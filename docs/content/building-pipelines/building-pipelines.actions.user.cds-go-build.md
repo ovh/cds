@@ -14,6 +14,7 @@ Go Build: compile a go program
 * **architecture**: GOOS
 * **artifactUpload**: Upload Binary as CDS Artifact
 * **binary**: Binary name: Put foo for go build -o foo
+* **cgoDisabled**: if true (checked) -> export CGO_ENABLED=0 before go build
 * **detectRaceCondition**: Enable data race detection. It's flag -race
 * **flags**: flags for go build. Put -ldflags "-X main.xyz=abc" for go build -ldflags "-X main.xyz=abc"
 * **gopath**: set a $GOPATH. If empty, this action try to get env $GOPATH. If $GOPATH is empty, action will set it to $HOME/go

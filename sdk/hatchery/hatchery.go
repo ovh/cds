@@ -47,7 +47,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func receiveJob(h Interface, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, warningSeconds, criticalSeconds, graceSeconds int, hostname string) bool {
+func receiveJob(h Interface, isWorkflowJob bool, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, warningSeconds, criticalSeconds, graceSeconds int, hostname string) bool {
 	if jobID == 0 {
 		return false
 	}
@@ -80,14 +80,14 @@ func receiveJob(h Interface, jobID int64, jobQueuedSeconds int64, jobBookedBy sd
 
 	atomic.AddInt64(nRoutines, 1)
 	defer atomic.AddInt64(nRoutines, -1)
-	if errR := routine(h, models, jobID, requirements, hostname, time.Now().Unix(), warningSeconds, criticalSeconds, graceSeconds); errR != nil {
+	if errR := routine(h, isWorkflowJob, models, jobID, requirements, hostname, time.Now().Unix(), warningSeconds, criticalSeconds, graceSeconds); errR != nil {
 		log.Warning("Error on routine: %s", errR)
 		return false
 	}
 	return true
 }
 
-func routine(h Interface, models []sdk.Model, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64, warningSeconds, criticalSeconds, graceSeconds int) error {
+func routine(h Interface, isWorkflowJob bool, models []sdk.Model, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64, warningSeconds, criticalSeconds, graceSeconds int) error {
 	defer logTime(fmt.Sprintf("routine> %d", timestamp), time.Now(), warningSeconds, criticalSeconds)
 	log.Debug("routine> %d enter", timestamp)
 
@@ -103,7 +103,7 @@ func routine(h Interface, models []sdk.Model, jobID int64, requirements []sdk.Re
 
 	for _, model := range models {
 		if canRunJob(h, timestamp, jobID, requirements, &model, hostname) {
-			if err := sdk.BookPipelineBuildJob(jobID); err != nil {
+			if err := h.Client().QueueJobBook(isWorkflowJob, jobID); err != nil {
 				// perhaps already booked by another hatchery
 				log.Debug("routine> %d - cannot book job %d %s: %s", timestamp, jobID, model.Name, err)
 				break // go to next job
@@ -124,11 +124,11 @@ func routine(h Interface, models []sdk.Model, jobID int64, requirements []sdk.Re
 					RemoteTime: time.Now(),
 					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryErrorSpawn.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name, sdk.Round(time.Since(start), time.Second).String(), errSpawn.Error()}},
 				})
-				if err := sdk.AddSpawnInfosPipelineBuildJob(jobID, infos); err != nil {
-					log.Warning("routine> %d - cannot record AddSpawnInfosPipelineBuildJob for job (err spawn)%d: %s", timestamp, jobID, err)
+				if err := h.Client().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos); err != nil {
+					log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job (err spawn)%d: %s", timestamp, jobID, err)
 				}
-				if err := sdk.SpawnErrorWorkerModel(model.ID, fmt.Sprintf("routine> cannot spawn worker %s for job %d: %s", model.Name, jobID, errSpawn)); err != nil {
-					log.Error("routine> error on call sdk.SpawnErrorWorkerModel on worker model %s for register: %s", model.Name, errSpawn)
+				if err := h.Client().WorkerModelSpawnError(model.ID, fmt.Sprintf("routine> cannot spawn worker %s for job %d: %s", model.Name, jobID, errSpawn)); err != nil {
+					log.Error("routine> error on call client.WorkerModelSpawnError on worker model %s for register: %s", model.Name, errSpawn)
 				}
 				continue // try another model
 			}
@@ -144,8 +144,8 @@ func routine(h Interface, models []sdk.Model, jobID int64, requirements []sdk.Re
 				},
 			})
 
-			if err := sdk.AddSpawnInfosPipelineBuildJob(jobID, infos); err != nil {
-				log.Warning("routine> %d - cannot record AddSpawnInfosPipelineBuildJob for job %d: %s", timestamp, jobID, err)
+			if err := h.Client().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos); err != nil {
+				log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", timestamp, jobID, err)
 			}
 			break // ok for this job
 		}
@@ -167,8 +167,8 @@ func provisioning(h Interface, provisionDisabled bool, models []sdk.Model) {
 				go func(m sdk.Model) {
 					if name, errSpawn := h.SpawnWorker(&m, 0, nil, false, "spawn for provision"); errSpawn != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
-						if err := sdk.SpawnErrorWorkerModel(m.ID, fmt.Sprintf("routine> cannot spawn worker %s for provisioning: %s", m.Name, errSpawn)); err != nil {
-							log.Error("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
+						if err := h.Client().WorkerModelSpawnError(m.ID, fmt.Sprintf("routine> cannot spawn worker %s for provisioning: %s", m.Name, errSpawn)); err != nil {
+							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
 						}
 					}
 				}(models[k])

@@ -103,7 +103,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 	}
 
 	var args []string
-	args = append(args, fmt.Sprintf("--api=%s", sdk.Host))
+	args = append(args, fmt.Sprintf("--api=%s", h.Client().APIURL()))
 	args = append(args, fmt.Sprintf("--token=%s", viper.GetString("token")))
 	args = append(args, fmt.Sprintf("--basedir=%s", h.basedir))
 	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
@@ -137,6 +137,8 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 	if registerOnly {
 		args = append(args, "register")
 	}
+
+	fmt.Printf("#### spawn with args %s \n", strings.Join(args, " "))
 	cmd := exec.Command("worker", args...)
 
 	// Clearenv
@@ -211,9 +213,9 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 func (h *HatcheryLocal) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
 	h.workers = make(map[string]*exec.Cmd)
 
-	sdk.Options(api, "", "", token)
+	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
 
-	req, err := sdk.GetRequirements()
+	req, err := h.Client().Requirements()
 	if err != nil {
 		return fmt.Errorf("Cannot fetch requirements: %s", err)
 	}
@@ -223,16 +225,18 @@ func (h *HatcheryLocal) Init(name, api, token string, requestSecondsTimeout int,
 		return fmt.Errorf("Cannot check local capabilities: %s", err)
 	}
 
+	genname := hatchery.GenerateName("local", name)
+
 	h.hatch = &sdk.Hatchery{
-		Name: name,
+		Name: genname,
 		Model: sdk.Model{
-			Name:         hatchery.GenerateName("local", name),
-			Image:        name,
+			Name:         genname,
+			Image:        genname,
 			Capabilities: capa,
 		},
+		Version: sdk.VERSION,
 	}
 
-	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -275,7 +279,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 	h.Lock()
 	defer h.Unlock()
 
-	apiworkers, err := sdk.GetWorkers()
+	apiworkers, err := h.Client().WorkerList()
 	if err != nil {
 		return err
 	}

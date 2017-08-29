@@ -1,9 +1,6 @@
 package sdk
 
 import (
-	"encoding/json"
-	"fmt"
-	"net/url"
 	"time"
 )
 
@@ -105,67 +102,6 @@ const (
 	StatusUnknown    Status = "Unknown"
 	StatusSkipped    Status = "Skipped"
 )
-
-// GetBuildQueue retrieves current CDS build in queue
-func GetBuildQueue() ([]PipelineBuildJob, error) {
-	var q []PipelineBuildJob
-
-	path := "/queue?status=all"
-
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	if err = json.Unmarshal(data, &q); err != nil {
-		return nil, err
-	}
-
-	return q, nil
-}
-
-// GetBuildState Get the state of given build
-func GetBuildState(projectKey, appName, pipelineName, env, buildID string) (PipelineBuild, error) {
-	var buildState PipelineBuild
-
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s?envName=%s", projectKey, appName, pipelineName, buildID, url.QueryEscape(env))
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return buildState, err
-	}
-	if code >= 300 {
-		return buildState, fmt.Errorf("HTTP %d", code)
-	}
-
-	err = json.Unmarshal(data, &buildState)
-	if err != nil {
-		return buildState, err
-	}
-	return buildState, nil
-}
-
-// GetBuildActionLog Get the log of the given action for the given build
-func GetBuildActionLog(projectKey, appName, pipelineName, buildID, pipelineActionID string) (BuildState, error) {
-	var buildState BuildState
-
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/action/%s/log", projectKey, appName, pipelineName, buildID, pipelineActionID)
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return buildState, err
-	}
-	if code >= 300 {
-		return buildState, fmt.Errorf("HTTP %d", code)
-	}
-
-	err = json.Unmarshal(data, &buildState)
-	if err != nil {
-		return buildState, err
-	}
-	return buildState, nil
-}
 
 // Translate translates messages in pipelineBuildJob
 func (p *PipelineBuildJob) Translate(lang string) {

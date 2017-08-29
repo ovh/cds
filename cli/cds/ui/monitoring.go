@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
@@ -10,13 +11,14 @@ import (
 
 	"github.com/gizak/termui"
 
+	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 )
 
 func (ui *Termui) showMonitoring() {
 	termui.Body.Rows = nil
 
-	ui.queue = NewScrollableList()
+	ui.queue = cli.NewScrollableList()
 	ui.queue.ItemFgColor = termui.ColorWhite
 	ui.queue.ItemBgColor = termui.ColorBlack
 
@@ -35,7 +37,7 @@ func (ui *Termui) showMonitoring() {
 
 	ui.selected = QueueSelected
 
-	ui.building = NewScrollableList()
+	ui.building = cli.NewScrollableList()
 	ui.building.ItemFgColor = termui.ColorWhite
 	ui.building.ItemBgColor = termui.ColorBlack
 
@@ -51,7 +53,7 @@ func (ui *Termui) showMonitoring() {
 	ui.building.BorderLeft = false
 	ui.building.BorderRight = false
 
-	ui.statusWorkerList = NewScrollableList()
+	ui.statusWorkerList = cli.NewScrollableList()
 	ui.statusWorkerList.ItemFgColor = termui.ColorWhite
 	ui.statusWorkerList.ItemBgColor = termui.ColorBlack
 
@@ -61,14 +63,14 @@ func (ui *Termui) showMonitoring() {
 	ui.statusWorkerList.BorderBottom = false
 	ui.statusWorkerList.BorderLeft = false
 
-	ui.statusWorkerModels = NewScrollableList()
+	ui.statusWorkerModels = cli.NewScrollableList()
 	ui.statusWorkerModels.BorderLabel = " Worker Models "
 	ui.statusWorkerModels.Height = heightBottom
 	ui.statusWorkerModels.Items = []string{"[loading...](fg-cyan,bg-default)"}
 	ui.statusWorkerModels.BorderBottom = false
 	ui.statusWorkerModels.BorderLeft = false
 
-	ui.statusHatcheriesWorkers = NewScrollableList()
+	ui.statusHatcheriesWorkers = cli.NewScrollableList()
 	ui.statusHatcheriesWorkers.BorderLabel = " Hatcheries "
 	ui.statusHatcheriesWorkers.Height = heightBottom
 	ui.statusHatcheriesWorkers.Items = []string{"[loading...](fg-cyan,bg-default)"}
@@ -76,7 +78,7 @@ func (ui *Termui) showMonitoring() {
 	ui.statusHatcheriesWorkers.BorderLeft = false
 	ui.statusHatcheriesWorkers.BorderRight = false
 
-	ui.status = NewScrollableList()
+	ui.status = cli.NewScrollableList()
 	ui.status.BorderLabel = " Status "
 	ui.status.Height = heightBottom
 	ui.status.Items = []string{"[loading...](fg-cyan,bg-default)"}
@@ -518,8 +520,18 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 
 func (ui *Termui) updateQueue(baseURL string) string {
 	start := time.Now()
-	pbJobs, err := sdk.GetBuildQueue()
+	var pbJobs []sdk.PipelineBuildJob
+	data, code, err := sdk.Request("GET", "/queue?status=all", nil)
 	if err != nil {
+		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+		return ""
+	}
+	if code >= 300 {
+		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+		return ""
+	}
+
+	if err = json.Unmarshal(data, &pbJobs); err != nil {
 		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
 		return ""
 	}

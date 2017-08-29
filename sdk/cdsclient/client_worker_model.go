@@ -30,3 +30,14 @@ func (c *client) workerModels(withDisabled bool) ([]sdk.Model, error) {
 	}
 	return models, nil
 }
+
+func (c *client) WorkerModelSpawnError(id int64, info string) error {
+	data := sdk.SpawnErrorForm{Error: info}
+	code, err := c.PutJSON(fmt.Sprintf("/worker/model/error/%d", id), &data, nil)
+	if code > 300 && err == nil {
+		return fmt.Errorf("WorkerModelSpawnError> HTTP %d", code)
+	} else if err != nil {
+		return sdk.WrapError(err, "WorkerModelSpawnError> Error")
+	}
+	return nil
+}

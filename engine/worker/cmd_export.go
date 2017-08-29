@@ -65,14 +65,16 @@ func exportCmd(cmd *cobra.Command, args []string) {
 
 func (wk *currentWorker) addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	data, errra := ioutil.ReadAll(r.Body)
+	if errra != nil {
+		log.Error("addBuildVarHandler> Cannot ReadAll err: %s", errra)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	var v sdk.Variable
 	if err := json.Unmarshal(data, &v); err != nil {
+		log.Error("addBuildVarHandler> Cannot Unmarshal err: %s", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -81,8 +83,9 @@ func (wk *currentWorker) addBuildVarHandler(w http.ResponseWriter, r *http.Reque
 	// - add it as a build var in API
 	wk.currentJob.buildVariables = append(wk.currentJob.buildVariables, v)
 	// - add it in current building Action
-	data, err = json.Marshal(v)
-	if err != nil {
+	data, errm := json.Marshal(v)
+	if errm != nil {
+		log.Error("addBuildVarHandler> Cannot Marshal err: %s", errm)
 		w.WriteHeader(http.StatusBadRequest)
 	}
 	// Retrieve build info

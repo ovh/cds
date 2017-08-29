@@ -366,25 +366,22 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return sdk.WrapError(err, "takePipelineBuildJobHandler> Cannot update worker status")
 	}
 
-	secrets, errSecret := loadActionBuildSecrets(db, pbJob.ID)
-	if errSecret != nil {
-		return sdk.WrapError(errSecret, "takePipelineBuildJobHandler> Cannot load action build secrets")
-	}
-
+	pbji := worker.PipelineBuildJobInfo{}
 	pb, errPb := pipeline.LoadPipelineBuildByID(db, pbJob.PipelineBuildID)
 	if errPb != nil {
 		return sdk.WrapError(errPb, "takePipelineBuildJobHandler> Cannot get pipeline build")
+	}
+	pbji.PipelineBuildJob = *pbJob
+	pbji.PipelineID = pb.Pipeline.ID
+	pbji.BuildNumber = pb.BuildNumber
+
+	if errSecret := loadActionBuildSecretsAndKeys(db, pbJob.ID, &pbji); errSecret != nil {
+		return sdk.WrapError(errSecret, "takePipelineBuildJobHandler> Cannot load action build secrets")
 	}
 
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "takePipelineBuildJobHandler> Cannot commit transaction")
 	}
-
-	pbji := worker.PipelineBuildJobInfo{}
-	pbji.PipelineBuildJob = *pbJob
-	pbji.Secrets = secrets
-	pbji.PipelineID = pb.Pipeline.ID
-	pbji.BuildNumber = pb.BuildNumber
 	return WriteJSON(w, r, pbji, http.StatusOK)
 }
 
@@ -427,7 +424,7 @@ func addSpawnInfosPipelineBuildJobHandler(w http.ResponseWriter, r *http.Request
 	return WriteJSON(w, r, nil, http.StatusOK)
 }
 
-func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, error) {
+func loadActionBuildSecretsAndKeys(db *gorp.DbMap, pbJobID int64, pbji *worker.PipelineBuildJobInfo) error {
 	query := `SELECT pipeline.project_id, pipeline_build.application_id, pipeline_build.environment_id
 	FROM pipeline_build
 	JOIN pipeline_build_job ON pipeline_build_job.pipeline_build_id = pipeline_build.id
@@ -435,15 +432,83 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 	WHERE pipeline_build_job.id = $1`
 
 	var projectID, appID, envID int64
-	var secrets []sdk.Variable
 	if err := db.QueryRow(query, pbJobID).Scan(&projectID, &appID, &envID); err != nil {
-		return nil, err
+		return err
 	}
 
+	if errS := loadActionBuildSecrets(db, projectID, appID, envID, pbji); errS != nil {
+		return sdk.WrapError(errS, "loadActionBuildSecretsAndKeys> Cannot load secrets")
+	}
+
+	if errK := loadActionBuildKeys(db, projectID, appID, envID, pbji); errK != nil {
+		return sdk.WrapError(errK, "loadActionBuildSecretsAndKeys> Cannot load keys")
+	}
+
+	return nil
+}
+
+func loadActionBuildKeys(db gorp.SqlExecutor, projectID, appID, envID int64, pbji *worker.PipelineBuildJobInfo) error {
+	p, errP := project.LoadByID(db, projectID, nil, project.LoadOptions.WithKeys)
+	if errP != nil {
+		return sdk.WrapError(errP, "loadActionBuildKeys> Cannot load project keys")
+	}
+	for _, k := range p.Keys {
+		pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
+			Name:  "cds.proj." + k.Name + ".pub",
+			Type:  "string",
+			Value: k.Public,
+		})
+		pbji.Secrets = append(pbji.Secrets, sdk.Variable{
+			Name:  "cds.proj." + k.Name + ".priv",
+			Type:  "string",
+			Value: k.Private,
+		})
+	}
+
+	a, errA := application.LoadByID(db, appID, nil, application.LoadOptions.WithKeys)
+	if errA != nil {
+		return sdk.WrapError(errA, "loadActionBuildKeys> Cannot load application keys")
+	}
+	for _, k := range a.Keys {
+		pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
+			Name:  "cds.app." + k.Name + ".pub",
+			Type:  "string",
+			Value: k.Public,
+		})
+		pbji.Secrets = append(pbji.Secrets, sdk.Variable{
+			Name:  "cds.app." + k.Name + ".priv",
+			Type:  "string",
+			Value: k.Private,
+		})
+	}
+
+	if envID != sdk.DefaultEnv.ID {
+		e, errE := environment.LoadEnvironmentByID(db, envID)
+		if errE != nil {
+			return sdk.WrapError(errE, "loadActionBuildKeys> Cannot load environment keys")
+		}
+		for _, k := range e.Keys {
+			pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
+				Name:  "cds.env." + k.Name + ".pub",
+				Type:  "string",
+				Value: k.Public,
+			})
+			pbji.Secrets = append(pbji.Secrets, sdk.Variable{
+				Name:  "cds.env." + k.Name + ".priv",
+				Type:  "string",
+				Value: k.Private,
+			})
+		}
+	}
+	return nil
+}
+
+func loadActionBuildSecrets(db gorp.SqlExecutor, projectID, appID, envID int64, pbji *worker.PipelineBuildJobInfo) error {
+	var secrets []sdk.Variable
 	// Load project secrets
 	pv, err := project.GetAllVariableInProject(db, projectID, project.WithClearPassword())
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for _, s := range pv {
 		if !sdk.NeedPlaceholder(s.Type) {
@@ -451,7 +516,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 		}
 		if s.Value == sdk.PasswordPlaceholder {
 			log.Error("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
-			return nil, fmt.Errorf("Loaded placeholder for %s", s.Name)
+			return fmt.Errorf("Loaded placeholder for %s", s.Name)
 		}
 		s.Name = "cds.proj." + s.Name
 		secrets = append(secrets, s)
@@ -460,7 +525,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 	// Load application secrets
 	pv, err = application.GetAllVariableByID(db, appID, application.WithClearPassword())
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for _, s := range pv {
 		if !sdk.NeedPlaceholder(s.Type) {
@@ -468,7 +533,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 		}
 		if s.Value == sdk.PasswordPlaceholder {
 			log.Error("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
-			return nil, fmt.Errorf("Loaded placeholder for %s", s.Name)
+			return fmt.Errorf("Loaded placeholder for %s", s.Name)
 		}
 		s.Name = "cds.app." + s.Name
 		secrets = append(secrets, s)
@@ -477,7 +542,7 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 	// Load environment secrets
 	pv, err = environment.GetAllVariableByID(db, envID, environment.WithClearPassword())
 	if err != nil {
-		return nil, err
+		return err
 	}
 	for _, s := range pv {
 		if !sdk.NeedPlaceholder(s.Type) {
@@ -485,13 +550,13 @@ func loadActionBuildSecrets(db *gorp.DbMap, pbJobID int64) ([]sdk.Variable, erro
 		}
 		if s.Value == sdk.PasswordPlaceholder {
 			log.Error("loadActionBuildSecrets> Loaded an placeholder for %s !", s.Name)
-			return nil, fmt.Errorf("Loaded placeholder for %s", s.Name)
+			return fmt.Errorf("Loaded placeholder for %s", s.Name)
 		}
 		s.Name = "cds.env." + s.Name
 		secrets = append(secrets, s)
 	}
-
-	return secrets, nil
+	pbji.Secrets = secrets
+	return nil
 }
 
 func getQueueHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
