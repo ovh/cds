@@ -9,18 +9,11 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/token"
-	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
-// DefaultValues contains default user values for init DB
-type DefaultValues struct {
-	DefaultGroupName string
-	SharedInfraToken string
-}
-
 //InitiliazeDB inits the database
-func InitiliazeDB(defaultValues DefaultValues, DBFunc func() *gorp.DbMap) error {
+func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
 	dbGorp := DBFunc()
 
 	if err := group.CreateDefaultGroup(dbGorp, group.SharedInfraGroupName); err != nil {
@@ -51,10 +44,6 @@ func InitiliazeDB(defaultValues DefaultValues, DBFunc func() *gorp.DbMap) error 
 
 	if err := environment.CreateBuiltinEnvironments(dbGorp); err != nil {
 		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin environments")
-	}
-
-	if err := workflow.CreateBuiltinWorkflowHookModels(dbGorp); err != nil {
-		return sdk.WrapError(err, "InitiliazeDB> Cannot setup builtin workflow hook models")
 	}
 
 	return nil

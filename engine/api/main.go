@@ -148,12 +148,16 @@ var mainCmd = &cobra.Command{
 			os.Exit(3)
 		}
 
-		defaultValues := bootstrap.DefaultValues{
+		defaultValues := sdk.DefaultValues{
 			DefaultGroupName: viper.GetString(viperAuthDefaultGroup),
 			SharedInfraToken: viper.GetString(viperAuthSharedInfraToken),
 		}
 		if err := bootstrap.InitiliazeDB(defaultValues, database.GetDBMap); err != nil {
 			log.Error("Cannot setup databases: %s", err)
+		}
+
+		if err := workflow.CreateBuiltinWorkflowHookModels(database.GetDBMap()); err != nil {
+			log.Error("Cannot setup builtin workflow hook models")
 		}
 
 		cache.Initialize(viper.GetString(viperCacheMode), viper.GetString(viperCacheRedisHost), viper.GetString(viperCacheRedisPassword), viper.GetInt(viperCacheTTL))

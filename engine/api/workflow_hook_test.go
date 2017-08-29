@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -17,7 +16,8 @@ import (
 )
 
 func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db := test.SetupPG(t)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	user, passUser := assets.InsertLambdaUser(db)
 
 	// Init router
@@ -41,7 +41,8 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 }
 
 func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db := test.SetupPG(t)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	admin, passAdmin := assets.InsertAdminUser(db)
 
 	// Init router
@@ -65,7 +66,8 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 }
 
 func Test_getWorkflowHookModelHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db := test.SetupPG(t)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	admin, passAdmin := assets.InsertAdminUser(db)
 
 	// Init router
@@ -94,7 +96,8 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 }
 
 func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db := test.SetupPG(t)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	admin, passAdmin := assets.InsertAdminUser(db)
 
 	// Init router
@@ -138,7 +141,9 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 }
 
 func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db := test.SetupPG(t)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+
 	u, pass := assets.InsertLambdaUser(db)
 
 	// Init router
