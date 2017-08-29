@@ -160,7 +160,7 @@ func UpdateHookModel(db gorp.SqlExecutor, m *sdk.WorkflowHookModel) error {
 func InsertHookModel(db gorp.SqlExecutor, m *sdk.WorkflowHookModel) error {
 	dbm := NodeHookModel(*m)
 	if err := db.Insert(&dbm); err != nil {
-		return sdk.WrapError(err, "UpdateHookModel> Unable to insert hook model %s", m.Name)
+		return sdk.WrapError(err, "InsertHookModel> Unable to insert hook model %s", m.Name)
 	}
 	*m = sdk.WorkflowHookModel(dbm)
 	return nil
