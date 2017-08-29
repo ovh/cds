@@ -262,7 +262,7 @@ func (n *WorkflowNode) References() []string {
 	return res
 }
 
-//InvolvedApplications reLOCK TABLE pipeline_scheduler_execution IN ACCESS EXCLUSIVE MODE NOWAITturns all applications used in the workflow
+//InvolvedApplications returns all applications used in the workflow
 func (n *WorkflowNode) InvolvedApplications() []int64 {
 	res := []int64{}
 	if n.Context != nil {
