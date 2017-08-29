@@ -173,6 +173,6 @@ func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
 	rec = httptest.NewRecorder()
 	router.mux.ServeHTTP(rec, req)
 
-	assert.Equal(t, 401, rec.Code)
+	assert.Equal(t, 403, rec.Code)
 
 }

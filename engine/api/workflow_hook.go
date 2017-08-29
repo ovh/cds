@@ -16,7 +16,6 @@ func getWorkflowHookModelsHandler(w http.ResponseWriter, r *http.Request, db *go
 	if err != nil {
 		return sdk.WrapError(err, "getWorkflowHookModelsHandler")
 	}
-
 	return WriteJSON(w, r, m, http.StatusOK)
 }
 
