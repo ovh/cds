@@ -29,6 +29,11 @@ export class Branch {
     }
 };
 
+export class Remote {
+    name: string;
+    url: string;
+};
+
 export interface Commit {
     id: string;
     author: Author;

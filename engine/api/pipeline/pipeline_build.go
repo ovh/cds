@@ -698,13 +698,25 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	sdk.AddParameter(&params, "cds.version", sdk.StringParameter, strconv.FormatInt(pb.Version, 10))
 
 	if client != nil {
-		repo, err := client.RepoByFullname(app.RepositoryFullname)
-		if err != nil {
-			log.Warning("InsertPipelineBuild> Unable to get repository %s from %s : %s", app.RepositoriesManager.Name, app.RepositoryFullname, err)
-			return nil, err
+		remote := app.RepositoryFullname
+		if pb.Trigger.VCSRemote != "" {
+			remote = pb.Trigger.VCSRemote
+			sdk.AddParameter(&params, "git.repository", sdk.StringParameter, pb.Trigger.VCSRemote)
 		}
-		sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
-		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, repo.HTTPCloneURL)
+
+		repo, errC := client.RepoByFullname(remote)
+		if errC != nil {
+			log.Warning("InsertPipelineBuild> Unable to get repository %s from %s : %s", app.RepositoriesManager.Name, app.RepositoryFullname, err)
+			return nil, errC
+		}
+		if pb.Trigger.VCSRemoteURL != "" {
+			sdk.AddParameter(&params, "git.url", sdk.StringParameter, pb.Trigger.VCSRemoteURL)
+			sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, pb.Trigger.VCSRemoteURL)
+		} else {
+			sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
+			sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, repo.HTTPCloneURL)
+		}
+
 	}
 
 	if pb.Trigger.TriggeredBy != nil {
@@ -771,6 +783,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	}
 
 	//Retreive commit information
+	// TODO: take care about VCSRemoteURL
 	if client != nil && pb.Trigger.VCSChangesHash != "" {
 		commit, err := client.Commit(app.RepositoryFullname, pb.Trigger.VCSChangesHash)
 		if err != nil {
@@ -876,8 +889,8 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 }
 
 func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipelineID int64, pb *sdk.PipelineBuild, envID int64, stages string, commits []sdk.VCSCommit) error {
-	query := `INSERT INTO pipeline_build (pipeline_id, build_number, version, status, args, start, application_id,environment_id, done, manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author, scheduled_trigger, stages, commits)
-						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING id`
+	query := `INSERT INTO pipeline_build (pipeline_id, build_number, version, status, args, start, application_id, environment_id, done, manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author, vcs_remote_url, scheduled_trigger, stages, commits)
+						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`
 
 	var triggeredBy, parentPipelineID int64
 	if pb.Trigger.TriggeredBy != nil {
@@ -897,7 +910,7 @@ func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipeli
 		args, time.Now(), applicationID, envID, time.Now(), pb.Trigger.ManualTrigger,
 		sql.NullInt64{Int64: triggeredBy, Valid: triggeredBy != 0},
 		sql.NullInt64{Int64: parentPipelineID, Valid: parentPipelineID != 0},
-		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor, pb.Trigger.ScheduledTrigger, stages, commitsBtes)
+		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor, pb.Trigger.VCSRemoteURL, pb.Trigger.ScheduledTrigger, stages, commitsBtes)
 
 	if err := statement.Scan(&pb.ID); err != nil {
 		return sdk.WrapError(err, "insertPipelineBuild> Unable to insert pipeline_build : App:%d,Pip:%d,Env:%d", applicationID, pipelineID, envID)
@@ -930,7 +943,15 @@ func BuildExists(db gorp.SqlExecutor, appID, pipID, envID int64, trigger *sdk.Pi
 		and vcs_changes_hash = $4
 		and vcs_changes_branch = $5`
 	var count int
-	if err := db.QueryRow(query, appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch).Scan(&count); err != nil {
+	var err error
+
+	if trigger.VCSRemoteURL != "" {
+		err = db.QueryRow(query+" and vcs_remote_url = $6", appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch, trigger.VCSRemoteURL).Scan(&count)
+	} else {
+		err = db.QueryRow(query, appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch).Scan(&count)
+	}
+
+	if err != nil {
 		return false, err
 	}
 	return count > 0, nil
@@ -1051,14 +1072,14 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 		SELECT DISTINCT ON (pipName, envName) pipName, MAX(start),
 			appName, envName,
 			pb.version, pb.status, pb.done, pb.build_number,
-			pb.manual_trigger, pb.scheduled_trigger, username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
+			pb.manual_trigger, pb.scheduled_trigger, username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author, pb.vcs_remote_url
 		FROM
 		(
 			(
 				SELECT
 					appName, pipName, envName,
 					pb.version, pb.status, pb.done, pb.start, pb.build_number,
-					pb.manual_trigger, pb.scheduled_trigger, "user".username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
+					pb.manual_trigger, pb.scheduled_trigger, "user".username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author, pb.vcs_remote_url
 				FROM pipeline_build pb
 				JOIN
 				    (SELECT
@@ -1080,7 +1101,7 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 		) pb
 		GROUP BY pipName, appName, envName,
 			pb.version, pb.status, pb.done, pb.build_number,
-			pb.manual_trigger, pb.scheduled_trigger, username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author
+			pb.manual_trigger, pb.scheduled_trigger, username, pb.vcs_changes_branch, pb.vcs_changes_hash, pb.vcs_changes_author, pb.vcs_remote_url
 		ORDER BY pipName ASC, envName ASC, max(start) DESC
 	`
 	rows, err := db.Query(query, projectKey, appName)
@@ -1094,12 +1115,12 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 		var status string
 		var user sdk.User
 		var manual, scheduledTrigger sql.NullBool
-		var hash, author, username, branch sql.NullString
+		var hash, author, username, branch, remoteURL sql.NullString
 
 		err = rows.Scan(&pb.Pipeline.Name, &pb.Start,
 			&pb.Application.Name, &pb.Environment.Name,
 			&pb.Version, &status, &pb.Done, &pb.BuildNumber,
-			&manual, &scheduledTrigger, &username, &branch, &hash, &author)
+			&manual, &scheduledTrigger, &username, &branch, &hash, &author, &remoteURL)
 		if err != nil {
 			return nil, err
 		}
@@ -1122,6 +1143,9 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 		if author.Valid {
 			pb.Trigger.VCSChangesAuthor = author.String
 		}
+		if remoteURL.Valid {
+			pb.Trigger.VCSRemoteURL = remoteURL.String
+		}
 
 		if scheduledTrigger.Valid {
 			pb.Trigger.ScheduledTrigger = scheduledTrigger.Bool
@@ -1133,25 +1157,31 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 }
 
 // GetVersions  Get version for the given application and branch
-func GetVersions(db gorp.SqlExecutor, app *sdk.Application, branchName string) ([]int, error) {
+func GetVersions(db gorp.SqlExecutor, app *sdk.Application, branchName, remoteURL string) ([]int, error) {
 	query := `
 		SELECT distinct version
 		FROM pipeline_build
 		WHERE application_id = $1 AND vcs_changes_branch = $2
-		ORDER BY version DESC
-		LIMIT 15
 	`
-	rows, err := db.Query(query, app.ID, branchName)
-	if err != nil {
-		return nil, err
+
+	queryOrder := "ORDER BY version DESC LIMIT 15"
+
+	var rows *sql.Rows
+	var errQ error
+	if remoteURL != "" {
+		rows, errQ = db.Query(query+" AND vcs_remote_url = $3 "+queryOrder, app.ID, branchName, remoteURL)
+	} else {
+		rows, errQ = db.Query(query+queryOrder, app.ID, branchName)
+	}
+	if errQ != nil {
+		return nil, errQ
 	}
 	defer rows.Close()
 
 	versions := []int{}
 	for rows.Next() {
 		var version int
-		err = rows.Scan(&version)
-		if err != nil {
+		if err := rows.Scan(&version); err != nil {
 			return nil, err
 		}
 		versions = append(versions, version)
@@ -1159,33 +1189,40 @@ func GetVersions(db gorp.SqlExecutor, app *sdk.Application, branchName string) (
 	return versions, nil
 }
 
-func GetAllLastBuildByApplication(db gorp.SqlExecutor, applicationID int64, branchName string, version int) ([]sdk.PipelineBuild, error) {
+func GetAllLastBuildByApplication(db gorp.SqlExecutor, applicationID int64, remote, branchName string, version int) ([]sdk.PipelineBuild, error) {
+	var args []interface{}
 	whereCondition := `
 		WHERE pb.id IN (
 			select max(id)
 			FROM pipeline_build
 			WHERE application_id = $1 %s
 			GROUP BY pipeline_id, environment_id
-		) AND application_id = $1;
+		) AND application_id = $1
 	`
-	var rows []PipelineBuildDbResult
-	var errSelect error
+
+	var query string
 	if branchName == "" && version == 0 {
-		query := fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, ""))
-		_, errSelect = db.Select(&rows, query, applicationID)
+		query = fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, ""))
+		args = append(args, applicationID)
 	} else if branchName != "" && version == 0 {
-		query := fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, " AND vcs_changes_branch = $2"))
-		_, errSelect = db.Select(&rows, query, applicationID, branchName)
+		query = fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, " AND vcs_changes_branch = $2"))
+		args = append(args, applicationID, branchName)
 	} else if branchName == "" && version != 0 {
-		query := fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, " AND version = $2"))
-		_, errSelect = db.Select(&rows, query, applicationID, version)
+		query = fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, " AND version = $2"))
+		args = append(args, applicationID, version)
 	} else {
-		query := fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, " AND vcs_changes_branch = $2 AND version = $3"))
-		_, errSelect = db.Select(&rows, query, applicationID, branchName, version)
+		query = fmt.Sprintf("%s %s", selectPipelineBuild, fmt.Sprintf(whereCondition, " AND vcs_changes_branch = $2 AND version = $3"))
+		args = append(args, applicationID, branchName, version)
 	}
 
-	if errSelect != nil {
-		return nil, errSelect
+	if remote != "" {
+		args = append(args, remote)
+		query = query + whereCondition + fmt.Sprintf(" AND vcs_remote = $%d", len(args))
+	}
+
+	var rows []PipelineBuildDbResult
+	if _, err := db.Select(&rows, query, args...); err != nil {
+		return nil, err
 	}
 
 	pbs := []sdk.PipelineBuild{}
@@ -1199,6 +1236,7 @@ func GetAllLastBuildByApplication(db gorp.SqlExecutor, applicationID int64, bran
 	return pbs, nil
 }
 
+// TODO add remote param I think to display branch attached to this remote
 // GetBranches from pipeline build and pipeline history for the given application
 func GetBranches(db gorp.SqlExecutor, app *sdk.Application) ([]sdk.VCSBranch, error) {
 	branches := []sdk.VCSBranch{}
@@ -1226,6 +1264,34 @@ func GetBranches(db gorp.SqlExecutor, app *sdk.Application) ([]sdk.VCSBranch, er
 
 	}
 	return branches, nil
+}
+
+// GetRemotes from pipeline build and pipeline history for the given application
+func GetRemotes(db gorp.SqlExecutor, app *sdk.Application) ([]sdk.VCSRemote, error) {
+	remotes := []sdk.VCSRemote{}
+	query := `
+		SELECT DISTINCT ON (vcs_remote_url, vcs_remote) vcs_remote_url, vcs_remote
+		FROM pipeline_build
+		WHERE vcs_remote_url != '' AND application_id = $1
+		ORDER BY vcs_remote DESC
+	`
+	rows, err := db.Query(query, app.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var remoteURL, remote sql.NullString
+		err := rows.Scan(&remoteURL, remote)
+		if err != nil {
+			return nil, err
+		}
+		if remoteURL.Valid && remote.Valid {
+			remotes = append(remotes, sdk.VCSRemote{Name: remote.String, URL: remoteURL.String})
+		}
+
+	}
+	return remotes, nil
 }
 
 //BuildNumberAndHash represents BuildNumber, Commit Hash and Branch for a Pipeline Build

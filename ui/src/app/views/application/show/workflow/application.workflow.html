@@ -1,6 +1,6 @@
 <div class="ui filter form">
     <div class="filter ui stackable grid">
-        <div class="four wide column">
+        <div class="three wide column">
             <sm-select class="search" [(model)]="workflowOrientation">
                 <option value="vertical">{{ 'workflow_orientation_vertical' | translate }}</option>
                 <option value="horizontal">{{ 'workflow_orientation_horizontal' | translate }}</option>
@@ -8,7 +8,20 @@
             </sm-select>
 
         </div>
-        <div class="six wide column">
+        <div class="four wide column">
+          <sm-select class="search"
+              placeholder="{{'application_workflow_branch_title' | translate}}"
+              *ngIf="remotes"
+              [options]="{'fullTextSearch': true}"
+              [(model)]="applicationFilter.remote"
+              (modelChange)="changeRemote()">
+              <option *ngFor="let remote of remotes" value="{{remote.name}}">{{ remote.name }}</option>
+          </sm-select>
+          <sm-select *ngIf="!remotes"
+              [placeholder]="'common_loading' | translate">
+          </sm-select>
+        </div>
+        <div class="four wide column">
             <sm-select class="search"
                 placeholder="{{'application_workflow_branch_title' | translate}}"
                 *ngIf="branches"
@@ -51,8 +64,8 @@
          [class.vertical]="workflowOrientation === 'vertical'"
          [class.hierarchical]="workflowOrientation === 'hierarchical'">
         <app-application-tree-workflow *ngIf="application.workflows" [project]="project" [application]="application"
-                                       [workflowItems]="application.workflows" [orientation]="workflowOrientation"
-                                       [applicationFilter]="applicationFilter"></app-application-tree-workflow>
+          [remotes]="remotes"
+          [workflowItems]="application.workflows" [orientation]="workflowOrientation"
+          [applicationFilter]="applicationFilter"></app-application-tree-workflow>
     </div>
 </div>
-

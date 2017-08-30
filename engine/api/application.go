@@ -120,6 +120,7 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 	applicationName := vars["permApplicationName"]
 
 	branch := r.FormValue("branch")
+	remoteURL := r.FormValue("remoteURL")
 
 	app, err := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.WithTriggers)
 	if err != nil {
@@ -127,7 +128,7 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	versions, err := pipeline.GetVersions(db, app, branch)
+	versions, err := pipeline.GetVersions(db, app, branch, remoteURL)
 	if err != nil {
 		log.Warning("getApplicationBranchVersionHandler: Cannot load version for application %s on branch %s: %s\n", applicationName, branch, err)
 		return err
@@ -193,6 +194,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	withSchedulers := FormBool(r, "withSchedulers")
 	withKeys := FormBool(r, "withKeys")
 	branchName := r.FormValue("branchName")
+	remote := r.FormValue("remote")
 	versionString := r.FormValue("version")
 
 	loadOptions := []application.LoadOptionFunc{
@@ -274,7 +276,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 		if version == 0 {
 			var errBuilds error
-			pipelineBuilds, errBuilds = pipeline.GetAllLastBuildByApplication(db, app.ID, branchName, 0)
+			pipelineBuilds, errBuilds = pipeline.GetAllLastBuildByApplication(db, app.ID, remote, branchName, 0)
 			if errBuilds != nil {
 				log.Warning("getApplicationHandler: Cannot load app status: %s\n", errBuilds)
 				return errBuilds
@@ -285,7 +287,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 				return sdk.ErrBranchNameNotProvided
 			}
 			var errPipBuilds error
-			pipelineBuilds, errPipBuilds = pipeline.GetAllLastBuildByApplication(db, app.ID, branchName, version)
+			pipelineBuilds, errPipBuilds = pipeline.GetAllLastBuildByApplication(db, app.ID, remote, branchName, version)
 			if errPipBuilds != nil {
 				log.Warning("getApplicationHandler: Cannot load app status by version: %s\n", errPipBuilds)
 				return errPipBuilds
@@ -307,6 +309,7 @@ func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gor
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
+	remote := r.FormValue("remote")
 
 	app, err := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default)
 	if err != nil {
@@ -321,12 +324,23 @@ func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gor
 			log.Warning("getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, erra)
 			return sdk.ErrNoReposManagerClientAuth
 		}
-		var errb error
-		branches, errb = client.Branches(app.RepositoryFullname)
-		if errb != nil {
-			log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
-			return sdk.ErrNoReposManagerClientAuth
+		if remote != "" && remote != "origin" {
+			prs, errP := client.PullRequests(app.RepositoryFullname)
+			if errP != nil {
+				return sdk.WrapError(errP, "getApplicationBranchHandler> Cannot get pull requests from repository")
+			}
+			for _, pr := range prs {
+				branches = append(branches, pr.Head.Branch)
+			}
+		} else {
+			var errb error
+			branches, errb = client.Branches(app.RepositoryFullname)
+			if errb != nil {
+				log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
+				return sdk.ErrNoReposManagerClientAuth
+			}
 		}
+
 	} else {
 		var errg error
 		branches, errg = pipeline.GetBranches(db, app)
@@ -339,6 +353,51 @@ func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gor
 	//Yo analyze branch and delete pipeline_build for old branches...
 
 	return WriteJSON(w, r, branches, http.StatusOK)
+}
+
+func getApplicationRemoteHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	vars := mux.Vars(r)
+	projectKey := vars["key"]
+	applicationName := vars["permApplicationName"]
+
+	app, errL := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.Default)
+	if errL != nil {
+		return sdk.WrapError(errL, "getApplicationRemoteHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
+	}
+
+	var remotes []sdk.VCSRemote
+	var prs []sdk.VCSPullRequest
+	if app.RepositoryFullname != "" && app.RepositoriesManager != nil {
+		client, erra := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
+		if erra != nil {
+			log.Warning("getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, erra)
+			return sdk.ErrNoReposManagerClientAuth
+		}
+		var errb error
+		prs, errb = client.PullRequests(app.RepositoryFullname)
+		if errb != nil {
+			log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
+			return sdk.ErrNoReposManagerClientAuth
+		}
+		for _, pr := range prs {
+			remotes = append(remotes, sdk.VCSRemote{URL: pr.Head.CloneURL, Name: pr.Head.Repo})
+		}
+	} else {
+		var errg error
+		remotes, errg = pipeline.GetRemotes(db, app)
+		if errg != nil {
+			return sdk.WrapError(errg, "getApplicationRemoteHandler> Cannot get remotes from builds")
+		}
+	}
+
+	// remotes, errg := pipeline.GetRemotes(db, app)
+	// if errg != nil {
+	// 	return sdk.WrapError(errg, "getApplicationRemoteHandler> Cannot get remotes from builds")
+	// }
+
+	//Yo analyze branch and delete pipeline_build for old remotes...
+
+	return WriteJSON(w, r, remotes, http.StatusOK)
 }
 
 func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {

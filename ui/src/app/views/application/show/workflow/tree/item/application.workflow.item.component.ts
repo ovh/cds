@@ -22,6 +22,7 @@ import {RepositoryPoller} from '../../../../../../model/polling.model';
 import {PipelineLaunchModalComponent} from '../../../../../../shared/pipeline/launch/pipeline.launch.modal.component';
 import {PermissionValue} from '../../../../../../model/permission.model';
 import {cloneDeep} from 'lodash';
+import {Remote} from '../../../../../../model/repositories.model';
 
 @Component({
     selector: 'app-application-workflow-item',
@@ -32,6 +33,7 @@ import {cloneDeep} from 'lodash';
 export class ApplicationWorkflowItemComponent implements DoCheck {
 
     @Input() project: Project;
+    @Input() remotes: Array<Remote>;
     @Input() workflowItem: WorkflowItem;
     @Input() orientation: string;
     @Input() application: Application;
@@ -117,6 +119,28 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         branchParam.type = 'string';
         branchParam.value = currentBranch;
         runRequest.parameters.push(branchParam);
+
+        if (this.applicationFilter.remote && this.applicationFilter.remote !== 'origin') {
+          let remote = this.remotes.find((remote) => remote.name === this.applicationFilter.remote);
+
+          if (remote) {
+            let urlParam = new Parameter();
+            urlParam.name = 'git.http_url';
+            urlParam.type = 'string';
+            urlParam.value = remote.url;
+            runRequest.parameters.push(urlParam);
+
+            urlParam.name = 'git.url';
+            urlParam.type = 'string';
+            urlParam.value = remote.url;
+            runRequest.parameters.push(urlParam);
+
+            urlParam.name = 'git.repository';
+            urlParam.type = 'string';
+            urlParam.value = remote.name;
+            runRequest.parameters.push(urlParam);
+          }
+        }
 
         this.loadingPipAction = true;
         // Run pipeline

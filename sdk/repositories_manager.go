@@ -295,6 +295,9 @@ type RepositoriesManagerClient interface {
 	Commits(repo, branch, since, until string) ([]VCSCommit, error)
 	Commit(repo, hash string) (VCSCommit, error)
 
+	// PullRequests
+	PullRequests(string) ([]VCSPullRequest, error)
+
 	//Hooks
 	CreateHook(repo, url string) error
 	DeleteHook(repo, url string) error
@@ -338,6 +341,12 @@ type VCSCommit struct {
 	URL       string    `json:"url"`
 }
 
+//VCSRemote reprensents remotes known by the repositories manager
+type VCSRemote struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
 //VCSBranch reprensents branches known by the repositories manager
 type VCSBranch struct {
 	ID           string   `json:"id"`
@@ -347,8 +356,18 @@ type VCSBranch struct {
 	Parents      []string `json:"parents"`
 }
 
+//VCSPullRequest represents a pull request
+type VCSPullRequest struct {
+	URL    string       `json:"url"`
+	User   VCSAuthor    `json:"user"`
+	Head   VCSPushEvent `json:"head"`
+	Base   VCSPushEvent `json:"base"`
+	Branch VCSBranch    `json:"branch"`
+}
+
 //VCSPushEvent represents a push events for polling
 type VCSPushEvent struct {
+	Repo     string    `json:"repo"`
 	Branch   VCSBranch `json:"branch"`
 	Commit   VCSCommit `json:"commit"`
 	CloneURL string    `json:"clone_url"`
@@ -366,6 +385,7 @@ type VCSDeleteEvent struct {
 type VCSPullRequestEvent struct {
 	Action string       `json:"action"` // opened | closed
 	URL    string       `json:"url"`
+	Repo   string       `json:"repo"`
 	User   VCSAuthor    `json:"user"`
 	Head   VCSPushEvent `json:"head"`
 	Base   VCSPushEvent `json:"base"`

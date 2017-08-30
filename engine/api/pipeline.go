@@ -302,9 +302,9 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		if request.ParentEnvironmentID != 0 {
 			envID = request.ParentEnvironmentID
 		}
-		pbs, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentVersion, 1)
-		if err != nil {
-			return sdk.WrapError(err, "runPipelineHandler> Cannot load parent pipeline build by version")
+		pbs, errP := pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentVersion, 1)
+		if errP != nil {
+			return sdk.WrapError(errP, "runPipelineHandler> Cannot load parent pipeline build by version")
 		}
 		if len(pbs) == 0 {
 			return sdk.WrapError(sdk.ErrNoParentBuildFound, "runPipelineHandler> No parent build found")

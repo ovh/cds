@@ -80,6 +80,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/keys", GET(getKeysInApplicationHandler), POST(addKeyInApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/keys/{name}", DELETE(deleteKeyInApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/branches", GET(getApplicationBranchHandler))
+	router.Handle("/project/{key}/application/{permApplicationName}/remotes", GET(getApplicationRemoteHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/version", GET(getApplicationBranchVersionHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/clone", POST(cloneApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/group", POST(addGroupInApplicationHandler), PUT(updateGroupsInApplicationHandler, DEPRECATED))

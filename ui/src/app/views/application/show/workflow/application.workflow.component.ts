@@ -5,7 +5,7 @@ import {Project} from '../../../../model/project.model';
 import {WorkflowItem, WorkflowStatusResponse} from '../../../../model/application.workflow.model';
 import {PipelineBuild, PipelineType} from '../../../../model/pipeline.model';
 import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.component';
-import {Branch} from '../../../../model/repositories.model';
+import {Branch, Remote} from '../../../../model/repositories.model';
 import {Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
 import {Observable} from 'rxjs/Observable';
@@ -37,6 +37,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     }
 
     // Filter values
+    remotes: Array<Remote>;
     branches: Array<Branch>;
     versions: Array<string>;
 
@@ -55,16 +56,19 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.generateParentInformation();
         // Load branches
-        this._appWorkflow.getBranches(this.project.key, this.application.name).subscribe(branches => {
-            this.branches = branches;
-            this.branches.forEach(b => {
-                if (b.default && !this.applicationFilter.branch) {
-                    this.applicationFilter.branch = b.display_id;
-                }
-            });
+        this._appWorkflow.getRemotes(this.project.key, this.application.name)
+          .subscribe(remotes => this.remotes = [{name: 'origin', url: 'origin'}, ...remotes]);
+        this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote)
+          .subscribe(branches => {
+              this.branches = branches;
+              this.branches.forEach(b => {
+                  if (b.default && !this.applicationFilter.branch) {
+                      this.applicationFilter.branch = b.display_id;
+                  }
+              });
 
-            this.loadVersions(this.project.key, this.application.name).subscribe();
-        });
+              this.loadVersions(this.project.key, this.application.name).subscribe();
+          });
     }
 
     generateParentInformation() {
@@ -210,6 +214,21 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
         this.loadVersions(this.project.key, this.application.name)
             .subscribe(() => this.changeVersion());
     }
+    /**
+     * Action when changing remote
+     */
+    changeRemote(): void {
+        this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote)
+          .subscribe(branches => {
+              this.branches = branches;
+              if (Array.isArray(branches) && branches.length) {
+                this.applicationFilter.branch = branches[0].display_id;
+              }
+
+              this.loadVersions(this.project.key, this.application.name)
+                  .subscribe(() => this.changeVersion());
+          });
+    }
 
     /**
      * Action when changing version
@@ -225,9 +244,13 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
             this.applicationFilter.version = version;
         }
 
-        this._router.navigate(['/project/', this.project.key, 'application', this.application.name],
-            {queryParams: {tab: 'workflow', branch: this.applicationFilter.branch, version: this.applicationFilter.version}});
-        this.changeWorkerEvent.emit(false);
+        this._router.navigate(['/project/', this.project.key, 'application', this.application.name], {
+          queryParams: {
+            tab: 'workflow', branch: this.applicationFilter.branch,
+            version: this.applicationFilter.version, remote: this.applicationFilter.remote
+          }
+        });
+        this.changeWorkerEvent.emit(true);
         this.clearTree(this.application.workflows);
     }
 
@@ -235,7 +258,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
      * Load the list of version for the current application on the selected branch
      */
     loadVersions(key: string, appName: string): Observable<Array<string>> {
-        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch)
+        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch, this.applicationFilter.remote)
             .map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]);
     }
 

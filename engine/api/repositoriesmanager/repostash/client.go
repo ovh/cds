@@ -143,6 +143,10 @@ func (s *StashClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 	return branches, nil
 }
 
+func (s *StashClient) PullRequests(string) ([]sdk.VCSPullRequest, error) {
+	return []sdk.VCSPullRequest{}, nil
+}
+
 //Branch retrieves the branch from Stash
 func (s *StashClient) Branch(fullname, branchName string) (*sdk.VCSBranch, error) {
 	t := strings.Split(fullname, "/")
