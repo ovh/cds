@@ -2,29 +2,34 @@ package vsphere
 
 import (
 	"context"
+	"fmt"
 	"os"
 
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
-	"github.com/ovh/cds/sdk/log"
-	"github.com/spf13/viper"
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/hatchery"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Init create newt client for vsphere
-func (h *HatcheryVSphere) Init() error {
-	// Register without declaring model
+func (h *HatcheryVSphere) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
 	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("vsphere", viper.GetString("name")),
-		UID:  viper.GetString("uk"),
+		Name:    hatchery.GenerateName("vsphere", name),
+		Version: sdk.VERSION,
 	}
 
+	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	if err := hatchery.Register(h); err != nil {
+		return fmt.Errorf("Cannot register: %s", err)
+	}
 	workersAlive = map[string]int64{}
-	ctx := context.TODO()
+	ctx := context.Background()
 
 	// Connect and login to ESX or vCenter
 	c, errNc := h.newClient(ctx)
@@ -32,9 +37,9 @@ func (h *HatcheryVSphere) Init() error {
 		log.Error("Unable to vsphere.newClient: %s", errNc)
 		os.Exit(11)
 	}
-	h.client = c
+	h.vclient = c
 
-	finder := find.NewFinder(h.client.Client, false)
+	finder := find.NewFinder(h.vclient.Client, false)
 	h.finder = finder
 
 	var errDc error
@@ -55,20 +60,20 @@ func (h *HatcheryVSphere) Init() error {
 		os.Exit(14)
 	}
 
-	if errRegistrer := hatchery.Register(h.hatch, viper.GetString("token")); errRegistrer != nil {
+	if errRegistrer := hatchery.Register(h); errRegistrer != nil {
 		log.Warning("Cannot register hatchery: %s", errRegistrer)
 	}
 
-	// go h.main()
+	go h.main()
 
 	return nil
 }
 
 func (h *HatcheryVSphere) initImages(ctx context.Context) error {
 	var vms []mo.VirtualMachine
-	m := view.NewManager(h.client.Client)
+	m := view.NewManager(h.vclient.Client)
 
-	v, err := m.CreateContainerView(ctx, h.client.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
+	v, err := m.CreateContainerView(ctx, h.vclient.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
 	if err != nil {
 		return err
 	}

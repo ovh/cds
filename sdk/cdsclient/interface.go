@@ -56,6 +56,7 @@ type Interface interface {
 	WorkerList() ([]sdk.Worker, error)
 	WorkerModelSpawnError(id int64, info string) error
 	WorkerModelsEnabled() ([]sdk.Model, error)
+	WorkerModelUpdate(id int64, name string, t string, value string, opts ...WorkerModelConfigParam) error
 	WorkerModels() ([]sdk.Model, error)
 	WorkerRegister(worker.RegistrationForm) (string, bool, error)
 	WorkerSetStatus(sdk.Status) error

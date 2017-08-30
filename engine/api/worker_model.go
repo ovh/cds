@@ -106,6 +106,8 @@ func spawnErrorWorkerModelHandler(w http.ResponseWriter, r *http.Request, db *go
 
 func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	workerModelID, errr := requestVarInt(r, "permModelID")
+	needRegistration := r.FormValue("needRegistration")
+
 	if errr != nil {
 		return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
 	}
@@ -186,6 +188,7 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	defer tx.Rollback()
 
 	// update model in db
+	model.NeedRegistration = needRegistration != "false"
 	if err := worker.UpdateWorkerModel(tx, model); err != nil {
 		return sdk.WrapError(err, "updateWorkerModel> cannot update worker model")
 	}

@@ -33,6 +33,7 @@ var (
 		string(Docker),
 		string(HostProcess),
 		string(Openstack),
+		string(VSphere),
 	}
 )
 

@@ -1155,6 +1155,12 @@
 			"revisionTime": "2016-09-28T01:52:44Z"
 		},
 		{
+			"checksumSHA1": "aqeInPjyAcytMRrpn9KWIBr0+tA=",
+			"path": "github.com/vmware/govmomi",
+			"revision": "d7e841db6909ae5e9eb7493f7b1ea7d7b15101e3",
+			"revisionTime": "2017-08-17T04:03:29Z"
+		},
+		{
 			"checksumSHA1": "drSl/ipSHSsHWWTrp3WZw4LN/No=",
 			"path": "github.com/xeipuuv/gojsonpointer",
 			"revision": "e0fe6f68307607d540ed8eac07a342c33fa1b54a",

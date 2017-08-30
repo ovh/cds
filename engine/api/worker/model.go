@@ -50,7 +50,6 @@ func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 // UpdateWorkerModel update a worker model
 func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 	model.UserLastModified = time.Now()
-	model.NeedRegistration = true
 	dbmodel := WorkerModel(model)
 	if _, err := db.Update(&dbmodel); err != nil {
 		return err
