@@ -29,9 +29,9 @@ func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *Ou
 	if verbose {
 		t1 := time.Now()
 		if opts != nil && opts.CheckoutCommit != "" {
-			defer LogFunc("Checkout commit %s\n", opts.CheckoutCommit)
+			defer LogFunc("Checkout commit %s", opts.CheckoutCommit)
 		}
-		defer LogFunc("Git clone %s (%v s)\n", path, int(time.Since(t1).Seconds()))
+		defer LogFunc("Git clone %s (%v s)", path, int(time.Since(t1).Seconds()))
 	}
 
 	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "ftp://") || strings.HasPrefix(repo, "ftps://") {

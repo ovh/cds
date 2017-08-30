@@ -95,7 +95,7 @@ func gitTagCommand(opts *TagOpts) cmds {
 	allCmd = append(allCmd, importcmd)
 
 	allCmd = append(allCmd, gitConfigCommand("user.name", opts.Username))
-	allCmd = append(allCmd, gitConfigCommand("user.email", "cds@corp.ovh.com"))
+	allCmd = append(allCmd, gitConfigCommand("user.email", "cds@localhost"))
 
 	gitcmd := cmd{
 		cmd:  "git",

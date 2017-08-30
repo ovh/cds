@@ -22,7 +22,7 @@ func TestGenerateKeyPair(t *testing.T) {
 }
 
 func TestGenerateGPGKeyPair(t *testing.T) {
-	kid, pub, priv, err := GeneratePGPKeyPair("mykey", "foo@bar.fr")
+	kid, pub, priv, err := GeneratePGPKeyPair("mykey")
 	if err != nil {
 		t.Fatalf("cannot generate keypair: %s\n", err)
 	}

@@ -49,7 +49,7 @@ func Generatekeypair(keyname string) (string, string, error) {
 
 // GeneratePGPKeyPair generates a private / public PGP key
 func GeneratePGPKeyPair(keyname string) (string, string, string, error) {
-	key, errE := openpgp.NewEntity(keyname, keyname, "cds@corp.ovh.com", nil)
+	key, errE := openpgp.NewEntity(keyname, keyname, "cds@locahost", nil)
 	if errE != nil {
 		return "", "", "", sdk.WrapError(errE, "GenerateGPGKeyPair> Cannot create new entity")
 	}
