@@ -93,7 +93,7 @@ Clone a repository into a new directory.`
 	}
 
 	// ----------------------------------- Git tag    -----------------------
-	gittag := sdk.NewAction(sdk.GitTag)
+	gittag := sdk.NewAction(sdk.GitTagAction)
 	gittag.Type = sdk.BuiltinAction
 	gittag.Description = `CDS Builtin Action.
 Tag the current branch and push it.`

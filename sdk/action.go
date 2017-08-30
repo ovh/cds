@@ -69,7 +69,7 @@ const (
 	ScriptAction   = "Script"
 	JUnitAction    = "JUnit"
 	GitCloneAction = "GitClone"
-	GitTag         = "GitTag"
+	GitTagAction   = "GitTag"
 )
 
 const (
