@@ -458,6 +458,11 @@ func loadActionBuildKeys(db gorp.SqlExecutor, projectID, appID, envID int64, pbj
 			Type:  "string",
 			Value: k.Public,
 		})
+		pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
+			Name:  "cds.proj." + k.Name + ".id",
+			Type:  "string",
+			Value: k.KeyID,
+		})
 		pbji.Secrets = append(pbji.Secrets, sdk.Variable{
 			Name:  "cds.proj." + k.Name + ".priv",
 			Type:  "string",
@@ -474,6 +479,11 @@ func loadActionBuildKeys(db gorp.SqlExecutor, projectID, appID, envID int64, pbj
 			Name:  "cds.app." + k.Name + ".pub",
 			Type:  "string",
 			Value: k.Public,
+		})
+		pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
+			Name:  "cds.app." + k.Name + ".id",
+			Type:  "string",
+			Value: k.KeyID,
 		})
 		pbji.Secrets = append(pbji.Secrets, sdk.Variable{
 			Name:  "cds.app." + k.Name + ".priv",
@@ -492,6 +502,11 @@ func loadActionBuildKeys(db gorp.SqlExecutor, projectID, appID, envID int64, pbj
 				Name:  "cds.env." + k.Name + ".pub",
 				Type:  "string",
 				Value: k.Public,
+			})
+			pbji.PipelineBuildJob.Parameters = append(pbji.PipelineBuildJob.Parameters, sdk.Parameter{
+				Name:  "cds.env." + k.Name + ".id",
+				Type:  "string",
+				Value: k.KeyID,
 			})
 			pbji.Secrets = append(pbji.Secrets, sdk.Variable{
 				Name:  "cds.env." + k.Name + ".priv",

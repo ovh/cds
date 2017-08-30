@@ -92,12 +92,13 @@ func addKeyInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		newKey.Public = pub
 		newKey.Private = priv
 	case sdk.KeyTypePgp:
-		pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name, c.User)
+		kid, pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 		if errGenerate != nil {
 			return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate pgpKey")
 		}
 		newKey.Public = pub
 		newKey.Private = priv
+		newKey.KeyID = kid
 	default:
 		return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInProjectHandler> unknown key of type: %s", newKey.Type)
 	}

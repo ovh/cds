@@ -9,8 +9,6 @@ import (
 
 	"github.com/magiconair/properties/assert"
 	"golang.org/x/crypto/openpgp"
-
-	"github.com/ovh/cds/sdk"
 )
 
 func TestGenerateKeyPair(t *testing.T) {
@@ -24,14 +22,13 @@ func TestGenerateKeyPair(t *testing.T) {
 }
 
 func TestGenerateGPGKeyPair(t *testing.T) {
-	pub, priv, err := GeneratePGPKeyPair("mykey", &sdk.User{
-		Email: "foo@bar.bar",
-	})
+	kid, pub, priv, err := GeneratePGPKeyPair("mykey")
 	if err != nil {
 		t.Fatalf("cannot generate keypair: %s\n", err)
 	}
 	t.Logf("Pub key:\n%s\n", pub)
 	t.Logf("Priv key:\n%s\n", priv)
+	t.Logf("ID key:\n%s\n", kid)
 
 	stringToEncode := "I am a secret"
 	entityList, err := openpgp.ReadArmoredKeyRing(strings.NewReader(pub))

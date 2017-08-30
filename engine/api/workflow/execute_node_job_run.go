@@ -7,14 +7,14 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/environment"
 )
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
@@ -169,13 +169,17 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRu
 			Type:  "string",
 			Value: k.Public,
 		})
+		params = append(params, sdk.Parameter{
+			Name:  "cds.proj." + k.Name + ".id",
+			Type:  "string",
+			Value: k.KeyID,
+		})
 		secrets = append(secrets, sdk.Variable{
 			Name:  "cds.proj." + k.Name + ".priv",
 			Type:  "string",
 			Value: k.Private,
 		})
 	}
-
 
 	//Load node definition
 	n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
@@ -192,6 +196,11 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRu
 				Name:  "cds.app." + k.Name + ".pub",
 				Type:  "string",
 				Value: k.Public,
+			})
+			params = append(params, sdk.Parameter{
+				Name:  "cds.app." + k.Name + ".id",
+				Type:  "string",
+				Value: k.KeyID,
 			})
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.app." + k.Name + ".priv",
@@ -211,6 +220,11 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRu
 				Name:  "cds.env." + k.Name + ".pub",
 				Type:  "string",
 				Value: k.Public,
+			})
+			params = append(params, sdk.Parameter{
+				Name:  "cds.env." + k.Name + ".id",
+				Type:  "string",
+				Value: k.KeyID,
 			})
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.env." + k.Name + ".priv",

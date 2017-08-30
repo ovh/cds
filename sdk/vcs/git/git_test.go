@@ -213,8 +213,8 @@ func Test_gitCommand(t *testing.T) {
 	}
 	for _, tt := range tests {
 		os.RemoveAll(tt.args.path)
-		if got := gitCommand(tt.args.repo, tt.args.path, tt.args.opts); !reflect.DeepEqual(got.Strings(), tt.want) {
-			t.Errorf("%q. gitCommand() = %v, want %v", tt.name, got, tt.want)
+		if got := gitCloneCommand(tt.args.repo, tt.args.path, tt.args.opts); !reflect.DeepEqual(got.Strings(), tt.want) {
+			t.Errorf("%q. gitCloneCommand() = %v, want %v", tt.name, got, tt.want)
 		}
 	}
 }
