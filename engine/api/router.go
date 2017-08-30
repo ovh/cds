@@ -174,6 +174,11 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 		w.Header().Add("X-Api-Time", time.Now().Format(time.RFC3339))
 		w.Header().Add("ETag", fmt.Sprintf("%d", time.Now().Unix()))
 
+		if req.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
 		rc := cfg.config[req.Method]
 		if rc == nil || rc.handler == nil {
 			WriteError(w, req, sdk.ErrNotFound)
@@ -193,11 +198,6 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 		}()
 
 		c := &businesscontext.Ctx{}
-
-		if req.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
 
 		//Check DB connection
 		db := database.DBMap(database.DB())
