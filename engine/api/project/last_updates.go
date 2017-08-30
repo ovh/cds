@@ -28,15 +28,15 @@ func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.Pr
 			t, s := getLastModified(cache.Key("lastModified", pg.Project.Key))
 			if s != "" && t != 0 && t > since.Unix() {
 				mapRes[pg.Project.Key] = &sdk.ProjectLastUpdates{
-					sdk.LastModification{
+					LastModification: sdk.LastModification{
 						Name:         pg.Project.Key,
 						LastModified: t,
 						Username:     s,
 					},
-					[]sdk.LastModification{},
-					[]sdk.LastModification{},
-					[]sdk.LastModification{},
-					[]sdk.LastModification{},
+					Applications: []sdk.LastModification{},
+					Pipelines:    []sdk.LastModification{},
+					Environments: []sdk.LastModification{},
+					Workflows:    []sdk.LastModification{},
 				}
 			}
 		}
