@@ -19,6 +19,7 @@ type PipelineBuildJob struct {
 	PipelineBuildID int64                  `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
 	BookedBy        Hatchery               `json:"bookedby" db:"-"`
 	SpawnInfos      []SpawnInfo            `json:"spawninfos" db:"-"`
+	ExecGroups      []Group                `json:"exec_groups" db:"-"`
 }
 
 // SpawnInfo contains an information about spawning

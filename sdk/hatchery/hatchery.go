@@ -47,7 +47,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func receiveJob(h Interface, isWorkflowJob bool, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, warningSeconds, criticalSeconds, graceSeconds int, hostname string) bool {
+func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, warningSeconds, criticalSeconds, graceSeconds int, hostname string) bool {
 	if jobID == 0 {
 		return false
 	}
@@ -80,14 +80,14 @@ func receiveJob(h Interface, isWorkflowJob bool, jobID int64, jobQueuedSeconds i
 
 	atomic.AddInt64(nRoutines, 1)
 	defer atomic.AddInt64(nRoutines, -1)
-	if errR := routine(h, isWorkflowJob, models, jobID, requirements, hostname, time.Now().Unix(), warningSeconds, criticalSeconds, graceSeconds); errR != nil {
+	if errR := routine(h, isWorkflowJob, models, execGroups, jobID, requirements, hostname, time.Now().Unix(), warningSeconds, criticalSeconds, graceSeconds); errR != nil {
 		log.Warning("Error on routine: %s", errR)
 		return false
 	}
 	return true
 }
 
-func routine(h Interface, isWorkflowJob bool, models []sdk.Model, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64, warningSeconds, criticalSeconds, graceSeconds int) error {
+func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []sdk.Group, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64, warningSeconds, criticalSeconds, graceSeconds int) error {
 	defer logTime(fmt.Sprintf("routine> %d", timestamp), time.Now(), warningSeconds, criticalSeconds)
 	log.Debug("routine> %d enter", timestamp)
 
@@ -102,7 +102,7 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, jobID int64, r
 	log.Debug("routine> %d - models received: %d", timestamp, len(models))
 
 	for _, model := range models {
-		if canRunJob(h, timestamp, jobID, requirements, &model, hostname) {
+		if canRunJob(h, timestamp, execGroups, jobID, requirements, &model, hostname) {
 			if err := h.Client().QueueJobBook(isWorkflowJob, jobID); err != nil {
 				// perhaps already booked by another hatchery
 				log.Debug("routine> %d - cannot book job %d %s: %s", timestamp, jobID, model.Name, err)
@@ -177,7 +177,7 @@ func provisioning(h Interface, provisionDisabled bool, models []sdk.Model) {
 	}
 }
 
-func canRunJob(h Interface, timestamp int64, jobID int64, requirements []sdk.Requirement, model *sdk.Model, hostname string) bool {
+func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64, requirements []sdk.Requirement, model *sdk.Model, hostname string) bool {
 	if model.Type != h.ModelType() {
 		return false
 	}
@@ -186,6 +186,20 @@ func canRunJob(h Interface, timestamp int64, jobID int64, requirements []sdk.Req
 	if model.NbSpawnErr > 5 && h.Hatchery().GroupID != model.ID {
 		log.Warning("canRunJob> Too many errors on spawn with model %s, please check this worker model", model.Name)
 		return false
+	}
+
+	if execGroups != nil && len(execGroups) > 0 {
+		checkGroup := false
+		for _, g := range execGroups {
+			if g.ID == model.GroupID {
+				checkGroup = true
+				break
+			}
+		}
+		if !checkGroup {
+			log.Debug("canRunJob> %d - job %d - model %s attached to group %d can't run this job", timestamp, jobID, model.Name, model.GroupID)
+			return false
+		}
 	}
 
 	// Common check
