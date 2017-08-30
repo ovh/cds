@@ -47,7 +47,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 
-	kid, pub, priv, err := keys.GeneratePGPKeyPair(k.Name, u)
+	kid, pub, priv, err := keys.GeneratePGPKeyPair(k.Name)
 	if err != nil {
 		t.Fatal(err)
 	}

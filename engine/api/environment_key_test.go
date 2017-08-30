@@ -48,7 +48,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 		EnvironmentID: env.ID,
 	}
 
-	kid, pub, priv, err := keys.GeneratePGPKeyPair(k.Name, u)
+	kid, pub, priv, err := keys.GeneratePGPKeyPair(k.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
