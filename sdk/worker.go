@@ -24,6 +24,7 @@ const (
 	Docker      = "docker"
 	HostProcess = "host"
 	Openstack   = "openstack"
+	VSphere     = "vsphere"
 )
 
 var (

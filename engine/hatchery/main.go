@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
+	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/spf13/cobra"
@@ -80,6 +81,7 @@ func addCommands() {
 	rootCmd.AddCommand(marathon.Cmd)
 	rootCmd.AddCommand(swarm.Cmd)
 	rootCmd.AddCommand(openstack.Cmd)
+	rootCmd.AddCommand(vsphere.Cmd)
 	rootCmd.AddCommand(cmdVersion)
 }
 
