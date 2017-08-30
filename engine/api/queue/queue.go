@@ -173,11 +173,11 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb *sdk.PipelineBuild
 	for _, job := range stage.Jobs {
 		pbJobParams, errParam := getPipelineBuildJobParameters(tx, job, pb, stage)
 		if errParam != nil {
-			return errParam
+			return sdk.WrapError(errParam, "addJobsToQueue> error on getPipelineBuildJobParameters")
 		}
 		groups, errGroups := getPipelineBuildJobExecutablesGroups(tx, pb)
 		if errGroups != nil {
-			return errGroups
+			return sdk.WrapError(errGroups, "addJobsToQueue> error on getPipelineBuildJobExecutablesGroups")
 		}
 		pbJob := sdk.PipelineBuildJob{
 			PipelineBuildID: pb.ID,
@@ -417,7 +417,7 @@ func getPipelineBuildJobExecutablesGroups(db gorp.SqlExecutor, pb *sdk.PipelineB
 	var groups []sdk.Group
 	rows, err := db.Query(query, group.SharedInfraGroupName, pb.ID, permission.PermissionReadExecute)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "getPipelineBuildJobExecutablesGroups> err query")
 	}
 	defer rows.Close()
 
@@ -427,7 +427,7 @@ func getPipelineBuildJobExecutablesGroups(db gorp.SqlExecutor, pb *sdk.PipelineB
 		var groupName sql.NullString
 
 		if err := rows.Scan(&groupID, &groupName); err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "getPipelineBuildJobExecutablesGroups> err scan")
 		}
 
 		if groupID.Valid {
