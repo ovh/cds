@@ -107,12 +107,13 @@ func addKeyInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		newKey.Public = pub
 		newKey.Private = priv
 	case sdk.KeyTypePgp:
-		pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name, c.User)
+		kid, pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 		if errGenerate != nil {
 			return sdk.WrapError(errGenerate, "addKeyInEnvironmentHandler> Cannot generate pgpKey")
 		}
 		newKey.Public = pub
 		newKey.Private = priv
+		newKey.KeyID = kid
 	default:
 		return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInEnvironmentHandler> unknown key of type: %s", newKey.Type)
 	}

@@ -103,12 +103,10 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
 	}
 
-
-
 	//Load workflow node run
 	nodeRun, err := workflow.LoadNodeRunByID(db, job.WorkflowNodeRunID)
 	if err != nil {
-		return  sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load node run")
+		return sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load node run")
 	}
 
 	//Load workflow run
@@ -130,7 +128,7 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 	pbji.SubNumber = noderun.SubNumber
 	pbji.Secrets = secrets
 
-	params, secretsKeys, errK :=  workflow.LoadNodeJobRunKeys(tx,job, nodeRun, workflowRun)
+	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, job, nodeRun, workflowRun)
 	if errK != nil {
 		return sdk.WrapError(errK, "postTakeWorkflowJobHandler> Cannot load keys")
 	}

@@ -20,6 +20,7 @@ func init() {
 	mapBuiltinActions[sdk.ScriptAction] = runScriptAction
 	mapBuiltinActions[sdk.JUnitAction] = runParseJunitTestResultAction
 	mapBuiltinActions[sdk.GitCloneAction] = runGitClone
+	mapBuiltinActions[sdk.GitTag] = runGitTag
 }
 
 // BuiltInAction defines builtin action signature

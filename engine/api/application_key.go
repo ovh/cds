@@ -95,12 +95,13 @@ func addKeyInApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp
 		newKey.Public = pub
 		newKey.Private = priv
 	case sdk.KeyTypePgp:
-		pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name, c.User)
+		keyID, pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 		if errGenerate != nil {
 			return sdk.WrapError(errGenerate, "addKeyInApplicationHandler> Cannot generate pgpKey")
 		}
 		newKey.Public = pub
 		newKey.Private = priv
+		newKey.KeyID = keyID
 	default:
 		return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInApplicationHandler> unknown key of type: %s", newKey.Type)
 	}

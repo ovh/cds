@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// DEPRECATED
 var keysDirectory string
 
 // DEPRECATED
