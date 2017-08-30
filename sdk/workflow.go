@@ -359,6 +359,8 @@ type WorkflowNodeHook struct {
 	Config              WorkflowNodeHookConfig     `json:"config" db:"-"`
 }
 
+var WorkflowHookModelBuiltin = "builtin"
+
 //WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
 type WorkflowNodeHookConfig map[string]string
 
@@ -367,9 +369,14 @@ type WorkflowHookModel struct {
 	ID            int64                  `json:"id" db:"id" cli:"-"`
 	Name          string                 `json:"name" db:"name" cli:"name"`
 	Type          string                 `json:"type"  db:"type"`
+	Author        string                 `json:"author" db:"author"`
+	Description   string                 `json:"description" db:"description"`
+	Identifier    string                 `json:"identifier" db:"identifier"`
+	Icon          string                 `json:"-" db:"icon"`
 	Image         string                 `json:"image" db:"image"`
 	Command       string                 `json:"command" db:"command"`
 	DefaultConfig WorkflowNodeHookConfig `json:"default_config" db:"-"`
+	Disabled      bool                   `json:"disabled" db:"disabled"`
 }
 
 //WorkflowList return the list of the workflows for a project

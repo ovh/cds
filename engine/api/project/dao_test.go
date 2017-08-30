@@ -66,7 +66,7 @@ func TestLoadAll(t *testing.T) {
 	user.DeleteUserWithDependenciesByName(db, "test_TestLoadAll_user")
 
 	u1, _ := InsertAdminUser(t, db, "test_TestLoadAll_admin")
-	u2, _ := InsertLambaUser(t, db, "test_TestLoadAll_user", &proj.ProjectGroups[0].Group)
+	u2, _ := InsertLambdaUser(t, db, "test_TestLoadAll_user", &proj.ProjectGroups[0].Group)
 
 	actualGroups1, err := LoadAll(db, u1)
 	test.NoError(t, err)
@@ -110,8 +110,8 @@ func InsertAdminUser(t *testing.T, db *gorp.DbMap, s string) (*sdk.User, string)
 	return u, password
 }
 
-// InsertLambaUser have to be used only for tests
-func InsertLambaUser(t *testing.T, db gorp.SqlExecutor, s string, groups ...*sdk.Group) (*sdk.User, string) {
+// InsertLambdaUser have to be used only for tests
+func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, s string, groups ...*sdk.Group) (*sdk.User, string) {
 	password, hash, _ := user.GeneratePassword()
 	u := &sdk.User{
 		Admin:    false,

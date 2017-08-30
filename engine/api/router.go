@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"runtime"
 	"time"
 
@@ -36,23 +35,24 @@ const nbPanicsBeforeFail = 50
 type Handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error
 
 // RouterConfigParam is the type of anonymous function returned by POST, GET and PUT functions
-type RouterConfigParam func(rc *routerConfig)
+type RouterConfigParam func(rc *RouterConfig)
 
-type routerConfig struct {
-	get                 Handler
-	getDeprecated       bool
-	post                Handler
-	postDeprecated      bool
-	put                 Handler
-	putDeprecated       bool
-	deleteHandler       Handler
-	deleteDeprecated    bool
+// RouterConfig contains a map of handler configuration. Key is the method of the http route
+type RouterConfig struct {
+	config map[string]*HandlerConfig
+}
+
+// HandlerConfig is the configuration for one handler
+type HandlerConfig struct {
 	auth                bool
 	isExecution         bool
 	needAdmin           bool
 	needUsernameOrAdmin bool
 	needHatchery        bool
 	needWorker          bool
+	method              string
+	handler             Handler
+	isDeprecated        bool
 }
 
 // ServeAbsoluteFile Serve file to download
@@ -143,16 +143,24 @@ func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
 	return &Router{a, m, p, ""}
 }
 
-var mapRouterConfigs = map[string]*routerConfig{}
+var mapRouterConfigs = map[string]*RouterConfig{}
+
+// HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
+type HandlerConfigParam func(*HandlerConfig)
+
+// HandlerConfigFunc is a type used in the router configuration fonction "Handle"
+type HandlerConfigFunc func(Handler, ...HandlerConfigParam) *HandlerConfig
 
 // Handle adds all handler for their specific verb in gorilla router for given uri
-func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
+func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 	uri = r.prefix + uri
-	rc := &routerConfig{auth: true, isExecution: false, needAdmin: false, needHatchery: false}
-	mapRouterConfigs[uri] = rc
+	cfg := &RouterConfig{
+		config: map[string]*HandlerConfig{},
+	}
+	mapRouterConfigs[uri] = cfg
 
-	for _, h := range handlers {
-		h(rc)
+	for i := range handlers {
+		cfg.config[handlers[i].method] = handlers[i]
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
@@ -166,12 +174,30 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		w.Header().Add("X-Api-Time", time.Now().Format(time.RFC3339))
 		w.Header().Add("ETag", fmt.Sprintf("%d", time.Now().Unix()))
 
-		c := &businesscontext.Ctx{}
-
 		if req.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+
+		rc := cfg.config[req.Method]
+		if rc == nil || rc.handler == nil {
+			WriteError(w, req, sdk.ErrNotFound)
+			return
+		}
+
+		start := time.Now()
+		defer func() {
+			end := time.Now()
+			latency := end.Sub(start)
+			if rc.isDeprecated {
+				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
+				w.Header().Add("X-CDS-WARNING", "deprecated route")
+			} else {
+				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
+			}
+		}()
+
+		c := &businesscontext.Ctx{}
 
 		//Check DB connection
 		db := database.DBMap(database.DB())
@@ -278,157 +304,111 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			return
 		}
 
-		start := time.Now()
-		defer func() {
-			end := time.Now()
-			latency := end.Sub(start)
-			if req.Method == http.MethodGet && rc.getDeprecated ||
-				req.Method == http.MethodPost && rc.postDeprecated ||
-				req.Method == http.MethodPut && rc.putDeprecated ||
-				req.Method == http.MethodDelete && rc.deleteDeprecated {
-				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
-				w.Header().Add("X-CDS-WARNING", "deprecated route")
-			} else {
-				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
-			}
-		}()
-
-		if req.Method == "GET" && rc.get != nil {
-			if err := rc.get(w, req, db, c); err != nil {
-				WriteError(w, req, err)
-			}
+		if err := rc.handler(w, req, db, c); err != nil {
+			WriteError(w, req, err)
 			return
 		}
 
-		if req.Method == "POST" && rc.post != nil {
-			if err := rc.post(w, req, db, c); err != nil {
-				WriteError(w, req, err)
-			}
+		if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
 			deleteUserPermissionCache(c)
-			return
 		}
-
-		if req.Method == "PUT" && rc.put != nil {
-			if err := rc.put(w, req, db, c); err != nil {
-				WriteError(w, req, err)
-			}
-			deleteUserPermissionCache(c)
-			return
-		}
-
-		if req.Method == "DELETE" && rc.deleteHandler != nil {
-			if err := rc.deleteHandler(w, req, db, c); err != nil {
-				WriteError(w, req, err)
-			}
-			deleteUserPermissionCache(c)
-			return
-		}
-		WriteError(w, req, sdk.ErrNotFound)
 	}
 	router.mux.HandleFunc(uri, compress(recoverWrap(f)))
 }
 
 // DEPRECATED marks the handler as deprecated
-var DEPRECATED = func(rc *routerConfig) {}
+var DEPRECATED = func(rc *HandlerConfig) {
+	rc.isDeprecated = true
+}
 
 // GET will set given handler only for GET request
-func GET(h Handler, cfg ...RouterConfigParam) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.get = h
-		for _, c := range cfg {
-			if reflect.ValueOf(c).Pointer() == reflect.ValueOf(DEPRECATED).Pointer() {
-				rc.getDeprecated = true
-				continue
-			}
-		}
+func GET(h Handler, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := new(HandlerConfig)
+	rc.handler = h
+	rc.auth = true
+	rc.method = "GET"
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // POST will set given handler only for POST request
-func POST(h Handler, cfg ...RouterConfigParam) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.post = h
-		for _, c := range cfg {
-			if reflect.ValueOf(c).Pointer() == reflect.ValueOf(DEPRECATED).Pointer() {
-				rc.postDeprecated = true
-				continue
-			}
-		}
+func POST(h Handler, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := new(HandlerConfig)
+	rc.handler = h
+	rc.auth = true
+	rc.method = "POST"
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // POSTEXECUTE will set given handler only for POST request and add a flag for execution permission
-func POSTEXECUTE(h Handler, cfg ...RouterConfigParam) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.post = h
-		rc.isExecution = true
-		for _, c := range cfg {
-			if reflect.ValueOf(c).Pointer() == reflect.ValueOf(DEPRECATED).Pointer() {
-				rc.postDeprecated = true
-				continue
-			}
-		}
+func POSTEXECUTE(h Handler, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := new(HandlerConfig)
+	rc.handler = h
+	rc.auth = true
+	rc.method = "POST"
+	rc.isExecution = true
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // PUT will set given handler only for PUT request
-func PUT(h Handler, cfg ...RouterConfigParam) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.put = h
-		for _, c := range cfg {
-			if reflect.ValueOf(c).Pointer() == reflect.ValueOf(DEPRECATED).Pointer() {
-				rc.putDeprecated = true
-				continue
-			}
-		}
+func PUT(h Handler, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := new(HandlerConfig)
+	rc.handler = h
+	rc.auth = true
+	rc.method = "PUT"
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // DELETE will set given handler only for DELETE request
-func DELETE(h Handler, cfg ...RouterConfigParam) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.deleteHandler = h
-		for _, c := range cfg {
-			if reflect.ValueOf(c).Pointer() == reflect.ValueOf(DEPRECATED).Pointer() {
-				rc.deleteDeprecated = true
-				continue
-			}
-		}
+func DELETE(h Handler, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := new(HandlerConfig)
+	rc.handler = h
+	rc.auth = true
+	rc.method = "DELETE"
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // NeedAdmin set the route for cds admin only (or not)
-func NeedAdmin(admin bool) RouterConfigParam {
-	f := func(rc *routerConfig) {
+func NeedAdmin(admin bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
 		rc.needAdmin = admin
 	}
 	return f
 }
 
 // NeedUsernameOrAdmin set the route for cds admin or current user = username called on route
-func NeedUsernameOrAdmin(need bool) RouterConfigParam {
-	f := func(rc *routerConfig) {
+func NeedUsernameOrAdmin(need bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
 		rc.needUsernameOrAdmin = need
 	}
 	return f
 }
 
 // NeedHatchery set the route for hatchery only
-func NeedHatchery() RouterConfigParam {
-	f := func(rc *routerConfig) {
+func NeedHatchery() HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
 		rc.needHatchery = true
 	}
 	return f
 }
 
 // NeedWorker set the route for worker only
-func NeedWorker() RouterConfigParam {
-	f := func(rc *routerConfig) {
+func NeedWorker() HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
 		rc.needWorker = true
 	}
 	return f
@@ -436,8 +416,8 @@ func NeedWorker() RouterConfigParam {
 
 // Auth set manually whether authorisation layer should be applied
 // Authorization is enabled by default
-func Auth(v bool) RouterConfigParam {
-	f := func(rc *routerConfig) {
+func Auth(v bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
 		rc.auth = v
 	}
 	return f

@@ -8,23 +8,23 @@ import (
 )
 
 func (router *Router) init() {
-	router.Handle("/login", Auth(false), POST(LoginUser))
+	router.Handle("/login", POST(LoginUser, Auth(false)))
 
 	// Action
 	router.Handle("/action", GET(getActionsHandler))
-	router.Handle("/action/import", NeedAdmin(true), POST(importActionHandler))
-	router.Handle("/action/requirement", Auth(false), GET(getActionsRequirements))
+	router.Handle("/action/import", POST(importActionHandler, NeedAdmin(true)))
+	router.Handle("/action/requirement", GET(getActionsRequirements, Auth(false)))
 	router.Handle("/action/{permActionName}", GET(getActionHandler), POST(addActionHandler), PUT(updateActionHandler), DELETE(deleteActionHandler))
-	router.Handle("/action/{actionName}/using", NeedAdmin(true), GET(getPipelinesUsingActionHandler))
-	router.Handle("/action/{actionID}/audit", NeedAdmin(true), GET(getActionAuditHandler))
+	router.Handle("/action/{actionName}/using", GET(getPipelinesUsingActionHandler, NeedAdmin(true)))
+	router.Handle("/action/{actionID}/audit", GET(getActionAuditHandler, NeedAdmin(true)))
 
 	// Admin
-	router.Handle("/admin/warning", NeedAdmin(true), DELETE(adminTruncateWarningsHandler))
-	router.Handle("/admin/maintenance", NeedAdmin(true), POST(postAdminMaintenanceHandler), GET(getAdminMaintenanceHandler), DELETE(deleteAdminMaintenanceHandler))
+	router.Handle("/admin/warning", DELETE(adminTruncateWarningsHandler, NeedAdmin(true)))
+	router.Handle("/admin/maintenance", POST(postAdminMaintenanceHandler, NeedAdmin(true)), GET(getAdminMaintenanceHandler, NeedAdmin(true)), DELETE(deleteAdminMaintenanceHandler, NeedAdmin(true)))
 
 	// Action plugin
-	router.Handle("/plugin", NeedAdmin(true), POST(addPluginHandler), PUT(updatePluginHandler))
-	router.Handle("/plugin/{name}", NeedAdmin(true), DELETE(deletePluginHandler))
+	router.Handle("/plugin", POST(addPluginHandler, NeedAdmin(true)), PUT(updatePluginHandler, NeedAdmin(true)))
+	router.Handle("/plugin/{name}", DELETE(deletePluginHandler, NeedAdmin(true)))
 	router.Handle("/plugin/download/{name}", GET(downloadPluginHandler))
 
 	// Download file
@@ -43,18 +43,18 @@ func (router *Router) init() {
 	router.Handle("/group/{permGroupName}/token/{expiration}", POST(generateTokenHandler))
 
 	// Hatchery
-	router.Handle("/hatchery", Auth(false), POST(registerHatchery))
+	router.Handle("/hatchery", POST(registerHatchery, Auth(false)))
 	router.Handle("/hatchery/{id}", PUT(refreshHatcheryHandler))
 
 	// Hooks
-	router.Handle("/hook", Auth(false) /* Public handler called by third parties */, POST(receiveHook))
+	router.Handle("/hook", POST(receiveHook, Auth(false) /* Public handler called by third parties */))
 
 	// Overall health
-	router.Handle("/mon/status", Auth(false), GET(statusHandler))
-	router.Handle("/mon/smtp/ping", Auth(true), GET(smtpPingHandler))
-	router.Handle("/mon/version", Auth(false), GET(getVersionHandler))
-	router.Handle("/mon/stats", Auth(false), GET(getStats))
-	router.Handle("/mon/models", Auth(false), GET(getWorkerModelsStatsHandler))
+	router.Handle("/mon/status", GET(statusHandler, Auth(false)))
+	router.Handle("/mon/smtp/ping", GET(smtpPingHandler, Auth(true)))
+	router.Handle("/mon/version", GET(getVersionHandler, Auth(false)))
+	router.Handle("/mon/stats", GET(getStats, Auth(false)))
+	router.Handle("/mon/models", GET(getWorkerModelsStatsHandler, Auth(false)))
 	router.Handle("/mon/building", GET(getBuildingPipelines))
 	router.Handle("/mon/building/{hash}", GET(getPipelineBuildingCommit))
 	router.Handle("/mon/warning", GET(getUserWarnings))
@@ -181,7 +181,7 @@ func (router *Router) init() {
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/{buildNumber}/artifact", GET(listArtifactsBuildHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/{buildNumber}/artifact/{tag}", POSTEXECUTE(uploadArtifactHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/artifact/download/{id}", GET(downloadArtifactHandler))
-	router.Handle("/artifact/{hash}", Auth(false), GET(downloadArtifactDirectHandler))
+	router.Handle("/artifact/{hash}", GET(downloadArtifactDirectHandler, Auth(false)))
 
 	// Hooks
 	router.Handle("/project/{key}/application/{permApplicationName}/hook", GET(getApplicationHooksHandler))
@@ -195,8 +195,8 @@ func (router *Router) init() {
 	// Build queue
 	router.Handle("/queue", GET(getQueueHandler))
 	router.Handle("/queue/{id}/take", POST(takePipelineBuildJobHandler))
-	router.Handle("/queue/{id}/book", NeedHatchery(), POST(bookPipelineBuildJobHandler))
-	router.Handle("/queue/{id}/spawn/infos", NeedWorker(), NeedHatchery(), POST(addSpawnInfosPipelineBuildJobHandler))
+	router.Handle("/queue/{id}/book", POST(bookPipelineBuildJobHandler, NeedHatchery()))
+	router.Handle("/queue/{id}/spawn/infos", POST(addSpawnInfosPipelineBuildJobHandler, NeedWorker(), NeedHatchery()))
 	router.Handle("/queue/{id}/result", POST(addQueueResultHandler))
 	router.Handle("/queue/{id}/infos", GET(getPipelineBuildJobHandler))
 	router.Handle("/build/{id}/log", POST(addBuildLogHandler))
@@ -204,17 +204,17 @@ func (router *Router) init() {
 
 	//Workflow queue
 	router.Handle("/queue/workflows", GET(getWorkflowJobQueueHandler))
-	router.Handle("/queue/workflows/requirements/errors", NeedWorker(), POST(postWorkflowJobRequirementsErrorHandler))
-	router.Handle("/queue/workflows/{id}/take", NeedWorker(), POST(postTakeWorkflowJobHandler))
-	router.Handle("/queue/workflows/{id}/book", NeedHatchery(), POST(postBookWorkflowJobHandler))
-	router.Handle("/queue/workflows/{id}/infos", NeedWorker(), GET(getWorkflowJobHandler))
-	router.Handle("/queue/workflows/{id}/spawn/infos", NeedHatchery(), POST(postSpawnInfosWorkflowJobHandler))
-	router.Handle("/queue/workflows/{permID}/result", NeedWorker(), POSTEXECUTE(postWorkflowJobResultHandler))
-	router.Handle("/queue/workflows/{permID}/log", NeedWorker(), POSTEXECUTE(postWorkflowJobLogsHandler))
-	router.Handle("/queue/workflows/{permID}/test", NeedWorker(), POSTEXECUTE(postWorkflowJobTestsResultsHandler))
-	router.Handle("/queue/workflows/{permID}/variable", NeedWorker(), POSTEXECUTE(postWorkflowJobVariableHandler))
-	router.Handle("/queue/workflows/{permID}/step", NeedWorker(), POSTEXECUTE(postWorkflowJobStepStatusHandler))
-	router.Handle("/queue/workflows/{permID}/artifact/{tag}", NeedWorker(), POSTEXECUTE(postWorkflowJobArtifactHandler))
+	router.Handle("/queue/workflows/requirements/errors", POST(postWorkflowJobRequirementsErrorHandler, NeedWorker()))
+	router.Handle("/queue/workflows/{id}/take", POST(postTakeWorkflowJobHandler, NeedWorker()))
+	router.Handle("/queue/workflows/{id}/book", POST(postBookWorkflowJobHandler, NeedHatchery()))
+	router.Handle("/queue/workflows/{id}/infos", GET(getWorkflowJobHandler, NeedWorker()))
+	router.Handle("/queue/workflows/{id}/spawn/infos", POST(postSpawnInfosWorkflowJobHandler, NeedHatchery()))
+	router.Handle("/queue/workflows/{permID}/result", POSTEXECUTE(postWorkflowJobResultHandler, NeedWorker()))
+	router.Handle("/queue/workflows/{permID}/log", POSTEXECUTE(postWorkflowJobLogsHandler, NeedWorker()))
+	router.Handle("/queue/workflows/{permID}/test", POSTEXECUTE(postWorkflowJobTestsResultsHandler, NeedWorker()))
+	router.Handle("/queue/workflows/{permID}/variable", POSTEXECUTE(postWorkflowJobVariableHandler, NeedWorker()))
+	router.Handle("/queue/workflows/{permID}/step", POSTEXECUTE(postWorkflowJobStepStatusHandler, NeedWorker()))
+	router.Handle("/queue/workflows/{permID}/artifact/{tag}", POSTEXECUTE(postWorkflowJobArtifactHandler, NeedWorker()))
 
 	router.Handle("/variable/type", GET(getVariableTypeHandler))
 	router.Handle("/parameter/type", GET(getParameterTypeHandler))
@@ -224,8 +224,8 @@ func (router *Router) init() {
 
 	// RepositoriesManager
 	router.Handle("/repositories_manager", GET(getRepositoriesManagerHandler))
-	router.Handle("/repositories_manager/add", NeedAdmin(true), POST(addRepositoriesManagerHandler))
-	router.Handle("/repositories_manager/oauth2/callback", Auth(false), GET(repositoriesManagerOAuthCallbackHandler))
+	router.Handle("/repositories_manager/add", POST(addRepositoriesManagerHandler, NeedAdmin(true)))
+	router.Handle("/repositories_manager/oauth2/callback", GET(repositoriesManagerOAuthCallbackHandler, Auth(false)))
 	// RepositoriesManager for projects
 	router.Handle("/project/{permProjectKey}/repositories_manager", GET(getRepositoriesManagerForProjectHandler))
 	router.Handle("/project/{permProjectKey}/repositories_manager/{name}/authorize", POST(repositoriesManagerAuthorize))
@@ -246,29 +246,29 @@ func (router *Router) init() {
 	router.Handle("/suggest/variable/{permProjectKey}", GET(getVariablesHandler))
 
 	// Templates
-	router.Handle("/template", Auth(false), GET(getTemplatesHandler))
-	router.Handle("/template/add", NeedAdmin(true), POST(addTemplateHandler))
-	router.Handle("/template/build", Auth(false), GET(getBuildTemplatesHandler))
-	router.Handle("/template/deploy", Auth(false), GET(getDeployTemplatesHandler))
-	router.Handle("/template/{id}", NeedAdmin(true), PUT(updateTemplateHandler), DELETE(deleteTemplateHandler))
+	router.Handle("/template", GET(getTemplatesHandler, Auth(false)))
+	router.Handle("/template/add", POST(addTemplateHandler, NeedAdmin(true)))
+	router.Handle("/template/build", GET(getBuildTemplatesHandler, Auth(false)))
+	router.Handle("/template/deploy", GET(getDeployTemplatesHandler, Auth(false)))
+	router.Handle("/template/{id}", PUT(updateTemplateHandler, NeedAdmin(true)), DELETE(deleteTemplateHandler, NeedAdmin(true)))
 	router.Handle("/project/{permProjectKey}/template", POST(applyTemplateHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/template", POST(applyTemplateOnApplicationHandler))
 
 	// UI
-	router.Handle("/config/user", Auth(true), GET(ConfigUserHandler))
+	router.Handle("/config/user", GET(ConfigUserHandler, Auth(true)))
 
 	// Users
 	router.Handle("/user", GET(GetUsers))
-	router.Handle("/user/signup", Auth(false), POST(AddUser))
-	router.Handle("/user/import", NeedAdmin(true), POST(importUsersHandler))
-	router.Handle("/user/{username}", NeedUsernameOrAdmin(true), GET(GetUserHandler), PUT(UpdateUserHandler), DELETE(DeleteUserHandler))
-	router.Handle("/user/{username}/groups", NeedUsernameOrAdmin(true), GET(getUserGroupsHandler))
-	router.Handle("/user/{username}/confirm/{token}", Auth(false), GET(ConfirmUser))
-	router.Handle("/user/{username}/reset", Auth(false), POST(ResetUser))
-	router.Handle("/auth/mode", Auth(false), GET(AuthModeHandler))
+	router.Handle("/user/signup", POST(AddUser, Auth(false)))
+	router.Handle("/user/import", POST(importUsersHandler, NeedAdmin(true)))
+	router.Handle("/user/{username}", GET(GetUserHandler, NeedUsernameOrAdmin(true)), PUT(UpdateUserHandler, NeedUsernameOrAdmin(true)), DELETE(DeleteUserHandler, NeedUsernameOrAdmin(true)))
+	router.Handle("/user/{username}/groups", GET(getUserGroupsHandler, NeedUsernameOrAdmin(true)))
+	router.Handle("/user/{username}/confirm/{token}", GET(ConfirmUser, Auth(false)))
+	router.Handle("/user/{username}/reset", POST(ResetUser, Auth(false)))
+	router.Handle("/auth/mode", GET(AuthModeHandler, Auth(false)))
 
 	// Workers
-	router.Handle("/worker", Auth(false), GET(getWorkersHandler), POST(registerWorkerHandler))
+	router.Handle("/worker", GET(getWorkersHandler, Auth(false)), POST(registerWorkerHandler, Auth(false)))
 	router.Handle("/worker/refresh", POST(refreshWorkerHandler))
 	router.Handle("/worker/checking", POST(workerCheckingHandler))
 	router.Handle("/worker/waiting", POST(workerWaitingHandler))
@@ -277,12 +277,16 @@ func (router *Router) init() {
 
 	// Worker models
 	router.Handle("/worker/model", POST(addWorkerModel), GET(getWorkerModels))
-	router.Handle("/worker/model/error/{permModelID}", NeedHatchery(), PUT(spawnErrorWorkerModelHandler))
+	router.Handle("/worker/model/error/{permModelID}", PUT(spawnErrorWorkerModelHandler, NeedHatchery()))
 	router.Handle("/worker/model/enabled", GET(getWorkerModelsEnabled))
 	router.Handle("/worker/model/type", GET(getWorkerModelTypes))
 	router.Handle("/worker/model/communication", GET(getWorkerModelCommunications))
 	router.Handle("/worker/model/{permModelID}", PUT(updateWorkerModel), DELETE(deleteWorkerModel))
 	router.Handle("/worker/model/capability/type", GET(getWorkerModelCapaTypes))
+
+	// Workflows
+	router.Handle("/workflow/hook", GET(getWorkflowHookModelsHandler))
+	router.Handle("/workflow/hook/{model}", GET(getWorkflowHookModelHandler), POST(postWorkflowHookModelHandler, NeedAdmin(true)), PUT(putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE
 	router.Handle("/mon/lastupdates/events", GET(lastUpdateBroker.ServeHTTP))

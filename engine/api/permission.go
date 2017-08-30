@@ -49,7 +49,7 @@ func getPermissionByMethod(method string, isExecution bool) int {
 	}
 }
 
-func checkWorkerPermission(db gorp.SqlExecutor, rc *routerConfig, routeVar map[string]string, c *businesscontext.Ctx) bool {
+func checkWorkerPermission(db gorp.SqlExecutor, rc *HandlerConfig, routeVar map[string]string, c *businesscontext.Ctx) bool {
 	if c.Worker == nil {
 		return false
 	}

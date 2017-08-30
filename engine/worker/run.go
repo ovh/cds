@@ -205,7 +205,7 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
-			w.sendLog(buildID, fmt.Sprintf("Starting step %s", childName), w.currentJob.currentStep, false)
+			w.sendLog(buildID, fmt.Sprintf("Starting step %s\n", childName), w.currentJob.currentStep, false)
 
 			r = w.startAction(ctx, &child, buildID, params, w.currentJob.currentStep, childName)
 			if r.Status != sdk.StatusSuccess.String() && !child.Optional {
