@@ -103,13 +103,13 @@ func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeH
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, err
+		return nil, sdk.WrapError(err, "loadHooks")
 	}
 
 	nodes := []sdk.WorkflowNodeHook{}
 	for i := range res {
 		if err := res[i].PostGet(db); err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "loadHooks")
 		}
 		nodes = append(nodes, sdk.WorkflowNodeHook(res[i]))
 	}
