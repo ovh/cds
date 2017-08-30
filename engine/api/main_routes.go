@@ -72,9 +72,13 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/variable/{name}/audit", GET(getVariableAuditInProjectHandler))
 	router.Handle("/project/{permProjectKey}/applications", GET(getApplicationsHandler), POST(addApplicationHandler))
 	router.Handle("/project/{permProjectKey}/notifications", GET(getProjectNotificationsHandler))
+	router.Handle("/project/{permProjectKey}/keys", GET(getKeysInProjectHandler), POST(addKeyInProjectHandler))
+	router.Handle("/project/{permProjectKey}/keys/{name}", DELETE(deleteKeyInProjectHandler))
 
 	// Application
 	router.Handle("/project/{key}/application/{permApplicationName}", GET(getApplicationHandler), PUT(updateApplicationHandler), DELETE(deleteApplicationHandler))
+	router.Handle("/project/{key}/application/{permApplicationName}/keys", GET(getKeysInApplicationHandler), POST(addKeyInApplicationHandler))
+	router.Handle("/project/{key}/application/{permApplicationName}/keys/{name}", DELETE(deleteKeyInApplicationHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/branches", GET(getApplicationBranchHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/version", GET(getApplicationBranchVersionHandler))
 	router.Handle("/project/{key}/application/{permApplicationName}/clone", POST(cloneApplicationHandler))
@@ -160,6 +164,8 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/environment/import", POST(importNewEnvironmentHandler))
 	router.Handle("/project/{permProjectKey}/environment/import/{permEnvironmentName}", POST(importIntoEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}", GET(getEnvironmentHandler), PUT(updateEnvironmentHandler), DELETE(deleteEnvironmentHandler))
+	router.Handle("/project/{key}/environment/{permEnvironmentName}/keys", GET(getKeysInEnvironmentHandler), POST(addKeyInEnvironmentHandler))
+	router.Handle("/project/{key}/environment/{permEnvironmentName}/keys/{name}", DELETE(deleteKeyInEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/clone/{cloneName}", POST(cloneEnvironmentHandler))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit", GET(getEnvironmentsAuditHandler, DEPRECATED))
 	router.Handle("/project/{key}/environment/{permEnvironmentName}/audit/{auditID}", PUT(restoreEnvironmentAuditHandler, DEPRECATED))

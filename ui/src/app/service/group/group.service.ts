@@ -1,8 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Rx';
 import {Group} from '../../model/group.model';
-import {User} from '../../model/user.model';
-import {Http} from '@angular/http';
+import {HttpClient} from '@angular/common/http';
 
 /**
  * Service to access Group from API.
@@ -12,7 +11,7 @@ import {Http} from '@angular/http';
 export class GroupService {
 
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
     }
 
     /**
@@ -20,7 +19,7 @@ export class GroupService {
      * @returns {Observable<Group>}
      */
     getGroupByName(name: string): Observable<Group> {
-        return this._http.get('/group/' + name).map(res => res.json());
+        return this._http.get('/group/' + name);
     }
 
     /**
@@ -28,9 +27,7 @@ export class GroupService {
      * @returns {Observable<Group[]>}
      */
     getGroups(): Observable<Group[]> {
-        return this._http.get('/group').map(res => {
-            return res.json();
-        });
+        return this._http.get('/group');
     }
 
     /**

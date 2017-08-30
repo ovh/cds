@@ -18,6 +18,7 @@ import {WorkflowItem, WorkflowStatusResponse} from '../../../../model/applicatio
 import {PipelineBuild, Pipeline} from '../../../../model/pipeline.model';
 import {Environment} from '../../../../model/environment.model';
 import {Scheduler, SchedulerExecution} from '../../../../model/scheduler.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application Workflow', () => {
 
@@ -40,7 +41,8 @@ describe('CDS: Application Workflow', () => {
             imports : [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 

@@ -18,6 +18,9 @@ import {LanguageStore} from '../../service/language/language.store';
 import {RouterService} from '../../service/router/router.service';
 import {WarningStore} from '../../service/warning/warning.store';
 import {WarningService} from '../../service/warning/warning.service';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
+import {User} from '../../model/user.model';
 
 describe('CDS: Navbar Component', () => {
 
@@ -46,7 +49,8 @@ describe('CDS: Navbar Component', () => {
             ],
             imports: [
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 
@@ -61,35 +65,29 @@ describe('CDS: Navbar Component', () => {
     });
 
 
-    it('should select a project + rename project event', fakeAsync(inject([XHRBackend], (backend: MockBackend) => {
-        let call = 0;
-        let nameUpdated = 'prj1Updated';
-        // Mock Http login request
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({
-                        body: `[
-                        { "key": "key1", "name": "prj1" },
-                        { "key": "key2", "name": "prj2" }
-                    ]`
-                    })));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "key": "key1", "name": "' + nameUpdated + '" }'})));
-                    break;
-            }
+    it('should select a project + rename project event', fakeAsync(() => {
+        const http = TestBed.get(HttpTestingController);
+        const authStore = TestBed.get(AuthentificationStore);
 
-        });
+        let projects = new Array<Project>();
+        let p1 = new Project();
+        p1.key = 'key1';
+        p1.name = 'prj1';
+        let p2 = new Project();
+        p2.key = 'key1';
+        p2.name = 'prj1';
+        projects.push(p1, p2);
 
-        // Create loginComponent
         let fixture = TestBed.createComponent(NavbarComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
+        authStore.addUser(new User(), false);
         fixture.componentInstance.ngOnInit();
-        expect(backend.connectionsArray.length).toBe(1, 'Must have call getProjects');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project';
+        })).flush(projects);
 
-    })));
+        http.verify();
+    }));
 });

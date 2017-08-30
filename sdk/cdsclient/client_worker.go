@@ -8,6 +8,20 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (c *client) WorkerList() ([]sdk.Worker, error) {
+	p := []sdk.Worker{}
+	code, err := c.GetJSON("/worker", &p)
+	if code != 200 {
+		if err == nil {
+			return nil, fmt.Errorf("HTTP Code %d", code)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
+}
+
 func (c *client) WorkerRegister(r worker.RegistrationForm) (string, bool, error) {
 	var w sdk.Worker
 	code, err := c.PostJSON("/worker", r, &w)

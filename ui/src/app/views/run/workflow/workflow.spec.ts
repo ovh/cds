@@ -14,6 +14,7 @@ import {Action} from '../../../model/action.model';
 import {ApplicationRunModule} from '../application.run.module';
 import {NotificationService} from '../../../service/notification/notification.service';
 import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Pipeline Run Workflow', () => {
 
@@ -32,7 +33,8 @@ describe('CDS: Pipeline Run Workflow', () => {
             imports: [
                 ApplicationRunModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 

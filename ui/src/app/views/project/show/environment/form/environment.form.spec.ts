@@ -15,6 +15,7 @@ import {Project} from '../../../../../model/project.model';
 import {Observable} from 'rxjs/Rx';
 import {SharedModule} from '../../../../../shared/shared.module';
 import {Environment} from '../../../../../model/environment.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Environment From Component', () => {
 
@@ -36,7 +37,8 @@ describe('CDS: Environment From Component', () => {
             imports : [
                 ProjectModule,
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 

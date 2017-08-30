@@ -17,7 +17,7 @@ type Repository struct {
 // Application represent an application in a project
 type Application struct {
 	ID                  int64                 `json:"id" db:"id"`
-	Name                string                `json:"name" db:"name"`
+	Name                string                `json:"name" db:"name" cli:"name"`
 	Description         string                `json:"description"  db:"description"`
 	ProjectID           int64                 `json:"-" db:"project_id"`
 	ProjectKey          string                `json:"project_key" db:"-"`
@@ -35,6 +35,7 @@ type Application struct {
 	Workflows           []CDPipeline          `json:"workflows,omitempty" db:"-"`
 	Schedulers          []PipelineScheduler   `json:"schedulers,omitempty" db:"-"`
 	Metadata            Metadata              `json:"metadata" yaml:"metadata" db:"-"`
+	Keys                []ApplicationKey      `json:"keys" yaml:"keys" db:"-"`
 }
 
 // ApplicationVariableAudit represents an audit on an application variable

@@ -1,6 +1,6 @@
 # Plugin Venom
 
-CDS plugin run venom https://github.com/runabove/venom
+CDS plugin run venom https://github.com/ovh/venom
 
 ## How to build
 

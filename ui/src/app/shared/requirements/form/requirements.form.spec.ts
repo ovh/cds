@@ -13,6 +13,7 @@ import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Requirement Form Component', () => {
 
@@ -35,7 +36,8 @@ describe('CDS: Requirement Form Component', () => {
             ],
             imports : [
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 

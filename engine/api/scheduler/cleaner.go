@@ -21,7 +21,10 @@ func Cleaner(c context.Context, DBFunc func() *gorp.DbMap, nbToKeep int) {
 				return
 			}
 		case <-tick:
-			CleanerRun(DBFunc(), nbToKeep)
+			if _, err := CleanerRun(DBFunc(), nbToKeep); err != nil {
+				log.Warning("cleander.Cleaner> Error : %s", err)
+				continue
+			}
 		}
 	}
 }
@@ -30,32 +33,29 @@ func Cleaner(c context.Context, DBFunc func() *gorp.DbMap, nbToKeep int) {
 func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.PipelineSchedulerExecution, error) {
 	log.Debug("CleanerRun> Deleting old executions...")
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("CleanerRun> Unable to start a transaction : %s", err)
-		return nil, err
+	tx, errb := db.Begin()
+	if errb != nil {
+		return nil, sdk.WrapError(errb, "CleanerRun> Unable to start a transaction")
 	}
 	defer tx.Rollback()
 
 	//Starting with exclusive lock on the table
 	if err := LockPipelineExecutions(tx); err != nil {
 		log.Debug("CleanerRun> Unable to take lock : %s", err)
-		return nil, err
+		return nil, nil
 	}
 
 	//Load schedulers
 	ps, err := LoadAll(tx)
 	if err != nil {
-		log.Warning("CleanerRun> Unable to load pipeline schedulers : %s", err)
-		return nil, err
+		return nil, sdk.WrapError(err, "CleanerRun> Unable to load pipeline schedulers")
 	}
 
 	deleted := []sdk.PipelineSchedulerExecution{}
 	for _, s := range ps {
 		exs, err := LoadPastExecutions(tx, s.ID)
 		if err != nil {
-			log.Warning("CleanerRun> Unable to load pipeline schedulers execution : %s", err)
-			return nil, err
+			return nil, sdk.WrapError(err, "CleanerRun> Unable to load pipeline schedulers execution")
 		}
 
 		nbToDelete := len(exs) - nbToKeep
@@ -65,7 +65,7 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.PipelineSchedulerExecution,
 				break
 			}
 			if err := DeleteExecution(tx, &exs[i]); err != nil {
-				log.Error("CleanerRun> Unable to delete execution %d", exs[i].ID)
+				log.Error("CleanerRun> Unable to delete execution %d err:%s", exs[i].ID, err)
 			}
 			nbDeleted++
 			deleted = append(deleted, exs[i])
@@ -73,8 +73,7 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.PipelineSchedulerExecution,
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("CleanerRun> Unable to commit a transaction : %s", err)
-		return nil, err
+		return nil, sdk.WrapError(err, "CleanerRun> Unable to commit a transaction")
 	}
 
 	return deleted, nil

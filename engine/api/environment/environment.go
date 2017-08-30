@@ -164,9 +164,14 @@ func CheckDefaultEnv(db gorp.SqlExecutor) error {
 func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {
 	variables, err := GetAllVariableByID(db, env.ID)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "loadDependencies> Cannot load environment variables")
 	}
 	env.Variable = variables
+
+	if errK := LoadAllKeys(db, env); errK != nil {
+		return sdk.WrapError(errK, "loadDependencies> Cannot load environment dependencies")
+	}
+
 	return loadGroupByEnvironment(db, env)
 }
 

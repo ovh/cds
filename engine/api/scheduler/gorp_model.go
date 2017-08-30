@@ -17,9 +17,9 @@ type PipelineSchedulerExecution sdk.PipelineSchedulerExecution
 
 //PostInsert is a DB Hook on PipelineScheduler to store params as JSON in DB
 func (p *PipelineScheduler) PostInsert(s gorp.SqlExecutor) error {
-	btes, err := json.Marshal(p.Args)
-	if err != nil {
-		return err
+	btes, errj := json.Marshal(p.Args)
+	if errj != nil {
+		return errj
 	}
 
 	query := "update pipeline_scheduler set args = $2 where id = $1"
@@ -27,9 +27,10 @@ func (p *PipelineScheduler) PostInsert(s gorp.SqlExecutor) error {
 		return err
 	}
 
-	p.EnvironmentName, err = s.SelectStr("select name from environment where environment.id = $1", p.EnvironmentID)
-	if err != nil {
-		return err
+	var errs error
+	p.EnvironmentName, errs = s.SelectStr("select name from environment where environment.id = $1", p.EnvironmentID)
+	if errs != nil {
+		return errs
 	}
 
 	return nil
@@ -37,9 +38,9 @@ func (p *PipelineScheduler) PostInsert(s gorp.SqlExecutor) error {
 
 //PostUpdate is a DB Hook on PipelineScheduler to store params as JSON in DB
 func (p *PipelineScheduler) PostUpdate(s gorp.SqlExecutor) error {
-	btes, err := json.Marshal(p.Args)
-	if err != nil {
-		return err
+	btes, errj := json.Marshal(p.Args)
+	if errj != nil {
+		return errj
 	}
 
 	query := "update pipeline_scheduler set args = $2 where id = $1"
@@ -47,9 +48,10 @@ func (p *PipelineScheduler) PostUpdate(s gorp.SqlExecutor) error {
 		return err
 	}
 
-	p.EnvironmentName, err = s.SelectStr("select name from environment where environment.id = $1", p.EnvironmentID)
-	if err != nil {
-		return err
+	var errs error
+	p.EnvironmentName, errs = s.SelectStr("select name from environment where environment.id = $1", p.EnvironmentID)
+	if errs != nil {
+		return errs
 	}
 
 	return nil
@@ -79,10 +81,10 @@ func (p *PipelineScheduler) PostGet(s gorp.SqlExecutor) error {
 		return err
 	}
 
-	var err error
-	p.EnvironmentName, err = s.SelectStr("select name from environment where environment.id = $1", p.EnvironmentID)
-	if err != nil {
-		return err
+	var errs error
+	p.EnvironmentName, errs = s.SelectStr("select name from environment where environment.id = $1", p.EnvironmentID)
+	if errs != nil {
+		return errs
 	}
 
 	return nil

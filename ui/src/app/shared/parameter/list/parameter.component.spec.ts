@@ -11,6 +11,8 @@ import {ParameterListComponent} from './parameter.component';
 import {Parameter} from '../../../model/parameter.model';
 import {ParameterEvent} from '../parameter.event.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: Parameter List Component', () => {
 
@@ -21,32 +23,32 @@ describe('CDS: Parameter List Component', () => {
             providers: [
                 ParameterService,
                 TranslateService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
                 RepoManagerService,
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
     });
 
 
-    it('should load component + update description', fakeAsync(
-        inject([XHRBackend], (backend: MockBackend) => {
-        // Mock Http request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '["string", "password"]'})));
-        });
+    it('should load component + update description', fakeAsync( () => {
+        const http = TestBed.get(HttpTestingController);
+
+        let typeMock = ['string', 'password'];
 
         // Create component
         let fixture = TestBed.createComponent(ParameterListComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        expect(backend.connectionsArray[0].request.url).toBe('/parameter/type', 'Component must load parameter type');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/parameter/type';
+        })).flush(typeMock);
 
         let params: Parameter[] = [];
         let p: Parameter = new Parameter();
@@ -75,6 +77,8 @@ describe('CDS: Parameter List Component', () => {
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(
             new ParameterEvent('delete', fixture.componentInstance.parameters[0])
         );
-    })));
+
+        http.verify();
+    }));
 });
 

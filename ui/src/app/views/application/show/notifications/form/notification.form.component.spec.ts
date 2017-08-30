@@ -22,6 +22,7 @@ import {NotificationEvent} from '../notification.event';
 import {Operator} from 'rxjs/Operator';
 import {Observable} from 'rxjs/Observable';
 import {Subscriber} from 'rxjs/Subscriber';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application notifications', () => {
 
@@ -44,7 +45,8 @@ describe('CDS: Application notifications', () => {
             imports: [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 

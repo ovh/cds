@@ -15,6 +15,7 @@ import {SharedModule} from '../../../../shared/shared.module';
 import {PipelineAdminComponent} from './pipeline.admin.component';
 import {Project} from '../../../../model/project.model';
 import {Pipeline} from '../../../../model/pipeline.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Pipeline Admin Component', () => {
 
@@ -39,7 +40,8 @@ describe('CDS: Pipeline Admin Component', () => {
             imports: [
                 PipelineModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 

@@ -65,6 +65,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	for _, a := range c.OptionnalArgs {
 		cmd.Use = cmd.Use + " [" + strings.ToUpper(a.Name) + "]"
 	}
+	cmd.Aliases = c.Aliases
 
 	if len(mods) == 0 {
 		mods = []CommandModifier{CommandWithExtraFlags}
@@ -159,7 +160,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 
 			verbose, _ := cmd.Flags().GetBool("verbose")
 			if !verbose {
-				i = listItem(i, nil, false, nil, verbose)
+				i = listItem(i, nil, false, nil, verbose, map[string]string{})
 			}
 
 			switch format {
@@ -212,7 +213,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			allResult := []map[string]string{}
 
 			for _, i := range s {
-				item := listItem(i, filters, quiet, nil, verbose)
+				item := listItem(i, filters, quiet, nil, verbose, map[string]string{})
 				if len(item) == 0 {
 					continue
 				}
@@ -283,9 +284,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	return cmd
 }
 
-func listItem(i interface{}, filters map[string]string, quiet bool, fields []string, verbose bool) map[string]string {
-	res := map[string]string{}
-
+func listItem(i interface{}, filters map[string]string, quiet bool, fields []string, verbose bool, res map[string]string) map[string]string {
 	var s reflect.Value
 	if reflect.ValueOf(i).Kind() == reflect.Ptr {
 		s = reflect.ValueOf(i).Elem()
@@ -305,6 +304,10 @@ func listItem(i interface{}, filters map[string]string, quiet bool, fields []str
 		case reflect.Array, reflect.Slice, reflect.Map:
 			continue
 		default:
+			if structField.Anonymous && f.Kind() == reflect.Struct {
+				res = listItem(f.Interface(), filters, quiet, fields, verbose, res)
+				continue
+			}
 			if s.IsValid() && s.CanInterface() {
 				var isKey bool
 				tag := structField.Tag.Get("cli")

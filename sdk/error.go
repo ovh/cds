@@ -114,6 +114,8 @@ var (
 	ErrInvalidJobRequirement                 = &Error{ID: 98, Status: http.StatusBadRequest}
 	ErrNotImplemented                        = &Error{ID: 99, Status: http.StatusNotImplemented}
 	ErrParameterNotExists                    = &Error{ID: 100, Status: http.StatusNotFound}
+	ErrUnknownKeyType                        = &Error{ID: 101, Status: http.StatusBadRequest}
+	ErrInvalidKeyPattern                     = &Error{ID: 102, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -217,6 +219,8 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidJobRequirement.ID:                 "Invalid job requirement",
 	ErrNotImplemented.ID:                        "This functionality isn't implemented",
 	ErrParameterNotExists.ID:                    "This parameter doesn't exist",
+	ErrUnknownKeyType.ID:                        "Unknown key type",
+	ErrInvalidKeyPattern.ID:                     "key name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
 }
 
 var errorsFrench = map[int]string{
@@ -320,6 +324,8 @@ var errorsFrench = map[int]string{
 	ErrInvalidJobRequirement.ID:                 "Pré-requis de Job invalide",
 	ErrNotImplemented.ID:                        "La fonctionnalité n'est pas implémentée",
 	ErrParameterNotExists.ID:                    "Ce paramètre n'existe pas",
+	ErrUnknownKeyType.ID:                        "Le type de clé n'est pas connu",
+	ErrInvalidKeyPattern.ID:                     "le nom de la clé doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
 }
 
 var errorsLanguages = []map[int]string{
@@ -385,7 +391,7 @@ func ProcessError(target error, al string) (string, int) {
 
 // Exit func display an error message on stderr and exit 1
 func Exit(format string, args ...interface{}) {
-	if format[:len(format)-1] != "\n" {
+	if len(format) > 0 && format[:len(format)-1] != "\n" {
 		format += "\n"
 	}
 	fmt.Fprintf(os.Stderr, format, args...)

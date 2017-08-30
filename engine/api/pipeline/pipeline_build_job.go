@@ -191,7 +191,7 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, workerName string, infos []sdk.SpawnInfo) (*sdk.PipelineBuildJob, error) {
 	pbJob, err := GetPipelineBuildJobForUpdate(db, pbJobID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "TakePipelineBuildJob> Cannot load pipelien build job")
+		return nil, sdk.WrapError(err, "TakePipelineBuildJob> Cannot load pipeline build job")
 	}
 	if pbJob.Status != sdk.StatusWaiting.String() {
 		k := keyBookJob(pbJobID)

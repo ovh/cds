@@ -109,8 +109,8 @@ func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64)
 	return loadRun(db, query, projectkey, workflowname, number)
 }
 
-// LoadRunByID returns a specific run
-func LoadRunByID(db gorp.SqlExecutor, projectkey string, id int64) (*sdk.WorkflowRun, error) {
+// LoadRunByIDAndProjectKey returns a specific run
+func LoadRunByIDAndProjectKey(db gorp.SqlExecutor, projectkey string, id int64) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.* 
 	from workflow_run 
 	join project on workflow_run.project_id = project.id 
@@ -119,7 +119,7 @@ func LoadRunByID(db gorp.SqlExecutor, projectkey string, id int64) (*sdk.Workflo
 	return loadRun(db, query, projectkey, id)
 }
 
-func loadRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
+func LoadRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.* 
 	from workflow_run 
 	where workflow_run.id = $1`

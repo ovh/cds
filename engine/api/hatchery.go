@@ -14,7 +14,6 @@ import (
 )
 
 func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Unmarshal body
 	hatch := sdk.Hatchery{}
 	if err := UnmarshalBody(r, &hatch); err != nil {
 		return err
@@ -33,6 +32,8 @@ func registerHatchery(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 		}
 		return sdk.WrapError(err, "registerHatchery> Error")
 	}
+
+	hatch.Uptodate = hatch.Version == sdk.VERSION
 
 	log.Debug("registerHatchery> Welcome %d", hatch.ID)
 	return WriteJSON(w, r, hatch, http.StatusOK)

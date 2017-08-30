@@ -19,15 +19,15 @@ import (
 
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
-func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryOpenstack) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	//generate a pretty cool name
 	name := model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
 	if registerOnly {
 		name = "register-" + name
 	}
 
-	if job != nil {
-		log.Info("spawnWorker> spawning worker %s model:%s for job %d - %s", name, model.Name, job.ID, logInfo)
+	if jobID > 0 {
+		log.Info("spawnWorker> spawning worker %s model:%s for job %d - %s", name, model.Name, jobID, logInfo)
 	} else {
 		log.Info("spawnWorker> spawning worker %s model:%s - %s", name, model.Name, logInfo)
 	}
@@ -109,11 +109,6 @@ export CDS_TTL={{.TTL}}
 		udataEnd += " register"
 	}
 	udataEnd += " ; sudo shutdown -h now;"
-
-	var jobID int64
-	if job != nil {
-		jobID = job.ID
-	}
 
 	var withExistingImage bool
 	if !model.NeedRegistration && !registerOnly {
@@ -210,7 +205,7 @@ export CDS_FROM_WORKER_IMAGE="false";
 	}
 
 	networks := []servers.Network{{UUID: h.networkID, FixedIP: ip}}
-	r := servers.Create(h.client, servers.CreateOpts{
+	r := servers.Create(h.openstackClient, servers.CreateOpts{
 		Name:      name,
 		FlavorRef: flavorID,
 		ImageRef:  imageID,

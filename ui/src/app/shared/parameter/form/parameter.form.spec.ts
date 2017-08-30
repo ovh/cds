@@ -12,6 +12,7 @@ import {ParameterFormComponent} from './parameter.form';
 import {Parameter} from '../../../model/parameter.model';
 import {ParameterEvent} from '../parameter.event.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: parameter From Component', () => {
 
@@ -33,7 +34,8 @@ describe('CDS: parameter From Component', () => {
             ],
             imports : [
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 

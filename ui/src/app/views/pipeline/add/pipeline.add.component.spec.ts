@@ -26,6 +26,7 @@ import {PipelineModule} from '../pipeline.module';
 import {PipelineService} from '../../../service/pipeline/pipeline.service';
 import {PipelineAddComponent} from './pipeline.add.component';
 import {Pipeline} from '../../../model/pipeline.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Pipeline Add Component', () => {
 
@@ -57,7 +58,8 @@ describe('CDS: Pipeline Add Component', () => {
             imports : [
                 PipelineModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 

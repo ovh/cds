@@ -515,7 +515,7 @@ export class ApplicationStore {
         });
     }
 
-    updateNotification(key: string, appName: string, pipName: string, notification: Notification) {
+    updateNotification(key: string, appName: string, pipName: string, notification: Notification): Observable<Application> {
         return this._applicationService.updateNotification(key, appName, pipName, notification).map( app => {
             return this.refreshApplicationNotificationsCache(key, appName, app);
         });

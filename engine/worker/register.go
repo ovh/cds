@@ -15,7 +15,7 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 	sdk.InitEndpoint(w.apiEndpoint)
 	sdk.Authorization("")
 
-	requirements, errR := sdk.GetRequirements()
+	requirements, errR := w.client.Requirements()
 	if errR != nil {
 		log.Warning("register> unable to get requirements : %s", errR)
 		return errR
@@ -23,7 +23,7 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 
 	log.Debug("Checking %d requirements", len(requirements))
 	form.BinaryCapabilities = LoopPath(w, requirements)
-	form.Version = VERSION
+	form.Version = sdk.VERSION
 	form.OS = runtime.GOOS
 	form.Arch = runtime.GOOS
 

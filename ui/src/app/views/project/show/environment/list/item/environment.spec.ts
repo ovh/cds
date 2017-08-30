@@ -21,6 +21,7 @@ import {Variable} from '../../../../../../model/variable.model';
 import {ProjectAuditService} from '../../../../../../service/project/project.audit.service';
 import {EnvironmentAuditService} from '../../../../../../service/environment/environment.audit.service';
 import {ApplicationAuditService} from '../../../../../../service/application/application.audit.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Environment Component', () => {
 
@@ -45,7 +46,8 @@ describe('CDS: Environment Component', () => {
             imports : [
                 ProjectModule,
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 
