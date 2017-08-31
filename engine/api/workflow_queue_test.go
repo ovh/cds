@@ -162,7 +162,7 @@ func test_registerWorker(t *testing.T, db *gorp.DbMap, ctx *test_runWorkflowCtx)
 		Name:  sdk.RandomString(10),
 		Token: ctx.workerToken,
 	}
-	ctx.worker, err = worker.RegisterWorker(db, params.Name, params.Token, params.Model, nil, params.BinaryCapabilities)
+	ctx.worker, err = worker.RegisterWorker(db, params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities)
 	test.NoError(t, err)
 }
 

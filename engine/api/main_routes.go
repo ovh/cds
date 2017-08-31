@@ -54,7 +54,6 @@ func (router *Router) init() {
 	router.Handle("/mon/smtp/ping", GET(smtpPingHandler, Auth(true)))
 	router.Handle("/mon/version", GET(getVersionHandler, Auth(false)))
 	router.Handle("/mon/stats", GET(getStats, Auth(false)))
-	router.Handle("/mon/models", GET(getWorkerModelsStatsHandler, Auth(false)))
 	router.Handle("/mon/building", GET(getBuildingPipelines))
 	router.Handle("/mon/building/{hash}", GET(getPipelineBuildingCommit))
 	router.Handle("/mon/warning", GET(getUserWarnings))

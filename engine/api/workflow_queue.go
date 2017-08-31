@@ -61,8 +61,8 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 
 	//Load worker model
 	workerModel := c.Worker.Name
-	if c.Worker.Model != 0 {
-		wm, errModel := worker.LoadWorkerModelByID(db, c.Worker.Model)
+	if c.Worker.ModelID != 0 {
+		wm, errModel := worker.LoadWorkerModelByID(db, c.Worker.ModelID)
 		if errModel != nil {
 			return sdk.ErrNoWorkerModel
 		}

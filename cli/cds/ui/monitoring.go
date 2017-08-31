@@ -426,7 +426,7 @@ func (ui *Termui) computeStatusWorkersList(workers []sdk.Worker, wModels map[int
 		selected = ""
 	}
 	for _, w := range workers {
-		n := wModels[w.Model].Type + " " + wModels[w.Model].Name + " " + w.Name
+		n := wModels[w.ModelID].Type + " " + wModels[w.ModelID].Name + " " + w.Name
 		titles = append(titles, n)
 		values[n] = w
 		if _, ok := status[w.Status.String()]; !ok {
@@ -474,7 +474,7 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 	status := make(map[string]int)
 
 	for _, w := range workers {
-		idModel := fmt.Sprintf("%s", wModels[w.Model].Type+" "+wModels[w.Model].Name)
+		idModel := fmt.Sprintf("%s", wModels[w.ModelID].Type+" "+wModels[w.ModelID].Name)
 		if _, ok := models[idModel]; !ok {
 			models[idModel] = make(map[string]int64)
 			idsModels = append(idsModels, idModel)
