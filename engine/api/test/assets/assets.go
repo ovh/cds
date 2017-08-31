@@ -84,8 +84,8 @@ func InsertAdminUser(db *gorp.DbMap) (*sdk.User, string) {
 	return u, string(t)
 }
 
-// InsertLambaUser have to be used only for tests
-func InsertLambaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, string) {
+// InsertLambdaUser have to be used only for tests
+func InsertLambdaUser(db gorp.SqlExecutor, groups ...*sdk.Group) (*sdk.User, string) {
 	s := sdk.RandomString(10)
 	_, hash, _ := user.GeneratePassword()
 	u := &sdk.User{

@@ -14,6 +14,8 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/trigger"
@@ -171,7 +173,11 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb *sdk.PipelineBuild
 	for _, job := range stage.Jobs {
 		pbJobParams, errParam := getPipelineBuildJobParameters(tx, job, pb, stage)
 		if errParam != nil {
-			return errParam
+			return sdk.WrapError(errParam, "addJobsToQueue> error on getPipelineBuildJobParameters")
+		}
+		groups, errGroups := getPipelineBuildJobExecutablesGroups(tx, pb)
+		if errGroups != nil {
+			return sdk.WrapError(errGroups, "addJobsToQueue> error on getPipelineBuildJobExecutablesGroups")
 		}
 		pbJob := sdk.PipelineBuildJob{
 			PipelineBuildID: pb.ID,
@@ -179,9 +185,10 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb *sdk.PipelineBuild
 			Job: sdk.ExecutedJob{
 				Job: job,
 			},
-			Queued: time.Now(),
-			Status: sdk.StatusWaiting.String(),
-			Start:  time.Now(),
+			ExecGroups: groups,
+			Queued:     time.Now(),
+			Status:     sdk.StatusWaiting.String(),
+			Start:      time.Now(),
 		}
 
 		if !stage.Enabled || !pbJob.Job.Enabled {
@@ -367,23 +374,68 @@ func ParentBuildInfos(pb *sdk.PipelineBuild) []sdk.Parameter {
 func getPipelineBuildJobParameters(db gorp.SqlExecutor, j sdk.Job, pb *sdk.PipelineBuild, stage *sdk.Stage) ([]sdk.Parameter, error) {
 	projectVariables, err := project.GetAllVariableInProject(db, pb.Pipeline.ProjectID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "getActionBuildParameters> err GetAllVariableInProject on ID %d", pb.Pipeline.ProjectID)
+		return nil, sdk.WrapError(err, "getPipelineBuildJobParameters> err GetAllVariableInProject on ID %d", pb.Pipeline.ProjectID)
 	}
 	// Load application Variables
 	appVariables, err := application.GetAllVariableByID(db, pb.Application.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "getActionBuildParameters> err GetAllVariableByID for app ID %d", pb.Application.ID)
+		return nil, sdk.WrapError(err, "getPipelineBuildJobParameters> err GetAllVariableByID for app ID %d", pb.Application.ID)
 	}
 	// Load environment Variables
 	envVariables, err := environment.GetAllVariableByID(db, pb.Environment.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "getActionBuildParameters> err GetAllVariableByID for env ID %d", pb.Environment.ID)
+		return nil, sdk.WrapError(err, "getPipelineBuildJobParameters> err GetAllVariableByID for env ID %d", pb.Environment.ID)
 	}
 
 	pipelineParameters, err := pipeline.GetAllParametersInPipeline(db, pb.Pipeline.ID)
 	if err != nil {
-		return nil, sdk.WrapError(err, "getActionBuildParameters> err GetAllParametersInPipeline for pip %d", pb.Pipeline.ID)
+		return nil, sdk.WrapError(err, "getPipelineBuildJobParameters> err GetAllParametersInPipeline for pip %d", pb.Pipeline.ID)
 	}
 
 	return action.ProcessActionBuildVariables(projectVariables, appVariables, envVariables, pipelineParameters, pb.Parameters, stage, j.Action), nil
+}
+
+func getPipelineBuildJobExecutablesGroups(db gorp.SqlExecutor, pb *sdk.PipelineBuild) ([]sdk.Group, error) {
+	query := `
+	SELECT distinct("group".id), "group".name FROM "group"
+	LEFT JOIN application_group ON application_group.group_id = "group".id
+	LEFT JOIN pipeline_group ON pipeline_group.group_id = "group".id
+	LEFT JOIN project_group ON project_group.group_id = "group".id
+	LEFT JOIN pipeline_build ON pipeline_build.pipeline_id = pipeline_group.pipeline_id
+	LEFT OUTER JOIN environment_group ON environment_group.group_id = "group".id
+	LEFT OUTER JOIN environment ON environment.id = pipeline_build.environment_id
+	WHERE	"group".name = $1
+	OR (pipeline_build.id = $2
+		AND pipeline_build.pipeline_id = pipeline_group.pipeline_id
+		AND pipeline_group.group_id = "group".id
+		AND application_group.role >= $3
+		AND pipeline_group.role >= $3
+		AND (environment_group.role >= $3 OR environment.name like 'NoEnv')
+	);
+	`
+
+	var groups []sdk.Group
+	rows, err := db.Query(query, group.SharedInfraGroupName, pb.ID, permission.PermissionReadExecute)
+	if err != nil {
+		return nil, sdk.WrapError(err, "getPipelineBuildJobExecutablesGroups> err query")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var g sdk.Group
+		var groupID sql.NullInt64
+		var groupName sql.NullString
+
+		if err := rows.Scan(&groupID, &groupName); err != nil {
+			return nil, sdk.WrapError(err, "getPipelineBuildJobExecutablesGroups> err scan")
+		}
+
+		if groupID.Valid {
+			g.ID = groupID.Int64
+			g.Name = groupName.String
+		}
+		groups = append(groups, g)
+	}
+
+	return groups, nil
 }

@@ -12,116 +12,120 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getWorkflowTriggerConditionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	key := vars["permProjectKey"]
-	name := vars["workflowName"]
+func getWorkflowTriggerConditionHandler(router *Router) Handler {
+	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		name := vars["workflowName"]
 
-	id, errID := requestVarInt(r, "nodeID")
-	if errID != nil {
-		return errID
-	}
-
-	proj, errproj := project.Load(db, key, c.User, project.LoadOptions.WithVariables)
-	if errproj != nil {
-		return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
-	}
-
-	wf, errw := workflow.Load(db, key, name, c.User)
-	if errw != nil {
-		return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
-	}
-
-	wr, errr := workflow.LoadLastRun(db, key, name)
-	if errr != nil {
-		if errr != sdk.ErrWorkflowNotFound {
-			return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
+		id, errID := requestVarInt(r, "nodeID")
+		if errID != nil {
+			return errID
 		}
-	}
 
-	params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, c.User)
-	if errp != nil {
-		return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
-	}
+		proj, errproj := project.Load(db, key, c.User, project.LoadOptions.WithVariables)
+		if errproj != nil {
+			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
+		}
 
-	data := struct {
-		Operators      map[string]string `json:"operators"`
-		ConditionNames []string          `json:"names"`
-	}{
-		Operators: sdk.WorkflowConditionsOperators,
-	}
+		wf, errw := workflow.Load(db, key, name, c.User)
+		if errw != nil {
+			return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
+		}
 
-	for _, p := range params {
-		data.ConditionNames = append(data.ConditionNames, p.Name)
-	}
+		wr, errr := workflow.LoadLastRun(db, key, name)
+		if errr != nil {
+			if errr != sdk.ErrWorkflowNotFound {
+				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
+			}
+		}
 
-	data.ConditionNames = append(data.ConditionNames, "cds.dest.pipeline")
+		params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, c.User)
+		if errp != nil {
+			return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
+		}
 
-	refNode := wf.GetNode(id)
-	if refNode == nil {
-		return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
-	}
-	if refNode.Context != nil && refNode.Context.Application != nil {
-		data.ConditionNames = append(data.ConditionNames, "cds.dest.application")
-	}
-	if refNode.Context != nil && refNode.Context.Environment != nil {
-		data.ConditionNames = append(data.ConditionNames, "cds.dest.environment")
-	}
+		data := struct {
+			Operators      map[string]string `json:"operators"`
+			ConditionNames []string          `json:"names"`
+		}{
+			Operators: sdk.WorkflowConditionsOperators,
+		}
 
-	return WriteJSON(w, r, data, http.StatusOK)
+		for _, p := range params {
+			data.ConditionNames = append(data.ConditionNames, p.Name)
+		}
+
+		data.ConditionNames = append(data.ConditionNames, "cds.dest.pipeline")
+
+		refNode := wf.GetNode(id)
+		if refNode == nil {
+			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
+		}
+		if refNode.Context != nil && refNode.Context.Application != nil {
+			data.ConditionNames = append(data.ConditionNames, "cds.dest.application")
+		}
+		if refNode.Context != nil && refNode.Context.Environment != nil {
+			data.ConditionNames = append(data.ConditionNames, "cds.dest.environment")
+		}
+
+		return WriteJSON(w, r, data, http.StatusOK)
+	}
 }
 
-func getWorkflowTriggerJoinConditionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	key := vars["permProjectKey"]
-	name := vars["workflowName"]
+func getWorkflowTriggerJoinConditionHandler(router *Router) Handler {
+	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		name := vars["workflowName"]
 
-	id, errID := requestVarInt(r, "joinID")
-	if errID != nil {
-		return errID
-	}
-
-	proj, errproj := project.Load(db, key, c.User, project.LoadOptions.WithVariables)
-	if errproj != nil {
-		return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
-	}
-
-	wf, errw := workflow.Load(db, key, name, c.User)
-	if errw != nil {
-		return sdk.WrapError(errw, "getWorkflowTriggerJoinConditionHandler> Unable to load workflow")
-	}
-
-	wr, errr := workflow.LoadLastRun(db, key, name)
-	if errr != nil {
-		if errr != sdk.ErrWorkflowNotFound {
-			return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load last run workflow")
+		id, errID := requestVarInt(r, "joinID")
+		if errID != nil {
+			return errID
 		}
-	}
 
-	j := wf.GetJoin(id)
-	if j == nil {
-		return sdk.ErrWorkflowNodeJoinNotFound
-	}
-
-	data := struct {
-		Operators      map[string]string `json:"operators"`
-		ConditionNames []string          `json:"names"`
-	}{
-		Operators: sdk.WorkflowConditionsOperators,
-	}
-
-	allparams := map[string]string{}
-	for _, i := range j.SourceNodeIDs {
-		params, errp := workflow.NodeBuildParameters(proj, wf, wr, i, c.User)
-		if errp != nil {
-			return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load build parameters")
+		proj, errproj := project.Load(db, key, c.User, project.LoadOptions.WithVariables)
+		if errproj != nil {
+			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
 		}
-		allparams = sdk.ParametersMapMerge(allparams, sdk.ParametersToMap(params))
-	}
 
-	for k := range allparams {
-		data.ConditionNames = append(data.ConditionNames, k)
-	}
+		wf, errw := workflow.Load(db, key, name, c.User)
+		if errw != nil {
+			return sdk.WrapError(errw, "getWorkflowTriggerJoinConditionHandler> Unable to load workflow")
+		}
 
-	return WriteJSON(w, r, data, http.StatusOK)
+		wr, errr := workflow.LoadLastRun(db, key, name)
+		if errr != nil {
+			if errr != sdk.ErrWorkflowNotFound {
+				return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load last run workflow")
+			}
+		}
+
+		j := wf.GetJoin(id)
+		if j == nil {
+			return sdk.ErrWorkflowNodeJoinNotFound
+		}
+
+		data := struct {
+			Operators      map[string]string `json:"operators"`
+			ConditionNames []string          `json:"names"`
+		}{
+			Operators: sdk.WorkflowConditionsOperators,
+		}
+
+		allparams := map[string]string{}
+		for _, i := range j.SourceNodeIDs {
+			params, errp := workflow.NodeBuildParameters(proj, wf, wr, i, c.User)
+			if errp != nil {
+				return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load build parameters")
+			}
+			allparams = sdk.ParametersMapMerge(allparams, sdk.ParametersToMap(params))
+		}
+
+		for k := range allparams {
+			data.ConditionNames = append(data.ConditionNames, k)
+		}
+
+		return WriteJSON(w, r, data, http.StatusOK)
+	}
 }

@@ -11,21 +11,22 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 )
 
-func getProjectNotificationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	key := vars["permProjectKey"]
+func getProjectNotificationsHandler(router *Router) Handler {
+	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
 
-	if _, err := project.Load(db, key, nil); err != nil {
-		return err
+		if _, err := project.Load(db, key, nil); err != nil {
+			return err
+		}
+
+		notifs, err := notification.LoadAllUserNotificationSettingsByProject(db, key, c.User)
+		if err != nil {
+			return err
+		}
+
+		WriteJSON(w, r, notifs, http.StatusOK)
+		return nil
 	}
-
-	notifs, err := notification.LoadAllUserNotificationSettingsByProject(db, key, c.User)
-	if err != nil {
-		return err
-	}
-
-	WriteJSON(w, r, notifs, http.StatusOK)
-
-	return nil
 }

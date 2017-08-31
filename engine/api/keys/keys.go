@@ -48,14 +48,14 @@ func Generatekeypair(keyname string) (string, string, error) {
 }
 
 // GeneratePGPKeyPair generates a private / public PGP key
-func GeneratePGPKeyPair(keyname string, u *sdk.User) (string, string, error) {
-	key, errE := openpgp.NewEntity(keyname, keyname, u.Email, nil)
+func GeneratePGPKeyPair(keyname string) (string, string, string, error) {
+	key, errE := openpgp.NewEntity(keyname, keyname, "cds@locahost", nil)
 	if errE != nil {
-		return "", "", sdk.WrapError(errE, "GenerateGPGKeyPair> Cannot create new entity")
+		return "", "", "", sdk.WrapError(errE, "GenerateGPGKeyPair> Cannot create new entity")
 	}
 
 	if len(key.Subkeys) != 1 {
-		return "", "", fmt.Errorf("Wrong key generation")
+		return "", "", "", fmt.Errorf("Wrong key generation")
 	}
 
 	// Self sign Identity
@@ -68,20 +68,20 @@ func GeneratePGPKeyPair(keyname string, u *sdk.User) (string, string, error) {
 			sha512,
 		}
 		if err := id.SelfSignature.SignUserId(id.UserId.Id, key.PrimaryKey, key.PrivateKey, nil); err != nil {
-			return "", "", sdk.WrapError(err, "GenerateGPGKeyPair> Cannot sign identity")
+			return "", "", "", sdk.WrapError(err, "GenerateGPGKeyPair> Cannot sign identity")
 		}
 	}
 	// Self-sign the Subkeys
 	for _, subkey := range key.Subkeys {
 		if err := subkey.Sig.SignKey(subkey.PublicKey, key.PrivateKey, nil); err != nil {
-			return "", "", sdk.WrapError(err, "GenerateGPGKeyPair> Cannot sign key")
+			return "", "", "", sdk.WrapError(err, "GenerateGPGKeyPair> Cannot sign key")
 		}
 	}
 
 	bufPrivate := new(bytes.Buffer)
 	encodePrivate, errPrivEncode := armor.Encode(bufPrivate, openpgp.PrivateKeyType, nil)
 	if errPrivEncode != nil {
-		return "", "", sdk.WrapError(errPrivEncode, "GenerateGPGKeyPair> Cannot encode private key")
+		return "", "", "", sdk.WrapError(errPrivEncode, "GenerateGPGKeyPair> Cannot encode private key")
 	}
 	key.SerializePrivate(encodePrivate, &packet.Config{})
 	encodePrivate.Close()
@@ -89,10 +89,10 @@ func GeneratePGPKeyPair(keyname string, u *sdk.User) (string, string, error) {
 	bufPublic := new(bytes.Buffer)
 	w, errEncode := armor.Encode(bufPublic, openpgp.PublicKeyType, nil)
 	if errEncode != nil {
-		return "", "", sdk.WrapError(errEncode, "GenerateGPGKeyPair> Cannot encode public key key")
+		return "", "", "", sdk.WrapError(errEncode, "GenerateGPGKeyPair> Cannot encode public key key")
 	}
 	key.Serialize(w)
 	w.Close()
 
-	return bufPublic.String(), bufPrivate.String(), nil
+	return key.PrimaryKey.KeyIdShortString(), bufPublic.String(), bufPrivate.String(), nil
 }

@@ -879,3 +879,73 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 
 	test.NoError(t, Delete(db, w2, u))
 }
+
+func TestInsertSimpleWorkflowWithHook(t *testing.T) {
+	db := test.SetupPG(t)
+	test.NoError(t, CreateBuiltinWorkflowHookModels(db))
+	u, _ := assets.InsertAdminUser(db)
+
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, key, key, u)
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Hooks: []sdk.WorkflowNodeHook{
+				{
+					WorkflowHookModel: sdk.WorkflowHookModel{
+						Name: WebHookModel.Name,
+					},
+					Conditions: []sdk.WorkflowTriggerCondition{
+						{
+							Variable: ".git.branch",
+							Operator: sdk.WorkflowConditionsOperatorEquals,
+							Value:    "master",
+						},
+					},
+					Config: sdk.WorkflowNodeHookConfig{
+						"username": "test",
+						"password": "password",
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, Insert(db, &w, u))
+
+	w1, err := Load(db, key, "test_1", u)
+	test.NoError(t, err)
+
+	assert.Equal(t, w.ID, w1.ID)
+	assert.Equal(t, w.ProjectID, w1.ProjectID)
+	assert.Equal(t, w.Name, w1.Name)
+	assert.Equal(t, w.Root.Pipeline.ID, w1.Root.Pipeline.ID)
+	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
+	assertEqualNode(t, w.Root, w1.Root)
+
+	ws, err := LoadAll(db, proj.Key)
+	test.NoError(t, err)
+	assert.Equal(t, 1, len(ws))
+
+	if t.Failed() {
+		return
+	}
+
+	assert.Len(t, w.Root.Hooks, 1)
+	t.Log(w.Root.Hooks)
+
+	test.NoError(t, Delete(db, &w, u))
+}

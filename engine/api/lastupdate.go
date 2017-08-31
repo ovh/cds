@@ -137,48 +137,50 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 
 }
 
-func (b *LastUpdateBroker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Make sure that the writer supports flushing.
-	f, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+func (b *LastUpdateBroker) ServeHTTP(router *Router) Handler {
+	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+		// Make sure that the writer supports flushing.
+		f, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+			return nil
+		}
+
+		uuid, errS := sessionstore.NewSessionKey()
+		if errS != nil {
+			return sdk.WrapError(errS, "LastUpdateBroker.Serve> Cannot generate UUID")
+		}
+		messageChan := &LastUpdateBrokerSubscribe{
+			UIID:  string(uuid),
+			User:  c.User,
+			Queue: make(chan string),
+		}
+
+		// Add this client to the map of those that should receive updates
+		b.newClients <- messageChan
+
+		// Set the headers related to event streaming.
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("X-Accel-Buffering", "no")
+
+	leave:
+		for {
+			select {
+			case <-w.(http.CloseNotifier).CloseNotify():
+				delete(b.clients, messageChan.UIID)
+				close(messageChan.Queue)
+				break leave
+			case msg, open := <-messageChan.Queue:
+				if !open {
+					delete(b.clients, messageChan.UIID)
+					break leave
+				}
+				fmt.Fprintf(w, "data: %s\n\n", msg)
+				f.Flush()
+			}
+		}
 		return nil
 	}
-
-	uuid, errS := sessionstore.NewSessionKey()
-	if errS != nil {
-		return sdk.WrapError(errS, "LastUpdateBroker.Serve> Cannot generate UUID")
-	}
-	messageChan := &LastUpdateBrokerSubscribe{
-		UIID:  string(uuid),
-		User:  c.User,
-		Queue: make(chan string),
-	}
-
-	// Add this client to the map of those that should receive updates
-	b.newClients <- messageChan
-
-	// Set the headers related to event streaming.
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
-
-leave:
-	for {
-		select {
-		case <-w.(http.CloseNotifier).CloseNotify():
-			delete(b.clients, messageChan.UIID)
-			close(messageChan.Queue)
-			break leave
-		case msg, open := <-messageChan.Queue:
-			if !open {
-				delete(b.clients, messageChan.UIID)
-				break leave
-			}
-			fmt.Fprintf(w, "data: %s\n\n", msg)
-			f.Flush()
-		}
-	}
-	return nil
 }

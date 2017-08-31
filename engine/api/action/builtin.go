@@ -92,6 +92,65 @@ Clone a repository into a new directory.`
 		return err
 	}
 
+	// ----------------------------------- Git tag    -----------------------
+	gittag := sdk.NewAction(sdk.GitTagAction)
+	gittag.Type = sdk.BuiltinAction
+	gittag.Description = `CDS Builtin Action.
+Tag the current branch and push it.`
+
+	gittag.Parameter(sdk.Parameter{
+		Name:        "url",
+		Description: "URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.",
+		Value:       "{{.git.http_url}}",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "authPrivateKey",
+		Value:       "",
+		Description: "Set the private key to be able to git push to the remote",
+		Type:        sdk.KeyParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "user",
+		Description: "Set the user to be able to git clone from https with authentication",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "password",
+		Description: "Set the password to be able to git clone from https with authentication",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "signKey",
+		Value:       "",
+		Description: "Set the key to be able to sign the tag",
+		Type:        sdk.KeyParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "tagName",
+		Description: "Set the name of the tag",
+		Value:       "",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "tagMessage",
+		Description: "Set a message for the tag.",
+		Value:       "",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "path",
+		Description: "The path to your git directory.",
+		Value:       "{{.cds.workspace}}",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Requirement("git", sdk.BinaryRequirement, "git")
+	gittag.Requirement("gpg", sdk.BinaryRequirement, "gpg")
+
+	if err := checkBuiltinAction(db, gittag); err != nil {
+		return err
+	}
+
 	return nil
 }
 

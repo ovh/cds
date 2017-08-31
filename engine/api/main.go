@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/auth"
@@ -40,7 +39,6 @@ import (
 )
 
 var startupTime time.Time
-var baseURL string
 
 type Configuration struct {
 	URL struct {
@@ -52,7 +50,7 @@ type Configuration struct {
 		SessionTTL string
 	}
 	GRPC struct {
-		Port string
+		Port int
 	}
 	Secrets struct {
 		Key string
@@ -73,7 +71,7 @@ type Configuration struct {
 	}
 	Cache struct {
 		Mode  string
-		TTL   string
+		TTL   int
 		Redis struct {
 			Host     string
 			Password string
@@ -152,7 +150,11 @@ type Configuration struct {
 }
 
 type API struct {
-	Config Configuration
+	Router    *Router
+	Config    Configuration
+	panicked  bool
+	nbPanic   int
+	lastPanic *time.Time
 }
 
 func (api *API) Init(config interface{}) error {
@@ -246,7 +248,7 @@ func (api *API) Serve(ctx context.Context) error {
 		os.Exit(3)
 	}
 
-	defaultValues := bootstrap.DefaultValues{
+	defaultValues := sdk.DefaultValues{
 		DefaultGroupName: api.Config.Auth.DefaultGroup,
 		SharedInfraToken: api.Config.Auth.SharedInfraToken,
 	}
@@ -254,76 +256,84 @@ func (api *API) Serve(ctx context.Context) error {
 		log.Error("Cannot setup databases: %s", err)
 	}
 
-	cache.Initialize(viper.GetString(viperCacheMode), viper.GetString(viperCacheRedisHost), viper.GetString(viperCacheRedisPassword), viper.GetInt(viperCacheTTL))
+	if err := workflow.CreateBuiltinWorkflowHookModels(database.GetDBMap()); err != nil {
+		log.Error("Cannot setup builtin workflow hook models")
+	}
+
+	cache.Initialize(
+		api.Config.Cache.Mode,
+		api.Config.Cache.Redis.Host,
+		api.Config.Cache.Redis.Password,
+		api.Config.Cache.TTL)
+
 	InitLastUpdateBroker(ctx, database.GetDBMap)
 
-	router = &Router{
-		mux: mux.NewRouter(),
+	api.Router = &Router{
+		Mux: mux.NewRouter(),
 	}
-	router.init()
-	router.url = viper.GetString(viperURLAPI)
-
-	baseURL = viper.GetString(viperURLUI)
+	api.Router.Init()
+	api.Router.URL = api.Config.URL.API
+	api.Router.Cfg = api.Config
 
 	//Intialize repositories manager
 	rmInitOpts := repositoriesmanager.InitializeOpts{
-		KeysDirectory:          viper.GetString(viperKeysDirectory),
-		UIBaseURL:              baseURL,
-		APIBaseURL:             viper.GetString(viperURLAPI),
-		DisableGithubSetStatus: viper.GetBool(viperVCSRepoGithubStatusDisabled),
-		DisableGithubStatusURL: viper.GetBool(viperVCSRepoGithubStatusURLDisabled),
-		DisableStashSetStatus:  viper.GetBool(viperVCSRepoBitbucketStatusDisabled),
-		GithubSecret:           viper.GetString(viperVCSRepoGithubSecret),
-		StashPrivateKey:        viper.GetString(viperVCSRepoBitbucketPrivateKey),
-		StashConsumerKey:       viper.GetString(viperVCSRepoBitbucketConsumerKey),
+		KeysDirectory:          api.Config.Directories.Keys,
+		UIBaseURL:              api.Config.URL.UI,
+		APIBaseURL:             api.Config.URL.API,
+		DisableGithubSetStatus: api.Config.VCS.Github.DisableStatus,
+		DisableGithubStatusURL: api.Config.VCS.Github.DisableStatusURL,
+		DisableStashSetStatus:  api.Config.VCS.Bitbucket.DisableStatus,
+		GithubSecret:           api.Config.VCS.Github.Secret,
+		StashPrivateKey:        api.Config.VCS.Bitbucket.PrivateKey,
+		StashConsumerKey:       api.Config.VCS.Bitbucket.ConsumerKey,
 	}
 	if err := repositoriesmanager.Initialize(rmInitOpts); err != nil {
 		log.Warning("Error initializing repositories manager connections: %s", err)
 	}
 
 	//Initiliaze hook package
-	hook.Init(viper.GetString(viperURLAPI))
+	hook.Init(api.Config.URL.API)
 
 	//Intialize notification package
-	notification.Init(viper.GetString(viperURLAPI), baseURL)
+	notification.Init(api.Config.URL.API, api.Config.URL.UI)
 
 	// Initialize the auth driver
 	var authMode string
 	var authOptions interface{}
-	switch viper.GetBool(viperAuthLDAPEnable) {
+	switch api.Config.Auth.LDAP.Enable {
 	case true:
 		authMode = "ldap"
 		authOptions = auth.LDAPConfig{
-			Host:         viper.GetString(viperAuthLDAPHost),
-			Port:         viper.GetInt(viperAuthLDAPPort),
-			Base:         viper.GetString(viperAuthLDAPBase),
-			DN:           viper.GetString(viperAuthLDAPDN),
-			SSL:          viper.GetBool(viperAuthLDAPSSL),
-			UserFullname: viper.GetString(viperAuthLDAPFullname),
+			Host:         api.Config.Auth.LDAP.Host,
+			Port:         api.Config.Auth.LDAP.Port,
+			Base:         api.Config.Auth.LDAP.Base,
+			DN:           api.Config.Auth.LDAP.DN,
+			SSL:          api.Config.Auth.LDAP.SSL,
+			UserFullname: api.Config.Auth.LDAP.Fullname,
 		}
 	default:
 		authMode = "local"
 	}
 
 	storeOptions := sessionstore.Options{
-		Mode:          viper.GetString(viperCacheMode),
-		TTL:           viper.GetInt(viperCacheTTL),
-		RedisHost:     viper.GetString(viperCacheRedisHost),
-		RedisPassword: viper.GetString(viperCacheRedisPassword),
+		Mode:          api.Config.Cache.Mode,
+		TTL:           api.Config.Cache.TTL,
+		RedisHost:     api.Config.Cache.Redis.Host,
+		RedisPassword: api.Config.Cache.Redis.Password,
 	}
 
 	var errdriver error
-	router.authDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions)
+	api.Router.AuthDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions)
 	if errdriver != nil {
 		log.Fatalf("Error: %v", errdriver)
 	}
 
 	kafkaOptions := event.KafkaConfig{
-		Enabled:         viper.GetBool(viperEventsKafkaEnabled),
-		BrokerAddresses: viper.GetString(viperEventsKafkaBroker),
-		User:            viper.GetString(viperEventsKafkaUser),
-		Password:        viper.GetString(viperEventsKafkaPassword),
-		Topic:           viper.GetString(viperEventsKafkaTopic),
+		Enabled:         api.Config.Events.Kafka.Enabled,
+		BrokerAddresses: api.Config.Events.Kafka.Broker,
+		User:            api.Config.Events.Kafka.User,
+		Password:        api.Config.Events.Kafka.Password,
+		Topic:           api.Config.Events.Kafka.Topic,
 	}
 	if err := event.Initialize(kafkaOptions); err != nil {
 		log.Warning("⚠ Error while initializing event system: %s", err)
@@ -349,36 +359,36 @@ func (api *API) Serve(ctx context.Context) error {
 
 	go user.PersistentSessionTokenCleaner(ctx, database.GetDBMap)
 
-	if !viper.GetBool(viperVCSPollingDisabled) {
+	if !api.Config.VCS.Polling.Disabled {
 		go poller.Initialize(ctx, 10, database.GetDBMap)
 	} else {
 		log.Warning("⚠ Repositories polling is disabled")
 	}
 
-	if !viper.GetBool(viperSchedulersDisabled) {
+	if !api.Config.Schedulers.Disabled {
 		go scheduler.Initialize(ctx, 10, database.GetDBMap)
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 
 	s := &http.Server{
-		Addr:           ":" + viper.GetString(viperServerHTTPPort),
-		Handler:        router.mux,
+		Addr:           ":" + api.Config.HTTP.Port,
+		Handler:        api.Router.Mux,
 		ReadTimeout:    10 * time.Minute,
 		WriteTimeout:   10 * time.Minute,
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", viper.GetString(viperServerHTTPPort))})
+	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", api.Config.HTTP.Port)})
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too
-		if err := grpc.Init(viper.GetInt(viperServerGRPCPort), false, "", ""); err != nil {
+		if err := grpc.Init(api.Config.GRPC.Port, false, "", ""); err != nil {
 			log.Fatalf("Cannot start grpc cds-server: %s", err)
 		}
 	}()
 
-	log.Info("Starting HTTP Server on port %s", viper.GetString(viperServerHTTPPort))
+	log.Info("Starting HTTP Server on port %s", api.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatalf("Cannot start cds-server: %s", err)
 	}

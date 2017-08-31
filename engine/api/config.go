@@ -10,6 +10,8 @@ import (
 )
 
 // ConfigUserHandler return url of CDS UI
-func ConfigUserHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	return WriteJSON(w, r, map[string]string{sdk.ConfigURLUIKey: baseURL}, http.StatusOK)
+func ConfigUserHandler(router *Router) Handler {
+	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+		return WriteJSON(w, r, map[string]string{sdk.ConfigURLUIKey: router.Cfg.URL.UI}, http.StatusOK)
+	}
 }

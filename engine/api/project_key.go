@@ -13,112 +13,119 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getKeysInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	key := vars["permProjectKey"]
+func getKeysInProjectHandler(router *Router) Handler {
+	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
 
-	p, errP := project.Load(db, key, c.User)
-	if errP != nil {
-		return sdk.WrapError(errP, "getKeysInProjectHandler> Cannot load project")
+		p, errP := project.Load(db, key, c.User)
+		if errP != nil {
+			return sdk.WrapError(errP, "getKeysInProjectHandler> Cannot load project")
+		}
+
+		if errK := project.LoadAllKeys(db, p); errK != nil {
+			return sdk.WrapError(errK, "getKeysInProjectHandler> Cannot load project keys")
+		}
+
+		return WriteJSON(w, r, p.Keys, http.StatusOK)
 	}
-
-	if errK := project.LoadAllKeys(db, p); errK != nil {
-		return sdk.WrapError(errK, "getKeysInProjectHandler> Cannot load project keys")
-	}
-
-	return WriteJSON(w, r, p.Keys, http.StatusOK)
 }
 
-func deleteKeyInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	key := vars["permProjectKey"]
-	keyName := vars["name"]
+func deleteKeyInProjectHandler(router *Router) Handler {
+	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		keyName := vars["name"]
 
-	p, errP := project.Load(db, key, c.User, project.LoadOptions.WithKeys)
-	if errP != nil {
-		return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
-	}
+		p, errP := project.Load(db, key, c.User, project.LoadOptions.WithKeys)
+		if errP != nil {
+			return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
+		}
 
-	tx, errT := db.Begin()
-	if errT != nil {
-		return sdk.WrapError(errT, "deleteKeyInProjectHandler> Cannot start transaction")
-	}
-	defer tx.Rollback()
-	for _, k := range p.Keys {
-		if k.Name == keyName {
-			if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
-				return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot delete key %s", k.Name)
-			}
-			if err := project.UpdateLastModified(tx, c.User, p); err != nil {
-				return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot update project last modified date")
+		tx, errT := db.Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "deleteKeyInProjectHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
+		for _, k := range p.Keys {
+			if k.Name == keyName {
+				if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
+					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot delete key %s", k.Name)
+				}
+				if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot update project last modified date")
+				}
 			}
 		}
-	}
 
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot commit transaction")
-	}
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot commit transaction")
+		}
 
-	return WriteJSON(w, r, nil, http.StatusOK)
+		return WriteJSON(w, r, nil, http.StatusOK)
+	}
 }
 
-func addKeyInProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	key := vars["permProjectKey"]
+func addKeyInProjectHandler(router *Router) Handler {
+	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
 
-	var newKey sdk.ProjectKey
-	if err := UnmarshalBody(r, &newKey); err != nil {
-		return err
-	}
-
-	// check application name pattern
-	regexp := regexp.MustCompile(sdk.NamePattern)
-	if !regexp.MatchString(newKey.Name) {
-		return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInProjectHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
-	}
-
-	p, errP := project.Load(db, key, c.User)
-	if errP != nil {
-		return sdk.WrapError(errP, "addKeyInProjectHandler> Cannot load project")
-	}
-	newKey.ProjectID = p.ID
-
-	switch newKey.Type {
-	case sdk.KeyTypeSsh:
-		pub, priv, errGenerate := keys.Generatekeypair(newKey.Name)
-		if errGenerate != nil {
-			return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate sshKey")
+		var newKey sdk.ProjectKey
+		if err := UnmarshalBody(r, &newKey); err != nil {
+			return err
 		}
-		newKey.Public = pub
-		newKey.Private = priv
-	case sdk.KeyTypePgp:
-		pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name, c.User)
-		if errGenerate != nil {
-			return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate pgpKey")
+
+		// check application name pattern
+		regexp := regexp.MustCompile(sdk.NamePattern)
+		if !regexp.MatchString(newKey.Name) {
+			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInProjectHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
-		newKey.Public = pub
-		newKey.Private = priv
-	default:
-		return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInProjectHandler> unknown key of type: %s", newKey.Type)
-	}
 
-	tx, errT := db.Begin()
-	if errT != nil {
-		return sdk.WrapError(errT, "addKeyInProjectHandler> Cannot start transaction")
-	}
-	defer tx.Rollback()
+		p, errP := project.Load(db, key, c.User)
+		if errP != nil {
+			return sdk.WrapError(errP, "addKeyInProjectHandler> Cannot load project")
+		}
+		newKey.ProjectID = p.ID
 
-	if err := project.InsertKey(tx, &newKey); err != nil {
-		return sdk.WrapError(err, "addKeyInProjectHandler> Cannot insert project key")
-	}
+		switch newKey.Type {
+		case sdk.KeyTypeSsh:
+			pub, priv, errGenerate := keys.Generatekeypair(newKey.Name)
+			if errGenerate != nil {
+				return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate sshKey")
+			}
+			newKey.Public = pub
+			newKey.Private = priv
+		case sdk.KeyTypePgp:
+			kid, pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
+			if errGenerate != nil {
+				return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate pgpKey")
+			}
+			newKey.Public = pub
+			newKey.Private = priv
+			newKey.KeyID = kid
+		default:
+			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInProjectHandler> unknown key of type: %s", newKey.Type)
+		}
 
-	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
-		return sdk.WrapError(err, "addKeyInProjectHandler> Cannot update project last modified date")
-	}
+		tx, errT := db.Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "addKeyInProjectHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
 
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "addKeyInProjectHandler> Cannot commit transaction")
-	}
+		if err := project.InsertKey(tx, &newKey); err != nil {
+			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot insert project key")
+		}
 
-	return WriteJSON(w, r, newKey, http.StatusOK)
+		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot update project last modified date")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot commit transaction")
+		}
+
+		return WriteJSON(w, r, newKey, http.StatusOK)
+	}
 }

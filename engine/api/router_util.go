@@ -54,32 +54,15 @@ func (r *Router) getRoute(method string, handler Handler, vars map[string]string
 	sf1 := reflect.ValueOf(handler)
 	var url string
 	for uri, routerConfig := range mapRouterConfigs {
+		rc := routerConfig.config[method]
+		if rc == nil {
+			continue
+		}
 		if strings.HasPrefix(uri, r.prefix) {
-			switch method {
-			case "GET":
-				sf2 := reflect.ValueOf(routerConfig.get)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
-			case "POST":
-				sf2 := reflect.ValueOf(routerConfig.post)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
-			case "PUT":
-				sf2 := reflect.ValueOf(routerConfig.put)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
-			case "DELETE":
-				sf2 := reflect.ValueOf(routerConfig.deleteHandler)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
+			sf2 := reflect.ValueOf(rc.handler)
+			if sf1.Pointer() == sf2.Pointer() {
+				url = uri
+				break
 			}
 		}
 	}

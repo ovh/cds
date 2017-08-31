@@ -276,7 +276,7 @@ func Test_getUserHandlerOK(t *testing.T) {
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserHandler")
 	router.init()
 
-	u1, pass1 := assets.InsertLambaUser(db)
+	u1, pass1 := assets.InsertLambdaUser(db)
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
@@ -304,7 +304,7 @@ func Test_getUserHandlerAdmin(t *testing.T) {
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserHandler")
 	router.init()
 
-	u1, pass1 := assets.InsertLambaUser(db)
+	u1, pass1 := assets.InsertLambdaUser(db)
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
@@ -336,7 +336,7 @@ func Test_getUserHandlerForbidden(t *testing.T) {
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserHandler")
 	router.init()
 
-	u1, pass1 := assets.InsertLambaUser(db)
+	u1, pass1 := assets.InsertLambdaUser(db)
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
@@ -344,7 +344,7 @@ func Test_getUserHandlerForbidden(t *testing.T) {
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
 
-	u2, pass2 := assets.InsertLambaUser(db)
+	u2, pass2 := assets.InsertLambdaUser(db)
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass2)
 
@@ -382,7 +382,7 @@ func Test_getUserGroupsHandler(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	u, pass := assets.InsertLambaUser(db, g1, g2)
+	u, pass := assets.InsertLambdaUser(db, g1, g2)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
