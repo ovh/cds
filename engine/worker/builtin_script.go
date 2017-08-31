@@ -153,6 +153,12 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
 			}
 
+			for _, p := range w.currentJob.buildVariables {
+				envName := strings.Replace(p.Name, ".", "_", -1)
+				envName = strings.ToUpper(envName)
+				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
+			}
+
 			workerpath, err := osext.Executable()
 			if err != nil {
 				log.Warning("runScriptAction: Cannot get worker path: %s", err)
