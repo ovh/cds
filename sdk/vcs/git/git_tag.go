@@ -80,19 +80,21 @@ func gitTagOverSSH(auth *AuthOpts, opts *TagOpts, output *OutputOpts) error {
 func gitTagCommand(opts *TagOpts) cmds {
 	allCmd := []cmd{}
 
-	// Create command to import key
-	importpubCmd := cmd{
-		cmd:  "gpg",
-		args: []string{"--import", "pgp.pub.key"},
-	}
-	allCmd = append(allCmd, importpubCmd)
+	if opts != nil && opts.SignKey != "" {
+		// Create command to import key
+		importpubCmd := cmd{
+			cmd:  "gpg",
+			args: []string{"--import", "pgp.pub.key"},
+		}
+		allCmd = append(allCmd, importpubCmd)
 
-	importcmd := cmd{
-		cmd:  "gpg",
-		args: []string{"--import", "pgp.key"},
-	}
+		importcmd := cmd{
+			cmd:  "gpg",
+			args: []string{"--import", "pgp.key"},
+		}
 
-	allCmd = append(allCmd, importcmd)
+		allCmd = append(allCmd, importcmd)
+	}
 
 	allCmd = append(allCmd, gitConfigCommand("user.name", opts.Username))
 	allCmd = append(allCmd, gitConfigCommand("user.email", "cds@localhost"))
@@ -123,5 +125,23 @@ func gitTagCommand(opts *TagOpts) cmds {
 
 	allCmd = append(allCmd, gitcmd)
 	allCmd = append(allCmd, gitPushCommand(optPush)...)
+	return cmds(allCmd)
+}
+
+// TagList List tag from given git directory
+func TagList(dir string, output *OutputOpts) error {
+	return runCommand(gitTagListCommand(dir), output)
+}
+
+func gitTagListCommand(dir string) cmds {
+	allCmd := []cmd{}
+
+	gitcmd := cmd{
+		cmd:  "git",
+		args: []string{"tag", "-l", "--sort=-v:refname"},
+		dir:  dir,
+	}
+
+	allCmd = append(allCmd, gitcmd)
 	return cmds(allCmd)
 }

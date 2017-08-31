@@ -128,7 +128,7 @@ Tag the current branch and push it.`
 	})
 	gittag.Parameter(sdk.Parameter{
 		Name:        "tagName",
-		Description: "Set the name of the tag",
+		Description: "Set the name of the tag. Must match semver. If empty CDS will make a patch version",
 		Value:       "",
 		Type:        sdk.StringParameter,
 	})

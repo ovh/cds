@@ -14,15 +14,15 @@ import (
 )
 
 func runParseJunitTestResultAction(*currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		var res sdk.Result
 		res.Status = sdk.StatusFail.String()
 
-		pip := sdk.ParameterValue(params, "cds.pipeline")
-		proj := sdk.ParameterValue(params, "cds.project")
-		app := sdk.ParameterValue(params, "cds.application")
-		envName := sdk.ParameterValue(params, "cds.environment")
-		bnS := sdk.ParameterValue(params, "cds.buildNumber")
+		pip := sdk.ParameterValue(*params, "cds.pipeline")
+		proj := sdk.ParameterValue(*params, "cds.project")
+		app := sdk.ParameterValue(*params, "cds.application")
+		envName := sdk.ParameterValue(*params, "cds.environment")
+		bnS := sdk.ParameterValue(*params, "cds.buildNumber")
 
 		p := sdk.ParameterValue(a.Parameters, "path")
 		if p == "" {
