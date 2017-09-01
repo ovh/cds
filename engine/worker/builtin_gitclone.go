@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/blang/semver"
@@ -155,7 +156,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		if len(stdTagListOut.Bytes()) > 0 {
 			// search for version
 			lines := strings.Split(stdTagListOut.String(), "\n")
-
+			sort.Sort(sort.Reverse(sort.StringSlice(lines)))
 			var v semver.Version
 			found := false
 			for _, l := range lines {
