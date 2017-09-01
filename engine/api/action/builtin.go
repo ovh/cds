@@ -151,6 +151,69 @@ Tag the current branch and push it.`
 		return err
 	}
 
+	// ----------------------------------- Git Release -----------------------
+	artifactList := sdk.ParameterFind(a.Parameters, "artifacts")
+	tag := sdk.ParameterFind(a.Parameters, "tag")
+	title := sdk.ParameterFind(a.Parameters, "title")
+	releaseNote := sdk.ParameterFind(a.Parameters, "releaseNote")
+
+	gitrelease := sdk.NewAction(sdk.ReleaseAction)
+	gitrelease.Type = sdk.BuiltinAction
+	gitrelease.Description = `CDS Builtin Action. Make a release using repository manager.`
+
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "tag",
+		Description: "Tag name.",
+		Value:       "{{.git.http_url}}",
+		Type:        sdk.StringParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "authPrivateKey",
+		Value:       "",
+		Description: "Set the private key to be able to git push to the remote",
+		Type:        sdk.KeyParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "user",
+		Description: "Set the user to be able to git clone from https with authentication",
+		Type:        sdk.StringParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "password",
+		Description: "Set the password to be able to git clone from https with authentication",
+		Type:        sdk.StringParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "signKey",
+		Value:       "",
+		Description: "Set the key to be able to sign the tag",
+		Type:        sdk.KeyParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "tagName",
+		Description: "Set the name of the tag. Must match semver. If empty CDS will make a patch version",
+		Value:       "",
+		Type:        sdk.StringParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "tagMessage",
+		Description: "Set a message for the tag.",
+		Value:       "",
+		Type:        sdk.StringParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "path",
+		Description: "The path to your git directory.",
+		Value:       "{{.cds.workspace}}",
+		Type:        sdk.StringParameter,
+	})
+	gitrelease.Requirement("git", sdk.BinaryRequirement, "git")
+	gitrelease.Requirement("gpg", sdk.BinaryRequirement, "gpg")
+
+	if err := checkBuiltinAction(db, gitrelease); err != nil {
+		return err
+	}
+
 	return nil
 }
 

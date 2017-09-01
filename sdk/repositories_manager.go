@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"time"
+	"bytes"
 )
 
 //RepositoriesManagerType lists the different repositories manager currently planned to be supported
@@ -308,6 +309,15 @@ type RepositoriesManagerClient interface {
 
 	// Set build status on repository
 	SetStatus(event Event) error
+
+	// Release
+	Release(repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
+	UploadReleaseFile(repo string, release *VCSRelease, runArtifact WorkflowNodeRunArtifact, file *bytes.Buffer) error
+}
+
+// Release represents data about release on github, etc..
+type VCSRelease struct {
+	ID string `json:"id"`
 }
 
 //VCSRepo represents data about repository even on stash, or github, etc...

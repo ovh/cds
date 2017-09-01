@@ -74,3 +74,15 @@ func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, name string,
 	}
 	return nil
 }
+
+func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/release", projectKey, workflowName, runNumber, nodeRunID)
+	code, err := c.PostJSON(url, release, nil)
+	if err != nil {
+		return err
+	}
+	if code >= 300 {
+		return fmt.Errorf("Cannot create workflow node run release")
+	}
+	return nil
+}

@@ -70,6 +70,7 @@ const (
 	JUnitAction    = "JUnit"
 	GitCloneAction = "GitClone"
 	GitTagAction   = "GitTag"
+	ReleaseAction  = "Release"
 )
 
 const (

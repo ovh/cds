@@ -83,6 +83,8 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 		tmp[k] = v
 	}
 
+	// TODO Update suggest.go  with new variable
+
 	tmp["cds.project"] = w.ProjectKey
 	tmp["cds.workflow"] = w.Name
 	tmp["cds.pipeline"] = n.Pipeline.Name

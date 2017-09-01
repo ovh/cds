@@ -1,8 +1,10 @@
 package repogithub
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -20,6 +22,65 @@ type GithubClient struct {
 	OAuthToken       string
 	DisableSetStatus bool
 	DisableStatusURL bool
+}
+
+// ReleaseRequest Request sent to Github to create a release
+type ReleaseRequest struct {
+	TagName string `json:"tag_name"`
+	Name    string `json:"name"`
+	Body    string `json:"body"`
+}
+
+// Release Create a release Github
+func (g *GithubClient) Release(fullname string, tagName string, title string, releaseNote string) (*sdk.VCSRelease, error) {
+	var url = "/repos/" + fullname + "/releases"
+
+	req := ReleaseRequest{
+		TagName: tagName,
+		Name:    title,
+		Body:    releaseNote,
+	}
+	b, err := json.Marshal(req)
+	if err != nil {
+		return nil, sdk.WrapError(err, "github.Release > Cannot marshal body %+v", req)
+	}
+
+	res, err := g.post(url, "application/json", bytes.NewBuffer(b))
+	if err != nil {
+		return nil, err
+	}
+
+	defer res.Body.Close()
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, sdk.WrapError(err, "github.Release > Cannot create release on github")
+	}
+
+	if res.StatusCode != 201 {
+		return nil, sdk.WrapError(fmt.Errorf("github.Release >Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body), "")
+	}
+
+	var release sdk.VCSRelease
+	if err := json.Unmarshal(body, &release); err != nil {
+		return nil, sdk.WrapError(err, "github.Release>  Cannot unmarshal response")
+	}
+
+	return &release, nil
+}
+
+// UploadReleaseFile Attach a file into the release
+func (g *GithubClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, buf *bytes.Buffer) error {
+	var url = "/repos/" + repo + "/releases/" + release.ID + "/assets?name=" + runArtifact.Name
+	res, err := g.post(url, "application/octet-stream", buf)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.StatusCode != 201 {
+		return sdk.WrapError(fmt.Errorf("github.Release >Unable to create status on github. Status code : %d", res.StatusCode), "")
+	}
+	return nil
 }
 
 // Repos list repositories that are accessible to the authenticated user
