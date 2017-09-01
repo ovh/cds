@@ -1,14 +1,13 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
@@ -17,13 +16,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getVariablesAuditInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariablesAuditInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		audits, err := application.GetVariableAudit(db, key, appName)
+		audits, err := application.GetVariableAudit(api.MustDB(), key, appName)
 		if err != nil {
 			log.Warning("getVariablesAuditInApplicationHandler: Cannot get variable audit for application %s: %s\n", appName, err)
 			return err
@@ -34,8 +33,8 @@ func getVariablesAuditInApplicationHandler(router *Router) Handler {
 }
 
 // Deprecated
-func restoreAuditHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) restoreAuditHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
@@ -47,25 +46,25 @@ func restoreAuditHandler(router *Router) Handler {
 			return sdk.ErrInvalidID
 		}
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot load %s: %s\n", key, err)
 			return err
 		}
 
-		app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot load application %s : %s\n", appName, err)
 			return sdk.ErrApplicationNotFound
 		}
 
-		variables, err := application.GetAudit(db, key, appName, auditID)
+		variables, err := application.GetAudit(api.MustDB(), key, appName, auditID)
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot get variable audit for application %s: %s\n", appName, err)
 			return err
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot start transaction : %s\n", err)
 			return sdk.ErrUnknownError
@@ -87,7 +86,7 @@ func restoreAuditHandler(router *Router) Handler {
 				}
 				v.Value = string(value)
 			}
-			err := application.InsertVariable(tx, app, v, c.User)
+			err := application.InsertVariable(tx, app, v, getUser(ctx))
 			if err != nil {
 				log.Warning("restoreAuditHandler: Cannot insert variable %s for application %s:  %s\n", v.Name, appName, err)
 				return err
@@ -100,7 +99,7 @@ func restoreAuditHandler(router *Router) Handler {
 			return sdk.ErrUnknownError
 		}
 
-		err = sanity.CheckProjectPipelines(db, p)
+		err = sanity.CheckProjectPipelines(api.MustDB(), p)
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot check warnings: %s\n", err)
 			return err
@@ -116,25 +115,25 @@ func restoreAuditHandler(router *Router) Handler {
 	}
 }
 
-func getVariableAuditInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariableAuditInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		app, errA := application.LoadByName(db, key, appName, c.User)
+		app, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load application %s on project %s", appName, key)
 		}
 
-		variable, errV := application.LoadVariable(db, app.ID, varName)
+		variable, errV := application.LoadVariable(api.MustDB(), app.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "getVariableAuditInApplicationHandler> Cannot load variable %s", varName)
 		}
 
-		audits, errA := application.LoadVariableAudits(db, app.ID, variable.ID)
+		audits, errA := application.LoadVariableAudits(api.MustDB(), app.ID, variable.ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load audit for variable %s", varName)
 		}
@@ -142,20 +141,20 @@ func getVariableAuditInApplicationHandler(router *Router) Handler {
 	}
 }
 
-func getVariableInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariableInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(db, key, appName, c.User)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getVariableInApplicationHandler: Cannot load application %s: %s\n", appName, err)
 			return err
 		}
 
-		variable, err := application.LoadVariable(db, app.ID, varName)
+		variable, err := application.LoadVariable(api.MustDB(), app.ID, varName)
 		if err != nil {
 			log.Warning("getVariableInApplicationHandler: Cannot get variable %s for application %s: %s\n", varName, appName, err)
 			return err
@@ -165,13 +164,13 @@ func getVariableInApplicationHandler(router *Router) Handler {
 	}
 }
 
-func getVariablesInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariablesInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		variables, err := application.GetAllVariable(db, key, appName)
+		variables, err := application.GetAllVariable(api.MustDB(), key, appName)
 		if err != nil {
 			log.Warning("getVariablesInApplicationHandler: Cannot get variables for application %s: %s\n", appName, err)
 			return err
@@ -181,36 +180,36 @@ func getVariablesInApplicationHandler(router *Router) Handler {
 	}
 }
 
-func deleteVariableFromApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteVariableFromApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableInApplicationHandler: Cannot load project %s", key)
 		}
 
-		app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableInApplicationHandler: Cannot load application: %s", appName)
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		// Clear password for audit
-		varToDelete, errV := application.LoadVariable(db, app.ID, varName, application.WithClearPassword())
+		varToDelete, errV := application.LoadVariable(api.MustDB(), app.ID, varName, application.WithClearPassword())
 		if errV != nil {
 			return sdk.WrapError(errV, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
 		}
 
-		if err := application.DeleteVariable(tx, app, varToDelete, c.User); err != nil {
+		if err := application.DeleteVariable(tx, app, varToDelete, getUser(ctx)); err != nil {
 			log.Warning("deleteVariableFromApplicationHandler: Cannot delete %s: %s\n", varName, err)
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot delete %s", varName)
 		}
@@ -223,7 +222,7 @@ func deleteVariableFromApplicationHandler(router *Router) Handler {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot commit transaction")
 		}
 
-		app.Variable, err = application.GetAllVariableByID(db, app.ID)
+		app.Variable, err = application.GetAllVariableByID(api.MustDB(), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot load variables")
 		}
@@ -234,13 +233,13 @@ func deleteVariableFromApplicationHandler(router *Router) Handler {
 }
 
 // deprecated
-func updateVariablesInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateVariablesInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 		if err != nil {
 			log.Warning("updateVariablesInApplicationHandler: Cannot load %s: %s\n", key, err)
 			return err
@@ -251,13 +250,13 @@ func updateVariablesInApplicationHandler(router *Router) Handler {
 			return err
 		}
 
-		app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updateVariablesInApplicationHandler: Cannot load application %s : %s\n", appName, err)
 			return sdk.ErrApplicationNotFound
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("updateVariablesInApplicationHandler: Cannot unmarshal body : %s\n", err)
 			return sdk.ErrUnknownError
@@ -289,14 +288,14 @@ func updateVariablesInApplicationHandler(router *Router) Handler {
 					}
 				}
 
-				if err := application.InsertVariable(tx, app, v, c.User); err != nil {
+				if err := application.InsertVariable(tx, app, v, getUser(ctx)); err != nil {
 					log.Warning("updateVariablesInApplicationHandler: Cannot insert variable %s for application %s:  %s\n", v.Name, appName, err)
 					return err
 				}
 				break
 			case sdk.KeyVariable:
 				if v.Value == "" {
-					if err := application.AddKeyPairToApplication(tx, app, v.Name, c.User); err != nil {
+					if err := application.AddKeyPairToApplication(tx, app, v.Name, getUser(ctx)); err != nil {
 						log.Warning("updateVariablesInApplicationHandler> cannot generate keypair: %s\n", err)
 						return err
 					}
@@ -306,14 +305,14 @@ func updateVariablesInApplicationHandler(router *Router) Handler {
 							v.Value = p.Value
 						}
 					}
-					if err := application.InsertVariable(tx, app, v, c.User); err != nil {
+					if err := application.InsertVariable(tx, app, v, getUser(ctx)); err != nil {
 						log.Warning("updateVariablesInApplication: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 						return err
 					}
 				}
 				break
 			default:
-				if err := application.InsertVariable(tx, app, v, c.User); err != nil {
+				if err := application.InsertVariable(tx, app, v, getUser(ctx)); err != nil {
 					log.Warning("updateVariablesInApplicationHandler: Cannot insert variable %s for application %s:  %s\n", v.Name, appName, err)
 					return err
 				}
@@ -325,12 +324,12 @@ func updateVariablesInApplicationHandler(router *Router) Handler {
 			return sdk.ErrUnknownError
 		}
 
-		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
 			log.Warning("updateVariableInApplicationHandler: Cannot check warnings: %s\n", err)
 			return err
 		}
 
-		if err := sanity.CheckApplication(db, p, app); err != nil {
+		if err := sanity.CheckApplication(api.MustDB(), p, app); err != nil {
 			log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
 			return err
 		}
@@ -340,14 +339,14 @@ func updateVariablesInApplicationHandler(router *Router) Handler {
 	}
 }
 
-func updateVariableInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateVariableInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load project %s", key)
 		}
@@ -360,18 +359,18 @@ func updateVariableInApplicationHandler(router *Router) Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load application: %s", appName)
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot create transaction")
 		}
 		defer tx.Rollback()
 
-		if err := application.UpdateVariable(tx, app, &newVar, c.User); err != nil {
+		if err := application.UpdateVariable(tx, app, &newVar, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot update variable %s for application %s", varName, appName)
 		}
 
@@ -379,16 +378,16 @@ func updateVariableInApplicationHandler(router *Router) Handler {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot commit transaction")
 		}
 
-		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot check warnings")
 		}
 
-		app.Variable, err = application.GetAllVariableByID(db, app.ID)
+		app.Variable, err = application.GetAllVariableByID(api.MustDB(), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load variables")
 		}
 
-		if err := sanity.CheckApplication(db, p, app); err != nil {
+		if err := sanity.CheckApplication(api.MustDB(), p, app); err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot check application sanity")
 		}
 
@@ -398,14 +397,14 @@ func updateVariableInApplicationHandler(router *Router) Handler {
 	}
 }
 
-func addVariableInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addVariableInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 		if err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot load %s: %s\n", key, err)
 			return err
@@ -420,13 +419,13 @@ func addVariableInApplicationHandler(router *Router) Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot load application %s :  %s\n", appName, err)
 			return err
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot start transaction:  %s\n", err)
 			return err
@@ -435,10 +434,10 @@ func addVariableInApplicationHandler(router *Router) Handler {
 
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			err = application.AddKeyPairToApplication(tx, app, newVar.Name, c.User)
+			err = application.AddKeyPairToApplication(tx, app, newVar.Name, getUser(ctx))
 			break
 		default:
-			err = application.InsertVariable(tx, app, newVar, c.User)
+			err = application.InsertVariable(tx, app, newVar, getUser(ctx))
 			break
 		}
 		if err != nil {
@@ -451,18 +450,18 @@ func addVariableInApplicationHandler(router *Router) Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot check warnings: %s\n", err)
 			return err
 		}
 
-		app.Variable, err = application.GetAllVariableByID(db, app.ID)
+		app.Variable, err = application.GetAllVariableByID(api.MustDB(), app.ID)
 		if err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot get variables: %s\n", err)
 			return err
 		}
 
-		if err := sanity.CheckApplication(db, p, app); err != nil {
+		if err := sanity.CheckApplication(api.MustDB(), p, app); err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
 			return err
 		}

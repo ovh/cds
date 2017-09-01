@@ -1,15 +1,14 @@
 package api
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/hcl"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -19,20 +18,20 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func importPipelineHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) importPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 
 		// Load project
-		proj, errp := project.Load(db, key, c.User, project.LoadOptions.Default)
+		proj, errp := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if errp != nil {
 			return sdk.WrapError(errp, "importPipelineHandler> Unable to load project %s", key)
 		}
 
-		if err := group.LoadGroupByProject(db, proj); err != nil {
+		if err := group.LoadGroupByProject(api.MustDB(), proj); err != nil {
 			return sdk.WrapError(errp, "importPipelineHandler> Unable to load project permissions %s", key)
 		}
 
@@ -64,7 +63,7 @@ func importPipelineHandler(router *Router) Handler {
 		}
 
 		// Check if pipeline exists
-		exist, errE := pipeline.ExistPipeline(db, proj.ID, payload.Name)
+		exist, errE := pipeline.ExistPipeline(api.MustDB(), proj.ID, payload.Name)
 		if errE != nil {
 			return sdk.WrapError(errE, "importPipelineHandler> Unable to check if pipeline %s exists", payload.Name)
 		}
@@ -78,7 +77,7 @@ func importPipelineHandler(router *Router) Handler {
 		// Load group in permission
 		for i := range pip.GroupPermission {
 			eg := &pip.GroupPermission[i]
-			g, errg := group.LoadGroup(db, eg.Group.Name)
+			g, errg := group.LoadGroup(api.MustDB(), eg.Group.Name)
 			if errg != nil {
 				return sdk.WrapError(errg, "importPipelineHandler> Error loading groups for permission")
 			}
@@ -100,7 +99,7 @@ func importPipelineHandler(router *Router) Handler {
 			}
 		}()
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			log.Warning("importPipelineHandler: Cannot start transaction: %s\n", errBegin)
 			return sdk.WrapError(errBegin, "importPipelineHandler: Cannot start transaction")
@@ -113,9 +112,9 @@ func importPipelineHandler(router *Router) Handler {
 		if exist && !forceUpdate {
 			return sdk.ErrPipelineAlreadyExists
 		} else if exist {
-			globalError = pipeline.ImportUpdate(tx, proj, pip, msgChan, c.User)
+			globalError = pipeline.ImportUpdate(tx, proj, pip, msgChan, getUser(ctx))
 		} else {
-			globalError = pipeline.Import(tx, proj, pip, msgChan, c.User)
+			globalError = pipeline.Import(tx, proj, pip, msgChan, getUser(ctx))
 		}
 
 		close(msgChan)
@@ -141,7 +140,7 @@ func importPipelineHandler(router *Router) Handler {
 			return sdk.WrapError(globalError, "importPipelineHandler> Unable import pipeline")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Unable to update project")
 		}
 
@@ -150,12 +149,12 @@ func importPipelineHandler(router *Router) Handler {
 		}
 
 		var errlp error
-		proj.Pipelines, errlp = pipeline.LoadPipelines(db, proj.ID, true, c.User)
+		proj.Pipelines, errlp = pipeline.LoadPipelines(api.MustDB(), proj.ID, true, getUser(ctx))
 		if errlp != nil {
 			return sdk.WrapError(errlp, "importPipelineHandler> Unable to reload pipelines for project %s", proj.Key)
 		}
 
-		if err := sanity.CheckProjectPipelines(db, proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), proj); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Cannot check warnings")
 		}
 

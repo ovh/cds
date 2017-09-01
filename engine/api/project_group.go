@@ -1,13 +1,12 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -16,34 +15,34 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func deleteGroupFromProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteGroupFromProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		groupName := vars["group"]
 
-		p, err := project.Load(db, key, c.User)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot load %s", key)
 		}
 
-		g, err := group.LoadGroup(db, groupName)
+		g, err := group.LoadGroup(api.MustDB(), groupName)
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot find %s", groupName)
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot start transaction")
 		}
 
 		defer tx.Rollback()
-		if err := group.DeleteGroupFromProject(db, p.ID, g.ID); err != nil {
+		if err := group.DeleteGroupFromProject(api.MustDB(), p.ID, g.ID); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from project %s", g.Name, p.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot update last modified date")
 		}
 
@@ -55,8 +54,8 @@ func deleteGroupFromProjectHandler(router *Router) Handler {
 	}
 }
 
-func updateGroupRoleOnProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateGroupRoleOnProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -71,17 +70,17 @@ func updateGroupRoleOnProjectHandler(router *Router) Handler {
 			return sdk.ErrGroupNotFound
 		}
 
-		p, errl := project.Load(db, key, c.User)
+		p, errl := project.Load(api.MustDB(), key, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "updateGroupRoleHandler: Cannot load %s: %s", key)
 		}
 
-		g, errlg := group.LoadGroup(db, groupProject.Group.Name)
+		g, errlg := group.LoadGroup(api.MustDB(), groupProject.Group.Name)
 		if errlg != nil {
 			return sdk.WrapError(errlg, "updateGroupRoleHandler: Cannot find %s", groupProject.Group.Name)
 		}
 
-		groupInProject, errcg := group.CheckGroupInProject(db, p.ID, g.ID)
+		groupInProject, errcg := group.CheckGroupInProject(api.MustDB(), p.ID, g.ID)
 		if errcg != nil {
 			return sdk.WrapError(errcg, "updateGroupRoleHandler: Cannot check if group %s is already in the project %s", g.Name, p.Name)
 		}
@@ -91,7 +90,7 @@ func updateGroupRoleOnProjectHandler(router *Router) Handler {
 		}
 
 		if groupProject.Permission != permission.PermissionReadWriteExecute {
-			permissions, err := group.LoadAllProjectGroupByRole(db, p.ID, permission.PermissionReadWriteExecute)
+			permissions, err := group.LoadAllProjectGroupByRole(api.MustDB(), p.ID, permission.PermissionReadWriteExecute)
 			if err != nil {
 				return sdk.WrapError(err, "updateGroupRoleHandler: Cannot load group for the given project %s", p.Name)
 			}
@@ -101,17 +100,17 @@ func updateGroupRoleOnProjectHandler(router *Router) Handler {
 			}
 		}
 
-		tx, errb := db.Begin()
+		tx, errb := api.MustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "updateGroupRoleHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := group.UpdateGroupRoleInProject(db, p.ID, g.ID, groupProject.Permission); err != nil {
+		if err := group.UpdateGroupRoleInProject(api.MustDB(), p.ID, g.ID, groupProject.Permission); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot add group %s in project %s", g.Name, p.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot update last modified date")
 		}
 
@@ -123,8 +122,8 @@ func updateGroupRoleOnProjectHandler(router *Router) Handler {
 }
 
 // Deprecated
-func updateGroupsInProject(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateGroupsInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -149,12 +148,12 @@ func updateGroupsInProject(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInProject: Need one group with write permission.")
 		}
 
-		p, err := project.Load(db, key, c.User)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "updateGroupsInProject: Cannot load %s")
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateGroupsInProject: Cannot start transaction")
 		}
@@ -183,8 +182,8 @@ func updateGroupsInProject(router *Router) Handler {
 	}
 }
 
-func addGroupInProject(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addGroupInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -194,17 +193,17 @@ func addGroupInProject(router *Router) Handler {
 			return sdk.WrapError(err, "addGroupInProject> unable to unmarshal")
 		}
 
-		p, errl := project.Load(db, key, c.User)
+		p, errl := project.Load(api.MustDB(), key, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "AddGroupInProject: Cannot load %s", key)
 		}
 
-		g, errlg := group.LoadGroup(db, groupProject.Group.Name)
+		g, errlg := group.LoadGroup(api.MustDB(), groupProject.Group.Name)
 		if errlg != nil {
 			return sdk.WrapError(errlg, "AddGroupInProject: Cannot find %s", groupProject.Group.Name)
 		}
 
-		groupInProject, errc := group.CheckGroupInProject(db, p.ID, g.ID)
+		groupInProject, errc := group.CheckGroupInProject(api.MustDB(), p.ID, g.ID)
 		if errc != nil {
 			return sdk.WrapError(errc, "AddGroupInProject: Cannot check if group %s is already in the project %s", g.Name, p.Name)
 		}
@@ -212,7 +211,7 @@ func addGroupInProject(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrGroupExists, "AddGroupInProject: Group already in the project %s", p.Name)
 		}
 
-		tx, errb := db.Begin()
+		tx, errb := api.MustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "AddGroupInProject: Cannot open transaction")
 		}
@@ -223,13 +222,13 @@ func addGroupInProject(router *Router) Handler {
 		}
 
 		// apply on application
-		applications, errla := application.LoadAll(tx, p.Key, c.User)
+		applications, errla := application.LoadAll(tx, p.Key, getUser(ctx))
 		if errla != nil {
 			return sdk.WrapError(errla, "AddGroupInProject: Cannot load applications for project %s", p.Name)
 		}
 
 		for _, app := range applications {
-			if permission.AccessToApplication(app.ID, c.User, permission.PermissionReadWriteExecute) {
+			if permission.AccessToApplication(app.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 				inApp, err := group.CheckGroupInApplication(tx, app.ID, g.ID)
 				if err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the application %s", g.Name, app.Name)
@@ -238,20 +237,20 @@ func addGroupInProject(router *Router) Handler {
 					if err := group.UpdateGroupRoleInApplication(tx, p.Key, app.Name, g.Name, groupProject.Permission); err != nil {
 						return sdk.WrapError(err, "AddGroupInProject: Cannot update group %s on application %s", g.Name, app.Name)
 					}
-				} else if err := application.AddGroup(tx, p, &app, c.User, groupProject); err != nil {
+				} else if err := application.AddGroup(tx, p, &app, getUser(ctx), groupProject); err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot insert group %s on application %s", g.Name, app.Name)
 				}
 			}
 		}
 
 		// apply on pipeline
-		pipelines, errlp := pipeline.LoadPipelines(tx, p.ID, false, c.User)
+		pipelines, errlp := pipeline.LoadPipelines(tx, p.ID, false, getUser(ctx))
 		if errlp != nil {
 			return sdk.WrapError(errlp, "AddGroupInProject: Cannot load pipelines for project %s", p.Name)
 		}
 
 		for _, pip := range pipelines {
-			if permission.AccessToPipeline(sdk.DefaultEnv.ID, pip.ID, c.User, permission.PermissionReadWriteExecute) {
+			if permission.AccessToPipeline(sdk.DefaultEnv.ID, pip.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 				inPip, err := group.CheckGroupInPipeline(tx, pip.ID, g.ID)
 				if err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the pipeline %s", g.Name, pip.Name)
@@ -267,13 +266,13 @@ func addGroupInProject(router *Router) Handler {
 		}
 
 		// apply on environment
-		envs, errle := environment.LoadEnvironments(tx, p.Key, false, c.User)
+		envs, errle := environment.LoadEnvironments(tx, p.Key, false, getUser(ctx))
 		if errle != nil {
 			return sdk.WrapError(errle, "AddGroupInProject: Cannot load environments for project %s", p.Name)
 		}
 
 		for _, env := range envs {
-			if permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadWriteExecute) {
+			if permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 				inEnv, err := group.IsInEnvironment(tx, env.ID, g.ID)
 				if err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the environment %s", g.Name, env.Name)
@@ -288,7 +287,7 @@ func addGroupInProject(router *Router) Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot update last modified date")
 		}
 
@@ -296,7 +295,7 @@ func addGroupInProject(router *Router) Handler {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot commit transaction")
 		}
 
-		if err := group.LoadGroupByProject(db, p); err != nil {
+		if err := group.LoadGroupByProject(api.MustDB(), p); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot load groups on project %s", p.Key)
 		}
 

@@ -1,23 +1,22 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"regexp"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getProjectsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getProjectsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		withApplication := FormBool(r, "application")
 
@@ -25,9 +24,9 @@ func getProjectsHandler(router *Router) Handler {
 		var err error
 
 		if withApplication {
-			projects, err = project.LoadAll(db, c.User, project.LoadOptions.WithApplications)
+			projects, err = project.LoadAll(api.MustDB(), getUser(ctx), project.LoadOptions.WithApplications)
 		} else {
-			projects, err = project.LoadAll(db, c.User)
+			projects, err = project.LoadAll(api.MustDB(), getUser(ctx))
 		}
 		if err != nil {
 			return sdk.WrapError(err, "getProjectsHandler")
@@ -36,8 +35,8 @@ func getProjectsHandler(router *Router) Handler {
 	}
 }
 
-func updateProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -57,13 +56,13 @@ func updateProjectHandler(router *Router) Handler {
 		}
 
 		// Check is project exist
-		p, errProj := project.Load(db, key, c.User)
+		p, errProj := project.Load(api.MustDB(), key, getUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateProject> Cannot load project from db")
 		}
 		// Update in DB is made given the primary key
 		proj.ID = p.ID
-		if errUp := project.Update(db, proj, c.User); errUp != nil {
+		if errUp := project.Update(api.MustDB(), proj, getUser(ctx)); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
 
@@ -71,8 +70,8 @@ func updateProjectHandler(router *Router) Handler {
 	}
 }
 
-func getProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -116,7 +115,7 @@ func getProjectHandler(router *Router) Handler {
 			opts = append(opts, project.LoadOptions.WithKeys)
 		}
 
-		p, errProj := project.Load(db, key, c.User, opts...)
+		p, errProj := project.Load(api.MustDB(), key, getUser(ctx), opts...)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
@@ -125,8 +124,8 @@ func getProjectHandler(router *Router) Handler {
 	}
 }
 
-func addProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Unmarshal data
 		p := &sdk.Project{}
 		if err := UnmarshalBody(r, p); err != nil {
@@ -144,7 +143,7 @@ func addProjectHandler(router *Router) Handler {
 		}
 
 		// Check that project does not already exists
-		exist, errExist := project.Exist(db, p.Key)
+		exist, errExist := project.Exist(api.MustDB(), p.Key)
 		if errExist != nil {
 			return sdk.WrapError(errExist, "AddProject>  Cannot check if project %s exist", p.Key)
 		}
@@ -154,13 +153,13 @@ func addProjectHandler(router *Router) Handler {
 		}
 
 		//Create a project within a transaction
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		defer tx.Rollback()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "AddProject> Cannot start tx")
 		}
 
-		if err := project.Insert(tx, p, c.User); err != nil {
+		if err := project.Insert(tx, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "AddProject> Cannot insert project")
 		}
 
@@ -182,8 +181,8 @@ func addProjectHandler(router *Router) Handler {
 
 			// Add user in group
 			if new {
-				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, c.User.ID, true); err != nil {
-					return sdk.WrapError(err, "addProject> Cannot add user %s in group %s", c.User.Username, groupPermission.Group.Name)
+				if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, getUser(ctx).ID, true); err != nil {
+					return sdk.WrapError(err, "addProject> Cannot add user %s in group %s", getUser(ctx).Username, groupPermission.Group.Name)
 				}
 			}
 		}
@@ -192,16 +191,16 @@ func addProjectHandler(router *Router) Handler {
 			var errVar error
 			switch v.Type {
 			case sdk.KeyVariable:
-				errVar = project.AddKeyPair(tx, p, v.Name, c.User)
+				errVar = project.AddKeyPair(tx, p, v.Name, getUser(ctx))
 			default:
-				errVar = project.InsertVariable(tx, p, &v, c.User)
+				errVar = project.InsertVariable(tx, p, &v, getUser(ctx))
 			}
 			if errVar != nil {
 				return sdk.WrapError(errVar, "addProject> Cannot add variable %s in project %s", v.Name, p.Name)
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "addProject> Cannot update last modified")
 		}
 
@@ -213,13 +212,13 @@ func addProjectHandler(router *Router) Handler {
 	}
 }
 
-func deleteProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errProj := project.Load(db, key, c.User, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+		p, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 		if errProj != nil {
 			if errProj != sdk.ErrNoProject {
 				return sdk.WrapError(errProj, "deleteProject> load project '%s' from db", key)
@@ -235,7 +234,7 @@ func deleteProjectHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrProjectHasApplication, "deleteProject> Project '%s' still used by %d applications", key, len(p.Applications))
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteProject> Cannot start transaction")
 		}
@@ -253,15 +252,15 @@ func deleteProjectHandler(router *Router) Handler {
 	}
 }
 
-func getUserLastUpdates(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getUserLastUpdatesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		sinceHeader := r.Header.Get("If-Modified-Since")
 		since := time.Unix(0, 0)
 		if sinceHeader != "" {
 			since, _ = time.Parse(time.RFC1123, sinceHeader)
 		}
 
-		lastUpdates, errUp := project.LastUpdates(db, c.User, since)
+		lastUpdates, errUp := project.LastUpdates(api.MustDB(), getUser(ctx), since)
 		if errUp != nil {
 			if errUp == sql.ErrNoRows {
 				w.WriteHeader(http.StatusNotModified)

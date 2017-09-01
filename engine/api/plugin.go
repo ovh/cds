@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,12 +11,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/actionplugin"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -72,8 +71,8 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 	return ap, params, content, deferFunc, nil
 }
 
-func addPluginHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addPluginHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Upload file and get plugin information
 		ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
 		if deferFunc != nil {
@@ -85,7 +84,7 @@ func addPluginHandler(router *Router) Handler {
 		defer file.Close()
 
 		// Check that action does not already exists
-		conflict, err := action.Exists(db, ap.Name)
+		conflict, err := action.Exists(api.MustDB(), ap.Name)
 		if err != nil {
 			return sdk.WrapError(err, "updatePluginHandler>%T", err)
 		}
@@ -100,7 +99,7 @@ func addPluginHandler(router *Router) Handler {
 		}
 		ap.ObjectPath = objectPath
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "addPluginHandler> Cannot start transaction")
 		}
@@ -121,8 +120,8 @@ func addPluginHandler(router *Router) Handler {
 	}
 }
 
-func updatePluginHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updatePluginHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Upload file and get plugin information
 		ap, params, file, deferFunc, errUpload := fileUploadAndGetPlugin(w, r)
 		if deferFunc != nil {
@@ -133,7 +132,7 @@ func updatePluginHandler(router *Router) Handler {
 		}
 
 		// Check that action does not already exists
-		exists, errExists := action.Exists(db, ap.Name)
+		exists, errExists := action.Exists(api.MustDB(), ap.Name)
 		if errExists != nil {
 			return sdk.WrapError(errExists, "updatePluginHandler> unable to check if action %s exists", ap.Name)
 		}
@@ -188,14 +187,14 @@ func updatePluginHandler(router *Router) Handler {
 		}
 		ap.ObjectPath = objectPath
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updatePluginHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		//Update in database
-		a, errDB := actionplugin.Update(tx, ap, params, c.User.ID)
+		a, errDB := actionplugin.Update(tx, ap, params, getUser(ctx).ID)
 		if errDB != nil && tmpFile != "" {
 			log.Warning("updatePluginHandler> Error while updating action %s in database: %s\n", ap.Name, errDB)
 			//Restore previous file
@@ -218,8 +217,8 @@ func updatePluginHandler(router *Router) Handler {
 	}
 }
 
-func deletePluginHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deletePluginHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
 
@@ -228,7 +227,7 @@ func deletePluginHandler(router *Router) Handler {
 		}
 
 		//Delete in database
-		if err := actionplugin.Delete(db, name, c.User.ID); err != nil {
+		if err := actionplugin.Delete(api.MustDB(), name, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "deletePluginHandler> Error while deleting action %s in database", name)
 		}
 
@@ -240,8 +239,8 @@ func deletePluginHandler(router *Router) Handler {
 	}
 }
 
-func downloadPluginHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) downloadPluginHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["name"]
 

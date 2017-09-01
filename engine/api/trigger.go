@@ -1,14 +1,13 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -18,8 +17,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func addTriggerHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addTriggerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		project := vars["key"]
 
@@ -31,34 +30,34 @@ func addTriggerHandler(router *Router) Handler {
 
 		// load source ids
 		if t.SrcApplication.ID == 0 {
-			a, errSrcApp := application.LoadByName(db, project, t.SrcApplication.Name, c.User)
+			a, errSrcApp := application.LoadByName(api.MustDB(), project, t.SrcApplication.Name, getUser(ctx))
 			if errSrcApp != nil {
 				log.Warning("addTriggersHandler> cannot load src application: %s\n", errSrcApp)
 				return errSrcApp
 			}
 			t.SrcApplication.ID = a.ID
 		}
-		if !permission.AccessToApplication(t.SrcApplication.ID, c.User, permission.PermissionReadWriteExecute) {
+		if !permission.AccessToApplication(t.SrcApplication.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 			log.Warning("addTriggersHandler> You don't have enought right on this application %s", t.SrcApplication.Name)
 			return sdk.ErrForbidden
 		}
 
 		if t.SrcPipeline.ID == 0 {
-			p, errSrcPip := pipeline.LoadPipeline(db, project, t.SrcPipeline.Name, false)
+			p, errSrcPip := pipeline.LoadPipeline(api.MustDB(), project, t.SrcPipeline.Name, false)
 			if errSrcPip != nil {
 				log.Warning("addTriggersHandler> cannot load src pipeline: %s\n", errSrcPip)
 				return errSrcPip
 			}
 			t.SrcPipeline.ID = p.ID
 		}
-		if !permission.AccessToPipeline(sdk.DefaultEnv.ID, t.SrcPipeline.ID, c.User, permission.PermissionReadWriteExecute) {
+		if !permission.AccessToPipeline(sdk.DefaultEnv.ID, t.SrcPipeline.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 			log.Warning("addTriggersHandler> You don't have enought right on this pipeline %s", t.SrcPipeline.Name)
 			return sdk.ErrForbidden
 
 		}
 
 		if t.SrcEnvironment.ID == 0 && t.SrcEnvironment.Name != "" && t.SrcEnvironment.Name != sdk.DefaultEnv.Name {
-			e, errSrcEnv := environment.LoadEnvironmentByName(db, project, t.SrcEnvironment.Name)
+			e, errSrcEnv := environment.LoadEnvironmentByName(api.MustDB(), project, t.SrcEnvironment.Name)
 			if errSrcEnv != nil {
 				log.Warning("addTriggersHandler> cannot load src environment: %s\n", errSrcEnv)
 				return errSrcEnv
@@ -67,7 +66,7 @@ func addTriggerHandler(router *Router) Handler {
 		} else if t.SrcEnvironment.ID == 0 {
 			t.SrcEnvironment = sdk.DefaultEnv
 		}
-		if !permission.AccessToEnvironment(t.SrcEnvironment.ID, c.User, permission.PermissionReadWriteExecute) {
+		if !permission.AccessToEnvironment(t.SrcEnvironment.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 			log.Warning("addTriggersHandler> No enought right on this environment %s: \n", t.SrcEnvironment.Name)
 			return sdk.ErrForbidden
 
@@ -75,34 +74,34 @@ func addTriggerHandler(router *Router) Handler {
 
 		// load destination ids
 		if t.DestApplication.ID == 0 {
-			a, errDestApp := application.LoadByName(db, project, t.DestApplication.Name, c.User)
+			a, errDestApp := application.LoadByName(api.MustDB(), project, t.DestApplication.Name, getUser(ctx))
 			if errDestApp != nil {
 				log.Warning("addTriggersHandler> cannot load dst application: %s\n", errDestApp)
 				return errDestApp
 			}
 			t.DestApplication.ID = a.ID
 		}
-		if !permission.AccessToApplication(t.DestApplication.ID, c.User, permission.PermissionReadWriteExecute) {
+		if !permission.AccessToApplication(t.DestApplication.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 			log.Warning("addTriggersHandler> You don't have enought right on this application %s", t.DestApplication.Name)
 			return sdk.ErrForbidden
 		}
 
 		if t.DestPipeline.ID == 0 {
-			p, errDestPip := pipeline.LoadPipeline(db, project, t.DestPipeline.Name, false)
+			p, errDestPip := pipeline.LoadPipeline(api.MustDB(), project, t.DestPipeline.Name, false)
 			if errDestPip != nil {
 				log.Warning("addTriggersHandler> cannot load dst pipeline: %s\n", errDestPip)
 				return errDestPip
 			}
 			t.DestPipeline.ID = p.ID
 		}
-		if !permission.AccessToPipeline(sdk.DefaultEnv.ID, t.DestPipeline.ID, c.User, permission.PermissionReadWriteExecute) {
+		if !permission.AccessToPipeline(sdk.DefaultEnv.ID, t.DestPipeline.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 			log.Warning("addTriggersHandler> You don't have enought right on this pipeline %s", t.DestPipeline.Name)
 			return sdk.ErrForbidden
 
 		}
 
 		if t.DestEnvironment.ID == 0 && t.DestEnvironment.Name != "" && t.DestEnvironment.Name != sdk.DefaultEnv.Name {
-			e, errDestEnv := environment.LoadEnvironmentByName(db, project, t.DestEnvironment.Name)
+			e, errDestEnv := environment.LoadEnvironmentByName(api.MustDB(), project, t.DestEnvironment.Name)
 			if errDestEnv != nil {
 				log.Warning("addTriggersHandler> cannot load dst environment: %s\n", errDestEnv)
 				return errDestEnv
@@ -112,13 +111,13 @@ func addTriggerHandler(router *Router) Handler {
 			t.DestEnvironment = sdk.DefaultEnv
 		}
 
-		if !permission.AccessToEnvironment(t.DestEnvironment.ID, c.User, permission.PermissionReadWriteExecute) {
+		if !permission.AccessToEnvironment(t.DestEnvironment.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 			log.Warning("addTriggersHandler> No enought right on this environment %s: \n", t.DestEnvironment.Name)
 			return sdk.ErrForbidden
 
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			return errBegin
 
@@ -132,7 +131,7 @@ func addTriggerHandler(router *Router) Handler {
 		}
 
 		// Update src application
-		if err := application.UpdateLastModified(tx, &t.SrcApplication, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, &t.SrcApplication, getUser(ctx)); err != nil {
 			log.Warning("addTriggerHandler> cannot update loast modified date on src application: %s\n", err)
 			return err
 		}
@@ -142,7 +141,7 @@ func addTriggerHandler(router *Router) Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, project, t.SrcApplication.Name, c.User, "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(api.MustDB(), project, t.SrcApplication.Name, getUser(ctx), "", 0)
 		if errWorkflow != nil {
 			log.Warning("addTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 			return errWorkflow
@@ -152,8 +151,8 @@ func addTriggerHandler(router *Router) Handler {
 	}
 }
 
-func getTriggerHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getTriggerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		striggerID := vars["id"]
 
@@ -163,7 +162,7 @@ func getTriggerHandler(router *Router) Handler {
 			return sdk.ErrInvalidID
 		}
 
-		t, errTrig := trigger.LoadTrigger(db, triggerID)
+		t, errTrig := trigger.LoadTrigger(api.MustDB(), triggerID)
 		if errTrig != nil {
 			log.Warning("getTriggerHandler> Cannot load trigger %d: %s\n", triggerID, errTrig)
 			return errTrig
@@ -173,8 +172,8 @@ func getTriggerHandler(router *Router) Handler {
 	}
 }
 
-func getTriggersHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getTriggersHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		project := vars["key"]
 		app := vars["permApplicationName"]
@@ -187,13 +186,13 @@ func getTriggersHandler(router *Router) Handler {
 		}
 		env := r.Form.Get("env")
 
-		a, errApp := application.LoadByName(db, project, app, c.User)
+		a, errApp := application.LoadByName(api.MustDB(), project, app, getUser(ctx))
 		if errApp != nil {
 			log.Warning("getTriggersHandler> cannot load application: %s\n", errApp)
 			return errApp
 		}
 
-		p, errPip := pipeline.LoadPipeline(db, project, pip, false)
+		p, errPip := pipeline.LoadPipeline(api.MustDB(), project, pip, false)
 		if errPip != nil {
 			log.Warning("getTriggersHandler> cannot load pipeline: %s\n", errPip)
 			return errPip
@@ -201,21 +200,21 @@ func getTriggersHandler(router *Router) Handler {
 
 		var envID int64
 		if env != "" && env != sdk.DefaultEnv.Name {
-			e, errEnv := environment.LoadEnvironmentByName(db, project, env)
+			e, errEnv := environment.LoadEnvironmentByName(api.MustDB(), project, env)
 			if errEnv != nil {
 				log.Warning("getTriggersHandler> cannot load environment: %s\n", errEnv)
 				return errEnv
 			}
 			envID = e.ID
 
-			if !permission.AccessToEnvironment(e.ID, c.User, permission.PermissionRead) {
+			if !permission.AccessToEnvironment(e.ID, getUser(ctx), permission.PermissionRead) {
 				log.Warning("getTriggersHandler> No enought right on this environment %s: \n", e.Name)
 				return sdk.ErrForbidden
 
 			}
 		}
 
-		triggers, errTri := trigger.LoadTriggers(db, a.ID, p.ID, envID)
+		triggers, errTri := trigger.LoadTriggers(api.MustDB(), a.ID, p.ID, envID)
 		if errTri != nil {
 			log.Warning("getTriggersHandler> cannot load triggers: %s\n", errTri)
 			return errTri
@@ -225,8 +224,8 @@ func getTriggersHandler(router *Router) Handler {
 	}
 }
 
-func deleteTriggerHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteTriggerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		triggerIDS := vars["id"]
@@ -237,13 +236,13 @@ func deleteTriggerHandler(router *Router) Handler {
 			return sdk.ErrInvalidID
 		}
 
-		t, errTrigger := trigger.LoadTrigger(db, triggerID)
+		t, errTrigger := trigger.LoadTrigger(api.MustDB(), triggerID)
 		if errTrigger != nil {
 			log.Warning("deleteTriggerHandler> Cannot load trigger: %s\n", errTrigger)
 			return errTrigger
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			log.Warning("deleteTriggerHandler> Cannot start transaction: %s\n", errBegin)
 			return errBegin
@@ -255,7 +254,7 @@ func deleteTriggerHandler(router *Router) Handler {
 			return err
 		}
 
-		if err := application.UpdateLastModified(tx, &t.SrcApplication, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, &t.SrcApplication, getUser(ctx)); err != nil {
 			log.Warning("deleteTriggerHandler> cannot update src application last modified date: %s\n", err)
 			return err
 
@@ -268,7 +267,7 @@ func deleteTriggerHandler(router *Router) Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, projectKey, t.SrcApplication.Name, c.User, "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(api.MustDB(), projectKey, t.SrcApplication.Name, getUser(ctx), "", 0)
 		if errWorkflow != nil {
 			log.Warning("deleteTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 			return errWorkflow
@@ -278,8 +277,8 @@ func deleteTriggerHandler(router *Router) Handler {
 	}
 }
 
-func updateTriggerHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateTriggerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		triggerIDS := vars["id"]
@@ -303,7 +302,7 @@ func updateTriggerHandler(router *Router) Handler {
 
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			log.Warning("updateTriggerHandler> cannot start transaction: %s\n", errBegin)
 			return errBegin
@@ -317,7 +316,7 @@ func updateTriggerHandler(router *Router) Handler {
 			return err
 		}
 
-		if err := application.UpdateLastModified(tx, &t.SrcApplication, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, &t.SrcApplication, getUser(ctx)); err != nil {
 			log.Warning("updateTriggerHandler> cannot update src application last modified date: %s\n", err)
 			return err
 		}
@@ -328,7 +327,7 @@ func updateTriggerHandler(router *Router) Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(db, projectKey, t.SrcApplication.Name, c.User, "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(api.MustDB(), projectKey, t.SrcApplication.Name, getUser(ctx), "", 0)
 		if errWorkflow != nil {
 			log.Warning("updateTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 			return errWorkflow
@@ -338,8 +337,8 @@ func updateTriggerHandler(router *Router) Handler {
 	}
 }
 
-func getTriggersAsSourceHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getTriggersAsSourceHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		project := vars["key"]
 		app := vars["permApplicationName"]
@@ -351,13 +350,13 @@ func getTriggersAsSourceHandler(router *Router) Handler {
 		}
 		env := r.Form.Get("env")
 
-		a, errApp := application.LoadByName(db, project, app, c.User)
+		a, errApp := application.LoadByName(api.MustDB(), project, app, getUser(ctx))
 		if errApp != nil {
 			log.Warning("getTriggersAsSourceHandler> cannot load application: %s\n", errApp)
 			return errApp
 		}
 
-		p, errPip := pipeline.LoadPipeline(db, project, pip, false)
+		p, errPip := pipeline.LoadPipeline(api.MustDB(), project, pip, false)
 		if errPip != nil {
 			log.Warning("getTriggersAsSourceHandler> cannot load pipeline: %s\n", errPip)
 			return errPip
@@ -365,20 +364,20 @@ func getTriggersAsSourceHandler(router *Router) Handler {
 
 		var envID int64
 		if env != "" && env != sdk.DefaultEnv.Name {
-			e, errEnv := environment.LoadEnvironmentByName(db, project, env)
+			e, errEnv := environment.LoadEnvironmentByName(api.MustDB(), project, env)
 			if errEnv != nil {
 				log.Warning("getTriggersAsSourceHandler> cannot load environment: %s\n", errEnv)
 				return errEnv
 			}
 			envID = e.ID
 
-			if !permission.AccessToEnvironment(e.ID, c.User, permission.PermissionRead) {
+			if !permission.AccessToEnvironment(e.ID, getUser(ctx), permission.PermissionRead) {
 				log.Warning("getTriggersAsSourceHandler> No enought right on this environment %s: \n", e.Name)
 				return sdk.ErrForbidden
 			}
 		}
 
-		triggers, errTri := trigger.LoadTriggersAsSource(db, a.ID, p.ID, envID)
+		triggers, errTri := trigger.LoadTriggersAsSource(api.MustDB(), a.ID, p.ID, envID)
 		if errTri != nil {
 			log.Warning("getTriggersAsSourceHandler> cannot load triggers: %s\n", errTri)
 			return errTri

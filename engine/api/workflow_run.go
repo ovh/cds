@@ -1,16 +1,16 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/businesscontext"
+
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -21,8 +21,8 @@ const (
 	defaultLimit = 10
 )
 
-func getWorkflowRunsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowRunsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// About pagination: [FR] http://blog.octo.com/designer-une-api-rest/#pagination
 		vars := mux.Vars(r)
 		var limit, offset int
@@ -58,7 +58,7 @@ func getWorkflowRunsHandler(router *Router) Handler {
 
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
-		runs, offset, limit, count, err := workflow.LoadRuns(db, key, name, offset, limit)
+		runs, offset, limit, count, err := workflow.LoadRuns(api.MustDB(), key, name, offset, limit)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunsHandler> Unable to load workflow runs")
 		}
@@ -71,8 +71,8 @@ func getWorkflowRunsHandler(router *Router) Handler {
 
 		//RFC5988: Link : <https://api.fakecompany.com/v1/orders?range=0-7>; rel="first", <https://api.fakecompany.com/v1/orders?range=40-47>; rel="prev", <https://api.fakecompany.com/v1/orders?range=56-64>; rel="next", <https://api.fakecompany.com/v1/orders?range=968-975>; rel="last"
 		if len(runs) < count {
-			baseLinkURL := router.url +
-				router.getRoute("GET", getWorkflowRunsHandler, map[string]string{
+			baseLinkURL := api.Router.URL +
+				api.Router.getRoute("GET", api.getWorkflowRunsHandler, map[string]string{
 					"permProjectKey": key,
 					"workflowName":   name,
 				})
@@ -132,12 +132,12 @@ func getWorkflowRunsHandler(router *Router) Handler {
 	}
 }
 
-func getLatestWorkflowRunHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getLatestWorkflowRunHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
-		run, err := workflow.LoadLastRun(db, key, name)
+		run, err := workflow.LoadLastRun(api.MustDB(), key, name)
 		if err != nil {
 			return sdk.WrapError(err, "getLatestWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -146,8 +146,8 @@ func getLatestWorkflowRunHandler(router *Router) Handler {
 	}
 }
 
-func getWorkflowRunHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowRunHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
@@ -155,7 +155,7 @@ func getWorkflowRunHandler(router *Router) Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadRun(db, key, name, number)
+		run, err := workflow.LoadRun(api.MustDB(), key, name, number)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -164,8 +164,8 @@ func getWorkflowRunHandler(router *Router) Handler {
 	}
 }
 
-func getWorkflowNodeRunHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowNodeRunHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
@@ -177,7 +177,7 @@ func getWorkflowNodeRunHandler(router *Router) Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadNodeRun(db, key, name, number, id)
+		run, err := workflow.LoadNodeRun(api.MustDB(), key, name, number, id)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -193,13 +193,13 @@ type postWorkflowRunHandlerOption struct {
 	FromNodeID *int64                        `json:"from_node,omitempty"`
 }
 
-func postWorkflowRunHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postWorkflowRunHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
 
-		tx, errb := db.Begin()
+		tx, errb := api.MustDB().Begin()
 		if errb != nil {
 			return errb
 		}
@@ -210,7 +210,7 @@ func postWorkflowRunHandler(router *Router) Handler {
 			return err
 		}
 
-		wf, errl := workflow.Load(tx, key, name, c.User)
+		wf, errl := workflow.Load(tx, key, name, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow")
 		}
@@ -237,7 +237,7 @@ func postWorkflowRunHandler(router *Router) Handler {
 			//Default manual run
 			if opts.Manual == nil {
 				opts.Manual = &sdk.WorkflowNodeRunManual{
-					User: *c.User,
+					User: *getUser(ctx),
 				}
 			}
 
@@ -296,8 +296,8 @@ func postWorkflowRunHandler(router *Router) Handler {
 	}
 }
 
-func getWorkflowNodeRunArtifactsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowNodeRunArtifactsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
@@ -311,7 +311,7 @@ func getWorkflowNodeRunArtifactsHandler(router *Router) Handler {
 		if errI != nil {
 			return sdk.WrapError(sdk.ErrInvalidID, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
 		}
-		nodeRun, errR := workflow.LoadNodeRun(db, key, name, number, id)
+		nodeRun, errR := workflow.LoadNodeRun(api.MustDB(), key, name, number, id)
 		if errR != nil {
 			return sdk.WrapError(errR, "getWorkflowJobArtifactsHandler> Cannot load node run")
 		}
@@ -320,8 +320,8 @@ func getWorkflowNodeRunArtifactsHandler(router *Router) Handler {
 	}
 }
 
-func getDownloadArtifactHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getDownloadArtifactHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
@@ -331,12 +331,12 @@ func getDownloadArtifactHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getDownloadArtifactHandler> Invalid node job run ID")
 		}
 
-		work, errW := workflow.Load(db, key, name, c.User)
+		work, errW := workflow.Load(api.MustDB(), key, name, getUser(ctx))
 		if errW != nil {
 			return sdk.WrapError(errW, "getDownloadArtifactHandler> Cannot load workflow")
 		}
 
-		art, errA := workflow.LoadArtifactByIDs(db, work.ID, id)
+		art, errA := workflow.LoadArtifactByIDs(api.MustDB(), work.ID, id)
 		if errA != nil {
 			return sdk.WrapError(errA, "getDownloadArtifactHandler> Cannot load artifacts")
 		}
@@ -351,8 +351,8 @@ func getDownloadArtifactHandler(router *Router) Handler {
 	}
 }
 
-func getWorkflowRunArtifactsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowRunArtifactsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
@@ -362,7 +362,7 @@ func getWorkflowRunArtifactsHandler(router *Router) Handler {
 			return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
 		}
 
-		wr, errW := workflow.LoadRun(db, key, name, number)
+		wr, errW := workflow.LoadRun(api.MustDB(), key, name, number)
 		if errW != nil {
 			return errW
 		}
@@ -384,8 +384,8 @@ func getWorkflowRunArtifactsHandler(router *Router) Handler {
 	}
 }
 
-func getWorkflowNodeRunJobStepHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 		workflowName := vars["workflowName"]
@@ -407,12 +407,12 @@ func getWorkflowNodeRunJobStepHandler(router *Router) Handler {
 		}
 
 		// Check workflow is in project
-		if _, errW := workflow.Load(db, projectKey, workflowName, c.User); errW != nil {
+		if _, errW := workflow.Load(api.MustDB(), projectKey, workflowName, getUser(ctx)); errW != nil {
 			return sdk.WrapError(errW, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find workflow %s in project %s", workflowName, projectKey)
 		}
 
 		// Check nodeRunID is link to workflow
-		nodeRun, errNR := workflow.LoadNodeRun(db, projectKey, workflowName, number, nodeRunID)
+		nodeRun, errNR := workflow.LoadNodeRun(api.MustDB(), projectKey, workflowName, number, nodeRunID)
 		if errNR != nil {
 			return sdk.WrapError(errNR, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
 		}
@@ -441,7 +441,7 @@ func getWorkflowNodeRunJobStepHandler(router *Router) Handler {
 				stepOrder, runJobID, nodeRunID, number, workflowName, projectKey), "")
 		}
 
-		logs, errL := workflow.LoadStepLogs(db, runJobID, stepOrder)
+		logs, errL := workflow.LoadStepLogs(api.MustDB(), runJobID, stepOrder)
 		if errL != nil {
 			return sdk.WrapError(errL, "getWorkflowNodeRunJobBuildLogsHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
 		}

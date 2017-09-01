@@ -22,7 +22,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -39,7 +39,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, proj, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(api.MustDB(), proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -51,7 +51,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, proj, pip2, u); err != nil {
+	if err := pipeline.InsertPipeline(api.MustDB(), proj, pip2, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -60,7 +60,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -75,7 +75,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 	tester.AddCall("Test_attachPipelinesToApplicationHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200))
 	tester.Run()
 
-	appDB, err := application.LoadByName(db, proj.Key, app.Name, u, application.LoadOptions.WithPipelines)
+	appDB, err := application.LoadByName(api.MustDB(), proj.Key, app.Name, u, application.LoadOptions.WithPipelines)
 	test.NoError(t, err)
 
 	assert.Equal(t, len(appDB.Pipelines), 2)

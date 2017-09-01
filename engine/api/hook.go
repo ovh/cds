@@ -1,7 +1,7 @@
 package api
 
 import (
-	ctx "context"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,7 +12,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -22,8 +21,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func receiveHook(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) receiveHookHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get body
 		data, err := ioutil.ReadAll(r.Body)
 		if err != nil {
@@ -48,13 +47,14 @@ func receiveHook(router *Router) Handler {
 			UID:        r.FormValue("uid"),
 		}
 
+		db := api.DBConnectionFactory.GetDBMap()
 		if db == nil {
 			hook.Recovery(rh, fmt.Errorf("database not available"))
 			return err
 
 		}
 
-		if err := processHook(db, rh); err != nil {
+		if err := processHook(api.DBConnectionFactory.GetDBMap, rh); err != nil {
 			hook.Recovery(rh, err)
 			return err
 
@@ -64,8 +64,8 @@ func receiveHook(router *Router) Handler {
 	}
 }
 
-func addHook(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addHookHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		appName := vars["permApplicationName"]
@@ -77,18 +77,18 @@ func addHook(router *Router) Handler {
 		h.Enabled = true
 
 		// Insert hook in database
-		if err := hook.InsertHook(db, &h); err != nil {
+		if err := hook.InsertHook(api.MustDB(), &h); err != nil {
 			log.Warning("addHook: cannot insert hook in db: %s\n", err)
 			return err
 
 		}
 
-		app, errA := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithHooks)
+		app, errA := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if errA != nil {
 			return sdk.WrapError(errA, "addHook: Cannot load application")
 		}
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User, "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.MustDB(), projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errA, "addHook: Cannot load workflow")
 		}
@@ -97,8 +97,8 @@ func addHook(router *Router) Handler {
 	}
 }
 
-func updateHookHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateHookHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		appName := vars["permApplicationName"]
@@ -108,7 +108,7 @@ func updateHookHandler(router *Router) Handler {
 			return sdk.WrapError(err, "updateHookHandler")
 		}
 
-		app, errA := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithHooks)
+		app, errA := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if errA != nil {
 			return sdk.WrapError(errA, "updateHookHandler> Cannot load application")
 		}
@@ -126,12 +126,12 @@ func updateHookHandler(router *Router) Handler {
 		}
 
 		// Update hook in database
-		if err := hook.UpdateHook(db, h); err != nil {
+		if err := hook.UpdateHook(api.MustDB(), h); err != nil {
 			return sdk.WrapError(err, "updateHookHandler: cannot update hook")
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User, "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.MustDB(), projectKey, app.Name, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updateHookHandler: Cannot load workflow")
 		}
@@ -140,13 +140,13 @@ func updateHookHandler(router *Router) Handler {
 	}
 }
 
-func getApplicationHooksHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getApplicationHooksHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectName := vars["key"]
 		appName := vars["permApplicationName"]
 
-		a, err := application.LoadByName(db, projectName, appName, c.User, application.LoadOptions.WithHooks)
+		a, err := application.LoadByName(api.MustDB(), projectName, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if err != nil {
 			log.Warning("getApplicationHooksHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
 			return err
@@ -156,14 +156,14 @@ func getApplicationHooksHandler(router *Router) Handler {
 	}
 }
 
-func getHooks(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getHooksHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectName := vars["key"]
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		p, err := pipeline.LoadPipeline(db, projectName, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.MustDB(), projectName, pipelineName, false)
 		if err != nil {
 			if err != sdk.ErrPipelineNotFound {
 				log.Warning("getHooks> cannot load pipeline %s/%s: %s\n", projectName, pipelineName, err)
@@ -171,13 +171,13 @@ func getHooks(router *Router) Handler {
 			return err
 		}
 
-		a, err := application.LoadByName(db, projectName, appName, c.User)
+		a, err := application.LoadByName(api.MustDB(), projectName, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getHooks> cannot load application %s/%s: %s\n", projectName, appName, err)
 			return err
 		}
 
-		hooks, err := hook.LoadPipelineHooks(db, p.ID, a.ID)
+		hooks, err := hook.LoadPipelineHooks(api.MustDB(), p.ID, a.ID)
 		if err != nil {
 			log.Warning("getHooks> cannot load hooks: %s\n", err)
 			return err
@@ -187,8 +187,8 @@ func getHooks(router *Router) Handler {
 	}
 }
 
-func deleteHook(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteHookHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		idS := vars["id"]
 
@@ -198,14 +198,14 @@ func deleteHook(router *Router) Handler {
 
 		}
 
-		_, err = hook.LoadHook(db, id)
+		_, err = hook.LoadHook(api.MustDB(), id)
 		if err != nil {
 			log.Warning("deleteHook> cannot load hook: %s\n", err)
 			return err
 
 		}
 
-		err = hook.DeleteHook(db, id)
+		err = hook.DeleteHook(api.MustDB(), id)
 		if err != nil {
 			log.Warning("deleteHook> cannot delete hook: %s\n", err)
 			return err
@@ -216,7 +216,7 @@ func deleteHook(router *Router) Handler {
 }
 
 //hookRecoverer is the go-routine which catches on-error hook
-func hookRecoverer(c ctx.Context, DBFunc func() *gorp.DbMap) {
+func hookRecoverer(c context.Context, DBFunc func() *gorp.DbMap) {
 	tick := time.NewTicker(10 * time.Second).C
 	for {
 		select {
@@ -233,7 +233,7 @@ func hookRecoverer(c ctx.Context, DBFunc func() *gorp.DbMap) {
 				return
 			}
 			if h.Repository != "" {
-				if err := processHook(DBFunc(), h); err != nil {
+				if err := processHook(DBFunc, h); err != nil {
 					hook.Recovery(h, err)
 				}
 			}
@@ -242,7 +242,8 @@ func hookRecoverer(c ctx.Context, DBFunc func() *gorp.DbMap) {
 }
 
 //processHook is the core function for hook processing
-func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
+func processHook(DBFunc func() *gorp.DbMap, h hook.ReceivedHook) error {
+	db := DBFunc()
 	if db == nil {
 		return fmt.Errorf("database not available")
 	}
@@ -329,12 +330,12 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 		}
 
 		go func(h *sdk.Hook) {
-			app, errapp := application.LoadByID(db, h.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
+			app, errapp := application.LoadByID(DBFunc(), h.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
 			if errapp != nil {
 				log.Warning("processHook> Unable to load application %s", errapp)
 			}
 
-			if _, err := pipeline.UpdatePipelineBuildCommits(db, projectData, p, app, &sdk.DefaultEnv, pb); err != nil {
+			if _, err := pipeline.UpdatePipelineBuildCommits(DBFunc(), projectData, p, app, &sdk.DefaultEnv, pb); err != nil {
 				log.Warning("processHook> Unable to update pipeline build commits: %s", err)
 			}
 		}(&hooks[i])

@@ -1,13 +1,12 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -15,8 +14,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func updateGroupRoleOnApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateGroupRoleOnApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -28,18 +27,18 @@ func updateGroupRoleOnApplicationHandler(router *Router) Handler {
 			return err
 		}
 
-		app, errload := application.LoadByName(db, key, appName, c.User)
+		app, errload := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if errload != nil {
 			return sdk.WrapError(errload, "updateGroupRoleOnApplicationHandler: Cannot load application %s", appName)
 		}
 
-		g, errLoadGroup := group.LoadGroup(db, groupName)
+		g, errLoadGroup := group.LoadGroup(api.MustDB(), groupName)
 		if errLoadGroup != nil {
 			return sdk.WrapError(errLoadGroup, "updateGroupRoleOnApplicationHandler: Cannot load group %s", groupName)
 		}
 
 		if groupApplication.Permission != permission.PermissionReadWriteExecute {
-			permissions, err := group.LoadAllApplicationGroupByRole(db, app.ID, permission.PermissionReadWriteExecute)
+			permissions, err := group.LoadAllApplicationGroupByRole(api.MustDB(), app.ID, permission.PermissionReadWriteExecute)
 			if err != nil {
 				return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot load group for application %s", appName)
 			}
@@ -49,7 +48,7 @@ func updateGroupRoleOnApplicationHandler(router *Router) Handler {
 			}
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot start transaction")
 		}
@@ -59,7 +58,7 @@ func updateGroupRoleOnApplicationHandler(router *Router) Handler {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot update permission for group %s in application %s", groupName, appName)
 		}
 
-		if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 		}
 
@@ -69,7 +68,7 @@ func updateGroupRoleOnApplicationHandler(router *Router) Handler {
 
 		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
-		if err := application.LoadGroupByApplication(db, app); err != nil {
+		if err := application.LoadGroupByApplication(api.MustDB(), app); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot load application groups")
 		}
 
@@ -78,14 +77,14 @@ func updateGroupRoleOnApplicationHandler(router *Router) Handler {
 }
 
 // Deprecated
-func updateGroupsInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateGroupsInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		proj, errload := project.Load(db, key, c.User)
+		proj, errload := project.Load(api.MustDB(), key, getUser(ctx))
 		if errload != nil {
 			return sdk.WrapError(errload, "addGroupInApplicationHandler> Cannot load %s", key)
 		}
@@ -110,12 +109,12 @@ func updateGroupsInApplicationHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInApplicationHandler: Need one group with write permission.")
 		}
 
-		app, errLoadName := application.LoadByName(db, key, appName, c.User)
+		app, errLoadName := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if errLoadName != nil {
 			return sdk.WrapError(errLoadName, "updateGroupsInApplicationHandler: Cannot load application %s: %s", appName)
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot start transaction")
 		}
@@ -125,15 +124,15 @@ func updateGroupsInApplicationHandler(router *Router) Handler {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot delete groups from application %s", appName)
 		}
 
-		if err := application.AddGroup(tx, proj, app, c.User, groupsPermission...); err != nil {
+		if err := application.AddGroup(tx, proj, app, getUser(ctx), groupsPermission...); err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot add groups in application %s", app.Name)
 		}
 
-		if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 		}
 
@@ -146,8 +145,8 @@ func updateGroupsInApplicationHandler(router *Router) Handler {
 	}
 }
 
-func addGroupInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addGroupInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -158,32 +157,32 @@ func addGroupInApplicationHandler(router *Router) Handler {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot unmarshal request")
 		}
 
-		proj, err := project.Load(db, key, c.User)
+		proj, err := project.Load(api.MustDB(), key, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load %s", key)
 		}
 
-		app, err := application.LoadByName(db, key, appName, c.User)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load %s", appName)
 		}
 
-		g, err := group.LoadGroup(db, groupPermission.Group.Name)
+		g, err := group.LoadGroup(api.MustDB(), groupPermission.Group.Name)
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot find %s", groupPermission.Group.Name)
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := application.AddGroup(tx, proj, app, c.User, groupPermission); err != nil {
+		if err := application.AddGroup(tx, proj, app, getUser(ctx), groupPermission); err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot add group %s in application %s", g.Name, app.Name)
 		}
 
-		if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot update application last modified date")
 		}
 
@@ -193,7 +192,7 @@ func addGroupInApplicationHandler(router *Router) Handler {
 
 		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
-		if err := application.LoadGroupByApplication(db, app); err != nil {
+		if err := application.LoadGroupByApplication(api.MustDB(), app); err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load application groups")
 		}
 
@@ -201,20 +200,20 @@ func addGroupInApplicationHandler(router *Router) Handler {
 	}
 }
 
-func deleteGroupFromApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteGroupFromApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		groupName := vars["group"]
 
-		app, err := application.LoadByName(db, key, appName, c.User)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application %s", appName)
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot start transaction")
 		}
@@ -224,7 +223,7 @@ func deleteGroupFromApplicationHandler(router *Router) Handler {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot delete group %s from pipeline %s", groupName, appName)
 		}
 
-		if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot update application last modified date")
 		}
 
@@ -234,7 +233,7 @@ func deleteGroupFromApplicationHandler(router *Router) Handler {
 
 		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
-		if err := application.LoadGroupByApplication(db, app); err != nil {
+		if err := application.LoadGroupByApplication(api.MustDB(), app); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application groups")
 		}
 

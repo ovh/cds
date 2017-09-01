@@ -21,7 +21,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
+func insertTestPipeline(api.MustDB() *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
 	pkey := sdk.RandomString(10)
 	projectFoo := assets.InsertTestProject(t, db, pkey, pkey, nil)
 
@@ -35,8 +35,8 @@ func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project
 		Name: "App1",
 	}
 
-	test.NoError(t, application.Insert(db, projectFoo, app, nil))
-	test.NoError(t, pipeline.InsertPipeline(db, projectFoo, p, nil))
+	test.NoError(t, application.Insert(api.MustDB(), projectFoo, app, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), projectFoo, p, nil))
 
 	return projectFoo, p, app
 }
@@ -48,7 +48,7 @@ func Test_runPipelineHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
@@ -61,17 +61,17 @@ func Test_runPipelineHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app, nil))
+	test.NoError(t, application.Insert(api.MustDB(), proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.MustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	//6. Prepare the run request
@@ -125,7 +125,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -139,17 +139,17 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app, nil))
+	test.NoError(t, application.Insert(api.MustDB(), proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.MustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	//6. Prepare the run request
@@ -195,7 +195,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	assert.Equal(t, "NoEnv", pb.Environment.Name)
 
 	//9. Update build status to Success
-	err = pipeline.UpdatePipelineBuildStatusAndStage(db, &pb, sdk.StatusSuccess)
+	err = pipeline.UpdatePipelineBuildStatusAndStage(api.MustDB(), &pb, sdk.StatusSuccess)
 	test.NoError(t, err)
 
 	//10. Create another Pipeline
@@ -205,17 +205,17 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, proj, pip2, u)
+	err = pipeline.InsertPipeline(api.MustDB(), proj, pip2, u)
 	test.NoError(t, err)
 
 	//11. Insert another Application
 	app2 := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	err = application.Insert(db, proj, app2, nil)
+	err = application.Insert(api.MustDB(), proj, app2, nil)
 
 	//12. Attach pipeline to application
-	_, err = application.AttachPipeline(db, app2.ID, pip2.ID)
+	_, err = application.AttachPipeline(api.MustDB(), app2.ID, pip2.ID)
 	test.NoError(t, err)
 
 	//13. Prepare the pipelne trigger
@@ -231,7 +231,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	}
 
 	//14. Insert the pipeline trigger
-	tx, _ := db.Begin()
+	tx, _ := api.MustDB().Begin()
 	defer tx.Rollback()
 	err = trigger.InsertTrigger(tx, &tigrou)
 	test.NoError(t, err)

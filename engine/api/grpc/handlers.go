@@ -15,7 +15,9 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-type handlers struct{}
+type handlers struct {
+	dbConnectionFactory *database.DBConnectionFactory
+}
 
 //AddBuildLog is the BuildLogServer implementation
 func (h *handlers) AddBuildLog(stream BuildLog_AddBuildLogServer) error {
@@ -30,7 +32,7 @@ func (h *handlers) AddBuildLog(stream BuildLog_AddBuildLogServer) error {
 		}
 		log.Debug("grpc.AddBuildLog> Got %+v", in)
 
-		db := database.GetDBMap()
+		db := h.dbConnectionFactory.GetDBMap()
 		if err := pipeline.AddBuildLog(db, in); err != nil {
 			log.Warning("grpc.AddBuildLog> Unable to insert log : %s", err)
 			return err
@@ -39,7 +41,7 @@ func (h *handlers) AddBuildLog(stream BuildLog_AddBuildLogServer) error {
 }
 
 //SendLog is the WorkflowQueueServer implementation
-func (*handlers) SendLog(stream WorkflowQueue_SendLogServer) error {
+func (h *handlers) SendLog(stream WorkflowQueue_SendLogServer) error {
 	log.Debug("grpc.SendLog> begin")
 	defer log.Debug("grpc.SendLog> end")
 	for {
@@ -52,7 +54,7 @@ func (*handlers) SendLog(stream WorkflowQueue_SendLogServer) error {
 		}
 		log.Debug("grpc.SendLog> Got %+v", in)
 
-		db := database.GetDBMap()
+		db := h.dbConnectionFactory.GetDBMap()
 		if err := workflow.AddLog(db, nil, in); err != nil {
 			log.Warning("grpc.SendLog> Unable to insert log : %s", err)
 			return err
@@ -61,7 +63,7 @@ func (*handlers) SendLog(stream WorkflowQueue_SendLogServer) error {
 }
 
 //SendResult is the WorkflowQueueServer implementation
-func (*handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty, error) {
+func (h *handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty, error) {
 	log.Debug("grpc.SendResult> begin")
 	defer log.Debug("grpc.SendResult> end")
 
@@ -77,7 +79,7 @@ func (*handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty, e
 		return new(empty.Empty), sdk.ErrForbidden
 	}
 
-	db := database.GetDBMap()
+	db := h.dbConnectionFactory.GetDBMap()
 
 	//Load workflow node job run
 	job, errj := workflow.LoadAndLockNodeJobRun(db, res.BuildID)

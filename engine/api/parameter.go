@@ -1,22 +1,20 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/sdk"
 )
 
-func getVariableTypeHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariableTypeHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return WriteJSON(w, r, sdk.AvailableVariableType, http.StatusOK)
 	}
 }
 
-func getParameterTypeHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getParameterTypeHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return WriteJSON(w, r, sdk.AvailableParameterType, http.StatusOK)
 	}
 }

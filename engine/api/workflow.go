@@ -1,24 +1,23 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
-func getWorkflowsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		ws, err := workflow.LoadAll(db, key)
+		ws, err := workflow.LoadAll(api.MustDB(), key)
 		if err != nil {
 			return err
 		}
@@ -28,13 +27,13 @@ func getWorkflowsHandler(router *Router) Handler {
 }
 
 // getWorkflowHandler returns a full workflow
-func getWorkflowHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
 
-		w1, err := workflow.Load(db, key, name, c.User)
+		w1, err := workflow.Load(api.MustDB(), key, name, getUser(ctx))
 		if err != nil {
 			return err
 		}
@@ -43,12 +42,12 @@ func getWorkflowHandler(router *Router) Handler {
 }
 
 // postWorkflowHandler create a new workflow
-func postWorkflowHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postWorkflowHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errP := project.Load(db, key, c.User)
+		p, errP := project.Load(api.MustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
@@ -59,17 +58,17 @@ func postWorkflowHandler(router *Router) Handler {
 		wf.ProjectID = p.ID
 		wf.ProjectKey = key
 
-		tx, errT := db.Begin()
+		tx, errT := api.MustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Insert(tx, &wf, c.User); err != nil {
+		if err := workflow.Insert(tx, &wf, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert workflow")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 
@@ -77,7 +76,7 @@ func postWorkflowHandler(router *Router) Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(db, wf.ID, c.User)
+		wf1, errl := workflow.LoadByID(api.MustDB(), wf.ID, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
@@ -87,18 +86,18 @@ func postWorkflowHandler(router *Router) Handler {
 }
 
 // putWorkflowHandler updates a workflow
-func putWorkflowHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) putWorkflowHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
 
-		p, errP := project.Load(db, key, c.User)
+		p, errP := project.Load(api.MustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(db, key, name, c.User)
+		oldW, errW := workflow.Load(api.MustDB(), key, name, getUser(ctx))
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
 		}
@@ -113,17 +112,17 @@ func putWorkflowHandler(router *Router) Handler {
 		wf.ProjectID = p.ID
 		wf.ProjectKey = key
 
-		tx, errT := db.Begin()
+		tx, errT := api.MustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Update(tx, &wf, oldW, c.User); err != nil {
+		if err := workflow.Update(tx, &wf, oldW, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot update workflow")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 
@@ -131,7 +130,7 @@ func putWorkflowHandler(router *Router) Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(db, wf.ID, c.User)
+		wf1, errl := workflow.LoadByID(api.MustDB(), wf.ID, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
@@ -141,33 +140,33 @@ func putWorkflowHandler(router *Router) Handler {
 }
 
 // putWorkflowHandler deletes a workflow
-func deleteWorkflowHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteWorkflowHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
 
-		p, errP := project.Load(db, key, c.User)
+		p, errP := project.Load(api.MustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(db, key, name, c.User)
+		oldW, errW := workflow.Load(api.MustDB(), key, name, getUser(ctx))
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
 		}
 
-		tx, errT := db.Begin()
+		tx, errT := api.MustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Delete(tx, oldW, c.User); err != nil {
+		if err := workflow.Delete(tx, oldW, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot delete workflow")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 

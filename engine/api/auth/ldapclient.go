@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"database/sql"
 	"errors"
@@ -13,7 +14,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"gopkg.in/ldap.v2"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
@@ -42,10 +42,11 @@ type LDAPDriver interface {
 
 //LDAPClient enbeddes the LDAP connecion
 type LDAPClient struct {
-	store sessionstore.Store
-	conn  *ldap.Conn
-	conf  LDAPConfig
-	local *LocalClient
+	store  sessionstore.Store
+	conn   *ldap.Conn
+	conf   LDAPConfig
+	local  *LocalClient
+	dbFunc func() *gorp.DbMap
 }
 
 //Entry represents a LDAP entity
@@ -59,7 +60,9 @@ func (c *LDAPClient) Open(options interface{}, store sessionstore.Store) error {
 	log.Info("Auth> Connecting to session store")
 	c.store = store
 	//LDAP Client needs a local client to check local users
-	c.local = &LocalClient{}
+	c.local = &LocalClient{
+		dbFunc: c.dbFunc,
+	}
 	c.local.Open(options, store)
 	return c.openLDAP(options)
 }
@@ -137,6 +140,43 @@ func (c *LDAPClient) Close() {
 //Store returns store
 func (c *LDAPClient) Store() sessionstore.Store {
 	return c.store
+}
+
+func (c *LDAPClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error) {
+
+	//Check if its coming from CLI
+	if req.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
+		var ok bool
+		ctx, ok = getUserPersistentSession(ctx, c.dbFunc(), c.Store(), req.Header)
+		if ok {
+			return ctx, nil
+		}
+	}
+
+	//Get the session token
+	sessionToken := req.Header.Get(sdk.SessionTokenHeader)
+	if sessionToken == "" {
+		return ctx, fmt.Errorf("no session header")
+	}
+	exists, err := c.store.Exists(sessionstore.SessionKey(sessionToken))
+	if err != nil {
+		return ctx, err
+	}
+	username, err := GetUsername(c.store, sessionToken)
+	if err != nil {
+		return ctx, err
+	}
+	//Find the suer
+	u, err := c.searchAndInsertOrUpdateUser(c.dbFunc(), username)
+	if err != nil {
+		return ctx, err
+	}
+	ctx = context.WithValue(ctx, ContextUser, u)
+
+	if !exists {
+		return ctx, fmt.Errorf("invalid session")
+	}
+	return ctx, nil
 }
 
 //Bind binds
@@ -289,7 +329,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 }
 
 //Authentify check username and password
-func (c *LDAPClient) Authentify(db gorp.SqlExecutor, username, password string) (bool, error) {
+func (c *LDAPClient) Authentify(username, password string) (bool, error) {
 	//Bind user
 	if err := c.Bind(username, password); err != nil {
 		log.Warning("LDAP> Bind error %s %s", username, err)
@@ -298,56 +338,15 @@ func (c *LDAPClient) Authentify(db gorp.SqlExecutor, username, password string) 
 			return false, err
 		}
 		//Try local auth
-		return c.local.Authentify(db, username, password)
+		return c.local.Authentify(username, password)
 	}
 
 	log.Debug("LDAP> Bind successful %s", username)
 
 	//Search user, refresh data and update database
-	if _, err := c.searchAndInsertOrUpdateUser(db, username); err != nil {
+	if _, err := c.searchAndInsertOrUpdateUser(c.dbFunc(), username); err != nil {
 		return false, err
 	}
 
 	return true, nil
-}
-
-//AuthentifyUser check password in database
-func (c *LDAPClient) AuthentifyUser(db gorp.SqlExecutor, u *sdk.User, password string) (bool, error) {
-	return c.Authentify(db, u.Username, password)
-}
-
-//CheckAuthHeader returns the func to heck http headers.
-func (c *LDAPClient) CheckAuthHeader(db *gorp.DbMap, headers http.Header, ctx *businesscontext.Ctx) error {
-	//Check if its coming from CLI
-	if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-		if getUserPersistentSession(db, c.Store(), headers, ctx) {
-			return nil
-		}
-	}
-
-	//Get the session token
-	sessionToken := headers.Get(sdk.SessionTokenHeader)
-	if sessionToken == "" {
-		return fmt.Errorf("no session header")
-	}
-	exists, err := c.store.Exists(sessionstore.SessionKey(sessionToken))
-	if err != nil {
-		return err
-	}
-	username, err := GetUsername(c.store, sessionToken)
-	if err != nil {
-		return err
-	}
-	//Find the suer
-	u, err := c.searchAndInsertOrUpdateUser(db, username)
-	if err != nil {
-		return err
-	}
-	ctx.User = u
-
-	if !exists {
-		return fmt.Errorf("invalid session")
-	}
-
-	return nil
 }

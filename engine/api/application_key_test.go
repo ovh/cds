@@ -22,7 +22,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -35,7 +35,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -55,7 +55,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	k.Private = priv
 	k.KeyID = kid
 
-	if err := application.InsertKey(db, k); err != nil {
+	if err := application.InsertKey(api.MustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -80,7 +80,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -93,7 +93,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -107,7 +107,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 
-	if err := application.InsertKey(db, k); err != nil {
+	if err := application.InsertKey(api.MustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -132,7 +132,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -145,7 +145,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

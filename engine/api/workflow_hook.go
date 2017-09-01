@@ -1,19 +1,18 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
-func getWorkflowHookModelsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		m, err := workflow.LoadHookModels(db)
+func (api *API) getWorkflowHookModelsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		m, err := workflow.LoadHookModels(api.MustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHookModelsHandler")
 		}
@@ -21,11 +20,11 @@ func getWorkflowHookModelsHandler(router *Router) Handler {
 	}
 }
 
-func getWorkflowHookModelHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowHookModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["model"]
-		m, err := workflow.LoadHookModelByName(db, name)
+		m, err := workflow.LoadHookModelByName(api.MustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHookModelHandler")
 		}
@@ -33,14 +32,14 @@ func getWorkflowHookModelHandler(router *Router) Handler {
 	}
 }
 
-func postWorkflowHookModelHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postWorkflowHookModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m := &sdk.WorkflowHookModel{}
 		if err := UnmarshalBody(r, m); err != nil {
 			return sdk.WrapError(err, "postWorkflowHookModelHandler")
 		}
 
-		tx, errtx := db.Begin()
+		tx, errtx := api.MustDB().Begin()
 		if errtx != nil {
 			return sdk.WrapError(errtx, "postWorkflowHookModelHandler> Unable to start transaction")
 		}
@@ -58,14 +57,14 @@ func postWorkflowHookModelHandler(router *Router) Handler {
 	}
 }
 
-func putWorkflowHookModelHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) putWorkflowHookModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m := &sdk.WorkflowHookModel{}
 		if err := UnmarshalBody(r, m); err != nil {
 			return err
 		}
 
-		tx, errtx := db.Begin()
+		tx, errtx := api.MustDB().Begin()
 		if errtx != nil {
 			return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to start transaction")
 		}

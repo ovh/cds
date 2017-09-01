@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
 	"github.com/ovh/cds/sdk"
@@ -37,16 +36,12 @@ type InitializeOpts struct {
 
 //Initialize initialize private keys
 //For instance for a repositories manager named "github.com/ovh", the private key
-func Initialize(o InitializeOpts) error {
+func Initialize(o InitializeOpts, DBFunc func() *gorp.DbMap) error {
 	options = o
 	repogithub.Init(o.APIBaseURL, o.UIBaseURL)
 	repostash.Init(o.APIBaseURL, o.UIBaseURL)
 
-	_db := database.DB()
-	if _db == nil {
-		return fmt.Errorf("Unable to init repositories manager")
-	}
-	if db := database.DBMap(_db); db != nil {
+	if db := DBFunc(); db != nil {
 		repositoriesManager, err := LoadAll(db)
 		if err != nil {
 			return err

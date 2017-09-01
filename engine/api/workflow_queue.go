@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"mime"
@@ -8,13 +9,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/mux"
 	"github.com/ovh/venom"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -22,29 +21,29 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func postWorkflowJobRequirementsErrorHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postWorkflowJobRequirementsErrorHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
 			log.Warning("requirementsErrorHandler> %s", err)
 			return err
 		}
 
-		if c.Worker.ID != "" {
+		if getWorker(ctx).ID != "" {
 			// Load calling worker
-			caller, err := worker.LoadWorker(db, c.Worker.ID)
+			caller, err := worker.LoadWorker(api.MustDB(), getWorker(ctx).ID)
 			if err != nil {
 				return sdk.WrapError(sdk.ErrWrongRequest, "requirementsErrorHandler> cannot load calling worker: %s", err)
 			}
 
-			log.Warning("%s (%s) > %s", c.Worker.ID, caller.Name, string(body))
+			log.Warning("%s (%s) > %s", getWorker(ctx).ID, caller.Name, string(body))
 		}
 		return nil
 	}
 }
 
-func postTakeWorkflowJobHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postTakeWorkflowJobHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
 			return sdk.WrapError(errc, "postTakeWorkflowJobHandler> invalid id")
@@ -56,16 +55,16 @@ func postTakeWorkflowJobHandler(router *Router) Handler {
 		}
 
 		// Start a tx
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "postTakeWorkflowJobHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		//Load worker model
-		workerModel := c.Worker.Name
-		if c.Worker.Model != 0 {
-			wm, errModel := worker.LoadWorkerModelByID(db, c.Worker.Model)
+		workerModel := getWorker(ctx).Name
+		if getWorker(ctx).Model != 0 {
+			wm, errModel := worker.LoadWorkerModelByID(api.MustDB(), getWorker(ctx).Model)
 			if errModel != nil {
 				return sdk.ErrNoWorkerModel
 			}
@@ -75,23 +74,23 @@ func postTakeWorkflowJobHandler(router *Router) Handler {
 		//Prepare spawn infos
 		infos := []sdk.SpawnInfo{{
 			RemoteTime: takeForm.Time,
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{c.Worker.Name}},
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{getWorker(ctx).Name}},
 		}}
 		if takeForm.BookedJobID != 0 && takeForm.BookedJobID == id {
 			infos = append(infos, sdk.SpawnInfo{
 				RemoteTime: takeForm.Time,
-				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJob.ID, Args: []interface{}{c.Worker.Name}},
+				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJob.ID, Args: []interface{}{getWorker(ctx).Name}},
 			})
 		}
 
 		//Take node job run
-		job, errTake := workflow.TakeNodeJobRun(tx, id, workerModel, c.Worker.Name, c.Worker.ID, infos)
+		job, errTake := workflow.TakeNodeJobRun(tx, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos)
 		if errTake != nil {
 			return sdk.WrapError(errTake, "postTakeWorkflowJobHandler> Cannot take job %d", id)
 		}
 
 		//Change worker status
-		if err := worker.SetToBuilding(tx, c.Worker.ID, job.ID); err != nil {
+		if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID); err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot update worker status")
 		}
 
@@ -107,13 +106,13 @@ func postTakeWorkflowJobHandler(router *Router) Handler {
 		}
 
 		//Load workflow node run
-		nodeRun, err := workflow.LoadNodeRunByID(db, job.WorkflowNodeRunID)
+		nodeRun, err := workflow.LoadNodeRunByID(api.MustDB(), job.WorkflowNodeRunID)
 		if err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load node run")
 		}
 
 		//Load workflow run
-		workflowRun, err := workflow.LoadRunByID(db, nodeRun.WorkflowRunID)
+		workflowRun, err := workflow.LoadRunByID(api.MustDB(), nodeRun.WorkflowRunID)
 		if err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load workflow run")
 		}
@@ -146,27 +145,27 @@ func postTakeWorkflowJobHandler(router *Router) Handler {
 	}
 }
 
-func postBookWorkflowJobHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postBookWorkflowJobHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
 			return sdk.WrapError(errc, "postBookWorkflowJobHandler> invalid id")
 		}
 
-		if _, err := workflow.BookNodeJobRun(id, c.Hatchery); err != nil {
+		if _, err := workflow.BookNodeJobRun(id, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "postBookWorkflowJobHandler> job already booked")
 		}
 		return WriteJSON(w, r, nil, http.StatusOK)
 	}
 }
 
-func getWorkflowJobHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowJobHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
 			return sdk.WrapError(errc, "getWorkflowJobHandler> invalid id")
 		}
-		j, err := workflow.LoadNodeJobRun(db, id)
+		j, err := workflow.LoadNodeJobRun(api.MustDB(), id)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobHandler> job not found")
 		}
@@ -174,8 +173,8 @@ func getWorkflowJobHandler(router *Router) Handler {
 	}
 }
 
-func postSpawnInfosWorkflowJobHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postSpawnInfosWorkflowJobHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
 			return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
@@ -185,7 +184,7 @@ func postSpawnInfosWorkflowJobHandler(router *Router) Handler {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "postSpawnInfosWorkflowJobHandler> Cannot start transaction")
 		}
@@ -203,15 +202,15 @@ func postSpawnInfosWorkflowJobHandler(router *Router) Handler {
 	}
 }
 
-func postWorkflowJobResultHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postWorkflowJobResultHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
 			return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
 		}
 
 		//Load workflow node job run
-		job, errj := workflow.LoadNodeJobRun(db, id)
+		job, errj := workflow.LoadNodeJobRun(api.MustDB(), id)
 		if errj != nil {
 			return sdk.WrapError(errj, "postWorkflowJobResultHandler> Unable to load node run job")
 		}
@@ -222,15 +221,15 @@ func postWorkflowJobResultHandler(router *Router) Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
 
-		tx, errb := db.Begin()
+		tx, errb := api.MustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "postWorkflowJobResultHandler> Cannot begin tx")
 		}
 		defer tx.Rollback()
 
 		//Update worker status
-		if err := worker.UpdateWorkerStatus(tx, c.Worker.ID, sdk.StatusWaiting); err != nil {
-			log.Warning("postWorkflowJobResultHandler> Cannot update worker status (%s): %s", c.Worker.ID, err)
+		if err := worker.UpdateWorkerStatus(tx, getWorker(ctx).ID, sdk.StatusWaiting); err != nil {
+			log.Warning("postWorkflowJobResultHandler> Cannot update worker status (%s): %s", getWorker(ctx).ID, err)
 		}
 
 		remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
@@ -241,7 +240,7 @@ func postWorkflowJobResultHandler(router *Router) Handler {
 		//Update spwan info
 		infos := []sdk.SpawnInfo{{
 			RemoteTime: remoteTime,
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{c.Worker.Name, res.Duration}},
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{getWorker(ctx).Name, res.Duration}},
 		}}
 
 		//Add spawn infos
@@ -264,14 +263,14 @@ func postWorkflowJobResultHandler(router *Router) Handler {
 	}
 }
 
-func postWorkflowJobLogsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postWorkflowJobLogsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
 		}
 
-		pbJob, errJob := workflow.LoadNodeJobRun(db, id)
+		pbJob, errJob := workflow.LoadNodeJobRun(api.MustDB(), id)
 		if errJob != nil {
 			return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
 		}
@@ -281,7 +280,7 @@ func postWorkflowJobLogsHandler(router *Router) Handler {
 			return sdk.WrapError(err, "postWorkflowJobLogsHandler> Unable to parse body")
 		}
 
-		if err := workflow.AddLog(db, pbJob, &logs); err != nil {
+		if err := workflow.AddLog(api.MustDB(), pbJob, &logs); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobLogsHandler")
 		}
 
@@ -289,14 +288,14 @@ func postWorkflowJobLogsHandler(router *Router) Handler {
 	}
 }
 
-func postWorkflowJobStepStatusHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postWorkflowJobStepStatusHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
 		}
 
-		pbJob, errJob := workflow.LoadNodeJobRun(db, id)
+		pbJob, errJob := workflow.LoadNodeJobRun(api.MustDB(), id)
 		if errJob != nil {
 			return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
 		}
@@ -318,7 +317,7 @@ func postWorkflowJobStepStatusHandler(router *Router) Handler {
 			pbJob.Job.StepStatus = append(pbJob.Job.StepStatus, step)
 		}
 
-		tx, errB := db.Begin()
+		tx, errB := api.MustDB().Begin()
 		if errB != nil {
 			return sdk.WrapError(errB, "postWorkflowJobStepStatusHandler> Cannot start transaction")
 		}
@@ -332,8 +331,8 @@ func postWorkflowJobStepStatusHandler(router *Router) Handler {
 	}
 }
 
-func getWorkflowJobQueueHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowJobQueueHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		sinceHeader := r.Header.Get("If-Modified-Since")
 		since := time.Unix(0, 0)
 		if sinceHeader != "" {
@@ -341,10 +340,10 @@ func getWorkflowJobQueueHandler(router *Router) Handler {
 		}
 
 		groupsID := []int64{}
-		for _, g := range c.User.Groups {
+		for _, g := range getUser(ctx).Groups {
 			groupsID = append(groupsID, g.ID)
 		}
-		jobs, err := workflow.LoadNodeJobRunQueue(db, groupsID, &since)
+		jobs, err := workflow.LoadNodeJobRunQueue(api.MustDB(), groupsID, &since)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowJobQueueHandler> Unable to load queue")
 		}
@@ -353,8 +352,8 @@ func getWorkflowJobQueueHandler(router *Router) Handler {
 	}
 }
 
-func postWorkflowJobTestsResultsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postWorkflowJobTestsResultsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal into results
 		var new venom.Tests
 		if err := UnmarshalBody(r, &new); err != nil {
@@ -367,12 +366,12 @@ func postWorkflowJobTestsResultsHandler(router *Router) Handler {
 			return sdk.WrapError(errI, "postWorkflowJobTestsResultsHandler> Invalid node job run ID")
 		}
 
-		nodeRunJob, errJobRun := workflow.LoadNodeJobRun(db, id)
+		nodeRunJob, errJobRun := workflow.LoadNodeJobRun(api.MustDB(), id)
 		if errJobRun != nil {
 			return sdk.WrapError(errJobRun, "postWorkflowJobTestsResultsHandler> Cannot load node run job")
 		}
 
-		tx, errB := db.Begin()
+		tx, errB := api.MustDB().Begin()
 		if errB != nil {
 			return sdk.WrapError(errB, "postWorkflowJobTestsResultsHandler> Cannot start transaction")
 		}
@@ -422,8 +421,8 @@ func postWorkflowJobTestsResultsHandler(router *Router) Handler {
 	}
 }
 
-func postWorkflowJobVariableHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postWorkflowJobVariableHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Invalid id")
@@ -435,7 +434,7 @@ func postWorkflowJobVariableHandler(router *Router) Handler {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler")
 		}
 
-		tx, errb := db.Begin()
+		tx, errb := api.MustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "postWorkflowJobVariableHandler> Unable to start tx")
 		}
@@ -471,8 +470,8 @@ func postWorkflowJobVariableHandler(router *Router) Handler {
 	}
 }
 
-func postWorkflowJobArtifactHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) postWorkflowJobArtifactHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Load and lock Existing workflow Run Job
 		id, errI := requestVarInt(r, "permID")
 		if errI != nil {
@@ -513,12 +512,12 @@ func postWorkflowJobArtifactHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowJobArtifactHandler> %s header is not set", "Content-Disposition")
 		}
 
-		nodeJobRun, errJ := workflow.LoadNodeJobRun(db, id)
+		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.MustDB(), id)
 		if errJ != nil {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(db, nodeJobRun.WorkflowNodeRunID)
+		nodeRun, errR := workflow.LoadNodeRunByID(api.MustDB(), nodeJobRun.WorkflowNodeRunID)
 		if errR != nil {
 			return sdk.WrapError(errR, "Cannot load node run")
 		}
@@ -566,7 +565,7 @@ func postWorkflowJobArtifactHandler(router *Router) Handler {
 		}
 
 		nodeRun.Artifacts = append(nodeRun.Artifacts, art)
-		if err := workflow.InsertArtifact(db, &art); err != nil {
+		if err := workflow.InsertArtifact(api.MustDB(), &art); err != nil {
 			_ = objectstore.DeleteArtifact(&art)
 			return sdk.WrapError(err, "postWorkflowJobArtifactHandler> Cannot update workflow node run")
 		}

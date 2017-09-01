@@ -1,18 +1,17 @@
 package api
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -20,8 +19,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func uploadArtifactHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) uploadArtifactHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		project := vars["key"]
 		pipelineName := vars["permPipelineKey"]
@@ -54,12 +53,12 @@ func uploadArtifactHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "uploadArtifactHandler> %s header is not set", sdk.ArtifactFileName)
 		}
 
-		p, errP := pipeline.LoadPipeline(db, project, pipelineName, false)
+		p, errP := pipeline.LoadPipeline(api.MustDB(), project, pipelineName, false)
 		if errP != nil {
 			return sdk.WrapError(errP, "uploadArtifactHandler> cannot load pipeline %s-%s", project, pipelineName)
 		}
 
-		a, errA := application.LoadByName(db, project, appName, c.User)
+		a, errA := application.LoadByName(api.MustDB(), project, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "uploadArtifactHandler> cannot load application %s-%s", project, appName)
 		}
@@ -69,13 +68,13 @@ func uploadArtifactHandler(router *Router) Handler {
 			env = &sdk.DefaultEnv
 		} else {
 			var errE error
-			env, errE = environment.LoadEnvironmentByName(db, project, envName)
+			env, errE = environment.LoadEnvironmentByName(api.MustDB(), project, envName)
 			if errE != nil {
 				return sdk.WrapError(errE, "uploadArtifactHandler> Cannot load environment %s", envName)
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "uploadArtifactHandler> No enought right on this environment %s")
 		}
 
@@ -121,7 +120,7 @@ func uploadArtifactHandler(router *Router) Handler {
 				return sdk.WrapError(err, "uploadArtifactHandler> cannot open file")
 			}
 
-			if err := artifact.SaveFile(db, p, a, art, file, env); err != nil {
+			if err := artifact.SaveFile(api.MustDB(), p, a, art, file, env); err != nil {
 				file.Close()
 				return sdk.WrapError(err, "uploadArtifactHandler> cannot save file")
 			}
@@ -131,15 +130,15 @@ func uploadArtifactHandler(router *Router) Handler {
 	}
 }
 
-func downloadArtifactHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) downloadArtifactHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		artifactID, errAtoi := requestVarInt(r, "id")
 		if errAtoi != nil {
 			return sdk.WrapError(errAtoi, "DownloadArtifactHandler> Cannot get artifact ID")
 		}
 
 		// Load artifact
-		art, err := artifact.LoadArtifact(db, int64(artifactID))
+		art, err := artifact.LoadArtifact(api.MustDB(), int64(artifactID))
 		if err != nil {
 			return sdk.WrapError(err, "downloadArtifactHandler> Cannot load artifact")
 		}
@@ -156,8 +155,8 @@ func downloadArtifactHandler(router *Router) Handler {
 	}
 }
 
-func listArtifactsBuildHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) listArtifactsBuildHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		project := vars["key"]
 		pipelineName := vars["permPipelineKey"]
@@ -166,13 +165,13 @@ func listArtifactsBuildHandler(router *Router) Handler {
 		envName := r.FormValue("envName")
 
 		// Load pipeline
-		p, errP := pipeline.LoadPipeline(db, project, pipelineName, false)
+		p, errP := pipeline.LoadPipeline(api.MustDB(), project, pipelineName, false)
 		if errP != nil {
 			return sdk.WrapError(errP, "listArtifactsBuildHandler> Cannot load pipeline %s", pipelineName)
 		}
 
 		// Load application
-		a, errA := application.LoadByName(db, project, appName, c.User)
+		a, errA := application.LoadByName(api.MustDB(), project, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "listArtifactsBuildHandler> Cannot load application %s", appName)
 		}
@@ -182,13 +181,13 @@ func listArtifactsBuildHandler(router *Router) Handler {
 			env = &sdk.DefaultEnv
 		} else {
 			var errE error
-			env, errE = environment.LoadEnvironmentByName(db, project, envName)
+			env, errE = environment.LoadEnvironmentByName(api.MustDB(), project, envName)
 			if errE != nil {
 				return sdk.WrapError(errE, "listArtifactsBuildHandler> Cannot load environment %s", envName)
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "listArtifactsBuildHandler> No enought right on this environment %s", envName)
 		}
 
@@ -197,7 +196,7 @@ func listArtifactsBuildHandler(router *Router) Handler {
 			return sdk.WrapError(errI, "listArtifactsBuildHandler> BuildNumber must be an integer")
 		}
 
-		art, errArt := artifact.LoadArtifactsByBuildNumber(db, p.ID, a.ID, buildNumber, env.ID)
+		art, errArt := artifact.LoadArtifactsByBuildNumber(api.MustDB(), p.ID, a.ID, buildNumber, env.ID)
 		if errArt != nil {
 			return sdk.WrapError(errArt, "listArtifactsBuildHandler> Cannot load artifacts")
 		}
@@ -206,8 +205,8 @@ func listArtifactsBuildHandler(router *Router) Handler {
 	}
 }
 
-func listArtifactsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) listArtifactsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		project := vars["key"]
 		pipelineName := vars["permPipelineKey"]
@@ -216,13 +215,13 @@ func listArtifactsHandler(router *Router) Handler {
 		envName := r.FormValue("envName")
 
 		// Load pipeline
-		p, errP := pipeline.LoadPipeline(db, project, pipelineName, false)
+		p, errP := pipeline.LoadPipeline(api.MustDB(), project, pipelineName, false)
 		if errP != nil {
 			return sdk.WrapError(errP, "listArtifactsHandler> Cannot load pipeline %s", pipelineName)
 		}
 
 		// Load application
-		a, errA := application.LoadByName(db, project, appName, c.User)
+		a, errA := application.LoadByName(api.MustDB(), project, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "listArtifactsHandler> Cannot load application %s", appName)
 		}
@@ -232,17 +231,17 @@ func listArtifactsHandler(router *Router) Handler {
 			env = &sdk.DefaultEnv
 		} else {
 			var errE error
-			env, errE = environment.LoadEnvironmentByName(db, project, envName)
+			env, errE = environment.LoadEnvironmentByName(api.MustDB(), project, envName)
 			if errE != nil {
 				return sdk.WrapError(errE, "listArtifactsHandler> Cannot load environment %s", envName)
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "listArtifactsHandler> No enought right on this environment %s", envName)
 		}
 
-		art, errArt := artifact.LoadArtifacts(db, p.ID, a.ID, env.ID, tag)
+		art, errArt := artifact.LoadArtifacts(api.MustDB(), p.ID, a.ID, env.ID, tag)
 		if errArt != nil {
 			return sdk.WrapError(errArt, "listArtifactsHandler> Cannot load artifacts")
 		}
@@ -255,12 +254,12 @@ func listArtifactsHandler(router *Router) Handler {
 	}
 }
 
-func downloadArtifactDirectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) downloadArtifactDirectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		hash := vars["hash"]
 
-		art, err := artifact.LoadArtifactByHash(db, hash)
+		art, err := artifact.LoadArtifactByHash(api.MustDB(), hash)
 		if err != nil {
 			return sdk.WrapError(err, "downloadArtifactDirectHandler> Could not load artifact with hash %s", hash)
 		}

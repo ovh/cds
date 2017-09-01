@@ -44,7 +44,7 @@ func Test_getTemplatesHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -95,7 +95,7 @@ func Test_addTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -103,8 +103,8 @@ func Test_addTemplateHandler(t *testing.T) {
 
 	downloadPublicAction(t, u, pass)
 
-	if tp, err := templateextension.LoadByName(db, "cds-template-cds-plugin"); err == nil {
-		if err := templateextension.Delete(db, tp); err != nil {
+	if tp, err := templateextension.LoadByName(api.MustDB(), "cds-template-cds-plugin"); err == nil {
+		if err := templateextension.Delete(api.MustDB(), tp); err != nil {
 			t.Log(err)
 		}
 	}
@@ -227,7 +227,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -339,7 +339,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -509,7 +509,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -638,7 +638,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	 */
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -714,7 +714,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	pKey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, pKey, pKey, u)
 	//Insert a Production environment
-	environment.InsertEnvironment(db, &sdk.Environment{
+	environment.InsertEnvironment(api.MustDB(), &sdk.Environment{
 		ProjectKey: pKey,
 		ProjectID:  p.ID,
 		Name:       "Production",

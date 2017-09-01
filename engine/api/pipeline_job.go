@@ -1,14 +1,13 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -16,8 +15,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func addJobToStageHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addJobToStageHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		pipelineName := vars["permPipelineKey"]
@@ -33,12 +32,12 @@ func addJobToStageHandler(router *Router) Handler {
 			return err
 		}
 
-		pip, errl := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+		pip, errl := pipeline.LoadPipeline(api.MustDB(), projectKey, pipelineName, false)
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "addJobToStageHandler> Cannot load pipeline %s for project %s: %s", pipelineName, projectKey, errl)
 		}
 
-		if err := pipeline.LoadPipelineStage(db, pip); err != nil {
+		if err := pipeline.LoadPipelineStage(api.MustDB(), pip); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler>Cannot load stages")
 		}
 
@@ -55,7 +54,7 @@ func addJobToStageHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "addJobToStageHandler>Stage not found")
 		}
 
-		tx, errb := db.Begin()
+		tx, errb := api.MustDB().Begin()
 		if errb != nil {
 			return errb
 		}
@@ -73,12 +72,12 @@ func addJobToStageHandler(router *Router) Handler {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot insert job in database")
 		}
 
-		proj, errproj := project.Load(db, projectKey, c.User)
+		proj, errproj := project.Load(api.MustDB(), projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, c.User); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot update pipeline last modified date")
 		}
 
@@ -93,7 +92,7 @@ func addJobToStageHandler(router *Router) Handler {
 		cache.DeleteAll(cache.Key("application", projectKey, "*"))
 		cache.Delete(cache.Key("pipeline", projectKey, pipelineName))
 
-		if err := pipeline.LoadPipelineStage(db, pip); err != nil {
+		if err := pipeline.LoadPipelineStage(api.MustDB(), pip); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot load stages")
 		}
 
@@ -101,8 +100,8 @@ func addJobToStageHandler(router *Router) Handler {
 	}
 }
 
-func updateJobHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateJobHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		pipName := vars["permPipelineKey"]
@@ -128,12 +127,12 @@ func updateJobHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "updateJobHandler>Pipeline action does not match")
 		}
 
-		pipelineData, errl := pipeline.LoadPipeline(db, key, pipName, false)
+		pipelineData, errl := pipeline.LoadPipeline(api.MustDB(), key, pipName, false)
 		if errl != nil {
 			return sdk.WrapError(errl, "updateJobHandler>Cannot load pipeline %s", pipName)
 		}
 
-		if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.MustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "updateJobHandler>Cannot load stages")
 		}
 
@@ -154,7 +153,7 @@ func updateJobHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "updateJobHandler>Job not found")
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot start transaction")
 		}
@@ -165,7 +164,7 @@ func updateJobHandler(router *Router) Handler {
 			return sdk.WrapError(errlb, "updateJobHandler> cannot load all binary requirements")
 		}
 
-		if err := pipeline.UpdateJob(tx, &job, c.User.ID); err != nil {
+		if err := pipeline.UpdateJob(tx, &job, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot update in database")
 		}
 
@@ -173,12 +172,12 @@ func updateJobHandler(router *Router) Handler {
 			return sdk.WrapError(err, "updateJobHandler> Cannot compute registration needs")
 		}
 
-		proj, errproj := project.Load(db, key, c.User)
+		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot update pipeline last_modified")
 		}
 
@@ -186,7 +185,7 @@ func updateJobHandler(router *Router) Handler {
 			return sdk.WrapError(err, "updateJobHandler> Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.MustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot load stages")
 		}
 
@@ -194,8 +193,8 @@ func updateJobHandler(router *Router) Handler {
 	}
 }
 
-func deleteJobHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteJobHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		pipName := vars["permPipelineKey"]
@@ -206,12 +205,12 @@ func deleteJobHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "deleteJobHandler>ID is not a int: %s", errp)
 		}
 
-		pipelineData, errl := pipeline.LoadPipeline(db, key, pipName, false)
+		pipelineData, errl := pipeline.LoadPipeline(api.MustDB(), key, pipName, false)
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteJobHandler>Cannot load pipeline %s", pipName)
 		}
 
-		if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.MustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler>Cannot load stages")
 		}
 
@@ -233,22 +232,22 @@ func deleteJobHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "deleteJobHandler>Job not found")
 		}
 
-		tx, errb := db.Begin()
+		tx, errb := api.MustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "deleteJobHandler> Cannot begin transaction")
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.DeleteJob(tx, jobToDelete, c.User.ID); err != nil {
+		if err := pipeline.DeleteJob(tx, jobToDelete, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot delete pipeline action")
 		}
 
-		proj, errproj := project.Load(db, key, c.User)
+		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "deleteJobHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot update pipeline last_modified")
 		}
 
@@ -259,7 +258,7 @@ func deleteJobHandler(router *Router) Handler {
 		k := cache.Key("application", key, "*")
 		cache.DeleteAll(k)
 
-		if err := pipeline.LoadPipelineStage(db, pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.MustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot load stages")
 		}
 

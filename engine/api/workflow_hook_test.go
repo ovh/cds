@@ -17,8 +17,8 @@ import (
 
 func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	db := test.SetupPG(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
-	user, passUser := assets.InsertLambdaUser(db)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
+	user, passUser := assets.InsertLambdaUser(api.MustDB())
 
 	// Init router
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowHookModelsHandlerAsLambdaUser")
@@ -42,8 +42,8 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 
 func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	db := test.SetupPG(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
-	admin, passAdmin := assets.InsertAdminUser(db)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
+	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
 
 	// Init router
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowHookModelsHandlerAsAdminUser")
@@ -67,8 +67,8 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 
 func Test_getWorkflowHookModelHandler(t *testing.T) {
 	db := test.SetupPG(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
-	admin, passAdmin := assets.InsertAdminUser(db)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
+	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
 
 	// Init router
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowHookModelHandler")
@@ -97,8 +97,8 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 
 func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 	db := test.SetupPG(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
-	admin, passAdmin := assets.InsertAdminUser(db)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
+	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
 
 	// Init router
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_putWorkflowHookModelHandlerAsAdminUser")
@@ -142,9 +142,9 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 
 func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
 	db := test.SetupPG(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
 
-	u, pass := assets.InsertLambdaUser(db)
+	u, pass := assets.InsertLambdaUser(api.MustDB())
 
 	// Init router
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_putWorkflowHookModelHandlerAsAdminUser")

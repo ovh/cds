@@ -1,27 +1,26 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/project"
 )
 
-func getProjectNotificationsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getProjectNotificationsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		if _, err := project.Load(db, key, nil); err != nil {
+		if _, err := project.Load(api.MustDB(), key, nil); err != nil {
 			return err
 		}
 
-		notifs, err := notification.LoadAllUserNotificationSettingsByProject(db, key, c.User)
+		notifs, err := notification.LoadAllUserNotificationSettingsByProject(api.MustDB(), key, getUser(ctx))
 		if err != nil {
 			return err
 		}

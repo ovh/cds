@@ -1,23 +1,22 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getActionsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		acts, err := action.LoadActions(db)
+func (api *API) getActionsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		acts, err := action.LoadActions(api.MustDB())
 		if err != nil {
 			return sdk.WrapError(err, "GetActions: Cannot load action from db")
 		}
@@ -25,8 +24,8 @@ func getActionsHandler(router *Router) Handler {
 	}
 }
 
-func getPipelinesUsingActionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getPipelinesUsingActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get action name in URL
 		vars := mux.Vars(r)
 		name := vars["actionName"]
@@ -48,7 +47,7 @@ func getPipelinesUsingActionHandler(router *Router) Handler {
 		WHERE actionChild.name = $1 and actionChild.public = true
 		ORDER BY projectkey, appName, pipName, actionName;
 	`
-		rows, errq := db.Query(query, name)
+		rows, errq := api.MustDB().Query(query, name)
 		if errq != nil {
 			return sdk.WrapError(errq, "getPipelinesUsingActionHandler> Cannot load pipelines using action %s", name)
 		}
@@ -96,9 +95,9 @@ func getPipelinesUsingActionHandler(router *Router) Handler {
 	}
 }
 
-func getActionsRequirements(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		req, err := action.LoadAllBinaryRequirements(db)
+func (api *API) getActionsRequirements() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		req, err := action.LoadAllBinaryRequirements(api.MustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getActionsRequirements> Cannot load action requirements")
 		}
@@ -106,13 +105,14 @@ func getActionsRequirements(router *Router) Handler {
 	}
 }
 
-func deleteActionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 		// Get action name in URL
 		vars := mux.Vars(r)
 		name := vars["permActionName"]
 
-		a, errLoad := action.LoadPublicAction(db, name)
+		a, errLoad := action.LoadPublicAction(api.MustDB(), name)
 		if errLoad != nil {
 			if errLoad != sdk.ErrNoAction {
 				log.Warning("deleteAction> Cannot load action %s: %T %s", name, errLoad, errLoad)
@@ -120,7 +120,7 @@ func deleteActionHandler(router *Router) Handler {
 			return errLoad
 		}
 
-		used, errUsed := action.Used(db, a.ID)
+		used, errUsed := action.Used(api.MustDB(), a.ID)
 		if errUsed != nil {
 			return errUsed
 		}
@@ -128,14 +128,14 @@ func deleteActionHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "deleteAction> Cannot delete action %s: used in pipelines", name)
 		}
 
-		tx, errbegin := db.Begin()
+		tx, errbegin := api.MustDB().Begin()
 		if errbegin != nil {
 			log.Warning("deleteAction> Cannot start transaction: %s\n", errbegin)
 			return errbegin
 		}
 		defer tx.Rollback()
 
-		if err := action.DeleteAction(tx, a.ID, c.User.ID); err != nil {
+		if err := action.DeleteAction(tx, a.ID, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "deleteAction> Cannot delete action %s", name)
 		}
 
@@ -147,8 +147,8 @@ func deleteActionHandler(router *Router) Handler {
 	}
 }
 
-func updateActionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get action name in URL
 		vars := mux.Vars(r)
 		name := vars["permActionName"]
@@ -160,13 +160,13 @@ func updateActionHandler(router *Router) Handler {
 		}
 
 		// Check that action  already exists
-		//actionDB, err := action.LoadPublicAction(db, name, action.WithClearPasswords())
-		actionDB, err := action.LoadPublicAction(db, name)
+		//actionDB, err := action.LoadPublicAction(api.MustDB(), name, action.WithClearPasswords())
+		actionDB, err := action.LoadPublicAction(api.MustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "updateAction> Cannot check if action %s exist", a.Name)
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateAction> Cannot begin tx")
 		}
@@ -174,7 +174,7 @@ func updateActionHandler(router *Router) Handler {
 
 		a.ID = actionDB.ID
 
-		if err = action.UpdateActionDB(tx, &a, c.User.ID); err != nil {
+		if err = action.UpdateActionDB(tx, &a, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "updateAction: Cannot update action")
 		}
 
@@ -187,15 +187,15 @@ func updateActionHandler(router *Router) Handler {
 	}
 }
 
-func addActionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var a sdk.Action
 		if err := UnmarshalBody(r, &a); err != nil {
 			return err
 		}
 
 		// Check that action does not already exists
-		conflict, errConflict := action.Exists(db, a.Name)
+		conflict, errConflict := action.Exists(api.MustDB(), a.Name)
 		if errConflict != nil {
 			return errConflict
 		}
@@ -204,7 +204,7 @@ func addActionHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrConflict, "addAction> Action %s already exists", a.Name)
 		}
 
-		tx, errDB := db.Begin()
+		tx, errDB := api.MustDB().Begin()
 		if errDB != nil {
 			return errDB
 		}
@@ -223,8 +223,8 @@ func addActionHandler(router *Router) Handler {
 	}
 }
 
-func getActionAuditHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getActionAuditHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		actionIDString := vars["actionID"]
 
@@ -233,7 +233,7 @@ func getActionAuditHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getActionAuditHandler> ActionID must be a number, got %s: %s", actionIDString, err)
 		}
 		// Load action
-		a, err := action.LoadAuditAction(db, actionID, true)
+		a, err := action.LoadAuditAction(api.MustDB(), actionID, true)
 		if err != nil {
 			return sdk.WrapError(err, "getActionAuditHandler> Cannot load audit for action %s", actionID)
 		}
@@ -241,12 +241,12 @@ func getActionAuditHandler(router *Router) Handler {
 	}
 }
 
-func getActionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["permActionName"]
 
-		a, err := action.LoadPublicAction(db, name)
+		a, err := action.LoadPublicAction(api.MustDB(), name)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "getActionHandler> Cannot load action: %s", err)
 		}
@@ -255,8 +255,8 @@ func getActionHandler(router *Router) Handler {
 }
 
 // importActionHandler insert OR update an existing action.
-func importActionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) importActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var a *sdk.Action
 		url := r.Form.Get("url")
 		//Load action from url
@@ -293,7 +293,7 @@ func importActionHandler(router *Router) Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		tx, errbegin := db.Begin()
+		tx, errbegin := api.MustDB().Begin()
 		if errbegin != nil {
 			return errbegin
 		}
@@ -313,7 +313,7 @@ func importActionHandler(router *Router) Handler {
 
 		//Update or Insert the action
 		if exist {
-			if err := action.UpdateActionDB(tx, a, c.User.ID); err != nil {
+			if err := action.UpdateActionDB(tx, a, getUser(ctx).ID); err != nil {
 				return err
 			}
 			code = 200

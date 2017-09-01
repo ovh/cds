@@ -2,15 +2,12 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -22,8 +19,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getVersionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVersionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		s := struct {
 			Version string `json:"version"`
 		}{
@@ -34,8 +31,8 @@ func getVersionHandler(router *Router) Handler {
 	}
 }
 
-func statusHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) statusHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var output []string
 
 		// Version
@@ -43,12 +40,12 @@ func statusHandler(router *Router) Handler {
 		log.Debug("Status> Version: %s", sdk.VERSION)
 
 		// Uptime
-		output = append(output, fmt.Sprintf("Uptime: %s", time.Since(startupTime)))
-		log.Debug("Status> Uptime: %s", time.Since(startupTime))
+		output = append(output, fmt.Sprintf("Uptime: %s", time.Since(api.StartupTime)))
+		log.Debug("Status> Uptime: %s", time.Since(api.StartupTime))
 
 		//Nb Panics
-		output = append(output, fmt.Sprintf("Nb of Panics: %d", nbPanic))
-		log.Debug("Status> Nb of Panics: %d", nbPanic)
+		output = append(output, fmt.Sprintf("Nb of Panics: %d", api.Router.nbPanic))
+		log.Debug("Status> Nb of Panics: %d", api.Router.nbPanic)
 
 		// Check Scheduler
 		output = append(output, fmt.Sprintf("Scheduler: %s", scheduler.Status()))
@@ -80,34 +77,34 @@ func statusHandler(router *Router) Handler {
 		log.Debug("Status> SMTP: %s", mailStatus)
 
 		// Check database
-		output = append(output, database.Status())
-		log.Debug("Status> %s", database.Status())
+		output = append(output, api.DBConnectionFactory.Status())
+		log.Debug("Status> %s", api.DBConnectionFactory.Status())
 
 		// Check LastUpdate Connected User
 		output = append(output, fmt.Sprintf("LastUpdate Connected: %d", len(lastUpdateBroker.clients)))
 		log.Debug("Status> LastUpdate ConnectedUser> %d", len(lastUpdateBroker.clients))
 
 		// Check Worker Model Error
-		wmStatus := worker.Status(db)
+		wmStatus := worker.Status(api.MustDB())
 		output = append(output, fmt.Sprintf("Worker Model Errors: %s", wmStatus))
 		log.Debug("Status> Worker Model Errors: %s", wmStatus)
 
 		var status = http.StatusOK
-		if panicked {
+		if api.Router.panicked {
 			status = http.StatusServiceUnavailable
 		}
 		return WriteJSON(w, r, output, status)
 	}
 }
 
-func smtpPingHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		if c.User == nil {
+func (api *API) smtpPingHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if getUser(ctx) == nil {
 			return sdk.ErrForbidden
 		}
 
 		message := "mail sent"
-		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), c.User.Email); err != nil {
+		if err := mail.SendEmail("Ping", bytes.NewBufferString("Pong"), getUser(ctx).Email); err != nil {
 			message = err.Error()
 		}
 

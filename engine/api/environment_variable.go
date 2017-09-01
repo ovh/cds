@@ -1,14 +1,13 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
@@ -18,13 +17,13 @@ import (
 )
 
 // Deprecated
-func getEnvironmentsAuditHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getEnvironmentsAuditHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 
-		audits, errAudit := environment.GetEnvironmentAudit(db, key, envName)
+		audits, errAudit := environment.GetEnvironmentAudit(api.MustDB(), key, envName)
 		if errAudit != nil {
 			log.Warning("getEnvironmentsAuditHandler: Cannot get environment audit for project %s: %s\n", key, errAudit)
 			return errAudit
@@ -34,8 +33,8 @@ func getEnvironmentsAuditHandler(router *Router) Handler {
 }
 
 // Deprecated
-func restoreEnvironmentAuditHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) restoreEnvironmentAuditHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
@@ -47,25 +46,25 @@ func restoreEnvironmentAuditHandler(router *Router) Handler {
 			return sdk.ErrInvalidID
 		}
 
-		p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+		p, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			log.Warning("restoreEnvironmentAuditHandler: Cannot load project %s: %s\n", key, errProj)
 			return errProj
 		}
 
-		env, errEnv := environment.LoadEnvironmentByName(db, key, envName)
+		env, errEnv := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
 		if errEnv != nil {
 			log.Warning("restoreEnvironmentAuditHandler: Cannot load environment %s: %s\n", envName, errEnv)
 			return errEnv
 		}
 
-		auditVars, errGetAudit := environment.GetAudit(db, auditID)
+		auditVars, errGetAudit := environment.GetAudit(api.MustDB(), auditID)
 		if errGetAudit != nil {
 			log.Warning("restoreEnvironmentAuditHandler: Cannot get environment audit for project %s: %s\n", key, errGetAudit)
 			return errGetAudit
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			log.Warning("restoreEnvironmentAuditHandler: Cannot start transaction : %s\n", errBegin)
 			return errBegin
@@ -87,13 +86,13 @@ func restoreEnvironmentAuditHandler(router *Router) Handler {
 				}
 				varEnv.Value = string(value)
 			}
-			if err := environment.InsertVariable(tx, env.ID, varEnv, c.User); err != nil {
+			if err := environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx)); err != nil {
 				log.Warning("restoreEnvironmentAuditHandler> Cannot insert variables on environments: %s\n", err)
 				return err
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			log.Warning("restoreEnvironmentAuditHandler> Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -103,25 +102,25 @@ func restoreEnvironmentAuditHandler(router *Router) Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
 			log.Warning("restoreEnvironmentAuditHandler: Cannot check warnings: %s\n", err)
 			return err
 		}
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(db, p.Key, true, c.User)
+		p.Environments, errEnvs = environment.LoadEnvironments(api.MustDB(), p.Key, true, getUser(ctx))
 		if errEnvs != nil {
 			log.Warning("restoreEnvironmentAuditHandler: Cannot load environments: %s\n", errEnvs)
 			return errEnvs
 		}
 
-		apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
+		apps, errApps := application.LoadAll(api.MustDB(), p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
 			log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
 			return errApps
 		}
 		for _, a := range apps {
-			if err := sanity.CheckApplication(db, p, &a); err != nil {
+			if err := sanity.CheckApplication(api.MustDB(), p, &a); err != nil {
 				log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
 				return err
 			}
@@ -131,25 +130,25 @@ func restoreEnvironmentAuditHandler(router *Router) Handler {
 	}
 }
 
-func getVariableAuditInEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariableAuditInEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		env, errE := environment.LoadEnvironmentByName(db, key, envName)
+		env, errE := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "getVariableAuditInEnvironmentHandler> Cannot load environment %s on project %s", envName, key)
 		}
 
-		variable, errV := environment.GetVariable(db, key, envName, varName)
+		variable, errV := environment.GetVariable(api.MustDB(), key, envName, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "getVariableAuditInEnvironmentHandler> Cannot load variable %s", varName)
 		}
 
-		audits, errA := environment.LoadVariableAudits(db, env.ID, variable.ID)
+		audits, errA := environment.LoadVariableAudits(api.MustDB(), env.ID, variable.ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInEnvironmentHandler> Cannot load audit for variable %s", varName)
 		}
@@ -157,14 +156,14 @@ func getVariableAuditInEnvironmentHandler(router *Router) Handler {
 	}
 }
 
-func getVariableInEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariableInEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 		name := vars["name"]
 
-		v, errVar := environment.GetVariable(db, key, envName, name)
+		v, errVar := environment.GetVariable(api.MustDB(), key, envName, name)
 		if errVar != nil {
 			log.Warning("getVariableInEnvironmentHandler: Cannot get variable %s for environment %s: %s\n", name, envName, errVar)
 			return errVar
@@ -174,13 +173,13 @@ func getVariableInEnvironmentHandler(router *Router) Handler {
 	}
 }
 
-func getVariablesInEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariablesInEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 
-		variables, errVar := environment.GetAllVariable(db, key, envName)
+		variables, errVar := environment.GetAllVariable(api.MustDB(), key, envName)
 		if errVar != nil {
 			log.Warning("getVariablesInEnvironmentHandler: Cannot get variables for environment %s: %s\n", envName, errVar)
 			return errVar
@@ -190,24 +189,24 @@ func getVariablesInEnvironmentHandler(router *Router) Handler {
 	}
 }
 
-func deleteVariableFromEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteVariableFromEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+		p, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "deleteVariableFromEnvironmentHandler: Cannot load project %s", key)
 		}
 
-		env, errEnv := environment.LoadEnvironmentByName(db, key, envName)
+		env, errEnv := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "deleteVariableFromEnvironmentHandler: Cannot load environment %s", envName)
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteVariableFromEnvironmentHandler: Cannot start transaction")
 		}
@@ -219,15 +218,15 @@ func deleteVariableFromEnvironmentHandler(router *Router) Handler {
 			return sdk.WrapError(errV, "deleteVariableFromEnvironmentHandler> Cannot load variable %s", varName)
 		}
 
-		if err := environment.DeleteVariable(tx, env.ID, varToDelete, c.User); err != nil {
+		if err := environment.DeleteVariable(tx, env.ID, varToDelete, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot delete %s", varName)
 		}
 
-		if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		if err := environment.UpdateLastModified(tx, getUser(ctx), env); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update last modified date")
 		}
 
@@ -235,18 +234,18 @@ func deleteVariableFromEnvironmentHandler(router *Router) Handler {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot commit transaction")
 		}
 
-		apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
+		apps, errApps := application.LoadAll(api.MustDB(), p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
 			return sdk.WrapError(errApps, "deleteVariableFromEnvironmentHandler: Cannot load applications")
 		}
 		for _, a := range apps {
-			if err := sanity.CheckApplication(db, p, &a); err != nil {
+			if err := sanity.CheckApplication(api.MustDB(), p, &a); err != nil {
 				return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot check application sanity")
 			}
 		}
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(db, key, true, c.User)
+		p.Environments, errEnvs = environment.LoadEnvironments(api.MustDB(), key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "deleteVariableFromEnvironmentHandler: Cannot load environments")
 		}
@@ -255,14 +254,14 @@ func deleteVariableFromEnvironmentHandler(router *Router) Handler {
 	}
 }
 
-func updateVariableInEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateVariableInEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+		p, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateVariableInEnvironment: Cannot load %s", key)
 		}
@@ -272,26 +271,26 @@ func updateVariableInEnvironmentHandler(router *Router) Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		env, errEnv := environment.LoadEnvironmentByName(db, key, envName)
+		env, errEnv := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "updateVariableInEnvironmentHandler: cannot load environment %s", envName)
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "updateVariableInEnvironmentHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := environment.UpdateVariable(db, env.ID, &newVar, c.User); err != nil {
+		if err := environment.UpdateVariable(api.MustDB(), env.ID, &newVar, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
 		}
 
-		if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		if err := environment.UpdateLastModified(tx, getUser(ctx), env); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update last modified date")
 		}
 
@@ -299,22 +298,22 @@ func updateVariableInEnvironmentHandler(router *Router) Handler {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot commit transaction")
 		}
 
-		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot check warnings")
 		}
 
-		apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
+		apps, errApps := application.LoadAll(api.MustDB(), p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
 			return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
 		}
 		for _, a := range apps {
-			if err := sanity.CheckApplication(db, p, &a); err != nil {
+			if err := sanity.CheckApplication(api.MustDB(), p, &a); err != nil {
 				return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot check application sanity")
 			}
 		}
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(db, key, true, c.User)
+		p.Environments, errEnvs = environment.LoadEnvironments(api.MustDB(), key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "updateVariableInEnvironmentHandler: Cannot load environments")
 		}
@@ -323,14 +322,14 @@ func updateVariableInEnvironmentHandler(router *Router) Handler {
 	}
 }
 
-func addVariableInEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addVariableInEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+		p, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "addVariableInEnvironmentHandler: Cannot load project %s", key)
 		}
@@ -344,12 +343,12 @@ func addVariableInEnvironmentHandler(router *Router) Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		env, errEnv := environment.LoadEnvironmentByName(db, key, envName)
+		env, errEnv := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "addVariableInEnvironmentHandler: Cannot load environment %s", envName)
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "addVariableInEnvironmentHandler: cannot begin tx")
 		}
@@ -358,41 +357,41 @@ func addVariableInEnvironmentHandler(router *Router) Handler {
 		var errInsert error
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			errInsert = environment.AddKeyPairToEnvironment(tx, env.ID, newVar.Name, c.User)
+			errInsert = environment.AddKeyPairToEnvironment(tx, env.ID, newVar.Name, getUser(ctx))
 		default:
-			errInsert = environment.InsertVariable(tx, env.ID, &newVar, c.User)
+			errInsert = environment.InsertVariable(tx, env.ID, &newVar, getUser(ctx))
 		}
 		if errInsert != nil {
 			return sdk.WrapError(errInsert, "addVariableInEnvironmentHandler: Cannot add variable %s in environment %s", varName, envName)
 		}
 
-		if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		if err := environment.UpdateLastModified(tx, getUser(ctx), env); err != nil {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler> Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot update last modified date")
 		}
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: cannot commit tx")
 		}
 
-		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot check warnings")
 		}
 
-		apps, errApps := application.LoadAll(db, p.Key, c.User, application.LoadOptions.WithVariables)
+		apps, errApps := application.LoadAll(api.MustDB(), p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
 			return sdk.WrapError(errApps, "addVariableInEnvironmentHandler: Cannot load applications")
 		}
 		for _, a := range apps {
-			if err := sanity.CheckApplication(db, p, &a); err != nil {
+			if err := sanity.CheckApplication(api.MustDB(), p, &a); err != nil {
 				return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot check application sanity")
 			}
 		}
 
 		var errEnvs error
-		p.Environments, errEnvs = environment.LoadEnvironments(db, key, true, c.User)
+		p.Environments, errEnvs = environment.LoadEnvironments(api.MustDB(), key, true, getUser(ctx))
 		if errEnvs != nil {
 			return sdk.WrapError(errEnvs, "addVariableInEnvironmentHandler: Cannot load environments")
 		}

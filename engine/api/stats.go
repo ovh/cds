@@ -1,22 +1,22 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getStats(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getStatsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var st sdk.Stats
 		var err error
 
-		st.History, err = initHistory(db)
+		st.History, err = initHistory(api.MustDB())
 		if err != nil {
 			log.Warning("getStats> cannot initialize history: %s\n", err)
 			return err
@@ -24,7 +24,7 @@ func getStats(r *Router) Handler {
 		}
 
 		for i := range st.History {
-			n, err := getNewUsers(db, i+1, i)
+			n, err := getNewUsers(api.MustDB(), i+1, i)
 			if err != nil {
 				log.Warning("getStats> cannot getNewUsers: %s\n", err)
 				return err
@@ -33,7 +33,7 @@ func getStats(r *Router) Handler {
 			st.History[i].NewUsers = n
 
 			// Number of users back then
-			n, err = getNewUsers(db, 540, i)
+			n, err = getNewUsers(api.MustDB(), 540, i)
 			if err != nil {
 				log.Warning("getStats> cannot getPeriodTotalUsers: %s\n", err)
 				return err
@@ -41,7 +41,7 @@ func getStats(r *Router) Handler {
 			}
 			st.History[i].Users = n
 
-			n, err = getNewProjects(db, i+1, i)
+			n, err = getNewProjects(api.MustDB(), i+1, i)
 			if err != nil {
 				log.Warning("getStats> cannot getNewProjects: %s\n", err)
 				return err
@@ -49,7 +49,7 @@ func getStats(r *Router) Handler {
 			}
 			st.History[i].NewProjects = n
 
-			n, err = getNewProjects(db, 540, i)
+			n, err = getNewProjects(api.MustDB(), 540, i)
 			if err != nil {
 				log.Warning("getStats> cannot getPeriodTotalUsers: %s\n", err)
 				return err
@@ -57,7 +57,7 @@ func getStats(r *Router) Handler {
 			}
 			st.History[i].Projects = n
 
-			n, err = getNewApplications(db, i+1, i)
+			n, err = getNewApplications(api.MustDB(), i+1, i)
 			if err != nil {
 				log.Warning("getStats> cannot getNewApplications: %s\n", err)
 				return err
@@ -65,7 +65,7 @@ func getStats(r *Router) Handler {
 			}
 			st.History[i].NewApplications = n
 
-			n, err = getNewApplications(db, 540, i)
+			n, err = getNewApplications(api.MustDB(), 540, i)
 			if err != nil {
 				log.Warning("getStats> cannot getNewApplications: %s\n", err)
 				return err
@@ -73,7 +73,7 @@ func getStats(r *Router) Handler {
 			}
 			st.History[i].Applications = n
 
-			n, err = getNewPipelines(db, i+1, i)
+			n, err = getNewPipelines(api.MustDB(), i+1, i)
 			if err != nil {
 				log.Warning("getStats> cannot getNewPipelines: %s\n", err)
 				return err
@@ -81,7 +81,7 @@ func getStats(r *Router) Handler {
 			}
 			st.History[i].NewPipelines = n
 
-			st.History[i].Pipelines.Build, st.History[i].Pipelines.Testing, st.History[i].Pipelines.Deploy, err = getPeriodTotalPipelinesByType(db, i)
+			st.History[i].Pipelines.Build, st.History[i].Pipelines.Testing, st.History[i].Pipelines.Deploy, err = getPeriodTotalPipelinesByType(api.MustDB(), i)
 			if err != nil {
 				log.Warning("getStats> cannot getPeriodTotalPipelinesByType: %s\n", err)
 				return err

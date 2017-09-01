@@ -23,7 +23,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowsHandler")
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -49,7 +49,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowHandler")
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -75,7 +75,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowHandler")
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -101,7 +101,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowHandler")
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -111,7 +111,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{
@@ -145,7 +145,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowHandler")
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -155,7 +155,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{
@@ -216,7 +216,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteWorkflowHandler")
 	router.init()
 	// Init user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -226,7 +226,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{

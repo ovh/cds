@@ -21,7 +21,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -33,7 +33,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -43,7 +43,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := application.InsertVariable(db, app, v, u); err != nil {
+	if err := application.InsertVariable(api.MustDB(), app, v, u); err != nil {
 		t.Fatal(err)
 	}
 

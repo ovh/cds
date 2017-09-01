@@ -51,14 +51,15 @@ func Pipelines(c context.Context, DBFunc func() *gorp.DbMap) {
 				}
 
 				for _, id := range ids {
-					runPipeline(db, id)
+					runPipeline(DBFunc, id)
 				}
 			}
 		}
 	}
 }
 
-func runPipeline(db *gorp.DbMap, pbID int64) {
+func runPipeline(DBFunc func() *gorp.DbMap, pbID int64) {
+	db := DBFunc()
 	tx, errb := db.Begin()
 	if errb != nil {
 		log.Warning("queue.RunActions> cannot start tx for pb %d: %s", pbID, errb)
@@ -151,7 +152,7 @@ func runPipeline(db *gorp.DbMap, pbID int64) {
 
 	// If pipeline build succeed, run trigger
 	if pb.Status == sdk.StatusSuccess {
-		if err := pipelineBuildEnd(tx, pb); err != nil {
+		if err := pipelineBuildEnd(DBFunc, tx, pb); err != nil {
 			log.Warning("RunActions> Cannot execute pipelineBuildEnd: %s", err)
 		}
 	}
@@ -273,7 +274,7 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 	return stageEnd, nil
 }
 
-func pipelineBuildEnd(tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
+func pipelineBuildEnd(DBFunc func() *gorp.DbMap, tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 	// run trigger
 	triggers, err := trigger.LoadAutomaticTriggersAsSource(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if err != nil {
@@ -328,7 +329,7 @@ func pipelineBuildEnd(tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 			ScheduledTrigger:    pb.Trigger.ScheduledTrigger,
 		}
 
-		_, err = RunPipeline(tx, t.DestProject.Key, app, t.DestPipeline.Name, t.DestEnvironment.Name, parameters, pb.Version, trigger, &sdk.User{Admin: true})
+		_, err = RunPipeline(DBFunc, tx, t.DestProject.Key, app, t.DestPipeline.Name, t.DestEnvironment.Name, parameters, pb.Version, trigger, &sdk.User{Admin: true})
 		if err != nil {
 			return sdk.WrapError(err, "pipelineScheduler> Cannot run pipeline on project %s, application %s, pipeline %s, env %s", t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name)
 		}

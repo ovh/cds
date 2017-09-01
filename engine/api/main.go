@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-gorp/gorp"
+
 	"github.com/gorilla/mux"
-	_ "github.com/lib/pq"
-	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/auth"
@@ -37,8 +37,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-var startupTime time.Time
 
 type Configuration struct {
 	URL struct {
@@ -150,11 +148,10 @@ type Configuration struct {
 }
 
 type API struct {
-	Router    *Router
-	Config    Configuration
-	panicked  bool
-	nbPanic   int
-	lastPanic *time.Time
+	Router              *Router
+	Config              Configuration
+	DBConnectionFactory *database.DBConnectionFactory
+	StartupTime         time.Time
 }
 
 func (api *API) Init(config interface{}) error {
@@ -172,18 +169,65 @@ func (api *API) Init(config interface{}) error {
 	return nil
 }
 
-func (api *API) Serve(ctx context.Context) error {
+func getUser(c context.Context) *sdk.User {
+	i := c.Value(auth.ContextUser)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(*sdk.User)
+	if !ok {
+		return nil
+	}
+	return u
+}
 
+func getAgent(r *http.Request) string {
+	return r.Header.Get("User-Agent")
+}
+
+func getWorker(c context.Context) *sdk.Worker {
+	i := c.Value(auth.ContextWorker)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(*sdk.Worker)
+	if !ok {
+		return nil
+	}
+	return u
+}
+
+func getHatchery(c context.Context) *sdk.Hatchery {
+	i := c.Value(auth.ContextWorker)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(*sdk.Hatchery)
+	if !ok {
+		return nil
+	}
+	return u
+}
+
+func (api *API) MustDB() *gorp.DbMap {
+	db := api.DBConnectionFactory.GetDBMap()
+	if db == nil {
+		panic(fmt.Errorf("Database unavailable"))
+	}
+	return db
+}
+
+func (api *API) Serve(ctx context.Context) error {
 	log.Initialize(&log.Conf{Level: api.Config.Log.Level})
 	log.Info("Starting CDS API Server...")
 
-	startupTime = time.Now()
+	api.StartupTime = time.Now()
 
 	go func() {
 		select {
 		case <-ctx.Done():
 			log.Warning("Cleanup SQL connections")
-			database.Close()
+			api.DBConnectionFactory.Close()
 			event.Publish(sdk.EventEngine{Message: "shutdown"})
 			event.Close()
 		}
@@ -234,7 +278,8 @@ func (api *API) Serve(ctx context.Context) error {
 	}
 
 	//Intialize database
-	if _, err := database.Init(
+	var errDB error
+	api.DBConnectionFactory, errDB = database.Init(
 		api.Config.Database.User,
 		api.Config.Database.Password,
 		api.Config.Database.Name,
@@ -242,9 +287,9 @@ func (api *API) Serve(ctx context.Context) error {
 		api.Config.Database.Port,
 		api.Config.Database.SSLMode,
 		api.Config.Database.Timeout,
-		api.Config.Database.MaxConn,
-	); err != nil {
-		log.Error("Cannot connect to database: %s", err)
+		api.Config.Database.MaxConn)
+	if errDB != nil {
+		log.Error("Cannot connect to database: %s", errDB)
 		os.Exit(3)
 	}
 
@@ -252,11 +297,11 @@ func (api *API) Serve(ctx context.Context) error {
 		DefaultGroupName: api.Config.Auth.DefaultGroup,
 		SharedInfraToken: api.Config.Auth.SharedInfraToken,
 	}
-	if err := bootstrap.InitiliazeDB(defaultValues, database.GetDBMap); err != nil {
+	if err := bootstrap.InitiliazeDB(defaultValues, api.DBConnectionFactory.GetDBMap); err != nil {
 		log.Error("Cannot setup databases: %s", err)
 	}
 
-	if err := workflow.CreateBuiltinWorkflowHookModels(database.GetDBMap()); err != nil {
+	if err := workflow.CreateBuiltinWorkflowHookModels(api.DBConnectionFactory.GetDBMap()); err != nil {
 		log.Error("Cannot setup builtin workflow hook models")
 	}
 
@@ -266,14 +311,16 @@ func (api *API) Serve(ctx context.Context) error {
 		api.Config.Cache.Redis.Password,
 		api.Config.Cache.TTL)
 
-	InitLastUpdateBroker(ctx, database.GetDBMap)
+	InitLastUpdateBroker(ctx, api.DBConnectionFactory.GetDBMap)
 
 	api.Router = &Router{
-		Mux: mux.NewRouter(),
+		Mux:        mux.NewRouter(),
+		Background: ctx,
 	}
-	api.Router.Init()
+	api.InitRouter()
 	api.Router.URL = api.Config.URL.API
-	api.Router.Cfg = api.Config
+	api.Router.SetHeaderFunc = DefaultHeaders
+	api.Router.Middlewares = append(api.Router.Middlewares, api.AuthMiddleware)
 
 	//Intialize repositories manager
 	rmInitOpts := repositoriesmanager.InitializeOpts{
@@ -287,7 +334,7 @@ func (api *API) Serve(ctx context.Context) error {
 		StashPrivateKey:        api.Config.VCS.Bitbucket.PrivateKey,
 		StashConsumerKey:       api.Config.VCS.Bitbucket.ConsumerKey,
 	}
-	if err := repositoriesmanager.Initialize(rmInitOpts); err != nil {
+	if err := repositoriesmanager.Initialize(rmInitOpts, api.DBConnectionFactory.GetDBMap); err != nil {
 		log.Warning("Error initializing repositories manager connections: %s", err)
 	}
 
@@ -323,7 +370,7 @@ func (api *API) Serve(ctx context.Context) error {
 	}
 
 	var errdriver error
-	api.Router.AuthDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions)
+	api.Router.AuthDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions, api.DBConnectionFactory.GetDBMap)
 	if errdriver != nil {
 		log.Fatalf("Error: %v", errdriver)
 	}
@@ -341,32 +388,32 @@ func (api *API) Serve(ctx context.Context) error {
 		go event.DequeueEvent(ctx)
 	}
 
-	if err := worker.Initialize(ctx, database.GetDBMap); err != nil {
+	if err := worker.Initialize(ctx, api.DBConnectionFactory.GetDBMap); err != nil {
 		log.Warning("⚠ Error while initializing workers routine: %s", err)
 	}
 
-	go queue.Pipelines(ctx, database.GetDBMap)
-	go workflow.Scheduler(ctx, database.GetDBMap)
-	go pipeline.AWOLPipelineKiller(ctx, database.GetDBMap)
-	go hatchery.Heartbeat(ctx, database.GetDBMap)
-	go auditCleanerRoutine(ctx, database.GetDBMap)
+	go queue.Pipelines(ctx, api.DBConnectionFactory.GetDBMap)
+	go workflow.Scheduler(ctx, api.DBConnectionFactory.GetDBMap)
+	go pipeline.AWOLPipelineKiller(ctx, api.DBConnectionFactory.GetDBMap)
+	go hatchery.Heartbeat(ctx, api.DBConnectionFactory.GetDBMap)
+	go auditCleanerRoutine(ctx, api.DBConnectionFactory.GetDBMap)
 
-	go repositoriesmanager.ReceiveEvents(ctx, database.GetDBMap)
+	go repositoriesmanager.ReceiveEvents(ctx, api.DBConnectionFactory.GetDBMap)
 
-	go stats.StartRoutine(ctx, database.GetDBMap)
-	go action.RequirementsCacheLoader(ctx, 5*time.Second, database.GetDBMap)
-	go hookRecoverer(ctx, database.GetDBMap)
+	go stats.StartRoutine(ctx, api.DBConnectionFactory.GetDBMap)
+	go action.RequirementsCacheLoader(ctx, 5*time.Second, api.DBConnectionFactory.GetDBMap)
+	go hookRecoverer(ctx, api.DBConnectionFactory.GetDBMap)
 
-	go user.PersistentSessionTokenCleaner(ctx, database.GetDBMap)
+	go user.PersistentSessionTokenCleaner(ctx, api.DBConnectionFactory.GetDBMap)
 
 	if !api.Config.VCS.Polling.Disabled {
-		go poller.Initialize(ctx, 10, database.GetDBMap)
+		go poller.Initialize(ctx, 10, api.DBConnectionFactory.GetDBMap)
 	} else {
 		log.Warning("⚠ Repositories polling is disabled")
 	}
 
 	if !api.Config.Schedulers.Disabled {
-		go scheduler.Initialize(ctx, 10, database.GetDBMap)
+		go scheduler.Initialize(ctx, 10, api.DBConnectionFactory.GetDBMap)
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
@@ -383,7 +430,7 @@ func (api *API) Serve(ctx context.Context) error {
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too
-		if err := grpc.Init(api.Config.GRPC.Port, false, "", ""); err != nil {
+		if err := grpc.Init(api.DBConnectionFactory, api.Config.GRPC.Port, false, "", ""); err != nil {
 			log.Fatalf("Cannot start grpc cds-server: %s", err)
 		}
 	}()
@@ -394,17 +441,4 @@ func (api *API) Serve(ctx context.Context) error {
 	}
 
 	return nil
-}
-
-var mainCmd = &cobra.Command{
-	Use:   "api",
-	Short: "CDS Engine",
-	Run: func(cmd *cobra.Command, args []string) {
-		initConfig()
-
-	},
-}
-
-func main() {
-	mainCmd.Execute()
 }

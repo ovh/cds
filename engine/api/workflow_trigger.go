@@ -1,19 +1,18 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
-func getWorkflowTriggerConditionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowTriggerConditionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
@@ -23,24 +22,24 @@ func getWorkflowTriggerConditionHandler(router *Router) Handler {
 			return errID
 		}
 
-		proj, errproj := project.Load(db, key, c.User, project.LoadOptions.WithVariables)
+		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
 		if errproj != nil {
 			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
 		}
 
-		wf, errw := workflow.Load(db, key, name, c.User)
+		wf, errw := workflow.Load(api.MustDB(), key, name, getUser(ctx))
 		if errw != nil {
 			return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
 		}
 
-		wr, errr := workflow.LoadLastRun(db, key, name)
+		wr, errr := workflow.LoadLastRun(api.MustDB(), key, name)
 		if errr != nil {
 			if errr != sdk.ErrWorkflowNotFound {
 				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
 			}
 		}
 
-		params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, c.User)
+		params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, getUser(ctx))
 		if errp != nil {
 			return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
 		}
@@ -73,8 +72,8 @@ func getWorkflowTriggerConditionHandler(router *Router) Handler {
 	}
 }
 
-func getWorkflowTriggerJoinConditionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
@@ -84,17 +83,17 @@ func getWorkflowTriggerJoinConditionHandler(router *Router) Handler {
 			return errID
 		}
 
-		proj, errproj := project.Load(db, key, c.User, project.LoadOptions.WithVariables)
+		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
 		if errproj != nil {
 			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
 		}
 
-		wf, errw := workflow.Load(db, key, name, c.User)
+		wf, errw := workflow.Load(api.MustDB(), key, name, getUser(ctx))
 		if errw != nil {
 			return sdk.WrapError(errw, "getWorkflowTriggerJoinConditionHandler> Unable to load workflow")
 		}
 
-		wr, errr := workflow.LoadLastRun(db, key, name)
+		wr, errr := workflow.LoadLastRun(api.MustDB(), key, name)
 		if errr != nil {
 			if errr != sdk.ErrWorkflowNotFound {
 				return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load last run workflow")
@@ -115,7 +114,7 @@ func getWorkflowTriggerJoinConditionHandler(router *Router) Handler {
 
 		allparams := map[string]string{}
 		for _, i := range j.SourceNodeIDs {
-			params, errp := workflow.NodeBuildParameters(proj, wf, wr, i, c.User)
+			params, errp := workflow.NodeBuildParameters(proj, wf, wr, i, getUser(ctx))
 			if errp != nil {
 				return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load build parameters")
 			}

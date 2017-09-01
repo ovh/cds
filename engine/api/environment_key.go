@@ -1,31 +1,30 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
 
-func getKeysInEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getKeysInEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 
-		env, errE := environment.LoadEnvironmentByName(db, key, envName)
+		env, errE := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "getKeysInEnvironmentHandler> Cannot load environment")
 		}
 
-		if errK := environment.LoadAllKeys(db, env); errK != nil {
+		if errK := environment.LoadAllKeys(api.MustDB(), env); errK != nil {
 			return sdk.WrapError(errK, "getKeysInEnvironmentHandler> Cannot load environment keys")
 		}
 
@@ -33,24 +32,24 @@ func getKeysInEnvironmentHandler(router *Router) Handler {
 	}
 }
 
-func deleteKeyInEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteKeyInEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
 		keyName := vars["name"]
 
-		p, errP := project.Load(db, key, c.User)
+		p, errP := project.Load(api.MustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteKeyInEnvironmentHandler> Cannot load project")
 		}
 
-		env, errE := environment.LoadEnvironmentByName(db, key, envName)
+		env, errE := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "deleteKeyInEnvironmentHandler> Cannot load environment")
 		}
 
-		tx, errT := db.Begin()
+		tx, errT := api.MustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "v> Cannot start transaction")
 		}
@@ -60,7 +59,7 @@ func deleteKeyInEnvironmentHandler(router *Router) Handler {
 				if err := environment.DeleteEnvironmentKey(tx, env.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot delete key %s", k.Name)
 				}
-				if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+				if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 					return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot update application last modified date")
 				}
 			}
@@ -74,8 +73,8 @@ func deleteKeyInEnvironmentHandler(router *Router) Handler {
 	}
 }
 
-func addKeyInEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addKeyInEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		envName := vars["permEnvironmentName"]
@@ -91,12 +90,12 @@ func addKeyInEnvironmentHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInEnvironmentHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		p, errP := project.Load(db, key, c.User)
+		p, errP := project.Load(api.MustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "addKeyInEnvironmentHandler> Cannot load project")
 		}
 
-		env, errE := environment.LoadEnvironmentByName(db, key, envName)
+		env, errE := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "addKeyInEnvironmentHandler> Cannot load environment")
 		}
@@ -123,7 +122,7 @@ func addKeyInEnvironmentHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInEnvironmentHandler> unknown key of type: %s", newKey.Type)
 		}
 
-		tx, errT := db.Begin()
+		tx, errT := api.MustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInEnvironmentHandler> Cannot start transaction")
 		}
@@ -133,7 +132,7 @@ func addKeyInEnvironmentHandler(router *Router) Handler {
 			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot insert application key")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot update project last modified date")
 		}
 

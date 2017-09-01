@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -11,9 +12,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
+
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -28,8 +28,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func rollbackPipelineHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) rollbackPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -42,13 +42,13 @@ func rollbackPipelineHandler(router *Router) Handler {
 		}
 
 		//Load the project
-		proj, errproj := project.Load(db, projectKey, c.User)
+		proj, errproj := project.Load(api.MustDB(), projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "rollbackPipelineHandler> Unable to load project %s", projectKey)
 		}
 
 		// Load application
-		app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
+		app, err := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 		if err != nil {
 			if err != sdk.ErrApplicationNotFound {
 				log.Warning("rollbackPipelineHandler> Cannot load application %s: %s\n", appName, err)
@@ -57,7 +57,7 @@ func rollbackPipelineHandler(router *Router) Handler {
 		}
 
 		// Load pipeline
-		pip, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+		pip, err := pipeline.LoadPipeline(api.MustDB(), projectKey, pipelineName, false)
 		if err != nil {
 			if err != sdk.ErrPipelineNotFound {
 				log.Warning("rollbackPipelineHandler> Cannot load pipeline %s; %s\n", pipelineName, err)
@@ -68,13 +68,13 @@ func rollbackPipelineHandler(router *Router) Handler {
 		// Load Env
 		var env *sdk.Environment
 		if request.Env.Name != "" && request.Env.Name != sdk.DefaultEnv.Name {
-			env, err = environment.LoadEnvironmentByName(db, projectKey, request.Env.Name)
+			env, err = environment.LoadEnvironmentByName(api.MustDB(), projectKey, request.Env.Name)
 			if err != nil {
 				log.Warning("rollbackPipelineHandler> Cannot load environment %s; %s\n", request.Env.Name, err)
 				return sdk.ErrNoEnvironment
 			}
 
-			if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
+			if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
 				log.Warning("rollbackPipelineHandler> No enought right on this environment %s: \n", request.Env.Name)
 				return sdk.ErrForbidden
 			}
@@ -83,12 +83,12 @@ func rollbackPipelineHandler(router *Router) Handler {
 			env = &sdk.DefaultEnv
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
 			log.Warning("rollbackPipelineHandler> You do not have Execution Right on this environment %s\n", env.Name)
 			return sdk.ErrNoEnvExecution
 		}
 
-		pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 2, string(sdk.StatusSuccess), "")
+		pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.MustDB(), app.ID, pip.ID, env.ID, 2, string(sdk.StatusSuccess), "")
 		if err != nil {
 			log.Warning("rollbackPipelineHandler> Cannot load pipeline build history %s", err)
 			return sdk.ErrNoPipelineBuild
@@ -99,7 +99,7 @@ func rollbackPipelineHandler(router *Router) Handler {
 			return sdk.ErrNoPreviousSuccess
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("rollbackPipelineHandler> Cannot start tx: %s", err)
 			return err
@@ -107,9 +107,9 @@ func rollbackPipelineHandler(router *Router) Handler {
 		defer tx.Rollback()
 
 		trigger := pbs[1].Trigger
-		trigger.TriggeredBy = c.User
+		trigger.TriggeredBy = getUser(ctx)
 
-		newPb, err := queue.RunPipeline(tx, projectKey, app, pipelineName, env.Name, pbs[1].Parameters, pbs[1].Version, trigger, c.User)
+		newPb, err := queue.RunPipeline(api.MustDB, tx, projectKey, app, pipelineName, env.Name, pbs[1].Parameters, pbs[1].Version, trigger, getUser(ctx))
 		if err != nil {
 			log.Warning("rollbackPipelineHandler> Cannot run pipeline: %s\n", err)
 			return err
@@ -121,8 +121,7 @@ func rollbackPipelineHandler(router *Router) Handler {
 		}
 
 		go func() {
-			db := database.GetDBMap()
-			if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, env, newPb); err != nil {
+			if _, err := pipeline.UpdatePipelineBuildCommits(api.MustDB(), proj, pip, app, env, newPb); err != nil {
 				log.Warning("scheduler.Run> Unable to update pipeline build commits : %s", err)
 			}
 		}()
@@ -134,7 +133,7 @@ func rollbackPipelineHandler(router *Router) Handler {
 	}
 }
 
-func loadDestEnvFromRunRequest(db *gorp.DbMap, c *businesscontext.Ctx, request *sdk.RunRequest, projectKey string) (*sdk.Environment, error) {
+func loadDestEnvFromRunRequest(ctx context.Context, db *gorp.DbMap, request *sdk.RunRequest, projectKey string) (*sdk.Environment, error) {
 	var envDest = &sdk.DefaultEnv
 	var err error
 	if request.Env.Name != "" && request.Env.Name != sdk.DefaultEnv.Name {
@@ -144,22 +143,22 @@ func loadDestEnvFromRunRequest(db *gorp.DbMap, c *businesscontext.Ctx, request *
 			return nil, sdk.ErrNoEnvironment
 		}
 	}
-	if !permission.AccessToEnvironment(envDest.ID, c.User, permission.PermissionReadExecute) {
+	if !permission.AccessToEnvironment(envDest.ID, getUser(ctx), permission.PermissionReadExecute) {
 		log.Warning("loadDestEnvFromRunRequest> You do not have Execution Right on this environment\n")
 		return nil, sdk.ErrForbidden
 	}
 	return envDest, nil
 }
 
-func runPipelineWithLastParentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) runPipelineWithLastParentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 		appName := vars["permApplicationName"]
 
-		app, errl := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
+		app, errl := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 		if errl != nil {
 			if errl != sdk.ErrApplicationNotFound {
 				log.Warning("runPipelineWithLastParentHandler> Cannot load application %s: %s\n", appName, errl)
@@ -182,7 +181,7 @@ func runPipelineWithLastParentHandler(router *Router) Handler {
 		}
 
 		// Load pipeline
-		pip, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+		pip, err := pipeline.LoadPipeline(api.MustDB(), projectKey, pipelineName, false)
 		if err != nil {
 			if err != sdk.ErrPipelineNotFound {
 				log.Warning("runPipelineWithLastParentHandler> Cannot load pipeline %s; %s\n", pipelineName, err)
@@ -191,7 +190,7 @@ func runPipelineWithLastParentHandler(router *Router) Handler {
 		}
 
 		// Check that pipeline is attached to application
-		ok, err := application.IsAttached(db, app.ProjectID, app.ID, pip.Name)
+		ok, err := application.IsAttached(api.MustDB(), app.ProjectID, app.ID, pip.Name)
 		if !ok {
 			log.Warning("runPipelineWithLastParentHandler> Pipeline %s is not attached to app %s\n", pipelineName, appName)
 			return sdk.ErrPipelineNotAttached
@@ -202,13 +201,13 @@ func runPipelineWithLastParentHandler(router *Router) Handler {
 		}
 
 		//Load environment
-		envDest, err := loadDestEnvFromRunRequest(db, c, &request, projectKey)
+		envDest, err := loadDestEnvFromRunRequest(ctx, api.MustDB(), &request, projectKey)
 		if err != nil {
 			return err
 		}
 
 		//Load triggers
-		triggers, err := trigger.LoadTriggers(db, app.ID, pip.ID, envDest.ID)
+		triggers, err := trigger.LoadTriggers(api.MustDB(), app.ID, pip.ID, envDest.ID)
 		if err != nil {
 			return err
 		}
@@ -237,7 +236,7 @@ func runPipelineWithLastParentHandler(router *Router) Handler {
 			}
 		}
 
-		builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, request.ParentApplicationID, request.ParentPipelineID, envID, 1, string(sdk.StatusSuccess), branch)
+		builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.MustDB(), request.ParentApplicationID, request.ParentPipelineID, envID, 1, string(sdk.StatusSuccess), branch)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoParentBuildFound, "runPipelineWithLastParentHandler> Unable to find any successful pipeline build")
 		}
@@ -247,11 +246,11 @@ func runPipelineWithLastParentHandler(router *Router) Handler {
 
 		request.ParentBuildNumber = builds[0].BuildNumber
 
-		return runPipelineHandlerFunc(w, r, db, c, &request)
+		return api.runPipelineHandlerFunc(ctx, w, r, &request)
 	}
 }
 
-func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx, request *sdk.RunRequest) error {
+func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWriter, r *http.Request, request *sdk.RunRequest) error {
 	// Get pipeline and action name in URL
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
@@ -259,12 +258,12 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	appName := vars["permApplicationName"]
 
 	//Load the project
-	proj, errproj := project.Load(db, projectKey, c.User)
+	proj, errproj := project.Load(api.MustDB(), projectKey, getUser(ctx))
 	if errproj != nil {
 		return sdk.WrapError(errproj, "runPipelineHandler> Unable to load project %s", projectKey)
 	}
 
-	app, errln := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
+	app, errln := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 	if errln != nil {
 		if errln != sdk.ErrApplicationNotFound {
 			log.Warning("runPipelineHandler> Cannot load application %s: %s\n", appName, errln)
@@ -293,7 +292,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		if request.ParentEnvironmentID != 0 {
 			envID = request.ParentEnvironmentID
 		}
-		pb, errlp := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentBuildNumber)
+		pb, errlp := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(api.MustDB(), request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentBuildNumber)
 		if errlp != nil {
 			return sdk.WrapError(errlp, "runPipelineHandler> Cannot load parent pipeline build")
 		}
@@ -306,7 +305,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		if request.ParentEnvironmentID != 0 {
 			envID = request.ParentEnvironmentID
 		}
-		pbs, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentVersion, 1)
+		pbs, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(api.MustDB(), request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentVersion, 1)
 		if err != nil {
 			return sdk.WrapError(err, "runPipelineHandler> Cannot load parent pipeline build by version")
 		}
@@ -320,12 +319,12 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		parentPipelineBuild = &pbs[0]
 	}
 
-	envDest, err := loadDestEnvFromRunRequest(db, c, request, projectKey)
+	envDest, err := loadDestEnvFromRunRequest(ctx, api.MustDB(), request, projectKey)
 	if err != nil {
 		return sdk.WrapError(err, "runPipelineHandler> Unable to load dest environment")
 	}
 
-	tx, err := db.Begin()
+	tx, err := api.MustDB().Begin()
 	if err != nil {
 		return sdk.WrapError(err, "runPipelineHandler> Cannot start tx")
 	}
@@ -334,10 +333,10 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	// Schedule pipeline for build
 	log.Debug("runPipelineHandler> Scheduling %s/%s/%s[%s] with %d params, version 0",
 		projectKey, app.Name, pipelineName, envDest.Name, len(request.Params))
-	log.Debug("runPipelineHandler> Pipeline trigger by %s - %d", c.User.ID, request.ParentPipelineID)
+	log.Debug("runPipelineHandler> Pipeline trigger by %s - %d", getUser(ctx).ID, request.ParentPipelineID)
 	trigger := sdk.PipelineBuildTrigger{
 		ManualTrigger:       true,
-		TriggeredBy:         c.User,
+		TriggeredBy:         getUser(ctx),
 		ParentPipelineBuild: parentPipelineBuild,
 	}
 	if parentPipelineBuild != nil {
@@ -346,12 +345,12 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		trigger.VCSChangesBranch = parentPipelineBuild.Trigger.VCSChangesBranch
 	}
 
-	env, errenv := environment.LoadEnvironmentByName(db, projectKey, envDest.Name)
+	env, errenv := environment.LoadEnvironmentByName(api.MustDB(), projectKey, envDest.Name)
 	if errenv != nil {
 		return sdk.WrapError(errenv, "runPipelineHandler> Unable to load env %s %s", projectKey, envDest.Name)
 	}
 
-	pb, err := queue.RunPipeline(tx, projectKey, app, pipelineName, envDest.Name, request.Params, version, trigger, c.User)
+	pb, err := queue.RunPipeline(api.MustDB, tx, projectKey, app, pipelineName, envDest.Name, request.Params, version, trigger, getUser(ctx))
 	if err != nil {
 		return sdk.WrapError(err, "runPipelineHandler> Cannot run pipeline")
 	}
@@ -361,8 +360,7 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	}
 
 	go func() {
-		db := database.GetDBMap()
-		if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, env, pb); err != nil {
+		if _, err := pipeline.UpdatePipelineBuildCommits(api.MustDB(), proj, pip, app, env, pb); err != nil {
 			log.Warning("runPipelineHandler> Unable to update pipeline build commits : %s", err)
 		}
 	}()
@@ -370,20 +368,20 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	return WriteJSON(w, r, pb, http.StatusOK)
 }
 
-func runPipelineHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) runPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var request sdk.RunRequest
 		if err := UnmarshalBody(r, &request); err != nil {
 			return err
 		}
 
-		return runPipelineHandlerFunc(w, r, db, c, &request)
+		return api.runPipelineHandlerFunc(ctx, w, r, &request)
 	}
 }
 
 // DEPRECATED
-func updatePipelineActionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updatePipelineActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		pipName := vars["permPipelineKey"]
@@ -403,13 +401,13 @@ func updatePipelineActionHandler(router *Router) Handler {
 			return fmt.Errorf("updatePipelineActionHandler>Pipeline action does not match")
 		}
 
-		pipelineData, err := pipeline.LoadPipeline(db, key, pipName, false)
+		pipelineData, err := pipeline.LoadPipeline(api.MustDB(), key, pipName, false)
 		if err != nil {
 			log.Warning("updatePipelineActionHandler>Cannot load pipeline %s: %s\n", pipName, err)
 			return err
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("updatePipelineActionHandler> Cannot start transaction: %s\n", err)
 			return err
@@ -423,12 +421,12 @@ func updatePipelineActionHandler(router *Router) Handler {
 		}
 
 		//Load the project
-		proj, errproj := project.Load(db, key, c.User)
+		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "updatePipelineActionHandler> Unable to load project %s", key)
 		}
 
-		err = pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User)
+		err = pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx))
 		if err != nil {
 			log.Warning("updatePipelineActionHandler> Cannot update pipeline last_modified: %s\n", err)
 			return err
@@ -447,8 +445,8 @@ func updatePipelineActionHandler(router *Router) Handler {
 	}
 }
 
-func deletePipelineActionHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deletePipelineActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -461,7 +459,7 @@ func deletePipelineActionHandler(router *Router) Handler {
 			return sdk.ErrInvalidID
 		}
 
-		pipelineData, err := pipeline.LoadPipeline(db, key, pipName, false)
+		pipelineData, err := pipeline.LoadPipeline(api.MustDB(), key, pipName, false)
 		if err != nil {
 			log.Warning("deletepipelineActionHandler>Cannot load pipeline %s: %s\n", pipName, err)
 			return err
@@ -469,7 +467,7 @@ func deletePipelineActionHandler(router *Router) Handler {
 
 		log.Info("deletePipelineActionHandler> Deleting action %d in %s/%s\n", pipelineActionID, vars["key"], vars["permPipelineKey"])
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("deletePipelineActionHandler> Cannot begin transaction: %s\n", err)
 			return err
@@ -483,12 +481,12 @@ func deletePipelineActionHandler(router *Router) Handler {
 		}
 
 		//Load the project
-		proj, errproj := project.Load(db, key, c.User)
+		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "updatePipelineActionHandler> Unable to load project %s", key)
 		}
 
-		err = pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User)
+		err = pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx))
 		if err != nil {
 			log.Warning("deletePipelineActionHandler> Cannot update pipeline last_modified: %s", err)
 			return err
@@ -503,14 +501,14 @@ func deletePipelineActionHandler(router *Router) Handler {
 	}
 }
 
-func updatePipelineHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updatePipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permPipelineKey"]
 
-		proj, errP := project.Load(db, key, c.User)
+		proj, errP := project.Load(api.MustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "updatePipelineHandler> Cannot load project")
 		}
@@ -526,7 +524,7 @@ func updatePipelineHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updatePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 		}
 
-		pipelineDB, err := pipeline.LoadPipeline(db, key, name, false)
+		pipelineDB, err := pipeline.LoadPipeline(api.MustDB(), key, name, false)
 		if err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> cannot load pipeline %s", name)
 		}
@@ -534,7 +532,7 @@ func updatePipelineHandler(router *Router) Handler {
 		pipelineDB.Name = p.Name
 		pipelineDB.Type = p.Type
 
-		tx, errB := db.Begin()
+		tx, errB := api.MustDB().Begin()
 		if errB != nil {
 			sdk.WrapError(errB, "updatePipelineHandler> Cannot start transaction")
 		}
@@ -544,22 +542,22 @@ func updatePipelineHandler(router *Router) Handler {
 			return sdk.WrapError(err, "updatePipelineHandler> cannot update pipeline %s", name)
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineDB, c.User); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineDB, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot update pipeline last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> cannot update project last modified date")
 		}
 
 		// Update applications
-		apps, errA := application.LoadByPipeline(tx, p.ID, c.User)
+		apps, errA := application.LoadByPipeline(tx, p.ID, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "updatePipelineHandler> Cannot load application using pipeline %s", p.Name)
 		}
 
 		for _, app := range apps {
-			if err := application.UpdateLastModified(tx, &app, c.User); err != nil {
+			if err := application.UpdateLastModified(tx, &app, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "updatePipelineHandler> Cannot update application last modified date")
 			}
 		}
@@ -575,19 +573,19 @@ func updatePipelineHandler(router *Router) Handler {
 	}
 }
 
-func getApplicationUsingPipelineHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getApplicationUsingPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permPipelineKey"]
 
-		pipelineData, err := pipeline.LoadPipeline(db, key, name, false)
+		pipelineData, err := pipeline.LoadPipeline(api.MustDB(), key, name, false)
 		if err != nil {
 			log.Warning("getApplicationUsingPipelineHandler> Cannot load pipeline %s: %s\n", name, err)
 			return err
 		}
-		applications, err := application.LoadByPipeline(db, pipelineData.ID, c.User)
+		applications, err := application.LoadByPipeline(api.MustDB(), pipelineData.ID, getUser(ctx))
 		if err != nil {
 			log.Warning("getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s: %s\n", name, err)
 			return err
@@ -597,13 +595,13 @@ func getApplicationUsingPipelineHandler(router *Router) Handler {
 	}
 }
 
-func addPipeline(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		proj, errl := project.Load(db, key, c.User, project.LoadOptions.Default)
+		proj, errl := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if errl != nil {
 			return sdk.WrapError(errl, "AddPipeline: Cannot load %s", key)
 		}
@@ -620,7 +618,7 @@ func addPipeline(router *Router) Handler {
 		}
 
 		// Check that pipeline does not already exists
-		exist, err := pipeline.ExistPipeline(db, proj.ID, p.Name)
+		exist, err := pipeline.ExistPipeline(api.MustDB(), proj.ID, p.Name)
 		if err != nil {
 			return sdk.WrapError(err, "cannot check if pipeline exist")
 		}
@@ -629,14 +627,14 @@ func addPipeline(router *Router) Handler {
 			return sdk.ErrConflict
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		p.ProjectID = proj.ID
-		if err := pipeline.InsertPipeline(tx, proj, &p, c.User); err != nil {
+		if err := pipeline.InsertPipeline(tx, proj, &p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
@@ -657,12 +655,12 @@ func addPipeline(router *Router) Handler {
 				return sdk.WrapError(err, "Cannot attach pipeline %d to %d", app.ID, p.ID)
 			}
 
-			if err := application.UpdateLastModified(tx, &app, c.User); err != nil {
+			if err := application.UpdateLastModified(tx, &app, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "Cannot update application last modified date")
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 		if err := tx.Commit(); err != nil {
@@ -675,24 +673,24 @@ func addPipeline(router *Router) Handler {
 	}
 }
 
-func getPipelineHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 		withApp := FormBool(r, "withApplications")
 
-		p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, true)
+		p, err := pipeline.LoadPipeline(api.MustDB(), projectKey, pipelineName, true)
 		if err != nil {
 			log.Warning("getPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
 			return err
 		}
 
-		p.Permission = permission.PipelinePermission(p.ID, c.User)
+		p.Permission = permission.PipelinePermission(p.ID, getUser(ctx))
 
 		if withApp {
-			apps, errA := application.LoadByPipeline(db, p.ID, c.User)
+			apps, errA := application.LoadByPipeline(api.MustDB(), p.ID, getUser(ctx))
 			if errA != nil {
 				return sdk.WrapError(errA, "getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s", p.Name)
 			}
@@ -703,19 +701,19 @@ func getPipelineHandler(router *Router) Handler {
 	}
 }
 
-func getPipelineTypeHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getPipelineTypeHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return WriteJSON(w, r, sdk.AvailablePipelineType, http.StatusOK)
 	}
 }
 
-func getPipelinesHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getPipelinesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		project, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+		project, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			if err != sdk.ErrNoProject {
 				log.Warning("getPipelinesHandler: Cannot load %s: %s\n", key, err)
@@ -723,7 +721,7 @@ func getPipelinesHandler(router *Router) Handler {
 			return err
 		}
 
-		pip, err := pipeline.LoadPipelines(db, project.ID, true, c.User)
+		pip, err := pipeline.LoadPipelines(api.MustDB(), project.ID, true, getUser(ctx))
 		if err != nil {
 			if err != sdk.ErrPipelineNotFound {
 				log.Warning("getPipelinesHandler>Cannot load pipelines: %s\n", err)
@@ -735,8 +733,8 @@ func getPipelinesHandler(router *Router) Handler {
 	}
 }
 
-func getPipelineHistoryHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getPipelineHistoryHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
@@ -762,12 +760,12 @@ func getPipelineHistoryHandler(router *Router) Handler {
 			limit = 20
 		}
 
-		p, errlp := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+		p, errlp := pipeline.LoadPipeline(api.MustDB(), projectKey, pipelineName, false)
 		if errlp != nil {
 			return sdk.WrapError(errlp, "getPipelineHistoryHandler> Cannot load pipelines")
 		}
 
-		a, errln := application.LoadByName(db, projectKey, appName, c.User)
+		a, errln := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx))
 		if errln != nil {
 			return sdk.WrapError(errln, "getPipelineHistoryHandler> Cannot load application %s", appName)
 		}
@@ -777,17 +775,17 @@ func getPipelineHistoryHandler(router *Router) Handler {
 			env = &sdk.DefaultEnv
 		} else {
 			var errle error
-			env, errle = environment.LoadEnvironmentByName(db, projectKey, envName)
+			env, errle = environment.LoadEnvironmentByName(api.MustDB(), projectKey, envName)
 			if errle != nil {
 				return sdk.WrapError(errle, "getPipelineHistoryHandler> Cannot load environment %s", envName)
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getPipelineHistoryHandler> No enought right on this environment %s", envName)
 		}
 
-		pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, status, branchName)
+		pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.MustDB(), a.ID, p.ID, env.ID, limit, status, branchName)
 		if errl != nil {
 			return sdk.WrapError(errl, "getPipelineHistoryHandler> cannot load pipeline %s history", p.Name)
 		}
@@ -796,24 +794,24 @@ func getPipelineHistoryHandler(router *Router) Handler {
 	}
 }
 
-func deletePipeline(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deletePipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, errP := project.Load(db, key, c.User)
+		proj, errP := project.Load(api.MustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "deletePipeline> Cannot load project")
 		}
 
-		p, err := pipeline.LoadPipeline(db, proj.Key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.MustDB(), proj.Key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "deletePipeline> Cannot load pipeline %s", pipelineName)
 		}
 
-		used, err := application.CountPipeline(db, p.ID)
+		used, err := application.CountPipeline(api.MustDB(), p.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deletePipeline> Cannot check if pipeline is used by an application")
 		}
@@ -822,18 +820,18 @@ func deletePipeline(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrPipelineHasApplication, "deletePipeline> Cannot delete a pipeline used by at least 1 application")
 		}
 
-		tx, errT := db.Begin()
+		tx, errT := api.MustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "deletePipeline> Cannot begin transaction")
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.DeletePipeline(tx, p.ID, c.User.ID); err != nil {
+		if err := pipeline.DeletePipeline(tx, p.ID, getUser(ctx).ID); err != nil {
 			log.Warning("deletePipeline> Cannot delete pipeline %s: %s\n", pipelineName, err)
 			return err
 		}
 
-		if err := project.UpdateLastModified(db, c.User, proj); err != nil {
+		if err := project.UpdateLastModified(api.MustDB(), getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "deletePipeline> Cannot update project last modified date")
 		}
 
@@ -849,8 +847,8 @@ func deletePipeline(router *Router) Handler {
 	}
 }
 
-func addJobToPipelineHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addJobToPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		pipelineName := vars["permPipelineKey"]
@@ -866,17 +864,17 @@ func addJobToPipelineHandler(router *Router) Handler {
 			return err
 		}
 
-		proj, errP := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
+		proj, errP := project.Load(api.MustDB(), projectKey, getUser(ctx), project.LoadOptions.Default)
 		if errP != nil {
 			return sdk.WrapError(errP, "addJoinedActionToPipelineHandler> Cannot load project %s", projectKey)
 		}
 
-		pip, errPip := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
+		pip, errPip := pipeline.LoadPipeline(api.MustDB(), projectKey, pipelineName, false)
 		if errPip != nil {
 			return sdk.WrapError(errPip, "addJoinedActionToPipelineHandler> Cannot load pipeline %s for project %s", pipelineName, projectKey)
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			return errBegin
 		}
@@ -917,20 +915,20 @@ func addJobToPipelineHandler(router *Router) Handler {
 	}
 }
 
-func updateJoinedAction(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateJoinedActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		actionIDString := vars["actionID"]
 		key := vars["key"]
 		pipName := vars["permPipelineKey"]
 
-		proj, errl := project.Load(db, key, c.User, project.LoadOptions.Default)
+		proj, errl := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrNoProject, "updateJoinedAction> Cannot load project %s: %s", key, errl)
 		}
 
-		pip, errlp := pipeline.LoadPipeline(db, key, pipName, false)
+		pip, errlp := pipeline.LoadPipeline(api.MustDB(), key, pipName, false)
 		if errlp != nil {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "updateJoinedAction> Cannot load pipeline %s for project %s: %s", pipName, key, errlp)
 		}
@@ -946,7 +944,7 @@ func updateJoinedAction(router *Router) Handler {
 		}
 		a.ID = actionID
 
-		clearJoinedAction, err := action.LoadActionByID(db, actionID)
+		clearJoinedAction, err := action.LoadActionByID(api.MustDB(), actionID)
 		if err != nil {
 			return sdk.WrapError(err, "updateJoinedAction> Cannot load action %d", actionID)
 		}
@@ -955,7 +953,7 @@ func updateJoinedAction(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "updateJoinedAction> Tried to update a %s action, aborting", clearJoinedAction.Type)
 		}
 
-		tx, errb := db.Begin()
+		tx, errb := api.MustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "updateJoinedAction> Cannot begin tx")
 		}
@@ -967,11 +965,11 @@ func updateJoinedAction(router *Router) Handler {
 		}
 
 		log.Debug("updateJoinedAction> UpdateActionDB %d", a.ID)
-		if err := action.UpdateActionDB(tx, &a, c.User.ID); err != nil {
+		if err := action.UpdateActionDB(tx, &a, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "updateJoinedAction> cannot update action")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, c.User); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateJoinedAction> cannot update pipeline last_modified date")
 		}
 
@@ -1000,8 +998,8 @@ func updateJoinedAction(router *Router) Handler {
 	}
 }
 
-func deleteJoinedAction(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteJoinedActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		pipName := vars["permPipelineKey"]
@@ -1012,28 +1010,28 @@ func deleteJoinedAction(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "deleteJoinedAction> Action ID %s must be an int", actionIDString)
 		}
 
-		pip, errload := pipeline.LoadPipeline(db, projectKey, pipName, false)
+		pip, errload := pipeline.LoadPipeline(api.MustDB(), projectKey, pipName, false)
 		if errload != nil {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "deleteJoinedAction> Cannot load pipeline %s for project %s, err:%s", pipName, projectKey, errload)
 		}
 
-		tx, errb := db.Begin()
+		tx, errb := api.MustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "deleteJoinedAction> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := action.DeleteAction(db, actionID, c.User.ID); err != nil {
+		if err := action.DeleteAction(api.MustDB(), actionID, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "deleteJoinedAction> Cannot delete joined action")
 		}
 
 		//Load the project
-		proj, errproj := project.Load(db, projectKey, c.User)
+		proj, errproj := project.Load(api.MustDB(), projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "deleteJoinedAction> Unable to load project %s", projectKey)
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, c.User); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteJoinedAction> cannot update pipeline last_modified date")
 		}
 
@@ -1047,8 +1045,8 @@ func deleteJoinedAction(router *Router) Handler {
 	}
 }
 
-func getJoinedActionAuditHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getJoinedActionAuditHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		actionIDString := vars["actionID"]
@@ -1060,7 +1058,7 @@ func getJoinedActionAuditHandler(router *Router) Handler {
 
 		}
 
-		audit, err := action.LoadAuditAction(db, actionID, false)
+		audit, err := action.LoadAuditAction(api.MustDB(), actionID, false)
 		if err != nil {
 			log.Warning("getJoinedActionAudithandler> Cannot load audit for action %d: %s\n", actionID, err)
 			return err
@@ -1071,8 +1069,8 @@ func getJoinedActionAuditHandler(router *Router) Handler {
 	}
 }
 
-func getJoinedAction(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getJoinedActionHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		actionIDString := vars["actionID"]
@@ -1086,7 +1084,7 @@ func getJoinedAction(router *Router) Handler {
 
 		}
 
-		a, err := action.LoadPipelineActionByID(db, projectKey, pipelineName, actionID)
+		a, err := action.LoadPipelineActionByID(api.MustDB(), projectKey, pipelineName, actionID)
 		if err != nil {
 			log.Warning("getJoinedAction> Cannot load joined action: %s\n", err)
 			return err
@@ -1097,15 +1095,15 @@ func getJoinedAction(router *Router) Handler {
 	}
 }
 
-func getBuildingPipelines(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getBuildingPipelinesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var err error
 		var pbs, recent []sdk.PipelineBuild
 
-		if c.User.Admin {
-			recent, err = pipeline.LoadRecentPipelineBuild(db)
+		if getUser(ctx).Admin {
+			recent, err = pipeline.LoadRecentPipelineBuild(api.MustDB())
 		} else {
-			recent, err = pipeline.LoadUserRecentPipelineBuild(db, c.User.ID)
+			recent, err = pipeline.LoadUserRecentPipelineBuild(api.MustDB(), getUser(ctx).ID)
 		}
 		if err != nil {
 			log.Warning("getBuildingPipelines> cannot load recent pipelines: %s", err)
@@ -1117,12 +1115,12 @@ func getBuildingPipelines(router *Router) Handler {
 	}
 }
 
-func getPipelineBuildingCommit(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getPipelineBuildingCommitHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		hash := vars["hash"]
 
-		pbs, err := pipeline.LoadPipelineBuildByHash(db, hash)
+		pbs, err := pipeline.LoadPipelineBuildByHash(api.MustDB(), hash)
 		if err != nil {
 			return err
 
@@ -1132,8 +1130,8 @@ func getPipelineBuildingCommit(router *Router) Handler {
 	}
 }
 
-func stopPipelineBuildHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) stopPipelineBuildHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		appName := vars["permApplicationName"]
@@ -1149,12 +1147,12 @@ func stopPipelineBuildHandler(router *Router) Handler {
 			return sdk.WrapError(err, "stopPipelineBuildHandler> invalid build number")
 		}
 
-		pip, err := pipeline.LoadPipeline(db, projectKey, pipName, false)
+		pip, err := pipeline.LoadPipeline(api.MustDB(), projectKey, pipName, false)
 		if err != nil {
 			return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot load pipeline")
 		}
 
-		app, err := application.LoadByName(db, projectKey, appName, c.User)
+		app, err := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot load application")
 		}
@@ -1165,17 +1163,17 @@ func stopPipelineBuildHandler(router *Router) Handler {
 		env := &sdk.DefaultEnv
 
 		if pip.Type != sdk.BuildPipeline {
-			env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
+			env, err = environment.LoadEnvironmentByName(api.MustDB(), projectKey, envName)
 			if err != nil {
 				return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot load environment %s", envName)
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "stopPipelineBuildHandler> You do not have Execution Right on this environment %s", env.Name)
 		}
 
-		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, app.ID, pip.ID, env.ID, buildNumber)
+		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(api.MustDB(), app.ID, pip.ID, env.ID, buildNumber)
 		if err != nil {
 			errFinal := err
 			if err == sdk.ErrNoPipelineBuild {
@@ -1184,7 +1182,7 @@ func stopPipelineBuildHandler(router *Router) Handler {
 			return sdk.WrapError(errFinal, "stopPipelineBuildHandler> Cannot load pipeline Build")
 		}
 
-		if err := pipeline.StopPipelineBuild(db, pb); err != nil {
+		if err := pipeline.StopPipelineBuild(api.MustDB(), pb); err != nil {
 			return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot stop pipeline build")
 		}
 
@@ -1195,8 +1193,8 @@ func stopPipelineBuildHandler(router *Router) Handler {
 	}
 }
 
-func restartPipelineBuildHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) restartPipelineBuildHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		appName := vars["permApplicationName"]
@@ -1219,7 +1217,7 @@ func restartPipelineBuildHandler(router *Router) Handler {
 		}
 
 		// Load pipeline
-		pip, err := pipeline.LoadPipeline(db, projectKey, pipName, false)
+		pip, err := pipeline.LoadPipeline(api.MustDB(), projectKey, pipName, false)
 		if err != nil {
 			log.Warning("restartPipelineBuildHandler> Cannot load pipeline: %s\n", err)
 			return err
@@ -1227,7 +1225,7 @@ func restartPipelineBuildHandler(router *Router) Handler {
 		}
 
 		// Load application
-		app, err := application.LoadByName(db, projectKey, appName, c.User)
+		app, err := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("restartPipelineBuildHandler> Cannot load application: %s\n", err)
 			return err
@@ -1242,21 +1240,21 @@ func restartPipelineBuildHandler(router *Router) Handler {
 		env := &sdk.DefaultEnv
 
 		if pip.Type != sdk.BuildPipeline {
-			env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
+			env, err = environment.LoadEnvironmentByName(api.MustDB(), projectKey, envName)
 			if err != nil {
 				log.Warning("restartPipelineBuildHandler> Cannot load environment %s: %s\n", envName, err)
 				return err
 
 			}
 
-			if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
+			if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
 				log.Warning("restartPipelineBuildHandler> No enought right on this environment %s: \n", envName)
 				return sdk.ErrForbidden
 
 			}
 		}
 
-		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, app.ID, pip.ID, env.ID, buildNumber)
+		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(api.MustDB(), app.ID, pip.ID, env.ID, buildNumber)
 		if err != nil {
 			errFinal := err
 			if err == sdk.ErrNoPipelineBuild {
@@ -1266,12 +1264,12 @@ func restartPipelineBuildHandler(router *Router) Handler {
 			return errFinal
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
 			log.Warning("restartPipelineBuildHandler> You do not have Execution Right on this environment %s\n", env.Name)
 			return sdk.ErrNoEnvExecution
 		}
 
-		tx, errbegin := db.Begin()
+		tx, errbegin := api.MustDB().Begin()
 		if errbegin != nil {
 			log.Warning("restartPipelineBuildHandler> Cannot start transaction: %s\n", errbegin)
 			return sdk.ErrNoEnvExecution
@@ -1297,8 +1295,8 @@ func restartPipelineBuildHandler(router *Router) Handler {
 	}
 }
 
-func getPipelineCommitsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getPipelineCommitsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		appName := vars["permApplicationName"]
@@ -1312,7 +1310,7 @@ func getPipelineCommitsHandler(router *Router) Handler {
 		hash := r.Form.Get("hash")
 
 		// Load pipeline
-		pip, errpip := pipeline.LoadPipeline(db, projectKey, pipName, false)
+		pip, errpip := pipeline.LoadPipeline(api.MustDB(), projectKey, pipName, false)
 		if errpip != nil {
 			return sdk.WrapError(errpip, "getPipelineCommitsHandler> Cannot load pipeline")
 		}
@@ -1323,18 +1321,18 @@ func getPipelineCommitsHandler(router *Router) Handler {
 			env = &sdk.DefaultEnv
 		} else {
 			var err error
-			env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
+			env, err = environment.LoadEnvironmentByName(api.MustDB(), projectKey, envName)
 			if err != nil {
 				return sdk.WrapError(err, "getPipelineCommitsHandler> Cannot load environment %s", envName)
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "getPipelineCommitsHandler> No enought right on this environment %s (user=%s)", envName, c.User.Username)
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+			return sdk.WrapError(sdk.ErrForbidden, "getPipelineCommitsHandler> No enought right on this environment %s (user=%s)", envName, getUser(ctx).Username)
 		}
 
 		//Load the application
-		app, errapp := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager)
+		app, errapp := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithRepositoryManager)
 		if errapp != nil {
 			return sdk.WrapError(errapp, "getPipelineCommitsHandler> Unable to load application %s", appName)
 		}
@@ -1347,7 +1345,7 @@ func getPipelineCommitsHandler(router *Router) Handler {
 			return WriteJSON(w, r, commits, http.StatusOK)
 		}
 
-		pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "")
+		pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.MustDB(), app.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "")
 		if errpb != nil {
 			return sdk.WrapError(errpb, "getPipelineCommitsHandler> Cannot load pipeline build")
 		}
@@ -1357,7 +1355,7 @@ func getPipelineCommitsHandler(router *Router) Handler {
 			return WriteJSON(w, r, commits, http.StatusOK)
 		}
 
-		b, e := repositoriesmanager.CheckApplicationIsAttached(db, app.RepositoriesManager.Name, projectKey, appName)
+		b, e := repositoriesmanager.CheckApplicationIsAttached(api.MustDB(), app.RepositoriesManager.Name, projectKey, appName)
 		if e != nil {
 			log.Warning("getPipelineCommitsHandler> Cannot check app (%s,%s,%s): %s", app.RepositoriesManager.Name, projectKey, appName, e)
 			return e
@@ -1369,7 +1367,7 @@ func getPipelineCommitsHandler(router *Router) Handler {
 		}
 
 		//Get the RepositoriesManager Client
-		client, errclient := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
+		client, errclient := repositoriesmanager.AuthorizedClient(api.MustDB(), projectKey, app.RepositoriesManager.Name)
 		if errclient != nil {
 			return sdk.WrapError(errclient, "getPipelineCommitsHandler> Cannot get client")
 		}
@@ -1390,8 +1388,8 @@ func getPipelineCommitsHandler(router *Router) Handler {
 	}
 }
 
-func getPipelineBuildCommitsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getPipelineBuildCommitsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		appName := vars["permApplicationName"]
@@ -1402,7 +1400,7 @@ func getPipelineBuildCommitsHandler(router *Router) Handler {
 
 		}
 
-		proj, errproj := project.Load(db, projectKey, c.User)
+		proj, errproj := project.Load(api.MustDB(), projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "getPipelineBuildCommitsHandler> Unable to load project %s", projectKey)
 		}
@@ -1415,7 +1413,7 @@ func getPipelineBuildCommitsHandler(router *Router) Handler {
 		envName := r.Form.Get("envName")
 
 		// Load pipeline
-		pip, err := pipeline.LoadPipeline(db, projectKey, pipName, false)
+		pip, err := pipeline.LoadPipeline(api.MustDB(), projectKey, pipName, false)
 		if err != nil {
 			log.Warning("getPipelineBuildCommitsHandler> Cannot load pipeline: %s\n", err)
 			return err
@@ -1427,7 +1425,7 @@ func getPipelineBuildCommitsHandler(router *Router) Handler {
 		if envName == "" || envName == sdk.DefaultEnv.Name {
 			env = &sdk.DefaultEnv
 		} else {
-			env, err = environment.LoadEnvironmentByName(db, projectKey, envName)
+			env, err = environment.LoadEnvironmentByName(api.MustDB(), projectKey, envName)
 			if err != nil {
 				if err != sdk.ErrNoEnvironment {
 					log.Warning("getPipelineBuildCommitsHandler> Cannot load environment %s: %s\n", envName, err)
@@ -1436,19 +1434,19 @@ func getPipelineBuildCommitsHandler(router *Router) Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
 			log.Warning("getPipelineHistoryHandler> No enought right on this environment %s: \n", envName)
 			return sdk.ErrForbidden
 		}
 
 		//Load the application
-		app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithRepositoryManager)
+		app, err := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithRepositoryManager)
 		if err != nil {
 			return sdk.ErrApplicationNotFound
 		}
 
 		//Load the pipeline build
-		pb, errpb := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db, app.ID, pip.ID, env.ID, int64(buildNumber))
+		pb, errpb := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(api.MustDB(), app.ID, pip.ID, env.ID, int64(buildNumber))
 		if errpb != nil {
 			return sdk.WrapError(errpb, "getPipelineBuildCommitsHandler>")
 		}
@@ -1458,7 +1456,7 @@ func getPipelineBuildCommitsHandler(router *Router) Handler {
 			return sdk.ErrNoReposManagerClientAuth
 		}
 
-		b, e := repositoriesmanager.CheckApplicationIsAttached(db, app.RepositoriesManager.Name, projectKey, appName)
+		b, e := repositoriesmanager.CheckApplicationIsAttached(api.MustDB(), app.RepositoriesManager.Name, projectKey, appName)
 		if e != nil {
 			log.Warning("getPipelineBuildCommitsHandler> Cannot check app (%s,%s,%s): %s", app.RepositoriesManager.Name, projectKey, appName, e)
 			return e
@@ -1468,7 +1466,7 @@ func getPipelineBuildCommitsHandler(router *Router) Handler {
 			return sdk.ErrNoReposManagerClientAuth
 		}
 
-		cm, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, env, pb)
+		cm, err := pipeline.UpdatePipelineBuildCommits(api.MustDB(), proj, pip, app, env, pb)
 		if err != nil {
 			return sdk.WrapError(err, "getPipelineBuildCommitsHandler> UpdatePipelineBuildCommits failed")
 		}

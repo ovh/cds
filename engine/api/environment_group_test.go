@@ -26,7 +26,7 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -34,15 +34,15 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 
 	//3. Create environment
 	envProd := &sdk.Environment{Name: sdk.RandomString(10), ProjectID: proj.ID}
-	test.NoError(t, environment.InsertEnvironment(db, envProd))
+	test.NoError(t, environment.InsertEnvironment(api.MustDB(), envProd))
 
 	//4. Create Group
 	grp1 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG := group.AddGroup(db, grp1)
+	_, _, errG := group.AddGroup(api.MustDB(), grp1)
 	test.NoError(t, errG)
 
 	grp2 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG2 := group.AddGroup(db, grp2)
+	_, _, errG2 := group.AddGroup(api.MustDB(), grp2)
 	test.NoError(t, errG2)
 
 	//5. Prepare request
@@ -106,7 +106,7 @@ func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
@@ -114,20 +114,20 @@ func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 
 	//3. Create environment
 	envProd := &sdk.Environment{Name: sdk.RandomString(10), ProjectID: proj.ID}
-	test.NoError(t, environment.InsertEnvironment(db, envProd))
+	test.NoError(t, environment.InsertEnvironment(api.MustDB(), envProd))
 
 	//4. Create Group
 	grp1 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG := group.AddGroup(db, grp1)
+	_, _, errG := group.AddGroup(api.MustDB(), grp1)
 	test.NoError(t, errG)
 
 	grp2 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG2 := group.AddGroup(db, grp2)
+	_, _, errG2 := group.AddGroup(api.MustDB(), grp2)
 	test.NoError(t, errG2)
 
 	//5. Add group on environment
-	test.NoError(t, group.InsertGroupInEnvironment(db, envProd.ID, grp1.ID, 7))
-	test.NoError(t, group.InsertGroupInEnvironment(db, envProd.ID, grp2.ID, 7))
+	test.NoError(t, group.InsertGroupInEnvironment(api.MustDB(), envProd.ID, grp1.ID, 7))
+	test.NoError(t, group.InsertGroupInEnvironment(api.MustDB(), envProd.ID, grp2.ID, 7))
 
 	//6. Prepare request
 	gp := sdk.GroupPermission{

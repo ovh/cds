@@ -1,14 +1,13 @@
 package api
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/notification"
@@ -22,37 +21,37 @@ import (
 )
 
 // Deprecated
-func attachPipelineToApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) attachPipelineToApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+		proj, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("addPipelineInApplicationHandler: Cannot load project: %s: %s\n", key, err)
 			return err
 		}
 
-		pipeline, err := pipeline.LoadPipeline(db, key, pipelineName, true)
+		pipeline, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, true)
 		if err != nil {
 			log.Warning("addPipelineInApplicationHandler: Cannot load pipeline %s: %s\n", appName, err)
 			return sdk.ErrNotFound
 		}
 
-		app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("addPipelineInApplicationHandler: Cannot load application %s: %s\n", appName, err)
 			return sdk.ErrNotFound
 		}
 
-		if _, err := application.AttachPipeline(db, app.ID, pipeline.ID); err != nil {
+		if _, err := application.AttachPipeline(api.MustDB(), app.ID, pipeline.ID); err != nil {
 			log.Warning("addPipelineInApplicationHandler: Cannot attach pipeline %s to application %s:  %s\n", pipelineName, appName, err)
 			return err
 		}
 
-		if err := sanity.CheckPipeline(db, proj, pipeline); err != nil {
+		if err := sanity.CheckPipeline(api.MustDB(), proj, pipeline); err != nil {
 			log.Warning("addPipelineInApplicationHandler: Cannot check pipeline sanity: %s\n", err)
 			return err
 		}
@@ -64,8 +63,8 @@ func attachPipelineToApplicationHandler(router *Router) Handler {
 	}
 }
 
-func attachPipelinesToApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) attachPipelinesToApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
@@ -75,19 +74,19 @@ func attachPipelinesToApplicationHandler(router *Router) Handler {
 			return err
 		}
 
-		project, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+		project, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot load project: %s: %s\n", key, err)
 			return err
 		}
 
-		app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot load application %s: %s\n", appName, err)
 			return err
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot begin transaction: %s\n", errBegin)
 			return errBegin
@@ -113,7 +112,7 @@ func attachPipelinesToApplicationHandler(router *Router) Handler {
 
 		}
 
-		if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot update application last modified date: %s\n", err)
 			return err
 		}
@@ -123,13 +122,13 @@ func attachPipelinesToApplicationHandler(router *Router) Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(db, project); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), project); err != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot check project sanity: %s\n", err)
 			return err
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(db, project.Key, app.Name, c.User, "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.MustDB(), project.Key, app.Name, getUser(ctx), "", 0)
 		if errW != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot load application workflow: %s\n", errW)
 			return errW
@@ -142,8 +141,8 @@ func attachPipelinesToApplicationHandler(router *Router) Handler {
 	}
 }
 
-func updatePipelinesToApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updatePipelinesToApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
@@ -153,13 +152,13 @@ func updatePipelinesToApplicationHandler(router *Router) Handler {
 			return err
 		}
 
-		app, err := application.LoadByName(db, key, appName, c.User, application.LoadOptions.Default)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updatePipelinesToApplicationHandler: Cannot load application %s: %s\n", appName, err)
 			return sdk.ErrApplicationNotFound
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("updatePipelinesToApplicationHandler: Cannot start transaction: %s\n", err)
 			return sdk.ErrUnknownError
@@ -167,7 +166,7 @@ func updatePipelinesToApplicationHandler(router *Router) Handler {
 		defer tx.Rollback()
 
 		for _, appPip := range appPipelines {
-			err = application.UpdatePipelineApplication(tx, app, appPip.Pipeline.ID, appPip.Parameters, c.User)
+			err = application.UpdatePipelineApplication(tx, app, appPip.Pipeline.ID, appPip.Parameters, getUser(ctx))
 			if err != nil {
 				log.Warning("updatePipelinesToApplicationHandler: Cannot update  application pipeline  %s/%s parameters: %s\n", appName, appPip.Pipeline.Name, err)
 				return sdk.ErrUnknownError
@@ -187,20 +186,20 @@ func updatePipelinesToApplicationHandler(router *Router) Handler {
 }
 
 // DEPRECATED
-func updatePipelineToApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updatePipelineToApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		pipeline, err := pipeline.LoadPipeline(db, key, pipelineName, false)
+		pipeline, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("updatePipelineToApplicationHandler: Cannot load pipeline %s: %s\n", appName, err)
 			return sdk.ErrNotFound
 		}
 
-		app, err := application.LoadByName(db, key, appName, c.User)
+		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("updatePipelineToApplicationHandler: Cannot load application %s: %s\n", appName, err)
 			return sdk.ErrNotFound
@@ -213,7 +212,7 @@ func updatePipelineToApplicationHandler(router *Router) Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		err = application.UpdatePipelineApplicationString(db, app, pipeline.ID, string(data), c.User)
+		err = application.UpdatePipelineApplicationString(api.MustDB(), app, pipeline.ID, string(data), getUser(ctx))
 		if err != nil {
 			log.Warning("updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s:  %s\n", appName, pipelineName, err)
 			return err
@@ -226,13 +225,13 @@ func updatePipelineToApplicationHandler(router *Router) Handler {
 	}
 }
 
-func getPipelinesInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getPipelinesInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		pipelines, err := application.GetAllPipelines(db, key, appName)
+		pipelines, err := application.GetAllPipelines(api.MustDB(), key, appName)
 		if err != nil {
 			log.Warning("getPipelinesInApplicationHandler: Cannot load pipelines for application %s: %s\n", appName, err)
 			return sdk.ErrNotFound
@@ -242,20 +241,20 @@ func getPipelinesInApplicationHandler(router *Router) Handler {
 	}
 }
 
-func removePipelineFromApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) removePipelineFromApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		a, errA := application.LoadByName(db, key, appName, c.User, application.LoadOptions.WithPipelines)
+		a, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.WithPipelines)
 		if errA != nil {
 			log.Warning("removePipelineFromApplicationHandler> Cannot load application: %s\n", errA)
 			return errA
 		}
 
-		tx, errB := db.Begin()
+		tx, errB := api.MustDB().Begin()
 		if errB != nil {
 			log.Warning("removePipelineFromApplicationHandler> Cannot start tx: %s\n", errB)
 			return errB
@@ -267,7 +266,7 @@ func removePipelineFromApplicationHandler(router *Router) Handler {
 			return err
 		}
 
-		if err := application.UpdateLastModified(tx, a, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, a, getUser(ctx)); err != nil {
 			log.Warning("removePipelineFromApplicationHandler> Cannot update application last modified date: %s\n", err)
 			return err
 		}
@@ -281,7 +280,7 @@ func removePipelineFromApplicationHandler(router *Router) Handler {
 		cache.DeleteAll(k)
 
 		var errW error
-		a.Workflows, errW = workflow.LoadCDTree(db, key, a.Name, c.User, "", 0)
+		a.Workflows, errW = workflow.LoadCDTree(api.MustDB(), key, a.Name, getUser(ctx), "", 0)
 		if errW != nil {
 			log.Warning("removePipelineFromApplicationHandler> Cannot load workflow: %s\n", errW)
 			return errW
@@ -301,22 +300,22 @@ func removePipelineFromApplicationHandler(router *Router) Handler {
 	}
 }
 
-func getUserNotificationTypeHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getUserNotificationTypeHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var types = []sdk.UserNotificationSettingsType{sdk.EmailUserNotification, sdk.JabberUserNotification}
 		return WriteJSON(w, r, types, http.StatusOK)
 	}
 }
 
-func getUserNotificationStateValueHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getUserNotificationStateValueHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		states := []sdk.UserNotificationEventType{sdk.UserNotificationAlways, sdk.UserNotificationChange, sdk.UserNotificationNever}
 		return WriteJSON(w, r, states, http.StatusOK)
 	}
 }
 
-func getUserNotificationApplicationPipelineHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getUserNotificationApplicationPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
@@ -330,14 +329,14 @@ func getUserNotificationApplicationPipelineHandler(router *Router) Handler {
 		envName := r.Form.Get("envName")
 
 		//Load application
-		application, err := application.LoadByName(db, key, appName, c.User)
+		application, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
 			return err
 		}
 
 		//Load pipeline
-		pipeline, err := pipeline.LoadPipeline(db, key, pipelineName, false)
+		pipeline, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("getUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
 			return err
@@ -346,20 +345,20 @@ func getUserNotificationApplicationPipelineHandler(router *Router) Handler {
 		//Load environment
 		env := &sdk.DefaultEnv
 		if envName != "" {
-			env, err = environment.LoadEnvironmentByName(db, key, envName)
+			env, err = environment.LoadEnvironmentByName(api.MustDB(), key, envName)
 			if err != nil {
 				log.Warning("getUserNotificationApplicationPipelineHandler> cannot load environment %s: %s\n", envName, err)
 				return err
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionRead) {
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
 			log.Warning("getUserNotificationApplicationPipelineHandler> Cannot access to this environment")
 			return sdk.ErrForbidden
 		}
 
 		//Load notifs
-		notifs, err := notification.LoadUserNotificationSettings(db, application.ID, pipeline.ID, env.ID)
+		notifs, err := notification.LoadUserNotificationSettings(api.MustDB(), application.ID, pipeline.ID, env.ID)
 		if err != nil {
 			log.Warning("getUserNotificationApplicationPipelineHandler> cannot load notification settings %s\n", err)
 			return err
@@ -372,8 +371,8 @@ func getUserNotificationApplicationPipelineHandler(router *Router) Handler {
 	}
 }
 
-func deleteUserNotificationApplicationPipelineHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
@@ -388,7 +387,7 @@ func deleteUserNotificationApplicationPipelineHandler(router *Router) Handler {
 		envName := r.Form.Get("envName")
 
 		///Load application
-		applicationData, err := application.LoadByName(db, key, appName, c.User)
+		applicationData, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
 			return err
@@ -396,7 +395,7 @@ func deleteUserNotificationApplicationPipelineHandler(router *Router) Handler {
 		}
 
 		//Load pipeline
-		pipeline, err := pipeline.LoadPipeline(db, key, pipelineName, false)
+		pipeline, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
 			return err
@@ -406,7 +405,7 @@ func deleteUserNotificationApplicationPipelineHandler(router *Router) Handler {
 		//Load environment
 		env := &sdk.DefaultEnv
 		if envName != "" && envName != sdk.DefaultEnv.Name {
-			env, err = environment.LoadEnvironmentByName(db, key, envName)
+			env, err = environment.LoadEnvironmentByName(api.MustDB(), key, envName)
 			if err != nil {
 				log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot load environment %s: %s\n", envName, err)
 				return err
@@ -414,12 +413,12 @@ func deleteUserNotificationApplicationPipelineHandler(router *Router) Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, c.User, permission.PermissionReadWriteExecute) {
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 			log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot access to this environment")
 			return sdk.ErrForbidden
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot start transaction: %s\n", err)
 			return err
@@ -431,7 +430,7 @@ func deleteUserNotificationApplicationPipelineHandler(router *Router) Handler {
 			return err
 		}
 
-		err = application.UpdateLastModified(tx, applicationData, c.User)
+		err = application.UpdateLastModified(tx, applicationData, getUser(ctx))
 		if err != nil {
 			log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot update application last_modified date: %s\n", err)
 			return err
@@ -448,7 +447,7 @@ func deleteUserNotificationApplicationPipelineHandler(router *Router) Handler {
 		cache.DeleteAll(k)
 
 		var errN error
-		applicationData.Notifications, errN = notification.LoadAllUserNotificationSettings(db, applicationData.ID)
+		applicationData.Notifications, errN = notification.LoadAllUserNotificationSettings(api.MustDB(), applicationData.ID)
 		if errN != nil {
 			log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot load notifications: %s\n", errN)
 			return errN
@@ -457,8 +456,8 @@ func deleteUserNotificationApplicationPipelineHandler(router *Router) Handler {
 	}
 }
 
-func addNotificationsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addNotificationsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
@@ -468,7 +467,7 @@ func addNotificationsHandler(router *Router) Handler {
 			return err
 		}
 
-		app, errApp := application.LoadByName(db, key, appName, c.User, application.LoadOptions.WithPipelines)
+		app, errApp := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.WithPipelines)
 		if errApp != nil {
 			log.Warning("addNotificationsHandler: Cannot load application: %s\n", errApp)
 			return sdk.ErrWrongRequest
@@ -479,7 +478,7 @@ func addNotificationsHandler(router *Router) Handler {
 			mapID[appPip.ID] = ""
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			log.Warning("addNotificationsHandler: Cannot begin transaction: %s\n", errBegin)
 			return errBegin
@@ -497,7 +496,7 @@ func addNotificationsHandler(router *Router) Handler {
 				n.Environment = sdk.DefaultEnv
 			}
 
-			if !permission.AccessToEnvironment(n.Environment.ID, c.User, permission.PermissionReadWriteExecute) {
+			if !permission.AccessToEnvironment(n.Environment.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 				log.Warning("addNotificationsHandler > Cannot access to this environment")
 				return sdk.ErrForbidden
 			}
@@ -510,7 +509,7 @@ func addNotificationsHandler(router *Router) Handler {
 			}
 		}
 
-		if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
 			log.Warning("addNotificationsHandler> cannot update application last_modified date: %s\n", err)
 			return err
 
@@ -522,7 +521,7 @@ func addNotificationsHandler(router *Router) Handler {
 		}
 
 		var errNotif error
-		app.Notifications, errNotif = notification.LoadAllUserNotificationSettings(db, app.ID)
+		app.Notifications, errNotif = notification.LoadAllUserNotificationSettings(api.MustDB(), app.ID)
 		if errNotif != nil {
 			log.Warning("addNotificationsHandler> cannot load notifications: %s\n", errNotif)
 			return errNotif
@@ -532,22 +531,22 @@ func addNotificationsHandler(router *Router) Handler {
 	}
 }
 
-func updateUserNotificationApplicationPipelineHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
 		///Load application
-		applicationData, err := application.LoadByName(db, key, appName, c.User)
+		applicationData, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
 			return err
 		}
 
 		//Load pipeline
-		pipeline, err := pipeline.LoadPipeline(db, key, pipelineName, false)
+		pipeline, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
 			return err
@@ -565,12 +564,12 @@ func updateUserNotificationApplicationPipelineHandler(router *Router) Handler {
 			notifs.Environment = sdk.DefaultEnv
 		}
 
-		if !permission.AccessToEnvironment(notifs.Environment.ID, c.User, permission.PermissionReadWriteExecute) {
+		if !permission.AccessToEnvironment(notifs.Environment.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
 			log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot access to this environment")
 			return sdk.ErrForbidden
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("updateUserNotificationApplicationPipelineHandler> cannot start transaction: %s\n", err)
 			return err
@@ -585,7 +584,7 @@ func updateUserNotificationApplicationPipelineHandler(router *Router) Handler {
 
 		}
 
-		err = application.UpdateLastModified(tx, applicationData, c.User)
+		err = application.UpdateLastModified(tx, applicationData, getUser(ctx))
 		if err != nil {
 			log.Warning("updateUserNotificationApplicationPipelineHandler> cannot update application last_modified date: %s\n", err)
 			return err
@@ -603,7 +602,7 @@ func updateUserNotificationApplicationPipelineHandler(router *Router) Handler {
 		cache.DeleteAll(k)
 
 		var errNotif error
-		applicationData.Notifications, errNotif = notification.LoadAllUserNotificationSettings(db, applicationData.ID)
+		applicationData.Notifications, errNotif = notification.LoadAllUserNotificationSettings(api.MustDB(), applicationData.ID)
 		if errNotif != nil {
 			log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load notifications: %s\n", errNotif)
 			return errNotif

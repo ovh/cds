@@ -22,7 +22,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -36,7 +36,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(db, env); err != nil {
+	if err := environment.InsertEnvironment(api.MustDB(), env); err != nil {
 		t.Fatal(err)
 	}
 
@@ -56,7 +56,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	k.Private = priv
 	k.KeyID = kid
 
-	if err := environment.InsertKey(db, k); err != nil {
+	if err := environment.InsertKey(api.MustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -81,7 +81,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -95,7 +95,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(db, env); err != nil {
+	if err := environment.InsertEnvironment(api.MustDB(), env); err != nil {
 		t.Fatal(err)
 	}
 
@@ -109,7 +109,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 		EnvironmentID: env.ID,
 	}
 
-	if err := environment.InsertKey(db, k); err != nil {
+	if err := environment.InsertKey(api.MustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -134,7 +134,7 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -148,7 +148,7 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(db, env); err != nil {
+	if err := environment.InsertEnvironment(api.MustDB(), env); err != nil {
 		t.Fatal(err)
 	}
 

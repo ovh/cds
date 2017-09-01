@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
@@ -73,7 +72,6 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
 // Start the broker
 func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 	for {
-		db := DBFunc()
 		select {
 		case <-c.Done():
 			// Close all channels
@@ -97,7 +95,7 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 
 			//Receive new message
 			for _, i := range b.clients {
-				if err := loadUserPermissions(db, i.User); err != nil {
+				if err := loadUserPermissions(DBFunc(), i.User); err != nil {
 					log.Warning("lastUpdate.CacheSubscribe> Cannot load auser permission: %s", err)
 					continue
 				}
@@ -137,8 +135,8 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 
 }
 
-func (b *LastUpdateBroker) ServeHTTP(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (b *LastUpdateBroker) ServeHTTP() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
 		if !ok {
@@ -152,7 +150,7 @@ func (b *LastUpdateBroker) ServeHTTP(router *Router) Handler {
 		}
 		messageChan := &LastUpdateBrokerSubscribe{
 			UIID:  string(uuid),
-			User:  c.User,
+			User:  getUser(ctx),
 			Queue: make(chan string),
 		}
 

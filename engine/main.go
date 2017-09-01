@@ -19,9 +19,14 @@ type Configuration struct {
 	Hatchery []struct{}
 }
 
+type ServiceServeOptions struct {
+	SetHeaderFunc func() map[string]string
+	Middlewares []api.Middleware
+}
+
 type Service interface {
 	Init(cfg interface{}) error
-	Serve(ctx context.Context) error
+	Serve(ctx context.Context, opts *ServiceServeOptions) error
 }
 
 func init() {

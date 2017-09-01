@@ -1,29 +1,28 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
 
-func getKeysInProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getKeysInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errP := project.Load(db, key, c.User)
+		p, errP := project.Load(api.MustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getKeysInProjectHandler> Cannot load project")
 		}
 
-		if errK := project.LoadAllKeys(db, p); errK != nil {
+		if errK := project.LoadAllKeys(api.MustDB(), p); errK != nil {
 			return sdk.WrapError(errK, "getKeysInProjectHandler> Cannot load project keys")
 		}
 
@@ -31,18 +30,18 @@ func getKeysInProjectHandler(router *Router) Handler {
 	}
 }
 
-func deleteKeyInProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteKeyInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		keyName := vars["name"]
 
-		p, errP := project.Load(db, key, c.User, project.LoadOptions.WithKeys)
+		p, errP := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.WithKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
 		}
 
-		tx, errT := db.Begin()
+		tx, errT := api.MustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteKeyInProjectHandler> Cannot start transaction")
 		}
@@ -52,7 +51,7 @@ func deleteKeyInProjectHandler(router *Router) Handler {
 				if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot delete key %s", k.Name)
 				}
-				if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+				if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot update project last modified date")
 				}
 			}
@@ -66,8 +65,8 @@ func deleteKeyInProjectHandler(router *Router) Handler {
 	}
 }
 
-func addKeyInProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addKeyInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
@@ -82,7 +81,7 @@ func addKeyInProjectHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInProjectHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		p, errP := project.Load(db, key, c.User)
+		p, errP := project.Load(api.MustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "addKeyInProjectHandler> Cannot load project")
 		}
@@ -108,7 +107,7 @@ func addKeyInProjectHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInProjectHandler> unknown key of type: %s", newKey.Type)
 		}
 
-		tx, errT := db.Begin()
+		tx, errT := api.MustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInProjectHandler> Cannot start transaction")
 		}
@@ -118,7 +117,7 @@ func addKeyInProjectHandler(router *Router) Handler {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot insert project key")
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot update project last modified date")
 		}
 

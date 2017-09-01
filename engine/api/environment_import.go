@@ -1,15 +1,14 @@
 package api
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/hashicorp/hcl"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
@@ -19,14 +18,14 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func importNewEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) importNewEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+		proj, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			log.Warning("importNewEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
 			return errProj
@@ -63,7 +62,7 @@ func importNewEnvironmentHandler(router *Router) Handler {
 		env := payload.Environment()
 		for i := range env.EnvironmentGroups {
 			eg := &env.EnvironmentGroups[i]
-			g, err := group.LoadGroup(db, eg.Group.Name)
+			g, err := group.LoadGroup(api.MustDB(), eg.Group.Name)
 			if err != nil {
 				log.Warning("importNewEnvironmentHandler> Error on import : %s", err)
 				return err
@@ -86,7 +85,7 @@ func importNewEnvironmentHandler(router *Router) Handler {
 			}
 		}()
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			log.Warning("importNewEnvironmentHandler: Cannot start transaction: %s\n", errBegin)
 			return errBegin
@@ -94,7 +93,7 @@ func importNewEnvironmentHandler(router *Router) Handler {
 
 		defer tx.Rollback()
 
-		if err := environment.Import(db, proj, env, msgChan, c.User); err != nil {
+		if err := environment.Import(api.MustDB(), proj, env, msgChan, getUser(ctx)); err != nil {
 			log.Warning("importNewEnvironmentHandler> Error on import : %s", err)
 			return err
 		}
@@ -112,7 +111,7 @@ func importNewEnvironmentHandler(router *Router) Handler {
 			}
 		}
 
-		if err := sanity.CheckProjectPipelines(db, proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), proj); err != nil {
 			log.Warning("importNewEnvironmentHandler> Cannot check warnings: %s\n", err)
 			return err
 		}
@@ -126,21 +125,21 @@ func importNewEnvironmentHandler(router *Router) Handler {
 	}
 }
 
-func importIntoEnvironmentHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) importIntoEnvironmentHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		envName := vars["permEnvironmentName"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+		proj, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			log.Warning("importIntoEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
 			return errProj
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			log.Warning("importIntoEnvironmentHandler: Cannot start transaction: %s\n", errBegin)
 			return errBegin
@@ -213,12 +212,12 @@ func importIntoEnvironmentHandler(router *Router) Handler {
 			}
 		}()
 
-		if err := environment.ImportInto(tx, proj, newEnv, env, msgChan, c.User); err != nil {
+		if err := environment.ImportInto(tx, proj, newEnv, env, msgChan, getUser(ctx)); err != nil {
 			log.Warning("importIntoEnvironmentHandler> Error on import : %s", err)
 			return err
 		}
 
-		if err := project.UpdateLastModified(db, c.User, proj); err != nil {
+		if err := project.UpdateLastModified(api.MustDB(), getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot update project last modified date")
 		}
 
@@ -240,7 +239,7 @@ func importIntoEnvironmentHandler(router *Router) Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(db, proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), proj); err != nil {
 			log.Warning("importIntoEnvironmentHandler> Cannot check warnings: %s\n", err)
 			return err
 		}

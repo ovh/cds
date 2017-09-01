@@ -1,13 +1,12 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
@@ -15,12 +14,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getVariablesAuditInProjectnHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariablesAuditInProjectnHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 
-		audits, err := project.GetVariableAudit(db, key)
+		audits, err := project.GetVariableAudit(api.MustDB(), key)
 		if err != nil {
 			log.Warning("getVariablesAuditInProjectnHandler: Cannot get variable audit for project %s: %s\n", key, err)
 			return err
@@ -31,8 +30,8 @@ func getVariablesAuditInProjectnHandler(router *Router) Handler {
 }
 
 // Deprecated
-func restoreProjectVariableAuditHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) restoreProjectVariableAuditHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		auditIDString := vars["auditID"]
@@ -44,21 +43,21 @@ func restoreProjectVariableAuditHandler(router *Router) Handler {
 
 		}
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot load %s: %s\n", key, err)
 			return err
 
 		}
 
-		variables, err := project.GetAudit(db, key, auditID)
+		variables, err := project.GetAudit(api.MustDB(), key, auditID)
 		if err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot get variable audit for project %s: %s\n", key, err)
 			return err
 
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot start transaction : %s\n", err)
 			return sdk.ErrUnknownError
@@ -82,13 +81,13 @@ func restoreProjectVariableAuditHandler(router *Router) Handler {
 				}
 				v.Value = string(value)
 			}
-			if err := project.InsertVariable(tx, p, &v, c.User); err != nil {
+			if err := project.InsertVariable(tx, p, &v, getUser(ctx)); err != nil {
 				log.Warning("restoreProjectVariableAuditHandler: Cannot insert variable %s for project %s:  %s\n", v.Name, key, err)
 				return err
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot update last modified:  %s\n", err)
 			return err
 		}
@@ -98,7 +97,7 @@ func restoreProjectVariableAuditHandler(router *Router) Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot check warnings: %s\n", err)
 			return err
 		}
@@ -107,13 +106,13 @@ func restoreProjectVariableAuditHandler(router *Router) Handler {
 	}
 }
 
-func getVariablesInProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariablesInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.WithVariables)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
 		if err != nil {
 			log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
 			return sdk.ErrNotFound
@@ -123,37 +122,37 @@ func getVariablesInProjectHandler(router *Router) Handler {
 	}
 }
 
-func deleteVariableFromProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteVariableFromProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
 			return err
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("deleteVariableFromProject: Cannot start transaction: %s\n", err)
 			return err
 		}
 		defer tx.Rollback()
 
-		varToDelete, errV := project.GetVariableInProject(db, p.ID, varName)
+		varToDelete, errV := project.GetVariableInProject(api.MustDB(), p.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "deleteVariableFromProject> Cannot load variable %s", varName)
 		}
 
-		if err := project.DeleteVariable(tx, p, varToDelete, c.User); err != nil {
+		if err := project.DeleteVariable(tx, p, varToDelete, getUser(ctx)); err != nil {
 			log.Warning("deleteVariableFromProject: Cannot delete %s: %s\n", varName, err)
 			return err
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			log.Warning("deleteVariableFromProject: Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -168,8 +167,8 @@ func deleteVariableFromProjectHandler(router *Router) Handler {
 }
 
 //DEPRECATED
-func updateVariablesInProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateVariablesInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -179,14 +178,14 @@ func updateVariablesInProjectHandler(router *Router) Handler {
 			return err
 		}
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot load %s: %s\n", key, err)
 			return sdk.ErrNotFound
 
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot start transaction: %s\n", err)
 			return sdk.ErrNotFound
@@ -219,7 +218,7 @@ func updateVariablesInProjectHandler(router *Router) Handler {
 						}
 					}
 				}
-				err = project.InsertVariable(tx, p, &v, c.User)
+				err = project.InsertVariable(tx, p, &v, getUser(ctx))
 				if err != nil {
 					log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 					return err
@@ -229,7 +228,7 @@ func updateVariablesInProjectHandler(router *Router) Handler {
 			// In case of a key variable, if empty, generate a pair and add them as variable
 			case sdk.KeyVariable:
 				if v.Value == "" {
-					err := project.AddKeyPair(tx, p, v.Name, c.User)
+					err := project.AddKeyPair(tx, p, v.Name, getUser(ctx))
 					if err != nil {
 						log.Warning("updateVariablesInProjectHandler> cannot generate keypair: %s\n", err)
 						return err
@@ -241,7 +240,7 @@ func updateVariablesInProjectHandler(router *Router) Handler {
 							v.Value = p.Value
 						}
 					}
-					err = project.InsertVariable(tx, p, &v, c.User)
+					err = project.InsertVariable(tx, p, &v, getUser(ctx))
 					if err != nil {
 						log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 						return err
@@ -250,7 +249,7 @@ func updateVariablesInProjectHandler(router *Router) Handler {
 				}
 				break
 			default:
-				err = project.InsertVariable(tx, p, &v, c.User)
+				err = project.InsertVariable(tx, p, &v, getUser(ctx))
 				if err != nil {
 					log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
 					return err
@@ -259,7 +258,7 @@ func updateVariablesInProjectHandler(router *Router) Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot update last modified:  %s\n", err)
 			return err
 		}
@@ -270,7 +269,7 @@ func updateVariablesInProjectHandler(router *Router) Handler {
 
 		}
 
-		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
 			log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s\n", err)
 			return err
 
@@ -280,8 +279,8 @@ func updateVariablesInProjectHandler(router *Router) Handler {
 	}
 }
 
-func updateVariableInProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateVariableInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -296,14 +295,14 @@ func updateVariableInProjectHandler(router *Router) Handler {
 
 		}
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updateVariableInProject: Cannot load %s: %s\n", key, err)
 			return err
 
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("updateVariableInProject: cannot start transaction: %s\n", err)
 			return err
@@ -311,12 +310,12 @@ func updateVariableInProjectHandler(router *Router) Handler {
 		}
 		defer tx.Rollback()
 
-		if err := project.UpdateVariable(tx, p, &newVar, c.User); err != nil {
+		if err := project.UpdateVariable(tx, p, &newVar, getUser(ctx)); err != nil {
 			log.Warning("updateVariableInProject: Cannot update variable %s in project %s:  %s\n", varName, p.Name, err)
 			return err
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			log.Warning("updateVariableInProject: Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -327,7 +326,7 @@ func updateVariableInProjectHandler(router *Router) Handler {
 
 		}
 
-		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
 			log.Warning("updateVariableInProject: Cannot check warnings: %s\n", err)
 			return err
 
@@ -337,21 +336,21 @@ func updateVariableInProjectHandler(router *Router) Handler {
 }
 
 //DEPRECATED
-func getVariableInProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariableInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		proj, err := project.Load(db, key, c.User)
+		proj, err := project.Load(api.MustDB(), key, getUser(ctx))
 		if err != nil {
 			log.Warning("getVariableInProjectHandler: Cannot load project %s: %s\n", key, err)
 			return err
 
 		}
 
-		v, err := project.GetVariableInProject(db, proj.ID, varName)
+		v, err := project.GetVariableInProject(api.MustDB(), proj.ID, varName)
 		if err != nil {
 			log.Warning("getVariableInProjectHandler: Cannot get variable %s in project %s: %s\n", varName, key, err)
 			return err
@@ -362,8 +361,8 @@ func getVariableInProjectHandler(router *Router) Handler {
 	}
 }
 
-func addVariableInProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addVariableInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
@@ -378,13 +377,13 @@ func addVariableInProjectHandler(router *Router) Handler {
 
 		}
 
-		p, err := project.Load(db, key, c.User, project.LoadOptions.Default)
+		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("AddVariableInProject: Cannot load %s: %s\n", key, err)
 			return err
 		}
 
-		varInProject, err := project.CheckVariableInProject(db, p.ID, varName)
+		varInProject, err := project.CheckVariableInProject(api.MustDB(), p.ID, varName)
 		if err != nil {
 			log.Warning("AddVariableInProject: Cannot check if variable %s is already in the project %s: %s\n", varName, p.Name, err)
 			return err
@@ -394,7 +393,7 @@ func addVariableInProjectHandler(router *Router) Handler {
 			return sdk.ErrVariableExists
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			log.Warning("addVariableInProjectHandler: cannot begin tx: %s\n", err)
 			return err
@@ -403,10 +402,10 @@ func addVariableInProjectHandler(router *Router) Handler {
 
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			err = project.AddKeyPair(tx, p, newVar.Name, c.User)
+			err = project.AddKeyPair(tx, p, newVar.Name, getUser(ctx))
 			break
 		default:
-			err = project.InsertVariable(tx, p, &newVar, c.User)
+			err = project.InsertVariable(tx, p, &newVar, getUser(ctx))
 			break
 		}
 		if err != nil {
@@ -415,7 +414,7 @@ func addVariableInProjectHandler(router *Router) Handler {
 
 		}
 
-		if err := project.UpdateLastModified(tx, c.User, p); err != nil {
+		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot update last modified:  %s\n", err)
 			return err
 		}
@@ -425,14 +424,14 @@ func addVariableInProjectHandler(router *Router) Handler {
 			return err
 		}
 
-		err = sanity.CheckProjectPipelines(db, p)
+		err = sanity.CheckProjectPipelines(api.MustDB(), p)
 		if err != nil {
 			log.Warning("AddVariableInProject: Cannot check warnings: %s\n", err)
 			return err
 
 		}
 
-		p.Variable, err = project.GetAllVariableInProject(db, p.ID)
+		p.Variable, err = project.GetAllVariableInProject(api.MustDB(), p.ID)
 		if err != nil {
 			log.Warning("AddVariableInProject: Cannot get variables: %s\n", err)
 			return err
@@ -443,24 +442,24 @@ func addVariableInProjectHandler(router *Router) Handler {
 	}
 }
 
-func getVariableAuditInProjectHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariableAuditInProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		p, errP := project.Load(db, key, c.User)
+		p, errP := project.Load(api.MustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getVariableAuditInProjectHandler> Cannot load project %s", key)
 		}
 
-		variable, errV := project.GetVariableInProject(db, p.ID, varName)
+		variable, errV := project.GetVariableInProject(api.MustDB(), p.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "getVariableAuditInProjectHandler> Cannot load variable %s", varName)
 		}
 
-		audits, errA := project.LoadVariableAudits(db, p.ID, variable.ID)
+		audits, errA := project.LoadVariableAudits(api.MustDB(), p.ID, variable.ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInProjectHandler> Cannot load audit for variable %s", varName)
 		}

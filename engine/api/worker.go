@@ -1,23 +1,21 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func registerWorkerHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) registerWorkerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		params := &worker.RegistrationForm{}
 		if err := UnmarshalBody(r, params); err != nil {
 			return sdk.WrapError(err, "registerWorkerHandler> Unable to parse registration form")
@@ -27,14 +25,14 @@ func registerWorkerHandler(router *Router) Handler {
 		var h *sdk.Hatchery
 		if params.HatcheryName != "" {
 			var errH error
-			h, errH = hatchery.LoadHatcheryByName(db, params.HatcheryName)
+			h, errH = hatchery.LoadHatcheryByName(api.MustDB(), params.HatcheryName)
 			if errH != nil {
 				return sdk.WrapError(errH, "registerWorkerHandler> Unable to load hatchery %s", params.HatcheryName)
 			}
 		}
 
 		// Try to register worker
-		worker, err := worker.RegisterWorker(db, params.Name, params.Token, params.Model, h, params.BinaryCapabilities)
+		worker, err := worker.RegisterWorker(api.MustDB(), params.Name, params.Token, params.Model, h, params.BinaryCapabilities)
 		if err != nil {
 			err = sdk.NewError(sdk.ErrUnauthorized, err)
 			return sdk.WrapError(err, "registerWorkerHandler> [%s] Registering failed", params.Name)
@@ -49,13 +47,13 @@ func registerWorkerHandler(router *Router) Handler {
 	}
 }
 
-func getWorkersHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkersHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := r.ParseForm(); err != nil {
 			return sdk.WrapError(err, "getWorkerModels> cannot parse form")
 		}
 
-		workers, errl := worker.LoadWorkers(db)
+		workers, errl := worker.LoadWorkers(api.MustDB())
 		if errl != nil {
 			return sdk.WrapError(errl, "getWorkerModels> cannot load workers")
 		}
@@ -64,13 +62,13 @@ func getWorkersHandler(router *Router) Handler {
 	}
 }
 
-func disableWorkerHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) disableWorkerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		id := vars["id"]
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "disabledWorkerHandler> Cannot start tx")
 		}
@@ -94,10 +92,10 @@ func disableWorkerHandler(router *Router) Handler {
 				for {
 					var attempts int
 					time.Sleep(500 * time.Millisecond)
-					db := database.DBMap(database.DB())
+					db := api.DBConnectionFactory.GetDBMap()
 					if db != nil {
 						attempts++
-						w1, err := worker.LoadWorker(db, w.ID)
+						w1, err := worker.LoadWorker(api.MustDB(), w.ID)
 						if err != nil {
 							log.Warning("disableWorkerHandler> Error getting worker %s", w.ID)
 							return
@@ -140,29 +138,29 @@ func disableWorkerHandler(router *Router) Handler {
 	}
 }
 
-func refreshWorkerHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		if err := worker.RefreshWorker(db, c.Worker.ID); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
-			return sdk.WrapError(err, "refreshWorkerHandler> cannot refresh last beat of %s", c.Worker.ID)
+func (api *API) refreshWorkerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if err := worker.RefreshWorker(api.MustDB(), getWorker(ctx).ID); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
+			return sdk.WrapError(err, "refreshWorkerHandler> cannot refresh last beat of %s", getWorker(ctx).ID)
 		}
 		return nil
 	}
 }
 
-func unregisterWorkerHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		if err := worker.DeleteWorker(db, c.Worker.ID); err != nil {
-			return sdk.WrapError(err, "unregisterWorkerHandler> cannot delete worker %s", c.Worker.ID)
+func (api *API) unregisterWorkerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if err := worker.DeleteWorker(api.MustDB(), getWorker(ctx).ID); err != nil {
+			return sdk.WrapError(err, "unregisterWorkerHandler> cannot delete worker %s", getWorker(ctx).ID)
 		}
 		return nil
 	}
 }
 
-func workerCheckingHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		wk, errW := worker.LoadWorker(db, c.Worker.ID)
+func (api *API) workerCheckingHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		wk, errW := worker.LoadWorker(api.MustDB(), getWorker(ctx).ID)
 		if errW != nil {
-			return sdk.WrapError(errW, "workerCheckingHandler> Unable to load worker %s", c.Worker.ID)
+			return sdk.WrapError(errW, "workerCheckingHandler> Unable to load worker %s", getWorker(ctx).ID)
 		}
 
 		if wk.Status != sdk.StatusWaiting {
@@ -170,19 +168,19 @@ func workerCheckingHandler(router *Router) Handler {
 			return nil
 		}
 
-		if err := worker.SetStatus(db, c.Worker.ID, sdk.StatusChecking); err != nil {
-			return sdk.WrapError(err, "workerCheckingHandler> cannot update worker %s", c.Worker.ID)
+		if err := worker.SetStatus(api.MustDB(), getWorker(ctx).ID, sdk.StatusChecking); err != nil {
+			return sdk.WrapError(err, "workerCheckingHandler> cannot update worker %s", getWorker(ctx).ID)
 		}
 
 		return nil
 	}
 }
 
-func workerWaitingHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		wk, errW := worker.LoadWorker(db, c.Worker.ID)
+func (api *API) workerWaitingHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		wk, errW := worker.LoadWorker(api.MustDB(), getWorker(ctx).ID)
 		if errW != nil {
-			return sdk.WrapError(errW, "workerWaitingHandler> Unable to load worker %s", c.Worker.ID)
+			return sdk.WrapError(errW, "workerWaitingHandler> Unable to load worker %s", getWorker(ctx).ID)
 		}
 
 		if wk.Status == sdk.StatusWaiting {
@@ -194,8 +192,8 @@ func workerWaitingHandler(router *Router) Handler {
 			return nil
 		}
 
-		if err := worker.SetStatus(db, c.Worker.ID, sdk.StatusWaiting); err != nil {
-			return sdk.WrapError(err, "workerWaitingHandler> cannot update worker %s", c.Worker.ID)
+		if err := worker.SetStatus(api.MustDB(), getWorker(ctx).ID, sdk.StatusWaiting); err != nil {
+			return sdk.WrapError(err, "workerWaitingHandler> cannot update worker %s", getWorker(ctx).ID)
 		}
 
 		return nil

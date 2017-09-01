@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/actionplugin"
-	"github.com/ovh/cds/engine/api/businesscontext"
+	
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -162,8 +162,8 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 	c := ctx.Background()
 	objectstore.Initialize(c, cfg)
 
-	u, _ := assets.InsertAdminUser(db)
-	if err := actionplugin.Delete(db, "plugin-download", u.ID); err != nil {
+	u, _ := assets.InsertAdminUser(api.MustDB())
+	if err := actionplugin.Delete(api.MustDB(), "plugin-download", u.ID); err != nil {
 		t.Log(err)
 	}
 
@@ -234,8 +234,8 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 	c := ctx.Background()
 	objectstore.Initialize(c, cfg)
 
-	u, _ := assets.InsertAdminUser(db)
-	actionplugin.Delete(db, "plugin-download", u.ID)
+	u, _ := assets.InsertAdminUser(api.MustDB())
+	actionplugin.Delete(api.MustDB(), "plugin-download", u.ID)
 
 	path, delete, err := downloadFile(t, "dummy1", dummyBinaryFile)
 	if delete != nil {
@@ -277,8 +277,8 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 	c := ctx.Background()
 	objectstore.Initialize(c, cfg)
 
-	u, _ := assets.InsertAdminUser(db)
-	actionplugin.Delete(db, "plugin-download", u.ID)
+	u, _ := assets.InsertAdminUser(api.MustDB())
+	actionplugin.Delete(api.MustDB(), "plugin-download", u.ID)
 
 	path, delete, err := downloadFile(t, "plugin-download", dummyBinaryFile)
 	if delete != nil {
@@ -328,8 +328,8 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 	c := ctx.Background()
 	objectstore.Initialize(c, cfg)
 
-	u, _ := assets.InsertAdminUser(db)
-	actionplugin.Delete(db, "plugin-download", u.ID)
+	u, _ := assets.InsertAdminUser(api.MustDB())
+	actionplugin.Delete(api.MustDB(), "plugin-download", u.ID)
 
 	path, delete, err := downloadFile(t, "plugin-download", dummyBinaryFile)
 	if delete != nil {
@@ -392,8 +392,8 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 	c := ctx.Background()
 	objectstore.Initialize(c, cfg)
 
-	u, _ := assets.InsertAdminUser(db)
-	actionplugin.Delete(db, "plugin-download", u.ID)
+	u, _ := assets.InsertAdminUser(api.MustDB())
+	actionplugin.Delete(api.MustDB(), "plugin-download", u.ID)
 
 	path, delete, err := downloadFile(t, "plugin-download", dummyBinaryFile)
 	if delete != nil {

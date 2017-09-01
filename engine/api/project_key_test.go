@@ -22,7 +22,7 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -47,7 +47,7 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	k.Private = priv
 	k.KeyID = kid
 
-	if err := project.InsertKey(db, k); err != nil {
+	if err := project.InsertKey(api.MustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -71,7 +71,7 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)
@@ -90,7 +90,7 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	if err := project.InsertKey(db, k); err != nil {
+	if err := project.InsertKey(api.MustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -114,7 +114,7 @@ func Test_addKeyInProjectHandler(t *testing.T) {
 	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.mux)

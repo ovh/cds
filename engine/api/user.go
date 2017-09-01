@@ -1,15 +1,14 @@
 package api
 
 import (
+	"context"
 	"database/sql"
 	"net/http"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -19,21 +18,21 @@ import (
 )
 
 // DeleteUserHandler removes a user
-func DeleteUserHandler(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) DeleteUserHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if !c.User.Admin && username != c.User.Username {
+		if !getUser(ctx).Admin && username != getUser(ctx).Username {
 			return WriteJSON(w, r, nil, http.StatusForbidden)
 		}
 
-		u, errLoad := user.LoadUserWithoutAuth(db, username)
+		u, errLoad := user.LoadUserWithoutAuth(api.MustDB(), username)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "deleteUserHandler> Cannot load user from db")
 		}
 
-		tx, errb := db.Begin()
+		tx, errb := api.MustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "deleteUserHandler> cannot start transaction")
 		}
@@ -52,21 +51,21 @@ func DeleteUserHandler(r *Router) Handler {
 }
 
 // GetUserHandler returns a specific user's information
-func GetUserHandler(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) GetUserHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if !c.User.Admin && username != c.User.Username {
+		if !getUser(ctx).Admin && username != getUser(ctx).Username {
 			return WriteJSON(w, r, nil, http.StatusForbidden)
 		}
 
-		u, err := user.LoadUserWithoutAuth(db, username)
+		u, err := user.LoadUserWithoutAuth(api.MustDB(), username)
 		if err != nil {
 			return sdk.WrapError(err, "getUserHandler: Cannot load user from db")
 		}
 
-		if err = loadUserPermissions(db, u); err != nil {
+		if err = loadUserPermissions(api.MustDB(), u); err != nil {
 			return sdk.WrapError(err, "getUserHandler: Cannot get user group and project from db")
 		}
 
@@ -75,16 +74,16 @@ func GetUserHandler(r *Router) Handler {
 }
 
 // getUserGroupsHandler returns groups of the user
-func getUserGroupsHandler(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getUserGroupsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if !c.User.Admin && username != c.User.Username {
+		if !getUser(ctx).Admin && username != getUser(ctx).Username {
 			return WriteJSON(w, r, nil, http.StatusForbidden)
 		}
 
-		u, errl := user.LoadUserWithoutAuth(db, username)
+		u, errl := user.LoadUserWithoutAuth(api.MustDB(), username)
 		if errl != nil {
 			return sdk.WrapError(errl, "getUserHandler: Cannot load user from db")
 		}
@@ -92,12 +91,12 @@ func getUserGroupsHandler(r *Router) Handler {
 		var groups, groupsAdmin []sdk.Group
 
 		var err1, err2 error
-		groups, err1 = group.LoadGroupByUser(db, u.ID)
+		groups, err1 = group.LoadGroupByUser(api.MustDB(), u.ID)
 		if err1 != nil {
 			return sdk.WrapError(err1, "getUserGroupsHandler: Cannot load group by user")
 		}
 
-		groupsAdmin, err2 = group.LoadGroupByAdmin(db, u.ID)
+		groupsAdmin, err2 = group.LoadGroupByAdmin(api.MustDB(), u.ID)
 		if err2 != nil {
 			return sdk.WrapError(err2, "getUserGroupsHandler: Cannot load group by admin")
 		}
@@ -111,16 +110,16 @@ func getUserGroupsHandler(r *Router) Handler {
 }
 
 // UpdateUserHandler modifies user informations
-func UpdateUserHandler(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) UpdateUserHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
 
-		if !c.User.Admin && username != c.User.Username {
+		if !getUser(ctx).Admin && username != getUser(ctx).Username {
 			return WriteJSON(w, r, nil, http.StatusForbidden)
 		}
 
-		userDB, errload := user.LoadUserWithoutAuth(db, username)
+		userDB, errload := user.LoadUserWithoutAuth(api.MustDB(), username)
 		if errload != nil {
 			return sdk.WrapError(errload, "getUserHandler: Cannot load user from db")
 		}
@@ -136,7 +135,7 @@ func UpdateUserHandler(r *Router) Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "updateUserHandler: Email address %s is not valid", userBody.Email)
 		}
 
-		if err := user.UpdateUser(db, userBody); err != nil {
+		if err := user.UpdateUser(api.MustDB(), userBody); err != nil {
 			return sdk.WrapError(err, "updateUserHandler: Cannot update user table")
 		}
 
@@ -145,9 +144,9 @@ func UpdateUserHandler(r *Router) Handler {
 }
 
 // GetUsers fetches all users from databases
-func GetUsers(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		users, err := user.LoadUsers(db)
+func (api *API) GetUsersHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		users, err := user.LoadUsers(api.MustDB())
 		if err != nil {
 			return sdk.WrapError(err, "GetUsers: Cannot load user from db")
 		}
@@ -156,10 +155,10 @@ func GetUsers(r *Router) Handler {
 }
 
 // AddUser creates a new user and generate verification email
-func AddUser(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) AddUserHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//returns forbidden if LDAP mode is activated
-		if _, ldap := router.authDriver.(*auth.LDAPClient); ldap {
+		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
 			return sdk.ErrForbidden
 		}
 
@@ -181,7 +180,7 @@ func AddUser(r *Router) Handler {
 
 		// Check that user does not already exists
 		query := `SELECT * FROM "user" WHERE username = $1`
-		rows, err := db.Query(query, u.Username)
+		rows, err := api.MustDB().Query(query, u.Username)
 		if err != nil {
 			return sdk.WrapError(err, "AddUsers: Cannot check if user %s exist", u.Username)
 		}
@@ -197,7 +196,7 @@ func AddUser(r *Router) Handler {
 
 		auth := sdk.NewAuth(hashedToken)
 
-		nbUsers, errc := user.CountUser(db)
+		nbUsers, errc := user.CountUser(api.MustDB())
 		if errc != nil {
 			return sdk.WrapError(errc, "AddUser: Cannot count user")
 		}
@@ -207,7 +206,7 @@ func AddUser(r *Router) Handler {
 			u.Admin = false
 		}
 
-		if err := user.InsertUser(db, &u, auth); err != nil {
+		if err := user.InsertUser(api.MustDB(), &u, auth); err != nil {
 			return sdk.WrapError(err, "AddUser: Cannot insert user")
 		}
 
@@ -215,7 +214,7 @@ func AddUser(r *Router) Handler {
 
 		// If it's the first user, add him to shared.infra group
 		if nbUsers == 0 {
-			if err := group.AddAdminInGlobalGroup(db, u.ID); err != nil {
+			if err := group.AddAdminInGlobalGroup(api.MustDB(), u.ID); err != nil {
 				return sdk.WrapError(err, "AddUser: Cannot add user in global group")
 			}
 		}
@@ -225,10 +224,10 @@ func AddUser(r *Router) Handler {
 }
 
 // ResetUser deletes auth secret, generates new ones and send them via email
-func ResetUser(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) ResetUserHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//returns forbidden if LDAP mode is activated
-		if _, ldap := router.authDriver.(*auth.LDAPClient); ldap {
+		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
 			return sdk.ErrForbidden
 		}
 
@@ -242,7 +241,7 @@ func ResetUser(r *Router) Handler {
 		}
 
 		// Load user
-		userDb, err := user.LoadUserAndAuth(db, username)
+		userDb, err := user.LoadUserAndAuth(api.MustDB(), username)
 		if err != nil || userDb.Email != resetUserRequest.User.Email {
 			return sdk.WrapError(sdk.ErrInvalidResetUser, "Cannot load user: %s", err)
 		}
@@ -255,7 +254,7 @@ func ResetUser(r *Router) Handler {
 		userDb.Auth.DateReset = time.Now().Unix()
 
 		// Update in db
-		if err := user.UpdateUserAndAuth(db, *userDb); err != nil {
+		if err := user.UpdateUserAndAuth(api.MustDB(), *userDb); err != nil {
 			return sdk.WrapError(err, "ResetUser: Cannot update user %s", userDb.Username)
 		}
 
@@ -266,10 +265,10 @@ func ResetUser(r *Router) Handler {
 }
 
 //AuthModeHandler returns the auth mode : local ok ldap
-func AuthModeHandler(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) AuthModeHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		mode := "local"
-		if _, ldap := router.authDriver.(*auth.LDAPClient); ldap {
+		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
 			mode = "ldap"
 		}
 		res := map[string]string{
@@ -280,10 +279,10 @@ func AuthModeHandler(r *Router) Handler {
 }
 
 // ConfirmUser verify token send via email and mark user as verified
-func ConfirmUser(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) ConfirmUserHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//returns forbidden if LDAP mode is activated
-		if _, ldap := router.authDriver.(*auth.LDAPClient); ldap {
+		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
 			return sdk.ErrForbidden
 		}
 
@@ -297,7 +296,7 @@ func ConfirmUser(r *Router) Handler {
 		}
 
 		// Load user
-		u, err := user.LoadUserAndAuth(db, username)
+		u, err := user.LoadUserAndAuth(api.MustDB(), username)
 		if err != nil {
 			return sdk.ErrInvalidUsername
 		}
@@ -313,7 +312,7 @@ func ConfirmUser(r *Router) Handler {
 		u.Auth.DateReset = 0
 
 		// Update in db
-		if err := user.UpdateUserAndAuth(db, *u); err != nil {
+		if err := user.UpdateUserAndAuth(api.MustDB(), *u); err != nil {
 			return err
 		}
 
@@ -321,7 +320,7 @@ func ConfirmUser(r *Router) Handler {
 			User: *u,
 		}
 
-		sessionKey, err := auth.NewSession(router.authDriver, u)
+		sessionKey, err := auth.NewSession(api.Router.AuthDriver, u)
 		if err != nil {
 			log.Error("Auth> Error while creating new session: %s\n", err)
 		}
@@ -335,8 +334,8 @@ func ConfirmUser(r *Router) Handler {
 }
 
 // LoginUser take user credentials and creates a auth token
-func LoginUser(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) LoginUserHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		loginUserRequest := sdk.UserLoginRequest{}
 		if err := UnmarshalBody(r, &loginUserRequest); err != nil {
 			return err
@@ -349,7 +348,7 @@ func LoginUser(r *Router) Handler {
 		}
 
 		// Authentify user through authDriver
-		authOK, erra := router.authDriver.Authentify(db, loginUserRequest.Username, loginUserRequest.Password)
+		authOK, erra := api.Router.AuthDriver.Authentify(loginUserRequest.Username, loginUserRequest.Password)
 		if erra != nil {
 			return sdk.WrapError(sdk.ErrInvalidUser, "Auth> Login error %s: %s", loginUserRequest.Username, erra)
 		}
@@ -357,7 +356,7 @@ func LoginUser(r *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidUser, "Auth> Login failed: %s", loginUserRequest.Username)
 		}
 		// Load user
-		u, errl := user.LoadUserWithoutAuth(db, loginUserRequest.Username)
+		u, errl := user.LoadUserWithoutAuth(api.MustDB(), loginUserRequest.Username)
 		if errl != nil && errl == sql.ErrNoRows {
 			return sdk.WrapError(sdk.ErrInvalidUser, "Auth> Login error %s: %s", loginUserRequest.Username, errl)
 		}
@@ -370,7 +369,7 @@ func LoginUser(r *Router) Handler {
 			User: *u,
 		}
 
-		if err := group.CheckUserInDefaultGroup(db, u.ID); err != nil {
+		if err := group.CheckUserInDefaultGroup(api.MustDB(), u.ID); err != nil {
 			log.Warning("Auth> Error while check user in default group:%s\n", err)
 		}
 
@@ -378,13 +377,13 @@ func LoginUser(r *Router) Handler {
 		var errs error
 		if !logFromCLI {
 			//Standard login, new session
-			sessionKey, errs = auth.NewSession(router.authDriver, u)
+			sessionKey, errs = auth.NewSession(api.Router.AuthDriver, u)
 			if errs != nil {
 				log.Error("Auth> Error while creating new session: %s\n", errs)
 			}
 		} else {
 			//CLI login, generate user key as persistent session
-			sessionKey, errs = auth.NewPersistentSession(db, router.authDriver, u)
+			sessionKey, errs = auth.NewPersistentSession(api.MustDB(), api.Router.AuthDriver, u)
 			if errs != nil {
 				log.Error("Auth> Error while creating new session: %s\n", errs)
 			}
@@ -400,8 +399,8 @@ func LoginUser(r *Router) Handler {
 	}
 }
 
-func importUsersHandler(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) importUsersHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		var users = []sdk.User{}
 		if err := UnmarshalBody(r, &users); err != nil {
 			return err
@@ -414,12 +413,12 @@ func importUsersHandler(r *Router) Handler {
 
 		errors := map[string]string{}
 		for _, u := range users {
-			if err := user.InsertUser(db, &u, &sdk.Auth{
+			if err := user.InsertUser(api.MustDB(), &u, &sdk.Auth{
 				EmailVerified:  true,
 				DateReset:      0,
 				HashedPassword: hashedToken,
 			}); err != nil {
-				oldU, err := user.LoadUserWithoutAuth(db, u.Username)
+				oldU, err := user.LoadUserWithoutAuth(api.MustDB(), u.Username)
 				if err != nil {
 					errors[u.Username] = err.Error()
 					continue
@@ -429,7 +428,7 @@ func importUsersHandler(r *Router) Handler {
 					EmailVerified: true,
 					DateReset:     0,
 				}
-				if err := user.UpdateUserAndAuth(db, u); err != nil {
+				if err := user.UpdateUserAndAuth(api.MustDB(), u); err != nil {
 					errors[u.Username] = err.Error()
 				}
 			}

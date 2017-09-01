@@ -1,12 +1,11 @@
 package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
-
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/businesscontext"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -17,8 +16,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func addWorkerModel(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addWorkerModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal body
 		var model sdk.Model
 		if err := UnmarshalBody(r, &model); err != nil {
@@ -39,10 +38,10 @@ func addWorkerModel(r *Router) Handler {
 
 		//User must be admin of the group set in the model
 		var ok bool
-		for _, g := range c.User.Groups {
+		for _, g := range getUser(ctx).Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
-					if a.ID == c.User.ID {
+					if a.ID == getUser(ctx).ID {
 						ok = true
 					}
 				}
@@ -50,22 +49,22 @@ func addWorkerModel(r *Router) Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !c.User.Admin && !ok {
+		if !getUser(ctx).Admin && !ok {
 			return sdk.ErrForbidden
 
 		}
 
 		model.CreatedBy = sdk.User{
-			Email:    c.User.Email,
-			Username: c.User.Username,
-			Admin:    c.User.Admin,
-			Fullname: c.User.Fullname,
-			ID:       c.User.ID,
-			Origin:   c.User.Origin,
+			Email:    getUser(ctx).Email,
+			Username: getUser(ctx).Username,
+			Admin:    getUser(ctx).Admin,
+			Fullname: getUser(ctx).Fullname,
+			ID:       getUser(ctx).ID,
+			Origin:   getUser(ctx).Origin,
 		}
 
 		// Insert model in db
-		if err := worker.InsertWorkerModel(db, &model); err != nil {
+		if err := worker.InsertWorkerModel(api.MustDB(), &model); err != nil {
 			return sdk.WrapError(err, "addWorkerModel> cannot add worker model")
 		}
 
@@ -73,8 +72,8 @@ func addWorkerModel(r *Router) Handler {
 	}
 }
 
-func spawnErrorWorkerModelHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) spawnErrorWorkerModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		spawnErrorForm := &sdk.SpawnErrorForm{}
 		if err := UnmarshalBody(r, spawnErrorForm); err != nil {
 			return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Unable to parse spawn error form")
@@ -85,13 +84,13 @@ func spawnErrorWorkerModelHandler(router *Router) Handler {
 			return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
 		}
 
-		tx, errBegin := db.Begin()
+		tx, errBegin := api.MustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "spawnErrorWorkerModelHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		model, errLoad := worker.LoadWorkerModelByID(db, workerModelID)
+		model, errLoad := worker.LoadWorkerModelByID(api.MustDB(), workerModelID)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "spawnErrorWorkerModelHandler> cannot load worker model by id")
 		}
@@ -108,14 +107,14 @@ func spawnErrorWorkerModelHandler(router *Router) Handler {
 	}
 }
 
-func updateWorkerModel(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateWorkerModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerModelID, errr := requestVarInt(r, "permModelID")
 		if errr != nil {
 			return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
 		}
 
-		old, errLoad := worker.LoadWorkerModelByID(db, workerModelID)
+		old, errLoad := worker.LoadWorkerModelByID(api.MustDB(), workerModelID)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "updateWorkerModel> cannot load worker model by id")
 		}
@@ -164,10 +163,10 @@ func updateWorkerModel(r *Router) Handler {
 
 		//User must be admin of the group set in the new model
 		var ok bool
-		for _, g := range c.User.Groups {
+		for _, g := range getUser(ctx).Groups {
 			if g.ID == model.GroupID {
 				for _, a := range g.Admins {
-					if a.ID == c.User.ID {
+					if a.ID == getUser(ctx).ID {
 						ok = true
 					}
 				}
@@ -175,7 +174,7 @@ func updateWorkerModel(r *Router) Handler {
 		}
 
 		//User should have the right permission or be admin
-		if !c.User.Admin && !ok {
+		if !getUser(ctx).Admin && !ok {
 			return sdk.ErrForbidden
 		}
 
@@ -183,7 +182,7 @@ func updateWorkerModel(r *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "updateWorkerModel> wrong ID")
 		}
 
-		tx, errtx := db.Begin()
+		tx, errtx := api.MustDB().Begin()
 		if errtx != nil {
 			return sdk.WrapError(errtx, "updateWorkerModel> unable to start transaction")
 		}
@@ -220,12 +219,12 @@ func updateWorkerModel(r *Router) Handler {
 				}
 				log.Debug("updateWorkerModel> Updating pipeline %d", id)
 				//Load the project
-				proj, errproj := project.LoadByPipelineID(tx, c.User, id)
+				proj, errproj := project.LoadByPipelineID(tx, getUser(ctx), id)
 				if errproj != nil {
 					return sdk.WrapError(errproj, "updateWorkerModel> unable to load project")
 				}
 
-				if err := pipeline.UpdatePipelineLastModified(tx, proj, &sdk.Pipeline{ID: id}, c.User); err != nil {
+				if err := pipeline.UpdatePipelineLastModified(tx, proj, &sdk.Pipeline{ID: id}, getUser(ctx)); err != nil {
 					return sdk.WrapError(err, "updateWorkerModel> cannot update pipeline")
 				}
 			}
@@ -238,13 +237,13 @@ func updateWorkerModel(r *Router) Handler {
 
 		// Recompute warnings
 		go func() {
-			warnings, err := sanity.LoadAllWarnings(db, "")
+			warnings, err := sanity.LoadAllWarnings(api.MustDB(), "")
 			if err != nil {
 				log.Warning("updateWorkerModel> cannot load warnings: %s", err)
 			}
 
 			for _, warning := range warnings {
-				sanity.CheckPipeline(db, &warning.Project, &warning.Pipeline)
+				sanity.CheckPipeline(api.MustDB(), &warning.Project, &warning.Pipeline)
 			}
 		}()
 
@@ -252,14 +251,14 @@ func updateWorkerModel(r *Router) Handler {
 	}
 }
 
-func deleteWorkerModel(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteWorkerModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerModelID, errr := requestVarInt(r, "permModelID")
 		if errr != nil {
 			return sdk.WrapError(errr, "deleteWorkerModel> Invalid permModelID")
 		}
 
-		tx, err := db.Begin()
+		tx, err := api.MustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteWorkerModel> Cannot start transaction")
 		}
@@ -276,48 +275,46 @@ func deleteWorkerModel(r *Router) Handler {
 	}
 }
 
-func getWorkerModel(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx, name string) error {
-		m, err := worker.LoadWorkerModelByName(db, name)
-		if err != nil {
-			return sdk.WrapError(err, "getWorkerModel> cannot load worker model")
-		}
-		return WriteJSON(w, r, m, http.StatusOK)
+func (api *API) getWorkerModel(w http.ResponseWriter, r *http.Request, name string) error {
+	m, err := worker.LoadWorkerModelByName(api.MustDB(), name)
+	if err != nil {
+		return sdk.WrapError(err, "getWorkerModel> cannot load worker model")
 	}
+	return WriteJSON(w, r, m, http.StatusOK)
 }
 
-func getWorkerModelsEnabled(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		if c.Hatchery == nil || c.Hatchery.GroupID == 0 {
+func (api *API) getWorkerModelsEnabledHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if getHatchery(ctx) == nil || getHatchery(ctx).GroupID == 0 {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModelsEnabled> this route can be called only by hatchery")
 		}
-		models, errgroup := worker.LoadWorkerModelsUsableOnGroup(db, c.Hatchery.GroupID, group.SharedInfraGroup.ID)
+		models, errgroup := worker.LoadWorkerModelsUsableOnGroup(api.MustDB(), getHatchery(ctx).GroupID, group.SharedInfraGroup.ID)
 		if errgroup != nil {
-			return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", c.Hatchery.ID, c.Hatchery.GroupID)
+			return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", getHatchery(ctx).ID, getHatchery(ctx).GroupID)
 		}
 		return WriteJSON(w, r, models, http.StatusOK)
 	}
 }
 
-func getWorkerModels(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkerModelsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if err := r.ParseForm(); err != nil {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> cannot parse form")
 		}
 
 		name := r.FormValue("name")
 		if name != "" {
-			return getWorkerModel(w, r, db, c, name)
+			return api.getWorkerModel(w, r, name)
 		}
 
 		models := []sdk.Model{}
-		if c.User != nil && c.User.ID > 0 {
+		if getUser(ctx) != nil && getUser(ctx).ID > 0 {
 			var errbyuser error
-			models, errbyuser = worker.LoadWorkerModelsByUser(db, c.User)
+			models, errbyuser = worker.LoadWorkerModelsByUser(api.MustDB(), getUser(ctx))
 			if errbyuser != nil {
-				return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", c.User.ID)
+				return sdk.WrapError(errbyuser, "getWorkerModels> cannot load worker models for user id %d", getUser(ctx).ID)
 			}
-			log.Debug("getWorkerModels> for user %d named %s (admin:%t): %s", c.User.ID, c.User.Username, c.User.Admin, models)
+			log.Debug("getWorkerModels> for user %d named %s (admin:%t): %s", getUser(ctx).ID, getUser(ctx).Username, getUser(ctx).Admin, models)
 		} else {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkerModels> this route can't be called by worker or hatchery")
 		}
@@ -326,26 +323,26 @@ func getWorkerModels(r *Router) Handler {
 	}
 }
 
-func getWorkerModelTypes(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkerModelTypesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
 	}
 }
 
-func getWorkerModelCommunications(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkerModelCommunicationsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return WriteJSON(w, r, sdk.AvailableWorkerModelCommunication, http.StatusOK)
 	}
 }
 
-func getWorkerModelCapaTypes(r *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkerModelCapaTypesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
 	}
 }
 
-func getWorkerModelsStatsHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getWorkerModelsStatsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		res := []struct {
 			Model string
 			Used  int
@@ -386,7 +383,7 @@ func getWorkerModelsStatsHandler(router *Router) Handler {
 		group by model;
 	`
 
-			rows, err := db.Query(query)
+			rows, err := api.MustDB().Query(query)
 			if err != nil {
 				log.Warning("getWorkerModelsStatusHandler> %s", err)
 				return

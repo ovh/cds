@@ -1,15 +1,14 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -17,8 +16,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getVariablesHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getVariablesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 		appName := r.FormValue("appName")
@@ -27,7 +26,7 @@ func getVariablesHandler(router *Router) Handler {
 		var allVariables []string
 
 		// Load variable project
-		projectVar, err := project.GetAllVariableNameInProjectByKey(db, projectKey)
+		projectVar, err := project.GetAllVariableNameInProjectByKey(api.MustDB(), projectKey)
 		if err != nil {
 			return sdk.WrapError(err, "getVariablesHandler> Cannot Load project variables: %s", err)
 		}
@@ -37,7 +36,7 @@ func getVariablesHandler(router *Router) Handler {
 		allVariables = append(allVariables, projectVar...)
 
 		// Load env variable
-		envVarNameArray, err := environment.GetAllVariableNameByProject(db, projectKey)
+		envVarNameArray, err := environment.GetAllVariableNameByProject(api.MustDB(), projectKey)
 		if err != nil {
 			return sdk.WrapError(err, "getVariablesHandler> Cannot Load env variables: %s", err)
 		}
@@ -50,12 +49,12 @@ func getVariablesHandler(router *Router) Handler {
 		appVar := []string{}
 		if appName != "" {
 			// Check permission on application
-			app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithVariables)
+			app, err := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithVariables)
 			if err != nil {
 				return sdk.WrapError(err, "getPipelineTypeHandler> Cannot Load application: %s", err)
 			}
 
-			if !permission.AccessToApplication(app.ID, c.User, permission.PermissionRead) {
+			if !permission.AccessToApplication(app.ID, getUser(ctx), permission.PermissionRead) {
 				return sdk.WrapError(sdk.ErrForbidden, "getVariablesHandler> Not allow to access to this application: %s", appName)
 			}
 
@@ -73,7 +72,7 @@ func getVariablesHandler(router *Router) Handler {
 			WHERE project.projectkey = $1
 			ORDER BY var_name;
 		`
-			rows, err := db.Query(query, projectKey)
+			rows, err := api.MustDB().Query(query, projectKey)
 			if err != nil {
 				return sdk.WrapError(err, "getVariablesHandler> Cannot Load all applications variables: %s", err)
 			}
@@ -95,7 +94,7 @@ func getVariablesHandler(router *Router) Handler {
 			if err != nil {
 				return sdk.WrapError(sdk.ErrWrongRequest, "getVariablesHandler> Cannot convert pipId to int : %s", err)
 			}
-			pipParams, err := pipeline.GetAllParametersInPipeline(db, pipIDN)
+			pipParams, err := pipeline.GetAllParametersInPipeline(api.MustDB(), pipIDN)
 
 			if err != nil {
 				return sdk.WrapError(err, "getVariablesHandler> Cannot get all parameters in pipeline: %s", err)

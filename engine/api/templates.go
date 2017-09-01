@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -9,14 +10,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
@@ -81,9 +79,9 @@ func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.Temp
 	return ap, params, content, deferFunc, nil
 }
 
-func getTemplatesHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		tmpls, err := templateextension.All(db)
+func (api *API) getTemplatesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		tmpls, err := templateextension.All(api.MustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getTemplatesHandler>%T", err)
 		}
@@ -91,8 +89,8 @@ func getTemplatesHandler(router *Router) Handler {
 	}
 }
 
-func addTemplateHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addTemplateHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//Upload file and get as a template object
 		templ, params, file, deferFunc, errf := fileUploadAndGetTemplate(w, r)
 		if deferFunc != nil {
@@ -109,7 +107,7 @@ func addTemplateHandler(router *Router) Handler {
 		//Check actions
 		for _, a := range templ.Actions {
 			log.Debug("Checking action %s", a)
-			pa, err := action.LoadPublicAction(db, a)
+			pa, err := action.LoadPublicAction(api.MustDB(), a)
 			if err != nil {
 				return sdk.WrapError(err, "addTemplateHandler> err on loadPublicAction")
 			}
@@ -128,7 +126,7 @@ func addTemplateHandler(router *Router) Handler {
 		templ.ObjectPath = objectpath
 
 		//Insert in database
-		if err := templateextension.Insert(db, templ); err != nil {
+		if err := templateextension.Insert(api.MustDB(), templ); err != nil {
 			return sdk.WrapError(err, "addTemplateHandler>%T", err)
 		}
 
@@ -136,15 +134,15 @@ func addTemplateHandler(router *Router) Handler {
 	}
 }
 
-func updateTemplateHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) updateTemplateHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "id")
 		if errr != nil {
 			return sdk.WrapError(errr, "updateTemplateHandler> Invalid id")
 		}
 
 		//Find it
-		templ, errLoad := templateextension.LoadByID(db, int64(id))
+		templ, errLoad := templateextension.LoadByID(api.MustDB(), int64(id))
 		if errLoad != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "updateTemplateHandler>Unable to load template: %s", errLoad)
 		}
@@ -185,7 +183,7 @@ func updateTemplateHandler(router *Router) Handler {
 		//Check actions
 		for _, a := range templ2.Actions {
 			log.Debug("updateTemplateHandler> Checking action %s", a)
-			pa, errlp := action.LoadPublicAction(db, a)
+			pa, errlp := action.LoadPublicAction(api.MustDB(), a)
 			if errlp != nil {
 				return sdk.WrapError(errlp, "updateTemplateHandler> error on loadPublicAction")
 			}
@@ -202,7 +200,7 @@ func updateTemplateHandler(router *Router) Handler {
 
 		templ2.ObjectPath = objectpath
 
-		if errUpdate := templateextension.Update(db, templ2); errUpdate != nil {
+		if errUpdate := templateextension.Update(api.MustDB(), templ2); errUpdate != nil {
 			//re-store the old file in case of error
 			if _, err := objectstore.StoreTemplateExtension(*templ2, ioutil.NopCloser(bytes.NewBuffer(btes))); err != nil {
 				return sdk.WrapError(err, "updateTemplateHandler> Error while uploading to object store %s", templ2.Name)
@@ -215,21 +213,21 @@ func updateTemplateHandler(router *Router) Handler {
 	}
 }
 
-func deleteTemplateHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteTemplateHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "id")
 		if errr != nil {
 			return sdk.WrapError(errr, "deleteTemplateHandler> Invalid id")
 		}
 
 		//Load it
-		templ, err := templateextension.LoadByID(db, int64(id))
+		templ, err := templateextension.LoadByID(api.MustDB(), int64(id))
 		if err != nil {
 			return sdk.WrapError(err, "deleteTemplateHandler> error on LoadByID")
 		}
 
 		//Delete it
-		if err := templateextension.Delete(db, templ); err != nil {
+		if err := templateextension.Delete(api.MustDB(), templ); err != nil {
 			return sdk.WrapError(err, "deleteTemplateHandler> error on Delete")
 		}
 
@@ -243,9 +241,9 @@ func deleteTemplateHandler(router *Router) Handler {
 	}
 }
 
-func getBuildTemplatesHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		tpl, err := templateextension.LoadByType(db, "BUILD")
+func (api *API) getBuildTemplatesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		tpl, err := templateextension.LoadByType(api.MustDB(), "BUILD")
 		if err != nil {
 			return sdk.WrapError(err, "getBuildTemplatesHandler> error on loadByType")
 		}
@@ -253,9 +251,9 @@ func getBuildTemplatesHandler(router *Router) Handler {
 	}
 }
 
-func getDeployTemplatesHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-		tpl, err := templateextension.LoadByType(db, "DEPLOY")
+func (api *API) getDeployTemplatesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		tpl, err := templateextension.LoadByType(api.MustDB(), "DEPLOY")
 		if err != nil {
 			return sdk.WrapError(err, "getDeployTemplatesHandler> error on loadByType")
 		}
@@ -263,13 +261,13 @@ func getDeployTemplatesHandler(router *Router) Handler {
 	}
 }
 
-func applyTemplateHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) applyTemplateHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 
 		// Load the project
-		proj, errload := project.Load(db, projectKey, c.User,
+		proj, errload := project.Load(api.MustDB(), projectKey, getUser(ctx),
 			project.LoadOptions.Default,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithGroups)
@@ -284,14 +282,14 @@ func applyTemplateHandler(router *Router) Handler {
 		}
 
 		// Create a session for current user
-		sessionKey, errnew := auth.NewSession(router.authDriver, c.User)
+		sessionKey, errnew := auth.NewSession(api.Router.AuthDriver, getUser(ctx))
 		if errnew != nil {
 			return sdk.WrapError(errnew, "applyTemplateHandler> Error while creating new session")
 		}
 
 		// Apply the template
 		log.Debug("applyTemplateHandler> applyTemplate")
-		msg, errapply := template.ApplyTemplate(db, proj, opts, c.User, sessionKey, viper.GetString(viperURLAPI))
+		msg, errapply := template.ApplyTemplate(api.MustDB(), proj, opts, getUser(ctx), sessionKey, api.Config.URL.API)
 		if errapply != nil {
 			return sdk.WrapError(errapply, "applyTemplateHandler> Error while applyTemplate")
 		}
@@ -305,17 +303,17 @@ func applyTemplateHandler(router *Router) Handler {
 		}
 
 		log.Debug("applyTemplatesHandler> Check warnings on project")
-		if err := sanity.CheckProjectPipelines(db, proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), proj); err != nil {
 			return sdk.WrapError(err, "applyTemplatesHandler> Cannot check warnings")
 		}
 
-		proj, errPrj := project.Load(db, proj.Key, c.User, project.LoadOptions.Default, project.LoadOptions.WithPipelines)
+		proj, errPrj := project.Load(api.MustDB(), proj.Key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithPipelines)
 		if errPrj != nil {
 			return sdk.WrapError(errPrj, "applyTemplatesHandler> Cannot load project")
 		}
 
 		for _, a := range proj.Applications {
-			if err := sanity.CheckApplication(db, proj, &a); err != nil {
+			if err := sanity.CheckApplication(api.MustDB(), proj, &a); err != nil {
 				return sdk.WrapError(err, "applyTemplatesHandler> Cannot check application sanity")
 			}
 		}
@@ -324,20 +322,20 @@ func applyTemplateHandler(router *Router) Handler {
 	}
 }
 
-func applyTemplateOnApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) applyTemplateOnApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		appName := vars["permApplicationName"]
 
 		// Load the project
-		proj, errLoad := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
+		proj, errLoad := project.Load(api.MustDB(), projectKey, getUser(ctx), project.LoadOptions.Default)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "applyTemplateOnApplicationHandler> Cannot load project %s", projectKey)
 		}
 
 		// Load the application
-		app, errLoadByName := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.Default)
+		app, errLoadByName := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.Default)
 		if errLoadByName != nil {
 			return sdk.WrapError(errLoadByName, "applyTemplateOnApplicationHandler> Cannot load application %s", appName)
 		}
@@ -349,13 +347,13 @@ func applyTemplateOnApplicationHandler(router *Router) Handler {
 		}
 
 		//Create a session for current user
-		sessionKey, err := auth.NewSession(router.authDriver, c.User)
+		sessionKey, err := auth.NewSession(api.Router.AuthDriver, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "applyTemplateOnApplicationHandler> Error while creating new session")
 		}
 
 		//Apply the template
-		msg, err := template.ApplyTemplateOnApplication(db, proj, app, opts, c.User, sessionKey, viper.GetString(viperURLAPI))
+		msg, err := template.ApplyTemplateOnApplication(api.MustDB(), proj, app, opts, getUser(ctx), sessionKey, api.Config.URL.API)
 		if err != nil {
 			return sdk.WrapError(err, "applyTemplateOnApplicationHandler> Error on apply template on application")
 		}
@@ -369,7 +367,7 @@ func applyTemplateOnApplicationHandler(router *Router) Handler {
 		}
 
 		log.Debug("applyTemplatesHandler> Check warnings on project")
-		if err := sanity.CheckProjectPipelines(db, proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.MustDB(), proj); err != nil {
 			return sdk.WrapError(err, "applyTemplatesHandler> Cannot check warnings")
 		}
 

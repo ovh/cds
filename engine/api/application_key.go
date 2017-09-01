@@ -1,30 +1,29 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 )
 
-func getKeysInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getKeysInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		app, errA := application.LoadByName(db, key, appName, c.User)
+		app, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getKeysInApplicationHandler> Cannot load application")
 		}
 
-		if errK := application.LoadAllKeys(db, app); errK != nil {
+		if errK := application.LoadAllKeys(api.MustDB(), app); errK != nil {
 			return sdk.WrapError(errK, "getKeysInApplicationHandler> Cannot load application keys")
 		}
 
@@ -32,19 +31,19 @@ func getKeysInApplicationHandler(router *Router) Handler {
 	}
 }
 
-func deleteKeyInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) deleteKeyInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		keyName := vars["name"]
 
-		app, errA := application.LoadByName(db, key, appName, c.User, application.LoadOptions.WithKeys)
+		app, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.WithKeys)
 		if errA != nil {
 			return sdk.WrapError(errA, "deleteKeyInApplicationHandler> Cannot load application")
 		}
 
-		tx, errT := db.Begin()
+		tx, errT := api.MustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "v> Cannot start transaction")
 		}
@@ -54,7 +53,7 @@ func deleteKeyInApplicationHandler(router *Router) Handler {
 				if err := application.DeleteApplicationKey(tx, app.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot delete key %s", k.Name)
 				}
-				if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+				if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
 					return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot update application last modified date")
 				}
 			}
@@ -68,8 +67,8 @@ func deleteKeyInApplicationHandler(router *Router) Handler {
 	}
 }
 
-func addKeyInApplicationHandler(router *Router) Handler {
-	return func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) addKeyInApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
@@ -85,7 +84,7 @@ func addKeyInApplicationHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInApplicationHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		app, errA := application.LoadByName(db, key, appName, c.User)
+		app, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "addKeyInApplicationHandler> Cannot load application")
 		}
@@ -111,7 +110,7 @@ func addKeyInApplicationHandler(router *Router) Handler {
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInApplicationHandler> unknown key of type: %s", newKey.Type)
 		}
 
-		tx, errT := db.Begin()
+		tx, errT := api.MustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInApplicationHandler> Cannot start transaction")
 		}
@@ -121,7 +120,7 @@ func addKeyInApplicationHandler(router *Router) Handler {
 			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot insert application key")
 		}
 
-		if err := application.UpdateLastModified(tx, app, c.User); err != nil {
+		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot update project last modified date")
 		}
 
