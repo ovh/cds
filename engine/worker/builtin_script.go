@@ -148,6 +148,10 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 
 			//set up environment variables from pipeline build job parameters
 			for _, p := range *params {
+				// avoid put private key in environment var as it's a binary value
+				if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
+					continue
+				}
 				envName := strings.Replace(p.Name, ".", "_", -1)
 				envName = strings.ToUpper(envName)
 				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
