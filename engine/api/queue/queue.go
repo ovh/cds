@@ -403,24 +403,22 @@ func getPipelineBuildJobExecutablesGroups(db gorp.SqlExecutor, pb *sdk.PipelineB
 	LEFT JOIN project_group ON project_group.group_id = "group".id
 	LEFT JOIN pipeline_build ON pipeline_build.pipeline_id = pipeline_group.pipeline_id
 	LEFT OUTER JOIN environment_group ON environment_group.group_id = "group".id
-	LEFT OUTER JOIN environment ON environment.id = pipeline_build.environment_id
-	WHERE	"group".name = $1
-	OR (pipeline_build.id = $2
+	WHERE pipeline_build.id = $1
 		AND pipeline_build.pipeline_id = pipeline_group.pipeline_id
 		AND pipeline_group.group_id = "group".id
-		AND application_group.role >= $3
-		AND pipeline_group.role >= $3
-		AND (environment_group.role >= $3 OR environment.name like 'NoEnv')
-	);
+		AND application_group.role >= $2
+		AND pipeline_group.role >= $2
+		AND (environment_group.role >= $2 OR pipeline_build.environment_id = $3);
 	`
 
 	var groups []sdk.Group
-	rows, err := db.Query(query, group.SharedInfraGroupName, pb.ID, permission.PermissionReadExecute)
+	rows, err := db.Query(query, pb.ID, permission.PermissionReadExecute, sdk.DefaultEnv.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "getPipelineBuildJobExecutablesGroups> err query")
 	}
 	defer rows.Close()
 
+	var sharedInfraIn bool
 	for rows.Next() {
 		var g sdk.Group
 		var groupID sql.NullInt64
@@ -435,6 +433,12 @@ func getPipelineBuildJobExecutablesGroups(db gorp.SqlExecutor, pb *sdk.PipelineB
 			g.Name = groupName.String
 		}
 		groups = append(groups, g)
+		if g.ID == group.SharedInfraGroup.ID {
+			sharedInfraIn = true
+		}
+	}
+	if !sharedInfraIn {
+		groups = append(groups, *group.SharedInfraGroup)
 	}
 
 	return groups, nil
