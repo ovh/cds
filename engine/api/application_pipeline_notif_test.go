@@ -1,35 +1,6 @@
 package api
 
-import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"strings"
-	"testing"
-
-	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/loopfz/gadgeto/iffy"
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/businesscontext"
-
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/notification"
-	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/sdk"
-)
-
+/*
 func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
@@ -645,3 +616,4 @@ func Test_addNotificationsHandler(t *testing.T) {
 
 	assert.Equal(t, len(notifications), 1)
 }
+*/

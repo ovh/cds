@@ -1,34 +1,10 @@
 package api
 
-import (
-	"bytes"
-	ctx "context"
-	"encoding/json"
-	"io"
-	"io/ioutil"
-	"mime/multipart"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path"
-	"runtime"
-	"strings"
-	"testing"
-
-	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/ovh/cds/engine/api/actionplugin"
-	
-	"github.com/ovh/cds/engine/api/objectstore"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/sdk"
-)
+import "runtime"
 
 const dummyBinaryFile = "https://github.com/ovh/cds/releases/download/0.8.1/plugin-download-" + runtime.GOOS + "-amd64"
 
+/*
 func postFile(t *testing.T,
 	db *gorp.DbMap,
 	filename string,
@@ -445,3 +421,4 @@ func TestDeletePluginHandlerSuccess(t *testing.T) {
 		assert.Equal(t, 200, w.Code)
 	})
 }
+*/

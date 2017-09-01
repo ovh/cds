@@ -21,7 +21,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func insertTestPipeline(api.MustDB() *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
+func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
 	pkey := sdk.RandomString(10)
 	projectFoo := assets.InsertTestProject(t, db, pkey, pkey, nil)
 

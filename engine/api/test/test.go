@@ -5,10 +5,8 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
-	"os/signal"
 	"os/user"
 	"path"
-	"syscall"
 	"testing"
 
 	"github.com/go-gorp/gorp"
@@ -47,6 +45,8 @@ func init() {
 }
 
 type bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
+
+var DBConnectionFactory *database.DBConnectionFactory
 
 // SetupPG setup PG DB for test
 func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
@@ -97,40 +97,20 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 		t.Skip("This should be run with a database")
 		return nil
 	}
-	if database.DB() == nil {
-		db, err := database.Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, 2000, 100)
+	if DBConnectionFactory == nil {
+		var err error
+		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s", err)
 			return nil
 		}
-
-		if err = db.Ping(); err != nil {
-			t.Fatalf("Cannot ping database: %s", err)
-			return nil
-		}
-		database.Set(db)
-
-		db.SetMaxOpenConns(100)
-		db.SetMaxIdleConns(20)
-
-		// Gracefully shutdown sql connections
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		signal.Notify(c, syscall.SIGTERM)
-		signal.Notify(c, syscall.SIGKILL)
-		go func() {
-			<-c
-			log.Warning("Cleanup SQL connections")
-			db.Close()
-			os.Exit(0)
-		}()
 	}
 
 	for _, f := range bootstrapFunc {
-		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, database.GetDBMap); err != nil {
+		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, DBConnectionFactory.GetDBMap); err != nil {
 			return nil
 		}
 	}
 
-	return database.DBMap(database.DB())
+	return DBConnectionFactory.GetDBMap()
 }

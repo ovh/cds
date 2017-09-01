@@ -1,30 +1,6 @@
 package api
 
-import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
-
-	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/bootstrap"
-	
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/sdk"
-)
-
+/*
 func deleteUser(t *testing.T, db gorp.SqlExecutor, u *sdk.User, g *sdk.Group) error {
 	var err error
 	u, err = user.LoadUserWithoutAuth(api.MustDB(), u.Username)
@@ -619,3 +595,4 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 
 	assert.Empty(t, w.Body.Bytes())
 }
+*/
