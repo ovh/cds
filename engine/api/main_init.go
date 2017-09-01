@@ -1,6 +1,6 @@
 package api
 
-type defaultValues struct {
+type DefaultValues struct {
 	ServerSecretsKey     string
 	AuthSharedInfraToken string
 	// For LDAP Client

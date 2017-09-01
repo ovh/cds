@@ -147,6 +147,10 @@ type Configuration struct {
 	}
 }
 
+func New() *API {
+	return &API{}
+}
+
 type API struct {
 	Router              *Router
 	Config              Configuration
@@ -154,15 +158,15 @@ type API struct {
 	StartupTime         time.Time
 }
 
-func (api *API) Init(config interface{}) error {
+func (a *API) Init(config interface{}) error {
 	var ok bool
-	api.Config, ok = config.(Configuration)
+	a.Config, ok = config.(Configuration)
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
 
 	//Check the first config key
-	if api.Config.URL.API == "" {
+	if a.Config.URL.API == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
 	}
 
@@ -209,66 +213,66 @@ func getHatchery(c context.Context) *sdk.Hatchery {
 	return u
 }
 
-func (api *API) MustDB() *gorp.DbMap {
-	db := api.DBConnectionFactory.GetDBMap()
+func (a *API) MustDB() *gorp.DbMap {
+	db := a.DBConnectionFactory.GetDBMap()
 	if db == nil {
 		panic(fmt.Errorf("Database unavailable"))
 	}
 	return db
 }
 
-func (api *API) Serve(ctx context.Context) error {
-	log.Initialize(&log.Conf{Level: api.Config.Log.Level})
+func (a *API) Serve(ctx context.Context) error {
+	log.Initialize(&log.Conf{Level: a.Config.Log.Level})
 	log.Info("Starting CDS API Server...")
 
-	api.StartupTime = time.Now()
+	a.StartupTime = time.Now()
 
 	go func() {
 		select {
 		case <-ctx.Done():
 			log.Warning("Cleanup SQL connections")
-			api.DBConnectionFactory.Close()
+			a.DBConnectionFactory.Close()
 			event.Publish(sdk.EventEngine{Message: "shutdown"})
 			event.Close()
 		}
 	}()
 
 	//Initialize secret driver
-	secret.Init(api.Config.Secrets.Key)
+	secret.Init(a.Config.Secrets.Key)
 
 	//Initialize mail package
-	mail.Init(api.Config.SMTP.User,
-		api.Config.SMTP.Password,
-		api.Config.SMTP.From,
-		api.Config.SMTP.Host,
-		api.Config.SMTP.Port,
-		api.Config.SMTP.TLS,
-		api.Config.SMTP.Disable)
+	mail.Init(a.Config.SMTP.User,
+		a.Config.SMTP.Password,
+		a.Config.SMTP.From,
+		a.Config.SMTP.Host,
+		a.Config.SMTP.Port,
+		a.Config.SMTP.TLS,
+		a.Config.SMTP.Disable)
 
 	//Initialize artifacts storage
 	var objectstoreKind objectstore.Kind
-	switch api.Config.Artifact.Mode {
+	switch a.Config.Artifact.Mode {
 	case "openstack", "swift":
 		objectstoreKind = objectstore.Openstack
 	case "filesystem", "local":
 		objectstoreKind = objectstore.Filesystem
 	default:
-		log.Fatalf("Unsupported objecstore mode : %s", api.Config.Artifact.Mode)
+		log.Fatalf("Unsupported objecstore mode : %s", a.Config.Artifact.Mode)
 	}
 
 	cfg := objectstore.Config{
 		Kind: objectstoreKind,
 		Options: objectstore.ConfigOptions{
 			Openstack: objectstore.ConfigOptionsOpenstack{
-				Address:         api.Config.Artifact.Openstack.URL,
-				Username:        api.Config.Artifact.Openstack.Username,
-				Password:        api.Config.Artifact.Openstack.Password,
-				Tenant:          api.Config.Artifact.Openstack.Tenant,
-				Region:          api.Config.Artifact.Openstack.Region,
-				ContainerPrefix: api.Config.Artifact.Openstack.ContainerPrefix,
+				Address:         a.Config.Artifact.Openstack.URL,
+				Username:        a.Config.Artifact.Openstack.Username,
+				Password:        a.Config.Artifact.Openstack.Password,
+				Tenant:          a.Config.Artifact.Openstack.Tenant,
+				Region:          a.Config.Artifact.Openstack.Region,
+				ContainerPrefix: a.Config.Artifact.Openstack.ContainerPrefix,
 			},
 			Filesystem: objectstore.ConfigOptionsFilesystem{
-				Basedir: api.Config.Artifact.Local.BaseDirectory,
+				Basedir: a.Config.Artifact.Local.BaseDirectory,
 			},
 		},
 	}
@@ -279,108 +283,108 @@ func (api *API) Serve(ctx context.Context) error {
 
 	//Intialize database
 	var errDB error
-	api.DBConnectionFactory, errDB = database.Init(
-		api.Config.Database.User,
-		api.Config.Database.Password,
-		api.Config.Database.Name,
-		api.Config.Database.Host,
-		api.Config.Database.Port,
-		api.Config.Database.SSLMode,
-		api.Config.Database.Timeout,
-		api.Config.Database.MaxConn)
+	a.DBConnectionFactory, errDB = database.Init(
+		a.Config.Database.User,
+		a.Config.Database.Password,
+		a.Config.Database.Name,
+		a.Config.Database.Host,
+		a.Config.Database.Port,
+		a.Config.Database.SSLMode,
+		a.Config.Database.Timeout,
+		a.Config.Database.MaxConn)
 	if errDB != nil {
 		log.Error("Cannot connect to database: %s", errDB)
 		os.Exit(3)
 	}
 
 	defaultValues := sdk.DefaultValues{
-		DefaultGroupName: api.Config.Auth.DefaultGroup,
-		SharedInfraToken: api.Config.Auth.SharedInfraToken,
+		DefaultGroupName: a.Config.Auth.DefaultGroup,
+		SharedInfraToken: a.Config.Auth.SharedInfraToken,
 	}
-	if err := bootstrap.InitiliazeDB(defaultValues, api.DBConnectionFactory.GetDBMap); err != nil {
+	if err := bootstrap.InitiliazeDB(defaultValues, a.DBConnectionFactory.GetDBMap); err != nil {
 		log.Error("Cannot setup databases: %s", err)
 	}
 
-	if err := workflow.CreateBuiltinWorkflowHookModels(api.DBConnectionFactory.GetDBMap()); err != nil {
+	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
 		log.Error("Cannot setup builtin workflow hook models")
 	}
 
 	cache.Initialize(
-		api.Config.Cache.Mode,
-		api.Config.Cache.Redis.Host,
-		api.Config.Cache.Redis.Password,
-		api.Config.Cache.TTL)
+		a.Config.Cache.Mode,
+		a.Config.Cache.Redis.Host,
+		a.Config.Cache.Redis.Password,
+		a.Config.Cache.TTL)
 
-	InitLastUpdateBroker(ctx, api.DBConnectionFactory.GetDBMap)
+	InitLastUpdateBroker(ctx, a.DBConnectionFactory.GetDBMap)
 
-	api.Router = &Router{
+	a.Router = &Router{
 		Mux:        mux.NewRouter(),
 		Background: ctx,
 	}
-	api.InitRouter()
-	api.Router.URL = api.Config.URL.API
-	api.Router.SetHeaderFunc = DefaultHeaders
-	api.Router.Middlewares = append(api.Router.Middlewares, api.AuthMiddleware)
+	a.InitRouter()
+	a.Router.URL = a.Config.URL.API
+	a.Router.SetHeaderFunc = DefaultHeaders
+	a.Router.Middlewares = append(a.Router.Middlewares, a.AuthMiddleware)
 
 	//Intialize repositories manager
 	rmInitOpts := repositoriesmanager.InitializeOpts{
-		KeysDirectory:          api.Config.Directories.Keys,
-		UIBaseURL:              api.Config.URL.UI,
-		APIBaseURL:             api.Config.URL.API,
-		DisableGithubSetStatus: api.Config.VCS.Github.DisableStatus,
-		DisableGithubStatusURL: api.Config.VCS.Github.DisableStatusURL,
-		DisableStashSetStatus:  api.Config.VCS.Bitbucket.DisableStatus,
-		GithubSecret:           api.Config.VCS.Github.Secret,
-		StashPrivateKey:        api.Config.VCS.Bitbucket.PrivateKey,
-		StashConsumerKey:       api.Config.VCS.Bitbucket.ConsumerKey,
+		KeysDirectory:          a.Config.Directories.Keys,
+		UIBaseURL:              a.Config.URL.UI,
+		APIBaseURL:             a.Config.URL.API,
+		DisableGithubSetStatus: a.Config.VCS.Github.DisableStatus,
+		DisableGithubStatusURL: a.Config.VCS.Github.DisableStatusURL,
+		DisableStashSetStatus:  a.Config.VCS.Bitbucket.DisableStatus,
+		GithubSecret:           a.Config.VCS.Github.Secret,
+		StashPrivateKey:        a.Config.VCS.Bitbucket.PrivateKey,
+		StashConsumerKey:       a.Config.VCS.Bitbucket.ConsumerKey,
 	}
-	if err := repositoriesmanager.Initialize(rmInitOpts, api.DBConnectionFactory.GetDBMap); err != nil {
+	if err := repositoriesmanager.Initialize(rmInitOpts, a.DBConnectionFactory.GetDBMap); err != nil {
 		log.Warning("Error initializing repositories manager connections: %s", err)
 	}
 
 	//Initiliaze hook package
-	hook.Init(api.Config.URL.API)
+	hook.Init(a.Config.URL.API)
 
 	//Intialize notification package
-	notification.Init(api.Config.URL.API, api.Config.URL.UI)
+	notification.Init(a.Config.URL.API, a.Config.URL.UI)
 
 	// Initialize the auth driver
 	var authMode string
 	var authOptions interface{}
-	switch api.Config.Auth.LDAP.Enable {
+	switch a.Config.Auth.LDAP.Enable {
 	case true:
 		authMode = "ldap"
 		authOptions = auth.LDAPConfig{
-			Host:         api.Config.Auth.LDAP.Host,
-			Port:         api.Config.Auth.LDAP.Port,
-			Base:         api.Config.Auth.LDAP.Base,
-			DN:           api.Config.Auth.LDAP.DN,
-			SSL:          api.Config.Auth.LDAP.SSL,
-			UserFullname: api.Config.Auth.LDAP.Fullname,
+			Host:         a.Config.Auth.LDAP.Host,
+			Port:         a.Config.Auth.LDAP.Port,
+			Base:         a.Config.Auth.LDAP.Base,
+			DN:           a.Config.Auth.LDAP.DN,
+			SSL:          a.Config.Auth.LDAP.SSL,
+			UserFullname: a.Config.Auth.LDAP.Fullname,
 		}
 	default:
 		authMode = "local"
 	}
 
 	storeOptions := sessionstore.Options{
-		Mode:          api.Config.Cache.Mode,
-		TTL:           api.Config.Cache.TTL,
-		RedisHost:     api.Config.Cache.Redis.Host,
-		RedisPassword: api.Config.Cache.Redis.Password,
+		Mode:          a.Config.Cache.Mode,
+		TTL:           a.Config.Cache.TTL,
+		RedisHost:     a.Config.Cache.Redis.Host,
+		RedisPassword: a.Config.Cache.Redis.Password,
 	}
 
 	var errdriver error
-	api.Router.AuthDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions, api.DBConnectionFactory.GetDBMap)
+	a.Router.AuthDriver, errdriver = auth.GetDriver(ctx, authMode, authOptions, storeOptions, a.DBConnectionFactory.GetDBMap)
 	if errdriver != nil {
 		log.Fatalf("Error: %v", errdriver)
 	}
 
 	kafkaOptions := event.KafkaConfig{
-		Enabled:         api.Config.Events.Kafka.Enabled,
-		BrokerAddresses: api.Config.Events.Kafka.Broker,
-		User:            api.Config.Events.Kafka.User,
-		Password:        api.Config.Events.Kafka.Password,
-		Topic:           api.Config.Events.Kafka.Topic,
+		Enabled:         a.Config.Events.Kafka.Enabled,
+		BrokerAddresses: a.Config.Events.Kafka.Broker,
+		User:            a.Config.Events.Kafka.User,
+		Password:        a.Config.Events.Kafka.Password,
+		Topic:           a.Config.Events.Kafka.Topic,
 	}
 	if err := event.Initialize(kafkaOptions); err != nil {
 		log.Warning("⚠ Error while initializing event system: %s", err)
@@ -388,54 +392,54 @@ func (api *API) Serve(ctx context.Context) error {
 		go event.DequeueEvent(ctx)
 	}
 
-	if err := worker.Initialize(ctx, api.DBConnectionFactory.GetDBMap); err != nil {
+	if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap); err != nil {
 		log.Warning("⚠ Error while initializing workers routine: %s", err)
 	}
 
-	go queue.Pipelines(ctx, api.DBConnectionFactory.GetDBMap)
-	go workflow.Scheduler(ctx, api.DBConnectionFactory.GetDBMap)
-	go pipeline.AWOLPipelineKiller(ctx, api.DBConnectionFactory.GetDBMap)
-	go hatchery.Heartbeat(ctx, api.DBConnectionFactory.GetDBMap)
-	go auditCleanerRoutine(ctx, api.DBConnectionFactory.GetDBMap)
+	go queue.Pipelines(ctx, a.DBConnectionFactory.GetDBMap)
+	go workflow.Scheduler(ctx, a.DBConnectionFactory.GetDBMap)
+	go pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap)
+	go hatchery.Heartbeat(ctx, a.DBConnectionFactory.GetDBMap)
+	go auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 
-	go repositoriesmanager.ReceiveEvents(ctx, api.DBConnectionFactory.GetDBMap)
+	go repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap)
 
-	go stats.StartRoutine(ctx, api.DBConnectionFactory.GetDBMap)
-	go action.RequirementsCacheLoader(ctx, 5*time.Second, api.DBConnectionFactory.GetDBMap)
-	go hookRecoverer(ctx, api.DBConnectionFactory.GetDBMap)
+	go stats.StartRoutine(ctx, a.DBConnectionFactory.GetDBMap)
+	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap)
+	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap)
 
-	go user.PersistentSessionTokenCleaner(ctx, api.DBConnectionFactory.GetDBMap)
+	go user.PersistentSessionTokenCleaner(ctx, a.DBConnectionFactory.GetDBMap)
 
-	if !api.Config.VCS.Polling.Disabled {
-		go poller.Initialize(ctx, 10, api.DBConnectionFactory.GetDBMap)
+	if !a.Config.VCS.Polling.Disabled {
+		go poller.Initialize(ctx, 10, a.DBConnectionFactory.GetDBMap)
 	} else {
 		log.Warning("⚠ Repositories polling is disabled")
 	}
 
-	if !api.Config.Schedulers.Disabled {
-		go scheduler.Initialize(ctx, 10, api.DBConnectionFactory.GetDBMap)
+	if !a.Config.Schedulers.Disabled {
+		go scheduler.Initialize(ctx, 10, a.DBConnectionFactory.GetDBMap)
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 
 	s := &http.Server{
-		Addr:           ":" + api.Config.HTTP.Port,
-		Handler:        api.Router.Mux,
+		Addr:           ":" + a.Config.HTTP.Port,
+		Handler:        a.Router.Mux,
 		ReadTimeout:    10 * time.Minute,
 		WriteTimeout:   10 * time.Minute,
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", api.Config.HTTP.Port)})
+	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", a.Config.HTTP.Port)})
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too
-		if err := grpc.Init(api.DBConnectionFactory, api.Config.GRPC.Port, false, "", ""); err != nil {
+		if err := grpc.Init(a.DBConnectionFactory, a.Config.GRPC.Port, false, "", ""); err != nil {
 			log.Fatalf("Cannot start grpc cds-server: %s", err)
 		}
 	}()
 
-	log.Info("Starting HTTP Server on port %s", api.Config.HTTP.Port)
+	log.Info("Starting HTTP Server on port %s", a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatalf("Cannot start cds-server: %s", err)
 	}
