@@ -8,6 +8,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// getGraylogGrpcEnv fetch the graylog and grpc configuration from viper and return environement variable in a slice
 func getGraylogGrpcEnv(model *sdk.Model) []string {
 	env := []string{}
 

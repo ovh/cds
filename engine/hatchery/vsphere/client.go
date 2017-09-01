@@ -13,8 +13,11 @@ import (
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+const reqTimeout = 3 * time.Second
 
 //This a embeded cache for servers list
 var lservers = struct {
@@ -25,25 +28,30 @@ var lservers = struct {
 	list: []mo.VirtualMachine{},
 }
 
+// get all servers on our host
 func (h *HatcheryVSphere) getServers() []mo.VirtualMachine {
 	var vms []mo.VirtualMachine
 	ctx := context.Background()
+	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
+	defer cancelC()
 
 	t := time.Now()
 	defer log.Debug("getServers() : %fs", time.Since(t).Seconds())
 
 	m := view.NewManager(h.vclient.Client)
 
-	v, err := m.CreateContainerView(ctx, h.vclient.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
-	if err != nil {
-		log.Error("Unable to create container view for vsphere api")
+	v, errC := m.CreateContainerView(ctxC, h.vclient.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
+	if errC != nil {
+		log.Warning("Unable to create container view for vsphere api %s", errC)
 		return lservers.list
 	}
 	defer v.Destroy(ctx)
 
+	ctxR, cancelR := context.WithTimeout(context.Background(), reqTimeout)
+	defer cancelR()
 	// Retrieve summary property for all machines
 	// Reference: http://pubs.vmware.com/vsphere-60/topic/com.vmware.wssdk.apiref.doc/vim.VirtualMachine.html
-	if err := v.Retrieve(ctx, []string{"VirtualMachine"}, []string{"name", "summary", "config"}, &vms); err != nil {
+	if err := v.Retrieve(ctxR, []string{"VirtualMachine"}, []string{"name", "summary", "config"}, &vms); err != nil {
 		log.Warning("Unable to retrieve virtual machines from vsphere %s", err)
 		return lservers.list
 	}
@@ -71,6 +79,7 @@ var lmodels = struct {
 	list: []mo.VirtualMachine{},
 }
 
+// get all servers tagged with model on our host
 func (h *HatcheryVSphere) getModels() []mo.VirtualMachine {
 	srvs := h.getServers()
 	models := make([]mo.VirtualMachine, len(srvs))
@@ -108,6 +117,7 @@ func (h *HatcheryVSphere) getModels() []mo.VirtualMachine {
 	return models
 }
 
+// Get a model by name
 func (h *HatcheryVSphere) getModelByName(name string) (mo.VirtualMachine, error) {
 	models := h.getModels()
 
@@ -128,15 +138,18 @@ func (h *HatcheryVSphere) getModelByName(name string) (mo.VirtualMachine, error)
 	return mo.VirtualMachine{}, fmt.Errorf("model not found")
 }
 
+// Shutdown and delete a specific server
 func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
-	ctx := context.TODO()
+	ctx := context.Background()
 	vms, errVml := h.finder.VirtualMachineList(ctx, s.Name)
 	if errVml != nil {
 		return errVml
 	}
 
 	for _, vm := range vms {
-		task, errOff := vm.PowerOff(ctx)
+		ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
+		defer cancelC()
+		task, errOff := vm.PowerOff(ctxC)
 		if errOff != nil {
 			return errOff
 		}
@@ -154,19 +167,18 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 	return nil
 }
 
+// createVMConfig create a basic configuration in order to create a vm
 func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annotation) (*types.VirtualMachineCloneSpec, *object.Folder, error) {
 	ctx := context.Background()
 
 	folder, errF := h.finder.FolderOrDefault(ctx, "")
 	if errF != nil {
-		log.Warning("createVMConfig> cannot find folder")
-		return nil, folder, errF
+		return nil, folder, sdk.WrapError(errF, "createVMConfig> cannot find folder")
 	}
 
 	devices, errD := vm.Device(ctx)
 	if errD != nil {
-		log.Warning("createVMConfig> Cannot find device")
-		return nil, folder, errD
+		return nil, folder, sdk.WrapError(errD, "createVMConfig> Cannot find device")
 	}
 
 	var card *types.VirtualEthernetCard
@@ -178,20 +190,18 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	}
 
 	if card == nil {
-		log.Warning("createVMConfig> no network device found.")
-		return nil, folder, fmt.Errorf("no network device found.")
+		log.Warning("createVMConfig> no network device found")
+		return nil, folder, fmt.Errorf("no network device found")
 	}
 
 	backing, errB := h.network.EthernetCardBackingInfo(ctx)
 	if errB != nil {
-		log.Warning("createVMConfig> cannot have ethernet backing info")
-		return nil, folder, errB
+		return nil, folder, sdk.WrapError(errB, "createVMConfig> cannot have ethernet backing info")
 	}
 
-	device, errE := object.EthernetCardTypes().CreateEthernetCard("e1000", backing)
+	device, errE := object.EthernetCardTypes().CreateEthernetCard(h.cardName, backing)
 	if errE != nil {
-		log.Warning("createVMConfig> cannot create ethernet card")
-		return nil, folder, errE
+		return nil, folder, sdk.WrapError(errE, "createVMConfig> cannot create ethernet card")
 	}
 	//set backing info
 	card.Backing = device.(types.BaseVirtualEthernetCard).GetVirtualEthernetCard().Backing
@@ -211,15 +221,13 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 
 	datastore, errD := h.finder.DatastoreOrDefault(ctx, h.datastoreString)
 	if errD != nil {
-		log.Warning("createVMConfig> cannot find datastore")
-		return nil, folder, errD
+		return nil, folder, sdk.WrapError(errD, "createVMConfig> cannot find datastore")
 	}
 	datastoreref := datastore.Reference()
 
 	annotStr, errM := json.Marshal(annot)
 	if errM != nil {
-		log.Warning("createVMConfig> cannot marshall annotation")
-		return nil, folder, errM
+		return nil, folder, sdk.WrapError(errM, "createVMConfig> cannot marshall annotation")
 	}
 
 	afterPO := true
@@ -244,13 +252,13 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 	return cloneSpec, folder, nil
 }
 
+// launchClientOp launch a script on the virtual machine given in paramters
 func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script string, env []string) (int64, error) {
 	ctx := context.Background()
 
 	running, errT := vm.IsToolsRunning(ctx)
 	if errT != nil {
-		log.Warning("launchClientOp> cannot fetch if tools are running %s", errT)
-		return -1, errT
+		return -1, sdk.WrapError(errT, "launchClientOp> cannot fetch if tools are running")
 	}
 	if !running {
 		log.Warning("launchClientOp> VmTools is not running")
@@ -265,8 +273,7 @@ func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script strin
 
 	procman, errPr := opman.ProcessManager(ctx)
 	if errPr != nil {
-		log.Warning("launchClientOp> cannot create processManager %s", errPr)
-		return -1, errPr
+		return -1, sdk.WrapError(errPr, "launchClientOp> cannot create processManager")
 	}
 
 	guestspec := types.GuestProgramSpec{

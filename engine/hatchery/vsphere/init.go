@@ -7,8 +7,6 @@ import (
 
 	"github.com/vmware/govmomi"
 	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/view"
-	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
 
 	"github.com/ovh/cds/sdk"
@@ -17,7 +15,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Init create newt client for vsphere
+// Init create new client for vsphere
 func (h *HatcheryVSphere) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
 	h.hatch = &sdk.Hatchery{
 		Name:    hatchery.GenerateName("vsphere", name),
@@ -28,7 +26,6 @@ func (h *HatcheryVSphere) Init(name, api, token string, requestSecondsTimeout in
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
-	workersAlive = map[string]int64{}
 	ctx := context.Background()
 
 	// Connect and login to ESX or vCenter
@@ -55,39 +52,7 @@ func (h *HatcheryVSphere) Init(name, api, token string, requestSecondsTimeout in
 		os.Exit(13)
 	}
 
-	if err := h.initImages(ctx); err != nil {
-		log.Error("Unable to vsphere.initImages: %s", errNc)
-		os.Exit(14)
-	}
-
-	if errRegistrer := hatchery.Register(h); errRegistrer != nil {
-		log.Warning("Cannot register hatchery: %s", errRegistrer)
-	}
-
 	go h.main()
-
-	return nil
-}
-
-func (h *HatcheryVSphere) initImages(ctx context.Context) error {
-	var vms []mo.VirtualMachine
-	m := view.NewManager(h.vclient.Client)
-
-	v, err := m.CreateContainerView(ctx, h.vclient.ServiceContent.RootFolder, []string{"VirtualMachine"}, true)
-	if err != nil {
-		return err
-	}
-	defer v.Destroy(ctx)
-
-	// Retrieve summary property for all machines
-	// Reference: http://pubs.vmware.com/vsphere-60/topic/com.vmware.wssdk.apiref.doc/vim.VirtualMachine.html
-	if err := v.Retrieve(ctx, []string{"VirtualMachine"}, []string{"summary", "config"}, &vms); err != nil {
-		return err
-	}
-
-	for _, vm := range vms {
-		h.images = append(h.images, vm.Summary.Config.Name)
-	}
 
 	return nil
 }
@@ -97,7 +62,7 @@ func (h *HatcheryVSphere) newClient(ctx context.Context) (*govmomi.Client, error
 	// Parse URL from string
 	u, err := soap.ParseURL("https://" + h.user + ":" + h.password + "@" + h.endpoint)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "newClient> cannot parse url")
 	}
 
 	// Connect and log in to ESX or vCenter

@@ -32,6 +32,9 @@ func init() {
 	Cmd.Flags().StringVar(&hatcheryVSphere.networkString, "vsphere-network", "VM Network", "")
 	viper.BindPFlag("vsphere-network", Cmd.Flags().Lookup("vsphere-network"))
 
+	Cmd.Flags().StringVar(&hatcheryVSphere.cardName, "vsphere-ethernet-card", "e1000", "Name of the virtual ethernet card")
+	viper.BindPFlag("vsphere-ethernet-card", Cmd.Flags().Lookup("vsphere-ethernet-card"))
+
 	Cmd.Flags().String("vsphere-ip-range", "", "")
 	viper.BindPFlag("vsphere-ip-range", Cmd.Flags().Lookup("vsphere-ip-range"))
 
@@ -43,15 +46,15 @@ func init() {
 
 	Cmd.Flags().Int("spawn-threshold-warning", 360, "log warning if spawn take more than this value (in seconds)")
 	viper.BindPFlag("spawn-threshold-warning", Cmd.Flags().Lookup("spawn-threshold-warning"))
-	//
-	// Cmd.Flags().BoolVar(&hatcheryVSphere.disableCreateImage, "disable-create-image", false, `if true: hatchery does not create openstack image when a worker model is updated`)
-	// viper.BindPFlag("disable-create-image", Cmd.Flags().Lookup("disable-create-image"))
-	//
-	// Cmd.Flags().IntVar(&hatcheryVSphere.createImageTimeout, "create-image-timeout", 180, `max wait for create an openstack image (in seconds)`)
-	// viper.BindPFlag("create-image-timeout", Cmd.Flags().Lookup("create-image-timeout"))
+
+	Cmd.Flags().BoolVar(&hatcheryVSphere.disableCreateImage, "disable-create-image", false, `if true: hatchery does not create vsphere image when a worker model is updated`)
+	viper.BindPFlag("disable-create-image", Cmd.Flags().Lookup("disable-create-image"))
+
+	Cmd.Flags().IntVar(&hatcheryVSphere.createImageTimeout, "create-image-timeout", 180, `max wait for create a vsphere image (in seconds)`)
+	viper.BindPFlag("create-image-timeout", Cmd.Flags().Lookup("create-image-timeout"))
 }
 
-// Cmd configures comamnd for HatcheryCloud
+// Cmd configures comamnd for HatcheryVSphere
 var Cmd = &cobra.Command{
 	Use:   "vsphere",
 	Short: "Hatchery Vsphere commands: hatchery vsphere --help",
@@ -111,5 +114,8 @@ $ CDS_VSPHERE_USER=<user> \
 		}
 
 		hatcheryVSphere.datacenterString = viper.GetString("vsphere-datacenter")
+		if hatcheryVSphere.datacenterString == "" {
+			sdk.Exit("flag or environment variable vsphere-datacenter not provided, aborting\n")
+		}
 	},
 }

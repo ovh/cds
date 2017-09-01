@@ -13,7 +13,6 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -25,6 +24,7 @@ type annotation struct {
 	WorkerModelLastModified time.Time `json:"worker_model_last_modified"`
 	Model                   bool      `json:"model"`
 	ToDelete                bool      `json:"to_delete"`
+	Created                 time.Time `json:"created"`
 }
 
 type imageConfiguration struct {
@@ -32,12 +32,12 @@ type imageConfiguration struct {
 	UserData string `json:"user_data"` //Commands to execute when create vm model
 }
 
-// SpawnWorker creates a new cloud instances
+// SpawnWorker creates a new vm instance
 func (h *HatcheryVSphere) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	var vm *object.VirtualMachine
 	var errV error
 	ctx := context.Background()
-	name := model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
+	name := "worker-" + model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
 	if registerOnly {
 		name = "register-" + name
 	}
@@ -46,7 +46,6 @@ func (h *HatcheryVSphere) SpawnWorker(model *sdk.Model, jobID int64, requirement
 
 	if errM != nil || model.NeedRegistration {
 		// Generate worker model vm
-		model.NeedRegistration = false
 		vm, errV = h.createVMModel(model)
 	}
 
@@ -63,6 +62,7 @@ func (h *HatcheryVSphere) SpawnWorker(model *sdk.Model, jobID int64, requirement
 		RegisterOnly:            registerOnly,
 		WorkerModelLastModified: model.UserLastModified,
 		WorkerModelName:         model.Name,
+		Created:                 time.Now(),
 	}
 
 	cloneSpec, folder, errCfg := h.createVMConfig(vm, annot)
@@ -70,36 +70,34 @@ func (h *HatcheryVSphere) SpawnWorker(model *sdk.Model, jobID int64, requirement
 		return "", sdk.WrapError(errCfg, "SpawnWorker> cannot create VM configuration")
 	}
 
-	log.Info("Create vm to exec worker")
-	defer log.Info("Terminate to create vm for worker")
+	log.Info("Create vm to exec worker %s", name)
+	defer log.Info("Terminate to create vm for worker %s", name)
 	task, errC := vm.Clone(ctx, folder, name, *cloneSpec)
 	if errC != nil {
-		log.Warning("SpawnWorker> cannot clone VM %s", errC)
-		return "", errC
+		return "", sdk.WrapError(errC, "SpawnWorker> cannot clone VM")
 	}
 
 	info, errW := task.WaitForResult(ctx, nil)
 	if errW != nil || info.State == types.TaskInfoStateError {
-		log.Warning("SpawnWorker> state in error %s", errW)
-		return "", errW
+		return "", sdk.WrapError(errW, "SpawnWorker> state in error")
 	}
 
-	return "", h.launchScript(name, jobID, model, registerOnly, info.Result.(types.ManagedObjectReference))
+	return "", h.launchScriptWorker(name, jobID, model, registerOnly, info.Result.(types.ManagedObjectReference))
 }
 
+// createVMModel create a model for a specific worker model
 func (h *HatcheryVSphere) createVMModel(model *sdk.Model) (*object.VirtualMachine, error) {
 	log.Info("Create vm model %s", model.Name)
 	ctx := context.Background()
 	imgCfg := imageConfiguration{}
 
 	if err := json.Unmarshal([]byte(model.Image), &imgCfg); err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "createVMModel> Cannot unmarshal image")
 	}
 
 	vm, errV := h.finder.VirtualMachine(ctx, imgCfg.OS)
 	if errV != nil {
-		log.Warning("createVMModel> Cannot find virtual machine")
-		return vm, errV
+		return vm, sdk.WrapError(errV, "createVMModel> Cannot find virtual machine")
 	}
 
 	annot := annotation{
@@ -107,6 +105,7 @@ func (h *HatcheryVSphere) createVMModel(model *sdk.Model) (*object.VirtualMachin
 		WorkerModelLastModified: model.UserLastModified,
 		WorkerModelName:         model.Name,
 		Model:                   true,
+		Created:                 time.Now(),
 	}
 
 	cloneSpec, folder, errCfg := h.createVMConfig(vm, annot)
@@ -116,21 +115,18 @@ func (h *HatcheryVSphere) createVMModel(model *sdk.Model) (*object.VirtualMachin
 
 	task, errC := vm.Clone(ctx, folder, model.Name+"-tmp", *cloneSpec)
 	if errC != nil {
-		log.Warning("createVMModel> cannot clone VM %s", errC)
-		return vm, errC
+		return vm, sdk.WrapError(errC, "createVMModel> cannot clone VM")
 	}
 
-	info, errW := task.WaitForResult(ctx, nil)
-	if errW != nil || info.State == types.TaskInfoStateError {
-		log.Warning("createVMModel> state in error %s", errW)
-		return vm, errW
+	info, errWr := task.WaitForResult(ctx, nil)
+	if errWr != nil || info.State == types.TaskInfoStateError {
+		return vm, sdk.WrapError(errWr, "createVMModel> state in error")
 	}
 
 	vm = object.NewVirtualMachine(h.vclient.Client, info.Result.(types.ManagedObjectReference))
 
 	if _, errW := vm.WaitForIP(ctx); errW != nil {
-		log.Warning("createVMModel> cannot get an ip %s", errW)
-		return vm, errW
+		return vm, sdk.WrapError(errW, "createVMModel> cannot get an ip")
 	}
 
 	if _, errS := h.launchClientOp(vm, imgCfg.UserData+"; shutdown -h now", nil); errS != nil {
@@ -157,31 +153,39 @@ func (h *HatcheryVSphere) createVMModel(model *sdk.Model) (*object.VirtualMachin
 		}
 	}
 
-	task, errR := vm.Rename(ctx, model.Name)
+	ctxTo, cancel = context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	task, errR := vm.Rename(ctxTo, model.Name)
 	if errR != nil {
 		return vm, sdk.WrapError(errR, "createVMModel> Cannot rename model %s", model.Name)
 	}
 
-	if _, err := task.WaitForResult(ctx, nil); err != nil {
+	ctxTo, cancel = context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	if _, err := task.WaitForResult(ctxTo, nil); err != nil {
 		return vm, sdk.WrapError(err, "createVMModel> error on waiting result for vm renaming %s", model.Name)
 	}
 
-	// FIXME doesn't work, give me a forbidden
-	return vm, h.client.WorkerModelUpdate(model.ID, model.Name, model.Type, model.Image, cdsclient.WorkerModelOpts.WithoutRegistrationNeed())
+	return vm, nil
 }
 
-func (h *HatcheryVSphere) launchScript(name string, jobID int64, model *sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
-	ctx := context.TODO()
+// launchScriptWorker launch a script on the worker
+func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model *sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
+	ctx := context.Background()
 	// Retrieve the new VM
 	vm := object.NewVirtualMachine(h.vclient.Client, vmInfo)
 
-	if _, errW := vm.WaitForIP(ctx); errW != nil {
-		return errW
+	ctxTo, cancel := context.WithTimeout(ctx, 2*time.Minute)
+	defer cancel()
+
+	if _, errW := vm.WaitForIP(ctxTo); errW != nil {
+		return sdk.WrapError(errW, "createVMModel> error on waiting ip")
 	}
 
 	env := []string{
 		"CDS_SINGLE_USE=1",
 		"CDS_FORCE_EXIT=1",
+		"CDS_FROM_WORKER_IMAGE=true",
 		"CDS_API=" + viper.GetString("api"),
 		"CDS_TOKEN=" + viper.GetString("token"),
 		"CDS_NAME=" + name,
@@ -195,7 +199,7 @@ func (h *HatcheryVSphere) launchScript(name string, jobID int64, model *sdk.Mode
 	env = append(env, getGraylogGrpcEnv(model)...)
 
 	script := fmt.Sprintf(
-		`cd $HOME; rm -f worker; curl "%s/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1; chmod +x worker; ./worker`,
+		`cd $HOME; rm -f worker; curl "%s/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1; chmod +x worker; PATH=$PATH ./worker`,
 		viper.GetString("api"),
 	)
 
@@ -205,8 +209,6 @@ func (h *HatcheryVSphere) launchScript(name string, jobID int64, model *sdk.Mode
 	script += " ; shutdown -h now;"
 
 	if _, errS := h.launchClientOp(vm, script, env); errS != nil {
-
-		// ----------------------------------------------
 		log.Warning("launchScript> cannot start program %s", errS)
 
 		// tag vm to delete
