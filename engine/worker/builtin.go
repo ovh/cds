@@ -103,7 +103,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		}
 		for _, p := range params {
 			pluginArgs.Data[p.Name] = p.Value
-			if p.Type == sdk.SecretVariable {
+			if sdk.NeedPlaceholder(p.Type) {
 				pluginSecrets.Data[p.Name] = p.Value
 			}
 		}
