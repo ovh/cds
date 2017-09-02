@@ -101,7 +101,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			pluginArgs.Data[p.Name] = p.Value
 		}
 		for _, v := range w.currentJob.buildVariables {
-			pluginArgs.Data["cds.build."+v.Name] = v.Value
+			pluginArgs.Data[v.Name] = v.Value
 		}
 
 		//Call the Run function on the plugin interface
