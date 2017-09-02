@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -78,15 +79,32 @@ func (wk *currentWorker) addBuildVarHandler(w http.ResponseWriter, r *http.Reque
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	v.Name = "cds.build." + v.Name
 
+	errstatus, err := wk.addVariableInPipelineBuild(v, nil)
+	if err != nil {
+		w.WriteHeader(errstatus)
+	}
+}
+
+func (wk *currentWorker) addVariableInPipelineBuild(v sdk.Variable, params *[]sdk.Parameter) (int, error) {
 	// OK, so now we got our new variable. We need to:
 	// - add it as a build var in API
-	wk.currentJob.buildVariables = append(wk.currentJob.buildVariables, v)
+	if strings.HasPrefix(v.Name, "cds.build") {
+		wk.currentJob.buildVariables = append(wk.currentJob.buildVariables, v)
+	} else if params != nil {
+		*params = append(*params, sdk.Parameter{
+			Name:  v.Name,
+			Type:  v.Type,
+			Value: v.Value,
+		})
+	}
+
 	// - add it in current building Action
 	data, errm := json.Marshal(v)
 	if errm != nil {
 		log.Error("addBuildVarHandler> Cannot Marshal err: %s", errm)
-		w.WriteHeader(http.StatusBadRequest)
+		return http.StatusBadRequest, fmt.Errorf("addBuildVarHandler> Cannot Marshal err: %s", errm)
 	}
 	// Retrieve build info
 	var proj, app, pip, bnS, env string
@@ -112,7 +130,7 @@ func (wk *currentWorker) addBuildVarHandler(w http.ResponseWriter, r *http.Reque
 	}
 	if err != nil {
 		log.Error("addBuildVarHandler> Cannot export variable: %s", err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
+		return http.StatusServiceUnavailable, fmt.Errorf("addBuildVarHandler> Cannot export variable: %s", err)
 	}
+	return http.StatusOK, nil
 }

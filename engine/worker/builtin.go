@@ -24,7 +24,7 @@ func init() {
 }
 
 // BuiltInAction defines builtin action signature
-type BuiltInAction func(context.Context, *sdk.Action, int64, []sdk.Parameter, LoggerFunc) sdk.Result
+type BuiltInAction func(context.Context, *sdk.Action, int64, *[]sdk.Parameter, LoggerFunc) sdk.Result
 
 // BuiltInActionFunc returns the BuiltInAction given a worker
 type BuiltInActionFunc func(*currentWorker) BuiltInAction
@@ -41,7 +41,7 @@ func getLogger(w *currentWorker, buildID int64, stepOrder int) LoggerFunc {
 	}
 }
 
-func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int) sdk.Result {
+func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int) sdk.Result {
 	defer w.drainLogsAndCloseLogger(ctx)
 
 	//Define a loggin function
@@ -59,7 +59,7 @@ func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID i
 	return f(w)(ctx, a, buildID, params, sendLog)
 }
 
-func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
+func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
 	chanRes := make(chan sdk.Result)
 
 	go func(buildID int64, params []sdk.Parameter) {
@@ -124,7 +124,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		}
 
 		chanRes <- res
-	}(buildID, params)
+	}(buildID, *params)
 
 	for {
 		select {

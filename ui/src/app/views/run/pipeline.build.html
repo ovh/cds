@@ -1,6 +1,6 @@
 <div id="ApplicationPipelineBuild">
     <div class="CDSbreadcrumb">
-        <app-breadcrumb [project]="project" [application]="application" [pipeline]="pipeline" [appVersion]="appVersionFilter" [version]="currentBuild?.version" [buildNumber]="currentBuild?.build_number" [envName]="envName" [branch]="branch"></app-breadcrumb>
+        <app-breadcrumb [project]="project" [application]="application" [pipeline]="pipeline" [appVersion]="appVersionFilter" [version]="currentBuild?.version" [buildNumber]="currentBuild?.build_number" [envName]="envName" [branch]="branch" [remote]="remote"></app-breadcrumb>
     </div>
 
     <ng-container *ngIf="application && currentBuild">

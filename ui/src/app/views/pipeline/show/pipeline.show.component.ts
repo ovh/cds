@@ -34,6 +34,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     buildNumber: string;
     envName: string;
     branch: string;
+    remote: string;
 
     queryParams: Params;
 
@@ -49,21 +50,12 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         private _router: Router, private _toast: ToastService, public _translate: TranslateService,
         private _appPipService: ApplicationPipelineService) {
         this.project = this._routeActivated.snapshot.data['project'];
-        if (this._routeActivated.snapshot.data['application']) {
-            this.application = this._routeActivated.snapshot.data['application'];
-        }
-        if (this._routeActivated.snapshot.queryParams['version']) {
-            this.version = this._routeActivated.snapshot.queryParams['version'];
-        }
-        if (this._routeActivated.snapshot.queryParams['buildNumber']) {
-            this.buildNumber = this._routeActivated.snapshot.queryParams['buildNumber'];
-        }
-        if (this._routeActivated.snapshot.queryParams['envName']) {
-            this.envName = this._routeActivated.snapshot.queryParams['envName'];
-        }
-        if (this._routeActivated.snapshot.queryParams['branch']) {
-            this.branch = this._routeActivated.snapshot.queryParams['branch'];
-        }
+        this.application = this._routeActivated.snapshot.data['application'];
+        this.version = this._routeActivated.snapshot.queryParams['version'];
+        this.buildNumber = this._routeActivated.snapshot.queryParams['buildNumber'];
+        this.envName = this._routeActivated.snapshot.queryParams['envName'];
+        this.branch = this._routeActivated.snapshot.queryParams['branch'];
+        this.remote = this._routeActivated.snapshot.queryParams['remote'];
     }
 
     ngOnDestroy(): void {

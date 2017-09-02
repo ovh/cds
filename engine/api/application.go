@@ -120,7 +120,7 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 	applicationName := vars["permApplicationName"]
 
 	branch := r.FormValue("branch")
-	remoteURL := r.FormValue("remoteURL")
+	remote := r.FormValue("remote")
 
 	app, err := application.LoadByName(db, projectKey, applicationName, c.User, application.LoadOptions.WithTriggers)
 	if err != nil {
@@ -128,7 +128,7 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	versions, err := pipeline.GetVersions(db, app, branch, remoteURL)
+	versions, err := pipeline.GetVersions(db, app, branch, remote)
 	if err != nil {
 		log.Warning("getApplicationBranchVersionHandler: Cannot load version for application %s on branch %s: %s\n", applicationName, branch, err)
 		return err

@@ -162,6 +162,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 'key': key,
                 'appName': this.application.name,
                 'branch': this.appFilter.branch,
+                'remote': this.appFilter.remote,
                 'version': this.appFilter.version
             };
 

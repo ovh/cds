@@ -15,14 +15,14 @@ import (
 
 func runArtifactUpload(w *currentWorker) BuiltInAction {
 	if w.currentJob.wJob == nil {
-		return func(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+		return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 			res := sdk.Result{Status: sdk.StatusSuccess.String()}
 
-			pipeline := sdk.ParameterValue(params, "cds.pipeline")
-			project := sdk.ParameterValue(params, "cds.project")
-			application := sdk.ParameterValue(params, "cds.application")
-			environment := sdk.ParameterValue(params, "cds.environment")
-			buildNumberString := sdk.ParameterValue(params, "cds.buildNumber")
+			pipeline := sdk.ParameterValue(*params, "cds.pipeline")
+			project := sdk.ParameterValue(*params, "cds.project")
+			application := sdk.ParameterValue(*params, "cds.application")
+			environment := sdk.ParameterValue(*params, "cds.environment")
+			buildNumberString := sdk.ParameterValue(*params, "cds.buildNumber")
 
 			path := sdk.ParameterValue(a.Parameters, "path")
 			if path == "" {
@@ -79,7 +79,7 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 		}
 	}
 
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		res := sdk.Result{Status: sdk.StatusSuccess.String()}
 
 		path := sdk.ParameterValue(a.Parameters, "path")
@@ -131,12 +131,12 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 
 func runArtifactDownload(w *currentWorker) BuiltInAction {
 	if w.currentJob.wJob == nil {
-		return func(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+		return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 			res := sdk.Result{Status: sdk.StatusSuccess.String()}
 
-			project := sdk.ParameterValue(params, "cds.project")
-			environment := sdk.ParameterValue(params, "cds.environment")
-			enabled := sdk.ParameterValue(params, "enabled") != "false"
+			project := sdk.ParameterValue(*params, "cds.project")
+			environment := sdk.ParameterValue(*params, "cds.environment")
+			enabled := sdk.ParameterValue(*params, "enabled") != "false"
 
 			application := sdk.ParameterValue(a.Parameters, "application")
 			pipeline := sdk.ParameterValue(a.Parameters, "pipeline")
@@ -177,13 +177,13 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 		}
 	}
 
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		res := sdk.Result{Status: sdk.StatusSuccess.String()}
 
-		project := sdk.ParameterValue(params, "cds.project")
-		workflow := sdk.ParameterValue(params, "cds.workflow")
-		number := sdk.ParameterValue(params, "cds.run.number")
-		enabled := sdk.ParameterValue(params, "enabled") != "false"
+		project := sdk.ParameterValue(*params, "cds.project")
+		workflow := sdk.ParameterValue(*params, "cds.workflow")
+		number := sdk.ParameterValue(*params, "cds.run.number")
+		enabled := sdk.ParameterValue(*params, "enabled") != "false"
 
 		path := sdk.ParameterValue(a.Parameters, "path")
 		tag := sdk.ParameterValue(a.Parameters, "tag")

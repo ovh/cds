@@ -111,7 +111,7 @@ func (wk *currentWorker) uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	sendLog := getLogger(wk, wk.currentJob.pbJob.ID, wk.currentJob.currentStep)
 
-	if result := runArtifactUpload(wk)(context.Background(), &action, wk.currentJob.pbJob.ID, wk.currentJob.pbJob.Parameters, sendLog); result.Status != sdk.StatusSuccess.String() {
+	if result := runArtifactUpload(wk)(context.Background(), &action, wk.currentJob.pbJob.ID, &wk.currentJob.pbJob.Parameters, sendLog); result.Status != sdk.StatusSuccess.String() {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}

@@ -32,6 +32,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     previousBuild: PipelineBuild;
     duration: string;
     branch: string;
+    remote: string;
     appVersionFilter: number;
 
     // Allow angular update from work started outside angular context
@@ -80,6 +81,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                 this.currentBuild = undefined;
                 this.histories = undefined;
             }
+            this.remote = q['remote'];
         });
         // Current route param
         this._activatedRoute.params.subscribe(params => {
@@ -109,6 +111,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             appName: paramSnap['appName'],
             pipName: paramSnap['pipName'],
             envName: querySnap['envName'],
+            remote: querySnap['remote'],
             buildNumber: paramSnap['buildNumber']
         });
 

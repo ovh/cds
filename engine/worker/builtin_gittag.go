@@ -8,14 +8,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/blang/semver"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/vcs"
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func runGitTag(*currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+func runGitTag(w *currentWorker) BuiltInAction {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		url := sdk.ParameterFind(a.Parameters, "url")
 		authPrivateKey := sdk.ParameterFind(a.Parameters, "authPrivateKey")
 		user := sdk.ParameterFind(a.Parameters, "user")
@@ -26,12 +28,15 @@ func runGitTag(*currentWorker) BuiltInAction {
 		path := sdk.ParameterFind(a.Parameters, "path")
 
 		if tagName == nil || tagName.Value == "" {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: "Tag name is not set. Nothing to perform.",
+			tagName = sdk.ParameterFind(*params, "cds.semver")
+			if tagName == nil {
+				res := sdk.Result{
+					Status: sdk.StatusFail.String(),
+					Reason: "Tag name is not set. Nothing to perform.",
+				}
+				sendLog(res.Reason)
+				return res
 			}
-			sendLog(res.Reason)
-			return res
 		}
 
 		if url == nil {
@@ -45,7 +50,7 @@ func runGitTag(*currentWorker) BuiltInAction {
 
 		var username string
 		if user == nil || user.Value == "" {
-			u := sdk.ParameterFind(params, "cds.triggered_by.username")
+			u := sdk.ParameterFind(*params, "cds.triggered_by.username")
 			if u == nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
@@ -72,7 +77,7 @@ func runGitTag(*currentWorker) BuiltInAction {
 		}
 
 		//Get the key
-		key, errK := vcs.GetSSHKey(params, keysDirectory, authPrivateKey)
+		key, errK := vcs.GetSSHKey(*params, keysDirectory, authPrivateKey)
 		if errK != nil && errK != sdk.ErrKeyNotFound {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
@@ -111,17 +116,29 @@ func runGitTag(*currentWorker) BuiltInAction {
 			msg = tagMessage.Value
 		}
 
+		v, errT := semver.Make(tagName.Value)
+		if errT != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Tag name is not semver compatible"),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+		v.Build = nil
+		v.Pre = nil
+
 		//Prepare all options - tag options
 		var tagOpts = &git.TagOpts{
 			Message:  msg,
-			Name:     tagName.Value,
+			Name:     v.String(),
 			Username: username,
 		}
 
 		if signKey != nil && signKey.Value != "" {
-			privateKey := sdk.ParameterFind(params, fmt.Sprintf("%s.priv", signKey.Value))
-			publicKey := sdk.ParameterFind(params, fmt.Sprintf("%s.pub", signKey.Value))
-			keyID := sdk.ParameterFind(params, fmt.Sprintf("%s.id", signKey.Value))
+			privateKey := sdk.ParameterFind(*params, fmt.Sprintf("%s.priv", signKey.Value))
+			publicKey := sdk.ParameterFind(*params, fmt.Sprintf("%s.pub", signKey.Value))
+			keyID := sdk.ParameterFind(*params, fmt.Sprintf("%s.id", signKey.Value))
 
 			if privateKey == nil {
 				res := sdk.Result{
@@ -202,6 +219,20 @@ func runGitTag(*currentWorker) BuiltInAction {
 			return res
 		}
 
+		semverVar := sdk.Variable{
+			Name:  "cds.release.version",
+			Type:  sdk.StringVariable,
+			Value: tagOpts.Name,
+		}
+		_, errV := w.addVariableInPipelineBuild(semverVar, params)
+		if errV != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable to save semver variable: %s", errV),
+			}
+			sendLog(res.Reason)
+			return res
+		}
 		time.Sleep(5 * time.Second)
 		return sdk.Result{Status: sdk.StatusSuccess.String()}
 	}

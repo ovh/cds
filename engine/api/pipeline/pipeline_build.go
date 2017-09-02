@@ -41,6 +41,8 @@ type PipelineBuildDbResult struct {
 	Done                  pq.NullTime    `db:"done"`
 	ManualTrigger         bool           `db:"manual_trigger"`
 	TriggeredBy           sql.NullInt64  `db:"triggered_by"`
+	VCSRemote             sql.NullString `db:"vcs_remote"`
+	VCSRemoteURL          sql.NullString `db:"vcs_remote_url"`
 	VCSChangesBranch      sql.NullString `db:"vcs_branch"`
 	VCSChangesHash        sql.NullString `db:"vcs_hash"`
 	VCSChangesAuthor      sql.NullString `db:"vcs_author"`
@@ -60,6 +62,7 @@ const (
 			pb.start as start, pb.done as done,
 			pb.manual_trigger as manual_trigger, pb.triggered_by as triggered_by,
 			pb.vcs_changes_branch as vcs_branch, pb.vcs_changes_hash as vcs_hash, pb.vcs_changes_author as vcs_author,
+			pb.vcs_remote as vcs_remote, pb.vcs_remote_url as vcs_remote_url,
 			pb.parent_pipeline_build_id as parent_pipeline_build,
 			"user".username as username,
 			pb.scheduled_trigger as scheduled_trigger
@@ -403,6 +406,12 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 	if pbResult.VCSChangesHash.Valid {
 		pb.Trigger.VCSChangesHash = pbResult.VCSChangesHash.String
 	}
+	if pbResult.VCSRemote.Valid {
+		pb.Trigger.VCSRemote = pbResult.VCSRemote.String
+	}
+	if pbResult.VCSRemoteURL.Valid {
+		pb.Trigger.VCSRemoteURL = pbResult.VCSRemoteURL.String
+	}
 
 	if err := json.Unmarshal([]byte(pbResult.Args), &pb.Parameters); err != nil {
 		return nil, sdk.WrapError(err, "scanPipelineBuild> Unable to Unmarshal parameter %s", pbResult.Args)
@@ -550,7 +559,7 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 
 	// Add build variable
 	params = append(params, sdk.Parameter{
-		Name:  "cds.build." + v.Name,
+		Name:  v.Name,
 		Type:  sdk.StringParameter,
 		Value: v.Value,
 	})
@@ -697,26 +706,23 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	sdk.AddParameter(&params, "cds.buildNumber", sdk.StringParameter, strconv.FormatInt(pb.BuildNumber, 10))
 	sdk.AddParameter(&params, "cds.version", sdk.StringParameter, strconv.FormatInt(pb.Version, 10))
 
-	if client != nil {
-		remote := app.RepositoryFullname
-		if pb.Trigger.VCSRemote != "" {
-			remote = pb.Trigger.VCSRemote
-			sdk.AddParameter(&params, "git.repository", sdk.StringParameter, pb.Trigger.VCSRemote)
+	gitURLfound := false
+	for _, param := range params {
+		if param.Name == "git.url" || param.Name == "git.http_url" {
+			gitURLfound = true
+			break
 		}
+	}
 
-		repo, errC := client.RepoByFullname(remote)
+	if client != nil && !gitURLfound {
+		repo, errC := client.RepoByFullname(app.RepositoryFullname)
 		if errC != nil {
 			log.Warning("InsertPipelineBuild> Unable to get repository %s from %s : %s", app.RepositoriesManager.Name, app.RepositoryFullname, err)
 			return nil, errC
 		}
-		if pb.Trigger.VCSRemoteURL != "" {
-			sdk.AddParameter(&params, "git.url", sdk.StringParameter, pb.Trigger.VCSRemoteURL)
-			sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, pb.Trigger.VCSRemoteURL)
-		} else {
-			sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
-			sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, repo.HTTPCloneURL)
-		}
 
+		sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
+		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, repo.HTTPCloneURL)
 	}
 
 	if pb.Trigger.TriggeredBy != nil {
@@ -745,6 +751,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 				lastGitHash[b.DisplayID] = b.LatestCommit
 			}
 		}
+		pb.Trigger.VCSRemote = app.RepositoryFullname
 
 		// If branch is not provided from parent
 		// then maybe it was directly set by pipeline parameters
@@ -755,6 +762,12 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 			if p.Name == "git.branch" && p.Value != "" {
 				found = true
 				pb.Trigger.VCSChangesBranch = p.Value
+			}
+			if p.Name == "git.repository" && p.Value != "" {
+				pb.Trigger.VCSRemote = p.Value
+			}
+			if (p.Name == "git.http_url" || p.Name == "git.url") && p.Value != "" {
+				pb.Trigger.VCSRemoteURL = p.Value
 			}
 			if p.Name == "git.hash" && p.Value != "" {
 				hashFound = true
@@ -785,7 +798,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	//Retreive commit information
 	// TODO: take care about VCSRemoteURL
 	if client != nil && pb.Trigger.VCSChangesHash != "" {
-		commit, err := client.Commit(app.RepositoryFullname, pb.Trigger.VCSChangesHash)
+		commit, err := client.Commit(pb.Trigger.VCSRemote, pb.Trigger.VCSChangesHash)
 		if err != nil {
 			log.Warning("InsertPipelineBuild> Cannot get commit: %s\n", err)
 		} else {
@@ -889,8 +902,8 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 }
 
 func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipelineID int64, pb *sdk.PipelineBuild, envID int64, stages string, commits []sdk.VCSCommit) error {
-	query := `INSERT INTO pipeline_build (pipeline_id, build_number, version, status, args, start, application_id, environment_id, done, manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author, vcs_remote_url, scheduled_trigger, stages, commits)
-						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`
+	query := `INSERT INTO pipeline_build (pipeline_id, build_number, version, status, args, start, application_id, environment_id, done, manual_trigger, triggered_by, parent_pipeline_build_id, vcs_changes_branch, vcs_changes_hash, vcs_changes_author, vcs_remote, vcs_remote_url, scheduled_trigger, stages, commits)
+						VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING id`
 
 	var triggeredBy, parentPipelineID int64
 	if pb.Trigger.TriggeredBy != nil {
@@ -910,7 +923,8 @@ func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipeli
 		args, time.Now(), applicationID, envID, time.Now(), pb.Trigger.ManualTrigger,
 		sql.NullInt64{Int64: triggeredBy, Valid: triggeredBy != 0},
 		sql.NullInt64{Int64: parentPipelineID, Valid: parentPipelineID != 0},
-		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor, pb.Trigger.VCSRemoteURL, pb.Trigger.ScheduledTrigger, stages, commitsBtes)
+		pb.Trigger.VCSChangesBranch, pb.Trigger.VCSChangesHash, pb.Trigger.VCSChangesAuthor,
+		pb.Trigger.VCSRemote, pb.Trigger.VCSRemoteURL, pb.Trigger.ScheduledTrigger, stages, commitsBtes)
 
 	if err := statement.Scan(&pb.ID); err != nil {
 		return sdk.WrapError(err, "insertPipelineBuild> Unable to insert pipeline_build : App:%d,Pip:%d,Env:%d", applicationID, pipelineID, envID)
@@ -1157,7 +1171,7 @@ func GetDeploymentHistory(db gorp.SqlExecutor, projectKey, appName string) ([]sd
 }
 
 // GetVersions  Get version for the given application and branch
-func GetVersions(db gorp.SqlExecutor, app *sdk.Application, branchName, remoteURL string) ([]int, error) {
+func GetVersions(db gorp.SqlExecutor, app *sdk.Application, branchName, remote string) ([]int, error) {
 	query := `
 		SELECT distinct version
 		FROM pipeline_build
@@ -1168,8 +1182,8 @@ func GetVersions(db gorp.SqlExecutor, app *sdk.Application, branchName, remoteUR
 
 	var rows *sql.Rows
 	var errQ error
-	if remoteURL != "" {
-		rows, errQ = db.Query(query+" AND vcs_remote_url = $3 "+queryOrder, app.ID, branchName, remoteURL)
+	if remote != "" {
+		rows, errQ = db.Query(query+" AND vcs_remote = $3 "+queryOrder, app.ID, branchName, remote)
 	} else {
 		rows, errQ = db.Query(query+queryOrder, app.ID, branchName)
 	}
