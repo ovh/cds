@@ -577,7 +577,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	params["size"] = "12"
 	params["perm"] = "7"
 	params["md5sum"] = "123"
-	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, "/tmp/myartifact", "myartifact", params)
+	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
 	rec = httptest.NewRecorder()
 	router.mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
