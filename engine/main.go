@@ -42,11 +42,11 @@ var (
 )
 
 func init() {
-	mainCmd.Flags().StringVar(&cfgFile, "config", "", "config file")
-	mainCmd.Flags().StringVar(&remoteCfg, "remote-config", "", "(optional) consul configuration store")
-	mainCmd.Flags().StringVar(&remoteCfgKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
-	mainCmd.Flags().StringVar(&vaultAddr, "vault-addr", "", "(optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200)")
-	mainCmd.Flags().StringVar(&vaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
+	startCmd.Flags().StringVar(&cfgFile, "config", "", "config file")
+	startCmd.Flags().StringVar(&remoteCfg, "remote-config", "", "(optional) consul configuration store")
+	startCmd.Flags().StringVar(&remoteCfgKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
+	startCmd.Flags().StringVar(&vaultAddr, "vault-addr", "", "(optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200)")
+	startCmd.Flags().StringVar(&vaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
 	//Database command
 	mainCmd.AddCommand(database.DBCmd)
 	//Start command
@@ -62,11 +62,21 @@ func main() {
 var mainCmd = &cobra.Command{
 	Use:   "engine",
 	Short: "CDS Engine",
+	Long: `
+CDS
+Continuous Delivery Service
+Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform
+
+Copyright (c) 2013-2017, OVH SAS.
+All rights reserved.`,
 }
 
 var configCmd = &cobra.Command{
 	Use:   "config",
-	Short: "engine config",
+	Short: "Manage CDS Configuration",
+	Long: `
+CDS configuration file assistant.
+Comming soon...`,
 	Run: func(cmd *cobra.Command, args []string) {
 		btes, err := toml.Marshal(*conf)
 		if err != nil {
@@ -78,7 +88,24 @@ var configCmd = &cobra.Command{
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "engine start [api] [hatchery:local]",
+	Short: "Start CDS",
+	Long: `
+Start CDS Engine Services:
+ * API: 
+ 	This is the core component of CDS.
+ * Hatcheries:
+	They are the components responsible for spawning workers. Supported platforms/orchestrators are:
+	 * Local machine
+	 * Local Docker
+	 * Openstack
+	 * Docker Swarm
+	 * Openstack
+
+Start all of this with a single command: 
+	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] -f config.toml
+
+All the services are using the same configuration file format. See $ engine config command for more details.
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
 			cmd.Help()
