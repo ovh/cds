@@ -53,34 +53,12 @@ func InsertGroupInProject(db gorp.SqlExecutor, projectID, groupID int64, role in
 func DeleteGroupProjectByProject(db gorp.SqlExecutor, projectID int64) error {
 	query := `DELETE FROM project_group WHERE project_id=$1`
 	_, err := db.Exec(query, projectID)
-	if err != nil {
-		return err
-	}
-	// Update project
-	query = `
-		UPDATE project 
-		SET last_modified = current_timestamp
-		WHERE id=$1
-	`
-	_, err = db.Exec(query, projectID)
 	return err
 }
 
 func deleteGroupProjectByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `DELETE FROM project_group WHERE group_id=$1`
 	_, err := db.Exec(query, group.ID)
-	if err != nil {
-		return err
-	}
-	// Update project
-	query = `
-		UPDATE project 
-		SET last_modified = current_timestamp
-		WHERE id in (
-			select project_id from project_group where group_id=$1
-		)
-	`
-	_, err = db.Exec(query, group.ID)
 	return err
 }
 

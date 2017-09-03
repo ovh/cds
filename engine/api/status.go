@@ -8,30 +8,25 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/internal"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/engine/api/sessionstore"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-func getError(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	return sdk.ErrInvalidProjectKey
-}
 
 func getVersionHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	s := struct {
 		Version string `json:"version"`
 	}{
-		Version: internal.VERSION,
+		Version: sdk.VERSION,
 	}
 
 	return WriteJSON(w, r, s, http.StatusOK)
@@ -41,8 +36,8 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *bu
 	var output []string
 
 	// Version
-	output = append(output, fmt.Sprintf("Version: %s", internal.VERSION))
-	log.Debug("Status> Version: %s", internal.VERSION)
+	output = append(output, fmt.Sprintf("Version: %s", sdk.VERSION))
+	log.Debug("Status> Version: %s", sdk.VERSION)
 
 	// Uptime
 	output = append(output, fmt.Sprintf("Uptime: %s", time.Since(startupTime)))
@@ -51,10 +46,6 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *bu
 	//Nb Panics
 	output = append(output, fmt.Sprintf("Nb of Panics: %d", nbPanic))
 	log.Debug("Status> Nb of Panics: %d", nbPanic)
-
-	// Check vault
-	output = append(output, fmt.Sprintf("Secret Backend: %s", secret.Status()))
-	log.Debug("Status> Secret Backend: %s", secret.Status())
 
 	// Check Scheduler
 	output = append(output, fmt.Sprintf("Scheduler: %s", scheduler.Status()))
@@ -88,6 +79,15 @@ func statusHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *bu
 	// Check database
 	output = append(output, database.Status())
 	log.Debug("Status> %s", database.Status())
+
+	// Check LastUpdate Connected User
+	output = append(output, fmt.Sprintf("LastUpdate Connected: %d", len(lastUpdateBroker.clients)))
+	log.Debug("Status> LastUpdate ConnectedUser> %d", len(lastUpdateBroker.clients))
+
+	// Check Worker Model Error
+	wmStatus := worker.Status(db)
+	output = append(output, fmt.Sprintf("Worker Model Errors: %s", wmStatus))
+	log.Debug("Status> Worker Model Errors: %s", wmStatus)
 
 	var status = http.StatusOK
 	if panicked {

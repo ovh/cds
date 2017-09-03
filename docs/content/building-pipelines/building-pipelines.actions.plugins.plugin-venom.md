@@ -7,7 +7,7 @@ identifier = "plugin-venom"
 
 +++
 
-This plugin helps you to run venom. Venom: https://github.com/runabove/venom.
+This plugin helps you to run venom. Venom: https://github.com/ovh/venom.
 
 Add an extra step of type junit on your job to view tests results on CDS UI.
 
@@ -19,6 +19,8 @@ Add an extra step of type junit on your job to view tests results on CDS UI.
 * **output**: Directory where output xunit result file
 * **parallel**: Launch Test Suites in parallel. Enter here number of routines
 * **path**: Path containers yml venom files. Format: adirectory/, ./*aTest.yml, ./foo/b*/**/z*.yml
+* **vars**: Empty: all {{.cds...}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty
+* **vars-from-file**: filename.yaml or filename.json. See https://github.com/ovh/venom#run-venom-with-file-var
 
 
 ## More

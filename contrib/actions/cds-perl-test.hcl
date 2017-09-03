@@ -45,12 +45,12 @@ prove --formatter=TAP::Formatter::JUnit {{.proveOptions}} > results/resultsUnits
 
 EOF
 	}, {
-		final = true
+		always_executed = true
 		artifactUpload = {
 				path = "{{.testDirectory}}/results/resultsUnitsTests.xml"
 				tag = "{{.cds.version}}"
 	  }
 	}, {
-		final = true
+		always_executed = true
 		jUnitReport = "{{.testDirectory}}/results/resultsUnitsTests.xml"
 	}]

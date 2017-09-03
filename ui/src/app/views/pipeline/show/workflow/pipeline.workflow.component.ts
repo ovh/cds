@@ -103,7 +103,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             this.selectedStage = cloneDeep(this.pipeline.stages[0]);
         }
 
-        this._varService.getContextVariable(this.project.key).first().subscribe(s => this.suggest = s);
+        this._varService.getContextVariable(this.project.key, this.pipeline.id).first().subscribe(s => this.suggest = s);
 
     }
 

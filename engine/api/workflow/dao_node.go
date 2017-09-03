@@ -176,6 +176,13 @@ func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk
 	}
 	wn.Context = ctx
 
+	//Load hooks
+	hooks, errHooks := loadHooks(db, &wn)
+	if errHooks != nil {
+		return nil, sdk.WrapError(errHooks, "LoadNode> Unable to load hooks of %d", id)
+	}
+	wn.Hooks = hooks
+
 	//Load pipeline
 	pip, err := pipeline.LoadPipelineByID(db, wn.PipelineID, true)
 	if err != nil {

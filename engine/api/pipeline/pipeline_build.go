@@ -238,7 +238,14 @@ func LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db gorp.SqlExecutor, a
 	if err := db.SelectOne(&row, query, applicationID, pipelineID, environmentID, buildNumber); err != nil {
 		return nil, err
 	}
-	return scanPipelineBuild(row)
+	pb, errS := scanPipelineBuild(row)
+
+	if errS != nil {
+		return nil, errS
+	}
+	attachPipelineWarnings(pb)
+
+	return pb, nil
 }
 
 // LoadPipelineBuildByHash look for a pipeline build triggered by a change with given hash
@@ -297,6 +304,8 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 		}
 		pbs = append(pbs, *pb)
 	}
+	AttachPipelinesWarnings(&pbs)
+
 	return pbs, nil
 }
 
@@ -541,7 +550,7 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 
 	// Add build variable
 	params = append(params, sdk.Parameter{
-		Name:  "cds.build." + v.Name,
+		Name:  v.Name,
 		Type:  sdk.StringParameter,
 		Value: v.Value,
 	})
@@ -627,17 +636,19 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 		if err != nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get branch %s", cur.Branch)
 		}
-		if br.LatestCommit == "" {
-			return nil, sdk.WrapError(sdk.ErrNoBranch, "UpdatePipelineBuildCommits> Branch or lastest commit not found")
-		}
+		if br != nil {
+			if br.LatestCommit == "" {
+				return nil, sdk.WrapError(sdk.ErrNoBranch, "UpdatePipelineBuildCommits> Branch or lastest commit not found")
+			}
 
-		//and return the last commit of the branch
-		log.Debug("get the last commit : %s", br.LatestCommit)
-		cm, errcm := client.Commit(app.RepositoryFullname, br.LatestCommit)
-		if errcm != nil {
-			return nil, sdk.WrapError(errcm, "UpdatePipelineBuildCommits> Cannot get commits")
+			//and return the last commit of the branch
+			log.Debug("get the last commit : %s", br.LatestCommit)
+			cm, errcm := client.Commit(app.RepositoryFullname, br.LatestCommit)
+			if errcm != nil {
+				return nil, sdk.WrapError(errcm, "UpdatePipelineBuildCommits> Cannot get commits")
+			}
+			res = []sdk.VCSCommit{cm}
 		}
-		res = []sdk.VCSCommit{cm}
 	}
 
 	if err := updatePipelineBuildCommits(db, pb.ID, res); err != nil {

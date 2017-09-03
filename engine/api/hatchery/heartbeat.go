@@ -29,16 +29,16 @@ func Heartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
 			if db != nil {
 				w, err := LoadDeadHatcheries(db, HatcheryHeartbeatTimeout)
 				if err != nil {
-					log.Warning("HatcheryHeartbeat> Cannot load hatcherys: %s\n", err)
+					log.Warning("HatcheryHeartbeat> Cannot load hatcherys: %s", err)
 					continue
 				}
 
 				for i := range w {
 					if err = DeleteHatchery(db, w[i].ID, w[i].Model.ID); err != nil {
-						log.Warning("HatcheryHeartbeat> Cannot delete hatchery %d: %s\n", w[i].ID, err)
+						log.Warning("HatcheryHeartbeat> Cannot delete hatchery %d: %s", w[i].ID, err)
 						continue
 					}
-					log.Debug("HatcheryHeartbeat> Hatchery %s removed.\n", w[i].Name)
+					log.Debug("HatcheryHeartbeat> Hatchery %s removed.", w[i].Name)
 				}
 			}
 		}

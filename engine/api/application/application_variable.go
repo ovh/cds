@@ -42,33 +42,7 @@ func WithEncryptPassword() FuncArg {
 	}
 }
 
-// DEPRECATED
-// CreateAudit Create variable audit for the given application
-func CreateAudit(db gorp.SqlExecutor, key string, app *sdk.Application, u *sdk.User) error {
-	variables, err := GetAllVariable(db, key, app.Name, WithEncryptPassword())
-	if err != nil {
-		return err
-	}
-	for i := range variables {
-		v := &variables[i]
-		if sdk.NeedPlaceholder(v.Type) {
-			v.Value = base64.StdEncoding.EncodeToString([]byte(v.Value))
-		}
-	}
-
-	data, err := json.Marshal(variables)
-	if err != nil {
-		return err
-	}
-
-	query := `
-		INSERT INTO application_variable_audit_old (versionned, application_id, data, author)
-		VALUES (NOW(), $1, $2, $3)
-	`
-	_, err = db.Exec(query, app.ID, string(data), u.Username)
-	return err
-}
-
+// Deprecated
 // GetAudit retrieve the current application variable audit
 func GetAudit(db gorp.SqlExecutor, key, appName string, auditID int64) ([]sdk.Variable, error) {
 	query := `
@@ -100,6 +74,7 @@ func GetAudit(db gorp.SqlExecutor, key, appName string, auditID int64) ([]sdk.Va
 	return variables, err
 }
 
+//Deprecated
 // GetVariableAudit Get variable audit for the given application
 func GetVariableAudit(db gorp.SqlExecutor, key, appName string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
@@ -296,7 +271,7 @@ func InsertVariable(db gorp.SqlExecutor, app *sdk.Application, variable sdk.Vari
 		Versionned:    time.Now(),
 	}
 
-	if err := InserAudit(db, ava); err != nil {
+	if err := inserAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "InsertVariable> Cannot insert audit for variable %d", variable.ID)
 	}
 
@@ -342,7 +317,7 @@ func UpdateVariable(db gorp.SqlExecutor, app *sdk.Application, variable *sdk.Var
 		Versionned:     time.Now(),
 	}
 
-	if err := InserAudit(db, ava); err != nil {
+	if err := inserAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "UpdateVariable> Cannot insert audit for variable %s", variable.Name)
 	}
 
@@ -376,7 +351,7 @@ func DeleteVariable(db gorp.SqlExecutor, app *sdk.Application, variable *sdk.Var
 		Versionned:     time.Now(),
 	}
 
-	if err := InserAudit(db, ava); err != nil {
+	if err := inserAudit(db, ava); err != nil {
 		return sdk.WrapError(err, "DeleteVariable> Cannot insert audit for variable %s", variable.Name)
 	}
 
@@ -391,10 +366,7 @@ func DeleteAllVariable(db gorp.SqlExecutor, applicationID int64) error {
 	if err != nil {
 		return err
 	}
-
-	query = "UPDATE application SET last_modified = current_timestamp WHERE id=$1"
-	_, err = db.Exec(query, applicationID)
-	return err
+	return nil
 }
 
 // AddKeyPairToApplication generate a ssh key pair and add them as application variables
@@ -423,8 +395,8 @@ func AddKeyPairToApplication(db gorp.SqlExecutor, app *sdk.Application, keyname 
 	return InsertVariable(db, app, p, u)
 }
 
-// InsertAudit  insert an application variable audit
-func InserAudit(db gorp.SqlExecutor, ava *sdk.ApplicationVariableAudit) error {
+// insertAudit  insert an application variable audit
+func inserAudit(db gorp.SqlExecutor, ava *sdk.ApplicationVariableAudit) error {
 	dbAppVarAudit := dbApplicationVariableAudit(*ava)
 	if err := db.Insert(&dbAppVarAudit); err != nil {
 		return sdk.WrapError(err, "Cannot Insert Audit for variable %d", ava.VariableID)

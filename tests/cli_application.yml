@@ -14,7 +14,7 @@ testcases:
 
 - name: application list
   steps:
-  - script: {{.cds.build.cds}} application list TEST
+  - script: {{.cds.build.cds}} application list ITCLIAPPPRJ
 
 - name: application show
   steps:

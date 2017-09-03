@@ -24,6 +24,7 @@ type Project struct {
 	LastModified  time.Time             `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
 	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-" db:"-" cli:"-"`
 	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
+	Keys          []ProjectKey          `json:"keys" yaml:"keys" db:"-" cli:"-"`
 }
 
 // ProjectVariableAudit represents an audit on a project variable
@@ -43,12 +44,21 @@ type Metadata map[string]string
 
 //LastModification is stored in cache and used for ProjectLastUpdates computing
 type LastModification struct {
+	Key          string `json:"key,omitempty"`
 	Name         string `json:"name"`
 	Username     string `json:"username"`
 	LastModified int64  `json:"last_modified"`
+	Type         string `json:"type,omitempty"`
 }
 
+const (
+	ApplicationLastModificationType = "application"
+	PipelineLastModificationType    = "pipeline"
+	ProjectLastModiciationType      = "project"
+)
+
 //ProjectLastUpdates update times of project, application and pipelines
+// Deprecated
 type ProjectLastUpdates struct {
 	LastModification
 	Applications []LastModification `json:"applications"`

@@ -1,24 +1,23 @@
 package sdk
 
-import (
-	"encoding/json"
-	"fmt"
-)
+import "time"
 
 // Auth Authentifaction Struct for user
 type Auth struct {
-	HashedPassword    string      `json:"hashedPassword"`
-	HashedTokenVerify string      `json:"hashedTokenVerify"`
-	EmailVerified     bool        `json:"emailVerified"`
-	DateReset         int64       `json:"dateReset"`
-	Tokens            []UserToken `json:"tokens,omitempty"`
+	HashedPassword    string `json:"hashedPassword"`
+	HashedTokenVerify string `json:"hashedTokenVerify"`
+	EmailVerified     bool   `json:"emailVerified"`
+	DateReset         int64  `json:"dateReset"`
 }
 
 // UserToken for user persistent session
 type UserToken struct {
-	Token     string `json:"token"`
-	Timestamp int64  `json:"timestamp"`
-	Comment   string `json:"comment"`
+	Token              string    `json:"token" db:"token"`
+	Timestamp          int64     `json:"timestamp" db:"-"`
+	Comment            string    `json:"comment" db:"comment"`
+	CreationDate       time.Time `json:"creation_date" db:"creation_date"`
+	LastConnectionDate time.Time `json:"last_connection_date" db:"last_connection_date"`
+	UserID             int64     `json:"-" db:"user_id"`
 }
 
 // NewAuth instanciate a new Authentification struct
@@ -28,21 +27,4 @@ func NewAuth(hashedToken string) *Auth {
 		EmailVerified:     false,
 	}
 	return a
-}
-
-// JSON return the marshalled string of Auth object
-func (a *Auth) JSON() string {
-
-	data, err := json.Marshal(a)
-	if err != nil {
-		fmt.Printf("Auth.JSON: cannot marshal: %s\n", err)
-		return ""
-	}
-
-	return string(data)
-}
-
-// FromJSON unmarshal given json data into Auth object
-func (a *Auth) FromJSON(data []byte) (*Auth, error) {
-	return a, json.Unmarshal(data, &a)
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/mux"
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/auth"
@@ -56,7 +56,7 @@ func test_runWorkflow(t *testing.T, db *gorp.DbMap, testName string) test_runWor
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true

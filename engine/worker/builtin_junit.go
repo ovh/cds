@@ -6,22 +6,23 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"path/filepath"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 func runParseJunitTestResultAction(*currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		var res sdk.Result
 		res.Status = sdk.StatusFail.String()
 
-		pip := sdk.ParameterValue(params, "cds.pipeline")
-		proj := sdk.ParameterValue(params, "cds.project")
-		app := sdk.ParameterValue(params, "cds.application")
-		envName := sdk.ParameterValue(params, "cds.environment")
-		bnS := sdk.ParameterValue(params, "cds.buildNumber")
+		pip := sdk.ParameterValue(*params, "cds.pipeline")
+		proj := sdk.ParameterValue(*params, "cds.project")
+		app := sdk.ParameterValue(*params, "cds.application")
+		envName := sdk.ParameterValue(*params, "cds.environment")
+		bnS := sdk.ParameterValue(*params, "cds.buildNumber")
 
 		p := sdk.ParameterValue(a.Parameters, "path")
 		if p == "" {
@@ -76,7 +77,7 @@ func runParseJunitTestResultAction(*currentWorker) BuiltInAction {
 			return res
 		}
 
-		uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, envName)
+		uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, url.QueryEscape(envName))
 		_, code, err := sdk.Request("POST", uri, data)
 		if err == nil && code > 300 {
 			err = fmt.Errorf("HTTP %d", code)

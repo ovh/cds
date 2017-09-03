@@ -21,6 +21,7 @@ export class DeleteButtonComponent  {
 
     deleteEvent() {
         this.event.emit(true);
+        this.reset();
     }
 
     reset(): void {

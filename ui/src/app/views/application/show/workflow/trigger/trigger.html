@@ -42,19 +42,19 @@
 </div>
 <h4 *ngIf="trigger && trigger.parameters && trigger.parameters.length > 0">{{ 'trigger_list_parameter_title' | translate}}</h4>
 <app-parameter-list *ngIf="trigger && trigger.parameters && trigger.parameters.length > 0"
-                    [project]="project"
-                    [parameters]="trigger.parameters" mode="launcher" [paramsRef]="paramsRef" (event)="trigger.hasChanged = true"></app-parameter-list>
+    [project]="project"
+    [parameters]="trigger.parameters" mode="launcher" [paramsRef]="paramsRef" (event)="trigger.hasChanged = true"></app-parameter-list>
 <h4 *ngIf="trigger && trigger.prerequisites && trigger.prerequisites.length > 0">
     {{ 'trigger_list_prerequisite_title' | translate}}
 </h4>
 <app-prerequisites-list
-        *ngIf="trigger && trigger.prerequisites && trigger.prerequisites.length > 0"
-        [prerequisites]="trigger.prerequisites"
-        [edit]="mode === 'edit'"
-        (event)="prerequisiteEvent($event)"></app-prerequisites-list>
+    *ngIf="trigger && trigger.prerequisites && trigger.prerequisites.length > 0"
+    [prerequisites]="trigger.prerequisites"
+    [edit]="mode === 'edit'"
+    (event)="prerequisiteEvent($event)"></app-prerequisites-list>
 <h4 *ngIf="refPrerequisites && trigger &&  ( !trigger.prerequisites || trigger.prerequisites.length !== refPrerequisites.length)">
     {{ 'trigger_add_prerequisite_title' | translate}}
 </h4>
 <app-prerequisites-form
-        *ngIf="refPrerequisites && trigger &&  ( !trigger.prerequisites || trigger.prerequisites.length !== refPrerequisites.length)"
-        [(prerequisites)]="refPrerequisites" (event)="prerequisiteEvent($event)"></app-prerequisites-form>
+    *ngIf="refPrerequisites && trigger &&  ( !trigger.prerequisites || trigger.prerequisites.length !== refPrerequisites.length)"
+    [(prerequisites)]="refPrerequisites" (event)="prerequisiteEvent($event)"></app-prerequisites-form>

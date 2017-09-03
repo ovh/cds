@@ -35,6 +35,7 @@
                   <a class="ui" [routerLink]="[v.name]">
                     <div class="ui">{{v.name}}
                         <span *ngIf="v.disabled==='true'"> {{ 'worker_model_disabled' | translate }}</span>
+                        <span *ngIf="v.nb_spawn_err > 0">  <i class="warning sign icon orange" title="{{ 'worker_model_warning' | translate }}"></i> </span>
                     </div>
                   </a>
               </td>

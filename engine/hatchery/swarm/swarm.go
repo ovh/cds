@@ -11,6 +11,7 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/fsouza/go-dockerclient"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 	"github.com/spf13/viper"
@@ -22,6 +23,7 @@ var hatcherySwarm *HatcherySwarm
 type HatcherySwarm struct {
 	hatch         *sdk.Hatchery
 	dockerClient  *docker.Client
+	client        cdsclient.Interface
 	ratioService  int
 	maxContainers int
 	defaultMemory int
@@ -29,7 +31,17 @@ type HatcherySwarm struct {
 }
 
 //Init connect the hatchery to the docker api
-func (h *HatcherySwarm) Init() error {
+func (h *HatcherySwarm) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+	h.hatch = &sdk.Hatchery{
+		Name:    hatchery.GenerateName("swarm", name),
+		Version: sdk.VERSION,
+	}
+
+	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	if err := hatchery.Register(h); err != nil {
+		return fmt.Errorf("Cannot register: %s", err)
+	}
+
 	var errc error
 	h.dockerClient, errc = docker.NewClientFromEnv()
 	if errc != nil {
@@ -41,17 +53,6 @@ func (h *HatcherySwarm) Init() error {
 		log.Error("Unable to ping docker host:%s", errPing)
 		return errPing
 	}
-
-	h.hatch = &sdk.Hatchery{
-		Name: hatchery.GenerateName("swarm", viper.GetString("name")),
-	}
-
-	if err := hatchery.Register(h.hatch, viper.GetString("token")); err != nil {
-		log.Warning("Cannot register hatchery: %s", err)
-		return err
-	}
-
-	log.Info("Swarm Hatchery ready to run !")
 
 	go h.killAwolWorkerRoutine()
 	return nil
@@ -171,7 +172,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 		ID:     ID,
 		Signal: docker.SIGKILL,
 	}); err != nil {
-		if !strings.Contains(err.Error(), "is not running") {
+		if !strings.Contains(err.Error(), "is not running") && !strings.Contains(err.Error(), "No such container") {
 			log.Warning("killAndRemove> Unable to kill container %s", err)
 		}
 	}
@@ -189,7 +190,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 }
 
 //SpawnWorker start a new docker container
-func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	if registerOnly {
@@ -207,8 +208,8 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 
 	services := []string{}
 
-	if job != nil {
-		for _, r := range job.Job.Action.Requirements {
+	if jobID > 0 {
+		for _, r := range requirements {
 			if r.Type == sdk.MemoryRequirement {
 				var err error
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
@@ -261,11 +262,11 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 	}
 
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
-	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", sdk.Host, registerCmd)}
+	cmd := []string{"sh", "-c", fmt.Sprintf("curl %s/download/worker/`uname -m` -o worker && echo chmod worker && chmod +x worker && echo starting worker && ./worker%s", h.Client().APIURL(), registerCmd)}
 
 	//CDS env needed by the worker binary
 	env := []string{
-		"CDS_API" + "=" + sdk.Host,
+		"CDS_API" + "=" + h.Client().APIURL(),
 		"CDS_NAME" + "=" + name,
 		"CDS_TOKEN" + "=" + viper.GetString("token"),
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
@@ -275,21 +276,25 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 		"CDS_SINGLE_USE=1",
 	}
 
-	if viper.GetString("graylog_host") != "" {
-		env = append(env, "CDS_GRAYLOG_HOST"+"="+viper.GetString("graylog_host"))
+	if viper.GetString("worker_graylog_host") != "" {
+		env = append(env, "CDS_GRAYLOG_HOST"+"="+viper.GetString("worker_graylog_host"))
 	}
-	if viper.GetString("graylog_port") != "" {
-		env = append(env, "CDS_GRAYLOG_PORT"+"="+viper.GetString("graylog_port"))
+	if viper.GetString("worker_graylog_port") != "" {
+		env = append(env, "CDS_GRAYLOG_PORT"+"="+viper.GetString("worker_graylog_port"))
 	}
-	if viper.GetString("graylog_extra_key") != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+viper.GetString("graylog_extra_key"))
+	if viper.GetString("worker_graylog_extra_key") != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+viper.GetString("worker_graylog_extra_key"))
 	}
-	if viper.GetString("graylog_extra_value") != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+viper.GetString("graylog_extra_value"))
+	if viper.GetString("worker_graylog_extra_value") != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+viper.GetString("worker_graylog_extra_value"))
+	}
+	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
+		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", viper.GetString("grpc_api")))
+		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", viper.GetBool("grpc_insecure")))
 	}
 
-	if job != nil {
-		env = append(env, "CDS_BOOKED_JOB_ID"+"="+strconv.FormatInt(job.ID, 10))
+	if jobID > 0 {
+		env = append(env, "CDS_BOOKED_JOB_ID"+"="+strconv.FormatInt(jobID, 10))
 	}
 
 	//labels are used to make container cleanup easier
@@ -301,7 +306,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 
 	//start the worker
 	if err := h.createAndStartContainer(name, model.Image, network, "worker", cmd, env, labels, memory); err != nil {
-		log.Warning("SpawnWorker> Unable to start container %s", err)
+		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, model.Image, err)
 	}
 
 	return name, nil
@@ -374,7 +379,7 @@ func (*HatcherySwarm) ModelType() string {
 }
 
 // CanSpawn checks if the model can be spawned by this hatchery
-func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bool {
+func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool {
 	//List all containers to check if we can spawn a new one
 	cs, errList := h.getContainers()
 	if errList != nil {
@@ -390,7 +395,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, job *sdk.PipelineBuildJob) bo
 	//Get links from requirements
 	links := map[string]string{}
 
-	for _, r := range job.Job.Action.Requirements {
+	for _, r := range requirements {
 		if r.Type == sdk.ServiceRequirement {
 			links[r.Name] = strings.Split(r.Value, " ")[0]
 		}
@@ -529,6 +534,11 @@ func (h *HatcherySwarm) Hatchery() *sdk.Hatchery {
 	return h.hatch
 }
 
+//Client returns cdsclient instance
+func (h *HatcherySwarm) Client() cdsclient.Interface {
+	return h.client
+}
+
 // ID returns ID of the Hatchery
 func (h *HatcherySwarm) ID() int64 {
 	if h.hatch == nil {
@@ -545,7 +555,7 @@ func (h *HatcherySwarm) killAwolWorkerRoutine() {
 }
 
 func (h *HatcherySwarm) killAwolWorker() {
-	apiworkers, err := sdk.GetWorkers()
+	apiworkers, err := h.Client().WorkerList()
 	if err != nil {
 		log.Warning("killAwolWorker> Cannot get workers: %s", err)
 		os.Exit(1)
@@ -642,7 +652,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 
 		log.Info("killAwolWorker> Delete network %s", n.Name)
 		if err := h.dockerClient.RemoveNetwork(n.ID); err != nil {
-			log.Warning("killAwolWorker> Unable to delete network %s", n.Name)
+			log.Warning("killAwolWorker> Unable to delete network %s err:%s", n.Name, err)
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package test
 
 import (
+	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"os"
@@ -12,9 +13,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"encoding/json"
-
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/secret"
@@ -48,7 +46,7 @@ func init() {
 	}
 }
 
-type bootstrapf func(bootstrap.DefaultValues, func() *gorp.DbMap) error
+type bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
 
 // SetupPG setup PG DB for test
 func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
@@ -76,6 +74,8 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 				dbHost = cfg["dbHost"]
 				dbPort = cfg["dbPort"]
 				dbSSLMode = cfg["sslMode"]
+			} else {
+				t.Errorf("Error when unmarshal config %s", err)
 			}
 		}
 	} else {
@@ -91,7 +91,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 
 	cache.Initialize("local", "", "", 30)
 
-	secret.Init("", "test-key", "", nil)
+	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 
 	if DBDriver == "" {
 		t.Skip("This should be run with a database")
@@ -127,7 +127,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 	}
 
 	for _, f := range bootstrapFunc {
-		if err := f(bootstrap.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, database.GetDBMap); err != nil {
+		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, database.GetDBMap); err != nil {
 			return nil
 		}
 	}

@@ -11,7 +11,7 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 // Pipeline represents the complete behavior of CDS for each projects
@@ -32,14 +32,15 @@ type Pipeline struct {
 
 // PipelineBuild Struct for history table
 type PipelineBuild struct {
-	ID          int64       `json:"id"`
-	BuildNumber int64       `json:"build_number"`
-	Version     int64       `json:"version"`
-	Parameters  []Parameter `json:"parameters"`
-	Status      Status      `json:"status"`
-	Start       time.Time   `json:"start,omitempty"`
-	Done        time.Time   `json:"done,omitempty"`
-	Stages      []Stage     `json:"stages"`
+	ID          int64                  `json:"id"`
+	BuildNumber int64                  `json:"build_number"`
+	Version     int64                  `json:"version"`
+	Parameters  []Parameter            `json:"parameters"`
+	Status      Status                 `json:"status"`
+	Warnings    []PipelineBuildWarning `json:"warnings"`
+	Start       time.Time              `json:"start,omitempty"`
+	Done        time.Time              `json:"done,omitempty"`
+	Stages      []Stage                `json:"stages"`
 
 	Pipeline    Pipeline    `json:"pipeline"`
 	Application Application `json:"application"`
@@ -89,11 +90,19 @@ type PipelineBuildTrigger struct {
 	VCSChangesAuthor    string         `json:"vcs_author"`
 }
 
-// Different types of Pipeline
+// PipelineBuildWarning Struct for display warnings about build
+type PipelineBuildWarning struct {
+	Type   string `json:"type"`
+	Action Action `json:"action"`
+}
+
 const (
+	// Different types of Pipeline
 	BuildPipeline      = "build"
 	DeploymentPipeline = "deployment"
 	TestingPipeline    = "testing"
+	// Different types of warning for PipelineBuild
+	OptionalStepFailed = "optional_step_failed"
 )
 
 // AvailablePipelineType List of all pipeline type
@@ -618,10 +627,10 @@ func AddParameterInPipeline(projectKey, pipelineName, paramName, paramValue, par
 }
 
 // UpdateParameterInPipeline update a variable in a pipeline
-func UpdateParameterInPipeline(projectKey, pipelineName, paramName, paramValue, paramType, paramDescription string) error {
+func UpdateParameterInPipeline(projectKey, pipelineName, paramName, newParamName, paramValue, paramType, paramDescription string) error {
 
 	newParam := Parameter{
-		Name:        paramName,
+		Name:        newParamName,
 		Value:       paramValue,
 		Type:        paramType,
 		Description: paramDescription,
@@ -734,19 +743,6 @@ func GetBuildingPipelineByHash(hash string) ([]PipelineBuild, error) {
 	}
 
 	return pbs, nil
-}
-
-// BookPipelineBuildJob books a job for a Hatchery
-func BookPipelineBuildJob(pipelineBuildJobID int64) error {
-	path := fmt.Sprintf("/queue/%d/book", pipelineBuildJobID)
-	data, code, err := Request("POST", path, nil)
-	if err != nil {
-		return fmt.Errorf("HTTP %d err:%s", code, err)
-	}
-	if code != http.StatusOK {
-		return fmt.Errorf("HTTP %d body:%s", code, string(data))
-	}
-	return nil
 }
 
 // AddSpawnInfosPipelineBuildJob books a job for a Hatchery

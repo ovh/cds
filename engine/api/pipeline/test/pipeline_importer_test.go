@@ -95,7 +95,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, args.pip, nil))
+			test.NoError(t, pipeline.InsertPipeline(db, proj, args.pip, nil))
 			args.pip.Stages = []sdk.Stage{
 				sdk.Stage{
 					BuildOrder: 1,
@@ -134,7 +134,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, args.pip, nil))
+			test.NoError(t, pipeline.InsertPipeline(db, proj, args.pip, nil))
 
 			args.pip.Stages = []sdk.Stage{
 				{
@@ -190,7 +190,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, args.pip, nil))
+			test.NoError(t, pipeline.InsertPipeline(db, proj, args.pip, nil))
 
 			args.pip.Stages = []sdk.Stage{
 				{
@@ -234,7 +234,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, args.pip, nil))
+			test.NoError(t, pipeline.InsertPipeline(db, proj, args.pip, nil))
 
 			args.pip.Stages = []sdk.Stage{
 				{
@@ -277,7 +277,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, args.pip, nil))
+			test.NoError(t, pipeline.InsertPipeline(db, proj, args.pip, nil))
 
 			args.pip.Stages = []sdk.Stage{
 				{
@@ -362,7 +362,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, args.pip, nil))
+			test.NoError(t, pipeline.InsertPipeline(db, proj, args.pip, nil))
 
 			args.pip.Stages = []sdk.Stage{
 				{
@@ -442,7 +442,7 @@ func TestImportUpdate(t *testing.T) {
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
-			test.NoError(t, pipeline.InsertPipeline(db, args.pip, nil))
+			test.NoError(t, pipeline.InsertPipeline(db, proj, args.pip, nil))
 
 			args.pip.Stages = []sdk.Stage{
 				{

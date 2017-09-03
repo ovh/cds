@@ -19,15 +19,15 @@ import (
 
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
-func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryOpenstack) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	//generate a pretty cool name
 	name := model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
 	if registerOnly {
 		name = "register-" + name
 	}
 
-	if job != nil {
-		log.Info("spawnWorker> spawning worker %s model:%s for job %d - %s", name, model.Name, job.ID, logInfo)
+	if jobID > 0 {
+		log.Info("spawnWorker> spawning worker %s model:%s for job %d - %s", name, model.Name, jobID, logInfo)
 	} else {
 		log.Info("spawnWorker> spawning worker %s model:%s - %s", name, model.Name, logInfo)
 	}
@@ -66,22 +66,29 @@ func (h *HatcheryCloud) SpawnWorker(model *sdk.Model, job *sdk.PipelineBuildJob,
 	}
 
 	graylog := ""
-	if viper.GetString("graylog_host") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_HOST=%s ", viper.GetString("graylog_host"))
+	if viper.GetString("worker_graylog_host") != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_HOST=%s ", viper.GetString("worker_graylog_host"))
 	}
-	if viper.GetString("graylog_port") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_PORT=%s ", viper.GetString("graylog_port"))
+	if viper.GetString("worker_graylog_port") != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_PORT=%s ", viper.GetString("worker_graylog_port"))
 	}
-	if viper.GetString("graylog_extra_key") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_KEY=%s ", viper.GetString("graylog_extra_key"))
+	if viper.GetString("worker_graylog_extra_key") != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_KEY=%s ", viper.GetString("worker_graylog_extra_key"))
 	}
-	if viper.GetString("graylog_extra_value") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s ", viper.GetString("graylog_extra_value"))
+	if viper.GetString("worker_graylog_extra_value") != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s ", viper.GetString("worker_graylog_extra_value"))
+	}
+
+	grpc := ""
+	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
+		grpc += fmt.Sprintf("export CDS_GRPC_API=%s ", viper.GetString("grpc_api"))
+		grpc += fmt.Sprintf("export CDS_GRPC_INSECURE=%t ", viper.GetBool("grpc_insecure"))
 	}
 
 	udataEnd := `
 cd $HOME
 # Download and start worker with curl
+rm -f worker
 curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
 chmod +x worker
 export CDS_SINGLE_USE=1
@@ -95,17 +102,13 @@ export CDS_HATCHERY_NAME={{.HatcheryName}}
 export CDS_BOOKED_JOB_ID={{.JobID}}
 export CDS_TTL={{.TTL}}
 {{.Graylog}}
+{{.Grpc}}
 ./worker`
 
 	if registerOnly {
 		udataEnd += " register"
 	}
 	udataEnd += " ; sudo shutdown -h now;"
-
-	var jobID int64
-	if job != nil {
-		jobID = job.ID
-	}
 
 	var withExistingImage bool
 	if !model.NeedRegistration && !registerOnly {
@@ -141,6 +144,7 @@ export CDS_TTL={{.TTL}}
 		JobID        int64
 		TTL          int
 		Graylog      string
+		Grpc         string
 	}{
 		API:          viper.GetString("api"),
 		Name:         name,
@@ -151,6 +155,7 @@ export CDS_TTL={{.TTL}}
 		JobID:        jobID,
 		TTL:          h.workerTTL,
 		Graylog:      graylog,
+		Grpc:         grpc,
 	}
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {
@@ -200,7 +205,7 @@ export CDS_FROM_WORKER_IMAGE="false";
 	}
 
 	networks := []servers.Network{{UUID: h.networkID, FixedIP: ip}}
-	r := servers.Create(h.client, servers.CreateOpts{
+	r := servers.Create(h.openstackClient, servers.CreateOpts{
 		Name:      name,
 		FlavorRef: flavorID,
 		ImageRef:  imageID,

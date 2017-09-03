@@ -26,8 +26,8 @@ export class ProjectRepoManagerFormComponent  {
     public verificationLoading = false;
 
     // Repo manager form data
-    private reposManagerList: RepositoriesManager[];
-    selectedRepo: string;
+    reposManagerList: RepositoriesManager[];
+    selectedRepoId: number;
 
     // Repo manager validation
     public addRepoResponse: any;
@@ -43,19 +43,20 @@ export class ProjectRepoManagerFormComponent  {
     }
 
     create(verificationModal: any, skip?: boolean): void {
-        if (this.selectedRepo) {
+        if (this.selectedRepoId && this.reposManagerList[this.selectedRepoId]) {
             if (!skip && this.project.externalChange) {
                 this.linkRepoWarningModal.show();
             } else {
                 this.connectLoading = true;
-                this._projectStore.connectRepoManager(this.project.key, this.selectedRepo).subscribe( res => {
-                    this.connectLoading = false;
-                    this.addRepoResponse = res;
-                    this.modalInstance = verificationModal;
-                    verificationModal.show();
-                }, () => {
-                    this.connectLoading = false;
-                });
+                this._projectStore.connectRepoManager(this.project.key, this.reposManagerList[this.selectedRepoId].name)
+                  .subscribe( res => {
+                      this.connectLoading = false;
+                      this.addRepoResponse = res;
+                      this.modalInstance = verificationModal;
+                      verificationModal.show();
+                  }, () => {
+                      this.connectLoading = false;
+                  });
             }
         }
     }
@@ -63,7 +64,7 @@ export class ProjectRepoManagerFormComponent  {
     sendVerificationCode(): void {
         this.verificationLoading = true;
         this._projectStore.verificationCallBackRepoManager(
-            this.project.key, this.selectedRepo, this.addRepoResponse.request_token, this.validationToken
+            this.project.key, this.reposManagerList[this.selectedRepoId].name, this.addRepoResponse.request_token, this.validationToken
         ).subscribe( () => {
             this.verificationLoading = false;
             this.modalInstance.hide();

@@ -18,6 +18,7 @@ import {ProjectRepoManagerComponent} from './project.repomanager.list.component'
 import {RepositoriesManager} from '../../../../../../model/repositories.model';
 import {Observable} from 'rxjs/Rx';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Project RepoManager List Component', () => {
 
@@ -45,7 +46,7 @@ describe('CDS: Project RepoManager List Component', () => {
                 ProjectModule,
                 SharedModule,
                 RouterTestingModule.withRoutes([]),
-
+                HttpClientTestingModule
             ],
             schemas: [
                 CUSTOM_ELEMENTS_SCHEMA

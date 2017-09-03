@@ -10,11 +10,11 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func insertEdge(db gorp.SqlExecutor, parentID, childID int64, execOrder int, final, enabled bool) (int64, error) {
-	query := `INSERT INTO action_edge (parent_id, child_id, exec_order, final, enabled) VALUES ($1, $2, $3, $4, $5) RETURNING id`
+func insertEdge(db gorp.SqlExecutor, parentID, childID int64, execOrder int, optional, alwaysExecuted, enabled bool) (int64, error) {
+	query := `INSERT INTO action_edge (parent_id, child_id, exec_order, optional, always_executed, enabled) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
 
 	var id int64
-	err := db.QueryRow(query, parentID, childID, execOrder, final, enabled).Scan(&id)
+	err := db.QueryRow(query, parentID, childID, execOrder, optional, alwaysExecuted, enabled).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -27,7 +27,7 @@ func insertActionChild(db gorp.SqlExecutor, actionID int64, child sdk.Action, ex
 		return fmt.Errorf("insertActionChild: child action has no id")
 	}
 
-	id, err := insertEdge(db, actionID, child.ID, execOrder, child.Final, child.Enabled)
+	id, err := insertEdge(db, actionID, child.ID, execOrder, child.Optional, child.AlwaysExecuted, child.Enabled)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func loadActionChildren(db gorp.SqlExecutor, actionID int64) ([]sdk.Action, erro
 	var children []sdk.Action
 	var edgeIDs []int64
 	var childrenIDs []int64
-	query := `SELECT id, child_id, exec_order, final, enabled FROM action_edge WHERE parent_id = $1 ORDER BY exec_order ASC`
+	query := `SELECT id, child_id, exec_order, optional, always_executed, enabled FROM action_edge WHERE parent_id = $1 ORDER BY exec_order ASC`
 
 	rows, err := db.Query(query, actionID)
 	if err != nil {
@@ -77,18 +77,20 @@ func loadActionChildren(db gorp.SqlExecutor, actionID int64) ([]sdk.Action, erro
 
 	var edgeID, childID int64
 	var execOrder int
-	var final, enabled bool
-	var mapFinal = make(map[int64]bool)
+	var optional, alwaysExecuted, enabled bool
+	var mapOptional = make(map[int64]bool)
+	var mapAlwaysExecuted = make(map[int64]bool)
 	var mapEnabled = make(map[int64]bool)
 
 	for rows.Next() {
-		err = rows.Scan(&edgeID, &childID, &execOrder, &final, &enabled)
+		err = rows.Scan(&edgeID, &childID, &execOrder, &optional, &alwaysExecuted, &enabled)
 		if err != nil {
 			return nil, err
 		}
 		edgeIDs = append(edgeIDs, edgeID)
 		childrenIDs = append(childrenIDs, childID)
-		mapFinal[edgeID] = final
+		mapOptional[edgeID] = optional
+		mapAlwaysExecuted[edgeID] = alwaysExecuted
 		mapEnabled[edgeID] = enabled
 	}
 	rows.Close()
@@ -111,8 +113,9 @@ func loadActionChildren(db gorp.SqlExecutor, actionID int64) ([]sdk.Action, erro
 		// If child action has been modified, new parameters will show
 		// and delete one won't be there anymore
 		replaceChildActionParameters(&children[i], params)
-		// Get final flag
-		children[i].Final = mapFinal[edgeIDs[i]]
+		// Get optional & always_executed flags
+		children[i].Optional = mapOptional[edgeIDs[i]]
+		children[i].AlwaysExecuted = mapAlwaysExecuted[edgeIDs[i]]
 		// Get enable flag
 		children[i].Enabled = mapEnabled[edgeIDs[i]]
 	}
@@ -180,4 +183,47 @@ func deleteActionChildren(db gorp.SqlExecutor, actionID int64) error {
 	}
 
 	return nil
+}
+
+// LoadJoinedActionsByActionID returns all joind action (aka jobs) using any of actionID
+func LoadJoinedActionsByActionID(db gorp.SqlExecutor, actionIDs []int64) ([]sdk.Action, error) {
+	query := `
+WITH RECURSIVE parent_action(id, name, parent_id) AS (
+    SELECT action.id, action.name, action_edge.parent_id
+        FROM action, action_edge
+        WHERE action.id = action_edge.child_id
+        AND action.id = ANY(string_to_array($1, ',')::int[])
+    UNION ALL
+    SELECT action.id, action.name, action_edge.parent_id
+        FROM parent_action, action, action_edge
+        WHERE action.id = action_edge.child_id
+        AND parent_action.parent_id = action.id
+)
+SELECT parent_id FROM parent_action
+UNION ALL
+SELECT action.id FROM action WHERE type = $2 and id = ANY(string_to_array($1, ',')::int[])
+`
+
+	ids := []string{}
+	for _, i := range actionIDs {
+		ids = append(ids, fmt.Sprintf("%d", i))
+	}
+
+	s := strings.Join(ids, ",")
+
+	joinedActionIDs := []int64{}
+	if _, err := db.Select(&joinedActionIDs, query, s, sdk.JoinedAction); err != nil {
+		return nil, err
+	}
+
+	joinedActions := []sdk.Action{}
+	for _, id := range joinedActionIDs {
+		a, err := LoadActionByID(db, id)
+		if err != nil {
+			return nil, err
+		}
+		joinedActions = append(joinedActions, *a)
+	}
+
+	return joinedActions, nil
 }

@@ -2,6 +2,7 @@ package project
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -149,7 +150,22 @@ func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, proj *sdk.Project) err
 
 	_, err := db.Exec("update project set last_modified = $2 where projectkey = $1", proj.Key, t)
 	proj.LastModified = t
-	return err
+
+	if u != nil {
+		updates := sdk.LastModification{
+			Key:          proj.Key,
+			Name:         proj.Name,
+			LastModified: t.Unix(),
+			Username:     u.Username,
+			Type:         sdk.ProjectLastModiciationType,
+		}
+		b, errP := json.Marshal(updates)
+		if errP == nil {
+			cache.Publish("lastUpdates", string(b))
+		}
+		return err
+	}
+	return nil
 }
 
 // DeleteByID removes given project from database (project and project_group table)
@@ -192,6 +208,7 @@ var LoadOptions = struct {
 	WithRepositoriesManagers LoadOptionFunc
 	WithApplicationPipelines LoadOptionFunc
 	WithApplicationVariables LoadOptionFunc
+	WithKeys                 LoadOptionFunc
 }{
 	Default:                  &loadDefault,
 	WithPipelines:            &loadPipelines,
@@ -203,6 +220,12 @@ var LoadOptions = struct {
 	WithVariables:            &loadVariables,
 	WithApplicationPipelines: &loadApplicationPipelines,
 	WithApplicationVariables: &loadApplicationVariables,
+	WithKeys:                 &loadKeys,
+}
+
+// LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
+func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	return load(db, u, opts, "select * from project where id = $1", id)
 }
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions

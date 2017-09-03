@@ -56,5 +56,4 @@ func addReposManager(cmd *cobra.Command, args []string) {
 		sdk.Exit("Error: %s\n", err)
 	}
 	fmt.Printf("%s %s %s\n", rm.Type, rm.Name, rm.URL)
-
 }

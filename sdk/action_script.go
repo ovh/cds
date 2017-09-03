@@ -19,10 +19,11 @@ type ActionScript struct {
 	Parameters   map[string]Parameter   `json:"parameters,omitempty"`
 	Steps        []struct {
 		Enabled          *bool                        `json:"enabled"`
-		Final            bool                         `json:"final"`
+		AlwaysExecuted   bool                         `json:"always_executed"`
 		ArtifactUpload   map[string]string            `json:"artifactUpload,omitempty"`
 		ArtifactDownload map[string]string            `json:"artifactDownload,omitempty"`
 		GitClone         map[string]string            `json:"gitClone,omitempty"`
+		GitTag           map[string]string            `json:"gitTag,omitempty"`
 		Script           string                       `json:"script,omitempty"`
 		JUnitReport      string                       `json:"jUnitReport,omitempty"`
 		Plugin           map[string]map[string]string `json:"plugin,omitempty"`
@@ -65,6 +66,16 @@ func NewStepJUnitReport(s string) Action {
 func NewStepGitClone(v map[string]string) Action {
 	newAction := Action{
 		Name:       GitCloneAction,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
+	}
+	return newAction
+}
+
+// NewStepGitTag returns an action (basically used as a step of a job) of GitTag type
+func NewStepGitTag(v map[string]string) Action {
+	newAction := Action{
+		Name:       GitTagAction,
 		Type:       BuiltinAction,
 		Parameters: ParametersFromMap(v),
 	}
@@ -193,6 +204,10 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 			goto next
 		}
 
+		if v.GitTag != nil {
+			newAction = NewStepGitTag(v.GitTag)
+		}
+
 		//Action builtin = Plugin
 		if v.Plugin != nil {
 			a, err := NewStepPlugin(v.Plugin)
@@ -211,7 +226,7 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 		} else {
 			newAction.Enabled = true
 		}
-		newAction.Final = v.Final
+		newAction.AlwaysExecuted = v.AlwaysExecuted
 		a.Actions = append(a.Actions, newAction)
 	}
 

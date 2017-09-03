@@ -12,7 +12,7 @@ import (
 )
 
 // Find image ID from image name
-func (h *HatcheryCloud) imageID(img string) (string, error) {
+func (h *HatcheryOpenstack) imageID(img string) (string, error) {
 	for _, i := range h.getImages() {
 		if i.Name == img {
 			return i.ID, nil
@@ -22,7 +22,7 @@ func (h *HatcheryCloud) imageID(img string) (string, error) {
 }
 
 // Find flavor ID from flavor name
-func (h *HatcheryCloud) flavorID(flavor string) (string, error) {
+func (h *HatcheryOpenstack) flavorID(flavor string) (string, error) {
 	for _, f := range h.flavors {
 		if f.Name == flavor {
 			return f.ID, nil
@@ -40,7 +40,7 @@ var limages = struct {
 	list: []images.Image{},
 }
 
-func (h *HatcheryCloud) getImages() []images.Image {
+func (h *HatcheryOpenstack) getImages() []images.Image {
 	t := time.Now()
 	defer log.Debug("getImages(): %fs", time.Since(t).Seconds())
 
@@ -49,7 +49,7 @@ func (h *HatcheryCloud) getImages() []images.Image {
 	limages.mu.RUnlock()
 
 	if nbImages == 0 {
-		all, err := images.ListDetail(h.client, nil).AllPages()
+		all, err := images.ListDetail(h.openstackClient, nil).AllPages()
 		if err != nil {
 			log.Error("getImages> error on listDetail: %s", err)
 			return limages.list
@@ -60,8 +60,17 @@ func (h *HatcheryCloud) getImages() []images.Image {
 			return limages.list
 		}
 
+		activeImages := []images.Image{}
+		for i := range imgs {
+			log.Debug("getImages> image %s status %s progress %d all:%+v", imgs[i].Name, imgs[i].Status, imgs[i].Progress, imgs[i])
+			if imgs[i].Status == "ACTIVE" {
+				log.Debug("getImages> add %s to activeImages", imgs[i].Name)
+				activeImages = append(activeImages, imgs[i])
+			}
+		}
+
 		limages.mu.Lock()
-		limages.list = imgs
+		limages.list = activeImages
 		limages.mu.Unlock()
 		//Remove data from the cache after 2 seconds
 		go func() {
@@ -73,7 +82,7 @@ func (h *HatcheryCloud) getImages() []images.Image {
 	return limages.list
 }
 
-func (h *HatcheryCloud) resetImagesCache() {
+func (h *HatcheryOpenstack) resetImagesCache() {
 	limages.mu.Lock()
 	limages.list = []images.Image{}
 	limages.mu.Unlock()
@@ -88,7 +97,7 @@ var lservers = struct {
 	list: []servers.Server{},
 }
 
-func (h *HatcheryCloud) getServers() []servers.Server {
+func (h *HatcheryOpenstack) getServers() []servers.Server {
 	t := time.Now()
 	defer log.Debug("getServers() : %fs", time.Since(t).Seconds())
 
@@ -97,7 +106,7 @@ func (h *HatcheryCloud) getServers() []servers.Server {
 	lservers.mu.RUnlock()
 
 	if nbServers == 0 {
-		all, err := servers.List(h.client, nil).AllPages()
+		all, err := servers.List(h.openstackClient, nil).AllPages()
 		if err != nil {
 			log.Error("getServers> error on servers.List: %s", err)
 			return lservers.list

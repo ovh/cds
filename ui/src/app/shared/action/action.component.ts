@@ -19,8 +19,7 @@ import {cloneDeep} from 'lodash';
 })
 export class ActionComponent implements OnDestroy {
     editableAction: Action;
-    nonFinalSteps: Array<Action> = new Array<Action>();
-    finalSteps: Array<Action> = new Array<Action>();
+    steps: Array<Action> = new Array<Action>();
     publicActions: Array<Action>;
 
     @Input() project: Project;
@@ -35,16 +34,9 @@ export class ActionComponent implements OnDestroy {
         if (!this.editableAction.requirements) {
             this.editableAction.requirements = new Array<Requirement>();
         }
-        this.nonFinalSteps = new Array<Action>();
-        this.finalSteps = new Array<Action>();
+        this.steps = new Array<Action>();
         if (this.editableAction.actions) {
-            this.editableAction.actions.forEach(s => {
-                if (s.final) {
-                    this.finalSteps.push(s);
-                } else {
-                    this.nonFinalSteps.push(s);
-                }
-            });
+            this.steps = cloneDeep(this.editableAction.actions);
         }
     }
 
@@ -142,23 +134,12 @@ export class ActionComponent implements OnDestroy {
                 break;
             case 'add':
                 let newStep = cloneDeep(event.step);
-                if (newStep.final) {
-                    this.finalSteps.push(newStep);
-                } else {
-                    this.nonFinalSteps.push(newStep);
-                }
+                this.steps.push(newStep);
                 break;
             case 'delete':
-                if (event.step.final) {
-                    let index = this.finalSteps.indexOf(event.step);
-                    if (index >= 0 ) {
-                        this.finalSteps.splice(index, 1);
-                    }
-                } else {
-                    let index = this.nonFinalSteps.indexOf(event.step);
-                    if (index >= 0 ) {
-                        this.nonFinalSteps.splice(index, 1);
-                    }
+                let index = this.steps.indexOf(event.step);
+                if (index >= 0 ) {
+                    this.steps.splice(index, 1);
                 }
                 break;
         }
@@ -171,14 +152,8 @@ export class ActionComponent implements OnDestroy {
     sendActionEvent(type: string): void {
         // Rebuild step
         this.editableAction.actions = new Array<Action>();
-        if (this.nonFinalSteps) {
-            this.nonFinalSteps.forEach(s => {
-                this.editableAction.actions.push(s);
-            });
-        }
-
-        if (this.finalSteps) {
-            this.finalSteps.forEach(s => {
+        if (this.steps) {
+            this.steps.forEach(s => {
                 this.editableAction.actions.push(s);
             });
         }

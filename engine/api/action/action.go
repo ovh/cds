@@ -2,6 +2,7 @@ package action
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -55,7 +56,8 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 				return errl
 			}
 			a.Actions[i].ID = ch.ID
-			a.Actions[i].Final = ch.Final
+			a.Actions[i].AlwaysExecuted = ch.AlwaysExecuted
+			a.Actions[i].Optional = ch.Optional
 			a.Actions[i].Enabled = ch.Enabled
 			log.Debug("InsertAction> Get existing child Action %s with enabled:%t", a.Actions[i].Name, a.Actions[i].Enabled)
 		} else {
@@ -290,6 +292,8 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 	if err := DeleteActionRequirements(db, a.ID); err != nil {
 		return err
 	}
+
+	//TODO we don't need to compute all job requirements here, but only when running the job
 	// Requirements of children are requirement of parent
 	for _, c := range a.Actions {
 		// Now for each requirement of child, check if it exists in parent
@@ -306,6 +310,16 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 			}
 		}
 	}
+
+	// Checks if multiple requirements have the same name
+	for i := range a.Requirements {
+		for j := range a.Requirements {
+			if a.Requirements[i].Name == a.Requirements[j].Name && i != j {
+				return sdk.ErrInvalidJobRequirement
+			}
+		}
+	}
+
 	for i := range a.Requirements {
 		if err := InsertActionRequirement(db, a.ID, a.Requirements[i]); err != nil {
 			return err
@@ -417,7 +431,12 @@ func insertAudit(db gorp.SqlExecutor, actionID, userID int64, change string) err
 	query := `INSERT INTO action_audit (action_id, user_id, change, versionned, action_json)
 			VALUES ($1, $2, $3, NOW(), $4)`
 
-	if _, err := db.Exec(query, actionID, userID, change, a.JSON()); err != nil {
+	b, errJSON := json.Marshal(a)
+	if errJSON != nil {
+		return errJSON
+	}
+
+	if _, err := db.Exec(query, actionID, userID, change, b); err != nil {
 		return err
 	}
 

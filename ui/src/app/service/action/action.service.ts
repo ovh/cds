@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
-import {Http, Response} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 import {Action, PipelineUsingAction} from '../../model/action.model';
+import {HttpClient} from '@angular/common/http';
 
 /**
  * Service to access Public Action
@@ -9,7 +9,7 @@ import {Action, PipelineUsingAction} from '../../model/action.model';
 @Injectable()
 export class ActionService {
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
     }
 
     /**
@@ -17,7 +17,7 @@ export class ActionService {
      * @returns {Observable<string[]>}
      */
     getActions(): Observable<Action[]> {
-        return this._http.get('/action').map(res => res.json());
+        return this._http.get('/action');
     }
 
     /**
@@ -26,7 +26,7 @@ export class ActionService {
      * @returns {Observable<Action>}
      */
     getAction(name: string): Observable<Action> {
-        return this._http.get('/action/' + name).map(res => res.json());
+        return this._http.get('/action/' + name);
     }
 
     /**
@@ -35,7 +35,7 @@ export class ActionService {
      * @returns {Observable<PipelineUsingAction>}
      */
     getPiplinesUsingAction(name: string): Observable<PipelineUsingAction[]> {
-        return this._http.get('/action/' + name + '/using').map(res => res.json());
+        return this._http.get('/action/' + name + '/using');
     }
 
     /**
@@ -44,7 +44,7 @@ export class ActionService {
      * @returns {Observable<Action>}
      */
     createAction(action: Action): Observable<Action> {
-        return this._http.post('/action/' + action.name, action).map(res => res.json());
+        return this._http.post('/action/' + action.name, action);
     }
 
     /**
@@ -53,7 +53,7 @@ export class ActionService {
      * @returns {Observable<Action>}
      */
     updateAction(name: string, action: Action): Observable<Action> {
-        return this._http.put('/action/' + name, action).map(res => res.json());
+        return this._http.put('/action/' + name, action);
     }
 
     /**

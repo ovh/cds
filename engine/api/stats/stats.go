@@ -8,7 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk/log"
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 // TestEvent inserts in stats the max number of tests for each application and total in stats

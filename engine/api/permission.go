@@ -49,7 +49,7 @@ func getPermissionByMethod(method string, isExecution bool) int {
 	}
 }
 
-func checkWorkerPermission(db gorp.SqlExecutor, rc *routerConfig, routeVar map[string]string, c *businesscontext.Ctx) bool {
+func checkWorkerPermission(db gorp.SqlExecutor, rc *HandlerConfig, routeVar map[string]string, c *businesscontext.Ctx) bool {
 	if c.Worker == nil {
 		return false
 	}
@@ -236,6 +236,9 @@ func checkWorkerModelPermissions(modelID string, c *businesscontext.Ctx, permiss
 		return false
 	}
 
+	if c.Hatchery != nil {
+		return c.Hatchery.GroupID == group.SharedInfraGroup.ID || m.GroupID == c.Hatchery.GroupID
+	}
 	return checkWorkerModelPermissionsByUser(m, c.User, permissionValue)
 }
 

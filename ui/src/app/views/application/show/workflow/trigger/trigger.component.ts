@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input} from '@angular/core';
 import {Trigger} from '../../../../../model/trigger.model';
 import {Project} from '../../../../../model/project.model';
 import {Pipeline} from '../../../../../model/pipeline.model';
@@ -14,7 +14,7 @@ import {Parameter} from '../../../../../model/parameter.model';
     templateUrl: './trigger.html',
     styleUrls: ['./trigger.scss']
 })
-export class ApplicationTriggerComponent implements OnInit {
+export class ApplicationTriggerComponent {
 
     // Trigger to edit
     @Input() trigger: Trigger;
@@ -36,9 +36,6 @@ export class ApplicationTriggerComponent implements OnInit {
     constructor(private _appStore: ApplicationStore) {
         this.refPrerequisites = new Array<Prerequisite>();
         this.refPrerequisites.push(this.getGitPrerequisite());
-    }
-
-    ngOnInit(): void {
     }
 
     /**

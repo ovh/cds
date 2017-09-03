@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -11,24 +12,23 @@ import (
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	projectKey := vars["permProjectKey"]
 	appName := r.FormValue("appName")
+	pipID := r.FormValue("pipId")
 
 	var allVariables []string
 
 	// Load variable project
 	projectVar, err := project.GetAllVariableNameInProjectByKey(db, projectKey)
 	if err != nil {
-		log.Warning("getVariablesHandler> Cannot Load project variables: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "getVariablesHandler> Cannot Load project variables: %s", err)
 	}
 	for i := range projectVar {
 		projectVar[i] = fmt.Sprintf("{{.cds.proj.%s}}", projectVar[i])
@@ -38,9 +38,7 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 	// Load env variable
 	envVarNameArray, err := environment.GetAllVariableNameByProject(db, projectKey)
 	if err != nil {
-		log.Warning("getVariablesHandler> Cannot Load env variables: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "getVariablesHandler> Cannot Load env variables: %s", err)
 	}
 	for i := range envVarNameArray {
 		envVarNameArray[i] = fmt.Sprintf("{{.cds.env.%s}}", envVarNameArray[i])
@@ -53,15 +51,11 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		// Check permission on application
 		app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithVariables)
 		if err != nil {
-			log.Warning("getPipelineTypeHandler> Cannot Load application: %s\n", err)
-			return err
-
+			return sdk.WrapError(err, "getPipelineTypeHandler> Cannot Load application: %s", err)
 		}
 
 		if !permission.AccessToApplication(app.ID, c.User, permission.PermissionRead) {
-			log.Warning("getVariablesHandler> Not allow to access to this application: %s\n", appName)
-			return sdk.ErrForbidden
-
+			return sdk.WrapError(sdk.ErrForbidden, "getVariablesHandler> Not allow to access to this application: %s", appName)
 		}
 
 		for _, v := range app.Variable {
@@ -80,24 +74,37 @@ func getVariablesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		`
 		rows, err := db.Query(query, projectKey)
 		if err != nil {
-			log.Warning("getVariablesHandler> Cannot Load all applications variables: %s\n", err)
-			return err
-
+			return sdk.WrapError(err, "getVariablesHandler> Cannot Load all applications variables: %s", err)
 		}
 		defer rows.Close()
 		for rows.Next() {
 			var name string
 			err := rows.Scan(&name)
 			if err != nil {
-				log.Warning("getVariablesHandler> Cannot scan results: %s\n", err)
-				return err
-
+				return sdk.WrapError(err, "getVariablesHandler> Cannot scan results: %s", err)
 			}
 			appVar = append(appVar, fmt.Sprintf("{{.cds.app.%s}}", name))
 
 		}
 	}
 	allVariables = append(allVariables, appVar...)
+
+	if pipID != "" {
+		pipIDN, err := strconv.ParseInt(pipID, 10, 64)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "getVariablesHandler> Cannot convert pipId to int : %s", err)
+		}
+		pipParams, err := pipeline.GetAllParametersInPipeline(db, pipIDN)
+
+		if err != nil {
+			return sdk.WrapError(err, "getVariablesHandler> Cannot get all parameters in pipeline: %s", err)
+		}
+
+		for _, param := range pipParams {
+			allVariables = append(allVariables, fmt.Sprintf("{{.cds.pip.%s}}", param.Name))
+		}
+	}
+
 	// add cds variable
 	cdsVar := []string{
 		"{{.cds.application}}",

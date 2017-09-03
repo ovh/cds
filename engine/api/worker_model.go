@@ -4,11 +4,13 @@ import (
 	"net/http"
 
 	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
@@ -69,6 +71,39 @@ func addWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *b
 	return WriteJSON(w, r, model, http.StatusOK)
 }
 
+func spawnErrorWorkerModelHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	spawnErrorForm := &sdk.SpawnErrorForm{}
+	if err := UnmarshalBody(r, spawnErrorForm); err != nil {
+		return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Unable to parse spawn error form")
+	}
+
+	workerModelID, errr := requestVarInt(r, "permModelID")
+	if errr != nil {
+		return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
+	}
+
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		return sdk.WrapError(errBegin, "spawnErrorWorkerModelHandler> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	model, errLoad := worker.LoadWorkerModelByID(db, workerModelID)
+	if errLoad != nil {
+		return sdk.WrapError(errLoad, "spawnErrorWorkerModelHandler> cannot load worker model by id")
+	}
+
+	if err := worker.UpdateSpawnErrorWorkerModel(tx, model.ID, spawnErrorForm.Error); err != nil {
+		return sdk.WrapError(err, "spawnErrorWorkerModelHandler> cannot update spawn error on worker model")
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "spawnErrorWorkerModelHandler> Cannot commit tx")
+	}
+
+	return WriteJSON(w, r, nil, http.StatusOK)
+}
+
 func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	workerModelID, errr := requestVarInt(r, "permModelID")
 	if errr != nil {
@@ -89,6 +124,12 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	//If the model name has not been set, keep the old name
 	if model.Name == "" {
 		model.Name = old.Name
+	}
+
+	//If the model has been renamed, we will have to update requirements
+	var renamed bool
+	if model.Name != old.Name {
+		renamed = true
 	}
 
 	//If the model image has not been set, keep the old image
@@ -137,9 +178,57 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return sdk.WrapError(sdk.ErrInvalidID, "updateWorkerModel> wrong ID")
 	}
 
+	tx, errtx := db.Begin()
+	if errtx != nil {
+		return sdk.WrapError(errtx, "updateWorkerModel> unable to start transaction")
+	}
+
+	defer tx.Rollback()
+
 	// update model in db
-	if err := worker.UpdateWorkerModel(db, model); err != nil {
+	if err := worker.UpdateWorkerModel(tx, model); err != nil {
 		return sdk.WrapError(err, "updateWorkerModel> cannot update worker model")
+	}
+
+	// update requirements if needed
+	if renamed {
+		actionsID, erru := action.UpdateAllRequirements(tx, old.Name, model.Name, sdk.ModelRequirement)
+		if erru != nil {
+			return sdk.WrapError(erru, "updateWorkerModel> cannot update action requirements")
+		}
+
+		log.Debug("updateWorkerModel> Update action %v", actionsID)
+
+		//update all the pipelines using this action
+		actions, erra := action.LoadJoinedActionsByActionID(tx, actionsID)
+		if erra != nil {
+			return sdk.WrapError(erra, "updateWorkerModel> cannot load joined actions")
+		}
+
+		log.Debug("updateWorkerModel> Loaded action %v", actions)
+
+		for _, a := range actions {
+			log.Debug("updateWorkerModel> Loading pipeline for action %d", a.ID)
+			id, err := pipeline.GetPipelineIDFromJoinedActionID(tx, a.ID)
+			if err != nil {
+				return sdk.WrapError(err, "updateWorkerModel> cannot get pipeline")
+			}
+			log.Debug("updateWorkerModel> Updating pipeline %d", id)
+			//Load the project
+			proj, errproj := project.LoadByPipelineID(tx, c.User, id)
+			if errproj != nil {
+				return sdk.WrapError(errproj, "updateWorkerModel> unable to load project")
+			}
+
+			if err := pipeline.UpdatePipelineLastModified(tx, proj, &sdk.Pipeline{ID: id}, c.User); err != nil {
+				return sdk.WrapError(err, "updateWorkerModel> cannot update pipeline")
+			}
+		}
+
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "updateWorkerModel> unable to commit transaction")
 	}
 
 	// Recompute warnings
@@ -195,7 +284,6 @@ func getWorkerModelsEnabled(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	if errgroup != nil {
 		return sdk.WrapError(errgroup, "getWorkerModels> cannot load worker models for hatchery %d with group %d", c.Hatchery.ID, c.Hatchery.GroupID)
 	}
-	log.Debug("getWorkerModels> for hatchery %s with group %s : %s", c.Hatchery.ID, c.Hatchery.GroupID, models)
 	return WriteJSON(w, r, models, http.StatusOK)
 }
 
@@ -224,42 +312,6 @@ func getWorkerModels(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	return WriteJSON(w, r, models, http.StatusOK)
 }
 
-func addWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	workerModelID, errr := requestVarInt(r, "permModelID")
-	if errr != nil {
-		return sdk.WrapError(errr, "addWorkerModelCapa> Invalid permModelID")
-	}
-
-	workerModel, errLoad := worker.LoadWorkerModelByID(db, workerModelID)
-	if errLoad != nil {
-		return sdk.WrapError(errLoad, "addWorkerModelCapa> cannot load worker model by id")
-	}
-
-	var capa sdk.Requirement
-	if err := UnmarshalBody(r, &capa); err != nil {
-		return sdk.WrapError(err, "addWorkerModelCapa> cannot unmashal body")
-	}
-	workerModel.Capabilities = append(workerModel.Capabilities, capa)
-
-	if err := worker.UpdateWorkerModel(db, *workerModel); err != nil {
-		return sdk.WrapError(err, "addWorkerModelCapa> cannot insert new worker model capa")
-	}
-
-	// Recompute warnings
-	go func() {
-		warnings, err := sanity.LoadAllWarnings(db, "")
-		if err != nil {
-			log.Warning("updateWorkerModel> cannot load warnings: %s", err)
-		}
-
-		for _, warning := range warnings {
-			sanity.CheckPipeline(db, &warning.Project, &warning.Pipeline)
-		}
-	}()
-
-	return nil
-}
-
 func getWorkerModelTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	return WriteJSON(w, r, sdk.AvailableWorkerModelType, http.StatusOK)
 }
@@ -270,72 +322,6 @@ func getWorkerModelCommunications(w http.ResponseWriter, r *http.Request, db *go
 
 func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	return WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
-}
-
-func updateWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	capaName := vars["capa"]
-
-	workerModelID, errr := requestVarInt(r, "permModelID")
-	if errr != nil {
-		return sdk.WrapError(errr, "updateWorkerModelCapa> Invalid permModelID")
-	}
-
-	// Unmarshal body
-	var capa sdk.Requirement
-	if err := UnmarshalBody(r, &capa); err != nil {
-		return sdk.WrapError(err, "updateWorkerModelCapa> Cannot unmarshal body")
-	}
-
-	if capaName != capa.Name {
-		return sdk.WrapError(sdk.ErrWrongRequest, "updateWorkerModelCapa> Wrong capability name %s != %s", capaName, capa.Name)
-	}
-
-	if err := worker.UpdateWorkerModelCapability(db, capa, workerModelID); err != nil {
-		return sdk.WrapError(err, "updateWorkerModelCapa> cannot update worker model")
-	}
-
-	// Recompute warnings
-	go func() {
-		warnings, err := sanity.LoadAllWarnings(db, "")
-		if err != nil {
-			log.Warning("updateWorkerModel> cannot load warnings: %s", err)
-		}
-
-		for _, warning := range warnings {
-			sanity.CheckPipeline(db, &warning.Project, &warning.Pipeline)
-		}
-	}()
-
-	return nil
-}
-
-func deleteWorkerModelCapa(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	capaName := vars["capa"]
-
-	workerModelID, errr := requestVarInt(r, "permModelID")
-	if errr != nil {
-		return sdk.WrapError(errr, "deleteWorkerModelCapa> Invalid permModelID")
-	}
-
-	if err := worker.DeleteWorkerModelCapability(db, workerModelID, capaName); err != nil {
-		return sdk.WrapError(err, "updateWorkerModelCapa> cannot remove worker model capa")
-	}
-
-	// Recompute warnings
-	go func() {
-		warnings, err := sanity.LoadAllWarnings(db, "")
-		if err != nil {
-			log.Warning("updateWorkerModel> cannot load warnings: %s", err)
-		}
-
-		for _, warning := range warnings {
-			sanity.CheckPipeline(db, &warning.Project, &warning.Pipeline)
-		}
-	}()
-
-	return nil
 }
 
 func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
@@ -405,23 +391,4 @@ func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}()
 
 	return WriteJSON(w, r, res, http.StatusAccepted)
-}
-
-func getWorkerModelInstances(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	workerModelID, errr := requestVarInt(r, "permModelID")
-	if errr != nil {
-		return sdk.WrapError(errr, "getWorkerModelInstances> Invalid permModelID")
-	}
-
-	m, errLoad := worker.LoadWorkerModelByID(db, workerModelID)
-	if errLoad != nil {
-		return sdk.WrapError(errLoad, "getWorkerModelInstances> cannot load worker model")
-	}
-
-	ws, errW := worker.LoadWorkersByModel(db, m.ID)
-	if errW != nil {
-		return sdk.WrapError(errW, "getWorkerModelInstances> cannot load workers by model id")
-	}
-
-	return WriteJSON(w, r, ws, http.StatusOK)
 }

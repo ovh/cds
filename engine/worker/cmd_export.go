@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -64,25 +66,45 @@ func exportCmd(cmd *cobra.Command, args []string) {
 
 func (wk *currentWorker) addBuildVarHandler(w http.ResponseWriter, r *http.Request) {
 	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
+	data, errra := ioutil.ReadAll(r.Body)
+	if errra != nil {
+		log.Error("addBuildVarHandler> Cannot ReadAll err: %s", errra)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	var v sdk.Variable
 	if err := json.Unmarshal(data, &v); err != nil {
+		log.Error("addBuildVarHandler> Cannot Unmarshal err: %s", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	v.Name = "cds.build." + v.Name
 
+	errstatus, err := wk.addVariableInPipelineBuild(v, nil)
+	if err != nil {
+		w.WriteHeader(errstatus)
+	}
+}
+
+func (wk *currentWorker) addVariableInPipelineBuild(v sdk.Variable, params *[]sdk.Parameter) (int, error) {
 	// OK, so now we got our new variable. We need to:
 	// - add it as a build var in API
-	wk.currentJob.buildVariables = append(wk.currentJob.buildVariables, v)
+	if strings.HasPrefix(v.Name, "cds.build") {
+		wk.currentJob.buildVariables = append(wk.currentJob.buildVariables, v)
+	} else if params != nil {
+		*params = append(*params, sdk.Parameter{
+			Name:  v.Name,
+			Type:  v.Type,
+			Value: v.Value,
+		})
+	}
+
 	// - add it in current building Action
-	data, err = json.Marshal(v)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+	data, errm := json.Marshal(v)
+	if errm != nil {
+		log.Error("addBuildVarHandler> Cannot Marshal err: %s", errm)
+		return http.StatusBadRequest, fmt.Errorf("addBuildVarHandler> Cannot Marshal err: %s", errm)
 	}
 	// Retrieve build info
 	var proj, app, pip, bnS, env string
@@ -101,14 +123,14 @@ func (wk *currentWorker) addBuildVarHandler(w http.ResponseWriter, r *http.Reque
 		}
 	}
 
-	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/variable?envName=%s", proj, app, pip, bnS, env)
+	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/variable?envName=%s", proj, app, pip, bnS, url.QueryEscape(env))
 	_, code, err := sdk.Request("POST", uri, data)
 	if err == nil && code > 300 {
 		err = fmt.Errorf("HTTP %d", code)
 	}
 	if err != nil {
 		log.Error("addBuildVarHandler> Cannot export variable: %s", err)
-		w.WriteHeader(http.StatusServiceUnavailable)
-		return
+		return http.StatusServiceUnavailable, fmt.Errorf("addBuildVarHandler> Cannot export variable: %s", err)
 	}
+	return http.StatusOK, nil
 }

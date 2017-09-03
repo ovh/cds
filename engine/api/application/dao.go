@@ -2,10 +2,13 @@ package application
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
@@ -27,6 +30,7 @@ var LoadOptions = struct {
 	WithHooks                      LoadOptionFunc
 	WithNotifs                     LoadOptionFunc
 	WithRepositoryManager          LoadOptionFunc
+	WithKeys                       LoadOptionFunc
 }{
 	Default:                        &loadDefaultDependencies,
 	WithVariables:                  &loadVariables,
@@ -37,6 +41,7 @@ var LoadOptions = struct {
 	WithHooks:                      &loadHooks,
 	WithNotifs:                     &loadNotifs,
 	WithRepositoryManager:          &loadRepositoryManager,
+	WithKeys:                       &loadKeys,
 }
 
 // LoadByName load an application from DB
@@ -168,11 +173,20 @@ func unwrap(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, dbApp *dbAp
 
 // Insert add an application id database
 func Insert(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, u *sdk.User) error {
+	// check application name pattern
+	regexp := regexp.MustCompile(sdk.NamePattern)
+	if !regexp.MatchString(app.Name) {
+		return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Insert: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
+	}
+
 	app.ProjectID = proj.ID
 	app.ProjectKey = proj.Key
 	app.LastModified = time.Now()
 	dbApp := dbApplication(*app)
 	if err := db.Insert(&dbApp); err != nil {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
+			err = sdk.ErrApplicationExist
+		}
 		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)
 	}
 	*app = sdk.Application(dbApp)
@@ -196,7 +210,7 @@ func Update(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
 // UpdateLastModified Update last_modified column in application table
 func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
 	query := `
-		UPDATE application SET last_modified=current_timestamp WHERE id = $1 RETURNING last_modified
+		UPDATE application SET last_modified = current_timestamp WHERE id = $1 RETURNING last_modified
 	`
 	var lastModified time.Time
 	err := db.QueryRow(query, app.ID).Scan(&lastModified)
@@ -210,6 +224,18 @@ func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) 
 			Username:     u.Username,
 			LastModified: lastModified.Unix(),
 		}, 0)
+
+		updates := sdk.LastModification{
+			Key:          app.ProjectKey,
+			Name:         app.Name,
+			LastModified: lastModified.Unix(),
+			Username:     u.Username,
+			Type:         sdk.ApplicationLastModificationType,
+		}
+		b, errP := json.Marshal(updates)
+		if errP == nil {
+			cache.Publish("lastUpdates", string(b))
+		}
 	}
 
 	return sdk.WrapError(err, "application.UpdateLastModified %s(%d)", app.Name, app.ID)

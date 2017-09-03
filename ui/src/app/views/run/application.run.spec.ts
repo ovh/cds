@@ -17,6 +17,7 @@ import {Pipeline} from '../../model/pipeline.model';
 import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {RouterService} from '../../service/router/router.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application Run Component', () => {
 
@@ -40,7 +41,8 @@ describe('CDS: Application Run Component', () => {
             imports : [
                 ApplicationRunModule,
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 

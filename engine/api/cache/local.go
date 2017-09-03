@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -184,4 +185,50 @@ func (s *LocalStore) DequeueWithContext(c context.Context, queueName string, val
 		close(elemChan)
 	})
 	return
+}
+
+// LocalPubSub local subscriber
+type LocalPubSub struct {
+	queueName string
+}
+
+// Unsubscribe a subscriber
+func (s *LocalPubSub) Unsubscribe(channels ...string) error {
+	return nil
+}
+
+// Publish a msg in a queue
+func (s *LocalStore) Publish(channel string, value interface{}) {
+	s.Mutex.Lock()
+	l := s.Queues[channel]
+	if l == nil {
+		s.Queues[channel] = &list.List{}
+		l = s.Queues[channel]
+	}
+	s.Mutex.Unlock()
+	b, err := json.Marshal(value)
+	if err != nil {
+		return
+	}
+	s.Mutex.Lock()
+	l.PushBack(b)
+	s.Mutex.Unlock()
+}
+
+// Subscribe to a channel
+func (s *LocalStore) Subscribe(channel string) PubSub {
+	return &LocalPubSub{
+		queueName: channel,
+	}
+}
+
+// GetMessageFromSubscription from a queue
+func (s *LocalStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
+	lps, ok := pb.(*LocalPubSub)
+	if !ok {
+		return "", fmt.Errorf("GetMessage> PubSub is not a LocalPubSub. Got %T", pb)
+	}
+	var msg string
+	DequeueWithContext(c, lps.queueName, &msg)
+	return msg, nil
 }

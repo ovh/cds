@@ -20,10 +20,11 @@ func init() {
 	mapBuiltinActions[sdk.ScriptAction] = runScriptAction
 	mapBuiltinActions[sdk.JUnitAction] = runParseJunitTestResultAction
 	mapBuiltinActions[sdk.GitCloneAction] = runGitClone
+	mapBuiltinActions[sdk.GitTagAction] = runGitTag
 }
 
 // BuiltInAction defines builtin action signature
-type BuiltInAction func(context.Context, *sdk.Action, int64, []sdk.Parameter, LoggerFunc) sdk.Result
+type BuiltInAction func(context.Context, *sdk.Action, int64, *[]sdk.Parameter, LoggerFunc) sdk.Result
 
 // BuiltInActionFunc returns the BuiltInAction given a worker
 type BuiltInActionFunc func(*currentWorker) BuiltInAction
@@ -40,7 +41,7 @@ func getLogger(w *currentWorker, buildID int64, stepOrder int) LoggerFunc {
 	}
 }
 
-func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int) sdk.Result {
+func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int) sdk.Result {
 	defer w.drainLogsAndCloseLogger(ctx)
 
 	//Define a loggin function
@@ -58,7 +59,7 @@ func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID i
 	return f(w)(ctx, a, buildID, params, sendLog)
 }
 
-func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
+func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
 	chanRes := make(chan sdk.Result)
 
 	go func(buildID int64, params []sdk.Parameter) {
@@ -67,7 +68,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		//For the moment we consider that plugin name = action name = plugin binary file name
 		pluginName := a.Name
 		//The binary file has been downloaded during requirement check in /tmp
-		pluginBinary := path.Join(os.TempDir(), a.Name)
+		pluginBinary := path.Join(w.basedir, a.Name)
 
 		var tlsskipverify bool
 		if os.Getenv("CDS_SKIP_VERIFY") != "" {
@@ -100,7 +101,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			pluginArgs.Data[p.Name] = p.Value
 		}
 		for _, v := range w.currentJob.buildVariables {
-			pluginArgs.Data["cds.build."+v.Name] = v.Value
+			pluginArgs.Data[v.Name] = v.Value
 		}
 
 		//Call the Run function on the plugin interface
@@ -123,7 +124,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		}
 
 		chanRes <- res
-	}(buildID, params)
+	}(buildID, *params)
 
 	for {
 		select {

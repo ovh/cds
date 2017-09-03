@@ -18,7 +18,7 @@
             <div class="paddingContent">
                 <div class="viewContent">
                     <div [hidden]="selectedTab !== 'workflow'" class="workflow">
-                        <app-application-workflow [project]="project" [application]="application" [(applicationFilter)]="appFilter" (changeWorkerEvent)="changeWorkerFilter()" #workflow></app-application-workflow>
+                        <app-application-workflow [project]="project" [application]="application" [(applicationFilter)]="appFilter" (changeWorkerEvent)="changeWorkerFilter($event)" #workflow></app-application-workflow>
                     </div>
                     <div [ngSwitch]="selectedTab">
                         <div *ngSwitchCase="'variables'">

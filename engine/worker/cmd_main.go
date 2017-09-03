@@ -55,7 +55,7 @@ func cmdMain(w *currentWorker) *cobra.Command {
 	flags.Bool("force-exit", false, "If single_use=true, force exit. This is useful if it's spawned by an Hatchery (default: worker wait 30min for being killed by hatchery)")
 	viper.BindPFlag("force_exit", flags.Lookup("force-exit"))
 
-	flags.String("basedir", "", "Worker working directory")
+	flags.String("basedir", "", "This directory (default TMPDIR os environment var) will contains worker working directory and temporary files")
 	viper.BindPFlag("basedir", flags.Lookup("basedir"))
 
 	flags.Int("ttl", 30, "Worker time to live (minutes)")
@@ -231,7 +231,8 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				// Unregister from engine
+				// Unregister from engine and stop the register goroutine
+				registerTick.Stop()
 				log.Debug("Job is done. Unregistering...")
 				if err := w.unregister(); err != nil {
 					log.Warning("takeJob> could not unregister: %s", err)

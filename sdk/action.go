@@ -9,16 +9,17 @@ import (
 
 // Action is the base element of CDS pipeline
 type Action struct {
-	ID           int64         `json:"id" yaml:"-"`
-	Name         string        `json:"name"`
-	Type         string        `json:"type" yaml:"-"` // Source - Build - Packaging - Deployment
-	Description  string        `json:"description" yaml:"desc,omitempty"`
-	Requirements []Requirement `json:"requirements"`
-	Parameters   []Parameter   `json:"parameters"`
-	Actions      []Action      `json:"actions" yaml:"actions,omitempty"`
-	Enabled      bool          `json:"enabled" yaml:"-"`
-	Final        bool          `json:"final" yaml:"-"`
-	LastModified int64         `json:"last_modified"`
+	ID             int64         `json:"id" yaml:"-"`
+	Name           string        `json:"name"`
+	Type           string        `json:"type" yaml:"-"` // Source - Build - Packaging - Deployment
+	Description    string        `json:"description" yaml:"desc,omitempty"`
+	Requirements   []Requirement `json:"requirements"`
+	Parameters     []Parameter   `json:"parameters"`
+	Actions        []Action      `json:"actions" yaml:"actions,omitempty"`
+	Enabled        bool          `json:"enabled" yaml:"-"`
+	Optional       bool          `json:"optional" yaml:"-"`
+	AlwaysExecuted bool          `json:"always_executed" yaml:"-"`
+	LastModified   int64         `json:"last_modified"`
 }
 
 // ActionAudit Audit on action
@@ -68,6 +69,7 @@ const (
 	ScriptAction   = "Script"
 	JUnitAction    = "JUnit"
 	GitCloneAction = "GitClone"
+	GitTagAction   = "GitTag"
 )
 
 const (
@@ -167,23 +169,6 @@ func (a *Action) Parameter(p Parameter) *Action {
 func (a *Action) Add(child Action) *Action {
 	a.Actions = append(a.Actions, child)
 	return a
-}
-
-// JSON return the marshalled string of Action object
-func (a *Action) JSON() string {
-
-	data, err := json.Marshal(a)
-	if err != nil {
-		fmt.Printf("Action.JSON: cannot marshal: %s\n", err)
-		return ""
-	}
-
-	return string(data)
-}
-
-// FromJSON unmarshal given json data into Action object
-func (a *Action) FromJSON(data []byte) (*Action, error) {
-	return a, json.Unmarshal(data, &a)
 }
 
 // AddAction creates a new action available only to creator by default
@@ -382,23 +367,4 @@ func ImportAction(action *Action) (*Action, error) {
 		return nil, err
 	}
 	return &act, nil
-}
-
-//GetRequirements returns the list of all used requirements
-func GetRequirements() ([]Requirement, error) {
-	path := "/action/requirement"
-
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	var req []Requirement
-	if err := json.Unmarshal(data, &req); err != nil {
-		return nil, err
-	}
-	return req, nil
 }

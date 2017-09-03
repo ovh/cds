@@ -7,9 +7,10 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -52,7 +53,12 @@ func addStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 		return err
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
+	proj, errproj := project.Load(db, projectKey, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "addStageHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User); err != nil {
 		log.Warning("addStageHandler> Cannot update pipeline last modified date: %s", err)
 		return err
 	}
@@ -149,9 +155,14 @@ func moveStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 		return err
 	}
 
-	k := cache.Key("application", projectKey, "*")
-	cache.DeleteAll(k)
-	cache.Delete(cache.Key("pipeline", projectKey, pipelineKey))
+	proj, errproj := project.Load(db, projectKey, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "moveStageHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(db, proj, pipelineData, c.User); err != nil {
+		return err
+	}
 
 	return WriteJSON(w, r, pipelineData, http.StatusOK)
 }
@@ -204,7 +215,12 @@ func updateStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		return err
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
+	proj, errproj := project.Load(db, projectKey, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "addStageHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User); err != nil {
 		log.Warning("addStageHandler> Cannot update pipeline last_modified: %s", err)
 		return err
 	}
@@ -267,7 +283,12 @@ func deleteStageHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 		return err
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, pipelineData); err != nil {
+	proj, errproj := project.Load(db, projectKey, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "deleteStageHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, c.User); err != nil {
 		log.Warning("deleteStageHandler> Cannot Update pipeline last_modified: %s", err)
 		return err
 	}

@@ -110,7 +110,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 
 func getNodeRunBuildParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
 	//Load workflow run
-	w, err := loadRunByID(db, run.WorkflowRunID)
+	w, err := LoadRunByID(db, run.WorkflowRunID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to load workflow run")
 	}

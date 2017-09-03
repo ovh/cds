@@ -1,4 +1,4 @@
-import {Component, EventEmitter, Input, NgZone, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, NgZone, OnInit, OnDestroy, Output, ViewChild} from '@angular/core';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {Application} from '../../../../model/application.model';
 import {Project} from '../../../../model/project.model';
@@ -15,7 +15,8 @@ import {Observable} from 'rxjs/Observable';
     templateUrl: './application.workflow.html',
     styleUrls: ['./application.workflow.scss']
 })
-export class ApplicationWorkflowComponent implements OnInit {
+export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
+    readonly ORIENTATION_KEY = 'CDS-ORIENTATION';
 
     @Input() project: Project;
     @Input() application: Application;
@@ -26,7 +27,14 @@ export class ApplicationWorkflowComponent implements OnInit {
     zone: NgZone;
 
     // Worflow to display
-    workflowOrientation = 'horizontal';
+    private _workflowOrientationValue = localStorage.getItem(this.ORIENTATION_KEY) || 'horizontal';
+    set workflowOrientation(orientation: string) {
+        this._workflowOrientationValue = orientation;
+        localStorage.setItem(this.ORIENTATION_KEY, orientation);
+    }
+    get workflowOrientation() {
+        return this._workflowOrientationValue;
+    }
 
     // Filter values
     branches: Array<Branch>;
@@ -40,12 +48,15 @@ export class ApplicationWorkflowComponent implements OnInit {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
+    ngOnDestroy(): void {
+        this.changeWorkerEvent.emit(true);
+    }
+
     ngOnInit(): void {
         this.generateParentInformation();
         // Load branches
         this._appWorkflow.getBranches(this.project.key, this.application.name).subscribe(branches => {
             this.branches = branches;
-
             this.branches.forEach(b => {
                 if (b.default && !this.applicationFilter.branch) {
                     this.applicationFilter.branch = b.display_id;
@@ -198,7 +209,7 @@ export class ApplicationWorkflowComponent implements OnInit {
         // Load the versions of the new branch
         this.loadVersions(this.project.key, this.application.name)
             .subscribe(() => this.changeVersion());
-    };
+    }
 
     /**
      * Action when changing version
@@ -216,7 +227,7 @@ export class ApplicationWorkflowComponent implements OnInit {
 
         this._router.navigate(['/project/', this.project.key, 'application', this.application.name],
             {queryParams: {tab: 'workflow', branch: this.applicationFilter.branch, version: this.applicationFilter.version}});
-        this.changeWorkerEvent.emit(true);
+        this.changeWorkerEvent.emit(false);
         this.clearTree(this.application.workflows);
     }
 
@@ -226,7 +237,7 @@ export class ApplicationWorkflowComponent implements OnInit {
     loadVersions(key: string, appName: string): Observable<Array<string>> {
         return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch)
             .map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]);
-    };
+    }
 
     clearTree(items: Array<WorkflowItem>): void {
         items.forEach(w => {
@@ -243,4 +254,3 @@ export class ApplicationWorkflowComponent implements OnInit {
         }
     }
 }
-

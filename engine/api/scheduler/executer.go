@@ -48,8 +48,7 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 	//Load pending executions
 	exs, err := LoadPendingExecutions(tx)
 	if err != nil {
-		log.Warning("ExecuterRun> Unable to load pending execution : %s", err)
-		return nil, err
+		return nil, sdk.WrapError(err, "ExecuterRun> Unable to load pending execution")
 	}
 
 	var pbs []sdk.PipelineBuild
@@ -73,7 +72,7 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 	for _, pb := range pbs {
 		proj, errproj := project.Load(db, pb.Application.ProjectKey, nil)
 		if errproj != nil {
-			log.Warning("ExecuterRun> Unable to load project: %s", err)
+			log.Warning("ExecuterRun> Unable to load project: %s", errproj)
 		}
 
 		app, errapp := application.LoadByID(db, pb.Application.ID, nil, application.LoadOptions.WithRepositoryManager)

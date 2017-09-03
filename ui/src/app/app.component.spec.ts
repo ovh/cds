@@ -5,7 +5,6 @@ import {AppModule} from './app.module';
 import {AppComponent} from './app.component';
 
 import {MockBackend} from '@angular/http/testing';
-import { Http, RequestOptions, ResponseOptions} from '@angular/http';
 import {Injector} from '@angular/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {User} from './model/user.model';
@@ -13,15 +12,13 @@ import {SharedModule} from './shared/shared.module';
 import {ProjectStore} from './service/project/project.store';
 import {ApplicationStore} from './service/application/application.store';
 import {ProjectService} from './service/project/project.service';
-import {ActivatedRoute, ActivatedRouteSnapshot, Router, RouterModule} from '@angular/router';
-import {ToastService} from './shared/toast/ToastService';
-import {HttpService} from './service/http-service.service';
+import {ActivatedRoute} from '@angular/router';
 import {APP_BASE_HREF} from '@angular/common';
 import {Observable} from 'rxjs/Observable';
 import {ApplicationService} from './service/application/application.service';
 import {PipelineService} from './service/pipeline/pipeline.service';
 import {PipelineStore} from './service/pipeline/pipeline.store';
-import {LastModification, ProjectLastUpdates} from './model/lastupdate.model';
+import {LastModification} from './model/lastupdate.model';
 import {AppService} from './app.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Pipeline} from './model/pipeline.model';
@@ -43,16 +40,6 @@ describe('App: CDS', () => {
             providers: [
                 { provide: APP_BASE_HREF, useValue: '/' },
                 MockBackend,
-                {
-                    provide: Http,
-                    useFactory: (backendParam: MockBackend,
-                                 defaultOptions: RequestOptions,
-                                 toast: ToastService,
-                                 authStore2: AuthentificationStore,
-                                 router: Router) =>
-                        new HttpService(backendParam, defaultOptions, toast, authStore2, router),
-                    deps: [MockBackend, RequestOptions, ToastService, AuthentificationStore]
-                },
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: ProjectService, useClass: MockProjectService },
                 { provide: ApplicationService, useClass: MockApplicationService},
@@ -98,6 +85,10 @@ describe('App: CDS', () => {
         expect(fixture.componentInstance.isConnected).toBeFalsy('IsConnected flag must be false');
         expect(compiled.querySelector('#navbar.connected')).toBeFalsy('Nav bar must not have the css class "connected"');
 
+        fixture.componentInstance.startLastUpdateSSE = () => {
+
+        };
+
         fixture.componentInstance.ngOnInit();
         authStore.addUser(new User(), false);
 
@@ -120,66 +111,57 @@ describe('App: CDS', () => {
         pipelineStore.getPipelines('key2', 'pip3').first().subscribe(() => {}).unsubscribe();
 
 
-        let lastUpdateData = new Array<ProjectLastUpdates>();
+        let prj1Update = new LastModification();
+        prj1Update.key = 'key1';
+        prj1Update.last_modified = 1497169222;
+        prj1Update.username = 'fooApp';
+        prj1Update.type = 'project';
 
-        // Proj to keep
-        let prj1 = new ProjectLastUpdates();
-        prj1.name = 'key1';
-        prj1.last_modified = 1497169222;
-        prj1.username = 'fooApp';
-        prj1.applications = new Array<LastModification>();
-        prj1.pipelines = new Array<LastModification>();
+        let app1Update = new LastModification();
+        app1Update.key = 'key1';
+        app1Update.last_modified = 1494490822;
+        app1Update.name = 'app1';
+        app1Update.type = 'application';
 
-        // App not modified
-        let app1 = new LastModification();
-        app1.last_modified = 1494490822;
-        app1.name = 'app1';
 
-        // Modified to keep
-        let app2 = new LastModification();
-        app2.last_modified = 1497169222;
-        app2.username = 'fooApp';
-        app2.name = 'app2';
+        let app2Update = new LastModification();
+        app2Update.key = 'key1';
+        app2Update.last_modified = 1497169222;
+        app2Update.name = 'app2';
+        app2Update.username = 'fooApp';
+        app2Update.type = 'application';
 
-        prj1.applications.push(app1);
-        prj1.applications.push(app2);
+        let pip1Update = new LastModification();
+        pip1Update.key = 'key1';
+        pip1Update.last_modified = 1494490822;
+        pip1Update.name = 'pip1';
+        pip1Update.type = 'pipeline';
 
-        // Pip not updated
-        let pip1 = new LastModification();
-        pip1.last_modified = 1494490822;
-        pip1.name = 'pip1';
+        let pip2Update = new LastModification();
+        pip2Update.key = 'key1';
+        pip2Update.last_modified = 1497169222;
+        pip2Update.name = 'pip2';
+        pip2Update.username = 'fooApp';
+        pip2Update.type = 'pipeline';
 
-        // Pip to keep
-        let pip2 = new LastModification();
-        pip2.last_modified = 1497169222;
-        pip2.name = 'pip2';
-        pip2.username = 'fooApp';
+        let prj2Update = new LastModification();
+        prj2Update.key = 'key2';
+        prj2Update.last_modified = 1497169222;
+        prj2Update.type = 'project';
 
-        prj1.pipelines.push(pip1, pip2);
+        let app3Update = new LastModification();
+        app3Update.key = 'key2';
+        app3Update.last_modified = 1497169222;
+        app3Update.name = 'app3';
+        app3Update.username = 'bar';
+        app3Update.type = 'application';
 
-        // Proj to delete
-        let prj2 = new ProjectLastUpdates();
-        prj2.name = 'key2';
-        prj2.last_modified = 1497169222;
-        prj2.applications = new Array<LastModification>();
-        prj2.pipelines = new Array<LastModification>();
-
-        // App to delete
-        let app3 = new LastModification();
-        app3.name = 'app3';
-        app3.last_modified = 1497169222;
-        app3.username = 'bar';
-
-        prj2.applications.push(app3);
-
-        let pip3 = new LastModification();
-        pip3.name = 'pip3';
-        pip3.last_modified = 1497169222;
-        pip3.username = 'bar';
-
-        prj2.pipelines.push(pip3);
-
-        lastUpdateData.push(prj1, prj2);
+        let pip3Update = new LastModification();
+        pip3Update.key = 'key2';
+        pip3Update.last_modified = 1497169222;
+        pip3Update.name = 'pip3';
+        pip3Update.username = 'bar';
+        pip3Update.type = 'pipeline';
 
         let AuthStore = injector.get(AuthentificationStore);
         let user = new User();
@@ -188,10 +170,10 @@ describe('App: CDS', () => {
 
         let appService = injector.get(AppService);
 
-        appService.updateCache(lastUpdateData);
+        appService.updateCache(prj1Update);
+        appService.updateCache(prj2Update);
 
         // Check project result
-
         let check = false;
         projectStore.getProjects().subscribe(projs => {
             check = true;
@@ -200,6 +182,10 @@ describe('App: CDS', () => {
             expect(projs.get('key1').last_modified).toBe('2017-06-11T10:20:22.874779+02:00', 'project key1 have to be up to date');
         }).unsubscribe();
         expect(check).toBe(true);
+
+        appService.updateCache(app1Update);
+        appService.updateCache(app2Update);
+        appService.updateCache(app3Update);
 
         // Check application result
         let checkApp = false;
@@ -212,6 +198,10 @@ describe('App: CDS', () => {
             expect(apps.get('key1-app2').last_modified).toBe('2017-06-11T10:20:22.874779+02:00', 'app2 have to be up to date');
         }).unsubscribe();
         expect(checkApp).toBe(true);
+
+        appService.updateCache(pip1Update);
+        appService.updateCache(pip2Update);
+        appService.updateCache(pip3Update);
 
         // Check pipeline result
         let checkPip = false;

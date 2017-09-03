@@ -41,31 +41,27 @@ func updateProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 
 	proj := &sdk.Project{}
 	if err := UnmarshalBody(r, proj); err != nil {
-		return err
+		return sdk.WrapError(err, "updateProject> Unmarshall error")
 	}
 
 	if proj.Name == "" {
-		log.Warning("updateProject: Project name must no be empty")
-		return sdk.ErrInvalidProjectName
+		return sdk.WrapError(sdk.ErrInvalidProjectName, "updateProject> Project name must no be empty")
 	}
 
 	// Check Request
 	if key != proj.Key {
-		log.Warning("updateProject: bad Project key %s/%s \n", key, proj.Key)
-		return sdk.ErrWrongRequest
+		return sdk.WrapError(sdk.ErrWrongRequest, "updateProject> bad Project key %s/%s ", key, proj.Key)
 	}
 
 	// Check is project exist
 	p, errProj := project.Load(db, key, c.User)
 	if errProj != nil {
-		log.Warning("updateProject: Cannot load project from db: %s\n", errProj)
-		return errProj
+		return sdk.WrapError(errProj, "updateProject> Cannot load project from db")
 	}
 	// Update in DB is made given the primary key
 	proj.ID = p.ID
 	if errUp := project.Update(db, proj, c.User); errUp != nil {
-		log.Warning("updateProject: Cannot update project %s : %s\n", key, errUp)
-		return errUp
+		return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 	}
 
 	return WriteJSON(w, r, p, http.StatusOK)
@@ -84,6 +80,7 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	WithGroups := FormBool(r, "withGroups")
 	WithPermission := FormBool(r, "withPermission")
 	WithRepositoriesManagers := FormBool(r, "withRepositoriesManagers")
+	WithKeys := FormBool(r, "withKeys")
 
 	opts := []project.LoadOptionFunc{}
 	if WithVariables {
@@ -109,6 +106,9 @@ func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 	if WithRepositoriesManagers {
 		opts = append(opts, project.LoadOptions.WithRepositoriesManagers)
+	}
+	if WithKeys {
+		opts = append(opts, project.LoadOptions.WithKeys)
 	}
 
 	p, errProj := project.Load(db, key, c.User, opts...)
@@ -143,7 +143,7 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 
 	if exist {
-		return sdk.WrapError(sdk.ErrConflict, "AddProject> Project %s already exists\n", p.Key)
+		return sdk.WrapError(sdk.ErrConflict, "AddProject> Project %s already exists", p.Key)
 	}
 
 	//Create a project within a transaction
@@ -170,15 +170,13 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 
 		// Add group on project
 		if err := group.InsertGroupInProject(tx, p.ID, groupPermission.Group.ID, groupPermission.Permission); err != nil {
-			log.Warning("addProject: Cannot add group %s in project %s:  %s\n", groupPermission.Group.Name, p.Name, err)
-			return err
+			return sdk.WrapError(err, "addProject> Cannot add group %s in project %s", groupPermission.Group.Name, p.Name)
 		}
 
 		// Add user in group
 		if new {
 			if err := group.InsertUserInGroup(tx, groupPermission.Group.ID, c.User.ID, true); err != nil {
-				log.Warning("addProject: Cannot add user %s in group %s:  %s\n", c.User.Username, groupPermission.Group.Name, err)
-				return err
+				return sdk.WrapError(err, "addProject> Cannot add user %s in group %s", c.User.Username, groupPermission.Group.Name)
 			}
 		}
 	}
@@ -192,19 +190,16 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 			errVar = project.InsertVariable(tx, p, &v, c.User)
 		}
 		if errVar != nil {
-			log.Warning("addProject: Cannot add variable %s in project %s:  %s\n", v.Name, p.Name, errVar)
-			return errVar
+			return sdk.WrapError(errVar, "addProject> Cannot add variable %s in project %s", v.Name, p.Name)
 		}
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
-		log.Warning("addProject: Cannot update last modified:  %s\n", err)
-		return err
+		return sdk.WrapError(err, "addProject> Cannot update last modified")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("addProject: Cannot commit transaction:  %s\n", err)
-		return err
+		return sdk.WrapError(err, "addProject> Cannot commit transaction")
 	}
 
 	return WriteJSON(w, r, p, http.StatusCreated)
@@ -215,44 +210,37 @@ func deleteProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
-	p, errProj := project.Load(db, key, c.User, project.LoadOptions.WithPipelines)
+	p, errProj := project.Load(db, key, c.User, project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 	if errProj != nil {
 		if errProj != sdk.ErrNoProject {
-			log.Warning("deleteProject: load project '%s' from db: %s\n", key, errProj)
+			return sdk.WrapError(errProj, "deleteProject> load project '%s' from db", key)
 		}
-		return errProj
+		return sdk.WrapError(errProj, "deleteProject> cannot load project %s", key)
 	}
 
 	if len(p.Pipelines) > 0 {
-		log.Warning("deleteProject> Project '%s' still used by %d pipelines\n", key, len(p.Pipelines))
-		return sdk.ErrProjectHasPipeline
+		return sdk.WrapError(sdk.ErrProjectHasPipeline, "deleteProject> Project '%s' still used by %d pipelines", key, len(p.Pipelines))
 	}
 
 	if len(p.Applications) > 0 {
-		log.Warning("deleteProject> Project '%s' still used by %d applications\n", key, len(p.Applications))
-		return sdk.ErrProjectHasApplication
+		return sdk.WrapError(sdk.ErrProjectHasApplication, "deleteProject> Project '%s' still used by %d applications", key, len(p.Applications))
 	}
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
-		log.Warning("deleteProject: Cannot start transaction: %s\n", errBegin)
-		return errBegin
+		return sdk.WrapError(errBegin, "deleteProject> Cannot start transaction")
 	}
 	defer tx.Rollback()
 
 	if err := project.Delete(tx, p.Key); err != nil {
-		log.Warning("deleteProject: cannot delete project %s: %s\n", err)
-		return err
-
+		return sdk.WrapError(err, "deleteProject> cannot delete project %s", key)
 	}
 	if err := tx.Commit(); err != nil {
-		log.Warning("deleteProject: Cannot commit transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "deleteProject> Cannot commit transaction")
 	}
-	log.Info("Project %s deleted.\n", p.Name)
+	log.Info("Project %s deleted.", p.Name)
 
 	return nil
-
 }
 
 func getUserLastUpdates(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {

@@ -90,7 +90,6 @@ services:
       CDS_API: http://cds-api:8081
       CDS_MAX_WORKER: 2
       CDS_MAX_CONTAINERS: 4
-      CDS_PROVISION: 0
       CDS_REQUEST_API_TIMEOUT: 120
     links:
        - cds-api
@@ -101,7 +100,6 @@ services:
     environment:
       CDS_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       CDS_API: http://cds-api:8081
-      CDS_PROVISION: 1
     links:
        - cds-api
 

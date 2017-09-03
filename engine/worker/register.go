@@ -15,7 +15,7 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 	sdk.InitEndpoint(w.apiEndpoint)
 	sdk.Authorization("")
 
-	requirements, errR := sdk.GetRequirements()
+	requirements, errR := w.client.Requirements()
 	if errR != nil {
 		log.Warning("register> unable to get requirements : %s", errR)
 		return errR
@@ -23,22 +23,22 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 
 	log.Debug("Checking %d requirements", len(requirements))
 	form.BinaryCapabilities = LoopPath(w, requirements)
-	form.Version = VERSION
+	form.Version = sdk.VERSION
 	form.OS = runtime.GOOS
 	form.Arch = runtime.GOOS
 
-	WorkerID, Uptodate, err := w.client.WorkerRegister(form)
+	workerID, uptodate, err := w.client.WorkerRegister(form)
 	if err != nil {
 		sdk.Exit("register> Got HTTP %d, exiting\n", err)
 		return err
 	}
 
-	w.id = WorkerID
-	sdk.Authorization(WorkerID)
+	w.id = workerID
+	sdk.Authorization(workerID)
 	w.initGRPCConn()
 	log.Info("%s Registered on %s", form.Name, w.apiEndpoint)
 
-	if !Uptodate {
+	if !uptodate {
 		log.Warning("-=-=-=-=- Please update your worker binary -=-=-=-=-")
 	}
 

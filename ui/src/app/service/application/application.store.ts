@@ -53,6 +53,7 @@ export class ApplicationStore {
     getApplicationResolver(key: string, appName: string): Observable<Application> {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
+
         if (store.size === 0 || !store.get(appKey)) {
             return this._applicationService.getApplication(key, appName).map( res => {
                 this._application.next(store.set(appKey, res));
@@ -514,7 +515,7 @@ export class ApplicationStore {
         });
     }
 
-    updateNotification(key: string, appName: string, pipName: string, notification: Notification) {
+    updateNotification(key: string, appName: string, pipName: string, notification: Notification): Observable<Application> {
         return this._applicationService.updateNotification(key, appName, pipName, notification).map( app => {
             return this.refreshApplicationNotificationsCache(key, appName, app);
         });

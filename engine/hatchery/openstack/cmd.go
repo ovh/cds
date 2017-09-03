@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	hatcheryOpenStack = &HatcheryCloud{}
+	hatcheryOpenStack = &HatcheryOpenstack{}
 
 	Cmd.Flags().StringVar(&hatcheryOpenStack.tenant, "openstack-tenant", "", "")
 	viper.BindPFlag("openstack-tenant", Cmd.Flags().Lookup("openstack-tenant"))
@@ -42,9 +42,12 @@ func init() {
 
 	Cmd.Flags().BoolVar(&hatcheryOpenStack.disableCreateImage, "disable-create-image", false, `if true: hatchery does not create openstack image when a worker model is updated`)
 	viper.BindPFlag("disable-create-image", Cmd.Flags().Lookup("disable-create-image"))
+
+	Cmd.Flags().IntVar(&hatcheryOpenStack.createImageTimeout, "create-image-timeout", 180, `max wait for create an openstack image (in seconds)`)
+	viper.BindPFlag("create-image-timeout", Cmd.Flags().Lookup("create-image-timeout"))
 }
 
-// Cmd configures comamnd for HatcheryCloud
+// Cmd configures comamnd for HatcheryOpenstack
 var Cmd = &cobra.Command{
 	Use:   "cloud",
 	Short: "Hatchery Cloud commands: hatchery cloud --help",
@@ -62,16 +65,17 @@ $ CDS_OPENSTACK_USER=<user> \
   CDS_API=https://api.domain \
   CDS_MAX-worker=10 \
   CDS_MODE=openstack \
-  CDS_PROVISION=1 \
   CDS_TOKEN=2706bda13748877c57029598b915d46236988c7c57ea0d3808524a1e1a3adef4 \
 	./hatchery
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		hatchery.Create(hatcheryOpenStack,
+			viper.GetString("name"),
 			viper.GetString("api"),
-			viper.GetString("token"), viper.GetInt("max-worker"),
-			viper.GetInt("provision"),
+			viper.GetString("token"),
+			viper.GetInt64("max-worker"),
+			viper.GetBool("provision-disabled"),
 			viper.GetInt("request-api-timeout"),
 			viper.GetInt("max-failures-heartbeat"),
 			viper.GetBool("insecure"),
@@ -85,33 +89,33 @@ $ CDS_OPENSTACK_USER=<user> \
 	PreRun: func(cmd *cobra.Command, args []string) {
 		hatcheryOpenStack.tenant = viper.GetString("openstack-tenant")
 		if hatcheryOpenStack.tenant == "" {
-			sdk.Exit("flag or environmnent variable openstack-tenant not provided, aborting\n")
+			sdk.Exit("flag or environment variable openstack-tenant not provided, aborting\n")
 		}
 
 		hatcheryOpenStack.user = viper.GetString("openstack-user")
 		if hatcheryOpenStack.user == "" {
-			sdk.Exit("flag or environmnent variable openstack-user not provided, aborting\n")
+			sdk.Exit("flag or environment variable openstack-user not provided, aborting\n")
 		}
 
 		hatcheryOpenStack.address = viper.GetString("openstack-auth-endpoint")
 		if hatcheryOpenStack.address == "" {
-			sdk.Exit("flag or environmnent variable openstack-auth-endpoint not provided, aborting\n")
+			sdk.Exit("flag or environment variable openstack-auth-endpoint not provided, aborting\n")
 		}
 
 		hatcheryOpenStack.password = viper.GetString("openstack-password")
 		if hatcheryOpenStack.password == "" {
-			sdk.Exit("flag or environmnent variable openstack-password not provided, aborting\n")
+			sdk.Exit("flag or environment variable openstack-password not provided, aborting\n")
 		}
 
 		hatcheryOpenStack.region = viper.GetString("openstack-region")
 		if hatcheryOpenStack.region == "" {
-			sdk.Exit("flag or environmnent variable openstack-region not provided, aborting\n")
+			sdk.Exit("flag or environment variable openstack-region not provided, aborting\n")
 		}
 
 		if viper.GetString("openstack-ip-range") != "" {
 			ips, err := IPinRanges(viper.GetString("openstack-ip-range"))
 			if err != nil {
-				sdk.Exit("flag or environmnent variable openstack-ip-range error: %s\n", err)
+				sdk.Exit("flag or environment variable openstack-ip-range error: %s\n", err)
 			}
 			for _, ip := range ips {
 				ipsInfos.ips[ip] = ipInfos{}

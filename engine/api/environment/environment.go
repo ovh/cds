@@ -164,9 +164,14 @@ func CheckDefaultEnv(db gorp.SqlExecutor) error {
 func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {
 	variables, err := GetAllVariableByID(db, env.ID)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "loadDependencies> Cannot load environment variables")
 	}
 	env.Variable = variables
+
+	if errK := LoadAllKeys(db, env); errK != nil {
+		return sdk.WrapError(errK, "loadDependencies> Cannot load environment dependencies")
+	}
+
 	return loadGroupByEnvironment(db, env)
 }
 
@@ -195,13 +200,10 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 
 // UpdateEnvironment Update an environment
 func UpdateEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error {
-	var lastModified time.Time
-	query := `UPDATE environment SET name=$1, last_modified=current_timestamp WHERE id=$2 RETURNING last_modified`
-	err := db.QueryRow(query, environment.Name, environment.ID).Scan(&lastModified)
-	if err != nil {
+	query := `UPDATE environment SET name=$1 WHERE id=$2`
+	if _, err := db.Exec(query, environment.Name, environment.ID); err != nil {
 		return err
 	}
-	environment.LastModified = lastModified.Unix()
 	return nil
 }
 

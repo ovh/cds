@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/fsamin/go-dump"
+	dump "github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
@@ -31,7 +31,7 @@ func TestManualRun1(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -55,7 +55,7 @@ func TestManualRun1(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -179,7 +179,7 @@ func TestManualRun1(t *testing.T) {
 	assert.Len(t, runs, 2)
 
 	//TestLoadRunByID
-	_, err = LoadRunByID(db, proj.Key, wr2.ID)
+	_, err = LoadRunByIDAndProjectKey(db, proj.Key, wr2.ID)
 	test.NoError(t, err)
 
 }
@@ -199,7 +199,7 @@ func TestManualRun2(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -223,7 +223,7 @@ func TestManualRun2(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -296,7 +296,7 @@ func TestManualRun3(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -320,7 +320,7 @@ func TestManualRun3(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -411,8 +411,20 @@ func TestManualRun3(t *testing.T) {
 			},
 		})
 
+		//Load workflow node run
+		nodeRun, err := LoadNodeRunByID(db, j.WorkflowNodeRunID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		//Load workflow run
+		workflowRun, err := LoadRunByID(db, nodeRun.WorkflowRunID)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		//TestLoadNodeJobRunSecrets
-		secrets, err := LoadNodeJobRunSecrets(db, j)
+		secrets, err := LoadNodeJobRunSecrets(db, j, nodeRun, workflowRun)
 		assert.NoError(t, err)
 		assert.Len(t, secrets, 1)
 

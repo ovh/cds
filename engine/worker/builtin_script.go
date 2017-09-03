@@ -18,7 +18,7 @@ import (
 )
 
 func runScriptAction(w *currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		chanRes := make(chan sdk.Result)
 
 		go func() {
@@ -55,7 +55,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			}
 
 			// Create a tmp file
-			tmpscript, err := ioutil.TempFile(os.TempDir(), "cds-")
+			tmpscript, err := ioutil.TempFile(w.basedir, "cds-")
 			if err != nil {
 				log.Warning("Cannot create tmp file: %s", err)
 				res.Reason = fmt.Sprintf("cannot create temporary file, aborting\n")
@@ -147,14 +147,16 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			//DEPRECATED - END
 
 			//set up environment variables from pipeline build job parameters
-			for _, p := range params {
+			for _, p := range *params {
 				envName := strings.Replace(p.Name, ".", "_", -1)
 				envName = strings.ToUpper(envName)
-				if !sdk.NeedPlaceholder(p.Type) {
-					cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
-				} else {
-					cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, sdk.PasswordPlaceholder))
-				}
+				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
+			}
+
+			for _, p := range w.currentJob.buildVariables {
+				envName := strings.Replace(p.Name, ".", "_", -1)
+				envName = strings.ToUpper(envName)
+				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
 			}
 
 			workerpath, err := osext.Executable()

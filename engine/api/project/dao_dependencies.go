@@ -70,6 +70,10 @@ var (
 		return nil
 	}
 
+	loadKeys = func(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
+		return LoadAllKeys(db, proj)
+	}
+
 	loadAllVariables = func(db gorp.SqlExecutor, proj *sdk.Project, args ...GetAllVariableFuncArg) error {
 		vars, err := GetAllVariableInProject(db, proj.ID, args...)
 		if err != nil && err != sql.ErrNoRows {

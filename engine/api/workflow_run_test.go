@@ -34,7 +34,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -58,7 +58,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -161,7 +161,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -185,7 +185,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -281,7 +281,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -305,7 +305,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -382,7 +382,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -406,7 +406,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -485,7 +485,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -509,7 +509,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
@@ -580,7 +580,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
@@ -604,7 +604,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID

@@ -16,9 +16,11 @@ export class ProjectEnvironmentComponent {
 
     editableEnvironment: Environment;
     oldEnvName: string;
+    cloneName: string;
 
     hasChanged = false;
     loading = false;
+    cloneLoading = false;
     addVarLoading = false;
 
     @Input('environment')
@@ -35,23 +37,33 @@ export class ProjectEnvironmentComponent {
 
     renameEnvironment(): void {
         this.loading = true;
-        this._projectStore.renameProjectEnvironment(this.project.key, this.oldEnvName, this.editableEnvironment).subscribe(() => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('environment_renamed'));
-        }, () => {
-            this.loading = false;
-        });
+        this._projectStore.renameProjectEnvironment(this.project.key, this.oldEnvName, this.editableEnvironment)
+            .finally(() => this.loading = false)
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('environment_renamed'));
+            });
+    }
+
+    cloneEnvironment(cloneModal?: any): void {
+        this.cloneLoading = true;
+
+        this._projectStore.cloneProjectEnvironment(this.project.key, this.editableEnvironment, this.cloneName)
+            .finally(() => {
+                this.cloneLoading = false;
+                this.cloneName = '';
+                cloneModal.hide();
+            })
+            .subscribe(() => this._toast.success('', this._translate.instant('environment_cloned')));
     }
 
     deleteEnvironment(): void {
         this.loading = true;
-        this._projectStore.deleteProjectEnvironment(this.project.key, this.editableEnvironment).subscribe(() => {
-            this._toast.success('', this._translate.instant('environment_deleted'));
-            this.loading = false;
-            this.deletedEnv.emit(this.editableEnvironment.name);
-        }, () => {
-            this.loading = false;
-        });
+        this._projectStore.deleteProjectEnvironment(this.project.key, this.editableEnvironment)
+            .finally(() => this.loading = false)
+            .subscribe(() => {
+                this._toast.success('', this._translate.instant('environment_deleted'));
+                this.deletedEnv.emit(this.editableEnvironment.name);
+            });
     }
 
 
@@ -61,22 +73,22 @@ export class ProjectEnvironmentComponent {
             case 'add':
                 this.addVarLoading = true;
                 this._projectStore.addEnvironmentVariable(this.project.key, this.editableEnvironment.name, event.variable)
-                    .subscribe( () => {
+                    .finally(() => this.addVarLoading = false)
+                    .subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_added'));
-                            this.addVarLoading = false;
-                    }, () => {
-                        this.addVarLoading = false;
                     });
                 break;
             case 'update':
                 this._projectStore.updateEnvironmentVariable(this.project.key, this.editableEnvironment.name, event.variable)
-                    .subscribe( () => {
+                    .finally(() => event.variable.updating = false)
+                    .subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_updated'));
                     });
                 break;
             case 'delete':
                 this._projectStore.removeEnvironmentVariable(this.project.key, this.editableEnvironment.name, event.variable)
-                    .subscribe( () => {
+                    .finally(() => event.variable.updating = false)
+                    .subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_deleted'));
                     });
                 break;

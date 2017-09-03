@@ -1,11 +1,13 @@
 package cdsclient
 
 import (
+	"crypto/tls"
 	"io"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/facebookgo/httpcontrol"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -28,9 +30,9 @@ func New(c Config) Interface {
 }
 
 // NewWorker returns client for a worker
-func NewWorker(endpoind string) Interface {
+func NewWorker(endpoint string) Interface {
 	conf := Config{
-		Host:  endpoind,
+		Host:  endpoint,
 		Retry: 2,
 	}
 	cli := new(client)
@@ -39,6 +41,27 @@ func NewWorker(endpoind string) Interface {
 		Timeout: time.Second * 10,
 	}
 	cli.isWorker = true
+	cli.init()
+	return cli
+}
+
+// NewHatchery returns client for a hatchery
+func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) Interface {
+	conf := Config{
+		Host:  endpoint,
+		Retry: 2,
+		Token: token,
+	}
+	cli := new(client)
+	cli.config = conf
+	cli.HTTPClient = &http.Client{
+		Transport: &httpcontrol.Transport{
+			RequestTimeout:  time.Duration(requestSecondsTimeout) * time.Second,
+			MaxTries:        5,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
+		},
+	}
+	cli.isHatchery = true
 	cli.init()
 	return cli
 }
@@ -69,12 +92,4 @@ func (c *client) init() {
 
 func (c *client) APIURL() string {
 	return c.config.Host
-}
-
-func (c *client) Requirements() ([]sdk.Requirement, error) {
-	var req []sdk.Requirement
-	if _, err := c.GetJSON("/action/requirement", &req); err != nil {
-		return nil, err
-	}
-	return req, nil
 }

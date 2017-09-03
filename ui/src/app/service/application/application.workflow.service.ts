@@ -1,12 +1,12 @@
 import {Injectable} from '@angular/core';
-import {Http, URLSearchParams, RequestOptions} from '@angular/http';
 import {Observable} from 'rxjs/Rx';
 import {Branch} from '../../model/repositories.model';
+import {HttpClient, HttpParams} from '@angular/common/http';
 
 @Injectable()
 export class ApplicationWorkflowService {
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
     }
 
     /**
@@ -16,7 +16,7 @@ export class ApplicationWorkflowService {
      * @returns {Observable<Array<Branch>>}
      */
     getBranches(key: string, appName: string): Observable<Array<Branch>> {
-        return this._http.get('/project/' + key + '/application/' + appName + '/branches').map(res => res.json());
+        return this._http.get('/project/' + key + '/application/' + appName + '/branches');
     }
 
     /**
@@ -27,9 +27,8 @@ export class ApplicationWorkflowService {
      * @returns {Observable<Array<number>>}
      */
     getVersions(key: string, appName: string, branchName: string): Observable<Array<number>> {
-        let options = new RequestOptions();
-        options.params = new URLSearchParams();
-        options.params.set('branch', branchName);
-        return this._http.get('/project/' + key + '/application/' + appName + '/version', options).map(res => res.json());
+        let params = new HttpParams();
+        params = params.append('branch', branchName);
+        return this._http.get('/project/' + key + '/application/' + appName + '/version', {params: params});
     }
 }

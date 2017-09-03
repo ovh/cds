@@ -191,6 +191,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	withRepoManager := FormBool(r, "withRepoMan")
 	withTriggers := FormBool(r, "withTriggers")
 	withSchedulers := FormBool(r, "withSchedulers")
+	withKeys := FormBool(r, "withKeys")
 	branchName := r.FormValue("branchName")
 	versionString := r.FormValue("version")
 
@@ -208,6 +209,9 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 	if withNotifs {
 		loadOptions = append(loadOptions, application.LoadOptions.WithNotifs)
+	}
+	if withKeys {
+		loadOptions = append(loadOptions, application.LoadOptions.WithKeys)
 	}
 
 	app, errApp := application.LoadByName(db, projectKey, applicationName, c.User, loadOptions...)
@@ -344,8 +348,7 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	proj, errl := project.Load(db, key, c.User)
 	if errl != nil {
-		log.Warning("addApplicationHandler: Cannot load %s: %s\n", key, errl)
-		return errl
+		return sdk.WrapError(errl, "addApplicationHandler: Cannot load %s: %s", key)
 	}
 
 	var app sdk.Application
@@ -356,36 +359,30 @@ func addApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	// check application name pattern
 	regexp := regexp.MustCompile(sdk.NamePattern)
 	if !regexp.MatchString(app.Name) {
-		log.Warning("addApplicationHandler: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
-		return sdk.ErrInvalidApplicationPattern
+		return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "addApplicationHandler: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("addApplicationHandler> Cannot start transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addApplicationHandler> Cannot start transaction")
 	}
 
 	defer tx.Rollback()
 
 	if err := application.Insert(tx, proj, &app, c.User); err != nil {
-		log.Warning("addApplicationHandler> Cannot insert pipeline: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addApplicationHandler> Cannot insert pipeline")
 	}
 
 	if err := group.LoadGroupByProject(tx, proj); err != nil {
-		log.Warning("addApplicationHandler> Cannot load group from project: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addApplicationHandler> Cannot load group from project")
 	}
 
 	if err := application.AddGroup(tx, proj, &app, c.User, proj.ProjectGroups...); err != nil {
-		log.Warning("addApplicationHandler> Cannot add groups on application: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addApplicationHandler> Cannot add groups on application")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("addApplicationHandler> Cannot commit transaction: %s\n", err)
-		return err
+		return sdk.WrapError(err, "addApplicationHandler> Cannot commit transaction")
 	}
 	return nil
 }
@@ -398,6 +395,11 @@ func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
 	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
+
+	proj, errP := project.Load(db, projectKey, c.User)
+	if errP != nil {
+		return sdk.WrapError(errP, "deleteApplicationHandler> Cannot laod project")
+	}
 
 	app, err := application.LoadByName(db, projectKey, applicationName, c.User)
 	if err != nil {
@@ -431,8 +433,11 @@ func deleteApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return err
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	if err := project.UpdateLastModified(tx, c.User, proj); err != nil {
+		return sdk.WrapError(err, "deleteApplicationHandler> Cannot update project last modified date")
+	}
+
+	if err := tx.Commit(); err != nil {
 		log.Warning("deleteApplicationHandler> Cannot commit transaction: %s\n", err)
 		return err
 	}

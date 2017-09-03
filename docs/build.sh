@@ -23,7 +23,7 @@ identifier = "${actionName}"
 +++
 EOF
 
-  cds action doc ${action} >> $ACTION_FILE
+  cds -w action doc ${action} >> $ACTION_FILE
 
   done;
 }

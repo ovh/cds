@@ -17,8 +17,8 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/notification"
@@ -102,7 +102,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *g
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err := pipeline.InsertPipeline(db, pip, u)
+	err := pipeline.InsertPipeline(db, proj, pip, u)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -601,7 +601,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 		Type:      "build",
 		ProjectID: p.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip, u)
+	err = pipeline.InsertPipeline(db, p, pip, u)
 	test.NoError(t, err)
 
 	_, err = application.AttachPipeline(db, app.ID, pip.ID)

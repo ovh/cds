@@ -48,11 +48,6 @@ type ProjectGroup struct {
 	Permission int     `json:"permission"`
 }
 
-// FromJSON unmarshal given json data into Group object
-func (p *Group) FromJSON(data []byte) (*Group, error) {
-	return p, json.Unmarshal(data, &p)
-}
-
 // AddGroup creates a new group
 func AddGroup(name string) error {
 

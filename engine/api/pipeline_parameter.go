@@ -6,8 +6,10 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -56,7 +58,12 @@ func deleteParameterFromPipelineHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "deleteParameterFromPipelineHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, p, c.User); err != nil {
 		log.Warning("deleteParameterFromPipelineHandler> Cannot update pipeline last_modified date: %s", err)
 		return err
 	}
@@ -80,12 +87,17 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 	key := vars["key"]
 	pipelineName := vars["permPipelineKey"]
 
+	proj, errP := project.Load(db, key, c.User)
+	if errP != nil {
+		return sdk.WrapError(errP, "updateParametersInPipelineHandler> Cannot load project")
+	}
+
 	var pipParams []sdk.Parameter
 	if err := UnmarshalBody(r, &pipParams); err != nil {
 		return err
 	}
 
-	pip, err := pipeline.LoadPipeline(db, key, pipelineName, false)
+	pip, err := pipeline.LoadPipeline(db, proj.Key, pipelineName, false)
 	if err != nil {
 		log.Warning("updateParametersInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
 		return err
@@ -145,7 +157,7 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 		}
 	}
 	for _, p := range updated {
-		if err := pipeline.UpdateParameterInPipeline(tx, pip.ID, p); err != nil {
+		if err := pipeline.UpdateParameterInPipeline(tx, pip.ID, p.Name, p); err != nil {
 			log.Warning("UpdatePipelineParameters> Cannot update parameter %s: %s", p.Name, err)
 			return err
 		}
@@ -157,21 +169,21 @@ func updateParametersInPipelineHandler(w http.ResponseWriter, r *http.Request, d
 		}
 	}
 
-	query := `
-			UPDATE application
-			SET last_modified = current_timestamp
-			FROM application_pipeline
-			WHERE application_pipeline.application_id = application.id
-			AND application_pipeline.pipeline_id = $1
-		`
-	if _, err := tx.Exec(query, pip.ID); err != nil {
-		log.Warning("UpdatePipelineParameters> Cannot update linked application [%d]: %s", pip.ID, err)
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, c.User); err != nil {
+
+		log.Warning("UpdatePipelineParameters> Cannot update pipeline last_modified date: %s", err)
 		return err
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, pip); err != nil {
-		log.Warning("UpdatePipelineParameters> Cannot update pipeline last_modified date: %s", err)
-		return err
+	apps, errA := application.LoadByPipeline(tx, pip.ID, c.User)
+	if errA != nil {
+		return sdk.WrapError(errA, "UpdatePipelineParameters> Cannot load applications using pipeline")
+	}
+
+	for _, app := range apps {
+		if err := application.UpdateLastModified(tx, &app, c.User); err != nil {
+			return sdk.WrapError(errA, "UpdatePipelineParameters> Cannot update application last modified date")
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -192,50 +204,47 @@ func updateParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db
 	if err := UnmarshalBody(r, &newParam); err != nil {
 		return err
 	}
-	if newParam.Name != paramName {
-		return sdk.ErrWrongRequest
-	}
 
 	p, err := pipeline.LoadPipeline(db, key, pipelineName, false)
 	if err != nil {
-		log.Warning("updateParameterInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
-		return err
+		return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load %s", pipelineName)
 	}
 
 	paramInPipeline, err := pipeline.CheckParameterInPipeline(db, p.ID, paramName)
 	if err != nil {
-		log.Warning("updateParameterInPipelineHandler: Cannot check if parameter %s is already in the pipeline %s: %s\n", paramName, pipelineName, err)
-		return err
+		return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot check if parameter %s is already in the pipeline %s", paramName, pipelineName)
+	}
+
+	if !paramInPipeline {
+		return sdk.WrapError(sdk.ErrParameterNotExists, "updateParameterInPipelineHandler> unable to find parameter %s", paramName)
 	}
 
 	tx, err := db.Begin()
 	if err != nil {
-		log.Warning("updateParameterInPipelineHandler: Cannot start transaction:  %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot start transaction:  %s", err)
 	}
 	defer tx.Rollback()
 
-	if paramInPipeline {
-		if err := pipeline.UpdateParameterInPipeline(tx, p.ID, newParam); err != nil {
-			log.Warning("updateParameterInPipelineHandler: Cannot update parameter %s in pipeline %s:  %s\n", paramName, pipelineName, err)
-			return err
-		}
+	if err := pipeline.UpdateParameterInPipeline(tx, p.ID, paramName, newParam); err != nil {
+		return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot update parameter %s in pipeline %s", paramName, pipelineName)
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
-		log.Warning("updateParameterInPipelineHandler: Cannot update pipeline last_modified date:  %s\n", err)
-		return err
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "updateParameterInPipelineHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, p, c.User); err != nil {
+		return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot update pipeline last_modified date")
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Warning("updateParameterInPipelineHandler: Cannot commit transaction:  %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot commit transaction")
 	}
 
 	p.Parameter, err = pipeline.GetAllParametersInPipeline(db, p.ID)
 	if err != nil {
-		log.Warning("updateParameterInPipelineHandler: Cannot load pipeline parameters:  %s\n", err)
-		return err
+		return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load pipeline parameters")
 	}
 	return WriteJSON(w, r, p, http.StatusOK)
 }
@@ -285,7 +294,12 @@ func addParameterInPipelineHandler(w http.ResponseWriter, r *http.Request, db *g
 		}
 	}
 
-	if err := pipeline.UpdatePipelineLastModified(tx, p); err != nil {
+	proj, errproj := project.Load(db, key, c.User)
+	if errproj != nil {
+		return sdk.WrapError(errproj, "addParameterInPipelineHandler> unable to load project")
+	}
+
+	if err := pipeline.UpdatePipelineLastModified(tx, proj, p, c.User); err != nil {
 		log.Warning("addParameterInPipelineHandler> Cannot update pipeline last_modified date: %s", err)
 		return err
 	}

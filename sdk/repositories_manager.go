@@ -107,7 +107,6 @@ func AddReposManager(args map[string]string) (*RepositoriesManager, error) {
 		return nil, err
 	}
 	return &rm, nil
-
 }
 
 //ConnectReposManager add a new repositories manager in CDS for a project
@@ -345,7 +344,7 @@ type VCSBranch struct {
 	DisplayID    string   `json:"display_id"`
 	LatestCommit string   `json:"latest_commit"`
 	Default      bool     `json:"default"`
-	Parents      []string `json:"default"`
+	Parents      []string `json:"parents"`
 }
 
 //VCSPushEvent represents a push events for polling

@@ -25,16 +25,20 @@ func (p *PipelineBuildJob) PostInsert(s gorp.SqlExecutor) error {
 	}
 	job, errJob := json.Marshal(p.Job)
 	if errJob != nil {
-		return errJob
+		return sdk.WrapError(errJob, "PostInsert> err on marshal p.Job")
 	}
 	spawn, errS := json.Marshal(p.SpawnInfos)
 	if errS != nil {
-		return errS
+		return sdk.WrapError(errS, "PostInsert> err on marshal p.SpawnInfos")
+	}
+	execGroups, errG := json.Marshal(p.ExecGroups)
+	if errG != nil {
+		return sdk.WrapError(errG, "PostInsert> err on marshal p.ExecGroups")
 	}
 
-	query := "update pipeline_build_job set parameters = $1, job = $2, spawninfos = $4 where id = $3"
-	if _, err := s.Exec(query, params, job, p.ID, spawn); err != nil {
-		return err
+	query := "update pipeline_build_job set parameters = $1, job = $2, spawninfos = $4, exec_groups = $5 where id = $3"
+	if _, err := s.Exec(query, params, job, p.ID, spawn, execGroups); err != nil {
+		return sdk.WrapError(err, "PostInsert> err on update sql")
 	}
 	return nil
 }
@@ -43,22 +47,29 @@ func (p *PipelineBuildJob) PostInsert(s gorp.SqlExecutor) error {
 func (p *PipelineBuildJob) PostUpdate(s gorp.SqlExecutor) error {
 	jobJSON, err := json.Marshal(p.Job)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "PostUpdate> err on marshal p.Job")
 	}
 
 	paramsJSON, errP := json.Marshal(p.Parameters)
 	if errP != nil {
-		return errP
+		return sdk.WrapError(errP, "PostUpdate> err on marshal p.Parameters")
 	}
 
 	spawnJSON, errJ := json.Marshal(p.SpawnInfos)
 	if errJ != nil {
-		return errJ
+		return sdk.WrapError(errJ, "PostUpdate> err on marshal p.SpawnInfos")
 	}
 
-	query := "update pipeline_build_job set job = $2, parameters = $3, spawninfos= $4 where id = $1"
-	if _, err := s.Exec(query, p.ID, jobJSON, paramsJSON, spawnJSON); err != nil {
-		return err
+	execGroupsJSON, errE := json.Marshal(p.ExecGroups)
+	if errE != nil {
+		return sdk.WrapError(errE, "PostUpdate> err on marshal p.ExecGroups")
+	}
+
+	// no need to update exec_groups, there are computed only at insert of pbj
+
+	query := "update pipeline_build_job set job = $2, parameters = $3, spawninfos= $4, exec_groups= $5 where id = $1"
+	if _, err := s.Exec(query, p.ID, jobJSON, paramsJSON, spawnJSON, execGroupsJSON); err != nil {
+		return sdk.WrapError(err, "PostUpdate> err on update sql")
 	}
 
 	return nil
@@ -71,20 +82,25 @@ func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
 		p.BookedBy = h
 	}
 
-	query := "SELECT job, parameters, spawninfos FROM pipeline_build_job WHERE id = $1"
-	var params, job, spawn []byte
-	if err := s.QueryRow(query, p.ID).Scan(&job, &params, &spawn); err != nil {
-		return err
+	query := "SELECT job, parameters, spawninfos, exec_groups FROM pipeline_build_job WHERE id = $1"
+	var params, job, spawn, execGroups []byte
+	if err := s.QueryRow(query, p.ID).Scan(&job, &params, &spawn, &execGroups); err != nil {
+		return sdk.WrapError(err, "PostGet> error on queryRow")
 	}
 
 	if err := json.Unmarshal(job, &p.Job); err != nil {
-		return err
+		return sdk.WrapError(err, "PostGet> error on unmarshal job")
 	}
 	if err := json.Unmarshal(params, &p.Parameters); err != nil {
-		return err
+		return sdk.WrapError(err, "PostGet> error on unmarshal params")
 	}
 	if err := json.Unmarshal(spawn, &p.SpawnInfos); err != nil {
-		return err
+		return sdk.WrapError(err, "PostGet> error on unmarshal spawnInfos")
+	}
+	if len(execGroups) > 0 {
+		if err := json.Unmarshal(execGroups, &p.ExecGroups); err != nil {
+			return sdk.WrapError(err, "PostGet> error on unmarshal exec_groups")
+		}
 	}
 
 	p.QueuedSeconds = time.Now().Unix() - p.Queued.Unix()

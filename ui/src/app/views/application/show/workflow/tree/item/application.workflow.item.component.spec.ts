@@ -28,6 +28,7 @@ import {ProjectService} from '../../../../../../service/project/project.service'
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {Scheduler} from '../../../../../../model/scheduler.model';
 import {NotificationService} from '../../../../../../service/notification/notification.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application Workflow Item', () => {
 
@@ -48,7 +49,8 @@ describe('CDS: Application Workflow Item', () => {
             imports: [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
@@ -123,6 +125,7 @@ describe('CDS: Application Workflow Item', () => {
             return Observable.of(pb);
         });
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
@@ -138,7 +141,6 @@ describe('CDS: Application Workflow Item', () => {
         request.parent_pipeline_id = 2;
 
         expect(appPipStore.run).toHaveBeenCalledWith('key1', 'app1', 'pip1', request);
-
     }));
 
     it('should run a pipeline without parent', fakeAsync(() => {
@@ -203,6 +205,7 @@ describe('CDS: Application Workflow Item', () => {
             return Observable.of(pb);
         });
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
@@ -269,6 +272,7 @@ describe('CDS: Application Workflow Item', () => {
         });
 
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         expect(fixture.componentInstance.runWithParameters).toHaveBeenCalled();
     }));
@@ -325,6 +329,7 @@ describe('CDS: Application Workflow Item', () => {
             return true;
         });
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         expect(fixture.componentInstance.runWithParameters).toHaveBeenCalled();
     }));
@@ -366,6 +371,7 @@ describe('CDS: Application Workflow Item', () => {
         fixture.componentInstance.triggerInModal = new Trigger();
         fixture.componentInstance.triggerInModal.src_application = workflowItem.application;
         fixture.componentInstance.triggerInModal.src_pipeline = workflowItem.pipeline;
+        fixture.componentInstance.triggerInModal.parameters = new Array<Parameter>()
 
         // Add trigger
 

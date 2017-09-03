@@ -35,19 +35,24 @@ const nbPanicsBeforeFail = 50
 type Handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error
 
 // RouterConfigParam is the type of anonymous function returned by POST, GET and PUT functions
-type RouterConfigParam func(rc *routerConfig)
+type RouterConfigParam func(rc *RouterConfig)
 
-type routerConfig struct {
-	get                 Handler
-	post                Handler
-	put                 Handler
-	deleteHandler       Handler
+// RouterConfig contains a map of handler configuration. Key is the method of the http route
+type RouterConfig struct {
+	config map[string]*HandlerConfig
+}
+
+// HandlerConfig is the configuration for one handler
+type HandlerConfig struct {
 	auth                bool
 	isExecution         bool
 	needAdmin           bool
 	needUsernameOrAdmin bool
 	needHatchery        bool
 	needWorker          bool
+	method              string
+	handler             Handler
+	isDeprecated        bool
 }
 
 // ServeAbsoluteFile Serve file to download
@@ -138,16 +143,24 @@ func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
 	return &Router{a, m, p, ""}
 }
 
-var mapRouterConfigs = map[string]*routerConfig{}
+var mapRouterConfigs = map[string]*RouterConfig{}
+
+// HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
+type HandlerConfigParam func(*HandlerConfig)
+
+// HandlerConfigFunc is a type used in the router configuration fonction "Handle"
+type HandlerConfigFunc func(Handler, ...HandlerConfigParam) *HandlerConfig
 
 // Handle adds all handler for their specific verb in gorilla router for given uri
-func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
+func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 	uri = r.prefix + uri
-	rc := &routerConfig{auth: true, isExecution: false, needAdmin: false, needHatchery: false}
-	mapRouterConfigs[uri] = rc
+	cfg := &RouterConfig{
+		config: map[string]*HandlerConfig{},
+	}
+	mapRouterConfigs[uri] = cfg
 
-	for _, h := range handlers {
-		h(rc)
+	for i := range handlers {
+		cfg.config[handlers[i].method] = handlers[i]
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
@@ -161,12 +174,30 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		w.Header().Add("X-Api-Time", time.Now().Format(time.RFC3339))
 		w.Header().Add("ETag", fmt.Sprintf("%d", time.Now().Unix()))
 
-		c := &businesscontext.Ctx{}
-
 		if req.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
+
+		rc := cfg.config[req.Method]
+		if rc == nil || rc.handler == nil {
+			WriteError(w, req, sdk.ErrNotFound)
+			return
+		}
+
+		start := time.Now()
+		defer func() {
+			end := time.Now()
+			latency := end.Sub(start)
+			if rc.isDeprecated {
+				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
+				w.Header().Add("X-CDS-WARNING", "deprecated route")
+			} else {
+				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
+			}
+		}()
+
+		c := &businesscontext.Ctx{}
 
 		//Check DB connection
 		db := database.DBMap(database.DB())
@@ -180,16 +211,14 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 		if rc.auth {
 			if err := r.checkAuthentication(db, req.Header, c); err != nil {
-				log.Warning("Router> Authorization denied on %s %s for %s: %s", req.Method, req.URL, req.RemoteAddr, err)
-				WriteError(w, req, sdk.ErrUnauthorized)
+				WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, c.Agent, err))
 				return
 			}
 		}
 
 		if c.User != nil {
 			if err := loadUserPermissions(db, c.User); err != nil {
-				log.Warning("Router> Unable to load user %s permission: %s", c.User.ID, err)
-				WriteError(w, req, sdk.ErrUnauthorized)
+				WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %s permission: %s", c.User.ID, err))
 				return
 			}
 		}
@@ -197,8 +226,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 		if c.Hatchery != nil {
 			g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
 			if err != nil {
-				log.Warning("Router> cannot load group permissions for GroupID %d err:%s", c.Hatchery.GroupID, err)
-				WriteError(w, req, sdk.ErrUnauthorized)
+				WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions for GroupID %d err:%s", c.Hatchery.GroupID, err))
 				return
 			}
 			c.User.Groups = append(c.User.Groups, *g)
@@ -206,15 +234,13 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 
 		if c.Worker != nil {
 			if err := worker.RefreshWorker(db, c.Worker.ID); err != nil {
-				log.Warning("Router> Unable to refresh worker: %s", err)
-				WriteError(w, req, err)
+				WriteError(w, req, sdk.WrapError(err, "Router> Unable to refresh worker"))
 				return
 			}
 
 			g, err := loadGroupPermissions(db, c.Worker.GroupID)
 			if err != nil {
-				log.Warning("Router> cannot load group permissions: %s", err)
-				WriteError(w, req, sdk.ErrUnauthorized)
+				WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions: %s", err))
 				return
 			}
 			c.User.Groups = append(c.User.Groups, *g)
@@ -223,8 +249,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 				//Load model
 				m, err := worker.LoadWorkerModelByID(db, c.Worker.Model)
 				if err != nil {
-					log.Warning("Router> cannot load worker: %s", err)
-					WriteError(w, req, sdk.ErrUnauthorized)
+					WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s", err))
 					return
 				}
 
@@ -235,8 +260,7 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 					log.Debug("Router> loading groups permission for model %d", c.Worker.Model)
 					modelGroup, errLoad2 := loadGroupPermissions(db, m.GroupID)
 					if errLoad2 != nil {
-						log.Warning("Router> Cannot load group: %s", errLoad2)
-						WriteError(w, req, sdk.ErrUnauthorized)
+						WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> Cannot load group: %s", errLoad2))
 						return
 					}
 					//Anyway, add the group of the model as a group of the user
@@ -280,125 +304,120 @@ func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
 			return
 		}
 
-		start := time.Now()
-		defer func() {
-			end := time.Now()
-			latency := end.Sub(start)
-			log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
-		}()
-
-		if req.Method == "GET" && rc.get != nil {
-			if err := rc.get(w, req, db, c); err != nil {
-				WriteError(w, req, err)
-			}
+		if err := rc.handler(w, req, db, c); err != nil {
+			WriteError(w, req, err)
 			return
 		}
 
-		if req.Method == "POST" && rc.post != nil {
-			if err := rc.post(w, req, db, c); err != nil {
-				WriteError(w, req, err)
-			}
+		if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
 			deleteUserPermissionCache(c)
-			return
 		}
-
-		if req.Method == "PUT" && rc.put != nil {
-			if err := rc.put(w, req, db, c); err != nil {
-				WriteError(w, req, err)
-			}
-			deleteUserPermissionCache(c)
-			return
-		}
-
-		if req.Method == "DELETE" && rc.deleteHandler != nil {
-			if err := rc.deleteHandler(w, req, db, c); err != nil {
-				WriteError(w, req, err)
-			}
-			deleteUserPermissionCache(c)
-			return
-		}
-		WriteError(w, req, sdk.ErrNotFound)
 	}
 	router.mux.HandleFunc(uri, compress(recoverWrap(f)))
 }
 
+// DEPRECATED marks the handler as deprecated
+var DEPRECATED = func(rc *HandlerConfig) {
+	rc.isDeprecated = true
+}
+
 // GET will set given handler only for GET request
-func GET(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.get = h
+func GET(h Handler, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := new(HandlerConfig)
+	rc.handler = h
+	rc.auth = true
+	rc.method = "GET"
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // POST will set given handler only for POST request
-func POST(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.post = h
+func POST(h Handler, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := new(HandlerConfig)
+	rc.handler = h
+	rc.auth = true
+	rc.method = "POST"
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // POSTEXECUTE will set given handler only for POST request and add a flag for execution permission
-func POSTEXECUTE(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.post = h
-		rc.isExecution = true
+func POSTEXECUTE(h Handler, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := new(HandlerConfig)
+	rc.handler = h
+	rc.auth = true
+	rc.method = "POST"
+	rc.isExecution = true
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // PUT will set given handler only for PUT request
-func PUT(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.put = h
+func PUT(h Handler, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := new(HandlerConfig)
+	rc.handler = h
+	rc.auth = true
+	rc.method = "PUT"
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
+}
+
+// DELETE will set given handler only for DELETE request
+func DELETE(h Handler, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := new(HandlerConfig)
+	rc.handler = h
+	rc.auth = true
+	rc.method = "DELETE"
+	for _, c := range cfg {
+		c(rc)
+	}
+	return rc
 }
 
 // NeedAdmin set the route for cds admin only (or not)
-func NeedAdmin(admin bool) RouterConfigParam {
-	f := func(rc *routerConfig) {
+func NeedAdmin(admin bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
 		rc.needAdmin = admin
 	}
 	return f
 }
 
 // NeedUsernameOrAdmin set the route for cds admin or current user = username called on route
-func NeedUsernameOrAdmin(need bool) RouterConfigParam {
-	f := func(rc *routerConfig) {
+func NeedUsernameOrAdmin(need bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
 		rc.needUsernameOrAdmin = need
 	}
 	return f
 }
 
 // NeedHatchery set the route for hatchery only
-func NeedHatchery() RouterConfigParam {
-	f := func(rc *routerConfig) {
+func NeedHatchery() HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
 		rc.needHatchery = true
 	}
 	return f
 }
 
 // NeedWorker set the route for worker only
-func NeedWorker() RouterConfigParam {
-	f := func(rc *routerConfig) {
+func NeedWorker() HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
 		rc.needWorker = true
-	}
-	return f
-}
-
-// DELETE will set given handler only for DELETE request
-func DELETE(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.deleteHandler = h
 	}
 	return f
 }
 
 // Auth set manually whether authorisation layer should be applied
 // Authorization is enabled by default
-func Auth(v bool) RouterConfigParam {
-	f := func(rc *routerConfig) {
+func Auth(v bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
 		rc.auth = v
 	}
 	return f
@@ -426,3 +445,86 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 	}()
 	WriteError(w, req, sdk.ErrNotFound)
 }
+
+/*
+// businessContext completes the business context with functionnal stuff
+func businessContext(db gorp.SqlExecutor, c *businesscontext.Ctx, req *http.Request, w http.ResponseWriter) error {
+
+	if c.Hatchery != nil {
+		g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
+		if err != nil {
+			log.Warning("Router> cannot load group permissions for GroupID %d err:%s", c.Hatchery.GroupID, err)
+			return sdk.ErrUnauthorized
+		}
+		c.User.Groups = append(c.User.Groups, *g)
+	}
+
+	if c.Worker != nil {
+		if err := worker.RefreshWorker(db, c.Worker.ID); err != nil {
+			log.Warning("Router> Unable to refresh worker: %s", err)
+			return err
+		}
+
+		g, err := loadGroupPermissions(db, c.Worker.GroupID)
+		if err != nil {
+			log.Warning("Router> cannot load group permissions: %s", err)
+			return sdk.ErrUnauthorized
+		}
+		c.User.Groups = append(c.User.Groups, *g)
+
+		if c.Worker.Model != 0 {
+			//Load model
+			m, err := worker.LoadWorkerModelByID(db, c.Worker.Model)
+			if err != nil {
+				log.Warning("Router> cannot load worker: %s", err)
+				return sdk.ErrUnauthorized
+			}
+
+			//If worker model is owned by shared.infra, let's add SharedInfraGroup in user's group
+			if m.GroupID == group.SharedInfraGroup.ID {
+				c.User.Groups = append(c.User.Groups, *group.SharedInfraGroup)
+			} else {
+				log.Debug("Router> loading groups permission for model %d", c.Worker.Model)
+				modelGroup, errLoad2 := loadGroupPermissions(db, m.GroupID)
+				if errLoad2 != nil {
+					log.Warning("Router> Cannot load group: %s", errLoad2)
+					return sdk.ErrUnauthorized
+				}
+				//Anyway, add the group of the model as a group of the user
+				c.User.Groups = append(c.User.Groups, *modelGroup)
+			}
+		}
+	}
+
+	if c.User != nil {
+		vars := mux.Vars(req)
+		key := vars["key"]
+		if key == "" {
+			key = vars["permProjectKey"]
+		}
+
+		if key != "" {
+			proj, errproj := project.Load(db, key, c.User, project.LoadOptions.Default)
+			if errproj != nil {
+				return errproj
+			}
+			c.Project = proj
+		}
+
+		app := vars["permApplicationName"]
+		if app == "" {
+			app = vars["app"]
+		}
+
+		if app != "" {
+			app, errapp := application.LoadByName(db, key, app, c.User, application.LoadOptions.Default)
+			if errapp != nil {
+				return errapp
+			}
+			c.Application = app
+		}
+	}
+
+	return nil
+}
+*/

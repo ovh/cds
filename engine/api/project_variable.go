@@ -28,6 +28,7 @@ func getVariablesAuditInProjectnHandler(w http.ResponseWriter, r *http.Request, 
 	return WriteJSON(w, r, audits, http.StatusOK)
 }
 
+// Deprecated
 func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -61,13 +62,6 @@ func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, 
 
 	}
 	defer tx.Rollback()
-
-	err = project.CreateAudit(tx, p, c.User)
-	if err != nil {
-		log.Warning("restoreProjectVariableAuditHandler: Cannot create audit: %s\n", err)
-		return err
-
-	}
 
 	if err := project.DeleteAllVariable(tx, p.ID); err != nil {
 		log.Warning("restoreProjectVariableAuditHandler: Cannot delete variables for project %s:  %s\n", key, err)
@@ -142,12 +136,6 @@ func deleteVariableFromProjectHandler(w http.ResponseWriter, r *http.Request, db
 	}
 	defer tx.Rollback()
 
-	// DEPRECATED
-	if err := project.CreateAudit(tx, p, c.User); err != nil {
-		log.Warning("deleteVariableFromProject: cannot create audit for project variable: %s\n", err)
-		return err
-	}
-
 	varToDelete, errV := project.GetVariableInProject(db, p.ID, varName)
 	if errV != nil {
 		return sdk.WrapError(errV, "deleteVariableFromProject> Cannot load variable %s", varName)
@@ -196,13 +184,6 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 
 	}
 	defer tx.Rollback()
-
-	err = project.CreateAudit(tx, p, c.User)
-	if err != nil {
-		log.Warning("updateVariablesInProjectHandler: cannot create audit for project variable: %s\n", err)
-		return err
-
-	}
 
 	// Preload values, if one password variable has a password placeholder, we can't just insert
 	// the placeholder !
@@ -319,13 +300,6 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 	}
 	defer tx.Rollback()
 
-	err = project.CreateAudit(tx, p, c.User)
-	if err != nil {
-		log.Warning("updateVariableInProject: cannot create audit for project variable: %s\n", err)
-		return err
-
-	}
-
 	if err := project.UpdateVariable(tx, p, &newVar, c.User); err != nil {
 		log.Warning("updateVariableInProject: Cannot update variable %s in project %s:  %s\n", varName, p.Name, err)
 		return err
@@ -411,12 +385,6 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return err
 	}
 	defer tx.Rollback()
-
-	// DEPRECATED
-	if err := project.CreateAudit(tx, p, c.User); err != nil {
-		log.Warning("addVariableInProjectHandler: cannot create audit for project variable: %s\n", err)
-		return err
-	}
 
 	switch newVar.Type {
 	case sdk.KeyVariable:

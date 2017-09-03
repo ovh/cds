@@ -17,6 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// Deprecated
 func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -30,6 +31,7 @@ func getEnvironmentsAuditHandler(w http.ResponseWriter, r *http.Request, db *gor
 	return WriteJSON(w, r, audits, http.StatusOK)
 }
 
+// Deprecated
 func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	vars := mux.Vars(r)
 	key := vars["key"]
@@ -66,11 +68,6 @@ func restoreEnvironmentAuditHandler(w http.ResponseWriter, r *http.Request, db *
 		return errBegin
 	}
 	defer tx.Rollback()
-
-	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
-		log.Warning("restoreEnvironmentAuditHandler: Cannot create audit: %s\n", err)
-		return err
-	}
 
 	if err := environment.DeleteAllVariable(tx, env.ID); err != nil {
 		log.Warning("restoreEnvironmentAuditHandler> Cannot delete variables on environments for update: %s\n", err)
@@ -205,20 +202,18 @@ func deleteVariableFromEnvironmentHandler(w http.ResponseWriter, r *http.Request
 	}
 	defer tx.Rollback()
 
-	// DEPRECATED
-	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
-		log.Warning("deleteVariableFromEnvironmentHandler: Cannot create audit for env %s:  %s\n", envName, err)
-		return err
-	}
-
 	// clear passwordfor audit
-	varToDelete, errV := environment.GetVariable(db, key, envName, varName, environment.WithClearPassword())
+	varToDelete, errV := environment.GetVariable(tx, key, envName, varName, environment.WithClearPassword())
 	if errV != nil {
 		return sdk.WrapError(errV, "deleteVariableFromEnvironmentHandler> Cannot load variable %s", varName)
 	}
 
-	if err := environment.DeleteVariable(db, env.ID, varToDelete, c.User); err != nil {
+	if err := environment.DeleteVariable(tx, env.ID, varToDelete, c.User); err != nil {
 		return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot delete %s", varName)
+	}
+
+	if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update environment last modified date")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
@@ -275,14 +270,12 @@ func updateVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, 
 	}
 	defer tx.Rollback()
 
-	// DEPRECATED
-	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
-		log.Warning("updateVariableInEnvironmentHandler: Cannot create audit for env %s:  %s\n", envName, err)
-		return err
-	}
-
 	if err := environment.UpdateVariable(db, env.ID, &newVar, c.User); err != nil {
 		return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
+	}
+
+	if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update environment last modified date")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {
@@ -347,12 +340,6 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 	}
 	defer tx.Rollback()
 
-	// DEPRECATED
-	if err := environment.CreateAudit(tx, key, env, c.User); err != nil {
-		log.Warning("addVariableInEnvironmentHandler: Cannot create audit for env %s:  %s\n", envName, err)
-		return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot create audit for env %s", envName)
-	}
-
 	var errInsert error
 	switch newVar.Type {
 	case sdk.KeyVariable:
@@ -362,6 +349,10 @@ func addVariableInEnvironmentHandler(w http.ResponseWriter, r *http.Request, db 
 	}
 	if errInsert != nil {
 		return sdk.WrapError(errInsert, "addVariableInEnvironmentHandler: Cannot add variable %s in environment %s", varName, envName)
+	}
+
+	if err := environment.UpdateLastModified(tx, c.User, env); err != nil {
+		return sdk.WrapError(err, "addVariableInEnvironmentHandler> Cannot update environment last modified date")
 	}
 
 	if err := project.UpdateLastModified(tx, c.User, p); err != nil {

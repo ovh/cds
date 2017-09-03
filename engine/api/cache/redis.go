@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 
@@ -16,12 +17,12 @@ import (
 //RedisStore a redis client and a default ttl
 type RedisStore struct {
 	ttl    int
-	Client redisClient
+	Client *redis.Client
 }
 
 //NewRedisStore initiate a new redisStore
 func NewRedisStore(host, password string, ttl int) (*RedisStore, error) {
-	var client redisClient
+	var client *redis.Client
 
 	//if host is line master@localhost:26379,localhost:26380 => it's a redis sentinel cluster
 	if strings.Contains(host, "@") && strings.Contains(host, ",") {
@@ -209,4 +210,65 @@ func (s *RedisStore) DequeueWithContext(c context.Context, queueName string, val
 		b := []byte(elem)
 		json.Unmarshal(b, value)
 	}
+}
+
+// Publish a msg in a channel
+func (s *RedisStore) Publish(channel string, value interface{}) {
+	msg, err := json.Marshal(value)
+	if err != nil {
+		log.Warning("redis.Publish> Marshall error, cannot push in channel %s: %v, %s", channel, value, err)
+		return
+	}
+	iUnquoted, err := strconv.Unquote(string(msg))
+
+	if err != nil {
+		log.Warning("redis.Publish> Unquote error, cannot push in channel %s: %v, %s", channel, string(msg), err)
+		return
+	}
+
+	s.Client.Publish(channel, iUnquoted)
+}
+
+// Subscribe to a channel
+func (s *RedisStore) Subscribe(channel string) PubSub {
+	return s.Client.Subscribe(channel)
+}
+
+// GetMessageFromSubscription from a redis PubSub
+func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (string, error) {
+	rps, ok := pb.(*redis.PubSub)
+	if !ok {
+		return "", fmt.Errorf("redis.GetMessage> PubSub is not a redis.PubSub. Got %T", pb)
+	}
+
+	msg, _ := rps.ReceiveTimeout(200 * time.Millisecond)
+	redisMsg, ok := msg.(*redis.Message)
+	if msg != nil {
+		if ok {
+			return redisMsg.Payload, nil
+		}
+		log.Warning("redis.GetMessage> Message casting error for %v of type %T", msg, msg)
+	}
+
+	ticker := time.NewTicker(250 * time.Millisecond).C
+	for redisMsg == nil {
+		select {
+		case <-ticker:
+			msg, _ := rps.ReceiveTimeout(200 * time.Millisecond)
+			if msg == nil {
+				continue
+			}
+
+			var ok bool
+			redisMsg, ok = msg.(*redis.Message)
+			if !ok {
+				log.Warning("redis.GetMessage> Message casting error for %v of type %T", msg, msg)
+				continue
+			}
+
+		case <-c.Done():
+			return "", nil
+		}
+	}
+	return redisMsg.Payload, nil
 }

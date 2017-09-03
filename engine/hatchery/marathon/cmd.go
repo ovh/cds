@@ -64,10 +64,11 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		hatchery.Create(hatcheryMarathon,
+			viper.GetString("name"),
 			viper.GetString("api"),
 			viper.GetString("token"),
-			viper.GetInt("max-worker"),
-			viper.GetInt("provision"),
+			viper.GetInt64("max-worker"),
+			viper.GetBool("provision-disabled"),
 			viper.GetInt("request-api-timeout"),
 			viper.GetInt("max-failures-heartbeat"),
 			viper.GetBool("insecure"),
@@ -82,20 +83,20 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 		hatcheryMarathon.token = viper.GetString("token")
 
 		if viper.GetString("marathon-host") == "" {
-			sdk.Exit("flag or environmnent variable marathon-host not provided, aborting\n")
+			sdk.Exit("flag or environment variable marathon-host not provided, aborting\n")
 		}
 
 		hatcheryMarathon.marathonID = viper.GetString("marathon-id")
 		if hatcheryMarathon.marathonID == "" {
-			sdk.Exit("flag or environmnent variable marathon-id not provided, aborting\n")
+			sdk.Exit("flag or environment variable marathon-id not provided, aborting\n")
 		}
 
 		if viper.GetString("marathon-user") == "" {
-			sdk.Exit("flag or environmnent variable marathon-user not provided, aborting\n")
+			sdk.Exit("flag or environment variable marathon-user not provided, aborting\n")
 		}
 
 		if viper.GetString("marathon-password") == "" {
-			sdk.Exit("flag or environmnent variable marathon-password not provided, aborting\n")
+			sdk.Exit("flag or environment variable marathon-password not provided, aborting\n")
 		}
 
 		hatcheryMarathon.marathonLabelsString = viper.GetString("marathon-labels")
@@ -108,7 +109,7 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 				}
 				tuple := strings.Split(s, "=")
 				if len(tuple) != 2 {
-					sdk.Exit("malformatted flag or environmnent variable marathon-labels")
+					sdk.Exit("malformatted flag or environment variable marathon-labels")
 				}
 				hatcheryMarathon.marathonLabels[tuple[0]] = tuple[1]
 			}
@@ -129,12 +130,11 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 		config.HTTPBasicPassword = hatcheryMarathon.marathonPassword
 		config.HTTPClient = httpClient
 
-		client, err := marathon.NewClient(config)
+		marathonClient, err := marathon.NewClient(config)
 		if err != nil {
 			sdk.Exit("Connection failed on %s\n", viper.GetString("marathon-host"))
 		}
 
-		hatcheryMarathon.client = client
-
+		hatcheryMarathon.marathonClient = marathonClient
 	},
 }

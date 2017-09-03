@@ -103,7 +103,6 @@ func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 
 			if nextLimit >= count {
 				nextLimit = count
-
 			}
 
 			nextLink := fmt.Sprintf(`<%s?offset=%d&limit=%d>; rel="next"`, baseLinkURL, nextOffset, nextLimit)
@@ -191,9 +190,9 @@ func postWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
 
-	tx, err := db.Begin()
-	if err != nil {
-		return err
+	tx, errb := db.Begin()
+	if errb != nil {
+		return errb
 	}
 	defer tx.Rollback()
 
@@ -202,16 +201,17 @@ func postWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		return err
 	}
 
-	wf, err := workflow.Load(tx, key, name, c.User)
-	if err != nil {
-		return sdk.WrapError(err, "postWorkflowRunHandler> Unable to load workflow")
+	wf, errl := workflow.Load(tx, key, name, c.User)
+	if errl != nil {
+		return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow")
 	}
 
 	var lastRun *sdk.WorkflowRun
 	if opts.Number != nil {
-		lastRun, err = workflow.LoadRun(tx, key, name, *opts.Number)
-		if err != nil {
-			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to load workflow run")
+		var errlr error
+		lastRun, errlr = workflow.LoadRun(tx, key, name, *opts.Number)
+		if errlr != nil {
+			return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
 		}
 	}
 
@@ -219,9 +219,10 @@ func postWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 
 	//Run from hook
 	if opts.Hook != nil {
-		wr, err = workflow.RunFromHook(tx, wf, opts.Hook)
-		if err != nil {
-			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to run workflow")
+		var errfh error
+		wr, errfh = workflow.RunFromHook(tx, wf, opts.Hook)
+		if errfh != nil {
+			return sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow")
 		}
 	} else {
 		//Default manual run
@@ -262,14 +263,16 @@ func postWorkflowRunHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 			if opts.FromNodeID == nil {
 				opts.FromNodeID = &lastRun.Workflow.RootID
 			}
-			wr, err = workflow.ManualRunFromNode(tx, wf, lastRun.Number, opts.Manual, *opts.FromNodeID)
-			if err != nil {
-				return sdk.WrapError(err, "postWorkflowRunHandler> Unable to run workflow")
+			var errmr error
+			wr, errmr = workflow.ManualRunFromNode(tx, wf, lastRun.Number, opts.Manual, *opts.FromNodeID)
+			if errmr != nil {
+				return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
 			}
 		} else {
-			wr, err = workflow.ManualRun(tx, wf, opts.Manual)
-			if err != nil {
-				return sdk.WrapError(err, "postWorkflowRunHandler> Unable to run workflow")
+			var errmr error
+			wr, errmr = workflow.ManualRun(tx, wf, opts.Manual)
+			if errmr != nil {
+				return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
 			}
 		}
 	}
