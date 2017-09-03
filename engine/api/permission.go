@@ -49,7 +49,14 @@ func getPermissionByMethod(method string, isExecution bool) int {
 	}
 }
 
-func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) error {
+func (api *API) DeletePermissionMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+	if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
+		deleteUserPermissionCache(ctx)
+	}
+	return ctx, nil
+}
+
+func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
 	headers := req.Header
 
 	if rc.Options["auth"] == "true" {
@@ -58,45 +65,45 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			var err error
 			ctx, err = auth.CheckHatcheryAuth(ctx, api.MustDB(), headers)
 			if err != nil {
-				return sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
 		case sdk.WorkerAgent:
 			var err error
 			ctx, err = auth.CheckWorkerAuth(ctx, api.MustDB(), headers)
 			if err != nil {
-				return sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
 		default:
 			var err error
 			ctx, err = api.Router.AuthDriver.CheckAuth(ctx, w, req)
 			if err != nil {
-				return sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
 		}
 	}
 
 	if getUser(ctx) != nil {
 		if err := loadUserPermissions(api.MustDB(), getUser(ctx)); err != nil {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %s permission: %s", getUser(ctx).ID, err)
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %s permission: %s", getUser(ctx).ID, err)
 		}
 	}
 
 	if getHatchery(ctx) != nil {
 		g, err := loadGroupPermissions(api.MustDB(), getHatchery(ctx).GroupID)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions for GroupID %d err:%s", getHatchery(ctx).GroupID, err)
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions for GroupID %d err:%s", getHatchery(ctx).GroupID, err)
 		}
 		getUser(ctx).Groups = append(getUser(ctx).Groups, *g)
 	}
 
 	if getWorker(ctx) != nil {
 		if err := worker.RefreshWorker(api.MustDB(), getWorker(ctx).ID); err != nil {
-			return sdk.WrapError(err, "Router> Unable to refresh worker")
+			return ctx, sdk.WrapError(err, "Router> Unable to refresh worker")
 		}
 
 		g, err := loadGroupPermissions(api.MustDB(), getWorker(ctx).GroupID)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions: %s", err)
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions: %s", err)
 		}
 		getUser(ctx).Groups = append(getUser(ctx).Groups, *g)
 
@@ -104,7 +111,7 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			//Load model
 			m, err := worker.LoadWorkerModelByID(api.MustDB(), getWorker(ctx).Model)
 			if err != nil {
-				return sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s", err)
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s", err)
 			}
 
 			//If worker model is owned by shared.infra, let's add SharedInfraGroup in user's group
@@ -114,7 +121,7 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 				log.Debug("Router> loading groups permission for model %d", getWorker(ctx).Model)
 				modelGroup, errLoad2 := loadGroupPermissions(api.MustDB(), m.GroupID)
 				if errLoad2 != nil {
-					return sdk.WrapError(sdk.ErrUnauthorized, "Router> Cannot load group: %s", errLoad2)
+					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Cannot load group: %s", errLoad2)
 				}
 				//Anyway, add the group of the model as a group of the user
 				getUser(ctx).Groups = append(getUser(ctx).Groups, *modelGroup)
@@ -123,42 +130,42 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	if rc.Options["auth"] != "true" {
-		return nil
+		return ctx, nil
 	} else {
 		if getUser(ctx) == nil {
-			return sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to find connected user")
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to find connected user")
 		}
 
 		if getUser(ctx).Admin {
-			return nil
+			return ctx, nil
 		}
 
 		if rc.Options["needHatchery"] == "true" && getHatchery(ctx) != nil {
-			return nil
+			return ctx, nil
 		}
 
 		if rc.Options["needWorker"] == "true" {
 			permissionOk := api.checkWorkerPermission(ctx, api.MustDB(), rc, mux.Vars(req))
 			if !permissionOk {
-				return sdk.WrapError(sdk.ErrUnauthorized, "Router> Worker not authorized")
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Worker not authorized")
 			}
-			return nil
+			return ctx, nil
 		}
 
 		if rc.Options["needAdmin"] != "true" {
 			permissionOk := api.checkPermission(ctx, mux.Vars(req), getPermissionByMethod(req.Method, rc.Options["isExecution"] == "true"))
 			if !permissionOk {
-				return sdk.WrapError(sdk.ErrUnauthorized, "Router> User not authorized")
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> User not authorized")
 			}
 		}
 
 		if rc.Options["needUsernameOrAdmin"] == "true" && getUser(ctx).Username != mux.Vars(req)["username"] {
 			// get / update / delete user -> for admin or current user
 			// if not admin and currentUser != username in request -> ko
-			return sdk.WrapError(sdk.ErrUnauthorized, "Router> User not authorized on this resource")
+			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> User not authorized on this resource")
 		}
 
-		return nil
+		return ctx, nil
 	}
 }
 
@@ -191,6 +198,7 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 }
 
 func (api *API) checkPermission(ctx context.Context, routeVar map[string]string, permission int) bool {
+	log.Debug("checkPermission : %+v", getUser(ctx))
 	for _, g := range getUser(ctx).Groups {
 		if group.SharedInfraGroup != nil && g.Name == group.SharedInfraGroup.Name {
 			return true

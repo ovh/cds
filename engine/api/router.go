@@ -38,7 +38,7 @@ type Router struct {
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
 
 // Middleware defines the HTTP Middleware used in CDS engine
-type Middleware func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) error
+type Middleware func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error)
 
 // HandlerFunc defines the way to a handler
 type HandlerFunc func() Handler
@@ -57,6 +57,12 @@ type HandlerConfig struct {
 	Handler      Handler
 	IsDeprecated bool
 	Options      map[string]string
+}
+
+func NewHandlerConfig() *HandlerConfig {
+	return &HandlerConfig{
+		Options: map[string]string{},
+	}
 }
 
 func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
@@ -155,6 +161,9 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 	cfg := &RouterConfig{
 		config: map[string]*HandlerConfig{},
 	}
+	if r.mapRouterConfigs == nil {
+		r.mapRouterConfigs = map[string]*RouterConfig{}
+	}
 	r.mapRouterConfigs[uri] = cfg
 
 	for i := range handlers {
@@ -162,9 +171,6 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
-		// Returns a shallow copy of r with its context changed to ctx
-		newReq := req.WithContext(r.Background)
-		*req = *newReq
 		ctx := req.Context()
 
 		// Close indicates  to close the connection after replying to this request
@@ -203,7 +209,9 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 		}()
 
 		for _, m := range r.Middlewares {
-			if err := m(ctx, w, req, rc); err != nil {
+			var err error
+			ctx, err = m(ctx, w, req, rc)
+			if err != nil {
 				WriteError(w, req, err)
 				return
 			}
@@ -214,9 +222,6 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 			return
 		}
 
-		if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
-			deleteUserPermissionCache(ctx)
-		}
 	}
 
 	r.Mux.HandleFunc(uri, r.compress(r.recoverWrap(f)))
@@ -229,7 +234,7 @@ var DEPRECATED = func(rc *HandlerConfig) {
 
 // GET will set given handler only for GET request
 func (r *Router) GET(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
-	rc := new(HandlerConfig)
+	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
 	rc.Method = "GET"
@@ -241,7 +246,7 @@ func (r *Router) GET(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 
 // POST will set given handler only for POST request
 func (r *Router) POST(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
-	rc := new(HandlerConfig)
+	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
 	rc.Method = "POST"
@@ -253,7 +258,7 @@ func (r *Router) POST(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 
 // POSTEXECUTE will set given handler only for POST request and add a flag for execution permission
 func (r *Router) POSTEXECUTE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
-	rc := new(HandlerConfig)
+	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
 	rc.Method = "POST"
@@ -266,7 +271,7 @@ func (r *Router) POSTEXECUTE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerC
 
 // PUT will set given handler only for PUT request
 func (r *Router) PUT(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
-	rc := new(HandlerConfig)
+	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
 	rc.Method = "PUT"
@@ -278,7 +283,7 @@ func (r *Router) PUT(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 
 // DELETE will set given handler only for DELETE request
 func (r *Router) DELETE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
-	rc := new(HandlerConfig)
+	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
 	rc.Method = "DELETE"

@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getKeysInApplicationHandler() Handler {
@@ -17,6 +18,8 @@ func (api *API) getKeysInApplicationHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		appName := vars["permApplicationName"]
+
+		log.Debug("%s %s", key, appName)
 
 		app, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
 		if errA != nil {

@@ -8,7 +8,7 @@ import (
 func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = DefaultHeaders
-	api.Router.Middlewares = append(api.Router.Middlewares, api.AuthMiddleware)
+	api.Router.Middlewares = append(api.Router.Middlewares, api.AuthMiddleware, api.DeletePermissionMiddleware)
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.LoginUserHandler, Auth(false)))
