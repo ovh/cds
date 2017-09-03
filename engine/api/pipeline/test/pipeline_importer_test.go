@@ -72,7 +72,7 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, tt testcase) {
 }
 
 func TestImportUpdate(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	if db == nil {
 		t.FailNow()
 	}

@@ -8,10 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
@@ -20,10 +18,9 @@ import (
 )
 
 func TestAddGroupsInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddGroupsInEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -66,7 +63,7 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addGroupsInEnvironmentHandler, vars)
+	uri := router.GetRoute("POST", api.addGroupsInEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -74,7 +71,7 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 
 	//4. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -100,10 +97,9 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 }
 
 func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateGroupRoleOnEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -145,7 +141,7 @@ func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("PUT", updateGroupRoleOnEnvironmentHandler, vars)
+	uri := router.GetRoute("PUT", api.updateGroupRoleOnEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("PUT", uri, body)
@@ -153,7 +149,7 @@ func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 
 	//4. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)

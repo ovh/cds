@@ -3,29 +3,25 @@ package api
 import (
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 
 	"github.com/magiconair/properties/assert"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
 func Test_getKeysInApplicationHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getKeysInApplicationHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -65,7 +61,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 		"name":                k.Name,
 	}
 
-	route := router.getRoute("GET", getKeysInApplicationHandler, vars)
+	route := router.GetRoute("GET", api.getKeysInApplicationHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var keys []sdk.ApplicationKey
@@ -74,16 +70,15 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 }
 
 func Test_deleteKeyInApplicationHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteKeyInProjectHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -117,7 +112,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 		"name":                k.Name,
 	}
 
-	route := router.getRoute("DELETE", deleteKeyInApplicationHandler, vars)
+	route := router.GetRoute("DELETE", api.deleteKeyInApplicationHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var keys []sdk.ApplicationKey
@@ -126,16 +121,15 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 }
 
 func Test_addKeyInApplicationHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addKeyInApplicationHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -161,7 +155,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 	}
 
-	route := router.getRoute("POST", addKeyInApplicationHandler, vars)
+	route := router.GetRoute("POST", api.addKeyInApplicationHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var key sdk.ApplicationKey

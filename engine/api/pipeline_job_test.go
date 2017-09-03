@@ -9,10 +9,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -20,10 +18,9 @@ import (
 )
 
 func TestAddJobHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddJobHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -69,7 +66,7 @@ func TestAddJobHandler(t *testing.T) {
 		"stageID":         strconv.FormatInt(stage.ID, 10),
 	}
 
-	uri := router.getRoute("POST", addJobToStageHandler, vars)
+	uri := router.GetRoute("POST", api.addJobToStageHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -77,7 +74,7 @@ func TestAddJobHandler(t *testing.T) {
 
 	//6. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -89,10 +86,9 @@ func TestAddJobHandler(t *testing.T) {
 }
 
 func TestUpdateJobHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateJobHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -153,7 +149,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		"jobID":           strconv.FormatInt(job.PipelineActionID, 10),
 	}
 
-	uri := router.getRoute("PUT", updateJobHandler, vars)
+	uri := router.GetRoute("PUT", api.updateJobHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("PUT", uri, body)
@@ -161,7 +157,7 @@ func TestUpdateJobHandler(t *testing.T) {
 
 	//7. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -173,10 +169,9 @@ func TestUpdateJobHandler(t *testing.T) {
 }
 
 func TestDeleteJobHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteJobHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -224,7 +219,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		"jobID":           strconv.FormatInt(job.PipelineActionID, 10),
 	}
 
-	uri := router.getRoute("DELETE", deleteJobHandler, vars)
+	uri := router.GetRoute("DELETE", api.deleteJobHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("DELETE", uri, nil)
@@ -232,7 +227,7 @@ func TestDeleteJobHandler(t *testing.T) {
 
 	//7. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)

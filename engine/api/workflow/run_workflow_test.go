@@ -19,7 +19,7 @@ import (
 )
 
 func TestManualRun1(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -182,7 +182,7 @@ func TestManualRun1(t *testing.T) {
 }
 
 func TestManualRun2(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -279,7 +279,7 @@ func TestManualRun2(t *testing.T) {
 }
 
 func TestManualRun3(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)

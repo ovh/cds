@@ -8,11 +8,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -21,10 +19,9 @@ import (
 )
 
 func TestAddTriggerHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddJobHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -88,7 +85,7 @@ func TestAddTriggerHandler(t *testing.T) {
 		"permPipelineKey":     pip1.Name,
 	}
 
-	uri := router.getRoute("POST", addTriggerHandler, vars)
+	uri := router.GetRoute("POST", api.addTriggerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, body)
@@ -96,7 +93,7 @@ func TestAddTriggerHandler(t *testing.T) {
 
 	//9. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -107,10 +104,9 @@ func TestAddTriggerHandler(t *testing.T) {
 }
 
 func TestUpdateTriggerHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateTriggerHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -181,7 +177,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		"id":                  strconv.FormatInt(triggerData.ID, 10),
 	}
 
-	uri := router.getRoute("PUT", updateTriggerHandler, vars)
+	uri := router.GetRoute("PUT", api.updateTriggerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("PUT", uri, body)
@@ -189,7 +185,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 
 	//9. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -201,10 +197,9 @@ func TestUpdateTriggerHandler(t *testing.T) {
 }
 
 func TestRemoveTriggerHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestRemoveTriggerHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -270,7 +265,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		"id":                  strconv.FormatInt(triggerData.ID, 10),
 	}
 
-	uri := router.getRoute("DELETE", deleteTriggerHandler, vars)
+	uri := router.GetRoute("DELETE", api.deleteTriggerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("DELETE", uri, nil)
@@ -278,7 +273,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 
 	//9. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 

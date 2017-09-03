@@ -23,7 +23,7 @@ func deleteUser(t *testing.T, db gorp.SqlExecutor, u *sdk.User, g *sdk.Group) er
 }
 
 func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create a user
 	u := sdk.NewUser("testuser")
@@ -123,7 +123,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 }
 
 func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create a user
 	u := sdk.NewUser("testuser")
@@ -235,7 +235,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 }
 
 func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create a user
 	u := sdk.NewUser("testuser")
@@ -364,7 +364,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 }
 
 func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create a user
 	u := sdk.NewUser("testuser")
@@ -485,7 +485,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 }
 
 func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create a user
 	u := sdk.NewUser("testuser")

@@ -7,7 +7,7 @@ import (
 )
 
 func TestCleanerRun(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
 	exs, err := CleanerRun(db, 2)
 	test.NoError(t, err)

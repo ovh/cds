@@ -13,7 +13,7 @@ import (
 )
 
 func TestLoadByNameAsAdmin(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
@@ -31,7 +31,7 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 }
 
 func TestLoadByNameAsUser(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
@@ -53,7 +53,7 @@ func TestLoadByNameAsUser(t *testing.T) {
 }
 
 func TestLoadByIDAsAdmin(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
@@ -71,7 +71,7 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 }
 
 func TestLoadByIDAsUser(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
 
 	proj := assets.InsertTestProject(t, db, key, key, nil)
@@ -94,7 +94,7 @@ func TestLoadByIDAsUser(t *testing.T) {
 }
 
 func TestLoadAllAsAdmin(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{
@@ -126,7 +126,7 @@ func TestLoadAllAsAdmin(t *testing.T) {
 }
 
 func TestLoadAllAsUser(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, nil)
 	app := sdk.Application{

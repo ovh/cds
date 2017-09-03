@@ -14,9 +14,13 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type Configuration struct {
+	Log struct {
+		Level string
+	}
 	API      api.Configuration
 	Hatchery []struct{}
 }
@@ -112,10 +116,13 @@ All the services are using the same configuration file format. See $ engine conf
 			return
 		}
 
-		//Init config
+		//Initialize config
 		config()
 
-		//Initliaze context
+		//Initialize logs
+		log.Initialize(&log.Conf{Level: conf.Log.Level})
+
+		//Initialize context
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)
 

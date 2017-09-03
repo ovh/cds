@@ -15,7 +15,7 @@ import (
 )
 
 func TestLoadAll(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	schedulers, err := LoadAll(db)
 	test.NoError(t, err)
@@ -25,7 +25,7 @@ func TestLoadAll(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -92,7 +92,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -167,7 +167,7 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestLoadPendingExecutions(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	pe, err := LoadPendingExecutions(db)
 	if err != nil {
 		t.Fatal(err)
@@ -176,7 +176,7 @@ func TestLoadPendingExecutions(t *testing.T) {
 }
 
 func TestGetByApplication(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -239,7 +239,7 @@ func TestGetByApplication(t *testing.T) {
 }
 
 func TestGetByPipeline(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -302,7 +302,7 @@ func TestGetByPipeline(t *testing.T) {
 }
 
 func TestGetByApplicationPipeline(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -365,7 +365,7 @@ func TestGetByApplicationPipeline(t *testing.T) {
 }
 
 func TestGetByApplicationPipelineEnv(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)

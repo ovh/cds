@@ -5,10 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -21,7 +19,7 @@ import (
 
 // TestVerifyUserToken test token verification when OK
 func TestVerifyUserToken(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -63,7 +61,7 @@ func TestVerifyUserToken(t *testing.T) {
 
 // TestWrongTokenUser  test token verification when token is wrong
 func TestWrongTokenUser(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -99,7 +97,7 @@ func TestWrongTokenUser(t *testing.T) {
 
 // TestVerifyResetExpired test validating reset token when time expired
 func TestVerifyResetExpired(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -140,7 +138,7 @@ func TestVerifyResetExpired(t *testing.T) {
 
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestVerifyAlreadyDone(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -181,7 +179,7 @@ func TestVerifyAlreadyDone(t *testing.T) {
 
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestLoadUserWithGroup(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -271,22 +269,21 @@ func TestLoadUserWithGroup(t *testing.T) {
 
 // Test_getUserHandlerOK checks call on /user/{username}
 func Test_getUserHandlerOK(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserHandler")
-	router.init()
+	api.InitRouter()
 
 	u1, pass1 := assets.InsertLambdaUser(api.MustDB())
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
-	uri := router.getRoute("GET", GetUserHandler, map[string]string{"username": u1.Username})
+	uri := api.Router.GetRoute("GET", api.GetUserHandler, map[string]string{"username": u1.Username})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
@@ -299,10 +296,9 @@ func Test_getUserHandlerOK(t *testing.T) {
 
 // Test_getUserHandlerOK checks call on /user/{username} with an admin user
 func Test_getUserHandlerAdmin(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserHandler")
-	router.init()
+	api.InitRouter()
 
 	u1, pass1 := assets.InsertLambdaUser(api.MustDB())
 	assert.NotZero(t, u1)
@@ -312,13 +308,13 @@ func Test_getUserHandlerAdmin(t *testing.T) {
 	assert.NotZero(t, uAdmin)
 	assert.NotZero(t, passAdmin)
 
-	uri := router.getRoute("GET", GetUserHandler, map[string]string{"username": u1.Username})
+	uri := router.GetRoute("GET", api.GetUserHandler, map[string]string{"username": u1.Username})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, uAdmin, passAdmin, "GET", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 200, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
@@ -331,16 +327,15 @@ func Test_getUserHandlerAdmin(t *testing.T) {
 
 // Test_getUserHandlerOK checks call on /user/{username} with a not allowed user
 func Test_getUserHandlerForbidden(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserHandler")
-	router.init()
+	api.InitRouter()
 
 	u1, pass1 := assets.InsertLambdaUser(api.MustDB())
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
-	uri := router.getRoute("GET", GetUserHandler, map[string]string{"username": u1.Username})
+	uri := router.GetRoute("GET", api.GetUserHandler, map[string]string{"username": u1.Username})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
 
@@ -352,7 +347,7 @@ func Test_getUserHandlerForbidden(t *testing.T) {
 
 	//Do the request
 	w1 := httptest.NewRecorder()
-	router.mux.ServeHTTP(w1, req)
+	router.Mux.ServeHTTP(w1, req)
 	assert.Equal(t, 200, w1.Code)
 
 	res := sdk.User{}
@@ -362,17 +357,16 @@ func Test_getUserHandlerForbidden(t *testing.T) {
 
 	// user 2 try to call user 1 -> this is forbidden
 	w2 := httptest.NewRecorder()
-	router.mux.ServeHTTP(w2, req2)
+	router.Mux.ServeHTTP(w2, req2)
 	assert.Equal(t, 403, w2.Code)
 
 	t.Logf("Body: %s", w2.Body.String())
 }
 
 func Test_getUserGroupsHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserGroupsHandler")
-	router.init()
+	api.InitRouter()
 
 	g1 := &sdk.Group{
 		Name: sdk.RandomString(10),
@@ -386,13 +380,13 @@ func Test_getUserGroupsHandler(t *testing.T) {
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	uri := router.getRoute("GET", getUserGroupsHandler, map[string]string{"username": u.Username})
+	uri := router.GetRoute("GET", api.getUserGroupsHandler, map[string]string{"username": u.Username})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 

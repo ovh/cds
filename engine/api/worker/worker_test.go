@@ -8,7 +8,7 @@ import (
 )
 
 func TestInsertWorker(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
 	workers, err := LoadWorkers(db)
 	test.NoError(t, err)
@@ -28,7 +28,7 @@ func TestInsertWorker(t *testing.T) {
 }
 
 func TestDeletetWorker(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
 	workers, errl := LoadWorkers(db)
 	test.NoError(t, errl)
@@ -51,7 +51,7 @@ func TestDeletetWorker(t *testing.T) {
 }
 
 func TestLoadWorkers(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
 	workers, errl := LoadWorkers(db)
 	test.NoError(t, errl)

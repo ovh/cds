@@ -9,10 +9,8 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
@@ -22,7 +20,7 @@ import (
 )
 
 func Test_getWorkflowRunsHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.MustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -100,24 +98,24 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	}
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowRunsHandler")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 	}
-	uri := router.getRoute("GET", getWorkflowRunsHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 	assert.Equal(t, "0-10/10", rec.Header().Get("Content-Range"))
 
-	uri = router.getRoute("GET", getWorkflowRunsHandler, vars)
+	uri = router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 	q := req.URL.Query()
@@ -126,7 +124,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 	//Do the request
 	rec = httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 206, rec.Code)
 	assert.Equal(t, "5-9/10", rec.Header().Get("Content-Range"))
 
@@ -142,14 +140,14 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 	//Do the request
 	rec = httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 400, rec.Code)
 	assert.Equal(t, "", rec.Header().Get("Content-Range"))
 
 }
 
 func Test_getLatestWorkflowRunHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.MustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -227,20 +225,20 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	}
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getLatestWorkflowRunHandler")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 	}
-	uri := router.getRoute("GET", getLatestWorkflowRunHandler, vars)
+	uri := router.GetRoute("GET", api.getLatestWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
@@ -249,7 +247,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.MustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -327,21 +325,21 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	}
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowRunHandler")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 		"number":         "9",
 	}
-	uri := router.getRoute("GET", getWorkflowRunHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
@@ -350,7 +348,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowNodeRunHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.MustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -433,8 +431,8 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	lastrun, err := workflow.LoadLastRun(api.MustDB(), proj.Key, w1.Name)
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowNodeRunHandler")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -442,18 +440,18 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		"number":         fmt.Sprintf("%d", lastrun.Number),
 		"id":             fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
 	}
-	uri := router.getRoute("GET", getWorkflowNodeRunHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 }
 
 func Test_postWorkflowRunHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.MustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -524,14 +522,14 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowRunHandler")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 	}
-	uri := router.getRoute("POST", postWorkflowRunHandler, vars)
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 
 	opts := &postWorkflowRunHandlerOption{}
@@ -539,7 +537,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
@@ -548,7 +546,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	u, pass := assets.InsertAdminUser(api.MustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -652,8 +650,8 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	test.NoError(t, errAL)
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowNodeRunJobStepHandler")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -663,13 +661,13 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		"runJobId":       fmt.Sprintf("%d", jobRun.ID),
 		"stepOrder":      "1",
 	}
-	uri := router.getRoute("GET", getWorkflowNodeRunJobStepHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 
 	stepState := &sdk.BuildState{}
 	json.Unmarshal(rec.Body.Bytes(), stepState)

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"reflect"
 	"testing"
 
 	"github.com/go-gorp/gorp"
@@ -44,12 +45,12 @@ func init() {
 	}
 }
 
-type bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
+type Bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
 
 var DBConnectionFactory *database.DBConnectionFactory
 
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
+func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) *gorp.DbMap {
 	log.SetLogger(t)
 
 	//Try to load flags from config flags, else load from flags
@@ -113,4 +114,11 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 	}
 
 	return DBConnectionFactory.GetDBMap()
+}
+
+//GetTestName returns the name the the test
+func GetTestName(t *testing.T) string {
+	v := reflect.ValueOf(*t)
+	name := v.FieldByName("name")
+	return name.String()
 }

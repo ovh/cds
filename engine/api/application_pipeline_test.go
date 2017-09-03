@@ -3,12 +3,10 @@ package api
 import (
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -16,16 +14,15 @@ import (
 )
 
 func Test_attachPipelinesToApplicationHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_attachPipelinesToApplicationHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -70,7 +67,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		"key": proj.Key,
 		"permApplicationName": app.Name,
 	}
-	route := router.getRoute("POST", attachPipelinesToApplicationHandler, vars)
+	route := router.GetRoute("POST", api.attachPipelinesToApplicationHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_attachPipelinesToApplicationHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200))
 	tester.Run()

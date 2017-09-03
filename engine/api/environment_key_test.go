@@ -3,29 +3,25 @@ package api
 import (
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 
 	"github.com/magiconair/properties/assert"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
 func Test_getKeysInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getKeysInEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -66,7 +62,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 		"name":                k.Name,
 	}
 
-	route := router.getRoute("GET", getKeysInEnvironmentHandler, vars)
+	route := router.GetRoute("GET", api.getKeysInEnvironmentHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var keys []sdk.ApplicationKey
@@ -75,16 +71,15 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 }
 
 func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteKeyInEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -119,7 +114,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 		"name":                k.Name,
 	}
 
-	route := router.getRoute("DELETE", deleteKeyInEnvironmentHandler, vars)
+	route := router.GetRoute("DELETE", api.deleteKeyInEnvironmentHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var keys []sdk.ApplicationKey
@@ -128,16 +123,15 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 }
 
 func Test_addKeyInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addKeyInEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -164,7 +158,7 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 		"permEnvironmentName": env.Name,
 	}
 
-	route := router.getRoute("POST", addKeyInEnvironmentHandler, vars)
+	route := router.GetRoute("POST", api.addKeyInEnvironmentHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var key sdk.EnvironmentKey

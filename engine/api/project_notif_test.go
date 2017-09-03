@@ -4,10 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
@@ -17,16 +15,15 @@ import (
 )
 
 func Test_getProjectNotificationsHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getProjectNotificationsHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -79,7 +76,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 		"key": p.Key,
 		"permApplicationName": app.Name,
 	}
-	route := router.getRoute("POST", addNotificationsHandler, vars)
+	route := router.GetRoute("POST", api.addNotificationsHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_getProjectNotificationsHandler", "POST", route, notifsToAdd).Headers(headers).Checkers(iffy.ExpectStatus(200))
 	tester.Run()
@@ -88,7 +85,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 	vars = map[string]string{
 		"permProjectKey": p.Key,
 	}
-	route = router.getRoute("GET", getProjectNotificationsHandler, vars)
+	route = router.GetRoute("GET", api.getProjectNotificationsHandler, vars)
 	tester.AddCall("Test_getProjectNotificationsHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
 	tester.Run()
 

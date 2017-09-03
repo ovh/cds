@@ -4,32 +4,28 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -85,30 +81,29 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	}
 
 	scheduler.Run(api.MustDB())
-	scheduler.ExecuterRun(api.MustDB())
+	scheduler.ExecuterRun(api.MustDB)
 
 	vars := map[string]string{
 		"key": proj.Key,
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	route := router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
+	route := router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_getSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
 	tester.Run()
 }
 
 func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addSchedulerApplicationPipelineHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -157,31 +152,30 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
+	route := router.GetRoute("POST", api.addSchedulerApplicationPipelineHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "POST", route+"?envName="+env.Name, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
 	tester.Run()
 	tester.Reset()
 
 	scheduler.Run(api.MustDB())
-	scheduler.ExecuterRun(api.MustDB())
+	scheduler.ExecuterRun(api.MustDB)
 
-	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
+	route = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
 	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
 	tester.Run()
 }
 
 func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updatechedulerApplicationPipelineHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -221,7 +215,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
+	route := router.GetRoute("POST", api.addSchedulerApplicationPipelineHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
 
@@ -234,7 +228,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	log.Warning(">>%+v", s)
 
-	route = router.getRoute("PUT", updateSchedulerApplicationPipelineHandler, vars)
+	route = router.GetRoute("PUT", api.updateSchedulerApplicationPipelineHandler, vars)
 	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "PUT", route, s).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
 	tester.Run()
 	tester.Reset()
@@ -244,24 +238,24 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	// scheduler is here: &app.Workflows[0].Schedulers[0]
 
 	scheduler.Run(api.MustDB())
-	scheduler.ExecuterRun(api.MustDB())
+	scheduler.ExecuterRun(api.MustDB)
 
-	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
+	route = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
 	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
 	tester.Run()
 
 }
 
 func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
-	db := test.SetupPG(t)
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteSchedulerApplicationPipelineHandler")
-	router.init()
+	api, db, router := newTestAPI(t)
+
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -301,7 +295,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	route := router.getRoute("POST", addSchedulerApplicationPipelineHandler, vars)
+	route := router.GetRoute("POST", api.addSchedulerApplicationPipelineHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "POST", route, s).Headers(headers).Checkers(iffy.ExpectStatus(201), iffy.DumpResponse(t), iffy.UnmarshalResponse(app))
@@ -314,13 +308,13 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	s = &app.Workflows[0].Schedulers[0]
 
 	vars["id"] = strconv.FormatInt(s.ID, 10)
-	route = router.getRoute("DELETE", deleteSchedulerApplicationPipelineHandler, vars)
+	route = router.GetRoute("DELETE", api.deleteSchedulerApplicationPipelineHandler, vars)
 	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "DELETE", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200))
 
 	tester.Run()
 	tester.Reset()
 
-	route = router.getRoute("GET", getSchedulerApplicationPipelineHandler, vars)
+	route = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
 	tester.AddCall("Test_deleteSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(0), iffy.DumpResponse(t))
 	tester.Run()
 }

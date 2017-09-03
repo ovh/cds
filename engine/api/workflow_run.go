@@ -72,7 +72,7 @@ func (api *API) getWorkflowRunsHandler() Handler {
 		//RFC5988: Link : <https://api.fakecompany.com/v1/orders?range=0-7>; rel="first", <https://api.fakecompany.com/v1/orders?range=40-47>; rel="prev", <https://api.fakecompany.com/v1/orders?range=56-64>; rel="next", <https://api.fakecompany.com/v1/orders?range=968-975>; rel="last"
 		if len(runs) < count {
 			baseLinkURL := api.Router.URL +
-				api.Router.getRoute("GET", api.getWorkflowRunsHandler, map[string]string{
+				api.Router.GetRoute("GET", api.getWorkflowRunsHandler, map[string]string{
 					"permProjectKey": key,
 					"workflowName":   name,
 				})

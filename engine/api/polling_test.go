@@ -9,11 +9,9 @@ import (
 	"testing"
 
 	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -37,7 +35,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 		return nil, nil
 	}
 
-	projs, err := project.LoadAll(api.MustDB(), nil)
+	projs, err := project.LoadAll(db, nil)
 	if err != nil {
 		t.Error(err.Error())
 		return nil, nil
@@ -50,7 +48,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 		}
 	}
 
-	rm, err := repositoriesmanager.LoadByID(api.MustDB(), rmID)
+	rm, err := repositoriesmanager.LoadByID(db, rmID)
 	if err != nil {
 		t.Error(err)
 		return nil, nil
@@ -60,10 +58,9 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 }
 
 func TestAddPollerHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddPollerHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -113,7 +110,7 @@ func TestAddPollerHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", addPollerHandler, vars)
+	uri := router.GetRoute("POST", api.addPollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -121,7 +118,7 @@ func TestAddPollerHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -132,10 +129,9 @@ func TestAddPollerHandler(t *testing.T) {
 }
 
 func TestUpdatePollerHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdatePollerHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Crerouter.ate admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -185,7 +181,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", addPollerHandler, vars)
+	uri := router.GetRoute("POST", api.addPollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -193,7 +189,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -207,7 +203,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	jsonBody, _ = json.Marshal(popol2.RepositoryPollers[0])
 	body = bytes.NewBuffer(jsonBody)
 
-	uri = router.getRoute("PUT", updatePollerHandler, vars)
+	uri = router.GetRoute("PUT", api.updatePollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ = http.NewRequest("PUT", uri, body)
@@ -215,7 +211,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 
 	//8. Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ = ioutil.ReadAll(w.Body)
@@ -226,9 +222,9 @@ func TestUpdatePollerHandler(t *testing.T) {
 }
 
 func TestGetApplicationPollersHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetApplicationPollersHandler")
-	router.init()
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -278,7 +274,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", addPollerHandler, vars)
+	uri := router.GetRoute("POST", api.addPollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -286,7 +282,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -299,12 +295,12 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	t.Logf("Poller : %s", string(res))
 
 	//9. Load the pollers
-	uri = router.getRoute("GET", getApplicationPollersHandler, vars)
+	uri = router.GetRoute("GET", api.getApplicationPollersHandler, vars)
 	req, _ = http.NewRequest("GET", uri, nil)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ = ioutil.ReadAll(w.Body)
@@ -321,10 +317,9 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 }
 
 func TestGetPollersHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -374,7 +369,7 @@ func TestGetPollersHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", addPollerHandler, vars)
+	uri := router.GetRoute("POST", api.addPollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -382,7 +377,7 @@ func TestGetPollersHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -394,12 +389,12 @@ func TestGetPollersHandler(t *testing.T) {
 	t.Logf("Poller : %s", string(res))
 
 	//9. Load the pollers
-	uri = router.getRoute("GET", getPollersHandler, vars)
+	uri = router.GetRoute("GET", api.getPollersHandler, vars)
 	req, _ = http.NewRequest("GET", uri, nil)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ = ioutil.ReadAll(w.Body)
@@ -413,10 +408,9 @@ func TestGetPollersHandler(t *testing.T) {
 }
 
 func TestDeletePollerHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -467,7 +461,7 @@ func TestDeletePollerHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", addPollerHandler, vars)
+	uri := router.GetRoute("POST", api.addPollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -475,7 +469,7 @@ func TestDeletePollerHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -487,22 +481,22 @@ func TestDeletePollerHandler(t *testing.T) {
 	t.Logf("Poller : %s", string(res))
 
 	//9. Load the pollers
-	uri = router.getRoute("DELETE", deletePollerHandler, vars)
+	uri = router.GetRoute("DELETE", api.deletePollerHandler, vars)
 	req, _ = http.NewRequest("DELETE", uri, nil)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
 	//9. Load the pollers
-	uri = router.getRoute("GET", getApplicationPollersHandler, vars)
+	uri = router.GetRoute("GET", api.getApplicationPollersHandler, vars)
 	req, _ = http.NewRequest("GET", uri, nil)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ = ioutil.ReadAll(w.Body)

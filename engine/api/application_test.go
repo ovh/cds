@@ -8,11 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -21,10 +19,9 @@ import (
 )
 
 func TestGetApplicationWithTriggersHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetApplicationHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -122,7 +119,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 	}
 
-	uri := fmt.Sprintf("%s?withTriggers=true", router.getRoute("GET", getApplicationHandler, vars))
+	uri := fmt.Sprintf("%s?withTriggers=true", router.GetRoute("GET", api.getApplicationHandler, vars))
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
@@ -130,7 +127,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 
 	//10. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)

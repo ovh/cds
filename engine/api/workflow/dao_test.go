@@ -19,7 +19,7 @@ import (
 )
 
 func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -30,7 +30,7 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 }
 
 func TestInsertSimpleWorkflow(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	u, _ := assets.InsertAdminUser(db)
 
 	key := sdk.RandomString(10)
@@ -73,7 +73,7 @@ func TestInsertSimpleWorkflow(t *testing.T) {
 }
 
 func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -127,7 +127,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 }
 
 func TestInsertComplexeWorkflow(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -253,7 +253,7 @@ func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
 	}
 }
 func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -386,7 +386,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 }
 
 func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -565,7 +565,7 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 }
 
 func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -774,7 +774,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 }
 
 func TestUpdateWorkflowWithJoins(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -881,7 +881,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 }
 
 func TestInsertSimpleWorkflowWithHook(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	test.NoError(t, CreateBuiltinWorkflowHookModels(db))
 	u, _ := assets.InsertAdminUser(db)
 

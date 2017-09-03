@@ -8,7 +8,7 @@ import (
 )
 
 func TestLoadPendingExecutions(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	pe, err := LoadPendingExecutions(db)
 	if err != nil {
 		t.Fatal(err)

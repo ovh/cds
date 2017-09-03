@@ -70,7 +70,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func TestInsertWorkerModel(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -118,7 +118,7 @@ func TestInsertWorkerModel(t *testing.T) {
 }
 
 func TestLoadWorkerModel(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g, err := group.LoadGroup(db, "shared.infra")
@@ -140,7 +140,7 @@ func TestLoadWorkerModel(t *testing.T) {
 }
 
 func TestLoadWorkerModels(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -165,7 +165,7 @@ func TestLoadWorkerModels(t *testing.T) {
 }
 
 func TestLoadWorkerModelCapabilities(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g, err := group.LoadGroup(db, "shared.infra")
@@ -182,7 +182,7 @@ func TestLoadWorkerModelCapabilities(t *testing.T) {
 }
 
 func TestUpdateWorkerModel(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)

@@ -8,11 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -20,10 +18,9 @@ import (
 )
 
 func TestAddVariableInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddVariableInEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -57,7 +54,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 		"name":                addVarRequest.Name,
 	}
 
-	uri := router.getRoute("POST", addVariableInEnvironmentHandler, vars)
+	uri := router.GetRoute("POST", api.addVariableInEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, body)
@@ -65,7 +62,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 
 	//4. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -84,10 +81,9 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 }
 
 func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateVariableInEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -129,7 +125,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 		"name":                v.Name,
 	}
 
-	uri := router.getRoute("PUT", updateVariableInEnvironmentHandler, vars)
+	uri := router.GetRoute("PUT", api.updateVariableInEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("PUT", uri, body)
@@ -137,7 +133,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 
 	//5. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -156,10 +152,9 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 }
 
 func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteVariableFromEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -195,7 +190,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 		"name":                v.Name,
 	}
 
-	uri := router.getRoute("DELETE", deleteVariableFromEnvironmentHandler, vars)
+	uri := router.GetRoute("DELETE", api.deleteVariableFromEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("DELETE", uri, nil)
@@ -203,7 +198,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 
 	//5. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -221,10 +216,9 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 }
 
 func TestGetVariablesInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetVariablesInEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -260,7 +254,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 		"name":                v.Name,
 	}
 
-	uri := router.getRoute("GET", getVariablesInEnvironmentHandler, vars)
+	uri := router.GetRoute("GET", api.getVariablesInEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
@@ -268,7 +262,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 
 	//5. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -279,16 +273,15 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 }
 
 func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getVariableAuditInEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -319,7 +312,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 		"name":                "foo",
 	}
 
-	route := router.getRoute("GET", getVariableAuditInEnvironmentHandler, vars)
+	route := router.GetRoute("GET", api.getVariableAuditInEnvironmentHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var audits []sdk.EnvironmentVariableAudit

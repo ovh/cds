@@ -11,7 +11,7 @@ import (
 )
 
 func TestInsertPipeline(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
@@ -65,7 +65,7 @@ func TestInsertPipeline(t *testing.T) {
 }
 
 func TestInsertPipelineWithParemeters(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{

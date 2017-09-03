@@ -7,32 +7,28 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 )
 
 func Test_updateStepStatusHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updateStepStatusHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -89,7 +85,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	vars := map[string]string{
 		"id": strconv.FormatInt(pbJob.ID, 10),
 	}
-	route := router.getRoute("POST", updateStepStatusHandler, vars)
+	route := router.GetRoute("POST", api.updateStepStatusHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()
@@ -109,10 +105,9 @@ func Test_updateStepStatusHandler(t *testing.T) {
 }
 
 func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addSpawnInfosPipelineBuildJobHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, _ := assets.InsertAdminUser(api.MustDB())
@@ -128,7 +123,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	}
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -180,7 +175,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	vars := map[string]string{
 		"id": strconv.FormatInt(pbJob.ID, 10),
 	}
-	route := router.getRoute("POST", addSpawnInfosPipelineBuildJobHandler, vars)
+	route := router.GetRoute("POST", api.addSpawnInfosPipelineBuildJobHandler, vars)
 
 	h := http.Header{}
 	h.Set("User-Agent", string(sdk.HatcheryAgent))

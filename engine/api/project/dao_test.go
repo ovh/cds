@@ -27,7 +27,7 @@ func TestExist(t *testing.T) {
 }
 
 func TestLoadAll(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	Delete(db, "test_TestLoadAll")
 	Delete(db, "test_TestLoadAll1")

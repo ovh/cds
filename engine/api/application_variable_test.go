@@ -3,28 +3,24 @@ package api
 import (
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
 func Test_getVariableAuditInApplicationHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getVariableAuditInApplicationHandler")
-	router.init()
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
@@ -53,7 +49,7 @@ func Test_getVariableAuditInApplicationHandler(t *testing.T) {
 		"name":                "foo",
 	}
 
-	route := router.getRoute("GET", getVariableAuditInApplicationHandler, vars)
+	route := router.GetRoute("GET", api.getVariableAuditInApplicationHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var audits []sdk.ApplicationVariableAudit

@@ -50,7 +50,7 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 	return nil
 }
 
-func (r *Router) getRoute(method string, handler HandlerFunc, vars map[string]string) string {
+func (r *Router) GetRoute(method string, handler HandlerFunc, vars map[string]string) string {
 	sf1 := reflect.ValueOf(handler)
 	var url string
 	for uri, routerConfig := range r.mapRouterConfigs {

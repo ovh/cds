@@ -4,10 +4,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
@@ -19,7 +17,7 @@ import (
 )
 
 func Test_workerCheckingHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
 	workers, err := worker.LoadWorkers(api.MustDB())
@@ -88,11 +86,10 @@ func Test_workerCheckingHandler(t *testing.T) {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_workerCheckingHandler")
-	router.init()
+	api.InitRouter()
 
 	//Prepare request
-	uri := router.getRoute("POST", workerCheckingHandler, nil)
+	uri := router.GetRoute("POST", api.workerCheckingHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
@@ -100,7 +97,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -115,7 +112,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 }
 
 func Test_workerWaitingHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
 	workers, err := worker.LoadWorkers(api.MustDB())
@@ -186,18 +183,17 @@ func Test_workerWaitingHandler(t *testing.T) {
 
 	worker.SetStatus(api.MustDB(), workr.ID, sdk.StatusBuilding)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_workerWaitingHandler")
-	router.init()
+	api.InitRouter()
 
 	//Prepare request
-	uri := router.getRoute("POST", workerWaitingHandler, nil)
+	uri := router.GetRoute("POST", api.workerWaitingHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 

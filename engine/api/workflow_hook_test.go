@@ -5,10 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -16,22 +14,22 @@ import (
 )
 
 func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
 	user, passUser := assets.InsertLambdaUser(api.MustDB())
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowHookModelsHandlerAsLambdaUser")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{}
-	uri := router.getRoute("GET", getWorkflowHookModelsHandler, vars)
+	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelsHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, user, passUser, "GET", uri, nil)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
 	//Check result
@@ -41,22 +39,22 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 }
 
 func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
 	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowHookModelsHandlerAsAdminUser")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{}
-	uri := router.getRoute("GET", getWorkflowHookModelsHandler, vars)
+	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelsHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, admin, passAdmin, "GET", uri, nil)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	api.Router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
 	//Check result
@@ -66,24 +64,24 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 }
 
 func Test_getWorkflowHookModelHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
 	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowHookModelHandler")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"model": workflow.WebHookModel.Name,
 	}
-	uri := router.getRoute("GET", getWorkflowHookModelHandler, vars)
+	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, admin, passAdmin, "GET", uri, nil)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	api.Router.Mux.ServeHTTP(rec, req)
 
 	//Check result
 	model := sdk.WorkflowHookModel{}
@@ -96,24 +94,24 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 }
 
 func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
 	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_putWorkflowHookModelHandlerAsAdminUser")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"model": workflow.WebHookModel.Name,
 	}
-	uri := router.getRoute("GET", getWorkflowHookModelHandler, vars)
+	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, admin, passAdmin, "GET", uri, nil)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	api.Router.Mux.ServeHTTP(rec, req)
 
 	//Check result
 	model := sdk.WorkflowHookModel{}
@@ -124,13 +122,13 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 	model.Disabled = false
 
 	//Prepare the request
-	uri = router.getRoute("PUT", putWorkflowHookModelHandler, vars)
+	uri = api.Router.GetRoute("PUT", api.putWorkflowHookModelHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, admin, passAdmin, "PUT", uri, model)
 
 	//Do the request
 	rec = httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	api.Router.Mux.ServeHTTP(rec, req)
 
 	//Check result
 	model = sdk.WorkflowHookModel{}
@@ -141,25 +139,25 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 }
 
 func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
 
 	u, pass := assets.InsertLambdaUser(api.MustDB())
 
 	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_putWorkflowHookModelHandlerAsAdminUser")
-	router.init()
+
+	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"model": workflow.WebHookModel.Name,
 	}
-	uri := router.getRoute("GET", getWorkflowHookModelHandler, vars)
+	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	api.Router.Mux.ServeHTTP(rec, req)
 
 	//Check result
 	model := sdk.WorkflowHookModel{}
@@ -170,13 +168,13 @@ func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
 	model.Disabled = false
 
 	//Prepare the request
-	uri = router.getRoute("PUT", putWorkflowHookModelHandler, vars)
+	uri = api.Router.GetRoute("PUT", api.putWorkflowHookModelHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model)
 
 	//Do the request
 	rec = httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	api.Router.Mux.ServeHTTP(rec, req)
 
 	assert.Equal(t, 403, rec.Code)
 

@@ -66,6 +66,7 @@ func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
 		Prefix:           p,
 		URL:              "",
 		mapRouterConfigs: map[string]*RouterConfig{},
+		Background:       context.Background(),
 	}
 }
 

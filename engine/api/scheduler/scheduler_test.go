@@ -7,7 +7,7 @@ import (
 )
 
 func TestSchedulerRun(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 	exs, status, err := Run(db)
 	if err != nil {
 		t.Fatalf("%s: %s", status, err)

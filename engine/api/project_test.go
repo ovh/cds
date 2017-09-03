@@ -5,13 +5,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestVariableInProject(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	// 1. Create project
 	project1 := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)

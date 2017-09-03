@@ -7,12 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
@@ -21,31 +18,10 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
-	pkey := sdk.RandomString(10)
-	projectFoo := assets.InsertTestProject(t, db, pkey, pkey, nil)
-
-	p := &sdk.Pipeline{
-		Name:      name,
-		ProjectID: projectFoo.ID,
-		Type:      sdk.BuildPipeline,
-	}
-
-	app := &sdk.Application{
-		Name: "App1",
-	}
-
-	test.NoError(t, application.Insert(api.MustDB(), projectFoo, app, nil))
-	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), projectFoo, p, nil))
-
-	return projectFoo, p, app
-}
-
 func Test_runPipelineHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -86,7 +62,7 @@ func Test_runPipelineHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", runPipelineHandler, vars)
+	uri := router.GetRoute("POST", api.runPipelineHandler, vars)
 	test.NotEmpty(t, uri)
 
 	//8. Send the request
@@ -99,7 +75,7 @@ func Test_runPipelineHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	//9. Check response
 	assert.Equal(t, 200, w.Code)
@@ -119,10 +95,9 @@ func Test_runPipelineHandler(t *testing.T) {
 }
 
 func Test_runPipelineWithLastParentHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -164,7 +139,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", runPipelineHandler, vars)
+	uri := router.GetRoute("POST", api.runPipelineHandler, vars)
 	test.NotEmpty(t, uri)
 
 	//8. Send the request
@@ -177,7 +152,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	//9. Check response
 	assert.Equal(t, 200, w.Code)
@@ -254,7 +229,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		"permApplicationName": app2.Name,
 		"permPipelineKey":     pip2.Name,
 	}
-	uri = router.getRoute("POST", runPipelineWithLastParentHandler, vars)
+	uri = router.GetRoute("POST", api.runPipelineWithLastParentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	//17. Send the request
@@ -267,7 +242,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 
 	//18. Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	//19. Check response
 	assert.Equal(t, 200, w.Code)

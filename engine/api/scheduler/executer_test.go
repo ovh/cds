@@ -15,7 +15,7 @@ import (
 )
 
 func TestExecuterRun(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)

@@ -8,11 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -20,10 +18,9 @@ import (
 )
 
 func TestAddEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -43,7 +40,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 		"permProjectKey": proj.Key,
 	}
 
-	uri := router.getRoute("POST", addEnvironmentHandler, vars)
+	uri := router.GetRoute("POST", api.addEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, body)
@@ -51,7 +48,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 
 	//4. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -68,10 +65,9 @@ func TestAddEnvironmentHandler(t *testing.T) {
 }
 
 func TestUpdateEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -101,7 +97,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 		"permEnvironmentName": "Preproduction",
 	}
 
-	uri := router.getRoute("PUT", updateEnvironmentHandler, vars)
+	uri := router.GetRoute("PUT", api.updateEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("PUT", uri, body)
@@ -109,7 +105,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 
 	//5. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -127,10 +123,9 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 }
 
 func TestDeleteEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -154,7 +149,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 		"permEnvironmentName": "Preproduction",
 	}
 
-	uri := router.getRoute("DELETE", deleteEnvironmentHandler, vars)
+	uri := router.GetRoute("DELETE", api.deleteEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("DELETE", uri, nil)
@@ -162,7 +157,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 
 	//4. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -178,10 +173,9 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 }
 
 func TestGetEnvironmentsHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -204,7 +198,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 		"permProjectKey": proj.Key,
 	}
 
-	uri := router.getRoute("GET", getEnvironmentsHandler, vars)
+	uri := router.GetRoute("GET", api.getEnvironmentsHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
@@ -212,7 +206,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 
 	//4. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -222,10 +216,9 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 }
 
 func TestGetEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -249,7 +242,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 		"permEnvironmentName": env.Name,
 	}
 
-	uri := router.getRoute("GET", getEnvironmentHandler, vars)
+	uri := router.GetRoute("GET", api.getEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
@@ -257,7 +250,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 
 	//4. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -267,10 +260,9 @@ func TestGetEnvironmentHandler(t *testing.T) {
 }
 
 func Test_cloneEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_cloneEnvironmentHandler")
-	router.init()
+	api.InitRouter()
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -302,8 +294,8 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 		Name: "Production2",
 	}
 
-	uri := router.getRoute("POST", cloneEnvironmentHandler, vars)
-	tester := iffy.NewTester(t, router.mux)
+	uri := router.GetRoute("POST", api.cloneEnvironmentHandler, vars)
+	tester := iffy.NewTester(t, router.Mux)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_cloneEnvironmentHandler", "POST", uri, &envPost).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()

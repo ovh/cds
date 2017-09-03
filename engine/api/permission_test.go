@@ -8,6 +8,8 @@ import (
 )
 
 func Test_checkWorkerModelPermissionsByUser(t *testing.T) {
+	api, _, _ := newTestAPI(t)
+
 	type args struct {
 		m *sdk.Model
 		u *sdk.User
@@ -111,7 +113,7 @@ func Test_checkWorkerModelPermissionsByUser(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		got := checkWorkerModelPermissionsByUser(tt.args.m, tt.args.u, tt.args.p)
+		got := api.checkWorkerModelPermissionsByUser(tt.args.m, tt.args.u, tt.args.p)
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("%q. checkWorkerModelPermissionsByUser() = %v, want %v", tt.name, got, tt.want)
 		}

@@ -14,7 +14,7 @@ import (
 )
 
 func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
 	//Insert Project
@@ -67,7 +67,7 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 }
 
 func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
@@ -138,7 +138,7 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 }
 
 func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2ActionsStageWithoutPrerequisite(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
@@ -244,7 +244,7 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 }
 
 func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequisites(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
@@ -380,7 +380,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 }
 
 func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 
@@ -438,7 +438,7 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 }
 
 func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	deleteAll(t, db, "TESTPIPELINESTAGES")
 

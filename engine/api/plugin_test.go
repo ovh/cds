@@ -1,6 +1,17 @@
 package api
 
-import "runtime"
+import (
+	"bytes"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"path"
+	"runtime"
+	"testing"
+
+	"github.com/ovh/cds/engine/api/test"
+)
 
 const dummyBinaryFile = "https://github.com/ovh/cds/releases/download/0.8.1/plugin-download-" + runtime.GOOS + "-amd64"
 
@@ -74,6 +85,7 @@ func postFile(t *testing.T,
 		check(t, db, w)
 	}
 }
+*/
 
 func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 	t.Logf("Downloading file %s", url)
@@ -115,8 +127,9 @@ func downloadFile(t *testing.T, name, url string) (string, func(), error) {
 	}, nil
 }
 
+/*
 func TestAddPluginHandlerSuccess(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -188,7 +201,7 @@ func TestAddPluginHandlerSuccess(t *testing.T) {
 }
 
 func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -231,7 +244,7 @@ func TestAddPluginHandlerFailWithInvalidPlugin(t *testing.T) {
 }
 
 func TestAddPluginHandlerFailWithConflict(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -281,7 +294,7 @@ func TestAddPluginHandlerFailWithConflict(t *testing.T) {
 }
 
 func TestUpdatePluginHandlerSuccess(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {
@@ -345,7 +358,7 @@ func TestUpdatePluginHandlerSuccess(t *testing.T) {
 }
 
 func TestDeletePluginHandlerSuccess(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
 	basedir, err := ioutil.TempDir("", "cds-test")
 	if err != nil {

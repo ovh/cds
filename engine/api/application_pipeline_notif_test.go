@@ -1,7 +1,19 @@
 package api
 
-/*
+import (
+	"testing"
+
+	"github.com/go-gorp/gorp"
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/sdk"
+)
+
 func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
+	api, _, _ := newTestAPI(t)
+
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
 	proj, errl := project.Load(api.MustDB(), key, &sdk.User{Admin: true})
@@ -55,8 +67,9 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	return nil
 }
 
+/*
 func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *gorp.DbMap, *sdk.Project, *sdk.Pipeline, *sdk.Application, *sdk.Environment, *sdk.User)) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	u, p := assets.InsertAdminUser(api.MustDB())
 	u.Auth.HashedPassword = p
@@ -546,16 +559,16 @@ func Test_SendPipeline(t *testing.T) {
 }
 
 func Test_addNotificationsHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	api, db, router := newTestAPI(t)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getSchedulerApplicationPipelineHandler")
-	router.init()
+
+	api.InitRouter()
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -606,7 +619,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 		"key": p.Key,
 		"permApplicationName": app.Name,
 	}
-	route := router.getRoute("POST", addNotificationsHandler, vars)
+	route := router.GetRoute("POST", api.addNotificationsHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_addNotificationsHandler", "POST", route, notifsToAdd).Headers(headers).Checkers(iffy.ExpectStatus(200))
 	tester.Run()
