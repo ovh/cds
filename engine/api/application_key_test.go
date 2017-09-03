@@ -5,8 +5,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
+	"github.com/stretchr/testify/assert"
 
-	"github.com/magiconair/properties/assert"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/keys"
