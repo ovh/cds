@@ -3,11 +3,10 @@ package workflow
 import (
 	"database/sql"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
-
-	"strings"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -50,7 +49,7 @@ func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 	}
 
 	if err := updateTags(db, r); err != nil {
-		return sdk.WrapError(err, "Run.PostInsert> Unable to store insert tags")
+		return sdk.WrapError(err, "Run.PostInsert> Unable to store tags")
 	}
 
 	return nil
@@ -93,7 +92,7 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 
 func updateTags(db gorp.SqlExecutor, r *Run) error {
 	if _, err := db.Exec("delete from workflow_run_tag where workflow_run_id = $1", r.ID); err != nil {
-		return sdk.WrapError(err, "Run.updateTags> Unable to store delete tags")
+		return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
 	}
 
 	tags := []interface{}{}
