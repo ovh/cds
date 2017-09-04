@@ -312,7 +312,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 
 	for _, p := range jobParams {
 		switch p.Name {
-		case "git.hash", "git.branch", "git.tag":
+		case "git.hash", "git.branch", "git.tag", "git.author":
 			w.Tag(p.Name, p.Value)
 		}
 	}
