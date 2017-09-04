@@ -337,8 +337,8 @@ func takePipelineBuildJobHandler(w http.ResponseWriter, r *http.Request, db *gor
 	defer tx.Rollback()
 
 	workerModel := caller.Name
-	if caller.Model != 0 {
-		wm, errModel := worker.LoadWorkerModelByID(db, caller.Model)
+	if caller.ModelID != 0 {
+		wm, errModel := worker.LoadWorkerModelByID(db, caller.ModelID)
 		if errModel != nil {
 			return sdk.ErrNoWorkerModel
 		}

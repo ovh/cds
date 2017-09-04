@@ -26,7 +26,7 @@ func cmdRegisterRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			Token:        w.token,
 			Hatchery:     w.hatchery.id,
 			HatcheryName: w.hatchery.name,
-			Model:        w.modelID,
+			ModelID:      w.model.ID,
 		}
 		if err := w.register(form); err != nil {
 			log.Error("Unable to register worker: %s", err)
