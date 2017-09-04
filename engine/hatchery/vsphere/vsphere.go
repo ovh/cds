@@ -81,7 +81,7 @@ func (h *HatcheryVSphere) NeedRegistration(m *sdk.Model) bool {
 		return true
 	}
 
-	return !annot.ToDelete && (m.NeedRegistration || m.UserLastModified.Unix() != annot.WorkerModelLastModified.Unix())
+	return !annot.ToDelete && (m.NeedRegistration || fmt.Sprintf("%d", m.UserLastModified.Unix()) != annot.WorkerModelLastModified)
 }
 
 // WorkersStartedByModel returns the number of instances of given model started but
