@@ -107,9 +107,9 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		}
 		getUser(ctx).Groups = append(getUser(ctx).Groups, *g)
 
-		if getWorker(ctx).Model != 0 {
+		if getWorker(ctx).ModelID != 0 {
 			//Load model
-			m, err := worker.LoadWorkerModelByID(api.MustDB(), getWorker(ctx).Model)
+			m, err := worker.LoadWorkerModelByID(api.MustDB(), getWorker(ctx).ModelID)
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s", err)
 			}
@@ -118,7 +118,7 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			if m.GroupID == group.SharedInfraGroup.ID {
 				getUser(ctx).Groups = append(getUser(ctx).Groups, *group.SharedInfraGroup)
 			} else {
-				log.Debug("Router> loading groups permission for model %d", getWorker(ctx).Model)
+				log.Debug("Router> loading groups permission for model %d", getWorker(ctx).ModelID)
 				modelGroup, errLoad2 := loadGroupPermissions(api.MustDB(), m.GroupID)
 				if errLoad2 != nil {
 					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Cannot load group: %s", errLoad2)

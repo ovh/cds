@@ -87,9 +87,6 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 	w1, err := workflow.Load(api.MustDB(), key, "test_1", u)
 	test.NoError(t, err)
 
-	
-
-	
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -160,7 +157,7 @@ func test_registerWorker(t *testing.T, api *API, router *Router, ctx *test_runWo
 		Name:  sdk.RandomString(10),
 		Token: ctx.workerToken,
 	}
-	ctx.worker, err = worker.RegisterWorker(api.MustDB(), params.Name, params.Token, params.Model, nil, params.BinaryCapabilities)
+	ctx.worker, err = worker.RegisterWorker(api.MustDB(), params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities)
 	test.NoError(t, err)
 }
 
@@ -575,7 +572,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	params["size"] = "12"
 	params["perm"] = "7"
 	params["md5sum"] = "123"
-	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, "/tmp/myartifact", "myartifact", params)
+	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)

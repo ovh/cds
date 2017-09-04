@@ -57,7 +57,6 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/smtp/ping", r.GET(api.smtpPingHandler, Auth(true)))
 	r.Handle("/mon/version", r.GET(api.getVersionHandler, Auth(false)))
 	r.Handle("/mon/stats", r.GET(api.getStatsHandler, Auth(false)))
-	r.Handle("/mon/models", r.GET(api.getWorkerModelsStatsHandler, Auth(false)))
 	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
 	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
@@ -141,6 +140,7 @@ func (api *API) InitRouter() {
 	// Workflows run
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POST(api.postWorkflowRunHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
+	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/artifacts", r.GET(api.getWorkflowRunArtifactsHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}", r.GET(api.getWorkflowNodeRunHandler))

@@ -63,8 +63,8 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 
 		//Load worker model
 		workerModel := getWorker(ctx).Name
-		if getWorker(ctx).Model != 0 {
-			wm, errModel := worker.LoadWorkerModelByID(api.MustDB(), getWorker(ctx).Model)
+		if getWorker(ctx).ModelID != 0 {
+			wm, errModel := worker.LoadWorkerModelByID(api.MustDB(), getWorker(ctx).ModelID)
 			if errModel != nil {
 				return sdk.ErrNoWorkerModel
 			}

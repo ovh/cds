@@ -109,6 +109,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) *gorp.DbMap {
 
 	for _, f := range bootstrapFunc {
 		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, DBConnectionFactory.GetDBMap); err != nil {
+			log.Error("Error: %v", err)
 			return nil
 		}
 	}

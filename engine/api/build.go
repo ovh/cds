@@ -335,10 +335,7 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 		}
 
 		// Load worker
-		caller, err := worker.LoadWorker(api.MustDB(), getWorker(ctx).ID)
-		if err != nil {
-			return sdk.WrapError(err, "takePipelineBuildJobHandler> cannot load calling worker")
-		}
+		caller := getWorker(ctx)
 		if caller.Status != sdk.StatusChecking {
 			return sdk.WrapError(sdk.ErrWrongRequest, "takePipelineBuildJobHandler> worker %s is not available to for build (status = %s)", caller.ID, caller.Status)
 		}
@@ -350,8 +347,8 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 		defer tx.Rollback()
 
 		workerModel := caller.Name
-		if caller.Model != 0 {
-			wm, errModel := worker.LoadWorkerModelByID(api.MustDB(), caller.Model)
+		if caller.ModelID != 0 {
+			wm, errModel := worker.LoadWorkerModelByID(api.MustDB(), caller.ModelID)
 			if errModel != nil {
 				return sdk.ErrNoWorkerModel
 			}

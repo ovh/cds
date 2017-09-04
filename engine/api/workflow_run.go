@@ -454,3 +454,18 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 		return WriteJSON(w, r, result, http.StatusOK)
 	}
 }
+
+func (api *API) getWorkflowRunTagsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		workflowName := vars["workflowName"]
+
+		res, err := workflow.GetTagsAndValue(api.MustDB(), projectKey, workflowName)
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowRunTagsHandler> Error")
+		}
+
+		return WriteJSON(w, r, res, http.StatusOK)
+	}
+}

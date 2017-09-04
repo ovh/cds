@@ -49,8 +49,8 @@ func workerList(cmd *cobra.Command, args []string) {
 
 	for _, w := range workers {
 		m := "N/A"
-		if _, ok := mmodels[w.Model]; ok {
-			m = mmodels[w.Model].Type
+		if _, ok := mmodels[w.ModelID]; ok {
+			m = mmodels[w.ModelID].Type
 		}
 		fmt.Printf("%-10s %-50s %s\n", m, w.Name, w.Status)
 	}
