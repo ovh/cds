@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -132,14 +133,15 @@ func LoadUserWarnings(db gorp.SqlExecutor, al string, userID int64) ([]sdk.Warni
 	LEFT OUTER JOIN group_user gupip ON gupip.group_id = pipeline_group.group_id AND gupip.user_id = $1
 	LEFT OUTER JOIN environment_group ON environment_group.environment_id = warning.env_id
 	LEFT OUTER JOIN group_user guenv ON guenv.group_id = environment_group.group_id AND guenv.user_id = $1
+	WHERE project_group.role >= $2 AND application_group.role >= $2 AND pipeline_group.role >= $2
 	GROUP BY warning.id, warning_id, warning.project_id, warning.pip_id, warning.app_id, warning.env_id, warning.action_id,
 	      projKey, pipeline_action.pipeline_stage_id, projName, appName, pipName, envName, actionName;
 	`
 
 	var warnings []sdk.Warning
-	rows, err := db.Query(query, userID)
-	if err != nil {
-		return nil, err
+	rows, errq := db.Query(query, userID, permission.PermissionReadWriteExecute)
+	if errq != nil {
+		return nil, sdk.WrapError(errq, "LoadUserWarnings>")
 	}
 	defer rows.Close()
 
@@ -188,6 +190,10 @@ func LoadUserWarnings(db gorp.SqlExecutor, al string, userID int64) ([]sdk.Warni
 			if !envPerm.Valid {
 				continue
 			}
+			// no check for default env, no warning if permission on env is not RW
+			if w.Environment.Name != sdk.DefaultEnv.Name && w.Environment.Permission < permission.PermissionReadWriteExecute {
+				continue
+			}
 			w.Environment.ID = envID.Int64
 			w.Environment.Name = envName.String
 		}
@@ -197,11 +203,11 @@ func LoadUserWarnings(db gorp.SqlExecutor, al string, userID int64) ([]sdk.Warni
 			w.Action.Name = actionName.String
 		}
 
-		if err = json.Unmarshal([]byte(messageParam), &w.MessageParam); err != nil {
+		if err := json.Unmarshal([]byte(messageParam), &w.MessageParam); err != nil {
 			return nil, err
 		}
 
-		if err = processWarning(&w, al); err != nil {
+		if err := processWarning(&w, al); err != nil {
 			return nil, err
 		}
 

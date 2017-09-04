@@ -550,7 +550,7 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 
 	// Add build variable
 	params = append(params, sdk.Parameter{
-		Name:  "cds.build." + v.Name,
+		Name:  v.Name,
 		Type:  sdk.StringParameter,
 		Value: v.Value,
 	})

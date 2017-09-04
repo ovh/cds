@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/loopfz/gadgeto/iffy"
+	"github.com/stretchr/testify/assert"
 
-	"github.com/magiconair/properties/assert"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/test/assets"
