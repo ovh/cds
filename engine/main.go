@@ -17,24 +17,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-type Configuration struct {
-	Log struct {
-		Level string
-	}
-	API      api.Configuration
-	Hatchery []struct{}
-}
-
-type ServiceServeOptions struct {
-	SetHeaderFunc func() map[string]string
-	Middlewares   []api.Middleware
-}
-
-type Service interface {
-	Init(cfg interface{}) error
-	Serve(ctx context.Context, opts *ServiceServeOptions) error
-}
-
 var (
 	cfgFile      string
 	remoteCfg    string
@@ -57,6 +39,8 @@ func init() {
 	mainCmd.AddCommand(startCmd)
 	//config command
 	mainCmd.AddCommand(configCmd)
+	configCmd.AddCommand(configNewCmd)
+	configCmd.AddCommand(configCheckCmd)
 }
 
 func main() {
@@ -78,8 +62,12 @@ All rights reserved.`,
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage CDS Configuration",
+}
+
+var configNewCmd = &cobra.Command{
+	Use:   "new",
+	Short: "CDS configuration file assistant",
 	Long: `
-CDS configuration file assistant.
 Comming soon...`,
 	Run: func(cmd *cobra.Command, args []string) {
 		btes, err := toml.Marshal(*conf)
@@ -87,6 +75,34 @@ Comming soon...`,
 			sdk.Exit("%v", err)
 		}
 		fmt.Println(string(btes))
+	},
+}
+
+var configCheckCmd = &cobra.Command{
+	Use:   "check",
+	Short: "Check CDS configuration file",
+	Long:  `$ engine config check <path>`,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 1 {
+			cmd.Help()
+			sdk.Exit("Wrong usage")
+		}
+
+		cfgFile = args[0]
+		//Initialize config
+		config()
+
+		var hasError bool
+		if conf.API.URL.API != "" {
+			if err := api.New().CheckConfiguration(conf.API); err != nil {
+				fmt.Println(err)
+				hasError = true
+			}
+		}
+
+		if !hasError {
+			fmt.Println("Configuration file OK")
+		}
 	},
 }
 

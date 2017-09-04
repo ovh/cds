@@ -131,44 +131,45 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	if rc.Options["auth"] != "true" {
 		return ctx, nil
-	} else {
-		if getUser(ctx) == nil {
-			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to find connected user")
-		}
+	}
 
-		if rc.Options["needHatchery"] == "true" && getHatchery(ctx) != nil {
-			return ctx, nil
-		}
+	if getUser(ctx) == nil {
+		return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to find connected user")
+	}
 
-		if rc.Options["needWorker"] == "true" {
-			permissionOk := api.checkWorkerPermission(ctx, api.MustDB(), rc, mux.Vars(req))
-			if !permissionOk {
-				return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> Worker not authorized")
-			}
-			return ctx, nil
-		}
-
-		if getUser(ctx).Admin {
-			return ctx, nil
-		}
-
-		if rc.Options["needAdmin"] != "true" {
-			permissionOk := api.checkPermission(ctx, mux.Vars(req), getPermissionByMethod(req.Method, rc.Options["isExecution"] == "true"))
-			if !permissionOk {
-				return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized")
-			}
-		} else {
-			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized")
-		}
-
-		if rc.Options["needUsernameOrAdmin"] == "true" && getUser(ctx).Username != mux.Vars(req)["username"] {
-			// get / update / delete user -> for admin or current user
-			// if not admin and currentUser != username in request -> ko
-			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized on this resource")
-		}
-
+	if rc.Options["needHatchery"] == "true" && getHatchery(ctx) != nil {
 		return ctx, nil
 	}
+
+	if rc.Options["needWorker"] == "true" {
+		permissionOk := api.checkWorkerPermission(ctx, api.MustDB(), rc, mux.Vars(req))
+		if !permissionOk {
+			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> Worker not authorized")
+		}
+		return ctx, nil
+	}
+
+	if getUser(ctx).Admin {
+		return ctx, nil
+	}
+
+	if rc.Options["needAdmin"] != "true" {
+		permissionOk := api.checkPermission(ctx, mux.Vars(req), getPermissionByMethod(req.Method, rc.Options["isExecution"] == "true"))
+		if !permissionOk {
+			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized")
+		}
+	} else {
+		return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized")
+	}
+
+	if rc.Options["needUsernameOrAdmin"] == "true" && getUser(ctx).Username != mux.Vars(req)["username"] {
+		// get / update / delete user -> for admin or current user
+		// if not admin and currentUser != username in request -> ko
+		return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized on this resource")
+	}
+
+	return ctx, nil
+
 }
 
 func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, rc *HandlerConfig, routeVar map[string]string) bool {
@@ -200,7 +201,6 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 }
 
 func (api *API) checkPermission(ctx context.Context, routeVar map[string]string, permission int) bool {
-	log.Debug("checkPermission : %+v", getUser(ctx))
 	for _, g := range getUser(ctx).Groups {
 		if group.SharedInfraGroup != nil && g.Name == group.SharedInfraGroup.Name {
 			return true
@@ -210,7 +210,6 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 	permissionOk := true
 	for key, value := range routeVar {
 		if permFunc, ok := permissionFunc(api)[key]; ok {
-			log.Debug("Check permission for %s", key)
 			permissionOk = permFunc(ctx, value, permission, routeVar)
 			if !permissionOk {
 				return permissionOk

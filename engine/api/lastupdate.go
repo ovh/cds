@@ -29,20 +29,13 @@ type LastUpdateBroker struct {
 	messages   chan string
 }
 
-var lastUpdateBroker *LastUpdateBroker
-
-func InitLastUpdateBroker(c context.Context, DBFunc func() *gorp.DbMap) {
-	lastUpdateBroker = &LastUpdateBroker{
-		make(map[string]*LastUpdateBrokerSubscribe),
-		make(chan *LastUpdateBrokerSubscribe),
-		make(chan string),
-	}
-
+//Init the LastUpdateBroker
+func (b *LastUpdateBroker) Init(c context.Context, DBFunc func() *gorp.DbMap) {
 	// Start cache Subscription
-	go CacheSubscribe(c, lastUpdateBroker.messages)
+	go CacheSubscribe(c, b.messages)
 
 	// Start processing events
-	go lastUpdateBroker.Start(c, DBFunc)
+	go b.Start(c, DBFunc)
 }
 
 // CacheSubscribe subscribe to a channel and push received message in a channel
@@ -108,6 +101,13 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 					for _, g := range i.User.Groups {
 						hasPermission = false
 						switch lastModif.Type {
+						case sdk.ProjectLastModificationType:
+							for _, pg := range g.ProjectGroups {
+								if pg.Project.Key == lastModif.Key {
+									hasPermission = true
+									break groups
+								}
+							}
 						case sdk.ApplicationLastModificationType:
 							for _, ag := range g.ApplicationGroups {
 								if ag.Application.Name == lastModif.Name && ag.Application.ProjectKey == lastModif.Key {
@@ -132,7 +132,6 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 			}
 		}
 	}
-
 }
 
 func (b *LastUpdateBroker) ServeHTTP() Handler {

@@ -161,18 +161,80 @@ type API struct {
 	Config              Configuration
 	DBConnectionFactory *database.DBConnectionFactory
 	StartupTime         time.Time
+	LastUpdateBroker    *LastUpdateBroker
 }
 
 func (a *API) Init(config interface{}) error {
+	return a.CheckConfiguration(config)
+}
+
+func directoryExists(path string) (bool, error) {
+	s, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return s.IsDir(), err
+}
+
+func (a *API) CheckConfiguration(config interface{}) error {
 	var ok bool
 	a.Config, ok = config.(Configuration)
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	//Check the first config key
 	if a.Config.URL.API == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
+	}
+
+	if a.Config.Directories.Download == "" {
+		return fmt.Errorf("Invalid download directory")
+	}
+
+	if ok, err := directoryExists(a.Config.Directories.Download); !ok {
+		return fmt.Errorf("Download directory doesn't exist")
+	} else if err != nil {
+		return fmt.Errorf("Invalid download directory: %v", err)
+	}
+
+	if a.Config.Directories.Keys == "" {
+		return fmt.Errorf("Invalid keys directory")
+	}
+
+	if ok, err := directoryExists(a.Config.Directories.Keys); !ok {
+		return fmt.Errorf("Keys directory doesn't exist")
+	} else if err != nil {
+		return fmt.Errorf("Invalid keys directory: %v", err)
+	}
+
+	switch a.Config.Artifact.Mode {
+	case "local", "openstack":
+	default:
+		return fmt.Errorf("Invalid artifact mode")
+	}
+
+	if a.Config.Artifact.Mode == "local" {
+		if a.Config.Artifact.Local.BaseDirectory == "" {
+			return fmt.Errorf("Invalid artifact local base directory")
+		}
+		if ok, err := directoryExists(a.Config.Artifact.Local.BaseDirectory); !ok {
+			return fmt.Errorf("artifact local base directory doesn't exist")
+		} else if err != nil {
+			return fmt.Errorf("Invalid artifact local base directory: %v", err)
+		}
+	}
+
+	switch a.Config.Cache.Mode {
+	case "local", "redis":
+	default:
+		return fmt.Errorf("Invalid cache mode")
+	}
+
+	if len(a.Config.Secrets.Key) != 32 {
+		return fmt.Errorf("Invalid secret key. It should be 32 bits (%d)", len(a.Config.Secrets.Key))
 	}
 
 	return nil
@@ -318,8 +380,6 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Cache.Redis.Host,
 		a.Config.Cache.Redis.Password,
 		a.Config.Cache.TTL)
-
-	InitLastUpdateBroker(ctx, a.DBConnectionFactory.GetDBMap)
 
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),

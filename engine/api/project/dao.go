@@ -157,7 +157,7 @@ func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, proj *sdk.Project) err
 			Name:         proj.Name,
 			LastModified: t.Unix(),
 			Username:     u.Username,
-			Type:         sdk.ProjectLastModiciationType,
+			Type:         sdk.ProjectLastModificationType,
 		}
 		b, errP := json.Marshal(updates)
 		if errP == nil {

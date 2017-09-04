@@ -9,6 +9,12 @@ func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.AuthMiddleware, api.DeletePermissionMiddleware)
+	api.LastUpdateBroker = &LastUpdateBroker{
+		make(map[string]*LastUpdateBrokerSubscribe),
+		make(chan *LastUpdateBrokerSubscribe),
+		make(chan string),
+	}
+	api.LastUpdateBroker.Init(api.Router.Background, api.DBConnectionFactory.GetDBMap)
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.LoginUserHandler, Auth(false)))
@@ -291,7 +297,7 @@ func (api *API) InitRouter() {
 	r.Handle("/workflow/hook/{model}", r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE
-	r.Handle("/mon/lastupdates/events", r.GET(lastUpdateBroker.ServeHTTP))
+	r.Handle("/mon/lastupdates/events", r.GET(api.LastUpdateBroker.ServeHTTP))
 
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(notFoundHandler)

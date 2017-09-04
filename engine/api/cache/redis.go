@@ -265,7 +265,7 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 				log.Warning("redis.GetMessage> Message casting error for %v of type %T", msg, msg)
 				continue
 			}
-
+			log.Warning("--> %v", redisMsg)
 		case <-c.Done():
 			return "", nil
 		}
