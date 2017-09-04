@@ -46,6 +46,13 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 				t := strings.SplitN(scriptContent, "\n", 2)
 				shell = strings.TrimPrefix(t[0], "#!")
 				shell = strings.TrimRight(shell, " \t\r\n")
+
+				if isShell(shell) && len(t) >= 2 {
+					t[1] = fmt.Sprintf("set -e; \n%s", t[1])
+				}
+				scriptContent = strings.Join(t, "\n")
+			} else {
+				scriptContent = fmt.Sprintf("set -e; \n%s", scriptContent)
 			}
 
 			// except on windows where it's powershell
@@ -55,9 +62,9 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			}
 
 			// Create a tmp file
-			tmpscript, err := ioutil.TempFile(w.basedir, "cds-")
-			if err != nil {
-				log.Warning("Cannot create tmp file: %s", err)
+			tmpscript, errt := ioutil.TempFile(w.basedir, "cds-")
+			if errt != nil {
+				log.Warning("Cannot create tmp file: %s", errt)
 				res.Reason = fmt.Sprintf("cannot create temporary file, aborting\n")
 				sendLog(res.Reason)
 				res.Status = sdk.StatusFail.String()
@@ -65,10 +72,10 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			}
 
 			// Put script in file
-			n, err := tmpscript.Write([]byte(scriptContent))
-			if err != nil || n != len(scriptContent) {
-				if err != nil {
-					log.Warning("Cannot write script: %s", err)
+			n, errw := tmpscript.Write([]byte(scriptContent))
+			if errw != nil || n != len(scriptContent) {
+				if errw != nil {
+					log.Warning("Cannot write script: %s", errw)
 				} else {
 					log.Warning("cannot write all script: %d/%d", n, len(scriptContent))
 				}
@@ -86,8 +93,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 				newPath := strings.Replace(oldPath, ".txt", "", -1)
 				//and add .PS1 extension
 				newPath = newPath + ".PS1"
-				err = os.Rename(oldPath, newPath)
-				if err != nil {
+				if err := os.Rename(oldPath, newPath); err != nil {
 					res.Status = sdk.StatusFail.String()
 					res.Reason = fmt.Sprintf("cannot rename script to add powershell Extension, aborting\n")
 					sendLog(res.Reason)
@@ -264,4 +270,13 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			}
 		}
 	}
+}
+
+func isShell(in string) bool {
+	for _, v := range []string{"ksh", "bash", "sh", "zsh"} {
+		if strings.HasSuffix(in, v) {
+			return true
+		}
+	}
+	return false
 }

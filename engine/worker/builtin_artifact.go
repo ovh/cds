@@ -193,14 +193,12 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		if tag == "" {
+		if tag != "" {
 			res.Status = sdk.StatusFail.String()
-			res.Reason = fmt.Sprintf("tag variable is empty. aborting")
+			res.Reason = fmt.Sprintf("tag variable can not be used with CDS Workflow. Please remove it. aborting")
 			sendLog(res.Reason)
 			return res
 		}
-		tag = strings.Replace(tag, "/", "-", -1)
-		tag = url.QueryEscape(tag)
 
 		sendLog(fmt.Sprintf("Downloading artifacts from into '%s'...", path))
 
