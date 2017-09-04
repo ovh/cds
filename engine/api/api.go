@@ -168,7 +168,7 @@ func (a *API) Init(config interface{}) error {
 	return a.CheckConfiguration(config)
 }
 
-func directoryExists(path string) (bool, error) {
+func DirectoryExists(path string) (bool, error) {
 	s, err := os.Stat(path)
 	if err == nil {
 		return true, nil
@@ -194,7 +194,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid download directory")
 	}
 
-	if ok, err := directoryExists(a.Config.Directories.Download); !ok {
+	if ok, err := DirectoryExists(a.Config.Directories.Download); !ok {
 		return fmt.Errorf("Download directory doesn't exist")
 	} else if err != nil {
 		return fmt.Errorf("Invalid download directory: %v", err)
@@ -204,7 +204,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid keys directory")
 	}
 
-	if ok, err := directoryExists(a.Config.Directories.Keys); !ok {
+	if ok, err := DirectoryExists(a.Config.Directories.Keys); !ok {
 		return fmt.Errorf("Keys directory doesn't exist")
 	} else if err != nil {
 		return fmt.Errorf("Invalid keys directory: %v", err)
@@ -220,7 +220,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		if a.Config.Artifact.Local.BaseDirectory == "" {
 			return fmt.Errorf("Invalid artifact local base directory")
 		}
-		if ok, err := directoryExists(a.Config.Artifact.Local.BaseDirectory); !ok {
+		if ok, err := DirectoryExists(a.Config.Artifact.Local.BaseDirectory); !ok {
 			return fmt.Errorf("artifact local base directory doesn't exist")
 		} else if err != nil {
 			return fmt.Errorf("Invalid artifact local base directory: %v", err)

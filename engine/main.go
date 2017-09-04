@@ -7,6 +7,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/docker/docker/volume/local"
+	defaults "github.com/mcuadros/go-defaults"
 	"github.com/pelletier/go-toml"
 	"github.com/spf13/cobra"
 	_ "github.com/spf13/viper/remote"
@@ -70,6 +72,7 @@ var configNewCmd = &cobra.Command{
 	Long: `
 Comming soon...`,
 	Run: func(cmd *cobra.Command, args []string) {
+		defaults.SetDefaults(conf)
 		btes, err := toml.Marshal(*conf)
 		if err != nil {
 			sdk.Exit("%v", err)
@@ -151,10 +154,19 @@ All the services are using the same configuration file format. See $ engine conf
 		}()
 
 		for _, a := range args {
+			var s Service
+			var cfg interface{}
+
 			switch a {
 			case "api":
-				go startAPI(ctx)
+				s = api.New()
+				cfg = conf.API
+			case "hatchery:local":
+				s = local.New()
+				cfg = conf.Hatchery
+
 			}
+			go start(ctx, s, cfg)
 		}
 
 		//Wait for the end
@@ -167,12 +179,11 @@ All the services are using the same configuration file format. See $ engine conf
 	},
 }
 
-func startAPI(c context.Context) {
-	newAPI := api.New()
-	if err := newAPI.Init(conf.API); err != nil {
-		sdk.Exit("Unable to init API: %v", err)
+func start(c context.Context, s Service, cfg interface{}) {
+	if err := s.Init(i); err != nil {
+		sdk.Exit("Unable to init service: %v", err)
 	}
-	if err := newAPI.Serve(c); err != nil {
-		sdk.Exit("API has been stopped: %v", err)
+	if err := s.Serve(c); err != nil {
+		sdk.Exit("Service has been stopped: %v", err)
 	}
 }

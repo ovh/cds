@@ -13,6 +13,52 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// Configuration is the base configuration for all hatcheries
+type Configuration struct {
+	Name string
+	API  struct {
+		HTTP struct {
+			URL      string `default:"https://localhost:8081"`
+			Insecure string
+		}
+		GRPC struct {
+			URL      string `default:"https://localhost:8082"`
+			Insecure bool
+		}
+		Token                string `default:"************"`
+		RequestTimeout       int    `default:"10"`
+		MaxHeartbeatFailures int    `default:"10"`
+	}
+	Provision struct {
+		Disabled          bool
+		Frequency         int `default:"30"`
+		MaxWorker         int `default:"10"`
+		GraceTimeQueued   int `default:"4"`
+		RegisterFrequency int `default:"60"`
+		WorkerLogsOptions struct {
+			Graylog struct {
+				Host       string
+				Port       int
+				ExtraKey   string
+				Extravalue string
+			}
+		}
+	}
+	LogOptions struct {
+		Graylog struct {
+			Host       string
+			Port       int
+			ExtraKey   string
+			Extravalue string
+		}
+		SpawnOptions struct {
+			ThresholdCritical int `default:"480"`
+			ThresholdWarning  int `default:"360"`
+		}
+	}
+	RemoteDebugURL string
+}
+
 // Interface describe an interface for each hatchery mode (mesos, local)
 type Interface interface {
 	Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error

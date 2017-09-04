@@ -1,6 +1,7 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,22 +11,61 @@ import (
 
 	"github.com/docker/docker/pkg/namesgenerator"
 
+	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/spf13/viper"
 )
 
-var hatcheryLocal *HatcheryLocal
+// HatcheryLocalConfiguration is the configuration for local hatchery
+type HatcheryLocalConfiguration struct {
+	hatchery.Configuration
+	Basedir string `default:"/tmp"`
+}
+
+// New instanciates a new hatchery local
+func New() *HatcheryLocal {
+	return new(HatcheryLocal)
+}
+
+func (h *HatcheryLocal) Init(cfg interface{}) error {
+	return h.CheckConfiguration(cfg)
+}
+
+func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
+	var ok bool
+	h.Config, ok = cfg.(HatcheryLocalConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	if h.Config.Basedir == "" {
+		return fmt.Errorf("Invalid basedir directory")
+	}
+
+	if ok, err := api.DirectoryExists(h.Config.Basedir); !ok {
+		return fmt.Errorf("Basedir doesn't exist")
+	} else if err != nil {
+		return fmt.Errorf("Invalid basedir: %v", err)
+	}
+	return nil
+}
+
+func (h *HatcheryLocal) Serve(ctx context.Context) error {
+	hatchery.Create(h, h.Config.Configuration.Name, h.Config.Configuration.API.HTTP.URL, h.Config.Configuration.API.Token, h.Config.Provision.MaxWorker, h.Config.Provision.Disabled, h.Config.API.RequestTimeout, h.Config.API.MaxHeartbeatFailures, h.Config.API.HTTP.Insecure, h.Config.Provision.Frequency, h.Config.Provision.RegisterFrequency, h.Config.LogOptions.SpawnOptions.ThresholdWarning, h.Config.LogOptions.SpawnOptions.ThresholdCritical, h.Config.Provision.GraceTimeQueued)
+	return nil
+}
 
 // HatcheryLocal implements HatcheryMode interface for local usage
 type HatcheryLocal struct {
+	Config HatcheryLocalConfiguration
 	sync.Mutex
 	hatch   *sdk.Hatchery
-	basedir string
 	workers map[string]*exec.Cmd
 	client  cdsclient.Interface
+	os      string
+	arch    string
 }
 
 // ID must returns hatchery id
@@ -87,8 +127,8 @@ func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	var err error
 
-	if len(h.workers) >= viper.GetInt("max-worker") {
-		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+	if len(h.workers) >= h.configuration.Configuration.Provision.MaxWorker {
+		return "", fmt.Errorf("Max capacity reached (%d)", h.configuration.Configuration.Provision.MaxWorker)
 	}
 
 	if jobID > 0 {
@@ -104,28 +144,28 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 
 	var args []string
 	args = append(args, fmt.Sprintf("--api=%s", h.Client().APIURL()))
-	args = append(args, fmt.Sprintf("--token=%s", viper.GetString("token")))
-	args = append(args, fmt.Sprintf("--basedir=%s", h.basedir))
+	args = append(args, fmt.Sprintf("--token=%s", h.configuration.Configuration.API.Token))
+	args = append(args, fmt.Sprintf("--basedir=%s", h.configuration.Basedir))
 	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
 	args = append(args, fmt.Sprintf("--name=%s", wName))
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
 	args = append(args, fmt.Sprintf("--hatchery-name=%s", h.hatch.Name))
 
-	if viper.GetString("worker_graylog_host") != "" {
-		args = append(args, fmt.Sprintf("--graylog-host=%s", viper.GetString("worker_graylog_host")))
+	if h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Host != "" {
+		args = append(args, fmt.Sprintf("--graylog-host=%s", h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Host))
 	}
-	if viper.GetString("worker_graylog_port") != "" {
-		args = append(args, fmt.Sprintf("--graylog-port=%s", viper.GetString("worker_graylog_port")))
+	if h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Port != 0 {
+		args = append(args, fmt.Sprintf("--graylog-port=%d", h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Port))
 	}
-	if viper.GetString("worker_graylog_extra_key") != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", viper.GetString("worker_graylog_extra_key")))
+	if h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.ExtraKey))
 	}
-	if viper.GetString("worker_graylog_extra_value") != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", viper.GetString("worker_graylog_extra_value")))
+	if h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Extravalue != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Extravalue))
 	}
-	if viper.GetString("grpc_api") != "" && wm.Communication == sdk.GRPC {
-		args = append(args, fmt.Sprintf("--grpc-api=%s", viper.GetString("grpc_api")))
-		args = append(args, fmt.Sprintf("--grpc-insecure=%t", viper.GetBool("grpc_insecure")))
+	if h.configuration.Configuration.API.GRPC.URL != "" && wm.Communication == sdk.GRPC {
+		args = append(args, fmt.Sprintf("--grpc-api=%s", h.configuration.Configuration.API.GRPC.URL))
+		args = append(args, fmt.Sprintf("--grpc-insecure=%t", h.configuration.Configuration.API.GRPC.Insecure))
 	}
 
 	args = append(args, "--single-use")

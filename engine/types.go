@@ -11,7 +11,9 @@ type Configuration struct {
 		Level string
 	}
 	API      api.Configuration
-	Hatchery []struct{}
+	Hatchery struct {
+		Local local.Configuration
+	}
 }
 
 type ServiceServeOptions struct {
@@ -21,6 +23,6 @@ type ServiceServeOptions struct {
 
 type Service interface {
 	Init(cfg interface{}) error
-	Serve(ctx context.Context, opts *ServiceServeOptions) error
+	Serve(ctx context.Context) error
 	CheckConfiguration(cfg interface{}) error
 }
