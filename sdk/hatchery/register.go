@@ -106,7 +106,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 				continue
 			}
 			go func(job sdk.PipelineBuildJob) {
-				if isRun := receiveJob(h, false, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
+				if isRun := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				}
@@ -117,7 +117,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 				continue
 			}
 			go func(job sdk.WorkflowNodeJobRun) {
-				if isRun := receiveJob(h, true, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
+				if isRun := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				}

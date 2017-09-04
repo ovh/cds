@@ -5,8 +5,10 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
-	"time"
+
+	"github.com/blang/semver"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -14,8 +16,8 @@ import (
 	"github.com/ovh/cds/sdk/vcs/git"
 )
 
-func runGitClone(*currentWorker) BuiltInAction {
-	return func(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+func runGitClone(w *currentWorker) BuiltInAction {
+	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		url := sdk.ParameterFind(a.Parameters, "url")
 		privateKey := sdk.ParameterFind(a.Parameters, "privateKey")
 		user := sdk.ParameterFind(a.Parameters, "user")
@@ -23,6 +25,7 @@ func runGitClone(*currentWorker) BuiltInAction {
 		branch := sdk.ParameterFind(a.Parameters, "branch")
 		commit := sdk.ParameterFind(a.Parameters, "commit")
 		directory := sdk.ParameterFind(a.Parameters, "directory")
+		cdsVersion := sdk.ParameterFind(*params, "cds.version")
 
 		if url == nil {
 			res := sdk.Result{
@@ -46,7 +49,7 @@ func runGitClone(*currentWorker) BuiltInAction {
 		}
 
 		//Get the key
-		key, errK := vcs.GetSSHKey(params, keysDirectory, privateKey)
+		key, errK := vcs.GetSSHKey(*params, keysDirectory, privateKey)
 		if errK != nil && errK != sdk.ErrKeyNotFound {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
@@ -141,7 +144,86 @@ func runGitClone(*currentWorker) BuiltInAction {
 			return res
 		}
 
-		time.Sleep(5 * time.Second)
+		stdTaglistErr := new(bytes.Buffer)
+		stdTagListOut := new(bytes.Buffer)
+		outputGitTar := &git.OutputOpts{
+			Stderr: stdTaglistErr,
+			Stdout: stdTagListOut,
+		}
+
+		errTag := git.TagList(dir, outputGitTar)
+		//Send the logs
+		if len(stdTagListOut.Bytes()) > 0 {
+			// search for version
+			lines := strings.Split(stdTagListOut.String(), "\n")
+			sort.Sort(sort.Reverse(sort.StringSlice(lines)))
+			var v semver.Version
+			found := false
+			for _, l := range lines {
+				var errorMake error
+				v, errorMake = semver.Make(l)
+				if errorMake == nil {
+					found = true
+					v.Patch++
+					break
+				}
+			}
+			if !found {
+				var errorMake error
+				v, errorMake = semver.Make("0.0.1")
+				if errorMake != nil {
+					res := sdk.Result{
+						Status: sdk.StatusFail.String(),
+						Reason: fmt.Sprintf("Unable init semver: %s", errorMake),
+					}
+					sendLog(res.Reason)
+					return res
+				}
+			}
+
+			pr, errPR := semver.NewPRVersion("snapshot")
+			if errPR != nil {
+				res := sdk.Result{
+					Status: sdk.StatusFail.String(),
+					Reason: fmt.Sprintf("Unable create snapshot version: %s", errTag),
+				}
+				sendLog(res.Reason)
+				return res
+			}
+			v.Pre = append(v.Pre, pr)
+
+			if cdsVersion != nil {
+				v.Build = append(v.Build, cdsVersion.Value, "cds")
+			}
+
+			semverVar := sdk.Variable{
+				Name:  "cds.semver",
+				Type:  sdk.StringVariable,
+				Value: v.String(),
+			}
+			_, err := w.addVariableInPipelineBuild(semverVar, params)
+			if err != nil {
+				res := sdk.Result{
+					Status: sdk.StatusFail.String(),
+					Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
+				}
+				sendLog(res.Reason)
+				return res
+			}
+		}
+		if len(stdTaglistErr.Bytes()) > 0 {
+			sendLog(stdTaglistErr.String())
+		}
+
+		if errTag != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable to list tag for getting current version: %s", errTag),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+
 		return sdk.Result{Status: sdk.StatusSuccess.String()}
 	}
 }

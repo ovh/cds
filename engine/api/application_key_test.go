@@ -5,10 +5,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
+	"github.com/stretchr/testify/assert"
 
-	"github.com/magiconair/properties/assert"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -16,7 +17,7 @@ import (
 )
 
 func Test_getKeysInApplicationHandler(t *testing.T) {
-	db := test.SetupPG(t)
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getKeysInApplicationHandler")
 	router.init()
@@ -47,12 +48,13 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 
-	pub, priv, err := keys.GeneratePGPKeyPair(k.Name, u)
+	kid, pub, priv, err := keys.GeneratePGPKeyPair(k.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
 	k.Public = pub
 	k.Private = priv
+	k.KeyID = kid
 
 	if err := application.InsertKey(db, k); err != nil {
 		t.Fatal(err)

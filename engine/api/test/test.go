@@ -1,6 +1,7 @@
 package test
 
 import (
+	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"os"
@@ -12,9 +13,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"encoding/json"
-
-	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/secret"
@@ -48,7 +46,7 @@ func init() {
 	}
 }
 
-type bootstrapf func(bootstrap.DefaultValues, func() *gorp.DbMap) error
+type bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
 
 // SetupPG setup PG DB for test
 func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
@@ -99,6 +97,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 		t.Skip("This should be run with a database")
 		return nil
 	}
+
 	if database.DB() == nil {
 		db, err := database.Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, 2000, 100)
 		if err != nil {
@@ -129,7 +128,8 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 	}
 
 	for _, f := range bootstrapFunc {
-		if err := f(bootstrap.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, database.GetDBMap); err != nil {
+		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, database.GetDBMap); err != nil {
+			log.Error("Error: %v", err)
 			return nil
 		}
 	}

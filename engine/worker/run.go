@@ -90,9 +90,9 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 	return nil
 }
 
-func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, stepName string) sdk.Result {
+func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
 	// Process action build arguments
-	for _, abp := range params {
+	for _, abp := range *params {
 		// Process build variable for root action
 		for j := range a.Parameters {
 			if abp.Name == a.Parameters[j].Name {
@@ -103,22 +103,24 @@ func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID 
 	return w.runJob(ctx, a, buildID, params, stepOrder, stepName)
 }
 
-func (w *currentWorker) replaceBuildVariablesPlaceholder(a *sdk.Action) {
+func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.Parameter) {
 	for i := range a.Parameters {
 		for _, v := range w.currentJob.buildVariables {
-			a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value,
-				"{{.cds.build."+v.Name+"}}", v.Value, -1)
+			a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
+		}
+		for _, v := range params {
+			a.Parameters[i].Value = strings.Replace(a.Parameters[i].Value, "{{."+v.Name+"}}", v.Value, -1)
 		}
 	}
 }
 
-func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, stepName string) sdk.Result {
+func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
 	log.Debug("runJob> start run %d stepOrder:%d", buildID, stepOrder)
 	defer log.Debug("runJob> end run %d stepOrder:%d", buildID, stepOrder)
-	// Replace build variable placeholder that may have been added by last step
-	w.replaceBuildVariablesPlaceholder(a)
+	// Replace variable placeholder that may have been added by last step
+	w.replaceVariablesPlaceholder(a, *params)
 	// Set the params
-	w.currentJob.params = params
+	w.currentJob.params = *params
 	// Unset the params at the end
 	defer func() {
 		w.currentJob.params = nil
@@ -162,7 +164,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 	return r
 }
 
-func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk.Action, buildID int64, params []sdk.Parameter, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
+func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
 	log.Debug("runSteps> start run %d stepOrder:%d len(steps):%d", buildID, stepOrder, len(steps))
 	defer log.Debug("runSteps> end run %d stepOrder:%d len(steps):%d", buildID, stepOrder, len(steps))
 	var criticalStepFailed bool
@@ -205,7 +207,7 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, sdk.StatusBuilding.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s\n", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
-			w.sendLog(buildID, fmt.Sprintf("Starting step %s", childName), w.currentJob.currentStep, false)
+			w.sendLog(buildID, fmt.Sprintf("Starting step %s\n", childName), w.currentJob.currentStep, false)
 
 			r = w.startAction(ctx, &child, buildID, params, w.currentJob.currentStep, childName)
 			if r.Status != sdk.StatusSuccess.String() && !child.Optional {
@@ -400,7 +402,7 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 	}
 
 	logsecrets = jobInfo.Secrets
-	res := w.startAction(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, jobInfo.NodeJobRun.Parameters, -1, "")
+	res := w.startAction(ctx, &jobInfo.NodeJobRun.Job.Action, jobInfo.NodeJobRun.ID, &jobInfo.NodeJobRun.Parameters, -1, "")
 	logsecrets = nil
 
 	log.Debug("processJob> call teardownBuildDirectory wd:%s", wd)
@@ -512,7 +514,7 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 	logsecrets = pbji.Secrets
 
 	log.Debug("run> run startAction")
-	res := w.startAction(ctx, &pbji.PipelineBuildJob.Job.Action, pbji.PipelineBuildJob.ID, pbji.PipelineBuildJob.Parameters, -1, "")
+	res := w.startAction(ctx, &pbji.PipelineBuildJob.Job.Action, pbji.PipelineBuildJob.ID, &pbji.PipelineBuildJob.Parameters, -1, "")
 	logsecrets = nil
 
 	if err := teardownBuildDirectory(wd); err != nil {

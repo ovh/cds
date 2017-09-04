@@ -136,7 +136,6 @@ func LoadGroupWaitingQueue(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineBu
 				pipeline_group.role > 4
 			)
 			OR $2 =  $3
-
 		)
 		 ORDER BY pipeline_build_job.pipeline_build_id ASC, pipeline_build_job.id ASC
 	`, sdk.StatusWaiting.String(), groupID, group.SharedInfraGroup.ID); err != nil {
@@ -163,7 +162,7 @@ func LoadUserWaitingQueue(db gorp.SqlExecutor, u *sdk.User) ([]sdk.PipelineBuild
 
 	// If user is in no group, don't bother
 	if len(u.Groups) == 0 {
-		log.Warning("LoadUserWaitingQueue> User %s is in no groups, let it go\n", u.Username)
+		log.Warning("LoadUserWaitingQueue> User %s is in no groups, let it go", u.Username)
 		return nil, nil
 	}
 

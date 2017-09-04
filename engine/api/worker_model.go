@@ -7,7 +7,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/businesscontext"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -325,73 +324,4 @@ func getWorkerModelCommunications(w http.ResponseWriter, r *http.Request, db *go
 
 func getWorkerModelCapaTypes(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	return WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
-}
-
-func getWorkerModelsStatsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	res := []struct {
-		Model string
-		Used  int
-	}{}
-
-	cache.Get("stats:models", &res)
-	if len(res) > 0 {
-		return WriteJSON(w, r, res, http.StatusOK)
-	}
-
-	//This can be very long, so run it in a goroutine and send 202
-	go func() {
-		var loading string
-		cache.Get("stats:models:loading", &loading)
-		if loading != "" {
-
-		}
-		loading = "true"
-		cache.Set("stats:models:loading", loading)
-		query := `
-		select model, sum(used)
-		from (
-			select worker_model_name as model, count(pipeline_build_job.id) as used from pipeline_build_job group by worker_model_name
-			union
-			select m.model as model, count(1) as used
-			from (
-				select jsonb_array_elements(b.builds)->>'model' as model
-				from
-				(
-					select stages->'builds' as builds
-					from pipeline_build h, jsonb_array_elements(h.stages) stages
-					where jsonb_typeof(h.stages) = 'array'
-				) b
-			) m
-			group by m.model
-			) m_u
-		where model is not null
-		group by model;
-	`
-
-		rows, err := db.Query(query)
-		if err != nil {
-			log.Warning("getWorkerModelsStatusHandler> %s", err)
-			return
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			var model string
-			var used int
-
-			if err := rows.Scan(&model, &used); err != nil {
-				log.Warning("getWorkerModelsStatusHandler> %s", err)
-				return
-			}
-			res = append(res, struct {
-				Model string
-				Used  int
-			}{model, used})
-		}
-
-		cache.Set("stats:models", res)
-		cache.Delete("stats:models:loading")
-	}()
-
-	return WriteJSON(w, r, res, http.StatusAccepted)
 }

@@ -12,14 +12,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-// DefaultValues contains default user values for init DB
-type DefaultValues struct {
-	DefaultGroupName string
-	SharedInfraToken string
-}
-
 //InitiliazeDB inits the database
-func InitiliazeDB(defaultValues DefaultValues, DBFunc func() *gorp.DbMap) error {
+func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
 	dbGorp := DBFunc()
 
 	if err := group.CreateDefaultGroup(dbGorp, group.SharedInfraGroupName); err != nil {

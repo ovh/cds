@@ -12,7 +12,8 @@ type Worker struct {
 	Name         string    `json:"name" cli:"name"`
 	LastBeat     time.Time `json:"-" cli:"lastbeat"`
 	GroupID      int64     `json:"group_id" cli:"-"`
-	Model        int64     `json:"model" cli:"-"`
+	ModelID      int64     `json:"model_id" cli:"-"`
+	Model        *Model    `json:"model" cli:"-"`
 	HatcheryID   int64     `json:"hatchery_id" cli:"-"`
 	HatcheryName string    `json:"hatchery_name" cli:"-"`
 	Status       Status    `json:"status" cli:"status"` // Waiting, Building, Disabled, Unknown

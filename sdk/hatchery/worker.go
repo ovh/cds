@@ -15,7 +15,7 @@ func killWorker(h Interface, model *sdk.Model) error {
 
 	// Get list of workers for this model
 	for _, worker := range workers {
-		if worker.Model != model.ID {
+		if worker.ModelID != model.ID {
 			continue
 		}
 

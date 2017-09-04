@@ -10,6 +10,7 @@ type Key struct {
 	Name    string `json:"name" db:"name" cli:"name"`
 	Public  string `json:"public" db:"public" cli:"publickey"`
 	Private string `json:"private" db:"private" cli:"-"`
+	KeyID   string `json:"keyID" db:"key_id" cli:"-"`
 	Type    string `json:"type" db:"type" cli:"type"`
 }
 

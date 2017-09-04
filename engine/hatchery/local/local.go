@@ -138,7 +138,6 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 		args = append(args, "register")
 	}
 
-	fmt.Printf("#### spawn with args %s \n", strings.Join(args, " "))
 	cmd := exec.Command("worker", args...)
 
 	// Clearenv

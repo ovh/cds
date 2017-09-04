@@ -12,6 +12,7 @@ import (
 	"log"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
@@ -198,11 +199,18 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 		//If action is nil: do nothing
 		return nil
 	}
-	Trace.Printf(format+"\n", i)
-
-	now, _ := ptypes.TimestampProto(time.Now())
 
 	s := fmt.Sprintf(format, i...)
+
+	for k, v := range j.Secrets().Data {
+		if len(v) >= 6 {
+			s = strings.Replace(s, v, "**"+k+"**", -1)
+		}
+	}
+
+	Trace.Println(s)
+
+	now, _ := ptypes.TimestampProto(time.Now())
 	l := Log{
 		PipelineBuildJobID: j.ID(),
 		PipelineBuildID:    j.PipelineBuildID(),

@@ -2,7 +2,6 @@ package main
 
 import (
 	"container/list"
-	"time"
 
 	"google.golang.org/grpc"
 
@@ -15,7 +14,8 @@ type currentWorker struct {
 	apiEndpoint   string
 	token         string
 	id            string
-	modelID       int64
+	model         sdk.Model
+	groupID       int64
 	bookedJobID   int64
 	nbActionsDone int
 	basedir       string
@@ -42,10 +42,8 @@ type currentWorker struct {
 		params         []sdk.Parameter
 	}
 	status struct {
-		Name      string    `json:"name"`
-		Heartbeat time.Time `json:"heartbeat"`
-		Status    string    `json:"status"`
-		Model     int64     `json:"model"`
+		Name   string `json:"name"`
+		Status string `json:"status"`
 	}
 	client cdsclient.Interface
 }
