@@ -16,7 +16,6 @@ import (
 // Interface describe an interface for each hatchery mode (mesos, local)
 type Interface interface {
 	Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error
-	KillWorker(worker sdk.Worker) error
 	SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error)
 	CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
 	WorkersStartedByModel(model *sdk.Model) int
