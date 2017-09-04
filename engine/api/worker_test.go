@@ -86,7 +86,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
 
-	api.InitRouter()
+	
 
 	//Prepare request
 	uri := router.GetRoute("POST", api.workerCheckingHandler, nil)
@@ -183,7 +183,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 
 	worker.SetStatus(api.MustDB(), workr.ID, sdk.StatusBuilding)
 
-	api.InitRouter()
+	
 
 	//Prepare request
 	uri := router.GetRoute("POST", api.workerWaitingHandler, nil)

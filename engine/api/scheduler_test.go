@@ -19,7 +19,7 @@ import (
 func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -97,7 +97,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -169,7 +169,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -249,7 +249,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())

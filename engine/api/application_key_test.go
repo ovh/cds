@@ -15,7 +15,7 @@ import (
 func Test_getKeysInApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -72,7 +72,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -123,7 +123,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 func Test_addKeyInApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())

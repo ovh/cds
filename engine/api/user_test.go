@@ -271,7 +271,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 func Test_getUserHandlerOK(t *testing.T) {
 	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	u1, pass1 := assets.InsertLambdaUser(api.MustDB())
 	assert.NotZero(t, u1)
@@ -298,7 +298,7 @@ func Test_getUserHandlerOK(t *testing.T) {
 func Test_getUserHandlerAdmin(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	u1, pass1 := assets.InsertLambdaUser(api.MustDB())
 	assert.NotZero(t, u1)
@@ -329,7 +329,7 @@ func Test_getUserHandlerAdmin(t *testing.T) {
 func Test_getUserHandlerForbidden(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	u1, pass1 := assets.InsertLambdaUser(api.MustDB())
 	assert.NotZero(t, u1)
@@ -366,7 +366,7 @@ func Test_getUserHandlerForbidden(t *testing.T) {
 func Test_getUserGroupsHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	g1 := &sdk.Group{
 		Name: sdk.RandomString(10),

@@ -14,10 +14,12 @@ import (
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router) {
 	db := test.SetupPG(t, bootstrapFunc...)
 	router := newRouter(auth.TestLocalAuth(t, db), mux.NewRouter(), "/"+test.GetTestName(t))
-	return &API{
+	api := &API{
 		StartupTime:         time.Now(),
 		Router:              router,
 		DBConnectionFactory: test.DBConnectionFactory,
 		Config:              Configuration{},
-	}, db, router
+	}
+	api.InitRouter()
+	return api, db, router
 }

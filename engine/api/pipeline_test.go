@@ -21,7 +21,7 @@ import (
 func Test_runPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -97,7 +97,7 @@ func Test_runPipelineHandler(t *testing.T) {
 func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())

@@ -15,7 +15,7 @@ import (
 func Test_getPublicGroupsHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//Create group
 	g := &sdk.Group{

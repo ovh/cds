@@ -22,7 +22,7 @@ import (
 func Test_updateStepStatusHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -107,7 +107,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, _ := assets.InsertAdminUser(api.MustDB())

@@ -20,7 +20,7 @@ import (
 func TestAddEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -67,7 +67,7 @@ func TestAddEnvironmentHandler(t *testing.T) {
 func TestUpdateEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -125,7 +125,7 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 func TestDeleteEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -175,7 +175,7 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 func TestGetEnvironmentsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -218,7 +218,7 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 func TestGetEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -262,7 +262,7 @@ func TestGetEnvironmentHandler(t *testing.T) {
 func Test_cloneEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())

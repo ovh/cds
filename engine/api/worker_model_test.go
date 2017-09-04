@@ -35,11 +35,22 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 }
 
 func Test_addWorkerModelAsAdmin(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
-
 	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	//Loading all models
+	models, err := worker.LoadWorkerModels(api.MustDB())
+	if err != nil {
+		t.Fatalf("Error getting models : %s", err)
+	}
+
+	//Delete all of them
+	for _, m := range models {
+		if err := worker.DeleteWorkerModel(api.MustDB(), m.ID); err != nil {
+			t.Fatalf("Error deleting model : %s", err)
+		}
+	}
+
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -84,7 +95,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -191,7 +202,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//Create group
 	g := &sdk.Group{
@@ -283,7 +294,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//Create group
 	g := &sdk.Group{
@@ -341,7 +352,7 @@ func Test_updateWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//Create group
 	g := &sdk.Group{
@@ -426,7 +437,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//Create group
 	g := &sdk.Group{
@@ -495,7 +506,7 @@ func Test_getWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -555,7 +566,7 @@ func Test_getWorkerModels(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())

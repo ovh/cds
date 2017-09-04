@@ -97,9 +97,9 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		test.NoError(t, err)
 	}
 
-	// Init router
+	
 
-	api.InitRouter()
+	
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -224,9 +224,9 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		test.NoError(t, err)
 	}
 
-	// Init router
+	
 
-	api.InitRouter()
+	
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -324,9 +324,9 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		test.NoError(t, err)
 	}
 
-	// Init router
+	
 
-	api.InitRouter()
+	
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -430,9 +430,9 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	lastrun, err := workflow.LoadLastRun(api.MustDB(), proj.Key, w1.Name)
 
-	// Init router
+	
 
-	api.InitRouter()
+	
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -521,9 +521,9 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	w1, err := workflow.Load(api.MustDB(), key, "test_1", u)
 	test.NoError(t, err)
 
-	// Init router
+	
 
-	api.InitRouter()
+	
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -649,9 +649,9 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	errAL := workflow.AddLog(api.MustDB(), jobRun, log)
 	test.NoError(t, errAL)
 
-	// Init router
+	
 
-	api.InitRouter()
+	
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,

@@ -20,7 +20,7 @@ import (
 func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -99,7 +99,7 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())

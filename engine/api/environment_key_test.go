@@ -15,7 +15,7 @@ import (
 func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -73,7 +73,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -125,7 +125,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 func Test_addKeyInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())

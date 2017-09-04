@@ -60,7 +60,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 func TestAddPollerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -131,7 +131,7 @@ func TestAddPollerHandler(t *testing.T) {
 func TestUpdatePollerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//1. Crerouter.ate admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -224,7 +224,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 func TestGetApplicationPollersHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -319,7 +319,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 func TestGetPollersHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -410,7 +410,7 @@ func TestGetPollersHandler(t *testing.T) {
 func TestDeletePollerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())

@@ -87,9 +87,9 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 	w1, err := workflow.Load(api.MustDB(), key, "test_1", u)
 	test.NoError(t, err)
 
-	// Init router
+	
 
-	api.InitRouter()
+	
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,

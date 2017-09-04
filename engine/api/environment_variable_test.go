@@ -20,7 +20,7 @@ import (
 func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -83,7 +83,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -154,7 +154,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -218,7 +218,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())
@@ -275,7 +275,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	api.InitRouter()
+	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.MustDB())

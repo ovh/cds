@@ -18,9 +18,6 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
 	user, passUser := assets.InsertLambdaUser(api.MustDB())
 
-	// Init router
-
-	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{}
 	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelsHandler, vars)
@@ -43,9 +40,6 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
 	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
 
-	// Init router
-
-	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{}
 	uri := api.Router.GetRoute("GET", api.getWorkflowHookModelsHandler, vars)
@@ -68,9 +62,6 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
 	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
 
-	// Init router
-
-	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"model": workflow.WebHookModel.Name,
@@ -98,9 +89,6 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
 	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
 
-	// Init router
-
-	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"model": workflow.WebHookModel.Name,
@@ -144,9 +132,6 @@ func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
 
 	u, pass := assets.InsertLambdaUser(api.MustDB())
 
-	// Init router
-
-	api.InitRouter()
 	//Prepare request
 	vars := map[string]string{
 		"model": workflow.WebHookModel.Name,
