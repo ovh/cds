@@ -41,24 +41,25 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			shell := "/bin/sh"
 			var opts []string
 
-			// If user wants a specific shell, use it
-			if strings.HasPrefix(scriptContent, "#!") {
-				t := strings.SplitN(scriptContent, "\n", 2)
-				shell = strings.TrimPrefix(t[0], "#!")
-				shell = strings.TrimRight(shell, " \t\r\n")
-
-				if isShell(shell) && len(t) >= 2 {
-					t[1] = fmt.Sprintf("set -e; \n%s", t[1])
-				}
-				scriptContent = strings.Join(t, "\n")
-			} else {
-				scriptContent = fmt.Sprintf("set -e; \n%s", scriptContent)
-			}
-
 			// except on windows where it's powershell
 			if runtime.GOOS == "windows" {
 				shell = "PowerShell"
 				opts = append(opts, "-ExecutionPolicy", "Bypass", "-Command")
+				// on windows, we add ErrorActionPreference just below
+			} else if strings.HasPrefix(scriptContent, "#!") { // If user wants a specific shell, use it
+				t := strings.SplitN(scriptContent, "\n", 2)
+				shell = strings.TrimPrefix(t[0], "#!")
+				shell = strings.TrimRight(shell, " \t\r\n")
+
+				// if it's a shell, we add set -e to failed job when a command is failed
+				if isShell(shell) && len(t) >= 2 {
+					// there is a shebang, we add set -e add first line after shebang.
+					t[1] = fmt.Sprintf("set -e; \n%s", t[1])
+				}
+				scriptContent = strings.Join(t, "\n")
+			} else {
+				// no specified shebang, we add set -e; at the beginning
+				scriptContent = fmt.Sprintf("set -e; \n%s", scriptContent)
 			}
 
 			// Create a tmp file
