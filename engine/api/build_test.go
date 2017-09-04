@@ -205,6 +205,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	basedHash := base64.StdEncoding.EncodeToString([]byte(hatch.UID))
 	h.Set(sdk.AuthHeader, basedHash)
 	h.Add(sdk.SessionTokenHeader, tk)
+	h.Add("User-Agent", sdk.HatcheryAgent)
 
 	tester.AddCall("Test_addSpawnInfosPipelineBuildJobHandler", "POST", route, request).Headers(h).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()

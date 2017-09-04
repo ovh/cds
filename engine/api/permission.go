@@ -136,10 +136,6 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to find connected user")
 		}
 
-		if getUser(ctx).Admin {
-			return ctx, nil
-		}
-
 		if rc.Options["needHatchery"] == "true" && getHatchery(ctx) != nil {
 			return ctx, nil
 		}
@@ -147,22 +143,26 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		if rc.Options["needWorker"] == "true" {
 			permissionOk := api.checkWorkerPermission(ctx, api.MustDB(), rc, mux.Vars(req))
 			if !permissionOk {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Worker not authorized")
+				return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> Worker not authorized")
 			}
+			return ctx, nil
+		}
+
+		if getUser(ctx).Admin {
 			return ctx, nil
 		}
 
 		if rc.Options["needAdmin"] != "true" {
 			permissionOk := api.checkPermission(ctx, mux.Vars(req), getPermissionByMethod(req.Method, rc.Options["isExecution"] == "true"))
 			if !permissionOk {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> User not authorized")
+				return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized")
 			}
 		}
 
 		if rc.Options["needUsernameOrAdmin"] == "true" && getUser(ctx).Username != mux.Vars(req)["username"] {
 			// get / update / delete user -> for admin or current user
 			// if not admin and currentUser != username in request -> ko
-			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> User not authorized on this resource")
+			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> User not authorized on this resource")
 		}
 
 		return ctx, nil

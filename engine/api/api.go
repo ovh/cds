@@ -207,7 +207,7 @@ func getWorker(c context.Context) *sdk.Worker {
 }
 
 func getHatchery(c context.Context) *sdk.Hatchery {
-	i := c.Value(auth.ContextWorker)
+	i := c.Value(auth.ContextHatchery)
 	if i == nil {
 		return nil
 	}
