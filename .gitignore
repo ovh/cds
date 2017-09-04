@@ -9,6 +9,7 @@ engine/api/config.toml
 engine/hatchery/hatchery
 engine/worker/worker
 *.out
+*.test
 coverage.html
 .bash_aliases
 npm-debug.log
