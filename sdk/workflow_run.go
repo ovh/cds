@@ -31,6 +31,22 @@ func (r *WorkflowRun) Translate(lang string) {
 	}
 }
 
+// Tag push a new Tag in WorkflowRunTag
+func (r *WorkflowRun) Tag(tag, value string) {
+	var found bool
+	for i := range r.Tags {
+		if r.Tags[i].Tag == tag {
+			found = true
+			if r.Tags[i].Value != value {
+				r.Tags[i].Value = strings.Join([]string{r.Tags[i].Value, value}, ",")
+			}
+		}
+	}
+	if !found {
+		r.Tags = append(r.Tags, WorkflowRunTag{Tag: tag, Value: value})
+	}
+}
+
 //WorkflowRunInfo is an info on workflow run
 type WorkflowRunInfo struct {
 	APITime time.Time `json:"api_time,omitempty" db:"-"`
@@ -41,8 +57,9 @@ type WorkflowRunInfo struct {
 
 //WorkflowRunTag is a tag on workflow run
 type WorkflowRunTag struct {
-	Tag   string `json:"tag" db:"tag"`
-	Value string `json:"value" db:"value"`
+	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
+	Tag           string `json:"tag" db:"tag"`
+	Value         string `json:"value" db:"value"`
 }
 
 //WorkflowNodeRun is as execution instance of a node

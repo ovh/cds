@@ -3,6 +3,7 @@ package workflow
 import (
 	"database/sql"
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -47,6 +48,10 @@ func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "Run.PostInsert> Unable to store marshalled infos")
 	}
 
+	if err := updateTags(db, r); err != nil {
+		return sdk.WrapError(err, "Run.PostInsert> Unable to store tags")
+	}
+
 	return nil
 }
 
@@ -80,6 +85,27 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 			return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal infos")
 		}
 		r.Infos = i
+	}
+
+	return nil
+}
+
+func updateTags(db gorp.SqlExecutor, r *Run) error {
+	if _, err := db.Exec("delete from workflow_run_tag where workflow_run_id = $1", r.ID); err != nil {
+		return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
+	}
+
+	tags := []interface{}{}
+	for i := range r.Tags {
+		r.Tags[i].WorkflowRunID = r.ID
+		t := RunTag(r.Tags[i])
+		tags = append(tags, &t)
+	}
+
+	if len(tags) > 0 {
+		if err := db.Insert(tags...); err != nil {
+			return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
+		}
 	}
 
 	return nil
@@ -201,5 +227,58 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], wnr)
 	}
 
+	tags, errT := loadTagsByRunID(db, wr.ID)
+	if errT != nil {
+		return nil, sdk.WrapError(errT, "loadRun> Error loading tags for run %d", wr.ID)
+	}
+	wr.Tags = tags
+
 	return &wr, nil
+}
+
+func loadTagsByRunID(db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunTag, error) {
+	tags := []sdk.WorkflowRunTag{}
+	dbTags := []sdk.WorkflowRunTag{}
+	if _, err := db.Select(&dbTags, "select * from workflow_run_tag where workflow_run_id = $1", runID); err != nil {
+		return nil, sdk.WrapError(err, "loadTagsByRunID> Unable to load tags for run %d", runID)
+	}
+	for i := range dbTags {
+		tags = append(tags, sdk.WorkflowRunTag(dbTags[i]))
+	}
+	return tags, nil
+}
+
+// GetTagsAndValue returns a map of tags and all the values available on all runs of a workflow
+func GetTagsAndValue(db gorp.SqlExecutor, key, name string) (map[string][]string, error) {
+	query := `
+SELECT tags.tag "tag", STRING_AGG(tags.value, ',') "values"
+FROM (
+        SELECT distinct tag "tag", value "value"
+        FROM workflow_run_tag
+		JOIN workflow_run ON workflow_run_tag.workflow_run_id = workflow_run.id
+		JOIN workflow ON workflow_run.workflow_id = workflow.id
+		JOIN project ON workflow.project_id = project.id
+		WHERE project.projectkey = $1
+		AND workflow.name = $2
+		order by value
+    ) AS "tags"
+GROUP BY tags.tag
+ORDER BY tags.tag;
+`
+
+	res := []struct {
+		Tag    string `db:"tag"`
+		Values string `db:"values"`
+	}{}
+
+	if _, err := db.Select(&res, query, key, name); err != nil {
+		return nil, sdk.WrapError(err, "GetTagsAndValue> Unable to load tags and values")
+	}
+
+	rmap := map[string][]string{}
+	for _, r := range res {
+		rmap[r.Tag] = strings.Split(r.Values, ",")
+	}
+
+	return rmap, nil
 }
