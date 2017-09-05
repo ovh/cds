@@ -366,7 +366,7 @@ func getApplicationRemoteHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return sdk.WrapError(errL, "getApplicationRemoteHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
 	}
 
-	var remotes []sdk.VCSRemote
+	remotes := []sdk.VCSRemote{}
 	var prs []sdk.VCSPullRequest
 	if app.RepositoryFullname != "" && app.RepositoriesManager != nil {
 		client, erra := repositoriesmanager.AuthorizedClient(db, projectKey, app.RepositoriesManager.Name)
@@ -390,13 +390,6 @@ func getApplicationRemoteHandler(w http.ResponseWriter, r *http.Request, db *gor
 			return sdk.WrapError(errg, "getApplicationRemoteHandler> Cannot get remotes from builds")
 		}
 	}
-
-	// remotes, errg := pipeline.GetRemotes(db, app)
-	// if errg != nil {
-	// 	return sdk.WrapError(errg, "getApplicationRemoteHandler> Cannot get remotes from builds")
-	// }
-
-	//Yo analyze branch and delete pipeline_build for old remotes...
 
 	return WriteJSON(w, r, remotes, http.StatusOK)
 }
