@@ -83,7 +83,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 // InsertWorker inserts worker representation into database
 func InsertWorker(db gorp.SqlExecutor, w *sdk.Worker, groupID int64) error {
 	query := `INSERT INTO worker (id, name, last_beat, model, status, hatchery_id, hatchery_name, group_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
-	_, err := db.Exec(query, w.ID, w.Name, time.Now(), w.Model, w.Status.String(), w.HatcheryID, w.HatcheryName, groupID)
+	_, err := db.Exec(query, w.ID, w.Name, time.Now(), w.ModelID, w.Status.String(), w.HatcheryID, w.HatcheryName, groupID)
 	return err
 }
 
@@ -93,7 +93,7 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	var statusS string
 	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
 
-	err := db.QueryRow(query, id).Scan(&w.ID, &w.Name, &w.LastBeat, &w.GroupID, &w.Model, &statusS, &w.HatcheryID, &w.HatcheryName, &w.GroupID)
+	err := db.QueryRow(query, id).Scan(&w.ID, &w.Name, &w.LastBeat, &w.GroupID, &w.ModelID, &statusS, &w.HatcheryID, &w.HatcheryName, &w.GroupID)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Work
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID, &worker.HatcheryName)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +141,7 @@ func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID, &worker.HatcheryName)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			return nil, err
 		}
@@ -171,7 +171,7 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error)
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.Model, &statusS, &worker.HatcheryID, &worker.HatcheryName)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			log.Warning("LoadDeadWorkers> Error scanning workers")
 			return nil, err
@@ -223,7 +223,7 @@ func generateID() (string, error) {
 type RegistrationForm struct {
 	Name               string
 	Token              string
-	Model              int64
+	ModelID            int64
 	Hatchery           int64
 	HatcheryName       string
 	BinaryCapabilities []string
@@ -292,7 +292,8 @@ func RegisterWorker(db *gorp.DbMap, name string, key string, modelID int64, h *s
 	w := &sdk.Worker{
 		ID:      id,
 		Name:    name,
-		Model:   modelID,
+		ModelID: modelID,
+		Model:   m,
 		Status:  sdk.StatusWaiting,
 		GroupID: t.GroupID,
 	}

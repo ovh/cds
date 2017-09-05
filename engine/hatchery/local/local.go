@@ -71,8 +71,8 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	return true
 }
 
-// KillWorker kill a local process
-func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
+// killWorker kill a local process
+func (h *HatcheryLocal) killWorker(worker sdk.Worker) error {
 	for name, cmd := range h.workers {
 		if worker.Name == name {
 			log.Info("KillLocalWorker> Killing %s", worker.Name)
@@ -138,7 +138,6 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 		args = append(args, "register")
 	}
 
-	fmt.Printf("#### spawn with args %s \n", strings.Join(args, " "))
 	cmd := exec.Command("worker", args...)
 
 	// Clearenv
@@ -298,7 +297,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		if w.Name == "" {
 			w.Name = name
 			log.Info("Killing AWOL worker %s", w.Name)
-			if err := h.KillWorker(w); err != nil {
+			if err := h.killWorker(w); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)
 			}
 			killedWorkers = append(killedWorkers, name)
@@ -308,7 +307,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		if w.Status == sdk.StatusDisabled {
 			log.Info("Killing disabled worker %s", w.Name)
 
-			if err := h.KillWorker(w); err != nil {
+			if err := h.killWorker(w); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)
 			}
 			killedWorkers = append(killedWorkers, name)

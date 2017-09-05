@@ -58,24 +58,6 @@ func (h *HatcherySwarm) Init(name, api, token string, requestSecondsTimeout int,
 	return nil
 }
 
-// KillWorker kill the worker
-func (h *HatcherySwarm) KillWorker(worker sdk.Worker) error {
-	log.Warning("killing container %s", worker.Name)
-	containers, errC := h.getContainers()
-	if errC != nil {
-		return sdk.WrapError(errC, "KillWorker> Cannot list containers")
-	}
-
-	for i := range containers {
-		if strings.Replace(containers[i].Names[0], "/", "", 1) == strings.Replace(worker.Name, "/", "", 1) {
-			//Kill the container, and all linked containers
-			h.killAndRemove(containers[i].ID)
-		}
-	}
-
-	return nil
-}
-
 //This a embeded cache for containers list
 var containersCache = struct {
 	mu   sync.RWMutex

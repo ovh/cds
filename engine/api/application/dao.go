@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -172,6 +173,12 @@ func unwrap(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, dbApp *dbAp
 
 // Insert add an application id database
 func Insert(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, u *sdk.User) error {
+	// check application name pattern
+	regexp := regexp.MustCompile(sdk.NamePattern)
+	if !regexp.MatchString(app.Name) {
+		return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Insert: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
+	}
+
 	app.ProjectID = proj.ID
 	app.ProjectKey = proj.Key
 	app.LastModified = time.Now()

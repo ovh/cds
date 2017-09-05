@@ -54,7 +54,6 @@ func (router *Router) init() {
 	router.Handle("/mon/smtp/ping", GET(smtpPingHandler, Auth(true)))
 	router.Handle("/mon/version", GET(getVersionHandler, Auth(false)))
 	router.Handle("/mon/stats", GET(getStats, Auth(false)))
-	router.Handle("/mon/models", GET(getWorkerModelsStatsHandler, Auth(false)))
 	router.Handle("/mon/building", GET(getBuildingPipelines))
 	router.Handle("/mon/building/{hash}", GET(getPipelineBuildingCommit))
 	router.Handle("/mon/warning", GET(getUserWarnings))
@@ -138,6 +137,7 @@ func (router *Router) init() {
 	// Workflows run
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs", GET(getWorkflowRunsHandler), POST(postWorkflowRunHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/latest", GET(getLatestWorkflowRunHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/tags", GET(getWorkflowRunTagsHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", GET(getWorkflowRunHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/artifacts", GET(getWorkflowRunArtifactsHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}", GET(getWorkflowNodeRunHandler))

@@ -93,6 +93,10 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		}
 
 		//Manage all parameters
+		pluginSecrets := plugin.Secrets{
+			Data: map[string]string{},
+		}
+
 		pluginArgs := plugin.Arguments{
 			Data: map[string]string{},
 		}
@@ -101,9 +105,12 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		}
 		for _, p := range params {
 			pluginArgs.Data[p.Name] = p.Value
+			if sdk.NeedPlaceholder(p.Type) {
+				pluginSecrets.Data[p.Name] = p.Value
+			}
 		}
 		for _, v := range w.currentJob.buildVariables {
-			pluginArgs.Data["cds.build."+v.Name] = v.Value
+			pluginArgs.Data[v.Name] = v.Value
 		}
 
 		//Call the Run function on the plugin interface
@@ -117,6 +124,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			IDPipelineJobBuild: buildID,
 			OrderStep:          stepOrder,
 			Args:               pluginArgs,
+			Secrts:             pluginSecrets,
 		}
 
 		pluginResult := _plugin.Run(pluginAction)

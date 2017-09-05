@@ -33,7 +33,7 @@ func registerWorkerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	// Try to register worker
-	worker, err := worker.RegisterWorker(db, params.Name, params.Token, params.Model, h, params.BinaryCapabilities)
+	worker, err := worker.RegisterWorker(db, params.Name, params.Token, params.ModelID, h, params.BinaryCapabilities)
 	if err != nil {
 		err = sdk.NewError(sdk.ErrUnauthorized, err)
 		return sdk.WrapError(err, "registerWorkerHandler> [%s] Registering failed", params.Name)

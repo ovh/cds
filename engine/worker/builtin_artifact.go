@@ -65,7 +65,7 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 
 			for _, filePath := range filesPath {
 				filename := filepath.Base(filePath)
-				sendLog(fmt.Sprintf("Uploading '%s'\n", filename))
+				sendLog(fmt.Sprintf("Uploading '%s'", filename))
 				if err := sdk.UploadArtifact(project, pipeline, application, tag.Value, filePath, buildNumber, environment); err != nil {
 					res.Status = sdk.StatusFail.String()
 					res.Reason = fmt.Sprintf("Error while uploading artefact: %s\n", err)
@@ -115,8 +115,8 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 		for _, filePath := range filesPath {
 			filename := filepath.Base(filePath)
 			sendLog(fmt.Sprintf("Uploading '%s'\n", filename))
-
 			if err := w.client.QueueArtifactUpload(buildID, tag.Value, filePath); err != nil {
+
 				res.Status = sdk.StatusFail.String()
 				res.Reason = fmt.Sprintf("Error while uploading artefact: %s\n", err)
 				sendLog(res.Reason)
@@ -192,21 +192,16 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		if tag == "" {
-			res.Status = sdk.StatusFail.String()
-			res.Reason = fmt.Sprintf("tag variable is empty. aborting")
-			sendLog(res.Reason)
-			return res
+		if tag != "" {
+			sendLog("tag variable can not be used with CDS Workflow. Please remove-it")
 		}
-		tag = strings.Replace(tag, "/", "-", -1)
-		tag = url.QueryEscape(tag)
 
 		sendLog(fmt.Sprintf("Downloading artifacts from into '%s'...", path))
 
 		n, err := strconv.ParseInt(number, 10, 64)
 		if err != nil {
 			res.Status = sdk.StatusFail.String()
-			res.Reason = fmt.Sprintf("cds.run.nubmer variable is not valid. aborting\n")
+			res.Reason = fmt.Sprintf("cds.run.nubmer variable is not valid. aborting")
 			sendLog(res.Reason)
 			return res
 		}

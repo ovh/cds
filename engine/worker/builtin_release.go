@@ -84,13 +84,12 @@ func runRelease(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-
 		artSplitted := strings.Split(artifactList.Value, ",")
-		req := sdk.WorkflowNodeRunRelease {
+		req := sdk.WorkflowNodeRunRelease{
 			ReleaseContent: releaseNote.Value,
-			ReleaseTitle: title.Value,
-			TagName: tag.Value,
-			Artifacts: artSplitted,
+			ReleaseTitle:   title.Value,
+			TagName:        tag.Value,
+			Artifacts:      artSplitted,
 		}
 
 		if err := w.client.WorkflowNodeRunRelease(pkey.Value, wName.Value, wRunNumber, w.currentJob.wJob.WorkflowNodeRunID, req); err != nil {

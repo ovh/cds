@@ -7,14 +7,14 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"bufio"
+	"bytes"
+	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/businesscontext"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"regexp"
-	"github.com/ovh/cds/engine/api/artifact"
-	"bytes"
-	"bufio"
 )
 
 func releaseApplicationWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
@@ -77,7 +77,7 @@ func releaseApplicationWorkflowHandler(w http.ResponseWriter, r *http.Request, d
 		return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.RepositoriesManager.Name)
 	}
 
-	release, errRelease := client.Release(workflowNode.Context.Application.RepositoryFullname, req.TagName,req.ReleaseTitle, req.ReleaseContent);
+	release, errRelease := client.Release(workflowNode.Context.Application.RepositoryFullname, req.TagName, req.ReleaseTitle, req.ReleaseContent)
 	if errRelease != nil {
 		return sdk.WrapError(errRelease, "releaseApplicationWorkflowHandler")
 	}

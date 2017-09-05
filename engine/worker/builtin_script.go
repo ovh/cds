@@ -41,23 +41,31 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			shell := "/bin/sh"
 			var opts []string
 
-			// If user wants a specific shell, use it
-			if strings.HasPrefix(scriptContent, "#!") {
-				t := strings.SplitN(scriptContent, "\n", 2)
-				shell = strings.TrimPrefix(t[0], "#!")
-				shell = strings.TrimRight(shell, " \t\r\n")
-			}
-
 			// except on windows where it's powershell
 			if runtime.GOOS == "windows" {
 				shell = "PowerShell"
 				opts = append(opts, "-ExecutionPolicy", "Bypass", "-Command")
+				// on windows, we add ErrorActionPreference just below
+			} else if strings.HasPrefix(scriptContent, "#!") { // If user wants a specific shell, use it
+				t := strings.SplitN(scriptContent, "\n", 2)
+				shell = strings.TrimPrefix(t[0], "#!")
+				shell = strings.TrimRight(shell, " \t\r\n")
+
+				// if it's a shell, we add set -e to failed job when a command is failed
+				if isShell(shell) && len(t) >= 2 {
+					// there is a shebang, we add set -e add first line after shebang.
+					t[1] = fmt.Sprintf("set -e; \n%s", t[1])
+				}
+				scriptContent = strings.Join(t, "\n")
+			} else {
+				// no specified shebang, we add set -e; at the beginning
+				scriptContent = fmt.Sprintf("set -e; \n%s", scriptContent)
 			}
 
 			// Create a tmp file
-			tmpscript, err := ioutil.TempFile(w.basedir, "cds-")
-			if err != nil {
-				log.Warning("Cannot create tmp file: %s", err)
+			tmpscript, errt := ioutil.TempFile(w.basedir, "cds-")
+			if errt != nil {
+				log.Warning("Cannot create tmp file: %s", errt)
 				res.Reason = fmt.Sprintf("cannot create temporary file, aborting\n")
 				sendLog(res.Reason)
 				res.Status = sdk.StatusFail.String()
@@ -65,10 +73,10 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			}
 
 			// Put script in file
-			n, err := tmpscript.Write([]byte(scriptContent))
-			if err != nil || n != len(scriptContent) {
-				if err != nil {
-					log.Warning("Cannot write script: %s", err)
+			n, errw := tmpscript.Write([]byte(scriptContent))
+			if errw != nil || n != len(scriptContent) {
+				if errw != nil {
+					log.Warning("Cannot write script: %s", errw)
 				} else {
 					log.Warning("cannot write all script: %d/%d", n, len(scriptContent))
 				}
@@ -86,8 +94,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 				newPath := strings.Replace(oldPath, ".txt", "", -1)
 				//and add .PS1 extension
 				newPath = newPath + ".PS1"
-				err = os.Rename(oldPath, newPath)
-				if err != nil {
+				if err := os.Rename(oldPath, newPath); err != nil {
 					res.Status = sdk.StatusFail.String()
 					res.Reason = fmt.Sprintf("cannot rename script to add powershell Extension, aborting\n")
 					sendLog(res.Reason)
@@ -148,6 +155,10 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 
 			//set up environment variables from pipeline build job parameters
 			for _, p := range *params {
+				// avoid put private key in environment var as it's a binary value
+				if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
+					continue
+				}
 				envName := strings.Replace(p.Name, ".", "_", -1)
 				envName = strings.ToUpper(envName)
 				cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", envName, p.Value))
@@ -260,4 +271,13 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			}
 		}
 	}
+}
+
+func isShell(in string) bool {
+	for _, v := range []string{"ksh", "bash", "sh", "zsh"} {
+		if strings.HasSuffix(in, v) {
+			return true
+		}
+	}
+	return false
 }

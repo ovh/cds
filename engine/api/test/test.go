@@ -97,6 +97,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 		t.Skip("This should be run with a database")
 		return nil
 	}
+
 	if database.DB() == nil {
 		db, err := database.Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, 2000, 100)
 		if err != nil {
@@ -128,6 +129,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 
 	for _, f := range bootstrapFunc {
 		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, database.GetDBMap); err != nil {
+			log.Error("Error: %v", err)
 			return nil
 		}
 	}
