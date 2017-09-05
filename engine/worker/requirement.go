@@ -32,7 +32,7 @@ func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group) 
 	errRequirements := []sdk.Requirement{}
 	w.client.WorkerSetStatus(sdk.StatusChecking)
 
-	if execGroups != nil && len(execGroups) > 0 {
+	if execGroups != nil && len(execGroups) > 0 && w.model.GroupID > 0 {
 		checkGroup := false
 		for _, g := range execGroups {
 			if g.ID == w.model.GroupID {
