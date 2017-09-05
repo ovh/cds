@@ -195,7 +195,6 @@ func TestUpdateWorkerModel(t *testing.T) {
 		Value: "Capa_2",
 	})
 
-	m1.NeedRegistration = true
 	if err := UpdateWorkerModel(db, m1); err != nil {
 		t.Fatalf("Error : %s", err)
 	}

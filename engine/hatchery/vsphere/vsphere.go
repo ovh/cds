@@ -58,17 +58,6 @@ func (h *HatcheryVSphere) Client() cdsclient.Interface {
 	return h.client
 }
 
-// KillWorker delete cloud instances
-func (h *HatcheryVSphere) KillWorker(worker sdk.Worker) error {
-	log.Info("KillWorker> Kill %s", worker.Name)
-	for _, s := range h.getServers() {
-		if s.Name == worker.Name {
-			return h.deleteServer(s)
-		}
-	}
-	return fmt.Errorf("not found")
-}
-
 // NeedRegistration return true if worker model need regsitration
 func (h *HatcheryVSphere) NeedRegistration(m *sdk.Model) bool {
 	model, errG := h.getModelByName(m.Name)

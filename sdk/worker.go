@@ -84,7 +84,7 @@ type Model struct {
 // OpenstackModelData type details the "Image" field of Openstack type model
 type OpenstackModelData struct {
 	Image    string `json:"os"`
-	Flavor   string `json:"flavor"`
+	Flavor   string `json:"flavor,omitempty"`
 	UserData string `json:"user_data"`
 }
 

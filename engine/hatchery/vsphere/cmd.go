@@ -11,9 +11,6 @@ import (
 func init() {
 	hatcheryVSphere = &HatcheryVSphere{}
 
-	Cmd.Flags().StringVar(&hatcheryVSphere.host, "vsphere-host", "", "")
-	viper.BindPFlag("vsphere-host", Cmd.Flags().Lookup("vsphere-host"))
-
 	Cmd.Flags().StringVar(&hatcheryVSphere.user, "vsphere-user", "", "")
 	viper.BindPFlag("vsphere-user", Cmd.Flags().Lookup("vsphere-user"))
 
@@ -34,9 +31,6 @@ func init() {
 
 	Cmd.Flags().StringVar(&hatcheryVSphere.cardName, "vsphere-ethernet-card", "e1000", "Name of the virtual ethernet card")
 	viper.BindPFlag("vsphere-ethernet-card", Cmd.Flags().Lookup("vsphere-ethernet-card"))
-
-	Cmd.Flags().String("vsphere-ip-range", "", "")
-	viper.BindPFlag("vsphere-ip-range", Cmd.Flags().Lookup("vsphere-ip-range"))
 
 	Cmd.Flags().IntVar(&hatcheryVSphere.workerTTL, "worker-ttl", 30, "Worker TTL (minutes)")
 	viper.BindPFlag("worker-ttl", Cmd.Flags().Lookup("worker-ttl"))
@@ -93,11 +87,6 @@ $ CDS_VSPHERE_USER=<user> \
 		)
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
-		hatcheryVSphere.host = viper.GetString("vsphere-host")
-		if hatcheryVSphere.host == "" {
-			sdk.Exit("flag or environment variable vsphere-host not provided, aborting\n")
-		}
-
 		hatcheryVSphere.user = viper.GetString("vsphere-user")
 		if hatcheryVSphere.user == "" {
 			sdk.Exit("flag or environment variable vsphere-user not provided, aborting\n")
