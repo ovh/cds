@@ -317,8 +317,8 @@ type RepositoriesManagerClient interface {
 
 // Release represents data about release on github, etc..
 type VCSRelease struct {
-	ID            int64  `json:"id"`
-	UploadRelease string `json:"upload_url"`
+	ID        int64  `json:"id"`
+	UploadURL string `json:"upload_url"`
 }
 
 //VCSRepo represents data about repository even on stash, or github, etc...

@@ -31,6 +31,12 @@ type ReleaseRequest struct {
 	Body    string `json:"body"`
 }
 
+// ReleaseResponse Response return by Github after release creation
+type ReleaseResponse struct {
+	ID        int64  `json:"id"`
+	UploadURL string `json:"upload_url"`
+}
+
 // Release Create a release Github
 func (g *GithubClient) Release(fullname string, tagName string, title string, releaseNote string) (*sdk.VCSRelease, error) {
 	var url = "/repos/" + fullname + "/releases"
@@ -61,17 +67,22 @@ func (g *GithubClient) Release(fullname string, tagName string, title string, re
 		return nil, sdk.WrapError(fmt.Errorf("github.Release >Unable to create release on github. Url : %s Status code : %d - Body: %s", url, res.StatusCode, body), "")
 	}
 
-	var release sdk.VCSRelease
-	if err := json.Unmarshal(body, &release); err != nil {
+	var response ReleaseResponse
+	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, sdk.WrapError(err, "github.Release>  Cannot unmarshal response: %s", string(body))
 	}
 
-	return &release, nil
+	release := &sdk.VCSRelease{
+		ID:        response.ID,
+		UploadURL: response.UploadURL,
+	}
+
+	return release, nil
 }
 
 // UploadReleaseFile Attach a file into the release
 func (g *GithubClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, buf *bytes.Buffer) error {
-	var url = strings.Split(release.UploadRelease, "{")[0] + "?name=" + runArtifact.Name
+	var url = strings.Split(release.UploadURL, "{")[0] + "?name=" + runArtifact.Name
 	res, err := g.post(url, "application/octet-stream", buf, true)
 	if err != nil {
 		return err
