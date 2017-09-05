@@ -55,7 +55,7 @@ func setFlags(cmd *cobra.Command) {
 	pflags.StringVarP(&connFactrory.dbPassword, "db-password", "", "", "DB Password")
 	pflags.StringVarP(&connFactrory.dbName, "db-name", "", "cds", "DB Name")
 	pflags.StringVarP(&connFactrory.dbHost, "db-host", "", "localhost", "DB Host")
-	pflags.StringVarP(&connFactrory.dbPort, "db-port", "", "5432", "DB Port")
+	pflags.IntVarP(&connFactrory.dbPort, "db-port", "", 5432, "DB Port")
 	pflags.StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	pflags.StringVarP(&connFactrory.dbSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
 	pflags.IntVarP(&connFactrory.dbMaxConn, "db-maxconn", "", 20, "DB Max connection")

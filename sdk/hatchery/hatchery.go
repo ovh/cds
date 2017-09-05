@@ -13,16 +13,16 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Configuration is the base configuration for all hatcheries
-type Configuration struct {
+// CommonConfiguration is the base configuration for all hatcheries
+type CommonConfiguration struct {
 	Name string
 	API  struct {
 		HTTP struct {
-			URL      string `default:"https://localhost:8081"`
-			Insecure string
+			URL      string `default:"http://localhost:8081"`
+			Insecure bool
 		}
 		GRPC struct {
-			URL      string `default:"https://localhost:8082"`
+			URL      string `default:"http://localhost:8082"`
 			Insecure bool
 		}
 		Token                string `default:"************"`

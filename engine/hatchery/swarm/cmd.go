@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+//TODO: DELETE ALL OF THIS
+
 func init() {
 	hatcherySwarm = &HatcherySwarm{}
 

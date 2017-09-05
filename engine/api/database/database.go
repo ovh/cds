@@ -17,7 +17,7 @@ type DBConnectionFactory struct {
 	dbPassword       string
 	dbName           string
 	dbHost           string
-	dbPort           string
+	dbPort           int
 	dbSSLMode        string
 	dbTimeout        int
 	dbMaxConn        int
@@ -59,7 +59,7 @@ func (f *DBConnectionFactory) Set(d *sql.DB) {
 }
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
-func Init(user, password, name, host, port, sslmode string, timeout, maxconn int) (*DBConnectionFactory, error) {
+func Init(user, password, name, host string, port int, sslmode string, timeout, maxconn int) (*DBConnectionFactory, error) {
 	f := &DBConnectionFactory{
 		dbDriver:   "postgres",
 		dbUser:     user,
@@ -89,7 +89,7 @@ func Init(user, password, name, host, port, sslmode string, timeout, maxconn int
 		f.dbPassword == "" ||
 		f.dbName == "" ||
 		f.dbHost == "" ||
-		f.dbPort == "" {
+		f.dbPort == 0 {
 		return nil, fmt.Errorf("Missing database infos")
 	}
 
@@ -107,8 +107,7 @@ func Init(user, password, name, host, port, sslmode string, timeout, maxconn int
 
 	// connect_timeout in seconds
 	// statement_timeout in milliseconds
-	// yeah...
-	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s connect_timeout=10 statement_timeout=%d", f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbTimeout)
+	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=10 statement_timeout=%d", f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbTimeout)
 	f.db, err = sql.Open(f.dbDriver, dsn)
 	if err != nil {
 		f.db = nil

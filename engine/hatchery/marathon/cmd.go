@@ -15,6 +15,9 @@ import (
 	"github.com/ovh/cds/sdk/hatchery"
 )
 
+//TODO: DELETE ALL OF THIS
+
+
 func init() {
 	hatcheryMarathon = &HatcheryMarathon{}
 

@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"context"
 	"fmt"
 	"strings"
 	"sync"
@@ -14,8 +15,71 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
+
+// HatcheryConfiguration is the configuration for hatchery
+type HatcheryConfiguration struct {
+	hatchery.CommonConfiguration
+}
+
+// New instanciates a new Hatchery Openstack
+func New() *HatcheryOpenstack {
+	return new(HatcheryOpenstack)
+}
+
+func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
+	if err := h.CheckConfiguration(cfg); err != nil {
+		return err
+	}
+
+	var ok bool
+	h.Config, ok = cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	return nil
+}
+
+func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
+	hconfig, ok := cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	if hconfig.API.HTTP.URL == "" {
+		return fmt.Errorf("API HTTP(s) URL is mandatory")
+	}
+
+	if hconfig.API.Token == "" {
+		return fmt.Errorf("API Token URL is mandatory")
+	}
+
+	//TODO
+
+	return nil
+}
+
+func (h *HatcheryOpenstack) Serve(ctx context.Context) error {
+	//TODO: refactor this ugly func
+	hatchery.Create(h,
+		h.Config.Name,
+		h.Config.API.HTTP.URL,
+		h.Config.API.Token,
+		int64(h.Config.Provision.MaxWorker),
+		h.Config.Provision.Disabled,
+		h.Config.API.RequestTimeout,
+		h.Config.API.MaxHeartbeatFailures,
+		h.Config.API.HTTP.Insecure,
+		h.Config.Provision.Frequency,
+		h.Config.Provision.RegisterFrequency,
+		h.Config.LogOptions.SpawnOptions.ThresholdWarning,
+		h.Config.LogOptions.SpawnOptions.ThresholdCritical,
+		h.Config.Provision.GraceTimeQueued)
+	return nil
+}
 
 var hatcheryOpenStack *HatcheryOpenstack
 
@@ -37,6 +101,7 @@ var ipsInfos = struct {
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'
 // by startup up virtual machines on /cloud
 type HatcheryOpenstack struct {
+	Config          HatcheryConfiguration
 	hatch           *sdk.Hatchery
 	flavors         []flavors.Flavor
 	networks        []tenantnetworks.Network

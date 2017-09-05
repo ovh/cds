@@ -18,9 +18,9 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// HatcheryLocalConfiguration is the configuration for local hatchery
-type HatcheryLocalConfiguration struct {
-	hatchery.Configuration
+// HatcheryConfiguration is the configuration for local hatchery
+type HatcheryConfiguration struct {
+	hatchery.CommonConfiguration
 	Basedir string `default:"/tmp"`
 }
 
@@ -29,22 +29,39 @@ func New() *HatcheryLocal {
 	return new(HatcheryLocal)
 }
 
-func (h *HatcheryLocal) Init(cfg interface{}) error {
-	return h.CheckConfiguration(cfg)
-}
+func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
+	if err := h.CheckConfiguration(cfg); err != nil {
+		return err
+	}
 
-func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	var ok bool
-	h.Config, ok = cfg.(HatcheryLocalConfiguration)
+	h.Config, ok = cfg.(HatcheryConfiguration)
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	if h.Config.Basedir == "" {
+	return nil
+}
+
+func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
+	hconfig, ok := cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	if hconfig.API.HTTP.URL == "" {
+		return fmt.Errorf("API HTTP(s) URL is mandatory")
+	}
+
+	if hconfig.API.Token == "" {
+		return fmt.Errorf("API Token URL is mandatory")
+	}
+
+	if hconfig.Basedir == "" {
 		return fmt.Errorf("Invalid basedir directory")
 	}
 
-	if ok, err := api.DirectoryExists(h.Config.Basedir); !ok {
+	if ok, err := api.DirectoryExists(hconfig.Basedir); !ok {
 		return fmt.Errorf("Basedir doesn't exist")
 	} else if err != nil {
 		return fmt.Errorf("Invalid basedir: %v", err)
@@ -53,13 +70,27 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 }
 
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
-	hatchery.Create(h, h.Config.Configuration.Name, h.Config.Configuration.API.HTTP.URL, h.Config.Configuration.API.Token, h.Config.Provision.MaxWorker, h.Config.Provision.Disabled, h.Config.API.RequestTimeout, h.Config.API.MaxHeartbeatFailures, h.Config.API.HTTP.Insecure, h.Config.Provision.Frequency, h.Config.Provision.RegisterFrequency, h.Config.LogOptions.SpawnOptions.ThresholdWarning, h.Config.LogOptions.SpawnOptions.ThresholdCritical, h.Config.Provision.GraceTimeQueued)
+	//TODO: refactor this ugly func
+	hatchery.Create(h,
+		h.Config.Name,
+		h.Config.API.HTTP.URL,
+		h.Config.API.Token,
+		int64(h.Config.Provision.MaxWorker),
+		h.Config.Provision.Disabled,
+		h.Config.API.RequestTimeout,
+		h.Config.API.MaxHeartbeatFailures,
+		h.Config.API.HTTP.Insecure,
+		h.Config.Provision.Frequency,
+		h.Config.Provision.RegisterFrequency,
+		h.Config.LogOptions.SpawnOptions.ThresholdWarning,
+		h.Config.LogOptions.SpawnOptions.ThresholdCritical,
+		h.Config.Provision.GraceTimeQueued)
 	return nil
 }
 
 // HatcheryLocal implements HatcheryMode interface for local usage
 type HatcheryLocal struct {
-	Config HatcheryLocalConfiguration
+	Config HatcheryConfiguration
 	sync.Mutex
 	hatch   *sdk.Hatchery
 	workers map[string]*exec.Cmd
@@ -127,8 +158,8 @@ func (h *HatcheryLocal) KillWorker(worker sdk.Worker) error {
 func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	var err error
 
-	if len(h.workers) >= h.configuration.Configuration.Provision.MaxWorker {
-		return "", fmt.Errorf("Max capacity reached (%d)", h.configuration.Configuration.Provision.MaxWorker)
+	if len(h.workers) >= h.Config.Provision.MaxWorker {
+		return "", fmt.Errorf("Max capacity reached (%d)", h.Config.Provision.MaxWorker)
 	}
 
 	if jobID > 0 {
@@ -144,28 +175,28 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 
 	var args []string
 	args = append(args, fmt.Sprintf("--api=%s", h.Client().APIURL()))
-	args = append(args, fmt.Sprintf("--token=%s", h.configuration.Configuration.API.Token))
-	args = append(args, fmt.Sprintf("--basedir=%s", h.configuration.Basedir))
+	args = append(args, fmt.Sprintf("--token=%s", h.Config.API.Token))
+	args = append(args, fmt.Sprintf("--basedir=%s", h.Config.Basedir))
 	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
 	args = append(args, fmt.Sprintf("--name=%s", wName))
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
 	args = append(args, fmt.Sprintf("--hatchery-name=%s", h.hatch.Name))
 
-	if h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Host != "" {
-		args = append(args, fmt.Sprintf("--graylog-host=%s", h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Host))
+	if h.Config.Provision.WorkerLogsOptions.Graylog.Host != "" {
+		args = append(args, fmt.Sprintf("--graylog-host=%s", h.Config.Provision.WorkerLogsOptions.Graylog.Host))
 	}
-	if h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Port != 0 {
-		args = append(args, fmt.Sprintf("--graylog-port=%d", h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Port))
+	if h.Config.Provision.WorkerLogsOptions.Graylog.Port != 0 {
+		args = append(args, fmt.Sprintf("--graylog-port=%d", h.Config.Provision.WorkerLogsOptions.Graylog.Port))
 	}
-	if h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.ExtraKey))
+	if h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey))
 	}
-	if h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Extravalue != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", h.configuration.Configuration.Provision.WorkerLogsOptions.Graylog.Extravalue))
+	if h.Config.Provision.WorkerLogsOptions.Graylog.Extravalue != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", h.Config.Provision.WorkerLogsOptions.Graylog.Extravalue))
 	}
-	if h.configuration.Configuration.API.GRPC.URL != "" && wm.Communication == sdk.GRPC {
-		args = append(args, fmt.Sprintf("--grpc-api=%s", h.configuration.Configuration.API.GRPC.URL))
-		args = append(args, fmt.Sprintf("--grpc-insecure=%t", h.configuration.Configuration.API.GRPC.Insecure))
+	if h.Config.API.GRPC.URL != "" && wm.Communication == sdk.GRPC {
+		args = append(args, fmt.Sprintf("--grpc-api=%s", h.Config.API.GRPC.URL))
+		args = append(args, fmt.Sprintf("--grpc-insecure=%t", h.Config.API.GRPC.Insecure))
 	}
 
 	args = append(args, "--single-use")

@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
-	"github.com/docker/docker/volume/local"
 	defaults "github.com/mcuadros/go-defaults"
 	"github.com/pelletier/go-toml"
 	"github.com/spf13/cobra"
@@ -15,6 +15,10 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/hatchery/docker"
+	"github.com/ovh/cds/engine/hatchery/local"
+	"github.com/ovh/cds/engine/hatchery/marathon"
+	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -35,11 +39,13 @@ func init() {
 	startCmd.Flags().StringVar(&remoteCfgKey, "remote-config-key", "cds/config.api.toml", "(optional) consul configuration store key")
 	startCmd.Flags().StringVar(&vaultAddr, "vault-addr", "", "(optional) Vault address to fetch secrets from vault (example: https://vault.mydomain.net:8200)")
 	startCmd.Flags().StringVar(&vaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
+	//Version  command
+	mainCmd.AddCommand(versionCmd)
 	//Database command
 	mainCmd.AddCommand(database.DBCmd)
 	//Start command
 	mainCmd.AddCommand(startCmd)
-	//config command
+	//Config command
 	mainCmd.AddCommand(configCmd)
 	configCmd.AddCommand(configNewCmd)
 	configCmd.AddCommand(configCheckCmd)
@@ -61,6 +67,14 @@ Copyright (c) 2013-2017, OVH SAS.
 All rights reserved.`,
 }
 
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Display CDS version",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(sdk.VERSION)
+	},
+}
+
 var configCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Manage CDS Configuration",
@@ -73,10 +87,16 @@ var configNewCmd = &cobra.Command{
 Comming soon...`,
 	Run: func(cmd *cobra.Command, args []string) {
 		defaults.SetDefaults(conf)
+
+		conf.API.Auth.SharedInfraToken = sdk.RandomString(128)
+		conf.API.Secrets.Key = sdk.RandomString(32)
+		conf.Hatchery.Local.API.Token = conf.API.Auth.SharedInfraToken
+
 		btes, err := toml.Marshal(*conf)
 		if err != nil {
 			sdk.Exit("%v", err)
 		}
+
 		fmt.Println(string(btes))
 	},
 }
@@ -98,6 +118,41 @@ var configCheckCmd = &cobra.Command{
 		var hasError bool
 		if conf.API.URL.API != "" {
 			if err := api.New().CheckConfiguration(conf.API); err != nil {
+				fmt.Println(err)
+				hasError = true
+			}
+		}
+
+		if conf.Hatchery.Local.API.HTTP.URL != "" {
+			if err := local.New().CheckConfiguration(conf.Hatchery.Local); err != nil {
+				fmt.Println(err)
+				hasError = true
+			}
+		}
+
+		if conf.Hatchery.Docker.API.HTTP.URL != "" {
+			if err := docker.New().CheckConfiguration(conf.Hatchery.Docker); err != nil {
+				fmt.Println(err)
+				hasError = true
+			}
+		}
+
+		if conf.Hatchery.Marathon.API.HTTP.URL != "" {
+			if err := marathon.New().CheckConfiguration(conf.Hatchery.Marathon); err != nil {
+				fmt.Println(err)
+				hasError = true
+			}
+		}
+
+		if conf.Hatchery.Openstack.API.HTTP.URL != "" {
+			if err := openstack.New().CheckConfiguration(conf.Hatchery.Openstack); err != nil {
+				fmt.Println(err)
+				hasError = true
+			}
+		}
+
+		if conf.Hatchery.Swarm.API.HTTP.URL != "" {
+			if err := openstack.New().CheckConfiguration(conf.Hatchery.Swarm); err != nil {
 				fmt.Println(err)
 				hasError = true
 			}
@@ -157,16 +212,35 @@ All the services are using the same configuration file format. See $ engine conf
 			var s Service
 			var cfg interface{}
 
+			fmt.Printf("Starting service %s\n", a)
+
 			switch a {
 			case "api":
 				s = api.New()
 				cfg = conf.API
+			case "hatchery:docker":
+				s = local.New()
+				cfg = conf.Hatchery.Docker
 			case "hatchery:local":
 				s = local.New()
-				cfg = conf.Hatchery
-
+				cfg = conf.Hatchery.Local
+			case "hatchery:marathon":
+				s = local.New()
+				cfg = conf.Hatchery.Marathon
+			case "hatchery:openstack":
+				s = local.New()
+				cfg = conf.Hatchery.Openstack
+			case "hatchery:swarm":
+				s = local.New()
+				cfg = conf.Hatchery.Swarm
 			}
+
 			go start(ctx, s, cfg)
+
+			//Stupid trick: when API is starting wait a bit before start the other
+			if a == "API" {
+				time.Sleep(2 * time.Second)
+			}
 		}
 
 		//Wait for the end
@@ -180,7 +254,7 @@ All the services are using the same configuration file format. See $ engine conf
 }
 
 func start(c context.Context, s Service, cfg interface{}) {
-	if err := s.Init(i); err != nil {
+	if err := s.ApplyConfiguration(cfg); err != nil {
 		sdk.Exit("Unable to init service: %v", err)
 	}
 	if err := s.Serve(c); err != nil {

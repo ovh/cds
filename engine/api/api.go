@@ -39,41 +39,41 @@ import (
 
 type Configuration struct {
 	URL struct {
-		API string
-		UI  string
+		API string `default:"http://localhost:8081"`
+		UI  string `default:"http://localhost:4200"`
 	}
 	HTTP struct {
-		Port       string
-		SessionTTL string
+		Port       int `default:"8081"`
+		SessionTTL int `default:"60"`
 	}
 	GRPC struct {
-		Port int
+		Port int `default:"8082"`
 	}
 	Secrets struct {
 		Key string
 	}
 	Database struct {
-		User     string
-		Password string
-		Name     string
-		Host     string
-		Port     string
-		SSLMode  string
-		MaxConn  int
-		Timeout  int
+		User     string `default:"cds"`
+		Password string `default:"cds"`
+		Name     string `default:"cds"`
+		Host     string `default:"localhost"`
+		Port     int    `default:"5432"`
+		SSLMode  string `default:"disable"`
+		MaxConn  int    `default:"20"`
+		Timeout  int    `default:"3000"`
 		Secret   string
 	}
 	Cache struct {
-		Mode  string
-		TTL   int
+		Mode  string `default:"redis"`
+		TTL   int    `default:"60"`
 		Redis struct {
-			Host     string
+			Host     string `default:"localhost:6379"`
 			Password string
 		}
 	}
 	Directories struct {
-		Download string
-		Keys     string
+		Download string `default:"/tmp/cds/download"`
+		Keys     string `default:"/tmp/cds/keys"`
 	}
 	Auth struct {
 		DefaultGroup     string
@@ -83,9 +83,9 @@ type Configuration struct {
 			Host     string
 			Port     int
 			SSL      bool
-			Base     string
-			DN       string
-			Fullname string
+			Base     string `default:"dc=myorganization,dc=com"`
+			DN       string `default:"uid=%s,ou=people,dc=myorganization,dc=com"`
+			Fullname string `default:"{{.givenName}} {{.sn}}"`
 		}
 	}
 	SMTP struct {
@@ -95,12 +95,12 @@ type Configuration struct {
 		TLS      bool
 		User     string
 		Password string
-		From     string
+		From     string `default:"no-reply@cds.org"`
 	}
 	Artifact struct {
-		Mode  string
+		Mode  string `default:"local"`
 		Local struct {
-			BaseDirectory string
+			BaseDirectory string `default:"/tmp/cds/artifacts"`
 		}
 		Openstack struct {
 			URL             string
@@ -164,8 +164,18 @@ type API struct {
 	LastUpdateBroker    *LastUpdateBroker
 }
 
-func (a *API) Init(config interface{}) error {
-	return a.CheckConfiguration(config)
+func (a *API) ApplyConfiguration(config interface{}) error {
+	if err := a.CheckConfiguration(config); err != nil {
+		return err
+	}
+
+	var ok bool
+	a.Config, ok = config.(Configuration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	return nil
 }
 
 func DirectoryExists(path string) (bool, error) {
@@ -180,61 +190,69 @@ func DirectoryExists(path string) (bool, error) {
 }
 
 func (a *API) CheckConfiguration(config interface{}) error {
-	var ok bool
-	a.Config, ok = config.(Configuration)
+	aConfig, ok := config.(Configuration)
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	if a.Config.URL.API == "" {
+	if aConfig.URL.API == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
 	}
 
-	if a.Config.Directories.Download == "" {
+	if aConfig.Directories.Download == "" {
 		return fmt.Errorf("Invalid download directory")
 	}
 
-	if ok, err := DirectoryExists(a.Config.Directories.Download); !ok {
-		return fmt.Errorf("Download directory doesn't exist")
+	if ok, err := DirectoryExists(aConfig.Directories.Download); !ok {
+		if err := os.MkdirAll(aConfig.Directories.Download, os.FileMode(0600)); err != nil {
+			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Directories.Download, err)
+		}
+		log.Info("Directory %s has been created", aConfig.Directories.Download)
 	} else if err != nil {
 		return fmt.Errorf("Invalid download directory: %v", err)
 	}
 
-	if a.Config.Directories.Keys == "" {
+	if aConfig.Directories.Keys == "" {
 		return fmt.Errorf("Invalid keys directory")
 	}
 
-	if ok, err := DirectoryExists(a.Config.Directories.Keys); !ok {
-		return fmt.Errorf("Keys directory doesn't exist")
+	if ok, err := DirectoryExists(aConfig.Directories.Keys); !ok {
+		if err := os.MkdirAll(aConfig.Directories.Keys, os.FileMode(0600)); err != nil {
+			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Directories.Keys, err)
+		}
+		log.Info("Directory %s has been created", aConfig.Directories.Keys)
 	} else if err != nil {
 		return fmt.Errorf("Invalid keys directory: %v", err)
 	}
 
-	switch a.Config.Artifact.Mode {
+	switch aConfig.Artifact.Mode {
 	case "local", "openstack":
 	default:
 		return fmt.Errorf("Invalid artifact mode")
 	}
 
-	if a.Config.Artifact.Mode == "local" {
-		if a.Config.Artifact.Local.BaseDirectory == "" {
+	if aConfig.Artifact.Mode == "local" {
+		if aConfig.Artifact.Local.BaseDirectory == "" {
 			return fmt.Errorf("Invalid artifact local base directory")
 		}
-		if ok, err := DirectoryExists(a.Config.Artifact.Local.BaseDirectory); !ok {
-			return fmt.Errorf("artifact local base directory doesn't exist")
+		if ok, err := DirectoryExists(aConfig.Artifact.Local.BaseDirectory); !ok {
+			if err := os.MkdirAll(aConfig.Artifact.Local.BaseDirectory, os.FileMode(0600)); err != nil {
+				return fmt.Errorf("Unable to create directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
+			}
+			log.Info("Directory %s has been created", aConfig.Artifact.Local.BaseDirectory)
 		} else if err != nil {
 			return fmt.Errorf("Invalid artifact local base directory: %v", err)
 		}
 	}
 
-	switch a.Config.Cache.Mode {
+	switch aConfig.Cache.Mode {
 	case "local", "redis":
 	default:
 		return fmt.Errorf("Invalid cache mode")
 	}
 
-	if len(a.Config.Secrets.Key) != 32 {
-		return fmt.Errorf("Invalid secret key. It should be 32 bits (%d)", len(a.Config.Secrets.Key))
+	if len(aConfig.Secrets.Key) != 32 {
+		return fmt.Errorf("Invalid secret key. It should be 32 bits (%d)", len(aConfig.Secrets.Key))
 	}
 
 	return nil
@@ -484,14 +502,14 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	s := &http.Server{
-		Addr:           ":" + a.Config.HTTP.Port,
+		Addr:           fmt.Sprintf(":%d", a.Config.HTTP.Port),
 		Handler:        a.Router.Mux,
 		ReadTimeout:    10 * time.Minute,
 		WriteTimeout:   10 * time.Minute,
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %s", a.Config.HTTP.Port)})
+	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)})
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too
@@ -500,7 +518,7 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 	}()
 
-	log.Info("Starting HTTP Server on port %s", a.Config.HTTP.Port)
+	log.Info("Starting HTTP Server on port %d", a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatalf("Cannot start cds-server: %s", err)
 	}

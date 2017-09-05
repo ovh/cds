@@ -2,7 +2,7 @@
 
 set -e
 
-BINARY="hatchery"
+BINARY="cds-engine"
 for GOOS in windows darwin linux freebsd; do
     for GOARCH in amd64 arm; do
         if [[ $GOARCH == "arm" && $GOOS != "linux" ]]; then
@@ -14,6 +14,6 @@ for GOOS in windows darwin linux freebsd; do
         export GOARCH=$GOARCH
         outfile="${BINARY}-${architecture}"
         echo "Building ${outfile}"
-        go build -ldflags "-X main.VERSION={{.cds.proj.version}}+{{.cds.version}}" -o bin/${outfile}
+        go build -ldflags "-X github.com/ovh/cds/sdk.VERSION={{.cds.proj.version}}+{{.cds.version}}" -o bin/${outfile}
     done
 done
