@@ -171,11 +171,11 @@ Tag the current branch and push it.`
 	gitrelease.Parameter(sdk.Parameter{
 		Name:        "releaseNote",
 		Description: "Set a release note for the release",
-		Type:        sdk.StringParameter,
+		Type:        sdk.TextParameter,
 	})
 	gitrelease.Parameter(sdk.Parameter{
 		Name:        "artifacts",
-		Description: "Set a list of artifacts, separate by , .",
+		Description: "Set a list of artifacts, separate by , . You can also use regexp.",
 		Type:        sdk.StringParameter,
 	})
 	if err := checkBuiltinAction(db, gitrelease); err != nil {

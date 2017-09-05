@@ -82,7 +82,7 @@ func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, 
 		return err
 	}
 	if code >= 300 {
-		return fmt.Errorf("Cannot create workflow node run release")
+		return fmt.Errorf("Cannot create workflow node run release. Http code error : %d", code)
 	}
 	return nil
 }
