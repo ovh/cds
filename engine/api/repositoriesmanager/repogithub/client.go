@@ -53,14 +53,14 @@ func (g *GithubClient) Release(fullname string, tagName string, title string, re
 
 	res, err := g.post(url, "application/json", bytes.NewBuffer(b), false)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "github.Release > Cannot create release on github")
 	}
 
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return nil, sdk.WrapError(err, "github.Release > Cannot create release on github")
+		return nil, sdk.WrapError(err, "github.Release > Cannot read release response")
 	}
 
 	if res.StatusCode != 201 {

@@ -1,20 +1,19 @@
 package main
 
 import (
+	"bytes"
 	"net/http"
+	"regexp"
 	"sort"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"bufio"
-	"bytes"
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"regexp"
 )
 
 func releaseApplicationWorkflowHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
@@ -35,8 +34,6 @@ func releaseApplicationWorkflowHandler(w http.ResponseWriter, r *http.Request, d
 	if errU := UnmarshalBody(r, &req); errU != nil {
 		return errU
 	}
-
-	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}/release", POST(releaseApplicationWorkflowHandler))
 
 	wNodeRun, errWNR := workflow.LoadNodeRun(db, key, name, number, nodeRunID)
 	if errWNR != nil {
@@ -99,11 +96,9 @@ func releaseApplicationWorkflowHandler(w http.ResponseWriter, r *http.Request, d
 
 	for _, a := range artifactToUpload {
 		b := &bytes.Buffer{}
-		writer := bufio.NewWriter(b)
-		if err := artifact.StreamFile(writer, &a); err != nil {
+		if err := artifact.StreamFile(b, &a); err != nil {
 			return sdk.WrapError(err, "Cannot get artifact")
 		}
-		writer.Flush()
 		if err := client.UploadReleaseFile(workflowNode.Context.Application.RepositoryFullname, release, a, b); err != nil {
 			return sdk.WrapError(err, "releaseApplicationWorkflowHandler")
 		}
