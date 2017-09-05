@@ -105,6 +105,7 @@ func spawnErrorWorkerModelHandler(w http.ResponseWriter, r *http.Request, db *go
 
 func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
 	workerModelID, errr := requestVarInt(r, "permModelID")
+
 	if errr != nil {
 		return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
 	}
