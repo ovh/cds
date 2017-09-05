@@ -1,11 +1,11 @@
 package sdk
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
-	"bytes"
 )
 
 //RepositoriesManagerType lists the different repositories manager currently planned to be supported
@@ -317,7 +317,8 @@ type RepositoriesManagerClient interface {
 
 // Release represents data about release on github, etc..
 type VCSRelease struct {
-	ID string `json:"id"`
+	ID            int64  `json:"id"`
+	UploadRelease string `json:"upload_url"`
 }
 
 //VCSRepo represents data about repository even on stash, or github, etc...

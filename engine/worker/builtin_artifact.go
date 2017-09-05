@@ -66,7 +66,6 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			for _, filePath := range filesPath {
 				filename := filepath.Base(filePath)
 				sendLog(fmt.Sprintf("Uploading '%s'\n", filename))
-				//TODO send artifact on workflow
 				if err := sdk.UploadArtifact(project, pipeline, application, tag.Value, filePath, buildNumber, environment); err != nil {
 					res.Status = sdk.StatusFail.String()
 					res.Reason = fmt.Sprintf("Error while uploading artefact: %s\n", err)
@@ -116,8 +115,8 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 		for _, filePath := range filesPath {
 			filename := filepath.Base(filePath)
 			sendLog(fmt.Sprintf("Uploading '%s'\n", filename))
-			//TODO send artifact on workflow
-			if err := w.client.QueueArtifactUpload(buildID, tag.Value, filename); err != nil {
+
+			if err := w.client.QueueArtifactUpload(buildID, tag.Value, filePath); err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = fmt.Sprintf("Error while uploading artefact: %s\n", err)
 				sendLog(res.Reason)

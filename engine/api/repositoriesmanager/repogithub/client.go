@@ -45,7 +45,7 @@ func (g *GithubClient) Release(fullname string, tagName string, title string, re
 		return nil, sdk.WrapError(err, "github.Release > Cannot marshal body %+v", req)
 	}
 
-	res, err := g.post(url, "application/json", bytes.NewBuffer(b))
+	res, err := g.post(url, "application/json", bytes.NewBuffer(b), false)
 	if err != nil {
 		return nil, err
 	}
@@ -58,12 +58,12 @@ func (g *GithubClient) Release(fullname string, tagName string, title string, re
 	}
 
 	if res.StatusCode != 201 {
-		return nil, sdk.WrapError(fmt.Errorf("github.Release >Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body), "")
+		return nil, sdk.WrapError(fmt.Errorf("github.Release >Unable to create release on github. Url : %s Status code : %d - Body: %s", url, res.StatusCode, body), "")
 	}
 
 	var release sdk.VCSRelease
 	if err := json.Unmarshal(body, &release); err != nil {
-		return nil, sdk.WrapError(err, "github.Release>  Cannot unmarshal response")
+		return nil, sdk.WrapError(err, "github.Release>  Cannot unmarshal response: %s", string(body))
 	}
 
 	return &release, nil
@@ -71,14 +71,14 @@ func (g *GithubClient) Release(fullname string, tagName string, title string, re
 
 // UploadReleaseFile Attach a file into the release
 func (g *GithubClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, buf *bytes.Buffer) error {
-	var url = "/repos/" + repo + "/releases/" + release.ID + "/assets?name=" + runArtifact.Name
-	res, err := g.post(url, "application/octet-stream", buf)
+	var url = strings.Split(release.UploadRelease, "{")[0] + "?name=" + runArtifact.Name
+	res, err := g.post(url, "application/octet-stream", buf, true)
 	if err != nil {
 		return err
 	}
 	defer res.Body.Close()
 	if res.StatusCode != 201 {
-		return sdk.WrapError(fmt.Errorf("github.Release >Unable to create status on github. Status code : %d", res.StatusCode), "")
+		return sdk.WrapError(fmt.Errorf("github.Release >Unable to upload file on release. Url : %s - Status code : %d", url, res.StatusCode), "")
 	}
 	return nil
 }

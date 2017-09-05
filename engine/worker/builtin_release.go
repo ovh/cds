@@ -15,7 +15,6 @@ func runRelease(w *currentWorker) BuiltInAction {
 		tag := sdk.ParameterFind(a.Parameters, "tag")
 		title := sdk.ParameterFind(a.Parameters, "title")
 		releaseNote := sdk.ParameterFind(a.Parameters, "releaseNote")
-		// /project/{permProjectKey}/workflows/{workflowName}/runs/{number}/artifacts
 
 		pkey := sdk.ParameterFind(*params, "cds.project")
 		wName := sdk.ParameterFind(*params, "cds.workflow")
@@ -94,7 +93,7 @@ func runRelease(w *currentWorker) BuiltInAction {
 			Artifacts: artSplitted,
 		}
 
-		if err := w.client.WorkflowNodeRunRelease(pkey.Value, wName.Value, wRunNumber, w.currentJob.wJob.ID, req); err != nil {
+		if err := w.client.WorkflowNodeRunRelease(pkey.Value, wName.Value, wRunNumber, w.currentJob.wJob.WorkflowNodeRunID, req); err != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
 				Reason: fmt.Sprintf("Cannot make workflow node run release: %s", err),

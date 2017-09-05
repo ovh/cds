@@ -98,7 +98,7 @@ func releaseApplicationWorkflowHandler(w http.ResponseWriter, r *http.Request, d
 	}
 
 	for _, a := range artifactToUpload {
-		var b *bytes.Buffer
+		b := &bytes.Buffer{}
 		writer := bufio.NewWriter(b)
 		if err := artifact.StreamFile(writer, &a); err != nil {
 			return sdk.WrapError(err, "Cannot get artifact")
