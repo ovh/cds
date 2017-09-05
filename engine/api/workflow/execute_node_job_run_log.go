@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -17,6 +18,9 @@ func LoadStepLogs(db gorp.SqlExecutor, id int64, order int64) (*sdk.Log, error) 
 	logs := &sdk.Log{}
 	var s, m, d time.Time
 	if err := db.QueryRow(query, id, order).Scan(&logs.Id, &logs.PipelineBuildJobID, &logs.PipelineBuildID, &s, &m, &d, &logs.StepOrder, &logs.Val); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	var err error

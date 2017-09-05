@@ -117,8 +117,8 @@ func withETag(c *GithubClient, req *http.Request, path string) {
 }
 func withoutETag(c *GithubClient, req *http.Request, path string) {}
 
-func (c *GithubClient) post(path string, bodyType string, body io.Reader) (*http.Response, error) {
-	if !strings.HasPrefix(path, APIURL) {
+func (c *GithubClient) post(path string, bodyType string, body io.Reader, skipDefaultBaseURL bool) (*http.Response, error) {
+	if !skipDefaultBaseURL && !strings.HasPrefix(path, APIURL) {
 		path = APIURL + path
 	}
 
@@ -127,6 +127,7 @@ func (c *GithubClient) post(path string, bodyType string, body io.Reader) (*http
 		return nil, err
 	}
 
+	req.Header.Set("Content-Type", bodyType)
 	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))

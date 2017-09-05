@@ -27,6 +27,7 @@ type ActionScript struct {
 		Script           string                       `json:"script,omitempty"`
 		JUnitReport      string                       `json:"jUnitReport,omitempty"`
 		Plugin           map[string]map[string]string `json:"plugin,omitempty"`
+		Release          map[string]string            `json:"release,omitempty"`
 	} `json:"steps"`
 }
 
@@ -76,6 +77,16 @@ func NewStepGitClone(v map[string]string) Action {
 func NewStepGitTag(v map[string]string) Action {
 	newAction := Action{
 		Name:       GitTagAction,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
+	}
+	return newAction
+}
+
+// NewStepRelease returns an action (basically used as a step of a job) of Release type
+func NewStepRelease(v map[string]string) Action {
+	newAction := Action{
+		Name:       ReleaseAction,
 		Type:       BuiltinAction,
 		Parameters: ParametersFromMap(v),
 	}
@@ -204,8 +215,13 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 			goto next
 		}
 
+		// Action builtin = GitTag
 		if v.GitTag != nil {
 			newAction = NewStepGitTag(v.GitTag)
+		}
+
+		if v.Release != nil {
+			newAction = NewStepRelease(v.Release)
 		}
 
 		//Action builtin = Plugin
