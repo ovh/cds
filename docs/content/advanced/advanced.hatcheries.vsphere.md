@@ -16,8 +16,6 @@ This hatchery spawns VM which obtains IP from DHCP. So first you have to create 
 
 Also we recommend you to create a VM base that the hatchery will use to linked clone your new VM to execute your jobs. For example in our case we create different VM base with a minimal debian installed in different versions. In order to save your host resources we advice you to turn these VMs off.
 
-//Example of network infrastructure
-
 ## Start Vsphere hatchery
 
 Generate a token for group:
@@ -31,7 +29,7 @@ Then start hatchery:
 
 ```bash
 VSPHERE-USER=<user> VSPHERE-ENDPOINT="pcc-11-222-333-444.ovh.com" VSPHERE-PASSWORD=<password> VSPHERE-DATACENTER=<datacenter> VSPHERE-DATASTORE=<datastore> VSPHERE-NETWORK=<vmNetwork> VSPHERE-ETHERNET-CARD=<ethernet card> hatchery vsphere \
-        --api=https://api.domain \
+        --api=https://api.cds.domain \
         --max-worker=10 \
         --provision=1 \
         --token=fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
