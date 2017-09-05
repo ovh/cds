@@ -126,7 +126,7 @@ func attachPipelinesToApplicationHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, project.Key, app.Name, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, project.Key, app.Name, c.User, "", "", 0)
 	if errW != nil {
 		log.Warning("attachPipelinesToApplicationHandler: Cannot load application workflow: %s\n", errW)
 		return errW
@@ -270,7 +270,7 @@ func removePipelineFromApplicationHandler(w http.ResponseWriter, r *http.Request
 	cache.DeleteAll(k)
 
 	var errW error
-	a.Workflows, errW = workflow.LoadCDTree(db, key, a.Name, c.User, "", 0)
+	a.Workflows, errW = workflow.LoadCDTree(db, key, a.Name, c.User, "", "", 0)
 	if errW != nil {
 		log.Warning("removePipelineFromApplicationHandler> Cannot load workflow: %s\n", errW)
 		return errW

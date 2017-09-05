@@ -15,8 +15,8 @@ import (
 )
 
 // GetWorkflowStatus Get workflow updated builds status + scheduler and poller executions
-func GetWorkflowStatus(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User, branchName string, version int64) ([]sdk.PipelineBuild, []sdk.PipelineScheduler, []sdk.RepositoryPoller, []sdk.Hook, error) {
-	cdPipelines, err := LoadCDTree(db, projectkey, appName, user, branchName, version)
+func GetWorkflowStatus(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User, branchName, remote string, version int64) ([]sdk.PipelineBuild, []sdk.PipelineScheduler, []sdk.RepositoryPoller, []sdk.Hook, error) {
+	cdPipelines, err := LoadCDTree(db, projectkey, appName, user, branchName, remote, version)
 	if err != nil {
 		return nil, nil, nil, nil, sdk.WrapError(err, "GetWorkflowStatus> Cannot load workflow")
 	}
@@ -55,7 +55,7 @@ func getWorkflowStatus(pbs *[]sdk.PipelineBuild, schedulers *[]sdk.PipelineSched
 }
 
 // LoadCDTree Load the continuous delivery pipeline tree for the given application
-func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User, branchName string, version int64) ([]sdk.CDPipeline, error) {
+func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User, branchName, remote string, version int64) ([]sdk.CDPipeline, error) {
 	cdTrees := []sdk.CDPipeline{}
 
 	// Select root trigger element + non triggered pipeline
@@ -268,7 +268,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 			lastTree.Pipeline.ID != root.Pipeline.ID || lastTree.Environment.ID != root.Environment.ID {
 			if permission.AccessToPipeline(root.Environment.ID, root.Pipeline.ID, user, permission.PermissionRead) {
 				if hasChild {
-					if err := getChild(db, &root, user, branchName, version); err != nil {
+					if err := getChild(db, &root, user, branchName, remote, version); err != nil {
 						return nil, sdk.WrapError(err, "LoadCDTree> Cannot get child")
 					}
 				}
@@ -295,14 +295,14 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 								return nil, sdk.WrapError(errP, "LoadCDTree> Cannot load project")
 							}
 							for _, e := range p.Environments {
-								builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, e.ID, 1, "", branchName)
+								builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, e.ID, 1, "", branchName, remote)
 								if errPB != nil {
 									return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build for env %s", e.Name)
 								}
 								pbs = append(pbs, builds...)
 							}
 						} else {
-							builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, 1, "", branchName)
+							builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, 1, "", branchName, remote)
 							if errPB != nil {
 								return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build")
 							}
@@ -351,7 +351,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 	return cdTrees, nil
 }
 
-func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branchName string, version int64) error {
+func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branchName, remote string, version int64) error {
 	listTrigger := []sdk.CDPipeline{}
 
 	query := `
@@ -476,7 +476,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 				var pbs []sdk.PipelineBuild
 				var errPB error
 				if version == 0 {
-					pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, 1, "", branchName)
+					pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, 1, "", branchName, remote)
 				} else {
 					pbs, errPB = pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, version, 1)
 				}

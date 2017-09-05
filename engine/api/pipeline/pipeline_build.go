@@ -273,8 +273,8 @@ func LoadPipelineBuildByHash(db gorp.SqlExecutor, hash string) ([]sdk.PipelineBu
 	return pbs, nil
 }
 
-// LoadPipelineBuildsByApplicationAndPipeline Load pipeline builds from application/pipeline/env status, branchname
-func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, applicationID, pipelineID, environmentID int64, limit int, status, branchName string) ([]sdk.PipelineBuild, error) {
+// LoadPipelineBuildsByApplicationAndPipeline Load pipeline builds from application/pipeline/env status, branchname, remote
+func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, applicationID, pipelineID, environmentID int64, limit int, status, branchName, remote string) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
 		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3 %s
 	`
@@ -289,11 +289,11 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 		query = fmt.Sprintf(query, " AND pb.status = $5 ORDER BY pb.version DESC, pb.id DESC LIMIT $4")
 		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, status)
 	} else if status == "" && branchName != "" {
-		query = fmt.Sprintf(query, " AND pb.vcs_changes_branch = $5 ORDER BY pb.version DESC, pb.id DESC LIMIT $4")
-		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, branchName)
+		query = fmt.Sprintf(query, " AND pb.vcs_changes_branch = $5 AND pb.vcs_remote = $6 ORDER BY pb.version DESC, pb.id DESC LIMIT $4")
+		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, branchName, remote)
 	} else {
-		query = fmt.Sprintf(query, " AND pb.status = $5 AND pb.vcs_changes_branch = $6 ORDER BY pb.version DESC, pb.id DESC LIMIT $4")
-		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, status, branchName)
+		query = fmt.Sprintf(query, " AND pb.status = $5 AND pb.vcs_changes_branch = $6 AND pb.vcs_remote = $7 ORDER BY pb.version DESC, pb.id DESC LIMIT $4")
+		_, errQuery = db.Select(&rows, query, applicationID, pipelineID, environmentID, limit, status, branchName, remote)
 	}
 	if errQuery != nil {
 		return nil, errQuery
@@ -441,18 +441,11 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	}
 	//Send notification
 	//Load previous pipeline (some app, pip, env and branch)
-	//Load branch
-	branch := ""
-	params := pb.Parameters
-	for _, param := range params {
-		if param.Name == ".git.branch" {
-			branch = param.Value
-			break
-		}
-	}
+	//Load branch and remote
+	branch, remote := GetVCSInfosInParams(pb.Parameters)
 	//Get the history
 	var previous *sdk.PipelineBuild
-	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", branch)
+	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", branch, remote)
 	if err != nil {
 		log.Error("UpdatePipelineBuildStatusAndStage> error while loading previous pipeline build")
 	}
@@ -732,6 +725,8 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 		sdk.AddParameter(&params, "cds.triggered_by.email", sdk.StringParameter, pb.Trigger.TriggeredBy.Email)
 	}
 
+	pb.Trigger.VCSRemote = app.RepositoryFullname
+
 	//Set git.Branch and git.Hash
 	if pb.Trigger.VCSChangesBranch != "" {
 		sdk.AddParameter(&params, "git.branch", sdk.StringParameter, pb.Trigger.VCSChangesBranch)
@@ -751,7 +746,6 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 				lastGitHash[b.DisplayID] = b.LatestCommit
 			}
 		}
-		pb.Trigger.VCSRemote = app.RepositoryFullname
 
 		// If branch is not provided from parent
 		// then maybe it was directly set by pipeline parameters
@@ -796,7 +790,6 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	}
 
 	//Retreive commit information
-	// TODO: take care about VCSRemoteURL
 	if client != nil && pb.Trigger.VCSChangesHash != "" {
 		commit, err := client.Commit(pb.Trigger.VCSRemote, pb.Trigger.VCSChangesHash)
 		if err != nil {
@@ -860,16 +853,10 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	//Send notification
 	//Load previous pipeline (some app, pip, env and branch)
 	//Load branch
-	branch := ""
-	for _, param := range pb.Parameters {
-		if param.Name == ".git.branch" {
-			branch = param.Value
-			break
-		}
-	}
+	branch, remote := GetVCSInfosInParams(pb.Parameters)
 	//Get the history
 	var previous *sdk.PipelineBuild
-	history, err := LoadPipelineBuildsByApplicationAndPipeline(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", branch)
+	history, err := LoadPipelineBuildsByApplicationAndPipeline(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", branch, remote)
 	if err != nil {
 		log.Error("InsertPipelineBuild> error while loading previous pipeline build: %s", err)
 	}
@@ -1394,7 +1381,7 @@ func StopPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 
 	//Get the history
 	var previous *sdk.PipelineBuild
-	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", pb.Trigger.VCSChangesBranch)
+	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2, "", pb.Trigger.VCSChangesBranch, pb.Trigger.VCSRemote)
 	if err != nil {
 		log.Error("StopPipelineBuild> error while loading previous pipeline build")
 	}
@@ -1503,4 +1490,18 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
 	}
 
 	return nil
+}
+
+func GetVCSInfosInParams(params []sdk.Parameter) (string, string) {
+	var branch, remote string
+	for _, param := range params {
+		switch param.Name {
+		case ".git.branch":
+			branch = param.Value
+		case ".git.repository":
+			remote = param.Value
+		}
+	}
+
+	return branch, remote
 }

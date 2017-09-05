@@ -543,7 +543,7 @@ func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request,
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User, "", "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "addHookOnRepositoriesManagerHandler> Cannot load workflow")
 	}
@@ -591,7 +591,7 @@ func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User, "", "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Unable to load workflow")
 	}

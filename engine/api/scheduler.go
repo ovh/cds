@@ -219,7 +219,7 @@ check:
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User, "", "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "addSchedulerApplicationPipelineHandler> cannot reload workflow")
 	}
@@ -319,7 +319,7 @@ func updateSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User, "", "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "updateSchedulerApplicationPipelineHandler> Cannot load workflow")
 	}
@@ -370,7 +370,7 @@ func deleteSchedulerApplicationPipelineHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, key, appName, c.User, "", "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "deleteSchedulerApplicationPipelineHandler> Cannot load workflow")
 	}

@@ -85,7 +85,7 @@ func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *business
 		return sdk.WrapError(errA, "addHook: Cannot load application")
 	}
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User, "", "", 0)
 	if errW != nil {
 		return sdk.WrapError(errA, "addHook: Cannot load workflow")
 	}
@@ -126,7 +126,7 @@ func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User, "", "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "updateHookHandler: Cannot load workflow")
 	}

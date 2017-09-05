@@ -46,7 +46,7 @@ func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
 
-	tree, err := workflow.LoadCDTree(db, projectKey, applicationName, c.User, "", 0)
+	tree, err := workflow.LoadCDTree(db, projectKey, applicationName, c.User, "", "", 0)
 	if err != nil {
 		log.Warning("getApplicationTreeHandler: Cannot load CD Tree for applications %s: %s\n", applicationName, err)
 		return err
@@ -143,6 +143,7 @@ func getApplicationTreeStatusHandler(w http.ResponseWriter, r *http.Request, db 
 	applicationName := vars["permApplicationName"]
 
 	branchName := r.FormValue("branchName")
+	remote := r.FormValue("remote")
 	versionString := r.FormValue("version")
 
 	var version int64
@@ -159,7 +160,7 @@ func getApplicationTreeStatusHandler(w http.ResponseWriter, r *http.Request, db 
 		return sdk.WrapError(errApp, "getApplicationTreeStatusHandler>Cannot get application")
 	}
 
-	pbs, schedulers, pollers, hooks, errPB := workflow.GetWorkflowStatus(db, projectKey, applicationName, c.User, branchName, version)
+	pbs, schedulers, pollers, hooks, errPB := workflow.GetWorkflowStatus(db, projectKey, applicationName, c.User, branchName, remote, version)
 	if errPB != nil {
 		return sdk.WrapError(errPB, "getApplicationHandler> Cannot load CD Tree status %s", app.Name)
 	}
@@ -246,7 +247,7 @@ func getApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	if withWorkflow {
 		var errWorflow error
-		app.Workflows, errWorflow = workflow.LoadCDTree(db, projectKey, applicationName, c.User, "", 0)
+		app.Workflows, errWorflow = workflow.LoadCDTree(db, projectKey, applicationName, c.User, "", "", 0)
 		if errWorflow != nil {
 			log.Warning("getApplicationHandler: Cannot load CD Tree for applications %s: %s\n", app.Name, errWorflow)
 			return errWorflow

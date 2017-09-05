@@ -87,7 +87,7 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return sdk.ErrNoEnvExecution
 	}
 
-	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 2, string(sdk.StatusSuccess), "")
+	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 2, string(sdk.StatusSuccess), "", "")
 	if err != nil {
 		log.Warning("rollbackPipelineHandler> Cannot load pipeline build history %s", err)
 		return sdk.ErrNoPipelineBuild
@@ -227,14 +227,9 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 	}
 
 	//Branch
-	var branch string
-	for _, p := range request.Params {
-		if p.Name == "git.branch" {
-			branch = p.Value
-		}
-	}
+	branch, remote := pipeline.GetVCSInfosInParams(request.Params)
 
-	builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, request.ParentApplicationID, request.ParentPipelineID, envID, 1, string(sdk.StatusSuccess), branch)
+	builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, request.ParentApplicationID, request.ParentPipelineID, envID, 1, string(sdk.StatusSuccess), branch, remote)
 	if err != nil {
 		return sdk.WrapError(sdk.ErrNoParentBuildFound, "runPipelineWithLastParentHandler> Unable to find any successful pipeline build")
 	}
@@ -340,6 +335,8 @@ func runPipelineHandlerFunc(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		trigger.VCSChangesAuthor = parentPipelineBuild.Trigger.VCSChangesAuthor
 		trigger.VCSChangesHash = parentPipelineBuild.Trigger.VCSChangesHash
 		trigger.VCSChangesBranch = parentPipelineBuild.Trigger.VCSChangesBranch
+		trigger.VCSRemote = parentPipelineBuild.Trigger.VCSRemote
+		trigger.VCSRemoteURL = parentPipelineBuild.Trigger.VCSRemoteURL
 	}
 
 	env, errenv := environment.LoadEnvironmentByName(db, projectKey, envDest.Name)
@@ -727,6 +724,7 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 	limitString := r.Form.Get("limit")
 	status := r.Form.Get("status")
 	branchName := r.Form.Get("branchName")
+	remote := r.Form.Get("remote")
 
 	var limit int
 	if limitString != "" {
@@ -764,7 +762,7 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		return sdk.WrapError(sdk.ErrForbidden, "getPipelineHistoryHandler> No enought right on this environment %s", envName)
 	}
 
-	pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, status, branchName)
+	pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, status, branchName, remote)
 	if errl != nil {
 		return sdk.WrapError(errl, "getPipelineHistoryHandler> cannot load pipeline %s history", p.Name)
 	}
@@ -1302,7 +1300,7 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		return WriteJSON(w, r, commits, http.StatusOK)
 	}
 
-	pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "")
+	pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "", "")
 	if errpb != nil {
 		return sdk.WrapError(errpb, "getPipelineCommitsHandler> Cannot load pipeline build")
 	}

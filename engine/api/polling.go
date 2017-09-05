@@ -95,7 +95,7 @@ func addPollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c 
 
 	app.RepositoryPollers = append(app.RepositoryPollers, h)
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User, "", "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "addPollerHandler> Cannot load workflow")
 	}
@@ -169,7 +169,7 @@ func updatePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return sdk.WrapError(err, "updatePollerHandler> cannot load pollers")
 	}
 	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User, "", 0)
+	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User, "", "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "updatePollerHandler> Cannot load workflow")
 	}
@@ -274,7 +274,7 @@ func deletePollerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 
 	}
 	var errW error
-	a.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User, "", 0)
+	a.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User, "", "", 0)
 	if errW != nil {
 		return sdk.WrapError(errW, "deletePollerHandler> Cannot load workflow")
 	}
