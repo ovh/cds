@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 	"net/url"
-	"path"
 	"strconv"
 	"strings"
 	"sync"
@@ -123,15 +122,6 @@ func (h *HatcheryMarathon) Hatchery() *sdk.Hatchery {
 //Client returns cdsclient instance
 func (h *HatcheryMarathon) Client() cdsclient.Interface {
 	return h.client
-}
-
-// KillWorker deletes an application on mesos via marathon
-func (h *HatcheryMarathon) KillWorker(worker sdk.Worker) error {
-	appID := path.Join(hatcheryMarathon.marathonID, worker.Name)
-	log.Info("KillWorker> Killing %s", appID)
-
-	_, err := h.marathonClient.DeleteApplication(appID, true)
-	return err
 }
 
 // ModelType returns type of hatchery

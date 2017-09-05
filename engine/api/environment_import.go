@@ -186,15 +186,13 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		newEnv := payload.Environment()
-		for i := range newEnv.EnvironmentGroups {
-			eg := &env.EnvironmentGroups[i]
-			g, err := group.LoadGroup(tx, eg.Group.Name)
-			if err != nil {
-				log.Warning("importIntoEnvironmentHandler> Error on import : %s", err)
-				return err
-			}
-			eg.Group = *g
+	newEnv := payload.Environment()
+	for i := range newEnv.EnvironmentGroups {
+		eg := &newEnv.EnvironmentGroups[i]
+		g, err := group.LoadGroup(tx, eg.Group.Name)
+		if err != nil {
+			log.Warning("importIntoEnvironmentHandler> Error on import : %s", err)
+			return err
 		}
 
 		allMsg := []sdk.Message{}

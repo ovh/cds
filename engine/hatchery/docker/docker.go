@@ -326,32 +326,6 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []
 	return name, nil
 }
 
-// KillWorker stops a worker locally
-func (h *HatcheryDocker) KillWorker(worker sdk.Worker) error {
-	h.Lock()
-	defer h.Unlock()
-
-	for name, cmd := range h.workers {
-		if worker.Name == name {
-			log.Debug("HatcheryDocker.KillWorker> %s", name)
-			if err := cmd.Process.Kill(); err != nil {
-				return err
-			}
-
-			// Remove container
-			cmd := exec.Command("docker", "rm", "-f", name)
-			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("HatcheryDocker.KillWorker: cannot rm container %s: %s", name, err)
-			}
-
-			delete(h.workers, worker.Name)
-			return nil
-		}
-	}
-
-	return nil
-}
-
 func randSeq(n int) (string, error) {
 	b := make([]byte, 64)
 	if _, err := rand.Read(b); err != nil {

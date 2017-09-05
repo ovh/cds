@@ -446,17 +446,3 @@ func (h *HatcheryOpenstack) NeedRegistration(m *sdk.Model) bool {
 	log.Info("NeedRegistration> %t for %s - m.NeedRegistration:%t m.UserLastModified:%d oldDateLastModified:%s", out, m.Name, m.NeedRegistration, m.UserLastModified.Unix(), oldDateLastModified)
 	return out
 }
-
-// KillWorker delete cloud instances
-func (h *HatcheryOpenstack) KillWorker(worker sdk.Worker) error {
-	log.Info("KillWorker> Kill %s", worker.Name)
-	for _, s := range h.getServers() {
-		if s.Name == worker.Name {
-			r := servers.Delete(h.openstackClient, s.ID)
-			if err := r.ExtractErr(); err != nil {
-				return err
-			}
-		}
-	}
-	return fmt.Errorf("not found")
-}
