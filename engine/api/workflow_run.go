@@ -436,3 +436,16 @@ stageLoop:
 
 	return WriteJSON(w, r, result, http.StatusOK)
 }
+
+func getWorkflowRunTagsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	vars := mux.Vars(r)
+	projectKey := vars["permProjectKey"]
+	workflowName := vars["workflowName"]
+
+	res, err := workflow.GetTagsAndValue(db, projectKey, workflowName)
+	if err != nil {
+		return sdk.WrapError(err, "getWorkflowRunTagsHandler> Error")
+	}
+
+	return WriteJSON(w, r, res, http.StatusOK)
+}

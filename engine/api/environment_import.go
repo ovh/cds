@@ -186,7 +186,7 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 
 	newEnv := payload.Environment()
 	for i := range newEnv.EnvironmentGroups {
-		eg := &env.EnvironmentGroups[i]
+		eg := &newEnv.EnvironmentGroups[i]
 		g, err := group.LoadGroup(tx, eg.Group.Name)
 		if err != nil {
 			log.Warning("importIntoEnvironmentHandler> Error on import : %s", err)

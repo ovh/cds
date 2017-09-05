@@ -8,6 +8,7 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -58,8 +59,7 @@ func initViper(w *currentWorker) {
 		os.Exit(4)
 	}
 
-	w.modelID = int64(viper.GetInt("model"))
-	w.status.Model = w.modelID
+	w.model = sdk.Model{ID: int64(viper.GetInt("model"))}
 
 	w.basedir = viper.GetString("basedir")
 	if w.basedir == "" {

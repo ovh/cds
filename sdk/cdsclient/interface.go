@@ -57,7 +57,7 @@ type Interface interface {
 	WorkerModelSpawnError(id int64, info string) error
 	WorkerModelsEnabled() ([]sdk.Model, error)
 	WorkerModels() ([]sdk.Model, error)
-	WorkerRegister(worker.RegistrationForm) (string, bool, error)
+	WorkerRegister(worker.RegistrationForm) (*sdk.Worker, bool, error)
 	WorkerSetStatus(sdk.Status) error
 	WorkflowList(projectKey string) ([]sdk.Workflow, error)
 	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)

@@ -245,9 +245,9 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 			}
 			c.User.Groups = append(c.User.Groups, *g)
 
-			if c.Worker.Model != 0 {
+			if c.Worker.ModelID != 0 {
 				//Load model
-				m, err := worker.LoadWorkerModelByID(db, c.Worker.Model)
+				m, err := worker.LoadWorkerModelByID(db, c.Worker.ModelID)
 				if err != nil {
 					WriteError(w, req, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s", err))
 					return
