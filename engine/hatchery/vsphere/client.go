@@ -17,7 +17,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-const reqTimeout = 3 * time.Second
+const reqTimeout = 7 * time.Second
 
 //This a embeded cache for servers list
 var lservers = struct {
@@ -170,13 +170,17 @@ func (h *HatcheryVSphere) deleteServer(s mo.VirtualMachine) error {
 // createVMConfig create a basic configuration in order to create a vm
 func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annotation) (*types.VirtualMachineCloneSpec, *object.Folder, error) {
 	ctx := context.Background()
+	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
+	defer cancelC()
 
-	folder, errF := h.finder.FolderOrDefault(ctx, "")
+	folder, errF := h.finder.FolderOrDefault(ctxC, "")
 	if errF != nil {
 		return nil, folder, sdk.WrapError(errF, "createVMConfig> cannot find folder")
 	}
 
-	devices, errD := vm.Device(ctx)
+	ctxC, cancelC = context.WithTimeout(ctx, reqTimeout)
+	defer cancelC()
+	devices, errD := vm.Device(ctxC)
 	if errD != nil {
 		return nil, folder, sdk.WrapError(errD, "createVMConfig> Cannot find device")
 	}
@@ -194,7 +198,9 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 		return nil, folder, fmt.Errorf("no network device found")
 	}
 
-	backing, errB := h.network.EthernetCardBackingInfo(ctx)
+	ctxC, cancelC = context.WithTimeout(ctx, reqTimeout)
+	defer cancelC()
+	backing, errB := h.network.EthernetCardBackingInfo(ctxC)
 	if errB != nil {
 		return nil, folder, sdk.WrapError(errB, "createVMConfig> cannot have ethernet backing info")
 	}
@@ -219,7 +225,9 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 		DiskMoveType: string(types.VirtualMachineRelocateDiskMoveOptionsMoveChildMostDiskBacking),
 	}
 
-	datastore, errD := h.finder.DatastoreOrDefault(ctx, h.datastoreString)
+	ctxC, cancelC = context.WithTimeout(ctx, reqTimeout)
+	defer cancelC()
+	datastore, errD := h.finder.DatastoreOrDefault(ctxC, h.datastoreString)
 	if errD != nil {
 		return nil, folder, sdk.WrapError(errD, "createVMConfig> cannot find datastore")
 	}
@@ -255,8 +263,10 @@ func (h *HatcheryVSphere) createVMConfig(vm *object.VirtualMachine, annot annota
 // launchClientOp launch a script on the virtual machine given in paramters
 func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script string, env []string) (int64, error) {
 	ctx := context.Background()
+	ctxC, cancelC := context.WithTimeout(ctx, reqTimeout)
+	defer cancelC()
 
-	running, errT := vm.IsToolsRunning(ctx)
+	running, errT := vm.IsToolsRunning(ctxC)
 	if errT != nil {
 		return -1, sdk.WrapError(errT, "launchClientOp> cannot fetch if tools are running")
 	}
@@ -271,7 +281,9 @@ func (h *HatcheryVSphere) launchClientOp(vm *object.VirtualMachine, script strin
 		Password: "",
 	}
 
-	procman, errPr := opman.ProcessManager(ctx)
+	ctxC, cancelC = context.WithTimeout(ctx, reqTimeout)
+	defer cancelC()
+	procman, errPr := opman.ProcessManager(ctxC)
 	if errPr != nil {
 		return -1, sdk.WrapError(errPr, "launchClientOp> cannot create processManager")
 	}
