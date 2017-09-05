@@ -25,7 +25,7 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 	key := vars["permProjectKey"]
 	format := r.FormValue("format")
 
-	proj, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+	proj, errProj := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 	if errProj != nil {
 		log.Warning("importNewEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
 		return errProj
@@ -60,6 +60,7 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 	}
 
 	env := payload.Environment()
+
 	for i := range env.EnvironmentGroups {
 		eg := &env.EnvironmentGroups[i]
 		g, err := group.LoadGroup(db, eg.Group.Name)
@@ -131,7 +132,7 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 	envName := vars["permEnvironmentName"]
 	format := r.FormValue("format")
 
-	proj, errProj := project.Load(db, key, c.User, project.LoadOptions.Default)
+	proj, errProj := project.Load(db, key, c.User, project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 	if errProj != nil {
 		log.Warning("importIntoEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
 		return errProj
@@ -185,6 +186,7 @@ func importIntoEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *go
 	}
 
 	newEnv := payload.Environment()
+
 	for i := range newEnv.EnvironmentGroups {
 		eg := &env.EnvironmentGroups[i]
 		g, err := group.LoadGroup(tx, eg.Group.Name)
