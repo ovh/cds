@@ -81,7 +81,7 @@ func importNewEnvironmentHandler(w http.ResponseWriter, r *http.Request, db *gor
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
-		return sdk.WrapError(errBegin, "importNewEnvironmentHandler: Cannot start transaction: %s", errBegin)
+		return sdk.WrapError(errBegin, "importNewEnvironmentHandler: Cannot start transaction")
 	}
 
 	defer tx.Rollback()
