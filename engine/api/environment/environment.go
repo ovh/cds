@@ -320,9 +320,9 @@ func DeleteAllEnvironment(db gorp.SqlExecutor, projectID int64) error {
 }
 
 // UpdateLastModified updates last_modified on environment
-func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, env *sdk.Environment) error {
+func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, env *sdk.Environment) error {
 	if u != nil {
-		cache.SetWithTTL(cache.Key("lastModified", env.ProjectKey, "environment", env.Name), sdk.LastModification{
+		store.SetWithTTL(cache.Key("lastModified", env.ProjectKey, "environment", env.Name), sdk.LastModification{
 			Name:         env.Name,
 			Username:     u.Username,
 			LastModified: time.Now().Unix(),

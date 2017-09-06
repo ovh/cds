@@ -10,6 +10,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
 	"github.com/ovh/cds/sdk"
@@ -36,13 +37,10 @@ type InitializeOpts struct {
 
 //Initialize initialize private keys
 //For instance for a repositories manager named "github.com/ovh", the private key
-func Initialize(o InitializeOpts, DBFunc func() *gorp.DbMap) error {
+func Initialize(o InitializeOpts, DBFunc func() *gorp.DbMap, store cache.Store, apiURL, uiURL string) error {
 	options = o
-	repogithub.Init(o.APIBaseURL, o.UIBaseURL)
-	repostash.Init(o.APIBaseURL, o.UIBaseURL)
-
 	if db := DBFunc(); db != nil {
-		repositoriesManager, err := LoadAll(db)
+		repositoriesManager, err := LoadAll(db, store, apiURL, uiURL)
 		if err != nil {
 			return err
 		}
@@ -81,7 +79,7 @@ func Initialize(o InitializeOpts, DBFunc func() *gorp.DbMap) error {
 }
 
 //New instanciate a new RepositoriesManager, act as a Factory with all supported repositories manager
-func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[string]string, consumerData string) (*sdk.RepositoriesManager, error) {
+func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[string]string, consumerData string, store cache.Store, uiURL, apiURL string) (*sdk.RepositoriesManager, error) {
 	switch t {
 	case sdk.Stash:
 		//we have to compute the StashConsumer
@@ -92,7 +90,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 			if len(args) != 1 || args["key"] == "" {
 				return nil, fmt.Errorf("key args is mandatory to connect to stash")
 			}
-			stash = repostash.New(URL, options.StashConsumerKey, args["key"])
+			stash = repostash.New(URL, options.StashConsumerKey, args["key"], store, apiURL, uiURL)
 		} else {
 			//It's coming from the database, we just have to unmarshal data from the DB to get consumerData
 			var data map[string]interface{}
@@ -100,7 +98,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 				log.Warning("New> Error %s", err)
 				return nil, err
 			}
-			stash = repostash.New(URL, data["consumer_key"].(string), data["private_rsa_key"].(string))
+			stash = repostash.New(URL, data["consumer_key"].(string), data["private_rsa_key"].(string), store, apiURL, uiURL)
 		}
 		stash.DisableSetStatus = options.DisableStashSetStatus
 
@@ -129,7 +127,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 				return nil, fmt.Errorf("client-id args and client-secret (in cds configuration) are mandatory to connect to github : %v", args)
 			}
 
-			github = repogithub.New(args["client-id"], options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback")
+			github = repogithub.New(args["client-id"], options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback", store, apiURL, uiURL)
 			if args["with-hooks"] != "" {
 				b, err := strconv.ParseBool(args["with-hooks"])
 				if err == nil {
@@ -151,7 +149,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 				return nil, err
 			}
 
-			github = repogithub.New(data["client-id"].(string), options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback")
+			github = repogithub.New(data["client-id"].(string), options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback", store, apiURL, uiURL)
 			if data["with-hooks"] != nil {
 				b, ok := data["with-hooks"].(bool)
 				if !ok {

@@ -265,10 +265,17 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 				log.Warning("redis.GetMessage> Message casting error for %v of type %T", msg, msg)
 				continue
 			}
-			log.Warning("--> %v", redisMsg)
 		case <-c.Done():
 			return "", nil
 		}
 	}
 	return redisMsg.Payload, nil
+}
+
+// Status returns the status of the local cache
+func (s *RedisStore) Status() string {
+	if s.Client.Ping().Err() == nil {
+		return "OK (redis)"
+	}
+	return "KO (redis"
 }

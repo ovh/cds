@@ -13,6 +13,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+var Cache cache.Store
+
 // Publish sends a event to a queue
 //func Publish(event sdk.Event, eventType string) {
 func Publish(payload interface{}) {
@@ -25,10 +27,10 @@ func Publish(payload interface{}) {
 	}
 
 	log.Debug("Publish> new event %+v", event)
-	cache.Enqueue("events", event)
+	Cache.Enqueue("events", event)
 
 	// send to cache for cds repositories manager
-	cache.Enqueue("events_repositoriesmanager", event)
+	Cache.Enqueue("events_repositoriesmanager", event)
 }
 
 // PublishJobRun sends an event

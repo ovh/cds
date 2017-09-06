@@ -166,6 +166,7 @@ type API struct {
 	DBConnectionFactory *database.DBConnectionFactory
 	StartupTime         time.Time
 	LastUpdateBroker    *LastUpdateBroker
+	Cache               cache.Store
 }
 
 // ApplyConfiguration apply an object of type api.Configuration after checking it
@@ -391,11 +392,17 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Error("Cannot setup builtin workflow hook models")
 	}
 
-	cache.Initialize(
+	//Init the cache
+	var errCache error
+	api.Cache, errCache = cache.New(
 		a.Config.Cache.Mode,
 		a.Config.Cache.Redis.Host,
 		a.Config.Cache.Redis.Password,
 		a.Config.Cache.TTL)
+	if errCache != nil {
+		log.Error("Cannot connect to cache store: %s", errCache)
+		os.Exit(3)
+	}
 
 	a.Router = &Router{
 		Mux:        mux.NewRouter(),

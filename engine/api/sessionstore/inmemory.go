@@ -26,9 +26,8 @@ func (s *InMemory) New(k SessionKey) (SessionKey, error) {
 		}
 	}
 	cache := &cache.LocalStore{
-		Mutex: &sync.Mutex{},
-		Data:  map[string][]byte{},
-		TTL:   s.ttl,
+		Data: map[string][]byte{},
+		TTL:  s.ttl,
 	}
 	s.lock.Lock()
 	s.data[k] = cache
