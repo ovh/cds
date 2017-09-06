@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// DBConnectionFactory is a database connection factory on postgres with gorp
 type DBConnectionFactory struct {
 	dbDriver         string
 	dbUser           string
