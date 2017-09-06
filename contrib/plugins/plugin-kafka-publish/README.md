@@ -10,9 +10,9 @@ This CDS Action Plugin helps you to publish data through Apache Kafka in a CDS P
 Make sure go >=1.7 is installed and properly configured ($GOPATH must be set)
 
 ```shell
-    $ mkdir -p $GOPATH/src/github/ovh/cds
-    $ git clone $GOPATH/src/github/ovh/cds
-    $ cd $GOPATH/src/github/ovh/cds/contrib/plugins/plugin-kafka-publish
+    $ mkdir -p $GOPATH/src/github.com/ovh/cds
+    $ git clone https://github.com/ovh/cds $GOPATH/src/github.com/ovh/cds
+    $ cd $GOPATH/src/github.com/ovh/cds/contrib/plugins/plugin-kafka-publish
     $ go test ./...
     $ go build
 ```
@@ -31,7 +31,7 @@ As CDS admin:
 ### Install the binary file
 
 ```shell
-    $ cd $GOPATH/src/github/ovh/cds/contrib/plugins/plugin-kafka-publish
+    $ cd $GOPATH/src/github.com/ovh/cds/contrib/plugins/plugin-kafka-publish
     $ go install
     $ export PATH:$GOPATH/bin
 ```
@@ -64,7 +64,7 @@ Type a secure passphrase.
     gpg --list-secret-keys
 ```
 
-This will shows all gpg keys. Please note the key IF you have just created.
+This will shows all gpg keys. Please note the key ID you have just created.
 
 #### Export your public key in ASCII armored format
 
