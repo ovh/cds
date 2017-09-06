@@ -5,17 +5,15 @@ import (
 
 	"github.com/loopfz/gadgeto/iffy"
 
-	"github.com/magiconair/properties/assert"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_getKeysInProjectHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-
-	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -63,8 +61,6 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 func Test_deleteKeyInProjectHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -104,8 +100,6 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 
 func Test_addKeyInProjectHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-
-	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())

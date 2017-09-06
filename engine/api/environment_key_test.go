@@ -5,17 +5,15 @@ import (
 
 	"github.com/loopfz/gadgeto/iffy"
 
-	"github.com/magiconair/properties/assert"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-
-	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -73,8 +71,6 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -124,8 +120,6 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 
 func Test_addKeyInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-
-	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())

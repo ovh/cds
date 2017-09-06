@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/magiconair/properties/assert"
+	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/openpgp"
 )
 
