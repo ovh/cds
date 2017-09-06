@@ -739,14 +739,21 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		limit = 20
 	}
 
-	p, errlp := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
-	if errlp != nil {
-		return sdk.WrapError(errlp, "getPipelineHistoryHandler> Cannot load pipelines")
-	}
-
-	a, errln := application.LoadByName(db, projectKey, appName, c.User)
+	a, errln := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithPipelines)
 	if errln != nil {
 		return sdk.WrapError(errln, "getPipelineHistoryHandler> Cannot load application %s", appName)
+	}
+
+	var p *sdk.Pipeline
+	for _, apip := range a.Pipelines {
+		if apip.Pipeline.Name == pipelineName {
+			p = &apip.Pipeline
+			break
+		}
+	}
+
+	if p == nil {
+		return sdk.WrapError(sdk.ErrPipelineNotAttached, "Pipeline not found on application")
 	}
 
 	var env *sdk.Environment
