@@ -9,6 +9,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var withApplications bool
+
 func pipelineShowCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "show",
@@ -17,19 +19,30 @@ func pipelineShowCmd() *cobra.Command {
 		Aliases: []string{"describe"},
 		Run:     showPipeline,
 	}
+
+	cmd.Flags().BoolVarP(&withApplications, "withApplications", "", false, "Show linked applications")
+
 	return cmd
 }
 
 func showPipeline(cmd *cobra.Command, args []string) {
+	var p *sdk.Pipeline
+	var errG error
 	if len(args) != 2 {
 		sdk.Exit("Wrong usage: see %s\n", cmd.Short)
 	}
 
 	projectKey := args[0]
 	pipelineName := args[1]
-	p, err := sdk.GetPipeline(projectKey, pipelineName)
-	if err != nil {
-		sdk.Exit("Error: cannot retrieve pipeline informations: %s\n", err)
+
+	if withApplications {
+		p, errG = sdk.GetPipeline(projectKey, pipelineName, sdk.GetPipelineOptions.WithApplications)
+	} else {
+		p, errG = sdk.GetPipeline(projectKey, pipelineName)
+	}
+
+	if errG != nil {
+		sdk.Exit("Error: cannot retrieve pipeline informations: %s\n", errG)
 	}
 
 	data, err := yaml.Marshal(p)

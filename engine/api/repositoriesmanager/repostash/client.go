@@ -1,6 +1,7 @@
 package repostash
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -32,6 +33,16 @@ type StashClient struct {
 	url              string
 	client           *stash.Client
 	disableSetStatus bool
+}
+
+// Release not implemented on bitbucket
+func (s *StashClient) Release(repo string, tagName string, title string, releaseNote string) (*sdk.VCSRelease, error) {
+	return nil, fmt.Errorf("Stash do not provide release system")
+}
+
+// UploadReleaseFile not implemented on bitbucket
+func (s *StashClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, buf *bytes.Buffer) error {
+	return fmt.Errorf("Stash do not provide an upload file system")
 }
 
 //Repos returns the list of accessible repositories

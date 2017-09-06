@@ -107,8 +107,14 @@ func (wk *currentWorker) addVariableInPipelineBuild(v sdk.Variable, params *[]sd
 		return http.StatusBadRequest, fmt.Errorf("addBuildVarHandler> Cannot Marshal err: %s", errm)
 	}
 	// Retrieve build info
+	var currentParam []sdk.Parameter
+	if wk.currentJob.wJob != nil {
+		currentParam = wk.currentJob.wJob.Parameters
+	} else {
+		currentParam = wk.currentJob.pbJob.Parameters
+	}
 	var proj, app, pip, bnS, env string
-	for _, p := range wk.currentJob.pbJob.Parameters {
+	for _, p := range currentParam {
 		switch p.Name {
 		case "cds.pipeline":
 			pip = p.Value
@@ -123,13 +129,19 @@ func (wk *currentWorker) addVariableInPipelineBuild(v sdk.Variable, params *[]sd
 		}
 	}
 
-	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/variable?envName=%s", proj, app, pip, bnS, url.QueryEscape(env))
+	var uri string
+	if wk.currentJob.wJob != nil {
+		uri = fmt.Sprintf("/queue/workflows/%d/variable", wk.currentJob.wJob.ID)
+	} else {
+		uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/variable?envName=%s", proj, app, pip, bnS, url.QueryEscape(env))
+	}
+
 	_, code, err := sdk.Request("POST", uri, data)
 	if err == nil && code > 300 {
 		err = fmt.Errorf("HTTP %d", code)
 	}
 	if err != nil {
-		log.Error("addBuildVarHandler> Cannot export variable: %s", err)
+		log.Error("addBuildVarHandler> Cannot export variable. %s: %s", uri, err)
 		return http.StatusServiceUnavailable, fmt.Errorf("addBuildVarHandler> Cannot export variable: %s", err)
 	}
 	return http.StatusOK, nil

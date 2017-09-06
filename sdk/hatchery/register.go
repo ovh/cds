@@ -229,6 +229,7 @@ func workerRegister(h Interface, models []sdk.Model) error {
 			log.Warning("workerRegister> Too many errors on spawn with model %s, please check this worker model", m.Name)
 			continue
 		}
+
 		if h.NeedRegistration(&m) {
 			log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
 			if _, errSpawn := h.SpawnWorker(&m, 0, nil, true, "spawn for register"); errSpawn != nil {

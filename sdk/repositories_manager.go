@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -311,6 +312,16 @@ type RepositoriesManagerClient interface {
 
 	// Set build status on repository
 	SetStatus(event Event) error
+
+	// Release
+	Release(repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
+	UploadReleaseFile(repo string, release *VCSRelease, runArtifact WorkflowNodeRunArtifact, file *bytes.Buffer) error
+}
+
+// Release represents data about release on github, etc..
+type VCSRelease struct {
+	ID        int64  `json:"id"`
+	UploadURL string `json:"upload_url"`
 }
 
 //VCSRepo represents data about repository even on stash, or github, etc...

@@ -102,7 +102,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	}
 	buf := bytes.NewBuffer(b)
 
-	res, err := g.post(path, "application/json", buf)
+	res, err := g.post(path, "application/json", buf, false)
 	if err != nil {
 		return err
 	}

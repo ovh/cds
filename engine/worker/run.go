@@ -316,7 +316,8 @@ func (w *currentWorker) processJob(ctx context.Context, jobInfo *worker.Workflow
 	// Setup working directory
 	pbJobPath := path.Join(fmt.Sprintf("%d", jobInfo.Number),
 		fmt.Sprintf("%d", jobInfo.SubNumber),
-		fmt.Sprintf("%s", jobInfo.NodeJobRun.Job.Action.Name))
+		fmt.Sprintf("%d", jobInfo.NodeJobRun.ID),
+		fmt.Sprintf("%d", jobInfo.NodeJobRun.Job.PipelineActionID))
 
 	log.Debug("processJob> init workingDirectory basedir:%s pbJobPath:%s", w.basedir, pbJobPath)
 	wd := workingDirectory(w.basedir, pbJobPath)
@@ -432,7 +433,7 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 		fmt.Sprintf("%d", pbji.BuildNumber))
 	wd := workingDirectory(w.basedir, pbJobPath)
 
-	log.Debug("run> setupBuildDirectory %s", setupBuildDirectory)
+	log.Debug("run> init workingDirectory basedir:%s pbJobPath:%s", w.basedir, pbJobPath)
 	if err := setupBuildDirectory(wd); err != nil {
 		log.Debug("run> setupBuildDirectory error %s", err)
 		return sdk.Result{
@@ -517,6 +518,7 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 	res := w.startAction(ctx, &pbji.PipelineBuildJob.Job.Action, pbji.PipelineBuildJob.ID, &pbji.PipelineBuildJob.Parameters, -1, "")
 	logsecrets = nil
 
+	log.Debug("processJob> call teardownBuildDirectory wd:%s", wd)
 	if err := teardownBuildDirectory(wd); err != nil {
 		log.Error("Cannot remove build directory: %s", err)
 	}

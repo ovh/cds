@@ -69,7 +69,7 @@ func processWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, hookEvent *sdk.
 
 					//Check conditions
 					var params = nodeRun.BuildParameters
-					//Define specific desitination parameters
+					//Define specific destination parameters
 					sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, t.WorkflowDestNode.Pipeline.Name)
 					if t.WorkflowDestNode.Context.Application != nil {
 						sdk.AddParameter(&params, "cds.dest.application", sdk.StringParameter, t.WorkflowDestNode.Context.Application.Name)
@@ -298,8 +298,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		run.PipelineParameters = m.PipelineParameters
 	}
 
-	//Process parameters for the jobs
-	//TODO inherit parameter from parent job
+	// Process parameters for the jobs
 	jobParams, errParam := getNodeRunBuildParameters(db, run)
 	if errParam != nil {
 		AddWorkflowRunInfo(w, sdk.SpawnMsg{
@@ -310,6 +309,14 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 	}
 	run.BuildParameters = jobParams
 
+	// Inherit parameter from parent job
+	if len(sourceNodeRuns) > 0 {
+		parentsParams, errPP := getParentParameters(db, run, sourceNodeRuns)
+		if errPP != nil {
+			return sdk.WrapError(errPP, "processWorkflowNodeRun> getParentParameters failed")
+		}
+		run.BuildParameters = append(run.BuildParameters, parentsParams...)
+	}
 	for _, p := range jobParams {
 		switch p.Name {
 		case "git.hash", "git.branch", "git.tag", "git.author":
