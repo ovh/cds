@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"sort"
 	"syscall"
 	"time"
 
@@ -48,6 +49,8 @@ func init() {
 	mainCmd.AddCommand(startCmd)
 	//Config command
 	mainCmd.AddCommand(configCmd)
+	configNewCmd.Flags().BoolVar(&configNewAsEnvFlag, "env", false, "Print configuration as environment variable")
+
 	configCmd.AddCommand(configNewCmd)
 	configCmd.AddCommand(configCheckCmd)
 }
@@ -81,6 +84,8 @@ var configCmd = &cobra.Command{
 	Short: "Manage CDS Configuration",
 }
 
+var configNewAsEnvFlag bool
+
 var configNewCmd = &cobra.Command{
 	Use:   "new",
 	Short: "CDS configuration file assistant",
@@ -93,12 +98,25 @@ Comming soon...`,
 		conf.API.Secrets.Key = sdk.RandomString(32)
 		conf.Hatchery.Local.API.Token = conf.API.Auth.SharedInfraToken
 
-		btes, err := toml.Marshal(*conf)
-		if err != nil {
-			sdk.Exit("%v", err)
-		}
+		if !configNewAsEnvFlag {
+			btes, err := toml.Marshal(*conf)
+			if err != nil {
+				sdk.Exit("%v", err)
+			}
+			fmt.Println(string(btes))
+		} else {
+			m := AsEnvVariables(conf, "cds")
+			keys := []string{}
 
-		fmt.Println(string(btes))
+			for k := range m {
+				keys = append(keys, k)
+			}
+
+			sort.Strings(keys)
+			for _, k := range keys {
+				fmt.Printf("export %s=\"%s\"\n", k, m[k])
+			}
+		}
 	},
 }
 
@@ -182,9 +200,13 @@ Start CDS Engine Services:
 	 * Vsphere
 
 Start all of this with a single command: 
-	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] -f config.toml
+	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm]
+All the services are using the same configuration file format.
+You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.
+You can also use or override toml file with environment variable.
 
-All the services are using the same configuration file format. See $ engine config command for more details.
+See $ engine config command for more details.
+
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		if len(args) == 0 {
