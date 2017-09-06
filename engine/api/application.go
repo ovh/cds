@@ -387,9 +387,14 @@ func getApplicationRemoteHandler(w http.ResponseWriter, r *http.Request, db *gor
 			log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
 			return sdk.ErrNoReposManagerClientAuth
 		}
+
+		found := map[string]bool{app.RepositoryFullname: true}
 		remotes = append(remotes, sdk.VCSRemote{Name: app.RepositoryFullname})
 		for _, pr := range prs {
-			remotes = append(remotes, sdk.VCSRemote{URL: pr.Head.CloneURL, Name: pr.Head.Repo})
+			if _, exist := found[pr.Head.Repo]; !exist {
+				remotes = append(remotes, sdk.VCSRemote{URL: pr.Head.CloneURL, Name: pr.Head.Repo})
+			}
+			found[pr.Head.Repo] = true
 		}
 	} else {
 		var errg error

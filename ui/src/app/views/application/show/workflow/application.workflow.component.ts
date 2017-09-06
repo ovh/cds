@@ -226,7 +226,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
         this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote)
           .subscribe(branches => {
               this.branches = branches;
-              if (Array.isArray(branches) && branches.length) {
+              if (Array.isArray(branches) && branches.length && !this.applicationFilter.branch) {
                 this.applicationFilter.branch = branches[0].display_id;
               }
 
@@ -251,8 +251,10 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
 
         this._router.navigate(['/project/', this.project.key, 'application', this.application.name], {
           queryParams: {
-            tab: 'workflow', branch: this.applicationFilter.branch,
-            version: this.applicationFilter.version, remote: this.applicationFilter.remote
+            tab: 'workflow',
+            branch: this.applicationFilter.branch,
+            version: this.applicationFilter.version,
+            remote: this.applicationFilter.remote
           }
         });
         this.changeWorkerEvent.emit(true);

@@ -318,7 +318,7 @@ type RepositoriesManagerClient interface {
 	UploadReleaseFile(repo string, release *VCSRelease, runArtifact WorkflowNodeRunArtifact, file *bytes.Buffer) error
 }
 
-// Release represents data about release on github, etc..
+// VCSRelease represents data about release on github, etc..
 type VCSRelease struct {
 	ID        int64  `json:"id"`
 	UploadURL string `json:"upload_url"`
@@ -352,13 +352,13 @@ type VCSCommit struct {
 	URL       string    `json:"url"`
 }
 
-//VCSRemote reprensents remotes known by the repositories manager
+//VCSRemote represents remotes known by the repositories manager
 type VCSRemote struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`
 }
 
-//VCSBranch reprensents branches known by the repositories manager
+//VCSBranch represents branches known by the repositories manager
 type VCSBranch struct {
 	ID           string   `json:"id"`
 	DisplayID    string   `json:"display_id"`

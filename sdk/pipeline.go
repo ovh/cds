@@ -75,6 +75,7 @@ type PipelineBuildDbResult struct {
 	VCSChangesHash        sql.NullString `db:"vcs_hash"`
 	VCSChangesAuthor      sql.NullString `db:"vcs_author"`
 	VCSRemoteURL          sql.NullString `db:"vcs_remote_url"`
+	VCSRemote             sql.NullString `db:"vcs_remote"`
 	ParentPipelineBuildID sql.NullInt64  `db:"parent_pipeline_build"`
 	Username              sql.NullString `db:"username"`
 	ScheduledTrigger      bool           `db:"scheduled_trigger"`

@@ -15,7 +15,7 @@ export class ApplicationWorkflowService {
      * @param appName Application Name
      * @returns {Observable<Array<Branch>>}
      */
-    getBranches(key: string, appName: string, remote: string=''): Observable<Array<Branch>> {
+    getBranches(key: string, appName: string, remote: string = ''): Observable<Array<Branch>> {
         let params = new HttpParams();
         params = params.append('remote', remote);
         return this._http.get('/project/' + key + '/application/' + appName + '/branches', {params});
@@ -38,7 +38,7 @@ export class ApplicationWorkflowService {
      * @param branchName branch name
      * @returns {Observable<Array<number>>}
      */
-    getVersions(key: string, appName: string, branchName: string, remote: string=''): Observable<Array<number>> {
+    getVersions(key: string, appName: string, branchName: string, remote: string = ''): Observable<Array<number>> {
         let params = new HttpParams();
         params = params.append('remote', remote);
         params = params.append('branch', branchName);

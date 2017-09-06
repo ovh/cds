@@ -275,6 +275,7 @@ func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *s
 		VCSChangesHash:   e.Commit.Hash,
 		VCSChangesAuthor: e.Commit.Author.DisplayName,
 		VCSRemoteURL:     e.CloneURL,
+		VCSRemote:        e.Repo,
 	}
 
 	// Get commit message to check if we have to skip the build

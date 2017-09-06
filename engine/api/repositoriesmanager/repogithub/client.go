@@ -651,7 +651,7 @@ func (g *GithubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 	log.Debug("GithubClient.GetEvents> loading events for %s after %v", fullname, dateRef)
 	var events = []interface{}{}
 
-	interval := 3 * time.Second
+	interval := 60 * time.Second
 
 	status, body, headers, err := g.get("/repos/" + fullname + "/events")
 	if err != nil {
@@ -737,7 +737,6 @@ func (g *GithubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk
 			events = append(events, e)
 		}
 	}
-	fmt.Printf("push events: %d\n", len(iEvents))
 
 	lastCommitPerBranch := map[string]sdk.VCSCommit{}
 	for _, e := range events {
@@ -773,6 +772,7 @@ func (g *GithubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk
 		res = append(res, sdk.VCSPushEvent{
 			Branch: *branch,
 			Commit: c,
+			Repo:   fullname,
 		})
 	}
 
@@ -844,7 +844,6 @@ func (g *GithubClient) DeleteEvents(fullname string, iEvents []interface{}) ([]s
 
 //PullRequestEvents checks pull request events from a event list
 func (g *GithubClient) PullRequestEvents(fullname string, iEvents []interface{}) ([]sdk.VCSPullRequestEvent, error) {
-	// fmt.Println(iEvents)
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
@@ -883,11 +882,11 @@ func (g *GithubClient) PullRequestEvents(fullname string, iEvents []interface{})
 					LatestCommit: e.Payload.PullRequest.Base.Sha,
 				},
 				Commit: sdk.VCSCommit{
-					// Author: sdk.VCSAuthor{
-					// 	Name:        e.Payload.PullRequest.Base.User.Name,
-					// 	DisplayName: e.Payload.PullRequest.Base.User.Login,
-					// 	Email:       e.Payload.PullRequest.Base.User.Email,
-					// },
+					Author: sdk.VCSAuthor{
+						Name:        e.Payload.PullRequest.Base.User.Name,
+						DisplayName: e.Payload.PullRequest.Base.User.Login,
+						Email:       e.Payload.PullRequest.Base.User.Email,
+					},
 					Hash:    e.Payload.PullRequest.Base.Sha,
 					Message: e.Payload.PullRequest.Base.Label,
 				},
@@ -898,6 +897,6 @@ func (g *GithubClient) PullRequestEvents(fullname string, iEvents []interface{})
 	}
 
 	log.Debug("GithubClient.PullRequestEvents> found %d pull request events : %#v", len(res), res)
-	fmt.Printf("GithubClient.PullRequestEvents> found %d pull request events : %#v", len(res), res)
+
 	return res, nil
 }

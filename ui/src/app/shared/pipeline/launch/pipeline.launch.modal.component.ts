@@ -57,7 +57,7 @@ export class PipelineLaunchModalComponent {
 
         if (this.applicationFilter.remote != null && this.applicationFilter.remote !== '' &&
                 this.applicationFilter.remote !== this.application.repository_fullname) {
-              let remote = this.remotes.find((remote) => remote.name === this.applicationFilter.remote);
+              let remote = this.remotes.find((rem) => rem.name === this.applicationFilter.remote);
 
               if (remote) {
                 let urlParam = new Parameter();
