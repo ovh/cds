@@ -75,12 +75,10 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
         this._route.queryParams.subscribe(queryParams => {
            this.appFilter = {
-               remote: queryParams['remote'] || 'origin',
+               remote: queryParams['remote'] || '',
                branch: queryParams['branch'] || 'master',
                version: queryParams['version'] || ' '
            };
-           console.log(this.appFilter.branch);
-           console.log(this.appFilter.remote);
 
            if (this.project && this.application) {
                this.startWorker(this.project.key);

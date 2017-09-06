@@ -2,11 +2,12 @@ import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Parameter} from '../../../model/parameter.model';
 import {Pipeline, PipelineBuild, PipelineRunRequest} from '../../../model/pipeline.model';
+import {Application} from '../../../model/application.model';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {Project} from '../../../model/project.model';
 import {WorkflowItem} from '../../../model/application.workflow.model';
 import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
-import {Commit} from '../../../model/repositories.model';
+import {Commit, Remote} from '../../../model/repositories.model';
 import {cloneDeep} from 'lodash';
 
 @Component({
@@ -17,8 +18,10 @@ import {cloneDeep} from 'lodash';
 export class PipelineLaunchModalComponent {
 
     @Input() applicationFilter: any;
+    @Input() application: Application;
     @Input() project: Project;
     @Input() workflowItem: WorkflowItem;
+    @Input() remotes: Array<Remote>;
 
     @Output() pipelineRunEvent = new EventEmitter<PipelineBuild>();
 
@@ -51,6 +54,31 @@ export class PipelineLaunchModalComponent {
         gitBranchParam.description = 'Git branch to use';
         gitBranchParam.type = 'string';
         this.launchGitParams.push(gitBranchParam);
+
+        if (this.applicationFilter.remote != null && this.applicationFilter.remote !== '' &&
+                this.applicationFilter.remote !== this.application.repository_fullname) {
+              let remote = this.remotes.find((remote) => remote.name === this.applicationFilter.remote);
+
+              if (remote) {
+                let urlParam = new Parameter();
+                urlParam.name = 'git.http_url';
+                urlParam.type = 'string';
+                urlParam.value = remote.url;
+                this.launchGitParams.push(urlParam);
+
+                urlParam = new Parameter();
+                urlParam.name = 'git.url';
+                urlParam.type = 'string';
+                urlParam.value = remote.url;
+                this.launchGitParams.push(urlParam);
+
+                urlParam = new Parameter();
+                urlParam.name = 'git.repository';
+                urlParam.type = 'string';
+                urlParam.value = remote.name;
+                this.launchGitParams.push(urlParam);
+              }
+            }
 
         if (this.workflowItem.trigger) {
             this.launchPipelineParams = Pipeline.mergeParams(

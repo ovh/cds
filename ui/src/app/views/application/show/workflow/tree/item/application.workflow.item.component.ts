@@ -120,11 +120,10 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         branchParam.value = currentBranch;
         runRequest.parameters.push(branchParam);
 
-        console.log(this.applicationFilter.remote);
-        if (this.applicationFilter.remote && this.applicationFilter.remote !== 'origin') {
-          console.log(this.remotes);
+        if (this.applicationFilter.remote != null && this.applicationFilter.remote !== '' &&
+            this.applicationFilter.remote !== this.application.repository_fullname) {
           let remote = this.remotes.find((remote) => remote.name === this.applicationFilter.remote);
-          console.log(remote);
+
           if (remote) {
             let urlParam = new Parameter();
             urlParam.name = 'git.http_url';
@@ -185,11 +184,10 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
             this.launchPipelineModal.hide();
         }
 
-        console.log(pb);
         let queryParams = {queryParams: {envName: pb.environment.name}};
         queryParams.queryParams['branch'] = pb.trigger.vcs_branch;
         queryParams.queryParams['version'] = pb.version;
-        queryParams.queryParams['remote'] = pb.trigger.vcs_remote;
+        queryParams.queryParams['remote'] = pb.trigger.vcs_remote || this.applicationFilter.remote;
 
         this._router.navigate([
             '/project', this.workflowItem.project.key,

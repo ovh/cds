@@ -41,7 +41,6 @@ func getApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 }
 
 func getApplicationTreeHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-
 	vars := mux.Vars(r)
 	projectKey := vars["key"]
 	applicationName := vars["permApplicationName"]
@@ -128,6 +127,10 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
+	if remote == app.RepositoryFullname {
+		remote = ""
+	}
+
 	versions, err := pipeline.GetVersions(db, app, branch, remote)
 	if err != nil {
 		log.Warning("getApplicationBranchVersionHandler: Cannot load version for application %s on branch %s: %s\n", applicationName, branch, err)
@@ -158,6 +161,10 @@ func getApplicationTreeStatusHandler(w http.ResponseWriter, r *http.Request, db 
 	app, errApp := application.LoadByName(db, projectKey, applicationName, c.User)
 	if errApp != nil {
 		return sdk.WrapError(errApp, "getApplicationTreeStatusHandler>Cannot get application")
+	}
+
+	if remote == app.RepositoryFullname {
+		remote = ""
 	}
 
 	pbs, schedulers, pollers, hooks, errPB := workflow.GetWorkflowStatus(db, projectKey, applicationName, c.User, branchName, remote, version)
@@ -325,7 +332,7 @@ func getApplicationBranchHandler(w http.ResponseWriter, r *http.Request, db *gor
 			log.Warning("getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, erra)
 			return sdk.ErrNoReposManagerClientAuth
 		}
-		if remote != "" && remote != "origin" {
+		if remote != "" && remote != app.RepositoryFullname {
 			prs, errP := client.PullRequests(app.RepositoryFullname)
 			if errP != nil {
 				return sdk.WrapError(errP, "getApplicationBranchHandler> Cannot get pull requests from repository")
@@ -380,6 +387,7 @@ func getApplicationRemoteHandler(w http.ResponseWriter, r *http.Request, db *gor
 			log.Warning("getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
 			return sdk.ErrNoReposManagerClientAuth
 		}
+		remotes = append(remotes, sdk.VCSRemote{Name: app.RepositoryFullname})
 		for _, pr := range prs {
 			remotes = append(remotes, sdk.VCSRemote{URL: pr.Head.CloneURL, Name: pr.Head.Repo})
 		}

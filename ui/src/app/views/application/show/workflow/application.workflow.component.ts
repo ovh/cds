@@ -57,7 +57,12 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
         this.generateParentInformation();
         // Load branches
         this._appWorkflow.getRemotes(this.project.key, this.application.name)
-          .subscribe(remotes => this.remotes = [{name: 'origin', url: 'origin'}, ...remotes]);
+          .subscribe(remotes => {
+              this.remotes = remotes;
+              if (Array.isArray(remotes) && remotes.length && !this.applicationFilter.remote) {
+                  this.applicationFilter.remote = remotes[0].name;
+              }
+          });
         this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote)
           .subscribe(branches => {
               this.branches = branches;
