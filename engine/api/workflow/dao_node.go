@@ -57,6 +57,15 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 		n.Context.EnvironmentID = n.Context.Environment.ID
 	}
 
+	var nb int64
+	if errCount := db.QueryRow("SELECT COUNT(*) FROM workflow_node WHERE workflow_id = $1 AND pipeline_id = $2", w.ID, n.Pipeline.ID).Scan(&nb); errCount != nil {
+		return sdk.WrapError(errCount, "insertNode> Cannot count node")
+	}
+
+	if nb > 0 {
+		n.Name = fmt.Sprintf("%s_%d", n.Name, nb+1)
+	}
+
 	//Insert new node
 	dbwn := Node(*n)
 	if err := db.Insert(&dbwn); err != nil {
