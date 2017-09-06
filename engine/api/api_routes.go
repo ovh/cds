@@ -155,6 +155,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/join/{joinID}/triggers/condition", r.GET(api.getWorkflowTriggerJoinConditionHandler))
+	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}/release", r.POST(api.releaseApplicationWorkflowHandler))
 
 	// DEPRECATED
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/action/{jobID}", r.PUT(api.updatePipelineActionHandler, DEPRECATED), r.DELETE(api.deleteJobHandler))

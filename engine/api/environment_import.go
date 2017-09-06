@@ -25,7 +25,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		key := vars["permProjectKey"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		proj, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
 			log.Warning("importNewEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
 			return errProj
@@ -133,7 +133,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		proj, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
 			log.Warning("importIntoEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
 			return errProj
@@ -187,12 +187,12 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		}
 
 	newEnv := payload.Environment()
+
 	for i := range newEnv.EnvironmentGroups {
 		eg := &newEnv.EnvironmentGroups[i]
 		g, err := group.LoadGroup(tx, eg.Group.Name)
 		if err != nil {
-			log.Warning("importIntoEnvironmentHandler> Error on import : %s", err)
-			return err
+			return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import")
 		}
 
 		allMsg := []sdk.Message{}

@@ -143,6 +143,17 @@ type RunRequest struct {
 	ParentApplicationID int64       `json:"parent_application_id,omitempty"`
 }
 
+// GetPipelineOptions are options for GetPipeline
+var GetPipelineOptions = struct {
+	WithApplications RequestModifier
+}{
+	WithApplications: func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withApplications", "true")
+		r.URL.RawQuery = q.Encode()
+	},
+}
+
 // ListPipelines retrieves all available pipelines to called
 func ListPipelines(projectKey string) ([]Pipeline, error) {
 	url := fmt.Sprintf("/project/%s/pipeline", projectKey)
@@ -161,9 +172,9 @@ func ListPipelines(projectKey string) ([]Pipeline, error) {
 }
 
 // GetPipeline retrieves pipeline definition from CDS
-func GetPipeline(key, name string) (*Pipeline, error) {
+func GetPipeline(key, name string, opts ...RequestModifier) (*Pipeline, error) {
 	path := fmt.Sprintf("/project/%s/pipeline/%s", key, name)
-	data, _, errr := Request("GET", path, nil)
+	data, _, errr := Request("GET", path, nil, opts...)
 	if errr != nil {
 		return nil, errr
 	}

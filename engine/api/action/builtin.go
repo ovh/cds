@@ -151,6 +151,37 @@ Tag the current branch and push it.`
 		return err
 	}
 
+	// ----------------------------------- Git Release -----------------------
+	gitrelease := sdk.NewAction(sdk.ReleaseAction)
+	gitrelease.Type = sdk.BuiltinAction
+	gitrelease.Description = `CDS Builtin Action. Make a release using repository manager.`
+
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "tag",
+		Description: "Tag name.",
+		Value:       "{{.cds.release.version}}",
+		Type:        sdk.StringParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "title",
+		Value:       "",
+		Description: "Set a title for the release",
+		Type:        sdk.StringParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "releaseNote",
+		Description: "Set a release note for the release",
+		Type:        sdk.TextParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "artifacts",
+		Description: "Set a list of artifacts, separate by , . You can also use regexp.",
+		Type:        sdk.StringParameter,
+	})
+	if err := checkBuiltinAction(db, gitrelease); err != nil {
+		return err
+	}
+
 	return nil
 }
 

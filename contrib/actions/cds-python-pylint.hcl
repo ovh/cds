@@ -22,7 +22,8 @@ requirements = {
 parameters = {
     "xml_output_file" = {
         type = "string"
-        description = "File to output the result xunit xml. Default to pylint_result.xml"
+        description = "File to output the result xunit xml, it should not be empty."
+        value = "pylint_result.xml"
     }
     "raw_output" = {
         type = "boolean"
@@ -45,7 +46,8 @@ by a ;"
     }
     "pylintrc" = {
         type = "string"
-        description = "Path of the pylintrc file, or its content"
+        description = "Path of the pylintrc file, or its content.
+If your pylintrc file is not used, try to use an absolute path using the variable {{.cds.workspace}} that points to the container default working directory"
     }
     "extra_options" = {
         type = "string"
@@ -293,7 +295,7 @@ if __name__ == '__main__':
         "raw_output_file": "{{.raw_output_file}}" or None,
         "module_path": [] if "{{.module_path}}".split(";") == [''] else "{{.module_path}}".split(";"),
         "ignore": [] if "{{.ignore}}".split(";") == [''] else ",". join("{{.ignore}}".split(";")),
-        "pylintrc": "{{.pylintrc}}" or None,
+        "pylintrc": """{{.pylintrc}}""" or None,
         "extra_options": "{{.extra_options}}" or None
     }
 

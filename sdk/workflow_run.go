@@ -23,6 +23,14 @@ type WorkflowRun struct {
 	Tags             []WorkflowRunTag            `json:"tags" db:"-"`
 }
 
+// WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
+type WorkflowNodeRunRelease struct {
+	TagName        string   `json:"tag_name"`
+	ReleaseTitle   string   `json:"release_title"`
+	ReleaseContent string   `json:"release_content"`
+	Artifacts      []string `json:"artifacts"`
+}
+
 // Translate translates messages in WorkflowNodeRun
 func (r *WorkflowRun) Translate(lang string) {
 	for ki, info := range r.Infos {

@@ -19,6 +19,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
+	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -178,6 +179,7 @@ Start CDS Engine Services:
 	 * Openstack
 	 * Docker Swarm
 	 * Openstack
+	 * Vsphere
 
 Start all of this with a single command: 
 	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] -f config.toml
@@ -233,6 +235,9 @@ All the services are using the same configuration file format. See $ engine conf
 			case "hatchery:swarm":
 				s = local.New()
 				cfg = conf.Hatchery.Swarm
+			case "hatchery:vsphere":
+				s = vsphere.New()
+				cfg = conf.Hatchery.VSphere
 			}
 
 			go start(ctx, s, cfg)

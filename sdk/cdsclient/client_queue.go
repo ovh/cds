@@ -179,13 +179,11 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
 	if errop != nil {
 		return errop
 	}
-
 	//File stat
 	stat, errst := fileForMD5.Stat()
 	if errst != nil {
 		return errst
 	}
-
 	//Compute md5sum
 	hash := md5.New()
 	if _, errcopy := io.Copy(hash, fileForMD5); errcopy != nil {
@@ -194,7 +192,6 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
 	fileForMD5.Close()
-
 	//Reopen the file because we already read it for md5
 	fileReopen, erro := os.Open(filePath)
 	if erro != nil {

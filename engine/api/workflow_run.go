@@ -63,7 +63,7 @@ func (api *API) getWorkflowRunsHandler() Handler {
 			return sdk.WrapError(err, "getWorkflowRunsHandler> Unable to load workflow runs")
 		}
 
-		if limit-offset > count {
+		if offset > count {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkflowRunsHandler> Requested range %d not allowed", (limit - offset))
 		}
 
@@ -436,20 +436,24 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 			}
 		}
 
-		if stepStatus == "" {
-			return sdk.WrapError(fmt.Errorf("getWorkflowNodeRunJobBuildLogsHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
-				stepOrder, runJobID, nodeRunID, number, workflowName, projectKey), "")
-		}
+	if stepStatus == "" {
+		return sdk.WrapError(fmt.Errorf("getWorkflowNodeRunJobStepHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
+			stepOrder, runJobID, nodeRunID, number, workflowName, projectKey), "")
+	}
 
-		logs, errL := workflow.LoadStepLogs(api.MustDB(), runJobID, stepOrder)
-		if errL != nil {
-			return sdk.WrapError(errL, "getWorkflowNodeRunJobBuildLogsHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
-		}
+	logs, errL := workflow.LoadStepLogs(api.MustDB(), runJobID, stepOrder)
+	if errL != nil {
+		return sdk.WrapError(errL, "getWorkflowNodeRunJobStepHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
+	}
 
-		result := &sdk.BuildState{
-			Status:   sdk.StatusFromString(stepStatus),
-			StepLogs: *logs,
-		}
+	ls := &sdk.Log{}
+	if logs != nil {
+		ls = logs
+	}
+	result := &sdk.BuildState{
+		Status:   sdk.StatusFromString(stepStatus),
+		StepLogs: *ls,
+	}
 
 		return WriteJSON(w, r, result, http.StatusOK)
 	}

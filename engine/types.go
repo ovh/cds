@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
+	"github.com/ovh/cds/engine/hatchery/vsphere"
 )
 
 type Configuration struct {
@@ -22,6 +23,7 @@ type Configuration struct {
 		Marathon  marathon.HatcheryConfiguration
 		Openstack openstack.HatcheryConfiguration
 		Swarm     swarm.HatcheryConfiguration
+		VSphere   vsphere.HatcheryConfiguration
 	}
 }
 

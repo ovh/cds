@@ -445,7 +445,7 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job")
 		}
 
-		sdk.AddParameter(&job.Parameters, "cds.build."+v.Name, sdk.StringParameter, v.Value)
+	sdk.AddParameter(&job.Parameters, v.Name, sdk.StringParameter, v.Value)
 
 		if err := workflow.UpdateNodeJobRun(tx, job); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run")
@@ -456,7 +456,7 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			return sdk.WrapError(errn, "postWorkflowJobVariableHandler> Unable to load node")
 		}
 
-		sdk.AddParameter(&node.BuildParameters, "cds.build."+v.Name, sdk.StringParameter, v.Value)
+	sdk.AddParameter(&node.BuildParameters, v.Name, sdk.StringParameter, v.Value)
 
 		if err := workflow.UpdateNodeRun(tx, node); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node run")

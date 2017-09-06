@@ -760,25 +760,31 @@ func (api *API) getPipelineHistoryHandler() Handler {
 			limit = 20
 		}
 
-		p, errlp := pipeline.LoadPipeline(api.MustDB(), projectKey, pipelineName, false)
-		if errlp != nil {
-			return sdk.WrapError(errlp, "getPipelineHistoryHandler> Cannot load pipelines")
-		}
+	a, errln := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithPipelines)
+	if errln != nil {
+		return sdk.WrapError(errln, "getPipelineHistoryHandler> Cannot load application %s", appName)
+	}
 
-		a, errln := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx))
-		if errln != nil {
-			return sdk.WrapError(errln, "getPipelineHistoryHandler> Cannot load application %s", appName)
+	var p *sdk.Pipeline
+	for _, apip := range a.Pipelines {
+		if apip.Pipeline.Name == pipelineName {
+			p = &apip.Pipeline
+			break
 		}
+	}
 
-		var env *sdk.Environment
-		if envName == "" || envName == sdk.DefaultEnv.Name {
-			env = &sdk.DefaultEnv
-		} else {
-			var errle error
-			env, errle = environment.LoadEnvironmentByName(api.MustDB(), projectKey, envName)
-			if errle != nil {
-				return sdk.WrapError(errle, "getPipelineHistoryHandler> Cannot load environment %s", envName)
-			}
+	if p == nil {
+		return sdk.WrapError(sdk.ErrPipelineNotAttached, "Pipeline not found on application")
+	}
+
+	var env *sdk.Environment
+	if envName == "" || envName == sdk.DefaultEnv.Name {
+		env = &sdk.DefaultEnv
+	} else {
+		var errle error
+		env, errle = environment.LoadEnvironmentByName(db, projectKey, envName)
+		if errle != nil {
+			return sdk.WrapError(errle, "getPipelineHistoryHandler> Cannot load environment %s", envName)
 		}
 
 		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
