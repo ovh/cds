@@ -8,6 +8,7 @@ import (
 	"os/user"
 	"path"
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/go-gorp/gorp"
@@ -26,7 +27,7 @@ var (
 	dbPassword string
 	dbName     string
 	dbHost     string
-	dbPort     string
+	dbPort     int64
 	dbSSLMode  string
 )
 
@@ -37,7 +38,7 @@ func init() {
 		flag.String("dbPassword", "cds", "password")
 		flag.String("dbName", "cds", "database name")
 		flag.String("dbHost", "localhost", "host")
-		flag.String("dbPort", "15432", "port")
+		flag.Int("dbPort", 15432, "port")
 		flag.String("sslMode", "disable", "ssl mode")
 
 		log.Initialize(&log.Conf{Level: "debug"})
@@ -73,7 +74,10 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) *gorp.DbMap {
 				dbPassword = cfg["dbPassword"]
 				dbName = cfg["dbName"]
 				dbHost = cfg["dbHost"]
-				dbPort = cfg["dbPort"]
+				dbPort, err = strconv.ParseInt(cfg["dbPort"], 10, 64)
+				if err != nil {
+					t.Errorf("Error when unmarshal config %s", err)
+				}
 				dbSSLMode = cfg["sslMode"]
 			} else {
 				t.Errorf("Error when unmarshal config %s", err)
@@ -86,7 +90,10 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) *gorp.DbMap {
 		dbPassword = flag.Lookup("dbPassword").Value.String()
 		dbName = flag.Lookup("dbName").Value.String()
 		dbHost = flag.Lookup("dbHost").Value.String()
-		dbPort = flag.Lookup("dbPort").Value.String()
+		dbPort, err = strconv.ParseInt(flag.Lookup("dbPort").Value.String(), 10, 64)
+		if err != nil {
+			t.Errorf("Error when unmarshal config %s", err)
+		}
 		dbSSLMode = flag.Lookup("sslMode").Value.String()
 	}
 
@@ -100,7 +107,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) *gorp.DbMap {
 	}
 	if DBConnectionFactory == nil {
 		var err error
-		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, 2000, 100)
+		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s", err)
 			return nil

@@ -1,14 +1,33 @@
 package api
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/go-gorp/gorp"
+	"github.com/gorilla/mux"
+	"github.com/loopfz/gadgeto/iffy"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
@@ -67,9 +86,8 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	return nil
 }
 
-/*
-func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *gorp.DbMap, *sdk.Project, *sdk.Pipeline, *sdk.Application, *sdk.Environment, *sdk.User)) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *API, *sdk.Project, *sdk.Pipeline, *sdk.Application, *sdk.Environment, *sdk.User)) {
+	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	u, p := assets.InsertAdminUser(api.mustDB())
 	u.Auth.HashedPassword = p
@@ -104,7 +122,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *g
 	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	f(t, db, proj, pip, app, env, u)
+	f(t, api, proj, pip, app, env, u)
 
 	t.Logf("Detach Pipeline %s on Application %s", pip.Name, app.Name)
 	tx, err := api.mustDB().Begin()
@@ -166,7 +184,7 @@ func testCheckUserNotificationSettings(t *testing.T, n1, n2 map[sdk.UserNotifica
 }
 
 func Test_LoadEmptyApplicationPipelineNotif(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *gorp.DbMap, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, api *API, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
 		t.Logf("Load Application Pipeline Notif %s %s", app.Name, env.Name)
 		notif, err := notification.LoadUserNotificationSettings(api.mustDB(), app.ID, pip.ID, env.ID)
 		test.NoError(t, err)
@@ -175,7 +193,7 @@ func Test_LoadEmptyApplicationPipelineNotif(t *testing.T) {
 }
 
 func Test_InsertAndLoadApplicationPipelineNotif(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *gorp.DbMap, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, api *API, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
 		notif := sdk.UserNotification{
 			Notifications: map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{
 				sdk.JabberUserNotification: &sdk.JabberEmailUserNotificationSettings{
@@ -219,7 +237,7 @@ func Test_InsertAndLoadApplicationPipelineNotif(t *testing.T) {
 }
 
 func Test_getUserNotificationApplicationPipelineHandlerReturnsEmptyUserNotification(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *gorp.DbMap, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, api *API, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
 		url := fmt.Sprintf("/test1/project/%s/application/%s/pipeline/%s/notification", proj.Key, app.Name, pip.Name)
 		req, err := http.NewRequest("GET", url, nil)
 
@@ -228,9 +246,7 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsEmptyUserNotificat
 		router := mux.NewRouter()
 		router.HandleFunc("/test1/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/notification",
 			func(w http.ResponseWriter, r *http.Request) {
-				getUserNotificationApplicationPipelineHandler(w, r, db, &businesscontext.Ctx{
-					User: u,
-				})
+				api.getUserNotificationApplicationPipelineHandler()(context.WithValue(context.Background(), auth.ContextUser, u), w, r)
 			})
 		http.Handle("/test1/", router)
 
@@ -244,7 +260,7 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsEmptyUserNotificat
 }
 
 func Test_getUserNotificationApplicationPipelineHandlerReturnsNonEmptyUserNotification(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *gorp.DbMap, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, api *API, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
 		notif := sdk.UserNotification{
 			Notifications: map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{
 				sdk.JabberUserNotification: &sdk.JabberEmailUserNotificationSettings{
@@ -283,9 +299,7 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsNonEmptyUserNotifi
 		router := mux.NewRouter()
 		router.HandleFunc("/test2/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/notification",
 			func(w http.ResponseWriter, r *http.Request) {
-				getUserNotificationApplicationPipelineHandler(w, r, db, &businesscontext.Ctx{
-					User: u,
-				})
+				api.getUserNotificationApplicationPipelineHandler()(context.WithValue(context.Background(), auth.ContextUser, u), w, r)
 			})
 		http.Handle("/test2/", router)
 
@@ -304,12 +318,13 @@ func Test_getUserNotificationApplicationPipelineHandlerReturnsNonEmptyUserNotifi
 }
 
 func Test_getNotificationTypeHandler(t *testing.T) {
+	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 	url := fmt.Sprintf("/test3/notification/type")
 	req, err := http.NewRequest("GET", url, nil)
 	router := mux.NewRouter()
 	router.HandleFunc("/test3/notification/type",
 		func(w http.ResponseWriter, r *http.Request) {
-			getUserNotificationTypeHandler(w, r, nil, nil)
+			api.getUserNotificationTypeHandler()(context.Background(), w, r)
 		})
 	http.Handle("/test3/", router)
 
@@ -324,7 +339,7 @@ func Test_getNotificationTypeHandler(t *testing.T) {
 }
 
 func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *gorp.DbMap, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, api *API, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
 		notif := sdk.UserNotification{
 			Notifications: map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{
 				sdk.JabberUserNotification: &sdk.JabberEmailUserNotificationSettings{
@@ -386,9 +401,7 @@ func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
 		router := mux.NewRouter()
 		router.HandleFunc("/test4/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/notification",
 			func(w http.ResponseWriter, r *http.Request) {
-				updateUserNotificationApplicationPipelineHandler(w, r, db, &businesscontext.Ctx{
-					User: u,
-				})
+				api.getUserNotificationApplicationPipelineHandler()(context.WithValue(context.Background(), auth.ContextUser, u), w, r)
 			})
 
 		http.Handle("/test4/", router)
@@ -399,15 +412,15 @@ func Test_updateUserNotificationApplicationPipelineHandler(t *testing.T) {
 
 		assert.Equal(t, 200, w.Code)
 
-		var appResponse sdk.Application
-		err = json.Unmarshal(w.Body.Bytes(), &appResponse)
+		log.Debug(string(w.Body.Bytes()))
+
+		var response sdk.UserNotification
+		err = json.Unmarshal(w.Body.Bytes(), &response)
 		test.NoError(t, err)
 
-		assert.Equal(t, len(appResponse.Notifications), 1)
+		assert.Equal(t, notif.Environment.ID, response.Environment.ID)
 
-		assert.Equal(t, notif.Environment.ID, appResponse.Notifications[0].Environment.ID)
-
-		testCheckUserNotificationSettings(t, notif.Notifications, appResponse.Notifications[0].Notifications)
+		testCheckUserNotificationSettings(t, notif.Notifications, response.Notifications)
 
 	})
 }
@@ -513,7 +526,7 @@ func Test_ShouldNotSendUserNotificationOnSuccessNever(t *testing.T) {
 }
 
 func Test_SendPipeline(t *testing.T) {
-	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, db *gorp.DbMap, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
+	testApplicationPipelineNotifBoilerPlate(t, func(t *testing.T, api *API, proj *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, u *sdk.User) {
 		notif := sdk.UserNotification{
 			Notifications: map[sdk.UserNotificationSettingsType]sdk.UserNotificationSettings{
 				sdk.JabberUserNotification: &sdk.JabberEmailUserNotificationSettings{
@@ -560,9 +573,6 @@ func Test_SendPipeline(t *testing.T) {
 
 func Test_addNotificationsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-
-
-	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -629,4 +639,3 @@ func Test_addNotificationsHandler(t *testing.T) {
 
 	assert.Equal(t, len(notifications), 1)
 }
-*/
