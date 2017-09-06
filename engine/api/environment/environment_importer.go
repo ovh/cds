@@ -40,7 +40,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 	}
 
 	//If no GroupPermission provided, inherit from project
-	if env.EnvironmentGroups == nil {
+	if len(env.EnvironmentGroups) == 0 {
 		env.EnvironmentGroups = proj.ProjectGroups
 	}
 	if err := group.InsertGroupsInEnvironment(db, env.EnvironmentGroups, env.ID); err != nil {
