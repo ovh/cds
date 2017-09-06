@@ -24,7 +24,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
 	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
@@ -38,7 +38,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	if err := pipeline.InsertPipeline(api.MustDB(), proj, pip1, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip1, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -50,7 +50,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	if err := pipeline.InsertPipeline(api.MustDB(), proj, pip2, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip2, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -62,7 +62,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	if err := pipeline.InsertPipeline(api.MustDB(), proj, pip3, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip3, u); err != nil {
 		t.Fatal(err)
 	}
 	// 6. Create application
@@ -70,20 +70,20 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
 	// 7. Attach pipeline to application
-	if _, err := application.AttachPipeline(api.MustDB(), app.ID, pip1.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip1.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(api.MustDB(), app.ID, pip2.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip2.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(api.MustDB(), app.ID, pip3.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip3.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -96,7 +96,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		DestApplication: *app,
 		DestPipeline:    *pip2,
 	}
-	if err := trigger.InsertTrigger(api.MustDB(), t1); err != nil {
+	if err := trigger.InsertTrigger(api.mustDB(), t1); err != nil {
 		t.Fatal(err)
 	}
 
@@ -109,7 +109,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		DestApplication: *app,
 		DestPipeline:    *pip3,
 	}
-	if err := trigger.InsertTrigger(api.MustDB(), t2); err != nil {
+	if err := trigger.InsertTrigger(api.mustDB(), t2); err != nil {
 		t.Fatal(err)
 	}
 

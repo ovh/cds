@@ -26,7 +26,7 @@ func (api *API) getVariablesHandler() Handler {
 		var allVariables []string
 
 		// Load variable project
-		projectVar, err := project.GetAllVariableNameInProjectByKey(api.MustDB(), projectKey)
+		projectVar, err := project.GetAllVariableNameInProjectByKey(api.mustDB(), projectKey)
 		if err != nil {
 			return sdk.WrapError(err, "getVariablesHandler> Cannot Load project variables: %s", err)
 		}
@@ -36,7 +36,7 @@ func (api *API) getVariablesHandler() Handler {
 		allVariables = append(allVariables, projectVar...)
 
 		// Load env variable
-		envVarNameArray, err := environment.GetAllVariableNameByProject(api.MustDB(), projectKey)
+		envVarNameArray, err := environment.GetAllVariableNameByProject(api.mustDB(), projectKey)
 		if err != nil {
 			return sdk.WrapError(err, "getVariablesHandler> Cannot Load env variables: %s", err)
 		}
@@ -49,7 +49,7 @@ func (api *API) getVariablesHandler() Handler {
 		appVar := []string{}
 		if appName != "" {
 			// Check permission on application
-			app, err := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithVariables)
+			app, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithVariables)
 			if err != nil {
 				return sdk.WrapError(err, "getPipelineTypeHandler> Cannot Load application: %s", err)
 			}
@@ -72,7 +72,7 @@ func (api *API) getVariablesHandler() Handler {
 			WHERE project.projectkey = $1
 			ORDER BY var_name;
 		`
-			rows, err := api.MustDB().Query(query, projectKey)
+			rows, err := api.mustDB().Query(query, projectKey)
 			if err != nil {
 				return sdk.WrapError(err, "getVariablesHandler> Cannot Load all applications variables: %s", err)
 			}
@@ -94,7 +94,7 @@ func (api *API) getVariablesHandler() Handler {
 			if err != nil {
 				return sdk.WrapError(sdk.ErrWrongRequest, "getVariablesHandler> Cannot convert pipId to int : %s", err)
 			}
-			pipParams, err := pipeline.GetAllParametersInPipeline(api.MustDB(), pipIDN)
+			pipParams, err := pipeline.GetAllParametersInPipeline(api.mustDB(), pipIDN)
 
 			if err != nil {
 				return sdk.WrapError(err, "getVariablesHandler> Cannot get all parameters in pipeline: %s", err)

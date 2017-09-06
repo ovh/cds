@@ -41,10 +41,10 @@ type test_runWorkflowCtx struct {
 }
 
 func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) test_runWorkflowCtx {
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
-	group.InsertUserInGroup(api.MustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
+	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
 	//First pipeline
@@ -54,12 +54,12 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(api.MustDB(), s)
+	pipeline.InsertStage(api.mustDB(), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
@@ -69,7 +69,7 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 			},
 		},
 	}
-	pipeline.InsertJob(api.MustDB(), j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -83,8 +83,8 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.MustDB(), &w, u))
-	w1, err := workflow.Load(api.MustDB(), key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), &w, u))
+	w1, err := workflow.Load(api.mustDB(), key, "test_1", u)
 	test.NoError(t, err)
 
 	//Prepare request
@@ -151,13 +151,13 @@ func test_registerWorker(t *testing.T, api *API, router *Router, ctx *test_runWo
 	ctx.workerToken, err = token.GenerateToken()
 	test.NoError(t, err)
 	//Insert token
-	test.NoError(t, token.InsertToken(api.MustDB(), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent))
+	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent))
 	//Register the worker
 	params := &worker.RegistrationForm{
 		Name:  sdk.RandomString(10),
 		Token: ctx.workerToken,
 	}
-	ctx.worker, err = worker.RegisterWorker(api.MustDB(), params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities)
+	ctx.worker, err = worker.RegisterWorker(api.mustDB(), params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities)
 	test.NoError(t, err)
 }
 
@@ -166,7 +166,7 @@ func test_registerHatchery(t *testing.T, api *API, router *Router, ctx *test_run
 	tk, err := token.GenerateToken()
 	test.NoError(t, err)
 	//Insert token
-	test.NoError(t, token.InsertToken(api.MustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent))
+	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent))
 
 	ctx.hatchery = &sdk.Hatchery{
 		UID:      tk,
@@ -175,7 +175,7 @@ func test_registerHatchery(t *testing.T, api *API, router *Router, ctx *test_run
 		GroupID:  ctx.user.Groups[0].ID,
 	}
 
-	err = hatchery.InsertHatchery(api.MustDB(), ctx.hatchery)
+	err = hatchery.InsertHatchery(api.mustDB(), ctx.hatchery)
 	test.NoError(t, err)
 }
 
@@ -245,7 +245,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	run, err := workflow.LoadNodeJobRun(api.MustDB(), ctx.job.ID)
+	run, err := workflow.LoadNodeJobRun(api.mustDB(), ctx.job.ID)
 	test.NoError(t, err)
 	assert.Equal(t, "Building", run.Status)
 
@@ -449,9 +449,9 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.MustDB(), ctx.job.ID)
+	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), ctx.job.ID)
 	test.NoError(t, errJ)
-	nodeRun, errN := workflow.LoadNodeRunByID(api.MustDB(), wNodeJobRun.WorkflowNodeRunID)
+	nodeRun, errN := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID)
 	test.NoError(t, errN)
 
 	assert.NotNil(t, nodeRun.Tests)
@@ -577,10 +577,10 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.MustDB(), ctx.job.ID)
+	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), ctx.job.ID)
 	test.NoError(t, errJ)
 
-	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(api.MustDB(), wNodeJobRun.WorkflowNodeRunID)
+	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID)
 	test.NoError(t, errN2)
 
 	assert.NotNil(t, updatedNodeRun.Artifacts)

@@ -12,7 +12,7 @@ import (
 
 func (api *API) getWorkflowHookModelsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		m, err := workflow.LoadHookModels(api.MustDB())
+		m, err := workflow.LoadHookModels(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHookModelsHandler")
 		}
@@ -24,7 +24,7 @@ func (api *API) getWorkflowHookModelHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		name := vars["model"]
-		m, err := workflow.LoadHookModelByName(api.MustDB(), name)
+		m, err := workflow.LoadHookModelByName(api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHookModelHandler")
 		}
@@ -39,7 +39,7 @@ func (api *API) postWorkflowHookModelHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowHookModelHandler")
 		}
 
-		tx, errtx := api.MustDB().Begin()
+		tx, errtx := api.mustDB().Begin()
 		if errtx != nil {
 			return sdk.WrapError(errtx, "postWorkflowHookModelHandler> Unable to start transaction")
 		}
@@ -64,7 +64,7 @@ func (api *API) putWorkflowHookModelHandler() Handler {
 			return err
 		}
 
-		tx, errtx := api.MustDB().Begin()
+		tx, errtx := api.mustDB().Begin()
 		if errtx != nil {
 			return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to start transaction")
 		}

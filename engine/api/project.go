@@ -24,9 +24,9 @@ func (api *API) getProjectsHandler() Handler {
 		var err error
 
 		if withApplication {
-			projects, err = project.LoadAll(api.MustDB(), getUser(ctx), project.LoadOptions.WithApplications)
+			projects, err = project.LoadAll(api.mustDB(), getUser(ctx), project.LoadOptions.WithApplications)
 		} else {
-			projects, err = project.LoadAll(api.MustDB(), getUser(ctx))
+			projects, err = project.LoadAll(api.mustDB(), getUser(ctx))
 		}
 		if err != nil {
 			return sdk.WrapError(err, "getProjectsHandler")
@@ -56,13 +56,13 @@ func (api *API) updateProjectHandler() Handler {
 		}
 
 		// Check is project exist
-		p, errProj := project.Load(api.MustDB(), key, getUser(ctx))
+		p, errProj := project.Load(api.mustDB(), key, getUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateProject> Cannot load project from db")
 		}
 		// Update in DB is made given the primary key
 		proj.ID = p.ID
-		if errUp := project.Update(api.MustDB(), proj, getUser(ctx)); errUp != nil {
+		if errUp := project.Update(api.mustDB(), proj, getUser(ctx)); errUp != nil {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
 
@@ -115,7 +115,7 @@ func (api *API) getProjectHandler() Handler {
 			opts = append(opts, project.LoadOptions.WithKeys)
 		}
 
-		p, errProj := project.Load(api.MustDB(), key, getUser(ctx), opts...)
+		p, errProj := project.Load(api.mustDB(), key, getUser(ctx), opts...)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "getProjectHandler (%s)", key)
 		}
@@ -143,7 +143,7 @@ func (api *API) addProjectHandler() Handler {
 		}
 
 		// Check that project does not already exists
-		exist, errExist := project.Exist(api.MustDB(), p.Key)
+		exist, errExist := project.Exist(api.mustDB(), p.Key)
 		if errExist != nil {
 			return sdk.WrapError(errExist, "AddProject>  Cannot check if project %s exist", p.Key)
 		}
@@ -153,7 +153,7 @@ func (api *API) addProjectHandler() Handler {
 		}
 
 		//Create a project within a transaction
-		tx, errBegin := api.MustDB().Begin()
+		tx, errBegin := api.mustDB().Begin()
 		defer tx.Rollback()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "AddProject> Cannot start tx")
@@ -218,7 +218,7 @@ func (api *API) deleteProjectHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
+		p, errProj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.WithPipelines, project.LoadOptions.WithApplications)
 		if errProj != nil {
 			if errProj != sdk.ErrNoProject {
 				return sdk.WrapError(errProj, "deleteProject> load project '%s' from db", key)
@@ -234,7 +234,7 @@ func (api *API) deleteProjectHandler() Handler {
 			return sdk.WrapError(sdk.ErrProjectHasApplication, "deleteProject> Project '%s' still used by %d applications", key, len(p.Applications))
 		}
 
-		tx, errBegin := api.MustDB().Begin()
+		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "deleteProject> Cannot start transaction")
 		}
@@ -260,7 +260,7 @@ func (api *API) getUserLastUpdatesHandler() Handler {
 			since, _ = time.Parse(time.RFC1123, sinceHeader)
 		}
 
-		lastUpdates, errUp := project.LastUpdates(api.MustDB(), getUser(ctx), since)
+		lastUpdates, errUp := project.LastUpdates(api.mustDB(), getUser(ctx), since)
 		if errUp != nil {
 			if errUp == sql.ErrNoRows {
 				w.WriteHeader(http.StatusNotModified)

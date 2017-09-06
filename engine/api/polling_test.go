@@ -63,7 +63,7 @@ func TestAddPollerHandler(t *testing.T) {
 	
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
@@ -77,22 +77,22 @@ func TestAddPollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.MustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(api.MustDB(), app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -134,7 +134,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	
 
 	//1. Crerouter.ate admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
@@ -148,22 +148,22 @@ func TestUpdatePollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.MustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(api.MustDB(), app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -227,7 +227,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
@@ -241,22 +241,22 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.MustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(api.MustDB(), app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -322,7 +322,7 @@ func TestGetPollersHandler(t *testing.T) {
 	
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
@@ -336,22 +336,22 @@ func TestGetPollersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.MustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(api.MustDB(), app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -413,7 +413,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
 	proj, rm := testfindLinkedProject(t, db)
@@ -427,22 +427,22 @@ func TestDeletePollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(api.MustDB(), app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(api.MustDB(), app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{

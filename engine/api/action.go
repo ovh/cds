@@ -16,7 +16,7 @@ import (
 
 func (api *API) getActionsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		acts, err := action.LoadActions(api.MustDB())
+		acts, err := action.LoadActions(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "GetActions: Cannot load action from db")
 		}
@@ -47,7 +47,7 @@ func (api *API) getPipelinesUsingActionHandler() Handler {
 		WHERE actionChild.name = $1 and actionChild.public = true
 		ORDER BY projectkey, appName, pipName, actionName;
 	`
-		rows, errq := api.MustDB().Query(query, name)
+		rows, errq := api.mustDB().Query(query, name)
 		if errq != nil {
 			return sdk.WrapError(errq, "getPipelinesUsingActionHandler> Cannot load pipelines using action %s", name)
 		}
@@ -97,7 +97,7 @@ func (api *API) getPipelinesUsingActionHandler() Handler {
 
 func (api *API) getActionsRequirements() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		req, err := action.LoadAllBinaryRequirements(api.MustDB())
+		req, err := action.LoadAllBinaryRequirements(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getActionsRequirements> Cannot load action requirements")
 		}
@@ -112,7 +112,7 @@ func (api *API) deleteActionHandler() Handler {
 		vars := mux.Vars(r)
 		name := vars["permActionName"]
 
-		a, errLoad := action.LoadPublicAction(api.MustDB(), name)
+		a, errLoad := action.LoadPublicAction(api.mustDB(), name)
 		if errLoad != nil {
 			if errLoad != sdk.ErrNoAction {
 				log.Warning("deleteAction> Cannot load action %s: %T %s", name, errLoad, errLoad)
@@ -120,7 +120,7 @@ func (api *API) deleteActionHandler() Handler {
 			return errLoad
 		}
 
-		used, errUsed := action.Used(api.MustDB(), a.ID)
+		used, errUsed := action.Used(api.mustDB(), a.ID)
 		if errUsed != nil {
 			return errUsed
 		}
@@ -128,7 +128,7 @@ func (api *API) deleteActionHandler() Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "deleteAction> Cannot delete action %s: used in pipelines", name)
 		}
 
-		tx, errbegin := api.MustDB().Begin()
+		tx, errbegin := api.mustDB().Begin()
 		if errbegin != nil {
 			log.Warning("deleteAction> Cannot start transaction: %s\n", errbegin)
 			return errbegin
@@ -160,13 +160,13 @@ func (api *API) updateActionHandler() Handler {
 		}
 
 		// Check that action  already exists
-		//actionDB, err := action.LoadPublicAction(api.MustDB(), name, action.WithClearPasswords())
-		actionDB, err := action.LoadPublicAction(api.MustDB(), name)
+		//actionDB, err := action.LoadPublicAction(api.mustDB(), name, action.WithClearPasswords())
+		actionDB, err := action.LoadPublicAction(api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "updateAction> Cannot check if action %s exist", a.Name)
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateAction> Cannot begin tx")
 		}
@@ -195,7 +195,7 @@ func (api *API) addActionHandler() Handler {
 		}
 
 		// Check that action does not already exists
-		conflict, errConflict := action.Exists(api.MustDB(), a.Name)
+		conflict, errConflict := action.Exists(api.mustDB(), a.Name)
 		if errConflict != nil {
 			return errConflict
 		}
@@ -204,7 +204,7 @@ func (api *API) addActionHandler() Handler {
 			return sdk.WrapError(sdk.ErrConflict, "addAction> Action %s already exists", a.Name)
 		}
 
-		tx, errDB := api.MustDB().Begin()
+		tx, errDB := api.mustDB().Begin()
 		if errDB != nil {
 			return errDB
 		}
@@ -233,7 +233,7 @@ func (api *API) getActionAuditHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getActionAuditHandler> ActionID must be a number, got %s: %s", actionIDString, err)
 		}
 		// Load action
-		a, err := action.LoadAuditAction(api.MustDB(), actionID, true)
+		a, err := action.LoadAuditAction(api.mustDB(), actionID, true)
 		if err != nil {
 			return sdk.WrapError(err, "getActionAuditHandler> Cannot load audit for action %s", actionID)
 		}
@@ -246,7 +246,7 @@ func (api *API) getActionHandler() Handler {
 		vars := mux.Vars(r)
 		name := vars["permActionName"]
 
-		a, err := action.LoadPublicAction(api.MustDB(), name)
+		a, err := action.LoadPublicAction(api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "getActionHandler> Cannot load action: %s", err)
 		}
@@ -293,7 +293,7 @@ func (api *API) importActionHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		tx, errbegin := api.MustDB().Begin()
+		tx, errbegin := api.mustDB().Begin()
 		if errbegin != nil {
 			return errbegin
 		}

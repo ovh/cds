@@ -19,7 +19,7 @@ func (api *API) getVariablesAuditInProjectnHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 
-		audits, err := project.GetVariableAudit(api.MustDB(), key)
+		audits, err := project.GetVariableAudit(api.mustDB(), key)
 		if err != nil {
 			log.Warning("getVariablesAuditInProjectnHandler: Cannot get variable audit for project %s: %s\n", key, err)
 			return err
@@ -43,21 +43,21 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 
 		}
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot load %s: %s\n", key, err)
 			return err
 
 		}
 
-		variables, err := project.GetAudit(api.MustDB(), key, auditID)
+		variables, err := project.GetAudit(api.mustDB(), key, auditID)
 		if err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot get variable audit for project %s: %s\n", key, err)
 			return err
 
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot start transaction : %s\n", err)
 			return sdk.ErrUnknownError
@@ -97,7 +97,7 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot check warnings: %s\n", err)
 			return err
 		}
@@ -112,7 +112,7 @@ func (api *API) getVariablesInProjectHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
 		if err != nil {
 			log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
 			return sdk.ErrNotFound
@@ -129,20 +129,20 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
 			return err
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("deleteVariableFromProject: Cannot start transaction: %s\n", err)
 			return err
 		}
 		defer tx.Rollback()
 
-		varToDelete, errV := project.GetVariableInProject(api.MustDB(), p.ID, varName)
+		varToDelete, errV := project.GetVariableInProject(api.mustDB(), p.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "deleteVariableFromProject> Cannot load variable %s", varName)
 		}
@@ -178,14 +178,14 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 			return err
 		}
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot load %s: %s\n", key, err)
 			return sdk.ErrNotFound
 
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot start transaction: %s\n", err)
 			return sdk.ErrNotFound
@@ -269,7 +269,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 
 		}
 
-		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
 			log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s\n", err)
 			return err
 
@@ -295,14 +295,14 @@ func (api *API) updateVariableInProjectHandler() Handler {
 
 		}
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updateVariableInProject: Cannot load %s: %s\n", key, err)
 			return err
 
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("updateVariableInProject: cannot start transaction: %s\n", err)
 			return err
@@ -326,7 +326,7 @@ func (api *API) updateVariableInProjectHandler() Handler {
 
 		}
 
-		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
 			log.Warning("updateVariableInProject: Cannot check warnings: %s\n", err)
 			return err
 
@@ -343,14 +343,14 @@ func (api *API) getVariableInProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		proj, err := project.Load(api.MustDB(), key, getUser(ctx))
+		proj, err := project.Load(api.mustDB(), key, getUser(ctx))
 		if err != nil {
 			log.Warning("getVariableInProjectHandler: Cannot load project %s: %s\n", key, err)
 			return err
 
 		}
 
-		v, err := project.GetVariableInProject(api.MustDB(), proj.ID, varName)
+		v, err := project.GetVariableInProject(api.mustDB(), proj.ID, varName)
 		if err != nil {
 			log.Warning("getVariableInProjectHandler: Cannot get variable %s in project %s: %s\n", varName, key, err)
 			return err
@@ -377,13 +377,13 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		}
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("AddVariableInProject: Cannot load %s: %s\n", key, err)
 			return err
 		}
 
-		varInProject, err := project.CheckVariableInProject(api.MustDB(), p.ID, varName)
+		varInProject, err := project.CheckVariableInProject(api.mustDB(), p.ID, varName)
 		if err != nil {
 			log.Warning("AddVariableInProject: Cannot check if variable %s is already in the project %s: %s\n", varName, p.Name, err)
 			return err
@@ -393,7 +393,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 			return sdk.ErrVariableExists
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("addVariableInProjectHandler: cannot begin tx: %s\n", err)
 			return err
@@ -424,14 +424,14 @@ func (api *API) addVariableInProjectHandler() Handler {
 			return err
 		}
 
-		err = sanity.CheckProjectPipelines(api.MustDB(), p)
+		err = sanity.CheckProjectPipelines(api.mustDB(), p)
 		if err != nil {
 			log.Warning("AddVariableInProject: Cannot check warnings: %s\n", err)
 			return err
 
 		}
 
-		p.Variable, err = project.GetAllVariableInProject(api.MustDB(), p.ID)
+		p.Variable, err = project.GetAllVariableInProject(api.mustDB(), p.ID)
 		if err != nil {
 			log.Warning("AddVariableInProject: Cannot get variables: %s\n", err)
 			return err
@@ -449,17 +449,17 @@ func (api *API) getVariableAuditInProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		p, errP := project.Load(api.MustDB(), key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getVariableAuditInProjectHandler> Cannot load project %s", key)
 		}
 
-		variable, errV := project.GetVariableInProject(api.MustDB(), p.ID, varName)
+		variable, errV := project.GetVariableInProject(api.mustDB(), p.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "getVariableAuditInProjectHandler> Cannot load variable %s", varName)
 		}
 
-		audits, errA := project.LoadVariableAudits(api.MustDB(), p.ID, variable.ID)
+		audits, errA := project.LoadVariableAudits(api.mustDB(), p.ID, variable.ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInProjectHandler> Cannot load audit for variable %s", varName)
 		}

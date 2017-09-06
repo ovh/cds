@@ -26,12 +26,12 @@ func (api *API) importPipelineHandler() Handler {
 		forceUpdate := FormBool(r, "forceUpdate")
 
 		// Load project
-		proj, errp := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		proj, errp := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if errp != nil {
 			return sdk.WrapError(errp, "importPipelineHandler> Unable to load project %s", key)
 		}
 
-		if err := group.LoadGroupByProject(api.MustDB(), proj); err != nil {
+		if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
 			return sdk.WrapError(errp, "importPipelineHandler> Unable to load project permissions %s", key)
 		}
 
@@ -63,7 +63,7 @@ func (api *API) importPipelineHandler() Handler {
 		}
 
 		// Check if pipeline exists
-		exist, errE := pipeline.ExistPipeline(api.MustDB(), proj.ID, payload.Name)
+		exist, errE := pipeline.ExistPipeline(api.mustDB(), proj.ID, payload.Name)
 		if errE != nil {
 			return sdk.WrapError(errE, "importPipelineHandler> Unable to check if pipeline %s exists", payload.Name)
 		}
@@ -77,7 +77,7 @@ func (api *API) importPipelineHandler() Handler {
 		// Load group in permission
 		for i := range pip.GroupPermission {
 			eg := &pip.GroupPermission[i]
-			g, errg := group.LoadGroup(api.MustDB(), eg.Group.Name)
+			g, errg := group.LoadGroup(api.mustDB(), eg.Group.Name)
 			if errg != nil {
 				return sdk.WrapError(errg, "importPipelineHandler> Error loading groups for permission")
 			}
@@ -99,7 +99,7 @@ func (api *API) importPipelineHandler() Handler {
 			}
 		}()
 
-		tx, errBegin := api.MustDB().Begin()
+		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			log.Warning("importPipelineHandler: Cannot start transaction: %s\n", errBegin)
 			return sdk.WrapError(errBegin, "importPipelineHandler: Cannot start transaction")
@@ -149,12 +149,12 @@ func (api *API) importPipelineHandler() Handler {
 		}
 
 		var errlp error
-		proj.Pipelines, errlp = pipeline.LoadPipelines(api.MustDB(), proj.ID, true, getUser(ctx))
+		proj.Pipelines, errlp = pipeline.LoadPipelines(api.mustDB(), proj.ID, true, getUser(ctx))
 		if errlp != nil {
 			return sdk.WrapError(errlp, "importPipelineHandler> Unable to reload pipelines for project %s", proj.Key)
 		}
 
-		if err := sanity.CheckProjectPipelines(api.MustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Cannot check warnings")
 		}
 

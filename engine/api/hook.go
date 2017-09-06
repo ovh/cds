@@ -77,18 +77,18 @@ func (api *API) addHookHandler() Handler {
 		h.Enabled = true
 
 		// Insert hook in database
-		if err := hook.InsertHook(api.MustDB(), &h); err != nil {
+		if err := hook.InsertHook(api.mustDB(), &h); err != nil {
 			log.Warning("addHook: cannot insert hook in db: %s\n", err)
 			return err
 
 		}
 
-		app, errA := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		app, errA := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if errA != nil {
 			return sdk.WrapError(errA, "addHook: Cannot load application")
 		}
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.MustDB(), projectKey, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errA, "addHook: Cannot load workflow")
 		}
@@ -108,7 +108,7 @@ func (api *API) updateHookHandler() Handler {
 			return sdk.WrapError(err, "updateHookHandler")
 		}
 
-		app, errA := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		app, errA := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if errA != nil {
 			return sdk.WrapError(errA, "updateHookHandler> Cannot load application")
 		}
@@ -126,12 +126,12 @@ func (api *API) updateHookHandler() Handler {
 		}
 
 		// Update hook in database
-		if err := hook.UpdateHook(api.MustDB(), h); err != nil {
+		if err := hook.UpdateHook(api.mustDB(), h); err != nil {
 			return sdk.WrapError(err, "updateHookHandler: cannot update hook")
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.MustDB(), projectKey, app.Name, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), projectKey, app.Name, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updateHookHandler: Cannot load workflow")
 		}
@@ -146,7 +146,7 @@ func (api *API) getApplicationHooksHandler() Handler {
 		projectName := vars["key"]
 		appName := vars["permApplicationName"]
 
-		a, err := application.LoadByName(api.MustDB(), projectName, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		a, err := application.LoadByName(api.mustDB(), projectName, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if err != nil {
 			log.Warning("getApplicationHooksHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
 			return err
@@ -163,7 +163,7 @@ func (api *API) getHooksHandler() Handler {
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		p, err := pipeline.LoadPipeline(api.MustDB(), projectName, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.mustDB(), projectName, pipelineName, false)
 		if err != nil {
 			if err != sdk.ErrPipelineNotFound {
 				log.Warning("getHooks> cannot load pipeline %s/%s: %s\n", projectName, pipelineName, err)
@@ -171,13 +171,13 @@ func (api *API) getHooksHandler() Handler {
 			return err
 		}
 
-		a, err := application.LoadByName(api.MustDB(), projectName, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), projectName, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getHooks> cannot load application %s/%s: %s\n", projectName, appName, err)
 			return err
 		}
 
-		hooks, err := hook.LoadPipelineHooks(api.MustDB(), p.ID, a.ID)
+		hooks, err := hook.LoadPipelineHooks(api.mustDB(), p.ID, a.ID)
 		if err != nil {
 			log.Warning("getHooks> cannot load hooks: %s\n", err)
 			return err
@@ -198,14 +198,14 @@ func (api *API) deleteHookHandler() Handler {
 
 		}
 
-		_, err = hook.LoadHook(api.MustDB(), id)
+		_, err = hook.LoadHook(api.mustDB(), id)
 		if err != nil {
 			log.Warning("deleteHook> cannot load hook: %s\n", err)
 			return err
 
 		}
 
-		err = hook.DeleteHook(api.MustDB(), id)
+		err = hook.DeleteHook(api.mustDB(), id)
 		if err != nil {
 			log.Warning("deleteHook> cannot delete hook: %s\n", err)
 			return err

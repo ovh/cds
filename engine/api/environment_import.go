@@ -25,7 +25,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		key := vars["permProjectKey"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		proj, errProj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
 			log.Warning("importNewEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
 			return errProj
@@ -62,7 +62,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		env := payload.Environment()
 		for i := range env.EnvironmentGroups {
 			eg := &env.EnvironmentGroups[i]
-			g, err := group.LoadGroup(api.MustDB(), eg.Group.Name)
+			g, err := group.LoadGroup(api.mustDB(), eg.Group.Name)
 			if err != nil {
 				log.Warning("importNewEnvironmentHandler> Error on import : %s", err)
 				return err
@@ -85,7 +85,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 			}
 		}()
 
-		tx, errBegin := api.MustDB().Begin()
+		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			log.Warning("importNewEnvironmentHandler: Cannot start transaction: %s\n", errBegin)
 			return errBegin
@@ -93,7 +93,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 
 		defer tx.Rollback()
 
-		if err := environment.Import(api.MustDB(), proj, env, msgChan, getUser(ctx)); err != nil {
+		if err := environment.Import(api.mustDB(), proj, env, msgChan, getUser(ctx)); err != nil {
 			log.Warning("importNewEnvironmentHandler> Error on import : %s", err)
 			return err
 		}
@@ -111,7 +111,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 			}
 		}
 
-		if err := sanity.CheckProjectPipelines(api.MustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
 			log.Warning("importNewEnvironmentHandler> Cannot check warnings: %s\n", err)
 			return err
 		}
@@ -133,13 +133,13 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		proj, errProj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
 			log.Warning("importIntoEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
 			return errProj
 		}
 
-		tx, errBegin := api.MustDB().Begin()
+		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			log.Warning("importIntoEnvironmentHandler: Cannot start transaction: %s\n", errBegin)
 			return errBegin
@@ -186,15 +186,16 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-	newEnv := payload.Environment()
+		newEnv := payload.Environment()
 
-	for i := range newEnv.EnvironmentGroups {
-		eg := &newEnv.EnvironmentGroups[i]
-		g, err := group.LoadGroup(tx, eg.Group.Name)
-		if err != nil {
-			return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import")
+		for i := range newEnv.EnvironmentGroups {
+			eg := &newEnv.EnvironmentGroups[i]
+			g, err := group.LoadGroup(tx, eg.Group.Name)
+			if err != nil {
+				return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import")
+			}
+			eg.Group = *g
 		}
-
 		allMsg := []sdk.Message{}
 		msgChan := make(chan sdk.Message, 10)
 		done := make(chan bool)
@@ -215,7 +216,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return err
 		}
 
-		if err := project.UpdateLastModified(api.MustDB(), getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(api.mustDB(), getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot update project last modified date")
 		}
 
@@ -237,7 +238,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.MustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
 			log.Warning("importIntoEnvironmentHandler> Cannot check warnings: %s\n", err)
 			return err
 		}

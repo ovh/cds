@@ -32,12 +32,12 @@ func (api *API) addJobToStageHandler() Handler {
 			return err
 		}
 
-		pip, errl := pipeline.LoadPipeline(api.MustDB(), projectKey, pipelineName, false)
+		pip, errl := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "addJobToStageHandler> Cannot load pipeline %s for project %s: %s", pipelineName, projectKey, errl)
 		}
 
-		if err := pipeline.LoadPipelineStage(api.MustDB(), pip); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(), pip); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler>Cannot load stages")
 		}
 
@@ -54,7 +54,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "addJobToStageHandler>Stage not found")
 		}
 
-		tx, errb := api.MustDB().Begin()
+		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return errb
 		}
@@ -72,7 +72,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot insert job in database")
 		}
 
-		proj, errproj := project.Load(api.MustDB(), projectKey, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
 		}
@@ -92,7 +92,7 @@ func (api *API) addJobToStageHandler() Handler {
 		cache.DeleteAll(cache.Key("application", projectKey, "*"))
 		cache.Delete(cache.Key("pipeline", projectKey, pipelineName))
 
-		if err := pipeline.LoadPipelineStage(api.MustDB(), pip); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(), pip); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot load stages")
 		}
 
@@ -127,12 +127,12 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "updateJobHandler>Pipeline action does not match")
 		}
 
-		pipelineData, errl := pipeline.LoadPipeline(api.MustDB(), key, pipName, false)
+		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, false)
 		if errl != nil {
 			return sdk.WrapError(errl, "updateJobHandler>Cannot load pipeline %s", pipName)
 		}
 
-		if err := pipeline.LoadPipelineStage(api.MustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "updateJobHandler>Cannot load stages")
 		}
 
@@ -153,7 +153,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "updateJobHandler>Job not found")
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot start transaction")
 		}
@@ -172,7 +172,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(err, "updateJobHandler> Cannot compute registration needs")
 		}
 
-		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
 		}
@@ -185,7 +185,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(err, "updateJobHandler> Cannot commit transaction")
 		}
 
-		if err := pipeline.LoadPipelineStage(api.MustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot load stages")
 		}
 
@@ -205,12 +205,12 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "deleteJobHandler>ID is not a int: %s", errp)
 		}
 
-		pipelineData, errl := pipeline.LoadPipeline(api.MustDB(), key, pipName, false)
+		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, false)
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteJobHandler>Cannot load pipeline %s", pipName)
 		}
 
-		if err := pipeline.LoadPipelineStage(api.MustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler>Cannot load stages")
 		}
 
@@ -232,7 +232,7 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "deleteJobHandler>Job not found")
 		}
 
-		tx, errb := api.MustDB().Begin()
+		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "deleteJobHandler> Cannot begin transaction")
 		}
@@ -242,7 +242,7 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot delete pipeline action")
 		}
 
-		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "deleteJobHandler> unable to load project")
 		}
@@ -258,7 +258,7 @@ func (api *API) deleteJobHandler() Handler {
 		k := cache.Key("application", key, "*")
 		cache.DeleteAll(k)
 
-		if err := pipeline.LoadPipelineStage(api.MustDB(), pipelineData); err != nil {
+		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot load stages")
 		}
 

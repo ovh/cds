@@ -41,7 +41,7 @@ func Test_getTemplatesHandler(t *testing.T) {
 	
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
@@ -91,7 +91,7 @@ func Test_addTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -99,8 +99,8 @@ func Test_addTemplateHandler(t *testing.T) {
 
 	downloadPublicAction(t, u, pass, api)
 
-	if tp, err := templateextension.LoadByName(api.MustDB(), "cds-template-cds-plugin"); err == nil {
-		if err := templateextension.Delete(api.MustDB(), tp); err != nil {
+	if tp, err := templateextension.LoadByName(api.mustDB(), "cds-template-cds-plugin"); err == nil {
+		if err := templateextension.Delete(api.mustDB(), tp); err != nil {
 			t.Log(err)
 		}
 	}
@@ -222,7 +222,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -333,7 +333,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -502,7 +502,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -630,7 +630,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	 */
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -706,7 +706,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	pKey := sdk.RandomString(10)
 	p := assets.InsertTestProject(t, db, pKey, pKey, u)
 	//Insert a Production environment
-	environment.InsertEnvironment(api.MustDB(), &sdk.Environment{
+	environment.InsertEnvironment(api.mustDB(), &sdk.Environment{
 		ProjectKey: pKey,
 		ProjectID:  p.ID,
 		Name:       "Production",

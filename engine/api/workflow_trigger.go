@@ -22,17 +22,17 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			return errID
 		}
 
-		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
+		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
 		if errproj != nil {
 			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
 		}
 
-		wf, errw := workflow.Load(api.MustDB(), key, name, getUser(ctx))
+		wf, errw := workflow.Load(api.mustDB(), key, name, getUser(ctx))
 		if errw != nil {
 			return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
 		}
 
-		wr, errr := workflow.LoadLastRun(api.MustDB(), key, name)
+		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name)
 		if errr != nil {
 			if errr != sdk.ErrWorkflowNotFound {
 				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
@@ -83,17 +83,17 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 			return errID
 		}
 
-		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
+		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
 		if errproj != nil {
 			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
 		}
 
-		wf, errw := workflow.Load(api.MustDB(), key, name, getUser(ctx))
+		wf, errw := workflow.Load(api.mustDB(), key, name, getUser(ctx))
 		if errw != nil {
 			return sdk.WrapError(errw, "getWorkflowTriggerJoinConditionHandler> Unable to load workflow")
 		}
 
-		wr, errr := workflow.LoadLastRun(api.MustDB(), key, name)
+		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name)
 		if errr != nil {
 			if errr != sdk.ErrWorkflowNotFound {
 				return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load last run workflow")

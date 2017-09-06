@@ -85,7 +85,7 @@ func (api *API) statusHandler() Handler {
 		log.Debug("Status> LastUpdate ConnectedUser> %d", len(api.LastUpdateBroker.clients))
 
 		// Check Worker Model Error
-		wmStatus := worker.Status(api.MustDB())
+		wmStatus := worker.Status(api.mustDB())
 		output = append(output, fmt.Sprintf("Worker Model Errors: %s", wmStatus))
 		log.Debug("Status> Worker Model Errors: %s", wmStatus)
 

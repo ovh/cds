@@ -27,18 +27,18 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 			return err
 		}
 
-		app, errload := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		app, errload := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if errload != nil {
 			return sdk.WrapError(errload, "updateGroupRoleOnApplicationHandler: Cannot load application %s", appName)
 		}
 
-		g, errLoadGroup := group.LoadGroup(api.MustDB(), groupName)
+		g, errLoadGroup := group.LoadGroup(api.mustDB(), groupName)
 		if errLoadGroup != nil {
 			return sdk.WrapError(errLoadGroup, "updateGroupRoleOnApplicationHandler: Cannot load group %s", groupName)
 		}
 
 		if groupApplication.Permission != permission.PermissionReadWriteExecute {
-			permissions, err := group.LoadAllApplicationGroupByRole(api.MustDB(), app.ID, permission.PermissionReadWriteExecute)
+			permissions, err := group.LoadAllApplicationGroupByRole(api.mustDB(), app.ID, permission.PermissionReadWriteExecute)
 			if err != nil {
 				return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot load group for application %s", appName)
 			}
@@ -48,7 +48,7 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 			}
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot start transaction")
 		}
@@ -68,7 +68,7 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 
 		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
-		if err := application.LoadGroupByApplication(api.MustDB(), app); err != nil {
+		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot load application groups")
 		}
 
@@ -84,7 +84,7 @@ func (api *API) updateGroupsInApplicationHandler() Handler {
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		proj, errload := project.Load(api.MustDB(), key, getUser(ctx))
+		proj, errload := project.Load(api.mustDB(), key, getUser(ctx))
 		if errload != nil {
 			return sdk.WrapError(errload, "addGroupInApplicationHandler> Cannot load %s", key)
 		}
@@ -109,12 +109,12 @@ func (api *API) updateGroupsInApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInApplicationHandler: Need one group with write permission.")
 		}
 
-		app, errLoadName := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		app, errLoadName := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if errLoadName != nil {
 			return sdk.WrapError(errLoadName, "updateGroupsInApplicationHandler: Cannot load application %s: %s", appName)
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot start transaction")
 		}
@@ -157,22 +157,22 @@ func (api *API) addGroupInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot unmarshal request")
 		}
 
-		proj, err := project.Load(api.MustDB(), key, getUser(ctx))
+		proj, err := project.Load(api.mustDB(), key, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load %s", key)
 		}
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load %s", appName)
 		}
 
-		g, err := group.LoadGroup(api.MustDB(), groupPermission.Group.Name)
+		g, err := group.LoadGroup(api.mustDB(), groupPermission.Group.Name)
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot find %s", groupPermission.Group.Name)
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot start transaction")
 		}
@@ -192,7 +192,7 @@ func (api *API) addGroupInApplicationHandler() Handler {
 
 		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
-		if err := application.LoadGroupByApplication(api.MustDB(), app); err != nil {
+		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load application groups")
 		}
 
@@ -208,12 +208,12 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		groupName := vars["group"]
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application %s", appName)
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot start transaction")
 		}
@@ -233,7 +233,7 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 
 		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
-		if err := application.LoadGroupByApplication(api.MustDB(), app); err != nil {
+		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application groups")
 		}
 

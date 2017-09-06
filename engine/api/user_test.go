@@ -35,14 +35,14 @@ func TestVerifyUserToken(t *testing.T) {
 		HashedTokenVerify: hashedToken,
 	}
 
-	user.DeleteUserWithDependenciesByName(api.MustDB(), u.Username)
+	user.DeleteUserWithDependenciesByName(api.mustDB(), u.Username)
 
-	err = user.InsertUser(api.MustDB(), u, a)
+	err = user.InsertUser(api.mustDB(), u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
 	}
 
-	u2, err := user.LoadUserAndAuth(api.MustDB(), "foo")
+	u2, err := user.LoadUserAndAuth(api.mustDB(), "foo")
 	if err != nil {
 		t.Fatalf("Cannot load %s: %s\n", "foo", err)
 	}
@@ -77,14 +77,14 @@ func TestWrongTokenUser(t *testing.T) {
 		HashedTokenVerify: hashedToken,
 	}
 
-	user.DeleteUserWithDependenciesByName(api.MustDB(), u.Username)
+	user.DeleteUserWithDependenciesByName(api.mustDB(), u.Username)
 
-	err = user.InsertUser(api.MustDB(), u, a)
+	err = user.InsertUser(api.mustDB(), u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
 	}
 
-	u2, err := user.LoadUserAndAuth(api.MustDB(), "foo")
+	u2, err := user.LoadUserAndAuth(api.mustDB(), "foo")
 	if err != nil {
 		t.Fatalf("Cannot load %s: %s\n", "foo", err)
 	}
@@ -115,14 +115,14 @@ func TestVerifyResetExpired(t *testing.T) {
 		EmailVerified:     true,
 	}
 
-	user.DeleteUserWithDependenciesByName(api.MustDB(), u.Username)
+	user.DeleteUserWithDependenciesByName(api.mustDB(), u.Username)
 
-	err = user.InsertUser(api.MustDB(), u, a)
+	err = user.InsertUser(api.mustDB(), u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
 	}
 
-	u2, err := user.LoadUserAndAuth(api.MustDB(), "foo")
+	u2, err := user.LoadUserAndAuth(api.mustDB(), "foo")
 	if err != nil {
 		t.Fatalf("Cannot load %s: %s\n", "foo", err)
 	}
@@ -156,14 +156,14 @@ func TestVerifyAlreadyDone(t *testing.T) {
 		EmailVerified:     true,
 	}
 
-	user.DeleteUserWithDependenciesByName(api.MustDB(), u.Username)
+	user.DeleteUserWithDependenciesByName(api.mustDB(), u.Username)
 
-	err = user.InsertUser(api.MustDB(), u, a)
+	err = user.InsertUser(api.mustDB(), u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
 	}
 
-	u2, err := user.LoadUserAndAuth(api.MustDB(), "foo")
+	u2, err := user.LoadUserAndAuth(api.mustDB(), "foo")
 	if err != nil {
 		t.Fatalf("Cannot load %s: %s\n", "foo", err)
 	}
@@ -186,9 +186,9 @@ func TestLoadUserWithGroup(t *testing.T) {
 		Fullname: "foo bar",
 	}
 
-	user.DeleteUserWithDependenciesByName(api.MustDB(), u.Username)
+	user.DeleteUserWithDependenciesByName(api.mustDB(), u.Username)
 
-	err := user.InsertUser(api.MustDB(), u, nil)
+	err := user.InsertUser(api.mustDB(), u, nil)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
 	}
@@ -202,14 +202,14 @@ func TestLoadUserWithGroup(t *testing.T) {
 		Name: "bar",
 	}
 
-	project.Delete(api.MustDB(), project1.Key)
-	project.Delete(api.MustDB(), project2.Key)
+	project.Delete(api.mustDB(), project1.Key)
+	project.Delete(api.mustDB(), project2.Key)
 
-	err = project.Insert(api.MustDB(), project1, u)
+	err = project.Insert(api.mustDB(), project1, u)
 	if err != nil {
 		t.Fatalf("cannot insert project1: %s", err)
 	}
-	err = project.Insert(api.MustDB(), project2, u)
+	err = project.Insert(api.mustDB(), project2, u)
 	if err != nil {
 		t.Fatalf("cannot insert project2: %s", err)
 	}
@@ -220,7 +220,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 		Type:      sdk.BuildPipeline,
 	}
 
-	err = pipeline.InsertPipeline(api.MustDB(), project1, pipelinePip1, nil)
+	err = pipeline.InsertPipeline(api.mustDB(), project1, pipelinePip1, nil)
 	if err != nil {
 		t.Fatalf("cannot insert pipeline: %s", err)
 	}
@@ -229,30 +229,30 @@ func TestLoadUserWithGroup(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	err = group.InsertGroup(api.MustDB(), groupInsert)
+	err = group.InsertGroup(api.mustDB(), groupInsert)
 	if err != nil {
 		t.Fatalf("cannot insert group: %s", err)
 	}
 
-	err = group.InsertGroupInProject(api.MustDB(), project1.ID, groupInsert.ID, 4)
+	err = group.InsertGroupInProject(api.mustDB(), project1.ID, groupInsert.ID, 4)
 	if err != nil {
 		t.Fatalf("cannot insert project1 in group: %s", err)
 	}
-	err = group.InsertGroupInProject(api.MustDB(), project2.ID, groupInsert.ID, 5)
+	err = group.InsertGroupInProject(api.mustDB(), project2.ID, groupInsert.ID, 5)
 	if err != nil {
 		t.Fatalf("cannot insert project1 in group: %s", err)
 	}
-	err = group.InsertGroupInPipeline(api.MustDB(), pipelinePip1.ID, groupInsert.ID, 7)
+	err = group.InsertGroupInPipeline(api.mustDB(), pipelinePip1.ID, groupInsert.ID, 7)
 	if err != nil {
 		t.Fatalf("cannot insert pipeline1 in group: %s", err)
 	}
 
-	err = group.InsertUserInGroup(api.MustDB(), groupInsert.ID, u.ID, false)
+	err = group.InsertUserInGroup(api.mustDB(), groupInsert.ID, u.ID, false)
 	if err != nil {
 		t.Fatalf("cannot insert user1 in group: %s", err)
 	}
 
-	if err := loadUserPermissions(api.MustDB(), u); err != nil {
+	if err := loadUserPermissions(api.mustDB(), u); err != nil {
 		t.Fatalf("cannot load user group and project: %s", err)
 	}
 
@@ -273,7 +273,7 @@ func Test_getUserHandlerOK(t *testing.T) {
 
 	
 
-	u1, pass1 := assets.InsertLambdaUser(api.MustDB())
+	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
@@ -300,11 +300,11 @@ func Test_getUserHandlerAdmin(t *testing.T) {
 
 	
 
-	u1, pass1 := assets.InsertLambdaUser(api.MustDB())
+	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
-	uAdmin, passAdmin := assets.InsertAdminUser(api.MustDB())
+	uAdmin, passAdmin := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, uAdmin)
 	assert.NotZero(t, passAdmin)
 
@@ -331,7 +331,7 @@ func Test_getUserHandlerForbidden(t *testing.T) {
 
 	
 
-	u1, pass1 := assets.InsertLambdaUser(api.MustDB())
+	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
@@ -339,7 +339,7 @@ func Test_getUserHandlerForbidden(t *testing.T) {
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
 
-	u2, pass2 := assets.InsertLambdaUser(api.MustDB())
+	u2, pass2 := assets.InsertLambdaUser(api.mustDB())
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass2)
 
@@ -376,7 +376,7 @@ func Test_getUserGroupsHandler(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	u, pass := assets.InsertLambdaUser(api.MustDB(), g1, g2)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g1, g2)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 

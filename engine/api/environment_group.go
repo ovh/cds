@@ -27,18 +27,18 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler> Cannot read body")
 		}
 
-		g, errG := group.LoadGroup(api.MustDB(), groupName)
+		g, errG := group.LoadGroup(api.mustDB(), groupName)
 		if errG != nil {
 			return sdk.WrapError(errG, "updateGroupRoleOnEnvironmentHandler> Cannot load group %s", groupName)
 		}
 
-		env, errE := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
+		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "updateGroupRoleOnEnvironmentHandler> Cannot load environment %s", envName)
 		}
 
 		if groupEnvironment.Permission != permission.PermissionReadWriteExecute {
-			permissions, errR := group.LoadAllEnvironmentGroupByRole(api.MustDB(), env.ID, permission.PermissionReadWriteExecute)
+			permissions, errR := group.LoadAllEnvironmentGroupByRole(api.mustDB(), env.ID, permission.PermissionReadWriteExecute)
 			if errR != nil {
 				return sdk.WrapError(errR, "updateGroupRoleOnEnvironmentHandler> Cannot load group %s for environment %s", groupName, envName)
 			}
@@ -49,12 +49,12 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 			}
 		}
 
-		p, errP := project.Load(api.MustDB(), key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "updateGroupRoleOnEnvironmentHandler> Cannot load project %s", key)
 		}
 
-		tx, errB := api.MustDB().Begin()
+		tx, errB := api.mustDB().Begin()
 		if errB != nil {
 			return sdk.WrapError(errB, "updateGroupRoleOnEnvironmentHandler> Cannot start transaction")
 		}
@@ -76,7 +76,7 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler> Cannot commit transaction")
 		}
 
-		envUpdated, errE := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
+		envUpdated, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "updateGroupRoleOnEnvironmentHandler> Cannot load updated environment")
 		}
@@ -97,12 +97,12 @@ func (api *API) addGroupsInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addGroupsInEnvironmentHandler> Cannot read body")
 		}
 
-		env, err := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
+		env, err := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if err != nil {
 			return sdk.WrapError(err, "addGroupsInEnvironmentHandler> Cannot load environment %s", envName)
 		}
 
-		tx, errB := api.MustDB().Begin()
+		tx, errB := api.mustDB().Begin()
 		if errB != nil {
 			return sdk.WrapError(errB, "addGroupsInEnvironmentHandler> Cannot start transaction")
 		}
@@ -150,7 +150,7 @@ func (api *API) addGroupsInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addGroupsInEnvironmentHandler: Cannot commit transaction")
 		}
 
-		envUpdated, errL := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
+		envUpdated, errL := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errL != nil {
 			return sdk.WrapError(errL, "addGroupsInEnvironmentHandler: Cannot load updated environment")
 		}
@@ -171,19 +171,19 @@ func (api *API) addGroupInEnvironmentHandler() Handler {
 			return err
 		}
 
-		env, err := environment.LoadEnvironmentByName(api.MustDB(), key, envName)
+		env, err := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if err != nil {
 			log.Warning("addGroupInEnvironmentHandler: Cannot load %s: %s\n", envName, err)
 			return err
 		}
 
-		g, err := group.LoadGroup(api.MustDB(), groupPermission.Group.Name)
+		g, err := group.LoadGroup(api.mustDB(), groupPermission.Group.Name)
 		if err != nil {
 			log.Warning("addGroupInEnvironmentHandler: Cannot find %s: %s\n", groupPermission.Group.Name, err)
 			return err
 		}
 
-		alreadyAdded, err := group.IsInEnvironment(api.MustDB(), env.ID, g.ID)
+		alreadyAdded, err := group.IsInEnvironment(api.mustDB(), env.ID, g.ID)
 		if err != nil {
 			log.Warning("addGroupInEnvironmentHandler> Cannot check if group is in env: %s\n", err)
 			return err
@@ -194,7 +194,7 @@ func (api *API) addGroupInEnvironmentHandler() Handler {
 			return sdk.ErrGroupPresent
 		}
 
-		if err := group.InsertGroupInEnvironment(api.MustDB(), env.ID, g.ID, groupPermission.Permission); err != nil {
+		if err := group.InsertGroupInEnvironment(api.mustDB(), env.ID, g.ID, groupPermission.Permission); err != nil {
 			log.Warning("addGroupInEnvironmentHandler: Cannot add group %s in environment %s:  %s\n", g.Name, env.Name, err)
 			return err
 		}
@@ -211,17 +211,17 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		groupName := vars["group"]
 
-		proj, errP := project.Load(api.MustDB(), key, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteGroupFromEnvironmentHandler> Cannot load project")
 		}
 
-		env, errE := environment.LoadEnvironmentByName(api.MustDB(), proj.Key, envName)
+		env, errE := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "deleteGroupFromEnvironmentHandler: Cannot load environment")
 		}
 
-		tx, errT := api.MustDB().Begin()
+		tx, errT := api.mustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteGroupFromEnvironmentHandler: Cannot start transaction")
 		}

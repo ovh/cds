@@ -20,13 +20,13 @@ func (api *API) registerHatcheryHandler() Handler {
 		}
 
 		// Load token
-		tk, err := token.LoadToken(api.MustDB(), hatch.UID)
+		tk, err := token.LoadToken(api.mustDB(), hatch.UID)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrUnauthorized, "registerHatchery> Invalid token")
 		}
 		hatch.GroupID = tk.GroupID
 
-		if err = hatchery.InsertHatchery(api.MustDB(), &hatch); err != nil {
+		if err = hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {
 			if err != sdk.ErrModelNameExist {
 				return sdk.WrapError(err, "registerHatchery> Cannot insert new hatchery")
 			}
@@ -45,7 +45,7 @@ func (api *API) refreshHatcheryHandler() Handler {
 		vars := mux.Vars(r)
 		hatcheryID := vars["id"]
 
-		if err := hatchery.RefreshHatchery(api.MustDB(), hatcheryID); err != nil {
+		if err := hatchery.RefreshHatchery(api.mustDB(), hatcheryID); err != nil {
 			return sdk.WrapError(err, "refreshHatcheryHandler> cannot refresh last beat of %s", hatcheryID)
 		}
 		return nil

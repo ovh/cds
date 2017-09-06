@@ -25,7 +25,7 @@ func (api *API) generateTokenHandler() Handler {
 			return sdk.WrapError(err, "generateTokenHandler> '%s'", expiration)
 		}
 
-		g, err := group.LoadGroup(api.MustDB(), groupName)
+		g, err := group.LoadGroup(api.mustDB(), groupName)
 		if err != nil {
 			return sdk.WrapError(err, "generateTokenHandler> cannot load group '%s'", groupName)
 		}
@@ -35,7 +35,7 @@ func (api *API) generateTokenHandler() Handler {
 			return sdk.WrapError(err, "generateTokenHandler: cannot generate key")
 		}
 
-		if err := token.InsertToken(api.MustDB(), g.ID, tk, exp); err != nil {
+		if err := token.InsertToken(api.mustDB(), g.ID, tk, exp); err != nil {
 			return sdk.WrapError(err, "generateTokenHandler> cannot insert new key")
 		}
 

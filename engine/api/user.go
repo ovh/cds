@@ -27,12 +27,12 @@ func (api *API) DeleteUserHandler() Handler {
 			return WriteJSON(w, r, nil, http.StatusForbidden)
 		}
 
-		u, errLoad := user.LoadUserWithoutAuth(api.MustDB(), username)
+		u, errLoad := user.LoadUserWithoutAuth(api.mustDB(), username)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "deleteUserHandler> Cannot load user from db")
 		}
 
-		tx, errb := api.MustDB().Begin()
+		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "deleteUserHandler> cannot start transaction")
 		}
@@ -60,12 +60,12 @@ func (api *API) GetUserHandler() Handler {
 			return WriteJSON(w, r, nil, http.StatusForbidden)
 		}
 
-		u, err := user.LoadUserWithoutAuth(api.MustDB(), username)
+		u, err := user.LoadUserWithoutAuth(api.mustDB(), username)
 		if err != nil {
 			return sdk.WrapError(err, "getUserHandler: Cannot load user from db")
 		}
 
-		if err = loadUserPermissions(api.MustDB(), u); err != nil {
+		if err = loadUserPermissions(api.mustDB(), u); err != nil {
 			return sdk.WrapError(err, "getUserHandler: Cannot get user group and project from db")
 		}
 
@@ -83,7 +83,7 @@ func (api *API) getUserGroupsHandler() Handler {
 			return WriteJSON(w, r, nil, http.StatusForbidden)
 		}
 
-		u, errl := user.LoadUserWithoutAuth(api.MustDB(), username)
+		u, errl := user.LoadUserWithoutAuth(api.mustDB(), username)
 		if errl != nil {
 			return sdk.WrapError(errl, "getUserHandler: Cannot load user from db")
 		}
@@ -91,12 +91,12 @@ func (api *API) getUserGroupsHandler() Handler {
 		var groups, groupsAdmin []sdk.Group
 
 		var err1, err2 error
-		groups, err1 = group.LoadGroupByUser(api.MustDB(), u.ID)
+		groups, err1 = group.LoadGroupByUser(api.mustDB(), u.ID)
 		if err1 != nil {
 			return sdk.WrapError(err1, "getUserGroupsHandler: Cannot load group by user")
 		}
 
-		groupsAdmin, err2 = group.LoadGroupByAdmin(api.MustDB(), u.ID)
+		groupsAdmin, err2 = group.LoadGroupByAdmin(api.mustDB(), u.ID)
 		if err2 != nil {
 			return sdk.WrapError(err2, "getUserGroupsHandler: Cannot load group by admin")
 		}
@@ -119,7 +119,7 @@ func (api *API) UpdateUserHandler() Handler {
 			return WriteJSON(w, r, nil, http.StatusForbidden)
 		}
 
-		userDB, errload := user.LoadUserWithoutAuth(api.MustDB(), username)
+		userDB, errload := user.LoadUserWithoutAuth(api.mustDB(), username)
 		if errload != nil {
 			return sdk.WrapError(errload, "getUserHandler: Cannot load user from db")
 		}
@@ -135,7 +135,7 @@ func (api *API) UpdateUserHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "updateUserHandler: Email address %s is not valid", userBody.Email)
 		}
 
-		if err := user.UpdateUser(api.MustDB(), userBody); err != nil {
+		if err := user.UpdateUser(api.mustDB(), userBody); err != nil {
 			return sdk.WrapError(err, "updateUserHandler: Cannot update user table")
 		}
 
@@ -146,7 +146,7 @@ func (api *API) UpdateUserHandler() Handler {
 // GetUsers fetches all users from databases
 func (api *API) GetUsersHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		users, err := user.LoadUsers(api.MustDB())
+		users, err := user.LoadUsers(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "GetUsers: Cannot load user from db")
 		}
@@ -180,7 +180,7 @@ func (api *API) AddUserHandler() Handler {
 
 		// Check that user does not already exists
 		query := `SELECT * FROM "user" WHERE username = $1`
-		rows, err := api.MustDB().Query(query, u.Username)
+		rows, err := api.mustDB().Query(query, u.Username)
 		if err != nil {
 			return sdk.WrapError(err, "AddUsers: Cannot check if user %s exist", u.Username)
 		}
@@ -196,7 +196,7 @@ func (api *API) AddUserHandler() Handler {
 
 		auth := sdk.NewAuth(hashedToken)
 
-		nbUsers, errc := user.CountUser(api.MustDB())
+		nbUsers, errc := user.CountUser(api.mustDB())
 		if errc != nil {
 			return sdk.WrapError(errc, "AddUser: Cannot count user")
 		}
@@ -206,7 +206,7 @@ func (api *API) AddUserHandler() Handler {
 			u.Admin = false
 		}
 
-		if err := user.InsertUser(api.MustDB(), &u, auth); err != nil {
+		if err := user.InsertUser(api.mustDB(), &u, auth); err != nil {
 			return sdk.WrapError(err, "AddUser: Cannot insert user")
 		}
 
@@ -214,7 +214,7 @@ func (api *API) AddUserHandler() Handler {
 
 		// If it's the first user, add him to shared.infra group
 		if nbUsers == 0 {
-			if err := group.AddAdminInGlobalGroup(api.MustDB(), u.ID); err != nil {
+			if err := group.AddAdminInGlobalGroup(api.mustDB(), u.ID); err != nil {
 				return sdk.WrapError(err, "AddUser: Cannot add user in global group")
 			}
 		}
@@ -241,7 +241,7 @@ func (api *API) ResetUserHandler() Handler {
 		}
 
 		// Load user
-		userDb, err := user.LoadUserAndAuth(api.MustDB(), username)
+		userDb, err := user.LoadUserAndAuth(api.mustDB(), username)
 		if err != nil || userDb.Email != resetUserRequest.User.Email {
 			return sdk.WrapError(sdk.ErrInvalidResetUser, "Cannot load user: %s", err)
 		}
@@ -254,7 +254,7 @@ func (api *API) ResetUserHandler() Handler {
 		userDb.Auth.DateReset = time.Now().Unix()
 
 		// Update in db
-		if err := user.UpdateUserAndAuth(api.MustDB(), *userDb); err != nil {
+		if err := user.UpdateUserAndAuth(api.mustDB(), *userDb); err != nil {
 			return sdk.WrapError(err, "ResetUser: Cannot update user %s", userDb.Username)
 		}
 
@@ -296,7 +296,7 @@ func (api *API) ConfirmUserHandler() Handler {
 		}
 
 		// Load user
-		u, err := user.LoadUserAndAuth(api.MustDB(), username)
+		u, err := user.LoadUserAndAuth(api.mustDB(), username)
 		if err != nil {
 			return sdk.ErrInvalidUsername
 		}
@@ -312,7 +312,7 @@ func (api *API) ConfirmUserHandler() Handler {
 		u.Auth.DateReset = 0
 
 		// Update in db
-		if err := user.UpdateUserAndAuth(api.MustDB(), *u); err != nil {
+		if err := user.UpdateUserAndAuth(api.mustDB(), *u); err != nil {
 			return err
 		}
 
@@ -356,7 +356,7 @@ func (api *API) LoginUserHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidUser, "Auth> Login failed: %s", loginUserRequest.Username)
 		}
 		// Load user
-		u, errl := user.LoadUserWithoutAuth(api.MustDB(), loginUserRequest.Username)
+		u, errl := user.LoadUserWithoutAuth(api.mustDB(), loginUserRequest.Username)
 		if errl != nil && errl == sql.ErrNoRows {
 			return sdk.WrapError(sdk.ErrInvalidUser, "Auth> Login error %s: %s", loginUserRequest.Username, errl)
 		}
@@ -369,7 +369,7 @@ func (api *API) LoginUserHandler() Handler {
 			User: *u,
 		}
 
-		if err := group.CheckUserInDefaultGroup(api.MustDB(), u.ID); err != nil {
+		if err := group.CheckUserInDefaultGroup(api.mustDB(), u.ID); err != nil {
 			log.Warning("Auth> Error while check user in default group:%s\n", err)
 		}
 
@@ -383,7 +383,7 @@ func (api *API) LoginUserHandler() Handler {
 			}
 		} else {
 			//CLI login, generate user key as persistent session
-			sessionKey, errs = auth.NewPersistentSession(api.MustDB(), api.Router.AuthDriver, u)
+			sessionKey, errs = auth.NewPersistentSession(api.mustDB(), api.Router.AuthDriver, u)
 			if errs != nil {
 				log.Error("Auth> Error while creating new session: %s\n", errs)
 			}
@@ -413,12 +413,12 @@ func (api *API) importUsersHandler() Handler {
 
 		errors := map[string]string{}
 		for _, u := range users {
-			if err := user.InsertUser(api.MustDB(), &u, &sdk.Auth{
+			if err := user.InsertUser(api.mustDB(), &u, &sdk.Auth{
 				EmailVerified:  true,
 				DateReset:      0,
 				HashedPassword: hashedToken,
 			}); err != nil {
-				oldU, err := user.LoadUserWithoutAuth(api.MustDB(), u.Username)
+				oldU, err := user.LoadUserWithoutAuth(api.mustDB(), u.Username)
 				if err != nil {
 					errors[u.Username] = err.Error()
 					continue
@@ -428,7 +428,7 @@ func (api *API) importUsersHandler() Handler {
 					EmailVerified: true,
 					DateReset:     0,
 				}
-				if err := user.UpdateUserAndAuth(api.MustDB(), u); err != nil {
+				if err := user.UpdateUserAndAuth(api.mustDB(), u); err != nil {
 					errors[u.Username] = err.Error()
 				}
 			}

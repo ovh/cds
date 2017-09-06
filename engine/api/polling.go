@@ -23,12 +23,12 @@ func (api *API) addPollerHandler() Handler {
 		pipName := vars["permPipelineKey"]
 
 		//Load the application
-		app, err := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "addPollerHandler> Cannot load application")
 		}
 
-		app.RepositoryPollers, err = poller.LoadByApplication(api.MustDB(), app.ID)
+		app.RepositoryPollers, err = poller.LoadByApplication(api.mustDB(), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "addPollerHandler> cannot load application poller %s/%s", projectKey, appName)
 		}
@@ -62,7 +62,7 @@ func (api *API) addPollerHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addPollerHandler> No repository on application")
 		}
 
-		b, e := repositoriesmanager.CheckApplicationIsAttached(api.MustDB(), app.RepositoriesManager.Name, projectKey, appName)
+		b, e := repositoriesmanager.CheckApplicationIsAttached(api.mustDB(), app.RepositoriesManager.Name, projectKey, appName)
 		if e != nil {
 			return sdk.WrapError(e, "addPollerHandler> Cannot check app (%s,%s,%s)", app.RepositoriesManager.Name, projectKey, appName)
 		}
@@ -71,14 +71,14 @@ func (api *API) addPollerHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addPollerHandler> No repository on application")
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(e, "addPollerHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		// Insert poller in database
-		err = poller.Insert(api.MustDB(), &h)
+		err = poller.Insert(api.mustDB(), &h)
 		if err != nil {
 			return sdk.WrapError(err, "addPollerHandler: cannot insert poller in db")
 		}
@@ -95,7 +95,7 @@ func (api *API) addPollerHandler() Handler {
 
 		app.RepositoryPollers = append(app.RepositoryPollers, h)
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.MustDB(), projectKey, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "addPollerHandler> Cannot load workflow")
 		}
@@ -112,12 +112,12 @@ func (api *API) updatePollerHandler() Handler {
 		pipName := vars["permPipelineKey"]
 
 		//Load the application
-		app, err := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "updatePollerHandler> Cannot load application")
 		}
 
-		app.RepositoryPollers, err = poller.LoadByApplication(api.MustDB(), app.ID)
+		app.RepositoryPollers, err = poller.LoadByApplication(api.mustDB(), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "updatePollerHandler> cannot load application poller %s/%s", projectKey, appName)
 		}
@@ -144,7 +144,7 @@ func (api *API) updatePollerHandler() Handler {
 		h.Application = *app
 		h.Pipeline = *pip
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updatePollerHandler> cannot start transaction")
 
@@ -166,12 +166,12 @@ func (api *API) updatePollerHandler() Handler {
 			return sdk.WrapError(err, "updatePollerHandler> cannot commit transaction")
 		}
 
-		app.RepositoryPollers, err = poller.LoadByApplication(api.MustDB(), app.ID)
+		app.RepositoryPollers, err = poller.LoadByApplication(api.mustDB(), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "updatePollerHandler> cannot load pollers")
 		}
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.MustDB(), projectKey, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updatePollerHandler> Cannot load workflow")
 		}
@@ -186,12 +186,12 @@ func (api *API) getApplicationPollersHandler() Handler {
 		projectName := vars["key"]
 		appName := vars["permApplicationName"]
 
-		a, err := application.LoadByName(api.MustDB(), projectName, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), projectName, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application %s/%s", projectName, appName)
 		}
 
-		a.RepositoryPollers, err = poller.LoadByApplication(api.MustDB(), a.ID)
+		a.RepositoryPollers, err = poller.LoadByApplication(api.mustDB(), a.ID)
 		if err != nil {
 			log.Warning("getApplicationHooksHandler> cannot load application poller %s/%s: %s\n", projectName, appName, err)
 			return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application poller %s/%s", projectName, appName)
@@ -208,19 +208,19 @@ func (api *API) getPollersHandler() Handler {
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		p, err := pipeline.LoadPipeline(api.MustDB(), projectName, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.mustDB(), projectName, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "getPollersHandler> cannot load pipeline %s/%s", projectName, pipelineName)
 		}
 
-		a, err := application.LoadByName(api.MustDB(), projectName, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), projectName, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getPollersHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
 			return sdk.WrapError(err, "getPollersHandler> cannot load application %s/%s", projectName, appName)
 
 		}
 
-		poller, err := poller.LoadByApplicationAndPipeline(api.MustDB(), a.ID, p.ID)
+		poller, err := poller.LoadByApplicationAndPipeline(api.mustDB(), a.ID, p.ID)
 		if err != nil {
 			return sdk.WrapError(err, "getPollersHandler> cannot load poller with ID %d %d", p.ID, a.ID)
 
@@ -237,24 +237,24 @@ func (api *API) deletePollerHandler() Handler {
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		p, err := pipeline.LoadPipeline(api.MustDB(), projectKey, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot load pipeline %s/%s", projectKey, pipelineName)
 
 		}
 
-		a, err := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot load application %s/%s", projectKey, appName)
 		}
 
-		po, err := poller.LoadByApplicationAndPipeline(api.MustDB(), a.ID, p.ID)
+		po, err := poller.LoadByApplicationAndPipeline(api.mustDB(), a.ID, p.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot load poller")
 
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot start transaction")
 
@@ -276,13 +276,13 @@ func (api *API) deletePollerHandler() Handler {
 
 		}
 
-		a.RepositoryPollers, err = poller.LoadByApplication(api.MustDB(), a.ID)
+		a.RepositoryPollers, err = poller.LoadByApplication(api.mustDB(), a.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot load pollers")
 
 		}
 		var errW error
-		a.Workflows, errW = workflow.LoadCDTree(api.MustDB(), projectKey, appName, getUser(ctx), "", 0)
+		a.Workflows, errW = workflow.LoadCDTree(api.mustDB(), projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "deletePollerHandler> Cannot load workflow")
 		}

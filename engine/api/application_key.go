@@ -21,12 +21,12 @@ func (api *API) getKeysInApplicationHandler() Handler {
 
 		log.Debug("%s %s", key, appName)
 
-		app, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getKeysInApplicationHandler> Cannot load application")
 		}
 
-		if errK := application.LoadAllKeys(api.MustDB(), app); errK != nil {
+		if errK := application.LoadAllKeys(api.mustDB(), app); errK != nil {
 			return sdk.WrapError(errK, "getKeysInApplicationHandler> Cannot load application keys")
 		}
 
@@ -41,12 +41,12 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		keyName := vars["name"]
 
-		app, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.WithKeys)
+		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.WithKeys)
 		if errA != nil {
 			return sdk.WrapError(errA, "deleteKeyInApplicationHandler> Cannot load application")
 		}
 
-		tx, errT := api.MustDB().Begin()
+		tx, errT := api.mustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "v> Cannot start transaction")
 		}
@@ -87,7 +87,7 @@ func (api *API) addKeyInApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInApplicationHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		app, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "addKeyInApplicationHandler> Cannot load application")
 		}
@@ -113,7 +113,7 @@ func (api *API) addKeyInApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInApplicationHandler> unknown key of type: %s", newKey.Type)
 		}
 
-		tx, errT := api.MustDB().Begin()
+		tx, errT := api.mustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "addKeyInApplicationHandler> Cannot start transaction")
 		}

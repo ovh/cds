@@ -22,7 +22,7 @@ func (api *API) getVariablesAuditInApplicationHandler() Handler {
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		audits, err := application.GetVariableAudit(api.MustDB(), key, appName)
+		audits, err := application.GetVariableAudit(api.mustDB(), key, appName)
 		if err != nil {
 			log.Warning("getVariablesAuditInApplicationHandler: Cannot get variable audit for application %s: %s\n", appName, err)
 			return err
@@ -46,25 +46,25 @@ func (api *API) restoreAuditHandler() Handler {
 			return sdk.ErrInvalidID
 		}
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot load %s: %s\n", key, err)
 			return err
 		}
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot load application %s : %s\n", appName, err)
 			return sdk.ErrApplicationNotFound
 		}
 
-		variables, err := application.GetAudit(api.MustDB(), key, appName, auditID)
+		variables, err := application.GetAudit(api.mustDB(), key, appName, auditID)
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot get variable audit for application %s: %s\n", appName, err)
 			return err
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot start transaction : %s\n", err)
 			return sdk.ErrUnknownError
@@ -99,7 +99,7 @@ func (api *API) restoreAuditHandler() Handler {
 			return sdk.ErrUnknownError
 		}
 
-		err = sanity.CheckProjectPipelines(api.MustDB(), p)
+		err = sanity.CheckProjectPipelines(api.mustDB(), p)
 		if err != nil {
 			log.Warning("restoreAuditHandler: Cannot check warnings: %s\n", err)
 			return err
@@ -123,17 +123,17 @@ func (api *API) getVariableAuditInApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		app, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load application %s on project %s", appName, key)
 		}
 
-		variable, errV := application.LoadVariable(api.MustDB(), app.ID, varName)
+		variable, errV := application.LoadVariable(api.mustDB(), app.ID, varName)
 		if errV != nil {
 			return sdk.WrapError(errV, "getVariableAuditInApplicationHandler> Cannot load variable %s", varName)
 		}
 
-		audits, errA := application.LoadVariableAudits(api.MustDB(), app.ID, variable.ID)
+		audits, errA := application.LoadVariableAudits(api.mustDB(), app.ID, variable.ID)
 		if errA != nil {
 			return sdk.WrapError(errA, "getVariableAuditInApplicationHandler> Cannot load audit for variable %s", varName)
 		}
@@ -148,13 +148,13 @@ func (api *API) getVariableInApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getVariableInApplicationHandler: Cannot load application %s: %s\n", appName, err)
 			return err
 		}
 
-		variable, err := application.LoadVariable(api.MustDB(), app.ID, varName)
+		variable, err := application.LoadVariable(api.mustDB(), app.ID, varName)
 		if err != nil {
 			log.Warning("getVariableInApplicationHandler: Cannot get variable %s for application %s: %s\n", varName, appName, err)
 			return err
@@ -170,7 +170,7 @@ func (api *API) getVariablesInApplicationHandler() Handler {
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		variables, err := application.GetAllVariable(api.MustDB(), key, appName)
+		variables, err := application.GetAllVariable(api.mustDB(), key, appName)
 		if err != nil {
 			log.Warning("getVariablesInApplicationHandler: Cannot get variables for application %s: %s\n", appName, err)
 			return err
@@ -187,24 +187,24 @@ func (api *API) deleteVariableFromApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableInApplicationHandler: Cannot load project %s", key)
 		}
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableInApplicationHandler: Cannot load application: %s", appName)
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		// Clear password for audit
-		varToDelete, errV := application.LoadVariable(api.MustDB(), app.ID, varName, application.WithClearPassword())
+		varToDelete, errV := application.LoadVariable(api.mustDB(), app.ID, varName, application.WithClearPassword())
 		if errV != nil {
 			return sdk.WrapError(errV, "deleteVariableFromApplicationHandler> Cannot load variable %s", varName)
 		}
@@ -222,7 +222,7 @@ func (api *API) deleteVariableFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot commit transaction")
 		}
 
-		app.Variable, err = application.GetAllVariableByID(api.MustDB(), app.ID)
+		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot load variables")
 		}
@@ -239,7 +239,7 @@ func (api *API) updateVariablesInApplicationHandler() Handler {
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 		if err != nil {
 			log.Warning("updateVariablesInApplicationHandler: Cannot load %s: %s\n", key, err)
 			return err
@@ -250,13 +250,13 @@ func (api *API) updateVariablesInApplicationHandler() Handler {
 			return err
 		}
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updateVariablesInApplicationHandler: Cannot load application %s : %s\n", appName, err)
 			return sdk.ErrApplicationNotFound
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("updateVariablesInApplicationHandler: Cannot unmarshal body : %s\n", err)
 			return sdk.ErrUnknownError
@@ -324,12 +324,12 @@ func (api *API) updateVariablesInApplicationHandler() Handler {
 			return sdk.ErrUnknownError
 		}
 
-		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
 			log.Warning("updateVariableInApplicationHandler: Cannot check warnings: %s\n", err)
 			return err
 		}
 
-		if err := sanity.CheckApplication(api.MustDB(), p, app); err != nil {
+		if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
 			log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
 			return err
 		}
@@ -346,7 +346,7 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load project %s", key)
 		}
@@ -359,12 +359,12 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load application: %s", appName)
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot create transaction")
 		}
@@ -378,16 +378,16 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot commit transaction")
 		}
 
-		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot check warnings")
 		}
 
-		app.Variable, err = application.GetAllVariableByID(api.MustDB(), app.ID)
+		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load variables")
 		}
 
-		if err := sanity.CheckApplication(api.MustDB(), p, app); err != nil {
+		if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot check application sanity")
 		}
 
@@ -404,7 +404,7 @@ func (api *API) addVariableInApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		p, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
 		if err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot load %s: %s\n", key, err)
 			return err
@@ -419,13 +419,13 @@ func (api *API) addVariableInApplicationHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot load application %s :  %s\n", appName, err)
 			return err
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot start transaction:  %s\n", err)
 			return err
@@ -450,18 +450,18 @@ func (api *API) addVariableInApplicationHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.MustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot check warnings: %s\n", err)
 			return err
 		}
 
-		app.Variable, err = application.GetAllVariableByID(api.MustDB(), app.ID)
+		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
 		if err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot get variables: %s\n", err)
 			return err
 		}
 
-		if err := sanity.CheckApplication(api.MustDB(), p, app); err != nil {
+		if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
 			return err
 		}

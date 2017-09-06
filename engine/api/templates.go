@@ -81,7 +81,7 @@ func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.Temp
 
 func (api *API) getTemplatesHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		tmpls, err := templateextension.All(api.MustDB())
+		tmpls, err := templateextension.All(api.mustDB())
 		if err != nil {
 			return sdk.WrapError(err, "getTemplatesHandler>%T", err)
 		}
@@ -107,7 +107,7 @@ func (api *API) addTemplateHandler() Handler {
 		//Check actions
 		for _, a := range templ.Actions {
 			log.Debug("Checking action %s", a)
-			pa, err := action.LoadPublicAction(api.MustDB(), a)
+			pa, err := action.LoadPublicAction(api.mustDB(), a)
 			if err != nil {
 				return sdk.WrapError(err, "addTemplateHandler> err on loadPublicAction")
 			}
@@ -126,7 +126,7 @@ func (api *API) addTemplateHandler() Handler {
 		templ.ObjectPath = objectpath
 
 		//Insert in database
-		if err := templateextension.Insert(api.MustDB(), templ); err != nil {
+		if err := templateextension.Insert(api.mustDB(), templ); err != nil {
 			return sdk.WrapError(err, "addTemplateHandler>%T", err)
 		}
 
@@ -142,7 +142,7 @@ func (api *API) updateTemplateHandler() Handler {
 		}
 
 		//Find it
-		templ, errLoad := templateextension.LoadByID(api.MustDB(), int64(id))
+		templ, errLoad := templateextension.LoadByID(api.mustDB(), int64(id))
 		if errLoad != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "updateTemplateHandler>Unable to load template: %s", errLoad)
 		}
@@ -183,7 +183,7 @@ func (api *API) updateTemplateHandler() Handler {
 		//Check actions
 		for _, a := range templ2.Actions {
 			log.Debug("updateTemplateHandler> Checking action %s", a)
-			pa, errlp := action.LoadPublicAction(api.MustDB(), a)
+			pa, errlp := action.LoadPublicAction(api.mustDB(), a)
 			if errlp != nil {
 				return sdk.WrapError(errlp, "updateTemplateHandler> error on loadPublicAction")
 			}
@@ -200,7 +200,7 @@ func (api *API) updateTemplateHandler() Handler {
 
 		templ2.ObjectPath = objectpath
 
-		if errUpdate := templateextension.Update(api.MustDB(), templ2); errUpdate != nil {
+		if errUpdate := templateextension.Update(api.mustDB(), templ2); errUpdate != nil {
 			//re-store the old file in case of error
 			if _, err := objectstore.StoreTemplateExtension(*templ2, ioutil.NopCloser(bytes.NewBuffer(btes))); err != nil {
 				return sdk.WrapError(err, "updateTemplateHandler> Error while uploading to object store %s", templ2.Name)
@@ -221,13 +221,13 @@ func (api *API) deleteTemplateHandler() Handler {
 		}
 
 		//Load it
-		templ, err := templateextension.LoadByID(api.MustDB(), int64(id))
+		templ, err := templateextension.LoadByID(api.mustDB(), int64(id))
 		if err != nil {
 			return sdk.WrapError(err, "deleteTemplateHandler> error on LoadByID")
 		}
 
 		//Delete it
-		if err := templateextension.Delete(api.MustDB(), templ); err != nil {
+		if err := templateextension.Delete(api.mustDB(), templ); err != nil {
 			return sdk.WrapError(err, "deleteTemplateHandler> error on Delete")
 		}
 
@@ -243,7 +243,7 @@ func (api *API) deleteTemplateHandler() Handler {
 
 func (api *API) getBuildTemplatesHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		tpl, err := templateextension.LoadByType(api.MustDB(), "BUILD")
+		tpl, err := templateextension.LoadByType(api.mustDB(), "BUILD")
 		if err != nil {
 			return sdk.WrapError(err, "getBuildTemplatesHandler> error on loadByType")
 		}
@@ -253,7 +253,7 @@ func (api *API) getBuildTemplatesHandler() Handler {
 
 func (api *API) getDeployTemplatesHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		tpl, err := templateextension.LoadByType(api.MustDB(), "DEPLOY")
+		tpl, err := templateextension.LoadByType(api.mustDB(), "DEPLOY")
 		if err != nil {
 			return sdk.WrapError(err, "getDeployTemplatesHandler> error on loadByType")
 		}
@@ -267,7 +267,7 @@ func (api *API) applyTemplateHandler() Handler {
 		projectKey := vars["permProjectKey"]
 
 		// Load the project
-		proj, errload := project.Load(api.MustDB(), projectKey, getUser(ctx),
+		proj, errload := project.Load(api.mustDB(), projectKey, getUser(ctx),
 			project.LoadOptions.Default,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithGroups)
@@ -289,7 +289,7 @@ func (api *API) applyTemplateHandler() Handler {
 
 		// Apply the template
 		log.Debug("applyTemplateHandler> applyTemplate")
-		msg, errapply := template.ApplyTemplate(api.MustDB(), proj, opts, getUser(ctx), sessionKey, api.Config.URL.API)
+		msg, errapply := template.ApplyTemplate(api.mustDB(), proj, opts, getUser(ctx), sessionKey, api.Config.URL.API)
 		if errapply != nil {
 			return sdk.WrapError(errapply, "applyTemplateHandler> Error while applyTemplate")
 		}
@@ -303,17 +303,17 @@ func (api *API) applyTemplateHandler() Handler {
 		}
 
 		log.Debug("applyTemplatesHandler> Check warnings on project")
-		if err := sanity.CheckProjectPipelines(api.MustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
 			return sdk.WrapError(err, "applyTemplatesHandler> Cannot check warnings")
 		}
 
-		proj, errPrj := project.Load(api.MustDB(), proj.Key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithPipelines)
+		proj, errPrj := project.Load(api.mustDB(), proj.Key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithPipelines)
 		if errPrj != nil {
 			return sdk.WrapError(errPrj, "applyTemplatesHandler> Cannot load project")
 		}
 
 		for _, a := range proj.Applications {
-			if err := sanity.CheckApplication(api.MustDB(), proj, &a); err != nil {
+			if err := sanity.CheckApplication(api.mustDB(), proj, &a); err != nil {
 				return sdk.WrapError(err, "applyTemplatesHandler> Cannot check application sanity")
 			}
 		}
@@ -329,13 +329,13 @@ func (api *API) applyTemplateOnApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 
 		// Load the project
-		proj, errLoad := project.Load(api.MustDB(), projectKey, getUser(ctx), project.LoadOptions.Default)
+		proj, errLoad := project.Load(api.mustDB(), projectKey, getUser(ctx), project.LoadOptions.Default)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "applyTemplateOnApplicationHandler> Cannot load project %s", projectKey)
 		}
 
 		// Load the application
-		app, errLoadByName := application.LoadByName(api.MustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.Default)
+		app, errLoadByName := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.Default)
 		if errLoadByName != nil {
 			return sdk.WrapError(errLoadByName, "applyTemplateOnApplicationHandler> Cannot load application %s", appName)
 		}
@@ -353,7 +353,7 @@ func (api *API) applyTemplateOnApplicationHandler() Handler {
 		}
 
 		//Apply the template
-		msg, err := template.ApplyTemplateOnApplication(api.MustDB(), proj, app, opts, getUser(ctx), sessionKey, api.Config.URL.API)
+		msg, err := template.ApplyTemplateOnApplication(api.mustDB(), proj, app, opts, getUser(ctx), sessionKey, api.Config.URL.API)
 		if err != nil {
 			return sdk.WrapError(err, "applyTemplateOnApplicationHandler> Error on apply template on application")
 		}
@@ -367,7 +367,7 @@ func (api *API) applyTemplateOnApplicationHandler() Handler {
 		}
 
 		log.Debug("applyTemplatesHandler> Check warnings on project")
-		if err := sanity.CheckProjectPipelines(api.MustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
 			return sdk.WrapError(err, "applyTemplatesHandler> Cannot check warnings")
 		}
 

@@ -20,14 +20,14 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Loading all models
-	models, err := worker.LoadWorkerModels(api.MustDB())
+	models, err := worker.LoadWorkerModels(api.mustDB())
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(api.MustDB(), m.ID); err != nil {
+		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -38,14 +38,14 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Loading all models
-	models, err := worker.LoadWorkerModels(api.MustDB())
+	models, err := worker.LoadWorkerModels(api.mustDB())
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(api.MustDB(), m.ID); err != nil {
+		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -53,11 +53,11 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(api.MustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -98,11 +98,11 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(api.MustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -210,7 +210,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.MustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -253,11 +253,11 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.MustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.MustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -306,16 +306,16 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	if err := group.InsertGroup(api.MustDB(), g1); err != nil {
+	if err := group.InsertGroup(api.mustDB(), g1); err != nil {
 		t.Fatal(err)
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.MustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.MustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -360,11 +360,11 @@ func Test_updateWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.MustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.MustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -445,11 +445,11 @@ func Test_deleteWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(api.MustDB(), g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(api.MustDB(), g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -509,11 +509,11 @@ func Test_getWorkerModel(t *testing.T) {
 	
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(api.MustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -569,11 +569,11 @@ func Test_getWorkerModels(t *testing.T) {
 	
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(api.MustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}

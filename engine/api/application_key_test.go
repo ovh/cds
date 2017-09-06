@@ -16,7 +16,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.Mux)
@@ -29,7 +29,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -49,7 +49,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	k.Private = priv
 	k.KeyID = kid
 
-	if err := application.InsertKey(api.MustDB(), k); err != nil {
+	if err := application.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -71,7 +71,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.Mux)
@@ -84,7 +84,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -98,7 +98,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 		ApplicationID: app.ID,
 	}
 
-	if err := application.InsertKey(api.MustDB(), k); err != nil {
+	if err := application.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -120,7 +120,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.Mux)
@@ -133,7 +133,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

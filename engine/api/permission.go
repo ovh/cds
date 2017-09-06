@@ -63,13 +63,13 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		switch headers.Get("User-Agent") {
 		case sdk.HatcheryAgent:
 			var err error
-			ctx, err = auth.CheckHatcheryAuth(ctx, api.MustDB(), headers)
+			ctx, err = auth.CheckHatcheryAuth(ctx, api.mustDB(), headers)
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
 		case sdk.WorkerAgent:
 			var err error
-			ctx, err = auth.CheckWorkerAuth(ctx, api.MustDB(), headers)
+			ctx, err = auth.CheckWorkerAuth(ctx, api.mustDB(), headers)
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
@@ -83,13 +83,13 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	if getUser(ctx) != nil {
-		if err := loadUserPermissions(api.MustDB(), getUser(ctx)); err != nil {
+		if err := loadUserPermissions(api.mustDB(), getUser(ctx)); err != nil {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %s permission: %s", getUser(ctx).ID, err)
 		}
 	}
 
 	if getHatchery(ctx) != nil {
-		g, err := loadGroupPermissions(api.MustDB(), getHatchery(ctx).GroupID)
+		g, err := loadGroupPermissions(api.mustDB(), getHatchery(ctx).GroupID)
 		if err != nil {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions for GroupID %d err:%s", getHatchery(ctx).GroupID, err)
 		}
@@ -97,11 +97,11 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	if getWorker(ctx) != nil {
-		if err := worker.RefreshWorker(api.MustDB(), getWorker(ctx).ID); err != nil {
+		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx).ID); err != nil {
 			return ctx, sdk.WrapError(err, "Router> Unable to refresh worker")
 		}
 
-		g, err := loadGroupPermissions(api.MustDB(), getWorker(ctx).GroupID)
+		g, err := loadGroupPermissions(api.mustDB(), getWorker(ctx).GroupID)
 		if err != nil {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions: %s", err)
 		}
@@ -109,7 +109,7 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 		if getWorker(ctx).ModelID != 0 {
 			//Load model
-			m, err := worker.LoadWorkerModelByID(api.MustDB(), getWorker(ctx).ModelID)
+			m, err := worker.LoadWorkerModelByID(api.mustDB(), getWorker(ctx).ModelID)
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s", err)
 			}
@@ -119,7 +119,7 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 				getUser(ctx).Groups = append(getUser(ctx).Groups, *group.SharedInfraGroup)
 			} else {
 				log.Debug("Router> loading groups permission for model %d", getWorker(ctx).ModelID)
-				modelGroup, errLoad2 := loadGroupPermissions(api.MustDB(), m.GroupID)
+				modelGroup, errLoad2 := loadGroupPermissions(api.mustDB(), m.GroupID)
 				if errLoad2 != nil {
 					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Cannot load group: %s", errLoad2)
 				}
@@ -142,7 +142,7 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	if rc.Options["needWorker"] == "true" {
-		permissionOk := api.checkWorkerPermission(ctx, api.MustDB(), rc, mux.Vars(req))
+		permissionOk := api.checkWorkerPermission(ctx, api.mustDB(), rc, mux.Vars(req))
 		if !permissionOk {
 			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> Worker not authorized")
 		}
@@ -347,7 +347,7 @@ func (api *API) checkWorkerModelPermissions(ctx context.Context, modelID string,
 		return false
 	}
 
-	m, err := worker.LoadWorkerModelByID(api.MustDB(), id)
+	m, err := worker.LoadWorkerModelByID(api.mustDB(), id)
 	if err != nil {
 		log.Warning("checkWorkerModelPermissions> unable to load model by id %s: %s", modelID, err)
 		return false

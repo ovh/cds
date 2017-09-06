@@ -28,30 +28,30 @@ func (api *API) attachPipelineToApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		proj, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("addPipelineInApplicationHandler: Cannot load project: %s: %s\n", key, err)
 			return err
 		}
 
-		pipeline, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, true)
+		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, true)
 		if err != nil {
 			log.Warning("addPipelineInApplicationHandler: Cannot load pipeline %s: %s\n", appName, err)
 			return sdk.ErrNotFound
 		}
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("addPipelineInApplicationHandler: Cannot load application %s: %s\n", appName, err)
 			return sdk.ErrNotFound
 		}
 
-		if _, err := application.AttachPipeline(api.MustDB(), app.ID, pipeline.ID); err != nil {
+		if _, err := application.AttachPipeline(api.mustDB(), app.ID, pipeline.ID); err != nil {
 			log.Warning("addPipelineInApplicationHandler: Cannot attach pipeline %s to application %s:  %s\n", pipelineName, appName, err)
 			return err
 		}
 
-		if err := sanity.CheckPipeline(api.MustDB(), proj, pipeline); err != nil {
+		if err := sanity.CheckPipeline(api.mustDB(), proj, pipeline); err != nil {
 			log.Warning("addPipelineInApplicationHandler: Cannot check pipeline sanity: %s\n", err)
 			return err
 		}
@@ -74,19 +74,19 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 			return err
 		}
 
-		project, err := project.Load(api.MustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		project, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot load project: %s: %s\n", key, err)
 			return err
 		}
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot load application %s: %s\n", appName, err)
 			return err
 		}
 
-		tx, errBegin := api.MustDB().Begin()
+		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot begin transaction: %s\n", errBegin)
 			return errBegin
@@ -122,13 +122,13 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.MustDB(), project); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), project); err != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot check project sanity: %s\n", err)
 			return err
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.MustDB(), project.Key, app.Name, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), project.Key, app.Name, getUser(ctx), "", 0)
 		if errW != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot load application workflow: %s\n", errW)
 			return errW
@@ -152,13 +152,13 @@ func (api *API) updatePipelinesToApplicationHandler() Handler {
 			return err
 		}
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updatePipelinesToApplicationHandler: Cannot load application %s: %s\n", appName, err)
 			return sdk.ErrApplicationNotFound
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("updatePipelinesToApplicationHandler: Cannot start transaction: %s\n", err)
 			return sdk.ErrUnknownError
@@ -193,13 +193,13 @@ func (api *API) updatePipelineToApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		pipeline, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
+		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("updatePipelineToApplicationHandler: Cannot load pipeline %s: %s\n", appName, err)
 			return sdk.ErrNotFound
 		}
 
-		app, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("updatePipelineToApplicationHandler: Cannot load application %s: %s\n", appName, err)
 			return sdk.ErrNotFound
@@ -212,7 +212,7 @@ func (api *API) updatePipelineToApplicationHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		err = application.UpdatePipelineApplicationString(api.MustDB(), app, pipeline.ID, string(data), getUser(ctx))
+		err = application.UpdatePipelineApplicationString(api.mustDB(), app, pipeline.ID, string(data), getUser(ctx))
 		if err != nil {
 			log.Warning("updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s:  %s\n", appName, pipelineName, err)
 			return err
@@ -231,7 +231,7 @@ func (api *API) getPipelinesInApplicationHandler() Handler {
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		pipelines, err := application.GetAllPipelines(api.MustDB(), key, appName)
+		pipelines, err := application.GetAllPipelines(api.mustDB(), key, appName)
 		if err != nil {
 			log.Warning("getPipelinesInApplicationHandler: Cannot load pipelines for application %s: %s\n", appName, err)
 			return sdk.ErrNotFound
@@ -248,13 +248,13 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
 
-		a, errA := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.WithPipelines)
+		a, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.WithPipelines)
 		if errA != nil {
 			log.Warning("removePipelineFromApplicationHandler> Cannot load application: %s\n", errA)
 			return errA
 		}
 
-		tx, errB := api.MustDB().Begin()
+		tx, errB := api.mustDB().Begin()
 		if errB != nil {
 			log.Warning("removePipelineFromApplicationHandler> Cannot start tx: %s\n", errB)
 			return errB
@@ -280,7 +280,7 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 		cache.DeleteAll(k)
 
 		var errW error
-		a.Workflows, errW = workflow.LoadCDTree(api.MustDB(), key, a.Name, getUser(ctx), "", 0)
+		a.Workflows, errW = workflow.LoadCDTree(api.mustDB(), key, a.Name, getUser(ctx), "", 0)
 		if errW != nil {
 			log.Warning("removePipelineFromApplicationHandler> Cannot load workflow: %s\n", errW)
 			return errW
@@ -329,14 +329,14 @@ func (api *API) getUserNotificationApplicationPipelineHandler() Handler {
 		envName := r.Form.Get("envName")
 
 		//Load application
-		application, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		application, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
 			return err
 		}
 
 		//Load pipeline
-		pipeline, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
+		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("getUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
 			return err
@@ -345,7 +345,7 @@ func (api *API) getUserNotificationApplicationPipelineHandler() Handler {
 		//Load environment
 		env := &sdk.DefaultEnv
 		if envName != "" {
-			env, err = environment.LoadEnvironmentByName(api.MustDB(), key, envName)
+			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if err != nil {
 				log.Warning("getUserNotificationApplicationPipelineHandler> cannot load environment %s: %s\n", envName, err)
 				return err
@@ -358,7 +358,7 @@ func (api *API) getUserNotificationApplicationPipelineHandler() Handler {
 		}
 
 		//Load notifs
-		notifs, err := notification.LoadUserNotificationSettings(api.MustDB(), application.ID, pipeline.ID, env.ID)
+		notifs, err := notification.LoadUserNotificationSettings(api.mustDB(), application.ID, pipeline.ID, env.ID)
 		if err != nil {
 			log.Warning("getUserNotificationApplicationPipelineHandler> cannot load notification settings %s\n", err)
 			return err
@@ -387,7 +387,7 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 		envName := r.Form.Get("envName")
 
 		///Load application
-		applicationData, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		applicationData, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
 			return err
@@ -395,7 +395,7 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 		}
 
 		//Load pipeline
-		pipeline, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
+		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("deleteUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
 			return err
@@ -405,7 +405,7 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 		//Load environment
 		env := &sdk.DefaultEnv
 		if envName != "" && envName != sdk.DefaultEnv.Name {
-			env, err = environment.LoadEnvironmentByName(api.MustDB(), key, envName)
+			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if err != nil {
 				log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot load environment %s: %s\n", envName, err)
 				return err
@@ -418,7 +418,7 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 			return sdk.ErrForbidden
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot start transaction: %s\n", err)
 			return err
@@ -447,7 +447,7 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 		cache.DeleteAll(k)
 
 		var errN error
-		applicationData.Notifications, errN = notification.LoadAllUserNotificationSettings(api.MustDB(), applicationData.ID)
+		applicationData.Notifications, errN = notification.LoadAllUserNotificationSettings(api.mustDB(), applicationData.ID)
 		if errN != nil {
 			log.Warning("deleteUserNotificationApplicationPipelineHandler> cannot load notifications: %s\n", errN)
 			return errN
@@ -467,7 +467,7 @@ func (api *API) addNotificationsHandler() Handler {
 			return err
 		}
 
-		app, errApp := application.LoadByName(api.MustDB(), key, appName, getUser(ctx), application.LoadOptions.WithPipelines)
+		app, errApp := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.WithPipelines)
 		if errApp != nil {
 			log.Warning("addNotificationsHandler: Cannot load application: %s\n", errApp)
 			return sdk.ErrWrongRequest
@@ -478,7 +478,7 @@ func (api *API) addNotificationsHandler() Handler {
 			mapID[appPip.ID] = ""
 		}
 
-		tx, errBegin := api.MustDB().Begin()
+		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			log.Warning("addNotificationsHandler: Cannot begin transaction: %s\n", errBegin)
 			return errBegin
@@ -521,7 +521,7 @@ func (api *API) addNotificationsHandler() Handler {
 		}
 
 		var errNotif error
-		app.Notifications, errNotif = notification.LoadAllUserNotificationSettings(api.MustDB(), app.ID)
+		app.Notifications, errNotif = notification.LoadAllUserNotificationSettings(api.mustDB(), app.ID)
 		if errNotif != nil {
 			log.Warning("addNotificationsHandler> cannot load notifications: %s\n", errNotif)
 			return errNotif
@@ -539,14 +539,14 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
 		pipelineName := vars["permPipelineKey"]
 
 		///Load application
-		applicationData, err := application.LoadByName(api.MustDB(), key, appName, getUser(ctx))
+		applicationData, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, err)
 			return err
 		}
 
 		//Load pipeline
-		pipeline, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
+		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
 			return err
@@ -569,7 +569,7 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
 			return sdk.ErrForbidden
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("updateUserNotificationApplicationPipelineHandler> cannot start transaction: %s\n", err)
 			return err
@@ -602,7 +602,7 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
 		cache.DeleteAll(k)
 
 		var errNotif error
-		applicationData.Notifications, errNotif = notification.LoadAllUserNotificationSettings(api.MustDB(), applicationData.ID)
+		applicationData.Notifications, errNotif = notification.LoadAllUserNotificationSettings(api.mustDB(), applicationData.ID)
 		if errNotif != nil {
 			log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load notifications: %s\n", errNotif)
 			return errNotif

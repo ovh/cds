@@ -17,7 +17,7 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 	
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.Mux)
@@ -32,7 +32,7 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := project.InsertVariable(api.MustDB(), proj, &v, u); err != nil {
+	if err := project.InsertVariable(api.mustDB(), proj, &v, u); err != nil {
 		t.Fatal(err)
 	}
 

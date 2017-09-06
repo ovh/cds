@@ -21,7 +21,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 
 	
 	// Init user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -47,7 +47,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 
 	
 	// Init user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -73,7 +73,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 
 	
 	// Init user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -99,7 +99,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 
 	
 	// Init user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -109,7 +109,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{
@@ -143,7 +143,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 
 	
 	// Init user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -153,7 +153,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{
@@ -214,7 +214,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 
 	
 	// Init user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, key, key, u)
@@ -224,7 +224,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.MustDB(), proj, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{

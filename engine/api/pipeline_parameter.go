@@ -19,13 +19,13 @@ func (api *API) getParametersInPipelineHandler() Handler {
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 
-		p, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("getParametersInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
 			return err
 		}
 
-		parameters, err := pipeline.GetAllParametersInPipeline(api.MustDB(), p.ID)
+		parameters, err := pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
 		if err != nil {
 			log.Warning("getParametersInPipelineHandler: Cannot get parameters for pipeline %s: %s\n", pipelineName, err)
 			return err
@@ -42,13 +42,13 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 		pipelineName := vars["permPipelineKey"]
 		paramName := vars["name"]
 
-		p, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("deleteParameterFromPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
 			return err
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("deleteParameterFromPipelineHandler: Cannot start transaction: %s\n", err)
 			return err
@@ -60,7 +60,7 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 			return err
 		}
 
-		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "deleteParameterFromPipelineHandler> unable to load project")
 		}
@@ -75,7 +75,7 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 			return err
 		}
 
-		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.MustDB(), p.ID)
+		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
 		if err != nil {
 			log.Warning("deleteParameterFromPipelineHandler: Cannot load pipeline parameters: %s\n", err)
 			return err
@@ -91,7 +91,7 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, errP := project.Load(api.MustDB(), key, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "updateParametersInPipelineHandler> Cannot load project")
 		}
@@ -101,18 +101,18 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 			return err
 		}
 
-		pip, err := pipeline.LoadPipeline(api.MustDB(), proj.Key, pipelineName, false)
+		pip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pipelineName, false)
 		if err != nil {
 			log.Warning("updateParametersInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
 			return err
 		}
-		pip.Parameter, err = pipeline.GetAllParametersInPipeline(api.MustDB(), pip.ID)
+		pip.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), pip.ID)
 		if err != nil {
 			log.Warning("updateParametersInPipelineHandler> Cannot GetAllParametersInPipeline: %s\n", err)
 			return err
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("updateParametersInPipelineHandler: Cannot start transaction: %s", err)
 			return sdk.ErrUnknownError
@@ -211,12 +211,12 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 			return err
 		}
 
-		p, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load %s", pipelineName)
 		}
 
-		paramInPipeline, err := pipeline.CheckParameterInPipeline(api.MustDB(), p.ID, paramName)
+		paramInPipeline, err := pipeline.CheckParameterInPipeline(api.mustDB(), p.ID, paramName)
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot check if parameter %s is already in the pipeline %s", paramName, pipelineName)
 		}
@@ -225,7 +225,7 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 			return sdk.WrapError(sdk.ErrParameterNotExists, "updateParameterInPipelineHandler> unable to find parameter %s", paramName)
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot start transaction:  %s", err)
 		}
@@ -235,7 +235,7 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot update parameter %s in pipeline %s", paramName, pipelineName)
 		}
 
-		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "updateParameterInPipelineHandler> unable to load project")
 		}
@@ -248,7 +248,7 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot commit transaction")
 		}
 
-		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.MustDB(), p.ID)
+		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
 		if err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot load pipeline parameters")
 		}
@@ -272,13 +272,13 @@ func (api *API) addParameterInPipelineHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		p, err := pipeline.LoadPipeline(api.MustDB(), key, pipelineName, false)
+		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
 			log.Warning("addParameterInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
 			return err
 		}
 
-		paramInProject, err := pipeline.CheckParameterInPipeline(api.MustDB(), p.ID, paramName)
+		paramInProject, err := pipeline.CheckParameterInPipeline(api.mustDB(), p.ID, paramName)
 		if err != nil {
 			log.Warning("addParameterInPipelineHandler: Cannot check if parameter %s is already in the pipeline %s: %s\n", paramName, pipelineName, err)
 			return err
@@ -288,7 +288,7 @@ func (api *API) addParameterInPipelineHandler() Handler {
 			return sdk.ErrParameterExists
 		}
 
-		tx, err := api.MustDB().Begin()
+		tx, err := api.mustDB().Begin()
 		if err != nil {
 			log.Warning("addParameterInPipelineHandler: Cannot start transaction: %s\n", err)
 			return err
@@ -302,7 +302,7 @@ func (api *API) addParameterInPipelineHandler() Handler {
 			}
 		}
 
-		proj, errproj := project.Load(api.MustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addParameterInPipelineHandler> unable to load project")
 		}
@@ -317,7 +317,7 @@ func (api *API) addParameterInPipelineHandler() Handler {
 			return err
 		}
 
-		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.MustDB(), p.ID)
+		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
 		if err != nil {
 			log.Warning("addParameterInPipelineHandler: Cannot get pipeline parameters: %s\n", err)
 			return err

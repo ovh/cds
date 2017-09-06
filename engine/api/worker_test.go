@@ -20,33 +20,33 @@ func Test_workerCheckingHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
-	workers, err := worker.LoadWorkers(api.MustDB())
+	workers, err := worker.LoadWorkers(api.mustDB())
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := hatchery.LoadHatcheries(api.MustDB())
+	hs, err := hatchery.LoadHatcheries(api.mustDB())
 	if err != nil {
 		t.Fatalf("Unable to load hatcheries : %s", err)
 	}
 	//2. Delete all workers and hatcheries
 	for _, w := range workers {
-		if err := worker.DeleteWorker(api.MustDB(), w.ID); err != nil {
+		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
 			t.Fatal(err)
 		}
 	}
 	for _, h := range hs {
-		err := hatchery.DeleteHatchery(api.MustDB(), h.ID, 0)
+		err := hatchery.DeleteHatchery(api.mustDB(), h.ID, 0)
 		if err != nil {
 			t.Fatalf("Unable to delete hatcheries : %s", err)
 		}
 	}
 
 	//3. Create model
-	g, err := group.LoadGroup(api.MustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(api.MustDB(), "Test1")
+	model, _ := worker.LoadWorkerModelByName(api.mustDB(), "Test1")
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -62,7 +62,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(api.MustDB(), model); err != nil {
+		if err := worker.InsertWorkerModel(api.mustDB(), model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}
@@ -73,15 +73,15 @@ func Test_workerCheckingHandler(t *testing.T) {
 		GroupID: g.ID,
 		UID:     "UUID",
 	}
-	if err := hatchery.InsertHatchery(api.MustDB(), &h); err != nil {
+	if err := hatchery.InsertHatchery(api.mustDB(), &h); err != nil {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(api.MustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
-	workr, err := worker.RegisterWorker(api.MustDB(), "test-worker", "test-key", model.ID, &h, nil)
+	workr, err := worker.RegisterWorker(api.mustDB(), "test-worker", "test-key", model.ID, &h, nil)
 	if err != nil {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
@@ -101,7 +101,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	workers, err = worker.LoadWorkers(api.MustDB())
+	workers, err = worker.LoadWorkers(api.mustDB())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,33 +115,33 @@ func Test_workerWaitingHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
-	workers, err := worker.LoadWorkers(api.MustDB())
+	workers, err := worker.LoadWorkers(api.mustDB())
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := hatchery.LoadHatcheries(api.MustDB())
+	hs, err := hatchery.LoadHatcheries(api.mustDB())
 	if err != nil {
 		t.Fatalf("Unable to load hatcheries : %s", err)
 	}
 	//2. Delete all workers and hatcheries
 	for _, w := range workers {
-		if err := worker.DeleteWorker(api.MustDB(), w.ID); err != nil {
+		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
 			t.Fatal(err)
 		}
 	}
 	for _, h := range hs {
-		err := hatchery.DeleteHatchery(api.MustDB(), h.ID, 0)
+		err := hatchery.DeleteHatchery(api.mustDB(), h.ID, 0)
 		if err != nil {
 			t.Fatalf("Unable to delete hatcheries : %s", err)
 		}
 	}
 
 	//3. Create model
-	g, err := group.LoadGroup(api.MustDB(), "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(api.MustDB(), "Test1")
+	model, _ := worker.LoadWorkerModelByName(api.mustDB(), "Test1")
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -157,7 +157,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(api.MustDB(), model); err != nil {
+		if err := worker.InsertWorkerModel(api.mustDB(), model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}
@@ -168,20 +168,20 @@ func Test_workerWaitingHandler(t *testing.T) {
 		GroupID: g.ID,
 		UID:     "UUID",
 	}
-	if err := hatchery.InsertHatchery(api.MustDB(), &h); err != nil {
+	if err := hatchery.InsertHatchery(api.mustDB(), &h); err != nil {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(api.MustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
-	workr, err := worker.RegisterWorker(api.MustDB(), "test-worker", "test-key", model.ID, &h, nil)
+	workr, err := worker.RegisterWorker(api.mustDB(), "test-worker", "test-key", model.ID, &h, nil)
 	if err != nil {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
 
-	worker.SetStatus(api.MustDB(), workr.ID, sdk.StatusBuilding)
+	worker.SetStatus(api.mustDB(), workr.ID, sdk.StatusBuilding)
 
 	
 
@@ -197,7 +197,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 
 	assert.Equal(t, 200, w.Code)
 
-	workers, err = worker.LoadWorkers(api.MustDB())
+	workers, err = worker.LoadWorkers(api.mustDB())
 	if err != nil {
 		t.Fatal(err)
 	}

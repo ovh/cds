@@ -15,8 +15,8 @@ import (
 
 func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	api, _, _ := newTestAPI(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
-	user, passUser := assets.InsertLambdaUser(api.MustDB())
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
+	user, passUser := assets.InsertLambdaUser(api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{}
@@ -37,8 +37,8 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 
 func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	api, _, _ := newTestAPI(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
-	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
+	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{}
@@ -59,8 +59,8 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 
 func Test_getWorkflowHookModelHandler(t *testing.T) {
 	api, _, _ := newTestAPI(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
-	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
+	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{
@@ -86,8 +86,8 @@ func Test_getWorkflowHookModelHandler(t *testing.T) {
 
 func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 	api, _, _ := newTestAPI(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
-	admin, passAdmin := assets.InsertAdminUser(api.MustDB())
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
+	admin, passAdmin := assets.InsertAdminUser(api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{
@@ -128,9 +128,9 @@ func Test_putWorkflowHookModelHandlerAsAdminUser(t *testing.T) {
 
 func Test_putWorkflowHookModelHandlerAsLambdaUser(t *testing.T) {
 	api, _, _ := newTestAPI(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.MustDB()))
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(api.mustDB()))
 
-	u, pass := assets.InsertLambdaUser(api.MustDB())
+	u, pass := assets.InsertLambdaUser(api.mustDB())
 
 	//Prepare request
 	vars := map[string]string{

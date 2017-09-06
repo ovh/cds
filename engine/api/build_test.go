@@ -25,7 +25,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(api.MustDB())
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
 	tester := iffy.NewTester(t, router.Mux)
@@ -42,7 +42,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.MustDB(), proj, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -51,15 +51,15 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(api.MustDB(), app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	pb, err := pipeline.InsertPipelineBuild(api.MustDB(), proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
+	pb, err := pipeline.InsertPipelineBuild(api.mustDB(), proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,7 +73,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 			StepStatus: []sdk.StepStatus{},
 		},
 	}
-	if err := pipeline.InsertPipelineBuildJob(api.MustDB(), pbJob); err != nil {
+	if err := pipeline.InsertPipelineBuildJob(api.mustDB(), pbJob); err != nil {
 		t.Fatal(err)
 	}
 
@@ -95,7 +95,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()
 
-	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.MustDB(), pbJob.ID)
+	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), pbJob.ID)
 	if errC != nil {
 		t.Fatal(errC)
 	}
@@ -110,15 +110,15 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	
 
 	//Create admin user
-	u, _ := assets.InsertAdminUser(api.MustDB())
+	u, _ := assets.InsertAdminUser(api.mustDB())
 
 	g := &sdk.Group{
 		Name: sdk.RandomString(10),
 	}
-	if err := group.InsertGroup(api.MustDB(), g); err != nil {
+	if err := group.InsertGroup(api.mustDB(), g); err != nil {
 		t.Fatal(err)
 	}
-	if err := group.InsertUserInGroup(api.MustDB(), g.ID, u.ID, true); err != nil {
+	if err := group.InsertUserInGroup(api.mustDB(), g.ID, u.ID, true); err != nil {
 		t.Fatal(err)
 	}
 
@@ -137,7 +137,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.MustDB(), proj, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -146,15 +146,15 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.MustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(api.MustDB(), app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	pb, erri := pipeline.InsertPipelineBuild(api.MustDB(), proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
+	pb, erri := pipeline.InsertPipelineBuild(api.mustDB(), proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
 	if erri != nil {
 		t.Fatal(erri)
 	}
@@ -168,7 +168,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 			StepStatus: []sdk.StepStatus{},
 		},
 	}
-	if err := pipeline.InsertPipelineBuildJob(api.MustDB(), pbJob); err != nil {
+	if err := pipeline.InsertPipelineBuildJob(api.mustDB(), pbJob); err != nil {
 		t.Fatal(err)
 	}
 
@@ -184,7 +184,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	if errg != nil {
 		t.Fatal(errg)
 	}
-	if err := token.InsertToken(api.MustDB(), g.ID, tk, sdk.Daily); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, tk, sdk.Daily); err != nil {
 		t.Fatal(err)
 	}
 
@@ -192,7 +192,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		Name:    "HATCHERY_TEST",
 		GroupID: g.ID,
 	}
-	if err := hatchery.InsertHatchery(api.MustDB(), &hatch); err != nil {
+	if err := hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {
 		t.Fatal(err)
 	}
 
@@ -210,7 +210,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	tester.AddCall("Test_addSpawnInfosPipelineBuildJobHandler", "POST", route, request).Headers(h).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()
 
-	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.MustDB(), pbJob.ID)
+	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), pbJob.ID)
 	if errC != nil {
 		t.Fatal(errC)
 	}

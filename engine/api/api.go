@@ -37,6 +37,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// Configuration is the configuraton structure for CDS API
 type Configuration struct {
 	URL struct {
 		API string `default:"http://localhost:8081"`
@@ -143,6 +144,7 @@ type Configuration struct {
 	}
 }
 
+// DefaultValues is the struc for API Default configuration default values
 type DefaultValues struct {
 	ServerSecretsKey     string
 	AuthSharedInfraToken string
@@ -152,10 +154,12 @@ type DefaultValues struct {
 	SN        string
 }
 
+// New instanciates a new API object
 func New() *API {
 	return &API{}
 }
 
+// API is a struct containing the configuration, the router, the database connection factory and so on
 type API struct {
 	Router              *Router
 	Config              Configuration
@@ -164,6 +168,7 @@ type API struct {
 	LastUpdateBroker    *LastUpdateBroker
 }
 
+// ApplyConfiguration apply an object of type api.Configuration after checking it
 func (a *API) ApplyConfiguration(config interface{}) error {
 	if err := a.CheckConfiguration(config); err != nil {
 		return err
@@ -178,6 +183,7 @@ func (a *API) ApplyConfiguration(config interface{}) error {
 	return nil
 }
 
+// DirectoryExists checks if the directory exists
 func DirectoryExists(path string) (bool, error) {
 	s, err := os.Stat(path)
 	if err == nil {
@@ -189,6 +195,7 @@ func DirectoryExists(path string) (bool, error) {
 	return s.IsDir(), err
 }
 
+// CheckConfiguration checks the validity of the configuration object
 func (a *API) CheckConfiguration(config interface{}) error {
 	aConfig, ok := config.(Configuration)
 	if !ok {
@@ -298,7 +305,7 @@ func getHatchery(c context.Context) *sdk.Hatchery {
 	return u
 }
 
-func (a *API) MustDB() *gorp.DbMap {
+func (a *API) mustDB() *gorp.DbMap {
 	db := a.DBConnectionFactory.GetDBMap()
 	if db == nil {
 		panic(fmt.Errorf("Database unavailable"))
@@ -306,20 +313,11 @@ func (a *API) MustDB() *gorp.DbMap {
 	return db
 }
 
+// Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
 	log.Info("Starting CDS API Server...")
 
 	a.StartupTime = time.Now()
-
-	go func() {
-		select {
-		case <-ctx.Done():
-			log.Warning("Cleanup SQL connections")
-			a.DBConnectionFactory.Close()
-			event.Publish(sdk.EventEngine{Message: "shutdown"})
-			event.Close()
-		}
-	}()
 
 	//Initialize secret driver
 	secret.Init(a.Config.Secrets.Key)
@@ -508,6 +506,17 @@ func (a *API) Serve(ctx context.Context) error {
 		WriteTimeout:   10 * time.Minute,
 		MaxHeaderBytes: 1 << 20,
 	}
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			log.Warning("Cleanup SQL connections")
+			s.Shutdown(ctx)
+			a.DBConnectionFactory.Close()
+			event.Publish(sdk.EventEngine{Message: "shutdown"})
+			event.Close()
+		}
+	}()
 
 	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)})
 
