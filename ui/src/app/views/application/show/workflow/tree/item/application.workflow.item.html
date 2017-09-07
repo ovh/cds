@@ -108,7 +108,6 @@
             <sm-dropdown>
                 <a sm-item class="item" (click)="runPipeline()">{{ 'pipeline_label_run' | translate }}</a>
                 <a sm-item class="item" (click)="runWithParameters()">{{ 'pipeline_label_run_with_parameter' | translate }}</a>
-                <a sm-item class="item" (click)="rollback()">{{ 'pipeline_label_rollback' | translate }}</a>
                 <div class="divider" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE"></div>
                 <a sm-item class="item" (click)="openDetachPipelineModal()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE && application.id === workflowItem.application.id">{{
                     'pipeline_label_detach' | translate }}</a>
