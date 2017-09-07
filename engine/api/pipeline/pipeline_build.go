@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -325,6 +326,19 @@ func LoadPipelineBuildByID(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuild, e
 	return scanPipelineBuild(row)
 }
 
+func LoadPipelineBuildByBuildNumber(db gorp.SqlExecutor, buildNumber int64) (*sdk.PipelineBuild, error) {
+	whereCondition := `
+		WHERE pb.build_number = $1
+	`
+
+	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
+	var row PipelineBuildDbResult
+	if err := db.SelectOne(&row, query, buildNumber); err != nil {
+		return nil, err
+	}
+	return scanPipelineBuild(row)
+}
+
 // LoadPipelineBuildChildren load triggered pipeline from given build
 func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64) ([]sdk.PipelineBuild, error) {
 	pbs := []sdk.PipelineBuild{}
@@ -602,9 +616,9 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 		return nil, sdk.WrapError(errclient, "UpdatePipelineBuildCommits> Cannot get client")
 	}
 
-	//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch
+	//Get the commit hash for the pipeline build number and the hash for the previous pipeline build for the same branch and same remote
 	//buildNumber, pipelineID, applicationID, environmentID
-	cur, prev, errcurr := CurrentAndPreviousPipelineBuildNumberAndHash(db, pb.BuildNumber, pip.ID, app.ID, env.ID)
+	cur, prev, errcurr := CurrentAndPreviousPipelineBuildVCSInfos(db, pb.BuildNumber, pip.ID, app.ID, env.ID)
 	if errcurr != nil {
 		return nil, sdk.WrapError(errcurr, "UpdatePipelineBuildCommits> Cannot get build number and hashes (buildNumber=%d, pipelineID=%d, applicationID=%d, envID=%d)", pb.BuildNumber, pip.ID, app.ID, env.ID)
 	}
@@ -615,11 +629,16 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 		log.Debug("UpdatePipelineBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
 	}
 
+	repo := app.RepositoryFullname
+	if cur != nil && cur.Remote != "" {
+		repo = cur.Remote
+	}
+
 	if prev != nil && cur.Hash == prev.Hash {
 		log.Debug("UpdatePipelineBuildCommits> there is not difference between the previous build and the current build")
 	} else if prev != nil && cur.Hash != "" && prev.Hash != "" {
 		//If we are lucky, return a true diff
-		commits, err := client.Commits(app.RepositoryFullname, cur.Branch, prev.Hash, cur.Hash)
+		commits, err := client.Commits(repo, cur.Branch, prev.Hash, cur.Hash)
 		if err != nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
 		}
@@ -627,14 +646,14 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 	} else if cur.Hash != "" {
 		//If we only get current pipeline build hash
 		log.Info("UpdatePipelineBuildCommits>  Looking for every commit until %s ", cur.Hash)
-		c, err := client.Commits(app.RepositoryFullname, cur.Branch, "", cur.Hash)
+		c, err := client.Commits(repo, cur.Branch, "", cur.Hash)
 		if err != nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
 		}
 		res = c
 	} else {
 		//If we only have the current branch, search for the branch
-		br, err := client.Branch(app.RepositoryFullname, cur.Branch)
+		br, err := client.Branch(repo, cur.Branch)
 		if err != nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get branch %s", cur.Branch)
 		}
@@ -645,7 +664,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 
 			//and return the last commit of the branch
 			log.Debug("get the last commit : %s", br.LatestCommit)
-			cm, errcm := client.Commit(app.RepositoryFullname, br.LatestCommit)
+			cm, errcm := client.Commit(repo, br.LatestCommit)
 			if errcm != nil {
 				return nil, sdk.WrapError(errcm, "UpdatePipelineBuildCommits> Cannot get commits")
 			}
@@ -680,6 +699,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	pb.BuildNumber = buildNumber + 1
 
 	pb.Trigger = trigger
+	pb.Trigger.VCSRemote = app.RepositoryFullname
 
 	// Reset version number when:
 	// - provided version is invalid
@@ -699,15 +719,12 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	sdk.AddParameter(&params, "cds.buildNumber", sdk.StringParameter, strconv.FormatInt(pb.BuildNumber, 10))
 	sdk.AddParameter(&params, "cds.version", sdk.StringParameter, strconv.FormatInt(pb.Version, 10))
 
-	gitURLfound := false
-	for _, param := range params {
-		if param.Name == "git.url" || param.Name == "git.http_url" {
-			gitURLfound = true
-			break
-		}
-	}
+	mapParams := paramsToMap(params)
+	_, gitURLfound := mapParams["git.url"]
+	_, gitHTTPURLFound := mapParams["git.http_url"]
+	parentBuildNumber, parentBuildNumberFound := mapParams["cds.parent.buildNumber"]
 
-	if client != nil && !gitURLfound {
+	if client != nil && (!gitURLfound || !gitHTTPURLFound) && !parentBuildNumberFound {
 		repo, errC := client.RepoByFullname(app.RepositoryFullname)
 		if errC != nil {
 			log.Warning("InsertPipelineBuild> Unable to get repository %s from %s : %s", app.RepositoriesManager.Name, app.RepositoryFullname, err)
@@ -716,6 +733,21 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 		sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
 		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, repo.HTTPCloneURL)
+	} else if parentBuildNumberFound {
+		pbn, errP := strconv.ParseInt(parentBuildNumber, 10, 64)
+		if errP != nil {
+			return nil, errP
+		}
+
+		parentPip, errL := LoadPipelineBuildByBuildNumber(tx, pbn)
+		if errL != nil {
+			return nil, errL
+		}
+
+		sdk.AddParameter(&params, "git.url", sdk.StringParameter, parentPip.Trigger.VCSRemoteURL)
+		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, parentPip.Trigger.VCSRemoteURL)
+		sdk.AddParameter(&params, "git.repository", sdk.StringParameter, parentPip.Trigger.VCSRemote)
+		pb.Trigger.VCSRemote = parentPip.Trigger.VCSRemote
 	}
 
 	if pb.Trigger.TriggeredBy != nil {
@@ -725,22 +757,20 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 		sdk.AddParameter(&params, "cds.triggered_by.email", sdk.StringParameter, pb.Trigger.TriggeredBy.Email)
 	}
 
-	pb.Trigger.VCSRemote = app.RepositoryFullname
-
 	//Set git.Branch and git.Hash
 	if pb.Trigger.VCSChangesBranch != "" {
 		sdk.AddParameter(&params, "git.branch", sdk.StringParameter, pb.Trigger.VCSChangesBranch)
 		sdk.AddParameter(&params, "git.hash", sdk.StringParameter, pb.Trigger.VCSChangesHash)
 	} else {
 		//We consider default branch is master
-		defautlBranch := "master"
+		defaultBranch := "master"
 		lastGitHash := map[string]string{}
 		if client != nil {
-			branches, _ := client.Branches(app.RepositoryFullname)
+			branches, _ := client.Branches(pb.Trigger.VCSRemote)
 			for _, b := range branches {
 				//If application is linked to a repository manager, we try to found de default branch
 				if b.Default {
-					defautlBranch = b.DisplayID
+					defaultBranch = b.DisplayID
 				}
 				//And we store LatestCommit for each branches
 				lastGitHash[b.DisplayID] = b.LatestCommit
@@ -771,13 +801,13 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 		if !found {
 			//If git.branch was not found is pipeline parameters, we set de previously found defaultBranch
-			sdk.AddParameter(&params, "git.branch", sdk.StringParameter, defautlBranch)
-			pb.Trigger.VCSChangesBranch = defautlBranch
+			sdk.AddParameter(&params, "git.branch", sdk.StringParameter, defaultBranch)
+			pb.Trigger.VCSChangesBranch = defaultBranch
 
 			//And we try to put the lastestCommit for this branch
-			if lastGitHash[defautlBranch] != "" {
-				sdk.AddParameter(&params, "git.hash", sdk.StringParameter, lastGitHash[defautlBranch])
-				pb.Trigger.VCSChangesHash = lastGitHash[defautlBranch]
+			if lastGitHash[defaultBranch] != "" {
+				sdk.AddParameter(&params, "git.hash", sdk.StringParameter, lastGitHash[defaultBranch])
+				pb.Trigger.VCSChangesHash = lastGitHash[defaultBranch]
 			}
 		} else {
 			//If git.branch was found but git.hash wasn't found in pipeline parameters
@@ -903,6 +933,10 @@ func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipeli
 	commitsBtes, errMarshal := json.Marshal(commits)
 	if errMarshal != nil {
 		return sdk.WrapError(errMarshal, "insertPipelineBuild> Unable to marshal commits")
+	}
+
+	if pb.Trigger.VCSRemote != "" && pb.Trigger.VCSRemoteURL != "" && !strings.Contains(pb.Trigger.VCSRemoteURL, pb.Trigger.VCSRemote) {
+		return sdk.WrapError(fmt.Errorf("remote aren't correct for this remote_url"), "insertPipelineBuild> Remote %s with url %s in error", pb.Trigger.VCSRemote, pb.Trigger.VCSRemoteURL)
 	}
 
 	statement := db.QueryRow(
@@ -1300,19 +1334,21 @@ type BuildNumberAndHash struct {
 	BuildNumber int64
 	Hash        string
 	Branch      string
+	Remote      string
+	RemoteURL   string
 }
 
-//CurrentAndPreviousPipelineBuildNumberAndHash returns a struct with BuildNumber, Commit Hash and Branch
+//CurrentAndPreviousPipelineBuildVCSInfos returns a struct with BuildNumber, Commit Hash, Branch, Remote, Remote_url
 //for the current pipeline build and the previous one on the same branch.
 //Returned pointers may be null if pipeline build are not found
-func CurrentAndPreviousPipelineBuildNumberAndHash(db gorp.SqlExecutor, buildNumber, pipelineID, applicationID, environmentID int64) (*BuildNumberAndHash, *BuildNumberAndHash, error) {
+func CurrentAndPreviousPipelineBuildVCSInfos(db gorp.SqlExecutor, buildNumber, pipelineID, applicationID, environmentID int64) (*BuildNumberAndHash, *BuildNumberAndHash, error) {
 	query := `
 			SELECT
-				current_pipeline.build_number, current_pipeline.vcs_changes_hash, current_pipeline.vcs_changes_branch,
-				previous_pipeline.build_number, previous_pipeline.vcs_changes_hash, previous_pipeline.vcs_changes_branch
+				current_pipeline.build_number, current_pipeline.vcs_changes_hash, current_pipeline.vcs_changes_branch, current_pipeline.vcs_remote, current_pipeline.vcs_remote_url,
+				previous_pipeline.build_number, previous_pipeline.vcs_changes_hash, previous_pipeline.vcs_changes_branch, previous_pipeline.vcs_remote, previous_pipeline.vcs_remote_url
 			FROM
 				(
-					SELECT    id, pipeline_id, build_number, vcs_changes_branch, vcs_changes_hash
+					SELECT    id, pipeline_id, build_number, vcs_changes_branch, vcs_changes_hash, vcs_remote, vcs_remote_url
 					FROM      pipeline_build
 					WHERE 		build_number = $1
 					AND				pipeline_id = $2
@@ -1321,7 +1357,7 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db gorp.SqlExecutor, buildNumb
 
 				) AS current_pipeline
 			LEFT OUTER JOIN (
-					SELECT    id, pipeline_id, build_number, vcs_changes_branch, vcs_changes_hash
+					SELECT    id, pipeline_id, build_number, vcs_changes_branch, vcs_changes_hash, vcs_remote, vcs_remote_url
 					FROM      pipeline_build
 					WHERE     build_number < $1
 					AND				pipeline_id = $2
@@ -1330,15 +1366,15 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db gorp.SqlExecutor, buildNumb
 
 					ORDER BY  build_number DESC
 				) AS previous_pipeline ON (
-					previous_pipeline.pipeline_id = current_pipeline.pipeline_id AND previous_pipeline.vcs_changes_branch = current_pipeline.vcs_changes_branch
+					previous_pipeline.pipeline_id = current_pipeline.pipeline_id AND previous_pipeline.vcs_changes_branch = current_pipeline.vcs_changes_branch AND previous_pipeline.vcs_remote = current_pipeline.vcs_remote
 				)
 			WHERE current_pipeline.build_number = $1
 			ORDER BY  previous_pipeline.build_number DESC
 			LIMIT 1;
 	`
 	var curBuildNumber, prevBuildNumber sql.NullInt64
-	var curHash, prevHash, curBranch, prevBranch sql.NullString
-	err := db.QueryRow(query, buildNumber, pipelineID, applicationID, environmentID).Scan(&curBuildNumber, &curHash, &curBranch, &prevBuildNumber, &prevHash, &prevBranch)
+	var curHash, prevHash, curBranch, prevBranch, curRemote, prevRemote, curRemoteURL, prevRemoteURL sql.NullString
+	err := db.QueryRow(query, buildNumber, pipelineID, applicationID, environmentID).Scan(&curBuildNumber, &curHash, &curBranch, &curRemote, &curRemoteURL, &prevBuildNumber, &prevHash, &prevBranch, &prevRemote, &prevRemoteURL)
 	if err == sql.ErrNoRows {
 		log.Warning("CurrentAndPreviousPipelineBuildNumberAndHash> no result with %d %d %d %d", buildNumber, pipelineID, applicationID, environmentID)
 		return nil, nil, sdk.ErrNoPipelineBuild
@@ -1357,6 +1393,12 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db gorp.SqlExecutor, buildNumb
 	if curBranch.Valid {
 		cur.Branch = curBranch.String
 	}
+	if curRemote.Valid {
+		cur.Remote = curRemote.String
+	}
+	if curRemoteURL.Valid {
+		cur.RemoteURL = curRemoteURL.String
+	}
 
 	prev := &BuildNumberAndHash{}
 	if prevBuildNumber.Valid {
@@ -1370,6 +1412,13 @@ func CurrentAndPreviousPipelineBuildNumberAndHash(db gorp.SqlExecutor, buildNumb
 	if prevBranch.Valid {
 		prev.Branch = prevBranch.String
 	}
+	if prevRemote.Valid {
+		prev.Remote = prevRemote.String
+	}
+	if prevRemoteURL.Valid {
+		prev.RemoteURL = prevRemoteURL.String
+	}
+
 	return cur, prev, nil
 }
 
@@ -1504,4 +1553,13 @@ func GetVCSInfosInParams(params []sdk.Parameter) (string, string) {
 	}
 
 	return branch, remote
+}
+
+func paramsToMap(params []sdk.Parameter) map[string]string {
+	mapParams := map[string]string{}
+	for _, param := range params {
+		mapParams[param.Name] = param.Value
+	}
+
+	return mapParams
 }

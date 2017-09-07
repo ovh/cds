@@ -169,13 +169,13 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             env = pb.environment.name;
         }
         this._appPipService.buildHistory(this.project.key, pb.application.name, pb.pipeline.name,
-            env, 50, '', pb.trigger.vcs_branch).subscribe(pbs => {
+            env, 50, '', pb.trigger.vcs_branch, pb.trigger.vcs_remote).subscribe(pbs => {
             this.histories = pbs;
             this.nbHistory = this.histories.length;
         });
 
         this._appPipService.buildHistory(this.project.key, pb.application.name, pb.pipeline.name,
-            env, 1, PipelineStatus.SUCCESS, pb.trigger.vcs_branch).subscribe(pbs => {
+            env, 1, PipelineStatus.SUCCESS, pb.trigger.vcs_branch, pb.trigger.vcs_remote).subscribe(pbs => {
             if (pbs && pbs.length === 1) {
                 this.previousBuild = pbs[0];
             }

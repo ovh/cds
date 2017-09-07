@@ -73,13 +73,14 @@ export class ApplicationPipelineService {
      * @returns {Observable<Array<PipelineBuild>>}
      */
     buildHistory(key: string, appName: string, pipName: string,
-                 envName: string, limit: number, status: string, branchName: string): Observable<Array<PipelineBuild>> {
+                 envName: string, limit: number, status: string, branchName: string, remote: string): Observable<Array<PipelineBuild>> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/history';
         let params = new HttpParams();
         params = params.append('envName', envName);
         params = params.append('limit', String(limit));
         params = params.append('status', status);
         params = params.append('branchName', branchName);
+        params = params.append('remote', remote);
         return this._http.get(url, {params: params});
     }
 

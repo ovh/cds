@@ -93,7 +93,7 @@ export class PipelineLaunchModalComponent {
         if (this.workflowItem.parent && this.workflowItem.trigger.id > 0) {
             this._appPipService.buildHistory(
                 this.project.key, this.workflowItem.trigger.src_application.name, this.workflowItem.trigger.src_pipeline.name,
-                this.workflowItem.trigger.src_environment.name, 20, 'Success', this.applicationFilter.branch)
+                this.workflowItem.trigger.src_environment.name, 20, 'Success', this.applicationFilter.branch, this.applicationFilter.remote)
                 .subscribe(pbs => {
                     this.launchOldBuilds = pbs;
                     this.launchParentBuildNumber = pbs[0].build_number;

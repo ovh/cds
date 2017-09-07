@@ -63,9 +63,12 @@ func runCommand(cmds cmds, output *OutputOpts, envs ...string) error {
 		osEnv = append(osEnv, e)
 	}
 	for _, c := range cmds {
+		for i, arg := range c.args {
+			c.args[i] = os.ExpandEnv(arg)
+		}
 		cmd := exec.Command(c.cmd, c.args...)
 		if c.dir != "" {
-			cmd.Dir = c.dir
+			cmd.Dir = os.ExpandEnv(c.dir)
 		}
 		cmd.Env = osEnv
 
