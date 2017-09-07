@@ -10,6 +10,7 @@ import {SharedModule} from './shared/shared.module';
 import {ToasterModule} from 'angular2-toaster/angular2-toaster';
 import {AppService} from './app.service';
 import {HttpClientModule} from '@angular/common/http';
+import {BrowserAnimationsModule} from '@angular/platform-browser/animations';
 
 @NgModule({
     declarations: [
@@ -17,6 +18,7 @@ import {HttpClientModule} from '@angular/common/http';
     ],
     imports: [
         BrowserModule,
+        BrowserAnimationsModule,
         HttpClientModule,
         NavbarModule,
         SharedModule,

@@ -283,6 +283,7 @@
   "pipeline_job_variable_parent" : "Variables du pipeline parent",
   "pipeline_job_variable_pip" : "Variables de pipeline",
   "pipeline_job_variable_project" : "Variables de projet",
+  "pipeline_job_variable_workflow" : "Variables du workflow",
   "pipeline_job_variables_show_title" : "Afficher les variables du job",
   "pipeline_job_variable_title" : "Variables du job",
   "pipeline_label_detach" : "Supprimer le pipeline de l'application",

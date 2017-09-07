@@ -96,7 +96,6 @@ export class WorkflowNode {
     hooks: Array<WorkflowNodeHook>;
     triggers: Array<WorkflowNodeTrigger>;
 
-
     static getNodeByID(node: WorkflowNode, id: number) {
         if (node.id === id) {
             return node;

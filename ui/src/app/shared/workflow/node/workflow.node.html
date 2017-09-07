@@ -1,15 +1,20 @@
 <div class="workflowNode">
-
     <div class="ui segment" [class.disabled]="disabled" [class.pointing]="currentNodeRun" (click)="goToNodeRun()"
         [class.building]="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"
         [class.success]="currentNodeRun?.status === pipelineStatus.SUCCESS"
         [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL"
-        [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED">
+        [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED" (click)="animateMe()"
+        #pipelineBox>
         <div class="pipeline">
             <p class="ellipsis">{{node.pipeline.name}}</p>
         </div>
-        <div class="firstloop" *ngIf="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"></div>
-        <div class="secondloop" *ngIf="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"></div>
+        <ng-container *ngIf="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING">
+            <div class="default"></div>
+            <div class="blueTopRightCorner"  [@blueTopRightCorner]="state" (@blueTopRightCorner.done)="animationDone($event)"></div>
+            <div class="blueBottomLeftCorner"  [@blueBottomLeftCorner]="state" (@blueBottomLeftCorner.done)="animationDone($event)"></div>
+            <div class="transparentTopRightCorner"  [@transparentTopRightCorner]="state" (@transparentTopRightCorner.done)="animationDone($event)"></div>
+            <div class="transparentBottomLeftCorner"  [@transparentBottomLeftCorner]="state" (@transparentBottomLeftCorner.done)="animationDone($event)"></div>
+        </ng-container>
     </div>
     <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0">
         <p class="ellipsis">{{node.context.application.name}}</p>
