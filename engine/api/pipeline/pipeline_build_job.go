@@ -7,11 +7,11 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/tat/api/cache"
 )
 
 // DeletePipelineBuildJob Delete all pipeline build job for the current pipeline build
@@ -195,7 +195,7 @@ func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, work
 	if pbJob.Status != sdk.StatusWaiting.String() {
 		k := keyBookJob(pbJobID)
 		h := sdk.Hatchery{}
-		if cache.Get(k, &h) {
+		if Store.Get(k, &h) {
 			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status and was booked by hatchery %d. Current status:%s", pbJobID, h.ID, pbJob.Status)
 		}
 		return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakePipelineBuildJob> job %d is not waiting status. Current status:%s", pbJobID, pbJob.Status)
@@ -224,9 +224,9 @@ func keyBookJob(pbJobID int64) string {
 func BookPipelineBuildJob(pbJobID int64, hatchery *sdk.Hatchery) (*sdk.Hatchery, error) {
 	k := keyBookJob(pbJobID)
 	h := sdk.Hatchery{}
-	if !cache.Get(k, &h) {
+	if !Store.Get(k, &h) {
 		// job not already booked, book it for 2 min
-		cache.SetWithTTL(k, hatchery, 120)
+		Store.SetWithTTL(k, hatchery, 120)
 		return nil, nil
 	}
 	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookPipelineBuildJob> job %d already booked by %s (%d)", pbJobID, h.Name, h.ID)

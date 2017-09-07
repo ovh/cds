@@ -26,7 +26,7 @@ type StashConsumer struct {
 }
 
 //New creates a new StashConsumer
-func New(URL, consumerKey, privateKey string, store cache.Store, apiURL string, uiURL string) *StashConsumer {
+func New(URL, consumerKey, privateKey string, store cache.Store) *StashConsumer {
 	s := &StashConsumer{
 		URL:           URL,
 		ConsumerKey:   consumerKey,

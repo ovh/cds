@@ -30,7 +30,7 @@ type LastUpdateBroker struct {
 }
 
 //Init the LastUpdateBroker
-func (b *LastUpdateBroker) Init(c context.Context, DBFunc func() *gorp.DbMap) {
+func (b *LastUpdateBroker) Init(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	// Start cache Subscription
 	go CacheSubscribe(c, b.messages)
 
@@ -39,8 +39,8 @@ func (b *LastUpdateBroker) Init(c context.Context, DBFunc func() *gorp.DbMap) {
 }
 
 // CacheSubscribe subscribe to a channel and push received message in a channel
-func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
-	pubSub := cache.Subscribe("lastUpdates")
+func CacheSubscribe(c context.Context, cacheMsgChan chan<- string, store cache.Store) {
+	pubSub := store.Subscribe("lastUpdates")
 	tick := time.NewTicker(250 * time.Millisecond)
 	defer tick.Stop()
 	for {
@@ -51,7 +51,7 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
 				return
 			}
 		case <-tick.C:
-			msg, err := cache.GetMessageFromSubscription(c, pubSub)
+			msg, err := store.GetMessageFromSubscription(c, pubSub)
 			if err != nil {
 				log.Warning("lastUpdate.CacheSubscribe> Cannot get message %s: %s", msg, err)
 				time.Sleep(5 * time.Second)

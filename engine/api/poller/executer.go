@@ -9,6 +9,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -17,7 +18,7 @@ import (
 )
 
 //Executer is the goroutine which run the pipelines
-func Executer(c context.Context, DBFunc func() *gorp.DbMap) {
+func Executer(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	tick := time.NewTicker(5 * time.Second).C
 	for {
 		select {
@@ -40,7 +41,7 @@ func Executer(c context.Context, DBFunc func() *gorp.DbMap) {
 }
 
 //ExecuterRun is the core function of Executer goroutine
-func ExecuterRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, error) {
+func ExecuterRun(db *gorp.DbMap, store cache.Store) ([]sdk.RepositoryPollerExecution, error) {
 	//Load pending executions
 	exs, err := LoadPendingExecutions(db)
 	if err != nil {
@@ -56,7 +57,7 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.RepositoryPollerExecution, error) {
 	return exs, nil
 }
 
-func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
+func executerRun(db *gorp.DbMap, store cache.Store, e *sdk.RepositoryPollerExecution) {
 	tx, errb := db.Begin()
 	if errb != nil {
 		log.Error("poller.ExecuterRun> %s", errb)
@@ -126,7 +127,7 @@ func executerRun(db *gorp.DbMap, e *sdk.RepositoryPollerExecution) {
 	}
 }
 
-func executerProcess(tx gorp.SqlExecutor, p *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) ([]sdk.PipelineBuild, error) {
+func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) ([]sdk.PipelineBuild, error) {
 	t := time.Now()
 	e.ExecutionDate = &t
 	e.Executed = true

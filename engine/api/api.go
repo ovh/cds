@@ -426,6 +426,9 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Warning("Error initializing repositories manager connections: %s", err)
 	}
 
+	//Init pipeline package
+	pipeline.Store = api.Cache
+
 	//Initiliaze hook package
 	hook.Init(a.Config.URL.API)
 

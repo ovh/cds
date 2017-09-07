@@ -13,7 +13,7 @@ import (
 )
 
 //LoadAll Load all RepositoriesManager from the database
-func LoadAll(db gorp.SqlExecutor, store cache.Store, apiURL, uiURL string) ([]sdk.RepositoriesManager, error) {
+func LoadAll(db gorp.SqlExecutor, store cache.Store) ([]sdk.RepositoriesManager, error) {
 	rms := []sdk.RepositoriesManager{}
 	query := `SELECT id, type, name, url, data FROM repositories_manager`
 	rows, err := db.Query(query)
@@ -30,7 +30,7 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, apiURL, uiURL string) ([]sd
 		if err != nil {
 			log.Warning("LoadAll> Error %s", err)
 		}
-		rm, err := New(sdk.RepositoriesManagerType(t), id, name, URL, map[string]string{}, data, store, uiURL, apiURL)
+		rm, err := New(sdk.RepositoriesManagerType(t), id, name, URL, map[string]string{}, data, store)
 		if err != nil {
 			log.Warning("LoadAll> Error %s", err)
 		}
@@ -42,7 +42,7 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, apiURL, uiURL string) ([]sd
 }
 
 //LoadByID loads the specified RepositoriesManager from the database
-func LoadByID(db gorp.SqlExecutor, id int64, store cache.Store, apiURL, uiURL string) (*sdk.RepositoriesManager, error) {
+func LoadByID(db gorp.SqlExecutor, id int64, store cache.Store) (*sdk.RepositoriesManager, error) {
 	var rm *sdk.RepositoriesManager
 	var rmid int64
 	var t, name, URL, data string
@@ -53,7 +53,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, store cache.Store, apiURL, uiURL st
 		return nil, err
 	}
 
-	rm, err := New(sdk.RepositoriesManagerType(t), rmid, name, URL, map[string]string{}, data, store, uiURL, apiURL)
+	rm, err := New(sdk.RepositoriesManagerType(t), rmid, name, URL, map[string]string{}, data, store)
 	if err != nil {
 		log.Warning("LoadByID> Error %s", err)
 	}
@@ -61,7 +61,7 @@ func LoadByID(db gorp.SqlExecutor, id int64, store cache.Store, apiURL, uiURL st
 }
 
 //LoadByName loads the specified RepositoriesManager from the database
-func LoadByName(db gorp.SqlExecutor, repositoriesManagerName string, store cache.Store, apiURL, uiURL string) (*sdk.RepositoriesManager, error) {
+func LoadByName(db gorp.SqlExecutor, repositoriesManagerName string, store cache.Store) (*sdk.RepositoriesManager, error) {
 	var rm *sdk.RepositoriesManager
 	var id int64
 	var t, name, URL, data string
@@ -72,7 +72,7 @@ func LoadByName(db gorp.SqlExecutor, repositoriesManagerName string, store cache
 		return nil, err
 	}
 
-	rm, err := New(sdk.RepositoriesManagerType(t), id, name, URL, map[string]string{}, data, store, uiURL, apiURL)
+	rm, err := New(sdk.RepositoriesManagerType(t), id, name, URL, map[string]string{}, data, store)
 	if err != nil {
 		log.Warning("LoadByName> Error %s", err)
 	}
@@ -80,7 +80,7 @@ func LoadByName(db gorp.SqlExecutor, repositoriesManagerName string, store cache
 }
 
 //LoadForProject load the specified repositorymanager for the project
-func LoadForProject(db gorp.SqlExecutor, projectkey, repositoriesManagerName string, store cache.Store, apiURL, uiURL string) (*sdk.RepositoriesManager, error) {
+func LoadForProject(db gorp.SqlExecutor, projectkey, repositoriesManagerName string, store cache.Store) (*sdk.RepositoriesManager, error) {
 	query := `SELECT 	repositories_manager.id,
 										repositories_manager.type,
 										repositories_manager.name,
@@ -98,7 +98,7 @@ func LoadForProject(db gorp.SqlExecutor, projectkey, repositoriesManagerName str
 	if err := db.QueryRow(query, projectkey, repositoriesManagerName).Scan(&id, &t, &name, &URL, &data); err != nil {
 		return nil, err
 	}
-	rm, err := New(sdk.RepositoriesManagerType(t), id, name, URL, map[string]string{}, data, store, uiURL, apiURL)
+	rm, err := New(sdk.RepositoriesManagerType(t), id, name, URL, map[string]string{}, data, store)
 	if err != nil {
 		log.Warning("LoadForProject> Error %s", err)
 	}
@@ -107,7 +107,7 @@ func LoadForProject(db gorp.SqlExecutor, projectkey, repositoriesManagerName str
 }
 
 //LoadAllForProject Load RepositoriesManager for a project from the database
-func LoadAllForProject(db gorp.SqlExecutor, projectkey string, store cache.Store, apiURL, uiURL string) ([]sdk.RepositoriesManager, error) {
+func LoadAllForProject(db gorp.SqlExecutor, projectkey string, store cache.Store) ([]sdk.RepositoriesManager, error) {
 	rms := []sdk.RepositoriesManager{}
 	query := `SELECT repositories_manager.id,
 			 repositories_manager.type,
@@ -134,7 +134,7 @@ func LoadAllForProject(db gorp.SqlExecutor, projectkey string, store cache.Store
 			log.Warning("LoadAllForProject> Error %s", err)
 			return rms, nil
 		}
-		rm, err := New(sdk.RepositoriesManagerType(t), id, name, URL, map[string]string{}, data, store, uiURL, apiURL)
+		rm, err := New(sdk.RepositoriesManagerType(t), id, name, URL, map[string]string{}, data, store)
 		if err != nil {
 			log.Warning("LoadAllForProject> Error %s", err)
 			return rms, nil
@@ -220,9 +220,9 @@ func SaveDataForProject(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, projec
 }
 
 //AuthorizedClient returns instance of client with the granted token
-func AuthorizedClient(db gorp.SqlExecutor, projectKey, rmName string, store cache.Store, apiURL, uiURL string) (sdk.RepositoriesManagerClient, error) {
+func AuthorizedClient(db gorp.SqlExecutor, projectKey, rmName string, store cache.Store) (sdk.RepositoriesManagerClient, error) {
 
-	rm, err := LoadForProject(db, projectKey, rmName, store, apiURL, uiURL)
+	rm, err := LoadForProject(db, projectKey, rmName, store)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func CheckApplicationIsAttached(db gorp.SqlExecutor, rmName, projectKey, applica
 }
 
 // LoadFromApplicationByID returns repositoryFullname, repoManager for an application
-func LoadFromApplicationByID(db gorp.SqlExecutor, applicationID int64, store cache.Store, apiURL, uiURL string) (string, *sdk.RepositoriesManager, error) {
+func LoadFromApplicationByID(db gorp.SqlExecutor, applicationID int64, store cache.Store) (string, *sdk.RepositoriesManager, error) {
 	query := `
 			SELECT
 					application.repo_fullname,
@@ -331,7 +331,7 @@ func LoadFromApplicationByID(db gorp.SqlExecutor, applicationID int64, store cac
 	rfn := ""
 	if rmID.Valid && rmType.Valid && rmName.Valid && rmURL.Valid {
 		var err error
-		rm, err = New(sdk.RepositoriesManagerType(rmType.String), rmID.Int64, rmName.String, rmURL.String, map[string]string{}, rmData.String, store, uiURL, apiURL)
+		rm, err = New(sdk.RepositoriesManagerType(rmType.String), rmID.Int64, rmName.String, rmURL.String, map[string]string{}, rmData.String, store)
 		if err != nil {
 			log.Warning("LoadApplications> Error loading repositories manager %s", err)
 		}

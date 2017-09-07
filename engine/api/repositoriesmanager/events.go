@@ -18,7 +18,7 @@ func EventsStatus(store cache.Store) string {
 }
 
 //ReceiveEvents has to be launched as a goroutine.
-func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store, apiURL, uiURL string) {
+func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	for {
 		e := sdk.Event{}
 		store.DequeueWithContext(c, "events_repositoriesmanager", &e)
@@ -29,7 +29,7 @@ func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Sto
 
 		db := DBFunc()
 		if db != nil {
-			if err := processEvent(db, e, store, apiURL, uiURL); err != nil {
+			if err := processEvent(db, e, store); err != nil {
 				log.Error("ReceiveEvents> err while processing error=%s : %v", err, e)
 				retryEvent(&e, err, store)
 			}
@@ -48,7 +48,7 @@ func retryEvent(e *sdk.Event, err error, store cache.Store) {
 	store.Enqueue("events_repositoriesmanager", e)
 }
 
-func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store, apiURL, uiURL string) error {
+func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store) error {
 	log.Debug("repositoriesmanager>processEvent> receive: type:%s all: %+v", event.EventType, event)
 
 	if event.EventType != fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
@@ -67,7 +67,7 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store, apiUR
 
 	log.Debug("repositoriesmanager>processEvent> event:%+v", event)
 
-	c, erra := AuthorizedClient(db, eventpb.ProjectKey, eventpb.RepositoryManagerName, store, apiURL, uiURL)
+	c, erra := AuthorizedClient(db, eventpb.ProjectKey, eventpb.RepositoryManagerName, store)
 	if erra != nil {
 		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, erra)
 	}

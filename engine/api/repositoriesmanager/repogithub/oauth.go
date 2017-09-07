@@ -48,19 +48,15 @@ type GithubConsumer struct {
 	DisableSetStatus         bool   `json:"-"`
 	DisableStatusURL         bool   `json:"-"`
 	Cache                    cache.Store
-	apiURL                   string
-	uiURL                    string
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret, AuthorizationCallbackURL string, store cache.Store, apiURL string, uiURL string) *GithubConsumer {
+func New(ClientID, ClientSecret, AuthorizationCallbackURL string, store cache.Store) *GithubConsumer {
 	return &GithubConsumer{
 		ClientID:                 ClientID,
 		ClientSecret:             ClientSecret,
 		AuthorizationCallbackURL: AuthorizationCallbackURL,
-		Cache:  store,
-		uiURL:  uiURL,
-		apiURL: apiURL,
+		Cache: store,
 	}
 }
 
@@ -165,8 +161,6 @@ func (g *GithubConsumer) GetAuthorized(accessToken, accessTokenSecret string) (s
 			DisableSetStatus: g.DisableSetStatus,
 			DisableStatusURL: g.DisableStatusURL,
 			Cache:            g.Cache,
-			apiURL:           g.apiURL,
-			uiURL:            g.uiURL,
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}

@@ -87,19 +87,19 @@ func GetUsername(store sessionstore.Store, token string) (string, error) {
 }
 
 //GetWorker returns the worker instance from its id
-func GetWorker(db gorp.SqlExecutor, workerID string) (*sdk.Worker, error) {
+func GetWorker(db gorp.SqlExecutor, store sessionstore.Store, workerID string) (*sdk.Worker, error) {
 	// Load worker
 	var w = &sdk.Worker{}
 
 	key := cache.Key("worker", workerID)
 	// Else load it from DB
-	if !cache.Get(key, w) {
+	if !store.Get(key, w) {
 		var err error
 		w, err = worker.LoadWorker(db, workerID)
 		if err != nil {
 			return nil, fmt.Errorf("cannot load worker: %s", err)
 		}
-		cache.Set(key, w)
+		store.Set(key, w)
 	}
 
 	return w, nil

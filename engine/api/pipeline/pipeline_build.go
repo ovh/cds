@@ -11,12 +11,12 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/tat/api/cache"
 )
 
 // PipelineBuildDbResult Gorp result when select a pipeline build
@@ -457,11 +457,12 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	}
 
 	k := cache.Key("application", pb.Application.ProjectKey, "*")
-	cache.DeleteAll(k)
+	Store.DeleteAll(k)
 
 	// Load repositorie manager if necessary
 	if pb.Application.RepositoriesManager == nil || pb.Application.RepositoryFullname == "" {
-		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID)
+		//We don't need to pass apiURL and uiURL because they are not usefull for sending events
+		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID, Store)
 		if errl != nil {
 			log.Error("UpdatePipelineBuildStatus> error while loading repoManager for appID %d err:%s", pb.Application.ID, errl)
 		}
@@ -595,7 +596,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 
 	res := []sdk.VCSCommit{}
 	//Get the RepositoriesManager Client
-	client, errclient := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name)
+	client, errclient := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name, Store)
 	if errclient != nil {
 		return nil, sdk.WrapError(errclient, "UpdatePipelineBuildCommits> Cannot get client")
 	}
@@ -666,7 +667,8 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 	//Initialize client for repository manager
 	if app.RepositoriesManager != nil && app.RepositoryFullname != "" {
-		client, _ = repositoriesmanager.AuthorizedClient(tx, project.Key, app.RepositoriesManager.Name)
+		//We don't need to pass apiURL and uiURL because they are not usefull for commit
+		client, _ = repositoriesmanager.AuthorizedClient(tx, project.Key, app.RepositoriesManager.Name, Store)
 	}
 
 	// Load last finished build

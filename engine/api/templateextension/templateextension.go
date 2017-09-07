@@ -131,7 +131,7 @@ func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.
 }
 
 //Apply will call the apply function of the template and returns a fresh new application
-func Apply(db gorp.SqlExecutor, store cache.Store, templ template.Interface, proj *sdk.Project, params []sdk.TemplateParam, appName string, apiURL, uiURL string) (*sdk.Application, error) {
+func Apply(db gorp.SqlExecutor, store cache.Store, templ template.Interface, proj *sdk.Project, params []sdk.TemplateParam, appName string) (*sdk.Application, error) {
 	regexp := regexp.MustCompile(sdk.NamePattern)
 	if !regexp.MatchString(appName) {
 		return nil, sdk.ErrInvalidApplicationPattern
@@ -152,7 +152,7 @@ func Apply(db gorp.SqlExecutor, store cache.Store, templ template.Interface, pro
 
 			// If repo from repository manager
 			if len(repoDatas) == 2 {
-				app.RepositoriesManager, err = repositoriesmanager.LoadByName(db, repoDatas[0], store, apiURL, uiURL)
+				app.RepositoriesManager, err = repositoriesmanager.LoadByName(db, repoDatas[0], store)
 				if err != nil {
 					log.Warning("ApplyTemplate> error getting repositories manager %s : %s", repoDatas[0], err)
 					return nil, err
@@ -163,7 +163,7 @@ func Apply(db gorp.SqlExecutor, store cache.Store, templ template.Interface, pro
 				for i := range app.Variable {
 					v := &app.Variable[i]
 					if v.Name == p.Name {
-						client, errClient := repositoriesmanager.AuthorizedClient(db, proj.Key, app.RepositoriesManager.Name, store, apiURL, uiURL)
+						client, errClient := repositoriesmanager.AuthorizedClient(db, proj.Key, app.RepositoriesManager.Name, store)
 						if errClient != nil {
 							log.Warning("ApplyTemplate> Cannot get client got %s %s : %s", proj.Key, app.RepositoriesManager.Name, errClient)
 							return nil, errClient
