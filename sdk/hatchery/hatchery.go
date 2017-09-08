@@ -13,7 +13,17 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Interface describe an interface for each hatchery mode (mesos, local)
+// Interface describe an interface for each hatchery mode
+// Init create new clients for different api
+// SpawnWorker creates a new vm instance
+// CanSpawn return wether or not hatchery can spawn model
+// WorkersStartedByModel returns the number of instances of given model started but not necessarily register on CDS yet
+// WorkersStarted returns the number of instances started but not necessarily register on CDS yet
+// Hatchery returns hatchery instance
+// Client returns cdsclient instance
+// ModelType returns type of hatchery
+// NeedRegistration return true if worker model need regsitration
+// ID returns hatchery id
 type Interface interface {
 	Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error
 	SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error)

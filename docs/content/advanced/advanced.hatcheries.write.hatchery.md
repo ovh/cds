@@ -10,4 +10,4 @@ identifier = "hatchery_write_hatchery"
 
 Feel free to contribute to add new Hatchery mode.
 
-Take a look at [Hatchery Local](https://github.com/ovh/cds/blob/master/engine/hatchery/local/local.go)
+See [Tutorial]({{< relref "tutorials.hatchery-create.md" >}})
