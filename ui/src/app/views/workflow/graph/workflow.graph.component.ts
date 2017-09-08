@@ -62,10 +62,8 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     workflowSubscription: Subscription;
 
-    readonly minSvgWidth = 155;
-    readonly minPipelineWidth = 177;
-    currentSvgWidth = 155;
-
+    nodeWidth: number;
+    nodeHeight: number;
 
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private _cd: ChangeDetectorRef,
                 private _workflowStore: WorkflowStore) {
@@ -89,7 +87,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     @HostListener('window:resize', ['$event'])
     onResize(event) {
-        /*
         let svg = d3.select('svg');
         let inner = d3.select('svg g');
         if (this.direction === 'LR') {
@@ -111,12 +108,12 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             let svgWidth = +svg.attr('width');
             let xCenterOffset = (svgWidth - this.g.graph().width) / 2;
             inner.attr('transform', 'translate(' + xCenterOffset + ', 0)');
-
+            */
 
         }
         this.svgHeight = this.g.graph().height + 40;
         svg.attr('height', this.svgHeight);
-        */
+
     }
 
     ngAfterViewInit(): void {
@@ -138,16 +135,19 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.svgWidth = window.innerWidth;
         this.svgHeight = window.innerHeight;
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
-        this.g = new dagreD3.graphlib.Graph().setGraph({rankdir: this.direction});
+        this.g = new dagreD3.graphlib.Graph().setGraph({rankdir: this.direction, labeloffset: 0});
+
+        //this.nodeWidth = 430;
+        this.nodeHeight = 88;
 
         let mapDeep = new Map<number, number>();
         mapDeep.set(this.workflow.root.id, 1);
         this.getWorkflowNodeDeep(this.workflow.root, mapDeep);
         this.getWorkflowJoinDeep(mapDeep);
 
-        this.currentSvgWidth = Math.floor(this.svgWidth * .75 / Math.max(...Array.from(mapDeep.values())));
-        if (this.currentSvgWidth < this.minSvgWidth) {
-            this.currentSvgWidth = this.minSvgWidth;
+        this.nodeWidth = Math.floor(this.svgWidth * .75 / Math.max(...Array.from(mapDeep.values())));
+        if (this.nodeWidth < 155) {
+            this.nodeWidth = 155;
         }
 
         if (this.workflow.root) {
@@ -192,7 +192,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.g.graph().transition = function(selection) {
             return selection.transition().duration(500);
         };
-        debugger;
+
         // Run the renderer. This is what draws the final graph.
         this.render(inner, this.g);
 
@@ -280,11 +280,13 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.svgContainer.insert(componentRef.hostView);
         this.g.setNode('node-' + node.id, {
             label: () => {
-                componentRef.location.nativeElement.style.width = this.currentSvgWidth + 'px';
+                componentRef.location.nativeElement.style.width = '90%';
+                componentRef.location.nativeElement.style.height = '100%';
                 return componentRef.location.nativeElement;
             },
-            labelStyle: "width: " + this.currentSvgWidth + "px",
-            width: this.currentSvgWidth
+            labelStyle: 'width: '+this.nodeWidth+'px; height: '+this.nodeHeight+'px',
+            width: this.nodeWidth,
+            height: this.nodeHeight
         });
         if (node.triggers) {
             node.triggers.forEach(t => {
@@ -302,8 +304,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         componentRef.instance.project = this.project;
         componentRef.instance.disabled = this.linkWithJoin;
         componentRef.instance.webworker = this.webworker;
-        componentRef.instance.workflowPipelineWidth = (this.currentSvgWidth + 22) + 'px';
-        componentRef.instance.workflowSvgNodeWidth = this.currentSvgWidth + 'px';
         this.nodesComponent.push(componentRef);
         componentRef.instance.linkJoinEvent.subscribe(n => {
             this.nodeToLink = n;

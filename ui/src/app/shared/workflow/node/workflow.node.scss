@@ -1,8 +1,65 @@
 @import '../../../../common';
 $boxHeight: 68px;
+$boxWidth: 155px;
 .workflowNode {
+  width: 100%;
+  height: 100%;
+
+  .nodePipeline {
+    position: relative;
+    background: white;
+    border: 1px solid grey;
+    border-radius: 5px;
+    width: 100%;
+    height: 100%;
+
+    .footer {
+      position: absolute;
+      bottom: 5px;
+      left: 10px;
+    }
+
+    .pipeline {
+      display: flex;
+      text-align: left;
+      padding-left: 10px;
+      padding-top: 20px;
+      height: 68px;
+      font-weight: 600;
+
+      p {
+        width: 155px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      p.ellipsis {
+        text-overflow: ellipsis;
+      }
+    }
+
+    .ribbon.label {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      font-size: 0.7em;
+      border: 1px solid black;
+      background-color: $cds_color_light_teal;
+      color: black;
+      border-radius: 2px;
+      padding-left: 10px;
+    }
+    .ui.ribbon.label:after {
+      content: none;
+    }
+  }
+}
+
+/*
+$boxHeight: 68px;
+$boxWidth: 176px;
+.workflowNode {
+  width: 155px;
   height: 58px;
-  padding-left: 10px;
 
   .ui.segment.success {
     background-color: $cds_color_light_green;
@@ -27,67 +84,87 @@ $boxHeight: 68px;
   .ui.segment {
     margin-top: -8px;
     margin-left: -11px;
+    width: $boxWidth;
     height: $boxHeight;
     border-color: #333;
-    //border: none;
     padding: 0;
-    z-index: 4;
 
-    .default {
-      width: 100%;
-      height: 100%;
-      border: 2px solid $cds_color_light_teal;
-      border-radius: 5px;
-      position: absolute;
-      top: 0px;
-      left: 0px;
-    }
-
-    .blueTopRightCorner {
+    .firstloop {
       position: absolute;
       top: 0px;
       left: 0px;
       margin: 0;
+      width: $boxWidth;
+      height: $boxHeight;
       background-color: transparent;
-      border: 2px solid transparent;
-      border-radius: 5px;
-      animation: blueTopRightCorner 4s infinite;
+      border: none;
+
+      &::before,
+      &::after {
+        z-index: 1;
+        box-sizing: inherit;
+        content: '';
+        position: absolute;
+        width: $boxWidth;
+        height: $boxHeight;
+      }
+
+      &::before {
+        top: -2px;
+        left: -2px;
+        border: 2px solid transparent;
+        border-radius: 5px;
+        animation: spinBefore 4s infinite;
+      }
+
+      &::after {
+        border: 2px solid transparent;
+        bottom: 2px;
+        right: 2px;
+        border-radius: 5px;
+        animation: spinAfter 4s infinite;
+      }
+
     }
 
-    .transparentTopRightCorner {
+    .secondloop {
       position: absolute;
       top: 0px;
       left: 0px;
       margin: 0;
-      z-index: 1;
+      width: $boxWidth;
+      height: $boxHeight;
       background-color: transparent;
-      border: 2px solid transparent;
-      border-radius: 5px;
-      animation: transparentTopRightCorner 4s infinite;
+      border: none;
+
+      &::before,
+      &::after {
+        z-index: 2;
+        box-sizing: inherit;
+        content: '';
+        position: absolute;
+        width: $boxWidth;
+        height: $boxHeight;
+      }
+
+      &::before {
+        top: -2px;
+        left: -2px;
+        border: 2px solid transparent;
+        border-radius: 5px;
+        animation: spinSecondBefore 4s infinite;
+      }
+
+      &::after {
+        border: 2px solid transparent;
+        bottom: 2px;
+        right: 2px;
+        border-radius: 5px;
+        animation: spinSecondAfter 4s infinite;
+      }
+
     }
 
-    .blueBottomLeftCorner {
-      position: absolute;
-      bottom: 0px;
-      right: 0;
-      margin: 0;
-      background-color: transparent;
-      border: 2px solid transparent;
-      border-radius: 5px;
-      animation: blueBottomLeftCorner 4s infinite;
-    }
-
-    .transparentBottomLeftCorner {
-      position: absolute;
-      bottom: 0px;
-      right: 0;
-      margin: 0;
-      z-index: 1;
-      background-color: transparent;
-      border: 2px solid transparent;
-      border-radius: 5px;
-      animation: transparentBottomLeftCorner 4s infinite;
-    }
     .pipeline {
       display: flex;
       text-align: left;
@@ -97,7 +174,7 @@ $boxHeight: 68px;
       font-weight: 600;
 
       p {
-        width: 95%;
+        width: 155px;
         white-space: nowrap;
         overflow: hidden;
       }
@@ -143,7 +220,6 @@ $boxHeight: 68px;
     position: absolute;
     bottom: -5px;
     width: 100%;
-    z-index: 5;
 
     p {
       color: #737373;
@@ -153,68 +229,40 @@ $boxHeight: 68px;
   }
 }
 
-@keyframes blueTopRightCorner {
+@keyframes spinBefore {
   0% {
     width: 0;
     height: 0;
+    box-sizing: inherit;
   }
   12.5% {
-    width: 100%;
+    width: $boxWidth;
     height: 0;
     border-top-color: $cds_color_teal;
     transition: width 0.5s ease-in;
   }
   25% {
-    width: 100%;
-    height: 100%;
+    width: $boxWidth;
+    height: $boxHeight;
     border-top-color: $cds_color_teal;
     border-right-color: $cds_color_teal;
+    transition: height 0.5s;
   }
   50% {
-    width: 100%;
-    height: 100%;
+    width: $boxWidth;
+    height: $boxHeight;
     border-top-color: $cds_color_teal;
     border-right-color: $cds_color_teal;
   }
   100% {
-    width: 100%;
-    height: 100%;
+    width: $boxWidth;
+    height: $boxHeight;
     border-top-color: $cds_color_teal;
     border-right-color: $cds_color_teal;
   }
 }
 
-@keyframes blueBottomLeftCorner {
-  0% {
-    width: 0;
-    height: 0;
-  }
-  25% {
-    width: 0;
-    height: 0;
-  }
-  37.5% {
-    width: 100%;
-    height: 0;
-    border-bottom-color: $cds_color_teal;
-    border-left-color: transparent;
-    transition: width 0.5s ease-in;
-  }
-  50% {
-    width: 100%;
-    height: 100%;
-    border-bottom-color: $cds_color_teal;
-    border-left-color: $cds_color_teal;
-  }
-  100% {
-    width: 100%;
-    height: 100%;
-    border-bottom-color: $cds_color_teal;
-    border-left-color: $cds_color_teal;
-  }
-}
-
-@keyframes transparentTopRightCorner {
+@keyframes spinSecondBefore {
   0% {
     width: 0;
     height: 0;
@@ -224,27 +272,60 @@ $boxHeight: 68px;
     height: 0;
   }
   62.5% {
-    width: 100%;
+    width: $boxWidth;
     height: 0;
     border-top-color: $cds_color_light_teal;
-    border-right-color: transparent;
     transition: width 0.5s ease-in;
   }
   75% {
-    width: 100%;
-    height: 100%;
+    width: $boxWidth;
+    height: $boxHeight;
     border-top-color: $cds_color_light_teal;
     border-right-color: $cds_color_light_teal;
+    transition: height 0.5s;
   }
   100% {
-    width: 100%;
-    height: 100%;
+    width: $boxWidth;
+    height: $boxHeight;
     border-top-color: $cds_color_light_teal;
     border-right-color: $cds_color_light_teal;
   }
 }
 
-@keyframes transparentBottomLeftCorner {
+@keyframes spinAfter {
+  0% {
+    width: 0;
+    height: 0;
+  }
+  25% {
+    width: 0;
+    height: 0;
+  }
+  37.5% {
+    width: $boxWidth;
+    height: 0;
+    border-bottom-color: $cds_color_teal;
+    border-left-color: transparent;
+    transition:
+            width 0.5s ease-in
+  }
+  50% {
+    width: $boxWidth;
+    height: $boxHeight;
+    border-bottom-color: $cds_color_teal;
+    border-left-color: $cds_color_teal;
+    transition:
+            height 0.5s
+  }
+  100% {
+    width: $boxWidth;
+    height: $boxHeight;
+    border-bottom-color: $cds_color_teal;
+    border-left-color: $cds_color_teal;
+  }
+}
+
+@keyframes spinSecondAfter {
   0% {
     width: 0;
     height: 0;
@@ -254,15 +335,21 @@ $boxHeight: 68px;
     height: 0;
   }
   87.5% {
-    width: 100%;
+    width: $boxWidth;
     height: 0;
     border-bottom-color: $cds_color_light_teal;
-    transition: width 0.5s ease-in;
+    border-left-color: transparent;
+    transition:
+            width 0.5s ease-in
+
   }
   100% {
-    width: 100%;
-    height: 100%;
+    width: $boxWidth;
+    height: $boxHeight;
     border-bottom-color: $cds_color_light_teal;
     border-left-color: $cds_color_light_teal;
+    transition:
+            height 0.5s
   }
 }
+*/

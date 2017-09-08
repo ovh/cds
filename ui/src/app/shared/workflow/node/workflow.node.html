@@ -1,20 +1,28 @@
 <div class="workflowNode">
+    <div class="nodePipeline">
+        <div class="pipeline">
+            <p class="ellipsis">{{node.pipeline.name}}</p>
+        </div>
+        <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0">
+            <p class="ellipsis">{{node.context.application.name}}</p>
+        </div>
+        <a class="ui white ribbon label" *ngIf="true || node.context.environment_id && node.context.environment_id > 0">aaa</a>
+    </div>
+
+</div>
+
+<!--
+<div class="workflowNode">
     <div class="ui segment" [class.disabled]="disabled" [class.pointing]="currentNodeRun" (click)="goToNodeRun()"
         [class.building]="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"
         [class.success]="currentNodeRun?.status === pipelineStatus.SUCCESS"
         [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL"
-        [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED" (click)="animateMe()"
-        #pipelineBox>
+        [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED">
         <div class="pipeline">
             <p class="ellipsis">{{node.pipeline.name}}</p>
         </div>
-        <ng-container *ngIf="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING">
-            <div class="default"></div>
-            <div class="blueTopRightCorner"  [@blueTopRightCorner]="state" (@blueTopRightCorner.done)="animationDone($event)"></div>
-            <div class="blueBottomLeftCorner"  [@blueBottomLeftCorner]="state" (@blueBottomLeftCorner.done)="animationDone($event)"></div>
-            <div class="transparentTopRightCorner"  [@transparentTopRightCorner]="state" (@transparentTopRightCorner.done)="animationDone($event)"></div>
-            <div class="transparentBottomLeftCorner"  [@transparentBottomLeftCorner]="state" (@transparentBottomLeftCorner.done)="animationDone($event)"></div>
-        </ng-container>
+        <div class="firstloop" *ngIf="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"></div>
+        <div class="secondloop" *ngIf="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"></div>
     </div>
     <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0">
         <p class="ellipsis">{{node.context.application.name}}</p>
@@ -41,3 +49,4 @@
 <ng-container *ngIf="project && node">
     <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
 </ng-container>
+-->

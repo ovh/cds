@@ -16,7 +16,6 @@ import {CDSWorker} from '../../worker/worker';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {Router} from '@angular/router';
 import {PipelineStatus} from '../../../model/pipeline.model';
-import {animate, keyframes, state, style, transition, trigger} from '@angular/animations'
 
 declare var _: any;
 
@@ -24,51 +23,6 @@ declare var _: any;
     selector: 'app-workflow-node',
     templateUrl: './workflow.node.html',
     styleUrls: ['./workflow.node.scss'],
-    animations: [
-        trigger('blueTopRightCorner', [
-            state('nothing', style({})),
-            state('running', style({})),
-            transition('nothing => running', animate('4s', keyframes([
-                style({width: 0, height: 0, offset: 0}),
-                style({width: '100%', height: 0, borderTopColor: '#4fa3e3', transition: 'width 0.5s ease-in', offset: 0.125}),
-                style({width: '100%', height: '100%', borderTopColor: '#4fa3e3', borderRightColor: '#4fa3e3', offset: 0.25}),
-                style({width: '100%', height: '100%', borderTopColor: '#4fa3e3', borderRightColor: '#4fa3e3', offset: 0.5}),
-                style({width: '100%', height: '100%', borderTopColor: '#4fa3e3', borderRightColor: '#4fa3e3', offset: 1}),
-            ]))),
-        ]),
-        trigger('blueBottomLeftCorner', [
-            state('nothing', style({})),
-            state('running', style({})),
-            transition('nothing => running', animate( '4s', keyframes([
-                style({width: 0, height: 0, offset: 0}),
-                style({width: 0, height: 0, offset: 0.25}),
-                style({width: '100%', height: 0, borderBottomColor: '#4fa3e3', borderLeftColor: 'transparent', transition: 'width 0.5s ease-in', offset: 0.375}),
-                style({width: '100%', height: '100%', borderBottomColor: '#4fa3e3', borderLeftColor: '#4fa3e3', offset: 0.5}),
-                style({width: '100%', height: '100%', borderBottomColor: '#4fa3e3', borderLeftColor: '#4fa3e3', offset: 1}),
-            ])))
-        ]),
-        trigger('transparentTopRightCorner', [
-            state('nothing', style({})),
-            state('running', style({})),
-            transition('nothing => running', animate( '4s', keyframes([
-                style({width: 0, height: 0, offset: 0}),
-                style({width: 0, height: 0, offset: 0.5}),
-                style({width: '100%', height: 0, borderTopColor: '#BEDEFF', transition: 'width 0.5s ease-in', offset: 0.625}),
-                style({width: '100%', height: '100%', borderTopColor: '#BEDEFF', borderRightColor: '#BEDEFF', offset: 0.75}),
-                style({width: '100%', height: '100%', offset: 1}),
-            ])))
-        ]),
-        trigger('transparentBottomLeftCorner', [
-            state('nothing', style({})),
-            state('running', style({})),
-            transition('nothing => running', animate( '4s', keyframes([
-                style({width: 0, height: 0, offset: 0}),
-                style({width: 0, height: 0, offset: 0.75}),
-                style({width: '100%', height: 0, borderBottomColor: '#BEDEFF', transition: 'width 0.5s ease-in', offset: 0.875}),
-                style({width: '100%', height: '100%', borderBottomColor: '#BEDEFF', borderLeftColor: '#BEDEFF', offset: 1}),
-            ])))
-        ]),
-    ]
 })
 @AutoUnsubscribe()
 export class WorkflowNodeComponent implements AfterViewInit, OnInit {
@@ -76,10 +30,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
-    @Input() workflowSvgNodeWidth: string;
-    @Input() workflowPipelineWidth: string;
-
-    @Input() disabled = false;
 
     @Output() linkJoinEvent = new EventEmitter<WorkflowNode>();
 
@@ -89,9 +39,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     workflowDeleteNode: WorkflowDeleteNodeComponent;
     @ViewChild('workflowContext')
     workflowContext: WorkflowNodeContextComponent;
-
-    @ViewChild('pipelineBox')
-    pipelineBoxER: ElementRef;
 
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
     editableNode: WorkflowNode;
@@ -106,19 +53,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     loading = false;
     options: {};
-
-    state: string = 'nothing';
-
-    animateMe() {
-        this.state = (this.state === 'nothing' ? 'running' : 'nothing');
-    }
-
-    animationDone(event: any): void {
-        this.state = 'nothing';
-        setTimeout(() => {
-            this.state = 'running';
-        })
-    }
+    disabled: boolean = false;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
                 private _toast: ToastService, private _pipelineStore: PipelineStore, private _router: Router) {
@@ -152,11 +87,8 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     ngAfterViewInit() {
-        //this.elementRef.nativeElement.style.position = 'fixed';
-        //this.elementRef.nativeElement.style.top = 0;
-        //this.elementRef.nativeElement.style.width = this.workflowSvgNodeWidth;
-        //this.pipelineBoxER.nativeElement.style.width = this.workflowSvgNodeWidth;
-
+        this.elementRef.nativeElement.style.position = 'fixed';
+        this.elementRef.nativeElement.style.top = 0;
     }
 
     openTriggerModal(): void {

@@ -40,7 +40,6 @@ export class WorkflowRunJobVariableComponent {
                 }
             });
         }
-        console.log(this.varCDS);
     }
 
     varGit: Array<Parameter>;
