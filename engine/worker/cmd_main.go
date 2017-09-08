@@ -96,7 +96,12 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		w.alive = true
 		initViper(w)
-		log.Info("What a good time to be alive, I'm in version %s", sdk.VERSION)
+		hostname, errh := os.Hostname() // no check of err here
+		if errh != nil {
+			hostname = fmt.Sprintf("error compute hostname: %s", errh)
+		}
+		log.Info("What a good time to be alive, I'm in version %s, my hostname:", sdk.VERSION, hostname)
+		log.Info("My Hostname %s", sdk.VERSION)
 		w.initServer(ctx)
 
 		// Gracefully shutdown connections
@@ -299,7 +304,7 @@ func (w *currentWorker) processBookedJob(pbjobs chan<- sdk.PipelineBuildJob) {
 		return
 	}
 
-	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action, j.ExecGroups)
+	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action, j.ExecGroups, w.bookedJobID)
 	if !requirementsOK {
 		var details string
 		for _, r := range errRequirements {
@@ -337,6 +342,7 @@ func (w *currentWorker) doRegister() error {
 			log.Info("Cannot register: %s", err)
 			return err
 		}
+		log.Debug("I am registered, with groupID:%d and model:%v", w.groupID, w.model)
 		w.alive = true
 	}
 	return nil
