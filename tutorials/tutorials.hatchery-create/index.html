@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
-    <title>Track CDS Pipeline from Git command line  :: CDS Documentation</title>
+    <title>Write your own hatchery :: CDS Documentation</title>
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/hybrid.css" rel="stylesheet">
@@ -20,7 +20,7 @@
     
 
   </head>
-  <body class="" data-url="/tutorials/tutorials.cds-track/">
+  <body class="" data-url="/tutorials/tutorials.hatchery-create/">
     
 <nav id="sidebar">
   <div id="header-wrapper">
@@ -185,13 +185,17 @@
     
 
     <li data-nav-id="/tutorials/tutorials.hatchery-create/" class="dd-item
-    
+    active
     ">
         <a href="https://ovh.github.io/cds/tutorials/tutorials.hatchery-create/">
             Write your own hatchery
             
             
         </a>
+        
+            
+            
+            
         
     </li>
 
@@ -311,17 +315,13 @@
     
 
     <li data-nav-id="/tutorials/tutorials.cds-track/" class="dd-item
-    active
+    
     ">
         <a href="https://ovh.github.io/cds/tutorials/tutorials.cds-track/">
             Track CDS Pipeline from Git command line 
             
             
         </a>
-        
-            
-            
-            
         
     </li>
 
@@ -391,7 +391,7 @@
                 
                 
               <div id="top-github-link">
-                  <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/tutorials/tutorials.cds-track.md" target="blank">
+                  <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/tutorials/tutorials.hatchery-create.md" target="blank">
                     <i class="fa fa-code-fork"></i>
                     Edit this page
                   </a>
@@ -411,7 +411,7 @@
                       <span class="fa fa-arrow-circle-right" style="font-size:larger" aria-hidden="true"></span>
                       CDS Documentation</a>
                       
-                         / <a href='https://ovh.github.io/cds/tutorials/tutorials/'>Tutorials</a> / <a href='https://ovh.github.io/cds/tutorials/tutorials.cds-track/'>Track CDS Pipeline from Git command line </a>
+                         / <a href='https://ovh.github.io/cds/tutorials/tutorials/'>Tutorials</a> / <a href='https://ovh.github.io/cds/tutorials/tutorials.hatchery-create/'>Write your own hatchery</a>
                       
                       
               </div>
@@ -424,10 +424,9 @@
 <ul>
 <li>
 <ul>
-<li><a href="#introduction">Introduction</a></li>
+<li><a href="#example-with-a-creation-of-a-vsphere-hatchery">Example with a creation of a VSphere hatchery</a></li>
+<li><a href="#test">Test</a></li>
 </ul></li>
-<li><a href="#goal-immediate-feedback">Goal: Immediate feedback</a></li>
-<li><a href="#git-alias-sugar">Git alias sugar</a></li>
 </ul></li>
 </ul>
 </nav>
@@ -439,34 +438,56 @@
               
             <div id="body-inner">
               
-              <h1>Track CDS Pipeline from Git command line </h1>
+              <h1>Write your own hatchery</h1>
               
 
 
 
-<h3 id="introduction">Introduction</h3>
+<h3 id="example-with-a-creation-of-a-vsphere-hatchery">Example with a creation of a VSphere hatchery</h3>
 
-<p>This tutorial introduce the <code>cds track &lt;git commit&gt;</code> function of CDS <a href="https://ovh.github.io/cds/cli">cli</a>.</p>
+<ul>
+<li><p>First of all you need to create a new package like the other into the hatchery package. Let&rsquo;s call this package vsphere for our example.</p></li>
 
-<h2 id="goal-immediate-feedback">Goal: Immediate feedback</h2>
+<li><p>You have to create a cli subcommand (see <a href="https://github.com/ovh/cds/blob/master/engine/hatchery/vsphere/cmd.go">here</a>) in order to launch this new hatchery mode via cli and with right flags in order to configure our access to vsphere API.</p></li>
 
-<p>cds track aims to display in your terminal the status of the pipeline building code refered by given commit hash.</p>
+<li><p>You need to implement the hatchery interface (see <a href="https://godoc.org/github.com/ovh/cds/sdk/hatchery#Interface">here</a>)</p></li>
 
-<p>Push your branch, start cds track and get immediate feedback.</p>
+<li><p>The <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Init">Init</a> function is useful to create the struct and to set all of these parameters, for our example it&rsquo;s in this function that we&rsquo;re going to create all our VSphere informations fetched from the VSphere API. (cf <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Init">init.go</a>). In this case we create a new vsphere client to request vsphere API, a new finder to fetch all informations about our vsphere host. In fact, all informations that we need to spawn and kill the vms with our workers inside on the vsphere infrastructure. This function is also used to create and register the hatchery on the api via the function in the sdk called <a href="https://godoc.org/github.com/ovh/cds/sdk/hatchery#Register">hatchery.Register</a>. This register will give you the id of your hatchery.</p></li>
 
-<p>Git track will display all pipelines related to given hash.</p>
+<li><p>The <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.ID">ID</a> function returns the id of the current hatchery that comes from the hatchery client registered with the sdk previously in the <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Init">Init</a> function.</p></li>
 
-<p>This means triggered testing and deployment pipelines will be displayed.</p>
+<li><p>The <a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.ModelType">ModelType</a> function returns the type of the hatchery, in this case it&rsquo;s vsphere type. We can create a constant VSphere inside our <a href="https://godoc.org/github.com/ovh/cds/sdk#pkg-constants">sdk package</a>.</p></li>
 
-<p><img src="https://ovh.github.io/cds/images/tutorials_git_track.png" alt="git-track" /></p>
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Hatchery">Hatchery</a> function returns the hatchery struct initialised previously in the <code>Init</code> function.</p></li>
 
-<h2 id="git-alias-sugar">Git alias sugar</h2>
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.Client">Client</a> function returns the sdk client initialised previously in the <code>Init</code> function too.</p></li>
 
-<p>To enhance even more your daily routine, you can create a git alias:</p>
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.NeedRegistration">NeedRegistration</a> is used to know if your worker model need registration. For example if a user update a worker model you have to rebuild the virtual machine model linked to this worker model. And this function returns true if the worker model was updated after the virtual machine model was created on vsphere. In order to know that for vsphere we have add some metadata on each vms in order to add more custom data as the last creation of this vm for example.</p></li>
 
-<pre><code class="language-bash">$ cat ~/.gitconfig
-[alias]
-  track = !cds track $(git rev-parse HEAD)
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.CanSpawn">CanSpawn</a> function checks if the hatchery can spawn this model. For example with vsphere with check if there is a memory requirement, if it&rsquo;s the case it returns false because it&rsquo;s not already supported by our vsphere hatchery for now.</p></li>
+
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.WorkersStartedByModel">WorkersStartedByModel</a> returns all workers which are running with a worker model. In our vsphere example, in order to know that we register a string metadata called model which tell us the name of our worker model.</p></li>
+
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.WorkersStarted">WorkersStarted</a> returns all workers include those which are running to build a vm model or to register a worker model. For example in the vsphere case, in order to count them we all prefix our worker spawned with <code>worker-</code>.</p></li>
+
+<li><p><a href="https://godoc.org/github.com/ovh/cds/engine/hatchery/vsphere#HatcheryVSphere.CanSpawn">CanSpawn</a> is where the magic happens, it&rsquo;s in this function that you spawn your vms with the right configuration. In fact with vsphere we check if there is a vm model already created for the worker model passed in parameter. If it doesn&rsquo;t we create a vm model with the user data store in worker model infos. Then we spawn a vm with right environment variables created from informations passed in parameters (workerModel, registerOnly, &hellip;) and with a script inside the vm that download the worker binary, execute it and shutdown when all is done. In this function we also check if the worker should be launch to register or to execute steps. When we launch a worker for register it means that the worker is launched and then send all there binary capabilities to the api for this worker model but don&rsquo;t execute any jobs.</p></li>
+
+<li><p>In our vsphere implementation we also launch multiple goroutine to clean and kill workers which seem down or in error. It&rsquo;s a ticker that check all vms state in a periodic way.</p></li>
+</ul>
+
+<h3 id="test">Test</h3>
+
+<p>If you want to test that you just have to launch it like that :</p>
+
+<pre><code class="language-bash">$ ./hatchery vsphere --api=http://localhost:8081 \
+  --token=6a132232b1baa5a0845466628d15963995bce1fc5997ae29eeb6b45c11111 \
+  --vsphere-user=user \
+  --vsphere-password=XXX \
+  --vsphere-datacenter=pcc-11-222-333-444_datacenter1111 \
+  --vsphere-network=VLAN16 \
+  --vsphere-datastore=pcc-000001 \
+  --vsphere-endpoint=&quot;pcc-11-222-333-444.ovh.com&quot; \
+  --max-worker=5
 </code></pre>
 
 
@@ -499,7 +520,16 @@
             
                 
                     
+                    
+                
+            
+                
+                    
                         
+                        
+                            
+                                
+                            
                         
                     
                 
@@ -508,12 +538,7 @@
                     
                         
                         
-                    
-                
-            
-                
-                    
-                        
+                            
                         
                     
                 
@@ -522,12 +547,7 @@
                     
                         
                         
-                    
-                
-            
-                
-                    
-                        
+                            
                         
                     
                 
@@ -536,6 +556,8 @@
                     
                         
                         
+                            
+                        
                     
                 
             
@@ -543,18 +565,35 @@
                     
                         
                         
+                            
+                        
                     
                 
             
                 
                     
+                        
+                        
+                            
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
+                            
+                        
                     
                 
             
 
             
-                <a class="nav nav-prev" href="https://ovh.github.io/cds/tutorials/tutorials.service-link-requirement-pg/" title="Service Requirement PostgreSQL"> <i class="fa fa-chevron-left"></i></a>
+                <a class="nav nav-prev" href="https://ovh.github.io/cds/tutorials/tutorials.worker-setup/" title="Worker Setup"> <i class="fa fa-chevron-left"></i></a>
             
+            
+                <a class="nav nav-next" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-simple/" title="Setup Worker Model From Docker Hub" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
             
         
     </div>

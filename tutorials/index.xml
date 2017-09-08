@@ -22,6 +22,17 @@ Bottom line, if you can access the application, your worker will too.</descripti
     </item>
     
     <item>
+      <title>Write your own hatchery</title>
+      <link>https://ovh.github.io/cds/tutorials/tutorials.hatchery-create/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/tutorials/tutorials.hatchery-create/</guid>
+      <description>Example with a creation of a VSphere hatchery  First of all you need to create a new package like the other into the hatchery package. Let&amp;rsquo;s call this package vsphere for our example.
+ You have to create a cli subcommand (see here) in order to launch this new hatchery mode via cli and with right flags in order to configure our access to vsphere API.
+ You need to implement the hatchery interface (see here)</description>
+    </item>
+    
+    <item>
       <title>Setup Worker Model From Docker Hub</title>
       <link>https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-simple/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -52,10 +63,23 @@ The following tools must be included in the model:
       <guid>https://ovh.github.io/cds/tutorials/tutorials.worker-model-openstack/</guid>
       <description>CDS build using OVH.com Openstack infrastructure
 Create Openstack user In OVH manager, in cloud section, click on the menu on the Servers&amp;gt;Openstack item.
-You will be able to create an Openstack user, enter description (name and password will be generated).
+You will be able to create a worker model Openstack user, enter description (name and password will be generated).
 Add Openstack worker model We need to define an Openstack worker model to have Openstack hatchery booting workers.
 We will create a model called docker:
  With low hardware capacity (vps-ssd-1) On Debian 8 With docker ready to use Git installed  First, define a udata file.</description>
+    </item>
+    
+    <item>
+      <title>Setup VSphere Worker Model</title>
+      <link>https://ovh.github.io/cds/tutorials/tutorials.worker-model-vsphere/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/tutorials/tutorials.worker-model-vsphere/</guid>
+      <description>CDS build using VSphere infrastructure
+Add VSphere worker model We need to define a VSphere worker model to have VSphere hatchery booting workers.
+We will create a worker model called debian8-docker:
+ On Debian 8 With docker ready to use Git installed  First, define a udata file. It is a shell script executed just after the boot sequence complete. Our udata will look like this:
+# Install docker cd $HOME apt-get -y --force-yes update &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 apt-get install -y --force-yes apt-transport-https ca-certificates &amp;gt;&amp;gt; /tmp/user_data 2&amp;gt;&amp;amp;1 apt-key adv --keyserver hkp://p80.</description>
     </item>
     
     <item>
@@ -101,7 +125,7 @@ Git alias sugar To enhance even more your daily routine, you can create a git al
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/tutorials/tutorials/</guid>
-      <description> Worker Setup Setup Worker Model From Docker Hub Setup Docker Worker Model with your own image Setup Openstack Worker Model Service Requirement Nginx Service Requirement PostgreSQL Track CDS Pipeline from Git command line   </description>
+      <description> Worker Setup Write your own hatchery Setup Worker Model From Docker Hub Setup Docker Worker Model with your own image Setup Openstack Worker Model Setup VSphere Worker Model Service Requirement Nginx Service Requirement PostgreSQL Track CDS Pipeline from Git command line   </description>
     </item>
     
   </channel>

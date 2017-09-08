@@ -34,6 +34,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/tutorials/tutorials.hatchery-create/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/advanced/advanced.repositories_manager.bitbucket/</loc>
   </url>
   
@@ -90,6 +94,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/introduction/introduction.concepts.job/</loc>
   </url>
   
@@ -119,6 +127,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/tutorials/tutorials.worker-model-openstack/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/tutorials/tutorials.worker-model-vsphere/</loc>
   </url>
   
   <url>
