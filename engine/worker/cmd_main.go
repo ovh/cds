@@ -100,8 +100,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if errh != nil {
 			hostname = fmt.Sprintf("error compute hostname: %s", errh)
 		}
-		log.Info("What a good time to be alive, I'm in version %s, my hostname:", sdk.VERSION, hostname)
-		log.Info("My Hostname %s", sdk.VERSION)
+		log.Info("What a good time to be alive, I'm in version %s, my hostname is %s", sdk.VERSION, hostname)
 		w.initServer(ctx)
 
 		// Gracefully shutdown connections
@@ -214,7 +213,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				requirementsOK, _ := checkRequirements(w, &j.Job.Action, j.ExecGroups)
+				requirementsOK, _ := checkRequirements(w, &j.Job.Action, j.ExecGroups, j.ID)
 
 				t := ""
 				if j.ID == w.bookedJobID {
@@ -251,7 +250,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				requirementsOK, _ := checkRequirements(w, &j.Job.Action, nil)
+				requirementsOK, _ := checkRequirements(w, &j.Job.Action, nil, j.ID)
 				t := ""
 				if j.ID == w.bookedJobID {
 					t = ", this was my booked job"
