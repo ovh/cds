@@ -59,18 +59,21 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
         this._appWorkflow.getRemotes(this.project.key, this.application.name)
           .subscribe(remotes => {
               this.remotes = remotes;
-              if (Array.isArray(remotes) && remotes.length && !this.applicationFilter.remote) {
-                  this.applicationFilter.remote = remotes[0].name;
+              if (Array.isArray(remotes) && remotes.length) {
+                  let remoteFound = remotes.find((r) => r.name === this.applicationFilter.remote);
+                  this.applicationFilter.remote = remoteFound ? remoteFound.name : remotes[0].name;
               }
           });
         this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote)
           .subscribe(branches => {
               this.branches = branches;
-              this.branches.forEach(b => {
-                  if (b.default && !this.applicationFilter.branch) {
-                      this.applicationFilter.branch = b.display_id;
-                  }
-              });
+              if (!this.applicationFilter.branch) {
+                this.branches.forEach(b => {
+                    if (b.default) {
+                        this.applicationFilter.branch = b.display_id;
+                    }
+                });
+              }
 
               this.loadVersions(this.project.key, this.application.name).subscribe();
           });
@@ -226,8 +229,10 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
         this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote)
           .subscribe(branches => {
               this.branches = branches;
-              if (Array.isArray(branches) && branches.length && !this.applicationFilter.branch) {
-                this.applicationFilter.branch = branches[0].display_id;
+
+              if (Array.isArray(branches) && branches.length) {
+                let branchFound = branches.find((br) => br.display_id === this.applicationFilter.branch);
+                this.applicationFilter.branch = branchFound ? branchFound.display_id : branches[0].display_id;
               }
 
               this.loadVersions(this.project.key, this.application.name)

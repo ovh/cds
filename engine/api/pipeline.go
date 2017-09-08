@@ -87,7 +87,8 @@ func rollbackPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.Db
 		return sdk.ErrNoEnvExecution
 	}
 
-	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 2, string(sdk.StatusSuccess), "", "")
+	pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 2,
+		pipeline.LoadPipelineBuildOpts.WithStatus(string(sdk.StatusSuccess)))
 	if err != nil {
 		log.Warning("rollbackPipelineHandler> Cannot load pipeline build history %s", err)
 		return sdk.ErrNoPipelineBuild
@@ -229,7 +230,11 @@ func runPipelineWithLastParentHandler(w http.ResponseWriter, r *http.Request, db
 	//Branch
 	branch, remote := pipeline.GetVCSInfosInParams(request.Params)
 
-	builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, request.ParentApplicationID, request.ParentPipelineID, envID, 1, string(sdk.StatusSuccess), branch, remote)
+	builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, request.ParentApplicationID, request.ParentPipelineID, envID, 1,
+		pipeline.LoadPipelineBuildOpts.WithStatus(string(sdk.StatusSuccess)),
+		pipeline.LoadPipelineBuildOpts.WithBranchName(branch),
+		pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+
 	if err != nil {
 		return sdk.WrapError(sdk.ErrNoParentBuildFound, "runPipelineWithLastParentHandler> Unable to find any successful pipeline build")
 	}
@@ -769,7 +774,19 @@ func getPipelineHistoryHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		return sdk.WrapError(sdk.ErrForbidden, "getPipelineHistoryHandler> No enought right on this environment %s", envName)
 	}
 
-	pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, status, branchName, remote)
+	opts := []pipeline.ExecOptionFunc{
+		pipeline.LoadPipelineBuildOpts.WithStatus(status),
+		pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
+	}
+
+	if a.RepositoryFullname != "" && (remote == "" || remote == a.RepositoryFullname) {
+		opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(a.RepositoryFullname), pipeline.LoadPipelineBuildOpts.WithEmptyRemote(""))
+	} else {
+		opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+	}
+
+	pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, a.ID, p.ID, env.ID, limit, opts...)
+
 	if errl != nil {
 		return sdk.WrapError(errl, "getPipelineHistoryHandler> cannot load pipeline %s history", p.Name)
 	}
@@ -1307,7 +1324,7 @@ func getPipelineCommitsHandler(w http.ResponseWriter, r *http.Request, db *gorp.
 		return WriteJSON(w, r, commits, http.StatusOK)
 	}
 
-	pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "", "")
+	pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, app.ID, pip.ID, env.ID, 1, pipeline.LoadPipelineBuildOpts.WithStatus(string(sdk.StatusSuccess)))
 	if errpb != nil {
 		return sdk.WrapError(errpb, "getPipelineCommitsHandler> Cannot load pipeline build")
 	}

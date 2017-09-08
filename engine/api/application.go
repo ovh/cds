@@ -127,10 +127,6 @@ func getApplicationBranchVersionHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	if remote == app.RepositoryFullname {
-		remote = ""
-	}
-
 	versions, err := pipeline.GetVersions(db, app, branch, remote)
 	if err != nil {
 		log.Warning("getApplicationBranchVersionHandler: Cannot load version for application %s on branch %s: %s\n", applicationName, branch, err)
@@ -161,10 +157,6 @@ func getApplicationTreeStatusHandler(w http.ResponseWriter, r *http.Request, db 
 	app, errApp := application.LoadByName(db, projectKey, applicationName, c.User)
 	if errApp != nil {
 		return sdk.WrapError(errApp, "getApplicationTreeStatusHandler>Cannot get application")
-	}
-
-	if remote == app.RepositoryFullname {
-		remote = ""
 	}
 
 	pbs, schedulers, pollers, hooks, errPB := workflow.GetWorkflowStatus(db, projectKey, applicationName, c.User, branchName, remote, version)

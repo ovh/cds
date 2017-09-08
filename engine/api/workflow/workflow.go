@@ -61,7 +61,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 	// Select root trigger element + non triggered pipeline
 	query := `
 		SELECT  projID, projName,
-			appID, appName,
+			appID, appName, appRepoName,
 			pipID, pipName, pipType,
 			envID, envName,
 			hasHook, hasScheduler, hasPoller, hasChild
@@ -69,7 +69,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 		      -- SELECT FROM scheduler
 		      (
 			SELECT project.id as projID, project.name as projName,
-			     s.application_id as appID, application.name as appName,
+			     s.application_id as appID, application.name as appName, application.repo_fullname as appRepoName,
 			     s.pipeline_id as pipID, pipeline.name as pipName, pipeline.type as pipType,
 			     s.environment_id as envID, environment.name as envName,
 			     false as hasHook, true as hasScheduler, false as hasPoller, true as hasChild
@@ -99,7 +99,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 		     -- SELECT FROM HOOK
 		     (
 			SELECT project.id as projID, project.name as projName,
-			     h.application_id as appID, application.name as appName,
+			     h.application_id as appID, application.name as appName, application.repo_fullname as appRepoName,
 			     h.pipeline_id as pipID, pipeline.name as pipName, pipeline.type as pipType,
 			     environment.id as envID, environment.name as envName,
 			     true as hasHook, false as hasScheduler, false as hasPoller, true as hasChild
@@ -128,7 +128,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 		     -- SELECT FROM POLLER
 		     (
 			SELECT project.id as projID, project.name as projName,
-			     p.application_id as appID, application.name as appName,
+			     p.application_id as appID, application.name as appName, application.repo_fullname as appRepoName,
 			     p.pipeline_id as pipID, pipeline.name as pipName, pipeline.type as pipType,
 			     environment.id as envID, environment.name as envName,
 			     false as hasHook, false as hasScheduler, true as hasPoller, true as hasChild
@@ -157,7 +157,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 		     -- ROOT PIPELINE WITH NO TRIGGER
 		     (
 			SELECT project.id as projID, project.name as projName,
-			       application.id as appID, application.name as appName,
+			       application.id as appID, application.name as appName, application.repo_fullname as appRepoName,
 			       pipeline.id as pipID, pipeline.name as pipName, pipeline.type as pipType,
 			       environment.id as envID, environment.name as EnvName,
 			       CASE WHEN COALESCE (count(h.id), 0)>0 THEN true ELSE false END as hasHook,
@@ -190,7 +190,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 		     (
 		     -- ROOT PIPELINE WITH TRIGGER
 			SELECT projID, projName,
-			       appID, appName,
+			       appID, appName, appRepoName,
 			       pipID, pipName, pipType,
 			       envID, envName,
 			       CASE WHEN COALESCE (count(h.id), 0)>0 THEN true ELSE false END as hasHook,
@@ -202,7 +202,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 				SELECT
 					distinct on (src_pipeline_id, src_environment_id) src_pipeline_id as pipID, pipeline.name as pipName, pipeline.type as pipType,
 					application.project_id as projID, project.name as projName,
-					application.id as appID, application.name as appName,
+					application.id as appID, application.name as appName, application.repo_fullname as appRepoName,
 					COALESCE(src_environment_id,1) as envID, environment.name as envName,
 					(src_pipeline_id || '-' || COALESCE(src_environment_id,1) ) as dis
 				FROM pipeline_trigger
@@ -230,7 +230,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 
 				)
 			)
-			GROUP BY projID, projName, appID, appName, pipID, pipName, pipType, envID, envName
+			GROUP BY projID, projName, appID, appName, appRepoName, pipID, pipName, pipType, envID, envName
 		)
 		order by
 		appID, pipID, envID`
@@ -247,7 +247,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 		var hasHook, hasScheduler, hasPoller, hasChild bool
 
 		if err = rows.Scan(&root.Project.ID, &root.Project.Name,
-			&root.Application.ID, &root.Application.Name,
+			&root.Application.ID, &root.Application.Name, &root.Application.RepositoryFullname,
 			&root.Pipeline.ID, &root.Pipeline.Name, &typePipeline,
 			&root.Environment.ID, &root.Environment.Name,
 			&hasHook, &hasScheduler, &hasPoller, &hasChild); err != nil {
@@ -295,14 +295,35 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 								return nil, sdk.WrapError(errP, "LoadCDTree> Cannot load project")
 							}
 							for _, e := range p.Environments {
-								builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, e.ID, 1, "", branchName, remote)
+								opts := []pipeline.ExecOptionFunc{
+									pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
+								}
+
+								if root.Application.RepositoryFullname != "" && (remote == "" || remote == root.Application.RepositoryFullname) {
+									opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(root.Application.RepositoryFullname), pipeline.LoadPipelineBuildOpts.WithEmptyRemote(""))
+								} else {
+									opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+								}
+
+								builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, e.ID, 1, opts...)
+
 								if errPB != nil {
 									return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build for env %s", e.Name)
 								}
 								pbs = append(pbs, builds...)
 							}
 						} else {
-							builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, 1, "", branchName, remote)
+							opts := []pipeline.ExecOptionFunc{
+								pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
+							}
+
+							if root.Application.RepositoryFullname != "" && (remote == "" || remote == root.Application.RepositoryFullname) {
+								opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(root.Application.RepositoryFullname), pipeline.LoadPipelineBuildOpts.WithEmptyRemote(""))
+							} else {
+								opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+							}
+
+							builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, 1, opts...)
 							if errPB != nil {
 								return nil, sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build")
 							}
@@ -476,7 +497,9 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 				var pbs []sdk.PipelineBuild
 				var errPB error
 				if version == 0 {
-					pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, 1, "", branchName, remote)
+					pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, 1,
+						pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
+						pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
 				} else {
 					pbs, errPB = pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, version, 1)
 				}
