@@ -124,7 +124,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			}
 		} else {
 			//Update
-			log.Debug("> Updating stage %s", s.Name)
+			log.Debug("> Updating stage %s", oldStage.Name)
 			for x := range s.Jobs {
 				jobAction := &s.Jobs[x]
 				//Check the job
@@ -133,38 +133,24 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					return errs
 				}
 			}
+			// Delete all existing jobs in existing stage
+			for _, oj := range oldStage.Jobs {
+				if err := DeleteJob(db, oj, u.ID); err != nil {
+					return sdk.WrapError(err, "ImportUpdate> Unable to delete job %s in %s", oj.Action.Name, pip.Name)
+				}
+			}
+			// then insert job from yml into existing stage
 			for x := range s.Jobs {
 				j := &s.Jobs[x]
-				var jobFound bool
-				for _, oj := range oldStage.Jobs {
-					//Update the job
-					if j.Action.Name == oj.Action.Name {
-						j.Action.ID = oj.Action.ID
-						j.PipelineActionID = oj.PipelineActionID
-						j.PipelineStageID = oj.PipelineStageID
-						j.Action.Type = sdk.JoinedAction
-						log.Debug(">> Updating job %s on stage %s on pipeline %s", j.Action.Name, s.Name, pip.Name)
-						if err := UpdateJob(db, j, u.ID); err != nil {
-							return sdk.WrapError(err, "ImportUpdate> Unable to update job %s in %s", j.Action.Name, pip.Name)
-						}
-						if msgChan != nil {
-							msgChan <- sdk.NewMessage(sdk.MsgPipelineJobUpdated, j.Action.Name, s.Name)
-						}
-						jobFound = true
-						break
-					}
+				//Insert the job
+				j.PipelineStageID = oldStage.ID
+				j.Action.Type = sdk.JoinedAction
+				log.Debug(">> Creating job %s on stage %s on pipeline %s stageID:", j.Action.Name, s.Name, pip.Name, oldStage.ID)
+				if err := InsertJob(db, j, oldStage.ID, pip); err != nil {
+					return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", j.Action.Name, pip.Name)
 				}
-				if !jobFound {
-					//Insert the job
-					j.PipelineStageID = s.ID
-					j.Action.Type = sdk.JoinedAction
-					log.Debug(">> Creating job %s on stage %s on pipeline %s", j.Action.Name, s.Name, pip.Name)
-					if err := InsertJob(db, j, s.ID, pip); err != nil {
-						return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", j.Action.Name, pip.Name)
-					}
-					if msgChan != nil {
-						msgChan <- sdk.NewMessage(sdk.MsgPipelineJobAdded, j.Action.Name, s.Name)
-					}
+				if msgChan != nil {
+					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobAdded, j.Action.Name, s.Name)
 				}
 			}
 			//Update stage
