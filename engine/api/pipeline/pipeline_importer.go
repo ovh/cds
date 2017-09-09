@@ -125,6 +125,8 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 		} else {
 			//Update
 			log.Debug("> Updating stage %s", oldStage.Name)
+			msgChan <- sdk.NewMessage(sdk.MsgPipelineStageUpdating, oldStage.Name)
+			msgChan <- sdk.NewMessage(sdk.MsgPipelineStageDeletingOldJobs, oldStage.Name)
 			for x := range s.Jobs {
 				jobAction := &s.Jobs[x]
 				//Check the job
@@ -138,7 +140,9 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 				if err := DeleteJob(db, oj, u.ID); err != nil {
 					return sdk.WrapError(err, "ImportUpdate> Unable to delete job %s in %s", oj.Action.Name, pip.Name)
 				}
+				msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, oj.Action.Name, s.Name)
 			}
+			msgChan <- sdk.NewMessage(sdk.MsgPipelineStageInsertingNewJobs, oldStage.Name)
 			// then insert job from yml into existing stage
 			for x := range s.Jobs {
 				j := &s.Jobs[x]
