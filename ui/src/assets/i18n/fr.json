@@ -471,7 +471,7 @@
   "worker_model_edit_title": "Édition du modèle de worker",
   "worker_model_enable": "Activer",
   "worker_model_enabled": "Ce modèle de worker est activé",
-  "worker_model_error": "Ce modèle de worker est en erreur",
+  "worker_model_error": "Ce modèle de worker est en erreur. En sauvegardant, les erreurs seront supprimées.",
   "worker_model_deleted": "Modèle de worker supprimé",
   "worker_model_disable": "Désactiver",
   "worker_model_disabled": "Ce modèle de worker est désactivé",

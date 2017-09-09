@@ -115,7 +115,6 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return sdk.WrapError(errLoad, "updateWorkerModel> cannot load worker model by id")
 	}
 
-	// Unmarshal body
 	var model sdk.Model
 	if err := UnmarshalBody(r, &model); err != nil {
 		return sdk.WrapError(err, "updateWorkerModel> cannot unmarshal body")
@@ -224,7 +223,6 @@ func updateWorkerModel(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 				return sdk.WrapError(err, "updateWorkerModel> cannot update pipeline")
 			}
 		}
-
 	}
 
 	if err := tx.Commit(); err != nil {
