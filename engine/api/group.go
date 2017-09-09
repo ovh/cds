@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
@@ -129,6 +130,10 @@ func updateGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 	}
 	defer tx.Rollback()
 
+	if strings.HasSuffix(updatedGroup.Name, sdk.DefaultGroupOnProjectSuffix) {
+		return sdk.WrapError(sdk.ErrWrongRequest, "You can create a group with ending with %s", sdk.DefaultGroupOnProjectSuffix)
+	}
+
 	if err := group.UpdateGroup(tx, &updatedGroup, oldName); err != nil {
 		return sdk.WrapError(err, "updateGroupHandler: Cannot update group %s", oldName)
 	}
@@ -210,6 +215,9 @@ func addGroupHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *
 	}
 	defer tx.Rollback()
 
+	if strings.HasSuffix(g.Name, sdk.DefaultGroupOnProjectSuffix) {
+		return sdk.WrapError(sdk.ErrWrongRequest, "You can create a group with ending with %s", sdk.DefaultGroupOnProjectSuffix)
+	}
 	if _, _, err := group.AddGroup(tx, g); err != nil {
 		return sdk.WrapError(err, "addGroupHandler> cannot add group")
 	}

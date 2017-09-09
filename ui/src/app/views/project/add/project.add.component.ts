@@ -79,21 +79,19 @@ export class ProjectAddComponent {
                 this.keyError = true;
             }
         }
-        if (!this.group || this.group.name === '') {
-            this.groupError = true;
+        if (this.group || this.group.name !== '') {
+          let gp = new GroupPermission();
+          gp.permission = this._permissionService.getRWX();
+          gp.group = this.group;
+          this.project.groups = new Array<GroupPermission>();
+          this.project.groups.push(gp);
         }
-
-        let gp = new GroupPermission();
-        gp.permission = this._permissionService.getRWX();
-        gp.group = this.group;
-        this.project.groups = new Array<GroupPermission>();
-        this.project.groups.push(gp);
 
         if (this.addSshKey && (!this.sshKeyVar.name || this.sshKeyVar.name === '')) {
             this.sshError = true;
         }
 
-        if (!this.nameError && !this.keyError && !this.groupError && !this.sshError) {
+        if (!this.nameError && !this.keyError && !this.sshError) {
             if (this.addSshKey) {
                 this.project.variables = new Array<Variable>();
                 this.project.variables.push(this.sshKeyVar);

@@ -4,7 +4,45 @@
         <div class="ui two column centered grid">
             <div class="column">
                 <div class="field">
-                  <label>{{'group_name' | translate}}</label>
+                    <label>{{ 'project_name' | translate }}</label>
+                    <input type="text" name="projectname" [(ngModel)]="project.name" (keyup)="generateKey($event.target.value)">
+                </div>
+                <div class="ui error message" *ngIf="nameError">
+                    {{ 'project_name_error' | translate }}
+                </div>
+                <div class="field">
+                    <label>{{ 'project_key' | translate }}</label>
+                    <input type="text" name="projectkey" [(ngModel)]="project.key">
+                </div>
+                <div class="ui error message" *ngIf="keyError">
+                    {{ 'project_key_error' | translate }}
+                </div>
+
+                <hr>
+
+                <div class="ui message">
+                  {{'project_add_ssh_key_help' | translate}}
+                </div>
+                <div class="field">
+                    <div class="ui checkbox">
+                        <input type="checkbox" name="sshkey" [(ngModel)]="addSshKey">
+                        <label>{{ 'project_add_ssh_key' | translate }}</label>
+                    </div>
+                </div>
+                <div class="field" *ngIf="addSshKey">
+                    <label>{{ 'wizard_ssh_key_name' | translate }}</label>
+                    <input type="text" name="keyname" [(ngModel)]="sshKeyVar.name">
+                </div>
+                <div class="ui error message" *ngIf="sshError">
+                    {{ 'project_ssh_error' | translate }}
+                </div>
+
+                <hr>
+
+                <div class="ui message">
+                  {{'project_add_group_help' | translate}}
+                </div>
+                <div class="field">
                   {{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" (click)="modalCreateGroup.show()">{{ 'project_permission_form_wizard_new' | translate }}</a>
                   <sm-select class="fluid search"
                       [options]="{'fullTextSearch': true}"
@@ -21,33 +59,7 @@
                       </div>
                   </div>
                 </div>
-                <div class="field">
-                    <label>{{ 'project_name' | translate }}</label>
-                    <input type="text" name="projectname" [(ngModel)]="project.name" (keyup)="generateKey($event.target.value)">
-                </div>
-                <div class="ui error message" *ngIf="nameError">
-                    {{ 'project_name_error' | translate }}
-                </div>
-                <div class="field">
-                    <label>{{ 'project_key' | translate }}</label>
-                    <input type="text" name="projectkey" [(ngModel)]="project.key">
-                </div>
-                <div class="ui error message" *ngIf="keyError">
-                    {{ 'project_key_error' | translate }}
-                </div>
-                <div class="field">
-                    <div class="ui checkbox">
-                        <input type="checkbox" name="sshkey" [(ngModel)]="addSshKey">
-                        <label>{{ 'project_add_ssh_key' | translate }}</label>
-                    </div>
-                </div>
-                <div class="field" *ngIf="addSshKey">
-                    <label>{{ 'wizard_ssh_key_name' | translate }}</label>
-                    <input type="text" name="keyname" [(ngModel)]="sshKeyVar.name">
-                </div>
-                <div class="ui error message" *ngIf="sshError">
-                    {{ 'project_ssh_error' | translate }}
-                </div>
+
             </div>
             <div class="row">
                 <div class="right aligned column">
