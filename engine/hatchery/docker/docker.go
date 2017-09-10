@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/spf13/viper"
@@ -18,18 +17,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// HatcheryConfiguration is the configuration for docker hatchery
-type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
-	//DockerAddHost Start worker with a custom host-to-IP mapping (host:ip)
-	DockerAddHost string `default:""`
-}
-
 // New instanciates a new hatchery docker
 func New() *HatcheryDocker {
 	return new(HatcheryDocker)
 }
 
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryDocker) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
 		return err
@@ -44,6 +37,7 @@ func (h *HatcheryDocker) ApplyConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryDocker) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
@@ -60,22 +54,10 @@ func (h *HatcheryDocker) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// Serve start the HatcheryDocker server
 func (h *HatcheryDocker) Serve(ctx context.Context) error {
 	hatchery.Create(h)
 	return nil
-}
-
-var hatcheryDocker *HatcheryDocker
-
-// HatcheryDocker spawns instances of worker model with type 'Docker'
-// by directly using available docker daemon
-type HatcheryDocker struct {
-	Config HatcheryConfiguration
-	sync.Mutex
-	workers map[string]*exec.Cmd
-	hatch   *sdk.Hatchery
-	addhost string
-	client  cdsclient.Interface
 }
 
 // ID must returns hatchery id

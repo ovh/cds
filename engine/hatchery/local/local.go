@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
@@ -18,17 +17,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// HatcheryConfiguration is the configuration for local hatchery
-type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
-	Basedir string `default:"/tmp"`
-}
-
 // New instanciates a new hatchery local
 func New() *HatcheryLocal {
 	return new(HatcheryLocal)
 }
 
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
 		return err
@@ -39,10 +33,10 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
-
 	return nil
 }
 
+// CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
@@ -69,20 +63,10 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// Serve start the HatcheryLocal server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
 	hatchery.Create(h)
 	return nil
-}
-
-// HatcheryLocal implements HatcheryMode interface for local usage
-type HatcheryLocal struct {
-	Config HatcheryConfiguration
-	sync.Mutex
-	hatch   *sdk.Hatchery
-	workers map[string]*exec.Cmd
-	client  cdsclient.Interface
-	os      string
-	arch    string
 }
 
 // ID must returns hatchery id

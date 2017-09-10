@@ -28,6 +28,7 @@ func New() *HatcherySwarm {
 	return new(HatcherySwarm)
 }
 
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
 		return err
@@ -42,6 +43,7 @@ func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// CheckConfiguration checks the validity of the configuration object
 func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
@@ -61,6 +63,7 @@ func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// Serve start the HatcherySwarm server
 func (h *HatcherySwarm) Serve(ctx context.Context) error {
 	hatchery.Create(h)
 	return nil
