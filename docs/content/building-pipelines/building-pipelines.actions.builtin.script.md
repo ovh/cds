@@ -28,7 +28,32 @@ This action execute a script, written in script attribute
 
  at first line.
 
-Make sure that the binary used is in the pre-requisites of action
+Make sure that the binary used is in the pre-requisites of action.
+
+If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails.
+
+If you want to control command's exit code, you have to add
+```bash
+set +e
+```
+
+Example of success step, CDS will execute all lines:
+
+```bash
+set +e # CDS will not exit in failure even if a command is failed
+which a-unknown-binary
+if [ $? -ne 0 ]; then echo "binary bar does not exists"; fi;
+exit 0
+```
+
+Example of failing step, CDS will exit at the first line, as `which a-unknown-binary will return an error` :
+
+```bash
+which a-unknown-binary
+if [ $? -ne 0 ]; then echo "binary bar does not exists"; fi;
+exit 0
+```
+
 
 #### Variable
 
