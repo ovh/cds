@@ -188,7 +188,7 @@ var startCmd = &cobra.Command{
 	Short: "Start CDS",
 	Long: `
 Start CDS Engine Services:
- * API: 
+ * API:
  	This is the core component of CDS.
  * Hatcheries:
 	They are the components responsible for spawning workers. Supported platforms/orchestrators are:
@@ -199,8 +199,8 @@ Start CDS Engine Services:
 	 * Openstack
 	 * Vsphere
 
-Start all of this with a single command: 
-	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm]
+Start all of this with a single command:
+	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere]
 All the services are using the same configuration file format.
 You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.
 You can also use or override toml file with environment variable.

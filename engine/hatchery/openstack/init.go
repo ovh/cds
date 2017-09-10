@@ -18,13 +18,18 @@ import (
 // Init fetch uri from nova
 // then list available models
 // then list available images
-func (h *HatcheryOpenstack) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+func (h *HatcheryOpenstack) Init() error {
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("openstack", name),
+		Name:    hatchery.GenerateName("openstack", h.Configuration().Name),
 		Version: sdk.VERSION,
 	}
 
-	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	h.client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}

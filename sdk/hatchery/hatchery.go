@@ -1,6 +1,7 @@
 package hatchery
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"sync/atomic"
@@ -72,16 +73,18 @@ type CommonConfiguration struct {
 // NeedRegistration return true if worker model need regsitration
 // ID returns hatchery id
 type Interface interface {
-	Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error
+	Init() error
 	SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error)
 	CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
 	WorkersStartedByModel(model *sdk.Model) int
 	WorkersStarted() int
 	Hatchery() *sdk.Hatchery
 	Client() cdsclient.Interface
+	Configuration() CommonConfiguration
 	ModelType() string
 	NeedRegistration(model *sdk.Model) bool
 	ID() int64
+	Serve(ctx context.Context) error
 }
 
 var (
@@ -103,7 +106,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, warningSeconds, criticalSeconds, graceSeconds int, hostname string) bool {
+func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, hostname string) bool {
 	if jobID == 0 {
 		return false
 	}
@@ -119,7 +122,7 @@ func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID i
 		return false
 	}
 
-	if jobQueuedSeconds < int64(graceSeconds) {
+	if jobQueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
 		log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", jobID, jobQueuedSeconds)
 		return false
 	}
@@ -136,15 +139,15 @@ func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID i
 
 	atomic.AddInt64(nRoutines, 1)
 	defer atomic.AddInt64(nRoutines, -1)
-	if errR := routine(h, isWorkflowJob, models, execGroups, jobID, requirements, hostname, time.Now().Unix(), warningSeconds, criticalSeconds, graceSeconds); errR != nil {
+	if errR := routine(h, isWorkflowJob, models, execGroups, jobID, requirements, hostname, time.Now().Unix()); errR != nil {
 		log.Warning("Error on routine: %s", errR)
 		return false
 	}
 	return true
 }
 
-func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []sdk.Group, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64, warningSeconds, criticalSeconds, graceSeconds int) error {
-	defer logTime(fmt.Sprintf("routine> %d", timestamp), time.Now(), warningSeconds, criticalSeconds)
+func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []sdk.Group, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64) error {
+	defer logTime(h, fmt.Sprintf("routine> %d", timestamp), time.Now())
 	log.Debug("routine> %d enter", timestamp)
 
 	if h.Hatchery() == nil || h.Hatchery().ID == 0 {
@@ -304,14 +307,14 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 	return h.CanSpawn(model, jobID, requirements)
 }
 
-func logTime(name string, then time.Time, warningSeconds, criticalSeconds int) {
+func logTime(h Interface, name string, then time.Time) {
 	d := time.Since(then)
-	if d > time.Duration(criticalSeconds)*time.Second {
+	if d > time.Duration(h.Configuration().LogOptions.SpawnOptions.ThresholdCritical)*time.Second {
 		log.Error("%s took %s to execute", name, d)
 		return
 	}
 
-	if d > time.Duration(warningSeconds)*time.Second {
+	if d > time.Duration(h.Configuration().LogOptions.SpawnOptions.ThresholdWarning)*time.Second {
 		log.Warning("%s took %s to execute", name, d)
 		return
 	}

@@ -17,7 +17,6 @@ import (
 
 //TODO: DELETE ALL OF THIS
 
-
 func init() {
 	hatcheryMarathon = &HatcheryMarathon{}
 
@@ -66,21 +65,7 @@ $ hatchery marathon --api=https://<api.domain> --token=<token>
 
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
-		hatchery.Create(hatcheryMarathon,
-			viper.GetString("name"),
-			viper.GetString("api"),
-			viper.GetString("token"),
-			viper.GetInt64("max-worker"),
-			viper.GetBool("provision-disabled"),
-			viper.GetInt("request-api-timeout"),
-			viper.GetInt("max-failures-heartbeat"),
-			viper.GetBool("insecure"),
-			viper.GetInt("provision-seconds"),
-			viper.GetInt("register-seconds"),
-			viper.GetInt("spawn-threshold-warning"),
-			viper.GetInt("spawn-threshold-critical"),
-			viper.GetInt("grace-time-queued"),
-		)
+		hatchery.Create(hatcheryMarathon)
 	},
 	PreRun: func(cmd *cobra.Command, args []string) {
 		hatcheryMarathon.token = viper.GetString("token")

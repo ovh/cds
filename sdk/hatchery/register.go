@@ -17,7 +17,7 @@ import (
 )
 
 // Create creates hatchery
-func Create(h Interface, name, api, token string, maxWorkers int64, provisionDisabled bool, requestSecondsTimeout int, maxFailures int, insecureSkipVerifyTLS bool, provisionSeconds, registerSeconds, warningSeconds, criticalSeconds, graceSeconds int) {
+func Create(h Interface) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 
@@ -39,7 +39,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 		}
 	}()
 
-	if err := h.Init(name, api, token, registerSeconds, insecureSkipVerifyTLS); err != nil {
+	if err := h.Init(); err != nil {
 		log.Error("Create> Init error: %s", err)
 		os.Exit(10)
 	}
@@ -50,7 +50,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 		os.Exit(10)
 	}
 
-	go hearbeat(h, token, maxFailures)
+	go hearbeat(h, h.Configuration().API.Token, h.Configuration().API.MaxHeartbeatFailures)
 
 	pbjobs := make(chan sdk.PipelineBuildJob, 1)
 	wjobs := make(chan sdk.WorkflowNodeJobRun, 1)
@@ -67,8 +67,8 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 	// purges expired items every minute
 	spawnIDs := cache.New(3*time.Second, 60*time.Second)
 
-	tickerProvision := time.NewTicker(time.Duration(provisionSeconds) * time.Second)
-	tickerRegister := time.NewTicker(time.Duration(registerSeconds) * time.Second)
+	tickerProvision := time.NewTicker(time.Duration(h.Configuration().Provision.Frequency) * time.Second)
+	tickerRegister := time.NewTicker(time.Duration(h.Configuration().Provision.RegisterFrequency) * time.Second)
 	tickerCountWorkersStarted := time.NewTicker(time.Duration(2 * time.Second))
 	tickerGetModels := time.NewTicker(time.Duration(3 * time.Second))
 
@@ -87,8 +87,8 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 			return
 		case <-tickerCountWorkersStarted.C:
 			workersStarted = int64(h.WorkersStarted())
-			if workersStarted > maxWorkers {
-				log.Info("max workers reached. current:%d max:%d", workersStarted, maxWorkers)
+			if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
+				log.Info("max workers reached. current:%d max:%d", workersStarted, int64(h.Configuration().Provision.MaxWorker))
 				maxWorkersReached = true
 			} else {
 				maxWorkersReached = false
@@ -106,7 +106,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 				continue
 			}
 			go func(job sdk.PipelineBuildJob) {
-				if isRun := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
+				if isRun := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				}
@@ -117,7 +117,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 				continue
 			}
 			go func(job sdk.WorkflowNodeJobRun) {
-				if isRun := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, warningSeconds, criticalSeconds, graceSeconds, hostname); isRun {
+				if isRun := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
 				}
@@ -125,7 +125,7 @@ func Create(h Interface, name, api, token string, maxWorkers int64, provisionDis
 		case err := <-errs:
 			log.Error("%v", err)
 		case <-tickerProvision.C:
-			provisioning(h, provisionDisabled, models)
+			provisioning(h, h.Configuration().Provision.Disabled, models)
 		case <-tickerRegister.C:
 			if err := workerRegister(h, models); err != nil {
 				log.Warning("Error on workerRegister: %s", err)
