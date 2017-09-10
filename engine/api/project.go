@@ -36,6 +36,7 @@ func getProjectsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, 
 }
 
 func updateProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
@@ -68,6 +69,7 @@ func updateProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap
 }
 
 func getProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	// Get project name in URL
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 
@@ -157,7 +159,6 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 	}
 
 	var groupAttached bool
-
 	for i := range p.ProjectGroups {
 		groupPermission := &p.ProjectGroups[i]
 		if strings.TrimSpace(groupPermission.Group.Name) == "" {
@@ -166,11 +167,21 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		groupAttached = true
 	}
 	if !groupAttached {
-		permG := sdk.GroupPermission{
-			Group:      sdk.Group{Name: p.Name + sdk.DefaultGroupOnProjectSuffix},
-			Permission: permission.PermissionReadWriteExecute,
+		// check if new auto group does not already exists
+		if _, errl := group.LoadGroup(db, p.Name); errl != nil {
+			if errl == sdk.ErrGroupNotFound {
+				// group name does not exists, add it on project
+				permG := sdk.GroupPermission{
+					Group:      sdk.Group{Name: p.Name},
+					Permission: permission.PermissionReadWriteExecute,
+				}
+				p.ProjectGroups = append(p.ProjectGroups, permG)
+			} else {
+				return sdk.WrapError(errl, "AddProject> Cannot check if group already exists")
+			}
+		} else {
+			return sdk.WrapError(sdk.ErrGroupPresent, "AddProject> Group %s already exists", p.Name)
 		}
-		p.ProjectGroups = append(p.ProjectGroups, permG)
 	}
 
 	// Add group
