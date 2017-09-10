@@ -14,7 +14,6 @@ import (
 	"github.com/go-gorp/gorp"
 	"gopkg.in/ldap.v2"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
@@ -205,53 +204,46 @@ func (c *LDAPClient) Bind(username, password string) error {
 
 //Search search
 func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error) {
-	entries := []Entry{}
-	key := cache.Key("ldap", filter)
-	cache.Get(key, &entries)
+	attr := append(attributes, "dn")
+	// Search for the given username
+	searchRequest := ldap.NewSearchRequest(
+		c.conf.Base,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		filter,
+		attr,
+		nil,
+	)
 
-	if len(entries) == 0 {
-		attr := append(attributes, "dn")
-		// Search for the given username
-		searchRequest := ldap.NewSearchRequest(
-			c.conf.Base,
-			ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-			filter,
-			attr,
-			nil,
-		)
-
-		sr, err := c.conn.Search(searchRequest)
-		if err != nil {
-			if shoudRetry(err) {
-				err = c.openLDAP(c.conf)
-				if err != nil {
-					return nil, err
-				}
-				sr, err = c.conn.Search(searchRequest)
-				if err != nil {
-					return nil, err
-				}
-			} else {
+	sr, err := c.conn.Search(searchRequest)
+	if err != nil {
+		if shoudRetry(err) {
+			err = c.openLDAP(c.conf)
+			if err != nil {
 				return nil, err
 			}
-		}
-
-		if len(sr.Entries) < 1 {
-			return nil, errors.New(errUserNotFound)
-		}
-
-		for _, e := range sr.Entries {
-			entry := Entry{
-				DN:         e.DN,
-				Attributes: make(map[string]string),
+			sr, err = c.conn.Search(searchRequest)
+			if err != nil {
+				return nil, err
 			}
-			for _, a := range attr {
-				entry.Attributes[a] = e.GetAttributeValue(a)
-			}
-			entries = append(entries, entry)
+		} else {
+			return nil, err
 		}
-		//Put ldap entries in cache for 5 minutes to avoid LDAP flood
-		cache.SetWithTTL(key, entries, 300)
+	}
+
+	if len(sr.Entries) < 1 {
+		return nil, errors.New(errUserNotFound)
+	}
+
+	entries := []Entry{}
+	for _, e := range sr.Entries {
+		entry := Entry{
+			DN:         e.DN,
+			Attributes: make(map[string]string),
+		}
+		for _, a := range attr {
+			entry.Attributes[a] = e.GetAttributeValue(a)
+		}
+		entries = append(entries, entry)
 	}
 
 	return entries, nil

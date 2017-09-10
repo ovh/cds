@@ -87,7 +87,7 @@ func GetUsername(store sessionstore.Store, token string) (string, error) {
 }
 
 //GetWorker returns the worker instance from its id
-func GetWorker(db gorp.SqlExecutor, store sessionstore.Store, workerID string) (*sdk.Worker, error) {
+func GetWorker(db gorp.SqlExecutor, store cache.Store, workerID string) (*sdk.Worker, error) {
 	// Load worker
 	var w = &sdk.Worker{}
 
@@ -106,14 +106,14 @@ func GetWorker(db gorp.SqlExecutor, store sessionstore.Store, workerID string) (
 }
 
 // CheckWorkerAuth checks worker authentication
-func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, headers http.Header) (context.Context, error) {
+func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header) (context.Context, error) {
 	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
 		return ctx, fmt.Errorf("bad worker key syntax: %s", err)
 	}
 	workerID := string(id)
 
-	w, err := GetWorker(db, workerID)
+	w, err := GetWorker(db, store, workerID)
 	if err != nil {
 		return ctx, err
 	}

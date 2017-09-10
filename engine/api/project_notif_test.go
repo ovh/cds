@@ -33,7 +33,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 	test.NoError(t, group.InsertUserInGroup(api.mustDB(), p.ProjectGroups[0].Group.ID, u.ID, true))
 
 	app := &sdk.Application{Name: sdk.RandomString(10)}
-	err := application.Insert(api.mustDB(), p, app, u)
+	err := application.Insert(api.MustDB(), api.Cache, p, app, u)
 	test.NoError(t, err)
 	test.NoError(t, group.InsertGroupInApplication(api.mustDB(), app.ID, p.ProjectGroups[0].Group.ID, 7))
 

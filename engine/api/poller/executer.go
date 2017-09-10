@@ -28,7 +28,7 @@ func Executer(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 				return
 			}
 		case <-tick:
-			exs, err := ExecuterRun(DBFunc())
+			exs, err := ExecuterRun(DBFunc(), store)
 			if err != nil {
 				log.Warning("poller.Executer> Error : %s", err)
 				continue
@@ -50,7 +50,7 @@ func ExecuterRun(db *gorp.DbMap, store cache.Store) ([]sdk.RepositoryPollerExecu
 
 	//Process all
 	for i := range exs {
-		go executerRun(db, &exs[i])
+		go executerRun(db, store, &exs[i])
 		time.Sleep(10 * time.Second)
 	}
 
@@ -86,7 +86,7 @@ func executerRun(db *gorp.DbMap, store cache.Store, e *sdk.RepositoryPollerExecu
 		log.Error("poller.ExecuterRun> Unable to load poller appID=%d pipID=%d: %s", e.ApplicationID, e.PipelineID, errl)
 		return
 	}
-	pbs, err := executerProcess(tx, p, e)
+	pbs, err := executerProcess(tx, store, p, e)
 	if err != nil {
 		log.Error("poller.ExecuterRun> Unable to process %+v : %s", e, err)
 		return
@@ -98,13 +98,13 @@ func executerRun(db *gorp.DbMap, store cache.Store, e *sdk.RepositoryPollerExecu
 	}
 
 	//Update pipeline build commits
-	app, errapp := application.LoadByID(db, e.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
+	app, errapp := application.LoadByID(db, store, e.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
 	if errapp != nil {
 		log.Warning("poller.ExecuterRun> Unable to load application : %s", errapp)
 		return
 	}
 
-	proj, errproj := project.Load(db, app.ProjectKey, nil)
+	proj, errproj := project.Load(db, store, app.ProjectKey, nil)
 	if errproj != nil {
 		log.Warning("poller.ExecuterRun> Unable to load project : %s", errproj)
 		return
@@ -138,7 +138,7 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 	log.Debug("Polling> Get %s client for project %s", rm.Name, projectKey)
 
 	//get the client for the repositories manager
-	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name)
+	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name, store)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Polling> Unable to get client for %s %s", projectKey, rm.Name)
 	}
@@ -171,7 +171,7 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 	var pbs []sdk.PipelineBuild
 	if len(e.PushEvents) > 0 {
 		var err error
-		pbs, err = triggerPipelines(tx, projectKey, rm, p, e)
+		pbs, err = triggerPipelines(tx, store, projectKey, rm, p, e)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Polling> Unable to trigger pipeline %s for repository %s", p.Pipeline.Name, p.Application.RepositoryFullname)
 		}
@@ -184,8 +184,8 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 	return pbs, nil
 }
 
-func triggerPipelines(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) ([]sdk.PipelineBuild, error) {
-	proj, err := project.LoadByPipelineID(tx, nil, poller.Pipeline.ID)
+func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e *sdk.RepositoryPollerExecution) ([]sdk.PipelineBuild, error) {
+	proj, err := project.LoadByPipelineID(tx, store, nil, poller.Pipeline.ID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Polling.triggerPipelines> Cannot load project for pipeline %s", poller.Pipeline.Name)
 	}

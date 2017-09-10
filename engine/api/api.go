@@ -394,7 +394,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	//Init the cache
 	var errCache error
-	api.Cache, errCache = cache.New(
+	a.Cache, errCache = cache.New(
 		a.Config.Cache.Mode,
 		a.Config.Cache.Redis.Host,
 		a.Config.Cache.Redis.Password,
@@ -422,12 +422,12 @@ func (a *API) Serve(ctx context.Context) error {
 		StashPrivateKey:        a.Config.VCS.Bitbucket.PrivateKey,
 		StashConsumerKey:       a.Config.VCS.Bitbucket.ConsumerKey,
 	}
-	if err := repositoriesmanager.Initialize(rmInitOpts, a.DBConnectionFactory.GetDBMap); err != nil {
+	if err := repositoriesmanager.Initialize(rmInitOpts, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
 		log.Warning("Error initializing repositories manager connections: %s", err)
 	}
 
 	//Init pipeline package
-	pipeline.Store = api.Cache
+	pipeline.Store = a.Cache
 
 	//Initiliaze hook package
 	hook.Init(a.Config.URL.API)
@@ -479,32 +479,29 @@ func (a *API) Serve(ctx context.Context) error {
 		go event.DequeueEvent(ctx)
 	}
 
-	if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap); err != nil {
+	if err := worker.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
 		log.Warning("⚠ Error while initializing workers routine: %s", err)
 	}
 
-	go queue.Pipelines(ctx, a.DBConnectionFactory.GetDBMap)
-	go workflow.Scheduler(ctx, a.DBConnectionFactory.GetDBMap)
+	go queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 	go pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap)
 	go hatchery.Heartbeat(ctx, a.DBConnectionFactory.GetDBMap)
 	go auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
-
-	go repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap)
-
+	go repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go stats.StartRoutine(ctx, a.DBConnectionFactory.GetDBMap)
-	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap)
+	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap)
 
 	go user.PersistentSessionTokenCleaner(ctx, a.DBConnectionFactory.GetDBMap)
 
 	if !a.Config.VCS.Polling.Disabled {
-		go poller.Initialize(ctx, 10, a.DBConnectionFactory.GetDBMap)
+		go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	} else {
 		log.Warning("⚠ Repositories polling is disabled")
 	}
 
 	if !a.Config.Schedulers.Disabled {
-		go scheduler.Initialize(ctx, 10, a.DBConnectionFactory.GetDBMap)
+		go scheduler.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}

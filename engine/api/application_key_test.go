@@ -29,7 +29,7 @@ func Test_getKeysInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -84,7 +84,7 @@ func Test_deleteKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -133,7 +133,7 @@ func Test_addKeyInApplicationHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

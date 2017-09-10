@@ -117,7 +117,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() Handler {
 				return sdk.WrapError(errI, "repositoriesManagerAuthorize> error while inserting repositories manager for project %s", proj.Key)
 			}
 
-			if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
+			if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), proj); err != nil {
 				return sdk.WrapError(err, "repositoriesManagerAuthorize> Cannot update project last modified")
 			}
 
@@ -212,7 +212,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with SaveDataForProject")
 		}
 
-		if err := project.UpdateLastModified(tx, u, proj); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, u, proj); err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot update project last modified date")
 		}
 
@@ -309,7 +309,7 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> error deleting %s-%s", projectKey, rmName)
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot update project last modified date")
 		}
 

@@ -56,7 +56,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.mustDB(), proj, app, u)
+	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
@@ -142,7 +142,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.mustDB(), proj, app, u)
+	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
@@ -233,7 +233,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.mustDB(), proj, app, u)
+	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1

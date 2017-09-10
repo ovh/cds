@@ -70,7 +70,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

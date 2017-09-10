@@ -200,7 +200,7 @@ func (api *API) addProjectHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "addProject> Cannot update last modified")
 		}
 

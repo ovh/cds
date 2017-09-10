@@ -57,7 +57,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

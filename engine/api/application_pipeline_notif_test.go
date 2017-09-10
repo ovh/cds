@@ -113,7 +113,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *A
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(api.mustDB(), proj, app, u)
+	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	env := &sdk.DefaultEnv
@@ -588,7 +588,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 
 	app := &sdk.Application{Name: sdk.RandomString(10)}
 
-	err := application.Insert(api.mustDB(), p, app, u)
+	err := application.Insert(api.MustDB(), api.Cache, p, app, u)
 	test.NoError(t, err)
 
 	pip := &sdk.Pipeline{

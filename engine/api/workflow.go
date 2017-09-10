@@ -68,7 +68,7 @@ func (api *API) postWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot insert workflow")
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 
@@ -122,7 +122,7 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot update workflow")
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 
@@ -166,7 +166,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot delete workflow")
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 

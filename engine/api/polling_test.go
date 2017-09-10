@@ -84,7 +84,7 @@ func TestAddPollerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -155,7 +155,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -248,7 +248,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -343,7 +343,7 @@ func TestGetPollersHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -434,7 +434,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)

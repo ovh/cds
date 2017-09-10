@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
@@ -88,9 +87,6 @@ func (api *API) addJobToStageHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return err
 		}
-
-		cache.DeleteAll(cache.Key("application", projectKey, "*"))
-		cache.Delete(cache.Key("pipeline", projectKey, pipelineName))
 
 		if err := pipeline.LoadPipelineStage(api.mustDB(), pip); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot load stages")
@@ -254,9 +250,6 @@ func (api *API) deleteJobHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot commit transaction")
 		}
-
-		k := cache.Key("application", key, "*")
-		cache.DeleteAll(k)
 
 		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot load stages")

@@ -64,7 +64,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(api.mustDB(), proj, app, u))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
@@ -164,7 +164,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(api.mustDB(), proj, app, u))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
@@ -183,7 +183,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	test.NoError(t, application.Insert(api.mustDB(), proj, app2, u))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app2, u))
 	test.NoError(t, group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4))
 	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, g.ID, 4))
 
@@ -279,7 +279,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(api.mustDB(), proj, app, u))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
@@ -302,7 +302,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(api.mustDB(), proj, app2, u)
+	err = application.Insert(api.MustDB(), api.Cache, proj, app2, u)
 	test.NoError(t, err)
 	err = group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4)
 	test.NoError(t, err)
@@ -406,7 +406,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(api.mustDB(), proj, app, u)
+	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//Create a group
@@ -432,7 +432,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(api.mustDB(), proj, app2, u)
+	err = application.Insert(api.MustDB(), api.Cache, proj, app2, u)
 	test.NoError(t, err)
 	test.NoError(t, project.UpdateLastModified(api.mustDB(), u, proj))
 	err = group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4)
@@ -528,7 +528,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(api.mustDB(), proj, app, u)
+	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//Create a group
@@ -551,7 +551,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(api.mustDB(), proj, app2, u)
+	err = application.Insert(api.MustDB(), api.Cache, proj, app2, u)
 
 	test.NoError(t, err)
 	err = group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4)

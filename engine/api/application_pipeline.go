@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
@@ -55,9 +54,6 @@ func (api *API) attachPipelineToApplicationHandler() Handler {
 			log.Warning("addPipelineInApplicationHandler: Cannot check pipeline sanity: %s\n", err)
 			return err
 		}
-
-		k := cache.Key("application", key, "*"+appName+"*")
-		cache.DeleteAll(k)
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
@@ -134,9 +130,6 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 			return errW
 		}
 
-		k := cache.Key("application", key, "*"+appName+"*")
-		cache.DeleteAll(k)
-
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
 }
@@ -178,9 +171,6 @@ func (api *API) updatePipelinesToApplicationHandler() Handler {
 			return sdk.ErrUnknownError
 		}
 
-		k := cache.Key("application", key, "*"+appName+"*")
-		cache.DeleteAll(k)
-
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
 }
@@ -217,9 +207,6 @@ func (api *API) updatePipelineToApplicationHandler() Handler {
 			log.Warning("updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s:  %s\n", appName, pipelineName, err)
 			return err
 		}
-
-		k := cache.Key("application", key, "*"+appName+"*")
-		cache.DeleteAll(k)
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
@@ -275,9 +262,6 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 			log.Warning("removePipelineFromApplicationHandler> Cannot commit tx: %s\n", err)
 			return err
 		}
-
-		k := cache.Key("application", key, "*"+appName+"*")
-		cache.DeleteAll(k)
 
 		var errW error
 		a.Workflows, errW = workflow.LoadCDTree(api.mustDB(), key, a.Name, getUser(ctx), "", 0)
@@ -443,9 +427,6 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 
 		}
 
-		k := cache.Key("application", key, "*"+appName+"*")
-		cache.DeleteAll(k)
-
 		var errN error
 		applicationData.Notifications, errN = notification.LoadAllUserNotificationSettings(api.mustDB(), applicationData.ID)
 		if errN != nil {
@@ -597,9 +578,6 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
 			return err
 
 		}
-
-		k := cache.Key("application", key, "*"+appName+"*")
-		cache.DeleteAll(k)
 
 		var errNotif error
 		applicationData.Notifications, errNotif = notification.LoadAllUserNotificationSettings(api.mustDB(), applicationData.ID)

@@ -14,7 +14,7 @@ func (api *API) InitRouter() {
 		make(chan *LastUpdateBrokerSubscribe),
 		make(chan string),
 	}
-	api.LastUpdateBroker.Init(api.Router.Background, api.DBConnectionFactory.GetDBMap)
+	api.LastUpdateBroker.Init(api.Router.Background, api.DBConnectionFactory.GetDBMap, api.Cache)
 
 	r := api.Router
 	r.Handle("/login", r.POST(api.LoginUserHandler, Auth(false)))

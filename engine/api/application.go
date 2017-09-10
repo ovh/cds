@@ -11,7 +11,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -32,7 +31,7 @@ func (api *API) getApplicationsHandler() Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 
-		applications, err := application.LoadAll(api.mustDB(), projectKey, getUser(ctx))
+		applications, err := application.LoadAll(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
 			log.Warning("getApplicationsHandler: Cannot load applications from db: %s\n", err)
 			return err
@@ -49,7 +48,7 @@ func (api *API) getApplicationTreeHandler() Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		tree, err := workflow.LoadCDTree(api.mustDB(), projectKey, applicationName, getUser(ctx), "", 0)
+		tree, err := workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", 0)
 		if err != nil {
 			log.Warning("getApplicationTreeHandler: Cannot load CD Tree for applications %s: %s\n", applicationName, err)
 			return err
@@ -130,7 +129,7 @@ func (api *API) getApplicationBranchVersionHandler() Handler {
 
 		branch := r.FormValue("branch")
 
-		app, err := application.LoadByName(api.mustDB(), projectKey, applicationName, getUser(ctx), application.LoadOptions.WithTriggers)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.WithTriggers)
 		if err != nil {
 			log.Warning("getApplicationBranchVersionHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, err)
 			return err
@@ -164,12 +163,12 @@ func (api *API) getApplicationTreeStatusHandler() Handler {
 			}
 		}
 
-		app, errApp := application.LoadByName(api.mustDB(), projectKey, applicationName, getUser(ctx))
+		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getApplicationTreeStatusHandler>Cannot get application")
 		}
 
-		pbs, schedulers, pollers, hooks, errPB := workflow.GetWorkflowStatus(api.mustDB(), projectKey, applicationName, getUser(ctx), branchName, version)
+		pbs, schedulers, pollers, hooks, errPB := workflow.GetWorkflowStatus(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, version)
 		if errPB != nil {
 			return sdk.WrapError(errPB, "getApplicationHandler> Cannot load CD Tree status %s", app.Name)
 		}
@@ -227,7 +226,7 @@ func (api *API) getApplicationHandler() Handler {
 			loadOptions = append(loadOptions, application.LoadOptions.WithKeys)
 		}
 
-		app, errApp := application.LoadByName(api.mustDB(), projectKey, applicationName, getUser(ctx), loadOptions...)
+		app, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), loadOptions...)
 		if errApp != nil {
 			log.Warning("getApplicationHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, errApp)
 			return errApp
@@ -257,7 +256,7 @@ func (api *API) getApplicationHandler() Handler {
 
 		if withWorkflow {
 			var errWorflow error
-			app.Workflows, errWorflow = workflow.LoadCDTree(api.mustDB(), projectKey, applicationName, getUser(ctx), "", 0)
+			app.Workflows, errWorflow = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", 0)
 			if errWorflow != nil {
 				log.Warning("getApplicationHandler: Cannot load CD Tree for applications %s: %s\n", app.Name, errWorflow)
 				return errWorflow
@@ -266,7 +265,7 @@ func (api *API) getApplicationHandler() Handler {
 
 		if withRepoManager {
 			var errRepo error
-			_, app.RepositoriesManager, errRepo = repositoriesmanager.LoadFromApplicationByID(api.mustDB(), app.ID)
+			_, app.RepositoriesManager, errRepo = repositoriesmanager.LoadFromApplicationByID(api.mustDB(), app.ID, api.Cache)
 			if errRepo != nil {
 				return sdk.WrapError(errRepo, "getApplicationHandler: Cannot load repo manager for application %s", app.Name)
 			}
@@ -323,7 +322,7 @@ func (api *API) getApplicationBranchHandler() Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		app, err := application.LoadByName(api.mustDB(), projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			log.Warning("getApplicationBranchHandler: Cannot load application %s for project %s from db: %s\n", applicationName, projectKey, err)
 			return err
@@ -331,7 +330,7 @@ func (api *API) getApplicationBranchHandler() Handler {
 
 		var branches []sdk.VCSBranch
 		if app.RepositoryFullname != "" && app.RepositoriesManager != nil {
-			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, app.RepositoriesManager.Name)
+			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, app.RepositoriesManager.Name, api.Cache)
 			if erra != nil {
 				log.Warning("getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, erra)
 				return sdk.ErrNoReposManagerClientAuth
@@ -363,7 +362,7 @@ func (api *API) addApplicationHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		proj, errl := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "addApplicationHandler: Cannot load %s: %s", key)
 		}
@@ -386,7 +385,7 @@ func (api *API) addApplicationHandler() Handler {
 
 		defer tx.Rollback()
 
-		if err := application.Insert(tx, proj, &app, getUser(ctx)); err != nil {
+		if err := application.Insert(tx, api.Cache, proj, &app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot insert pipeline")
 		}
 
@@ -412,10 +411,7 @@ func (api *API) deleteApplicationHandler() Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		cache.DeleteAll(cache.Key("application", projectKey, "*"))
-		cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
-
-		proj, errP := project.Load(api.mustDB(), projectKey, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteApplicationHandler> Cannot laod project")
 		}
@@ -452,7 +448,7 @@ func (api *API) deleteApplicationHandler() Handler {
 			return err
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "deleteApplicationHandler> Cannot update project last modified date")
 		}
 
@@ -460,9 +456,6 @@ func (api *API) deleteApplicationHandler() Handler {
 			log.Warning("deleteApplicationHandler> Cannot commit transaction: %s\n", err)
 			return err
 		}
-
-		cache.DeleteAll(cache.Key("application", projectKey, "*"))
-		cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
 
 		return nil
 	}
@@ -512,7 +505,7 @@ func (api *API) cloneApplicationHandler() Handler {
 			return err
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
 			log.Warning("cloneApplicationHandler: Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -521,9 +514,6 @@ func (api *API) cloneApplicationHandler() Handler {
 			log.Warning("cloneApplicationHandler> Cannot commit transaction : %s\n", err)
 			return err
 		}
-
-		cache.DeleteAll(cache.Key("application", projectKey, "*"))
-		cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
 
 		return WriteJSON(w, r, newApp, http.StatusOK)
 	}
@@ -683,9 +673,6 @@ func (api *API) updateApplicationHandler() Handler {
 			log.Warning("updateApplicationHandler> Cannot commit transaction: %s\n", err)
 			return err
 		}
-
-		cache.DeleteAll(cache.Key("application", projectKey, "*"))
-		cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))
 
 		return WriteJSON(w, r, app, http.StatusOK)
 

@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/ptypes/empty"
 	"golang.org/x/net/context"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/worker"
@@ -17,6 +18,7 @@ import (
 
 type handlers struct {
 	dbConnectionFactory *database.DBConnectionFactory
+	store               cache.Store
 }
 
 //AddBuildLog is the BuildLogServer implementation
@@ -82,7 +84,7 @@ func (h *handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty,
 	db := h.dbConnectionFactory.GetDBMap()
 
 	//Load workflow node job run
-	job, errj := workflow.LoadAndLockNodeJobRun(db, res.BuildID)
+	job, errj := workflow.LoadAndLockNodeJobRun(db, h.store, res.BuildID)
 	if errj != nil {
 		return new(empty.Empty), sdk.WrapError(errj, "postWorkflowJobResultHandler> Unable to load node run job")
 	}
@@ -111,14 +113,14 @@ func (h *handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty,
 	}}
 
 	//Add spawn infos
-	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, job.ID, infos); err != nil {
+	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, h.store, job.ID, infos); err != nil {
 		log.Error("addQueueResultHandler> Cannot save spawn info job %d: %s", job.ID, err)
 		return nil, err
 	}
 
 	// Update action status
 	log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", workerID, res.Status)
-	if err := workflow.UpdateNodeJobRunStatus(tx, job, sdk.Status(res.Status)); err != nil {
+	if err := workflow.UpdateNodeJobRunStatus(tx, h.store, job, sdk.Status(res.Status)); err != nil {
 		return new(empty.Empty), sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", workerID)
 	}
 

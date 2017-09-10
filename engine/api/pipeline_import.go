@@ -140,7 +140,7 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(globalError, "importPipelineHandler> Unable import pipeline")
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Unable to update project")
 		}
 

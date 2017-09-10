@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -65,8 +64,6 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot commit transaction")
 		}
-
-		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot load application groups")
@@ -132,7 +129,7 @@ func (api *API) updateGroupsInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 		}
 
@@ -140,7 +137,6 @@ func (api *API) updateGroupsInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot commit transaction")
 		}
 
-		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
 }
@@ -190,8 +186,6 @@ func (api *API) addGroupInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot commit transaction")
 		}
 
-		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
-
 		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load application groups")
 		}
@@ -230,8 +224,6 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot commit transaction")
 		}
-
-		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 		if err := application.LoadGroupByApplication(api.mustDB(), app); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application groups")

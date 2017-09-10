@@ -48,7 +48,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -135,7 +135,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -198,7 +198,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -278,7 +278,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.mustDB(), proj, app, u); err != nil {
+	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

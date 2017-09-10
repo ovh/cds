@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
@@ -110,7 +109,6 @@ func (api *API) restoreAuditHandler() Handler {
 			return err
 		}
 
-		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 		return nil
 	}
 }
@@ -227,7 +225,6 @@ func (api *API) deleteVariableFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot load variables")
 		}
 
-		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
 }
@@ -334,7 +331,6 @@ func (api *API) updateVariablesInApplicationHandler() Handler {
 			return err
 		}
 
-		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 		return nil
 	}
 }
@@ -390,8 +386,6 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 		if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot check application sanity")
 		}
-
-		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
@@ -465,8 +459,6 @@ func (api *API) addVariableInApplicationHandler() Handler {
 			log.Warning("addVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
 			return err
 		}
-
-		cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}

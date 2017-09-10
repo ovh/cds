@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -125,9 +124,6 @@ func (api *API) rollbackPipelineHandler() Handler {
 				log.Warning("scheduler.Run> Unable to update pipeline build commits : %s", err)
 			}
 		}()
-
-		k := cache.Key("application", projectKey, "builds", "*")
-		cache.DeleteAll(k)
 
 		return WriteJSON(w, r, newPb, http.StatusOK)
 	}
@@ -438,9 +434,6 @@ func (api *API) updatePipelineActionHandler() Handler {
 			return err
 		}
 
-		k := cache.Key("application", key, "*")
-		cache.DeleteAll(k)
-
 		return nil
 	}
 }
@@ -546,7 +539,7 @@ func (api *API) updatePipelineHandler() Handler {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot update pipeline last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> cannot update project last modified date")
 		}
 
@@ -565,10 +558,6 @@ func (api *API) updatePipelineHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot commit transaction")
 		}
-
-		cache.DeleteAll(cache.Key("application", key, "*"))
-		cache.Delete(cache.Key("pipeline", key, name))
-
 		return WriteJSON(w, r, pipelineDB, http.StatusOK)
 	}
 }
@@ -660,7 +649,7 @@ func (api *API) addPipelineHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 		if err := tx.Commit(); err != nil {
@@ -846,10 +835,6 @@ func (api *API) deletePipelineHandler() Handler {
 			log.Warning("deletePipeline> Cannot commit transaction: %s\n", err)
 			return err
 		}
-
-		cache.DeleteAll(cache.Key("application", proj.Key, "*"))
-		cache.Delete(cache.Key("pipeline", proj.Key, pipelineName))
-
 		return nil
 	}
 }
@@ -914,9 +899,6 @@ func (api *API) addJobToPipelineHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return err
 		}
-
-		cache.DeleteAll(cache.Key("application", projectKey, "*"))
-		cache.Delete(cache.Key("pipeline", projectKey, pipelineName))
 
 		return WriteJSON(w, r, job, http.StatusOK)
 	}
@@ -998,9 +980,6 @@ func (api *API) updateJoinedActionHandler() Handler {
 			return sdk.WrapError(err, "updateJoinedAction> Cannot commit transaction")
 		}
 
-		cache.DeleteAll(cache.Key("application", projectKey, "*"))
-		cache.Delete(cache.Key("pipeline", projectKey, pip.Name))
-
 		return WriteJSON(w, r, a, http.StatusOK)
 	}
 }
@@ -1046,8 +1025,6 @@ func (api *API) deleteJoinedActionHandler() Handler {
 			return sdk.WrapError(err, "deleteJoinedAction> Cannot commit transaction")
 		}
 
-		k := cache.Key("application", projectKey, "*")
-		cache.DeleteAll(k)
 		return nil
 	}
 }
@@ -1193,9 +1170,6 @@ func (api *API) stopPipelineBuildHandler() Handler {
 			return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot stop pipeline build")
 		}
 
-		k := cache.Key("application", projectKey, "builds", "*")
-		cache.DeleteAll(k)
-
 		return nil
 	}
 }
@@ -1294,9 +1268,6 @@ func (api *API) restartPipelineBuildHandler() Handler {
 			return sdk.ErrNoEnvExecution
 
 		}
-
-		k := cache.Key("application", projectKey, "builds", "*")
-		cache.DeleteAll(k)
 
 		return WriteJSON(w, r, pb, http.StatusOK)
 	}

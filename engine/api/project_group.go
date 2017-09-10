@@ -42,7 +42,7 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from project %s", g.Name, p.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot update last modified date")
 		}
 
@@ -110,7 +110,7 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot add group %s in project %s", g.Name, p.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot update last modified date")
 		}
 
@@ -287,7 +287,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot update last modified date")
 		}
 

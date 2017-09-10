@@ -7,7 +7,6 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
@@ -72,10 +71,6 @@ func (api *API) addStageHandler() Handler {
 			log.Warning("addStageHandler> Cannot load pipeline stages: %s", err)
 			return err
 		}
-
-		k := cache.Key("application", projectKey, "*")
-		cache.DeleteAll(k)
-		cache.Delete(cache.Key("pipeline", projectKey, pipelineKey))
 
 		return WriteJSON(w, r, pipelineData, http.StatusCreated)
 	}
@@ -242,10 +237,6 @@ func (api *API) updateStageHandler() Handler {
 			return err
 		}
 
-		k := cache.Key("application", projectKey, "*")
-		cache.DeleteAll(k)
-		cache.Delete(cache.Key("pipeline", projectKey, pipelineKey))
-
 		return WriteJSON(w, r, pipelineData, http.StatusOK)
 	}
 }
@@ -309,10 +300,6 @@ func (api *API) deleteStageHandler() Handler {
 			log.Warning("deleteStageHandler> Cannot load stages: %s", err)
 			return err
 		}
-
-		k := cache.Key("application", projectKey, "*")
-		cache.DeleteAll(k)
-		cache.Delete(cache.Key("pipeline", projectKey, pipelineKey))
 
 		return WriteJSON(w, r, pipelineData, http.StatusOK)
 	}

@@ -15,7 +15,7 @@ import (
 )
 
 //Import is able to create a new application and all its components
-func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, u *sdk.User, msgChan chan<- sdk.Message, apiURL, uiURL string) error {
+func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, u *sdk.User, msgChan chan<- sdk.Message) error {
 	//Save application in database
 	if err := Insert(db, store, proj, app, u); err != nil {
 		return sdk.WrapError(err, "application.Import")

@@ -44,7 +44,7 @@ func Test_runPipelineHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -121,7 +121,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.mustDB(), proj, app, nil))
+	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -187,7 +187,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	app2 := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	err = application.Insert(api.mustDB(), proj, app2, nil)
+	err = application.Insert(api.MustDB(), api.Cache, proj, app2, nil)
 
 	//12. Attach pipeline to application
 	_, err = application.AttachPipeline(api.mustDB(), app2.ID, pip2.ID)

@@ -87,7 +87,7 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot update last modified:  %s\n", err)
 			return err
 		}
@@ -152,7 +152,7 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 			return err
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("deleteVariableFromProject: Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -258,7 +258,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot update last modified:  %s\n", err)
 			return err
 		}
@@ -315,7 +315,7 @@ func (api *API) updateVariableInProjectHandler() Handler {
 			return err
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("updateVariableInProject: Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -414,7 +414,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		}
 
-		if err := project.UpdateLastModified(tx, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot update last modified:  %s\n", err)
 			return err
 		}
