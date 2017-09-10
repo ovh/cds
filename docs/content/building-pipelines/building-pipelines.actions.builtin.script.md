@@ -37,20 +37,26 @@ If you want to control command's exit code, you have to add
 set +e
 ```
 
-Example of success step, CDS will execute all lines:
+Example of step, CDS will exit at the first line, as `which a-unknown-binary will return an error` :
 
 ```bash
-set +e # CDS will not exit in failure even if a command is failed
-which a-unknown-binary
-if [ $? -ne 0 ]; then echo "binary bar does not exists"; fi;
+which a-unknown-binary # Step will fail here, lines below won't be executed
+if [ $? -ne 0 ]; then
+  echo "binary a-unknown-binary does not exists";
+  exit 1
+fi;
 exit 0
 ```
 
-Example of failing step, CDS will exit at the first line, as `which a-unknown-binary will return an error` :
+Example of step, CDS will execute all lines:
 
 ```bash
+set +e
 which a-unknown-binary
-if [ $? -ne 0 ]; then echo "binary bar does not exists"; fi;
+if [ $? -ne 0 ]; then
+  echo "binary a-unknown-binary does not exists"; # this will be displayed
+  exit 1
+fi;
 exit 0
 ```
 
