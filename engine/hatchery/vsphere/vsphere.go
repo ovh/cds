@@ -7,9 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vmware/govmomi"
-	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
@@ -17,11 +14,6 @@ import (
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
-
-// HatcheryConfiguration is the configuration for hatchery
-type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
-}
 
 // New instanciates a new Hatchery vsphere
 func New() *HatcheryVSphere {
@@ -58,7 +50,21 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("API Token URL is mandatory")
 	}
 
-	//TODO
+	if hconfig.VSphereUser == "" {
+		return fmt.Errorf("vsphere-user is mandatory")
+	}
+
+	if hconfig.VSphereEndpoint == "" {
+		return fmt.Errorf("vsphere-endpoint is mandatory")
+	}
+
+	if hconfig.VSpherePassword == "" {
+		return fmt.Errorf("vsphere-password is mandatory")
+	}
+
+	if hconfig.VSphereDatacenterString == "" {
+		return fmt.Errorf("vsphere-datacenter is mandatory")
+	}
 
 	return nil
 }
@@ -67,33 +73,6 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 func (h *HatcheryVSphere) Serve(ctx context.Context) error {
 	hatchery.Create(h)
 	return nil
-}
-
-var hatcheryVSphere *HatcheryVSphere
-
-// HatcheryVSphere spawns vm
-type HatcheryVSphere struct {
-	Config     HatcheryConfiguration
-	hatch      *sdk.Hatchery
-	images     []string
-	datacenter *object.Datacenter
-	finder     *find.Finder
-	network    object.NetworkReference
-	vclient    *govmomi.Client
-	client     cdsclient.Interface
-
-	// User provided parameters
-	endpoint           string
-	user               string
-	password           string
-	host               string
-	datacenterString   string
-	datastoreString    string
-	networkString      string
-	cardName           string
-	workerTTL          int
-	disableCreateImage bool
-	createImageTimeout int
 }
 
 // CanSpawn return wether or not hatchery can spawn model
