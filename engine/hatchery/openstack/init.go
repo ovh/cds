@@ -37,11 +37,11 @@ func (h *HatcheryOpenstack) Init() error {
 	workersAlive = map[string]int64{}
 
 	authOpts := gophercloud.AuthOptions{
-		Username:         h.user,
-		Password:         h.password,
+		Username:         h.Config.User,
+		Password:         h.Config.Password,
 		AllowReauth:      true,
-		IdentityEndpoint: h.address,
-		TenantName:       h.tenant,
+		IdentityEndpoint: h.Config.Address,
+		TenantName:       h.Config.Tenant,
 	}
 
 	provider, errac := openstack.AuthenticatedClient(authOpts)
@@ -50,7 +50,7 @@ func (h *HatcheryOpenstack) Init() error {
 		os.Exit(11)
 	}
 
-	openstackClient, errn := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{Region: h.region})
+	openstackClient, errn := openstack.NewComputeV2(provider, gophercloud.EndpointOpts{Region: h.Config.Region})
 	if errn != nil {
 		log.Error("Unable to openstack.NewComputeV2: %s", errn)
 		os.Exit(12)
@@ -97,7 +97,7 @@ func (h *HatcheryOpenstack) initNetworks() error {
 		return fmt.Errorf("initNetworks> Unable to get Network: %s", err)
 	}
 	for _, n := range nets {
-		if n.Name == h.networkString {
+		if n.Name == h.Config.NetworkString {
 			h.networkID = n.ID
 			break
 		}
@@ -119,7 +119,7 @@ func (h *HatcheryOpenstack) initIPStatus() error {
 				continue
 			}
 			for k, v := range s.Addresses {
-				if k != h.networkString {
+				if k != h.Config.NetworkString {
 					continue
 				}
 				switch v.(type) {

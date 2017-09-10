@@ -25,12 +25,6 @@ func init() {
 
 	Cmd.Flags().IntVar(&hatcherySwarm.workerTTL, "worker-ttl", 10, "Worker TTL (minutes)")
 	viper.BindPFlag("worker-ttl", Cmd.Flags().Lookup("worker-ttl"))
-
-	Cmd.Flags().Int("spawn-threshold-critical", 20, "log critical if spawn take more than this value (in seconds)")
-	viper.BindPFlag("spawn-threshold-critical", Cmd.Flags().Lookup("spawn-threshold-critical"))
-
-	Cmd.Flags().Int("spawn-threshold-warning", 4, "log warning if spawn take more than this value (in seconds)")
-	viper.BindPFlag("spawn-threshold-warning", Cmd.Flags().Lookup("spawn-threshold-warning"))
 }
 
 // Cmd configures comamnd for HatcherySwarm
