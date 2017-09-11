@@ -5,6 +5,7 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
+import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
 import {TranslateParser} from 'ng2-translate';
 import {ProjectStore} from '../../../service/project/project.store';
@@ -22,17 +23,20 @@ import {Variable} from '../../../model/variable.model';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {GroupPermission} from '../../../model/group.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
+import {User} from '../../../model/user.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Project Show Component', () => {
 
     let injector: Injector;
     let backend: MockBackend;
+    let authStore: AuthentificationStore;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
+                AuthentificationStore,
                 MockBackend,
                 {provide: XHRBackend, useClass: MockBackend},
                 TranslateLoader,
@@ -57,12 +61,14 @@ describe('CDS: Project Show Component', () => {
         });
         injector = getTestBed();
         backend = injector.get(MockBackend);
-
+        authStore = injector.get(AuthentificationStore);
+        authStore.addUser(new User(), false);
     });
 
     afterEach(() => {
         injector = undefined;
         backend = undefined;
+        authStore = undefined;
     });
 
 
@@ -173,4 +179,3 @@ class MockActivatedRoutes extends ActivatedRoute {
         this.queryParams = Observable.of({tab: 'application'});
     }
 }
-
