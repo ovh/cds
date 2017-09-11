@@ -51,6 +51,16 @@ $boxWidth: 155px;
     .ui.ribbon.label:after {
       content: none;
     }
+
+    sm-dropdown {
+      z-index: 3;
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      .dropdown.icon {
+        display: none;
+      }
+    }
   }
 }
 

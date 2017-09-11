@@ -53,7 +53,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     loading = false;
     options: {};
-    disabled: boolean = false;
+    disabled = false;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
                 private _toast: ToastService, private _pipelineStore: PipelineStore, private _router: Router) {

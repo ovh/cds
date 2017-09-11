@@ -1,16 +1,34 @@
 <div class="workflowNode">
     <div class="nodePipeline">
         <div class="pipeline">
-            <p class="ellipsis">{{node.pipeline.name}}</p>
+            <p class="ellipsis">{{node.name}}</p>
         </div>
         <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0">
             <p class="ellipsis">{{node.context.application.name}}</p>
         </div>
         <a class="ui white ribbon label" *ngIf="true || node.context.environment_id && node.context.environment_id > 0">aaa</a>
+        <ng-container *ngIf="!webworker">
+            <sm-dropdown class="nocaret" icon="settings" [disabled]="disabled" (click)="displayDropdown()" [options]="options">
+                <a sm-item href="#" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]">{{ 'pipeline_label_edit' | translate }}</a>
+                <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
+                <sm-item (click)="createJoin()">{{ 'workflow_node_join_add' | translate }}</sm-item>
+                <sm-item (click)="linkJoin()">{{ 'workflow_node_join_link' | translate }}</sm-item>
+                <sm-item (click)="openEditContextModal()">{{ 'workflow_node_context_edit' | translate }}</sm-item>
+                <sm-item (click)="openDeleteNodeModal()">{{ 'workflow_node_delete_btn' | translate }}</sm-item>
+            </sm-dropdown>
+        </ng-container>
     </div>
 
 </div>
-
+<ng-container *ngIf="project && node">
+    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [triggerSrcNode]="node" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowTrigger></app-workflow-trigger>
+</ng-container>
+<ng-container *ngIf="node">
+    <app-workflow-node-delete [loading]="loading" [node]="node" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
+</ng-container>
+<ng-container *ngIf="project && node">
+    <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
+</ng-container>
 <!--
 <div class="workflowNode">
     <div class="ui segment" [class.disabled]="disabled" [class.pointing]="currentNodeRun" (click)="goToNodeRun()"
@@ -40,13 +58,5 @@
         </sm-dropdown>
     </ng-container>
 </div>
-<ng-container *ngIf="project && node">
-    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [triggerSrcNode]="node" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowTrigger></app-workflow-trigger>
-</ng-container>
-<ng-container *ngIf="node">
-    <app-workflow-node-delete [loading]="loading" [node]="node" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
-</ng-container>
-<ng-container *ngIf="project && node">
-    <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
-</ng-container>
+
 -->

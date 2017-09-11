@@ -18,7 +18,6 @@ export class WorkflowRunJobVariableComponent {
         this.init();
         if (data) {
             data.forEach(p => {
-                debugger;
                 if (p.name.indexOf('cds.proj.', 0) === 0) {
                     this.varProject.push(p);
                 } else if (p.name.indexOf('cds.app.', 0) === 0) {
