@@ -8,7 +8,7 @@
         </div>
         <a class="ui white ribbon label" *ngIf="true || node.context.environment_id && node.context.environment_id > 0">aaa</a>
         <ng-container *ngIf="!webworker">
-            <sm-dropdown class="nocaret" icon="settings" [disabled]="disabled" (click)="displayDropdown()" [options]="options">
+            <sm-dropdown class="nocaret right pointing link" icon="settings" [disabled]="disabled" (click)="displayDropdown()" [options]="options">
                 <a sm-item href="#" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]">{{ 'pipeline_label_edit' | translate }}</a>
                 <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
                 <sm-item (click)="createJoin()">{{ 'workflow_node_join_add' | translate }}</sm-item>

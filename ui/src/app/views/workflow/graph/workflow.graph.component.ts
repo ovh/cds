@@ -101,7 +101,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             inner.each(function () {
                 w = this.getBBox().width;
             });
-            this.svgWidth = w + 100;
+            this.svgWidth = w + 30;
             inner.attr('transform', 'translate(20, 0)');
         } else {
             inner.attr('transform', 'translate(20, 0)');
@@ -173,7 +173,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
         // Add listener on graph element
         this.addListener(d3.select('svg'));
-
+        this.svgHeight = this.g.graph().height + 40;
         this._cd.detectChanges();
     }
 
@@ -289,7 +289,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                 componentRef.location.nativeElement.style.height = '100%';
                 return componentRef.location.nativeElement;
             },
-            labelStyle: 'width: ' + this.nodeWidth * 1.1 + 'px; height: ' + this.nodeHeight + 'px',
+            labelStyle: 'width: ' + this.nodeWidth + 'px; height: ' + this.nodeHeight + 'px',
             width: this.nodeWidth,
             height: this.nodeHeight
         });
