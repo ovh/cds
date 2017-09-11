@@ -8,17 +8,14 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 )
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router) {
-	db := test.SetupPG(t, bootstrapFunc...)
+	db, cache := test.SetupPG(t, bootstrapFunc...)
 	router := newRouter(auth.TestLocalAuth(t, db), mux.NewRouter(), "/"+test.GetTestName(t))
-
-	cache, _ := cache.New("local", "", "", 5)
 	api := &API{
 		StartupTime:         time.Now(),
 		Router:              router,

@@ -59,6 +59,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 				Value: "capa_1",
 			},
 		},
+		UserLastModified: time.Now(),
 	}
 
 	if err := InsertWorkerModel(db, &m); err != nil {
@@ -70,7 +71,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func TestInsertWorkerModel(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -82,11 +83,11 @@ func TestInsertWorkerModel(t *testing.T) {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
 	m1.Group = sdk.Group{}
-	now := time.Now()
+
 	// lastregistration is LOCALTIMESTAMP (at sql insert)
 	// set it manually to allow use EqualValues on others fields
-	m.LastRegistration = now
-	m1.LastRegistration = now
+	m.LastRegistration = m1.LastRegistration
+	m.UserLastModified = m1.UserLastModified
 
 	assert.EqualValues(t, m, m1)
 
@@ -113,12 +114,15 @@ func TestInsertWorkerModel(t *testing.T) {
 	}
 	m3u := m3[0]
 	m3u.Group = sdk.Group{}
-	m3u.LastRegistration = now
+
+	m.UserLastModified = m3u.UserLastModified
+	m.LastRegistration = m3u.LastRegistration
+
 	assert.EqualValues(t, *m, m3u)
 }
 
 func TestLoadWorkerModel(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g, err := group.LoadGroup(db, "shared.infra")
@@ -140,7 +144,7 @@ func TestLoadWorkerModel(t *testing.T) {
 }
 
 func TestLoadWorkerModels(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -165,7 +169,7 @@ func TestLoadWorkerModels(t *testing.T) {
 }
 
 func TestLoadWorkerModelCapabilities(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g, err := group.LoadGroup(db, "shared.infra")
@@ -182,7 +186,7 @@ func TestLoadWorkerModelCapabilities(t *testing.T) {
 }
 
 func TestUpdateWorkerModel(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
