@@ -26,7 +26,6 @@ export class ProjectAddComponent {
     loading = false;
     nameError = false;
     keyError = false;
-    groupError = false;
     sshError = false;
 
     groupList: Group[];
@@ -65,7 +64,6 @@ export class ProjectAddComponent {
         this.loading = true;
         this.nameError = false;
         this.keyError = false;
-        this.groupError = false;
         this.sshError = false;
         if (!this.project.name || this.project.name.length === 0) {
             this.nameError = true;
@@ -79,7 +77,7 @@ export class ProjectAddComponent {
                 this.keyError = true;
             }
         }
-        if (this.group || this.group.name !== '') {
+        if (this.group && this.group.name !== '') {
           let gp = new GroupPermission();
           gp.permission = this._permissionService.getRWX();
           gp.group = this.group;

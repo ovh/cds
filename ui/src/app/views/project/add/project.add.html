@@ -51,13 +51,6 @@
                       id="PermissionGroup">
                       <option *ngFor="let g of groupList" [value]="g.id">{{g.name}}</option>
                   </sm-select>
-                  <div class="row" *ngIf="groupError">
-                      <div class="column">
-                          <div class="ui error message">
-                              {{ 'project_groups_error' | translate }}
-                          </div>
-                      </div>
-                  </div>
                 </div>
 
             </div>

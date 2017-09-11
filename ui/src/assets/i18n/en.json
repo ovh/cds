@@ -348,7 +348,6 @@
   "project_env_form_title" : "Add an environment: ",
   "project_env_list_title" : "Environments List: ",
   "project_env_permission_form_title"  : "Add permissions on environments",
-  "project_groups_error" : "A project must have at least one group with write permission",
   "project_key" : "Project unique key",
   "project_key_error" : "Project unique key is mandatory and must be in upper case",
   "project_name" : "Project name",
