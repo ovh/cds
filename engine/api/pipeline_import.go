@@ -58,8 +58,7 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 	}
 
 	if errorParse != nil {
-		log.Warning("importNewEnvironmentHandler> Cannot parsing: %s\n", errorParse)
-		return sdk.ErrWrongRequest
+		return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Cannot parsing: %s", errorParse)
 	}
 
 	// Check if pipeline exists
@@ -101,7 +100,6 @@ func importPipelineHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMa
 
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
-		log.Warning("importPipelineHandler: Cannot start transaction: %s\n", errBegin)
 		return sdk.WrapError(errBegin, "importPipelineHandler: Cannot start transaction")
 	}
 
