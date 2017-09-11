@@ -594,7 +594,35 @@
 
 <p>at first line.</p>
 
-<p>Make sure that the binary used is in the pre-requisites of action</p>
+<p>Make sure that the binary used is in the pre-requisites of action.</p>
+
+<p>If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails.</p>
+
+<p>If you want to control command&rsquo;s exit code, you have to add</p>
+
+<pre><code class="language-bash">set +e
+</code></pre>
+
+<p>Example of step, CDS will exit at the first line, as <code>which a-unknown-binary will return an error</code> :</p>
+
+<pre><code class="language-bash">which a-unknown-binary # Step will fail here, lines below won't be executed
+if [ $? -ne 0 ]; then
+  echo &quot;binary a-unknown-binary does not exists&quot;;
+  exit 1
+fi;
+exit 0
+</code></pre>
+
+<p>Example of step, CDS will execute all lines:</p>
+
+<pre><code class="language-bash">set +e
+which a-unknown-binary
+if [ $? -ne 0 ]; then
+  echo &quot;binary a-unknown-binary does not exists&quot;; # this will be displayed
+  exit 1
+fi;
+exit 0
+</code></pre>
 
 <h4 id="variable">Variable</h4>
 

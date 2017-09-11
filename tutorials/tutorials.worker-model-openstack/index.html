@@ -490,12 +490,6 @@ apt-get -y --force-yes install binutils &gt;&gt; /tmp/user_data 2&gt;&amp;1
 <pre><code class="language-bash">$ cds worker model add docker openstack --image=&quot;Debian 8&quot; --flavor=&quot;vps-ssd-1&quot; --userdata=&quot;./docker.udata&quot;
 </code></pre>
 
-<p>Declare docker and git capabilities</p>
-
-<pre><code class="language-shell">$ cds worker model capability add docker docker binary docker
-$ cds worker model capability add docker git binary git
-</code></pre>
-
 
 <footer class=" footline" >
 	

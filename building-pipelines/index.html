@@ -356,13 +356,12 @@ Parameters  path: Path to junit xml file  Example  Job Configuration.   Launch p
         <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.script/">Script</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> Script is a builtin action, you can&rsquo;t modify it.
+        <p>Script is a builtin action, you can&rsquo;t modify it.
 This action execute a script, written in script attribute
 Parameters  script: Content of your script. You can put  #!/bin/bash  or
 #!/bin/perl  at first line.
-Make sure that the binary used is in the pre-requisites of action
-Variable You can use CDS Variables in a step script.
-Example  Job Configuration, a step with perl, another with bash   Launch pipeline, check logs   <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.script/">&raquo;</a></p>
+Make sure that the binary used is in the pre-requisites of action.
+If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.script/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
