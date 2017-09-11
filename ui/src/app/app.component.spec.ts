@@ -38,6 +38,7 @@ describe('App: CDS', () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
+                AuthentificationStore,
                 { provide: APP_BASE_HREF, useValue: '/' },
                 MockBackend,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
