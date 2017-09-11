@@ -7,11 +7,11 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/tat/api/cache"
 )
 
 // DeletePipelineBuildJob Delete all pipeline build job for the current pipeline build

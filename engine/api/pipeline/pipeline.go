@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/tat/api/cache"
 )
 
 type structarg struct {
