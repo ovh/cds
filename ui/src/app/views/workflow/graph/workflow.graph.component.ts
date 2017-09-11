@@ -144,7 +144,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     initWorkflow(resize: boolean) {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
-        this.g = new dagreD3.graphlib.Graph().setGraph({rankdir: this.direction, labeloffset: 0});
+        this.g = new dagreD3.graphlib.Graph().setGraph({rankdir: this.direction});
 
         // Calculate node width
         this.nodeHeight = 78;

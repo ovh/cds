@@ -102,10 +102,11 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     openEditContextModal(): void {
-        this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
+        let sub = this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
             if (pips.get(this.project.key + '-' + this.node.pipeline.name)) {
                 setTimeout(() => {
                     this.workflowContext.show({observable: true, closable: false, autofocus: false});
+                    sub.unsubscribe();
                 }, 100);
             }
         });
@@ -231,10 +232,11 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         if (!this.webworker || !this.currentNodeRun) {
             return;
         }
+        let pip = Workflow.getNodeByID(this.currentNodeRun.workflow_node_id, this.workflow).pipeline.name;
         this._router.navigate([
             '/project', this.project.key,
             'workflow', this.workflow.name,
             'run', this.currentNodeRun.num,
-            'node', this.currentNodeRun.id]);
+            'node', this.currentNodeRun.id], {queryParams: { name: pip}});
     }
 }
