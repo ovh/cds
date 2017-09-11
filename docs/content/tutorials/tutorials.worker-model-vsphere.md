@@ -52,9 +52,3 @@ $ cds worker model add debian8-docker vsphere --image="debian8" --userdata="./yo
 ```
 
 `--image` is the name of your virtual machine that you have created before on your host to clone (See [Advanced]({{< relref "advanced.hatcheries.vsphere.md" >}}))
-
-Declare docker and git capabilities
-``` shell
-$ cds worker model capability add debian8-docker docker binary docker
-$ cds worker model capability add debian8-docker git binary git
-```

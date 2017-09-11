@@ -57,9 +57,3 @@ Last step, define worker model in cds:
 ```bash
 $ cds worker model add docker openstack --image="Debian 8" --flavor="vps-ssd-1" --userdata="./docker.udata"
 ```
-
-Declare docker and git capabilities
-``` shell
-$ cds worker model capability add docker docker binary docker
-$ cds worker model capability add docker git binary git
-```
