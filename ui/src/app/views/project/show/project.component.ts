@@ -1,5 +1,6 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
+import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {ProjectStore} from '../../../service/project/project.store';
 import {Project} from '../../../model/project.model';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
@@ -10,6 +11,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {PermissionValue} from '../../../model/permission.model';
 import {Environment} from '../../../model/environment.model';
+import {User} from '../../../model/user.model';
 
 @Component({
     selector: 'app-project-show',
@@ -17,10 +19,10 @@ import {Environment} from '../../../model/environment.model';
     styleUrls: ['./project.scss']
 })
 export class ProjectShowComponent implements OnInit, OnDestroy {
-
     varFormLoading = false;
     permFormLoading = false;
-    permEnvFormLoading = false;
+    permEnvFormLoading = false
+    currentUser: User;
 
     project: Project;
     private projectSubscriber: Subscription;
@@ -39,7 +41,9 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
     permissionEnum = PermissionValue;
 
     constructor(private _projectStore: ProjectStore, private _route: ActivatedRoute, private _router: Router,
-                private _toast: ToastService, public _translate: TranslateService) {
+                private _toast: ToastService, public _translate: TranslateService,
+                private _authentificationStore: AuthentificationStore) {
+        this.currentUser = this._authentificationStore.getUser();
     }
 
     ngOnDestroy(): void {

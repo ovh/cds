@@ -3,8 +3,8 @@ import {Project} from '../../../../model/project.model';
 
 @Component({
     selector: 'app-project-workflows',
-    templateUrl: './project.workflows.html',
-    styleUrls: ['./project.workflows.scss']
+    templateUrl: './workflow.list.html',
+    styleUrls: ['./workflow.list.scss']
 })
 export class ProjectWorkflowListComponent {
 
