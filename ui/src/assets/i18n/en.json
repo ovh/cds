@@ -353,6 +353,7 @@
   "project_name_error" : "project name is mandatory",
   "project_no_application" : "There is no application in this project",
   "project_no_pipeline" : "There is no pipeline in this project",
+  "project_no_workflow" : "There is no workflow in this project",
   "project_permission_list_title" : "List of permissions on the project: ",
   "project_permission_form_title" : "Add a permission: ",
   "project_permission_form_wizard_title" : "Use an existing group: ",
@@ -365,6 +366,7 @@
   "project_update_name_error" : "Project name is mandatory and must respect the alphanumeric pattern ([a-zA-Z0-9]*)",
   "project_variable_list_title" : "List of project variables: ",
   "project_variable_form_title" : "Add a new variable: ",
+  "project_workflows_list" : "List of workflow in the project: ",
 
   "repo_name" : "Repository",
   "repoman_delete_msg_ok" : "Repository mananger is detached from the project",
