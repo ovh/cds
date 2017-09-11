@@ -13,7 +13,10 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -50,7 +53,7 @@ type Bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
 var DBConnectionFactory *database.DBConnectionFactory
 
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) *gorp.DbMap {
+func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store) {
 	log.SetLogger(t)
 
 	//Try to load flags from config flags, else load from flags
@@ -100,25 +103,29 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) *gorp.DbMap {
 
 	if DBDriver == "" {
 		t.Skip("This should be run with a database")
-		return nil
+		return nil, nil
 	}
 	if DBConnectionFactory == nil {
 		var err error
 		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s", err)
-			return nil
+			return nil, nil
 		}
 	}
 
 	for _, f := range bootstrapFunc {
 		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, DBConnectionFactory.GetDBMap); err != nil {
 			log.Error("Error: %v", err)
-			return nil
+			return nil, nil
 		}
 	}
 
-	return DBConnectionFactory.GetDBMap()
+	store := cache.NewLocalStore()
+	event.Cache = store
+	pipeline.Store = store
+
+	return DBConnectionFactory.GetDBMap(), store
 }
 
 //GetTestName returns the name the the test

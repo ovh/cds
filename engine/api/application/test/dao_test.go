@@ -13,16 +13,16 @@ import (
 )
 
 func TestLoadByNameAsAdmin(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 
-	actual, err := application.LoadByName(db, api.Cache, key, "my-app", nil)
+	actual, err := application.LoadByName(db, cache, key, "my-app", nil)
 	test.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
@@ -31,20 +31,20 @@ func TestLoadByNameAsAdmin(t *testing.T) {
 }
 
 func TestLoadByNameAsUser(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 
 	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, api.Cache, proj, &app, u, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, cache, proj, &app, u, proj.ProjectGroups...))
 
-	actual, err := application.LoadByName(db, api.Cache, key, "my-app", u)
+	actual, err := application.LoadByName(db, cache, key, "my-app", u)
 	assert.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
@@ -53,16 +53,16 @@ func TestLoadByNameAsUser(t *testing.T) {
 }
 
 func TestLoadByIDAsAdmin(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 
-	actual, err := application.LoadByID(db, app.ID, nil)
+	actual, err := application.LoadByID(db, cache, app.ID, nil)
 	test.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
@@ -71,21 +71,21 @@ func TestLoadByIDAsAdmin(t *testing.T) {
 }
 
 func TestLoadByIDAsUser(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
 
-	proj := assets.InsertTestProject(t, db, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
 
 	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, api.Cache, proj, &app, u, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, cache, proj, &app, u, proj.ProjectGroups...))
 
-	actual, err := application.LoadByID(db, app.ID, u)
+	actual, err := application.LoadByID(db, cache, app.ID, u)
 	assert.NoError(t, err)
 
 	assert.Equal(t, app.Name, actual.Name)
@@ -94,9 +94,9 @@ func TestLoadByIDAsUser(t *testing.T) {
 }
 
 func TestLoadAllAsAdmin(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 		Metadata: sdk.Metadata{
@@ -111,10 +111,10 @@ func TestLoadAllAsAdmin(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app, nil))
-	test.NoError(t, application.Insert(db, proj, &app2, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app2, nil))
 
-	actual, err := application.LoadAll(db, proj.Key, nil)
+	actual, err := application.LoadAll(db, cache, proj.Key, nil)
 	test.NoError(t, err)
 
 	assert.Equal(t, 2, len(actual))
@@ -126,9 +126,9 @@ func TestLoadAllAsAdmin(t *testing.T) {
 }
 
 func TestLoadAllAsUser(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, nil)
+	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
 	app := sdk.Application{
 		Name: "my-app",
 	}
@@ -137,14 +137,14 @@ func TestLoadAllAsUser(t *testing.T) {
 		Name: "my-app2",
 	}
 
-	test.NoError(t, application.Insert(db, proj, &app, nil))
-	test.NoError(t, application.Insert(db, proj, &app2, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app, nil))
+	test.NoError(t, application.Insert(db, cache, proj, &app2, nil))
 
 	u, _ := assets.InsertLambdaUser(db, &proj.ProjectGroups[0].Group)
 
-	test.NoError(t, application.AddGroup(db, api.Cache, proj, &app, u, proj.ProjectGroups...))
+	test.NoError(t, application.AddGroup(db, cache, proj, &app, u, proj.ProjectGroups...))
 
-	actual, err := application.LoadAll(db, proj.Key, u)
+	actual, err := application.LoadAll(db, cache, proj.Key, u)
 	test.NoError(t, err)
 
 	assert.Equal(t, 1, len(actual))
