@@ -4,24 +4,6 @@
         <div class="ui two column centered grid">
             <div class="column">
                 <div class="field">
-                  <label>{{'group_name' | translate}}</label>
-                  {{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" (click)="modalCreateGroup.show()">{{ 'project_permission_form_wizard_new' | translate }}</a>
-                  <sm-select class="fluid search"
-                      [options]="{'fullTextSearch': true}"
-                      [model]="group?.id"
-                      (modelChange)="setGroup($event)"
-                      id="PermissionGroup">
-                      <option *ngFor="let g of groupList" [value]="g.id">{{g.name}}</option>
-                  </sm-select>
-                  <div class="row" *ngIf="groupError">
-                      <div class="column">
-                          <div class="ui error message">
-                              {{ 'project_groups_error' | translate }}
-                          </div>
-                      </div>
-                  </div>
-                </div>
-                <div class="field">
                     <label>{{ 'project_name' | translate }}</label>
                     <input type="text" name="projectname" [(ngModel)]="project.name" (keyup)="generateKey($event.target.value)">
                 </div>
@@ -34,6 +16,12 @@
                 </div>
                 <div class="ui error message" *ngIf="keyError">
                     {{ 'project_key_error' | translate }}
+                </div>
+
+                <hr>
+
+                <div class="ui message">
+                  {{'project_add_ssh_key_help' | translate}}
                 </div>
                 <div class="field">
                     <div class="ui checkbox">
@@ -48,6 +36,23 @@
                 <div class="ui error message" *ngIf="sshError">
                     {{ 'project_ssh_error' | translate }}
                 </div>
+
+                <hr>
+
+                <div class="ui message">
+                  {{'project_add_group_help' | translate}}
+                </div>
+                <div class="field">
+                  {{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" (click)="modalCreateGroup.show()">{{ 'project_permission_form_wizard_new' | translate }}</a>
+                  <sm-select class="fluid search"
+                      [options]="{'fullTextSearch': true}"
+                      [model]="group?.id"
+                      (modelChange)="setGroup($event)"
+                      id="PermissionGroup">
+                      <option *ngFor="let g of groupList" [value]="g.id">{{g.name}}</option>
+                  </sm-select>
+                </div>
+
             </div>
             <div class="row">
                 <div class="right aligned column">

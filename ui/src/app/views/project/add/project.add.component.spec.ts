@@ -115,21 +115,12 @@ describe('CDS: Project Show Component', () => {
 
         expect(fixture.componentInstance.nameError).toBeTruthy();
         expect(fixture.componentInstance.keyError).toBeTruthy();
-        expect(fixture.componentInstance.groupError).toBeTruthy();
         expect(fixture.componentInstance.sshError).toBeTruthy();
 
         // pattern error
         fixture.componentInstance.project.key = 'aze';
         fixture.componentInstance.createProject();
         expect(fixture.componentInstance.keyError).toBeTruthy();
-
-        // no group with write right
-        fixture.componentInstance.project.groups = new Array<GroupPermission>();
-        let gp = new GroupPermission();
-        gp.permission = 4;
-        fixture.componentInstance.project.groups.push(gp);
-        fixture.componentInstance.createProject();
-        expect(fixture.componentInstance.groupError).toBeTruthy();
     }));
 });
 
