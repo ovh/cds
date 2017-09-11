@@ -29,7 +29,7 @@ func TestInsert(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -96,7 +96,7 @@ func TestUpdate(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -180,7 +180,7 @@ func TestGetByApplication(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -243,7 +243,7 @@ func TestGetByPipeline(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -306,7 +306,7 @@ func TestGetByApplicationPipeline(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -369,7 +369,7 @@ func TestGetByApplicationPipelineEnv(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{

@@ -60,7 +60,7 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 			return err
 		}
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "deleteParameterFromPipelineHandler> unable to load project")
 		}
@@ -91,7 +91,7 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, errP := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "updateParametersInPipelineHandler> Cannot load project")
 		}
@@ -179,13 +179,13 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 			return err
 		}
 
-		apps, errA := application.LoadByPipeline(tx, pip.ID, getUser(ctx))
+		apps, errA := application.LoadByPipeline(tx, api.Cache, pip.ID, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "UpdatePipelineParameters> Cannot load applications using pipeline")
 		}
 
 		for _, app := range apps {
-			if err := application.UpdateLastModified(tx, &app, getUser(ctx)); err != nil {
+			if err := application.UpdateLastModified(tx, api.Cache, &app, getUser(ctx)); err != nil {
 				return sdk.WrapError(errA, "UpdatePipelineParameters> Cannot update application last modified date")
 			}
 		}
@@ -235,7 +235,7 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot update parameter %s in pipeline %s", paramName, pipelineName)
 		}
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "updateParameterInPipelineHandler> unable to load project")
 		}
@@ -302,7 +302,7 @@ func (api *API) addParameterInPipelineHandler() Handler {
 			}
 		}
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addParameterInPipelineHandler> unable to load project")
 		}

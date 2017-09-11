@@ -22,12 +22,12 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			return errID
 		}
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
 		if errproj != nil {
 			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
 		}
 
-		wf, errw := workflow.Load(api.mustDB(), key, name, getUser(ctx))
+		wf, errw := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if errw != nil {
 			return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
 		}
@@ -83,12 +83,12 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 			return errID
 		}
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
 		if errproj != nil {
 			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
 		}
 
-		wf, errw := workflow.Load(api.mustDB(), key, name, getUser(ctx))
+		wf, errw := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if errw != nil {
 			return sdk.WrapError(errw, "getWorkflowTriggerJoinConditionHandler> Unable to load workflow")
 		}

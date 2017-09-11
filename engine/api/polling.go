@@ -23,7 +23,7 @@ func (api *API) addPollerHandler() Handler {
 		pipName := vars["permPipelineKey"]
 
 		//Load the application
-		app, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "addPollerHandler> Cannot load application")
 		}
@@ -83,7 +83,7 @@ func (api *API) addPollerHandler() Handler {
 			return sdk.WrapError(err, "addPollerHandler: cannot insert poller in db")
 		}
 
-		err = application.UpdateLastModified(tx, app, getUser(ctx))
+		err = application.UpdateLastModified(tx, api.Cache, app, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "addPollerHandler: cannot update application (%s) lastmodified date", app.Name)
 		}
@@ -95,7 +95,7 @@ func (api *API) addPollerHandler() Handler {
 
 		app.RepositoryPollers = append(app.RepositoryPollers, h)
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), projectKey, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "addPollerHandler> Cannot load workflow")
 		}
@@ -112,7 +112,7 @@ func (api *API) updatePollerHandler() Handler {
 		pipName := vars["permPipelineKey"]
 
 		//Load the application
-		app, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "updatePollerHandler> Cannot load application")
 		}
@@ -158,7 +158,7 @@ func (api *API) updatePollerHandler() Handler {
 
 		}
 
-		if err = application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err = application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updatePollerHandler: cannot update application last modified date")
 		}
 
@@ -171,7 +171,7 @@ func (api *API) updatePollerHandler() Handler {
 			return sdk.WrapError(err, "updatePollerHandler> cannot load pollers")
 		}
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), projectKey, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updatePollerHandler> Cannot load workflow")
 		}
@@ -186,7 +186,7 @@ func (api *API) getApplicationPollersHandler() Handler {
 		projectName := vars["key"]
 		appName := vars["permApplicationName"]
 
-		a, err := application.LoadByName(api.mustDB(), projectName, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectName, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application %s/%s", projectName, appName)
 		}
@@ -213,7 +213,7 @@ func (api *API) getPollersHandler() Handler {
 			return sdk.WrapError(err, "getPollersHandler> cannot load pipeline %s/%s", projectName, pipelineName)
 		}
 
-		a, err := application.LoadByName(api.mustDB(), projectName, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectName, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getPollersHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
 			return sdk.WrapError(err, "getPollersHandler> cannot load application %s/%s", projectName, appName)
@@ -243,7 +243,7 @@ func (api *API) deletePollerHandler() Handler {
 
 		}
 
-		a, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot load application %s/%s", projectKey, appName)
 		}
@@ -266,7 +266,7 @@ func (api *API) deletePollerHandler() Handler {
 
 		}
 
-		if err = application.UpdateLastModified(tx, a, getUser(ctx)); err != nil {
+		if err = application.UpdateLastModified(tx, api.Cache, a, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot update application last modified date")
 
 		}
@@ -282,7 +282,7 @@ func (api *API) deletePollerHandler() Handler {
 
 		}
 		var errW error
-		a.Workflows, errW = workflow.LoadCDTree(api.mustDB(), projectKey, appName, getUser(ctx), "", 0)
+		a.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "deletePollerHandler> Cannot load workflow")
 		}

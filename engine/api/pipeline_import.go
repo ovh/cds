@@ -26,7 +26,7 @@ func (api *API) importPipelineHandler() Handler {
 		forceUpdate := FormBool(r, "forceUpdate")
 
 		// Load project
-		proj, errp := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errp != nil {
 			return sdk.WrapError(errp, "importPipelineHandler> Unable to load project %s", key)
 		}
@@ -140,7 +140,7 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(globalError, "importPipelineHandler> Unable import pipeline")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Unable to update project")
 		}
 
@@ -154,7 +154,7 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(errlp, "importPipelineHandler> Unable to reload pipelines for project %s", proj.Key)
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Cannot check warnings")
 		}
 

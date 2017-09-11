@@ -16,10 +16,10 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func deleteUserPermissionCache(ctx context.Context) {
+func deleteUserPermissionCache(ctx context.Context, store cache.Store) {
 	if getUser(ctx) != nil {
 		k := cache.Key("users", getUser(ctx).Username, "permissions")
-		cache.Delete(k)
+		store.Delete(k)
 	}
 }
 
@@ -50,6 +50,7 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 	return nil
 }
 
+// GetRoute returns the routes given a handler
 func (r *Router) GetRoute(method string, handler HandlerFunc, vars map[string]string) string {
 	sf1 := reflect.ValueOf(handler())
 	var url string

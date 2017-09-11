@@ -29,7 +29,7 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 			return sdk.ErrGroupNotFound
 		}
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "updateGroupRoleOnPipelineHandler> unable to load project")
 		}
@@ -94,7 +94,7 @@ func (api *API) updateGroupsOnPipelineHandler() Handler {
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "updateGroupsOnPipelineHandler> unable to load project")
 		}
@@ -163,7 +163,7 @@ func (api *API) addGroupInPipelineHandler() Handler {
 		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addGroupInPipelineHandler> unable to load project")
 		}
@@ -244,7 +244,7 @@ func (api *API) deleteGroupFromPipelineHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromPipelineHandler: Cannot delete group %s from project %s", g.Name, p.Name)
 		}
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "deleteGroupFromPipelineHandler> unable to load project")
 		}

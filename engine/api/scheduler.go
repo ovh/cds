@@ -27,7 +27,7 @@ func (api *API) getSchedulerApplicationPipelineHandler() Handler {
 		pipelineName := vars["permPipelineKey"]
 
 		///Load application
-		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
 			return errA
@@ -91,7 +91,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		pipelineName := vars["permPipelineKey"]
 
 		///Load application
-		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			log.Warning("addSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
 			return errA
@@ -212,7 +212,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addSchedulerApplicationPipelineHandler> cannot update application last modified date")
 		}
 
@@ -221,7 +221,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), key, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "addSchedulerApplicationPipelineHandler> cannot reload workflow")
 		}
@@ -267,7 +267,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		// Load application
-		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "updateSchedulerApplicationPipelineHandler> Cannot load application %s", appName)
 		}
@@ -314,7 +314,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 			}
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> Cannot update application last modified date")
 		}
 
@@ -323,7 +323,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), key, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updateSchedulerApplicationPipelineHandler> Cannot load workflow")
 		}
@@ -345,7 +345,7 @@ func (api *API) deleteSchedulerApplicationPipelineHandler() Handler {
 			return sdk.ErrInvalidID
 		}
 
-		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "deleteSchedulerApplicationPipelineHandler> Cannot load application %s", appName)
 		}
@@ -367,7 +367,7 @@ func (api *API) deleteSchedulerApplicationPipelineHandler() Handler {
 			return err
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteSchedulerApplicationPipelineHandler> Cannot update application last modified date")
 		}
 
@@ -376,7 +376,7 @@ func (api *API) deleteSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), key, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "deleteSchedulerApplicationPipelineHandler> Cannot load workflow")
 		}

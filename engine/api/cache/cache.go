@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/ovh/cds/sdk/log"
 )
@@ -38,10 +39,12 @@ type Store interface {
 
 //New init a cache
 func New(mode, redisHost, redisPassword string, TTL int) (Store, error) {
+	log.Debug("New cache")
 	switch mode {
 	case "local":
 		log.Info("Cache> Initialize local cache (TTL=%d seconds)", TTL)
 		return &LocalStore{
+			mutex:  &sync.Mutex{},
 			Data:   map[string][]byte{},
 			Queues: map[string]*list.List{},
 			TTL:    TTL,

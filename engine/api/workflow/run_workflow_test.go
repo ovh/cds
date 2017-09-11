@@ -1,13 +1,11 @@
 package workflow
 
 import (
-	"context"
 	"sort"
 	"testing"
 	"time"
 
 	dump "github.com/fsamin/go-dump"
-	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -22,7 +20,7 @@ func TestManualRun1(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -112,12 +110,6 @@ func TestManualRun1(t *testing.T) {
 		t.Logf("%s: \t%s", k, m1[k])
 	}
 
-	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	Scheduler(c, func() *gorp.DbMap { return db })
-
-	time.Sleep(2 * time.Second)
-
 	lastrun, err := LoadLastRun(db, proj.Key, "test_1")
 	test.NoError(t, err)
 
@@ -188,7 +180,7 @@ func TestManualRun2(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
@@ -269,12 +261,6 @@ func TestManualRun2(t *testing.T) {
 	_, err = ManualRunFromNode(db, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 
-	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	Scheduler(c, func() *gorp.DbMap { return db })
-
-	time.Sleep(3 * time.Second)
-
 	jobs, err := LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
@@ -285,7 +271,7 @@ func TestManualRun3(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
@@ -359,12 +345,6 @@ func TestManualRun3(t *testing.T) {
 		User: *u,
 	})
 	test.NoError(t, err)
-
-	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	Scheduler(c, func() *gorp.DbMap { return db })
-
-	time.Sleep(3 * time.Second)
 
 	jobs, err := LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
@@ -461,12 +441,6 @@ func TestManualRun3(t *testing.T) {
 
 		tx.Commit()
 	}
-
-	c, cancel = context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	Scheduler(c, func() *gorp.DbMap { return db })
-
-	time.Sleep(2 * time.Second)
 
 	jobs, err = LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)

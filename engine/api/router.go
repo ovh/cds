@@ -19,7 +19,7 @@ import (
 
 const nbPanicsBeforeFail = 50
 
-// Router
+// Router is a wrapper around mux.Router
 type Router struct {
 	Background       context.Context
 	AuthDriver       auth.Driver
@@ -59,6 +59,7 @@ type HandlerConfig struct {
 	Options      map[string]string
 }
 
+// NewHandlerConfig returns a new HandlerConfig pointer
 func NewHandlerConfig() *HandlerConfig {
 	return &HandlerConfig{
 		Options: map[string]string{},
@@ -144,7 +145,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func DefaultHeaders() map[string]string {
+func defaultHeaders() map[string]string {
 	return map[string]string{
 		"Access-Control-Allow-Origin":   "*",
 		"Access-Control-Allow-Methods":  "GET,OPTIONS,PUT,POST,DELETE",

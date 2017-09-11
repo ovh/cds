@@ -38,7 +38,6 @@ func Test_getTemplatesHandler(t *testing.T) {
 		t.Fatal("Router cannot be nil")
 		return
 	}
-	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -70,7 +69,6 @@ func Test_addTemplateHandler(t *testing.T) {
 		t.Fatal("Router cannot be nil")
 		return
 	}
-	
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
 	if err != nil {
@@ -201,7 +199,6 @@ func Test_deleteTemplateHandler(t *testing.T) {
 		t.Fatal("Router cannot be nil")
 		return
 	}
-	
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
 	if err != nil {
@@ -312,8 +309,6 @@ func Test_deleteTemplateHandler(t *testing.T) {
 
 func Test_updateTemplateHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
-
-	
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
 	if err != nil {
@@ -481,8 +476,6 @@ func Test_updateTemplateHandler(t *testing.T) {
 func Test_getBuildTemplatesHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
 	if err != nil {
 		t.Fatal(err)
@@ -605,7 +598,6 @@ func Test_applyTemplatesHandler(t *testing.T) {
 		t.Fatal("Router cannot be nil")
 		return
 	}
-	
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
 	if err != nil {
@@ -704,7 +696,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Insert a new project
 	pKey := sdk.RandomString(10)
-	p := assets.InsertTestProject(t, db, pKey, pKey, u)
+	p := assets.InsertTestProject(t, db, api.Cache, pKey, pKey, u)
 	//Insert a Production environment
 	environment.InsertEnvironment(api.mustDB(), &sdk.Environment{
 		ProjectKey: pKey,

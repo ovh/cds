@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
@@ -393,7 +394,7 @@ func (api *API) addApplicationHandler() Handler {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot load group from project")
 		}
 
-		if err := application.AddGroup(tx, proj, &app, getUser(ctx), proj.ProjectGroups...); err != nil {
+		if err := application.AddGroup(tx, api.Cache, proj, &app, getUser(ctx), proj.ProjectGroups...); err != nil {
 			return sdk.WrapError(err, "addApplicationHandler> Cannot add groups on application")
 		}
 
@@ -416,7 +417,7 @@ func (api *API) deleteApplicationHandler() Handler {
 			return sdk.WrapError(errP, "deleteApplicationHandler> Cannot laod project")
 		}
 
-		app, err := application.LoadByName(api.mustDB(), projectKey, applicationName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx))
 		if err != nil {
 			if err != sdk.ErrApplicationNotFound {
 				log.Warning("deleteApplicationHandler> Cannot load application %s: %s\n", applicationName, err)
@@ -468,7 +469,7 @@ func (api *API) cloneApplicationHandler() Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		proj, errProj := project.Load(api.mustDB(), projectKey, getUser(ctx))
+		proj, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errProj != nil {
 			log.Warning("cloneApplicationHandler> Cannot load %s: %s\n", projectKey, errProj)
 			return sdk.ErrNoProject
@@ -487,7 +488,7 @@ func (api *API) cloneApplicationHandler() Handler {
 			return err
 		}
 
-		appToClone, errApp := application.LoadByName(api.mustDB(), projectKey, applicationName, getUser(ctx), application.LoadOptions.Default, application.LoadOptions.WithGroups)
+		appToClone, errApp := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default, application.LoadOptions.WithGroups)
 		if errApp != nil {
 			log.Warning("cloneApplicationHandler> Cannot load application %s: %s\n", applicationName, errApp)
 			return errApp
@@ -500,7 +501,7 @@ func (api *API) cloneApplicationHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := cloneApplication(tx, proj, &newApp, appToClone, getUser(ctx)); err != nil {
+		if err := cloneApplication(tx, api.Cache, proj, &newApp, appToClone, getUser(ctx)); err != nil {
 			log.Warning("cloneApplicationHandler> Cannot insert new application %s: %s\n", newApp.Name, err)
 			return err
 		}
@@ -520,12 +521,12 @@ func (api *API) cloneApplicationHandler() Handler {
 }
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
-func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application, u *sdk.User) error {
+func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application, u *sdk.User) error {
 	newApp.Pipelines = appToClone.Pipelines
 	newApp.ApplicationGroups = appToClone.ApplicationGroups
 
 	// Create Application
-	if err := application.Insert(db, proj, newApp, u); err != nil {
+	if err := application.Insert(db, store, proj, newApp, u); err != nil {
 		return err
 	}
 
@@ -550,9 +551,9 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 		var errVar error
 		// If variable is a key variable, generate a new one for this application
 		if v.Type == sdk.KeyVariable {
-			errVar = application.AddKeyPairToApplication(db, newApp, v.Name, u)
+			errVar = application.AddKeyPairToApplication(db, store, newApp, v.Name, u)
 		} else {
-			errVar = application.InsertVariable(db, newApp, v, u)
+			errVar = application.InsertVariable(db, store, newApp, v, u)
 		}
 		if errVar != nil {
 			return errVar
@@ -565,7 +566,7 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 			return err
 		}
 
-		if err := application.UpdatePipelineApplication(db, newApp, appPip.Pipeline.ID, appPip.Parameters, u); err != nil {
+		if err := application.UpdatePipelineApplication(db, store, newApp, appPip.Pipeline.ID, appPip.Parameters, u); err != nil {
 			return err
 		}
 	}
@@ -600,7 +601,7 @@ func cloneApplication(db gorp.SqlExecutor, proj *sdk.Project, newApp *sdk.Applic
 	}
 
 	// Insert Permission
-	if err := application.AddGroup(db, proj, newApp, u, newApp.ApplicationGroups...); err != nil {
+	if err := application.AddGroup(db, store, proj, newApp, u, newApp.ApplicationGroups...); err != nil {
 		return err
 	}
 
@@ -619,7 +620,7 @@ func (api *API) updateApplicationHandler() Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		p, errload := project.Load(api.mustDB(), projectKey, getUser(ctx), project.LoadOptions.Default)
+		p, errload := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
 		if errload != nil {
 			log.Warning("updateApplicationHandler> Cannot load project %s: %s\n", projectKey, errload)
 			return errload
@@ -631,7 +632,7 @@ func (api *API) updateApplicationHandler() Handler {
 		}
 		p.Environments = envs
 
-		app, errloadbyname := application.LoadByName(api.mustDB(), projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
+		app, errloadbyname := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
 		if errloadbyname != nil {
 			log.Warning("updateApplicationHandler> Cannot load application %s: %s\n", applicationName, errloadbyname)
 			return errloadbyname
@@ -659,7 +660,7 @@ func (api *API) updateApplicationHandler() Handler {
 			return err
 		}
 		defer tx.Rollback()
-		if err := application.Update(tx, app, getUser(ctx)); err != nil {
+		if err := application.Update(tx, api.Cache, app, getUser(ctx)); err != nil {
 			log.Warning("updateApplicationHandler> Cannot delete application %s: %s\n", applicationName, err)
 			return err
 		}

@@ -15,10 +15,10 @@ import (
 )
 
 // loadUserPermissions retrieves all group memberships
-func loadUserPermissions(db gorp.SqlExecutor, user *sdk.User) error {
+func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, user *sdk.User) error {
 	user.Groups = nil
 	k := cache.Key("users", user.Username, "permissions")
-	if !cache.Get(k, &user.Groups) {
+	if !store.Get(k, &user.Groups) {
 		query := `
 			SELECT "group".id, "group".name, "group_user".group_admin 
 			FROM "group"
@@ -56,16 +56,16 @@ func loadUserPermissions(db gorp.SqlExecutor, user *sdk.User) error {
 			}
 			user.Groups = append(user.Groups, group)
 		}
-		cache.SetWithTTL(k, user.Groups, 30)
+		store.SetWithTTL(k, user.Groups, 30)
 	}
 	return nil
 }
 
 // loadGroupPermissions retrieves all group memberships
-func loadGroupPermissions(db gorp.SqlExecutor, groupID int64) (*sdk.Group, error) {
+func loadGroupPermissions(db gorp.SqlExecutor, store cache.Store, groupID int64) (*sdk.Group, error) {
 	group := &sdk.Group{ID: groupID}
 	k := cache.Key("groups", strconv.Itoa(int(groupID)), "permissions")
-	if !cache.Get(k, group) {
+	if !store.Get(k, group) {
 		query := `SELECT "group".name FROM "group" WHERE "group".id = $1`
 		if err := db.QueryRow(query, groupID).Scan(&group.Name); err != nil {
 			return nil, fmt.Errorf("no group with id %d: %s", groupID, err)
@@ -82,7 +82,7 @@ func loadGroupPermissions(db gorp.SqlExecutor, groupID int64) (*sdk.Group, error
 		if err := environment.LoadEnvironmentByGroup(db, group); err != nil {
 			return nil, err
 		}
-		cache.SetWithTTL(k, group, 30)
+		store.SetWithTTL(k, group, 30)
 	}
 	return group, nil
 }

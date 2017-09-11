@@ -49,14 +49,14 @@ func getPermissionByMethod(method string, isExecution bool) int {
 	}
 }
 
-func (api *API) DeletePermissionMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+func (api *API) deletePermissionMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
 	if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
-		deleteUserPermissionCache(ctx)
+		deleteUserPermissionCache(ctx, api.Cache)
 	}
 	return ctx, nil
 }
 
-func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
 	headers := req.Header
 
 	if rc.Options["auth"] == "true" {
@@ -69,7 +69,7 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			}
 		case sdk.WorkerAgent:
 			var err error
-			ctx, err = auth.CheckWorkerAuth(ctx, api.mustDB(), headers)
+			ctx, err = auth.CheckWorkerAuth(ctx, api.mustDB(), api.Cache, headers)
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
@@ -83,13 +83,13 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 	}
 
 	if getUser(ctx) != nil {
-		if err := loadUserPermissions(api.mustDB(), getUser(ctx)); err != nil {
+		if err := loadUserPermissions(api.mustDB(), api.Cache, getUser(ctx)); err != nil {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %s permission: %s", getUser(ctx).ID, err)
 		}
 	}
 
 	if getHatchery(ctx) != nil {
-		g, err := loadGroupPermissions(api.mustDB(), getHatchery(ctx).GroupID)
+		g, err := loadGroupPermissions(api.mustDB(), api.Cache, getHatchery(ctx).GroupID)
 		if err != nil {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions for GroupID %d err:%s", getHatchery(ctx).GroupID, err)
 		}
@@ -101,7 +101,7 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			return ctx, sdk.WrapError(err, "Router> Unable to refresh worker")
 		}
 
-		g, err := loadGroupPermissions(api.mustDB(), getWorker(ctx).GroupID)
+		g, err := loadGroupPermissions(api.mustDB(), api.Cache, getWorker(ctx).GroupID)
 		if err != nil {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions: %s", err)
 		}
@@ -119,7 +119,7 @@ func (api *API) AuthMiddleware(ctx context.Context, w http.ResponseWriter, req *
 				getUser(ctx).Groups = append(getUser(ctx).Groups, *group.SharedInfraGroup)
 			} else {
 				log.Debug("Router> loading groups permission for model %d", getWorker(ctx).ModelID)
-				modelGroup, errLoad2 := loadGroupPermissions(api.mustDB(), m.GroupID)
+				modelGroup, errLoad2 := loadGroupPermissions(api.mustDB(), api.Cache, m.GroupID)
 				if errLoad2 != nil {
 					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Cannot load group: %s", errLoad2)
 				}
@@ -190,7 +190,7 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 
 	//IF it is POSTEXECUTE, it means that the job is must be taken by the worker
 	if rc.Options["isExecution"] == "true" {
-		node, err := workflow.LoadNodeJobRun(db, id)
+		node, err := workflow.LoadNodeJobRun(db, api.Cache, id)
 		if err != nil {
 			log.Error("checkWorkerPermission> Unable to load job %d", id)
 			return false

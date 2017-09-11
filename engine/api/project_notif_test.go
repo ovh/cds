@@ -17,8 +17,6 @@ import (
 func Test_getProjectNotificationsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -29,11 +27,11 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 	assert.NotZero(t, pass)
 
 	// Create project
-	p := assets.InsertTestProject(t, db, strings.ToUpper(sdk.RandomString(4)), sdk.RandomString(10), u)
+	p := assets.InsertTestProject(t, db, api.Cache, strings.ToUpper(sdk.RandomString(4)), sdk.RandomString(10), u)
 	test.NoError(t, group.InsertUserInGroup(api.mustDB(), p.ProjectGroups[0].Group.ID, u.ID, true))
 
 	app := &sdk.Application{Name: sdk.RandomString(10)}
-	err := application.Insert(api.MustDB(), api.Cache, p, app, u)
+	err := application.Insert(api.mustDB(), api.Cache, p, app, u)
 	test.NoError(t, err)
 	test.NoError(t, group.InsertGroupInApplication(api.mustDB(), app.ID, p.ProjectGroups[0].Group.ID, 7))
 

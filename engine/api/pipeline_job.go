@@ -71,7 +71,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot insert job in database")
 		}
 
-		proj, errproj := project.Load(api.mustDB(), projectKey, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
 		}
@@ -168,7 +168,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(err, "updateJobHandler> Cannot compute registration needs")
 		}
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
 		}
@@ -238,7 +238,7 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot delete pipeline action")
 		}
 
-		proj, errproj := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "deleteJobHandler> unable to load project")
 		}

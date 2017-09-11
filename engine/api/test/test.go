@@ -13,7 +13,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
@@ -96,8 +95,6 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) *gorp.DbMap {
 		}
 		dbSSLMode = flag.Lookup("sslMode").Value.String()
 	}
-
-	cache.Initialize("local", "", "", 30)
 
 	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 

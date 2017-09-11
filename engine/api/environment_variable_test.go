@@ -20,13 +20,11 @@ import (
 func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -83,13 +81,11 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -154,13 +150,11 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -218,13 +212,11 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -275,8 +267,6 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -285,7 +275,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	// Insert env
 	e := &sdk.Environment{

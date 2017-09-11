@@ -13,6 +13,7 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -81,7 +82,7 @@ func (api *API) getPipelineBuildTriggeredHandler() Handler {
 		}
 
 		// Load Application
-		a, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getPipelineBuildTriggeredHandler> Cannot load application %s", appName)
 		}
@@ -124,7 +125,7 @@ func (api *API) deleteBuildHandler() Handler {
 			return sdk.WrapError(err, "deleteBuildHandler> Cannot load pipeline %s", pipelineName)
 		}
 
-		a, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "deleteBuildHandler> Cannot load application %s", appName)
 		}
@@ -184,7 +185,7 @@ func (api *API) getBuildStateHandler() Handler {
 			return sdk.WrapError(err, "getBuildStateHandler> Cannot load pipeline %s", pipelineName)
 		}
 
-		a, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getBuildStateHandler> Cannot load application %s", appName)
 		}
@@ -385,7 +386,7 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 		pbji.PipelineID = pb.Pipeline.ID
 		pbji.BuildNumber = pb.BuildNumber
 
-		if errSecret := loadActionBuildSecretsAndKeys(api.mustDB(), pbJob.ID, &pbji); errSecret != nil {
+		if errSecret := loadActionBuildSecretsAndKeys(api.mustDB(), api.Cache, pbJob.ID, &pbji); errSecret != nil {
 			return sdk.WrapError(errSecret, "takePipelineBuildJobHandler> Cannot load action build secrets")
 		}
 
@@ -439,7 +440,7 @@ func (api *API) addSpawnInfosPipelineBuildJobHandler() Handler {
 	}
 }
 
-func loadActionBuildSecretsAndKeys(db *gorp.DbMap, pbJobID int64, pbji *worker.PipelineBuildJobInfo) error {
+func loadActionBuildSecretsAndKeys(db *gorp.DbMap, store cache.Store, pbJobID int64, pbji *worker.PipelineBuildJobInfo) error {
 	query := `SELECT pipeline.project_id, pipeline_build.application_id, pipeline_build.environment_id
 	FROM pipeline_build
 	JOIN pipeline_build_job ON pipeline_build_job.pipeline_build_id = pipeline_build.id
@@ -451,19 +452,19 @@ func loadActionBuildSecretsAndKeys(db *gorp.DbMap, pbJobID int64, pbji *worker.P
 		return err
 	}
 
-	if errS := loadActionBuildSecrets(db, projectID, appID, envID, pbji); errS != nil {
+	if errS := loadActionBuildSecrets(db, store, projectID, appID, envID, pbji); errS != nil {
 		return sdk.WrapError(errS, "loadActionBuildSecretsAndKeys> Cannot load secrets")
 	}
 
-	if errK := loadActionBuildKeys(db, projectID, appID, envID, pbji); errK != nil {
+	if errK := loadActionBuildKeys(db, store, projectID, appID, envID, pbji); errK != nil {
 		return sdk.WrapError(errK, "loadActionBuildSecretsAndKeys> Cannot load keys")
 	}
 
 	return nil
 }
 
-func loadActionBuildKeys(db gorp.SqlExecutor, projectID, appID, envID int64, pbji *worker.PipelineBuildJobInfo) error {
-	p, errP := project.LoadByID(db, projectID, nil, project.LoadOptions.WithKeys)
+func loadActionBuildKeys(db gorp.SqlExecutor, store cache.Store, projectID, appID, envID int64, pbji *worker.PipelineBuildJobInfo) error {
+	p, errP := project.LoadByID(db, store, projectID, nil, project.LoadOptions.WithKeys)
 	if errP != nil {
 		return sdk.WrapError(errP, "loadActionBuildKeys> Cannot load project keys")
 	}
@@ -485,7 +486,7 @@ func loadActionBuildKeys(db gorp.SqlExecutor, projectID, appID, envID int64, pbj
 		})
 	}
 
-	a, errA := application.LoadByID(db, appID, nil, application.LoadOptions.WithKeys)
+	a, errA := application.LoadByID(db, store, appID, nil, application.LoadOptions.WithKeys)
 	if errA != nil {
 		return sdk.WrapError(errA, "loadActionBuildKeys> Cannot load application keys")
 	}
@@ -533,7 +534,7 @@ func loadActionBuildKeys(db gorp.SqlExecutor, projectID, appID, envID int64, pbj
 	return nil
 }
 
-func loadActionBuildSecrets(db gorp.SqlExecutor, projectID, appID, envID int64, pbji *worker.PipelineBuildJobInfo) error {
+func loadActionBuildSecrets(db gorp.SqlExecutor, store cache.Store, projectID, appID, envID int64, pbji *worker.PipelineBuildJobInfo) error {
 	var secrets []sdk.Variable
 	// Load project secrets
 	pv, err := project.GetAllVariableInProject(db, projectID, project.WithClearPassword())
@@ -650,7 +651,7 @@ func (api *API) addBuildVariableHandler() Handler {
 		}
 
 		// Check that application exists
-		a, errLA := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		a, errLA := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if errLA != nil {
 			return sdk.WrapError(errLA, "addBuildVariableHandler> Cannot load application %s", appName)
 		}
@@ -720,7 +721,7 @@ func (api *API) addBuildTestResultsHandler() Handler {
 		}
 
 		// Check that application exists
-		a, errln := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		a, errln := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if errln != nil {
 			return sdk.WrapError(errln, "addBuildTestResultsHandler> Cannot load application %s", appName)
 		}
@@ -807,7 +808,7 @@ func (api *API) getBuildTestResultsHandler() Handler {
 		}
 
 		// Check that application exists
-		a, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getBuildTestResultsHandler> Cannot load application %s", appName)
 		}

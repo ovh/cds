@@ -49,7 +49,7 @@ func (api *API) getVariablesHandler() Handler {
 		appVar := []string{}
 		if appName != "" {
 			// Check permission on application
-			app, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithVariables)
+			app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithVariables)
 			if err != nil {
 				return sdk.WrapError(err, "getPipelineTypeHandler> Cannot Load application: %s", err)
 			}

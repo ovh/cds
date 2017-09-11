@@ -22,8 +22,6 @@ import (
 func Test_updateStepStatusHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -32,7 +30,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -51,7 +49,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -107,8 +105,6 @@ func Test_updateStepStatusHandler(t *testing.T) {
 func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, _ := assets.InsertAdminUser(api.mustDB())
 
@@ -127,7 +123,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -146,7 +142,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

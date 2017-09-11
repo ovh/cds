@@ -19,8 +19,6 @@ import (
 func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -29,7 +27,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -48,7 +46,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -81,7 +79,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	}
 
 	scheduler.Run(api.mustDB())
-	scheduler.ExecuterRun(api.mustDB)
+	scheduler.ExecuterRun(api.mustDB, api.Cache)
 
 	vars := map[string]string{
 		"key": proj.Key,
@@ -97,8 +95,6 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -107,7 +103,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	env := &sdk.Environment{
 		Name:      pkey + "-env",
@@ -135,7 +131,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -159,7 +155,7 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 	tester.Reset()
 
 	scheduler.Run(api.mustDB())
-	scheduler.ExecuterRun(api.mustDB)
+	scheduler.ExecuterRun(api.mustDB, api.Cache)
 
 	route = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
 	tester.AddCall("Test_addSchedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
@@ -169,8 +165,6 @@ func Test_addSchedulerApplicationPipelineHandler(t *testing.T) {
 func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -179,7 +173,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -198,7 +192,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -238,7 +232,7 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 	// scheduler is here: &app.Workflows[0].Schedulers[0]
 
 	scheduler.Run(api.mustDB())
-	scheduler.ExecuterRun(api.mustDB)
+	scheduler.ExecuterRun(api.mustDB, api.Cache)
 
 	route = router.GetRoute("GET", api.getSchedulerApplicationPipelineHandler, vars)
 	tester.AddCall("Test_updatechedulerApplicationPipelineHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
@@ -249,8 +243,6 @@ func Test_updateSchedulerApplicationPipelineHandler(t *testing.T) {
 func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -259,7 +251,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -278,7 +270,7 @@ func Test_deleteSchedulerApplicationPipelineHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

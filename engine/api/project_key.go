@@ -17,7 +17,7 @@ func (api *API) getKeysInProjectHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errP := project.Load(api.mustDB(), key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getKeysInProjectHandler> Cannot load project")
 		}
@@ -36,7 +36,7 @@ func (api *API) deleteKeyInProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		keyName := vars["name"]
 
-		p, errP := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.WithKeys)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteKeyInProjectHandler> Cannot load project")
 		}
@@ -51,7 +51,7 @@ func (api *API) deleteKeyInProjectHandler() Handler {
 				if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot delete key %s", k.Name)
 				}
-				if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot update project last modified date")
 				}
 			}
@@ -81,7 +81,7 @@ func (api *API) addKeyInProjectHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInProjectHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		p, errP := project.Load(api.mustDB(), key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "addKeyInProjectHandler> Cannot load project")
 		}
@@ -117,7 +117,7 @@ func (api *API) addKeyInProjectHandler() Handler {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot insert project key")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot update project last modified date")
 		}
 

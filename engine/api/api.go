@@ -490,7 +490,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go stats.StartRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
-	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap)
+	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 
 	go user.PersistentSessionTokenCleaner(ctx, a.DBConnectionFactory.GetDBMap)
 
@@ -525,6 +525,8 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 	}()
 
+	pipeline.Store = a.Cache
+	event.Cache = a.Cache
 	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)})
 
 	go func() {

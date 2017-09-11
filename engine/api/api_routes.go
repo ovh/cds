@@ -5,10 +5,11 @@ import (
 	"path"
 )
 
+// InitRouter initializes the router and all the routes
 func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
-	api.Router.SetHeaderFunc = DefaultHeaders
-	api.Router.Middlewares = append(api.Router.Middlewares, api.AuthMiddleware, api.DeletePermissionMiddleware)
+	api.Router.SetHeaderFunc = defaultHeaders
+	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.deletePermissionMiddleware)
 	api.LastUpdateBroker = &LastUpdateBroker{
 		make(map[string]*LastUpdateBrokerSubscribe),
 		make(chan *LastUpdateBrokerSubscribe),
@@ -17,7 +18,7 @@ func (api *API) InitRouter() {
 	api.LastUpdateBroker.Init(api.Router.Background, api.DBConnectionFactory.GetDBMap, api.Cache)
 
 	r := api.Router
-	r.Handle("/login", r.POST(api.LoginUserHandler, Auth(false)))
+	r.Handle("/login", r.POST(api.loginUserHandler, Auth(false)))
 
 	// Action
 	r.Handle("/action", r.GET(api.getActionsHandler))
@@ -267,14 +268,14 @@ func (api *API) InitRouter() {
 	r.Handle("/config/user", r.GET(api.ConfigUserHandler, Auth(true)))
 
 	// Users
-	r.Handle("/user", r.GET(api.GetUsersHandler))
-	r.Handle("/user/signup", r.POST(api.AddUserHandler, Auth(false)))
+	r.Handle("/user", r.GET(api.getUsersHandler))
+	r.Handle("/user/signup", r.POST(api.addUserHandler, Auth(false)))
 	r.Handle("/user/import", r.POST(api.importUsersHandler, NeedAdmin(true)))
-	r.Handle("/user/{username}", r.GET(api.GetUserHandler, NeedUsernameOrAdmin(true)), r.PUT(api.UpdateUserHandler, NeedUsernameOrAdmin(true)), r.DELETE(api.DeleteUserHandler, NeedUsernameOrAdmin(true)))
+	r.Handle("/user/{username}", r.GET(api.getUserHandler, NeedUsernameOrAdmin(true)), r.PUT(api.updateUserHandler, NeedUsernameOrAdmin(true)), r.DELETE(api.deleteUserHandler, NeedUsernameOrAdmin(true)))
 	r.Handle("/user/{username}/groups", r.GET(api.getUserGroupsHandler, NeedUsernameOrAdmin(true)))
-	r.Handle("/user/{username}/confirm/{token}", r.GET(api.ConfirmUserHandler, Auth(false)))
-	r.Handle("/user/{username}/reset", r.POST(api.ResetUserHandler, Auth(false)))
-	r.Handle("/auth/mode", r.GET(api.AuthModeHandler, Auth(false)))
+	r.Handle("/user/{username}/confirm/{token}", r.GET(api.confirmUserHandler, Auth(false)))
+	r.Handle("/user/{username}/reset", r.POST(api.resetUserHandler, Auth(false)))
+	r.Handle("/auth/mode", r.GET(api.authModeHandler, Auth(false)))
 
 	// Workers
 	r.Handle("/worker", r.GET(api.getWorkersHandler, Auth(false)), r.POST(api.registerWorkerHandler, Auth(false)))

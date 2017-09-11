@@ -210,7 +210,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			return err
 		}
 
-		wf, errl := workflow.Load(tx, key, name, getUser(ctx))
+		wf, errl := workflow.Load(tx, api.Cache, key, name, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow")
 		}
@@ -273,13 +273,13 @@ func (api *API) postWorkflowRunHandler() Handler {
 					opts.FromNodeID = &lastRun.Workflow.RootID
 				}
 				var errmr error
-				wr, errmr = workflow.ManualRunFromNode(tx, wf, lastRun.Number, opts.Manual, *opts.FromNodeID)
+				wr, errmr = workflow.ManualRunFromNode(tx, api.Cache, wf, lastRun.Number, opts.Manual, *opts.FromNodeID)
 				if errmr != nil {
 					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
 				}
 			} else {
 				var errmr error
-				wr, errmr = workflow.ManualRun(tx, wf, opts.Manual)
+				wr, errmr = workflow.ManualRun(tx, api.Cache, wf, opts.Manual)
 				if errmr != nil {
 					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
 				}
@@ -331,7 +331,7 @@ func (api *API) getDownloadArtifactHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getDownloadArtifactHandler> Invalid node job run ID")
 		}
 
-		work, errW := workflow.Load(api.mustDB(), key, name, getUser(ctx))
+		work, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if errW != nil {
 			return sdk.WrapError(errW, "getDownloadArtifactHandler> Cannot load workflow")
 		}
@@ -407,7 +407,7 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 		}
 
 		// Check workflow is in project
-		if _, errW := workflow.Load(api.mustDB(), projectKey, workflowName, getUser(ctx)); errW != nil {
+		if _, errW := workflow.Load(api.mustDB(), api.Cache, projectKey, workflowName, getUser(ctx)); errW != nil {
 			return sdk.WrapError(errW, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find workflow %s in project %s", workflowName, projectKey)
 		}
 
@@ -436,24 +436,24 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 			}
 		}
 
-	if stepStatus == "" {
-		return sdk.WrapError(fmt.Errorf("getWorkflowNodeRunJobStepHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
-			stepOrder, runJobID, nodeRunID, number, workflowName, projectKey), "")
-	}
+		if stepStatus == "" {
+			return sdk.WrapError(fmt.Errorf("getWorkflowNodeRunJobStepHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
+				stepOrder, runJobID, nodeRunID, number, workflowName, projectKey), "")
+		}
 
-	logs, errL := workflow.LoadStepLogs(api.mustDB(), runJobID, stepOrder)
-	if errL != nil {
-		return sdk.WrapError(errL, "getWorkflowNodeRunJobStepHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
-	}
+		logs, errL := workflow.LoadStepLogs(api.mustDB(), runJobID, stepOrder)
+		if errL != nil {
+			return sdk.WrapError(errL, "getWorkflowNodeRunJobStepHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
+		}
 
-	ls := &sdk.Log{}
-	if logs != nil {
-		ls = logs
-	}
-	result := &sdk.BuildState{
-		Status:   sdk.StatusFromString(stepStatus),
-		StepLogs: *ls,
-	}
+		ls := &sdk.Log{}
+		if logs != nil {
+			ls = logs
+		}
+		result := &sdk.BuildState{
+			Status:   sdk.StatusFromString(stepStatus),
+			StepLogs: *ls,
+		}
 
 		return WriteJSON(w, r, result, http.StatusOK)
 	}

@@ -20,14 +20,11 @@ import (
 
 func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
@@ -70,7 +67,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 

@@ -24,7 +24,7 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -50,7 +50,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -76,7 +76,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
@@ -102,7 +102,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -146,7 +146,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",
@@ -217,7 +217,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 	// Init pipeline
 	pip := sdk.Pipeline{
 		Name:      "pipeline1",

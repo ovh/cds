@@ -30,7 +30,7 @@ func (api *API) addTriggerHandler() Handler {
 
 		// load source ids
 		if t.SrcApplication.ID == 0 {
-			a, errSrcApp := application.LoadByName(api.mustDB(), project, t.SrcApplication.Name, getUser(ctx))
+			a, errSrcApp := application.LoadByName(api.mustDB(), api.Cache, project, t.SrcApplication.Name, getUser(ctx))
 			if errSrcApp != nil {
 				log.Warning("addTriggersHandler> cannot load src application: %s\n", errSrcApp)
 				return errSrcApp
@@ -74,7 +74,7 @@ func (api *API) addTriggerHandler() Handler {
 
 		// load destination ids
 		if t.DestApplication.ID == 0 {
-			a, errDestApp := application.LoadByName(api.mustDB(), project, t.DestApplication.Name, getUser(ctx))
+			a, errDestApp := application.LoadByName(api.mustDB(), api.Cache, project, t.DestApplication.Name, getUser(ctx))
 			if errDestApp != nil {
 				log.Warning("addTriggersHandler> cannot load dst application: %s\n", errDestApp)
 				return errDestApp
@@ -131,7 +131,7 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		// Update src application
-		if err := application.UpdateLastModified(tx, &t.SrcApplication, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, &t.SrcApplication, getUser(ctx)); err != nil {
 			log.Warning("addTriggerHandler> cannot update loast modified date on src application: %s\n", err)
 			return err
 		}
@@ -141,7 +141,7 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(api.mustDB(), project, t.SrcApplication.Name, getUser(ctx), "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(api.mustDB(), api.Cache, project, t.SrcApplication.Name, getUser(ctx), "", 0)
 		if errWorkflow != nil {
 			log.Warning("addTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 			return errWorkflow
@@ -186,7 +186,7 @@ func (api *API) getTriggersHandler() Handler {
 		}
 		env := r.Form.Get("env")
 
-		a, errApp := application.LoadByName(api.mustDB(), project, app, getUser(ctx))
+		a, errApp := application.LoadByName(api.mustDB(), api.Cache, project, app, getUser(ctx))
 		if errApp != nil {
 			log.Warning("getTriggersHandler> cannot load application: %s\n", errApp)
 			return errApp
@@ -254,7 +254,7 @@ func (api *API) deleteTriggerHandler() Handler {
 			return err
 		}
 
-		if err := application.UpdateLastModified(tx, &t.SrcApplication, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, &t.SrcApplication, getUser(ctx)); err != nil {
 			log.Warning("deleteTriggerHandler> cannot update src application last modified date: %s\n", err)
 			return err
 
@@ -267,7 +267,7 @@ func (api *API) deleteTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(api.mustDB(), projectKey, t.SrcApplication.Name, getUser(ctx), "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", 0)
 		if errWorkflow != nil {
 			log.Warning("deleteTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 			return errWorkflow
@@ -316,7 +316,7 @@ func (api *API) updateTriggerHandler() Handler {
 			return err
 		}
 
-		if err := application.UpdateLastModified(tx, &t.SrcApplication, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, &t.SrcApplication, getUser(ctx)); err != nil {
 			log.Warning("updateTriggerHandler> cannot update src application last modified date: %s\n", err)
 			return err
 		}
@@ -327,7 +327,7 @@ func (api *API) updateTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(api.mustDB(), projectKey, t.SrcApplication.Name, getUser(ctx), "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", 0)
 		if errWorkflow != nil {
 			log.Warning("updateTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 			return errWorkflow
@@ -350,7 +350,7 @@ func (api *API) getTriggersAsSourceHandler() Handler {
 		}
 		env := r.Form.Get("env")
 
-		a, errApp := application.LoadByName(api.mustDB(), project, app, getUser(ctx))
+		a, errApp := application.LoadByName(api.mustDB(), api.Cache, project, app, getUser(ctx))
 		if errApp != nil {
 			log.Warning("getTriggersAsSourceHandler> cannot load application: %s\n", errApp)
 			return errApp

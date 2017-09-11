@@ -21,12 +21,10 @@ import (
 func Test_runPipelineHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -44,7 +42,7 @@ func Test_runPipelineHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -97,13 +95,11 @@ func Test_runPipelineHandler(t *testing.T) {
 func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -121,7 +117,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -187,7 +183,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	app2 := &sdk.Application{
 		Name: sdk.RandomString(10),
 	}
-	err = application.Insert(api.MustDB(), api.Cache, proj, app2, nil)
+	err = application.Insert(api.mustDB(), api.Cache, proj, app2, nil)
 
 	//12. Attach pipeline to application
 	_, err = application.AttachPipeline(api.mustDB(), app2.ID, pip2.ID)

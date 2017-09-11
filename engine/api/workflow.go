@@ -33,7 +33,7 @@ func (api *API) getWorkflowHandler() Handler {
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
 
-		w1, err := workflow.Load(api.mustDB(), key, name, getUser(ctx))
+		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func (api *API) postWorkflowHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errP := project.Load(api.mustDB(), key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
@@ -64,11 +64,11 @@ func (api *API) postWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Insert(tx, &wf, getUser(ctx)); err != nil {
+		if err := workflow.Insert(tx, api.Cache, &wf, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert workflow")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 
@@ -76,7 +76,7 @@ func (api *API) postWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(api.mustDB(), wf.ID, getUser(ctx))
+		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, wf.ID, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
@@ -92,12 +92,12 @@ func (api *API) putWorkflowHandler() Handler {
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
 
-		p, errP := project.Load(api.mustDB(), key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(api.mustDB(), key, name, getUser(ctx))
+		oldW, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
 		}
@@ -118,11 +118,11 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Update(tx, &wf, oldW, getUser(ctx)); err != nil {
+		if err := workflow.Update(tx, api.Cache, &wf, oldW, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot update workflow")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 
@@ -130,7 +130,7 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(api.mustDB(), wf.ID, getUser(ctx))
+		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, wf.ID, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
@@ -146,12 +146,12 @@ func (api *API) deleteWorkflowHandler() Handler {
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
 
-		p, errP := project.Load(api.mustDB(), key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(api.mustDB(), key, name, getUser(ctx))
+		oldW, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
 		}
@@ -166,7 +166,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot delete workflow")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 

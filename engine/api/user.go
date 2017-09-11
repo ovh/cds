@@ -18,7 +18,7 @@ import (
 )
 
 // DeleteUserHandler removes a user
-func (api *API) DeleteUserHandler() Handler {
+func (api *API) deleteUserHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
@@ -51,7 +51,7 @@ func (api *API) DeleteUserHandler() Handler {
 }
 
 // GetUserHandler returns a specific user's information
-func (api *API) GetUserHandler() Handler {
+func (api *API) getUserHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
@@ -65,7 +65,7 @@ func (api *API) GetUserHandler() Handler {
 			return sdk.WrapError(err, "getUserHandler: Cannot load user from db")
 		}
 
-		if err = loadUserPermissions(api.mustDB(), u); err != nil {
+		if err = loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
 			return sdk.WrapError(err, "getUserHandler: Cannot get user group and project from db")
 		}
 
@@ -110,7 +110,7 @@ func (api *API) getUserGroupsHandler() Handler {
 }
 
 // UpdateUserHandler modifies user informations
-func (api *API) UpdateUserHandler() Handler {
+func (api *API) updateUserHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		username := vars["username"]
@@ -144,7 +144,7 @@ func (api *API) UpdateUserHandler() Handler {
 }
 
 // GetUsers fetches all users from databases
-func (api *API) GetUsersHandler() Handler {
+func (api *API) getUsersHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		users, err := user.LoadUsers(api.mustDB())
 		if err != nil {
@@ -155,7 +155,7 @@ func (api *API) GetUsersHandler() Handler {
 }
 
 // AddUser creates a new user and generate verification email
-func (api *API) AddUserHandler() Handler {
+func (api *API) addUserHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//returns forbidden if LDAP mode is activated
 		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
@@ -223,8 +223,7 @@ func (api *API) AddUserHandler() Handler {
 	}
 }
 
-// ResetUser deletes auth secret, generates new ones and send them via email
-func (api *API) ResetUserHandler() Handler {
+func (api *API) resetUserHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//returns forbidden if LDAP mode is activated
 		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
@@ -265,7 +264,7 @@ func (api *API) ResetUserHandler() Handler {
 }
 
 //AuthModeHandler returns the auth mode : local ok ldap
-func (api *API) AuthModeHandler() Handler {
+func (api *API) authModeHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		mode := "local"
 		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
@@ -279,7 +278,7 @@ func (api *API) AuthModeHandler() Handler {
 }
 
 // ConfirmUser verify token send via email and mark user as verified
-func (api *API) ConfirmUserHandler() Handler {
+func (api *API) confirmUserHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		//returns forbidden if LDAP mode is activated
 		if _, ldap := api.Router.AuthDriver.(*auth.LDAPClient); ldap {
@@ -334,7 +333,7 @@ func (api *API) ConfirmUserHandler() Handler {
 }
 
 // LoginUser take user credentials and creates a auth token
-func (api *API) LoginUserHandler() Handler {
+func (api *API) loginUserHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		loginUserRequest := sdk.UserLoginRequest{}
 		if err := UnmarshalBody(r, &loginUserRequest); err != nil {

@@ -40,14 +40,14 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 	//Delete user and group
 	deleteUser(t, db, u, g)
 	//All the project
-	deleteAll(t, db, "TEST_LAST_UPDATE")
+	deleteAll(t, api, "TEST_LAST_UPDATE")
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
 	test.NoError(t, user.InsertUser(api.mustDB(), u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -64,7 +64,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache,  proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
@@ -140,14 +140,14 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 	//Delete user and group
 	deleteUser(t, db, u, g)
 	//All the project
-	deleteAll(t, db, "TEST_LAST_UPDATE")
+	deleteAll(t, api, "TEST_LAST_UPDATE")
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
 	test.NoError(t, user.InsertUser(api.mustDB(), u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -164,7 +164,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache,  proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
@@ -183,7 +183,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app2, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache,  proj, app2, u))
 	test.NoError(t, group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4))
 	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, g.ID, 4))
 
@@ -252,17 +252,17 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 	//Delete user and group
 	deleteUser(t, db, u, g)
 	//All the project
-	deleteAll(t, db, "TEST_LAST_UPDATE")
-	deleteAll(t, db, "TEST_LAST_UPDATE_2")
+	deleteAll(t, api, "TEST_LAST_UPDATE")
+	deleteAll(t, api, "TEST_LAST_UPDATE_2")
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
 	test.NoError(t, user.InsertUser(api.mustDB(), u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
 
-	proj2 := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE_2", "TEST_LAST_UPDATE_2", u)
+	proj2 := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE_2", "TEST_LAST_UPDATE_2", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -279,7 +279,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache,  proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
@@ -302,7 +302,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(api.MustDB(), api.Cache, proj, app2, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app2, u)
 	test.NoError(t, err)
 	err = group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4)
 	test.NoError(t, err)
@@ -381,14 +381,14 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 	//Delete user and group
 	deleteUser(t, db, u, g)
 	//All the project
-	deleteAll(t, db, "TEST_LAST_UPDATE")
+	deleteAll(t, api, "TEST_LAST_UPDATE")
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
 	test.NoError(t, user.InsertUser(api.mustDB(), u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -406,7 +406,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app, u)
 	test.NoError(t, err)
 
 	//Create a group
@@ -432,7 +432,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(api.MustDB(), api.Cache, proj, app2, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app2, u)
 	test.NoError(t, err)
 	test.NoError(t, project.UpdateLastModified(api.mustDB(), u, proj))
 	err = group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4)
@@ -502,7 +502,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 	//Delete user and group
 	deleteUser(t, db, u, g)
 	//All the project
-	deleteAll(t, db, "TEST_LAST_UPDATE")
+	deleteAll(t, api, "TEST_LAST_UPDATE")
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
@@ -510,7 +510,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 	test.NoError(t, err)
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -528,7 +528,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app, u)
 	test.NoError(t, err)
 
 	//Create a group
@@ -551,7 +551,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(api.MustDB(), api.Cache, proj, app2, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app2, u)
 
 	test.NoError(t, err)
 	err = group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4)

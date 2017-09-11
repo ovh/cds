@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/notification"
@@ -30,17 +29,15 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
-	api, _, _ := newTestAPI(t)
-
+func deleteAll(t *testing.T, api *API, key string) error {
 	// Delete all apps
 	t.Logf("start deleted : %s", key)
-	proj, errl := project.Load(api.mustDB(), key, &sdk.User{Admin: true})
+	proj, errl := project.Load(api.mustDB(), api.Cache, key, &sdk.User{Admin: true})
 	if errl != nil {
 		return errl
 	}
 
-	apps, errloadall := application.LoadAll(api.mustDB(), key, &sdk.User{Admin: true})
+	apps, errloadall := application.LoadAll(api.mustDB(), api.Cache, key, &sdk.User{Admin: true})
 	if errloadall != nil {
 		t.Logf("Cannot list app: %s", errloadall)
 		return errloadall
@@ -78,7 +75,7 @@ func deleteAll(t *testing.T, db *gorp.DbMap, key string) error {
 	}
 
 	// Delete project
-	if err := project.Delete(api.mustDB(), key); err != nil {
+	if err := project.Delete(api.mustDB(), api.Cache, key); err != nil {
 		t.Logf("RemoveProject: %s", err)
 		return err
 	}
@@ -92,10 +89,10 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *A
 	u, p := assets.InsertAdminUser(api.mustDB())
 	u.Auth.HashedPassword = p
 
-	_ = deleteAll(t, db, "TEST_APP_PIPELINE_NOTIF")
+	_ = deleteAll(t, api, "TEST_APP_PIPELINE_NOTIF")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_APP_PIPELINE_NOTIF", "TEST_APP_PIPELINE_NOTIF", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_APP_PIPELINE_NOTIF", "TEST_APP_PIPELINE_NOTIF", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -113,7 +110,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *A
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	env := &sdk.DefaultEnv
@@ -153,7 +150,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *A
 	test.NoError(t, err)
 
 	//Delete Project
-	err = assets.DeleteTestProject(t, db, "TEST_APP_PIPELINE_NOTIF")
+	err = assets.DeleteTestProject(t, db, api.Cache, "TEST_APP_PIPELINE_NOTIF")
 	test.NoError(t, err)
 }
 
@@ -543,7 +540,6 @@ func Test_SendPipeline(t *testing.T) {
 				},
 			},
 		}
-		cache.Initialize("local", "", "", 5)
 		err := notification.InsertOrUpdateUserNotificationSettings(api.mustDB(), app.ID, pip.ID, env.ID, &notif)
 		test.NoError(t, err)
 
@@ -559,11 +555,17 @@ func Test_SendPipeline(t *testing.T) {
 		err = tx.Commit()
 		test.NoError(t, err)
 
-		var event *sdk.Event
-		cache.Dequeue("events", &event)
-		assert.Equal(t, event.EventType, "sdk.EventNotif", nil)
-		cache.Dequeue("events", &event)
-		assert.Equal(t, event.EventType, "sdk.EventPipelineBuild", nil)
+		//t.SkipNow()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		var event = &sdk.Event{}
+		api.Cache.DequeueWithContext(ctx, "events", event)
+
+		assert.Equal(t, event.EventType, "sdk.EventNotif")
+		api.Cache.DequeueWithContext(ctx, "events", event)
+		assert.Equal(t, event.EventType, "sdk.EventPipelineBuild")
 
 		err = pipeline.DeletePipelineBuildByID(api.mustDB(), pb.ID)
 		test.NoError(t, err)
@@ -584,11 +586,11 @@ func Test_addNotificationsHandler(t *testing.T) {
 	assert.NotZero(t, pass)
 
 	// Create project
-	p := assets.InsertTestProject(t, db, strings.ToUpper(sdk.RandomString(4)), sdk.RandomString(10), u)
+	p := assets.InsertTestProject(t, db, api.Cache, strings.ToUpper(sdk.RandomString(4)), sdk.RandomString(10), u)
 
 	app := &sdk.Application{Name: sdk.RandomString(10)}
 
-	err := application.Insert(api.MustDB(), api.Cache, p, app, u)
+	err := application.Insert(api.mustDB(), api.Cache, p, app, u)
 	test.NoError(t, err)
 
 	pip := &sdk.Pipeline{

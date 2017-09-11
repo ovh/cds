@@ -26,7 +26,7 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 			return err
 		}
 
-		app, errload := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
+		app, errload := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errload != nil {
 			return sdk.WrapError(errload, "updateGroupRoleOnApplicationHandler: Cannot load application %s", appName)
 		}
@@ -57,7 +57,7 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot update permission for group %s in application %s", groupName, appName)
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 		}
 
@@ -81,7 +81,7 @@ func (api *API) updateGroupsInApplicationHandler() Handler {
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 
-		proj, errload := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errload := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errload != nil {
 			return sdk.WrapError(errload, "addGroupInApplicationHandler> Cannot load %s", key)
 		}
@@ -106,7 +106,7 @@ func (api *API) updateGroupsInApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInApplicationHandler: Need one group with write permission.")
 		}
 
-		app, errLoadName := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
+		app, errLoadName := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errLoadName != nil {
 			return sdk.WrapError(errLoadName, "updateGroupsInApplicationHandler: Cannot load application %s: %s", appName)
 		}
@@ -121,11 +121,11 @@ func (api *API) updateGroupsInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot delete groups from application %s", appName)
 		}
 
-		if err := application.AddGroup(tx, proj, app, getUser(ctx), groupsPermission...); err != nil {
+		if err := application.AddGroup(tx, api.Cache, proj, app, getUser(ctx), groupsPermission...); err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot add groups in application %s", app.Name)
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 		}
 
@@ -153,12 +153,12 @@ func (api *API) addGroupInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot unmarshal request")
 		}
 
-		proj, err := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load %s", key)
 		}
 
-		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot load %s", appName)
 		}
@@ -174,11 +174,11 @@ func (api *API) addGroupInApplicationHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := application.AddGroup(tx, proj, app, getUser(ctx), groupPermission); err != nil {
+		if err := application.AddGroup(tx, api.Cache, proj, app, getUser(ctx), groupPermission); err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot add group %s in application %s", g.Name, app.Name)
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot update application last modified date")
 		}
 
@@ -202,7 +202,7 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		groupName := vars["group"]
 
-		app, err := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot load application %s", appName)
 		}
@@ -217,7 +217,7 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot delete group %s from pipeline %s", groupName, appName)
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromApplicationHandler: Cannot update application last modified date")
 		}
 

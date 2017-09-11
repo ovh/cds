@@ -202,14 +202,14 @@ func TestLoadUserWithGroup(t *testing.T) {
 		Name: "bar",
 	}
 
-	project.Delete(api.mustDB(), project1.Key)
-	project.Delete(api.mustDB(), project2.Key)
+	project.Delete(api.mustDB(), api.Cache, project1.Key)
+	project.Delete(api.mustDB(), api.Cache, project2.Key)
 
-	err = project.Insert(api.mustDB(), project1, u)
+	err = project.Insert(api.mustDB(), api.Cache, project1, u)
 	if err != nil {
 		t.Fatalf("cannot insert project1: %s", err)
 	}
-	err = project.Insert(api.mustDB(), project2, u)
+	err = project.Insert(api.mustDB(), api.Cache, project2, u)
 	if err != nil {
 		t.Fatalf("cannot insert project2: %s", err)
 	}
@@ -252,7 +252,7 @@ func TestLoadUserWithGroup(t *testing.T) {
 		t.Fatalf("cannot insert user1 in group: %s", err)
 	}
 
-	if err := loadUserPermissions(api.mustDB(), u); err != nil {
+	if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
 		t.Fatalf("cannot load user group and project: %s", err)
 	}
 
@@ -271,13 +271,11 @@ func TestLoadUserWithGroup(t *testing.T) {
 func Test_getUserHandlerOK(t *testing.T) {
 	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
-	uri := api.Router.GetRoute("GET", api.GetUserHandler, map[string]string{"username": u1.Username})
+	uri := api.Router.GetRoute("GET", api.getUserHandler, map[string]string{"username": u1.Username})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
 
@@ -298,8 +296,6 @@ func Test_getUserHandlerOK(t *testing.T) {
 func Test_getUserHandlerAdmin(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
@@ -308,7 +304,7 @@ func Test_getUserHandlerAdmin(t *testing.T) {
 	assert.NotZero(t, uAdmin)
 	assert.NotZero(t, passAdmin)
 
-	uri := router.GetRoute("GET", api.GetUserHandler, map[string]string{"username": u1.Username})
+	uri := router.GetRoute("GET", api.getUserHandler, map[string]string{"username": u1.Username})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, uAdmin, passAdmin, "GET", uri, nil)
 
@@ -329,13 +325,11 @@ func Test_getUserHandlerAdmin(t *testing.T) {
 func Test_getUserHandlerForbidden(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
 	assert.NotZero(t, u1)
 	assert.NotZero(t, pass1)
 
-	uri := router.GetRoute("GET", api.GetUserHandler, map[string]string{"username": u1.Username})
+	uri := router.GetRoute("GET", api.getUserHandler, map[string]string{"username": u1.Username})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
 
@@ -365,8 +359,6 @@ func Test_getUserHandlerForbidden(t *testing.T) {
 
 func Test_getUserGroupsHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
-
-	
 
 	g1 := &sdk.Group{
 		Name: sdk.RandomString(10),

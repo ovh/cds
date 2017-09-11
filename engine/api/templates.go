@@ -267,7 +267,7 @@ func (api *API) applyTemplateHandler() Handler {
 		projectKey := vars["permProjectKey"]
 
 		// Load the project
-		proj, errload := project.Load(api.mustDB(), projectKey, getUser(ctx),
+		proj, errload := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx),
 			project.LoadOptions.Default,
 			project.LoadOptions.WithEnvironments,
 			project.LoadOptions.WithGroups)
@@ -289,7 +289,7 @@ func (api *API) applyTemplateHandler() Handler {
 
 		// Apply the template
 		log.Debug("applyTemplateHandler> applyTemplate")
-		msg, errapply := template.ApplyTemplate(api.mustDB(), proj, opts, getUser(ctx), sessionKey, api.Config.URL.API)
+		msg, errapply := template.ApplyTemplate(api.mustDB(), api.Cache, proj, opts, getUser(ctx), sessionKey, api.Config.URL.API)
 		if errapply != nil {
 			return sdk.WrapError(errapply, "applyTemplateHandler> Error while applyTemplate")
 		}
@@ -303,11 +303,11 @@ func (api *API) applyTemplateHandler() Handler {
 		}
 
 		log.Debug("applyTemplatesHandler> Check warnings on project")
-		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
 			return sdk.WrapError(err, "applyTemplatesHandler> Cannot check warnings")
 		}
 
-		proj, errPrj := project.Load(api.mustDB(), proj.Key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithPipelines)
+		proj, errPrj := project.Load(api.mustDB(), api.Cache, proj.Key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithPipelines)
 		if errPrj != nil {
 			return sdk.WrapError(errPrj, "applyTemplatesHandler> Cannot load project")
 		}
@@ -329,13 +329,13 @@ func (api *API) applyTemplateOnApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 
 		// Load the project
-		proj, errLoad := project.Load(api.mustDB(), projectKey, getUser(ctx), project.LoadOptions.Default)
+		proj, errLoad := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
 		if errLoad != nil {
 			return sdk.WrapError(errLoad, "applyTemplateOnApplicationHandler> Cannot load project %s", projectKey)
 		}
 
 		// Load the application
-		app, errLoadByName := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.Default)
+		app, errLoadByName := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.Default)
 		if errLoadByName != nil {
 			return sdk.WrapError(errLoadByName, "applyTemplateOnApplicationHandler> Cannot load application %s", appName)
 		}
@@ -353,7 +353,7 @@ func (api *API) applyTemplateOnApplicationHandler() Handler {
 		}
 
 		//Apply the template
-		msg, err := template.ApplyTemplateOnApplication(api.mustDB(), proj, app, opts, getUser(ctx), sessionKey, api.Config.URL.API)
+		msg, err := template.ApplyTemplateOnApplication(api.mustDB(), api.Cache, proj, app, opts, getUser(ctx), sessionKey, api.Config.URL.API)
 		if err != nil {
 			return sdk.WrapError(err, "applyTemplateOnApplicationHandler> Error on apply template on application")
 		}
@@ -367,7 +367,7 @@ func (api *API) applyTemplateOnApplicationHandler() Handler {
 		}
 
 		log.Debug("applyTemplatesHandler> Check warnings on project")
-		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
 			return sdk.WrapError(err, "applyTemplatesHandler> Cannot check warnings")
 		}
 

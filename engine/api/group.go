@@ -79,7 +79,7 @@ func (api *API) deleteGroupHandler() Handler {
 		}
 
 		for _, pg := range g.ApplicationGroups {
-			if err := application.UpdateLastModified(tx, &pg.Application, getUser(ctx)); err != nil {
+			if err := application.UpdateLastModified(tx, api.Cache, &pg.Application, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "deleteGroupHandler> Cannot update application last modified date")
 			}
 		}
@@ -94,7 +94,7 @@ func (api *API) deleteGroupHandler() Handler {
 		}
 
 		for _, pg := range g.EnvironmentGroups {
-			if err := environment.UpdateLastModified(tx, getUser(ctx), &pg.Environment); err != nil {
+			if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), &pg.Environment); err != nil {
 				return sdk.WrapError(err, "deleteGroupHandler> Cannot update environment last modified date")
 			}
 		}

@@ -43,7 +43,7 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 
 		}
 
-		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot load %s: %s\n", key, err)
 			return err
@@ -87,7 +87,7 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot update last modified:  %s\n", err)
 			return err
 		}
@@ -97,7 +97,7 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
 			log.Warning("restoreProjectVariableAuditHandler: Cannot check warnings: %s\n", err)
 			return err
 		}
@@ -112,7 +112,7 @@ func (api *API) getVariablesInProjectHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.WithVariables)
+		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
 		if err != nil {
 			log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
 			return sdk.ErrNotFound
@@ -129,7 +129,7 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
 			return err
@@ -152,7 +152,7 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 			return err
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("deleteVariableFromProject: Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -178,7 +178,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 			return err
 		}
 
-		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot load %s: %s\n", key, err)
 			return sdk.ErrNotFound
@@ -258,7 +258,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot update last modified:  %s\n", err)
 			return err
 		}
@@ -269,7 +269,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
 			log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s\n", err)
 			return err
 
@@ -295,7 +295,7 @@ func (api *API) updateVariableInProjectHandler() Handler {
 
 		}
 
-		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updateVariableInProject: Cannot load %s: %s\n", key, err)
 			return err
@@ -315,7 +315,7 @@ func (api *API) updateVariableInProjectHandler() Handler {
 			return err
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("updateVariableInProject: Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -326,7 +326,7 @@ func (api *API) updateVariableInProjectHandler() Handler {
 
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
 			log.Warning("updateVariableInProject: Cannot check warnings: %s\n", err)
 			return err
 
@@ -343,7 +343,7 @@ func (api *API) getVariableInProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		proj, err := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if err != nil {
 			log.Warning("getVariableInProjectHandler: Cannot load project %s: %s\n", key, err)
 			return err
@@ -377,7 +377,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		}
 
-		p, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("AddVariableInProject: Cannot load %s: %s\n", key, err)
 			return err
@@ -414,7 +414,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot update last modified:  %s\n", err)
 			return err
 		}
@@ -424,7 +424,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 			return err
 		}
 
-		err = sanity.CheckProjectPipelines(api.mustDB(), p)
+		err = sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p)
 		if err != nil {
 			log.Warning("AddVariableInProject: Cannot check warnings: %s\n", err)
 			return err
@@ -449,7 +449,7 @@ func (api *API) getVariableAuditInProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		varName := vars["name"]
 
-		p, errP := project.Load(api.mustDB(), key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "getVariableAuditInProjectHandler> Cannot load project %s", key)
 		}

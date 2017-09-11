@@ -52,7 +52,7 @@ func (api *API) addStageHandler() Handler {
 			return err
 		}
 
-		proj, errproj := project.Load(api.mustDB(), projectKey, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addStageHandler> unable to load project")
 		}
@@ -154,7 +154,7 @@ func (api *API) moveStageHandler() Handler {
 			return err
 		}
 
-		proj, errproj := project.Load(api.mustDB(), projectKey, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "moveStageHandler> unable to load project")
 		}
@@ -216,7 +216,7 @@ func (api *API) updateStageHandler() Handler {
 			return err
 		}
 
-		proj, errproj := project.Load(api.mustDB(), projectKey, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addStageHandler> unable to load project")
 		}
@@ -281,7 +281,7 @@ func (api *API) deleteStageHandler() Handler {
 			return err
 		}
 
-		proj, errproj := project.Load(api.mustDB(), projectKey, getUser(ctx))
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "deleteStageHandler> unable to load project")
 		}

@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var Cache cache.Store
@@ -26,9 +25,7 @@ func Publish(payload interface{}) {
 		Payload:   structs.Map(payload),
 	}
 
-	log.Debug("Publish> new event %+v", event)
 	Cache.Enqueue("events", event)
-
 	// send to cache for cds repositories manager
 	Cache.Enqueue("events_repositoriesmanager", event)
 }

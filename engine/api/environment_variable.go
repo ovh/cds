@@ -46,7 +46,7 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 			return sdk.ErrInvalidID
 		}
 
-		p, errProj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			log.Warning("restoreEnvironmentAuditHandler: Cannot load project %s: %s\n", key, errProj)
 			return errProj
@@ -92,7 +92,7 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("restoreEnvironmentAuditHandler> Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -102,7 +102,7 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
 			log.Warning("restoreEnvironmentAuditHandler: Cannot check warnings: %s\n", err)
 			return err
 		}
@@ -114,7 +114,7 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 			return errEnvs
 		}
 
-		apps, errApps := application.LoadAll(api.mustDB(), p.Key, getUser(ctx), application.LoadOptions.WithVariables)
+		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
 			log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
 			return errApps
@@ -196,7 +196,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "deleteVariableFromEnvironmentHandler: Cannot load project %s", key)
 		}
@@ -222,11 +222,11 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot delete %s", varName)
 		}
 
-		if err := environment.UpdateLastModified(tx, getUser(ctx), env); err != nil {
+		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update last modified date")
 		}
 
@@ -234,7 +234,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler: Cannot commit transaction")
 		}
 
-		apps, errApps := application.LoadAll(api.mustDB(), p.Key, getUser(ctx), application.LoadOptions.WithVariables)
+		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
 			return sdk.WrapError(errApps, "deleteVariableFromEnvironmentHandler: Cannot load applications")
 		}
@@ -261,7 +261,7 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "updateVariableInEnvironment: Cannot load %s", key)
 		}
@@ -286,11 +286,11 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update variable %s for environment %s", varName, envName)
 		}
 
-		if err := environment.UpdateLastModified(tx, getUser(ctx), env); err != nil {
+		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update last modified date")
 		}
 
@@ -298,11 +298,11 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot commit transaction")
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot check warnings")
 		}
 
-		apps, errApps := application.LoadAll(api.mustDB(), p.Key, getUser(ctx), application.LoadOptions.WithVariables)
+		apps, errApps := application.LoadAll(api.mustDB(),  api.Cache,p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
 			return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
 		}
@@ -329,7 +329,7 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		varName := vars["name"]
 
-		p, errProj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			return sdk.WrapError(errProj, "addVariableInEnvironmentHandler: Cannot load project %s", key)
 		}
@@ -365,22 +365,22 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(errInsert, "addVariableInEnvironmentHandler: Cannot add variable %s in environment %s", varName, envName)
 		}
 
-		if err := environment.UpdateLastModified(tx, getUser(ctx), env); err != nil {
+		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler> Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot update last modified date")
 		}
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: cannot commit tx")
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), p); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot check warnings")
 		}
 
-		apps, errApps := application.LoadAll(api.mustDB(), p.Key, getUser(ctx), application.LoadOptions.WithVariables)
+		apps, errApps := application.LoadAll(api.mustDB(),  api.Cache,p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
 			return sdk.WrapError(errApps, "addVariableInEnvironmentHandler: Cannot load applications")
 		}

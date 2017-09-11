@@ -24,7 +24,7 @@ func Test_getVariableAuditInProjectHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	// Add variable
 	v := sdk.Variable{

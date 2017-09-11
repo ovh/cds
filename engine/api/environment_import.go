@@ -25,7 +25,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		key := vars["permProjectKey"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
 			log.Warning("importNewEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
 			return errProj
@@ -111,7 +111,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 			}
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
 			log.Warning("importNewEnvironmentHandler> Cannot check warnings: %s\n", err)
 			return err
 		}
@@ -133,7 +133,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		format := r.FormValue("format")
 
-		proj, errProj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
 			log.Warning("importIntoEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
 			return errProj
@@ -216,7 +216,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return err
 		}
 
-		if err := project.UpdateLastModified(api.mustDB(), getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot update project last modified date")
 		}
 
@@ -238,7 +238,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
 			log.Warning("importIntoEnvironmentHandler> Cannot check warnings: %s\n", err)
 			return err
 		}

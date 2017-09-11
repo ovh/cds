@@ -69,7 +69,7 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), key, workflowNode.Context.Application.RepositoriesManager.Name)
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), key, workflowNode.Context.Application.RepositoriesManager.Name, api.Cache)
 		if err != nil {
 			return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.RepositoriesManager.Name)
 		}

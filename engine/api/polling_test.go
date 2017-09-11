@@ -13,6 +13,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -21,7 +22,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sdk.RepositoriesManager) {
+func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor, store cache.Store) (*sdk.Project, *sdk.RepositoriesManager) {
 	query := `
 		select 	project.ID, repositories_manager_project.id_repositories_manager
 		from 	project, repositories_manager_project
@@ -35,7 +36,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 		return nil, nil
 	}
 
-	projs, err := project.LoadAll(db, nil)
+	projs, err := project.LoadAll(db, store, nil)
 	if err != nil {
 		t.Error(err.Error())
 		return nil, nil
@@ -48,7 +49,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 		}
 	}
 
-	rm, err := repositoriesmanager.LoadByID(db, rmID)
+	rm, err := repositoriesmanager.LoadByID(db, rmID, store)
 	if err != nil {
 		t.Error(err)
 		return nil, nil
@@ -60,13 +61,11 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 func TestAddPollerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db)
+	proj, rm := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -84,7 +83,7 @@ func TestAddPollerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -131,13 +130,11 @@ func TestAddPollerHandler(t *testing.T) {
 func TestUpdatePollerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//1. Crerouter.ate admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db)
+	proj, rm := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -155,7 +152,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -224,13 +221,11 @@ func TestUpdatePollerHandler(t *testing.T) {
 func TestGetApplicationPollersHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db)
+	proj, rm := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -248,7 +243,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -319,13 +314,11 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 func TestGetPollersHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db)
+	proj, rm := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -343,7 +336,7 @@ func TestGetPollersHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
@@ -410,13 +403,11 @@ func TestGetPollersHandler(t *testing.T) {
 func TestDeletePollerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db)
+	proj, rm := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -434,7 +425,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(api.MustDB(), api.Cache, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)

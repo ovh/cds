@@ -63,7 +63,7 @@ func (api *API) getStepBuildLogsHandler() Handler {
 		}
 
 		// Check that application exists
-		a, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getStepBuildLogsHandler> Cannot load application %s: %s\n", appName, err)
 			return err
@@ -149,7 +149,7 @@ func (api *API) getBuildLogsHandler() Handler {
 		}
 
 		// Check that application exists
-		a, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getBuildLogsHandler> Cannot load application %s: %s\n", appName, err)
 			return sdk.ErrApplicationNotFound
@@ -225,7 +225,7 @@ func (api *API) getPipelineBuildJobLogsHandler() Handler {
 			return err
 		}
 
-		a, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
 			log.Warning("getPipelineBuildJobLogsHandler> Cannot load application %s: %s\n", appName, err)
 			return err

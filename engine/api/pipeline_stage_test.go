@@ -15,10 +15,10 @@ import (
 
 func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing.T) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
-	deleteAll(t, db, "TESTPIPELINESTAGES")
+	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -62,17 +62,17 @@ func TestInsertAndLoadPipelineWith1StageAnd0ActionWithoutPrerequisite(t *testing
 	test.NoError(t, err)
 
 	//Delete Project
-	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, api.Cache, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
 
 func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing.T) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	deleteAll(t, db, "TESTPIPELINESTAGES")
+	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -133,17 +133,17 @@ func TestInsertAndLoadPipelineWith1StageAnd1ActionWithoutPrerequisite(t *testing
 	test.NoError(t, err)
 
 	//Delete Project
-	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, api.Cache, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
 
 func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2ActionsStageWithoutPrerequisite(t *testing.T) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	deleteAll(t, db, "TESTPIPELINESTAGES")
+	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -239,17 +239,17 @@ func TestInsertAndLoadPipelineWith2StagesWithAnEmptyStageAtFirstFollowedBy2Actio
 	test.NoError(t, err)
 
 	//Delete Project
-	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, api.Cache, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
 
 func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequisites(t *testing.T) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	deleteAll(t, db, "TESTPIPELINESTAGES")
+	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -375,17 +375,17 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 	test.NoError(t, err)
 
 	//Delete Project
-	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, api.Cache, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
 
 func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	deleteAll(t, db, "TESTPIPELINESTAGES")
+	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -433,17 +433,17 @@ func TestDeleteStageByIDShouldDeleteStagePrerequisites(t *testing.T) {
 	test.NoError(t, err)
 
 	//Delete Project
-	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, api.Cache, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }
 
 func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	deleteAll(t, db, "TESTPIPELINESTAGES")
+	deleteAll(t, api, "TESTPIPELINESTAGES")
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TESTPIPELINESTAGES", "TESTPIPELINESTAGES", nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -518,6 +518,6 @@ func TestUpdateSTageShouldUpdateStagePrerequisites(t *testing.T) {
 	test.NoError(t, err)
 
 	//Delete Project
-	err = assets.DeleteTestProject(t, db, "TESTPIPELINESTAGES")
+	err = assets.DeleteTestProject(t, db, api.Cache, "TESTPIPELINESTAGES")
 	test.NoError(t, err)
 }

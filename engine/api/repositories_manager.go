@@ -28,7 +28,7 @@ import (
 
 func (api *API) getRepositoriesManagerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		rms, err := repositoriesmanager.LoadAll(api.mustDB())
+		rms, err := repositoriesmanager.LoadAll(api.mustDB(), api.Cache)
 		if err != nil {
 			return sdk.WrapError(err, "getRepositoriesManagerHandler> error")
 		}
@@ -60,7 +60,7 @@ func (api *API) addRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addRepositoriesManagerHandler> Bad request: type=%s name=%s url=%s", t, name, url)
 		}
 
-		rm, err := repositoriesmanager.New(sdk.RepositoriesManagerType(t), 0, name, url, options, "")
+		rm, err := repositoriesmanager.New(sdk.RepositoriesManagerType(t), 0, name, url, options, "", api.Cache)
 		if err != nil {
 			return sdk.WrapError(err, "addRepositoriesManagerHandler> cannot create %s")
 		}
@@ -76,7 +76,7 @@ func (api *API) getRepositoriesManagerForProjectHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		rms, err := repositoriesmanager.LoadAllForProject(api.mustDB(), key)
+		rms, err := repositoriesmanager.LoadAllForProject(api.mustDB(), key, api.Cache)
 		if err != nil {
 			return sdk.WrapError(err, "getRepositoriesManagerForProjectHandler> error %s")
 		}
@@ -90,19 +90,19 @@ func (api *API) repositoriesManagerAuthorizeHandler() Handler {
 		key := vars["permProjectKey"]
 		rmName := vars["name"]
 
-		proj, errP := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
 		}
 
 		//Load the repositories manager from the DB
-		rm, errFind := repositoriesmanager.LoadForProject(api.mustDB(), proj.Key, rmName)
+		rm, errFind := repositoriesmanager.LoadForProject(api.mustDB(), proj.Key, rmName, api.Cache)
 		var lastModified time.Time
 
 		//If we don't find any repositories manager for the project, let's insert it
 		if errFind == sql.ErrNoRows {
 			var errLoad error
-			rm, errLoad = repositoriesmanager.LoadByName(api.mustDB(), rmName)
+			rm, errLoad = repositoriesmanager.LoadByName(api.mustDB(), rmName, api.Cache)
 			if errLoad != nil {
 				return sdk.WrapError(sdk.ErrNoReposManager, "repositoriesManagerAuthorize> error while loading repositories manager %s", errLoad)
 			}
@@ -117,7 +117,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() Handler {
 				return sdk.WrapError(errI, "repositoriesManagerAuthorize> error while inserting repositories manager for project %s", proj.Key)
 			}
 
-			if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), proj); err != nil {
+			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
 				return sdk.WrapError(err, "repositoriesManagerAuthorize> Cannot update project last modified")
 			}
 
@@ -143,7 +143,7 @@ func (api *API) repositoriesManagerAuthorizeHandler() Handler {
 			"username":      getUser(ctx).Username,
 		}
 
-		cache.Set(cache.Key("reposmanager", "oauth", token), data)
+		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
 		return WriteJSON(w, r, data, http.StatusOK)
 	}
 }
@@ -164,7 +164,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 
 		data := map[string]string{}
 
-		cache.Get(cache.Key("reposmanager", "oauth", state), &data)
+		api.Cache.Get(cache.Key("reposmanager", "oauth", state), &data)
 		projectKey := data["project_key"]
 		rmName := data["repositories_manager"]
 		username := data["username"]
@@ -174,13 +174,13 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 			return sdk.WrapError(errU, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
 		}
 
-		proj, errP := project.Load(api.mustDB(), projectKey, u)
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, u)
 		if errP != nil {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
 
 		//Load the repositories manager from the DB
-		rm, err := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName)
+		rm, err := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName, api.Cache)
 		if err != nil {
 			log.Warning("repositoriesManagerAuthorizeCallback> error %s\n", err)
 			return sdk.ErrNoReposManager
@@ -212,7 +212,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with SaveDataForProject")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, u, proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, u, proj); err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot update project last modified date")
 		}
 
@@ -234,7 +234,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 		projectKey := vars["permProjectKey"]
 		rmName := vars["name"]
 
-		rm, errl := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName)
+		rm, errl := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName, api.Cache)
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "repositoriesManagerAuthorizeCallback> Cannot find repository manager %s for project %s err:%s", rmName, projectKey, errl)
 		}
@@ -273,7 +273,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with SaveDataForProject")
 		}
 
-		p, err := project.Load(api.mustDB(), projectKey, getUser(ctx), project.LoadOptions.WithRepositoriesManagers)
+		p, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.WithRepositoriesManagers)
 		if err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot load project %s", projectKey)
 		}
@@ -288,13 +288,13 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 		projectKey := vars["permProjectKey"]
 		rmName := vars["name"]
 
-		p, errl := project.Load(api.mustDB(), projectKey, getUser(ctx))
+		p, errl := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteRepositoriesManagerHandler> Cannot load project %s", projectKey)
 		}
 
 		// Load the repositories manager from the DB
-		rm, errlp := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName)
+		rm, errlp := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName, api.Cache)
 		if errlp != nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "deleteRepositoriesManagerHandler> error loading %s-%s: %s", projectKey, rmName, errlp)
 		}
@@ -309,7 +309,7 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> error deleting %s-%s", projectKey, rmName)
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot update project last modified date")
 		}
 
@@ -318,7 +318,7 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 		}
 
 		var errla error
-		p.ReposManager, errla = repositoriesmanager.LoadAllForProject(api.mustDB(), p.Key)
+		p.ReposManager, errla = repositoriesmanager.LoadAllForProject(api.mustDB(), p.Key, api.Cache)
 		if errla != nil {
 			return sdk.WrapError(errla, "deleteRepositoriesManagerHandler> Cannot load repos manager for project %s", p.Key)
 		}
@@ -334,21 +334,21 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 		rmName := vars["name"]
 		sync := FormBool(r, "synchronize")
 
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, rmName)
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, rmName, api.Cache)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
 
 		cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
 		if sync {
-			cache.Delete(cacheKey)
+			api.Cache.Delete(cacheKey)
 		}
 
 		var repos []sdk.VCSRepo
-		if !cache.Get(cacheKey, &repos) {
+		if !api.Cache.Get(cacheKey, &repos) {
 			log.Debug("getReposFromRepositoriesManagerHandler> loading from Stash")
 			repos, err = client.Repos()
-			cache.SetWithTTL(cacheKey, repos, 0)
+			api.Cache.SetWithTTL(cacheKey, repos, 0)
 		}
 		if err != nil {
 			return sdk.WrapError(err, "getReposFromRepositoriesManagerHandler> Cannot get repos")
@@ -366,7 +366,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
 		rmName := vars["name"]
 		repoName := r.FormValue("repo")
 
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, rmName)
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, rmName, api.Cache)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getRepoFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
@@ -386,19 +386,19 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 		rmName := vars["name"]
 		fullname := r.FormValue("fullname")
 
-		app, err := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot load application %s", appName)
 		}
 
 		//Load the repositoriesManager for the project
-		rm, err := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName)
+		rm, err := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName, api.Cache)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s: %s", projectKey, rmName, err)
 		}
 
 		//Get an authorized Client
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, rmName)
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, rmName, api.Cache)
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
@@ -420,7 +420,7 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot insert for application")
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "attachRepositoriesManager> Cannot update application last modified date")
 		}
 
@@ -439,12 +439,12 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 		appName := vars["permApplicationName"]
 		rmName := vars["name"]
 
-		app, errl := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		app, errl := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if errl != nil {
 			return sdk.WrapError(errl, "detachRepositoriesManager> error on load project %s", projectKey)
 		}
 
-		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, rmName)
+		client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, rmName, api.Cache)
 		if erra != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "detachRepositoriesManager> Cannot get client got %s %s: %s", projectKey, rmName, erra)
 		}
@@ -479,7 +479,7 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "detachRepositoriesManager> error on poller.DeleteAll")
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "detachRepositoriesManager> Cannot update application last modified date")
 		}
 
@@ -506,7 +506,7 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 		repoFullname := data["repository_fullname"]
 		pipelineName := data["pipeline_name"]
 
-		app, errla := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		app, errla := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if errla != nil {
 			return sdk.ErrApplicationNotFound
 		}
@@ -520,7 +520,7 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "addHookOnRepositoriesManagerHandler> You don't have enought right on this pipeline %s", pipeline.Name)
 		}
 
-		rm, errlp := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName)
+		rm, errlp := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName, api.Cache)
 		if errlp != nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "addHookOnRepositoriesManagerHandler> error loading %s-%s: %s", projectKey, rmName, errlp)
 		}
@@ -540,11 +540,11 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if _, err := hook.CreateHook(tx, projectKey, rm, repoFullname, app, pipeline); err != nil {
+		if _, err := hook.CreateHook(tx, api.Cache, projectKey, rm, repoFullname, app, pipeline); err != nil {
 			return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot create hook")
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot update application last modified date")
 		}
 
@@ -559,7 +559,7 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), projectKey, app.Name, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "addHookOnRepositoriesManagerHandler> Cannot load workflow")
 		}
@@ -580,7 +580,7 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "deleteHookOnRepositoriesManagerHandler> Unable to parse hook id")
 		}
 
-		app, errload := application.LoadByName(api.mustDB(), projectKey, appName, getUser(ctx))
+		app, errload := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if errload != nil {
 			return sdk.WrapError(errload, "deleteHookOnRepositoriesManagerHandler> Application %s/%s not found ", projectKey, appName)
 		}
@@ -600,7 +600,7 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Unable to delete hook %d", h.ID)
 		}
 
-		if errupdate := application.UpdateLastModified(tx, app, getUser(ctx)); errupdate != nil {
+		if errupdate := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); errupdate != nil {
 			return sdk.WrapError(errupdate, "deleteHookOnRepositoriesManagerHandler> Unable to update last modified")
 		}
 
@@ -609,18 +609,18 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), projectKey, app.Name, getUser(ctx), "", 0)
+		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Unable to load workflow")
 		}
 
 		var errR error
-		_, app.RepositoriesManager, errR = repositoriesmanager.LoadFromApplicationByID(api.mustDB(), app.ID)
+		_, app.RepositoriesManager, errR = repositoriesmanager.LoadFromApplicationByID(api.mustDB(), app.ID, api.Cache)
 		if errR != nil {
 			return sdk.WrapError(errR, "deleteHookOnRepositoriesManagerHandler> Cannot load repository manager from application %s", appName)
 		}
 
-		client, errauth := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, app.RepositoriesManager.Name)
+		client, errauth := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, app.RepositoriesManager.Name, api.Cache)
 		if errauth != nil {
 			return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, app.RepositoriesManager.Name)
 		}
@@ -657,17 +657,17 @@ func (api *API) addApplicationFromRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addApplicationFromRepositoriesManagerHandler>Repository fullname is mandatory")
 		}
 
-		proj, errlp := project.Load(api.mustDB(), projectKey, getUser(ctx))
+		proj, errlp := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errlp != nil {
 			return sdk.WrapError(sdk.ErrInvalidProject, "addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s", projectKey, errlp)
 		}
 
-		rm, errlrm := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName)
+		rm, errlrm := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName, api.Cache)
 		if errlrm != nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "addApplicationFromRepositoriesManagerHandler> error loading %s-%s: %s", projectKey, rmName, errlrm)
 		}
 
-		client, errac := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, rmName)
+		client, errac := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, rmName, api.Cache)
 		if errac != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addApplicationFromRepositoriesManagerHandler> Cannot get client got %s %s: %s", projectKey, rmName, errac)
 		}
@@ -697,7 +697,7 @@ func (api *API) addApplicationFromRepositoriesManagerHandler() Handler {
 		defer tx.Rollback()
 
 		//Insert application in database
-		if err := application.Insert(tx, proj, &app, getUser(ctx)); err != nil {
+		if err := application.Insert(tx, api.Cache, proj, &app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline")
 		}
 
@@ -707,7 +707,7 @@ func (api *API) addApplicationFromRepositoriesManagerHandler() Handler {
 		}
 
 		//Add the  groups on the application
-		if err := application.AddGroup(tx, proj, &app, getUser(ctx), proj.ProjectGroups...); err != nil {
+		if err := application.AddGroup(tx, api.Cache, proj, &app, getUser(ctx), proj.ProjectGroups...); err != nil {
 			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot add groups on application")
 		}
 

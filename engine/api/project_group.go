@@ -22,7 +22,7 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 		key := vars["permProjectKey"]
 		groupName := vars["group"]
 
-		p, err := project.Load(api.mustDB(), key, getUser(ctx))
+		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot load %s", key)
 		}
@@ -42,7 +42,7 @@ func (api *API) deleteGroupFromProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot delete group %s from project %s", g.Name, p.Name)
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromProjectHandler: Cannot update last modified date")
 		}
 
@@ -70,7 +70,7 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 			return sdk.ErrGroupNotFound
 		}
 
-		p, errl := project.Load(api.mustDB(), key, getUser(ctx))
+		p, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "updateGroupRoleHandler: Cannot load %s: %s", key)
 		}
@@ -110,7 +110,7 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot add group %s in project %s", g.Name, p.Name)
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleHandler: Cannot update last modified date")
 		}
 
@@ -148,7 +148,7 @@ func (api *API) updateGroupsInProjectHandler() Handler {
 			return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateGroupsInProject: Need one group with write permission.")
 		}
 
-		p, err := project.Load(api.mustDB(), key, getUser(ctx))
+		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "updateGroupsInProject: Cannot load %s")
 		}
@@ -193,7 +193,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 			return sdk.WrapError(err, "addGroupInProject> unable to unmarshal")
 		}
 
-		p, errl := project.Load(api.mustDB(), key, getUser(ctx))
+		p, errl := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "AddGroupInProject: Cannot load %s", key)
 		}
@@ -222,7 +222,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 		}
 
 		// apply on application
-		applications, errla := application.LoadAll(tx, p.Key, getUser(ctx))
+		applications, errla := application.LoadAll(tx, api.Cache, p.Key, getUser(ctx))
 		if errla != nil {
 			return sdk.WrapError(errla, "AddGroupInProject: Cannot load applications for project %s", p.Name)
 		}
@@ -237,7 +237,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 					if err := group.UpdateGroupRoleInApplication(tx, p.Key, app.Name, g.Name, groupProject.Permission); err != nil {
 						return sdk.WrapError(err, "AddGroupInProject: Cannot update group %s on application %s", g.Name, app.Name)
 					}
-				} else if err := application.AddGroup(tx, p, &app, getUser(ctx), groupProject); err != nil {
+				} else if err := application.AddGroup(tx, api.Cache, p, &app, getUser(ctx), groupProject); err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot insert group %s on application %s", g.Name, app.Name)
 				}
 			}
@@ -287,7 +287,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "AddGroupInProject: Cannot update last modified date")
 		}
 

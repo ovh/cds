@@ -21,7 +21,7 @@ func (api *API) getKeysInApplicationHandler() Handler {
 
 		log.Debug("%s %s", key, appName)
 
-		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "getKeysInApplicationHandler> Cannot load application")
 		}
@@ -41,7 +41,7 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		keyName := vars["name"]
 
-		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx), application.LoadOptions.WithKeys)
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithKeys)
 		if errA != nil {
 			return sdk.WrapError(errA, "deleteKeyInApplicationHandler> Cannot load application")
 		}
@@ -56,7 +56,7 @@ func (api *API) deleteKeyInApplicationHandler() Handler {
 				if err := application.DeleteApplicationKey(tx, app.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot delete key %s", k.Name)
 				}
-				if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+				if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 					return sdk.WrapError(err, "deleteKeyInApplicationHandler> Cannot update application last modified date")
 				}
 			}
@@ -87,7 +87,7 @@ func (api *API) addKeyInApplicationHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInApplicationHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}
 
-		app, errA := application.LoadByName(api.mustDB(), key, appName, getUser(ctx))
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "addKeyInApplicationHandler> Cannot load application")
 		}
@@ -123,7 +123,7 @@ func (api *API) addKeyInApplicationHandler() Handler {
 			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot insert application key")
 		}
 
-		if err := application.UpdateLastModified(tx, app, getUser(ctx)); err != nil {
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addKeyInApplicationHandler> Cannot update project last modified date")
 		}
 

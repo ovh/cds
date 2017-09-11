@@ -49,7 +49,7 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 			}
 		}
 
-		p, errP := project.Load(api.mustDB(), key, getUser(ctx))
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "updateGroupRoleOnEnvironmentHandler> Cannot load project %s", key)
 		}
@@ -64,11 +64,11 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler: Cannot update permission for group %s in environment %s", groupName, envName)
 		}
 
-		if err := environment.UpdateLastModified(tx, getUser(ctx), env); err != nil {
+		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler: Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler: Cannot update project last modified date")
 		}
 
@@ -133,16 +133,16 @@ func (api *API) addGroupsInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addGroupsInEnvironmentHandler: Cannot update environment %s", env.Name)
 		}
 
-		p, errP := project.Load(tx, key, getUser(ctx))
+		p, errP := project.Load(tx, api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "addGroupsInEnvironmentHandler: Cannot load project %s", env.Name)
 		}
 
-		if err := environment.UpdateLastModified(tx, getUser(ctx), env); err != nil {
+		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
 			return sdk.WrapError(err, "addGroupsInEnvironmentHandler: Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(errP, "addGroupsInEnvironmentHandler: Cannot update project %s", p.Key)
 		}
 
@@ -211,7 +211,7 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 		envName := vars["permEnvironmentName"]
 		groupName := vars["group"]
 
-		proj, errP := project.Load(api.mustDB(), key, getUser(ctx))
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
 			return sdk.WrapError(errP, "deleteGroupFromEnvironmentHandler> Cannot load project")
 		}
@@ -231,11 +231,11 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot delete group %s from pipeline %s", groupName, envName)
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot update project last modified date")
 		}
 
-		if err := environment.UpdateLastModified(tx, getUser(ctx), env); err != nil {
+		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot update environment last modified date")
 		}
 

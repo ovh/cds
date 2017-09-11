@@ -43,7 +43,7 @@ type test_runWorkflowCtx struct {
 func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) test_runWorkflowCtx {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 	group.InsertUserInGroup(api.mustDB(), proj.ProjectGroups[0].Group.ID, u.ID, true)
 	u.Groups = append(u.Groups, proj.ProjectGroups[0].Group)
 
@@ -83,8 +83,8 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), &w, u))
-	w1, err := workflow.Load(api.mustDB(), key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	//Prepare request
@@ -110,11 +110,6 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 	if t.Failed() {
 		t.FailNow()
 	}
-
-	c, cancel := context.WithTimeout(context.Background(), time.Second*1)
-	defer cancel()
-	workflow.Scheduler(c, func() *gorp.DbMap { return db })
-	time.Sleep(1 * time.Second)
 
 	return test_runWorkflowCtx{
 		user:     u,
@@ -245,7 +240,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	run, err := workflow.LoadNodeJobRun(api.mustDB(), ctx.job.ID)
+	run, err := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
 	test.NoError(t, err)
 	assert.Equal(t, "Building", run.Status)
 
@@ -449,7 +444,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), ctx.job.ID)
+	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
 	test.NoError(t, errJ)
 	nodeRun, errN := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID)
 	test.NoError(t, errN)
@@ -577,7 +572,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), ctx.job.ID)
+	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
 	test.NoError(t, errJ)
 
 	updatedNodeRun, errN2 := workflow.LoadNodeRunByID(api.mustDB(), wNodeJobRun.WorkflowNodeRunID)

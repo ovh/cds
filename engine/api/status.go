@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/mail"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -56,12 +55,12 @@ func (api *API) statusHandler() Handler {
 		log.Debug("Status> Event: %s", event.Status())
 
 		// Check Event
-		output = append(output, fmt.Sprintf("Internal Events Queue: %s", repositoriesmanager.EventsStatus()))
-		log.Debug("Status> Internal Events Queue: %s", repositoriesmanager.EventsStatus())
+		output = append(output, fmt.Sprintf("Internal Events Queue: %s", repositoriesmanager.EventsStatus(api.Cache)))
+		log.Debug("Status> Internal Events Queue: %s", repositoriesmanager.EventsStatus(api.Cache))
 
 		// Check redis
-		output = append(output, fmt.Sprintf("Cache: %s", cache.Status))
-		log.Debug("Status> Cache: %s", cache.Status)
+		output = append(output, fmt.Sprintf("Cache: %s", api.Cache.Status()))
+		log.Debug("Status> Cache: %s", api.Cache.Status())
 
 		// Check session-store
 		output = append(output, fmt.Sprintf("Session-Store: %s", sessionstore.Status))

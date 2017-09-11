@@ -16,8 +16,6 @@ import (
 func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -26,7 +24,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -57,7 +55,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(api.MustDB(), api.Cache, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -72,7 +70,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 	tester.AddCall("Test_attachPipelinesToApplicationHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200))
 	tester.Run()
 
-	appDB, err := application.LoadByName(api.mustDB(), proj.Key, app.Name, u, application.LoadOptions.WithPipelines)
+	appDB, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, u, application.LoadOptions.WithPipelines)
 	test.NoError(t, err)
 
 	assert.Equal(t, len(appDB.Pipelines), 2)

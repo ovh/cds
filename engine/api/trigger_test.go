@@ -27,7 +27,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
@@ -56,7 +56,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
@@ -112,7 +112,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
@@ -142,7 +142,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
@@ -205,7 +205,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
@@ -233,7 +233,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.MustDB(), api.Cache, proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1

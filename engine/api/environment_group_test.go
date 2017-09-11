@@ -20,13 +20,11 @@ import (
 func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	test.NotNil(t, proj)
 
 	//3. Create environment
@@ -99,13 +97,11 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	test.NotNil(t, proj)
 
 	//3. Create environment

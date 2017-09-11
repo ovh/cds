@@ -13,7 +13,7 @@ func TestVariableInProject(t *testing.T) {
 	api, db, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	// 1. Create project
-	project1 := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	project1 := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 
 	// 2. Insert new variable
 	var1 := &sdk.Variable{

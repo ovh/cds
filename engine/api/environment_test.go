@@ -20,13 +20,11 @@ import (
 func TestAddEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	test.NotNil(t, proj)
 
 	//3. Prepare the request
@@ -67,13 +65,11 @@ func TestAddEnvironmentHandler(t *testing.T) {
 func TestUpdateEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -125,13 +121,11 @@ func TestUpdateEnvironmentHandler(t *testing.T) {
 func TestDeleteEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -175,13 +169,11 @@ func TestDeleteEnvironmentHandler(t *testing.T) {
 func TestGetEnvironmentsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -218,13 +210,11 @@ func TestGetEnvironmentsHandler(t *testing.T) {
 func TestGetEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -262,13 +252,11 @@ func TestGetEnvironmentHandler(t *testing.T) {
 func Test_cloneEnvironmentHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	test.NotNil(t, proj)
 
 	//3. Create env

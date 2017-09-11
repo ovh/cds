@@ -58,7 +58,7 @@ func (api *API) uploadArtifactHandler() Handler {
 			return sdk.WrapError(errP, "uploadArtifactHandler> cannot load pipeline %s-%s", project, pipelineName)
 		}
 
-		a, errA := application.LoadByName(api.mustDB(), project, appName, getUser(ctx))
+		a, errA := application.LoadByName(api.mustDB(), api.Cache, project, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "uploadArtifactHandler> cannot load application %s-%s", project, appName)
 		}
@@ -171,7 +171,7 @@ func (api *API) listArtifactsBuildHandler() Handler {
 		}
 
 		// Load application
-		a, errA := application.LoadByName(api.mustDB(), project, appName, getUser(ctx))
+		a, errA := application.LoadByName(api.mustDB(), api.Cache, project, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "listArtifactsBuildHandler> Cannot load application %s", appName)
 		}
@@ -221,7 +221,7 @@ func (api *API) listArtifactsHandler() Handler {
 		}
 
 		// Load application
-		a, errA := application.LoadByName(api.mustDB(), project, appName, getUser(ctx))
+		a, errA := application.LoadByName(api.mustDB(), api.Cache, project, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "listArtifactsHandler> Cannot load application %s", appName)
 		}

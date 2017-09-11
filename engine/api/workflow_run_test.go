@@ -1,14 +1,11 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
 	"testing"
-	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -23,7 +20,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -86,12 +83,12 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), &w, u))
-	w1, err := workflow.Load(api.mustDB(), key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(api.mustDB(), w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(), api.Cache, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 		})
 		test.NoError(t, err)
@@ -147,7 +144,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -210,12 +207,12 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), &w, u))
-	w1, err := workflow.Load(api.mustDB(), key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(api.mustDB(), w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(), api.Cache, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": "master",
@@ -264,7 +261,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -327,12 +324,12 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), &w, u))
-	w1, err := workflow.Load(api.mustDB(), key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(api.mustDB(), w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(), api.Cache, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 		})
 		test.NoError(t, err)
@@ -362,7 +359,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -425,19 +422,14 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), &w, u))
-	w1, err := workflow.Load(api.mustDB(), key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(api.mustDB(), w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(api.mustDB(), api.Cache, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
-
-	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	workflow.Scheduler(c, func() *gorp.DbMap { return db })
-	time.Sleep(2 * time.Second)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name)
 
@@ -462,7 +454,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -525,8 +517,8 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), &w, u))
-	w1, err := workflow.Load(api.mustDB(), key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	//Prepare request
@@ -554,7 +546,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -617,19 +609,14 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), &w, u))
-	w1, err := workflow.Load(api.mustDB(), key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(api.mustDB(), w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(api.mustDB(), api.Cache, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
-
-	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	workflow.Scheduler(c, func() *gorp.DbMap { return db })
-	time.Sleep(2 * time.Second)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name)
 

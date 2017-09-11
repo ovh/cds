@@ -56,7 +56,7 @@ func (api *API) updateEnvironmentsHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		proj, err := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
 			log.Warning("updateEnvironmentsHandler: Cannot load %s: %s\n", key, err)
 			return err
@@ -204,7 +204,7 @@ func (api *API) updateEnvironmentsHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
 			log.Warning("updateEnvironmentsHandler> Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -215,7 +215,7 @@ func (api *API) updateEnvironmentsHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), proj); err != nil {
+		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
 			log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s\n", err)
 			return err
 		}
@@ -230,7 +230,7 @@ func (api *API) addEnvironmentHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		proj, errProj := project.Load(api.mustDB(), key, getUser(ctx), project.LoadOptions.Default)
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			log.Warning("addEnvironmentHandler: Cannot load %s: %s\n", key, errProj)
 			return errProj
@@ -265,7 +265,7 @@ func (api *API) addEnvironmentHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
 			log.Warning("addEnvironmentHandler> Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -293,7 +293,7 @@ func (api *API) deleteEnvironmentHandler() Handler {
 		projectKey := vars["key"]
 		environmentName := vars["permEnvironmentName"]
 
-		p, errProj := project.Load(api.mustDB(), projectKey, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			log.Warning("deleteEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
 			return errProj
@@ -318,7 +318,7 @@ func (api *API) deleteEnvironmentHandler() Handler {
 			return err
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("deleteEnvironmentHandler> Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -352,7 +352,7 @@ func (api *API) updateEnvironmentHandler() Handler {
 			return errEnv
 		}
 
-		p, errProj := project.Load(api.mustDB(), projectKey, getUser(ctx), project.LoadOptions.Default)
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
 			log.Warning("updateEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
 			return errProj
@@ -414,11 +414,11 @@ func (api *API) updateEnvironmentHandler() Handler {
 			}
 		}
 
-		if err := environment.UpdateLastModified(tx, getUser(ctx), env); err != nil {
+		if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), env); err != nil {
 			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			log.Warning("updateEnvironmentHandler> Cannot update last modified date: %s\n", err)
 			return err
 		}
@@ -451,7 +451,7 @@ func (api *API) cloneEnvironmentHandler() Handler {
 			return sdk.WrapError(errEnv, "cloneEnvironmentHandler> Cannot load environment %s: %s", environmentName, errEnv)
 		}
 
-		p, errProj := project.Load(api.mustDB(), projectKey, getUser(ctx))
+		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errProj != nil {
 			return sdk.WrapError(errProj, "cloneEnvironmentHandler> Cannot load project %s: %s", projectKey, errProj)
 		}
@@ -505,7 +505,7 @@ func (api *API) cloneEnvironmentHandler() Handler {
 		}
 
 		//Update the poroject
-		if err := project.UpdateLastModified(tx,api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
 			return sdk.WrapError(err, "cloneEnvironmentHandler> Cannot update last modified date: %s", err)
 		}
 

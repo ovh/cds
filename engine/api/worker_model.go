@@ -218,7 +218,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 				}
 				log.Debug("updateWorkerModel> Updating pipeline %d", id)
 				//Load the project
-				proj, errproj := project.LoadByPipelineID(tx, getUser(ctx), id)
+				proj, errproj := project.LoadByPipelineID(tx, api.Cache, getUser(ctx), id)
 				if errproj != nil {
 					return sdk.WrapError(errproj, "updateWorkerModel> unable to load project")
 				}
@@ -242,7 +242,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 			}
 
 			for _, warning := range warnings {
-				sanity.CheckPipeline(api.mustDB(), &warning.Project, &warning.Pipeline)
+				sanity.CheckPipeline(api.mustDB(), api.Cache, &warning.Project, &warning.Pipeline)
 			}
 		}()
 

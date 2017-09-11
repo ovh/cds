@@ -32,10 +32,10 @@ type LastUpdateBroker struct {
 //Init the LastUpdateBroker
 func (b *LastUpdateBroker) Init(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	// Start cache Subscription
-	go CacheSubscribe(c, b.messages)
+	go CacheSubscribe(c, b.messages, store)
 
 	// Start processing events
-	go b.Start(c, DBFunc)
+	go b.Start(c, DBFunc, store)
 }
 
 // CacheSubscribe subscribe to a channel and push received message in a channel
@@ -63,7 +63,7 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string, store cache.S
 }
 
 // Start the broker
-func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
+func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	for {
 		select {
 		case <-c.Done():
@@ -88,7 +88,7 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 
 			//Receive new message
 			for _, i := range b.clients {
-				if err := loadUserPermissions(DBFunc(), i.User); err != nil {
+				if err := loadUserPermissions(DBFunc(), store, i.User); err != nil {
 					log.Warning("lastUpdate.CacheSubscribe> Cannot load auser permission: %s", err)
 					continue
 				}
