@@ -22,22 +22,22 @@ func (c *client) WorkerList() ([]sdk.Worker, error) {
 	return p, nil
 }
 
-func (c *client) WorkerRegister(r worker.RegistrationForm) (string, bool, error) {
+func (c *client) WorkerRegister(r worker.RegistrationForm) (*sdk.Worker, bool, error) {
 	var w sdk.Worker
 	code, err := c.PostJSON("/worker", r, &w)
 	if code == http.StatusUnauthorized {
-		return "", false, sdk.ErrUnauthorized
+		return nil, false, sdk.ErrUnauthorized
 	}
 	if code > 300 && err == nil {
-		return "", false, fmt.Errorf("HTTP %d", code)
+		return nil, false, fmt.Errorf("HTTP %d", code)
 	} else if err != nil {
-		return "", false, err
+		return nil, false, err
 	}
 
 	c.isWorker = true
 	c.config.Hash = w.ID
 
-	return w.ID, w.Uptodate, nil
+	return &w, w.Uptodate, nil
 }
 
 func (c *client) WorkerSetStatus(s sdk.Status) error {

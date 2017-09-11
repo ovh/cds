@@ -96,7 +96,11 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		w.alive = true
 		initViper(w)
-		log.Info("What a good time to be alive")
+		hostname, errh := os.Hostname() // no check of err here
+		if errh != nil {
+			hostname = fmt.Sprintf("error compute hostname: %s", errh)
+		}
+		log.Info("What a good time to be alive, I'm in version %s, my hostname is %s", sdk.VERSION, hostname)
 		w.initServer(ctx)
 
 		// Gracefully shutdown connections
@@ -209,7 +213,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				requirementsOK, _ := checkRequirements(w, &j.Job.Action)
+				requirementsOK, _ := checkRequirements(w, &j.Job.Action, j.ExecGroups, j.ID)
 
 				t := ""
 				if j.ID == w.bookedJobID {
@@ -219,7 +223,10 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				//Take the job
 				if requirementsOK {
 					log.Info("checkQueue> Taking job %d%s", j.ID, t)
-					w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
+					canWorkOnAnotherJob := w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
+					if canWorkOnAnotherJob {
+						continue
+					}
 				} else {
 					log.Debug("Unable to run this job, let's continue %d%s", j.ID, t)
 					continue
@@ -243,7 +250,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					continue
 				}
 
-				requirementsOK, _ := checkRequirements(w, &j.Job.Action)
+				requirementsOK, _ := checkRequirements(w, &j.Job.Action, nil, j.ID)
 				t := ""
 				if j.ID == w.bookedJobID {
 					t = ", this was my booked job"
@@ -296,7 +303,7 @@ func (w *currentWorker) processBookedJob(pbjobs chan<- sdk.PipelineBuildJob) {
 		return
 	}
 
-	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action)
+	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action, j.ExecGroups, w.bookedJobID)
 	if !requirementsOK {
 		var details string
 		for _, r := range errRequirements {
@@ -328,12 +335,13 @@ func (w *currentWorker) doRegister() error {
 			Token:        w.token,
 			Hatchery:     w.hatchery.id,
 			HatcheryName: w.hatchery.name,
-			Model:        w.modelID,
+			ModelID:      w.model.ID,
 		}
 		if err := w.register(form); err != nil {
 			log.Info("Cannot register: %s", err)
 			return err
 		}
+		log.Debug("I am registered, with groupID:%d and model:%v", w.groupID, w.model)
 		w.alive = true
 	}
 	return nil

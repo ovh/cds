@@ -80,7 +80,6 @@ func NewProject(key string) *Project {
 
 // RemoveProject call api to delete a project
 func RemoveProject(key string) error {
-
 	url := fmt.Sprintf("/project/%s", key)
 	data, code, err := Request("DELETE", url, nil)
 	if err != nil {
@@ -124,7 +123,6 @@ func UpdateProject(proj *Project) error {
 
 // RenameProject call API to update project
 func RenameProject(key, newName string) error {
-
 	p := NewProject(key)
 	p.Name = newName
 
@@ -152,7 +150,6 @@ func RenameProject(key, newName string) error {
 
 // AddProject creates a new project available only to creator by default
 func AddProject(name, key, groupName string) error {
-
 	regexp := regexp.MustCompile(ProjectKeyPattern)
 	if !regexp.MatchString(key) {
 		return fmt.Errorf("project key '%s' must contain only upper-case alphanumerical characters", key)
@@ -191,7 +188,6 @@ func AddProject(name, key, groupName string) error {
 
 // RemoveGroupFromProject  call api to remove a group from the project
 func RemoveGroupFromProject(projectKey, groupname string) error {
-
 	path := fmt.Sprintf("/project/%s/group/%s", projectKey, groupname)
 	data, code, err := Request("DELETE", path, nil)
 	if err != nil {
@@ -211,7 +207,6 @@ func RemoveGroupFromProject(projectKey, groupname string) error {
 
 // UpdateGroupInProject  call api to update group permission on project
 func UpdateGroupInProject(projectKey, groupname string, permission int) error {
-
 	if permission < 4 || permission > 7 {
 		return fmt.Errorf("Permission should be between 4-7 \n")
 	}

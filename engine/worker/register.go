@@ -27,14 +27,18 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 	form.OS = runtime.GOOS
 	form.Arch = runtime.GOOS
 
-	workerID, uptodate, err := w.client.WorkerRegister(form)
+	worker, uptodate, err := w.client.WorkerRegister(form)
 	if err != nil {
 		sdk.Exit("register> Got HTTP %d, exiting\n", err)
 		return err
 	}
 
-	w.id = workerID
-	sdk.Authorization(workerID)
+	w.id = worker.ID
+	w.groupID = worker.GroupID
+	if worker.Model != nil {
+		w.model = *worker.Model
+	}
+	sdk.Authorization(worker.ID)
 	w.initGRPCConn()
 	log.Info("%s Registered on %s", form.Name, w.apiEndpoint)
 

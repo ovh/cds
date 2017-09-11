@@ -162,7 +162,7 @@ func test_registerWorker(t *testing.T, db *gorp.DbMap, ctx *test_runWorkflowCtx)
 		Name:  sdk.RandomString(10),
 		Token: ctx.workerToken,
 	}
-	ctx.worker, err = worker.RegisterWorker(db, params.Name, params.Token, params.Model, nil, params.BinaryCapabilities)
+	ctx.worker, err = worker.RegisterWorker(db, params.Name, params.Token, params.ModelID, nil, params.BinaryCapabilities)
 	test.NoError(t, err)
 }
 
@@ -577,7 +577,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	params["size"] = "12"
 	params["perm"] = "7"
 	params["md5sum"] = "123"
-	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, "/tmp/myartifact", "myartifact", params)
+	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
 	rec = httptest.NewRecorder()
 	router.mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)

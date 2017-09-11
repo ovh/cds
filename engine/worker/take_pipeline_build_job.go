@@ -14,7 +14,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJobID int64, isBooked bool) {
+// takePipelineBuildJob takes pipeline build job. If failed, this func return true if worker can safely check another job
+func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJobID int64, isBooked bool) bool {
 	in := worker.TakeForm{Time: time.Now()}
 	if isBooked {
 		in.BookedJobID = pipelineBuildJobID
@@ -32,16 +33,16 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	data, code, errr := sdk.Request("POST", path, bodyTake)
 	if errr != nil {
 		log.Info("takeJob> Cannot take job %d : %s", pipelineBuildJobID, errr)
-		return
+		return true
 	}
 	if code != http.StatusOK {
-		return
+		return true
 	}
 
 	pbji := worker.PipelineBuildJobInfo{}
 	if err := json.Unmarshal([]byte(data), &pbji); err != nil {
 		log.Info("takeJob> Cannot unmarshal action: %s", err)
-		return
+		return false
 	}
 
 	w.currentJob.pbJob = pbji.PipelineBuildJob
@@ -99,7 +100,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	body, errm := json.MarshalIndent(res, " ", " ")
 	if errm != nil {
 		log.Error("takeJob> Cannot marshal result: %s", errm)
-		return
+		return false
 	}
 
 	code = 300
@@ -129,4 +130,5 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 			break
 		}
 	}
+	return false
 }

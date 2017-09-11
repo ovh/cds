@@ -97,16 +97,15 @@ func restoreAuditHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap,
 		return sdk.ErrUnknownError
 	}
 
-	err = sanity.CheckProjectPipelines(db, p)
-	if err != nil {
-		log.Warning("restoreAuditHandler: Cannot check warnings: %s\n", err)
-		return err
-	}
+	go func() {
+		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+			log.Warning("restoreAuditHandler: Cannot check warnings: %s", err)
+		}
 
-	if err := sanity.CheckApplication(tx, p, app); err != nil {
-		log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
-		return err
-	}
+		if err := sanity.CheckApplication(db, p, app); err != nil {
+			log.Warning("restoreAuditHandler: Cannot check application sanity: %s")
+		}
+	}()
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 	return nil
@@ -204,13 +203,15 @@ func deleteVariableFromApplicationHandler(w http.ResponseWriter, r *http.Request
 		return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot delete %s", varName)
 	}
 
-	if err := sanity.CheckApplication(tx, p, app); err != nil {
-		return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
-	}
-
 	if err := tx.Commit(); err != nil {
 		return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot commit transaction")
 	}
+
+	go func() {
+		if err := sanity.CheckApplication(db, p, app); err != nil {
+			log.Warning("restoreAuditHandler: Cannot check application sanity: %s", err)
+		}
+	}()
 
 	app.Variable, err = application.GetAllVariableByID(db, app.ID)
 	if err != nil {
@@ -317,10 +318,11 @@ func updateVariablesInApplicationHandler(w http.ResponseWriter, r *http.Request,
 		return err
 	}
 
-	if err := sanity.CheckApplication(db, p, app); err != nil {
-		log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
-		return err
-	}
+	go func() {
+		if err := sanity.CheckApplication(db, p, app); err != nil {
+			log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s", err)
+		}
+	}()
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 	return nil
@@ -373,9 +375,11 @@ func updateVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, 
 		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load variables")
 	}
 
-	if err := sanity.CheckApplication(db, p, app); err != nil {
-		return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot check application sanity")
-	}
+	go func() {
+		if err := sanity.CheckApplication(db, p, app); err != nil {
+			log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s", err)
+		}
+	}()
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 
@@ -445,10 +449,11 @@ func addVariableInApplicationHandler(w http.ResponseWriter, r *http.Request, db 
 		return err
 	}
 
-	if err := sanity.CheckApplication(db, p, app); err != nil {
-		log.Warning("addVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
-		return err
-	}
+	go func() {
+		if err := sanity.CheckApplication(db, p, app); err != nil {
+			log.Warning("addVariableInApplicationHandler: Cannot check application sanity: %s", err)
+		}
+	}()
 
 	cache.DeleteAll(cache.Key("application", key, "*"+appName+"*"))
 

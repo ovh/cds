@@ -61,8 +61,8 @@ func postTakeWorkflowJobHandler(w http.ResponseWriter, r *http.Request, db *gorp
 
 	//Load worker model
 	workerModel := c.Worker.Name
-	if c.Worker.Model != 0 {
-		wm, errModel := worker.LoadWorkerModelByID(db, c.Worker.Model)
+	if c.Worker.ModelID != 0 {
+		wm, errModel := worker.LoadWorkerModelByID(db, c.Worker.ModelID)
 		if errModel != nil {
 			return sdk.ErrNoWorkerModel
 		}
@@ -425,7 +425,7 @@ func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *
 		return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job")
 	}
 
-	sdk.AddParameter(&job.Parameters, "cds.build."+v.Name, sdk.StringParameter, v.Value)
+	sdk.AddParameter(&job.Parameters, v.Name, sdk.StringParameter, v.Value)
 
 	if err := workflow.UpdateNodeJobRun(tx, job); err != nil {
 		return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run")
@@ -436,7 +436,7 @@ func postWorkflowJobVariableHandler(w http.ResponseWriter, r *http.Request, db *
 		return sdk.WrapError(errn, "postWorkflowJobVariableHandler> Unable to load node")
 	}
 
-	sdk.AddParameter(&node.BuildParameters, "cds.build."+v.Name, sdk.StringParameter, v.Value)
+	sdk.AddParameter(&node.BuildParameters, v.Name, sdk.StringParameter, v.Value)
 
 	if err := workflow.UpdateNodeRun(tx, node); err != nil {
 		return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node run")

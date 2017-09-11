@@ -6,9 +6,12 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/hashicorp/hcl"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 var importFormat, importInto string
@@ -32,9 +35,28 @@ func importCmd() *cobra.Command {
 				importFormat = "hcl"
 			}
 
+			var payload = &exportentities.Environment{}
+
+			f, errF := exportentities.GetFormat(importFormat)
+			if errF != nil {
+				sdk.Exit("Error: %s\n", errF)
+			}
+
 			btes, err := ioutil.ReadFile(name)
 			if err != nil {
 				sdk.Exit("Error: %s\n", err)
+			}
+
+			var errorParse error
+			switch f {
+			case exportentities.FormatJSON, exportentities.FormatHCL:
+				errorParse = hcl.Unmarshal(btes, payload)
+			case exportentities.FormatYAML:
+				errorParse = yaml.Unmarshal(btes, payload)
+			}
+
+			if errorParse != nil {
+				sdk.Exit("Error: %s\n", errorParse)
 			}
 
 			var url string
@@ -42,7 +64,22 @@ func importCmd() *cobra.Command {
 			if importInto == "" {
 				url = fmt.Sprintf("/project/%s/environment/import?format=%s", projectKey, importFormat)
 			} else {
-				url = fmt.Sprintf("/project/%s/environment/import/%s?format=%s", projectKey, importInto, importFormat)
+				_, errOldEnv := sdk.GetEnvironment(projectKey, importInto)
+				if errOldEnv != nil && !sdk.ErrorIs(errOldEnv, sdk.ErrNoEnvironment) {
+					sdk.Exit("Error: %s\n", errOldEnv)
+				}
+				//If user import into a non existing env, lets change the name existing in the file and call the import handler
+				if sdk.ErrorIs(errOldEnv, sdk.ErrNoEnvironment) {
+					fmt.Println("Environment doesn't exist. It will be created.")
+					payload.Name = importInto
+					btes, err = yaml.Marshal(payload)
+					if err != nil {
+						sdk.Exit("Error: %s\n", err)
+					}
+					url = fmt.Sprintf("/project/%s/environment/import?format=%v", projectKey, "yaml")
+				} else {
+					url = fmt.Sprintf("/project/%s/environment/import/%s?format=%s", projectKey, importInto, importFormat)
+				}
 			}
 
 			data, _, err := sdk.Request("POST", url, btes)

@@ -33,6 +33,7 @@ export class ProjectService {
         params = params.append('withGroups', 'true');
         params = params.append('withPermission', 'true');
         params = params.append('withRepositoriesManagers', 'true');
+        params = params.append('withWorkflows', 'true');
         return this._http.get('/project/' + key, {params: params});
     }
 

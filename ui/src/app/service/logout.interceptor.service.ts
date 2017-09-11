@@ -21,7 +21,12 @@ export class LogoutInterceptor implements HttpInterceptor {
                     this._router.navigate(['/account/login']);
                     return Observable.throw(e);
                 } else {
-                    this._toast.error(e.statusText, JSON.parse(e.message));
+                    // error formatted from CDS API
+                    if (e.error && e.error.message) {
+                        this._toast.error(e.statusText, e.error.message);
+                    } else {
+                        this._toast.error(e.statusText, JSON.parse(e.message));
+                    }
                 }
             }
         });

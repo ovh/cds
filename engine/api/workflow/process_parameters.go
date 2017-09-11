@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
@@ -12,11 +13,7 @@ import (
 )
 
 func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, error) {
-	params, err := getNodeRunBuildParameters(db, run)
-	if err != nil {
-		return nil, err
-	}
-
+	params := run.BuildParameters
 	tmp := map[string]string{}
 
 	tmp["cds.stage"] = stage.Name
@@ -35,15 +32,14 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 	if errm.IsEmpty() {
 		return params, nil
 	}
-
 	return params, errm
 }
 
 // GetNodeBuildParameters returns build parameters with default values for cds.version, cds.run, cds.run.number, cds.run.subnumber
 func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowNode, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
 	vars := map[string]string{}
-	tmp := sdk.ParametersFromProjectVariables(proj)
-	for k, v := range tmp {
+	tmpProj := sdk.ParametersFromProjectVariables(proj)
+	for k, v := range tmpProj {
 		vars[k] = v
 	}
 
@@ -66,8 +62,8 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	}
 
 	// compute pipeline parameters
-	tmp = sdk.ParametersFromPipelineParameters(pipelineParameters)
-	for k, v := range tmp {
+	tmpPip := sdk.ParametersFromPipelineParameters(pipelineParameters)
+	for k, v := range tmpPip {
 		vars[k] = v
 	}
 
@@ -80,20 +76,22 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 		errm.Append(errdump)
 	}
 	for k, v := range payloadMap {
-		tmp[k] = v
+		vars[k] = v
 	}
 
-	tmp["cds.project"] = w.ProjectKey
-	tmp["cds.workflow"] = w.Name
-	tmp["cds.pipeline"] = n.Pipeline.Name
-	tmp["cds.version"] = fmt.Sprintf("%d.%d", 1, 0)
-	tmp["cds.run"] = fmt.Sprintf("%d.%d", 1, 0)
-	tmp["cds.run.number"] = fmt.Sprintf("%d", 1)
-	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", 0)
+	// TODO Update suggest.go  with new variable
+
+	vars["cds.project"] = w.ProjectKey
+	vars["cds.workflow"] = w.Name
+	vars["cds.pipeline"] = n.Pipeline.Name
+	vars["cds.version"] = fmt.Sprintf("%d.%d", 1, 0)
+	vars["cds.run"] = fmt.Sprintf("%d.%d", 1, 0)
+	vars["cds.run.number"] = fmt.Sprintf("%d", 1)
+	vars["cds.run.subnumber"] = fmt.Sprintf("%d", 0)
 
 	params := []sdk.Parameter{}
-	for k, v := range tmp {
-		s, err := sdk.Interpolate(v, tmp)
+	for k, v := range vars {
+		s, err := sdk.Interpolate(v, vars)
 		if err != nil {
 			errm.Append(err)
 			continue
@@ -106,6 +104,44 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	}
 
 	return params, errm
+}
+
+func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunIds []int64) ([]sdk.Parameter, error) {
+	//Load workflow run
+	w, err := LoadRunByID(db, run.WorkflowRunID)
+	if err != nil {
+		return nil, sdk.WrapError(err, "getParentParameters> Unable to load workflow run")
+	}
+
+	params := []sdk.Parameter{}
+	for _, nodeRunID := range nodeRunIds {
+		parentNodeRun, errNR := LoadNodeRunByID(db, nodeRunID)
+		if errNR != nil {
+			return nil, sdk.WrapError(errNR, "getParentParameters> Cannot get parent node run")
+		}
+
+		node := w.Workflow.GetNode(parentNodeRun.WorkflowNodeID)
+		if node == nil {
+			return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", parentNodeRun.WorkflowNodeID), "getParentParameters>")
+		}
+
+		for i := range parentNodeRun.BuildParameters {
+			p := &parentNodeRun.BuildParameters[i]
+
+			if p.Name == "cds.semver" || p.Name == "cds.release.version" || strings.HasPrefix(p.Name, "cds.proj") || strings.HasPrefix(p.Name, "workflow.") {
+				continue
+			}
+
+			prefix := "workflow." + node.Name + "."
+			if strings.HasPrefix(p.Name, "cds.") {
+				p.Name = strings.Replace(p.Name, "cds.", prefix, 1)
+			} else {
+				p.Name = prefix + p.Name
+			}
+		}
+		params = append(params, parentNodeRun.BuildParameters...)
+	}
+	return params, nil
 }
 
 func getNodeRunBuildParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {

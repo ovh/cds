@@ -1,9 +1,12 @@
 package model
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
+	"regexp"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -11,10 +14,10 @@ import (
 )
 
 var (
-	imageP                 string
-	openstackFlavorP       string
-	openstackUserDataFileP string
-	groupName              string
+	imageP           string
+	openstackFlavorP string
+	userDataFileP    string
+	groupName        string
 )
 
 func cmdWorkerModelAdd() *cobra.Command {
@@ -25,13 +28,14 @@ func cmdWorkerModelAdd() *cobra.Command {
 		Available model type :
 		- Docker images ("docker")
 		- Openstack image ("openstack")
+		- VSphere image ("vsphere")
 		`,
 		Run: addWorkerModel,
 	}
 
-	cmd.Flags().StringVar(&imageP, "image", "", "Image value (docker or openstack)")
+	cmd.Flags().StringVar(&imageP, "image", "", "Image value (docker, openstack, vsphere)")
 	cmd.Flags().StringVar(&openstackFlavorP, "flavor", "", "Flavor value (openstack)")
-	cmd.Flags().StringVar(&openstackUserDataFileP, "userdata", "", "Path to UserData file (openstack)")
+	cmd.Flags().StringVar(&userDataFileP, "userdata", "", "Path to UserData file (vsphere or openstack)")
 	cmd.Flags().StringVar(&groupName, "group", "", "Group name")
 
 	return cmd
@@ -66,15 +70,42 @@ func addWorkerModel(cmd *cobra.Command, args []string) {
 		if d.Flavor == "" {
 			sdk.Exit("Error: Openstack flavor not provided (--flavor)\n")
 		}
-		if openstackUserDataFileP == "" {
+		if userDataFileP == "" {
 			sdk.Exit("Error: Openstack UserData file not provided (--userdata)\n")
 		}
-		file, err := ioutil.ReadFile(openstackUserDataFileP)
+		file, err := ioutil.ReadFile(userDataFileP)
 		if err != nil {
 			sdk.Exit("Error: Cannot read Openstack UserData file (%s)\n", err)
 		}
 		d.UserData = base64.StdEncoding.EncodeToString([]byte(file))
 		data, err := json.Marshal(d)
+		if err != nil {
+			sdk.Exit("Error: Cannot marshal model info (%s)\n", err)
+		}
+		image = string(data)
+		break
+	case string(sdk.VSphere):
+		t = sdk.VSphere
+		d := sdk.OpenstackModelData{
+			Image: imageP,
+		}
+		if d.Image == "" {
+			sdk.Exit("Error: VSphere image not provided (--image)\n")
+		}
+
+		if userDataFileP == "" {
+			sdk.Exit("Error: VSphere UserData file not provided (--userdata)\n")
+		}
+		file, err := ioutil.ReadFile(userDataFileP)
+		if err != nil {
+			sdk.Exit("Error: Cannot read Openstack UserData file (%s)\n", err)
+		}
+
+		rx := regexp.MustCompile(`(?m)(#.*)$`)
+		file = rx.ReplaceAll(file, []byte(""))
+		d.UserData = strings.Replace(string(file), "\n", " ; ", -1)
+
+		data, err := jsonWithoutHTMLEncode(d)
 		if err != nil {
 			sdk.Exit("Error: Cannot marshal model info (%s)\n", err)
 		}
@@ -96,4 +127,12 @@ func addWorkerModel(cmd *cobra.Command, args []string) {
 	if _, err := sdk.AddWorkerModel(name, t, image, g.ID); err != nil {
 		sdk.Exit("Error: cannot add worker model (%s)\n", err)
 	}
+}
+
+func jsonWithoutHTMLEncode(t interface{}) ([]byte, error) {
+	buffer := &bytes.Buffer{}
+	encoder := json.NewEncoder(buffer)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(t)
+	return buffer.Bytes(), err
 }

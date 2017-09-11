@@ -651,15 +651,16 @@ func updateApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.D
 		return err
 	}
 
-	if err := sanity.CheckApplication(tx, p, app); err != nil {
-		log.Warning("updateApplicationHandler: Cannot check application sanity: %s\n", err)
-		return err
-	}
-
 	if err := tx.Commit(); err != nil {
 		log.Warning("updateApplicationHandler> Cannot commit transaction: %s\n", err)
 		return err
 	}
+
+	go func() {
+		if err := sanity.CheckApplication(db, p, app); err != nil {
+			log.Warning("updateApplicationHandler: Cannot check application sanity: %s", err)
+		}
+	}()
 
 	cache.DeleteAll(cache.Key("application", projectKey, "*"))
 	cache.DeleteAll(cache.Key("pipeline", projectKey, "*"))

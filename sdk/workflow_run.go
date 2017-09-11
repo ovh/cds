@@ -23,11 +23,35 @@ type WorkflowRun struct {
 	Tags             []WorkflowRunTag            `json:"tags" db:"-"`
 }
 
+// WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
+type WorkflowNodeRunRelease struct {
+	TagName        string   `json:"tag_name"`
+	ReleaseTitle   string   `json:"release_title"`
+	ReleaseContent string   `json:"release_content"`
+	Artifacts      []string `json:"artifacts"`
+}
+
 // Translate translates messages in WorkflowNodeRun
 func (r *WorkflowRun) Translate(lang string) {
 	for ki, info := range r.Infos {
 		m := NewMessage(Messages[info.Message.ID], info.Message.Args...)
 		r.Infos[ki].UserMessage = m.String(lang)
+	}
+}
+
+// Tag push a new Tag in WorkflowRunTag
+func (r *WorkflowRun) Tag(tag, value string) {
+	var found bool
+	for i := range r.Tags {
+		if r.Tags[i].Tag == tag {
+			found = true
+			if r.Tags[i].Value != value {
+				r.Tags[i].Value = strings.Join([]string{r.Tags[i].Value, value}, ",")
+			}
+		}
+	}
+	if !found {
+		r.Tags = append(r.Tags, WorkflowRunTag{Tag: tag, Value: value})
 	}
 }
 
@@ -41,8 +65,9 @@ type WorkflowRunInfo struct {
 
 //WorkflowRunTag is a tag on workflow run
 type WorkflowRunTag struct {
-	Tag   string `json:"tag" db:"tag"`
-	Value string `json:"value" db:"value"`
+	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
+	Tag           string `json:"tag" db:"tag"`
+	Value         string `json:"value" db:"value"`
 }
 
 //WorkflowNodeRun is as execution instance of a node

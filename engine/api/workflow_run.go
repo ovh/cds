@@ -62,8 +62,8 @@ func getWorkflowRunsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbM
 		return sdk.WrapError(err, "getWorkflowRunsHandler> Unable to load workflow runs")
 	}
 
-	if limit-offset > count {
-		return sdk.WrapError(sdk.ErrWrongRequest, "getWorkflowRunsHandler> Requested range %d not allowed", (limit - offset))
+	if offset > count {
+		return sdk.WrapError(sdk.ErrWrongRequest, "getWorkflowRunsHandler> Requested range %d not allowed", offset)
 	}
 
 	code := http.StatusOK
@@ -374,30 +374,30 @@ func getWorkflowNodeRunJobStepHandler(w http.ResponseWriter, r *http.Request, db
 	workflowName := vars["workflowName"]
 	number, errN := requestVarInt(r, "number")
 	if errN != nil {
-		return sdk.WrapError(errN, "getWorkflowNodeRunJobBuildLogsHandler> Number: invalid number")
+		return sdk.WrapError(errN, "getWorkflowNodeRunJobStepHandler> Number: invalid number")
 	}
 	nodeRunID, errNI := requestVarInt(r, "id")
 	if errNI != nil {
-		return sdk.WrapError(errNI, "getWorkflowNodeRunJobBuildLogsHandler> id: invalid number")
+		return sdk.WrapError(errNI, "getWorkflowNodeRunJobStepHandler> id: invalid number")
 	}
 	runJobID, errJ := requestVarInt(r, "runJobId")
 	if errJ != nil {
-		return sdk.WrapError(errJ, "getWorkflowNodeRunJobBuildLogsHandler> runJobId: invalid number")
+		return sdk.WrapError(errJ, "getWorkflowNodeRunJobStepHandler> runJobId: invalid number")
 	}
 	stepOrder, errS := requestVarInt(r, "stepOrder")
 	if errS != nil {
-		return sdk.WrapError(errS, "getWorkflowNodeRunJobBuildLogsHandler> stepOrder: invalid number")
+		return sdk.WrapError(errS, "getWorkflowNodeRunJobStepHandler> stepOrder: invalid number")
 	}
 
 	// Check workflow is in project
 	if _, errW := workflow.Load(db, projectKey, workflowName, c.User); errW != nil {
-		return sdk.WrapError(errW, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find workflow %s in project %s", workflowName, projectKey)
+		return sdk.WrapError(errW, "getWorkflowNodeRunJobStepHandler> Cannot find workflow %s in project %s", workflowName, projectKey)
 	}
 
 	// Check nodeRunID is link to workflow
 	nodeRun, errNR := workflow.LoadNodeRun(db, projectKey, workflowName, number, nodeRunID)
 	if errNR != nil {
-		return sdk.WrapError(errNR, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
+		return sdk.WrapError(errNR, "getWorkflowNodeRunJobStepHandler> Cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
 	}
 
 	var stepStatus string
@@ -420,19 +420,36 @@ stageLoop:
 	}
 
 	if stepStatus == "" {
-		return sdk.WrapError(fmt.Errorf("getWorkflowNodeRunJobBuildLogsHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
+		return sdk.WrapError(fmt.Errorf("getWorkflowNodeRunJobStepHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
 			stepOrder, runJobID, nodeRunID, number, workflowName, projectKey), "")
 	}
 
 	logs, errL := workflow.LoadStepLogs(db, runJobID, stepOrder)
 	if errL != nil {
-		return sdk.WrapError(errL, "getWorkflowNodeRunJobBuildLogsHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
+		return sdk.WrapError(errL, "getWorkflowNodeRunJobStepHandler> Cannot load log for runJob %d on step %d", runJobID, stepOrder)
 	}
 
+	ls := &sdk.Log{}
+	if logs != nil {
+		ls = logs
+	}
 	result := &sdk.BuildState{
 		Status:   sdk.StatusFromString(stepStatus),
-		StepLogs: *logs,
+		StepLogs: *ls,
 	}
 
 	return WriteJSON(w, r, result, http.StatusOK)
+}
+
+func getWorkflowRunTagsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+	vars := mux.Vars(r)
+	projectKey := vars["permProjectKey"]
+	workflowName := vars["workflowName"]
+
+	res, err := workflow.GetTagsAndValue(db, projectKey, workflowName)
+	if err != nil {
+		return sdk.WrapError(err, "getWorkflowRunTagsHandler> Error")
+	}
+
+	return WriteJSON(w, r, res, http.StatusOK)
 }

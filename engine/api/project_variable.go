@@ -95,10 +95,11 @@ func restoreProjectVariableAuditHandler(w http.ResponseWriter, r *http.Request, 
 		return err
 	}
 
-	if err := sanity.CheckProjectPipelines(db, p); err != nil {
-		log.Warning("restoreProjectVariableAuditHandler: Cannot check warnings: %s\n", err)
-		return err
-	}
+	go func() {
+		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+			log.Warning("restoreProjectVariableAuditHandler: Cannot check warnings: %s", err)
+		}
+	}()
 
 	return nil
 }
@@ -261,11 +262,11 @@ func updateVariablesInProjectHandler(w http.ResponseWriter, r *http.Request, db 
 
 	}
 
-	if err := sanity.CheckProjectPipelines(db, p); err != nil {
-		log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s\n", err)
-		return err
-
-	}
+	go func() {
+		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+			log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s")
+		}
+	}()
 
 	return nil
 }
@@ -316,11 +317,12 @@ func updateVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *
 
 	}
 
-	if err := sanity.CheckProjectPipelines(db, p); err != nil {
-		log.Warning("updateVariableInProject: Cannot check warnings: %s\n", err)
-		return err
+	go func() {
+		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+			log.Warning("updateVariableInProject: Cannot check warnings: %s", err)
+		}
+	}()
 
-	}
 	return WriteJSON(w, r, newVar, http.StatusOK)
 }
 
@@ -410,12 +412,11 @@ func addVariableInProjectHandler(w http.ResponseWriter, r *http.Request, db *gor
 		return err
 	}
 
-	err = sanity.CheckProjectPipelines(db, p)
-	if err != nil {
-		log.Warning("AddVariableInProject: Cannot check warnings: %s\n", err)
-		return err
-
-	}
+	go func() {
+		if err := sanity.CheckProjectPipelines(db, p); err != nil {
+			log.Warning("AddVariableInProject: Cannot check warnings: %s", err)
+		}
+	}()
 
 	p.Variable, err = project.GetAllVariableInProject(db, p.ID)
 	if err != nil {

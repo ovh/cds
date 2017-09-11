@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -11,13 +12,13 @@ import (
 
 	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 func getProjectsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get project name in URL
 	withApplication := FormBool(r, "application")
 
 	var projects []sdk.Project
@@ -157,9 +158,38 @@ func addProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c
 		return sdk.WrapError(err, "AddProject> Cannot insert project")
 	}
 
+	var groupAttached bool
+	for i := range p.ProjectGroups {
+		groupPermission := &p.ProjectGroups[i]
+		if strings.TrimSpace(groupPermission.Group.Name) == "" {
+			continue
+		}
+		groupAttached = true
+	}
+	if !groupAttached {
+		// check if new auto group does not already exists
+		if _, errl := group.LoadGroup(db, p.Name); errl != nil {
+			if errl == sdk.ErrGroupNotFound {
+				// group name does not exists, add it on project
+				permG := sdk.GroupPermission{
+					Group:      sdk.Group{Name: p.Name},
+					Permission: permission.PermissionReadWriteExecute,
+				}
+				p.ProjectGroups = append(p.ProjectGroups, permG)
+			} else {
+				return sdk.WrapError(errl, "AddProject> Cannot check if group already exists")
+			}
+		} else {
+			return sdk.WrapError(sdk.ErrGroupPresent, "AddProject> Group %s already exists", p.Name)
+		}
+	}
+
 	// Add group
 	for i := range p.ProjectGroups {
 		groupPermission := &p.ProjectGroups[i]
+		if strings.TrimSpace(groupPermission.Group.Name) == "" {
+			continue
+		}
 
 		// Insert group
 		groupID, new, errGroup := group.AddGroup(tx, &groupPermission.Group)
