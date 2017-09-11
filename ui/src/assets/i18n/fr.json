@@ -354,6 +354,7 @@
   "project_name_error" : "Le nom du projet est obligatoire",
   "project_no_application" : "Le projet ne contient aucune application",
   "project_no_pipeline" : "Le projet ne contient aucun pipeline",
+  "project_no_workflow" : "Le projet ne contient aucun workflow",
   "project_permission_list_title" : "Liste des permissions sur le projet : ",
   "project_permission_form_title" : "Ajouter une permission : ",
   "project_permission_form_wizard_title" : "Choisir un groupe existant - ou laisser vide pour créer automatiquement un nouveau groupe : ",
@@ -366,6 +367,7 @@
   "project_update_name_error" : "Le nom du projet est obligatoire et doit être au format alphanumérique ([a-zA-Z0-9]*)",
   "project_variable_list_title" : "Liste des variables du projet : ",
   "project_variable_form_title" : "Ajouter une nouvelle variable : ",
+  "project_pipelines_list" : "Liste des workflows du projet : ",
 
   "repo_name" : "Nom du dépôt",
   "repoman_delete_msg_ok" : "Le gestionnaire de dépôt n'est plus lié au projet",
