@@ -149,7 +149,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 				//Insert the job
 				j.PipelineStageID = oldStage.ID
 				j.Action.Type = sdk.JoinedAction
-				log.Debug(">> Creating job %s on stage %s on pipeline %s stageID:", j.Action.Name, s.Name, pip.Name, oldStage.ID)
+				log.Debug(">> Creating job %s on stage %s on pipeline %s stageID: %d", j.Action.Name, s.Name, pip.Name, oldStage.ID)
 				if err := InsertJob(db, j, oldStage.ID, pip); err != nil {
 					return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", j.Action.Name, pip.Name)
 				}
