@@ -366,7 +366,7 @@
   "project_update_name_error" : "Project name is mandatory and must respect the alphanumeric pattern ([a-zA-Z0-9]*)",
   "project_variable_list_title" : "List of project variables: ",
   "project_variable_form_title" : "Add a new variable: ",
-  "project_workflows_list" : "List of workflow in the project: ",
+  "project_workflows_list" : "List of workflows in the project: ",
 
   "repo_name" : "Repository",
   "repoman_delete_msg_ok" : "Repository mananger is detached from the project",
