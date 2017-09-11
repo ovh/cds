@@ -23,6 +23,5 @@ type HatcheryDocker struct {
 	sync.Mutex
 	workers map[string]*exec.Cmd
 	hatch   *sdk.Hatchery
-	addhost string
 	client  cdsclient.Interface
 }

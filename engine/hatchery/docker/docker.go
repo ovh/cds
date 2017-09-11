@@ -272,8 +272,8 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []
 		args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_JOB_ID=%d", jobID))
 	}
 
-	if h.addhost != "" {
-		args = append(args, fmt.Sprintf("--add-host=%s", h.addhost))
+	if h.Config.DockerAddHost != "" {
+		args = append(args, fmt.Sprintf("--add-host=%s", h.Config.DockerAddHost))
 	}
 	args = append(args, wm.Image)
 	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo 'Download worker' && curl %s/download/worker/`uname -m` -o worker && echo 'chmod worker' && chmod +x worker && echo 'starting worker' && ./worker", h.Client().APIURL()))
