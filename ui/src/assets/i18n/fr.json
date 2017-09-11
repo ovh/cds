@@ -322,7 +322,7 @@
 
   "pipeline_stage_edit" : "Édition du stage",
   "pipeline_stage_moved" : "Stage déplacé",
-  "pipeline_stage_no" : "Le pipeline ne continet aucun stage",
+  "pipeline_stage_no" : "Le pipeline ne contient aucun stage",
 
   "poller_added" : "Poller ajouté",
   "poller_create_label" : "Créer un poller",

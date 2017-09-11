@@ -22,7 +22,7 @@ declare var _: any;
 @Component({
     selector: 'app-workflow-node',
     templateUrl: './workflow.node.html',
-    styleUrls: ['./workflow.node.scss'],
+    styleUrls: ['./workflow.node.scss']
 })
 @AutoUnsubscribe()
 export class WorkflowNodeComponent implements AfterViewInit, OnInit {
