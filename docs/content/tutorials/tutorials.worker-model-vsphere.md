@@ -1,33 +1,26 @@
 +++
-title = "Setup Openstack Worker Model"
+title = "Setup VSphere Worker Model"
 weight = 4
 
 [menu.main]
 parent = "tutorials"
-identifier = "tutorials-openstack"
+identifier = "tutorials-vsphere"
 
 +++
 
-CDS build using OVH.com Openstack infrastructure
+CDS build using VSphere infrastructure
 
-## Create Openstack user
+## Add VSphere worker model
 
-In OVH manager, in [cloud section](https://www.ovh.com/manager/cloud), click on the menu on the *Servers>Openstack* item.
+We need to define a VSphere worker model to have VSphere hatchery booting workers.
 
-You will be able to create a worker model Openstack user, enter description (name and password will be generated).
+We will create a worker model called debian8-docker:
 
-## Add Openstack worker model
-
-We need to define an Openstack worker model to have Openstack hatchery booting workers.
-
-We will create a model called docker:
-
- * With low hardware capacity (vps-ssd-1)
  * On Debian 8
  * With docker ready to use
  * Git installed
 
-First, define a udata file. It is a shell script executed just after the boot sequence complete. Our docker udata will look like this:
+First, define a udata file. It is a shell script executed just after the boot sequence complete. Our udata will look like this:
 
 ```bash
 # Install docker
@@ -55,5 +48,7 @@ apt-get -y --force-yes install binutils >> /tmp/user_data 2>&1
 Last step, define worker model in cds:
 
 ```bash
-$ cds worker model add docker openstack --image="Debian 8" --flavor="vps-ssd-1" --userdata="./docker.udata"
+$ cds worker model add debian8-docker vsphere --image="debian8" --userdata="./yourscript.sh"
 ```
+
+`--image` is the name of your virtual machine that you have created before on your host to clone (See [Advanced]({{< relref "advanced.hatcheries.vsphere.md" >}}))

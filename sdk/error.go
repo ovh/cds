@@ -206,7 +206,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrEnvironmentCannotBeDeleted.ID:            "Environment cannot be deleted. It is still in used",
 	ErrInvalidPipeline.ID:                       "Invalid pipeline",
 	ErrKeyNotFound.ID:                           "Key not found",
-	ErrPipelineAlreadyExists.ID:                 "Pipeline already exist",
+	ErrPipelineAlreadyExists.ID:                 "Pipeline already exists",
 	ErrJobAlreadyBooked.ID:                      "Job already booked",
 	ErrPipelineBuildNotFound.ID:                 "Pipeline build not found",
 	ErrAlreadyTaken.ID:                          "This job is already taken by another worker",

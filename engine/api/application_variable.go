@@ -92,22 +92,20 @@ func (api *API) restoreAuditHandler() Handler {
 			}
 		}
 
-		err = tx.Commit()
-		if err != nil {
+		if err := tx.Commit(); err != nil {
 			log.Warning("restoreAuditHandler: Cannot commit transaction:  %s\n", err)
 			return sdk.ErrUnknownError
 		}
 
-		err = sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p)
-		if err != nil {
-			log.Warning("restoreAuditHandler: Cannot check warnings: %s\n", err)
-			return err
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Warning("restoreAuditHandler: Cannot check warnings: %s", err)
+			}
 
-		if err := sanity.CheckApplication(tx, p, app); err != nil {
-			log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
-			return err
-		}
+			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
+				log.Warning("restoreAuditHandler: Cannot check application sanity: %s")
+			}
+		}()
 
 		return nil
 	}
@@ -212,13 +210,15 @@ func (api *API) deleteVariableFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot delete %s", varName)
 		}
 
-		if err := sanity.CheckApplication(tx, p, app); err != nil {
-			return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromApplicationHandler: Cannot commit transaction")
 		}
+
+		go func() {
+			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
+				log.Warning("restoreAuditHandler: Cannot check application sanity: %s", err)
+			}
+		}()
 
 		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
 		if err != nil {
@@ -321,15 +321,15 @@ func (api *API) updateVariablesInApplicationHandler() Handler {
 			return sdk.ErrUnknownError
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-			log.Warning("updateVariableInApplicationHandler: Cannot check warnings: %s\n", err)
-			return err
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Warning("updateVariableInApplicationHandler: Cannot check warnings: %s\n", err)
+			}
 
-		if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
-			log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
-			return err
-		}
+			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
+				log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s", err)
+			}
+		}()
 
 		return nil
 	}
@@ -374,18 +374,19 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot commit transaction")
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot check warnings")
-		}
-
 		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot load variables")
 		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Warning("updateVariableInApplicationHandler: Cannot check warnings: %v", err)
+			}
 
-		if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
-			return sdk.WrapError(err, "updateVariableInApplicationHandler: Cannot check application sanity")
-		}
+			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
+				log.Warning("updateVariableInApplicationHandler: Cannot check application sanity: %s", err)
+			}
+		}()
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
@@ -444,21 +445,21 @@ func (api *API) addVariableInApplicationHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-			log.Warning("addVariableInApplicationHandler: Cannot check warnings: %s\n", err)
-			return err
-		}
-
 		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)
 		if err != nil {
 			log.Warning("addVariableInApplicationHandler: Cannot get variables: %s\n", err)
 			return err
 		}
 
-		if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
-			log.Warning("addVariableInApplicationHandler: Cannot check application sanity: %s\n", err)
-			return err
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Warning("addVariableInApplicationHandler: Cannot check warnings: %s\n", err)
+			}
+
+			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
+				log.Warning("addVariableInApplicationHandler: Cannot check application sanity: %s", err)
+			}
+		}()
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}

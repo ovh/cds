@@ -215,10 +215,11 @@ func (api *API) updateEnvironmentsHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-			log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s\n", err)
-			return err
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
+				log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s", err)
+			}
+		}()
 
 		return WriteJSON(w, r, proj, http.StatusOK)
 	}

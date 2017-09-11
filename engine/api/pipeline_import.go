@@ -58,8 +58,7 @@ func (api *API) importPipelineHandler() Handler {
 		}
 
 		if errorParse != nil {
-			log.Warning("importNewEnvironmentHandler> Cannot parsing: %s\n", errorParse)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Cannot parsing: %s", errorParse)
 		}
 
 		// Check if pipeline exists

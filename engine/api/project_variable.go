@@ -97,10 +97,11 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 			return err
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-			log.Warning("restoreProjectVariableAuditHandler: Cannot check warnings: %s\n", err)
-			return err
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Warning("restoreProjectVariableAuditHandler: Cannot check warnings: %s", err)
+			}
+		}()
 
 		return nil
 	}
@@ -266,14 +267,13 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			log.Warning("updateVariablesInProjectHandler: Cannot commit transaction: %s\n", err)
 			return sdk.ErrNotFound
-
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-			log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s\n", err)
-			return err
-
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s")
+			}
+		}()
 
 		return nil
 	}
@@ -326,11 +326,12 @@ func (api *API) updateVariableInProjectHandler() Handler {
 
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-			log.Warning("updateVariableInProject: Cannot check warnings: %s\n", err)
-			return err
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Warning("updateVariableInProject: Cannot check warnings: %s", err)
+			}
+		}()
 
-		}
 		return WriteJSON(w, r, newVar, http.StatusOK)
 	}
 }
@@ -424,12 +425,11 @@ func (api *API) addVariableInProjectHandler() Handler {
 			return err
 		}
 
-		err = sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p)
-		if err != nil {
-			log.Warning("AddVariableInProject: Cannot check warnings: %s\n", err)
-			return err
-
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Warning("AddVariableInProject: Cannot check warnings: %s", err)
+			}
+		}()
 
 		p.Variable, err = project.GetAllVariableInProject(api.mustDB(), p.ID)
 		if err != nil {

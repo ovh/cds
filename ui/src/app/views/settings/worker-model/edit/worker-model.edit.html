@@ -30,7 +30,7 @@
                 <div class="content">
                   <p>{{ 'worker_model_enabled' | translate }}</p>
                 </div>
-                <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=true">{{ 'worker_model_disable' | translate }}</button>
+                <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=true;clickSaveButton()">{{ 'worker_model_disable' | translate }}</button>
               </div>
 
               <div class="ui icon message" *ngIf="workerModel.disabled">
@@ -38,7 +38,7 @@
                 <div class="content">
                   <p>{{ 'worker_model_disabled' | translate }}</p>
                 </div>
-                <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=false">{{ 'worker_model_enable' | translate }}</button>
+                <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=false;clickSaveButton()">{{ 'worker_model_enable' | translate }}</button>
               </div>
               <div class="ui icon message" *ngIf="workerModel.nb_spawn_err > 0">
                 <i class="warning red icon"></i>

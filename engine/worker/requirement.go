@@ -27,10 +27,13 @@ var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement)
 	sdk.MemoryRequirement:        checkMemoryRequirement,
 }
 
-func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group) (bool, []sdk.Requirement) {
+func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, bookedJobID int64) (bool, []sdk.Requirement) {
 	requirementsOK := true
 	errRequirements := []sdk.Requirement{}
 	w.client.WorkerSetStatus(sdk.StatusChecking)
+
+	log.Debug("checkRequirements> for JobID:%d model of worker: %+v", bookedJobID, w.model)
+	log.Debug("checkRequirements> for JobID:%d execGroups: %+v", bookedJobID, execGroups)
 
 	if execGroups != nil && len(execGroups) > 0 && w.model.GroupID > 0 {
 		checkGroup := false
@@ -59,6 +62,7 @@ func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group) 
 		}
 	}
 
+	log.Debug("checkRequirements> checkRequirements:%t errRequirements:%s", requirementsOK, errRequirements)
 	return requirementsOK, errRequirements
 }
 

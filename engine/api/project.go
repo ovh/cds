@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -150,6 +152,32 @@ func (api *API) addProjectHandler() Handler {
 
 		if exist {
 			return sdk.WrapError(sdk.ErrConflict, "AddProject> Project %s already exists", p.Key)
+		}
+
+		var groupAttached bool
+		for i := range p.ProjectGroups {
+			groupPermission := &p.ProjectGroups[i]
+			if strings.TrimSpace(groupPermission.Group.Name) == "" {
+				continue
+			}
+			groupAttached = true
+		}
+		if !groupAttached {
+			// check if new auto group does not already exists
+			if _, errl := group.LoadGroup(api.mustDB(), p.Name); errl != nil {
+				if errl == sdk.ErrGroupNotFound {
+					// group name does not exists, add it on project
+					permG := sdk.GroupPermission{
+						Group:      sdk.Group{Name: p.Name},
+						Permission: permission.PermissionReadWriteExecute,
+					}
+					p.ProjectGroups = append(p.ProjectGroups, permG)
+				} else {
+					return sdk.WrapError(errl, "AddProject> Cannot check if group already exists")
+				}
+			} else {
+				return sdk.WrapError(sdk.ErrGroupPresent, "AddProject> Group %s already exists", p.Name)
+			}
 		}
 
 		//Create a project within a transaction
