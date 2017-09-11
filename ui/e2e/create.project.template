@@ -8,8 +8,6 @@
       fill:
       - find: input[name="projectname"]
         text: '{{.ui.project}}'
-      - find: '#PermissionGroup input.search'
-        text: CDS_TEAM
     screenshot: project_create_2_group.png
   - action:
       click:
