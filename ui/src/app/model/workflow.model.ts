@@ -88,6 +88,7 @@ export class WorkflowNodeJoinTrigger {
 // WorkflowNode represents a node in w workflow tree
 export class WorkflowNode {
     id: number;
+    name: string;
     ref: string;
     workflow_id: number;
     pipeline_id: number;

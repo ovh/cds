@@ -102,14 +102,15 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     openEditContextModal(): void {
-        let sub = this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
-            if (pips.get(this.project.key + '-' + this.node.pipeline.name)) {
-                setTimeout(() => {
-                    this.workflowContext.show({observable: true, closable: false, autofocus: false});
-                    sub.unsubscribe();
-                }, 100);
-            }
-        });
+        let sub = this.pipelineSubscription =
+            this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
+                if (pips.get(this.project.key + '-' + this.node.pipeline.name)) {
+                    setTimeout(() => {
+                        this.workflowContext.show({observable: true, closable: false, autofocus: false});
+                        sub.unsubscribe();
+                    }, 100);
+                }
+            });
     }
 
     saveTrigger(): void {
