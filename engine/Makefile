@@ -107,7 +107,7 @@ test-xunit-report: $(GO_GO2XUNIT)
 	fi;
 
 clean:
-	rm -rf $(TARGET_DIR)/ls
+	rm -rf $(TARGET_DIR)
 	rm -f ./tests.log **/tests.log
 	rm -f ./tests.log.xml **/tests.log.xml
 	rm -f ./*.coverprofile **/*.coverprofile
