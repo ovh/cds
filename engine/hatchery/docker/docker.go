@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/spf13/viper"
@@ -18,16 +17,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// HatcheryConfiguration is the configuration for hatchery
-type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
-}
-
 // New instanciates a new hatchery docker
 func New() *HatcheryDocker {
 	return new(HatcheryDocker)
 }
 
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryDocker) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
 		return err
@@ -42,6 +37,7 @@ func (h *HatcheryDocker) ApplyConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryDocker) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
@@ -55,42 +51,13 @@ func (h *HatcheryDocker) CheckConfiguration(cfg interface{}) error {
 	if hconfig.API.Token == "" {
 		return fmt.Errorf("API Token URL is mandatory")
 	}
-
-	//TODO
-
 	return nil
 }
 
+// Serve start the HatcheryDocker server
 func (h *HatcheryDocker) Serve(ctx context.Context) error {
-	//TODO: refactor this ugly func
-	hatchery.Create(h,
-		h.Config.Name,
-		h.Config.API.HTTP.URL,
-		h.Config.API.Token,
-		int64(h.Config.Provision.MaxWorker),
-		h.Config.Provision.Disabled,
-		h.Config.API.RequestTimeout,
-		h.Config.API.MaxHeartbeatFailures,
-		h.Config.API.HTTP.Insecure,
-		h.Config.Provision.Frequency,
-		h.Config.Provision.RegisterFrequency,
-		h.Config.LogOptions.SpawnOptions.ThresholdWarning,
-		h.Config.LogOptions.SpawnOptions.ThresholdCritical,
-		h.Config.Provision.GraceTimeQueued)
+	hatchery.Create(h)
 	return nil
-}
-
-var hatcheryDocker *HatcheryDocker
-
-// HatcheryDocker spawns instances of worker model with type 'Docker'
-// by directly using available docker daemon
-type HatcheryDocker struct {
-	Config HatcheryConfiguration
-	sync.Mutex
-	workers map[string]*exec.Cmd
-	hatch   *sdk.Hatchery
-	addhost string
-	client  cdsclient.Interface
 }
 
 // ID must returns hatchery id
@@ -111,6 +78,11 @@ func (h *HatcheryDocker) Client() cdsclient.Interface {
 	return h.client
 }
 
+//Configuration returns Hatchery CommonConfiguration
+func (h *HatcheryDocker) Configuration() hatchery.CommonConfiguration {
+	return h.Config.CommonConfiguration
+}
+
 // ModelType returns type of hatchery
 func (*HatcheryDocker) ModelType() string {
 	return sdk.Docker
@@ -124,21 +96,25 @@ func (h *HatcheryDocker) CanSpawn(model *sdk.Model, jobID int64, requirements []
 			return false
 		}
 	}
-
 	return true
 }
 
 // Init starts cleaning routine
 // and check hatchery can run in docker mode with given configuration
-func (h *HatcheryDocker) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+func (h *HatcheryDocker) Init() error {
 	h.workers = make(map[string]*exec.Cmd)
 
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("docker", name),
+		Name:    hatchery.GenerateName("docker", h.Configuration().Name),
 		Version: sdk.VERSION,
 	}
 
-	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	h.client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -296,8 +272,8 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []
 		args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_JOB_ID=%d", jobID))
 	}
 
-	if h.addhost != "" {
-		args = append(args, fmt.Sprintf("--add-host=%s", h.addhost))
+	if h.Config.DockerAddHost != "" {
+		args = append(args, fmt.Sprintf("--add-host=%s", h.Config.DockerAddHost))
 	}
 	args = append(args, wm.Image)
 	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo 'Download worker' && curl %s/download/worker/`uname -m` -o worker && echo 'chmod worker' && chmod +x worker && echo 'starting worker' && ./worker", h.Client().APIURL()))

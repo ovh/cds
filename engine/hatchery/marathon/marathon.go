@@ -2,8 +2,10 @@ package marathon
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"math"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -11,6 +13,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
+	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
 	"github.com/spf13/viper"
 
@@ -20,16 +23,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// HatcheryConfiguration is the configuration for hatchery
-type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
-}
-
 // New instanciates a new Hatchery Marathon
 func New() *HatcheryMarathon {
 	return new(HatcheryMarathon)
 }
 
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
 		return err
@@ -44,6 +43,7 @@ func (h *HatcheryMarathon) ApplyConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
@@ -58,52 +58,65 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("API Token URL is mandatory")
 	}
 
-	//TODO
+	if hconfig.MarathonHost == "" {
+		return fmt.Errorf("Marathon Host is mandatory")
+	}
 
+	if hconfig.MarathonID == "" {
+		return fmt.Errorf("Marathon ID is mandatory")
+	}
+
+	if hconfig.MarathonUser == "" {
+		return fmt.Errorf("Marathon User is mandatory")
+	}
+
+	if hconfig.MarathonPassword == "" {
+		return fmt.Errorf("Marathon Password is mandatory")
+	}
+
+	h.marathonLabels = map[string]string{}
+	if hconfig.MarathonLabelsString != "" {
+		array := strings.Split(hconfig.MarathonLabelsString, ",")
+		for _, s := range array {
+			if !strings.Contains(s, "=") {
+				continue
+			}
+			tuple := strings.Split(s, "=")
+			if len(tuple) != 2 {
+				return fmt.Errorf("malformatted configuration Marathon Labels")
+			}
+			h.marathonLabels[tuple[0]] = tuple[1]
+		}
+	}
+
+	//Custom http client with 3 retries
+	httpClient := &http.Client{
+		Transport: &httpcontrol.Transport{
+			RequestTimeout:  time.Minute,
+			MaxTries:        3,
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: hconfig.API.HTTP.Insecure},
+		},
+	}
+
+	config := marathon.NewDefaultConfig()
+	config.URL = hconfig.MarathonHost
+	config.HTTPBasicAuthUser = hconfig.MarathonUser
+	config.HTTPBasicPassword = hconfig.MarathonPassword
+	config.HTTPClient = httpClient
+
+	marathonClient, err := marathon.NewClient(config)
+	if err != nil {
+		return fmt.Errorf("Connection failed on %s", viper.GetString("marathon-host"))
+	}
+
+	h.marathonClient = marathonClient
 	return nil
 }
 
+// Serve start the HatcheryMarathon server
 func (h *HatcheryMarathon) Serve(ctx context.Context) error {
-	//TODO: refactor this ugly func
-	hatchery.Create(h,
-		h.Config.Name,
-		h.Config.API.HTTP.URL,
-		h.Config.API.Token,
-		int64(h.Config.Provision.MaxWorker),
-		h.Config.Provision.Disabled,
-		h.Config.API.RequestTimeout,
-		h.Config.API.MaxHeartbeatFailures,
-		h.Config.API.HTTP.Insecure,
-		h.Config.Provision.Frequency,
-		h.Config.Provision.RegisterFrequency,
-		h.Config.LogOptions.SpawnOptions.ThresholdWarning,
-		h.Config.LogOptions.SpawnOptions.ThresholdCritical,
-		h.Config.Provision.GraceTimeQueued)
+	hatchery.Create(h)
 	return nil
-}
-
-var hatcheryMarathon *HatcheryMarathon
-
-// HatcheryMarathon implements HatcheryMode interface for mesos mode
-type HatcheryMarathon struct {
-	Config HatcheryConfiguration
-	hatch  *sdk.Hatchery
-	token  string
-
-	marathonClient marathon.Marathon
-	client         cdsclient.Interface
-
-	marathonHost     string
-	marathonUser     string
-	marathonPassword string
-
-	marathonID           string
-	marathonLabelsString string
-	marathonLabels       map[string]string
-
-	defaultMemory      int
-	workerTTL          int
-	workerSpawnTimeout int
 }
 
 // ID must returns hatchery id
@@ -122,6 +135,11 @@ func (h *HatcheryMarathon) Hatchery() *sdk.Hatchery {
 //Client returns cdsclient instance
 func (h *HatcheryMarathon) Client() cdsclient.Interface {
 	return h.client
+}
+
+//Configuration returns Hatchery CommonConfiguration
+func (h *HatcheryMarathon) Configuration() hatchery.CommonConfiguration {
+	return h.Config.CommonConfiguration
 }
 
 // ModelType returns type of hatchery
@@ -151,7 +169,7 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 		return false
 	}
 
-	apps, err := h.listApplications(h.marathonID)
+	apps, err := h.listApplications(h.Config.MarathonID)
 	if err != nil {
 		log.Info("CanSpawn> Error on m.listApplications() : %s", errd)
 		return false
@@ -176,7 +194,7 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 	var logJob string
 
 	// Estimate needed memory, we will set 110% of required memory
-	memory := h.defaultMemory
+	memory := h.Config.DefaultMemory
 
 	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
 	if registerOnly {
@@ -197,7 +215,7 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 		"CDS_HATCHERY":      fmt.Sprintf("%d", h.hatch.ID),
 		"CDS_HATCHERY_NAME": fmt.Sprintf("%s", h.hatch.Name),
 		"CDS_SINGLE_USE":    "1",
-		"CDS_TTL":           fmt.Sprintf("%d", h.workerTTL),
+		"CDS_TTL":           fmt.Sprintf("%d", h.Config.WorkerTTL),
 	}
 
 	if viper.GetString("worker_graylog_host") != "" {
@@ -238,7 +256,7 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 	mem := float64(memory * 110 / 100)
 
 	application := &marathon.Application{
-		ID:  fmt.Sprintf("%s/%s", h.marathonID, workerName),
+		ID:  fmt.Sprintf("%s/%s", h.Config.MarathonID, workerName),
 		Cmd: &cmd,
 		Container: &marathon.Container{
 			Docker: &marathon.Docker{
@@ -252,7 +270,7 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 		Env:       &env,
 		Instances: &instance,
 		Mem:       &mem,
-		Labels:    &hatcheryMarathon.marathonLabels,
+		Labels:    &h.marathonLabels,
 	}
 
 	if _, err := h.marathonClient.CreateApplication(application); err != nil {
@@ -301,12 +319,12 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 		go func(id string) {
 			defer wg.Done()
 			go func() {
-				time.Sleep((time.Duration(h.workerSpawnTimeout) + 1) * time.Second)
+				time.Sleep((time.Duration(h.Config.WorkerSpawnTimeout) + 1) * time.Second)
 				if done {
 					return
 				}
 				// try to delete deployment
-				log.Debug("spawnMarathonDockerWorker> %s timeout (%d) on deployment %s", logJob, h.workerSpawnTimeout, id)
+				log.Debug("spawnMarathonDockerWorker> %s timeout (%d) on deployment %s", logJob, h.Config.WorkerSpawnTimeout, id)
 				if _, err := h.marathonClient.DeleteDeployment(id, true); err != nil {
 					log.Warning("spawnMarathonDockerWorker> %s error on delete timeouted deployment %s: %s", logJob, id, err.Error())
 				}
@@ -314,7 +332,7 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 				wg.Done()
 			}()
 
-			if err := h.marathonClient.WaitOnDeployment(id, time.Duration(h.workerSpawnTimeout)*time.Second); err != nil {
+			if err := h.marathonClient.WaitOnDeployment(id, time.Duration(h.Config.WorkerSpawnTimeout)*time.Second); err != nil {
 				log.Warning("spawnMarathonDockerWorker> %s error on deployment %s: %s", logJob, id, err.Error())
 				successChan <- false
 				return
@@ -347,14 +365,14 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 func (h *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
 	values := url.Values{}
 	values.Set("embed", "apps.counts")
-	values.Set("id", hatcheryMarathon.marathonID)
+	values.Set("id", h.Config.MarathonID)
 	return h.marathonClient.ListApplications(values)
 }
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcheryMarathon) WorkersStarted() int {
-	apps, err := h.listApplications(hatcheryMarathon.marathonID)
+	apps, err := h.listApplications(h.Config.MarathonID)
 	if err != nil {
 		log.Warning("WorkersStarted> error on list applications err:%s", err)
 		return 0
@@ -365,7 +383,7 @@ func (h *HatcheryMarathon) WorkersStarted() int {
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
-	apps, err := h.listApplications(hatcheryMarathon.marathonID)
+	apps, err := h.listApplications(h.Config.MarathonID)
 	if err != nil {
 		return 0
 	}
@@ -381,13 +399,18 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 }
 
 // Init only starts killing routine of worker not registered
-func (h *HatcheryMarathon) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+func (h *HatcheryMarathon) Init() error {
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("marathon", name),
+		Name:    hatchery.GenerateName("marathon", h.Configuration().Name),
 		Version: sdk.VERSION,
 	}
 
-	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	h.client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -422,7 +445,7 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 		return err
 	}
 
-	apps, err := h.listApplications(hatcheryMarathon.marathonID)
+	apps, err := h.listApplications(h.Config.MarathonID)
 	if err != nil {
 		return err
 	}
@@ -456,7 +479,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 
 	values := url.Values{}
 	values.Set("embed", "apps.counts")
-	values.Set("id", hatcheryMarathon.marathonID)
+	values.Set("id", h.Config.MarathonID)
 
 	apps, err := h.marathonClient.Applications(values)
 	if err != nil {

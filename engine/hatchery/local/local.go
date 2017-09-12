@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
@@ -18,17 +17,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// HatcheryConfiguration is the configuration for local hatchery
-type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
-	Basedir string `default:"/tmp"`
-}
-
 // New instanciates a new hatchery local
 func New() *HatcheryLocal {
 	return new(HatcheryLocal)
 }
 
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
 		return err
@@ -39,10 +33,10 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
-
 	return nil
 }
 
+// CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
@@ -69,34 +63,10 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// Serve start the HatcheryLocal server
 func (h *HatcheryLocal) Serve(ctx context.Context) error {
-	//TODO: refactor this ugly func
-	hatchery.Create(h,
-		h.Config.Name,
-		h.Config.API.HTTP.URL,
-		h.Config.API.Token,
-		int64(h.Config.Provision.MaxWorker),
-		h.Config.Provision.Disabled,
-		h.Config.API.RequestTimeout,
-		h.Config.API.MaxHeartbeatFailures,
-		h.Config.API.HTTP.Insecure,
-		h.Config.Provision.Frequency,
-		h.Config.Provision.RegisterFrequency,
-		h.Config.LogOptions.SpawnOptions.ThresholdWarning,
-		h.Config.LogOptions.SpawnOptions.ThresholdCritical,
-		h.Config.Provision.GraceTimeQueued)
+	hatchery.Create(h)
 	return nil
-}
-
-// HatcheryLocal implements HatcheryMode interface for local usage
-type HatcheryLocal struct {
-	Config HatcheryConfiguration
-	sync.Mutex
-	hatch   *sdk.Hatchery
-	workers map[string]*exec.Cmd
-	client  cdsclient.Interface
-	os      string
-	arch    string
 }
 
 // ID must returns hatchery id
@@ -115,6 +85,11 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 //Client returns cdsclient instance
 func (h *HatcheryLocal) Client() cdsclient.Interface {
 	return h.client
+}
+
+//Configuration returns Hatchery CommonConfiguration
+func (h *HatcheryLocal) Configuration() hatchery.CommonConfiguration {
+	return h.Config.CommonConfiguration
 }
 
 // ModelType returns type of hatchery
@@ -280,10 +255,15 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 }
 
 // Init register local hatchery with its worker model
-func (h *HatcheryLocal) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]*exec.Cmd)
 
-	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	h.client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+	)
 
 	req, err := h.Client().Requirements()
 	if err != nil {
@@ -295,7 +275,7 @@ func (h *HatcheryLocal) Init(name, api, token string, requestSecondsTimeout int,
 		return fmt.Errorf("Cannot check local capabilities: %s", err)
 	}
 
-	genname := hatchery.GenerateName("local", name)
+	genname := hatchery.GenerateName("local", h.Configuration().Name)
 
 	h.hatch = &sdk.Hatchery{
 		Name: genname,

@@ -16,13 +16,18 @@ import (
 )
 
 // Init create new client for vsphere
-func (h *HatcheryVSphere) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+func (h *HatcheryVSphere) Init() error {
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("vsphere", name),
+		Name:    hatchery.GenerateName("vsphere", h.Configuration().Name),
 		Version: sdk.VERSION,
 	}
 
-	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	h.client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}

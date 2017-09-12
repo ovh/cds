@@ -7,9 +7,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gophercloud/gophercloud"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/tenantnetworks"
-	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 
@@ -19,16 +16,26 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// HatcheryConfiguration is the configuration for hatchery
-type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
-}
+var (
+	hatcheryOpenStack *HatcheryOpenstack
+
+	workersAlive map[string]int64
+
+	ipsInfos = struct {
+		mu  sync.RWMutex
+		ips map[string]ipInfos
+	}{
+		mu:  sync.RWMutex{},
+		ips: map[string]ipInfos{},
+	}
+)
 
 // New instanciates a new Hatchery Openstack
 func New() *HatcheryOpenstack {
 	return new(HatcheryOpenstack)
 }
 
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
 		return err
@@ -43,6 +50,7 @@ func (h *HatcheryOpenstack) ApplyConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
@@ -57,70 +65,43 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("API Token URL is mandatory")
 	}
 
-	//TODO
+	if hconfig.Tenant == "" {
+		return fmt.Errorf("Openstack-tenant is mandatory")
+	}
+
+	if hconfig.User == "" {
+		return fmt.Errorf("Openstack-user is mandatory")
+	}
+
+	if hconfig.Address == "" {
+		return fmt.Errorf("Openstack-auth-endpoint is mandatory")
+	}
+
+	if hconfig.Password == "" {
+		return fmt.Errorf("Openstack-password is mandatory")
+	}
+
+	if hconfig.Region == "" {
+		return fmt.Errorf("Openstack-region is mandatory")
+	}
+
+	if hconfig.IPRange != "" {
+		ips, err := IPinRanges(hconfig.IPRange)
+		if err != nil {
+			return fmt.Errorf("flag or environment variable openstack-ip-range error: %s", err)
+		}
+		for _, ip := range ips {
+			ipsInfos.ips[ip] = ipInfos{}
+		}
+	}
 
 	return nil
 }
 
+// Serve start the HatcheryOpenstack server
 func (h *HatcheryOpenstack) Serve(ctx context.Context) error {
-	//TODO: refactor this ugly func
-	hatchery.Create(h,
-		h.Config.Name,
-		h.Config.API.HTTP.URL,
-		h.Config.API.Token,
-		int64(h.Config.Provision.MaxWorker),
-		h.Config.Provision.Disabled,
-		h.Config.API.RequestTimeout,
-		h.Config.API.MaxHeartbeatFailures,
-		h.Config.API.HTTP.Insecure,
-		h.Config.Provision.Frequency,
-		h.Config.Provision.RegisterFrequency,
-		h.Config.LogOptions.SpawnOptions.ThresholdWarning,
-		h.Config.LogOptions.SpawnOptions.ThresholdCritical,
-		h.Config.Provision.GraceTimeQueued)
+	hatchery.Create(h)
 	return nil
-}
-
-var hatcheryOpenStack *HatcheryOpenstack
-
-var workersAlive map[string]int64
-
-type ipInfos struct {
-	workerName     string
-	dateLastBooked time.Time
-}
-
-var ipsInfos = struct {
-	mu  sync.RWMutex
-	ips map[string]ipInfos
-}{
-	mu:  sync.RWMutex{},
-	ips: map[string]ipInfos{},
-}
-
-// HatcheryOpenstack spawns instances of worker model with type 'ISO'
-// by startup up virtual machines on /cloud
-type HatcheryOpenstack struct {
-	Config          HatcheryConfiguration
-	hatch           *sdk.Hatchery
-	flavors         []flavors.Flavor
-	networks        []tenantnetworks.Network
-	images          []images.Image
-	openstackClient *gophercloud.ServiceClient
-	client          cdsclient.Interface
-
-	// User provided parameters
-	address            string
-	user               string
-	password           string
-	endpoint           string
-	tenant             string
-	region             string
-	networkString      string // flag from cli
-	networkID          string // computed from networkString
-	workerTTL          int
-	disableCreateImage bool
-	createImageTimeout int
 }
 
 // ID returns hatchery id
@@ -139,6 +120,11 @@ func (h *HatcheryOpenstack) Hatchery() *sdk.Hatchery {
 //Client returns cdsclient instance
 func (h *HatcheryOpenstack) Client() cdsclient.Interface {
 	return h.client
+}
+
+//Configuration returns Hatchery CommonConfiguration
+func (h *HatcheryOpenstack) Configuration() hatchery.CommonConfiguration {
+	return h.Config.CommonConfiguration
 }
 
 // ModelType returns type of hatchery
@@ -261,7 +247,7 @@ func (h *HatcheryOpenstack) killAwolServers() {
 			// if it's was a worker model for registration
 			// check if we need to create a new openstack image from it
 			// by comparing userDateLastModified from worker model
-			if !h.disableCreateImage && s.Status == "SHUTOFF" && registerOnly == "true" {
+			if !h.Config.DisableCreateImage && s.Status == "SHUTOFF" && registerOnly == "true" {
 				h.killAwolServersComputeImage(workerModelName, workerModelNameLastModified, s.ID, model, flavor)
 			}
 
@@ -317,11 +303,11 @@ func (h *HatcheryOpenstack) killAwolServersComputeImage(workerModelName, workerM
 	if err != nil {
 		log.Error("killAwolServersComputeImage> error on create image for worker model %s: %s", workerModelName, err)
 	} else {
-		log.Info("killAwolServersComputeImage> image %s created for worker model %s - waiting %ds for saving created img...", imageID, workerModelName, h.createImageTimeout)
+		log.Info("killAwolServersComputeImage> image %s created for worker model %s - waiting %ds for saving created img...", imageID, workerModelName, h.Config.CreateImageTimeout)
 
 		startTime := time.Now().Unix()
 		var newImageIsActive bool
-		for time.Now().Unix()-startTime < int64(hatcheryOpenStack.createImageTimeout) {
+		for time.Now().Unix()-startTime < int64(h.Config.CreateImageTimeout) {
 			newImage, err := images.Get(h.openstackClient, imageID).Extract()
 			if err != nil {
 				log.Error("killAwolServersComputeImage> error on get new image %s for worker model %s: %s", imageID, workerModelName, err)

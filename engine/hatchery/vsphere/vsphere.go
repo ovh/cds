@@ -7,9 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/vmware/govmomi"
-	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
@@ -18,16 +15,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// HatcheryConfiguration is the configuration for hatchery
-type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
-}
-
 // New instanciates a new Hatchery vsphere
 func New() *HatcheryVSphere {
 	return new(HatcheryVSphere)
 }
 
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
 func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	if err := h.CheckConfiguration(cfg); err != nil {
 		return err
@@ -42,6 +35,7 @@ func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
 	return nil
 }
 
+// CheckConfiguration checks the validity of the configuration object
 func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 	hconfig, ok := cfg.(HatcheryConfiguration)
 	if !ok {
@@ -56,55 +50,29 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("API Token URL is mandatory")
 	}
 
-	//TODO
+	if hconfig.VSphereUser == "" {
+		return fmt.Errorf("vsphere-user is mandatory")
+	}
+
+	if hconfig.VSphereEndpoint == "" {
+		return fmt.Errorf("vsphere-endpoint is mandatory")
+	}
+
+	if hconfig.VSpherePassword == "" {
+		return fmt.Errorf("vsphere-password is mandatory")
+	}
+
+	if hconfig.VSphereDatacenterString == "" {
+		return fmt.Errorf("vsphere-datacenter is mandatory")
+	}
 
 	return nil
 }
 
+// Serve start the HatcheryVSphere server
 func (h *HatcheryVSphere) Serve(ctx context.Context) error {
-	//TODO: refactor this ugly func
-	hatchery.Create(h,
-		h.Config.Name,
-		h.Config.API.HTTP.URL,
-		h.Config.API.Token,
-		int64(h.Config.Provision.MaxWorker),
-		h.Config.Provision.Disabled,
-		h.Config.API.RequestTimeout,
-		h.Config.API.MaxHeartbeatFailures,
-		h.Config.API.HTTP.Insecure,
-		h.Config.Provision.Frequency,
-		h.Config.Provision.RegisterFrequency,
-		h.Config.LogOptions.SpawnOptions.ThresholdWarning,
-		h.Config.LogOptions.SpawnOptions.ThresholdCritical,
-		h.Config.Provision.GraceTimeQueued)
+	hatchery.Create(h)
 	return nil
-}
-
-var hatcheryVSphere *HatcheryVSphere
-
-// HatcheryVSphere spawns vm
-type HatcheryVSphere struct {
-	Config     HatcheryConfiguration
-	hatch      *sdk.Hatchery
-	images     []string
-	datacenter *object.Datacenter
-	finder     *find.Finder
-	network    object.NetworkReference
-	vclient    *govmomi.Client
-	client     cdsclient.Interface
-
-	// User provided parameters
-	endpoint           string
-	user               string
-	password           string
-	host               string
-	datacenterString   string
-	datastoreString    string
-	networkString      string
-	cardName           string
-	workerTTL          int
-	disableCreateImage bool
-	createImageTimeout int
 }
 
 // CanSpawn return wether or not hatchery can spawn model
@@ -121,6 +89,11 @@ func (h *HatcheryVSphere) CanSpawn(model *sdk.Model, jobID int64, requirements [
 //Client returns cdsclient instance
 func (h *HatcheryVSphere) Client() cdsclient.Interface {
 	return h.client
+}
+
+//Configuration returns Hatchery CommonConfiguration
+func (h *HatcheryVSphere) Configuration() hatchery.CommonConfiguration {
+	return h.Config.CommonConfiguration
 }
 
 // NeedRegistration return true if worker model need regsitration
