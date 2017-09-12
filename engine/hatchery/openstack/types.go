@@ -33,10 +33,10 @@ type HatcheryConfiguration struct {
 	Region string `default:"" commented:"true" comment:"Openstack Region"`
 
 	// NetworkString openstack-network
-	NetworkString string `default:"Ext-Net" commented:"true"`
+	NetworkString string `default:"Ext-Net" commented:"true" comment:"Hatchery will use this Network to spawn CDS Worker (Virtual Machine)."`
 
 	// IPRange IP Range
-	IPRange string `default:"" commented:"true" comment:"Facultative. IP Range for spwaned workers. \n Format: a.a.a.a/b,c.c.c.c/e,"`
+	IPRange string `default:"" commented:"true" comment:"Facultative. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute)."`
 
 	// WorkerTTL Worker TTL (minutes)
 	WorkerTTL int `default:"30" commented:"true" comment:"Worker TTL (minutes)"`

@@ -19,19 +19,19 @@ type CommonConfiguration struct {
 	Name string `default:"" comment:"Name of Hatchery"`
 	API  struct {
 		HTTP struct {
-			URL      string `default:"http://localhost:8081" comment:"CDS API URL"`
-			Insecure bool   `comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
+			URL      string `default:"http://localhost:8081" commented:"true" comment:"CDS API URL"`
+			Insecure bool   `default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
 		}
 		GRPC struct {
 			URL      string `default:"http://localhost:8082"`
-			Insecure bool   `comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
+			Insecure bool   `default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
 		}
 		Token                string `default:"************" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ "`
 		RequestTimeout       int    `default:"10" comment:"Request CDS API: timeout in seconds"`
 		MaxHeartbeatFailures int    `default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine"`
 	}
 	Provision struct {
-		Disabled          bool `comment:"Disabled provisionning. Format:true or false"`
+		Disabled          bool `default:"false" comment:"Disabled provisionning. Format:true or false"`
 		Frequency         int  `default:"30" comment:"Check provisioning each n Seconds"`
 		MaxWorker         int  `default:"10" comment:"Maximum allowed simultaneous workers"`
 		GraceTimeQueued   int  `default:"4" comment:"if worker is queued less than this value (seconds), hatchery does not take care of it"`

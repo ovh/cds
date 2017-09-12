@@ -16,7 +16,7 @@ type HatcheryConfiguration struct {
 	RatioService int `default:"75" commented:"true" comment:"Percent reserved for spwaning worker with service requirement"`
 
 	// MaxContainers
-	MaxContainers int `default:"10" comemnted:"true" comment:"Max Containers on Host managed by this Hatchery"`
+	MaxContainers int `default:"10" commented:"true" comment:"Max Containers on Host managed by this Hatchery"`
 
 	// DefaultMemory Worker default memory
 	DefaultMemory int `default:"1024" commented:"true" comment:"Worker default memory in Mo"`
