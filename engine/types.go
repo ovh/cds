@@ -19,7 +19,7 @@ import (
 type Configuration struct {
 	Log struct {
 		Level string `default:"warning" comment:"Log Level: debug, info, warning, notice, critical"`
-	}
+	} `comment:"#####################\n# CDS Logs Settings #\n#####################"`
 	API      api.Configuration
 	Hatchery struct {
 		Docker    docker.HatcheryConfiguration
