@@ -22,7 +22,7 @@ import {WarningService} from '../../service/warning/warning.service';
     styleUrls: ['./navbar.scss']
 })
 @AutoUnsubscribe()
-export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
+export class NavbarComponent implements OnInit, AfterViewInit {
 
     // flag to indicate that the component is ready to use
     public ready = false;
@@ -30,9 +30,8 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
     // List of projects in the nav bar
     navProjects: List<Project>;
     navRecentApp: List<Application>;
+    searchItems: Array<string>;
 
-    selectedProjectKey: string;
-    selectedApplicationName: string;
     listApplications: Array<Application>;
 
     currentCountry: string;
@@ -53,7 +52,6 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
                 private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
                 private _translate: TranslateService, private _warningStore: WarningStore,
                 private _authentificationStore: AuthentificationStore, private _warningService: WarningService) {
-        this.selectedProjectKey = '#NOPROJECT#';
         this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
             this.currentUser = u;
         });
@@ -79,12 +77,6 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
         this._language.set(this.currentCountry);
     }
 
-    ngOnDestroy() {
-        if (this.langSubscrition) {
-            this.langSubscrition.unsubscribe();
-        }
-    }
-
     ngAfterViewInit() {
         this._translate.get('navbar_projects_placeholder').subscribe(() => {
             this.ready = true;
@@ -108,8 +100,6 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
         });
     }
 
-
-
     /**
      * Listen change on project list.
      */
@@ -117,8 +107,28 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
         this._projectStore.getProjectsList().subscribe(projects => {
             if (projects.size > 0) {
                 this.navProjects = projects;
+                this.searchItems = new Array<string>();
+
+                this.navProjects.toArray().forEach(p => {
+                    this.searchItems.push(p.name);
+                    if (p.applications && p.applications.length > 0) {
+                        p.applications.forEach(a => {
+                            this.searchItems.push(p.name + '/' + a.name);
+                        })
+                    }
+                });
             }
         });
+    }
+
+    navigateToResult(result: string) {
+        let splittedSelection = result.split('/', 2);
+        let project = this.navProjects.toArray().find(p => p.name === splittedSelection[0] );
+        if (splittedSelection.length === 1) {
+           this.navigateToProject(project.key);
+        } else if (splittedSelection.length === 2) {
+            this.navigateToApplication(project.key, project.applications.find(a => a.name === splittedSelection[1]).name);
+        }
     }
 
     selectAllProjects(): void {
@@ -149,37 +159,7 @@ export class NavbarComponent implements OnInit, OnDestroy, AfterViewInit {
     /**
      * Navigate to the selected application.
      */
-    navigateToApplication(route: string): void {
-        if (route === '#NOAPP#') {
-            return;
-        }
-        this.selectedApplicationName = '#NOAPP#';
-        this._router.navigate([route]);
-    }
-
-    applicationKeyEvent(event: KeyboardEvent, a): void {
-        if (event.key === 'Escape') {
-            this.selectedProjectKey = '#NOPROJECT#';
-            this.selectedApplicationName = '#NOAPP#';
-            this.selectAllProjects();
-        }
-    }
-
-    filterApplication(event: any): void {
-        if (this.selectedProjectKey === '#NOPROJECT#') {
-            if (this.navProjects) {
-                this.listApplications = this.navProjects.toArray().reduce((allProj, proj) => {
-                    let filteredApps = [];
-
-                    if (proj.applications) {
-                        filteredApps = proj.applications.filter(app => {
-                            return app.name.toLocaleLowerCase().indexOf(event.toLowerCase()) !== -1;
-                        });
-                    }
-
-                    return [...allProj, ...filteredApps];
-                }, []);
-            }
-        }
+    navigateToApplication(key: string, appName: string): void {
+        this._router.navigate(['project', key, 'application', appName]);
     }
 }

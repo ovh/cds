@@ -42,6 +42,7 @@
     "ng2-codemirror-typescript": "^1.1.1",
     "ng2-completer": "^1.4.0",
     "ng2-dragula": "^1.2.1",
+    "ng2-semantic-ui": "^0.9.6",
     "ng2-translate": "^4.2.0",
     "ngx-auto-scroll": "https://github.com/NagRock/ngx-auto-scroll/tarball/master",
     "rxjs": "5.1.0",
@@ -71,7 +72,7 @@
     "protractor": "~5.1.0",
     "ts-node": "~2.0.0",
     "tslint": "~5.1.0",
-    "typescript": "~2.2.0",
+    "typescript": "~2.3.4",
     "webdriver-manager": "10.2.5",
     "wrench-sui": "0.0.3"
   }

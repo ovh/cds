@@ -214,12 +214,11 @@
   "job_spawn_title" : "Informations",
 
   "navbar_actions" : "Actions",
-  "navbar_applications_placeholder": "Trouver une application",
+  "navbar_search": "Rechercher...",
   "navbar_documentation" : "Documentation",
   "navbar_download" : "Téléchargement",
   "navbar_groups" : "Groupes",
   "navbar_profile" : "Votre Compte",
-  "navbar_projects_placeholder": "Tous les Projets",
   "navbar_settings" : "Paramètres",
   "navbar_users" : "Utilisateurs",
   "navbar_worker_models" : "Modèles de worker",

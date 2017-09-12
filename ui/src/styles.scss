@@ -551,3 +551,16 @@ ngui-auto-complete .no-match-found {
 foreignObject {
   overflow: visible;
 }
+
+// Ovveride of ng2-semantic-ui
+sui-search {
+  .ui.input {
+    input {
+      background-color: transparent;
+      border-color: #233332;
+    }
+  }
+}
+.ui.search .prompt {
+  border-radius: 5px;
+}
