@@ -10,9 +10,9 @@ import (
 	"time"
 
 	defaults "github.com/mcuadros/go-defaults"
-	"github.com/pelletier/go-toml"
 	"github.com/spf13/cobra"
 	_ "github.com/spf13/viper/remote"
+	"github.com/yesnault/go-toml"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
@@ -66,6 +66,7 @@ var mainCmd = &cobra.Command{
 CDS
 Continuous Delivery Service
 Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform
+https://ovh.github.io/cds/
 
 Copyright (c) 2013-2017, OVH SAS.
 All rights reserved.`,

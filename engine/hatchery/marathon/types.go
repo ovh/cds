@@ -12,29 +12,29 @@ import (
 type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration
 
-	// MarathonHost "marathon-host"
-	MarathonHost string `default:""`
+	// MarathonURL "marathon-api"
+	MarathonURL string `default:"" commented:"true" comment:"URL of your marathon"`
 
 	// MarathonID "marathon-id"
-	MarathonID string `default:""`
+	MarathonIDPrefix string `default:"" commented:"true" comment:"Prefix of id for workers spawn on marathon. Enter 'workers' to have id as: '/workers/a-worker'"`
 
 	// MarathonUser "marathon-user"
-	MarathonUser string `default:""`
+	MarathonUser string `default:"" commented:"true" comment:"Marathon Username, used to call Marathon URL"`
 
 	// MarathonPassword "marathon-password"
-	MarathonPassword string `default:""`
+	MarathonPassword string `default:"" commented:"true" comment:"Marathon Password, you need a marathon User to use it"`
 
 	// MarathonLabelsStr "marathon-labels"
-	MarathonLabelsString string `default:""`
+	MarathonLabels string `default:"" commented:"true" comment:"Use this option if you want to add labels on workers spawned by this hatchery.\n Format: MarathonLabels = \"A_LABEL=value-of-label\""`
 
 	// DefaultMemory Worker default memory
-	DefaultMemory int `default:"1024"`
+	DefaultMemory int `default:"1024" commented:"true" comment:"Worker default memory in Mo"`
 
 	// WorkerTTL Worker TTL (minutes)
-	WorkerTTL int `default:"10"`
+	WorkerTTL int `default:"10" commented:"true" comment:"Worker TTL (minutes)"`
 
-	// WorkerSpawnTimeout , "Worker Timeout Spawning (seconds)
-	WorkerSpawnTimeout int `default:"120"`
+	// WorkerSpawnTimeout Worker Timeout Spawning (seconds)
+	WorkerSpawnTimeout int `default:"120" commented:"true" comment:"Worker Timeout Spawning (seconds)"`
 }
 
 // HatcheryMarathon implements HatcheryMode interface for mesos mode

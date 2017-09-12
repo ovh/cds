@@ -58,12 +58,12 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("API Token URL is mandatory")
 	}
 
-	if hconfig.MarathonHost == "" {
+	if hconfig.MarathonURL == "" {
 		return fmt.Errorf("Marathon Host is mandatory")
 	}
 
-	if hconfig.MarathonID == "" {
-		return fmt.Errorf("Marathon ID is mandatory")
+	if hconfig.MarathonIDPrefix == "" {
+		return fmt.Errorf("Marathon ID Prefix is mandatory")
 	}
 
 	if hconfig.MarathonUser == "" {
@@ -75,8 +75,8 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	}
 
 	h.marathonLabels = map[string]string{}
-	if hconfig.MarathonLabelsString != "" {
-		array := strings.Split(hconfig.MarathonLabelsString, ",")
+	if hconfig.MarathonLabels != "" {
+		array := strings.Split(hconfig.MarathonLabels, ",")
 		for _, s := range array {
 			if !strings.Contains(s, "=") {
 				continue
@@ -99,7 +99,7 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	}
 
 	config := marathon.NewDefaultConfig()
-	config.URL = hconfig.MarathonHost
+	config.URL = hconfig.MarathonURL
 	config.HTTPBasicAuthUser = hconfig.MarathonUser
 	config.HTTPBasicPassword = hconfig.MarathonPassword
 	config.HTTPClient = httpClient
@@ -169,7 +169,7 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 		return false
 	}
 
-	apps, err := h.listApplications(h.Config.MarathonID)
+	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
 		log.Info("CanSpawn> Error on m.listApplications() : %s", errd)
 		return false
@@ -256,7 +256,7 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 	mem := float64(memory * 110 / 100)
 
 	application := &marathon.Application{
-		ID:  fmt.Sprintf("%s/%s", h.Config.MarathonID, workerName),
+		ID:  fmt.Sprintf("%s/%s", h.Config.MarathonIDPrefix, workerName),
 		Cmd: &cmd,
 		Container: &marathon.Container{
 			Docker: &marathon.Docker{
@@ -365,14 +365,14 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 func (h *HatcheryMarathon) listApplications(idPrefix string) ([]string, error) {
 	values := url.Values{}
 	values.Set("embed", "apps.counts")
-	values.Set("id", h.Config.MarathonID)
+	values.Set("id", h.Config.MarathonIDPrefix)
 	return h.marathonClient.ListApplications(values)
 }
 
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcheryMarathon) WorkersStarted() int {
-	apps, err := h.listApplications(h.Config.MarathonID)
+	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
 		log.Warning("WorkersStarted> error on list applications err:%s", err)
 		return 0
@@ -383,7 +383,7 @@ func (h *HatcheryMarathon) WorkersStarted() int {
 // WorkersStartedByModel returns the number of instances of given model started but
 // not necessarily register on CDS yet
 func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
-	apps, err := h.listApplications(h.Config.MarathonID)
+	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
 		return 0
 	}
@@ -445,7 +445,7 @@ func (h *HatcheryMarathon) killDisabledWorkers() error {
 		return err
 	}
 
-	apps, err := h.listApplications(h.Config.MarathonID)
+	apps, err := h.listApplications(h.Config.MarathonIDPrefix)
 	if err != nil {
 		return err
 	}
@@ -479,7 +479,7 @@ func (h *HatcheryMarathon) killAwolWorkers() error {
 
 	values := url.Values{}
 	values.Set("embed", "apps.counts")
-	values.Set("id", h.Config.MarathonID)
+	values.Set("id", h.Config.MarathonIDPrefix)
 
 	apps, err := h.marathonClient.Applications(values)
 	if err != nil {
