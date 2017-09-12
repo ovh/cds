@@ -22,12 +22,12 @@ type Configuration struct {
 	} `comment:"#####################\n# CDS Logs Settings #\n#####################"`
 	API      api.Configuration
 	Hatchery struct {
-		Docker    docker.HatcheryConfiguration
-		Local     local.HatcheryConfiguration
-		Marathon  marathon.HatcheryConfiguration
-		Openstack openstack.HatcheryConfiguration
-		Swarm     swarm.HatcheryConfiguration
-		VSphere   vsphere.HatcheryConfiguration
+		Docker    docker.HatcheryConfiguration    `comment:"Hatchery Docker."`
+		Local     local.HatcheryConfiguration     `comment:"Hatchery Local."`
+		Marathon  marathon.HatcheryConfiguration  `comment:"Hatchery Marathon."`
+		Openstack openstack.HatcheryConfiguration `comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/"`
+		Swarm     swarm.HatcheryConfiguration     `comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
+		VSphere   vsphere.HatcheryConfiguration   `comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
 	}
 }
 
