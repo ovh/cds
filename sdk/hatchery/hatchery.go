@@ -211,15 +211,13 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 		}
 	}
 
-	var containsModelRequirement, containsHostnameRequirement, containsNetworkRequirement bool
+	var containsModelRequirement, containsHostnameRequirement bool
 	for _, r := range requirements {
 		switch r.Type {
 		case sdk.ModelRequirement:
 			containsModelRequirement = true
-		case sdk.NetworkAccessRequirement:
-			containsHostnameRequirement = true
 		case sdk.HostnameRequirement:
-			containsNetworkRequirement = true
+			containsHostnameRequirement = true
 		}
 	}
 	// Common check
@@ -254,7 +252,7 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 			return false
 		}
 
-		if !containsModelRequirement && !containsHostnameRequirement && !containsNetworkRequirement {
+		if !containsModelRequirement && !containsHostnameRequirement {
 			if r.Type == sdk.BinaryRequirement {
 				found := false
 				// Check binary requirement against worker model capabilities
