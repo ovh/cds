@@ -284,6 +284,7 @@
   "pipeline_job_variable_parent" : "Parent pipeline variables",
   "pipeline_job_variable_pip" : "Pipeline variables",
   "pipeline_job_variable_project" : "Project variables",
+  "pipeline_job_variable_workflow" : "Workflow variables",
   "pipeline_job_variables_show_title" : "Display job variables",
   "pipeline_job_variable_title" : "Job variables",
   "pipeline_label_detach" : "Delete the pipeline from the application",
@@ -321,6 +322,7 @@
 
   "pipeline_stage_edit" : "Edit stage",
   "pipeline_stage_moved" : "Stage moved",
+  "pipeline_stage_no" : "The pipeline has no stage",
 
   "poller_added" : "Poller added",
   "poller_create_label" : "Create a poller",

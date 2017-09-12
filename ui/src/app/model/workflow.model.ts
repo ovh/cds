@@ -88,6 +88,7 @@ export class WorkflowNodeJoinTrigger {
 // WorkflowNode represents a node in w workflow tree
 export class WorkflowNode {
     id: number;
+    name: string;
     ref: string;
     workflow_id: number;
     pipeline_id: number;
@@ -95,7 +96,6 @@ export class WorkflowNode {
     context: WorkflowNodeContext;
     hooks: Array<WorkflowNodeHook>;
     triggers: Array<WorkflowNodeTrigger>;
-
 
     static getNodeByID(node: WorkflowNode, id: number) {
         if (node.id === id) {

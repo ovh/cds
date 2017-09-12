@@ -9,6 +9,7 @@ import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Workflow} from '../../../../model/workflow.model';
+import {RouterService} from '../../../../service/router/router.service';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -30,7 +31,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
     selectedTab: string;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-        private _router: Router) {
+        private _router: Router, private _routerService: RouterService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         this._activatedRoute.data.subscribe(datas => {
@@ -46,20 +47,21 @@ export class WorkflowNodeRunComponent implements OnDestroy {
             }
         });
 
-        this._activatedRoute.params.first().subscribe(params => {
-            let key = params['key'];
-            this.workflowName = params['workflowName'];
+        this.workflowName = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root)['workflowName'];
+
+
+        this._activatedRoute.params.subscribe(params => {
             let number = params['number'];
             let nodeRunId = params['nodeId'];
 
-            if (key && this.workflowName && number && nodeRunId) {
+            if (this.project && this.project.key && this.workflowName && number && nodeRunId) {
                 // Start web worker
                 this.nodeRunWorker = new CDSWorker('./assets/worker/web/noderun.js');
                 this.nodeRunWorker.start({
                     'user': this._authStore.getUser(),
                     'session': this._authStore.getSessionToken(),
                     'api': environment.apiURL,
-                    key: key,
+                    key: this.project.key,
                     workflowName: this.workflowName,
                     number: number,
                     nodeRunId: nodeRunId

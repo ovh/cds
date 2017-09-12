@@ -17,8 +17,8 @@ import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {Router} from '@angular/router';
 import {PipelineStatus} from '../../../model/pipeline.model';
 
-
 declare var _: any;
+
 @Component({
     selector: 'app-workflow-node',
     templateUrl: './workflow.node.html',
@@ -30,8 +30,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
-
-    @Input () disabled = false;
 
     @Output() linkJoinEvent = new EventEmitter<WorkflowNode>();
 
@@ -52,14 +50,17 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     currentNodeRun: WorkflowNodeRun;
     pipelineStatus = PipelineStatus;
 
+
     loading = false;
     options: {};
+    disabled = false;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
                 private _toast: ToastService, private _pipelineStore: PipelineStore, private _router: Router) {
     }
 
     ngOnInit(): void {
+
         this.zone = new NgZone({enableLongStackTrace: false});
         if (this.webworker) {
             this.webworker.response().subscribe(wrString => {
@@ -88,7 +89,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
         this.elementRef.nativeElement.style.top = 0;
-
     }
 
     openTriggerModal(): void {
@@ -102,13 +102,15 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     openEditContextModal(): void {
-        this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
-           if (pips.get(this.project.key + '-' + this.node.pipeline.name)) {
-               setTimeout(() => {
-                   this.workflowContext.show({observable: true, closable: false, autofocus: false});
-               }, 100);
-           }
-        });
+        let sub = this.pipelineSubscription =
+            this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
+                if (pips.get(this.project.key + '-' + this.node.pipeline.name)) {
+                    setTimeout(() => {
+                        this.workflowContext.show({observable: true, closable: false, autofocus: false});
+                        sub.unsubscribe();
+                    }, 100);
+                }
+            });
     }
 
     saveTrigger(): void {
@@ -231,10 +233,11 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         if (!this.webworker || !this.currentNodeRun) {
             return;
         }
+        let pip = Workflow.getNodeByID(this.currentNodeRun.workflow_node_id, this.workflow).pipeline.name;
         this._router.navigate([
             '/project', this.project.key,
             'workflow', this.workflow.name,
             'run', this.currentNodeRun.num,
-            'node', this.currentNodeRun.id]);
+            'node', this.currentNodeRun.id], {queryParams: { name: pip}});
     }
 }

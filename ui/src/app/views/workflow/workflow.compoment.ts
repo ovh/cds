@@ -20,6 +20,7 @@ export class WorkflowComponent {
     number: number;
     workflowSubscription: Subscription;
     sidebarOpen: boolean;
+    currentNodeName: string;
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
@@ -49,6 +50,10 @@ export class WorkflowComponent {
                 }
             }
 
+        });
+
+        this._activatedRoute.queryParams.subscribe( p => {
+            this.currentNodeName = p['name'];
         });
 
         this._activatedRoute.children.forEach(c => {
