@@ -131,7 +131,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -187,7 +187,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -231,7 +231,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -274,7 +274,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -359,7 +359,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -439,7 +439,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key
@@ -506,6 +506,6 @@ func TestImportUpdate(t *testing.T) {
 	//Run the tests
 	var tests = []testcase{test1, test2, test3, test4, test5, test6, test7}
 	for _, tt := range tests {
-		testImportUpdate(t, db, tt)
+		testImportUpdate(t, db, cache, tt)
 	}
 }

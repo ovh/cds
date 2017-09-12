@@ -11,14 +11,14 @@ import (
 )
 
 func TestInsertPipeline(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	db, cache := test.SetupPG(t)
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
 		Key:  pk,
 		Name: pk,
 	}
-	if err := project.Insert(db, &p, nil); err != nil {
+	if err := project.Insert(db, cache, &p, nil); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 	}
 
@@ -65,14 +65,14 @@ func TestInsertPipeline(t *testing.T) {
 }
 
 func TestInsertPipelineWithParemeters(t *testing.T) {
-	api, db, router := newTestAPI(t)
+	db, cache := test.SetupPG(t)
 	pk := sdk.RandomString(8)
 
 	p := sdk.Project{
 		Key:  pk,
 		Name: pk,
 	}
-	if err := project.Insert(db, &p, nil); err != nil {
+	if err := project.Insert(db, cache, &p, nil); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 	}
 

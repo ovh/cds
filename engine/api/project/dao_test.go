@@ -27,10 +27,10 @@ func TestExist(t *testing.T) {
 }
 
 func TestLoadAll(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	Delete(db, "test_TestLoadAll")
-	Delete(db, "test_TestLoadAll1")
+	Delete(db, cache, "test_TestLoadAll")
+	Delete(db, cache, "test_TestLoadAll1")
 
 	proj := sdk.Project{
 		Key:  "test_TestLoadAll",
@@ -57,8 +57,8 @@ func TestLoadAll(t *testing.T) {
 		t.Fatalf("Cannot insert group : %s", err)
 	}
 
-	test.NoError(t, Insert(db, &proj, nil))
-	test.NoError(t, Insert(db, &proj1, nil))
+	test.NoError(t, Insert(db, cache, &proj, nil))
+	test.NoError(t, Insert(db, cache, &proj1, nil))
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 
@@ -68,7 +68,7 @@ func TestLoadAll(t *testing.T) {
 	u1, _ := InsertAdminUser(t, db, "test_TestLoadAll_admin")
 	u2, _ := InsertLambdaUser(t, db, "test_TestLoadAll_user", &proj.ProjectGroups[0].Group)
 
-	actualGroups1, err := LoadAll(db, u1)
+	actualGroups1, err := LoadAll(db, cache, u1)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups1) > 1, "This should return more than one project")
 
@@ -79,7 +79,7 @@ func TestLoadAll(t *testing.T) {
 		}
 	}
 
-	actualGroups2, err := LoadAll(db, u2)
+	actualGroups2, err := LoadAll(db, cache, u2)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups2) == 1, "This should return one project")
 
@@ -87,8 +87,8 @@ func TestLoadAll(t *testing.T) {
 	test.NoError(t, err)
 	assert.True(t, ok)
 
-	Delete(db, "test_TestLoadAll")
-	Delete(db, "test_TestLoadAll1")
+	Delete(db, cache, "test_TestLoadAll")
+	Delete(db, cache, "test_TestLoadAll1")
 
 }
 

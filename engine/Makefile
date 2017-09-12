@@ -16,10 +16,10 @@ GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
 
 TEST_PKGS = $(shell go list ./... | grep -v vendor)
 TEST_DB_HOST = localhost
-TEST_DB_PORT = 15432
+TEST_DB_PORT = 5432
 TEST_DB_USER = cds
 TEST_DB_PASSWORD = cds
-TEST_DB_NAME = cds_2
+TEST_DB_NAME = cds
 TEST_DB_START = docker run -d -p $(TEST_DB_PORT):5432 -e POSTGRES_PASSWORD=$(TEST_DB_PASSWORD) -e POSTGRES_USER=$(TEST_DB_USER) -e POSTGRES_DB=$(TEST_DB_NAME) --name postgres-cds postgres
 TEST_DB_INIT = $(GO_BUILD) && ./engine database upgrade --db-host $(TEST_DB_HOST) --db-port $(TEST_DB_PORT) --db-user $(TEST_DB_USER) --db-password $(TEST_DB_PASSWORD) --db-name $(TEST_DB_NAME) --db-sslmode disable --migrate-dir ./sql && rm -rf ./engine
 TEST_CMD = go test -v -timeout 180s -coverprofile=profile.coverprofile
@@ -43,10 +43,13 @@ $(GO_GO2XUNIT):
 default: build
 
 clean:
-	rm -rf $(TARGET_DIR)
-	rm -f ./tests.log **/tests.log
-	rm -f ./tests.log.xml **/tests.log.xml
-	rm -f ./*.coverprofile **/*.coverprofile
+	@rm -rf $(TARGET_DIR)
+	@for TST in `find . -name "tests.log"`; do \
+		rm $$TST; \
+	done;
+	@for profile in `find . -name "*.coverprofile"`; do \
+		rm $$profile; \
+	done;
 
 build: $(TARGET_DIR)
 	@for GOOS in $(TARGET_OS); do \
@@ -65,7 +68,7 @@ test-config: ${HOME}/.cds/tests.cfg.json
 	@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\",  \"dbPassword\" :\"$(TEST_DB_PASSWORD)\"  ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\"}" > ${HOME}/.cds/tests.cfg.json
 
 
-test: test-config 
+test: test-config clean
 	@for PKG in $(TEST_PKGS); do \
 		echo "Running tests in package $$PKG"; \
 		cd ${GOPATH}/src/$$PKG; \
@@ -85,7 +88,7 @@ endif
 test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 	@for TST in `find . -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
-			FAILED=`grep -E '(FAIL)+\s([a-z\.\/]*)\s(.*)' $$TST | wc -l`; \
+			FAILED=`grep -E '(FAIL)+\s([a-z\.\/]*)\s\[build failed\]' $$TST | wc -l`; \
 			if [ $$FAILED -gt 0 ]; then \
 				echo "Build Failed \t\t\t($$TST)"; \
 				echo "Build Failed \t\t\t($$TST)" >>  $(TARGET_DIR)/fail; \

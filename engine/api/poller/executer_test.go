@@ -7,8 +7,8 @@ import (
 )
 
 func TestExecuterRun(t *testing.T) {
-	api, db, router := newTestAPI(t)
-	exs, err := ExecuterRun(db)
+	db, cache := test.SetupPG(t)
+	exs, err := ExecuterRun(db, cache)
 	if err != nil {
 		t.Fatalf("%s", err)
 	}
