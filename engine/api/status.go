@@ -80,8 +80,8 @@ func (api *API) statusHandler() Handler {
 		log.Debug("Status> %s", api.DBConnectionFactory.Status())
 
 		// Check LastUpdate Connected User
-		output = append(output, fmt.Sprintf("LastUpdate Connected: %d", len(api.LastUpdateBroker.clients)))
-		log.Debug("Status> LastUpdate ConnectedUser> %d", len(api.LastUpdateBroker.clients))
+		output = append(output, fmt.Sprintf("LastUpdate Connected: %d", len(api.lastUpdateBroker.clients)))
+		log.Debug("Status> LastUpdate ConnectedUser> %d", len(api.lastUpdateBroker.clients))
 
 		// Check Worker Model Error
 		wmStatus := worker.Status(api.mustDB())

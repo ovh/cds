@@ -165,7 +165,7 @@ type API struct {
 	Config              Configuration
 	DBConnectionFactory *database.DBConnectionFactory
 	StartupTime         time.Time
-	LastUpdateBroker    *LastUpdateBroker
+	lastUpdateBroker    *lastUpdateBroker
 	Cache               cache.Store
 }
 
@@ -234,7 +234,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	switch aConfig.Artifact.Mode {
-	case "local", "openstack":
+	case "local", "openstack", "swift":
 	default:
 		return fmt.Errorf("Invalid artifact mode")
 	}
@@ -429,6 +429,9 @@ func (a *API) Serve(ctx context.Context) error {
 	//Init pipeline package
 	pipeline.Store = a.Cache
 
+	//Init events package
+	event.Cache = a.Cache
+
 	//Initiliaze hook package
 	hook.Init(a.Config.URL.API)
 
@@ -525,8 +528,6 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 	}()
 
-	pipeline.Store = a.Cache
-	event.Cache = a.Cache
 	event.Publish(sdk.EventEngine{Message: fmt.Sprintf("started - listen on %d", a.Config.HTTP.Port)})
 
 	go func() {

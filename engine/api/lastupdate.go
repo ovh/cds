@@ -15,22 +15,22 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// LastUpdateBrokerSubscribe is the information need to to subscribe
-type LastUpdateBrokerSubscribe struct {
+// lastUpdateBrokerSubscribe is the information need to to subscribe
+type lastUpdateBrokerSubscribe struct {
 	UIID  string
 	User  *sdk.User
 	Queue chan string
 }
 
-// LastUpdateBroker keeps connected client of the current route,
-type LastUpdateBroker struct {
-	clients    map[string]*LastUpdateBrokerSubscribe
-	newClients chan *LastUpdateBrokerSubscribe
+// lastUpdateBroker keeps connected client of the current route,
+type lastUpdateBroker struct {
+	clients    map[string]*lastUpdateBrokerSubscribe
+	newClients chan *lastUpdateBrokerSubscribe
 	messages   chan string
 }
 
-//Init the LastUpdateBroker
-func (b *LastUpdateBroker) Init(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
+//Init the lastUpdateBroker
+func (b *lastUpdateBroker) Init(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	// Start cache Subscription
 	go CacheSubscribe(c, b.messages, store)
 
@@ -63,7 +63,7 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string, store cache.S
 }
 
 // Start the broker
-func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
+func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	for {
 		select {
 		case <-c.Done():
@@ -134,7 +134,7 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, s
 	}
 }
 
-func (b *LastUpdateBroker) ServeHTTP() Handler {
+func (b *lastUpdateBroker) ServeHTTP() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Make sure that the writer supports flushing.
 		f, ok := w.(http.Flusher)
@@ -145,9 +145,9 @@ func (b *LastUpdateBroker) ServeHTTP() Handler {
 
 		uuid, errS := sessionstore.NewSessionKey()
 		if errS != nil {
-			return sdk.WrapError(errS, "LastUpdateBroker.Serve> Cannot generate UUID")
+			return sdk.WrapError(errS, "lastUpdateBroker.Serve> Cannot generate UUID")
 		}
-		messageChan := &LastUpdateBrokerSubscribe{
+		messageChan := &lastUpdateBrokerSubscribe{
 			UIID:  string(uuid),
 			User:  getUser(ctx),
 			Queue: make(chan string),
