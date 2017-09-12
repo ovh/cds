@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
@@ -30,7 +31,7 @@ type testcase struct {
 	tearDown func(t *testing.T, args args)
 }
 
-func testImportUpdate(t *testing.T, db gorp.SqlExecutor, tt testcase) {
+func testImportUpdate(t *testing.T, db gorp.SqlExecutor, store cache.Store, tt testcase) {
 	msgChan := make(chan sdk.Message, 1)
 	done := make(chan bool)
 
@@ -49,7 +50,7 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, tt testcase) {
 		tt.setup(t, tt.args)
 	}
 
-	proj, err := project.Load(db, tt.args.pip.ProjectKey, nil)
+	proj, err := project.Load(db, store, tt.args.pip.ProjectKey, nil)
 	test.NoError(t, err)
 
 	if err := pipeline.ImportUpdate(db, proj, tt.args.pip, msgChan, tt.args.u); (err != nil) != tt.wantErr {
@@ -72,7 +73,7 @@ func testImportUpdate(t *testing.T, db gorp.SqlExecutor, tt testcase) {
 }
 
 func TestImportUpdate(t *testing.T) {
-	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	if db == nil {
 		t.FailNow()
 	}
@@ -91,7 +92,7 @@ func TestImportUpdate(t *testing.T) {
 			},
 		},
 		setup: func(t *testing.T, args args) {
-			proj := assets.InsertTestProject(t, db, args.pkey, args.pkey, nil)
+			proj := assets.InsertTestProject(t, db, cache, args.pkey, args.pkey, nil)
 			args.pip.Name = proj.Key + "_PIP"
 			args.pip.ProjectID = proj.ID
 			args.pip.ProjectKey = proj.Key

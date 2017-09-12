@@ -2,7 +2,7 @@
 
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 
-TARGET_DIR = dist
+TARGET_DIR = ./dist
 TARGET_ENGINE = cds-engine
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
 TARGET_OS = windows darwin linux freebsd
@@ -42,6 +42,12 @@ $(GO_GO2XUNIT):
 
 default: build
 
+clean:
+	rm -rf $(TARGET_DIR)
+	rm -f ./tests.log **/tests.log
+	rm -f ./tests.log.xml **/tests.log.xml
+	rm -f ./*.coverprofile **/*.coverprofile
+
 build: $(TARGET_DIR)
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
@@ -68,14 +74,15 @@ test: test-config
 	$(MAKE) test-coverage
 	$(MAKE) test-xunit-report
 
-test-coverage: $(GO_COV_MERGE) $(GO_GOVERALLS) $(TARGET_DIR)
+test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR)
 	@$(GO_COV_MERGE) ./**/*.coverprofile > $(TARGET_DIR)/cover.out
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
 ifneq ($(VERSION), snapshot)
-	goveralls -coverprofile=$(TARGET_DIR)/cover.out -service=cds -repotoken ${CDS_PROJ_COVERALLS_TOKEN}
+	echo "Pushing results to coveralls"
+	@$(GO_GOVERALLS) -coverprofile=$(TARGET_DIR)/cover.out -service=cds -repotoken ${CDS_PROJ_COVERALLS_TOKEN}
 endif
 
-test-xunit-report: $(GO_GO2XUNIT)
+test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 	@for TST in `find . -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
 			FAILED=`grep -E '(FAIL)+\s([a-z\.\/]*)\s(.*)' $$TST | wc -l`; \
@@ -88,7 +95,7 @@ test-xunit-report: $(GO_GO2XUNIT)
 					echo "No tests found \t\t\t($$TST)"; \
 				else \
 					echo "Generating xUnit report \t$$TST.xml"; \
-					go2xunit -input $$TST -output $$TST.xml; \
+					$(GO_GO2XUNIT) -input $$TST -output $$TST.xml; \
 				fi; \
 			fi; \
 		else \
@@ -102,15 +109,11 @@ test-xunit-report: $(GO_GO2XUNIT)
 			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
 		fi; \
 	done; \
-	if [ -s $(TARGET_DIR)/fail ]; then \
-		$(error Test compilation failure)
+	if [ -e $(TARGET_DIR)/fail ]; then \
+		echo "ERROR: Test compilation failure"; \
+		cat $(TARGET_DIR)/fail; \
+		exit 1; \
 	fi;
-
-clean:
-	rm -rf $(TARGET_DIR)
-	rm -f ./tests.log **/tests.log
-	rm -f ./tests.log.xml **/tests.log.xml
-	rm -f ./*.coverprofile **/*.coverprofile
 
 lint: $(GO_LINT)
 	$(GO_LINT) --install --force
