@@ -211,6 +211,15 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 		}
 	}
 
+	var containsModelRequirement, containsHostnameRequirement bool
+	for _, r := range requirements {
+		switch r.Type {
+		case sdk.ModelRequirement:
+			containsModelRequirement = true
+		case sdk.HostnameRequirement:
+			containsHostnameRequirement = true
+		}
+	}
 	// Common check
 	for _, r := range requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
@@ -237,19 +246,27 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 			continue
 		}
 
-		if r.Type == sdk.BinaryRequirement {
-			found := false
-			// Check binary requirement against worker model capabilities
-			for _, c := range model.Capabilities {
-				if r.Value == c.Value || r.Value == c.Name {
-					found = true
-					break
-				}
-			}
+		// here, if there a model requirements, we don't need to check binaries
+		if r.Type == sdk.ModelRequirement && r.Value != model.Name {
+			log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) != model.Name(%s)", timestamp, jobID, r.Value, model.Name)
+			return false
+		}
 
-			if !found {
-				log.Debug("canRunJob> %d - job %d - model(%s) does not have binary %s(%s) for this job.", timestamp, jobID, model.Name, r.Name, r.Value)
-				return false
+		if !containsModelRequirement && !containsHostnameRequirement {
+			if r.Type == sdk.BinaryRequirement {
+				found := false
+				// Check binary requirement against worker model capabilities
+				for _, c := range model.Capabilities {
+					if r.Value == c.Value || r.Value == c.Name {
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					log.Debug("canRunJob> %d - job %d - model(%s) does not have binary %s(%s) for this job.", timestamp, jobID, model.Name, r.Name, r.Value)
+					return false
+				}
 			}
 		}
 	}
