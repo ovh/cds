@@ -10,6 +10,7 @@ export class WorkflowBreadCrumbComponent {
     @Input() project: Project;
     @Input() workflowName: string;
     @Input() run: number;
+    @Input() nodeName: string;
 
     constructor() { }
 }
