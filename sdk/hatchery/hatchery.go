@@ -16,26 +16,26 @@ import (
 
 // CommonConfiguration is the base configuration for all hatcheries
 type CommonConfiguration struct {
-	Name string
+	Name string `default:"" comment:"Name of Hatchery"`
 	API  struct {
 		HTTP struct {
-			URL      string `default:"http://localhost:8081"`
-			Insecure bool
+			URL      string `default:"http://localhost:8081" comment:"CDS API URL"`
+			Insecure bool   `comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
 		}
 		GRPC struct {
 			URL      string `default:"http://localhost:8082"`
-			Insecure bool
+			Insecure bool   `comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
 		}
-		Token                string `default:"************"`
-		RequestTimeout       int    `default:"10"`
-		MaxHeartbeatFailures int    `default:"10"`
+		Token                string `default:"************" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ "`
+		RequestTimeout       int    `default:"10" comment:"Request CDS API: timeout in seconds"`
+		MaxHeartbeatFailures int    `default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine"`
 	}
 	Provision struct {
-		Disabled          bool
-		Frequency         int `default:"30"`
-		MaxWorker         int `default:"10"`
-		GraceTimeQueued   int `default:"4"`
-		RegisterFrequency int `default:"60"`
+		Disabled          bool `comment:"Disabled provisionning. Format:true or false"`
+		Frequency         int  `default:"30" comment:"Check provisioning each n Seconds"`
+		MaxWorker         int  `default:"10" comment:"Maximum allowed simultaneous workers"`
+		GraceTimeQueued   int  `default:"4" comment:"if worker is queued less than this value (seconds), hatchery does not take care of it"`
+		RegisterFrequency int  `default:"60" comment:"Check if some worker model have to be registered each n Seconds"`
 		WorkerLogsOptions struct {
 			Graylog struct {
 				Host       string
@@ -43,7 +43,7 @@ type CommonConfiguration struct {
 				ExtraKey   string
 				Extravalue string
 			}
-		}
+		} `comment:"Worker Log Configuration"`
 	}
 	LogOptions struct {
 		Graylog struct {
@@ -53,10 +53,10 @@ type CommonConfiguration struct {
 			Extravalue string
 		}
 		SpawnOptions struct {
-			ThresholdCritical int `default:"480"`
-			ThresholdWarning  int `default:"360"`
+			ThresholdCritical int `default:"480" comment:"log critical if spawn take more than this value (in seconds)"`
+			ThresholdWarning  int `default:"360" comment:"log warning if spawn take more than this value (in seconds)"`
 		}
-	}
+	} `comment:"Hatchery Log Configuration"`
 	RemoteDebugURL string
 }
 

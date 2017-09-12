@@ -18,34 +18,34 @@ type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration
 
 	// Tenant openstack-tenant
-	Tenant string `default:""`
+	Tenant string `default:"" commented:"true" comment:"Openstack tenant (string)"`
 
 	// User  openstack-user
-	User string `default:""`
+	User string `default:"" commented:"true" comment:"Openstack User"`
 
 	// Address  openstack-auth-endpoint
-	Address string `default:""`
+	Address string `default:"" commented:"true" comment:"Opentack Auth Endpoint"`
 
 	// Password openstack-password
-	Password string `default:""`
+	Password string `default:"" commented:"true" comment:"Openstack Password"`
 
 	// Region openstack-region
-	Region string `default:""`
+	Region string `default:"" commented:"true" comment:"Openstack Region"`
 
 	// NetworkString openstack-network
-	NetworkString string `default:"Ext-Net"`
+	NetworkString string `default:"Ext-Net" commented:"true"`
 
 	// IPRange IP Range
-	IPRange string `default:""`
+	IPRange string `default:"" commented:"true" comment:"Facultative. IP Range for spwaned workers. \n Format: a.a.a.a/b,c.c.c.c/e,"`
 
 	// WorkerTTL Worker TTL (minutes)
-	WorkerTTL int `default:"30"`
+	WorkerTTL int `default:"30" commented:"true" comment:"Worker TTL (minutes)"`
 
 	// DisableCreateImage if true: hatchery does not create openstack image when a worker model is updated
-	DisableCreateImage bool `default:"false"`
+	DisableCreateImage bool `default:"false" commented:"true" comment:"if true: hatchery does not create openstack image when a worker model is updated"`
 
 	// CreateImageTimeout max wait for create an openstack image (in seconds)
-	CreateImageTimeout int `default:"180"`
+	CreateImageTimeout int `default:"180" commented:"true" comment:"max wait for create an openstack image (in seconds)"`
 }
 
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'

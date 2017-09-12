@@ -15,34 +15,34 @@ type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration
 
 	// User vsphere-user
-	VSphereUser string `default:""`
+	VSphereUser string `default:"" commented:"true" comment:"VSphere User"`
 
 	// Endpoint vsphere-endpoint
-	VSphereEndpoint string `default:""`
+	VSphereEndpoint string `default:"" commented:"true" comment:"VShpere Endpoint, example:pcc-11-222-333-444.ovh.com"`
 
 	// Password vsphere-password
-	VSpherePassword string `default:""`
+	VSpherePassword string `default:"" commented:"true" comment:"VShpere Password"`
 
 	// DatacenterString vsphere-datacenter
-	VSphereDatacenterString string `default:""`
+	VSphereDatacenterString string `default:"" commented:"true" comment:"VSphere Datacenter"`
 
 	// DatastoreString vsphere-datastore
-	VSphereDatastoreString string `default:""`
+	VSphereDatastoreString string `default:"" commented:"true" comment:"VSphere Datastore"`
 
 	// NetworkString vsphere-network VM Network
-	VSphereNetworkString string `default:""`
+	VSphereNetworkString string `default:"" commented:"true" comment:"VShpere Network"`
 
 	// CardName vsphere-ethernet-card Name of the virtual ethernet card
-	VSphereCardName string `default:"e1000"`
+	VSphereCardName string `default:"e1000" commented:"true" comment:"Name of the virtual ethernet card"`
 
 	// WorkerTTL Worker TTL (minutes)
-	WorkerTTL int `default:"30"`
+	WorkerTTL int `default:"30" commented:"true" comment:"Worker TTL (minutes)"`
 
 	// DisableCreateImage if true: hatchery does not create vsphere image when a worker model is updated
-	DisableCreateImage bool `default:"false"`
+	DisableCreateImage bool `default:"false" commented:"true" comment:"if true: hatchery does not create vsphere image when a worker model is updated"`
 
 	// CreateImageTimeout max wait for create a vsphere image (in seconds)
-	CreateImageTimeout int `default:"180"`
+	CreateImageTimeout int `default:"180" commented:"true" comment:"max wait for create a vsphere image (in seconds)"`
 }
 
 // HatcheryVSphere spawns vm

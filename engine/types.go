@@ -18,7 +18,7 @@ import (
 
 type Configuration struct {
 	Log struct {
-		Level string `default:"warning"`
+		Level string `default:"warning" comment:"Log Level: debug, info, warning, notice, critical"`
 	}
 	API      api.Configuration
 	Hatchery struct {
