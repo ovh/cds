@@ -94,7 +94,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
         this._router.navigateByUrl('/project/' + this.project.key +
             '/workflow/' + this.workflowName +
             '/run/' + this.nodeRun.num +
-            '/node/' + this.nodeRun.id,
+            '/node/' + this.nodeRun.id +
             '?&tab=' + tab);
     }
 }

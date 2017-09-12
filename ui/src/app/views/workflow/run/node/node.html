@@ -11,8 +11,10 @@
             <a sm-item [class.active]="selectedTab === 'test'">
                 Test
             </a>
-            <a sm-item [class.active]="selectedTab === 'artifact'">
-                Artifact
+            <a sm-item [class.active]="selectedTab === 'artifact'" (click)="showTab('artifact')">
+                <span *ngIf="nodeRun && nodeRun.artifacts && nodeRun.artifacts.length > 1">{{ 'common_artifacts' | translate }}</span>
+                <span *ngIf="!nodeRun || !nodeRun.artifacts || nodeRun.artifacts.length < 2">{{ 'common_artifact' | translate }}</span>
+                <span *ngIf="nodeRun && nodeRun.artifacts ">{{ ' (' +nodeRun.artifacts.length + ')'}}</span>
             </a>
             <a sm-item [class.active]="selectedTab === 'history'">
                 History
@@ -25,6 +27,9 @@
             <div class="viewContent" [ngSwitch]="selectedTab">
                 <div *ngSwitchCase="'workflow'">
                     <app-node-run-pipeline [run]="nodeRun" [project]="project" [workflowName]="workflowName"></app-node-run-pipeline>
+                </div>
+                <div *ngSwitchCase="'artifact'">
+                    <app-workflow-artifact-list [artifacts]="nodeRun.artifacts"></app-workflow-artifact-list>
                 </div>
             </div>
         </div>

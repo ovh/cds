@@ -13,6 +13,7 @@ import {WorkflowRunJobSpawnInfoComponent} from './run/node/pipeline/spawninfo/sp
 import {WorkflowStepLogComponent} from './run/node/pipeline/step/step.log.component';
 import {WorkflowComponent} from './workflow.compoment';
 import {WorkflowSidebarComponent} from './sidebar/workflow.sidebar.component';
+import {WorkflowRunArtifactListComponent} from './run/node/artifact/artifact.list.component';
 
 @NgModule({
     declarations: [
@@ -25,6 +26,7 @@ import {WorkflowSidebarComponent} from './sidebar/workflow.sidebar.component';
         WorkflowRunJobVariableComponent,
         WorkflowRunJobSpawnInfoComponent,
         WorkflowRunNodePipelineComponent,
+        WorkflowRunArtifactListComponent,
         WorkflowSidebarComponent,
         WorkflowShowComponent,
         WorkflowStepLogComponent,
