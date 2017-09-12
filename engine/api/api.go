@@ -65,7 +65,7 @@ type Configuration struct {
 		Secret   string
 	} `comment:"################################\n# Postgresql Database settings #\n################################"`
 	Cache struct {
-		Mode  string `default:"local" comment:"Mode Cache: redis or local"`
+		Mode  string `default:"local" comment:"Cache Mode: redis or local"`
 		TTL   int    `default:"60"`
 		Redis struct {
 			Host     string `default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379"`
@@ -78,7 +78,7 @@ type Configuration struct {
 	}
 	Auth struct {
 		DefaultGroup     string `default:"" comment:"The default group is the group in which every new user will be granted at signup"`
-		SharedInfraToken string `default:"changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory. 64 char"`
+		SharedInfraToken string `default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory."`
 		LDAP             struct {
 			Enable   bool `default:"false"`
 			Host     string
@@ -109,7 +109,7 @@ type Configuration struct {
 			Password        string `comment:"Openstack Password, generally value of $OS_PASSWORD"`
 			Tenant          string `comment:"Openstack Tenant, generally value of $OS_TENANT_NAME"`
 			Region          string `comment:"Region, generally value of $OS_REGION_NAME"`
-			ContainerPrefix string `comment:"Use if your want to prefix containers for CDS Artefacts"`
+			ContainerPrefix string `comment:"Use if your want to prefix containers for CDS Artifacts"`
 		}
 	} `comment:"Either filesystem local storage or Openstack Swift Storage are supported"`
 	Events struct {

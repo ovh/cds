@@ -23,7 +23,7 @@ services:
     image: ovhcom/cds-api:latest
     command: sh -c "mv worker-linux-amd64 worker && ./api-linux-amd64"
     volumes:
-      - cds-artefacts-volume:/app/artefacts
+      - cds-artifacts-volume:/app/artifacts
     environment:
       CDS_VCS_REPOSITORIES_GITHUB_STATUSES_URL_DISABLED: "true"
       CDS_VCS_REPOSITORIES_GITHUB_STATUSES_DISABLED: "true"
@@ -60,7 +60,7 @@ services:
       CDS_SCHEDULERS_DISABLED: "false"
       CDS_DIRECTORIES_KEYS: /app/keys
       CDS_ARTIFACT_MODE: local
-      CDS_ARTIFACT_LOCAL_BASEDIR: /app/artefacts
+      CDS_ARTIFACT_LOCAL_BASEDIR: /app/artifacts
       CDS_AUTH_SHAREDINFRA_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       CDS_SERVER_SECRETS_KEY: changeitchangeitchangeitchangeit
     ports:
@@ -104,5 +104,5 @@ services:
        - cds-api
 
 volumes:
-  cds-artefacts-volume:
+  cds-artifacts-volume:
     driver: local
