@@ -1293,6 +1293,12 @@
 			"revisionTime": "2015-05-23T23:00:31Z"
 		},
 		{
+			"checksumSHA1": "ZDsXVpq1hLWG8sedJquwLTfdqO8=",
+			"path": "github.com/yesnault/go-toml",
+			"revision": "e47763c0d955fb075f6e4c05f0c678a4b988c420",
+			"revisionTime": "2017-09-12T08:21:15Z"
+		},
+		{
 			"checksumSHA1": "TT1rac6kpQp2vz24m5yDGUNQ/QQ=",
 			"path": "golang.org/x/crypto/cast5",
 			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
