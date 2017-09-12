@@ -13,10 +13,10 @@ type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration
 
 	// MarathonURL "marathon-api"
-	MarathonURL string `default:"" commented:"true" comment:"URL of your marathon"`
+	MarathonURL string `default:"https://lb.gra-1.containers.ovh.net/marathon/yourstack/" commented:"true" comment:"URL of your marathon"`
 
 	// MarathonID "marathon-id"
-	MarathonIDPrefix string `default:"" commented:"true" comment:"Prefix of id for workers spawn on marathon. Enter 'workers' to have id as: '/workers/a-worker'"`
+	MarathonIDPrefix string `default:"/cds/workers" commented:"true" comment:"Prefix of id for workers spawn on marathon. Enter 'workers' to have id as: '/workers/a-worker'"`
 
 	// MarathonUser "marathon-user"
 	MarathonUser string `default:"" commented:"true" comment:"Marathon Username, used to call Marathon URL"`
