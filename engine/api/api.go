@@ -42,7 +42,7 @@ type Configuration struct {
 	URL struct {
 		API string `default:"http://localhost:8081"`
 		UI  string `default:"http://localhost:4200"`
-	}
+	} `comment:"#####################\n# CDS URLs Settings #\n#####################"`
 	HTTP struct {
 		Port       int `default:"8081"`
 		SessionTTL int `default:"60"`
@@ -63,55 +63,55 @@ type Configuration struct {
 		MaxConn  int    `default:"20"`
 		Timeout  int    `default:"3000"`
 		Secret   string
-	}
+	} `comment:"################################\n# Postgresql Database settings #\n################################"`
 	Cache struct {
-		Mode  string `default:"redis"`
+		Mode  string `default:"local" comment:"Mode Cache: redis or local"`
 		TTL   int    `default:"60"`
 		Redis struct {
-			Host     string `default:"localhost:6379"`
+			Host     string `default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379"`
 			Password string
-		}
-	}
+		} `comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup"`
+	} `comment:"######################\n# CDS Cache Settings #\n######################\nIf your CDS is made of a unique instance, a local cache if enough, but rememeber that all cached data will be lost on startup."`
 	Directories struct {
 		Download string `default:"/tmp/cds/download"`
 		Keys     string `default:"/tmp/cds/keys"`
 	}
 	Auth struct {
-		DefaultGroup     string
-		SharedInfraToken string
+		DefaultGroup     string `default:"" comment:"The default group is the group in which every new user will be granted at signup"`
+		SharedInfraToken string `default:"changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory. 64 char"`
 		LDAP             struct {
-			Enable   bool
+			Enable   bool `default:"false"`
 			Host     string
-			Port     int
-			SSL      bool
+			Port     int    `default:"636"`
+			SSL      bool   `default:"true"`
 			Base     string `default:"dc=myorganization,dc=com"`
 			DN       string `default:"uid=%s,ou=people,dc=myorganization,dc=com"`
 			Fullname string `default:"{{.givenName}} {{.sn}}"`
 		}
-	}
+	} `comment:"##############################\n# CDS Authentication Settings#\n##############################"`
 	SMTP struct {
-		Disable  bool
+		Disable  bool `default:"true"`
 		Host     string
 		Port     string
 		TLS      bool
 		User     string
 		Password string
-		From     string `default:"no-reply@cds.org"`
-	}
+		From     string `default:"no-reply@cds.local"`
+	} `comment:"#####################n# CDS SMTP Settings #\n#####################"`
 	Artifact struct {
-		Mode  string `default:"local"`
+		Mode  string `default:"local" comment:"swift or local"`
 		Local struct {
 			BaseDirectory string `default:"/tmp/cds/artifacts"`
 		}
 		Openstack struct {
-			URL             string
-			Username        string
-			Password        string
-			Tenant          string
-			Region          string
-			ContainerPrefix string
+			URL             string `comment:"Authentication Endpoint, generally value of $OS_AUTH_URL"`
+			Username        string `comment:"Openstack Username, generally value of $OS_USERNAME"`
+			Password        string `comment:"Openstack Password, generally value of $OS_PASSWORD"`
+			Tenant          string `comment:"Openstack Tenant, generally value of $OS_TENANT_NAME"`
+			Region          string `comment:"Region, generally value of $OS_REGION_NAME"`
+			ContainerPrefix string `comment:"Use if your want to prefix containers for CDS Artefacts"`
 		}
-	}
+	} `comment:"Either filesystem local storage or Openstack Swift Storage are supported"`
 	Events struct {
 		Kafka struct {
 			Enabled  bool
@@ -120,25 +120,25 @@ type Configuration struct {
 			User     string
 			Password string
 		}
-	}
+	} `comment:"#######################\n# CDS Events Settings #\n#######################"`
 	Schedulers struct {
-		Disabled bool
-	}
+		Disabled bool `default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it"`
+	} `comment:"###########################\n# CDS Schedulers Settings #\n###########################"`
 	VCS struct {
 		Polling struct {
-			Disabled bool
+			Disabled bool `default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it"`
 		}
 		Github struct {
 			Secret           string
-			DisableStatus    bool
-			DisableStatusURL bool
+			DisableStatus    bool `default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on Github API"`
+			DisableStatusURL bool `default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on Github API"`
 		}
 		Bitbucket struct {
-			DisableStatus bool
+			DisableStatus bool `default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on Bitbucket API"`
 			ConsumerKey   string
 			PrivateKey    string
 		}
-	}
+	} `comment:"####################\n# CDS VCS Settings #\n####################"`
 	Vault struct {
 		ConfigurationKey string
 	}

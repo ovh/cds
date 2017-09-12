@@ -26,7 +26,7 @@ type CommonConfiguration struct {
 			URL      string `default:"http://localhost:8082"`
 			Insecure bool   `default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
 		}
-		Token                string `default:"************" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ "`
+		Token                string `default:"changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ "`
 		RequestTimeout       int    `default:"10" comment:"Request CDS API: timeout in seconds"`
 		MaxHeartbeatFailures int    `default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine"`
 	}
