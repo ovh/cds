@@ -16,6 +16,7 @@ import {WorkflowSidebarComponent} from './sidebar/workflow.sidebar.component';
 import {WorkflowRunArtifactListComponent} from './run/node/artifact/artifact.list.component';
 import {WorkflowRunTestsResultComponent} from './run/node/test/tests.component';
 import {WorkflowRunTestTableComponent} from './run/node/test/table/test.table.component';
+import {WorkflowNodeRunHistoryComponent} from './run/node/history/history.component';
 
 @NgModule({
     declarations: [
@@ -31,6 +32,7 @@ import {WorkflowRunTestTableComponent} from './run/node/test/table/test.table.co
         WorkflowRunArtifactListComponent,
         WorkflowRunTestsResultComponent,
         WorkflowRunTestTableComponent,
+        WorkflowNodeRunHistoryComponent,
         WorkflowSidebarComponent,
         WorkflowShowComponent,
         WorkflowStepLogComponent,
