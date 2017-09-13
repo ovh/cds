@@ -14,6 +14,8 @@ import {WorkflowStepLogComponent} from './run/node/pipeline/step/step.log.compon
 import {WorkflowComponent} from './workflow.compoment';
 import {WorkflowSidebarComponent} from './sidebar/workflow.sidebar.component';
 import {WorkflowRunArtifactListComponent} from './run/node/artifact/artifact.list.component';
+import {WorkflowRunTestsResultComponent} from './run/node/test/tests.component';
+import {WorkflowRunTestTableComponent} from './run/node/test/table/test.table.component';
 
 @NgModule({
     declarations: [
@@ -27,6 +29,8 @@ import {WorkflowRunArtifactListComponent} from './run/node/artifact/artifact.lis
         WorkflowRunJobSpawnInfoComponent,
         WorkflowRunNodePipelineComponent,
         WorkflowRunArtifactListComponent,
+        WorkflowRunTestsResultComponent,
+        WorkflowRunTestTableComponent,
         WorkflowSidebarComponent,
         WorkflowShowComponent,
         WorkflowStepLogComponent,
