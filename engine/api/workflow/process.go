@@ -296,6 +296,19 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 	if m != nil {
 		run.Payload = m.Payload
 		run.PipelineParameters = m.PipelineParameters
+		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
+			Name:  "cds.triggered_by.email",
+			Type:  sdk.StringParameter,
+			Value: m.User.Email,
+		}, sdk.Parameter{
+			Name:  "cds.triggered_by.fullname",
+			Type:  sdk.StringParameter,
+			Value: m.User.Fullname,
+		}, sdk.Parameter{
+			Name:  "cds.triggered_by.username",
+			Type:  sdk.StringParameter,
+			Value: m.User.Username,
+		})
 	}
 
 	// Process parameters for the jobs
