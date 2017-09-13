@@ -20,7 +20,7 @@ func releaseApplicationWorkflowHandler(w http.ResponseWriter, r *http.Request, d
 	vars := mux.Vars(r)
 	key := vars["permProjectKey"]
 	name := vars["workflowName"]
-	nodeRunID, errN := requestVarInt(r, "id")
+	nodeRunID, errN := requestVarInt(r, "nodeRunID")
 	if errN != nil {
 		return errN
 	}

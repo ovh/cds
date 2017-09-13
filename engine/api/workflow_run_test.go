@@ -21,6 +21,114 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
+	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(db, s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(db, j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	//Second pipeline
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
+	s = sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip2.ID
+	pipeline.InsertStage(db, s)
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(db, j, s.ID, &pip2)
+	s.Jobs = append(s.Jobs, *j)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(db, &w, u))
+	w1, err := workflow.Load(db, key, "test_1", u)
+	test.NoError(t, err)
+
+	wr, errMR := workflow.ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
+		User: *u,
+	})
+	if errMR != nil {
+		test.NoError(t, errMR)
+	}
+
+	_, errMR2 := workflow.ManualRunFromNode(db, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.RootID)
+	if errMR2 != nil {
+		test.NoError(t, errMR2)
+	}
+
+	// Init router
+	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowNodeRunHistoryHandler")
+	router.init()
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+		"workflowName":   w1.Name,
+		"number":         fmt.Sprintf("%d", wr.Number),
+		"nodeID":         fmt.Sprintf("%d", wr.Workflow.RootID),
+	}
+	uri := router.getRoute("GET", getWorkflowNodeRunHistoryHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	history := []sdk.WorkflowNodeRun{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &history))
+	assert.Equal(t, 2, len(history))
+	assert.Equal(t, int64(1), history[0].SubNumber)
+	assert.Equal(t, int64(0), history[1].SubNumber)
+}
 func Test_getWorkflowRunsHandler(t *testing.T) {
 	db := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(db)
@@ -460,7 +568,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 		"number":         fmt.Sprintf("%d", lastrun.Number),
-		"id":             fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
+		"nodeRunID":      fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
 	}
 	uri := router.getRoute("GET", getWorkflowNodeRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -679,7 +787,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 		"number":         fmt.Sprintf("%d", lastrun.Number),
-		"id":             fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
+		"nodeRunID":      fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
 		"runJobId":       fmt.Sprintf("%d", jobRun.ID),
 		"stepOrder":      "1",
 	}

@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/venom"
 )
 
-func runParseJunitTestResultAction(*currentWorker) BuiltInAction {
+func runParseJunitTestResultAction(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
 		var res sdk.Result
 		res.Status = sdk.StatusFail.String()
@@ -77,7 +77,13 @@ func runParseJunitTestResultAction(*currentWorker) BuiltInAction {
 			return res
 		}
 
-		uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, url.QueryEscape(envName))
+		var uri string
+		if w.currentJob.wJob != nil {
+			uri = fmt.Sprintf("/queue/workflows/%d/test", w.currentJob.wJob.ID)
+		} else {
+			uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/test?envName=%s", proj, app, pip, bnS, url.QueryEscape(envName))
+		}
+
 		_, code, err := sdk.Request("POST", uri, data)
 		if err == nil && code > 300 {
 			err = fmt.Errorf("HTTP %d", code)
