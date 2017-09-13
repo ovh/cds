@@ -178,9 +178,11 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 		req.Close = true
 
 		// Set default headers
-		headers := r.SetHeaderFunc()
-		for k, v := range headers {
-			w.Header().Add(k, v)
+		if r.SetHeaderFunc != nil {
+			headers := r.SetHeaderFunc()
+			for k, v := range headers {
+				w.Header().Add(k, v)
+			}
 		}
 
 		//Always returns OK on Options method
