@@ -318,16 +318,16 @@ func getWorkflowNodeRunArtifactsHandler(w http.ResponseWriter, r *http.Request, 
 
 	number, errNu := requestVarInt(r, "number")
 	if errNu != nil {
-		return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
+		return sdk.WrapError(errNu, "getWorkflowNodeRunArtifactsHandler> Invalid node job run ID")
 	}
 
 	id, errI := requestVarInt(r, "nodeRunID")
 	if errI != nil {
-		return sdk.WrapError(sdk.ErrInvalidID, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
+		return sdk.WrapError(sdk.ErrInvalidID, "getWorkflowNodeRunArtifactsHandler> Invalid node job run ID")
 	}
 	nodeRun, errR := workflow.LoadNodeRun(db, key, name, number, id)
 	if errR != nil {
-		return sdk.WrapError(errR, "getWorkflowJobArtifactsHandler> Cannot load node run")
+		return sdk.WrapError(errR, "getWorkflowNodeRunArtifactsHandler> Cannot load node run")
 	}
 
 	return WriteJSON(w, r, nodeRun.Artifacts, http.StatusOK)
@@ -369,7 +369,7 @@ func getWorkflowRunArtifactsHandler(w http.ResponseWriter, r *http.Request, db *
 
 	number, errNu := requestVarInt(r, "number")
 	if errNu != nil {
-		return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
+		return sdk.WrapError(errNu, "getWorkflowRunArtifactsHandler> Invalid node job run ID")
 	}
 
 	wr, errW := workflow.LoadRun(db, key, name, number)

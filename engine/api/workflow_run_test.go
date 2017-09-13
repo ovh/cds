@@ -568,7 +568,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 		"number":         fmt.Sprintf("%d", lastrun.Number),
-		"id":             fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
+		"nodeRunID":      fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
 	}
 	uri := router.getRoute("GET", getWorkflowNodeRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -787,7 +787,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 		"number":         fmt.Sprintf("%d", lastrun.Number),
-		"id":             fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
+		"nodeRunID":      fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
 		"runJobId":       fmt.Sprintf("%d", jobRun.ID),
 		"stepOrder":      "1",
 	}
