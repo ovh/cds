@@ -2,7 +2,7 @@
       navigate:
         url: '{{.ui.url}}'
         reset: true
-    screenshot: login_1_navigate.png
+    screenshot: e2e_0_login_1_navigate.png
     assertions:
     - result.title ShouldEqual CDS
   - action:
@@ -11,9 +11,9 @@
         text: '{{.ui.user}}'
       - find: 'input[name="password"]'
         text: '{{.ui.password}}'
-    screenshot: login_2_type.png
+    screenshot: e2e_0_login_2_type.png
   - action:
       click:
         find: 'button#loginButton'
         wait: 2
-    screenshot: login_3_click.png
+    screenshot: e2e_0_login_3_click.png

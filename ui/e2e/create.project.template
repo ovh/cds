@@ -3,14 +3,14 @@
         find: a[href*="/project"]
     assertions:
     - result.url ShouldEqual {{.ui.url}}/project
-    screenshot: project_create_1_navigate.png
+    screenshot: e2e_1_project_create_1_navigate.png
   - action:
       fill:
       - find: input[name="projectname"]
         text: '{{.ui.project}}'
-    screenshot: project_create_2_group.png
+    screenshot: e2e_1_project_create_2_group.png
   - action:
       click:
          find: button.ui.green
          wait: 2
-    screenshot: project_create_3_submit.png
+    screenshot: e2e_1_project_create_3_submit.png
