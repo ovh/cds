@@ -13,7 +13,7 @@ type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration
 
 	// MarathonURL "marathon-api"
-	MarathonURL string `toml:"url" default:"https://lb.gra-1.containers.ovh.net/marathon/yourstack/" commented:"true" comment:"URL of your marathon"`
+	MarathonURL string `toml:"url" default:"http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080" commented:"true" comment:"URL of your marathon"`
 
 	// MarathonID "marathon-id"
 	MarathonIDPrefix string `default:"/cds/workers" commented:"true" comment:"Prefix of id for workers spawn on marathon. Enter 'workers' to have id as: '/workers/a-worker'"`

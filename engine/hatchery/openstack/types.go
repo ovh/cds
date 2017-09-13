@@ -24,7 +24,7 @@ type HatcheryConfiguration struct {
 	User string `default:"" commented:"true" comment:"Openstack User"`
 
 	// Address  openstack-auth-endpoint
-	Address string `default:"" commented:"true" comment:"Opentack Auth Endpoint"`
+	Address string `default:"https://auth.cloud.ovh.net/v2.0" commented:"true" comment:"Opentack Auth Endpoint"`
 
 	// Password openstack-password
 	Password string `default:"" commented:"true" comment:"Openstack Password"`
@@ -36,7 +36,7 @@ type HatcheryConfiguration struct {
 	NetworkString string `default:"Ext-Net" commented:"true" comment:"Hatchery will use this Network to spawn CDS Worker (Virtual Machine)."`
 
 	// IPRange IP Range
-	IPRange string `default:"" commented:"true" comment:"Facultative. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute)."`
+	IPRange string `default:"" commented:"true" comment:"Facultative. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).\nIf not set, it will get an address from the neutron service"`
 
 	// WorkerTTL Worker TTL (minutes)
 	WorkerTTL int `default:"30" commented:"true" comment:"Worker TTL (minutes)"`
