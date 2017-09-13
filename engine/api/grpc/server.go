@@ -16,7 +16,7 @@ import (
 )
 
 // Init initialize all GRPC services
-func Init(port int, tls bool, certFile, keyFile string) error {
+func Init(dbConnectionFactory *database.DBConnectionFactory, port int, tls bool, certFile, keyFile string) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return err
@@ -24,9 +24,13 @@ func Init(port int, tls bool, certFile, keyFile string) error {
 
 	log.Info("Starting GRPC services on port %d", port)
 
+	handlers := &handlers{
+		dbConnectionFactory: dbConnectionFactory,
+	}
+
 	opts := []grpc.ServerOption{
-		grpc.StreamInterceptor(streamInterceptor),
-		grpc.UnaryInterceptor(unaryInterceptor),
+		grpc.StreamInterceptor(handlers.streamInterceptor),
+		grpc.UnaryInterceptor(handlers.unaryInterceptor),
 	}
 
 	if tls {
@@ -39,7 +43,6 @@ func Init(port int, tls bool, certFile, keyFile string) error {
 
 	grpcServer := grpc.NewServer(opts...)
 
-	handlers := &handlers{}
 	RegisterBuildLogServer(grpcServer, handlers)
 	RegisterWorkflowQueueServer(grpcServer, handlers)
 
@@ -53,9 +56,9 @@ const (
 	keyWorkerName key = "worker_name"
 )
 
-func streamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+func (h *handlers) streamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	c := stream.Context()
-	w, err := authorize(c)
+	w, err := h.authorize(c)
 	if err != nil {
 		log.Warning("streamInterceptor> authorize failed : %s", err)
 		return err
@@ -66,8 +69,8 @@ func streamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.Str
 	return handler(srv, stream)
 }
 
-func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-	w, err := authorize(ctx)
+func (h *handlers) unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+	w, err := h.authorize(ctx)
 	if err != nil {
 		log.Warning("unaryInterceptor> authorize failed : %s", err)
 		return nil, err
@@ -77,10 +80,10 @@ func unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServ
 	return handler(ctx, req)
 }
 
-func authorize(ctx context.Context) (*sdk.Worker, error) {
+func (h *handlers) authorize(ctx context.Context) (*sdk.Worker, error) {
 	if md, ok := metadata.FromContext(ctx); ok {
 		if len(md["name"]) > 0 && len(md["token"]) > 0 {
-			w, err := auth.GetWorker(database.GetDBMap(), md["token"][0])
+			w, err := auth.GetWorker(h.dbConnectionFactory.GetDBMap(), h.store, md["token"][0])
 			if err != nil {
 				log.Error("grpc.authorize> Unable to get worker %v:%v => %s", md["name"], md["token"], err)
 				return nil, sdk.ErrServiceUnavailable

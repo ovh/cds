@@ -1,31 +1,72 @@
 package local
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
 
+	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/spf13/viper"
 )
 
-var hatcheryLocal *HatcheryLocal
+// New instanciates a new hatchery local
+func New() *HatcheryLocal {
+	return new(HatcheryLocal)
+}
 
-// HatcheryLocal implements HatcheryMode interface for local usage
-type HatcheryLocal struct {
-	sync.Mutex
-	hatch   *sdk.Hatchery
-	basedir string
-	workers map[string]*exec.Cmd
-	client  cdsclient.Interface
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
+func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
+	if err := h.CheckConfiguration(cfg); err != nil {
+		return err
+	}
+
+	var ok bool
+	h.Config, ok = cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+	return nil
+}
+
+// CheckConfiguration checks the validity of the configuration object
+func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
+	hconfig, ok := cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	if hconfig.API.HTTP.URL == "" {
+		return fmt.Errorf("API HTTP(s) URL is mandatory")
+	}
+
+	if hconfig.API.Token == "" {
+		return fmt.Errorf("API Token URL is mandatory")
+	}
+
+	if hconfig.Basedir == "" {
+		return fmt.Errorf("Invalid basedir directory")
+	}
+
+	if ok, err := api.DirectoryExists(hconfig.Basedir); !ok {
+		return fmt.Errorf("Basedir doesn't exist")
+	} else if err != nil {
+		return fmt.Errorf("Invalid basedir: %v", err)
+	}
+	return nil
+}
+
+// Serve start the HatcheryLocal server
+func (h *HatcheryLocal) Serve(ctx context.Context) error {
+	hatchery.Create(h)
+	return nil
 }
 
 // ID must returns hatchery id
@@ -44,6 +85,11 @@ func (h *HatcheryLocal) Hatchery() *sdk.Hatchery {
 //Client returns cdsclient instance
 func (h *HatcheryLocal) Client() cdsclient.Interface {
 	return h.client
+}
+
+//Configuration returns Hatchery CommonConfiguration
+func (h *HatcheryLocal) Configuration() hatchery.CommonConfiguration {
+	return h.Config.CommonConfiguration
 }
 
 // ModelType returns type of hatchery
@@ -87,8 +133,8 @@ func (h *HatcheryLocal) killWorker(worker sdk.Worker) error {
 func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	var err error
 
-	if len(h.workers) >= viper.GetInt("max-worker") {
-		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+	if len(h.workers) >= h.Config.Provision.MaxWorker {
+		return "", fmt.Errorf("Max capacity reached (%d)", h.Config.Provision.MaxWorker)
 	}
 
 	if jobID > 0 {
@@ -104,28 +150,28 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 
 	var args []string
 	args = append(args, fmt.Sprintf("--api=%s", h.Client().APIURL()))
-	args = append(args, fmt.Sprintf("--token=%s", viper.GetString("token")))
-	args = append(args, fmt.Sprintf("--basedir=%s", h.basedir))
+	args = append(args, fmt.Sprintf("--token=%s", h.Config.API.Token))
+	args = append(args, fmt.Sprintf("--basedir=%s", h.Config.Basedir))
 	args = append(args, fmt.Sprintf("--model=%d", h.Hatchery().Model.ID))
 	args = append(args, fmt.Sprintf("--name=%s", wName))
 	args = append(args, fmt.Sprintf("--hatchery=%d", h.hatch.ID))
 	args = append(args, fmt.Sprintf("--hatchery-name=%s", h.hatch.Name))
 
-	if viper.GetString("worker_graylog_host") != "" {
-		args = append(args, fmt.Sprintf("--graylog-host=%s", viper.GetString("worker_graylog_host")))
+	if h.Config.Provision.WorkerLogsOptions.Graylog.Host != "" {
+		args = append(args, fmt.Sprintf("--graylog-host=%s", h.Config.Provision.WorkerLogsOptions.Graylog.Host))
 	}
-	if viper.GetString("worker_graylog_port") != "" {
-		args = append(args, fmt.Sprintf("--graylog-port=%s", viper.GetString("worker_graylog_port")))
+	if h.Config.Provision.WorkerLogsOptions.Graylog.Port != 0 {
+		args = append(args, fmt.Sprintf("--graylog-port=%d", h.Config.Provision.WorkerLogsOptions.Graylog.Port))
 	}
-	if viper.GetString("worker_graylog_extra_key") != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", viper.GetString("worker_graylog_extra_key")))
+	if h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey))
 	}
-	if viper.GetString("worker_graylog_extra_value") != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", viper.GetString("worker_graylog_extra_value")))
+	if h.Config.Provision.WorkerLogsOptions.Graylog.Extravalue != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", h.Config.Provision.WorkerLogsOptions.Graylog.Extravalue))
 	}
-	if viper.GetString("grpc_api") != "" && wm.Communication == sdk.GRPC {
-		args = append(args, fmt.Sprintf("--grpc-api=%s", viper.GetString("grpc_api")))
-		args = append(args, fmt.Sprintf("--grpc-insecure=%t", viper.GetBool("grpc_insecure")))
+	if h.Config.API.GRPC.URL != "" && wm.Communication == sdk.GRPC {
+		args = append(args, fmt.Sprintf("--grpc-api=%s", h.Config.API.GRPC.URL))
+		args = append(args, fmt.Sprintf("--grpc-insecure=%t", h.Config.API.GRPC.Insecure))
 	}
 
 	args = append(args, "--single-use")
@@ -209,10 +255,15 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 }
 
 // Init register local hatchery with its worker model
-func (h *HatcheryLocal) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]*exec.Cmd)
 
-	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	h.client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+	)
 
 	req, err := h.Client().Requirements()
 	if err != nil {
@@ -224,7 +275,7 @@ func (h *HatcheryLocal) Init(name, api, token string, requestSecondsTimeout int,
 		return fmt.Errorf("Cannot check local capabilities: %s", err)
 	}
 
-	genname := hatchery.GenerateName("local", name)
+	genname := hatchery.GenerateName("local", h.Configuration().Name)
 
 	h.hatch = &sdk.Hatchery{
 		Name: genname,

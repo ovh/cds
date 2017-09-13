@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -16,7 +17,7 @@ import (
 )
 
 //Executer is the goroutine which run the pipelines
-func Executer(c context.Context, DBFunc func() *gorp.DbMap) {
+func Executer(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	tick := time.NewTicker(5 * time.Second).C
 	for {
 		select {
@@ -26,13 +27,17 @@ func Executer(c context.Context, DBFunc func() *gorp.DbMap) {
 				return
 			}
 		case <-tick:
-			ExecuterRun(DBFunc())
+			ExecuterRun(DBFunc, store)
 		}
 	}
 }
 
 //ExecuterRun is the core function of Executer goroutine
-func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
+func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSchedulerExecution, error) {
+	db := DBFunc()
+	if db == nil {
+		return nil, sdk.WrapError(sdk.ErrServiceUnavailable, "ExecuterRun> Unable to load pending execution")
+	}
 	tx, errb := db.Begin()
 	if errb != nil {
 		log.Warning("ExecuterRun> %s", errb)
@@ -54,7 +59,7 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 	var pbs []sdk.PipelineBuild
 	//Process all
 	for i := range exs {
-		pb, err := executerProcess(tx, &exs[i])
+		pb, err := executerProcess(DBFunc, store, tx, &exs[i])
 		if err != nil {
 			log.Error("ExecuterRun> Unable to process %+v : %s", exs[i], err)
 		}
@@ -70,12 +75,12 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 	}
 
 	for _, pb := range pbs {
-		proj, errproj := project.Load(db, pb.Application.ProjectKey, nil)
+		proj, errproj := project.Load(db, store, pb.Application.ProjectKey, nil)
 		if errproj != nil {
 			log.Warning("ExecuterRun> Unable to load project: %s", errproj)
 		}
 
-		app, errapp := application.LoadByID(db, pb.Application.ID, nil, application.LoadOptions.WithRepositoryManager)
+		app, errapp := application.LoadByID(db, store, pb.Application.ID, nil, application.LoadOptions.WithRepositoryManager)
 		if errapp != nil {
 			log.Warning("ExecuterRun> Unable to load app: %s", errapp)
 		}
@@ -88,7 +93,7 @@ func ExecuterRun(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, error) {
 	return exs, nil
 }
 
-func executerProcess(db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) (*sdk.PipelineBuild, error) {
+func executerProcess(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) (*sdk.PipelineBuild, error) {
 	//Load the scheduler
 	s, err := Load(db, e.PipelineSchedulerID)
 	if err != nil {
@@ -96,7 +101,7 @@ func executerProcess(db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) (*s
 	}
 
 	//Load application
-	app, err := application.LoadByID(db, s.ApplicationID, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithVariablesWithClearPassword)
+	app, err := application.LoadByID(db, store, s.ApplicationID, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +119,7 @@ func executerProcess(db gorp.SqlExecutor, e *sdk.PipelineSchedulerExecution) (*s
 	}
 
 	//Create a new pipeline build
-	pb, err := queue.RunPipeline(db, app.ProjectKey, app, pip.Name, env.Name, s.Args, -1, sdk.PipelineBuildTrigger{
+	pb, err := queue.RunPipeline(DBFunc, store, db, app.ProjectKey, app, pip.Name, env.Name, s.Args, -1, sdk.PipelineBuildTrigger{
 		ManualTrigger:    false,
 		ScheduledTrigger: true,
 	}, nil)

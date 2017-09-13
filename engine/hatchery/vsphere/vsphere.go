@@ -1,45 +1,78 @@
 package vsphere
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/vmware/govmomi"
-	"github.com/vmware/govmomi/find"
-	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
-var hatcheryVSphere *HatcheryVSphere
+// New instanciates a new Hatchery vsphere
+func New() *HatcheryVSphere {
+	return new(HatcheryVSphere)
+}
 
-// HatcheryVSphere spawns vm
-type HatcheryVSphere struct {
-	hatch      *sdk.Hatchery
-	images     []string
-	datacenter *object.Datacenter
-	finder     *find.Finder
-	network    object.NetworkReference
-	vclient    *govmomi.Client
-	client     cdsclient.Interface
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
+func (h *HatcheryVSphere) ApplyConfiguration(cfg interface{}) error {
+	if err := h.CheckConfiguration(cfg); err != nil {
+		return err
+	}
 
-	// User provided parameters
-	endpoint           string
-	user               string
-	password           string
-	host               string
-	datacenterString   string
-	datastoreString    string
-	networkString      string
-	cardName           string
-	workerTTL          int
-	disableCreateImage bool
-	createImageTimeout int
+	var ok bool
+	h.Config, ok = cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	return nil
+}
+
+// CheckConfiguration checks the validity of the configuration object
+func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
+	hconfig, ok := cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	if hconfig.API.HTTP.URL == "" {
+		return fmt.Errorf("API HTTP(s) URL is mandatory")
+	}
+
+	if hconfig.API.Token == "" {
+		return fmt.Errorf("API Token URL is mandatory")
+	}
+
+	if hconfig.VSphereUser == "" {
+		return fmt.Errorf("vsphere-user is mandatory")
+	}
+
+	if hconfig.VSphereEndpoint == "" {
+		return fmt.Errorf("vsphere-endpoint is mandatory")
+	}
+
+	if hconfig.VSpherePassword == "" {
+		return fmt.Errorf("vsphere-password is mandatory")
+	}
+
+	if hconfig.VSphereDatacenterString == "" {
+		return fmt.Errorf("vsphere-datacenter is mandatory")
+	}
+
+	return nil
+}
+
+// Serve start the HatcheryVSphere server
+func (h *HatcheryVSphere) Serve(ctx context.Context) error {
+	hatchery.Create(h)
+	return nil
 }
 
 // CanSpawn return wether or not hatchery can spawn model
@@ -56,6 +89,11 @@ func (h *HatcheryVSphere) CanSpawn(model *sdk.Model, jobID int64, requirements [
 //Client returns cdsclient instance
 func (h *HatcheryVSphere) Client() cdsclient.Interface {
 	return h.client
+}
+
+//Configuration returns Hatchery CommonConfiguration
+func (h *HatcheryVSphere) Configuration() hatchery.CommonConfiguration {
+	return h.Config.CommonConfiguration
 }
 
 // NeedRegistration return true if worker model need regsitration

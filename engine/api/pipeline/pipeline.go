@@ -29,7 +29,7 @@ func UpdatePipelineLastModified(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.P
 	t := time.Now()
 
 	if u != nil {
-		cache.SetWithTTL(cache.Key("lastModified", proj.Key, "pipeline", p.Name), sdk.LastModification{
+		Store.SetWithTTL(cache.Key("lastModified", proj.Key, "pipeline", p.Name), sdk.LastModification{
 			Name:         p.Name,
 			Username:     u.Username,
 			LastModified: t.Unix(),
@@ -44,7 +44,7 @@ func UpdatePipelineLastModified(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.P
 		}
 		b, errP := json.Marshal(updates)
 		if errP == nil {
-			cache.Publish("lastUpdates", string(b))
+			Store.Publish("lastUpdates", string(b))
 		}
 	}
 
