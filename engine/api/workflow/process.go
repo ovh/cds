@@ -320,7 +320,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, w *sdk.WorkflowRun, n *sdk.Work
 		})
 		return sdk.WrapError(errParam, "processWorkflowNodeRun> getNodeRunBuildParameters failed")
 	}
-	run.BuildParameters = jobParams
+	run.BuildParameters = append(run.BuildParameters, jobParams...)
 
 	// Inherit parameter from parent job
 	if len(sourceNodeRuns) > 0 {
