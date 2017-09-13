@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/fatih/structs"
@@ -47,6 +48,9 @@ func AsEnvVariables(o interface{}, prefix string) map[string]string {
 	prefix = strings.ToUpper(prefix)
 	fields := structs.Fields(o)
 	for _, f := range fields {
+		if commented, _ := strconv.ParseBool(f.Tag("commented")); commented {
+			continue
+		}
 		if structs.IsStruct(f.Value()) {
 			rf := AsEnvVariables(f.Value(), prefix+"_"+f.Name())
 			for k, v := range rf {
