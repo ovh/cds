@@ -10,6 +10,7 @@ import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {Workflow} from '../../../../model/workflow.model';
 import {RouterService} from '../../../../service/router/router.service';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -28,10 +29,13 @@ export class WorkflowNodeRunComponent implements OnDestroy {
     project: Project;
     workflowName: string;
 
+    // History
+    nodeRunsHistory = new Array<WorkflowNodeRun>();
+
     selectedTab: string;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-        private _router: Router, private _routerService: RouterService) {
+        private _router: Router, private _routerService: RouterService, private _workflowRunService: WorkflowRunService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         this._activatedRoute.data.subscribe(datas => {
@@ -70,8 +74,18 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                     if (!wrString) {
                         return;
                     }
+                    let historyChecked = false;
                     this.zone.run(() => {
                         this.nodeRun = <WorkflowNodeRun>JSON.parse(wrString);
+
+                        if (!historyChecked) {
+                            historyChecked = true;
+                            this._workflowRunService.nodeRunHistory(
+                                this.project.key, this.workflowName,
+                                number, this.nodeRun.workflow_node_id).first().subscribe( nrs => {
+                                this.nodeRunsHistory = nrs;
+                            })
+                        }
 
                         if (this.nodeRun && this.nodeRun.status === PipelineStatus.SUCCESS || this.nodeRun.status === PipelineStatus.FAIL) {
                             this.nodeRunWorker.stop();
@@ -94,7 +108,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
         this._router.navigateByUrl('/project/' + this.project.key +
             '/workflow/' + this.workflowName +
             '/run/' + this.nodeRun.num +
-            '/node/' + this.nodeRun.id,
+            '/node/' + this.nodeRun.id +
             '?&tab=' + tab);
     }
 }

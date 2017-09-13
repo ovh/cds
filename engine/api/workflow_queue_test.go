@@ -596,7 +596,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 		"permProjectKey": ctx.project.Key,
 		"workflowName":   ctx.workflow.Name,
 		"number":         fmt.Sprintf("%d", updatedNodeRun.Number),
-		"id":             fmt.Sprintf("%d", wNodeJobRun.WorkflowNodeRunID),
+		"nodeRunID":      fmt.Sprintf("%d", wNodeJobRun.WorkflowNodeRunID),
 	}
 	uri = router.getRoute("GET", getWorkflowNodeRunArtifactsHandler, vars)
 	test.NotEmpty(t, uri)

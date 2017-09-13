@@ -140,13 +140,14 @@ func (router *Router) init() {
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/tags", GET(getWorkflowRunTagsHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", GET(getWorkflowRunHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/artifacts", GET(getWorkflowRunArtifactsHandler))
-	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}", GET(getWorkflowNodeRunHandler))
-	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}/job/{runJobId}/step/{stepOrder}", GET(getWorkflowNodeRunJobStepHandler))
-	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}/artifacts", GET(getWorkflowNodeRunArtifactsHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}", GET(getWorkflowNodeRunHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeID}/history", GET(getWorkflowNodeRunHistoryHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", GET(getWorkflowNodeRunJobStepHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}/artifacts", GET(getWorkflowNodeRunArtifactsHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/artifact/{artifactId}", GET(getDownloadArtifactHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/node/{nodeID}/triggers/condition", GET(getWorkflowTriggerConditionHandler))
 	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/join/{joinID}/triggers/condition", GET(getWorkflowTriggerJoinConditionHandler))
-	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{id}/release", POST(releaseApplicationWorkflowHandler))
+	router.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}/release", POST(releaseApplicationWorkflowHandler))
 
 	// DEPRECATED
 	router.Handle("/project/{key}/pipeline/{permPipelineKey}/action/{jobID}", PUT(updatePipelineActionHandler, DEPRECATED), DELETE(deleteJobHandler))
