@@ -35,6 +35,10 @@ type Store interface {
 	Subscribe(queueName string) PubSub
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
 	Status() string
+	SetAdd(key string, member interface{})
+	SetCard(key string) int
+	SetRemove(key string, member interface{})
+	SetScan(key string, members ...interface{}) error
 }
 
 //New init a cache

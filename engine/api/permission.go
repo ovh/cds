@@ -73,6 +73,13 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
+		case sdk.ServiceRequirement:
+			var err error
+			ctx, err = auth.CheckWorkerAuth(ctx, api.mustDB(), api.Cache, headers)
+			if err != nil {
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
+			}
+
 		default:
 			var err error
 			ctx, err = api.Router.AuthDriver.CheckAuth(ctx, w, req)

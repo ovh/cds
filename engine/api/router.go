@@ -320,6 +320,14 @@ func NeedHatchery() HandlerConfigParam {
 	return f
 }
 
+// NeedService set the route for hatchery only
+func NeedService() HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["needService"] = "true"
+	}
+	return f
+}
+
 // NeedWorker set the route for worker only
 func NeedWorker() HandlerConfigParam {
 	f := func(rc *HandlerConfig) {

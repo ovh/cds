@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
+	"github.com/ovh/cds/engine/hooks"
 )
 
 type Configuration struct {
@@ -30,6 +31,7 @@ type Configuration struct {
 		Swarm     swarm.HatcheryConfiguration     `comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
 		VSphere   vsphere.HatcheryConfiguration   `comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
 	}
+	Hooks hooks.Configuration `comment:"CDS Workflow Hooks."`
 }
 
 type ServiceServeOptions struct {

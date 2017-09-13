@@ -23,6 +23,7 @@ const (
 	ContextUser contextKey = iota
 	ContextHatchery
 	ContextWorker
+	ContextService
 )
 
 //Driver is an interface to all auth method (local, ldap and beyond...)
@@ -120,6 +121,20 @@ func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, hea
 
 	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: w.Name})
 	ctx = context.WithValue(ctx, ContextWorker, w)
+	return ctx, nil
+}
+
+// CheckServiceAuth checks services authentication
+func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header) (context.Context, error) {
+	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
+	if err != nil {
+		return ctx, fmt.Errorf("bad service key syntax: %s", err)
+	}
+
+	_ = id
+
+	//ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: w.Name})
+	//ctx = context.WithValue(ctx, ContextWorker, w)
 	return ctx, nil
 }
 

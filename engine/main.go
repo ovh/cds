@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
+	"github.com/ovh/cds/engine/hooks"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -204,9 +205,11 @@ Start CDS Engine Services:
 	 * Docker Swarm
 	 * Openstack
 	 * Vsphere
+ * Hooks:
+ 	This component operates CDS workflow hooks
 
 Start all of this with a single command:
-	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere]
+	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks]
 All the services are using the same configuration file format.
 You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.
 You can also use or override toml file with environment variable.
@@ -229,13 +232,13 @@ See $ engine config command for more details.
 		//Initialize context
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
 
 		// Gracefully shutdown all
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 		defer func() {
 			signal.Stop(c)
-			cancel()
 		}()
 
 		for _, a := range args {
@@ -266,12 +269,15 @@ See $ engine config command for more details.
 			case "hatchery:vsphere":
 				s = vsphere.New()
 				cfg = conf.Hatchery.VSphere
+			case "hooks":
+				s = hooks.New()
+				cfg = conf.Hooks
 			}
 
 			go start(ctx, s, cfg)
 
 			//Stupid trick: when API is starting wait a bit before start the other
-			if a == "API" {
+			if a == "API" || a == "api" {
 				time.Sleep(2 * time.Second)
 			}
 		}

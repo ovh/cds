@@ -302,6 +302,9 @@ func (api *API) InitRouter() {
 	// SSE
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))
 
+	// Engine µServices
+	r.Handle("/services/register", r.POST(api.postServiceRegisterHandler, Auth(false)))
+
 	//Not Found handler
 	r.Mux.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 }

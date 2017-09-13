@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk/log"
+	"github.com/pkg/errors"
 
 	"github.com/go-redis/redis"
 )
@@ -278,4 +279,37 @@ func (s *RedisStore) Status() string {
 		return "OK (redis)"
 	}
 	return "KO (redis"
+}
+
+func (s *RedisStore) SetAdd(key string, member interface{}) {
+	b, err := json.Marshal(member)
+	if err != nil {
+		log.Warning("redis> Error SAdd %s:%s", key, err)
+		return
+	}
+	s.Client.SAdd(key, b)
+}
+func (s *RedisStore) SetCard(key string) int {
+	return int(s.Client.SCard(key).Val())
+}
+func (s *RedisStore) SetRemove(key string, member interface{}) {
+	b, err := json.Marshal(member)
+	if err != nil {
+		log.Warning("redis> Error SAdd %s:%s", key, err)
+		return
+	}
+	s.Client.SRem(key, b)
+}
+func (s *RedisStore) SetScan(key string, members ...interface{}) error {
+	values, _, err := s.Client.ZScan(key, uint64(0), "", int64(len(members))).Result()
+	if err != nil {
+		return errors.Wrap(err, "redis.SetScan")
+	}
+
+	for i := range members {
+		if err := json.Unmarshal([]byte(values[i]), members[i]); err != nil {
+			return err
+		}
+	}
+	return nil
 }

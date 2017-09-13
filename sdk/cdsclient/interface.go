@@ -46,6 +46,7 @@ type Interface interface {
 	QueueSendResult(int64, sdk.Result) error
 	QueueArtifactUpload(id int64, tag, filePath string) error
 	Requirements() ([]sdk.Requirement, error)
+	ServiceRegister(sdk.Service) error
 	UserLogin(username, password string) (bool, string, error)
 	UserList() ([]sdk.User, error)
 	UserSignup(username, fullname, email, callback string) error
