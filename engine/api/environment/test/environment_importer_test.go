@@ -12,7 +12,7 @@ import (
 )
 
 func TestImportInto_Variable(t *testing.T) {
-	db := test.SetupPG(t)
+	db, cache := test.SetupPG(t)
 
 	u := &sdk.User{
 		Username: "foo",
@@ -23,9 +23,9 @@ func TestImportInto_Variable(t *testing.T) {
 		Name: "testimportenv",
 	}
 
-	project.Delete(db, proj.Key)
+	project.Delete(db, cache, proj.Key)
 
-	test.NoError(t, project.Insert(db, &proj, nil))
+	test.NoError(t, project.Insert(db, cache, &proj, nil))
 
 	env := sdk.Environment{
 		Name:      "testenv",
@@ -136,7 +136,7 @@ func TestImportInto_Variable(t *testing.T) {
 }
 
 func TestImportInto_Group(t *testing.T) {
-	db := test.SetupPG(t)
+	db, cache := test.SetupPG(t)
 
 	u := &sdk.User{
 		Username: "foo",
@@ -147,9 +147,9 @@ func TestImportInto_Group(t *testing.T) {
 		Name: "testimportenv",
 	}
 
-	project.Delete(db, proj.Key)
+	project.Delete(db, cache, proj.Key)
 
-	test.NoError(t, project.Insert(db, &proj, nil))
+	test.NoError(t, project.Insert(db, cache, &proj, nil))
 
 	oldEnv, _ := environment.LoadEnvironmentByName(db, proj.Key, "testenv")
 	if oldEnv != nil {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -15,8 +16,8 @@ import (
 )
 
 // GetWorkflowStatus Get workflow updated builds status + scheduler and poller executions
-func GetWorkflowStatus(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User, branchName string, version int64) ([]sdk.PipelineBuild, []sdk.PipelineScheduler, []sdk.RepositoryPoller, []sdk.Hook, error) {
-	cdPipelines, err := LoadCDTree(db, projectkey, appName, user, branchName, version)
+func GetWorkflowStatus(db gorp.SqlExecutor, store cache.Store, projectkey, appName string, user *sdk.User, branchName string, version int64) ([]sdk.PipelineBuild, []sdk.PipelineScheduler, []sdk.RepositoryPoller, []sdk.Hook, error) {
+	cdPipelines, err := LoadCDTree(db, store, projectkey, appName, user, branchName, version)
 	if err != nil {
 		return nil, nil, nil, nil, sdk.WrapError(err, "GetWorkflowStatus> Cannot load workflow")
 	}
@@ -55,7 +56,7 @@ func getWorkflowStatus(pbs *[]sdk.PipelineBuild, schedulers *[]sdk.PipelineSched
 }
 
 // LoadCDTree Load the continuous delivery pipeline tree for the given application
-func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User, branchName string, version int64) ([]sdk.CDPipeline, error) {
+func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName string, user *sdk.User, branchName string, version int64) ([]sdk.CDPipeline, error) {
 	cdTrees := []sdk.CDPipeline{}
 
 	// Select root trigger element + non triggered pipeline
@@ -290,7 +291,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 					var pbs []sdk.PipelineBuild
 					if version == 0 {
 						if root.Pipeline.Type != sdk.BuildPipeline {
-							p, errP := project.Load(db, projectkey, user, project.LoadOptions.WithEnvironments)
+							p, errP := project.Load(db, store, projectkey, user, project.LoadOptions.WithEnvironments)
 							if errP != nil {
 								return nil, sdk.WrapError(errP, "LoadCDTree> Cannot load project")
 							}
@@ -311,7 +312,7 @@ func LoadCDTree(db gorp.SqlExecutor, projectkey, appName string, user *sdk.User,
 
 					} else {
 						if root.Pipeline.Type != sdk.BuildPipeline {
-							p, errP := project.Load(db, projectkey, user, project.LoadOptions.WithEnvironments)
+							p, errP := project.Load(db, store, projectkey, user, project.LoadOptions.WithEnvironments)
 							if errP != nil {
 								return nil, sdk.WrapError(errP, "LoadCDTree> Cannot load project")
 							}

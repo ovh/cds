@@ -17,7 +17,7 @@ import (
 )
 
 // LoadOptionFunc is a type for all options in LoadOptions
-type LoadOptionFunc *func(gorp.SqlExecutor, *sdk.Application, *sdk.User) error
+type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Application, *sdk.User) error
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
@@ -45,7 +45,7 @@ var LoadOptions = struct {
 }
 
 // LoadByName load an application from DB
-func LoadByName(db gorp.SqlExecutor, projectKey, appName string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
+func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	var query string
 	var args []interface{}
 
@@ -81,11 +81,11 @@ func LoadByName(db gorp.SqlExecutor, projectKey, appName string, u *sdk.User, op
 		args = []interface{}{projectKey, appName, groupID, group.SharedInfraGroup.ID}
 	}
 
-	return load(db, projectKey, u, opts, query, args...)
+	return load(db, store, projectKey, u, opts, query, args...)
 }
 
 // LoadByID load an application from DB
-func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
+func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	var query string
 	var args []interface{}
 
@@ -118,24 +118,24 @@ func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User, opts ...LoadOptionFunc
 		args = []interface{}{id, groupID, group.SharedInfraGroup.ID}
 	}
 
-	return load(db, "", u, opts, query, args...)
+	return load(db, store, "", u, opts, query, args...)
 }
 
 // LoadByPipeline Load application where pipeline is attached
-func LoadByPipeline(db gorp.SqlExecutor, pipelineID int64, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
+func LoadByPipeline(db gorp.SqlExecutor, store cache.Store, pipelineID int64, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
 	query := `SELECT distinct application.*
 		 FROM application
 		 JOIN application_pipeline ON application.id = application_pipeline.application_id
 		 WHERE application_pipeline.pipeline_id = $1
 		 ORDER BY application.name`
-	app, err := loadapplications(db, u, opts, query, pipelineID)
+	app, err := loadapplications(db, store, u, opts, query, pipelineID)
 	if err != nil {
 		return nil, sdk.WrapError(err, "LoadByPipeline (%d)", pipelineID)
 	}
 	return app, nil
 }
 
-func load(db gorp.SqlExecutor, key string, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Application, error) {
+func load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Application, error) {
 	log.Debug("application.load> %s %v", query, args)
 	dbApp := dbApplication{}
 	if err := db.SelectOne(&dbApp, query, args...); err != nil {
@@ -145,10 +145,10 @@ func load(db gorp.SqlExecutor, key string, u *sdk.User, opts []LoadOptionFunc, q
 		return nil, sdk.WrapError(err, "application.load")
 	}
 	dbApp.ProjectKey = key
-	return unwrap(db, u, opts, &dbApp)
+	return unwrap(db, store, u, opts, &dbApp)
 }
 
-func unwrap(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, dbApp *dbApplication) (*sdk.Application, error) {
+func unwrap(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, dbApp *dbApplication) (*sdk.Application, error) {
 	app := sdk.Application(*dbApp)
 
 	if app.ProjectKey == "" {
@@ -160,11 +160,11 @@ func unwrap(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, dbApp *dbAp
 	}
 
 	if u != nil {
-		loadPermission(db, &app, u)
+		loadPermission(db, store, &app, u)
 	}
 
 	for _, f := range opts {
-		if err := (*f)(db, &app, u); err != nil && err != sql.ErrNoRows {
+		if err := (*f)(db, store, &app, u); err != nil && err != sql.ErrNoRows {
 			return nil, sdk.WrapError(err, "application.unwrap")
 		}
 	}
@@ -172,7 +172,7 @@ func unwrap(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, dbApp *dbAp
 }
 
 // Insert add an application id database
-func Insert(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, u *sdk.User) error {
+func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, u *sdk.User) error {
 	// check application name pattern
 	regexp := regexp.MustCompile(sdk.NamePattern)
 	if !regexp.MatchString(app.Name) {
@@ -190,11 +190,11 @@ func Insert(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, u *sdk
 		return sdk.WrapError(err, "application.Insert %s(%d)", app.Name, app.ID)
 	}
 	*app = sdk.Application(dbApp)
-	return UpdateLastModified(db, app, u)
+	return UpdateLastModified(db, store, app, u)
 }
 
 // Update updates application id database
-func Update(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+func Update(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 	app.LastModified = time.Now()
 	dbApp := dbApplication(*app)
 	n, err := db.Update(&dbApp)
@@ -204,11 +204,11 @@ func Update(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
 	if n == 0 {
 		return sdk.WrapError(sdk.ErrApplicationNotFound, "application.Update %s(%d)", app.Name, app.ID)
 	}
-	return UpdateLastModified(db, app, u)
+	return UpdateLastModified(db, store, app, u)
 }
 
 // UpdateLastModified Update last_modified column in application table
-func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 	query := `
 		UPDATE application SET last_modified = current_timestamp WHERE id = $1 RETURNING last_modified
 	`
@@ -219,7 +219,7 @@ func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) 
 	}
 
 	if u != nil {
-		cache.SetWithTTL(cache.Key("lastModified", app.ProjectKey, "application", app.Name), sdk.LastModification{
+		store.SetWithTTL(cache.Key("lastModified", app.ProjectKey, "application", app.Name), sdk.LastModification{
 			Name:         app.Name,
 			Username:     u.Username,
 			LastModified: lastModified.Unix(),
@@ -234,7 +234,7 @@ func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) 
 		}
 		b, errP := json.Marshal(updates)
 		if errP == nil {
-			cache.Publish("lastUpdates", string(b))
+			store.Publish("lastUpdates", string(b))
 		}
 	}
 
@@ -242,7 +242,7 @@ func UpdateLastModified(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) 
 }
 
 // LoadAll returns all applications
-func LoadAll(db gorp.SqlExecutor, key string, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
+func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
 	var query string
 	var args []interface{}
 
@@ -269,10 +269,10 @@ func LoadAll(db gorp.SqlExecutor, key string, u *sdk.User, opts ...LoadOptionFun
 			ORDER by application.name ASC`
 		args = []interface{}{key, u.ID}
 	}
-	return loadapplications(db, u, opts, query, args...)
+	return loadapplications(db, store, u, opts, query, args...)
 }
 
-func loadapplications(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Application, error) {
+func loadapplications(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Application, error) {
 	log.Debug("application.loadapplications> %s %v", query, args)
 
 	var res []dbApplication
@@ -289,7 +289,7 @@ func loadapplications(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, q
 		if err := a.PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "application.loadapplications")
 		}
-		app, err := unwrap(db, u, opts, a)
+		app, err := unwrap(db, store, u, opts, a)
 		if err != nil {
 			return nil, sdk.WrapError(err, "application.loadapplications")
 		}

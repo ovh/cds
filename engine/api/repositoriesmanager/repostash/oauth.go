@@ -8,6 +8,7 @@ import (
 	"github.com/go-stash/go-stash/oauth1"
 	"github.com/go-stash/go-stash/stash"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -19,14 +20,20 @@ type StashConsumer struct {
 	PrivateRSAKey    string `json:"private_rsa_key"`
 	DisableSetStatus bool   `json:"-"`
 	consumer         *oauth1.Consumer
+	cache            cache.Store
+	apiURL           string
+	uiURL            string
 }
 
 //New creates a new StashConsumer
-func New(URL, consumerKey, privateKey string) *StashConsumer {
+func New(URL, consumerKey, privateKey string, store cache.Store) *StashConsumer {
 	s := &StashConsumer{
 		URL:           URL,
 		ConsumerKey:   consumerKey,
 		PrivateRSAKey: privateKey,
+		cache:         store,
+		apiURL:        apiURL,
+		uiURL:         uiURL,
 	}
 	s.consumer = &oauth1.Consumer{
 		RequestTokenURL:       URL + "/plugins/servlet/oauth/request-token",
@@ -103,7 +110,7 @@ func (s *StashConsumer) GetAuthorized(accessToken, accessTokenSecret string) (sd
 		accessTokenSecret,
 		s.PrivateRSAKey,
 	)
-	c := &StashClient{url: s.URL, client: client}
+	c := &StashClient{url: s.URL, client: client, cache: s.cache, uiURL: s.uiURL, apiURL: s.apiURL}
 	c.disableSetStatus = s.DisableSetStatus
 	return c, nil
 }

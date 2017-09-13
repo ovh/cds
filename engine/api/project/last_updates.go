@@ -9,23 +9,23 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func getLastModified(k string) (int64, string) {
+func getLastModified(store cache.Store, k string) (int64, string) {
 	m := &sdk.LastModification{}
-	if cache.Get(k, m) {
+	if store.Get(k, m) {
 		return m.LastModified, m.Username
 	}
 	return 0, ""
 }
 
 //LastUpdates returns projects and application last update
-func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.ProjectLastUpdates, error) {
+func LastUpdates(db gorp.SqlExecutor, store cache.Store, user *sdk.User, since time.Time) ([]sdk.ProjectLastUpdates, error) {
 	res := []sdk.ProjectLastUpdates{}
 
 	mapRes := map[string]*sdk.ProjectLastUpdates{}
 
 	for _, g := range user.Groups {
 		for _, pg := range g.ProjectGroups {
-			t, s := getLastModified(cache.Key("lastModified", pg.Project.Key))
+			t, s := getLastModified(store, cache.Key("lastModified", pg.Project.Key))
 			if s != "" && t != 0 && t > since.Unix() {
 				mapRes[pg.Project.Key] = &sdk.ProjectLastUpdates{
 					LastModification: sdk.LastModification{
@@ -42,7 +42,7 @@ func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.Pr
 		}
 
 		for _, ag := range g.ApplicationGroups {
-			t, s := getLastModified(cache.Key("lastModified", ag.Application.ProjectKey, "application", ag.Application.Name))
+			t, s := getLastModified(store, cache.Key("lastModified", ag.Application.ProjectKey, "application", ag.Application.Name))
 			if s != "" && t != 0 && t > since.Unix() {
 				proj := mapRes[ag.Application.ProjectKey]
 				if proj != nil {
@@ -56,7 +56,7 @@ func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.Pr
 		}
 
 		for _, pg := range g.PipelineGroups {
-			t, s := getLastModified(cache.Key("lastModified", pg.Pipeline.ProjectKey, "pipeline", pg.Pipeline.Name))
+			t, s := getLastModified(store, cache.Key("lastModified", pg.Pipeline.ProjectKey, "pipeline", pg.Pipeline.Name))
 			if s != "" && t != 0 && t > since.Unix() {
 				proj := mapRes[pg.Pipeline.ProjectKey]
 				if proj != nil {
@@ -70,7 +70,7 @@ func LastUpdates(db gorp.SqlExecutor, user *sdk.User, since time.Time) ([]sdk.Pr
 		}
 
 		for _, eg := range g.EnvironmentGroups {
-			t, s := getLastModified(cache.Key("lastModified", eg.Environment.ProjectKey, "environment", eg.Environment.Name))
+			t, s := getLastModified(store, cache.Key("lastModified", eg.Environment.ProjectKey, "environment", eg.Environment.Name))
 			if s != "" && t != 0 && t > since.Unix() {
 				proj := mapRes[eg.Environment.ProjectKey]
 				if proj != nil {

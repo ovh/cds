@@ -6,12 +6,13 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func lockAndExecute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
+func lockAndExecute(db *gorp.DbMap, store cache.Store, n *sdk.WorkflowNodeRun) error {
 	//Start a transaction
 	tx, errtx := db.Begin()
 	if errtx != nil {
@@ -27,7 +28,7 @@ func lockAndExecute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 		return fmt.Errorf("Unable to take lock on workflow_run ID=%d (%v)", n.WorkflowRunID, err)
 	}
 
-	if err := execute(db, n); err != nil {
+	if err := execute(db, store, n); err != nil {
 		return err
 	}
 
@@ -40,7 +41,7 @@ func lockAndExecute(db *gorp.DbMap, n *sdk.WorkflowNodeRun) error {
 }
 
 //execute is called by the scheduler. You should not call this by yourself
-func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) (err error) {
+func execute(db gorp.SqlExecutor, store cache.Store, n *sdk.WorkflowNodeRun) (err error) {
 	t0 := time.Now()
 	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
 	defer func() {
@@ -102,7 +103,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) (err error) {
 			newStatus = sdk.StatusBuilding.String()
 
 			var end bool
-			end, errSync := syncStage(db, stage)
+			end, errSync := syncStage(db, store, stage)
 			if errSync != nil {
 				return errSync
 			}
@@ -139,7 +140,7 @@ func execute(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) (err error) {
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	if n.Status == sdk.StatusSuccess.String() {
-		if err := processWorkflowRun(db, updatedWorkflowRun, nil, nil, nil); err != nil {
+		if err := processWorkflowRun(db, store, updatedWorkflowRun, nil, nil, nil); err != nil {
 			return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 		}
 	}
@@ -231,7 +232,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 	return nil
 }
 
-func syncStage(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
+func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, error) {
 	stageEnd := true
 	finalStatus := sdk.StatusBuilding
 
@@ -240,7 +241,7 @@ func syncStage(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 		pbJob := &stage.RunJobs[indexJob]
 		// If job is runnning, sync it
 		if pbJob.Status == sdk.StatusBuilding.String() || pbJob.Status == sdk.StatusWaiting.String() {
-			pbJobDB, errJob := LoadNodeJobRun(db, pbJob.ID)
+			pbJobDB, errJob := LoadNodeJobRun(db, store, pbJob.ID)
 			if errJob != nil {
 				return stageEnd, errJob
 			}
