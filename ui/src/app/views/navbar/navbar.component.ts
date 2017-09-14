@@ -110,7 +110,6 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 this.searchItems = new Array<string>();
 
                 this.navProjects.toArray().forEach(p => {
-                    this.searchItems.push(p.name);
                     if (p.applications && p.applications.length > 0) {
                         p.applications.forEach(a => {
                             this.searchItems.push(p.name + '/' + a.name);
