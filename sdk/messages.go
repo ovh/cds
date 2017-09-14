@@ -65,6 +65,7 @@ var (
 	MsgSpawnInfoJobError                   = &Message{"MsgSpawnInfoJobError", trad{FR: "Impossible de lancer ce job : %s", EN: "Unable to run this job: %s"}, nil}
 	MsgWorkflowStarting                    = &Message{"MsgWorkflowStarting", trad{FR: "Le workflow %s#%s a été démarré", EN: "Workflow %s#%s has been started"}, nil}
 	MsgWorkflowError                       = &Message{"MsgWorkflowError", trad{FR: "Une erreur est survenue: %v", EN: "An error has occured: %v"}, nil}
+	MsgWorkflowNodeStop                    = &Message{"MsgWorkflowNodeStop", trad{FR: "Le pipeline a été arrété par: %s", EN: "The pipeline has been stopped by %s"}, nil}
 )
 
 // Messages contains all sdk Messages
@@ -89,12 +90,17 @@ var Messages = map[string]*Message{
 	MsgEnvironmentGroupCannotBeUpdated.ID:     MsgEnvironmentGroupCannotBeUpdated,
 	MsgEnvironmentGroupCreated.ID:             MsgEnvironmentGroupCreated,
 	MsgEnvironmentGroupCannotBeCreated.ID:     MsgEnvironmentGroupCannotBeCreated,
+	MsgEnvironmentGroupDeleted.ID:             MsgEnvironmentGroupDeleted,
+	MsgEnvironmentGroupCannotBeDeleted.ID:     MsgEnvironmentGroupCannotBeDeleted,
 	MsgJobNotValidActionNotFound.ID:           MsgJobNotValidActionNotFound,
 	MsgJobNotValidInvalidActionParameter.ID:   MsgJobNotValidInvalidActionParameter,
 	MsgPipelineGroupUpdated.ID:                MsgPipelineGroupUpdated,
 	MsgPipelineGroupAdded.ID:                  MsgPipelineGroupAdded,
 	MsgPipelineGroupDeleted.ID:                MsgPipelineGroupDeleted,
 	MsgPipelineStageUpdated.ID:                MsgPipelineStageUpdated,
+	MsgPipelineStageUpdating.ID:               MsgPipelineStageUpdating,
+	MsgPipelineStageDeletingOldJobs.ID:        MsgPipelineStageDeletingOldJobs,
+	MsgPipelineStageInsertingNewJobs.ID:       MsgPipelineStageInsertingNewJobs,
 	MsgPipelineStageAdded.ID:                  MsgPipelineStageAdded,
 	MsgPipelineStageDeleted.ID:                MsgPipelineStageDeleted,
 	MsgPipelineJobUpdated.ID:                  MsgPipelineJobUpdated,
@@ -107,7 +113,10 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoJobTaken.ID:                   MsgSpawnInfoJobTaken,
 	MsgSpawnInfoWorkerForJob.ID:               MsgSpawnInfoWorkerForJob,
 	MsgSpawnInfoWorkerForJobError.ID:          MsgSpawnInfoWorkerForJobError,
+	MsgSpawnInfoJobError.ID:                   MsgSpawnInfoJobError,
 	MsgWorkflowStarting.ID:                    MsgWorkflowStarting,
+	MsgWorkflowError.ID:                       MsgWorkflowError,
+	MsgWorkflowNodeStop.ID:                    MsgWorkflowNodeStop,
 }
 
 //Message represent a struc format translated messages

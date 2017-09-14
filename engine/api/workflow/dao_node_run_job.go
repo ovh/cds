@@ -70,6 +70,25 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int6
 	return jobs, nil
 }
 
+// LoadNodeJobRunIDByNodeRunID Load node run job id by node run id
+func LoadNodeJobRunIDByNodeRunID(db gorp.SqlExecutor, runNodeID int64) ([]int64, error) {
+	query := `SELECT workflow_node_run_job.id FROM workflow_node_run_job WHERE workflow_node_run_id = $1`
+	rows, err := db.Query(query, runNodeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 //LoadNodeJobRun load a NodeJobRun given its ID
 func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
