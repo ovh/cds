@@ -269,13 +269,11 @@ func syncStage(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 			}
 		}
 	}
-	log.Debug("syncStage> stage %s stageEnd:%t len(stage.RunJobs):%d len(stage.PipelineBuildJobs):%d", stage.Name, stageEnd, len(stage.RunJobs), len(stage.PipelineBuildJobs))
+	log.Debug("syncStage> stage %s stageEnd:%t len(stage.RunJobs):%d", stage.Name, stageEnd, len(stage.RunJobs))
 
 	if stageEnd || len(stage.RunJobs) == 0 {
-		if len(stage.PipelineBuildJobs) == 0 {
-			finalStatus = sdk.StatusSuccess
-			stageEnd = true
-		}
+		finalStatus = sdk.StatusSuccess
+		stageEnd = true
 		// Determine final stage status
 	finalStageLoop:
 		for _, runJob := range stage.RunJobs {
