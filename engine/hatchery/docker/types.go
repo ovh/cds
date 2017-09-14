@@ -11,8 +11,8 @@ import (
 
 // HatcheryConfiguration is the configuration for docker hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
-	DockerAddHost string `default:"" commented:"true" comment:"Start worker with a custom host-to-IP mapping (host:ip)"`
+	hatchery.CommonConfiguration `toml:"commonConfiguration"`
+	DockerAddHost                string `toml:"dockerAddHost" default:"" commented:"true" comment:"Start worker with a custom host-to-IP mapping (host:ip)"`
 }
 
 // HatcheryDocker spawns instances of worker model with type 'Docker'

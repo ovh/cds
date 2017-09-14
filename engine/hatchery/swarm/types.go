@@ -10,19 +10,19 @@ import (
 
 // HatcheryConfiguration is the configuration for hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
+	hatchery.CommonConfiguration `toml:"commonConfiguration"`
 
 	// RatioService Percent reserved for spwaning worker with service requirement
-	RatioService int `default:"75" commented:"true" comment:"Percent reserved for spwaning worker with service requirement"`
+	RatioService int `toml:"ratioService" default:"75" commented:"true" comment:"Percent reserved for spwaning worker with service requirement"`
 
 	// MaxContainers
-	MaxContainers int `default:"10" commented:"true" comment:"Max Containers on Host managed by this Hatchery"`
+	MaxContainers int `toml:"maxContainers" default:"10" commented:"true" comment:"Max Containers on Host managed by this Hatchery"`
 
 	// DefaultMemory Worker default memory
-	DefaultMemory int `default:"1024" commented:"true" comment:"Worker default memory in Mo"`
+	DefaultMemory int `toml:"defaultMemory" default:"1024" commented:"true" comment:"Worker default memory in Mo"`
 
 	// WorkerTTL Worker TTL (minutes)
-	WorkerTTL int `default:"10" commented:"true" comment:"Worker TTL (minutes)"`
+	WorkerTTL int `toml:"workerTTL" default:"10" commented:"true" comment:"Worker TTL (minutes)"`
 }
 
 // HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api

@@ -16,48 +16,48 @@ import (
 
 // CommonConfiguration is the base configuration for all hatcheries
 type CommonConfiguration struct {
-	Name string `default:"" comment:"Name of Hatchery"`
+	Name string `toml:"name" default:"" comment:"Name of Hatchery"`
 	API  struct {
 		HTTP struct {
-			URL      string `default:"http://localhost:8081" commented:"true" comment:"CDS API URL"`
-			Insecure bool   `default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
-		}
+			URL      string `toml:"url" default:"http://localhost:8081" commented:"true" comment:"CDS API URL"`
+			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
+		} `toml:"http"`
 		GRPC struct {
-			URL      string `default:"http://localhost:8082"`
-			Insecure bool   `default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
-		}
-		Token                string `default:"" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ "`
-		RequestTimeout       int    `default:"10" comment:"Request CDS API: timeout in seconds"`
-		MaxHeartbeatFailures int    `default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine"`
-	}
+			URL      string `toml:"url" default:"http://localhost:8082"`
+			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
+		} `toml:"grpc"`
+		Token                string `toml:"token" default:"" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ "`
+		RequestTimeout       int    `toml:"requestTimeout" default:"10" comment:"Request CDS API: timeout in seconds"`
+		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine"`
+	} `toml:"api"`
 	Provision struct {
-		Disabled          bool `default:"false" comment:"Disabled provisionning. Format:true or false"`
-		Frequency         int  `default:"30" comment:"Check provisioning each n Seconds"`
-		MaxWorker         int  `default:"10" comment:"Maximum allowed simultaneous workers"`
-		GraceTimeQueued   int  `default:"4" comment:"if worker is queued less than this value (seconds), hatchery does not take care of it"`
-		RegisterFrequency int  `default:"60" comment:"Check if some worker model have to be registered each n Seconds"`
+		Disabled          bool `toml:"disabled" default:"false" comment:"Disabled provisionning. Format:true or false"`
+		Frequency         int  `toml:"frequency" default:"30" comment:"Check provisioning each n Seconds"`
+		MaxWorker         int  `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers"`
+		GraceTimeQueued   int  `toml:"graceTimeQueued" default:"4" comment:"if worker is queued less than this value (seconds), hatchery does not take care of it"`
+		RegisterFrequency int  `toml:"registerFrequency" default:"60" comment:"Check if some worker model have to be registered each n Seconds"`
 		WorkerLogsOptions struct {
 			Graylog struct {
-				Host       string
-				Port       int
-				ExtraKey   string
-				Extravalue string
-			}
-		} `comment:"Worker Log Configuration"`
-	}
+				Host       string `toml:"host"`
+				Port       int    `toml:"port"`
+				ExtraKey   string `toml:"extraKey"`
+				Extravalue string `toml:"extravalue"`
+			} `toml:"graylog"`
+		} `toml:"workerLogsOptions" comment:"Worker Log Configuration"`
+	} `toml:"provision"`
 	LogOptions struct {
 		Graylog struct {
-			Host       string
-			Port       int
-			ExtraKey   string
-			Extravalue string
-		}
+			Host       string `toml:"host"`
+			Port       int    `toml:"port"`
+			ExtraKey   string `toml:"extraKey"`
+			Extravalue string `toml:"extravalue"`
+		} `toml:"graylog"`
 		SpawnOptions struct {
-			ThresholdCritical int `default:"480" comment:"log critical if spawn take more than this value (in seconds)"`
-			ThresholdWarning  int `default:"360" comment:"log warning if spawn take more than this value (in seconds)"`
-		}
-	} `comment:"Hatchery Log Configuration"`
-	RemoteDebugURL string
+			ThresholdCritical int `toml:"thresholdCritical" default:"480" comment:"log critical if spawn take more than this value (in seconds)"`
+			ThresholdWarning  int `toml:"thresholdWarning" default:"360" comment:"log warning if spawn take more than this value (in seconds)"`
+		} `toml:"spawnOptions"`
+	} `toml:"logOptions" comment:"Hatchery Log Configuration"`
+	RemoteDebugURL string `toml:"remoteDebugURL" comment:"start a gops agent on specified URL. Ex: localhost:9999"`
 }
 
 // Interface describe an interface for each hatchery mode (mesos, local)

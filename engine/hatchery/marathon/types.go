@@ -10,31 +10,31 @@ import (
 
 // HatcheryConfiguration is the configuration for hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
+	hatchery.CommonConfiguration `toml:"commonConfiguration"`
 
 	// MarathonURL "marathon-api"
 	MarathonURL string `toml:"url" default:"http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080" commented:"true" comment:"URL of your marathon"`
 
 	// MarathonID "marathon-id"
-	MarathonIDPrefix string `default:"/cds/workers" commented:"true" comment:"Prefix of id for workers spawn on marathon. Enter 'workers' to have id as: '/workers/a-worker'"`
+	MarathonIDPrefix string `toml:"idPrefix" default:"/cds/workers" commented:"true" comment:"Prefix of id for workers spawn on marathon. Enter 'workers' to have id as: '/workers/a-worker'"`
 
 	// MarathonUser "marathon-user"
-	MarathonUser string `default:"" commented:"true" comment:"Marathon Username, used to call Marathon URL"`
+	MarathonUser string `toml:"user" default:"" commented:"true" comment:"Marathon Username, used to call Marathon URL"`
 
 	// MarathonPassword "marathon-password"
-	MarathonPassword string `default:"" commented:"true" comment:"Marathon Password, you need a marathon User to use it"`
+	MarathonPassword string `toml:"password" default:"" commented:"true" comment:"Marathon Password, you need a marathon User to use it"`
 
 	// MarathonLabelsStr "marathon-labels"
-	MarathonLabels string `default:"" commented:"true" comment:"Use this option if you want to add labels on workers spawned by this hatchery.\n Format: MarathonLabels = \"A_LABEL=value-of-label\""`
+	MarathonLabels string `toml:"labels" default:"" commented:"true" comment:"Use this option if you want to add labels on workers spawned by this hatchery.\n Format: MarathonLabels = \"A_LABEL=value-of-label\""`
 
 	// DefaultMemory Worker default memory
-	DefaultMemory int `default:"1024" commented:"true" comment:"Worker default memory in Mo"`
+	DefaultMemory int `toml:"defaultMemory" default:"1024" commented:"true" comment:"Worker default memory in Mo"`
 
 	// WorkerTTL Worker TTL (minutes)
-	WorkerTTL int `default:"10" commented:"true" comment:"Worker TTL (minutes)"`
+	WorkerTTL int `toml:"workerTTL" default:"10" commented:"true" comment:"Worker TTL (minutes)"`
 
 	// WorkerSpawnTimeout Worker Timeout Spawning (seconds)
-	WorkerSpawnTimeout int `default:"120" commented:"true" comment:"Worker Timeout Spawning (seconds)"`
+	WorkerSpawnTimeout int `toml:"workerSpawnTimeout" default:"120" commented:"true" comment:"Worker Timeout Spawning (seconds)"`
 }
 
 // HatcheryMarathon implements HatcheryMode interface for mesos mode
