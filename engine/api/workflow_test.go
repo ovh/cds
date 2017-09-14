@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -17,9 +18,6 @@ func Test_getWorkflowsHandler(t *testing.T) {
 	// Init database
 	api, db, router := newTestAPI(t)
 
-	
-
-	
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
@@ -43,9 +41,6 @@ func Test_getWorkflowHandler(t *testing.T) {
 	// Init database
 	api, db, router := newTestAPI(t)
 
-	
-
-	
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
@@ -69,9 +64,7 @@ func Test_getWorkflowHandler(t *testing.T) {
 func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 	// Init database
 	api, db, router := newTestAPI(t)
-	
 
-	
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
@@ -95,9 +88,7 @@ func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {
 func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 	// Init database
 	api, db, router := newTestAPI(t)
-	
 
-	
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
@@ -139,9 +130,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 func Test_putWorkflowHandler(t *testing.T) {
 	// Init database
 	api, db, router := newTestAPI(t)
-	
 
-	
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
@@ -207,12 +196,63 @@ func Test_putWorkflowHandler(t *testing.T) {
 	assert.Equal(t, "Name 2", workflow1.Name)
 }
 
+func Test_postWorkflowWithHooksHandler(t *testing.T) {
+	// Init database
+	api, db, router := newTestAPI(t)
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+
+	// Init user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	// Init project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	// Init pipeline
+	pip := sdk.Pipeline{
+		Name:      "pipeline1",
+		ProjectID: proj.ID,
+		Type:      sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, nil))
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+
+	t.Logf("%+v", workflow.WebHookModel)
+
+	var wf = &sdk.Workflow{
+		Name:        "Name",
+		Description: "Description",
+		Root: &sdk.WorkflowNode{
+			PipelineID: pip.ID,
+			Hooks: []sdk.WorkflowNodeHook{
+				{
+					Config: sdk.WorkflowNodeHookConfig{
+						"method": "GET",
+					},
+					WorkflowHookModelID: workflow.WebHookModel.ID,
+				},
+			},
+		},
+	}
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 201, w.Code)
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+}
+
 func Test_deleteWorkflowHandler(t *testing.T) {
 	// Init database
 	api, db, router := newTestAPI(t)
-	
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 
-	
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	// Init project
@@ -238,6 +278,14 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 		Description: "Description",
 		Root: &sdk.WorkflowNode{
 			PipelineID: pip.ID,
+			Hooks: []sdk.WorkflowNodeHook{
+				{
+					Config: sdk.WorkflowNodeHookConfig{
+						"method": "GET",
+					},
+					WorkflowHookModelID: workflow.WebHookModel.ID,
+				},
+			},
 		},
 	}
 

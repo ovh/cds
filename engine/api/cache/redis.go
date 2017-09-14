@@ -289,9 +289,11 @@ func (s *RedisStore) SetAdd(key string, member interface{}) {
 	}
 	s.Client.SAdd(key, b)
 }
+
 func (s *RedisStore) SetCard(key string) int {
 	return int(s.Client.SCard(key).Val())
 }
+
 func (s *RedisStore) SetRemove(key string, member interface{}) {
 	b, err := json.Marshal(member)
 	if err != nil {

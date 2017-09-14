@@ -3,6 +3,8 @@ package hooks
 import (
 	"reflect"
 
+	"github.com/ovh/cds/sdk"
+
 	"github.com/ovh/cds/sdk/cdsclient"
 
 	"github.com/ovh/cds/engine/api"
@@ -51,7 +53,7 @@ type Configuration struct {
 type LongRunningTask struct {
 	UUID      string
 	Type      string
-	Config    map[string]string
+	Config    sdk.WorkflowNodeHookConfig
 	LastError string
 }
 
@@ -59,7 +61,7 @@ type ScheduledTask struct {
 	UUID      string
 	Type      string
 	CronExpr  string
-	Config    map[string]string
+	Config    sdk.WorkflowNodeHookConfig
 	LastError string
 }
 

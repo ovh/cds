@@ -352,8 +352,8 @@ type WorkflowNodeContext struct {
 type WorkflowNodeHook struct {
 	ID                  int64                      `json:"id" db:"id"`
 	UUID                string                     `json:"uuid" db:"uuid"`
-	WorkflowNodeID      int64                      `json:"-" db:"workflow_node_id"`
-	WorkflowHookModelID int64                      `json:"-" db:"workflow_hook_model_id"`
+	WorkflowNodeID      int64                      `json:"workflow_node_id" db:"workflow_node_id"`
+	WorkflowHookModelID int64                      `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
 	WorkflowHookModel   WorkflowHookModel          `json:"model" db:"-"`
 	Conditions          []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
 	Config              WorkflowNodeHookConfig     `json:"config" db:"-"`

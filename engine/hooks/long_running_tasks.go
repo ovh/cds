@@ -7,30 +7,22 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-//This are all the types
-const (
-	TypeWebHook = "webhook"
-
-	longRunningTasksKey = "cds:hooks:longRunningTasks"
-)
-
 func (s *Service) startLongRunningTasks(ctx context.Context) error {
 	log.Info("Hooks> Starting long running tasks...")
 	c, cancel := context.WithCancel(ctx)
 	defer cancel()
 
 	//Load all the tasks
-	nbTasks := s.Cache.SetCard(longRunningTasksKey)
-	tasks := make([]*LongRunningTask, nbTasks)
-	for _, t := range tasks {
-		*t = LongRunningTask{}
-	}
-	if err := s.Cache.SetScan(longRunningTasksKey, interfaceSlice(tasks)...); err != nil {
+	tasks, err := s.Dao.FindAllLongRunningTasks()
+	if err != nil {
 		return err
 	}
 
+	log.Debug("Hooks> Starting %d tasks", len(tasks))
+
 	//Start the tasks
-	for _, t := range tasks {
+	for i := range tasks {
+		t := &tasks[i]
 		if err := s.startLongRunningTask(c, t); err != nil {
 			log.Error("hooks.runLongRunningTasks> Unable to start tasks: %v", err)
 			return err
