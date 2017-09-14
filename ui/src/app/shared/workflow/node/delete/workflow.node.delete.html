@@ -1,11 +1,12 @@
-<sm-modal title="{{ 'workflow_node_delete_title' | translate: { pip: node.pipeline.name} }}" #deleteModal>
-    <modal-content>
+<ng-template let-context let-modal="modal" #deleteModal>
+    <div class="header">{{ 'workflow_node_delete_title' | translate: { pip: node.pipeline.name} }}</div>
+    <div class="content">
         <div class="">
             {{ 'workflow_node_delete_alert' | translate }}
         </div>
-    </modal-content>
-    <modal-actions>
+    </div>
+    <div class="actions">
         <button class="ui grey button" [disabled]="loading" (click)="hide()">{{ 'common_close' | translate }}</button>
         <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="deleteNode()">{{ 'btn_delete' | translate }}</button>
-    </modal-actions>
-</sm-modal>
+    </div>
+</ng-template>

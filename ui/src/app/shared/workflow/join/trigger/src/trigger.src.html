@@ -1,15 +1,16 @@
-<sm-modal title="{{ 'workflow_join_trigger_src_title' | translate }}" #triggerSrcJoinModal>
-    <modal-content *ngIf="join">
+<ng-template let-context let-modal="modal" #triggerSrcJoinModal>
+    <div class="header">{{ 'workflow_join_trigger_src_title' | translate }}</div>
+    <div class="content" *ngIf="join">
         <ng-container *ngIf="join.source_node_ref.length > 1">
             {{ 'workflow_join_src_delete_alert' | translate}}
         </ng-container>
         <ng-container *ngIf="join.source_node_ref.length === 1">
             {{ 'workflow_join_delete_alert' | translate}}
         </ng-container>
-    </modal-content>
-    <modal-actions *ngIf="join">
+    </div>
+    <div class="actions" *ngIf="join">
         <button class="ui grey button" (click)="hide()">{{ 'common_close' | translate }}</button>
         <button class="ui green button" (click)="deleteSrc()" *ngIf="join.source_node_ref.length > 1">{{ 'workflow_join_trigger_src_delete' | translate }}</button>
         <button class="ui green button" (click)="deleteJoin()" *ngIf="join.source_node_ref.length === 1">{{ 'workflow_join_delete' | translate }}</button>
-    </modal-actions>
-</sm-modal>
+    </div>
+</ng-template>

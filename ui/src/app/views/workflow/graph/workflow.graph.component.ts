@@ -129,7 +129,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     changeDisplay(resize: boolean): void {
         this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
-
         this.joinsComponent.forEach(j => {
             j.destroy();
         });

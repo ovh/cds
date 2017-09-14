@@ -85,6 +85,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, n *sdk.WorkflowNodeRun) (er
 			stage.Status = sdk.StatusWaiting
 			//Add job to Queue
 			//Insert data in workflow_node_run_job
+			log.Debug("workflow.execute> stage %s call addJobsToQueue", stage.Name)
 			if err := addJobsToQueue(db, stage, n); err != nil {
 				return err
 			}
@@ -96,6 +97,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, n *sdk.WorkflowNodeRun) (er
 
 		//If stage is waiting, nothing to do
 		if stage.Status == sdk.StatusWaiting {
+			log.Debug("workflow.execute> stage %s status:%s - nothing to do", stage.Name, stage.Status)
 			break
 		}
 
@@ -107,7 +109,9 @@ func execute(db gorp.SqlExecutor, store cache.Store, n *sdk.WorkflowNodeRun) (er
 			if errSync != nil {
 				return errSync
 			}
-			if end {
+			if !end {
+				break
+			} else {
 				//The stage is over
 				if stage.Status == sdk.StatusFail {
 					n.Done = time.Now()
@@ -126,6 +130,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, n *sdk.WorkflowNodeRun) (er
 		}
 	}
 
+	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
 	n.Status = newStatus
 	// Save the node run in database
 	if err := UpdateNodeRun(db, n); err != nil {
@@ -236,6 +241,7 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	stageEnd := true
 	finalStatus := sdk.StatusBuilding
 
+	log.Debug("syncStage> work on stage %s", stage.Name)
 	// browse all running jobs
 	for indexJob := range stage.RunJobs {
 		pbJob := &stage.RunJobs[indexJob]
@@ -264,11 +270,11 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 			}
 		}
 	}
+	log.Debug("syncStage> stage %s stageEnd:%t len(stage.RunJobs):%d", stage.Name, stageEnd, len(stage.RunJobs))
+
 	if stageEnd || len(stage.RunJobs) == 0 {
-		if len(stage.PipelineBuildJobs) == 0 {
-			finalStatus = sdk.StatusSuccess
-			stageEnd = true
-		}
+		finalStatus = sdk.StatusSuccess
+		stageEnd = true
 		// Determine final stage status
 	finalStageLoop:
 		for _, runJob := range stage.RunJobs {
@@ -290,8 +296,8 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 				}
 			}
 		}
-
 	}
+	log.Debug("syncStage> set stage %s from %s to %s", stage.Name, stage.Status, finalStatus)
 	stage.Status = finalStatus
 	return stageEnd, nil
 }

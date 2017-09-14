@@ -31,6 +31,7 @@ input[disabled] {
 }
 
 .CodeMirror {
+  min-height:40px;
   height: auto;
   border: 1px solid rgba(34, 36, 38, 0.14902);
   border-radius: 4px;
