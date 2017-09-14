@@ -7,7 +7,6 @@ import (
 
 	"github.com/docker/docker/pkg/namesgenerator"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -58,7 +57,7 @@ func Initialize(k KafkaConfig) error {
 func DequeueEvent(c context.Context) {
 	for {
 		e := sdk.Event{}
-		cache.DequeueWithContext(c, "events", &e)
+		Cache.DequeueWithContext(c, "events", &e)
 		if err := c.Err(); err != nil {
 			log.Error("Exiting event.DequeueEvent : %v", err)
 			return

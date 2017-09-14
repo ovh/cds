@@ -1,35 +1,29 @@
-package main
+package api
 
 import (
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_getKeysInProjectHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getKeysInProjectHandler")
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	k := &sdk.ProjectKey{
 		Key: sdk.Key{
@@ -47,7 +41,7 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 	k.Private = priv
 	k.KeyID = kid
 
-	if err := project.InsertKey(db, k); err != nil {
+	if err := project.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -56,7 +50,7 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 		"name":           k.Name,
 	}
 
-	route := router.getRoute("GET", getKeysInProjectHandler, vars)
+	route := router.GetRoute("GET", api.getKeysInProjectHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var keys []sdk.ProjectKey
@@ -65,20 +59,17 @@ func Test_getKeysInProjectHandler(t *testing.T) {
 }
 
 func Test_deleteKeyInProjectHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteKeyInProjectHandler")
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	k := &sdk.ProjectKey{
 		Key: sdk.Key{
@@ -90,7 +81,7 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 		ProjectID: proj.ID,
 	}
 
-	if err := project.InsertKey(db, k); err != nil {
+	if err := project.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -99,7 +90,7 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 		"name":           k.Name,
 	}
 
-	route := router.getRoute("DELETE", deleteKeyInProjectHandler, vars)
+	route := router.GetRoute("DELETE", api.deleteKeyInProjectHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var keys []sdk.ProjectKey
@@ -108,20 +99,17 @@ func Test_deleteKeyInProjectHandler(t *testing.T) {
 }
 
 func Test_addKeyInProjectHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addKeyInProjectHandler")
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	k := &sdk.ProjectKey{
 		Key: sdk.Key{
@@ -134,7 +122,7 @@ func Test_addKeyInProjectHandler(t *testing.T) {
 		"permProjectKey": proj.Key,
 	}
 
-	route := router.getRoute("POST", addKeyInProjectHandler, vars)
+	route := router.GetRoute("POST", api.addKeyInProjectHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var key sdk.ProjectKey

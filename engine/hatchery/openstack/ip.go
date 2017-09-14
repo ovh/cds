@@ -46,7 +46,7 @@ func (h *HatcheryOpenstack) findAvailableIP(workerName string) (string, error) {
 			}
 
 			for k, v := range s.Addresses {
-				if k != h.networkString {
+				if k != h.Config.NetworkString {
 					continue
 				}
 				switch v.(type) {

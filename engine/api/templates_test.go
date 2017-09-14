@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"bytes"
@@ -15,10 +15,8 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/objectstore"
@@ -34,24 +32,22 @@ const (
 )
 
 func Test_getTemplatesHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getTemplatesHandler")
-	if router.mux == nil {
+	if router.Mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
 	}
-	router.init()
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
 	//Prepare request
 	vars := map[string]string{}
-	uri := router.getRoute("GET", getTemplatesHandler, vars)
+	uri := router.GetRoute("GET", api.getTemplatesHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
@@ -59,7 +55,7 @@ func Test_getTemplatesHandler(t *testing.T) {
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -67,14 +63,12 @@ func Test_getTemplatesHandler(t *testing.T) {
 }
 
 func Test_addTemplateHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addTemplateHandler")
-	if router.mux == nil {
+	if router.Mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
 	}
-	router.init()
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
 	if err != nil {
@@ -95,16 +89,16 @@ func Test_addTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	downloadPublicAction(t, u, pass)
+	downloadPublicAction(t, u, pass, api)
 
-	if tp, err := templateextension.LoadByName(db, "cds-template-cds-plugin"); err == nil {
-		if err := templateextension.Delete(db, tp); err != nil {
+	if tp, err := templateextension.LoadByName(api.mustDB(), "cds-template-cds-plugin"); err == nil {
+		if err := templateextension.Delete(api.mustDB(), tp); err != nil {
 			t.Log(err)
 		}
 	}
@@ -151,7 +145,7 @@ func Test_addTemplateHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{}
-	uri := router.getRoute("POST", addTemplateHandler, vars)
+	uri := router.GetRoute("POST", api.addTemplateHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
@@ -162,7 +156,7 @@ func Test_addTemplateHandler(t *testing.T) {
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
@@ -172,7 +166,7 @@ func Test_addTemplateHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{}
-	uri = router.getRoute("GET", getTemplatesHandler, vars)
+	uri = router.GetRoute("GET", api.getTemplatesHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("GET", uri, nil)
@@ -181,7 +175,7 @@ func Test_addTemplateHandler(t *testing.T) {
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	templs := []sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templs)
@@ -199,14 +193,12 @@ func Test_addTemplateHandler(t *testing.T) {
 }
 
 func Test_deleteTemplateHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteTemplateHandler")
-	if router.mux == nil {
+	if router.Mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
 	}
-	router.init()
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
 	if err != nil {
@@ -227,13 +219,13 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	downloadPublicAction(t, u, pass)
+	downloadPublicAction(t, u, pass, api)
 
 	//download the binary from plik
 	path, delete, err := downloadFile(t, "cds-template-cds-plugin", testTestTemplate)
@@ -277,7 +269,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{}
-	uri := router.getRoute("POST", addTemplateHandler, vars)
+	uri := router.GetRoute("POST", api.addTemplateHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
@@ -288,7 +280,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
@@ -300,7 +292,7 @@ func Test_deleteTemplateHandler(t *testing.T) {
 	vars = map[string]string{
 		"id": fmt.Sprintf("%d", templ.ID),
 	}
-	uri = router.getRoute("DELETE", deleteTemplateHandler, vars)
+	uri = router.GetRoute("DELETE", api.deleteTemplateHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("DELETE", uri, nil)
@@ -309,17 +301,14 @@ func Test_deleteTemplateHandler(t *testing.T) {
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
 }
 
 func Test_updateTemplateHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addUpdateHandler")
-	router.init()
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
 	if err != nil {
@@ -339,7 +328,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -387,7 +376,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{}
-	uri := router.getRoute("POST", addTemplateHandler, vars)
+	uri := router.GetRoute("POST", api.addTemplateHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
@@ -398,7 +387,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
@@ -408,7 +397,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{}
-	uri = router.getRoute("GET", getTemplatesHandler, vars)
+	uri = router.GetRoute("GET", api.getTemplatesHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("GET", uri, nil)
@@ -417,7 +406,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	templs := []sdk.TemplateExtension{}
 	json.Unmarshal(w.Body.Bytes(), &templs)
@@ -461,7 +450,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 	vars = map[string]string{
 		"id": fmt.Sprintf("%d", templ.ID),
 	}
-	uri = router.getRoute("PUT", updateTemplateHandler, vars)
+	uri = router.GetRoute("PUT", api.updateTemplateHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("PUT", uri, bodyBuf)
@@ -472,7 +461,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
@@ -485,10 +474,7 @@ func Test_updateTemplateHandler(t *testing.T) {
 }
 
 func Test_getBuildTemplatesHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getBuildTemplatesHandler")
-	router.init()
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
 	if err != nil {
@@ -509,7 +495,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
@@ -557,7 +543,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{}
-	uri := router.getRoute("POST", addTemplateHandler, vars)
+	uri := router.GetRoute("POST", api.addTemplateHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
@@ -568,7 +554,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
@@ -578,7 +564,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{}
-	uri = router.getRoute("GET", getBuildTemplatesHandler, vars)
+	uri = router.GetRoute("GET", api.getBuildTemplatesHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("GET", uri, nil)
@@ -587,7 +573,7 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	t.Logf("Body: %s", w.Body.String())
@@ -606,14 +592,12 @@ func Test_getBuildTemplatesHandler(t *testing.T) {
 }
 
 func Test_applyTemplatesHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_applyTemplatesHandler")
-	if router.mux == nil {
+	if router.Mux == nil {
 		t.Fatal("Router cannot be nil")
 		return
 	}
-	router.init()
 
 	tmpDir, err := ioutil.TempDir("objectstore", "test")
 	if err != nil {
@@ -638,13 +622,13 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	 */
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	test.NoError(t, err)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	downloadPublicAction(t, u, pass)
+	downloadPublicAction(t, u, pass, api)
 
 	//download the binary from plik
 	path, delete, err := downloadFile(t, "cds-template-cds-plugin", testTestTemplate)
@@ -688,7 +672,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{}
-	uri := router.getRoute("POST", addTemplateHandler, vars)
+	uri := router.GetRoute("POST", api.addTemplateHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, bodyBuf)
@@ -699,7 +683,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -712,9 +696,9 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Insert a new project
 	pKey := sdk.RandomString(10)
-	p := assets.InsertTestProject(t, db, pKey, pKey, u)
+	p := assets.InsertTestProject(t, db, api.Cache, pKey, pKey, u)
 	//Insert a Production environment
-	environment.InsertEnvironment(db, &sdk.Environment{
+	environment.InsertEnvironment(api.mustDB(), &sdk.Environment{
 		ProjectKey: pKey,
 		ProjectID:  p.ID,
 		Name:       "Production",
@@ -743,7 +727,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	vars = map[string]string{
 		"permProjectKey": pKey,
 	}
-	uri = router.getRoute("POST", applyTemplateHandler, vars)
+	uri = router.GetRoute("POST", api.applyTemplateHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err = http.NewRequest("POST", uri, bodyBuf)
@@ -754,7 +738,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -769,7 +753,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 		"key": pKey,
 		"permApplicationName": opts.ApplicationName,
 	}
-	uri = router.getRoute("POST", applyTemplateOnApplicationHandler, vars)
+	uri = router.GetRoute("POST", api.applyTemplateOnApplicationHandler, vars)
 	test.NotEmpty(t, uri)
 
 	bodyBuf = bytes.NewBuffer(btes)
@@ -781,7 +765,7 @@ func Test_applyTemplatesHandler(t *testing.T) {
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -791,10 +775,10 @@ func Test_applyTemplatesHandler(t *testing.T) {
 	db.Delete(&dbtempl)
 }
 
-func downloadPublicAction(t *testing.T, u *sdk.User, pass string) {
+func downloadPublicAction(t *testing.T, u *sdk.User, pass string, api *API) {
 	//Load the gitclone public action
 	//Prepare request
-	uri := router.getRoute("POST", importActionHandler, nil)
+	uri := api.Router.GetRoute("POST", api.importActionHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, nil)
@@ -804,7 +788,7 @@ func downloadPublicAction(t *testing.T, u *sdk.User, pass string) {
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, req)
 	assert.True(t, w.Code >= 200)
 	assert.True(t, w.Code < 400)
 }

@@ -68,7 +68,6 @@ func (g *GithubConsumer) postForm(path string, data url.Values, headers map[stri
 }
 
 func (c *GithubClient) setETag(path string, headers http.Header) {
-
 	etag := headers.Get("ETag")
 
 	r, _ := regexp.Compile(".*\"(.*)\".*")
@@ -79,13 +78,13 @@ func (c *GithubClient) setETag(path string, headers http.Header) {
 
 	if etag != "" {
 		//Put etag for this path in cache for 59 minutes
-		cache.SetWithTTL(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 59*60)
+		c.Cache.SetWithTTL(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 59*60)
 	}
 }
 
 func (c *GithubClient) getETag(path string) string {
 	var s string
-	cache.Get(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), &s)
+	c.Cache.Get(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), &s)
 	return s
 }
 

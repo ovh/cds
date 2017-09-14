@@ -25,13 +25,10 @@ func (s *InMemory) New(k SessionKey) (SessionKey, error) {
 			return "", e
 		}
 	}
-	cache := &cache.LocalStore{
-		Mutex: &sync.Mutex{},
-		Data:  map[string][]byte{},
-		TTL:   s.ttl,
-	}
+	store := cache.NewLocalStore()
+	store.TTL = s.ttl
 	s.lock.Lock()
-	s.data[k] = cache
+	s.data[k] = store
 	s.lock.Unlock()
 
 	time.AfterFunc(time.Duration(s.ttl)*time.Minute, func() {
@@ -57,7 +54,10 @@ func (s *InMemory) Set(session SessionKey, k string, data interface{}) error {
 	if b, _ := s.Exists(session); !b {
 		return sdk.ErrSessionNotFound
 	}
+	s.lock.Lock()
 	s.data[session].Set(k, data)
+	defer s.lock.Unlock()
+
 	return nil
 }
 
@@ -66,6 +66,8 @@ func (s *InMemory) Get(session SessionKey, k string, data interface{}) error {
 	if b, _ := s.Exists(session); !b {
 		return sdk.ErrSessionNotFound
 	}
+	s.lock.Lock()
 	s.data[session].Get(k, data)
+	defer s.lock.Unlock()
 	return nil
 }

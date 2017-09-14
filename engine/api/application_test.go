@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -8,11 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -21,16 +19,12 @@ import (
 )
 
 func TestGetApplicationWithTriggersHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetApplicationHandler")
-	router.init()
-
+	api, db, router := newTestAPI(t)
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), u)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline 1
@@ -41,7 +35,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	if err := pipeline.InsertPipeline(db, proj, pip1, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip1, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -53,7 +47,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	if err := pipeline.InsertPipeline(db, proj, pip2, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip2, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -65,7 +59,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	if err := pipeline.InsertPipeline(db, proj, pip3, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip3, u); err != nil {
 		t.Fatal(err)
 	}
 	// 6. Create application
@@ -73,20 +67,20 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: appName,
 	}
-	if err := application.Insert(db, proj, app, u); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
 	// 7. Attach pipeline to application
-	if _, err := application.AttachPipeline(db, app.ID, pip1.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip1.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(db, app.ID, pip2.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip2.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(db, app.ID, pip3.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip3.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -99,7 +93,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		DestApplication: *app,
 		DestPipeline:    *pip2,
 	}
-	if err := trigger.InsertTrigger(db, t1); err != nil {
+	if err := trigger.InsertTrigger(api.mustDB(), t1); err != nil {
 		t.Fatal(err)
 	}
 
@@ -112,7 +106,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		DestApplication: *app,
 		DestPipeline:    *pip3,
 	}
-	if err := trigger.InsertTrigger(db, t2); err != nil {
+	if err := trigger.InsertTrigger(api.mustDB(), t2); err != nil {
 		t.Fatal(err)
 	}
 
@@ -122,7 +116,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 	}
 
-	uri := fmt.Sprintf("%s?withTriggers=true", router.getRoute("GET", getApplicationHandler, vars))
+	uri := fmt.Sprintf("%s?withTriggers=true", router.GetRoute("GET", api.getApplicationHandler, vars))
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
@@ -130,7 +124,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 
 	//10. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)

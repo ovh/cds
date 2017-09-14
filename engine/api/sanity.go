@@ -1,32 +1,31 @@
-package main
+package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getUserWarnings(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
+func (api *API) getUserWarningsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		al := r.Header.Get("Accept-Language")
 
-	al := r.Header.Get("Accept-Language")
+		var warnings []sdk.Warning
+		var err error
+		if getUser(ctx).Admin {
+			warnings, err = sanity.LoadAllWarnings(api.mustDB(), al)
+		} else {
+			warnings, err = sanity.LoadUserWarnings(api.mustDB(), al, getUser(ctx).ID)
+		}
+		if err != nil {
+			log.Warning("getUserWarnings> Cannot load user %d warnings: %s\n", getUser(ctx).ID, err)
+			return err
 
-	var warnings []sdk.Warning
-	var err error
-	if c.User.Admin {
-		warnings, err = sanity.LoadAllWarnings(db, al)
-	} else {
-		warnings, err = sanity.LoadUserWarnings(db, al, c.User.ID)
+		}
+
+		return WriteJSON(w, r, warnings, http.StatusOK)
 	}
-	if err != nil {
-		log.Warning("getUserWarnings> Cannot load user %d warnings: %s\n", c.User.ID, err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, warnings, http.StatusOK)
 }

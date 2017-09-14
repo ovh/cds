@@ -1,0 +1,761 @@
+
+# CDS Workflow Hooks.
+[API]
+
+  [API.Artifact]
+
+    # swift or local
+    Mode = "local"
+
+    [API.Artifact.Local]
+      BaseDirectory = "/tmp/cds/artifacts"
+
+    [API.Artifact.Openstack]
+
+      # Use if your want to prefix containers for CDS Artifacts
+      ContainerPrefix = ""
+
+      # Openstack Password, generally value of $OS_PASSWORD
+      Password = ""
+
+      # Region, generally value of $OS_REGION_NAME
+      Region = ""
+
+      # Openstack Tenant, generally value of $OS_TENANT_NAME
+      Tenant = ""
+
+      # Authentication Endpoint, generally value of $OS_AUTH_URL
+      URL = ""
+
+      # Openstack Username, generally value of $OS_USERNAME
+      Username = ""
+
+  [API.Auth]
+
+    # The default group is the group in which every new user will be granted at signup
+    DefaultGroup = ""
+
+    # Token for shared.infra group. This value will be used when shared.infra will be created
+    #at first CDS launch. This token can be used by CDS CLI, Hatchery, etc...
+    #This is mandatory.
+    SharedInfraToken = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
+
+    [API.Auth.LDAP]
+      Base = "dc=myorganization,dc=com"
+      DN = "uid=%s,ou=people,dc=myorganization,dc=com"
+      Enable = false
+      Fullname = "{{.givenName}} {{.sn}}"
+      Host = ""
+      Port = 636
+      SSL = true
+
+  [API.Cache]
+
+    # Cache Mode: redis or local
+    Mode = "local"
+    TTL = 60
+
+    # Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup
+    [API.Cache.Redis]
+
+      # If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379
+      Host = "localhost:6379"
+      Password = ""
+
+  [API.Database]
+    Host = "localhost"
+    MaxConn = 20
+    Name = "cds"
+    Password = "cds"
+    Port = 5432
+    SSLMode = "disable"
+    Secret = ""
+    Timeout = 3000
+    User = "cds"
+
+  [API.Directories]
+    Download = "/tmp/cds/download"
+    Keys = "/tmp/cds/keys"
+
+  [API.Events]
+
+    [API.Events.Kafka]
+      Broker = ""
+      Enabled = false
+      Password = ""
+      Topic = ""
+      User = ""
+
+  [API.GRPC]
+    Port = 8082
+
+  [API.HTTP]
+    Port = 8081
+    SessionTTL = 60
+
+  [API.SMTP]
+    Disable = true
+    From = "no-reply@cds.local"
+    Host = ""
+    Password = ""
+    Port = ""
+    TLS = false
+    User = ""
+
+  [API.Schedulers]
+
+    # This is mainly for dev purpose, you should not have to change it
+    # Disabled = false
+
+  [API.Secrets]
+    Key = "jzh94e1yfn6afmog01016vncwep162gs"
+
+  [API.URL]
+    API = "http://localhost:8081"
+    UI = "http://localhost:4200"
+
+  [API.VCS]
+
+    [API.VCS.Bitbucket]
+      ConsumerKey = ""
+
+      # Set to true if you don't want CDS to push statuses on Bitbucket API
+      # DisableStatus = false
+      PrivateKey = ""
+
+    [API.VCS.Github]
+
+      # Set to true if you don't want CDS to push statuses on Github API
+      # DisableStatus = false
+
+      # Set to true if you don't want CDS to push CDS URL in statuses on Github API
+      # DisableStatusURL = false
+      Secret = ""
+
+    [API.VCS.Polling]
+
+      # This is mainly for dev purpose, you should not have to change it
+      # Disabled = false
+
+  [API.Vault]
+    ConfigurationKey = ""
+
+# CDS Workflow Hooks.
+[Hatchery]
+
+  # Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/
+  [Hatchery.Docker]
+
+    # Start worker with a custom host-to-IP mapping (host:ip)
+    # DockerAddHost = ""
+
+    [Hatchery.Docker.CommonConfiguration]
+
+      # Name of Hatchery
+      Name = ""
+      RemoteDebugURL = ""
+
+      # Hatchery Log Configuration
+      [Hatchery.Docker.CommonConfiguration.API]
+
+        # Maximum allowed consecutives failures on heatbeat routine
+        MaxHeartbeatFailures = 10
+
+        # Request CDS API: timeout in seconds
+        RequestTimeout = 10
+
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
+
+        [Hatchery.Docker.CommonConfiguration.API.GRPC]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+          URL = "http://localhost:8082"
+
+        [Hatchery.Docker.CommonConfiguration.API.HTTP]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+
+          # CDS API URL
+          # URL = "http://localhost:8081"
+
+      # Hatchery Log Configuration
+      [Hatchery.Docker.CommonConfiguration.LogOptions]
+
+        [Hatchery.Docker.CommonConfiguration.LogOptions.Graylog]
+          ExtraKey = ""
+          Extravalue = ""
+          Host = ""
+          Port = 0
+
+        [Hatchery.Docker.CommonConfiguration.LogOptions.SpawnOptions]
+
+          # log critical if spawn take more than this value (in seconds)
+          ThresholdCritical = 480
+
+          # log warning if spawn take more than this value (in seconds)
+          ThresholdWarning = 360
+
+      # Hatchery Log Configuration
+      [Hatchery.Docker.CommonConfiguration.Provision]
+
+        # Disabled provisionning. Format:true or false
+        Disabled = false
+
+        # Check provisioning each n Seconds
+        Frequency = 30
+
+        # if worker is queued less than this value (seconds), hatchery does not take care of it
+        GraceTimeQueued = 4
+
+        # Maximum allowed simultaneous workers
+        MaxWorker = 10
+
+        # Check if some worker model have to be registered each n Seconds
+        RegisterFrequency = 60
+
+        # Worker Log Configuration
+        [Hatchery.Docker.CommonConfiguration.Provision.WorkerLogsOptions]
+
+          [Hatchery.Docker.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
+            ExtraKey = ""
+            Extravalue = ""
+            Host = ""
+            Port = 0
+
+  # Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/
+  [Hatchery.Local]
+
+    # BaseDir for worker workspace
+    Basedir = "/tmp"
+
+    [Hatchery.Local.CommonConfiguration]
+
+      # Name of Hatchery
+      Name = ""
+      RemoteDebugURL = ""
+
+      # Hatchery Log Configuration
+      [Hatchery.Local.CommonConfiguration.API]
+
+        # Maximum allowed consecutives failures on heatbeat routine
+        MaxHeartbeatFailures = 10
+
+        # Request CDS API: timeout in seconds
+        RequestTimeout = 10
+
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
+
+        [Hatchery.Local.CommonConfiguration.API.GRPC]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+          URL = "http://localhost:8082"
+
+        [Hatchery.Local.CommonConfiguration.API.HTTP]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+
+          # CDS API URL
+          # URL = "http://localhost:8081"
+
+      # Hatchery Log Configuration
+      [Hatchery.Local.CommonConfiguration.LogOptions]
+
+        [Hatchery.Local.CommonConfiguration.LogOptions.Graylog]
+          ExtraKey = ""
+          Extravalue = ""
+          Host = ""
+          Port = 0
+
+        [Hatchery.Local.CommonConfiguration.LogOptions.SpawnOptions]
+
+          # log critical if spawn take more than this value (in seconds)
+          ThresholdCritical = 480
+
+          # log warning if spawn take more than this value (in seconds)
+          ThresholdWarning = 360
+
+      # Hatchery Log Configuration
+      [Hatchery.Local.CommonConfiguration.Provision]
+
+        # Disabled provisionning. Format:true or false
+        Disabled = false
+
+        # Check provisioning each n Seconds
+        Frequency = 30
+
+        # if worker is queued less than this value (seconds), hatchery does not take care of it
+        GraceTimeQueued = 4
+
+        # Maximum allowed simultaneous workers
+        MaxWorker = 10
+
+        # Check if some worker model have to be registered each n Seconds
+        RegisterFrequency = 60
+
+        # Worker Log Configuration
+        [Hatchery.Local.CommonConfiguration.Provision.WorkerLogsOptions]
+
+          [Hatchery.Local.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
+            ExtraKey = ""
+            Extravalue = ""
+            Host = ""
+            Port = 0
+
+  # Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/
+  [Hatchery.Marathon]
+
+    # Worker default memory in Mo
+    # DefaultMemory = 1024
+
+    # Prefix of id for workers spawn on marathon. Enter 'workers' to have id as: '/workers/a-worker'
+    # MarathonIDPrefix = "/cds/workers"
+
+    # Use this option if you want to add labels on workers spawned by this hatchery.
+    # Format: MarathonLabels = "A_LABEL=value-of-label"
+    # MarathonLabels = ""
+
+    # Marathon Password, you need a marathon User to use it
+    # MarathonPassword = ""
+
+    # Marathon Username, used to call Marathon URL
+    # MarathonUser = ""
+
+    # Worker Timeout Spawning (seconds)
+    # WorkerSpawnTimeout = 120
+
+    # Worker TTL (minutes)
+    # WorkerTTL = 10
+
+    # URL of your marathon
+    # url = "http://10.241.1.71:8080,10.241.1.72:8080,10.241.1.73:8080"
+
+    [Hatchery.Marathon.CommonConfiguration]
+
+      # Name of Hatchery
+      Name = ""
+      RemoteDebugURL = ""
+
+      # Hatchery Log Configuration
+      [Hatchery.Marathon.CommonConfiguration.API]
+
+        # Maximum allowed consecutives failures on heatbeat routine
+        MaxHeartbeatFailures = 10
+
+        # Request CDS API: timeout in seconds
+        RequestTimeout = 10
+
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
+
+        [Hatchery.Marathon.CommonConfiguration.API.GRPC]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+          URL = "http://localhost:8082"
+
+        [Hatchery.Marathon.CommonConfiguration.API.HTTP]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+
+          # CDS API URL
+          # URL = "http://localhost:8081"
+
+      # Hatchery Log Configuration
+      [Hatchery.Marathon.CommonConfiguration.LogOptions]
+
+        [Hatchery.Marathon.CommonConfiguration.LogOptions.Graylog]
+          ExtraKey = ""
+          Extravalue = ""
+          Host = ""
+          Port = 0
+
+        [Hatchery.Marathon.CommonConfiguration.LogOptions.SpawnOptions]
+
+          # log critical if spawn take more than this value (in seconds)
+          ThresholdCritical = 480
+
+          # log warning if spawn take more than this value (in seconds)
+          ThresholdWarning = 360
+
+      # Hatchery Log Configuration
+      [Hatchery.Marathon.CommonConfiguration.Provision]
+
+        # Disabled provisionning. Format:true or false
+        Disabled = false
+
+        # Check provisioning each n Seconds
+        Frequency = 30
+
+        # if worker is queued less than this value (seconds), hatchery does not take care of it
+        GraceTimeQueued = 4
+
+        # Maximum allowed simultaneous workers
+        MaxWorker = 10
+
+        # Check if some worker model have to be registered each n Seconds
+        RegisterFrequency = 60
+
+        # Worker Log Configuration
+        [Hatchery.Marathon.CommonConfiguration.Provision.WorkerLogsOptions]
+
+          [Hatchery.Marathon.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
+            ExtraKey = ""
+            Extravalue = ""
+            Host = ""
+            Port = 0
+
+  # Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/
+  [Hatchery.Openstack]
+
+    # Opentack Auth Endpoint
+    # Address = "https://auth.cloud.ovh.net/v2.0"
+
+    # max wait for create an openstack image (in seconds)
+    # CreateImageTimeout = 180
+
+    # if true: hatchery does not create openstack image when a worker model is updated
+    # DisableCreateImage = false
+
+    # Facultative. IP Range for spawned workers. 
+    # Format: a.a.a.a/b,c.c.c.c/e 
+    # Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).
+    #If not set, it will get an address from the neutron service
+    # IPRange = ""
+
+    # Hatchery will use this Network to spawn CDS Worker (Virtual Machine).
+    # NetworkString = "Ext-Net"
+
+    # Openstack Password
+    # Password = ""
+
+    # Openstack Region
+    # Region = ""
+
+    # Openstack tenant (string)
+    # Tenant = ""
+
+    # Openstack User
+    # User = ""
+
+    # Worker TTL (minutes)
+    # WorkerTTL = 30
+
+    [Hatchery.Openstack.CommonConfiguration]
+
+      # Name of Hatchery
+      Name = ""
+      RemoteDebugURL = ""
+
+      # Hatchery Log Configuration
+      [Hatchery.Openstack.CommonConfiguration.API]
+
+        # Maximum allowed consecutives failures on heatbeat routine
+        MaxHeartbeatFailures = 10
+
+        # Request CDS API: timeout in seconds
+        RequestTimeout = 10
+
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
+
+        [Hatchery.Openstack.CommonConfiguration.API.GRPC]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+          URL = "http://localhost:8082"
+
+        [Hatchery.Openstack.CommonConfiguration.API.HTTP]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+
+          # CDS API URL
+          # URL = "http://localhost:8081"
+
+      # Hatchery Log Configuration
+      [Hatchery.Openstack.CommonConfiguration.LogOptions]
+
+        [Hatchery.Openstack.CommonConfiguration.LogOptions.Graylog]
+          ExtraKey = ""
+          Extravalue = ""
+          Host = ""
+          Port = 0
+
+        [Hatchery.Openstack.CommonConfiguration.LogOptions.SpawnOptions]
+
+          # log critical if spawn take more than this value (in seconds)
+          ThresholdCritical = 480
+
+          # log warning if spawn take more than this value (in seconds)
+          ThresholdWarning = 360
+
+      # Hatchery Log Configuration
+      [Hatchery.Openstack.CommonConfiguration.Provision]
+
+        # Disabled provisionning. Format:true or false
+        Disabled = false
+
+        # Check provisioning each n Seconds
+        Frequency = 30
+
+        # if worker is queued less than this value (seconds), hatchery does not take care of it
+        GraceTimeQueued = 4
+
+        # Maximum allowed simultaneous workers
+        MaxWorker = 10
+
+        # Check if some worker model have to be registered each n Seconds
+        RegisterFrequency = 60
+
+        # Worker Log Configuration
+        [Hatchery.Openstack.CommonConfiguration.Provision.WorkerLogsOptions]
+
+          [Hatchery.Openstack.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
+            ExtraKey = ""
+            Extravalue = ""
+            Host = ""
+            Port = 0
+
+  # Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/
+  [Hatchery.Swarm]
+
+    # Worker default memory in Mo
+    # DefaultMemory = 1024
+
+    # Max Containers on Host managed by this Hatchery
+    # MaxContainers = 10
+
+    # Percent reserved for spwaning worker with service requirement
+    # RatioService = 75
+
+    # Worker TTL (minutes)
+    # WorkerTTL = 10
+
+    [Hatchery.Swarm.CommonConfiguration]
+
+      # Name of Hatchery
+      Name = ""
+      RemoteDebugURL = ""
+
+      # Hatchery Log Configuration
+      [Hatchery.Swarm.CommonConfiguration.API]
+
+        # Maximum allowed consecutives failures on heatbeat routine
+        MaxHeartbeatFailures = 10
+
+        # Request CDS API: timeout in seconds
+        RequestTimeout = 10
+
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
+
+        [Hatchery.Swarm.CommonConfiguration.API.GRPC]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+          URL = "http://localhost:8082"
+
+        [Hatchery.Swarm.CommonConfiguration.API.HTTP]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+
+          # CDS API URL
+          # URL = "http://localhost:8081"
+
+      # Hatchery Log Configuration
+      [Hatchery.Swarm.CommonConfiguration.LogOptions]
+
+        [Hatchery.Swarm.CommonConfiguration.LogOptions.Graylog]
+          ExtraKey = ""
+          Extravalue = ""
+          Host = ""
+          Port = 0
+
+        [Hatchery.Swarm.CommonConfiguration.LogOptions.SpawnOptions]
+
+          # log critical if spawn take more than this value (in seconds)
+          ThresholdCritical = 480
+
+          # log warning if spawn take more than this value (in seconds)
+          ThresholdWarning = 360
+
+      # Hatchery Log Configuration
+      [Hatchery.Swarm.CommonConfiguration.Provision]
+
+        # Disabled provisionning. Format:true or false
+        Disabled = false
+
+        # Check provisioning each n Seconds
+        Frequency = 30
+
+        # if worker is queued less than this value (seconds), hatchery does not take care of it
+        GraceTimeQueued = 4
+
+        # Maximum allowed simultaneous workers
+        MaxWorker = 10
+
+        # Check if some worker model have to be registered each n Seconds
+        RegisterFrequency = 60
+
+        # Worker Log Configuration
+        [Hatchery.Swarm.CommonConfiguration.Provision.WorkerLogsOptions]
+
+          [Hatchery.Swarm.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
+            ExtraKey = ""
+            Extravalue = ""
+            Host = ""
+            Port = 0
+
+  # Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/
+  [Hatchery.VSphere]
+
+    # max wait for create a vsphere image (in seconds)
+    # CreateImageTimeout = 180
+
+    # if true: hatchery does not create vsphere image when a worker model is updated
+    # DisableCreateImage = false
+
+    # Name of the virtual ethernet card
+    # VSphereCardName = "e1000"
+
+    # VSphere Datacenter
+    # VSphereDatacenterString = ""
+
+    # VSphere Datastore
+    # VSphereDatastoreString = ""
+
+    # VShpere Endpoint, example:pcc-11-222-333-444.ovh.com
+    # VSphereEndpoint = ""
+
+    # VShpere Network
+    # VSphereNetworkString = ""
+
+    # VShpere Password
+    # VSpherePassword = ""
+
+    # VSphere User
+    # VSphereUser = ""
+
+    # Worker TTL (minutes)
+    # WorkerTTL = 30
+
+    [Hatchery.VSphere.CommonConfiguration]
+
+      # Name of Hatchery
+      Name = ""
+      RemoteDebugURL = ""
+
+      # Hatchery Log Configuration
+      [Hatchery.VSphere.CommonConfiguration.API]
+
+        # Maximum allowed consecutives failures on heatbeat routine
+        MaxHeartbeatFailures = 10
+
+        # Request CDS API: timeout in seconds
+        RequestTimeout = 10
+
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
+
+        [Hatchery.VSphere.CommonConfiguration.API.GRPC]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+          URL = "http://localhost:8082"
+
+        [Hatchery.VSphere.CommonConfiguration.API.HTTP]
+
+          # sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API
+          # Insecure = false
+
+          # CDS API URL
+          # URL = "http://localhost:8081"
+
+      # Hatchery Log Configuration
+      [Hatchery.VSphere.CommonConfiguration.LogOptions]
+
+        [Hatchery.VSphere.CommonConfiguration.LogOptions.Graylog]
+          ExtraKey = ""
+          Extravalue = ""
+          Host = ""
+          Port = 0
+
+        [Hatchery.VSphere.CommonConfiguration.LogOptions.SpawnOptions]
+
+          # log critical if spawn take more than this value (in seconds)
+          ThresholdCritical = 480
+
+          # log warning if spawn take more than this value (in seconds)
+          ThresholdWarning = 360
+
+      # Hatchery Log Configuration
+      [Hatchery.VSphere.CommonConfiguration.Provision]
+
+        # Disabled provisionning. Format:true or false
+        Disabled = false
+
+        # Check provisioning each n Seconds
+        Frequency = 30
+
+        # if worker is queued less than this value (seconds), hatchery does not take care of it
+        GraceTimeQueued = 4
+
+        # Maximum allowed simultaneous workers
+        MaxWorker = 10
+
+        # Check if some worker model have to be registered each n Seconds
+        RegisterFrequency = 60
+
+        # Worker Log Configuration
+        [Hatchery.VSphere.CommonConfiguration.Provision.WorkerLogsOptions]
+
+          [Hatchery.VSphere.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
+            ExtraKey = ""
+            Extravalue = ""
+            Host = ""
+            Port = 0
+
+# CDS Workflow Hooks.
+[Hooks]
+
+  [Hooks.API]
+    MaxHeartbeatFailures = 10
+    RequestTimeout = 10
+    Token = "************"
+
+    [Hooks.API.GRPC]
+      Insecure = false
+      URL = "http://localhost:8082"
+
+    [Hooks.API.HTTP]
+      Insecure = false
+      URL = "http://localhost:8081"
+
+  [Hooks.Cache]
+    Mode = "redis"
+    TTL = 60
+
+    [Hooks.Cache.Redis]
+      Host = "localhost:6379"
+      Password = ""
+
+  [Hooks.HTTP]
+    Port = 8083
+
+  [Hooks.URL]
+    API = "http://localhost:8083"
+
+# CDS Workflow Hooks.
+[Log]
+
+  # Log Level: debug, info, warning, notice, critical
+  Level = "debug"
+

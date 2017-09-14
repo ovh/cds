@@ -24,7 +24,7 @@ import (
 )
 
 // Pipelines is a goroutine responsible for pushing actions of a building pipeline in queue, in the wanted order
-func Pipelines(c context.Context, DBFunc func() *gorp.DbMap) {
+func Pipelines(c context.Context, store cache.Store, DBFunc func() *gorp.DbMap) {
 	tick := time.NewTicker(2 * time.Second).C
 	for {
 		select {
@@ -34,16 +34,8 @@ func Pipelines(c context.Context, DBFunc func() *gorp.DbMap) {
 				return
 			}
 		case <-tick:
-			//Check if CDS is in maintenance mode
-			var m bool
-			cache.Get("maintenance", &m)
-			if m {
-				log.Info("⚠ CDS maintenance in ON")
-				time.Sleep(30 * time.Second)
-			}
-
 			db := DBFunc()
-			if db != nil && !m {
+			if db != nil {
 				ids, err := pipeline.LoadBuildingPipelinesIDs(db)
 				if err != nil {
 					log.Warning("queue.Pipelines> Cannot load building pipelines: %s", err)
@@ -51,14 +43,22 @@ func Pipelines(c context.Context, DBFunc func() *gorp.DbMap) {
 				}
 
 				for _, id := range ids {
-					runPipeline(db, id)
+					runPipeline(DBFunc, store, id)
 				}
 			}
 		}
 	}
 }
 
-func runPipeline(db *gorp.DbMap, pbID int64) {
+func runPipeline(DBFunc func() *gorp.DbMap, store cache.Store, pbID int64) {
+	//Check if CDS is in maintenance mode
+	var m bool
+	store.Get("maintenance", &m)
+	if m {
+		log.Info("⚠ CDS maintenance in ON")
+	}
+
+	db := DBFunc()
 	tx, errb := db.Begin()
 	if errb != nil {
 		log.Warning("queue.RunActions> cannot start tx for pb %d: %s", pbID, errb)
@@ -103,7 +103,8 @@ func runPipeline(db *gorp.DbMap, pbID int64) {
 	for stageIndex := range pb.Stages {
 		stage := &pb.Stages[stageIndex]
 
-		if stage.Status == sdk.StatusWaiting {
+		//We only add jobs to queue if we are not in maintenance
+		if stage.Status == sdk.StatusWaiting && !m {
 			if err := addJobsToQueue(tx, stage, pb); err != nil {
 				log.Warning("queue.RunActions> Cannot add job to queue: %s", err)
 				return
@@ -151,7 +152,7 @@ func runPipeline(db *gorp.DbMap, pbID int64) {
 
 	// If pipeline build succeed, run trigger
 	if pb.Status == sdk.StatusSuccess {
-		if err := pipelineBuildEnd(tx, pb); err != nil {
+		if err := pipelineBuildEnd(DBFunc, store, tx, pb); err != nil {
 			log.Warning("RunActions> Cannot execute pipelineBuildEnd: %s", err)
 		}
 	}
@@ -273,7 +274,7 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 	return stageEnd, nil
 }
 
-func pipelineBuildEnd(tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
+func pipelineBuildEnd(DBFunc func() *gorp.DbMap, store cache.Store, tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 	// run trigger
 	triggers, err := trigger.LoadAutomaticTriggersAsSource(tx, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID)
 	if err != nil {
@@ -311,7 +312,7 @@ func pipelineBuildEnd(tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 		parameters = append(parameters, parentParams...)
 
 		// Start build
-		app, err := application.LoadByName(tx, t.DestProject.Key, t.DestApplication.Name, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
+		app, err := application.LoadByName(tx, store, t.DestProject.Key, t.DestApplication.Name, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 		if err != nil {
 			return sdk.WrapError(err, "pipelineBuildEnd> Cannot load destination application")
 		}
@@ -328,7 +329,7 @@ func pipelineBuildEnd(tx gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 			ScheduledTrigger:    pb.Trigger.ScheduledTrigger,
 		}
 
-		_, err = RunPipeline(tx, t.DestProject.Key, app, t.DestPipeline.Name, t.DestEnvironment.Name, parameters, pb.Version, trigger, &sdk.User{Admin: true})
+		_, err = RunPipeline(DBFunc, store, tx, t.DestProject.Key, app, t.DestPipeline.Name, t.DestEnvironment.Name, parameters, pb.Version, trigger, &sdk.User{Admin: true})
 		if err != nil {
 			return sdk.WrapError(err, "pipelineScheduler> Cannot run pipeline on project %s, application %s, pipeline %s, env %s", t.DestProject.Key, t.DestApplication.Name, t.DestPipeline.Name, t.DestEnvironment.Name)
 		}

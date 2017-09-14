@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"context"
@@ -9,46 +9,38 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-// LastUpdateBrokerSubscribe is the information need to to subscribe
-type LastUpdateBrokerSubscribe struct {
+// lastUpdateBrokerSubscribe is the information need to to subscribe
+type lastUpdateBrokerSubscribe struct {
 	UIID  string
 	User  *sdk.User
 	Queue chan string
 }
 
-// LastUpdateBroker keeps connected client of the current route,
-type LastUpdateBroker struct {
-	clients    map[string]*LastUpdateBrokerSubscribe
-	newClients chan *LastUpdateBrokerSubscribe
+// lastUpdateBroker keeps connected client of the current route,
+type lastUpdateBroker struct {
+	clients    map[string]*lastUpdateBrokerSubscribe
+	newClients chan *lastUpdateBrokerSubscribe
 	messages   chan string
 }
 
-var lastUpdateBroker *LastUpdateBroker
-
-func InitLastUpdateBroker(c context.Context, DBFunc func() *gorp.DbMap) {
-	lastUpdateBroker = &LastUpdateBroker{
-		make(map[string]*LastUpdateBrokerSubscribe),
-		make(chan *LastUpdateBrokerSubscribe),
-		make(chan string),
-	}
-
+//Init the lastUpdateBroker
+func (b *lastUpdateBroker) Init(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	// Start cache Subscription
-	go CacheSubscribe(c, lastUpdateBroker.messages)
+	go CacheSubscribe(c, b.messages, store)
 
 	// Start processing events
-	go lastUpdateBroker.Start(c, DBFunc)
+	go b.Start(c, DBFunc, store)
 }
 
 // CacheSubscribe subscribe to a channel and push received message in a channel
-func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
-	pubSub := cache.Subscribe("lastUpdates")
+func CacheSubscribe(c context.Context, cacheMsgChan chan<- string, store cache.Store) {
+	pubSub := store.Subscribe("lastUpdates")
 	tick := time.NewTicker(250 * time.Millisecond)
 	defer tick.Stop()
 	for {
@@ -59,7 +51,7 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
 				return
 			}
 		case <-tick.C:
-			msg, err := cache.GetMessageFromSubscription(c, pubSub)
+			msg, err := store.GetMessageFromSubscription(c, pubSub)
 			if err != nil {
 				log.Warning("lastUpdate.CacheSubscribe> Cannot get message %s: %s", msg, err)
 				time.Sleep(5 * time.Second)
@@ -71,9 +63,8 @@ func CacheSubscribe(c context.Context, cacheMsgChan chan<- string) {
 }
 
 // Start the broker
-func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
+func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	for {
-		db := DBFunc()
 		select {
 		case <-c.Done():
 			// Close all channels
@@ -97,7 +88,7 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 
 			//Receive new message
 			for _, i := range b.clients {
-				if err := loadUserPermissions(db, i.User); err != nil {
+				if err := loadUserPermissions(DBFunc(), store, i.User); err != nil {
 					log.Warning("lastUpdate.CacheSubscribe> Cannot load auser permission: %s", err)
 					continue
 				}
@@ -110,6 +101,13 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 					for _, g := range i.User.Groups {
 						hasPermission = false
 						switch lastModif.Type {
+						case sdk.ProjectLastModificationType:
+							for _, pg := range g.ProjectGroups {
+								if pg.Project.Key == lastModif.Key {
+									hasPermission = true
+									break groups
+								}
+							}
 						case sdk.ApplicationLastModificationType:
 							for _, ag := range g.ApplicationGroups {
 								if ag.Application.Name == lastModif.Name && ag.Application.ProjectKey == lastModif.Key {
@@ -134,51 +132,52 @@ func (b *LastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap) {
 			}
 		}
 	}
-
 }
 
-func (b *LastUpdateBroker) ServeHTTP(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Make sure that the writer supports flushing.
-	f, ok := w.(http.Flusher)
-	if !ok {
-		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+func (b *lastUpdateBroker) ServeHTTP() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Make sure that the writer supports flushing.
+		f, ok := w.(http.Flusher)
+		if !ok {
+			http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+			return nil
+		}
+
+		uuid, errS := sessionstore.NewSessionKey()
+		if errS != nil {
+			return sdk.WrapError(errS, "lastUpdateBroker.Serve> Cannot generate UUID")
+		}
+		messageChan := &lastUpdateBrokerSubscribe{
+			UIID:  string(uuid),
+			User:  getUser(ctx),
+			Queue: make(chan string),
+		}
+
+		// Add this client to the map of those that should receive updates
+		b.newClients <- messageChan
+
+		// Set the headers related to event streaming.
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+		w.Header().Set("X-Accel-Buffering", "no")
+
+	leave:
+		for {
+			select {
+			case <-w.(http.CloseNotifier).CloseNotify():
+				delete(b.clients, messageChan.UIID)
+				close(messageChan.Queue)
+				break leave
+			case msg, open := <-messageChan.Queue:
+				if !open {
+					delete(b.clients, messageChan.UIID)
+					break leave
+				}
+				fmt.Fprintf(w, "data: %s\n\n", msg)
+				f.Flush()
+			}
+		}
 		return nil
 	}
-
-	uuid, errS := sessionstore.NewSessionKey()
-	if errS != nil {
-		return sdk.WrapError(errS, "LastUpdateBroker.Serve> Cannot generate UUID")
-	}
-	messageChan := &LastUpdateBrokerSubscribe{
-		UIID:  string(uuid),
-		User:  c.User,
-		Queue: make(chan string),
-	}
-
-	// Add this client to the map of those that should receive updates
-	b.newClients <- messageChan
-
-	// Set the headers related to event streaming.
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Connection", "keep-alive")
-	w.Header().Set("X-Accel-Buffering", "no")
-
-leave:
-	for {
-		select {
-		case <-w.(http.CloseNotifier).CloseNotify():
-			delete(b.clients, messageChan.UIID)
-			close(messageChan.Queue)
-			break leave
-		case msg, open := <-messageChan.Queue:
-			if !open {
-				delete(b.clients, messageChan.UIID)
-				break leave
-			}
-			fmt.Fprintf(w, "data: %s\n\n", msg)
-			f.Flush()
-		}
-	}
-	return nil
 }

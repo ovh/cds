@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
@@ -22,7 +23,7 @@ import (
 )
 
 // InsertTestProject create a test project
-func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string, u *sdk.User) *sdk.Project {
+func InsertTestProject(t *testing.T, db *gorp.DbMap, store cache.Store, key, name string, u *sdk.User) *sdk.Project {
 	proj := sdk.Project{
 		Key:  key,
 		Name: name,
@@ -39,7 +40,7 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string, u *sdk.Us
 		return nil
 	}
 
-	if err := project.Insert(db, &proj, u); err != nil {
+	if err := project.Insert(db, store, &proj, u); err != nil {
 		t.Fatalf("Cannot insert project : %s", err)
 		return nil
 	}
@@ -58,9 +59,9 @@ func InsertTestProject(t *testing.T, db *gorp.DbMap, key, name string, u *sdk.Us
 }
 
 // DeleteTestProject delete a test project
-func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, key string) error {
+func DeleteTestProject(t *testing.T, db gorp.SqlExecutor, store cache.Store, key string) error {
 	t.Logf("Delete Project %s", key)
-	return project.Delete(db, key)
+	return project.Delete(db, store, key)
 }
 
 // InsertAdminUser have to be used only for tests

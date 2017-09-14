@@ -1,6 +1,7 @@
-package main
+package api
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -10,16 +11,15 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func deleteUserPermissionCache(c *businesscontext.Ctx) {
-	if c.User != nil {
-		k := cache.Key("users", c.User.Username, "permissions")
-		cache.Delete(k)
+func deleteUserPermissionCache(ctx context.Context, store cache.Store) {
+	if getUser(ctx) != nil {
+		k := cache.Key("users", getUser(ctx).Username, "permissions")
+		store.Delete(k)
 	}
 }
 
@@ -50,16 +50,18 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 	return nil
 }
 
-func (r *Router) getRoute(method string, handler Handler, vars map[string]string) string {
-	sf1 := reflect.ValueOf(handler)
+// GetRoute returns the routes given a handler
+func (r *Router) GetRoute(method string, handler HandlerFunc, vars map[string]string) string {
+	sf1 := reflect.ValueOf(handler())
 	var url string
-	for uri, routerConfig := range mapRouterConfigs {
+	for uri, routerConfig := range r.mapRouterConfigs {
 		rc := routerConfig.config[method]
 		if rc == nil {
 			continue
 		}
-		if strings.HasPrefix(uri, r.prefix) {
-			sf2 := reflect.ValueOf(rc.handler)
+
+		if strings.HasPrefix(uri, r.Prefix) {
+			sf2 := reflect.ValueOf(rc.Handler)
 			if sf1.Pointer() == sf2.Pointer() {
 				url = uri
 				break
