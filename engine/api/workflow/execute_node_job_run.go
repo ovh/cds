@@ -57,6 +57,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 	//If the job has been set to building, set the stage to building
 	var stageUpdated bool
 	if job.Status == sdk.StatusBuilding.String() {
+		log.Debug("UpdateNodeJobRunStatus> job:%d", job.ID)
 		for i := range node.Stages {
 			s := &node.Stages[i]
 			var found bool
@@ -68,6 +69,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 				}
 			}
 			if found && s.Status == sdk.StatusWaiting {
+				log.Debug("UpdateNodeJobRunStatus> stage:%s status from %s to %s", s.Name, s.Status, sdk.StatusBuilding)
 				s.Status = sdk.StatusBuilding
 				stageUpdated = true
 				break
@@ -76,11 +78,13 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 	}
 
 	if stageUpdated {
+		log.Debug("UpdateNodeJobRunStatus> stageUpdated, set status node from %s to %s", node.Status, sdk.StatusBuilding.String())
 		node.Status = sdk.StatusBuilding.String()
 		if err := UpdateNodeRun(db, node); err != nil {
 			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to update workflow node run %d", node.ID)
 		}
 	} else {
+		log.Debug("UpdateNodeJobRunStatus> call execute node")
 		if errE := execute(db, node); errE != nil {
 			return sdk.WrapError(errE, "workflow.UpdateNodeJobRunStatus> Cannot execute sync node")
 		}
@@ -147,6 +151,7 @@ func TakeNodeJobRun(db gorp.SqlExecutor, id int64, workerModel string, workerNam
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot prepare spawn infos")
 	}
 
+	log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
 	if err := UpdateNodeJobRunStatus(db, job, sdk.StatusBuilding); err != nil {
 		return nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run")
 	}
