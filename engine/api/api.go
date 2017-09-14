@@ -28,6 +28,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/user"
@@ -494,8 +495,8 @@ func (a *API) Serve(ctx context.Context) error {
 	go stats.StartRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-
 	go user.PersistentSessionTokenCleaner(ctx, a.DBConnectionFactory.GetDBMap)
+	go services.KillDeadServices(ctx, services.NewRepository(a.DBConnectionFactory, a.Cache))
 
 	if !a.Config.VCS.Polling.Disabled {
 		go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
