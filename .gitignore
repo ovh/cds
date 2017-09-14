@@ -6,6 +6,7 @@ engine/engine
 engine/dist
 engine/api/.secrets
 engine/api/config.toml
+engine/config.toml
 engine/worker/worker
 *.out
 *.coverprofile
