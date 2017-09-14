@@ -17,6 +17,8 @@ type PipelineBuildJob sdk.PipelineBuildJob
 // Log is a gorp wrapper around sdk.Log
 type Log sdk.Log
 
+var Store cache.Store
+
 //PostInsert is a DB Hook on PipelineBuildJob to store jobs and params as JSON in DB
 func (p *PipelineBuildJob) PostInsert(s gorp.SqlExecutor) error {
 	params, errParams := json.Marshal(p.Parameters)
@@ -78,7 +80,7 @@ func (p *PipelineBuildJob) PostUpdate(s gorp.SqlExecutor) error {
 //PostGet is a DB Hook on PipelineBuildJob to get jobs and params as from JSON in DB
 func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
 	h := sdk.Hatchery{}
-	if cache.Get(keyBookJob(p.ID), &h) {
+	if Store.Get(keyBookJob(p.ID), &h) {
 		p.BookedBy = h
 	}
 

@@ -153,7 +153,7 @@ export CDS_TTL={{.TTL}}
 		Hatchery:     h.hatch.ID,
 		HatcheryName: h.hatch.Name,
 		JobID:        jobID,
-		TTL:          h.workerTTL,
+		TTL:          h.Config.WorkerTTL,
 		Graylog:      graylog,
 		Grpc:         grpc,
 	}

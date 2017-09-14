@@ -1,6 +1,7 @@
 package swarm
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -17,27 +18,77 @@ import (
 	"github.com/spf13/viper"
 )
 
-var hatcherySwarm *HatcherySwarm
+// New instanciates a new Hatchery Swarm
+func New() *HatcherySwarm {
+	return new(HatcherySwarm)
+}
 
-//HatcherySwarm is a hatchery which can be connected to a remote to a docker remote api
-type HatcherySwarm struct {
-	hatch         *sdk.Hatchery
-	dockerClient  *docker.Client
-	client        cdsclient.Interface
-	ratioService  int
-	maxContainers int
-	defaultMemory int
-	workerTTL     int
+// ApplyConfiguration apply an object of type HatcheryConfiguration after checking it
+func (h *HatcherySwarm) ApplyConfiguration(cfg interface{}) error {
+	if err := h.CheckConfiguration(cfg); err != nil {
+		return err
+	}
+
+	var ok bool
+	h.Config, ok = cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	return nil
+}
+
+// CheckConfiguration checks the validity of the configuration object
+func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
+	hconfig, ok := cfg.(HatcheryConfiguration)
+	if !ok {
+		return fmt.Errorf("Invalid configuration")
+	}
+
+	if hconfig.API.HTTP.URL == "" {
+		return fmt.Errorf("API HTTP(s) URL is mandatory")
+	}
+
+	if hconfig.API.Token == "" {
+		return fmt.Errorf("API Token URL is mandatory")
+	}
+
+	if hconfig.MaxContainers <= 0 {
+		return fmt.Errorf("max-containers must be > 0")
+	}
+	if hconfig.WorkerTTL <= 0 {
+		return fmt.Errorf("worker-ttl must be > 0")
+	}
+	if hconfig.DefaultMemory <= 1 {
+		return fmt.Errorf("worker-memory must be > 1")
+	}
+
+	if os.Getenv("DOCKER_HOST") == "" {
+		return fmt.Errorf("Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
+	}
+
+	return nil
+}
+
+// Serve start the HatcherySwarm server
+func (h *HatcherySwarm) Serve(ctx context.Context) error {
+	hatchery.Create(h)
+	return nil
 }
 
 //Init connect the hatchery to the docker api
-func (h *HatcherySwarm) Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error {
+func (h *HatcherySwarm) Init() error {
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("swarm", name),
+		Name:    hatchery.GenerateName("swarm", h.Configuration().Name),
 		Version: sdk.VERSION,
 	}
 
-	h.client = cdsclient.NewHatchery(api, token, requestSecondsTimeout, insecureSkipVerifyTLS)
+	h.client = cdsclient.NewHatchery(
+		h.Configuration().API.HTTP.URL,
+		h.Configuration().API.Token,
+		h.Configuration().Provision.RegisterFrequency,
+		h.Configuration().API.HTTP.Insecure,
+	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)
 	}
@@ -186,7 +237,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 	h.createNetwork(network)
 
 	//Memory for the worker
-	memory := int64(h.defaultMemory)
+	memory := int64(h.Config.DefaultMemory)
 
 	services := []string{}
 
@@ -254,7 +305,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
 		"CDS_HATCHERY_NAME" + "=" + h.hatch.Name,
-		"CDS_TTL" + "=" + strconv.Itoa(h.workerTTL),
+		"CDS_TTL" + "=" + strconv.Itoa(h.Config.WorkerTTL),
 		"CDS_SINGLE_USE=1",
 	}
 
@@ -369,8 +420,8 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		return false
 	}
 
-	if len(cs) > h.maxContainers {
-		log.Warning("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.maxContainers)
+	if len(cs) > h.Config.MaxContainers {
+		log.Warning("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.Config.MaxContainers)
 		return false
 	}
 
@@ -386,9 +437,9 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	// hatcherySwarm.ratioService: Percent reserved for spwaning worker with service requirement
 	// if no link -> we need to check ratioService
 	if len(links) == 0 && len(cs) > 0 {
-		percentFree := 100 - (100 * len(cs) / h.maxContainers)
-		if percentFree <= hatcherySwarm.ratioService {
-			log.Info("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, hatcherySwarm.ratioService)
+		percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
+		if percentFree <= h.Config.RatioService {
+			log.Info("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
 			return false
 		}
 	}
@@ -519,6 +570,11 @@ func (h *HatcherySwarm) Hatchery() *sdk.Hatchery {
 //Client returns cdsclient instance
 func (h *HatcherySwarm) Client() cdsclient.Interface {
 	return h.client
+}
+
+//Configuration returns Hatchery CommonConfiguration
+func (h *HatcherySwarm) Configuration() hatchery.CommonConfiguration {
+	return h.Config.CommonConfiguration
 }
 
 // ID returns ID of the Hatchery

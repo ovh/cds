@@ -5,16 +5,18 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
-	"os/signal"
 	"os/user"
 	"path"
-	"syscall"
+	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -27,7 +29,7 @@ var (
 	dbPassword string
 	dbName     string
 	dbHost     string
-	dbPort     string
+	dbPort     int64
 	dbSSLMode  string
 )
 
@@ -38,7 +40,7 @@ func init() {
 		flag.String("dbPassword", "cds", "password")
 		flag.String("dbName", "cds", "database name")
 		flag.String("dbHost", "localhost", "host")
-		flag.String("dbPort", "15432", "port")
+		flag.Int("dbPort", 15432, "port")
 		flag.String("sslMode", "disable", "ssl mode")
 
 		log.Initialize(&log.Conf{Level: "debug"})
@@ -46,10 +48,12 @@ func init() {
 	}
 }
 
-type bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
+type Bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
+
+var DBConnectionFactory *database.DBConnectionFactory
 
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
+func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store) {
 	log.SetLogger(t)
 
 	//Try to load flags from config flags, else load from flags
@@ -72,7 +76,10 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 				dbPassword = cfg["dbPassword"]
 				dbName = cfg["dbName"]
 				dbHost = cfg["dbHost"]
-				dbPort = cfg["dbPort"]
+				dbPort, err = strconv.ParseInt(cfg["dbPort"], 10, 64)
+				if err != nil {
+					t.Errorf("Error when unmarshal config %s", err)
+				}
 				dbSSLMode = cfg["sslMode"]
 			} else {
 				t.Errorf("Error when unmarshal config %s", err)
@@ -85,54 +92,45 @@ func SetupPG(t *testing.T, bootstrapFunc ...bootstrapf) *gorp.DbMap {
 		dbPassword = flag.Lookup("dbPassword").Value.String()
 		dbName = flag.Lookup("dbName").Value.String()
 		dbHost = flag.Lookup("dbHost").Value.String()
-		dbPort = flag.Lookup("dbPort").Value.String()
+		dbPort, err = strconv.ParseInt(flag.Lookup("dbPort").Value.String(), 10, 64)
+		if err != nil {
+			t.Errorf("Error when unmarshal config %s", err)
+		}
 		dbSSLMode = flag.Lookup("sslMode").Value.String()
 	}
-
-	cache.Initialize("local", "", "", 30)
 
 	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 
 	if DBDriver == "" {
 		t.Skip("This should be run with a database")
-		return nil
+		return nil, nil
 	}
-
-	if database.DB() == nil {
-		db, err := database.Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, 2000, 100)
+	if DBConnectionFactory == nil {
+		var err error
+		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s", err)
-			return nil
+			return nil, nil
 		}
-
-		if err = db.Ping(); err != nil {
-			t.Fatalf("Cannot ping database: %s", err)
-			return nil
-		}
-		database.Set(db)
-
-		db.SetMaxOpenConns(100)
-		db.SetMaxIdleConns(20)
-
-		// Gracefully shutdown sql connections
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		signal.Notify(c, syscall.SIGTERM)
-		signal.Notify(c, syscall.SIGKILL)
-		go func() {
-			<-c
-			log.Warning("Cleanup SQL connections")
-			db.Close()
-			os.Exit(0)
-		}()
 	}
 
 	for _, f := range bootstrapFunc {
-		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, database.GetDBMap); err != nil {
+		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, DBConnectionFactory.GetDBMap); err != nil {
 			log.Error("Error: %v", err)
-			return nil
+			return nil, nil
 		}
 	}
 
-	return database.DBMap(database.DB())
+	store := cache.NewLocalStore()
+	event.Cache = store
+	pipeline.Store = store
+
+	return DBConnectionFactory.GetDBMap(), store
+}
+
+//GetTestName returns the name the the test
+func GetTestName(t *testing.T) string {
+	v := reflect.ValueOf(*t)
+	name := v.FieldByName("name")
+	return name.String()
 }

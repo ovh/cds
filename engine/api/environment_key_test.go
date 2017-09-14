@@ -1,42 +1,36 @@
-package main
+package api
 
 import (
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_getKeysInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getKeysInEnvironmentHandler")
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Application
 	env := &sdk.Environment{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(db, env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(), env); err != nil {
 		t.Fatal(err)
 	}
 
@@ -56,7 +50,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 	k.Private = priv
 	k.KeyID = kid
 
-	if err := environment.InsertKey(db, k); err != nil {
+	if err := environment.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -66,7 +60,7 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 		"name":                k.Name,
 	}
 
-	route := router.getRoute("GET", getKeysInEnvironmentHandler, vars)
+	route := router.GetRoute("GET", api.getKeysInEnvironmentHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var keys []sdk.ApplicationKey
@@ -75,27 +69,24 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 }
 
 func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteKeyInEnvironmentHandler")
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Application
 	env := &sdk.Environment{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(db, env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(), env); err != nil {
 		t.Fatal(err)
 	}
 
@@ -109,7 +100,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 		EnvironmentID: env.ID,
 	}
 
-	if err := environment.InsertKey(db, k); err != nil {
+	if err := environment.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
 	}
 
@@ -119,7 +110,7 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 		"name":                k.Name,
 	}
 
-	route := router.getRoute("DELETE", deleteKeyInEnvironmentHandler, vars)
+	route := router.GetRoute("DELETE", api.deleteKeyInEnvironmentHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var keys []sdk.ApplicationKey
@@ -128,27 +119,24 @@ func Test_deleteKeyInEnvironmentHandler(t *testing.T) {
 }
 
 func Test_addKeyInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addKeyInEnvironmentHandler")
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
 	pkey := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Environment
 	env := &sdk.Environment{
 		Name:      sdk.RandomString(10),
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(db, env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(), env); err != nil {
 		t.Fatal(err)
 	}
 
@@ -164,7 +152,7 @@ func Test_addKeyInEnvironmentHandler(t *testing.T) {
 		"permEnvironmentName": env.Name,
 	}
 
-	route := router.getRoute("POST", addKeyInEnvironmentHandler, vars)
+	route := router.GetRoute("POST", api.addKeyInEnvironmentHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var key sdk.EnvironmentKey

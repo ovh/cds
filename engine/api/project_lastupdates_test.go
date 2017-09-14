@@ -1,53 +1,29 @@
-package main
+package api
 
-import (
-	"bytes"
-	"encoding/json"
-	"fmt"
-	"net/http"
-	"net/http/httptest"
-	"testing"
-	"time"
-
-	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
-
-	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/businesscontext"
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/sdk"
-)
-
+/*
 func deleteUser(t *testing.T, db gorp.SqlExecutor, u *sdk.User, g *sdk.Group) error {
 	var err error
-	u, err = user.LoadUserWithoutAuth(db, u.Username)
+	u, err = user.LoadUserWithoutAuth(api.mustDB(), u.Username)
 	if err != nil {
 		return err
 	}
-	g, err = group.LoadGroup(db, g.Name)
+	g, err = group.LoadGroup(api.mustDB(), g.Name)
 	if err != nil {
 		return err
 	}
 	t.Logf("Delete user %s(%d)\n", u.Username, u.ID)
-	if err := user.DeleteUserWithDependencies(db, u); err != nil {
+	if err := user.DeleteUserWithDependencies(api.mustDB(), u); err != nil {
 		return err
 	}
 	t.Logf("Delete group %s(%d)\n", g.Name, g.ID)
-	if err := group.DeleteGroupAndDependencies(db, g); err != nil {
+	if err := group.DeleteGroupAndDependencies(api.mustDB(), g); err != nil {
 		return err
 	}
 	return nil
 }
 
 func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create a user
 	u := sdk.NewUser("testuser")
@@ -64,14 +40,14 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 	//Delete user and group
 	deleteUser(t, db, u, g)
 	//All the project
-	deleteAll(t, db, "TEST_LAST_UPDATE")
+	deleteAll(t, api, "TEST_LAST_UPDATE")
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
-	test.NoError(t, user.InsertUser(db, u, &u.Auth))
+	test.NoError(t, user.InsertUser(api.mustDB(), u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -81,31 +57,31 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, u))
 
 	//Insert Application
 	app := &sdk.Application{
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(db, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache,  proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
-	test.NoError(t, group.InsertGroup(db, g))
+	test.NoError(t, group.InsertGroup(api.mustDB(), g))
 
 	//Add user in group
-	test.NoError(t, group.InsertUserInGroup(db, g.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), g.ID, u.ID, true))
 
 	//All associations
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, 4))
-	test.NoError(t, group.InsertGroupInApplication(db, app.ID, g.ID, 4))
-	test.NoError(t, group.InsertGroupInPipeline(db, pip.ID, g.ID, 4))
+	test.NoError(t, group.InsertGroupInProject(api.mustDB(), proj.ID, g.ID, 4))
+	test.NoError(t, group.InsertGroupInApplication(api.mustDB(), app.ID, g.ID, 4))
+	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, g.ID, 4))
 
 	url := fmt.Sprintf("/project_lastupdates_test/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
 
-	test.NoError(t, loadUserPermissions(db, u))
+	test.NoError(t, loadUserPermissions(api.mustDB(), u))
 
 	c := &businesscontext.Ctx{
 		User: u,
@@ -147,7 +123,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1App1Pipeline(t *testing.T) {
 }
 
 func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create a user
 	u := sdk.NewUser("testuser")
@@ -164,14 +140,14 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 	//Delete user and group
 	deleteUser(t, db, u, g)
 	//All the project
-	deleteAll(t, db, "TEST_LAST_UPDATE")
+	deleteAll(t, api, "TEST_LAST_UPDATE")
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
-	test.NoError(t, user.InsertUser(db, u, &u.Auth))
+	test.NoError(t, user.InsertUser(api.mustDB(), u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -181,25 +157,25 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, u))
 
 	//Insert Application
 	app := &sdk.Application{
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(db, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache,  proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
-	test.NoError(t, group.InsertGroup(db, g))
+	test.NoError(t, group.InsertGroup(api.mustDB(), g))
 
 	//Add user in group
-	test.NoError(t, group.InsertUserInGroup(db, g.ID, u.ID, true))
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), g.ID, u.ID, true))
 
 	//All associations
-	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, 4))
-	test.NoError(t, group.InsertGroupInApplication(db, app.ID, g.ID, 4))
+	test.NoError(t, group.InsertGroupInProject(api.mustDB(), proj.ID, g.ID, 4))
+	test.NoError(t, group.InsertGroupInApplication(api.mustDB(), app.ID, g.ID, 4))
 
 	time.Sleep(1 * time.Second)
 	//Insert Application
@@ -207,14 +183,14 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	test.NoError(t, application.Insert(db, proj, app2, u))
-	test.NoError(t, group.InsertGroupInApplication(db, app2.ID, g.ID, 4))
-	test.NoError(t, group.InsertGroupInPipeline(db, pip.ID, g.ID, 4))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache,  proj, app2, u))
+	test.NoError(t, group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4))
+	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, g.ID, 4))
 
 	url := fmt.Sprintf("/project_lastupdates_test1/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
 
-	test.NoError(t, loadUserPermissions(db, u))
+	test.NoError(t, loadUserPermissions(api.mustDB(), u))
 
 	c := &businesscontext.Ctx{
 		User: u,
@@ -259,7 +235,7 @@ func Test_getUserLastUpdatesShouldReturns1Project2Apps1Pipeline(t *testing.T) {
 }
 
 func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create a user
 	u := sdk.NewUser("testuser")
@@ -276,17 +252,17 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 	//Delete user and group
 	deleteUser(t, db, u, g)
 	//All the project
-	deleteAll(t, db, "TEST_LAST_UPDATE")
-	deleteAll(t, db, "TEST_LAST_UPDATE_2")
+	deleteAll(t, api, "TEST_LAST_UPDATE")
+	deleteAll(t, api, "TEST_LAST_UPDATE_2")
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
-	test.NoError(t, user.InsertUser(db, u, &u.Auth))
+	test.NoError(t, user.InsertUser(api.mustDB(), u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
 
-	proj2 := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE_2", "TEST_LAST_UPDATE_2", u)
+	proj2 := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE_2", "TEST_LAST_UPDATE_2", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -296,29 +272,29 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, u))
 
 	//Insert Application
 	app := &sdk.Application{
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	test.NoError(t, application.Insert(db, proj, app, u))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache,  proj, app, u))
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
-	test.NoError(t, group.InsertGroup(db, g))
+	test.NoError(t, group.InsertGroup(api.mustDB(), g))
 
 	//Add user in group
-	err := group.InsertUserInGroup(db, g.ID, u.ID, true)
+	err := group.InsertUserInGroup(api.mustDB(), g.ID, u.ID, true)
 	test.NoError(t, err)
 
 	//All associations
-	err = group.InsertGroupInProject(db, proj.ID, g.ID, 4)
+	err = group.InsertGroupInProject(api.mustDB(), proj.ID, g.ID, 4)
 	test.NoError(t, err)
-	err = group.InsertGroupInProject(db, proj2.ID, g.ID, 4)
+	err = group.InsertGroupInProject(api.mustDB(), proj2.ID, g.ID, 4)
 	test.NoError(t, err)
-	err = group.InsertGroupInApplication(db, app.ID, g.ID, 4)
+	err = group.InsertGroupInApplication(api.mustDB(), app.ID, g.ID, 4)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -326,17 +302,17 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(db, proj, app2, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app2, u)
 	test.NoError(t, err)
-	err = group.InsertGroupInApplication(db, app2.ID, g.ID, 4)
+	err = group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4)
 	test.NoError(t, err)
-	err = group.InsertGroupInPipeline(db, pip.ID, g.ID, 4)
+	err = group.InsertGroupInPipeline(api.mustDB(), pip.ID, g.ID, 4)
 	test.NoError(t, err)
 
 	url := fmt.Sprintf("/project_lastupdates_test2/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
 
-	test.NoError(t, loadUserPermissions(db, u))
+	test.NoError(t, loadUserPermissions(api.mustDB(), u))
 
 	c := &businesscontext.Ctx{
 		User: u,
@@ -388,7 +364,7 @@ func Test_getUserLastUpdatesShouldReturns2Project2Apps1Pipeline(t *testing.T) {
 }
 
 func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create a user
 	u := sdk.NewUser("testuser")
@@ -405,14 +381,14 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 	//Delete user and group
 	deleteUser(t, db, u, g)
 	//All the project
-	deleteAll(t, db, "TEST_LAST_UPDATE")
+	deleteAll(t, api, "TEST_LAST_UPDATE")
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
-	test.NoError(t, user.InsertUser(db, u, &u.Auth))
+	test.NoError(t, user.InsertUser(api.mustDB(), u, &u.Auth))
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -422,7 +398,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err := pipeline.InsertPipeline(db, proj, pip, u)
+	err := pipeline.InsertPipeline(api.mustDB(), proj, pip, u)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -430,22 +406,22 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(db, proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app, u)
 	test.NoError(t, err)
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
-	err = group.InsertGroup(db, g)
+	err = group.InsertGroup(api.mustDB(), g)
 	test.NoError(t, err)
 
 	//Add user in group
-	err = group.InsertUserInGroup(db, g.ID, u.ID, true)
+	err = group.InsertUserInGroup(api.mustDB(), g.ID, u.ID, true)
 	test.NoError(t, err)
 
 	//All associations
-	err = group.InsertGroupInProject(db, proj.ID, g.ID, 4)
+	err = group.InsertGroupInProject(api.mustDB(), proj.ID, g.ID, 4)
 	test.NoError(t, err)
-	err = group.InsertGroupInApplication(db, app.ID, g.ID, 4)
+	err = group.InsertGroupInApplication(api.mustDB(), app.ID, g.ID, 4)
 	test.NoError(t, err)
 
 	time.Sleep(1 * time.Second)
@@ -456,19 +432,19 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(db, proj, app2, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app2, u)
 	test.NoError(t, err)
-	test.NoError(t, project.UpdateLastModified(db, u, proj))
-	err = group.InsertGroupInApplication(db, app2.ID, g.ID, 4)
+	test.NoError(t, project.UpdateLastModified(api.mustDB(), u, proj))
+	err = group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4)
 	test.NoError(t, err)
-	err = group.InsertGroupInPipeline(db, pip.ID, g.ID, 4)
+	err = group.InsertGroupInPipeline(api.mustDB(), pip.ID, g.ID, 4)
 	test.NoError(t, err)
 
 	url := fmt.Sprintf("/project_lastupdates_test3/mon/lastupdates")
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Set("If-Modified-Since", since.Format(time.RFC1123))
 
-	test.NoError(t, loadUserPermissions(db, u))
+	test.NoError(t, loadUserPermissions(api.mustDB(), u))
 
 	c := &businesscontext.Ctx{
 		User: u,
@@ -509,7 +485,7 @@ func Test_getUserLastUpdatesShouldReturns1Project1Apps1PipelineWithSinceHeader(t
 }
 
 func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create a user
 	u := sdk.NewUser("testuser")
@@ -526,15 +502,15 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 	//Delete user and group
 	deleteUser(t, db, u, g)
 	//All the project
-	deleteAll(t, db, "TEST_LAST_UPDATE")
+	deleteAll(t, api, "TEST_LAST_UPDATE")
 
 	//Create a user
 	t.Logf("Insert User %s", u.Username)
-	err := user.InsertUser(db, u, &u.Auth)
+	err := user.InsertUser(api.mustDB(), u, &u.Auth)
 	test.NoError(t, err)
 
 	//Insert Project
-	proj := assets.InsertTestProject(t, db, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
+	proj := assets.InsertTestProject(t, db, api.Cache, "TEST_LAST_UPDATE", "TEST_LAST_UPDATE", u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -544,7 +520,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err = pipeline.InsertPipeline(db, proj, pip, u)
+	err = pipeline.InsertPipeline(api.mustDB(), proj, pip, u)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -552,22 +528,22 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	err = application.Insert(db, proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app, u)
 	test.NoError(t, err)
 
 	//Create a group
 	t.Logf("Insert Group %s", g.Name)
-	err = group.InsertGroup(db, g)
+	err = group.InsertGroup(api.mustDB(), g)
 	test.NoError(t, err)
 
 	//Add user in group
-	err = group.InsertUserInGroup(db, g.ID, u.ID, true)
+	err = group.InsertUserInGroup(api.mustDB(), g.ID, u.ID, true)
 	test.NoError(t, err)
 
 	//All associations
-	err = group.InsertGroupInProject(db, proj.ID, g.ID, 4)
+	err = group.InsertGroupInProject(api.mustDB(), proj.ID, g.ID, 4)
 	test.NoError(t, err)
-	err = group.InsertGroupInApplication(db, app.ID, g.ID, 4)
+	err = group.InsertGroupInApplication(api.mustDB(), app.ID, g.ID, 4)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -575,12 +551,12 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 		Name: "TEST_APP_2",
 	}
 	t.Logf("Insert Application %s for Project %s", app2.Name, proj.Name)
-	err = application.Insert(db, proj, app2, u)
+	err = application.Insert(api.mustDB(), api.Cache,  proj, app2, u)
 
 	test.NoError(t, err)
-	err = group.InsertGroupInApplication(db, app2.ID, g.ID, 4)
+	err = group.InsertGroupInApplication(api.mustDB(), app2.ID, g.ID, 4)
 	test.NoError(t, err)
-	err = group.InsertGroupInPipeline(db, pip.ID, g.ID, 4)
+	err = group.InsertGroupInPipeline(api.mustDB(), pip.ID, g.ID, 4)
 	test.NoError(t, err)
 
 	url := fmt.Sprintf("/project_lastupdates_test4/mon/lastupdates")
@@ -591,7 +567,7 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 
 	req.Header.Set("If-Modified-Since", since.Format(time.RFC1123))
 
-	test.NoError(t, loadUserPermissions(db, u))
+	test.NoError(t, loadUserPermissions(api.mustDB(), u))
 
 	c := &businesscontext.Ctx{
 		User: u,
@@ -619,3 +595,4 @@ func Test_getUserLastUpdatesShouldReturnsNothingWithSinceHeader(t *testing.T) {
 
 	assert.Empty(t, w.Body.Bytes())
 }
+*/

@@ -13,15 +13,15 @@ import (
 )
 
 //EventsStatus returns info about length of events queue
-func EventsStatus() string {
-	return fmt.Sprintf("%d", cache.QueueLen("events_repositoriesmanager"))
+func EventsStatus(store cache.Store) string {
+	return fmt.Sprintf("%d", store.QueueLen("events_repositoriesmanager"))
 }
 
 //ReceiveEvents has to be launched as a goroutine.
-func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap) {
+func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	for {
 		e := sdk.Event{}
-		cache.DequeueWithContext(c, "events_repositoriesmanager", &e)
+		store.DequeueWithContext(c, "events_repositoriesmanager", &e)
 		if err := c.Err(); err != nil {
 			log.Error("Exiting repositoriesmanager.ReceiveEvents: %v", err)
 			return
@@ -29,26 +29,26 @@ func ReceiveEvents(c context.Context, DBFunc func() *gorp.DbMap) {
 
 		db := DBFunc()
 		if db != nil {
-			if err := processEvent(db, e); err != nil {
+			if err := processEvent(db, e, store); err != nil {
 				log.Error("ReceiveEvents> err while processing error=%s : %v", err, e)
-				retryEvent(&e, err)
+				retryEvent(&e, err, store)
 			}
 			continue
 		}
-		retryEvent(&e, nil)
+		retryEvent(&e, nil, store)
 	}
 }
 
-func retryEvent(e *sdk.Event, err error) {
+func retryEvent(e *sdk.Event, err error, store cache.Store) {
 	e.Attempts++
 	if e.Attempts > 2 {
 		log.Error("ReceiveEvents> Aborting event processing %v: %v", err, e)
 		return
 	}
-	cache.Enqueue("events_repositoriesmanager", e)
+	store.Enqueue("events_repositoriesmanager", e)
 }
 
-func processEvent(db gorp.SqlExecutor, event sdk.Event) error {
+func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store) error {
 	log.Debug("repositoriesmanager>processEvent> receive: type:%s all: %+v", event.EventType, event)
 
 	if event.EventType != fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
@@ -67,13 +67,13 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event) error {
 
 	log.Debug("repositoriesmanager>processEvent> event:%+v", event)
 
-	c, erra := AuthorizedClient(db, eventpb.ProjectKey, eventpb.RepositoryManagerName)
+	c, erra := AuthorizedClient(db, eventpb.ProjectKey, eventpb.RepositoryManagerName, store)
 	if erra != nil {
 		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, erra)
 	}
 
 	if err := c.SetStatus(event); err != nil {
-		retryEvent(&event, err)
+		retryEvent(&event, err, store)
 		return fmt.Errorf("repositoriesmanager>processEvent> SetStatus > err:%s", err)
 	}
 

@@ -7,13 +7,14 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // CheckAction checks for configuration errors
-func CheckAction(tx gorp.SqlExecutor, project *sdk.Project, pip *sdk.Pipeline, actionID int64) ([]sdk.Warning, error) {
+func CheckAction(tx gorp.SqlExecutor, store cache.Store, project *sdk.Project, pip *sdk.Pipeline, actionID int64) ([]sdk.Warning, error) {
 	var warnings []sdk.Warning
 
 	a, err := action.LoadActionByID(tx, actionID)
@@ -72,13 +73,13 @@ func CheckAction(tx gorp.SqlExecutor, project *sdk.Project, pip *sdk.Pipeline, a
 	}
 	warnings = append(warnings, w...)
 
-	w, err = checkApplicationVariables(tx, avars, project, pip, a)
+	w, err = checkApplicationVariables(tx, store, avars, project, pip, a)
 	if err != nil {
 		return nil, fmt.Errorf("CheckAction> checkApplicationVariables> %s", err)
 	}
 	warnings = append(warnings, w...)
 
-	w = checkGitVariables(tx, gitvars, project, pip, a)
+	w = checkGitVariables(tx, store, gitvars, project, pip, a)
 	warnings = append(warnings, w...)
 
 	return warnings, nil

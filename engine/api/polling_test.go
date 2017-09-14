@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"bytes"
@@ -9,12 +9,11 @@ import (
 	"testing"
 
 	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
@@ -23,7 +22,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sdk.RepositoriesManager) {
+func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor, store cache.Store) (*sdk.Project, *sdk.RepositoriesManager) {
 	query := `
 		select 	project.ID, repositories_manager_project.id_repositories_manager
 		from 	project, repositories_manager_project
@@ -37,7 +36,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 		return nil, nil
 	}
 
-	projs, err := project.LoadAll(db, nil)
+	projs, err := project.LoadAll(db, store, nil)
 	if err != nil {
 		t.Error(err.Error())
 		return nil, nil
@@ -50,7 +49,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 		}
 	}
 
-	rm, err := repositoriesmanager.LoadByID(db, rmID)
+	rm, err := repositoriesmanager.LoadByID(db, rmID, store)
 	if err != nil {
 		t.Error(err)
 		return nil, nil
@@ -60,16 +59,13 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor) (*sdk.Project, *sd
 }
 
 func TestAddPollerHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddPollerHandler")
-	router.init()
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db)
+	proj, rm := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -80,22 +76,22 @@ func TestAddPollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(db, app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -113,7 +109,7 @@ func TestAddPollerHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", addPollerHandler, vars)
+	uri := router.GetRoute("POST", api.addPollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -121,7 +117,7 @@ func TestAddPollerHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -132,16 +128,13 @@ func TestAddPollerHandler(t *testing.T) {
 }
 
 func TestUpdatePollerHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdatePollerHandler")
-	router.init()
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Crerouter.ate admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db)
+	proj, rm := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -152,22 +145,22 @@ func TestUpdatePollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(db, app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -185,7 +178,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", addPollerHandler, vars)
+	uri := router.GetRoute("POST", api.addPollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -193,7 +186,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -207,7 +200,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	jsonBody, _ = json.Marshal(popol2.RepositoryPollers[0])
 	body = bytes.NewBuffer(jsonBody)
 
-	uri = router.getRoute("PUT", updatePollerHandler, vars)
+	uri = router.GetRoute("PUT", api.updatePollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ = http.NewRequest("PUT", uri, body)
@@ -215,7 +208,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 
 	//8. Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ = ioutil.ReadAll(w.Body)
@@ -226,15 +219,13 @@ func TestUpdatePollerHandler(t *testing.T) {
 }
 
 func TestGetApplicationPollersHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetApplicationPollersHandler")
-	router.init()
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db)
+	proj, rm := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -245,22 +236,22 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(db, app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -278,7 +269,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", addPollerHandler, vars)
+	uri := router.GetRoute("POST", api.addPollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -286,7 +277,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -299,12 +290,12 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	t.Logf("Poller : %s", string(res))
 
 	//9. Load the pollers
-	uri = router.getRoute("GET", getApplicationPollersHandler, vars)
+	uri = router.GetRoute("GET", api.getApplicationPollersHandler, vars)
 	req, _ = http.NewRequest("GET", uri, nil)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ = ioutil.ReadAll(w.Body)
@@ -321,16 +312,13 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 }
 
 func TestGetPollersHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler")
-	router.init()
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db)
+	proj, rm := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -341,22 +329,22 @@ func TestGetPollersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(db, app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
 		Application: *app,
@@ -374,7 +362,7 @@ func TestGetPollersHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", addPollerHandler, vars)
+	uri := router.GetRoute("POST", api.addPollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -382,7 +370,7 @@ func TestGetPollersHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -394,12 +382,12 @@ func TestGetPollersHandler(t *testing.T) {
 	t.Logf("Poller : %s", string(res))
 
 	//9. Load the pollers
-	uri = router.getRoute("GET", getPollersHandler, vars)
+	uri = router.GetRoute("GET", api.getPollersHandler, vars)
 	req, _ = http.NewRequest("GET", uri, nil)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ = ioutil.ReadAll(w.Body)
@@ -413,16 +401,13 @@ func TestGetPollersHandler(t *testing.T) {
 }
 
 func TestDeletePollerHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetPollersHandler")
-	router.init()
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db)
+	proj, rm := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -433,22 +418,22 @@ func TestDeletePollerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
 	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app, nil))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	app.RepositoriesManager = rm
 	app.RepositoryFullname = "test/" + app.Name
-	repositoriesmanager.InsertForApplication(db, app, proj.Key)
+	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 
 	//6. Prepare a poller
 	popol := &sdk.RepositoryPoller{
@@ -467,7 +452,7 @@ func TestDeletePollerHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", addPollerHandler, vars)
+	uri := router.GetRoute("POST", api.addPollerHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -475,7 +460,7 @@ func TestDeletePollerHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -487,22 +472,22 @@ func TestDeletePollerHandler(t *testing.T) {
 	t.Logf("Poller : %s", string(res))
 
 	//9. Load the pollers
-	uri = router.getRoute("DELETE", deletePollerHandler, vars)
+	uri = router.GetRoute("DELETE", api.deletePollerHandler, vars)
 	req, _ = http.NewRequest("DELETE", uri, nil)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
 	//9. Load the pollers
-	uri = router.getRoute("GET", getApplicationPollersHandler, vars)
+	uri = router.GetRoute("GET", api.getApplicationPollersHandler, vars)
 	req, _ = http.NewRequest("GET", uri, nil)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ = ioutil.ReadAll(w.Body)

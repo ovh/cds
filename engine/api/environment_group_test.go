@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"bytes"
@@ -8,10 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
@@ -20,29 +18,26 @@ import (
 )
 
 func TestAddGroupsInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddGroupsInEnvironmentHandler")
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	test.NotNil(t, proj)
 
 	//3. Create environment
 	envProd := &sdk.Environment{Name: sdk.RandomString(10), ProjectID: proj.ID}
-	test.NoError(t, environment.InsertEnvironment(db, envProd))
+	test.NoError(t, environment.InsertEnvironment(api.mustDB(), envProd))
 
 	//4. Create Group
 	grp1 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG := group.AddGroup(db, grp1)
+	_, _, errG := group.AddGroup(api.mustDB(), grp1)
 	test.NoError(t, errG)
 
 	grp2 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG2 := group.AddGroup(db, grp2)
+	_, _, errG2 := group.AddGroup(api.mustDB(), grp2)
 	test.NoError(t, errG2)
 
 	//5. Prepare request
@@ -66,7 +61,7 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addGroupsInEnvironmentHandler, vars)
+	uri := router.GetRoute("POST", api.addGroupsInEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -74,7 +69,7 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 
 	//4. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -100,34 +95,31 @@ func TestAddGroupsInEnvironmentHandler(t *testing.T) {
 }
 
 func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateGroupRoleOnEnvironmentHandler")
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, sdk.RandomString(10), sdk.RandomString(10), nil)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), nil)
 	test.NotNil(t, proj)
 
 	//3. Create environment
 	envProd := &sdk.Environment{Name: sdk.RandomString(10), ProjectID: proj.ID}
-	test.NoError(t, environment.InsertEnvironment(db, envProd))
+	test.NoError(t, environment.InsertEnvironment(api.mustDB(), envProd))
 
 	//4. Create Group
 	grp1 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG := group.AddGroup(db, grp1)
+	_, _, errG := group.AddGroup(api.mustDB(), grp1)
 	test.NoError(t, errG)
 
 	grp2 := &sdk.Group{Name: sdk.RandomString(10)}
-	_, _, errG2 := group.AddGroup(db, grp2)
+	_, _, errG2 := group.AddGroup(api.mustDB(), grp2)
 	test.NoError(t, errG2)
 
 	//5. Add group on environment
-	test.NoError(t, group.InsertGroupInEnvironment(db, envProd.ID, grp1.ID, 7))
-	test.NoError(t, group.InsertGroupInEnvironment(db, envProd.ID, grp2.ID, 7))
+	test.NoError(t, group.InsertGroupInEnvironment(api.mustDB(), envProd.ID, grp1.ID, 7))
+	test.NoError(t, group.InsertGroupInEnvironment(api.mustDB(), envProd.ID, grp2.ID, 7))
 
 	//6. Prepare request
 	gp := sdk.GroupPermission{
@@ -145,7 +137,7 @@ func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("PUT", updateGroupRoleOnEnvironmentHandler, vars)
+	uri := router.GetRoute("PUT", api.updateGroupRoleOnEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("PUT", uri, body)
@@ -153,7 +145,7 @@ func TestUpdateGroupRoleOnEnvironmentHandler(t *testing.T) {
 
 	//4. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)

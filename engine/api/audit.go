@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"context"
@@ -27,7 +27,7 @@ func auditCleanerRoutine(c context.Context, DBFunc func() *gorp.DbMap) {
 		case <-tick:
 			db := DBFunc()
 			if db != nil {
-				err := actionAuditCleaner(db)
+				err := actionAuditCleaner(DBFunc())
 				if err != nil {
 					log.Warning("AuditCleanerRoutine> Action clean failed: %s", err)
 				}

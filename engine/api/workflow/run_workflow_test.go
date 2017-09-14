@@ -1,13 +1,11 @@
 package workflow
 
 import (
-	"context"
 	"sort"
 	"testing"
 	"time"
 
 	dump "github.com/fsamin/go-dump"
-	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
@@ -19,10 +17,10 @@ import (
 )
 
 func TestManualRun1(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -85,11 +83,11 @@ func TestManualRun1(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, &w, u))
-	w1, err := Load(db, key, "test_1", u)
+	test.NoError(t, Insert(db, cache, &w, u))
+	w1, err := Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	_, err = ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
+	_, err = ManualRun(db, cache, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 		Payload: map[string]string{
 			"git.branch": "master",
@@ -97,7 +95,7 @@ func TestManualRun1(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	wr1, err := ManualRun(db, w1, &sdk.WorkflowNodeRunManual{User: *u})
+	wr1, err := ManualRun(db, cache, w1, &sdk.WorkflowNodeRunManual{User: *u})
 	test.NoError(t, err)
 
 	m1, _ := dump.ToMap(wr1)
@@ -112,12 +110,6 @@ func TestManualRun1(t *testing.T) {
 		t.Logf("%s: \t%s", k, m1[k])
 	}
 
-	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	Scheduler(c, func() *gorp.DbMap { return db })
-
-	time.Sleep(2 * time.Second)
-
 	lastrun, err := LoadLastRun(db, proj.Key, "test_1")
 	test.NoError(t, err)
 
@@ -129,7 +121,7 @@ func TestManualRun1(t *testing.T) {
 	test.Equal(t, lastrun.WorkflowNodeRuns[w1.RootID][0], nodeRun)
 
 	//TestLoadNodeJobRun
-	jobs, err := LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	//Print lastrun
@@ -156,7 +148,7 @@ func TestManualRun1(t *testing.T) {
 	}
 
 	//TestprocessWorkflowRun
-	wr2, err := ManualRunFromNode(db, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	wr2, err := ManualRunFromNode(db, cache, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 	assert.NotNil(t, wr2)
 
@@ -185,10 +177,10 @@ func TestManualRun1(t *testing.T) {
 }
 
 func TestManualRun2(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
@@ -253,39 +245,33 @@ func TestManualRun2(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, &w, u))
-	w1, err := Load(db, key, "test_1", u)
+	test.NoError(t, Insert(db, cache, &w, u))
+	w1, err := Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	_, err = ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
+	_, err = ManualRun(db, cache, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
 
-	_, err = ManualRun(db, w1, &sdk.WorkflowNodeRunManual{User: *u})
+	_, err = ManualRun(db, cache, w1, &sdk.WorkflowNodeRunManual{User: *u})
 	test.NoError(t, err)
 
 	//TestprocessWorkflowRun
-	_, err = ManualRunFromNode(db, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	_, err = ManualRunFromNode(db, cache, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 
-	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	Scheduler(c, func() *gorp.DbMap { return db })
-
-	time.Sleep(3 * time.Second)
-
-	jobs, err := LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	assert.Len(t, jobs, 3)
 }
 
 func TestManualRun3(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
 	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
@@ -351,22 +337,16 @@ func TestManualRun3(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, &w, u))
-	w1, err := Load(db, key, "test_1", u)
+	test.NoError(t, Insert(db, cache, &w, u))
+	w1, err := Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
+	ManualRun(db, cache, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
 
-	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	Scheduler(c, func() *gorp.DbMap { return db })
-
-	time.Sleep(3 * time.Second)
-
-	jobs, err := LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	for i := range jobs {
@@ -374,7 +354,7 @@ func TestManualRun3(t *testing.T) {
 		tx, _ := db.Begin()
 
 		//BookNodeJobRun
-		_, err = BookNodeJobRun(j.ID, &sdk.Hatchery{
+		_, err = BookNodeJobRun(cache, j.ID, &sdk.Hatchery{
 			Name: "Hatchery",
 			ID:   1,
 		})
@@ -385,7 +365,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//AddSpawnInfosNodeJobRun
-		j, err := AddSpawnInfosNodeJobRun(db, j.ID, []sdk.SpawnInfo{
+		j, err := AddSpawnInfosNodeJobRun(db, cache, j.ID, []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -401,7 +381,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TakeNodeJobRun
-		j, err = TakeNodeJobRun(db, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
+		j, err = TakeNodeJobRun(db, cache, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -445,7 +425,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TestUpdateNodeJobRunStatus
-		assert.NoError(t, UpdateNodeJobRunStatus(db, j, sdk.StatusSuccess))
+		assert.NoError(t, UpdateNodeJobRunStatus(db, cache, j, sdk.StatusSuccess))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()
@@ -462,13 +442,7 @@ func TestManualRun3(t *testing.T) {
 		tx.Commit()
 	}
 
-	c, cancel = context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	Scheduler(c, func() *gorp.DbMap { return db })
-
-	time.Sleep(2 * time.Second)
-
-	jobs, err = LoadNodeJobRunQueue(db, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err = LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(jobs))
 
