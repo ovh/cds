@@ -67,6 +67,7 @@ test-db-start:
 test-config: ${HOME}/.cds/tests.cfg.json
 
 ${HOME}/.cds/tests.cfg.json:
+		@mkdir -p ${HOME}/.cds
 		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\",  \"dbPassword\" :\"$(TEST_DB_PASSWORD)\"  ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\"}" > ${HOME}/.cds/tests.cfg.json
 
 
