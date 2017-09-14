@@ -1,6 +1,7 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {WorkflowNodeJoin} from '../../../../../model/workflow.model';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 @Component({
     selector: 'app-workflow-trigger-join-src',
@@ -14,19 +15,15 @@ export class WorkflowJoinTriggerSrcComponent {
     @Output() event = new EventEmitter<string>();
 
     @ViewChild('triggerSrcJoinModal')
-    modal: SemanticModalComponent;
+    modalTemplate: ModalTemplate<boolean, boolean, void>;
+    modal: ActiveModal<boolean, boolean, void>;
 
-    constructor() { }
+    constructor(private _modalService: SuiModalService) { }
 
-    show(data: { observable: boolean; closable: boolean; autofocus: boolean }) {
-        if (this.modal) {
-            this.modal.show(data);
-        }
-    }
-
-    hide(): void {
-        if (this.modal) {
-            this.modal.hide();
+    show() {
+        if (this.modalTemplate) {
+            const config = new TemplateModalConfig<boolean, boolean, void>(this.modalTemplate);
+            this.modal = this._modalService.open(config);
         }
     }
 

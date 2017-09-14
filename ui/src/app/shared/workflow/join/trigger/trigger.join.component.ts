@@ -1,11 +1,12 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {
     Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger,
     WorkflowTriggerCondition
 } from '../../../../model/workflow.model';
 import {Project} from '../../../../model/project.model';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 @Component({
     selector: 'app-workflow-trigger-join',
@@ -15,7 +16,8 @@ import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 export class WorkflowTriggerJoinComponent {
 
     @ViewChild('triggerJoinModal')
-    modal: SemanticModalComponent;
+    modalTemplate: ModalTemplate<boolean, boolean, void>;
+    modal: ActiveModal<boolean, boolean, void>;
 
     @Output() triggerChange = new EventEmitter<WorkflowNodeJoinTrigger>();
     @Input() join: WorkflowNodeJoin;
@@ -29,21 +31,18 @@ export class WorkflowTriggerJoinComponent {
 
 
 
-    constructor(private _workflowStore: WorkflowStore) {
+    constructor(private _workflowStore: WorkflowStore, private _modalService: SuiModalService) {
     }
 
-    show(data?: {}): void {
-        this.modal.show(data);
+    show(): void {
+        const config = new TemplateModalConfig<boolean, boolean, void>(this.modalTemplate);
+        this.modal = this._modalService.open(config);
         this._workflowStore.getTriggerJoinCondition(this.project.key, this.workflow.name, this.join.id).first().subscribe( wtc => {
             this.operators = wtc.operators;
             this.conditionNames = wtc.names;
         });
 
 
-    }
-
-    hide(): void {
-        this.modal.hide();
     }
 
     destNodeChange(node: WorkflowNode): void {

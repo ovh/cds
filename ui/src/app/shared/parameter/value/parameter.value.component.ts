@@ -77,7 +77,8 @@ export class ParameterValueComponent implements OnInit {
         this.codeMirrorConfig = {
             mode: 'shell',
             lineWrapping: true,
-            lineNumbers: true
+            lineNumbers: true,
+            autoRefresh: true
         };
     }
 
