@@ -159,6 +159,10 @@ func (c *client) Stream(method string, path string, args []byte, mods ...Request
 			}
 		}
 
+		if c.config.Verbose {
+			log.Printf("Request Headers: %+v\n", req.Header)
+		}
+
 		resp, err := c.HTTPClient.Do(req)
 
 		// if everything is fine, return body

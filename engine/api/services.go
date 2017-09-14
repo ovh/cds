@@ -42,7 +42,7 @@ func (api *API) postServiceRegisterHandler() Handler {
 		srv.Token = ""
 
 		//Insert or update the service
-		repo := services.NewRepository(api.DBConnectionFactory, api.Cache)
+		repo := services.NewRepository(api.mustDB, api.Cache)
 		if err := repo.Begin(); err != nil {
 			return sdk.WrapError(err, "postServiceRegisterHandler")
 		}

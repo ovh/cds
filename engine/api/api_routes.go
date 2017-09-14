@@ -296,8 +296,9 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/capability/type", r.GET(api.getWorkerModelCapaTypesHandler))
 
 	// Workflows
-	r.Handle("/workflow/hook", r.GET(api.getWorkflowHookModelsHandler))
-	r.Handle("/workflow/hook/{model}", r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
+	r.Handle("/workflow/hook", r.GET(api.getWorkflowHooksHandler, NeedService()))
+	r.Handle("/workflow/hook/model", r.GET(api.getWorkflowHookModelsHandler))
+	r.Handle("/workflow/hook/model/{model}", r.GET(api.getWorkflowHookModelHandler), r.POST(api.postWorkflowHookModelHandler, NeedAdmin(true)), r.PUT(api.putWorkflowHookModelHandler, NeedAdmin(true)))
 
 	// SSE
 	r.Handle("/mon/lastupdates/events", r.GET(api.lastUpdateBroker.ServeHTTP))

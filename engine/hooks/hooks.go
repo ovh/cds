@@ -74,6 +74,7 @@ func (s *Service) Serve(ctx context.Context) error {
 		log.Error("Hooks> Unable to register: %v", err)
 		return err
 	}
+	log.Info("Hooks> Service registered")
 
 	//Init the cache
 	var errCache error
@@ -81,6 +82,9 @@ func (s *Service) Serve(ctx context.Context) error {
 	if errCache != nil {
 		return errCache
 	}
+
+	//Init the DAO
+	s.Dao = dao{s.Cache}
 
 	//Start the heartbeat gorourine
 	go func() {

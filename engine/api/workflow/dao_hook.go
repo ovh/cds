@@ -97,6 +97,26 @@ func (r *NodeHook) PostGet(db gorp.SqlExecutor) error {
 	return nil
 }
 
+// LoadAllHooks returns all hooks
+func LoadAllHooks(db gorp.SqlExecutor) ([]sdk.WorkflowNodeHook, error) {
+	res := []NodeHook{}
+	if _, err := db.Select(&res, "select id, uuid, workflow_hook_model_id from workflow_node_hook"); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "LoadAllHooks")
+	}
+
+	nodes := []sdk.WorkflowNodeHook{}
+	for i := range res {
+		if err := res[i].PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "LoadAllHooks")
+		}
+		nodes = append(nodes, sdk.WorkflowNodeHook(res[i]))
+	}
+	return nodes, nil
+}
+
 func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeHook, error) {
 	res := []NodeHook{}
 	if _, err := db.Select(&res, "select id, uuid, workflow_hook_model_id from workflow_node_hook where workflow_node_id = $1", node.ID); err != nil {

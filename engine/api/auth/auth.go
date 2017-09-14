@@ -11,6 +11,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
@@ -88,7 +89,7 @@ func GetUsername(store sessionstore.Store, token string) (string, error) {
 }
 
 //GetWorker returns the worker instance from its id
-func GetWorker(db gorp.SqlExecutor, store cache.Store, workerID string) (*sdk.Worker, error) {
+func GetWorker(db *gorp.DbMap, store cache.Store, workerID string) (*sdk.Worker, error) {
 	// Load worker
 	var w = &sdk.Worker{}
 
@@ -104,6 +105,26 @@ func GetWorker(db gorp.SqlExecutor, store cache.Store, workerID string) (*sdk.Wo
 	}
 
 	return w, nil
+}
+
+//GetService returns the worker instance from its id
+func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, error) {
+	// Load worker
+	var srv = &sdk.Service{}
+
+	key := cache.Key("services", hash)
+	// Else load it from DB
+	if !store.Get(key, srv) {
+		var err error
+		repo := services.NewRepository(func() *gorp.DbMap { return db }, store)
+		srv, err = repo.FindByHash(hash)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load worker: %s", err)
+		}
+		store.Set(key, srv)
+	}
+
+	return srv, nil
 }
 
 // CheckWorkerAuth checks worker authentication
@@ -131,10 +152,15 @@ func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, he
 		return ctx, fmt.Errorf("bad service key syntax: %s", err)
 	}
 
-	_ = id
+	serviceHash := string(id)
 
-	//ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: w.Name})
-	//ctx = context.WithValue(ctx, ContextWorker, w)
+	srv, err := GetService(db, store, serviceHash)
+	if err != nil {
+		return ctx, err
+	}
+
+	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name})
+	ctx = context.WithValue(ctx, ContextService, srv)
 	return ctx, nil
 }
 

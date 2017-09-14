@@ -9,47 +9,49 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/sdk"
 )
 
 // Repository is the data persistence layer
 type Repository struct {
 	sync      *sync.Mutex
-	db        *database.DBConnectionFactory
+	db        func() *gorp.DbMap
 	store     cache.Store
 	currentTX *gorp.Transaction
 }
 
 // NewRepository returns a fresh repository
-func NewRepository(db *database.DBConnectionFactory, store cache.Store) *Repository {
-	return &Repository{db: db, store: store, sync: new(sync.Mutex)}
+func NewRepository(dbFunc func() *gorp.DbMap, store cache.Store) *Repository {
+	return &Repository{db: dbFunc, store: store, sync: new(sync.Mutex)}
 }
 
+// Tx return the current gorp.SqlExecutor
 func (r *Repository) Tx() gorp.SqlExecutor {
 	r.sync.Lock()
 	defer r.sync.Unlock()
 	if r.currentTX != nil {
 		return r.currentTX
 	}
-	return r.db.GetDBMap()
+	return r.db()
 }
 
+// Begin a transaction
 func (r *Repository) Begin() error {
 	r.sync.Lock()
 	defer r.sync.Unlock()
-	if r.currentTX != nil {
+	if r.currentTX != nil || r.db == nil {
 		return errors.New("Unable to start a new transaction on this repository")
 	}
 	var err error
-	r.currentTX, err = r.db.GetDBMap().Begin()
+	r.currentTX, err = r.db().Begin()
 	return err
 }
 
+// Commit a transaction
 func (r *Repository) Commit() error {
 	r.sync.Lock()
 	defer r.sync.Unlock()
-	if r.currentTX == nil {
+	if r.currentTX == nil || r.db == nil {
 		return errors.New("No current transaction")
 	}
 	err := r.currentTX.Commit()
@@ -57,10 +59,11 @@ func (r *Repository) Commit() error {
 	return err
 }
 
+// Rollback the transaction
 func (r *Repository) Rollback() error {
 	r.sync.Lock()
 	defer r.sync.Unlock()
-	if r.currentTX == nil {
+	if r.currentTX == nil || r.db == nil {
 		return errors.New("No current transaction")
 	}
 	err := r.currentTX.Rollback()
@@ -71,12 +74,22 @@ func (r *Repository) Rollback() error {
 // Find a service by its name
 func (r *Repository) Find(name string) (*sdk.Service, error) {
 	query := "SELECT name, type, http_url, last_heartbeat, hash FROM services WHERE name = $1"
+	return r.findOne(query, name)
+}
+
+// FindByHash a service by its hash
+func (r *Repository) FindByHash(hash string) (*sdk.Service, error) {
+	query := "SELECT name, type, http_url, last_heartbeat, hash FROM services WHERE hash = $1"
+	return r.findOne(query, hash)
+}
+
+func (r *Repository) findOne(query string, args ...interface{}) (*sdk.Service, error) {
 	sdb := service{}
-	if err := r.Tx().SelectOne(&sdb, query, name); err != nil {
+	if err := r.Tx().SelectOne(&sdb, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNotFound
 		}
-		return nil, sdk.WrapError(err, "Find> service %s not found", name)
+		return nil, sdk.WrapError(err, "findOne> service not found")
 	}
 	s := sdk.Service(sdb)
 	if s.Name == "" {

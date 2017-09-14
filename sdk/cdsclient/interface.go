@@ -68,4 +68,5 @@ type Interface interface {
 	WorkflowNodeRunArtifacts(projectKey string, name string, number int64, nodeRunID int64) ([]sdk.Artifact, error)
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, artifactID int64, w io.Writer) error
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
+	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
 }

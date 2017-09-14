@@ -15,6 +15,7 @@ type Service struct {
 	Router *api.Router
 	Cache  cache.Store
 	cds    cdsclient.Interface
+	Dao    dao
 }
 
 // Configuration is

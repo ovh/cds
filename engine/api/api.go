@@ -496,7 +496,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go user.PersistentSessionTokenCleaner(ctx, a.DBConnectionFactory.GetDBMap)
-	go services.KillDeadServices(ctx, services.NewRepository(a.DBConnectionFactory, a.Cache))
+	go services.KillDeadServices(ctx, services.NewRepository(a.mustDB, a.Cache))
 
 	if !a.Config.VCS.Polling.Disabled {
 		go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)
