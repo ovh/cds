@@ -2,12 +2,12 @@ import {AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, Outpu
 import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../model/workflow.model';
 import {cloneDeep} from 'lodash';
 import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.component';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {Project} from '../../../model/project.model';
 import {ToastService} from '../../toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 @Component({
     selector: 'app-workflow-join',
@@ -61,14 +61,14 @@ export class WorkflowJoinComponent implements AfterViewInit {
 
     openDeleteJoinModal(): void {
         if (this.workflowDeleteJoin) {
-            this.workflowDeleteJoin.show({observable: true, closable: false, autofocus: false});
+            this.workflowDeleteJoin.show();
         }
     }
 
     openTriggerJoinModal(): void {
         this.newTrigger = new WorkflowNodeJoinTrigger();
         if (this.workflowJoinTrigger) {
-            this.workflowJoinTrigger.show({observable: true, closable: false, autofocus: false});
+            this.workflowJoinTrigger.show();
         }
     }
 
@@ -81,13 +81,13 @@ export class WorkflowJoinComponent implements AfterViewInit {
         }
     }
 
-    updateWorkflow(w: Workflow, modal?: SemanticModalComponent): void {
+    updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
         this.loading = true;
         this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
             this.loading = false;
             this._toast.success('', this._translate.instant('workflow_updated'));
             if (modal) {
-                modal.hide();
+                modal.approve(true);
             }
         }, () => {
             this.loading = false;

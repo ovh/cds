@@ -6,7 +6,6 @@ import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger, Workf
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowTriggerComponent} from '../../../shared/workflow/trigger/workflow.trigger.component';
-import {SemanticModalComponent} from 'ng-semantic';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {cloneDeep} from 'lodash';
@@ -14,6 +13,7 @@ import {WorkflowTriggerJoinComponent} from '../../../shared/workflow/join/trigge
 import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
 import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 declare var _: any;
 @Component({
@@ -82,7 +82,7 @@ export class WorkflowShowComponent {
         this.selectedJoin = this.detailedWorkflow.joins.find(j => j.id === cID);
 
         if (this.workflowJoinTriggerSrc) {
-            this.workflowJoinTriggerSrc.show({observable: true, closable: false, autofocus: false});
+            this.workflowJoinTriggerSrc.show();
         }
     }
 
@@ -101,7 +101,7 @@ export class WorkflowShowComponent {
         }
         if (this.editTriggerComponent) {
             setTimeout(() => {
-                this.editTriggerComponent.show({observable: true, closable: false, autofocus: false});
+                this.editTriggerComponent.show();
             }, 1);
 
         }
@@ -117,7 +117,7 @@ export class WorkflowShowComponent {
         }
         if (this.editJoinTriggerComponent) {
             setTimeout(() => {
-                this.editJoinTriggerComponent.show({observable: true, closable: false, autofocus: false});
+                this.editJoinTriggerComponent.show();
             }, 1);
 
         }
@@ -177,11 +177,11 @@ export class WorkflowShowComponent {
         this.updateWorkflow(clonedWorkflow, this.editJoinTriggerComponent.modal);
     }
 
-    updateWorkflow(w: Workflow, modal?: SemanticModalComponent): void {
+    updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
         this._workflowStore.updateWorkflow(this.project.key, w).first().subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_updated'));
             if (modal) {
-                modal.hide();
+                modal.approve(true);
             }
             if (this.workflowGraph) {
                 this.workflowGraph.toggleLinkJoin(false);

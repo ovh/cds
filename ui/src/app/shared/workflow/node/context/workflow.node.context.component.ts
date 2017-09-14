@@ -1,12 +1,13 @@
-import {AfterViewInit, Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {Project} from '../../../../model/project.model';
 import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {cloneDeep} from 'lodash';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {Subscription} from 'rxjs/Subscription';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 
 declare var CodeMirror: any;
 
@@ -16,7 +17,7 @@ declare var CodeMirror: any;
     styleUrls: ['./node.context.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowNodeContextComponent implements AfterViewInit {
+export class WorkflowNodeContextComponent {
 
     @Input() project: Project;
     @Input() node: WorkflowNode;
@@ -26,7 +27,8 @@ export class WorkflowNodeContextComponent implements AfterViewInit {
     @Output() contextEvent = new EventEmitter<WorkflowNode>();
 
     @ViewChild('nodeContextModal')
-    nodeContextModal: SemanticModalComponent;
+    nodeContextModal: ModalTemplate<boolean, boolean, void>;
+    modal: ActiveModal<boolean, boolean, void>;
 
     editableNode: WorkflowNode;
 
@@ -37,16 +39,27 @@ export class WorkflowNodeContextComponent implements AfterViewInit {
     pipParamsReady = false;
     pipelineSubscription: Subscription;
 
-    constructor(private _pipelineStore: PipelineStore) {
+    constructor(private _pipelineStore: PipelineStore, private _modalService: SuiModalService) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
             mode: 'application/json',
-            lineWrapping: true
+            lineWrapping: true,
+            autoRefresh: true
         };
     }
-    ngAfterViewInit(): void {
-        this.nodeContextModal.onModalShow.subscribe(() => {
+
+    show(): void {
+        if (this.nodeContextModal) {
+            this.editableNode = cloneDeep(this.node);
+            if (!this.editableNode.context.default_payload) {
+                this.editableNode.context.default_payload = {};
+            }
+            this.payloadString = JSON.stringify(this.editableNode.context.default_payload);
+
+            const config = new TemplateModalConfig<boolean, boolean, void>(this.nodeContextModal);
+            this.modal = this._modalService.open(config);
+
             this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
                 let pip = pips.get(this.project.key + '-' + this.node.pipeline.name);
                 if (pip) {
@@ -58,26 +71,8 @@ export class WorkflowNodeContextComponent implements AfterViewInit {
                         this.editableNode.context.default_payload = '{}';
                     }
                 }
+                this.pipelineSubscription.unsubscribe();
             });
-        });
-    }
-
-
-
-    show(data?: {}): void {
-        if (this.nodeContextModal) {
-            this.editableNode = cloneDeep(this.node);
-            if (!this.editableNode.context.default_payload) {
-                this.editableNode.context.default_payload = {};
-            }
-            this.payloadString = JSON.stringify(this.editableNode.context.default_payload);
-            this.nodeContextModal.show(data);
-        }
-    }
-
-    hide(): void {
-        if (this.nodeContextModal) {
-            this.nodeContextModal.hide();
         }
     }
 

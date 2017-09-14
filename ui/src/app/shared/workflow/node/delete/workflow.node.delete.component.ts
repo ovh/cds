@@ -1,6 +1,7 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {WorkflowNode} from '../../../../model/workflow.model';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 @Component({
     selector: 'app-workflow-node-delete',
@@ -10,22 +11,20 @@ import {WorkflowNode} from '../../../../model/workflow.model';
 export class WorkflowDeleteNodeComponent {
 
     @ViewChild('deleteModal')
-    modal: SemanticModalComponent;
+    deleteModalTemplate: ModalTemplate<boolean, boolean, void>;
+    modal: ActiveModal<boolean, boolean, void>;
 
     @Output() deleteEvent = new EventEmitter<boolean>();
     @Input() node: WorkflowNode;
     @Input() loading: boolean;
 
-    constructor() {
+    constructor(private _modalService: SuiModalService) {
 
     }
 
-    show(data?: {}): void {
-        this.modal.show(data);
-    }
-
-    hide(): void {
-        this.modal.hide();
+    show(): void {
+        const config = new TemplateModalConfig<boolean, boolean, void>(this.deleteModalTemplate);
+        this.modal = this._modalService.open(config);
     }
 
     deleteNode(): void {
