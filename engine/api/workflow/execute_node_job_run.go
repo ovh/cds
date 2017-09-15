@@ -253,7 +253,6 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nod
 	}
 	pv = sdk.VariablesFilter(pv, sdk.SecretVariable, sdk.KeyVariable)
 	pv = sdk.VariablesPrefix(pv, "cds.proj")
-	fmt.Printf("####### PV: %+v", pv)
 	secrets = append(secrets, pv...)
 
 	//Load node definition
