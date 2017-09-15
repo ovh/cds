@@ -315,7 +315,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			var errfh error
 			wr, errfh = workflow.RunFromHook(tx, wf, opts.Hook)
 			if errfh != nil {
-				return sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow")
+				return sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
 			}
 		} else {
 			//Default manual run
@@ -329,9 +329,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 			if opts.Manual.Payload == interface{}(nil) {
 				n := wf.Root
 				if opts.FromNodeID != nil {
-					n = wf.GetNode(*opts.FromNodeID)
+					n = lastRun.Workflow.GetNode(*opts.FromNodeID)
 					if n == nil {
-						return sdk.WrapError(sdk.ErrWorkflowNotFound, "postWorkflowRunHandler> Unable to run workflow")
+						return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node")
 					}
 				}
 				opts.Manual.Payload = n.Context.DefaultPayload
@@ -341,9 +341,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 			if len(opts.Manual.PipelineParameters) == 0 {
 				n := wf.Root
 				if opts.FromNodeID != nil {
-					n = wf.GetNode(*opts.FromNodeID)
+					n = lastRun.Workflow.GetNode(*opts.FromNodeID)
 					if n == nil {
-						return sdk.WrapError(sdk.ErrWorkflowNotFound, "postWorkflowRunHandler> Unable to run workflow")
+						return sdk.WrapError(sdk.ErrWorkflowNotFound, "postWorkflowRunHandler> Pipeline Param: Unable to get node")
 					}
 				}
 				opts.Manual.PipelineParameters = n.Context.DefaultPipelineParameters
@@ -359,7 +359,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				var errmr error
 				wr, errmr = workflow.ManualRunFromNode(tx, api.Cache, wf, lastRun.Number, opts.Manual, *opts.FromNodeID)
 				if errmr != nil {
-					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
+					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow from node")
 				}
 			} else {
 				var errmr error
@@ -372,7 +372,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 
 		//Commit and return success
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to run workflow")
+			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
 		}
 
 		wr.Translate(r.Header.Get("Accept-Language"))
