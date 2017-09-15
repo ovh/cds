@@ -196,7 +196,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			sendLog("tag variable can not be used with CDS Workflow. Please remove-it")
 		}
 
-		sendLog(fmt.Sprintf("Downloading artifacts from into '%s'...", path))
+		sendLog(fmt.Sprintf("Downloading artifacts from workflow into '%s'...", path))
 
 		n, err := strconv.ParseInt(number, 10, 64)
 		if err != nil {
@@ -219,7 +219,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			if err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifacts: %s", err)
+				log.Warning("Cannot download artifacts (OpenFile): %s", err)
 				sendLog(res.Reason)
 				return res
 			}

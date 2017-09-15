@@ -159,7 +159,10 @@ func (c *client) Stream(method string, path string, args []byte, mods ...Request
 			}
 		}
 
-		resp, err := c.HTTPClient.Do(req)
+		if c.HTTPClientStream == nil {
+			return nil, 0, fmt.Errorf("HTTPClientStream is not setted on this client")
+		}
+		resp, err := c.HTTPClientStream.Do(req)
 
 		// if everything is fine, return body
 		if err == nil && resp.StatusCode < 500 {
@@ -175,8 +178,7 @@ func (c *client) Stream(method string, path string, args []byte, mods ...Request
 				resp.Body.Close()
 				continue
 			}
-			cdserr := sdk.DecodeError(body)
-			if cdserr != nil {
+			if cdserr := sdk.DecodeError(body); cdserr != nil {
 				resp.Body.Close()
 				return nil, resp.StatusCode, cdserr
 			}
