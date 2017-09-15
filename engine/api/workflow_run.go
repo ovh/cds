@@ -233,7 +233,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 		for _, nrjID := range ids {
 			njr, errNRJ := workflow.LoadAndLockNodeJobRun(tx, api.Cache, nrjID)
 			if errNRJ != nil {
-				return sdk.WrapError(errIDS, "stopWorkflowNodeRunHandler> Cannot load node job run id")
+				return sdk.WrapError(errNRJ, "stopWorkflowNodeRunHandler> Cannot load node job run id")
 			}
 			njr.SpawnInfos = append(njr.SpawnInfos, infos)
 			if err := workflow.UpdateNodeJobRunStatus(tx, api.Cache, njr, sdk.StatusFail); err != nil {
