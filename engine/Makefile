@@ -58,6 +58,7 @@ build: $(TARGET_DIR)
 			$(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_ENGINE)-$$GOOS-$$GOARCH; \
 		done; \
 	done
+	@tar czf dist/sql.tar.gz sql/*
 
 test-db-start:
 	$(TEST_DB_START)
