@@ -55,5 +55,5 @@ func worker(cmd *cobra.Command, args []string) {
 		sdk.Exit("Error: cannot generate token (%s)\n", err)
 	}
 
-	fmt.Printf("%s\n", token)
+	fmt.Printf("%s\n", token.Token)
 }

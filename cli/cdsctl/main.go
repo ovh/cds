@@ -26,15 +26,16 @@ func main() {
 
 	root := cli.NewCommand(mainCmd, mainRun,
 		[]*cobra.Command{
-			application,
-			environment,
 			login,
 			signup,
-			monitoring,
+			application,
+			environment,
+			group,
 			project,
 			worker,
 			workflow,
 			usr,
+			monitoring,
 			health,
 		},
 	)

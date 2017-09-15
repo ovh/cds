@@ -2,6 +2,7 @@ package token
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -29,7 +30,7 @@ func Initialize(db *gorp.DbMap, sharedInfraToken string) error {
 	}
 
 	log.Info("Initialize> create token for %s group", group.SharedInfraGroupName)
-	if err := InsertToken(db, permission.SharedInfraGroupID, sharedInfraToken, sdk.Persistent); err != nil {
+	if err := InsertToken(db, permission.SharedInfraGroupID, sharedInfraToken, sdk.Persistent, time.Now()); err != nil {
 		return sdk.WrapError(err, "Initialize> cannot insert new token for %s", group.SharedInfraGroupName)
 	}
 

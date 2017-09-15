@@ -27,6 +27,11 @@ type Interface interface {
 	EnvironmentKeysList(string, string) ([]sdk.EnvironmentKey, error)
 	EnvironmentKeyCreate(string, string, *sdk.EnvironmentKey) error
 	EnvironmentKeysDelete(string, string, string) error
+	GroupCreate(group *sdk.Group) error
+	GroupDelete(name string) error
+	GroupGenerateToken(groupName, expiration string) (*sdk.Token, error)
+	GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error)
+	GroupList() ([]sdk.Group, error)
 	HatcheryRefresh(int64) error
 	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
 	MonStatus() ([]string, error)
