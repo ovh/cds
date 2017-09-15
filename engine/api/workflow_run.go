@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/artifact"
-
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -188,6 +188,63 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowNodeRunHistoryHandler")
 		}
 		return WriteJSON(w, r, nodeRuns, http.StatusOK)
+	}
+}
+
+func (api *API) stopWorkflowNodeRunHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		name := vars["workflowName"]
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+		id, err := requestVarInt(r, "nodeRunID")
+		if err != nil {
+
+			return err
+		}
+		// Load node run
+		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id)
+		if err != nil {
+			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
+		}
+
+		// Load node job run ID
+		ids, errIDS := workflow.LoadNodeJobRunIDByNodeRunID(api.mustDB(), nodeRun.ID)
+		if errIDS != nil {
+			return sdk.WrapError(errIDS, "stopWorkflowNodeRunHandler> Cannot load node job run id")
+		}
+
+		infos := sdk.SpawnInfo{
+			APITime: time.Now(),
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getUser(ctx).Username}},
+		}
+
+		// Update node job run
+		tx, errT := api.mustDB().Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "stopWorkflowNodeRunHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		for _, nrjID := range ids {
+			njr, errNRJ := workflow.LoadAndLockNodeJobRun(tx, api.Cache, nrjID)
+			if errNRJ != nil {
+				return sdk.WrapError(errNRJ, "stopWorkflowNodeRunHandler> Cannot load node job run id")
+			}
+			njr.SpawnInfos = append(njr.SpawnInfos, infos)
+			if err := workflow.UpdateNodeJobRunStatus(tx, api.Cache, njr, sdk.StatusFail); err != nil {
+				return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Cannot update node job run")
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Cannot commit transaction")
+		}
+		return nil
 	}
 }
 
