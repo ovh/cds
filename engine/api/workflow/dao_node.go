@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/go-gorp/gorp"
 
@@ -39,14 +40,43 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 	n.WorkflowID = w.ID
 	n.ID = 0
 
+	// Load Pipeline
+	if n.Pipeline.Name == "" {
+		var errP error
+		var pip *sdk.Pipeline
+		pip, errP = pipeline.LoadPipelineByID(db, n.PipelineID, false)
+		if errP != nil {
+			return sdk.WrapError(errP, "insertNode> cannot load pipeline")
+		}
+		n.Pipeline = *pip
+	}
+
+	// Set pipeline ID
 	if n.PipelineID == 0 {
 		n.PipelineID = n.Pipeline.ID
 	}
 
-	if n.Name == "" {
+	// Set name
+	if n.Name == "" || strings.HasPrefix(n.Name, fmt.Sprintf("%s_", n.Pipeline.Name)) {
 		n.Name = n.Pipeline.Name
 	}
 
+	if n.Name == n.Pipeline.Name {
+		var nb int64
+		query := `
+		SELECT COUNT(workflow_node.*) FROM workflow_node
+		WHERE workflow_node.workflow_id = $1 AND workflow_node.pipeline_id = $2
+	`
+		if errCount := db.QueryRow(query, w.ID, n.PipelineID).Scan(&nb); errCount != nil {
+			return sdk.WrapError(errCount, "insertNode> Cannot count node")
+		}
+
+		if nb > 0 {
+			n.Name = fmt.Sprintf("%s_%d", n.Name, nb+1)
+		}
+	}
+
+	// Init context
 	if n.Context == nil {
 		n.Context = &sdk.WorkflowNodeContext{}
 	}
@@ -56,28 +86,6 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 	}
 	if n.Context.EnvironmentID == 0 && n.Context.Environment != nil {
 		n.Context.EnvironmentID = n.Context.Environment.ID
-	}
-
-	var nb int64
-	query := `
-		SELECT COUNT(workflow_node.*) FROM workflow_node
-		WHERE workflow_node.workflow_id = $1 AND workflow_node.pipeline_id = $2
-	`
-	if errCount := db.QueryRow(query, w.ID, n.PipelineID).Scan(&nb); errCount != nil {
-		return sdk.WrapError(errCount, "insertNode> Cannot count node")
-	}
-
-	// have to load pipeline to get the name
-	if n.Name == "" {
-		pip, errP := pipeline.LoadPipelineByID(db, n.PipelineID, false)
-		if errP != nil {
-			return sdk.WrapError(errP, "insertNode> cannot load pipeline")
-		}
-		n.Name = pip.Name
-	}
-
-	if nb > 0 {
-		n.Name = fmt.Sprintf("%s_%d", n.Name, nb+1)
 	}
 
 	//Insert new node

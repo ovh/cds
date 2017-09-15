@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {Workflow} from '../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowRun, WorkflowRunRequest} from '../../../model/workflow.run.model';
 import {HttpClient} from '@angular/common/http';
 
 @Injectable()
@@ -15,8 +15,8 @@ export class WorkflowRunService {
      * @param key Project unique key
      * @param workflow Workflow to create
      */
-    runWorkflow(key: string, workflow: Workflow, payload: {}): Observable<WorkflowRun> {
-        return this._http.post('/project/' + key + '/workflows/' + workflow.name + '/runs', payload);
+    runWorkflow(key: string, workflow: Workflow, request: WorkflowRunRequest): Observable<WorkflowRun> {
+        return this._http.post('/project/' + key + '/workflows/' + workflow.name + '/runs', request);
     }
 
     /**
@@ -29,5 +29,28 @@ export class WorkflowRunService {
      */
     nodeRunHistory(key: string, workflowName: string, number: number, nodeID: number): Observable<Array<WorkflowNodeRun>> {
         return this._http.get('/project/' + key + '/workflows/' + workflowName + '/runs/' + number + '/nodes/' + nodeID + '/history');
+    }
+
+    /**
+     * Get workflow Run
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name to get
+     * @param {number} number Number of the workflow run
+     * @returns {Observable<WorkflowRun>}
+     */
+    getWorkflowRun(key: string, workflowName: string, number: number): Observable<WorkflowRun> {
+        return this._http.get('/project/' + key + '/workflows/' + workflowName + '/runs/' + number);
+    }
+
+    /**
+     * Stop a workflow node run
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name
+     * @param {number} number Number of the workflow run
+     * @param {number} id of the node run to stop
+     * @returns {Observable<boolean>}
+     */
+    stopNodeRun(key: string, workflowName: string, num: number, id: number): Observable<boolean> {
+        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/nodes/' + id + '/stop', null);
     }
 }
