@@ -12,7 +12,7 @@
         </div>
         <ng-container *ngIf="project && detailedWorkflow">
             <div class="graph">
-                <app-workflow-graph [workflow]="detailedWorkflow" [project]="project"
+                <app-workflow-graph [workflowData]="detailedWorkflow" [project]="project"
                                     (addSrcToJoinEvent)="addSourceToJoin($event)"
                                     (deleteJoinSrcEvent)="openDeleteJoinSrcModal($event)"
                                     (editTriggerJoinEvent)="openEditJoinTriggerModal($event)"

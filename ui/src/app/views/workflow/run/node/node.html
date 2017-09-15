@@ -1,4 +1,7 @@
 <div id="WorkflowNodeRun" *ngIf="nodeRun">
+    <ng-container *ngIf="nodeRun">
+        <app-workflow-node-run-summary [project]="project" [nodeRun]="nodeRun" [workflow]="workflowRun.workflow" [duration]="duration"></app-workflow-node-run-summary>
+    </ng-container>
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
             <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')">
@@ -24,7 +27,6 @@
             </a>
         </sm-menu>
     </div>
-
     <div class="scrollingContent">
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab">

@@ -14,6 +14,7 @@ import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/tri
 import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {WorkflowRunRequest} from '../../../model/workflow.run.model';
 
 declare var _: any;
 @Component({
@@ -191,7 +192,8 @@ export class WorkflowShowComponent {
 
     runWorkflow(): void {
         this.loading = true;
-        this._workflowRun.runWorkflow(this.project.key, this.detailedWorkflow, {}).first().subscribe(wr => {
+        let request = new WorkflowRunRequest();
+        this._workflowRun.runWorkflow(this.project.key, this.detailedWorkflow, request).first().subscribe(wr => {
             this.loading = false;
             this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name, 'run', wr.num]);
         }, () => {
