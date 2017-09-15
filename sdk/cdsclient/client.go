@@ -12,10 +12,11 @@ import (
 )
 
 type client struct {
-	isWorker   bool
-	isHatchery bool
-	HTTPClient HTTPClient
-	config     Config
+	isWorker         bool
+	isHatchery       bool
+	HTTPClient       HTTPClient
+	HTTPClientStream HTTPClient
+	config           Config
 }
 
 // New returns a client from a config struct
@@ -25,6 +26,7 @@ func New(c Config) Interface {
 	cli.HTTPClient = &http.Client{
 		Timeout: time.Second * 10,
 	}
+	cli.HTTPClientStream = &http.Client{}
 	cli.init()
 	return cli
 }
@@ -40,6 +42,7 @@ func NewWorker(endpoint string) Interface {
 	cli.HTTPClient = &http.Client{
 		Timeout: time.Second * 10,
 	}
+	cli.HTTPClientStream = &http.Client{}
 	cli.isWorker = true
 	cli.init()
 	return cli
@@ -61,6 +64,9 @@ func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insec
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
 		},
 	}
+
+	// hatchery don't need to stream something from API
+	cli.HTTPClientStream = nil
 	cli.isHatchery = true
 	cli.init()
 	return cli
