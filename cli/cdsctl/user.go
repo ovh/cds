@@ -62,17 +62,6 @@ var userResetCmd = cli.Command{
 }
 
 func userResetRun(v cli.Values) error {
-	username := v["username"]
-	if username == "" {
-		username = cfg.User
-	}
-	if username == "" {
-		fmt.Printf("Username: ")
-		username = cli.ReadLine()
-	} else {
-		fmt.Println("Username:", username)
-	}
-
 	email := v["email"]
 	if email == "" {
 		fmt.Printf("Email: ")
