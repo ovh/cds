@@ -88,7 +88,7 @@ func (c *client) RequestJSON(method, path string, in interface{}, out interface{
 
 // Request executes an authentificated HTTP request on $path given $method and $args
 func (c *client) Request(method string, path string, args []byte, mods ...RequestModifier) ([]byte, int, error) {
-	respBody, code, err := c.Stream(method, path, args, mods...)
+	respBody, code, err := c.Stream(method, path, args, false, mods...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -118,7 +118,7 @@ func (c *client) Request(method string, path string, args []byte, mods ...Reques
 }
 
 // Stream makes an authenticated http request and return io.ReadCloser
-func (c *client) Stream(method string, path string, args []byte, mods ...RequestModifier) (io.ReadCloser, int, error) {
+func (c *client) Stream(method string, path string, args []byte, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, int, error) {
 	var savederror error
 
 	if c.config.Verbose {
@@ -159,22 +159,29 @@ func (c *client) Stream(method string, path string, args []byte, mods ...Request
 			}
 		}
 
-		if c.HTTPClientStream == nil {
-			return nil, 0, fmt.Errorf("HTTPClientStream is not setted on this client")
+		var errDo error
+		var resp *http.Response
+		if !noTimeout {
+			if c.HTTPClientWithoutTimeout == nil {
+				return nil, 0, fmt.Errorf("HTTPClientWithoutTimeout is not setted on this client")
+			}
+			resp, errDo = c.HTTPClientWithoutTimeout.Do(req)
+		} else {
+			resp, errDo = c.HTTPClient.Do(req)
 		}
-		resp, err := c.HTTPClientStream.Do(req)
 
 		// if everything is fine, return body
-		if err == nil && resp.StatusCode < 500 {
+		if errDo == nil && resp.StatusCode < 500 {
 			return resp.Body, resp.StatusCode, nil
 		}
 
 		// if no request error by status > 500, check CDS error
 		// if there is a CDS errors, return it
-		if err == nil && resp.StatusCode == 500 {
+		if errDo == nil && resp.StatusCode == 500 {
 			var body []byte
-			body, err = ioutil.ReadAll(resp.Body)
-			if err != nil {
+			var errRead error
+			body, errRead = ioutil.ReadAll(resp.Body)
+			if errRead != nil {
 				resp.Body.Close()
 				continue
 			}
@@ -192,17 +199,17 @@ func (c *client) Stream(method string, path string, args []byte, mods ...Request
 			continue
 		}
 
-		if err != nil && (strings.Contains(err.Error(), "connection reset by peer") ||
-			strings.Contains(err.Error(), "unexpected EOF")) {
-			savederror = err
+		if errDo != nil && (strings.Contains(errDo.Error(), "connection reset by peer") ||
+			strings.Contains(errDo.Error(), "unexpected EOF")) {
+			savederror = errDo
 			if resp != nil && resp.Body != nil {
 				resp.Body.Close()
 			}
 			continue
 		}
 
-		if err != nil {
-			return nil, 0, err
+		if errDo != nil {
+			return nil, 0, errDo
 		}
 	}
 

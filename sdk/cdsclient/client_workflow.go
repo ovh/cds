@@ -64,7 +64,7 @@ func (c *client) WorkflowNodeRunArtifacts(projectKey string, name string, number
 
 func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, name string, artifactID int64, w io.Writer) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/artifact/%d", projectKey, name, artifactID)
-	reader, _, err := c.Stream("GET", url, nil)
+	reader, _, err := c.Stream("GET", url, nil, true)
 	if err != nil {
 		return err
 	}
