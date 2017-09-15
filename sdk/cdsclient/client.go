@@ -14,6 +14,7 @@ import (
 type client struct {
 	isWorker                 bool
 	isHatchery               bool
+	name                     string
 	HTTPClient               HTTPClient
 	HTTPClientWithoutTimeout HTTPClient
 	config                   Config
@@ -32,7 +33,7 @@ func New(c Config) Interface {
 }
 
 // NewWorker returns client for a worker
-func NewWorker(endpoint string) Interface {
+func NewWorker(endpoint string, name string) Interface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 2,
@@ -44,12 +45,13 @@ func NewWorker(endpoint string) Interface {
 	}
 	cli.HTTPClientWithoutTimeout = &http.Client{}
 	cli.isWorker = true
+	cli.name = name
 	cli.init()
 	return cli
 }
 
 // NewHatchery returns client for a hatchery
-func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) Interface {
+func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool, name string) Interface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 2,
@@ -68,6 +70,7 @@ func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insec
 	// hatchery don't need to make a request without timeout on API
 	cli.HTTPClientWithoutTimeout = nil
 	cli.isHatchery = true
+	cli.name = name
 	cli.init()
 	return cli
 }

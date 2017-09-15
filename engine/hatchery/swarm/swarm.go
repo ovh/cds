@@ -88,6 +88,7 @@ func (h *HatcherySwarm) Init() error {
 		h.Configuration().API.Token,
 		h.Configuration().Provision.RegisterFrequency,
 		h.Configuration().API.HTTP.Insecure,
+		h.hatch.Name,
 	)
 	if err := hatchery.Register(h); err != nil {
 		return fmt.Errorf("Cannot register: %s", err)

@@ -23,6 +23,8 @@ const (
 	RequestedWithHeader = "X-Requested-With"
 	// RequestedWithValue is used as HTTP header
 	RequestedWithValue = "X-CDS-SDK"
+	// RequestedNameHeader is used as HTTP header
+	RequestedNameHeader = "X-Requested-Name"
 )
 
 // RequestModifier is used to modify behavior of Request and Steam functions
@@ -142,6 +144,9 @@ func (c *client) Stream(method string, path string, args []byte, noTimeout bool,
 		req.Header.Set("User-Agent", c.config.userAgent)
 		req.Header.Set("Connection", "close")
 		req.Header.Add(RequestedWithHeader, RequestedWithValue)
+		if c.name != "" {
+			req.Header.Add(RequestedNameHeader, c.name)
+		}
 
 		for i := range mods {
 			mods[i](req)
@@ -161,7 +166,7 @@ func (c *client) Stream(method string, path string, args []byte, noTimeout bool,
 
 		var errDo error
 		var resp *http.Response
-		if !noTimeout {
+		if noTimeout {
 			if c.HTTPClientWithoutTimeout == nil {
 				return nil, 0, fmt.Errorf("HTTPClientWithoutTimeout is not setted on this client")
 			}
