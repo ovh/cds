@@ -44,7 +44,7 @@ var groupUserRemove = cli.Command{
 }
 
 func groupUserRemoveRun(v cli.Values) error {
-	return client.GroupUserRemove(v["groupname"], "username")
+	return client.GroupUserRemove(v["groupname"], v["username"])
 }
 
 var groupUserSetAdmin = cli.Command{
@@ -70,5 +70,5 @@ var groupUserAdminRemove = cli.Command{
 }
 
 func groupUserAdminRemoveRun(v cli.Values) error {
-	return client.GroupUserAdminRemove(v["groupname"], "username")
+	return client.GroupUserAdminRemove(v["groupname"], v["username"])
 }
