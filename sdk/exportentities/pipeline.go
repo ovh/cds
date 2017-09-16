@@ -33,10 +33,12 @@ type Stage struct {
 
 // Job represents exported sdk.Job
 type Job struct {
-	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
-	Enabled      *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Steps        []Step        `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
-	Requirements []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty" hcl:"requirement,omitempty"`
+	Description    string        `json:"description,omitempty" yaml:"description,omitempty"`
+	Enabled        *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Steps          []Step        `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
+	Requirements   []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty" hcl:"requirement,omitempty"`
+	Optional       *bool         `json:"optional,omitempty" yaml:"optional,omitempty" hcl:"optional,omitempty"`
+	AlwaysExecuted *bool         `json:"always_executed,omitempty" yaml:"always_executed,omitempty" hcl:"always_executed,omitempty"`
 }
 
 // Step represents exported step used in a job
@@ -449,9 +451,15 @@ func newSteps(a sdk.Action) []Step {
 	for i := range a.Actions {
 		act := &a.Actions[i]
 		s := Step{}
-		s["enabled"] = act.Enabled
-		s["optional"] = act.Optional
-		s["always_executed"] = act.AlwaysExecuted
+		if !act.Enabled {
+			s["enabled"] = act.Enabled
+		}
+		if act.Optional {
+			s["optional"] = act.Optional
+		}
+		if act.AlwaysExecuted {
+			s["always_executed"] = act.AlwaysExecuted
+		}
 
 		switch act.Type {
 		case sdk.BuiltinAction:
