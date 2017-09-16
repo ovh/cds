@@ -17,6 +17,7 @@ var (
 			cli.NewListCommand(groupListCmd, groupListRun, nil),
 			cli.NewGetCommand(groupShowCmd, groupShowRun, nil),
 			groupToken,
+			groupUser,
 		})
 )
 
@@ -37,12 +38,12 @@ var groupShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS group",
 	Args: []cli.Arg{
-		{Name: "name"},
+		{Name: "groupname"},
 	},
 }
 
 func groupShowRun(v cli.Values) (interface{}, error) {
-	group, err := client.GroupGet(v["name"])
+	group, err := client.GroupGet(v["groupname"])
 	if err != nil {
 		return nil, err
 	}

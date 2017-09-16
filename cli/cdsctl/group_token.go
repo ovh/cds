@@ -22,13 +22,13 @@ var groupTokenCreateCmd = cli.Command{
 	Name:  "generate",
 	Short: "Generate a new token",
 	Args: []cli.Arg{
-		{Name: "groupName"},
+		{Name: "groupname"},
 		{Name: "expiration"},
 	},
 }
 
 func groupTokenCreateRun(v cli.Values) (interface{}, error) {
-	token, err := client.GroupGenerateToken(v["groupName"], v["expiration"])
+	token, err := client.GroupGenerateToken(v["groupname"], v["expiration"])
 	if err != nil {
 		return nil, err
 	}
