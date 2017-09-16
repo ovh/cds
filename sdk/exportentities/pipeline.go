@@ -289,7 +289,7 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
-// Is returns true the step has the flag set
+// IsFlagged returns true the step has the flag set
 func (s Step) IsFlagged(flag string) (bool, error) {
 	bI, ok := s[flag]
 	if !ok {

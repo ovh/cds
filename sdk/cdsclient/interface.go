@@ -31,6 +31,7 @@ type Interface interface {
 	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
 	MonStatus() ([]string, error)
 	PipelineExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
+	PipelineImport(projectKey string, content []byte, format string, force bool) ([]string, error)
 	PipelineList(projectKey string) ([]sdk.Pipeline, error)
 	ProjectCreate(*sdk.Project) error
 	ProjectDelete(string) error

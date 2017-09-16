@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
@@ -43,6 +44,29 @@ func (c *client) PipelineExport(projectKey, name string, exportWithPermissions b
 		return nil, err
 	}
 	return btes, nil
+}
+
+func (c *client) PipelineImport(projectKey string, content []byte, format string, force bool) ([]string, error) {
+	var url string
+	url = fmt.Sprintf("/project/%s/import/pipeline?format=%s", projectKey, format)
+
+	if force {
+		url += "&forceUpdate=true"
+	}
+
+	btes, code, errReq := c.Request("POST", url, content)
+	if code != 200 {
+		if errReq == nil {
+			return nil, fmt.Errorf("HTTP Code %d", code)
+		}
+	}
+
+	var msgs []string
+	if err := json.Unmarshal(btes, &msgs); err != nil {
+		return []string{string(btes)}, errReq
+	}
+
+	return msgs, errReq
 }
 
 func (c *client) PipelineList(projectKey string) ([]sdk.Pipeline, error) {
