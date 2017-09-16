@@ -20,19 +20,19 @@ import (
 
 // Artifact define a file needed to be save for future use
 type Artifact struct {
-	ID          int64  `json:"id"`
+	ID          int64  `json:"id" cli:"id"`
 	Project     string `json:"project"`
 	Pipeline    string `json:"pipeline"`
 	Application string `json:"application"`
 	Environment string `json:"environment"`
 	BuildNumber int    `json:"build_number"`
-	Name        string `json:"name"`
+	Name        string `json:"name" cli:"name"`
 	Tag         string `json:"tag"`
 
-	DownloadHash string `json:"download_hash"`
-	Size         int64  `json:"size,omitempty"`
+	DownloadHash string `json:"download_hash" cli:"download_hash"`
+	Size         int64  `json:"size,omitempty" cli:"size"`
 	Perm         uint32 `json:"perm,omitempty"`
-	MD5sum       string `json:"md5sum,omitempty"`
+	MD5sum       string `json:"md5sum,omitempty" cli:"md5sum"`
 	ObjectPath   string `json:"object_path,omitempty"`
 }
 
