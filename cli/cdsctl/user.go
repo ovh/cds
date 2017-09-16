@@ -16,6 +16,7 @@ var (
 
 	usr = cli.NewCommand(userCmd, nil,
 		[]*cobra.Command{
+			cli.NewGetCommand(userMeCmd, userMeRun, nil),
 			cli.NewListCommand(userListCmd, userListRun, nil),
 			cli.NewGetCommand(userShowCmd, userShowRun, nil),
 			cli.NewCommand(userResetCmd, userResetRun, nil),
@@ -34,6 +35,20 @@ func userListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(users), nil
+}
+
+var userMeCmd = cli.Command{
+	Name:  "me",
+	Short: "Show Current CDS user details",
+}
+
+func userMeRun(v cli.Values) (interface{}, error) {
+	fmt.Printf("CDS API:%s\n", cfg.Host)
+	u, err := client.UserGet(cfg.User)
+	if err != nil {
+		return nil, err
+	}
+	return *u, nil
 }
 
 var userShowCmd = cli.Command{
