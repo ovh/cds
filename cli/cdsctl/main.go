@@ -28,6 +28,7 @@ func main() {
 		[]*cobra.Command{
 			application,
 			environment,
+			pipeline,
 			login,
 			signup,
 			monitoring,
