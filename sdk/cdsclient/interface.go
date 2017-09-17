@@ -11,6 +11,9 @@ import (
 
 // Interface is the main interface for cdsclient package
 type Interface interface {
+	ActionDelete(actionName string) error
+	ActionGet(actionName string, mods ...RequestModifier) (*sdk.Action, error)
+	ActionList() ([]sdk.Action, error)
 	APIURL() string
 	ApplicationCreate(string, *sdk.Application) error
 	ApplicationDelete(string, string) error

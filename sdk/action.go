@@ -10,8 +10,8 @@ import (
 // Action is the base element of CDS pipeline
 type Action struct {
 	ID             int64         `json:"id" yaml:"-"`
-	Name           string        `json:"name"`
-	Type           string        `json:"type" yaml:"-"` // Source - Build - Packaging - Deployment
+	Name           string        `json:"name" cli:"name"`
+	Type           string        `json:"type" yaml:"-" cli:"type"`
 	Description    string        `json:"description" yaml:"desc,omitempty"`
 	Requirements   []Requirement `json:"requirements"`
 	Parameters     []Parameter   `json:"parameters"`
@@ -19,7 +19,7 @@ type Action struct {
 	Enabled        bool          `json:"enabled" yaml:"-"`
 	Optional       bool          `json:"optional" yaml:"-"`
 	AlwaysExecuted bool          `json:"always_executed" yaml:"-"`
-	LastModified   int64         `json:"last_modified"`
+	LastModified   int64         `json:"last_modified" cli:"modified"`
 }
 
 // ActionAudit Audit on action
