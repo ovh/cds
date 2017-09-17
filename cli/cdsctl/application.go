@@ -16,6 +16,7 @@ var (
 		[]*cobra.Command{
 			cli.NewListCommand(applicationListCmd, applicationListRun, nil),
 			cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil),
+			cli.NewCommand(applicationDeleteCmd, applicationDeleteRun, nil),
 			applicationKey,
 		})
 )
@@ -51,4 +52,17 @@ func applicationShowRun(v cli.Values) (interface{}, error) {
 		return nil, err
 	}
 	return *app, nil
+}
+
+var applicationDeleteCmd = cli.Command{
+	Name:  "delete",
+	Short: "Delete CDS application",
+	Args: []cli.Arg{
+		{Name: "project-key"},
+		{Name: "application-name"},
+	},
+}
+
+func applicationDeleteRun(v cli.Values) error {
+	return client.ApplicationDelete(v["project-key"], v["application-name"])
 }

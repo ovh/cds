@@ -13,23 +13,17 @@ func (c *client) ApplicationCreate(key string, app *sdk.Application) error {
 			return fmt.Errorf("HTTP Code %d", code)
 		}
 	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (c *client) ApplicationDelete(key string, appName string) error {
-	code, err := c.DeleteJSON("/project/"+key+"/application/"+appName, nil, nil)
+	code, err := c.DeleteJSON("/project/"+key+"/application/"+appName, nil)
 	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
 		}
 	}
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func (c *client) ApplicationGet(key string, appName string, mods ...RequestModifier) (*sdk.Application, error) {
