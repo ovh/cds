@@ -3,7 +3,7 @@
 VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
 
 TARGET_DIR = ./dist
-TARGET_BINARY = cds-worker
+TARGET_BINARY = cds-
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm)
@@ -47,8 +47,13 @@ clean:
 build: clean $(TARGET_DIR)
 	@for GOOS in $(TARGET_OS); do \
 		for GOARCH in $(TARGET_ARCH); do \
-			echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH $(VERSION); \
-			$(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_BINARY)-$$GOOS-$$GOARCH; \
+			for plugin in plugin-*; do \
+				echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH $(VERSION); \
+				cd $$plugin \
+				echo $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH; \
+				$(GO_BUILD) $(TARGET_LDFLAGS) -o ../$(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH; \
+				cd ..; \
+				done; \
 		done; \
 	done
 
@@ -62,7 +67,7 @@ test: clean
 	$(MAKE) test-xunit-report
 
 test-coverage: $(GO_GOVERALLS) $(GO_COV_MERGE) $(TARGET_DIR)
-	@$(GO_COV_MERGE) ./*.coverprofile > $(TARGET_DIR)/cover.out
+	@$(GO_COV_MERGE) ./**/*.coverprofile > $(TARGET_DIR)/cover.out
 	@go tool cover -html=$(TARGET_DIR)/cover.out -o=$(TARGET_DIR)/cover.html
 ifneq ($(VERSION), snapshot)
 	echo "Pushing results to coveralls"
