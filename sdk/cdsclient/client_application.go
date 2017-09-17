@@ -8,7 +8,7 @@ import (
 
 func (c *client) ApplicationCreate(key string, app *sdk.Application) error {
 	code, err := c.PostJSON("/project/"+key+"/applications", app, nil)
-	if code != 201 {
+	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
 		}
