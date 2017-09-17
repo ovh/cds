@@ -23,6 +23,7 @@ var (
 			cli.NewListCommand(pipelineListCmd, pipelineListRun, nil),
 			cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil),
 			cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil),
+			cli.NewCommand(pipelineDeleteCmd, pipelineDeleteRun, nil),
 		})
 )
 
@@ -142,4 +143,17 @@ func pipelineImportRun(v cli.Values) error {
 		fmt.Println(m)
 	}
 	return nil
+}
+
+var pipelineDeleteCmd = cli.Command{
+	Name:  "delete",
+	Short: "Delete CDS pipeline",
+	Args: []cli.Arg{
+		{Name: "project-key"},
+		{Name: "pipeline-name"},
+	},
+}
+
+func pipelineDeleteRun(v cli.Values) error {
+	return client.PipelineDelete(v["project-key"], v["pipeline-name"])
 }

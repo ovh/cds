@@ -149,7 +149,9 @@ func (c *client) Stream(method string, path string, args []byte, noTimeout bool,
 		}
 
 		for i := range mods {
-			mods[i](req)
+			if mods[i] != nil {
+				mods[i](req)
+			}
 		}
 
 		//No auth on /login route

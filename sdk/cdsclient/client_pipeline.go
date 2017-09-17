@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -20,6 +21,16 @@ func (c *client) PipelineGet(projectKey, name string) (*sdk.Pipeline, error) {
 		return nil, err
 	}
 	return &pipeline, nil
+}
+
+func (c *client) PipelineDelete(projectKey, name string) error {
+	code, err := c.DeleteJSON("/project/"+projectKey+"/pipeline/"+url.QueryEscape(name), nil, nil)
+	if code != 200 {
+		if err == nil {
+			return fmt.Errorf("HTTP Code %d", code)
+		}
+	}
+	return err
 }
 
 func (c *client) PipelineExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error) {
