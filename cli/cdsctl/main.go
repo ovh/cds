@@ -26,15 +26,16 @@ func main() {
 
 	root := cli.NewCommand(mainCmd, mainRun,
 		[]*cobra.Command{
-			application,
-			environment,
 			login,
 			signup,
-			monitoring,
+			application,
+			environment,
+			group,
 			project,
 			worker,
 			workflow,
 			usr,
+			monitoring,
 			health,
 		},
 	)
@@ -49,10 +50,11 @@ func main() {
 			return
 		}
 
-		config, err := loadConfig(configFile)
+		var err error
+		cfg, err = loadConfig(configFile)
 		cli.ExitOnError(err, login.Help)
 
-		client, err = loadClient(config)
+		client, err = loadClient(cfg)
 		cli.ExitOnError(err)
 
 		//Manage warnings

@@ -3,6 +3,7 @@ package api
 import (
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -77,7 +78,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent, time.Now()); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
@@ -85,8 +86,6 @@ func Test_workerCheckingHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
-
-	
 
 	//Prepare request
 	uri := router.GetRoute("POST", api.workerCheckingHandler, nil)
@@ -172,7 +171,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent, time.Now()); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
@@ -182,8 +181,6 @@ func Test_workerWaitingHandler(t *testing.T) {
 	}
 
 	worker.SetStatus(api.mustDB(), workr.ID, sdk.StatusBuilding)
-
-	
 
 	//Prepare request
 	uri := router.GetRoute("POST", api.workerWaitingHandler, nil)
