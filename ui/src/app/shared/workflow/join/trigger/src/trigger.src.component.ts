@@ -1,7 +1,7 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {WorkflowNodeJoin} from '../../../../../model/workflow.model';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui/src';
-import {ActiveModal} from 'ng2-semantic-ui/src';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 @Component({
     selector: 'app-workflow-trigger-join-src',

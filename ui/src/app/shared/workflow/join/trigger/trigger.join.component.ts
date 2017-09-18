@@ -5,8 +5,8 @@ import {
 } from '../../../../model/workflow.model';
 import {Project} from '../../../../model/project.model';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui/src';
-import {ActiveModal} from 'ng2-semantic-ui/src';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 @Component({
     selector: 'app-workflow-trigger-join',

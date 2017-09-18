@@ -13,9 +13,9 @@ import {WorkflowTriggerJoinComponent} from '../../../shared/workflow/join/trigge
 import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
 import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
-import {ActiveModal} from 'ng2-semantic-ui/src';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowRunRequest} from '../../../model/workflow.run.model';
-import {SuiModalService} from 'ng2-semantic-ui/src';
+import {SuiModalService} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 
 declare var _: any;

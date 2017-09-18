@@ -6,8 +6,8 @@ import {cloneDeep} from 'lodash';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {Subscription} from 'rxjs/Subscription';
-import {ActiveModal} from 'ng2-semantic-ui/src';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui/src';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 
 declare var CodeMirror: any;
 

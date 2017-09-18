@@ -1,11 +1,10 @@
 import {Component, Input, ViewChild} from '@angular/core';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui/src';
-import {ActiveModal} from 'ng2-semantic-ui/src';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
 import {Project} from '../../../../model/project.model';
 import {cloneDeep} from 'lodash';
 import {Pipeline} from '../../../../model/pipeline.model';
-import {WorkflowService} from '../../../../service/workflow/workflow.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {WorkflowNodeRunManual, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {Router} from '@angular/router';

@@ -60,7 +60,7 @@ import {RouterModule} from '@angular/router';
 import {ForMapPipe} from './pipes/map.pipe';
 import {PermissionEnvironmentFormComponent} from './permission/environment/form/permission.env.form.component';
 import {NgxAutoScroll} from 'ngx-auto-scroll/src/ngx-auto-scroll.directive';
-import {SuiModule} from 'ng2-semantic-ui/src';
+import {SuiModule} from 'ng2-semantic-ui';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
