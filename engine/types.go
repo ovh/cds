@@ -29,7 +29,7 @@ type Configuration struct {
 		Openstack openstack.HatcheryConfiguration `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/"`
 		Swarm     swarm.HatcheryConfiguration     `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
 		VSphere   vsphere.HatcheryConfiguration   `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
-	} `toml:"log"`
+	} `toml:"hatchery"`
 }
 
 type ServiceServeOptions struct {
