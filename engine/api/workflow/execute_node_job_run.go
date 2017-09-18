@@ -252,7 +252,7 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nod
 		return nil, err
 	}
 	pv = sdk.VariablesFilter(pv, sdk.SecretVariable, sdk.KeyVariable)
-	pv = sdk.VariablesPrefix(pv, "cds.proj")
+	pv = sdk.VariablesPrefix(pv, "cds.proj.")
 	secrets = append(secrets, pv...)
 
 	//Load node definition
@@ -265,7 +265,7 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nod
 	av := []sdk.Variable{}
 	if n.Context != nil && n.Context.Application != nil {
 		av = sdk.VariablesFilter(n.Context.Application.Variable, sdk.SecretVariable, sdk.KeyVariable)
-		av = sdk.VariablesPrefix(av, "cds.app")
+		av = sdk.VariablesPrefix(av, "cds.app.")
 	}
 	secrets = append(secrets, av...)
 
@@ -273,7 +273,7 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nod
 	ev := []sdk.Variable{}
 	if n.Context != nil && n.Context.Environment != nil {
 		ev = sdk.VariablesFilter(n.Context.Environment.Variable, sdk.SecretVariable, sdk.KeyVariable)
-		ev = sdk.VariablesPrefix(ev, "cds.env")
+		ev = sdk.VariablesPrefix(ev, "cds.env.")
 	}
 	secrets = append(secrets, ev...)
 
@@ -284,7 +284,6 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nod
 			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Unable to decrypt variables")
 		}
 	}
-
 	return secrets, nil
 }
 
