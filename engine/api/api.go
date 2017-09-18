@@ -212,7 +212,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	if ok, err := DirectoryExists(aConfig.Directories.Download); !ok {
-		if err := os.MkdirAll(aConfig.Directories.Download, os.FileMode(0600)); err != nil {
+		if err := os.MkdirAll(aConfig.Directories.Download, os.FileMode(0700)); err != nil {
 			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Directories.Download, err)
 		}
 		log.Info("Directory %s has been created", aConfig.Directories.Download)
@@ -225,7 +225,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	}
 
 	if ok, err := DirectoryExists(aConfig.Directories.Keys); !ok {
-		if err := os.MkdirAll(aConfig.Directories.Keys, os.FileMode(0600)); err != nil {
+		if err := os.MkdirAll(aConfig.Directories.Keys, os.FileMode(0700)); err != nil {
 			return fmt.Errorf("Unable to create directory %s: %v", aConfig.Directories.Keys, err)
 		}
 		log.Info("Directory %s has been created", aConfig.Directories.Keys)
@@ -244,7 +244,7 @@ func (a *API) CheckConfiguration(config interface{}) error {
 			return fmt.Errorf("Invalid artifact local base directory")
 		}
 		if ok, err := DirectoryExists(aConfig.Artifact.Local.BaseDirectory); !ok {
-			if err := os.MkdirAll(aConfig.Artifact.Local.BaseDirectory, os.FileMode(0600)); err != nil {
+			if err := os.MkdirAll(aConfig.Artifact.Local.BaseDirectory, os.FileMode(0700)); err != nil {
 				return fmt.Errorf("Unable to create directory %s: %v", aConfig.Artifact.Local.BaseDirectory, err)
 			}
 			log.Info("Directory %s has been created", aConfig.Artifact.Local.BaseDirectory)
