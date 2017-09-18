@@ -35,6 +35,7 @@
     "enhanced-resolve": "3.3.0",
     "font-awesome": "^4.6.3",
     "immutable": "^3.8.1",
+    "js-beautify": "1.6.14",
     "lodash": "~4.17.2",
     "moment": "^2.17.1",
     "ng-event-source": "^1.0.1",

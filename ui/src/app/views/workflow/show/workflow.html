@@ -4,9 +4,9 @@
             <div class="ui green buttons">
                 <div class="ui button" (click)="runWorkflow()" [class.loading]="loading">{{ 'btn_run_workflow' | translate }}</div>
                 <sm-dropdown class="icon button">
-                    <sm-item>
+                    <a sm-item (click)="runWithParameter()">
                         {{ 'btn_run_custom_worklow' | translate }}
-                    </sm-item>
+                    </a>
                 </sm-dropdown>
             </div>
         </div>
@@ -45,3 +45,7 @@
                                        #workflowJoinTriggerSrc></app-workflow-trigger-join-src>
     </ng-container>
 </div>
+<ng-container *ngIf="detailedWorkflow">
+    <app-workflow-node-run-param #workflowNodeRunParam [project]="project" [workflow]="detailedWorkflow" [nodeToRun]="detailedWorkflow.root"></app-workflow-node-run-param>    
+</ng-container>
+
