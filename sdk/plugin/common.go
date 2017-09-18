@@ -97,6 +97,14 @@ func Main(p CDSAction) {
 		},
 	}
 
+	var cmdVersion = &cobra.Command{
+		Use:   "version",
+		Short: "Print plugin version",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Print(sdk.VERSION)
+		},
+	}
+
 	cmdInfo.Flags().StringVarP(&format, "format", "", "markdown", "--format:yaml, json, xml, markdown")
 
 	var rootCmd = &cobra.Command{
@@ -105,6 +113,7 @@ func Main(p CDSAction) {
 		},
 	}
 	rootCmd.AddCommand(cmdInfo)
+	rootCmd.AddCommand(cmdVersion)
 	rootCmd.Execute()
 }
 
