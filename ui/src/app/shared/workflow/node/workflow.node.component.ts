@@ -15,7 +15,7 @@ import {CDSWorker} from '../../worker/worker';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {Router} from '@angular/router';
 import {PipelineStatus} from '../../../model/pipeline.model';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {ActiveModal} from 'ng2-semantic-ui/src';
 
 declare var _: any;
 

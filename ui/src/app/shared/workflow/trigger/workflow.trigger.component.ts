@@ -2,8 +2,8 @@ import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNode, WorkflowNodeTrigger, WorkflowTriggerCondition} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui/src';
+import {ActiveModal} from 'ng2-semantic-ui/src';
 
 @Component({
     selector: 'app-workflow-trigger',

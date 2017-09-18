@@ -7,7 +7,7 @@ import {Project} from '../../../model/project.model';
 import {ToastService} from '../../toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {ActiveModal} from 'ng2-semantic-ui/src';
 
 @Component({
     selector: 'app-workflow-join',

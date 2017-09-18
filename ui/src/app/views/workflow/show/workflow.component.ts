@@ -13,10 +13,13 @@ import {WorkflowTriggerJoinComponent} from '../../../shared/workflow/join/trigge
 import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
 import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {ActiveModal} from 'ng2-semantic-ui/src';
 import {WorkflowRunRequest} from '../../../model/workflow.run.model';
+import {SuiModalService} from 'ng2-semantic-ui/src';
+import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 
 declare var _: any;
+
 @Component({
     selector: 'app-workflow',
     templateUrl: './workflow.html',
@@ -37,6 +40,8 @@ export class WorkflowShowComponent {
     editJoinTriggerComponent: WorkflowTriggerJoinComponent;
     @ViewChild('workflowJoinTriggerSrc')
     workflowJoinTriggerSrc: WorkflowJoinTriggerSrcComponent;
+    @ViewChild('workflowNodeRunParam')
+    runWithParamComponent: WorkflowNodeRunParamComponent;
 
     selectedNode: WorkflowNode;
     selectedTrigger: WorkflowNodeTrigger;
@@ -46,7 +51,8 @@ export class WorkflowShowComponent {
     loading = false;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService) {
+                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService,
+                private _modalService: SuiModalService) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -199,5 +205,11 @@ export class WorkflowShowComponent {
         }, () => {
             this.loading = false;
         });
+    }
+
+    runWithParameter(): void {
+        if (this.runWithParamComponent) {
+            this.runWithParamComponent.show();
+        }
     }
 }
