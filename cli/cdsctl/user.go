@@ -81,15 +81,32 @@ func userResetRun(v cli.Values) error {
 		fmt.Println("Email:", email)
 	}
 
-	client.UserReset(cfg.User, email)
+	if err := client.UserReset(username, email, "cdsctl user confirm %s %s"); err != nil {
+		return err
+	}
+	fmt.Println("Reset done, please check your emails")
 	return nil
 }
 
 var userConfirmCmd = cli.Command{
 	Name:  "confirm",
 	Short: "Confirm CDS user password reset",
+	Args: []cli.Arg{
+		{Name: "username"},
+		{Name: "token"},
+	},
 }
 
 func userConfirmRun(v cli.Values) error {
+	ok, password, err := client.UserConfirm(v["username"], v["token"])
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("verification failed")
+	}
+
+	fmt.Println("All is fine. Here is your new password:")
+	fmt.Println(password)
 	return nil
 }
