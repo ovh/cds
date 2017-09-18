@@ -62,6 +62,7 @@ type Interface interface {
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
 	UserReset(username, email, callback string) error
 	UserConfirm(username, token string) (bool, string, error)
+	Version() (*sdk.Version, error)
 	WorkerList() ([]sdk.Worker, error)
 	WorkerModelSpawnError(id int64, info string) error
 	WorkerModelsEnabled() ([]sdk.Model, error)
