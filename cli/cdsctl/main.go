@@ -32,6 +32,7 @@ func main() {
 			signup,
 			application,
 			environment,
+      pipeline,
 			group,
 			project,
 			worker,
