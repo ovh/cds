@@ -8,28 +8,22 @@ import (
 
 func (c *client) ApplicationCreate(key string, app *sdk.Application) error {
 	code, err := c.PostJSON("/project/"+key+"/applications", app, nil)
-	if code != 201 {
-		if err == nil {
-			return fmt.Errorf("HTTP Code %d", code)
-		}
-	}
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (c *client) ApplicationDelete(key string, appName string) error {
-	code, err := c.DeleteJSON("/project/"+key+"/application/"+appName, nil, nil)
 	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
 		}
 	}
-	if err != nil {
-		return err
+	return err
+}
+
+func (c *client) ApplicationDelete(key string, appName string) error {
+	code, err := c.DeleteJSON("/project/"+key+"/application/"+appName, nil)
+	if code != 200 {
+		if err == nil {
+			return fmt.Errorf("HTTP Code %d", code)
+		}
 	}
-	return nil
+	return err
 }
 
 func (c *client) ApplicationGet(key string, appName string, mods ...RequestModifier) (*sdk.Application, error) {
