@@ -148,8 +148,10 @@ func (s *LocalStore) DequeueWithContext(c context.Context, queueName string, val
 	log.Debug("[%p] DequeueWithContext from %s", s, queueName)
 	l := s.Queues[queueName]
 	if l == nil {
+		s.mutex.Lock()
 		s.Queues[queueName] = &list.List{}
 		l = s.Queues[queueName]
+		s.mutex.Unlock()
 	}
 
 	elemChan := make(chan *list.Element)

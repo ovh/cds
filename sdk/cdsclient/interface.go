@@ -30,6 +30,15 @@ type Interface interface {
 	EnvironmentKeysList(string, string) ([]sdk.EnvironmentKey, error)
 	EnvironmentKeyCreate(string, string, *sdk.EnvironmentKey) error
 	EnvironmentKeysDelete(string, string, string) error
+	GroupCreate(group *sdk.Group) error
+	GroupDelete(name string) error
+	GroupGenerateToken(groupName, expiration string) (*sdk.Token, error)
+	GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error)
+	GroupList() ([]sdk.Group, error)
+	GroupUserAdminSet(groupname string, username string) error
+	GroupUserAdminRemove(groupname, username string) error
+	GroupUserAdd(groupname string, users []string) error
+	GroupUserRemove(groupname, username string) error
 	HatcheryRefresh(int64) error
 	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
 	MonStatus() ([]string, error)
@@ -54,8 +63,9 @@ type Interface interface {
 	UserSignup(username, fullname, email, callback string) error
 	UserGet(username string) (*sdk.User, error)
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
-	UserReset(username, email string) error
+	UserReset(username, email, callback string) error
 	UserConfirm(username, token string) (bool, string, error)
+	Version() (*sdk.Version, error)
 	WorkerList() ([]sdk.Worker, error)
 	WorkerModelSpawnError(id int64, info string) error
 	WorkerModelsEnabled() ([]sdk.Model, error)

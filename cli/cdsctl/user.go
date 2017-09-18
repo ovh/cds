@@ -16,6 +16,7 @@ var (
 
 	usr = cli.NewCommand(userCmd, nil,
 		[]*cobra.Command{
+			cli.NewGetCommand(userMeCmd, userMeRun, nil),
 			cli.NewListCommand(userListCmd, userListRun, nil),
 			cli.NewGetCommand(userShowCmd, userShowRun, nil),
 			cli.NewCommand(userResetCmd, userResetRun, nil),
@@ -34,6 +35,20 @@ func userListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(users), nil
+}
+
+var userMeCmd = cli.Command{
+	Name:  "me",
+	Short: "Show Current CDS user details",
+}
+
+func userMeRun(v cli.Values) (interface{}, error) {
+	fmt.Printf("CDS API:%s\n", cfg.Host)
+	u, err := client.UserGet(cfg.User)
+	if err != nil {
+		return nil, err
+	}
+	return *u, nil
 }
 
 var userShowCmd = cli.Command{
@@ -55,7 +70,7 @@ func userShowRun(v cli.Values) (interface{}, error) {
 var userResetCmd = cli.Command{
 	Name:  "reset",
 	Short: "Reset CDS user password",
-	OptionnalArgs: []cli.Arg{
+	OptionalArgs: []cli.Arg{
 		{Name: "username"},
 		{Name: "email"},
 	},
@@ -81,15 +96,32 @@ func userResetRun(v cli.Values) error {
 		fmt.Println("Email:", email)
 	}
 
-	client.UserReset(cfg.User, email)
+	if err := client.UserReset(username, email, "cdsctl user confirm %s %s"); err != nil {
+		return err
+	}
+	fmt.Println("Reset done, please check your emails")
 	return nil
 }
 
 var userConfirmCmd = cli.Command{
 	Name:  "confirm",
 	Short: "Confirm CDS user password reset",
+	Args: []cli.Arg{
+		{Name: "username"},
+		{Name: "token"},
+	},
 }
 
 func userConfirmRun(v cli.Values) error {
+	ok, password, err := client.UserConfirm(v["username"], v["token"])
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return fmt.Errorf("verification failed")
+	}
+
+	fmt.Println("All is fine. Here is your new password:")
+	fmt.Println(password)
 	return nil
 }

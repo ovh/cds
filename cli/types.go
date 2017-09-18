@@ -69,13 +69,13 @@ func (s args) Swap(i, j int) {
 
 // Command represents the way to instanciate a cobra.Command
 type Command struct {
-	Name          string
-	Args          []Arg
-	OptionnalArgs []Arg
-	Short         string
-	Long          string
-	Flags         []Flag
-	Aliases       []string
+	Name         string
+	Args         []Arg
+	OptionalArgs []Arg
+	Short        string
+	Long         string
+	Flags        []Flag
+	Aliases      []string
 }
 
 // CommandModifier is a function type to extend a command
