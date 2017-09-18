@@ -20,12 +20,7 @@ import (
 
 func (api *API) getVersionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		s := struct {
-			Version string `json:"version"`
-		}{
-			Version: sdk.VERSION,
-		}
-
+		s := sdk.Version{Version: sdk.VERSION}
 		return WriteJSON(w, r, s, http.StatusOK)
 	}
 }

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -34,14 +35,16 @@ func (api *API) generateTokenHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "generateTokenHandler: cannot generate key")
 		}
-
-		if err := token.InsertToken(api.mustDB(), g.ID, tk, exp); err != nil {
+		now := time.Now()
+		if err := token.InsertToken(api.mustDB(), g.ID, tk, exp, now); err != nil {
 			return sdk.WrapError(err, "generateTokenHandler> cannot insert new key")
 		}
-
-		s := map[string]string{
-			"key": tk,
+		token := sdk.Token{
+			GroupID:    g.ID,
+			Token:      tk,
+			Expiration: exp,
+			Created:    now,
 		}
-		return WriteJSON(w, r, s, http.StatusOK)
+		return WriteJSON(w, r, token, http.StatusOK)
 	}
 }

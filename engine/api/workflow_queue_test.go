@@ -146,7 +146,7 @@ func test_registerWorker(t *testing.T, api *API, router *Router, ctx *test_runWo
 	ctx.workerToken, err = token.GenerateToken()
 	test.NoError(t, err)
 	//Insert token
-	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent))
+	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent, time.Now()))
 	//Register the worker
 	params := &worker.RegistrationForm{
 		Name:  sdk.RandomString(10),
@@ -161,7 +161,7 @@ func test_registerHatchery(t *testing.T, api *API, router *Router, ctx *test_run
 	tk, err := token.GenerateToken()
 	test.NoError(t, err)
 	//Insert token
-	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent))
+	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, tk, sdk.Persistent, time.Now))
 
 	ctx.hatchery = &sdk.Hatchery{
 		UID:      tk,

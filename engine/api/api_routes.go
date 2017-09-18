@@ -68,6 +68,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
 	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
 	r.Handle("/mon/lastupdates", r.GET(api.getUserLastUpdatesHandler))
+	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler), r.POST(api.addProjectHandler))

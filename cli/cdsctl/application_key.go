@@ -26,20 +26,20 @@ var applicationKeyCreateCmd = cli.Command{
 	Short: "Add a new key on application. key type can be ssh or pgp",
 	Args: []cli.Arg{
 		{Name: "key"},
-		{Name: "appName"},
-		{Name: "keyName"},
-		{Name: "keyType"},
+		{Name: "app-name"},
+		{Name: "key-name"},
+		{Name: "key-type"},
 	},
 }
 
 func applicationCreateKeyRun(v cli.Values) error {
 	key := &sdk.ApplicationKey{
 		Key: sdk.Key{
-			Name: v["keyName"],
-			Type: v["keyType"],
+			Name: v["key-name"],
+			Type: v["key-type"],
 		},
 	}
-	if err := client.ApplicationKeyCreate(v["key"], v["appName"], key); err != nil {
+	if err := client.ApplicationKeyCreate(v["key"], v["app-name"], key); err != nil {
 		return err
 	}
 	return nil
@@ -50,12 +50,12 @@ var applicationKeyListCmd = cli.Command{
 	Short: "List CDS application keys",
 	Args: []cli.Arg{
 		{Name: "key"},
-		{Name: "appName"},
+		{Name: "app-name"},
 	},
 }
 
 func applicationListKeyRun(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.ApplicationKeysList(v["key"], v["appName"])
+	keys, err := client.ApplicationKeysList(v["key"], v["app-name"])
 	if err != nil {
 		return nil, err
 	}
@@ -67,11 +67,11 @@ var applicationKeyDeleteCmd = cli.Command{
 	Short: "Delete CDS an application key",
 	Args: []cli.Arg{
 		{Name: "key"},
-		{Name: "appName"},
-		{Name: "keyName"},
+		{Name: "app-name"},
+		{Name: "key-name"},
 	},
 }
 
 func applicationDeleteKeyRun(v cli.Values) error {
-	return client.ApplicationKeysDelete(v["key"], v["appName"], v["keyName"])
+	return client.ApplicationKeysDelete(v["key"], v["app-name"], v["key-name"])
 }
