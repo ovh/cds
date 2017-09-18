@@ -70,7 +70,7 @@ func userShowRun(v cli.Values) (interface{}, error) {
 var userResetCmd = cli.Command{
 	Name:  "reset",
 	Short: "Reset CDS user password",
-	OptionnalArgs: []cli.Arg{
+	OptionalArgs: []cli.Arg{
 		{Name: "username"},
 		{Name: "email"},
 	},

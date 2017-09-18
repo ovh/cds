@@ -16,6 +16,7 @@ var (
 		[]*cobra.Command{
 			cli.NewListCommand(workflowListCmd, workflowListRun, nil),
 			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil),
+			workflowArtifact,
 		})
 )
 
