@@ -41,12 +41,12 @@ var workflowShowCmd = cli.Command{
 	Short: "Show a CDS workflow",
 	Args: []cli.Arg{
 		{Name: "project-key"},
-		{Name: "name"},
+		{Name: "workflow-name"},
 	},
 }
 
 func workflowShowRun(v cli.Values) (interface{}, error) {
-	w, err := client.WorkflowGet(v["project-key"], v["name"])
+	w, err := client.WorkflowGet(v["project-key"], v["workflow-name"])
 	if err != nil {
 		return nil, err
 	}
