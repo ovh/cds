@@ -58,7 +58,7 @@ func (s *LocalStore) SetWithTTL(key string, value interface{}, ttl int) {
 	if ttl > 0 {
 		go func(s *LocalStore, key string) {
 			time.Sleep(time.Duration(ttl) * time.Second)
-			delete(s.Data, key)
+			s.Delete(key)
 		}(s, key)
 	}
 }
@@ -70,14 +70,16 @@ func (s *LocalStore) Set(key string, value interface{}) {
 
 //Delete a key from local store
 func (s *LocalStore) Delete(key string) {
+	s.mutex.Lock()
 	delete(s.Data, key)
+	s.mutex.Unlock()
 }
 
 //DeleteAll on locastore delete all the things
 func (s *LocalStore) DeleteAll(key string) {
 	for k := range s.Data {
 		if key == k || (strings.HasSuffix(key, "*") && strings.HasPrefix(k, key[:len(key)-1])) {
-			delete(s.Data, k)
+			s.Delete(k)
 		}
 	}
 }

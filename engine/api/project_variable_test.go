@@ -14,8 +14,6 @@ import (
 func Test_getVariableAuditInProjectHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 

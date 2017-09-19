@@ -192,10 +192,28 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 	}
 	wruns := make([]sdk.WorkflowRun, len(runs))
 	for i := range runs {
-		wruns[i] = sdk.WorkflowRun(runs[i])
+		wr := sdk.WorkflowRun(runs[i])
+		if err := loadRunTags(db, &wr); err != nil {
+			return nil, 0, 0, 0, sdk.WrapError(err, "LoadRuns> unable to load tags")
+		}
+
+		wruns[i] = wr
 	}
 
 	return wruns, offset, limit, int(count), nil
+}
+
+func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
+	dbRunTags := []RunTag{}
+	if _, err := db.Select(&dbRunTags, "SELECT * from workflow_run_tag WHERE workflow_run_id=$1", run.ID); err != nil {
+		return sdk.WrapError(err, "loadRunTags")
+	}
+
+	run.Tags = make([]sdk.WorkflowRunTag, len(dbRunTags))
+	for i := range dbRunTags {
+		run.Tags[i] = sdk.WorkflowRunTag(dbRunTags[i])
+	}
+	return nil
 }
 
 func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.WorkflowRun, error) {
