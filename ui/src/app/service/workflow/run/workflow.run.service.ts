@@ -53,4 +53,14 @@ export class WorkflowRunService {
     stopNodeRun(key: string, workflowName: string, num: number, id: number): Observable<boolean> {
         return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/nodes/' + id + '/stop', null);
     }
+
+    /**
+     * Get workflow tags
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name
+     * @returns {Observable<{}>}
+     */
+    getTags(key: string, workflowName: string): Observable<Map<string, Array<string>>> {
+        return this._http.get('/project/' + key + '/workflows/' + workflowName + '/runs/tags');
+    }
 }

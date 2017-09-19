@@ -8,7 +8,10 @@
          (click)="goToNodeRun()"
     >
         <div class="pipeline">
-            <p class="ellipsis">{{node.name}}</p>
+            <p class="ellipsis">
+                <span class="ui black circular label" *ngIf="currentNodeRun">{{currentNodeRun?.num + '.' + currentNodeRun?.subnumber}}</span>
+                <b>{{node.name}}</b>{{' - ' + node.pipeline.name}}
+            </p>
         </div>
         <div class="firstloop" *ngIf="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"></div>
         <div class="secondloop" *ngIf="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"></div>

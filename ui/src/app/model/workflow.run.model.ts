@@ -14,6 +14,7 @@ export class WorkflowRunRequest {
     number: number;
     from_node: number;
 }
+
 export class WorkflowRun {
     id: number;
     num: number;
@@ -22,7 +23,13 @@ export class WorkflowRun {
     workflow: Workflow;
     start: string;
     last_modified: string;
-    nodes: {[key: string]: Array<WorkflowNodeRun>; };
+    nodes: { [key: string]: Array<WorkflowNodeRun>; };
+    tags: Array<WorkflowRunTags>;
+}
+
+export class WorkflowRunTags {
+    tag: string;
+    value: string;
 }
 
 // WorkflowNodeRun is as execution instance of a node
