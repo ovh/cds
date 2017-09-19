@@ -30,7 +30,7 @@ func GenerateToken() (string, error) {
 }
 
 // InsertToken inserts a new token in database
-func InsertToken(db gorp.SqlExecutor, groupID int64, token string, e sdk.Expiration, created time.Time) error {
+func InsertToken(db gorp.SqlExecutor, groupID int64, token string, e sdk.Expiration) error {
 	query := `INSERT INTO token (group_id, token, expiration, created) VALUES ($1, $2, $3, $4)`
 
 	hasher := sha512.New()

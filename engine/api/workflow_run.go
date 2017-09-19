@@ -146,6 +146,33 @@ func (api *API) getLatestWorkflowRunHandler() Handler {
 	}
 }
 
+func (api *API) resyncWorkflowRunPipelinesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		name := vars["workflowName"]
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+		run, err := workflow.LoadRun(api.mustDB(), key, name, number)
+		if err != nil {
+			return sdk.WrapError(err, "resyncWorkflowRunPipelinesHandler> Unable to load last workflow run [%s/%d]", name, number)
+		}
+
+		tx, errT := api.mustDB().Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "resyncWorkflowRunPipelinesHandler> Cannot start transaction")
+		}
+
+		if err := workflow.ResyncPipeline(tx, run); err != nil {
+			return sdk.WrapError(err, "resyncWorkflowRunPipelinesHandler> Cannot resync pipelines")
+		}
+
+		return tx.Commit()
+	}
+}
+
 func (api *API) getWorkflowRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
