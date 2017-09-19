@@ -99,18 +99,19 @@ func (c *client) UserGetGroups(username string) (map[string][]sdk.Group, error) 
 
 }
 
-func (c *client) UserReset(username, email string) error {
+func (c *client) UserReset(username, email, callback string) error {
 	req := sdk.UserAPIRequest{
 		User: sdk.User{
 			Email: email,
 		},
+		Callback: callback,
 	}
 
 	code, err := c.PostJSON("/user/"+url.QueryEscape(username)+"/reset", req, nil)
 	if err != nil {
 		return err
 	}
-	if code != http.StatusOK {
+	if code != http.StatusCreated {
 		return fmt.Errorf("Error %d", code)
 	}
 
@@ -119,8 +120,7 @@ func (c *client) UserReset(username, email string) error {
 
 func (c *client) UserConfirm(username, token string) (bool, string, error) {
 	res := sdk.UserAPIResponse{}
-
-	code, err := c.PostJSON("/user/"+url.QueryEscape(username)+"/confirm/"+url.QueryEscape(token), nil, res)
+	code, err := c.GetJSON("/user/"+url.QueryEscape(username)+"/confirm/"+url.QueryEscape(token), &res)
 	if err != nil {
 		return false, "", err
 	}

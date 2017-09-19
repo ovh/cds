@@ -27,8 +27,9 @@ export class WorkflowNodeContextComponent {
     @Output() contextEvent = new EventEmitter<WorkflowNode>();
 
     @ViewChild('nodeContextModal')
-    nodeContextModal: ModalTemplate<boolean, boolean, void>;
+    public nodeContextModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
+    modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
     editableNode: WorkflowNode;
 
@@ -57,8 +58,8 @@ export class WorkflowNodeContextComponent {
             }
             this.payloadString = JSON.stringify(this.editableNode.context.default_payload);
 
-            const config = new TemplateModalConfig<boolean, boolean, void>(this.nodeContextModal);
-            this.modal = this._modalService.open(config);
+            this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeContextModal);
+            this.modal = this._modalService.open(this.modalConfig);
 
             this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
                 let pip = pips.get(this.project.key + '-' + this.node.pipeline.name);

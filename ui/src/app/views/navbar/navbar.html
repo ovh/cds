@@ -1,12 +1,19 @@
 <div class="ui inverted fixed menu navbar" *ngIf="ready">
     <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item" title="{{'navbar_home' | translate}}"></a>
-    <sui-search  placeholder="{{'navbar_search' | translate}}" [options]="searchItems" (resultSelected)="navigateToResult($event)"></sui-search>
+
+    <sui-search placeholder="{{'navbar_search' | translate}}" [options]="searchItems" [maxResults]="15" (resultSelected)="navigateToResult($event)"></sui-search>
+
+    <sm-dropdown icon="browser" *ngIf="currentUser" class="search">
+        <ng-container *ngFor="let prj of navProjects">
+            <a sm-item href="#" [routerLink]="['project', prj.key]">{{ prj.name }}</a>
+        </ng-container>
+    </sm-dropdown>
+
     <sm-dropdown icon="clock" *ngIf="currentUser">
         <ng-container *ngFor="let app of listApplications">
             <a sm-item href="#" [routerLink]="['project', app.project_key, 'application', app.name]">{{ app.project_key + '/' + app.name}}</a>
         </ng-container>
     </sm-dropdown>
-
 
     <div class="right menu">
         <div class="item link" *ngIf="currentUser">

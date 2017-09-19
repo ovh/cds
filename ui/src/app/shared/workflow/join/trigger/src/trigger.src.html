@@ -9,7 +9,7 @@
         </ng-container>
     </div>
     <div class="actions" *ngIf="join">
-        <button class="ui grey button" (click)="hide()">{{ 'common_close' | translate }}</button>
+        <button class="ui grey button" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
         <button class="ui green button" (click)="deleteSrc()" *ngIf="join.source_node_ref.length > 1">{{ 'workflow_join_trigger_src_delete' | translate }}</button>
         <button class="ui green button" (click)="deleteJoin()" *ngIf="join.source_node_ref.length === 1">{{ 'workflow_join_delete' | translate }}</button>
     </div>

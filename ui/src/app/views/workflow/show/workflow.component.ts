@@ -14,8 +14,12 @@ import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/tri
 import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {WorkflowRunRequest} from '../../../model/workflow.run.model';
+import {SuiModalService} from 'ng2-semantic-ui';
+import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 
 declare var _: any;
+
 @Component({
     selector: 'app-workflow',
     templateUrl: './workflow.html',
@@ -36,6 +40,8 @@ export class WorkflowShowComponent {
     editJoinTriggerComponent: WorkflowTriggerJoinComponent;
     @ViewChild('workflowJoinTriggerSrc')
     workflowJoinTriggerSrc: WorkflowJoinTriggerSrcComponent;
+    @ViewChild('workflowNodeRunParam')
+    runWithParamComponent: WorkflowNodeRunParamComponent;
 
     selectedNode: WorkflowNode;
     selectedTrigger: WorkflowNodeTrigger;
@@ -45,7 +51,8 @@ export class WorkflowShowComponent {
     loading = false;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService) {
+                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService,
+                private _modalService: SuiModalService) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -191,11 +198,18 @@ export class WorkflowShowComponent {
 
     runWorkflow(): void {
         this.loading = true;
-        this._workflowRun.runWorkflow(this.project.key, this.detailedWorkflow, {}).first().subscribe(wr => {
+        let request = new WorkflowRunRequest();
+        this._workflowRun.runWorkflow(this.project.key, this.detailedWorkflow, request).first().subscribe(wr => {
             this.loading = false;
             this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name, 'run', wr.num]);
         }, () => {
             this.loading = false;
         });
+    }
+
+    runWithParameter(): void {
+        if (this.runWithParamComponent) {
+            this.runWithParamComponent.show();
+        }
     }
 }

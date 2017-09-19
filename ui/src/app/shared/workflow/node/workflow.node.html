@@ -15,7 +15,7 @@
         <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0">
             <p class="ellipsis">{{node.context.application.name}}</p>
         </div>
-        <a class="ui white ribbon label" *ngIf="true || node.context.environment_id && node.context.environment_id > 0">aaa</a>
+        <a class="ui white ribbon label" *ngIf="node.context.environment_id && node.context.environment_id > 0">{{node.context.environment?.name}}</a>
         <ng-container *ngIf="!webworker">
             <sm-dropdown class="nocaret right pointing link" icon="settings" [disabled]="disabled" (click)="displayDropdown()" [options]="options">
                 <a sm-item href="#" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]">{{ 'pipeline_label_edit' | translate }}</a>

@@ -11,8 +11,8 @@ import (
 
 // HatcheryConfiguration is the configuration for local hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration
-	Basedir string `default:"/tmp" comment:"BaseDir for worker workspace"`
+	hatchery.CommonConfiguration `toml:"commonConfiguration"`
+	Basedir                      string `toml:"basedir" default:"/tmp" comment:"BaseDir for worker workspace"`
 }
 
 // HatcheryLocal implements HatcheryMode interface for local usage

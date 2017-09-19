@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/artifact"
-
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -191,6 +191,63 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 	}
 }
 
+func (api *API) stopWorkflowNodeRunHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		name := vars["workflowName"]
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+		id, err := requestVarInt(r, "nodeRunID")
+		if err != nil {
+
+			return err
+		}
+		// Load node run
+		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id)
+		if err != nil {
+			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
+		}
+
+		// Load node job run ID
+		ids, errIDS := workflow.LoadNodeJobRunIDByNodeRunID(api.mustDB(), nodeRun.ID)
+		if errIDS != nil {
+			return sdk.WrapError(errIDS, "stopWorkflowNodeRunHandler> Cannot load node job run id")
+		}
+
+		infos := sdk.SpawnInfo{
+			APITime: time.Now(),
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getUser(ctx).Username}},
+		}
+
+		// Update node job run
+		tx, errT := api.mustDB().Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "stopWorkflowNodeRunHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		for _, nrjID := range ids {
+			njr, errNRJ := workflow.LoadAndLockNodeJobRun(tx, api.Cache, nrjID)
+			if errNRJ != nil {
+				return sdk.WrapError(errNRJ, "stopWorkflowNodeRunHandler> Cannot load node job run id")
+			}
+			njr.SpawnInfos = append(njr.SpawnInfos, infos)
+			if err := workflow.UpdateNodeJobRunStatus(tx, api.Cache, njr, sdk.StatusFail); err != nil {
+				return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Cannot update node job run")
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Cannot commit transaction")
+		}
+		return nil
+	}
+}
+
 func (api *API) getWorkflowNodeRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -258,7 +315,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 			var errfh error
 			wr, errfh = workflow.RunFromHook(tx, wf, opts.Hook)
 			if errfh != nil {
-				return sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow")
+				return sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
 			}
 		} else {
 			//Default manual run
@@ -272,9 +329,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 			if opts.Manual.Payload == interface{}(nil) {
 				n := wf.Root
 				if opts.FromNodeID != nil {
-					n = wf.GetNode(*opts.FromNodeID)
+					n = lastRun.Workflow.GetNode(*opts.FromNodeID)
 					if n == nil {
-						return sdk.WrapError(sdk.ErrWorkflowNotFound, "postWorkflowRunHandler> Unable to run workflow")
+						return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node")
 					}
 				}
 				opts.Manual.Payload = n.Context.DefaultPayload
@@ -284,9 +341,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 			if len(opts.Manual.PipelineParameters) == 0 {
 				n := wf.Root
 				if opts.FromNodeID != nil {
-					n = wf.GetNode(*opts.FromNodeID)
+					n = lastRun.Workflow.GetNode(*opts.FromNodeID)
 					if n == nil {
-						return sdk.WrapError(sdk.ErrWorkflowNotFound, "postWorkflowRunHandler> Unable to run workflow")
+						return sdk.WrapError(sdk.ErrWorkflowNotFound, "postWorkflowRunHandler> Pipeline Param: Unable to get node")
 					}
 				}
 				opts.Manual.PipelineParameters = n.Context.DefaultPipelineParameters
@@ -302,7 +359,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 				var errmr error
 				wr, errmr = workflow.ManualRunFromNode(tx, api.Cache, wf, lastRun.Number, opts.Manual, *opts.FromNodeID)
 				if errmr != nil {
-					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
+					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow from node")
 				}
 			} else {
 				var errmr error
@@ -315,7 +372,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 
 		//Commit and return success
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to run workflow")
+			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
 		}
 
 		wr.Translate(r.Header.Get("Accept-Language"))

@@ -117,6 +117,7 @@ var (
 	ErrUnknownKeyType                        = &Error{ID: 101, Status: http.StatusBadRequest}
 	ErrInvalidKeyPattern                     = &Error{ID: 102, Status: http.StatusBadRequest}
 	ErrWebhookConfigDoesNotMatch             = &Error{ID: 103, Status: http.StatusBadRequest}
+	ErrPipelineUsedByWorkflow                = &Error{ID: 104, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -223,6 +224,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrUnknownKeyType.ID:                        "Unknown key type",
 	ErrInvalidKeyPattern.ID:                     "key name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWebhookConfigDoesNotMatch.ID:             "Webhook config does not match",
+	ErrPipelineUsedByWorkflow.ID:                "pipeline still used by a workflow",
 }
 
 var errorsFrench = map[int]string{
@@ -329,6 +331,7 @@ var errorsFrench = map[int]string{
 	ErrUnknownKeyType.ID:                        "Le type de clé n'est pas connu",
 	ErrInvalidKeyPattern.ID:                     "le nom de la clé doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWebhookConfigDoesNotMatch.ID:             "la configuration du webhook ne correspond pas",
+	ErrPipelineUsedByWorkflow.ID:                "le pipeline est utilisé par un workflow",
 }
 
 var errorsLanguages = []map[int]string{

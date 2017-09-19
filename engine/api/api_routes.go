@@ -38,10 +38,21 @@ func (api *API) InitRouter() {
 	r.Handle("/plugin/download/{name}", r.GET(api.downloadPluginHandler))
 
 	// Download file
-	r.ServeAbsoluteFile("/download/cli/x86_64", path.Join(api.Config.Directories.Download, "cds"), "cds")
-	r.ServeAbsoluteFile("/download/worker/x86_64", path.Join(api.Config.Directories.Download, "worker"), "worker")
-	r.ServeAbsoluteFile("/download/worker/windows_x86_64", path.Join(api.Config.Directories.Download, "worker.exe"), "worker.exe")
-	r.ServeAbsoluteFile("/download/hatchery/x86_64", path.Join(api.Config.Directories.Download, "hatchery", "x86_64"), "hatchery")
+	r.ServeAbsoluteFile("/download/cli/x86_64", path.Join(api.Config.Directories.Download, "cds-linux-amd64"), "cds")
+	r.ServeAbsoluteFile("/download/worker/x86_64", path.Join(api.Config.Directories.Download, "cds-worker-linux-amd64"), "worker")
+	r.ServeAbsoluteFile("/download/worker/windows_x86_64", path.Join(api.Config.Directories.Download, "cds-worker-windows-amd64"), "worker.exe")
+
+	r.ServeAbsoluteFile("/download/cdsctl-windows-amd64", path.Join(api.Config.Directories.Download, "cdsctl-windows-amd64"), "cdsctl-windows-amd64")
+	r.ServeAbsoluteFile("/download/cdsctl-linux-amd64", path.Join(api.Config.Directories.Download, "cdsctl-linux-amd64"), "cdsctl-linux-amd64")
+	r.ServeAbsoluteFile("/download/cdsctl-freebsd-amd64", path.Join(api.Config.Directories.Download, "cdsctl-freebsd-amd64"), "cdsctl-freebsd-amd64")
+	r.ServeAbsoluteFile("/download/cdsctl-darwin-amd64", path.Join(api.Config.Directories.Download, "cdsctl-darwin-amd64"), "cdsctl-darwin-amd64")
+	r.ServeAbsoluteFile("/download/cds-engine-darwin-amd64", path.Join(api.Config.Directories.Download, "cds-engine-darwin-amd64"), "cds-engine-darwin-amd64")
+	r.ServeAbsoluteFile("/download/cds-worker-windows-amd64", path.Join(api.Config.Directories.Download, "cds-worker-windows-amd64"), "cds-worker-windows-amd64")
+	r.ServeAbsoluteFile("/download/cds-worker-linux-amd64", path.Join(api.Config.Directories.Download, "cds-worker-linux-amd64"), "cds-worker-linux-amd64")
+	r.ServeAbsoluteFile("/download/cds-engine-windows-amd64", path.Join(api.Config.Directories.Download, "cds-engine-windows-amd64"), "cds-engine-windows-amd64")
+	r.ServeAbsoluteFile("/download/cds-worker-freebsd-amd64", path.Join(api.Config.Directories.Download, "cds-worker-freebsd-amd64"), "cds-worker-freebsd-amd64")
+	r.ServeAbsoluteFile("/download/cds-worker-darwin-amd64", path.Join(api.Config.Directories.Download, "cds-worker-darwin-amd64"), "cds-worker-darwin-amd64")
+	r.ServeAbsoluteFile("/download/cds-engine-linux-amd64", path.Join(api.Config.Directories.Download, "cds-engine-linux-amd64"), "cds-engine-linux-amd64")
 
 	// Group
 	r.Handle("/group", r.GET(api.getGroupsHandler), r.POST(api.addGroupHandler))
@@ -68,6 +79,7 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
 	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
 	r.Handle("/mon/lastupdates", r.GET(api.getUserLastUpdatesHandler))
+	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler), r.POST(api.addProjectHandler))
@@ -151,6 +163,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/artifacts", r.GET(api.getWorkflowRunArtifactsHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}", r.GET(api.getWorkflowNodeRunHandler))
+	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}/stop", r.POST(api.stopWorkflowNodeRunHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeID}/history", r.GET(api.getWorkflowNodeRunHistoryHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", r.GET(api.getWorkflowNodeRunJobStepHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}/artifacts", r.GET(api.getWorkflowNodeRunArtifactsHandler))

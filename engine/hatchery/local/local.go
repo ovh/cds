@@ -258,11 +258,14 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]*exec.Cmd)
 
+	genname := hatchery.GenerateName("local", h.Configuration().Name)
+
 	h.client = cdsclient.NewHatchery(
 		h.Configuration().API.HTTP.URL,
 		h.Configuration().API.Token,
 		h.Configuration().Provision.RegisterFrequency,
 		h.Configuration().API.HTTP.Insecure,
+		genname,
 	)
 
 	req, err := h.Client().Requirements()
@@ -274,8 +277,6 @@ func (h *HatcheryLocal) Init() error {
 	if err != nil {
 		return fmt.Errorf("Cannot check local capabilities: %s", err)
 	}
-
-	genname := hatchery.GenerateName("local", h.Configuration().Name)
 
 	h.hatch = &sdk.Hatchery{
 		Name: genname,

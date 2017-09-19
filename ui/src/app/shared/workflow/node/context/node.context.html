@@ -24,7 +24,7 @@
         </div>
     </div>
     <div class="actions">
-        <button class="ui grey button" [disabled]="loading" (click)="hide()">{{ 'common_close' | translate }}</button>
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
         <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="saveContext()">{{ 'btn_save' | translate }}</button>
     </div>
 </ng-template>

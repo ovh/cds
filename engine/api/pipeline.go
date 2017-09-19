@@ -23,6 +23,7 @@ import (
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -816,6 +817,15 @@ func (api *API) deletePipelineHandler() Handler {
 			return sdk.WrapError(sdk.ErrPipelineHasApplication, "deletePipeline> Cannot delete a pipeline used by at least 1 application")
 		}
 
+		usedW, err := workflow.CountPipeline(api.mustDB(), p.ID)
+		if err != nil {
+			return sdk.WrapError(err, "deletePipeline> Cannot check if pipeline is used by a workflow")
+		}
+
+		if usedW {
+			return sdk.WrapError(sdk.ErrPipelineUsedByWorkflow, "deletePipeline> Cannot delete a pipeline used by at least 1 workflow")
+		}
+
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "deletePipeline> Cannot begin transaction")
@@ -823,8 +833,7 @@ func (api *API) deletePipelineHandler() Handler {
 		defer tx.Rollback()
 
 		if err := pipeline.DeletePipeline(tx, p.ID, getUser(ctx).ID); err != nil {
-			log.Warning("deletePipeline> Cannot delete pipeline %s: %s\n", pipelineName, err)
-			return err
+			return sdk.WrapError(err, "deletePipeline> Cannot delete pipeline %s", pipelineName)
 		}
 
 		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj); err != nil {
@@ -832,8 +841,7 @@ func (api *API) deletePipelineHandler() Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("deletePipeline> Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deletePipeline> Cannot commit transaction")
 		}
 		return nil
 	}
@@ -1371,10 +1379,9 @@ func (api *API) getPipelineBuildCommitsHandler() Handler {
 		projectKey := vars["key"]
 		appName := vars["permApplicationName"]
 		pipName := vars["permPipelineKey"]
-		buildNumber, err := strconv.Atoi(vars["build"])
-		if err != nil {
+		buildNumber, errS := strconv.Atoi(vars["build"])
+		if errS != nil {
 			return sdk.ErrInvalidID
-
 		}
 
 		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))

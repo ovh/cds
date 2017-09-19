@@ -20,18 +20,18 @@ import (
 
 type Configuration struct {
 	Log struct {
-		Level string `default:"warning" comment:"Log Level: debug, info, warning, notice, critical"`
+		Level string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, critical"`
 	} `comment:"#####################\n# CDS Logs Settings #\n#####################"`
-	API      api.Configuration
+	API      api.Configuration `toml:"api"`
 	Hatchery struct {
-		Docker    docker.HatcheryConfiguration    `comment:"Hatchery Docker."`
-		Local     local.HatcheryConfiguration     `comment:"Hatchery Local."`
-		Marathon  marathon.HatcheryConfiguration  `comment:"Hatchery Marathon."`
-		Openstack openstack.HatcheryConfiguration `comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/"`
-		Swarm     swarm.HatcheryConfiguration     `comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
-		VSphere   vsphere.HatcheryConfiguration   `comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
-	}
-	Hooks hooks.Configuration `comment:"CDS Workflow Hooks."`
+		Docker    docker.HatcheryConfiguration    `toml:"docker" comment:"Hatchery Docker."`
+		Local     local.HatcheryConfiguration     `toml:"local" comment:"Hatchery Local."`
+		Marathon  marathon.HatcheryConfiguration  `toml:"marathon" comment:"Hatchery Marathon."`
+		Openstack openstack.HatcheryConfiguration `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/"`
+		Swarm     swarm.HatcheryConfiguration     `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
+		VSphere   vsphere.HatcheryConfiguration   `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
+	} `toml:"hatchery"`
+	Hooks hooks.Configuration
 }
 
 type ServiceServeOptions struct {

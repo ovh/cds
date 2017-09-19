@@ -116,7 +116,6 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			filename := filepath.Base(filePath)
 			sendLog(fmt.Sprintf("Uploading '%s'\n", filename))
 			if err := w.client.QueueArtifactUpload(buildID, tag.Value, filePath); err != nil {
-
 				res.Status = sdk.StatusFail.String()
 				res.Reason = fmt.Sprintf("Error while uploading artefact: %s\n", err)
 				sendLog(res.Reason)
@@ -193,15 +192,15 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 		}
 
 		if tag != "" {
-			sendLog("tag variable can not be used with CDS Workflow. Please remove-it")
+			sendLog("tag variable can not be used with CDS Workflow - ignored.")
 		}
 
-		sendLog(fmt.Sprintf("Downloading artifacts from into '%s'...", path))
+		sendLog(fmt.Sprintf("Downloading artifacts from workflow into '%s'...", path))
 
 		n, err := strconv.ParseInt(number, 10, 64)
 		if err != nil {
 			res.Status = sdk.StatusFail.String()
-			res.Reason = fmt.Sprintf("cds.run.nubmer variable is not valid. aborting")
+			res.Reason = fmt.Sprintf("cds.run.number variable is not valid. aborting")
 			sendLog(res.Reason)
 			return res
 		}
@@ -219,21 +218,22 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			if err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifacts: %s", err)
+				log.Warning("Cannot download artifact (OpenFile) %s: %s", a.Name, err)
 				sendLog(res.Reason)
 				return res
 			}
+			sendLog(fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", a.Name, project, workflow, n))
 			if err := w.client.WorkflowNodeRunArtifactDownload(project, workflow, a.ID, f); err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifacts: %s", err)
+				log.Warning("Cannot download artifact %s: %s", a.Name, err)
 				sendLog(res.Reason)
 				return res
 			}
 			if err := f.Close(); err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifacts: %s", err)
+				log.Warning("Cannot download artifact %s: %s", a.Name, err)
 				sendLog(res.Reason)
 				return res
 			}

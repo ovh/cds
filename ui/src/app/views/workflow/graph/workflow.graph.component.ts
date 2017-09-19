@@ -18,7 +18,6 @@ import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node
 import {Project} from '../../../model/project.model';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
-import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {CDSWorker} from '../../../shared/worker/worker';
@@ -36,7 +35,12 @@ import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
 @AutoUnsubscribe()
 export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
-    @Input() workflow: Workflow;
+    workflow: Workflow;
+    @Input('workflowData')
+    set workflowData(data: Workflow) {
+        this.workflow = data;
+        this.changeDisplay(true);
+    }
     @Input() project: Project;
     @Input() webworker: CDSWorker;
 
@@ -45,7 +49,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     @Output() deleteJoinSrcEvent = new EventEmitter<{ source, target }>();
     @Output() addSrcToJoinEvent = new EventEmitter<{ source, target }>();
 
-    viewInit = false;
+    ready: boolean;
 
     // workflow graph
     @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer;
@@ -64,8 +68,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     nodesComponent = new Map<number, ComponentRef<WorkflowNodeComponent>>();
     joinsComponent = new Map<number, ComponentRef<WorkflowJoinComponent>>();
 
-    workflowSubscription: Subscription;
-
     nodeWidth: number;
     nodeHeight: number;
 
@@ -75,20 +77,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     ngOnInit(): void {
         this.direction = this._workflowStore.getDirection(this.project.key, this.workflow.name);
-        this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, this.workflow.name).subscribe(ws => {
-            if (ws) {
-                let updatedWorkflow = ws.get(this.project.key + '-' + this.workflow.name);
-                if (updatedWorkflow && !updatedWorkflow.externalChange) {
-                    this.workflow = updatedWorkflow;
-                    if (this.viewInit) {
-                        this.changeDisplay(true);
-                    }
-                    this.viewInit = true;
-                }
-            }
-        }, () => {
-            console.log('Error getting workflow');
-        });
     }
 
     @HostListener('window:resize', ['$event'])
@@ -121,13 +109,14 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     }
 
     ngAfterViewInit(): void {
-        if (this.viewInit) {
-            this.changeDisplay(true);
-        }
-        this.viewInit = true;
+        this.ready = true;
+        this.changeDisplay(true);
     }
 
     changeDisplay(resize: boolean): void {
+        if (!this.ready) {
+           return;
+        }
         this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
         this.joinsComponent.forEach(j => {
             j.destroy();

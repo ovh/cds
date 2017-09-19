@@ -29,7 +29,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, w *sdk.WorkflowR
 		}
 		//Run the node : manual or from an event
 		log.Debug("processWorkflowRun> starting from node %#v", startingFromNode)
-		if err := processWorkflowNodeRun(db, store, w, start, len(w.WorkflowNodeRuns), nil, hookEvent, manual); err != nil {
+		if err := processWorkflowNodeRun(db, store, w, start, len(w.WorkflowNodeRuns[start.ID]), nil, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
 		}
 		return nil
