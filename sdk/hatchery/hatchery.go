@@ -41,7 +41,7 @@ type CommonConfiguration struct {
 				Host       string `toml:"host"`
 				Port       int    `toml:"port"`
 				ExtraKey   string `toml:"extraKey"`
-				Extravalue string `toml:"extravalue"`
+				ExtraValue string `toml:"extraValue"`
 			} `toml:"graylog"`
 		} `toml:"workerLogsOptions" comment:"Worker Log Configuration"`
 	} `toml:"provision"`
@@ -50,7 +50,7 @@ type CommonConfiguration struct {
 			Host       string `toml:"host"`
 			Port       int    `toml:"port"`
 			ExtraKey   string `toml:"extraKey"`
-			Extravalue string `toml:"extravalue"`
+			ExtraValue string `toml:"extraValue"`
 		} `toml:"graylog"`
 		SpawnOptions struct {
 			ThresholdCritical int `toml:"thresholdCritical" default:"480" comment:"log critical if spawn take more than this value (in seconds)"`

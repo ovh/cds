@@ -164,7 +164,7 @@
         # Request CDS API: timeout in seconds
         RequestTimeout = 10
 
-        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/
         Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
 
         [Hatchery.Docker.CommonConfiguration.API.GRPC]
@@ -186,7 +186,7 @@
 
         [Hatchery.Docker.CommonConfiguration.LogOptions.Graylog]
           ExtraKey = ""
-          Extravalue = ""
+          ExtraValue = ""
           Host = ""
           Port = 0
 
@@ -221,7 +221,7 @@
 
           [Hatchery.Docker.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
             ExtraKey = ""
-            Extravalue = ""
+            ExtraValue = ""
             Host = ""
             Port = 0
 
@@ -246,7 +246,7 @@
         # Request CDS API: timeout in seconds
         RequestTimeout = 10
 
-        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/
         Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
 
         [Hatchery.Local.CommonConfiguration.API.GRPC]
@@ -268,7 +268,7 @@
 
         [Hatchery.Local.CommonConfiguration.LogOptions.Graylog]
           ExtraKey = ""
-          Extravalue = ""
+          ExtraValue = ""
           Host = ""
           Port = 0
 
@@ -303,7 +303,7 @@
 
           [Hatchery.Local.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
             ExtraKey = ""
-            Extravalue = ""
+            ExtraValue = ""
             Host = ""
             Port = 0
 
@@ -350,7 +350,7 @@
         # Request CDS API: timeout in seconds
         RequestTimeout = 10
 
-        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/
         Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
 
         [Hatchery.Marathon.CommonConfiguration.API.GRPC]
@@ -372,7 +372,7 @@
 
         [Hatchery.Marathon.CommonConfiguration.LogOptions.Graylog]
           ExtraKey = ""
-          Extravalue = ""
+          ExtraValue = ""
           Host = ""
           Port = 0
 
@@ -407,7 +407,7 @@
 
           [Hatchery.Marathon.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
             ExtraKey = ""
-            Extravalue = ""
+            ExtraValue = ""
             Host = ""
             Port = 0
 
@@ -423,8 +423,8 @@
     # if true: hatchery does not create openstack image when a worker model is updated
     # DisableCreateImage = false
 
-    # Facultative. IP Range for spawned workers. 
-    # Format: a.a.a.a/b,c.c.c.c/e 
+    # Facultative. IP Range for spawned workers.
+    # Format: a.a.a.a/b,c.c.c.c/e
     # Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).
     #If not set, it will get an address from the neutron service
     # IPRange = ""
@@ -462,7 +462,7 @@
         # Request CDS API: timeout in seconds
         RequestTimeout = 10
 
-        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/
         Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
 
         [Hatchery.Openstack.CommonConfiguration.API.GRPC]
@@ -484,7 +484,7 @@
 
         [Hatchery.Openstack.CommonConfiguration.LogOptions.Graylog]
           ExtraKey = ""
-          Extravalue = ""
+          ExtraValue = ""
           Host = ""
           Port = 0
 
@@ -519,7 +519,7 @@
 
           [Hatchery.Openstack.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
             ExtraKey = ""
-            Extravalue = ""
+            ExtraValue = ""
             Host = ""
             Port = 0
 
@@ -553,7 +553,7 @@
         # Request CDS API: timeout in seconds
         RequestTimeout = 10
 
-        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/
         Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
 
         [Hatchery.Swarm.CommonConfiguration.API.GRPC]
@@ -575,7 +575,7 @@
 
         [Hatchery.Swarm.CommonConfiguration.LogOptions.Graylog]
           ExtraKey = ""
-          Extravalue = ""
+          ExtraValue = ""
           Host = ""
           Port = 0
 
@@ -610,7 +610,7 @@
 
           [Hatchery.Swarm.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
             ExtraKey = ""
-            Extravalue = ""
+            ExtraValue = ""
             Host = ""
             Port = 0
 
@@ -662,7 +662,7 @@
         # Request CDS API: timeout in seconds
         RequestTimeout = 10
 
-        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ 
+        # CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/
         Token = "pw3adk0q9oqquumss2vjmq41agpc203dbuzby7o1dcfizra2sbyq21grwpu1cqhtgitgbf0nhaoiive7xkuuj3imxve518z9d0khnzu8r4rumdbgpz8xvlkt6yp3rynb"
 
         [Hatchery.VSphere.CommonConfiguration.API.GRPC]
@@ -684,7 +684,7 @@
 
         [Hatchery.VSphere.CommonConfiguration.LogOptions.Graylog]
           ExtraKey = ""
-          Extravalue = ""
+          ExtraValue = ""
           Host = ""
           Port = 0
 
@@ -719,7 +719,7 @@
 
           [Hatchery.VSphere.CommonConfiguration.Provision.WorkerLogsOptions.Graylog]
             ExtraKey = ""
-            Extravalue = ""
+            ExtraValue = ""
             Host = ""
             Port = 0
 
@@ -757,4 +757,3 @@
 
   # Log Level: debug, info, warning, notice, critical
   Level = "debug"
-
