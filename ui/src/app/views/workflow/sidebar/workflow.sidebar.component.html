@@ -1,7 +1,16 @@
 <div id="WorkflowSidebar" *ngIf="open">
-    <h3></h3>
+    <sui-multi-select class="selection"
+                      [(ngModel)]="selectedTags"
+                      [options]="tagsSelectable"
+                      [isSearchable]="true"
+                      (ngModelChange)="refreshRun()"
+                      #multiSelect>
+        <sui-select-option *ngFor="let option of multiSelect.filteredOptions"
+                           [value]="option">
+        </sui-select-option>
+    </sui-multi-select>
     <ul>
-        <li *ngFor="let r of workflowRuns">
+        <li *ngFor="let r of filteredWorkflowRuns">
             <a href="#" [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', r.num]">Run {{r.num}}</a>
         </li>
         <li *ngIf="ready && (!workflowRuns || workflowRuns.length === 0)">{{ 'workflow_run_never' | translate }}</li>

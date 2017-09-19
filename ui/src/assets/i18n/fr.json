@@ -296,6 +296,7 @@
   "pipeline_label_run_new" : "Relancer le pipeline",
   "pipeline_label_run_with_parameter" : "Lancer le pipeline avec des paramètres",
   "pipeline_label_stop" : "Arrêter le pipeline",
+  "pipeline_loading" : "Chargement du pipeline...",
   "pipeline_name": "Nom du pipeline",
   "pipeline_name_error" : "Le nom du pipeline est invalide. Pattern autorisé : a-zA-Z0-9._-",
   "pipeline_parameters_list_title" : "Liste des paramètres du pipeline : ",
