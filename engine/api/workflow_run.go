@@ -218,7 +218,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 		}
 
 		infos := sdk.SpawnInfo{
-			APITime: time.Now(),
+			APITime:    time.Now(),
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getUser(ctx).Username}},
 		}

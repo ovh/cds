@@ -50,8 +50,6 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 		}
 	}
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
@@ -94,8 +92,6 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
-
-	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -202,8 +198,6 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//Create group
 	g := &sdk.Group{
 		Name: sdk.RandomString(10),
@@ -294,8 +288,6 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//Create group
 	g := &sdk.Group{
 		Name: sdk.RandomString(10),
@@ -351,8 +343,6 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 func Test_updateWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
-
-	
 
 	//Create group
 	g := &sdk.Group{
@@ -437,8 +427,6 @@ func Test_deleteWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//Create group
 	g := &sdk.Group{
 		Name: sdk.RandomString(10),
@@ -506,8 +494,6 @@ func Test_getWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	
-
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
@@ -565,8 +551,6 @@ func Test_getWorkerModel(t *testing.T) {
 func Test_getWorkerModels(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
-
-	
 
 	//Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())

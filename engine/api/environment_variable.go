@@ -302,7 +302,7 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot check warnings")
 		}
 
-		apps, errApps := application.LoadAll(api.mustDB(),  api.Cache,p.Key, getUser(ctx), application.LoadOptions.WithVariables)
+		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
 			return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
 		}
@@ -380,7 +380,7 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot check warnings")
 		}
 
-		apps, errApps := application.LoadAll(api.mustDB(),  api.Cache,p.Key, getUser(ctx), application.LoadOptions.WithVariables)
+		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
 			return sdk.WrapError(errApps, "addVariableInEnvironmentHandler: Cannot load applications")
 		}
