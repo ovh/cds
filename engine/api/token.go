@@ -36,7 +36,7 @@ func (api *API) generateTokenHandler() Handler {
 			return sdk.WrapError(err, "generateTokenHandler: cannot generate key")
 		}
 		now := time.Now()
-		if err := token.InsertToken(api.mustDB(), g.ID, tk, exp, now); err != nil {
+		if err := token.InsertToken(api.mustDB(), g.ID, tk, exp); err != nil {
 			return sdk.WrapError(err, "generateTokenHandler> cannot insert new key")
 		}
 		token := sdk.Token{

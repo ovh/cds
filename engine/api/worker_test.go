@@ -3,7 +3,6 @@ package api
 import (
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -78,7 +77,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent, time.Now()); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
@@ -171,7 +170,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent, time.Now()); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
