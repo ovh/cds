@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -21,6 +22,51 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func processStashHook(w http.ResponseWriter, r *http.Request, data []byte) hook.ReceivedHook {
+	rh := hook.ReceivedHook{
+		URL:        *r.URL,
+		Data:       data,
+		ProjectKey: r.FormValue("project"),
+		Repository: r.FormValue("name"),
+		Branch:     r.FormValue("branch"),
+		Hash:       r.FormValue("hash"),
+		Author:     r.FormValue("author"),
+		Message:    r.FormValue("message"),
+		UID:        r.FormValue("uid"),
+	}
+
+	return rh
+}
+
+func processGitlabHook(w http.ResponseWriter, r *http.Request, data []byte) (hook.ReceivedHook, error) {
+
+	type gitlabEvent struct {
+		ObjectKind  string `json:"object_kind"`
+		Ref         string `json:"ref"`
+		UserName    string `json:"user_name"`
+		CheckoutSha string `json:"checkout_sha"`
+	}
+
+	var ge gitlabEvent
+	if err := json.Unmarshal(data, &ge); err != nil {
+		return hook.ReceivedHook{}, err
+	}
+
+	rh := hook.ReceivedHook{
+		URL:        *r.URL,
+		Data:       data,
+		ProjectKey: r.FormValue("project"),
+		Repository: r.FormValue("name"),
+		Branch:     ge.Ref,
+		Hash:       ge.CheckoutSha,
+		Author:     ge.UserName,
+		Message:    ge.ObjectKind,
+		UID:        r.FormValue("uid"),
+	}
+
+	return rh, nil
+}
+
 func (api *API) receiveHookHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get body
@@ -35,16 +81,14 @@ func (api *API) receiveHookHandler() Handler {
 			return err
 		}
 
-		rh := hook.ReceivedHook{
-			URL:        *r.URL,
-			Data:       data,
-			ProjectKey: r.FormValue("project"),
-			Repository: r.FormValue("name"),
-			Branch:     r.FormValue("branch"),
-			Hash:       r.FormValue("hash"),
-			Author:     r.FormValue("author"),
-			Message:    r.FormValue("message"),
-			UID:        r.FormValue("uid"),
+		var rh hook.ReceivedHook
+		if r.Header.Get("X-Gitlab-Event") != "" {
+			rh, err = processGitlabHook(w, r, data)
+			if err != nil {
+				return err
+			}
+		} else {
+			rh = processStashHook(w, r, data)
 		}
 
 		db := api.DBConnectionFactory.GetDBMap()
