@@ -25,39 +25,16 @@ services:
     volumes:
       - cds-artifacts-volume:/app/artifacts
     environment:
-      CDS_API_VCS_GITHUB_DISABLESTATUS: "true"
-      CDS_API_VCS_GITHUB_DISABLESTATUSURL: "true"
-      CDS_API_VCS_POLLING_DISABLED: "true"
       CDS_API_DATABASE_HOST: cds-db
-      CDS_API_DATABASE_PASSWORD: cds
-      CDS_API_DATABASE_TIMEOUT: 10000
-      CDS_API_DATABASE_USER: cds
-      CDS_API_DATABASE_NAME: cds
-      CDS_API_DATABASE_MAXCONN: 40
-      CDS_API_DATABASE_PORT: 5432
-      CDS_API_DATABASE_SSLMODE: disable
       CDS_API_URL_API: ${HOSTNAME}:8081
       CDS_API_URL_UI: ${HOSTNAME}:8080
-      CDS_API_SMTP_DISABLE: "true"
-      CDS_API_SMTP_TLS: "false"
-      CDS_API_SMTP_FROM: noreply.cds@foo.cds
-      CDS_API_SMTP_HOST: smtp.foo.cds
-      CDS_API_SMTP_PORT: 25
-      CDS_API_AUTH_LDAP_ENABLE: "false"
       CDS_API_AUTH_DEFAULTGROUP: cdsdemo
       CDS_LOG_LEVEL: info
-      CDS_API_HTTP_SESSIONTTL: 600
-      CDS_API_CACHE_TTL: 60
       CDS_API_CACHE_MODE: redis
       CDS_API_CACHE_REDIS_HOST: cds-cache:6379
       CDS_API_CACHE_REDIS_PASSWORD: cds
       CDS_API_DIRECTORIES_DOWNLOAD: /app
-      CDS_API_VCS_POLLING_DISABLED: "false"
-      CDS_API_HTTP_PORT: 8081
-      CDS_API_GRPC_PORT: 8082
-      CDS_API_SCHEDULERS_DISABLED: "false"
       CDS_API_DIRECTORIES_KEYS: /app/keys
-      CDS_API_ARTIFACT_MODE: local
       CDS_API_ARTIFACT_LOCAL_BASEDIRECTORY: /app/artifacts
       CDS_API_AUTH_SHAREDINFRATOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       CDS_API_SECRETS_KEY: changeitchangeitchangeitchangeit
@@ -82,13 +59,10 @@ services:
     image: ovhcom/cds-engine:latest
     command: /app/cds-engine-linux-amd64 start hatchery:swarm
     environment:
-      CDS_HATCHERY_SWARM_RATIOSERVICE: 50
       CDS_HATCHERY_SWARM_COMMONCONFIGURATION_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       DOCKER_HOST: tcp://${HOSTNAME}:2375
       CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_HTTP_URL: http://cds-api:8081
-      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_PROVISION_MAXWORKER: 2
       CDS_HATCHERY_SWARM_MAXCONTAINERS: 4
-      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_REQUESTTIMEOUT: 120
     links:
        - cds-api
 
