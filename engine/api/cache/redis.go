@@ -9,10 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk/log"
-	"github.com/pkg/errors"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/tat/api/cache"
 
 	"github.com/go-redis/redis"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //RedisStore a redis client and a default ttl
@@ -281,37 +282,43 @@ func (s *RedisStore) Status() string {
 	return "KO (redis"
 }
 
-func (s *RedisStore) SetAdd(key string, member interface{}) {
-	b, err := json.Marshal(member)
-	if err != nil {
-		log.Warning("redis> Error SAdd %s:%s", key, err)
-		return
-	}
-	s.Client.SAdd(key, b)
+func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}) {
+	s.Client.ZAdd(rootKey, redis.Z{
+		Member: memberKey,
+		Score:  float64(time.Now().UnixNano()),
+	})
+	s.SetWithTTL(Key(rootKey, memberKey), member, -1)
+	log.Debug("redis> %s saved", Key(rootKey, memberKey))
 }
 
 func (s *RedisStore) SetCard(key string) int {
-	return int(s.Client.SCard(key).Val())
+	return int(s.Client.ZCard(key).Val())
 }
 
-func (s *RedisStore) SetRemove(key string, member interface{}) {
-	b, err := json.Marshal(member)
-	if err != nil {
-		log.Warning("redis> Error SAdd %s:%s", key, err)
-		return
-	}
-	s.Client.SRem(key, b)
+func (s *RedisStore) SetRemove(rootKey string, memberKey string) {
+	s.Client.ZRem(rootKey, memberKey)
+	s.Delete(Key(rootKey, memberKey))
 }
+
 func (s *RedisStore) SetScan(key string, members ...interface{}) error {
-	values, _, err := s.Client.ZScan(key, uint64(0), "", int64(len(members))).Result()
+	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
+		Min: "-inf",
+		Max: "+inf",
+	}).Result()
 	if err != nil {
-		return errors.Wrap(err, "redis.SetScan")
+		return sdk.WrapError(err, "redis zrange error")
 	}
 
 	for i := range members {
-		if err := json.Unmarshal([]byte(values[i]), members[i]); err != nil {
-			return err
+		val := values[i]
+		memKey := Key(key, val)
+		if !s.Get(memKey, members[i]) {
+			return fmt.Errorf("Member (%s) not found", memKey)
 		}
 	}
 	return nil
+}
+
+func (s *RedisStore) SetGet(rootKey string, memberKey string, member interface{}) bool {
+	return s.Get(cache.Key(rootKey, memberKey), member)
 }

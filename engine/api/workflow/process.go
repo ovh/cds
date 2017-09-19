@@ -290,7 +290,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, w *sdk.Workf
 	run.HookEvent = h
 	if h != nil {
 		run.Payload = h.Payload
-		run.PipelineParameters = h.PipelineParameters
+		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
 
 	run.Manual = m

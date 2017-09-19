@@ -131,9 +131,3 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.URL = s.Cfg.URL
 	r.Handle("/webhook/{uuid}", r.POST(s.webhookHandler), r.GET(s.webhookHandler), r.DELETE(s.webhookHandler), r.PUT(s.webhookHandler))
 }
-
-func (s *Service) webhookHandler() api.Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return nil
-	}
-}

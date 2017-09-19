@@ -245,18 +245,18 @@ func (s *LocalStore) Status() string {
 	return "OK (local)"
 }
 
-func (s *LocalStore) SetAdd(key string, member interface{}) {
+func (s *LocalStore) SetAdd(rootKey string, memberKey string, member interface{}) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	set := s.Sets[key]
+	set := s.Sets[rootKey]
 	btes, err := json.Marshal(member)
 	if err != nil {
 		log.Error("cache.local.SetAdd> Unable to marshal member value: %v", err)
 		return
 	}
 	set = append(set, btes)
-	s.Sets[key] = set
+	s.Sets[rootKey] = set
 }
 
 func (s *LocalStore) SetCard(key string) int {
@@ -267,14 +267,14 @@ func (s *LocalStore) SetCard(key string) int {
 	return len(set)
 }
 
-func (s *LocalStore) SetRemove(key string, member interface{}) {
+func (s *LocalStore) SetRemove(rootKey string, memberKey string) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
-	s.Sets[key] = nil
+	s.Sets[rootKey] = nil
 }
 
-func (s *LocalStore) SetScan(key string, members ...interface{}) error {
-	set := s.Sets[key]
+func (s *LocalStore) SetScan(rootKey string, members ...interface{}) error {
+	set := s.Sets[rootKey]
 	if len(members) > len(set) {
 		return errors.New("Too much members")
 	}
@@ -284,4 +284,8 @@ func (s *LocalStore) SetScan(key string, members ...interface{}) error {
 		}
 	}
 	return nil
+}
+
+func (s *LocalStore) SetGet(rootKey string, memberKey string, member interface{}) bool {
+	return false
 }

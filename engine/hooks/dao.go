@@ -2,7 +2,7 @@ package hooks
 
 import (
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk"
 )
 
 type dao struct {
@@ -11,13 +11,12 @@ type dao struct {
 
 func (d *dao) FindAllLongRunningTasks() ([]LongRunningTask, error) {
 	nbTasks := d.store.SetCard(longRunningRootKey)
-	log.Debug("dao> ")
 	tasks := make([]*LongRunningTask, nbTasks, nbTasks)
 	for i := 0; i < nbTasks; i++ {
 		tasks[i] = &LongRunningTask{}
 	}
 	if err := d.store.SetScan(longRunningRootKey, interfaceSlice(tasks)...); err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "hooks>FindAllLongRunningTasks> Unable to scan %s", longRunningRootKey)
 	}
 
 	alltasks := make([]LongRunningTask, nbTasks)
@@ -38,8 +37,5 @@ func (d *dao) FindLongRunningTask(uuid string) *LongRunningTask {
 }
 
 func (d *dao) SaveLongRunningTask(r *LongRunningTask) {
-	key := cache.Key(longRunningRootKey, r.UUID)
-	d.store.Set(key, r)
-	d.store.SetAdd(longRunningRootKey, r.UUID)
-	log.Debug("Hooks> tasks %s saved", r.UUID)
+	d.store.SetAdd(longRunningRootKey, r.UUID, r)
 }

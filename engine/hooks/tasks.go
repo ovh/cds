@@ -28,11 +28,13 @@ func (s *Service) runTasks(ctx context.Context) error {
 	}
 
 	if err := s.startLongRunningTasks(ctx); err != nil {
-		log.Error("Hook> EXit long running tasks: %v", err)
+		log.Error("Hook> Exit long running tasks: %v", err)
+		return err
 	}
 
 	if err := s.startScheduledTasks(ctx); err != nil {
 		log.Error("Hook> Exit scheduled tasks: %v", err)
+		return err
 	}
 	<-ctx.Done()
 	return ctx.Err()
