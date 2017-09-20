@@ -10,7 +10,7 @@ identifier = "gitclone"
 
 **GitClone** is a builtin action, you can't modify it.
 
-This action clone a repository into a new directory.
+This action clones a repository into a new directory.
 
 Git Clone will be done with a `depth` of 1.
 

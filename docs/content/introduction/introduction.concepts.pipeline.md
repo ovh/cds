@@ -1,6 +1,6 @@
 +++
 title = "Pipeline"
-weight = 1
+weight = 2
 
 [menu.main]
 parent = "concepts"
