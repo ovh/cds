@@ -85,7 +85,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	vars["cds.project"] = w.ProjectKey
 	vars["cds.workflow"] = w.Name
 	vars["cds.pipeline"] = n.Pipeline.Name
-	vars["cds.version"] = fmt.Sprintf("%d.%d", 1, 0)
+	vars["cds.version"] = fmt.Sprintf("%d.%d", 1)
 	vars["cds.run"] = fmt.Sprintf("%d.%d", 1, 0)
 	vars["cds.run.number"] = fmt.Sprintf("%d", 1)
 	vars["cds.run.subnumber"] = fmt.Sprintf("%d", 0)
@@ -178,7 +178,7 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, run *sdk.
 
 	//override default parameters value
 	tmp := sdk.ParametersToMap(params)
-	tmp["cds.version"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
+	tmp["cds.version"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)

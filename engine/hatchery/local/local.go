@@ -166,8 +166,8 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 	if h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
 		args = append(args, fmt.Sprintf("--graylog-extra-key=%s", h.Config.Provision.WorkerLogsOptions.Graylog.ExtraKey))
 	}
-	if h.Config.Provision.WorkerLogsOptions.Graylog.Extravalue != "" {
-		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", h.Config.Provision.WorkerLogsOptions.Graylog.Extravalue))
+	if h.Config.Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
+		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", h.Config.Provision.WorkerLogsOptions.Graylog.ExtraValue))
 	}
 	if h.Config.API.GRPC.URL != "" && wm.Communication == sdk.GRPC {
 		args = append(args, fmt.Sprintf("--grpc-api=%s", h.Config.API.GRPC.URL))

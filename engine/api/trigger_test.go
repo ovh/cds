@@ -21,8 +21,6 @@ import (
 func TestAddTriggerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -56,7 +54,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.mustDB(), api.Cache,  proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
@@ -106,8 +104,6 @@ func TestAddTriggerHandler(t *testing.T) {
 func TestUpdateTriggerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -142,7 +138,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.mustDB(), api.Cache,  proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
@@ -199,8 +195,6 @@ func TestUpdateTriggerHandler(t *testing.T) {
 func TestRemoveTriggerHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 
-	
-
 	//1. Create admin user
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
@@ -233,7 +227,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	app := &sdk.Application{
 		Name: applicationName,
 	}
-	err = application.Insert(api.mustDB(), api.Cache,  proj, app, u)
+	err = application.Insert(api.mustDB(), api.Cache, proj, app, u)
 	test.NoError(t, err)
 
 	//6. Attach pipeline 1
