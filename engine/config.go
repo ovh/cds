@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	defaults "github.com/mcuadros/go-defaults"
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/secret"
@@ -14,6 +15,10 @@ import (
 
 // config reads in config file and ENV variables if set.
 func config() {
+	for k := range AsEnvVariables(conf, "") {
+		viper.BindEnv(strings.ToLower(strings.Replace(k, "_", ".", -1)), "CDS_"+k)
+	}
+
 	if cfgFile != "" {
 		//If the config file doesn't exists, let's exit
 		if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
@@ -26,9 +31,6 @@ func config() {
 			sdk.Exit(err.Error())
 		}
 
-		if err := viper.Unmarshal(conf); err != nil {
-			sdk.Exit(err.Error())
-		}
 	} else if remoteCfg != "" {
 		fmt.Println("Reading configuration from consul @", remoteCfg)
 		viper.AddRemoteProvider("consul", remoteCfg, remoteCfgKey)
@@ -56,14 +58,10 @@ func config() {
 		if err := viper.ReadConfig(cfgBuffer); err != nil {
 			sdk.Exit("Unable to read config: %v", err.Error())
 		}
-
-		// Unmarshal in the conf
-		if err := viper.Unmarshal(conf); err != nil {
-			sdk.Exit("Unable to parse config: %v", err.Error())
-		}
 	}
 
-	viper.AutomaticEnv() // read in environment variables that match
-	viper.SetEnvPrefix("cds")
-	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_")) // Replace "." and "-" by "_" for env variable lookup
+	if err := viper.Unmarshal(conf); err != nil {
+		sdk.Exit("Unable to parse config: %v", err.Error())
+	}
+	defaults.SetDefaults(conf)
 }
