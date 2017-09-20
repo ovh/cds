@@ -169,7 +169,10 @@ func (api *API) resyncWorkflowRunPipelinesHandler() Handler {
 			return sdk.WrapError(err, "resyncWorkflowRunPipelinesHandler> Cannot resync pipelines")
 		}
 
-		return tx.Commit()
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "resyncWorkflowRunPipelinesHandler> Cannot commit transaction")
+		}
+		return WriteJSON(w, r, run, http.StatusOK)
 	}
 }
 

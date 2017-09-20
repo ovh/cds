@@ -105,12 +105,13 @@ func (s *LocalStore) Enqueue(queueName string, value interface{}) {
 
 //Dequeue gets from queue This is blocking while there is nothing in the queue
 func (s *LocalStore) Dequeue(queueName string, value interface{}) {
+	s.mutex.Lock()
 	l := s.Queues[queueName]
 	if l == nil {
 		s.Queues[queueName] = &list.List{}
 		l = s.Queues[queueName]
 	}
-
+	s.mutex.Unlock()
 	elemChan := make(chan *list.Element)
 	go func() {
 		for {
@@ -138,6 +139,8 @@ func (s *LocalStore) Dequeue(queueName string, value interface{}) {
 
 //QueueLen returns the length of a queue
 func (s *LocalStore) QueueLen(queueName string) int {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	l := s.Queues[queueName]
 	if l == nil {
 		return 0
@@ -148,7 +151,10 @@ func (s *LocalStore) QueueLen(queueName string) int {
 //DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
 func (s *LocalStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
 	log.Debug("[%p] DequeueWithContext from %s", s, queueName)
+	s.mutex.Lock()
 	l := s.Queues[queueName]
+	s.mutex.Unlock()
+
 	if l == nil {
 		s.mutex.Lock()
 		s.Queues[queueName] = &list.List{}
