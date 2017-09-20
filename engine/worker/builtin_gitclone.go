@@ -152,65 +152,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		}
 
 		errTag := git.TagList(dir, outputGitTar)
-		//Send the logs
-		if len(stdTagListOut.Bytes()) > 0 {
-			// search for version
-			lines := strings.Split(stdTagListOut.String(), "\n")
-			sort.Sort(sort.Reverse(sort.StringSlice(lines)))
-			var v semver.Version
-			found := false
-			for _, l := range lines {
-				var errorMake error
-				v, errorMake = semver.Make(l)
-				if errorMake == nil {
-					found = true
-					v.Patch++
-					break
-				}
-			}
-			if !found {
-				var errorMake error
-				v, errorMake = semver.Make("0.0.1")
-				if errorMake != nil {
-					res := sdk.Result{
-						Status: sdk.StatusFail.String(),
-						Reason: fmt.Sprintf("Unable init semver: %s", errorMake),
-					}
-					sendLog(res.Reason)
-					return res
-				}
-			}
 
-			pr, errPR := semver.NewPRVersion("snapshot")
-			if errPR != nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable create snapshot version: %s", errTag),
-				}
-				sendLog(res.Reason)
-				return res
-			}
-			v.Pre = append(v.Pre, pr)
-
-			if cdsVersion != nil {
-				v.Build = append(v.Build, cdsVersion.Value, "cds")
-			}
-
-			semverVar := sdk.Variable{
-				Name:  "cds.semver",
-				Type:  sdk.StringVariable,
-				Value: v.String(),
-			}
-			_, err := w.addVariableInPipelineBuild(semverVar, params)
-			if err != nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
-				}
-				sendLog(res.Reason)
-				return res
-			}
-		}
 		if len(stdTaglistErr.Bytes()) > 0 {
 			sendLog(stdTaglistErr.String())
 		}
@@ -219,6 +161,62 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
 				Reason: fmt.Sprintf("Unable to list tag for getting current version: %s", errTag),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+
+		v, errorMake := semver.Make("0.0.1")
+		if errorMake != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable init semver: %s", errorMake),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+
+		//Send the logs
+		if len(stdTagListOut.Bytes()) > 0 {
+			// search for version
+			lines := strings.Split(stdTagListOut.String(), "\n")
+			sort.Sort(sort.Reverse(sort.StringSlice(lines)))
+
+			for _, l := range lines {
+				var errorMake error
+				v, errorMake = semver.Make(l)
+				if errorMake == nil {
+					v.Patch++
+					break
+				}
+			}
+		}
+
+		pr, errPR := semver.NewPRVersion("snapshot")
+		if errPR != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable create snapshot version: %s", errTag),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+		v.Pre = append(v.Pre, pr)
+
+		if cdsVersion != nil {
+			v.Build = append(v.Build, cdsVersion.Value, "cds")
+		}
+
+		semverVar := sdk.Variable{
+			Name:  "cds.semver",
+			Type:  sdk.StringVariable,
+			Value: v.String(),
+		}
+
+		if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
 			}
 			sendLog(res.Reason)
 			return res
