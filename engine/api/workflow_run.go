@@ -343,7 +343,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		//Run from hook
 		if opts.Hook != nil {
 			var errfh error
-			wr, errfh = workflow.RunFromHook(tx, wf, opts.Hook)
+			wr, errfh = workflow.RunFromHook(tx, api.Cache, wf, opts.Hook)
 			if errfh != nil {
 				return sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
 			}

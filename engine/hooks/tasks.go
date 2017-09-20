@@ -61,9 +61,13 @@ func (s *Service) synchronizeTasks() error {
 	log.Info("Hooks> Synchronizing (%d) tasks from CDS API (%s)", len(hooks), s.Cfg.API.HTTP.URL)
 
 	for _, h := range hooks {
+		if h.Config["project"] == "" || h.Config["workflow"] == "" {
+			log.Error("Hook> Unable to synchronize task %+v: %v", h, err)
+			continue
+		}
 		t, err := s.hookToTask(h)
 		if err != nil {
-			log.Error("Hook> Unable to synchronize task +%v: %v", h, err)
+			log.Error("Hook> Unable to synchronize task %+v: %v", h, err)
 			continue
 		}
 		if lrTask, ok := t.(LongRunningTask); ok {

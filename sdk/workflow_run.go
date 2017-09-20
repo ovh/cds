@@ -144,8 +144,8 @@ func (njr *WorkflowNodeJobRun) Translate(lang string) {
 
 //WorkflowNodeRunHookEvent is an instanc of event received on a hook
 type WorkflowNodeRunHookEvent struct {
-	Payload              interface{} `json:"payload" db:"-"`
-	WorkflowNodeHookUUID string      `json:"uuid" db:"-"`
+	Payload              map[string]string `json:"payload" db:"-"`
+	WorkflowNodeHookUUID string            `json:"uuid" db:"-"`
 }
 
 //WorkflowNodeRunManual is an instanc of event received on a hook

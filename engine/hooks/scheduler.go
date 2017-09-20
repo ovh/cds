@@ -42,8 +42,9 @@ func (s *Service) dequeueLongRunningTasks(c context.Context) error {
 		if err := s.doLongRunningTask(c, &t); err != nil {
 			log.Error("Hooks> doLongRunningTask failed: %v", err)
 			t.LastError = err.Error()
-			s.Dao.SaveLongRunningTaskExecution(&t)
-			continue
 		}
+
+		s.Dao.SaveLongRunningTaskExecution(&t)
+		continue
 	}
 }

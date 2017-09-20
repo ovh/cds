@@ -2,8 +2,8 @@ package hooks
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
-	"net/http/httputil"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -17,24 +17,31 @@ func (s *Service) webhookHandler() api.Handler {
 		uuid := vars["uuid"]
 
 		if uuid == "" {
-			return sdk.WrapError(sdk.ErrWrongRequest, "webhookHandler> invalid uuid")
+			return sdk.WrapError(sdk.ErrWrongRequest, "Hook> webhookHandler> invalid uuid")
 		}
 
 		webHook := s.Dao.FindLongRunningTask(uuid)
 		if webHook == nil {
-			return sdk.WrapError(sdk.ErrNotFound, "webhookHandler> unknown uuid")
+			return sdk.WrapError(sdk.ErrNotFound, "Hook> webhookHandler> unknown uuid")
 		}
 
-		req, err := httputil.DumpRequest(r, true)
+		req, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			return sdk.WrapError(err, "webhookHandler> unsupported request")
+			return sdk.WrapError(err, "Hook> webhookHandler> unable to read request")
+		}
+
+		if r.Method != webHook.Config["method"] {
+			return sdk.WrapError(sdk.ErrMethodNotAllowed, "Hook> webhookHandler> Unsupported method %s : %v", r.Method, webHook.Config)
 		}
 
 		exec := &LongRunningTaskExecution{
-			Request:   req,
-			Timestamp: time.Now().UnixNano(),
-			Type:      webHook.Type,
-			UUID:      webHook.UUID,
+			RequestBody:   req,
+			RequestHeader: r.Header,
+			RequestURL:    r.URL.RawQuery,
+			Timestamp:     time.Now().UnixNano(),
+			Type:          webHook.Type,
+			UUID:          webHook.UUID,
+			Config:        webHook.Config,
 		}
 
 		s.Dao.SaveLongRunningTaskExecution(exec)

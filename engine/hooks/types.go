@@ -58,11 +58,15 @@ type LongRunningTask struct {
 
 type LongRunningTaskExecution struct {
 	UUID                string
+	Config              sdk.WorkflowNodeHookConfig
 	Type                string
 	Timestamp           int64
-	Request             []byte
+	RequestURL          string
+	RequestBody         []byte
+	RequestHeader       map[string][]string
 	LastError           string
 	ProcessingTimestamp int64
+	WorkflowRun         int64
 }
 
 type ScheduledTask struct {

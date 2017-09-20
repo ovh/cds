@@ -111,6 +111,8 @@ func (api *API) putWorkflowHandler() Handler {
 		wf.Root.ID = oldW.RootID
 		wf.ProjectID = p.ID
 		wf.ProjectKey = key
+		//This is forbidden to update the workflow name
+		wf.Name = name
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {

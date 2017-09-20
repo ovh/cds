@@ -225,16 +225,21 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 	return permissionOk
 }
 
-func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, permission int, routeVar map[string]string) bool {
+func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, perm int, routeVar map[string]string) bool {
+	if permission.PermissionReadExecute == perm && getService(ctx) != nil {
+		return true
+	}
+
 	if getUser(ctx).Groups != nil {
 		for _, g := range getUser(ctx).Groups {
 			for _, p := range g.ProjectGroups {
-				if projectKey == p.Project.Key && p.Permission >= permission {
+				if projectKey == p.Project.Key && p.Permission >= perm {
 					return true
 				}
 			}
 		}
 	}
+
 	log.Warning("Access denied. user %s on project %s", getUser(ctx).Username, projectKey)
 	return false
 }

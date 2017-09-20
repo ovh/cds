@@ -309,6 +309,18 @@ func getHatchery(c context.Context) *sdk.Hatchery {
 	return u
 }
 
+func getService(c context.Context) *sdk.Service {
+	i := c.Value(auth.ContextService)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(*sdk.Service)
+	if !ok {
+		return nil
+	}
+	return u
+}
+
 func (a *API) mustDB() *gorp.DbMap {
 	db := a.DBConnectionFactory.GetDBMap()
 	if db == nil {

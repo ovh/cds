@@ -19,6 +19,30 @@ type Workflow struct {
 	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-" cli:"-"`
 }
 
+func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
+	if w.Root == nil {
+		return nil
+	}
+
+	res := map[string]WorkflowNodeHook{}
+
+	a := w.Root.GetHooks()
+	for k, v := range a {
+		res[k] = v
+	}
+
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			b := t.WorkflowDestNode.GetHooks()
+			for k, v := range b {
+				res[k] = v
+			}
+		}
+	}
+
+	return res
+}
+
 //JoinsID returns joins ID
 func (w *Workflow) JoinsID() []int64 {
 	res := []int64{}
@@ -192,6 +216,24 @@ type WorkflowNode struct {
 	TriggerJoinSrcID int64                 `json:"-" db:"-"`
 	Hooks            []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
 	Triggers         []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
+}
+
+//GetHooks returns all hooks for the node and its children
+func (w *WorkflowNode) GetHooks() map[string]WorkflowNodeHook {
+	res := map[string]WorkflowNodeHook{}
+
+	for _, h := range w.Hooks {
+		res[h.UUID] = h
+	}
+
+	for _, t := range w.Triggers {
+		b := t.WorkflowDestNode.GetHooks()
+		for k, v := range b {
+			res[k] = v
+		}
+	}
+
+	return res
 }
 
 // EqualsTo returns true if a node has the same pipeline and context than another
