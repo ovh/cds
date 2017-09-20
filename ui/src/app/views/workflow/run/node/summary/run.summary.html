@@ -35,9 +35,13 @@
             <div class="right aligned column">
                 <div class="ui buttons" *ngIf="nodeRun.status !== pipelineStatusEnum.BUILDING">
                     <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="runNew()">{{ 'pipeline_label_run_new' | translate }}</button>
+                    <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="runNewWithParameter()">{{ 'pipeline_label_run_with_parameter' | translate }}</button>
                 </div>
                 <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="stop()" *ngIf="nodeRun.status === pipelineStatusEnum.BUILDING">{{ 'pipeline_label_stop' | translate }}</button>
             </div>
         </div>
     </div>
 </div>
+<ng-container *ngIf="node && workflow && project">
+    <app-workflow-node-run-param #workflowNodeRunParam [project]="project" [workflow]="workflow" [nodeToRun]="node" [canResync]="true" [nodeRun]="nodeRun"></app-workflow-node-run-param>
+</ng-container>

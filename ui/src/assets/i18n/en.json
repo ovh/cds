@@ -540,6 +540,7 @@
   "workflow_node_form_title" : "Triggered pipeline",
   "workflow_node_join_add" : "Add a join",
   "workflow_node_join_link" : "Link to a join",
+  "workflow_node_pipeline_synchronized" : "Pipeline up to date",
   "workflow_node_trigger_add" : "Add a trigger",
   "workflow_node_trigger_condition_list_title": "Trigger condition list",
   "workflow_node_trigger_condition_name" : "Variable name",
@@ -553,7 +554,9 @@
   "workflow_root_context_pipeline" : "Pipeline",
   "workflow_run_loading" : "Loading runs...",
   "workflow_run_never" : "This workflow has never been run",
+  "workflow_run_with_parameters" : "Run workflow",
   "workflow_updated" : "Workflow updated",
+  "workflow_resync_pipeline" : "Resynchronize all workflow pipelines",
 
   "workflow_orientation_horizontal" : "Horizontal",
   "workflow_orientation_vertical" : "Vertical",

@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {Router} from '@angular/router';
 import {WorkflowNodeRun, WorkflowRunRequest} from '../../../../../model/workflow.run.model';
 import {Project} from '../../../../../model/project.model';
@@ -7,6 +7,7 @@ import {Workflow, WorkflowNode} from '../../../../../model/workflow.model';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../../../shared/toast/ToastService';
+import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
 
 @Component({
     selector: 'app-workflow-node-run-summary',
@@ -19,6 +20,9 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
     @Input() workflow: Workflow;
     @Input() project: Project;
     @Input() duration: string;
+
+    @ViewChild('workflowNodeRunParam')
+    runWithParamComponent: WorkflowNodeRunParamComponent;
 
     node: WorkflowNode;
     pipelineStatusEnum = PipelineStatus;
@@ -69,5 +73,11 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
             this._router.navigate(['project', this.project.key, 'workflow', this.workflow.name, 'run', this.nodeRun.num])
         });
 
+    }
+
+    runNewWithParameter(): void {
+        if (this.runWithParamComponent) {
+            this.runWithParamComponent.show();
+        }
     }
 }

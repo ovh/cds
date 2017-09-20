@@ -86,7 +86,6 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                     let historyChecked = false;
                     this.zone.run(() => {
                         this.nodeRun = <WorkflowNodeRun>JSON.parse(wrString);
-
                         if (!historyChecked) {
                             historyChecked = true;
                             this._workflowRunService.nodeRunHistory(
@@ -96,7 +95,8 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                             })
                         }
 
-                        if (this.nodeRun && this.nodeRun.status === PipelineStatus.SUCCESS || this.nodeRun.status === PipelineStatus.FAIL) {
+                        if (this.nodeRun && (this.nodeRun.status === PipelineStatus.SUCCESS || this.nodeRun.status === PipelineStatus.FAIL
+                                || this.nodeRun.status === PipelineStatus.DISABLED || this.nodeRun.status === PipelineStatus.SKIPPED)) {
                             this.nodeRunWorker.stop();
                             this.nodeRunWorker = undefined;
 
