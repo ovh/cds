@@ -138,7 +138,7 @@ func gitTagListCommand(dir string) cmds {
 
 	gitcmd := cmd{
 		cmd:  "git",
-		args: []string{"tag"},
+		args: []string{"ls-remote", "--tags", "--refs", "origin"},
 		dir:  dir,
 	}
 
