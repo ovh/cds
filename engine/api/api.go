@@ -136,6 +136,9 @@ type Configuration struct {
 			DisableStatus    bool   `toml:"disableStatus" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on Github API"`
 			DisableStatusURL bool   `toml:"disableStatusURL" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on Github API"`
 		} `toml:"github"`
+		Gitlab struct {
+			Secret string `toml:"secret"`
+		} `toml:"gitlab"`
 		Bitbucket struct {
 			DisableStatus bool   `toml:"disableStatus" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on Bitbucket API"`
 			ConsumerKey   string `toml:"consumerKey"`
@@ -434,6 +437,7 @@ func (a *API) Serve(ctx context.Context) error {
 		DisableGithubStatusURL: a.Config.VCS.Github.DisableStatusURL,
 		DisableStashSetStatus:  a.Config.VCS.Bitbucket.DisableStatus,
 		GithubSecret:           a.Config.VCS.Github.Secret,
+		GitlabSecret:           a.Config.VCS.Gitlab.Secret,
 		StashPrivateKey:        a.Config.VCS.Bitbucket.PrivateKey,
 		StashConsumerKey:       a.Config.VCS.Bitbucket.ConsumerKey,
 	}

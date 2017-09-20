@@ -13,6 +13,7 @@ CDS can be linked to following repositories manager :
 
  - **Atlassian Stash / Bitbucket**
  - **Github**
+ - **Gitlab**
 
 It allows you to enable some CDS features such as :
 

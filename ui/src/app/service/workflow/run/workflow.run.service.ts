@@ -63,4 +63,14 @@ export class WorkflowRunService {
     getTags(key: string, workflowName: string): Observable<Map<string, Array<string>>> {
         return this._http.get('/project/' + key + '/workflows/' + workflowName + '/runs/tags');
     }
+
+    /**
+     * Resync pipeline inside workflow run
+     * @param {string} key Project unique key
+     * @param {Workflow} workflow Workflow
+     * @param {number} workflow_run_id Workflow run id to resync
+     */
+    resync(key: string, workflow: Workflow, workflow_run_id: number): Observable<WorkflowRun> {
+        return this._http.post('/project/' + key + '/workflows/' + workflow.name + '/runs/' + workflow_run_id + '/resync', null);
+    }
 }

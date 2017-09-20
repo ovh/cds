@@ -13,8 +13,6 @@
                 <b>{{node.name}}</b>{{' - ' + node.pipeline.name}}
             </p>
         </div>
-        <div class="firstloop" *ngIf="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"></div>
-        <div class="secondloop" *ngIf="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"></div>
         <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0">
             <p class="ellipsis">{{node.context.application.name}}</p>
         </div>

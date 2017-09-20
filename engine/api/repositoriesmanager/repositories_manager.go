@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
+	"github.com/ovh/cds/engine/api/repositoriesmanager/repogitlab"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -33,6 +34,7 @@ type InitializeOpts struct {
 	GithubSecret           string
 	StashPrivateKey        string
 	StashConsumerKey       string
+	GitlabSecret           string
 }
 
 //Initialize initialize private keys
@@ -40,6 +42,7 @@ type InitializeOpts struct {
 func Initialize(o InitializeOpts, DBFunc func() *gorp.DbMap, store cache.Store) error {
 	repogithub.Init(o.APIBaseURL, o.UIBaseURL)
 	repostash.Init(o.APIBaseURL, o.UIBaseURL)
+	repogitlab.Init(o.APIBaseURL, o.UIBaseURL)
 	options = o
 	if db := DBFunc(); db != nil {
 		repositoriesManager, err := LoadAll(db, store)
@@ -64,11 +67,19 @@ func Initialize(o InitializeOpts, DBFunc func() *gorp.DbMap, store cache.Store) 
 					// GithubSecret is already the real secret, not a path to a file
 					found = true
 				}
+			case sdk.Gitlab:
+				// rmSecrets does not need to contains ["client-secret"] = o.GithubSecret
+				// GithubSecret is already the real secret, not a path to a file
+				found = true
+				if o.GitlabSecret != "" {
+					log.Info("RepositoriesManager> Found secret for %s", rm.Name)
+					rmSecrets["secret"] = o.GitlabSecret
+				}
 			}
 
 			if found {
 				if err := initRepositoriesManager(db, &rm, o.KeysDirectory, rmSecrets); err != nil {
-					log.Warning("RepositoriesManager> Unable init %s", rm.Name)
+					log.Warning("RepositoriesManager> Unable init %s: %s", rm.Name, err)
 				}
 			} else {
 				log.Warning("RepositoriesManager> Unable to find key for %s", rm.Name)
@@ -196,6 +207,23 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 		}
 
 		return &rm, nil
+	case sdk.Gitlab:
+		driver, err := repogitlab.NewGitlabDriver(id, name, URL, options.APIBaseURL+"/repositories_manager/oauth2/callback", options.GitlabSecret, args, consumerData)
+		if err != nil {
+			return nil, err
+		}
+
+		rm := sdk.RepositoriesManager{
+			ID:               id,
+			Consumer:         driver,
+			Name:             name,
+			URL:              URL,
+			Type:             sdk.Gitlab,
+			HooksSupported:   driver.HooksSupported(),
+			PollingSupported: driver.PollingSupported(),
+		}
+		return &rm, nil
+
 	}
 	return nil, fmt.Errorf("Unknown type %s. Cannot instanciate repositories manager t=%s id=%d name=%s url=%s args=%s consumerData=%s", t, t, id, name, URL, args, consumerData)
 }
@@ -225,5 +253,14 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 		// nothing to do here for github
 		return nil
 	}
+
+	if rm.Type == sdk.Gitlab {
+		if s, ok := secrets["secret"]; ok {
+			g := rm.Consumer.(*repogitlab.GitlabDriver)
+			g.Secret = s
+		}
+		return nil
+	}
+
 	return fmt.Errorf("Unsupported repositories manager : %s: %s", rm.Name, rm.Type)
 }

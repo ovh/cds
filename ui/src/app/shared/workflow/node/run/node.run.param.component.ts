@@ -1,4 +1,4 @@
-import {Component, Input, ViewChild} from '@angular/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
@@ -6,20 +6,26 @@ import {Project} from '../../../../model/project.model';
 import {cloneDeep} from 'lodash';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {WorkflowNodeRunManual, WorkflowRunRequest} from '../../../../model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {Router} from '@angular/router';
+import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
+import {Subscription} from 'rxjs/Subscription';
+import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-workflow-node-run-param',
     templateUrl: './node.run.param.html',
     styleUrls: ['./node.run.param.scss']
 })
-export class WorkflowNodeRunParamComponent {
+@AutoUnsubscribe()
+export class WorkflowNodeRunParamComponent implements OnInit {
 
     @ViewChild('runWithParamModal')
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
 
+    @Input() canResync = false;
+    @Input() nodeRun: WorkflowNodeRun;
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input('nodeToRun')
@@ -38,8 +44,12 @@ export class WorkflowNodeRunParamComponent {
     codeMirrorConfig: {};
     payloadString: string;
     invalidJSON: boolean;
+    isSync = false;
 
-    constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router) {
+    pipelineSubscription: Subscription;
+
+    constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
+                private _pipStore: PipelineStore) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -47,6 +57,18 @@ export class WorkflowNodeRunParamComponent {
             lineWrapping: true,
             autoRefresh: true
         };
+    }
+
+    ngOnInit(): void {
+        this.pipelineSubscription = this._pipStore.getPipelines(this.project.key, this.nodeToRun.pipeline.name).subscribe(ps => {
+            let pipkey = this.project.key + '-' + this.nodeToRun.pipeline.name;
+            let pip = ps.get(pipkey);
+            if (pip) {
+                if (pip.last_modified === this.nodeToRun.pipeline.last_modified) {
+                    this.isSync = true;
+                }
+            }
+        })
     }
 
     show(): void {
@@ -81,12 +103,26 @@ export class WorkflowNodeRunParamComponent {
 
     }
 
+    resync(): void {
+        this._workflowRunService.resync(this.project.key, this.workflow, this.nodeRun.num).subscribe(wr => {
+            this.nodeToRun = Workflow.getNodeByID(this._nodeToRun.id, wr.workflow);
+            this.isSync = true;
+        });
+    }
+
     run(): void {
         let request = new WorkflowRunRequest();
         request.manual = new WorkflowNodeRunManual();
         request.manual.payload = this.payloadString;
         request.manual.pipeline_parameter = this.nodeToRun.context.default_pipeline_parameters;
+
+        if (this.nodeRun) {
+            request.from_node = this.nodeRun.workflow_node_id;
+            request.number = this.nodeRun.num;
+        }
+
         this._workflowRunService.runWorkflow(this.project.key, this.workflow, request).subscribe(wr => {
+            this.modal.approve(true);
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num]);
         });
     }

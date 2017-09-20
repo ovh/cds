@@ -540,6 +540,7 @@
   "workflow_node_form_title" : "Pipeline à déclencher",
   "workflow_node_join_add" : "Ajouter une jointure",
   "workflow_node_join_link" : "Lier à une jointure",
+  "workflow_node_pipeline_synchronized" : "Pipeline à jour",
   "workflow_node_trigger_add" : "Ajouter un trigger",
   "workflow_node_trigger_condition_list_title": "Liste des conditions de déclenchement",
   "workflow_node_trigger_condition_name" : "Nom de la variable",
@@ -553,7 +554,9 @@
   "workflow_root_context_pipeline" : "Pipeline",
   "workflow_run_loading" : "Chargement des exécutions",
   "workflow_run_never" : "Ce workflow n'a jamais été lancé",
+  "workflow_run_with_parameters" : "Lancer le workflow",
   "workflow_updated" : "Workflow mis à jour",
+  "workflow_resync_pipeline" : "Resynchroniser tous les pipelines du workflow",
 
   "workflow_orientation_tree" : "Arborescence",
   "workflow_orientation_horizontal" : "Horizontale",
