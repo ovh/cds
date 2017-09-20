@@ -330,6 +330,31 @@ With CDS CLI run : <a class="read-more" href="https://ovh.github.io/cds/advanced
 
    <article class="post advanced">
     <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.io/cds/advanced/advanced.repositories_manager.gitlab/">Gitlab</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>Authorize CDS on your Gitlab instance What you need to perform the following steps :
+ Gitlab admin privileges  Create a CDS application on Gitlab In Gitlab go to Settings / Application section. Create a new application with :
+ Name : CDS Redirect URI : http(s):///repositories_manager/oauth2/callback  Scopes :
+ API read_user read_registry  Connect CDS to Gitlab Using CDS CLI, run :
+ $ cds admin reposmanager add GITLAB mygitlab. <a class="read-more" href="https://ovh.github.io/cds/advanced/advanced.repositories_manager.gitlab/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post advanced">
+    <header class="post-header">
         <h2 class="post-title"><a href="https://ovh.github.io/cds/advanced/advanced.hatcheries/">Hatcheries</a></h2>
     </header>
     <section class="post-excerpt">
@@ -454,29 +479,6 @@ Setup a worker model See Tutorial <a class="read-more" href="https://ovh.github.
     <section class="post-excerpt">
         <p>CDS build using VMWare Vsphere infrastructure to spawn each CDS Workers inside dedicated VM.
 Pre-requisites This hatchery spawns VM which obtains IP from DHCP. So first you have to create a DHCP server on your host with NAT if you want to access to the internet. In order to create you have multiple possibilities like create your own VM with a DHCP server configured or if you are comfortable with the VMWare tools you can use the NSX system. <a class="read-more" href="https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/">&raquo;</a></p>
-    </section>
-    <footer class=" footline" >
-         
-        
-
-        
-        
-
-    </footer>
-</article>
-
-
-
-
-
-   <article class="post advanced">
-    <header class="post-header">
-        <h2 class="post-title"><a href="https://ovh.github.io/cds/advanced/advanced.repositories_manager/">Repositories Manager</a></h2>
-    </header>
-    <section class="post-excerpt">
-        <p>CDS can be linked to following repositories manager :
- Atlassian Stash / Bitbucket Github  It allows you to enable some CDS features such as :
- Create application in CDS from Bitbucket or Github Attach an application to its Bitbucket or Github repository Fully automatic hook management Branch filtering on application workflows Commit logs on pipeline build details  Go through this tutorial to enable the link between repositories managers and CDS. <a class="read-more" href="https://ovh.github.io/cds/advanced/advanced.repositories_manager/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          

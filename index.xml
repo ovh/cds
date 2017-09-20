@@ -168,6 +168,19 @@ $ cds project add TEST &amp;quot;My test project&amp;quot; test-team OK  Create 
     </item>
     
     <item>
+      <title>Gitlab</title>
+      <link>https://ovh.github.io/cds/advanced/advanced.repositories_manager.gitlab/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/advanced/advanced.repositories_manager.gitlab/</guid>
+      <description>Authorize CDS on your Gitlab instance What you need to perform the following steps :
+ Gitlab admin privileges  Create a CDS application on Gitlab In Gitlab go to Settings / Application section. Create a new application with :
+ Name : CDS Redirect URI : http(s):///repositories_manager/oauth2/callback  Scopes :
+ API read_user read_registry  Connect CDS to Gitlab Using CDS CLI, run :
+ $ cds admin reposmanager add GITLAB mygitlab.</description>
+    </item>
+    
+    <item>
       <title>Hatcheries</title>
       <link>https://ovh.github.io/cds/advanced/advanced.hatcheries/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -298,7 +311,7 @@ A Job will be executed by a worker. CDS will choose and provision a worker for d
       
       <guid>https://ovh.github.io/cds/advanced/advanced.repositories_manager/</guid>
       <description>CDS can be linked to following repositories manager :
- Atlassian Stash / Bitbucket Github  It allows you to enable some CDS features such as :
+ Atlassian Stash / Bitbucket Github Gitlab  It allows you to enable some CDS features such as :
  Create application in CDS from Bitbucket or Github Attach an application to its Bitbucket or Github repository Fully automatic hook management Branch filtering on application workflows Commit logs on pipeline build details  Go through this tutorial to enable the link between repositories managers and CDS.</description>
     </item>
     

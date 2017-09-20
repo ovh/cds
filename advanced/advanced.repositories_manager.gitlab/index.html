@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <link rel="shortcut icon" href="https://ovh.github.io/cds/images/favicon.png" type="image/x-icon" />
-    <title>Repositories Manager :: CDS Documentation</title>
+    <title>Gitlab :: CDS Documentation</title>
     <link href="https://ovh.github.io/cds/css/nucleus.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/font-awesome.min.css" rel="stylesheet">
     <link href="https://ovh.github.io/cds/css/hybrid.css" rel="stylesheet">
@@ -20,7 +20,7 @@
     
 
   </head>
-  <body class="" data-url="/advanced/advanced.repositories_manager/">
+  <body class="" data-url="/advanced/advanced.repositories_manager.gitlab/">
     
 <nav id="sidebar">
   <div id="header-wrapper">
@@ -209,14 +209,14 @@
     
 
     <li data-nav-id="/advanced/advanced.repositories_manager/" class="dd-item
-    active
-    ">
+    
+    parent">
         <a href="https://ovh.github.io/cds/advanced/advanced.repositories_manager/">
             Repositories Manager
             
             
               
-                <i style="color:grey" class="fa fa-angle-down section-icon"></i>
+                <i style="color:grey" class="fa fa-angle-right section-icon"></i>
               
             
         </a>
@@ -269,13 +269,17 @@
     
 
     <li data-nav-id="/advanced/advanced.repositories_manager.gitlab/" class="dd-item
-    
+    active
     ">
         <a href="https://ovh.github.io/cds/advanced/advanced.repositories_manager.gitlab/">
             Gitlab
             
             
         </a>
+        
+            
+            
+            
         
     </li>
 
@@ -390,7 +394,7 @@
                 
                 
               <div id="top-github-link">
-                  <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/advanced/advanced.repositories_manager.md" target="blank">
+                  <a class="github-link" href="https://github.com/ovh/cds/edit/master/docs/content/advanced/advanced.repositories_manager.gitlab.md" target="blank">
                     <i class="fa fa-code-fork"></i>
                     Edit this page
                   </a>
@@ -410,14 +414,26 @@
                       <span class="fa fa-arrow-circle-right" style="font-size:larger" aria-hidden="true"></span>
                       CDS Documentation</a>
                       
-                         / <a href='https://ovh.github.io/cds/advanced/advanced/'>Advanced</a> / <a href='https://ovh.github.io/cds/advanced/advanced.repositories_manager/'>Repositories Manager</a>
+                         / <a href='https://ovh.github.io/cds/advanced/advanced/'>Advanced</a> / <a href='https://ovh.github.io/cds/advanced/advanced.repositories_manager/'>Repositories Manager</a> / <a href='https://ovh.github.io/cds/advanced/advanced.repositories_manager.gitlab/'>Gitlab</a>
                       
                       
               </div>
 
                   <div class="progress">
     <div class="wrapper">
-
+<nav id="TableOfContents">
+<ul>
+<li>
+<ul>
+<li><a href="#authorize-cds-on-your-gitlab-instance">Authorize CDS on your Gitlab instance</a>
+<ul>
+<li><a href="#create-a-cds-application-on-gitlab">Create a CDS application on Gitlab</a></li>
+<li><a href="#connect-cds-to-gitlab">Connect CDS to Gitlab</a></li>
+<li><a href="#update-config-toml-and-restart">Update config.toml and restart</a></li>
+</ul></li>
+</ul></li>
+</ul>
+</nav>
     </div>
 </div>
 
@@ -426,31 +442,53 @@
               
             <div id="body-inner">
               
-              <h1>Repositories Manager</h1>
+              <h1>Gitlab</h1>
               
 
-<p>CDS can be linked to following repositories manager :</p>
+
+
+<h2 id="authorize-cds-on-your-gitlab-instance">Authorize CDS on your Gitlab instance</h2>
+
+<p>What you need to perform the following steps :</p>
 
 <ul>
-<li><strong>Atlassian Stash / Bitbucket</strong></li>
-<li><strong>Github</strong></li>
-<li><strong>Gitlab</strong></li>
+<li>Gitlab admin privileges</li>
 </ul>
 
-<p>It allows you to enable some CDS features such as :</p>
+<h3 id="create-a-cds-application-on-gitlab">Create a CDS application on Gitlab</h3>
+
+<p>In Gitlab go to <em>Settings</em> / <em>Application</em> section. Create a new application with :</p>
 
 <ul>
-<li>Create application in CDS from Bitbucket or Github</li>
-<li>Attach an application to its Bitbucket or Github repository</li>
-<li>Fully automatic hook management</li>
-<li>Branch filtering on application workflows</li>
-<li>Commit logs on pipeline build details</li>
+<li>Name : <strong>CDS</strong></li>
+<li>Redirect URI : <strong>http(s)://<your-cds-api>/repositories_manager/oauth2/callback</strong></li>
 </ul>
 
-<p>Go through this tutorial to enable the link between repositories managers and CDS.</p>
+<p>Scopes :</p>
 
-<p>You need CDS admin privileges to perform the following steps.
-Download and install properly the CDS CLI.</p>
+<ul>
+<li>API</li>
+<li>read_user</li>
+<li>read_registry</li>
+</ul>
+
+<h3 id="connect-cds-to-gitlab">Connect CDS to Gitlab</h3>
+
+<p>Using CDS CLI, run :</p>
+
+<pre><code> $ cds admin reposmanager add GITLAB mygitlab.mynetwork.net http://mygitlab.mynetwork.net app-id=gitlabappid
+</code></pre>
+
+<p>And follow instructions.</p>
+
+<h3 id="update-config-toml-and-restart">Update config.toml and restart</h3>
+
+<p>Update the secret value in <code>api.vcs.gitlab</code> section then restart CDS.</p>
+
+<p>You can check operation has succeeded with :</p>
+
+<pre><code> $ cds admin reposmanager list
+</code></pre>
 
 
 <footer class=" footline" >
@@ -489,33 +527,13 @@ Download and install properly the CDS CLI.</p>
             
                 
                     
-                        
-                        
-                    
-                
-            
-                
-                    
-                    
-                
-            
-                
-                    
-                        
-                        
-                            
-                                
-                            
-                        
                     
                 
             
 
             
-                <a class="nav nav-prev" href="https://ovh.github.io/cds/advanced/advanced.worker/" title="Worker"> <i class="fa fa-chevron-left"></i></a>
+                <a class="nav nav-prev" href="https://ovh.github.io/cds/advanced/advanced.repositories_manager.bitbucket/" title="Bitbucket"> <i class="fa fa-chevron-left"></i></a>
             
-            
-                <a class="nav nav-next" href="https://ovh.github.io/cds/advanced/advanced.write-plugin/" title="Write a Plugin" style="margin-right: 0px;"><i class="fa fa-chevron-right"></i></a>
             
         
     </div>
