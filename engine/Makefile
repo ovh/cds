@@ -1,6 +1,6 @@
 .PHONY: clean
 
-VERSION := $(if ${CDS_VERSION},${CDS_VERSION},snapshot)
+VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 
 TARGET_DIR = ./dist
 TARGET_ENGINE = cds-engine
