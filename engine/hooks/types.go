@@ -51,10 +51,18 @@ type Configuration struct {
 }
 
 type LongRunningTask struct {
-	UUID      string
-	Type      string
-	Config    sdk.WorkflowNodeHookConfig
-	LastError string
+	UUID   string
+	Type   string
+	Config sdk.WorkflowNodeHookConfig
+}
+
+type LongRunningTaskExecution struct {
+	UUID                string
+	Type                string
+	Timestamp           int64
+	Request             []byte
+	LastError           string
+	ProcessingTimestamp int64
 }
 
 type ScheduledTask struct {
@@ -69,8 +77,6 @@ type ScheduledTaskExecution struct {
 	UUID                   string
 	Type                   string
 	DateScheduledExecution string
-	DateEffectiveExecution string
-	Error                  string
 }
 
 func interfaceSlice(slice interface{}) []interface{} {

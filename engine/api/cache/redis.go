@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/tat/api/cache"
 
 	"github.com/go-redis/redis"
 	"github.com/ovh/cds/sdk/log"
@@ -86,10 +85,10 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
 	}
 	b, err := json.Marshal(value)
 	if err != nil {
-		log.Warning("redis> Error caching %s", key)
+		log.Warning("redis> Error caching %s: %s", key, err)
 	}
 	if err := s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
-		log.Warning("redis> Error caching %s", key)
+		log.Warning("redis> Error caching %s: %s", key, err)
 	}
 }
 
@@ -288,7 +287,6 @@ func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}
 		Score:  float64(time.Now().UnixNano()),
 	})
 	s.SetWithTTL(Key(rootKey, memberKey), member, -1)
-	log.Debug("redis> %s saved", Key(rootKey, memberKey))
 }
 
 func (s *RedisStore) SetCard(key string) int {
@@ -319,6 +317,13 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 	return nil
 }
 
-func (s *RedisStore) SetGet(rootKey string, memberKey string, member interface{}) bool {
-	return s.Get(cache.Key(rootKey, memberKey), member)
+func (s *RedisStore) SetRange(key string, min, max string) ([]string, error) {
+	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
+		Min: min,
+		Max: max,
+	}).Result()
+	if err != nil {
+		return nil, sdk.WrapError(err, "redis zrange error")
+	}
+	return values, nil
 }

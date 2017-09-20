@@ -18,7 +18,13 @@ const (
 )
 
 var (
-	longRunningRootKey = cache.Key("hooks", "tasks", "long_running")
+	longRunningRootKey          = cache.Key("hooks", "tasks", "long_running")
+	longRunningExecutionRootKey = cache.Key("hooks", "tasks", "long_running", "executions")
+	scheduledRootKey            = cache.Key("hooks", "tasks", "scheduled")
+	scheduledExecutionRootKey   = cache.Key("hooks", "tasks", "scheduled", "executions")
+
+	schedulerQueueLongRuningTasksKey = cache.Key("hooks", "scheduler", "queue", "long_running")
+	schedulerQueueScheduledTasksKey  = cache.Key("hooks", "scheduler", "queue", "scheduled")
 )
 
 // runTasks should run as a long-running goroutine

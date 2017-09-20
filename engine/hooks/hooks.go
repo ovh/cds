@@ -6,13 +6,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/hatchery"
-
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -59,10 +58,13 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 }
 
 // Serve will start the http api server
-func (s *Service) Serve(ctx context.Context) error {
+func (s *Service) Serve(c context.Context) error {
 	if s.Cfg.Name == "" {
 		s.Cfg.Name = hatchery.GenerateName("hooks", "")
 	}
+
+	ctx, cancel := context.WithCancel(c)
+	defer cancel()
 
 	log.Info("Hooks> Starting service %s...", s.Cfg.Name)
 
@@ -90,6 +92,7 @@ func (s *Service) Serve(ctx context.Context) error {
 	go func() {
 		if err := s.heartbeat(ctx); err != nil {
 			log.Error("%v", err)
+			cancel()
 		}
 	}()
 
@@ -97,11 +100,20 @@ func (s *Service) Serve(ctx context.Context) error {
 	go func() {
 		if err := s.runTasks(ctx); err != nil {
 			log.Error("%v", err)
+			cancel()
 		}
 	}()
 
-	s.initRouter(ctx)
+	//Start the scheduler to execute all the tasks
+	go func() {
+		if err := s.runScheduler(ctx); err != nil {
+			log.Error("%v", err)
+			cancel()
+		}
+	}()
 
+	//Init the http server
+	s.initRouter(ctx)
 	server := &http.Server{
 		Addr:           fmt.Sprintf(":%d", s.Cfg.HTTP.Port),
 		Handler:        s.Router.Mux,
@@ -110,6 +122,7 @@ func (s *Service) Serve(ctx context.Context) error {
 		MaxHeaderBytes: 1 << 20,
 	}
 
+	//Gracefully shutdown the http server
 	go func() {
 		select {
 		case <-ctx.Done():
@@ -118,10 +131,12 @@ func (s *Service) Serve(ctx context.Context) error {
 		}
 	}()
 
+	//Start the http server
 	log.Info("Hooks> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
 		log.Fatalf("Hooks> Cannot start cds-hooks: %s", err)
 	}
+
 	return ctx.Err()
 }
 

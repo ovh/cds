@@ -1,6 +1,8 @@
 package hooks
 
 import (
+	"fmt"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 )
@@ -38,4 +40,14 @@ func (d *dao) FindLongRunningTask(uuid string) *LongRunningTask {
 
 func (d *dao) SaveLongRunningTask(r *LongRunningTask) {
 	d.store.SetAdd(longRunningRootKey, r.UUID, r)
+}
+
+func (d *dao) SaveLongRunningTaskExecution(r *LongRunningTaskExecution) {
+	k := fmt.Sprintf("%s:%d", r.UUID, r.Timestamp)
+	d.store.SetAdd(longRunningExecutionRootKey, k, r)
+}
+
+func (d *dao) EnqueueLongRunningTaskExecution(r *LongRunningTaskExecution) {
+	k := fmt.Sprintf("%s:%d", r.UUID, r.Timestamp)
+	d.store.Enqueue(schedulerQueueLongRuningTasksKey, cache.Key(longRunningExecutionRootKey, k))
 }

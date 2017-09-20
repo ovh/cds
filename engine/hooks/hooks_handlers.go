@@ -3,6 +3,8 @@ package hooks
 import (
 	"context"
 	"net/http"
+	"net/http/httputil"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api"
@@ -23,6 +25,21 @@ func (s *Service) webhookHandler() api.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "webhookHandler> unknown uuid")
 		}
 
-		return s.doWebHook(webHook, r)
+		req, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			return sdk.WrapError(err, "webhookHandler> unsupported request")
+		}
+
+		exec := &LongRunningTaskExecution{
+			Request:   req,
+			Timestamp: time.Now().UnixNano(),
+			Type:      webHook.Type,
+			UUID:      webHook.UUID,
+		}
+
+		s.Dao.SaveLongRunningTaskExecution(exec)
+		s.Dao.EnqueueLongRunningTaskExecution(exec)
+
+		return nil
 	}
 }

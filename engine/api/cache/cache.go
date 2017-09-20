@@ -36,10 +36,10 @@ type Store interface {
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
 	Status() string
 	SetAdd(rootKey string, memberKey string, member interface{})
-	SetGet(rootKey string, memberKey string, member interface{}) bool
 	SetCard(key string) int
 	SetRemove(rootKey string, memberKey string)
 	SetScan(key string, members ...interface{}) error
+	SetRange(key string, min, max string) ([]string, error)
 }
 
 //New init a cache

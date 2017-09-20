@@ -288,6 +288,6 @@ func (s *LocalStore) SetScan(rootKey string, members ...interface{}) error {
 	return nil
 }
 
-func (s *LocalStore) SetGet(rootKey string, memberKey string, member interface{}) bool {
-	return false
+func (s *LocalStore) SetRange(key string, min, max string) ([]string, error) {
+	return nil, nil
 }

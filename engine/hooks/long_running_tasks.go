@@ -3,9 +3,6 @@ package hooks
 import (
 	"context"
 	"fmt"
-	"net/http"
-
-	"github.com/ovh/cds/sdk"
 
 	"github.com/ovh/cds/sdk/log"
 )
@@ -46,13 +43,12 @@ func (s *Service) startLongRunningTask(ctx context.Context, t *LongRunningTask) 
 	}
 }
 
-func (s *Service) doWebHook(t *LongRunningTask, r *http.Request) error {
-	log.Info("Hooks> Executing tasks %s", t.UUID)
-
-	if t.Config["method"] != r.Method {
-		log.Debug("Hooks> config %+v doesn't match", t.Config)
-		return sdk.ErrWebhookConfigDoesNotMatch
+func (s *Service) doLongRunningTask(ctx context.Context, t *LongRunningTaskExecution) error {
+	switch t.Type {
+	case TypeWebHook:
+		log.Debug("Hooks> Processing webhook %s", t.UUID)
+		return nil
+	default:
+		return fmt.Errorf("Unsupported task type %s", t.Type)
 	}
-
-	return nil
 }
