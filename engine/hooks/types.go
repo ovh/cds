@@ -3,12 +3,10 @@ package hooks
 import (
 	"reflect"
 
-	"github.com/ovh/cds/sdk"
-
-	"github.com/ovh/cds/sdk/cdsclient"
-
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 // Service is the stuct representing a hooks µService
@@ -20,34 +18,34 @@ type Service struct {
 	Dao    dao
 }
 
-// Configuration is
+// Configuration is the hooks configuration structure
 type Configuration struct {
-	Name string
+	Name string `toml:"name" default:"cdshooks" comment:"Name of this CDS Hooks Service"`
 	HTTP struct {
-		Port int `default:"8083"`
-	}
+		Port int `toml:"port" default:"8083" toml:"name"`
+	} `toml:"http" comment:"######################\n# CDS Hooks HTTP Configuration #\n######################\n"`
 	URL string `default:"http://localhost:8083"`
 	API struct {
 		HTTP struct {
-			URL      string `default:"http://localhost:8081"`
-			Insecure bool
-		}
+			URL      string `toml:"url" default:"http://localhost:8081"`
+			Insecure bool   `toml:"insecure" commented:"true"`
+		} `toml:"http"`
 		GRPC struct {
-			URL      string `default:"http://localhost:8082"`
-			Insecure bool
-		}
-		Token                string `default:"************"`
-		RequestTimeout       int    `default:"10"`
-		MaxHeartbeatFailures int    `default:"10"`
-	}
+			URL      string `toml:"url" default:"http://localhost:8082"`
+			Insecure bool   `toml:"insecure" commented:"true"`
+		} `toml:"grpc"`
+		Token                string `toml:"token" default:"************"`
+		RequestTimeout       int    `toml:"requestTimeout" default:"10"`
+		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10"`
+	} `toml:"api" comment:"######################\n# CDS API Settings #\n######################\n`
 	Cache struct {
-		Mode  string `default:"redis"`
-		TTL   int    `default:"60"`
+		Mode  string `toml:"mode" default:"local" comment:"Cache Mode: redis or local"`
+		TTL   int    `toml:"ttl" default:"60"`
 		Redis struct {
-			Host     string `default:"localhost:6379"`
-			Password string
-		}
-	}
+			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379"`
+			Password string `toml:"password"`
+		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup"`
+	} `toml:"cache" comment:"######################\n# CDS Cache Settings #\n######################\nIf your CDS is made of a unique instance, a local cache if enough, but rememeber that all cached data will be lost on startup."`
 }
 
 type LongRunningTask struct {

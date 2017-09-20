@@ -277,12 +277,6 @@ func (s *LocalStore) SetCard(key string) int {
 	return len(set)
 }
 
-func (s *LocalStore) SetRemove(rootKey string, memberKey string) {
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-	s.Sets[rootKey] = nil
-}
-
 func (s *LocalStore) SetScan(rootKey string, members ...interface{}) error {
 	set := s.Sets[rootKey]
 	if len(members) > len(set) {
@@ -294,8 +288,4 @@ func (s *LocalStore) SetScan(rootKey string, members ...interface{}) error {
 		}
 	}
 	return nil
-}
-
-func (s *LocalStore) SetRange(key string, min, max string) ([]string, error) {
-	return nil, nil
 }

@@ -37,9 +37,7 @@ type Store interface {
 	Status() string
 	SetAdd(rootKey string, memberKey string, member interface{})
 	SetCard(key string) int
-	SetRemove(rootKey string, memberKey string)
 	SetScan(key string, members ...interface{}) error
-	SetRange(key string, min, max string) ([]string, error)
 }
 
 //New init a cache

@@ -293,11 +293,6 @@ func (s *RedisStore) SetCard(key string) int {
 	return int(s.Client.ZCard(key).Val())
 }
 
-func (s *RedisStore) SetRemove(rootKey string, memberKey string) {
-	s.Client.ZRem(rootKey, memberKey)
-	s.Delete(Key(rootKey, memberKey))
-}
-
 func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
 		Min: "-inf",
@@ -315,15 +310,4 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 		}
 	}
 	return nil
-}
-
-func (s *RedisStore) SetRange(key string, min, max string) ([]string, error) {
-	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
-		Min: min,
-		Max: max,
-	}).Result()
-	if err != nil {
-		return nil, sdk.WrapError(err, "redis zrange error")
-	}
-	return values, nil
 }

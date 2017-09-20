@@ -31,7 +31,7 @@ type Configuration struct {
 		Swarm     swarm.HatcheryConfiguration     `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
 		VSphere   vsphere.HatcheryConfiguration   `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
 	} `toml:"hatchery"`
-	Hooks hooks.Configuration
+	Hooks hooks.Configuration `toml:"hooks"`
 }
 
 type ServiceServeOptions struct {

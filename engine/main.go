@@ -104,6 +104,7 @@ Comming soon...`,
 		conf.Hatchery.VSphere.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
+		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
 
 		if !configNewAsEnvFlag {
 			btes, err := toml.Marshal(*conf)
