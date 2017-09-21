@@ -12,12 +12,12 @@ import (
 )
 
 type client struct {
-	isWorker                 bool
-	isHatchery               bool
-	name                     string
-	HTTPClient               HTTPClient
-	HTTPClientWithoutTimeout HTTPClient
-	config                   Config
+	isWorker   bool
+	isHatchery bool
+	isService  bool
+	HTTPClient HTTPClient
+	config     Config
+	name       string
 }
 
 // New returns a client from a config struct
@@ -27,7 +27,22 @@ func New(c Config) Interface {
 	cli.HTTPClient = &http.Client{
 		Timeout: time.Second * 10,
 	}
-	cli.HTTPClientWithoutTimeout = &http.Client{}
+	cli.init()
+	return cli
+}
+
+// NewService returns client for a service
+func NewService(endpoint string) Interface {
+	conf := Config{
+		Host:  endpoint,
+		Retry: 2,
+	}
+	cli := new(client)
+	cli.config = conf
+	cli.HTTPClient = &http.Client{
+		Timeout: time.Second * 10,
+	}
+	cli.isService = true
 	cli.init()
 	return cli
 }
@@ -43,7 +58,6 @@ func NewWorker(endpoint string, name string) Interface {
 	cli.HTTPClient = &http.Client{
 		Timeout: time.Second * 10,
 	}
-	cli.HTTPClientWithoutTimeout = &http.Client{}
 	cli.isWorker = true
 	cli.name = name
 	cli.init()
@@ -68,7 +82,6 @@ func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insec
 	}
 
 	// hatchery don't need to make a request without timeout on API
-	cli.HTTPClientWithoutTimeout = nil
 	cli.isHatchery = true
 	cli.name = name
 	cli.init()
@@ -90,6 +103,8 @@ func (c *client) init() {
 		c.config.userAgent = sdk.WorkerAgent
 	} else if c.isHatchery {
 		c.config.userAgent = sdk.HatcheryAgent
+	} else if c.isService {
+		c.config.userAgent = sdk.ServiceAgent
 	} else {
 		c.config.userAgent = sdk.SDKAgent
 	}

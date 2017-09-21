@@ -10,6 +10,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (api *API) getWorkflowHooksHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		hooks, err := workflow.LoadAllHooks(api.mustDB())
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowHooksHandler")
+		}
+
+		return WriteJSON(w, r, hooks, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkflowHookModelsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		m, err := workflow.LoadHookModels(api.mustDB())

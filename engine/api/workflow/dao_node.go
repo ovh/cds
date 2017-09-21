@@ -108,8 +108,12 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 	//Insert hooks
 	for i := range n.Hooks {
 		h := &n.Hooks[i]
+		//Configure the hook
+		h.Config["project"] = w.ProjectKey
+		h.Config["workflow"] = w.Name
+		//Insert the hook
 		if err := insertHook(db, n, h); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
+			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node hook")
 		}
 	}
 

@@ -62,6 +62,7 @@ type Interface interface {
 	QueueSendResult(int64, sdk.Result) error
 	QueueArtifactUpload(id int64, tag, filePath string) error
 	Requirements() ([]sdk.Requirement, error)
+	ServiceRegister(sdk.Service) (string, error)
 	UserLogin(username, password string) (bool, string, error)
 	UserList() ([]sdk.User, error)
 	UserSignup(username, fullname, email, callback string) error
@@ -80,8 +81,10 @@ type Interface interface {
 	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
 	WorkflowRun(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.Artifact, error)
+	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
 	WorkflowNodeRun(projectKey string, name string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRunArtifacts(projectKey string, name string, number int64, nodeRunID int64) ([]sdk.Artifact, error)
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, artifactID int64, w io.Writer) error
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
+	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
 }

@@ -300,3 +300,11 @@ ORDER BY tags.tag;
 
 	return rmap, nil
 }
+
+func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
+	i, err := db.SelectInt("select workflow_sequences_nextval($1)", w.ID)
+	if err != nil {
+		return 0, sdk.WrapError(err, "nextRunNumber")
+	}
+	return int64(i), nil
+}

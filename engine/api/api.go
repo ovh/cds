@@ -29,6 +29,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/secret"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/stats"
 	"github.com/ovh/cds/engine/api/user"
@@ -311,6 +312,18 @@ func getHatchery(c context.Context) *sdk.Hatchery {
 	return u
 }
 
+func getService(c context.Context) *sdk.Service {
+	i := c.Value(auth.ContextService)
+	if i == nil {
+		return nil
+	}
+	u, ok := i.(*sdk.Service)
+	if !ok {
+		return nil
+	}
+	return u
+}
+
 func (a *API) mustDB() *gorp.DbMap {
 	db := a.DBConnectionFactory.GetDBMap()
 	if db == nil {
@@ -501,8 +514,8 @@ func (a *API) Serve(ctx context.Context) error {
 	go stats.StartRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go hookRecoverer(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
-
 	go user.PersistentSessionTokenCleaner(ctx, a.DBConnectionFactory.GetDBMap)
+	go services.KillDeadServices(ctx, services.NewRepository(a.mustDB, a.Cache))
 
 	if !a.Config.VCS.Polling.Disabled {
 		go poller.Initialize(ctx, a.Cache, 10, a.DBConnectionFactory.GetDBMap)

@@ -73,6 +73,12 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 			if err != nil {
 				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
 			}
+		case sdk.ServiceAgent:
+			var err error
+			ctx, err = auth.CheckServiceAuth(ctx, api.mustDB(), api.Cache, headers)
+			if err != nil {
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Authorization denied on %s %s for %s agent %s : %s", req.Method, req.URL, req.RemoteAddr, getAgent(req), err)
+			}
 		default:
 			var err error
 			ctx, err = api.Router.AuthDriver.CheckAuth(ctx, w, req)
@@ -219,16 +225,21 @@ func (api *API) checkPermission(ctx context.Context, routeVar map[string]string,
 	return permissionOk
 }
 
-func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, permission int, routeVar map[string]string) bool {
+func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, perm int, routeVar map[string]string) bool {
+	if permission.PermissionReadExecute == perm && getService(ctx) != nil {
+		return true
+	}
+
 	if getUser(ctx).Groups != nil {
 		for _, g := range getUser(ctx).Groups {
 			for _, p := range g.ProjectGroups {
-				if projectKey == p.Project.Key && p.Permission >= permission {
+				if projectKey == p.Project.Key && p.Permission >= perm {
 					return true
 				}
 			}
 		}
 	}
+
 	log.Warning("Access denied. user %s on project %s", getUser(ctx).Username, projectKey)
 	return false
 }

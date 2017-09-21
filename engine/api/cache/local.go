@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -17,6 +18,7 @@ type LocalStore struct {
 	mutex  *sync.Mutex
 	Data   map[string][]byte
 	Queues map[string]*list.List
+	Sets   map[string][][]byte
 	TTL    int
 }
 
@@ -26,6 +28,7 @@ func NewLocalStore() *LocalStore {
 		mutex:  &sync.Mutex{},
 		Data:   map[string][]byte{},
 		Queues: map[string]*list.List{},
+		Sets:   map[string][][]byte{},
 	}
 }
 
@@ -250,4 +253,50 @@ func (s *LocalStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 // Status returns the status of the local cache
 func (s *LocalStore) Status() string {
 	return "OK (local)"
+}
+
+// SetAdd add a member (identified by a key) in the cached set
+func (s *LocalStore) SetAdd(rootKey string, memberKey string, member interface{}) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	set := s.Sets[rootKey]
+	btes, err := json.Marshal(member)
+	if err != nil {
+		log.Error("cache.local.SetAdd> Unable to marshal member value: %v", err)
+		return
+	}
+	set = append(set, btes)
+	s.Sets[rootKey] = set
+}
+
+// SetRemove removes a member from a set
+func (s *LocalStore) SetRemove(rootKey string, memberKey string, member interface{}) {
+
+}
+
+// SetCard returns the cardinality of a set
+func (s *LocalStore) SetCard(key string) int {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	set := s.Sets[key]
+	return len(set)
+}
+
+// SetScan scans a set as mush as members are given in the variadic
+func (s *LocalStore) SetScan(rootKey string, members ...interface{}) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	set := s.Sets[rootKey]
+	if len(members) > len(set) {
+		return errors.New("Too much members")
+	}
+	for i := range members {
+		if err := json.Unmarshal(set[i], members[i]); err != nil {
+			return err
+		}
+	}
+	return nil
 }

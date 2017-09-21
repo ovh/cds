@@ -19,6 +19,30 @@ type Workflow struct {
 	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-" cli:"-"`
 }
 
+func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
+	if w.Root == nil {
+		return nil
+	}
+
+	res := map[string]WorkflowNodeHook{}
+
+	a := w.Root.GetHooks()
+	for k, v := range a {
+		res[k] = v
+	}
+
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			b := t.WorkflowDestNode.GetHooks()
+			for k, v := range b {
+				res[k] = v
+			}
+		}
+	}
+
+	return res
+}
+
 //JoinsID returns joins ID
 func (w *Workflow) JoinsID() []int64 {
 	res := []int64{}
@@ -194,6 +218,24 @@ type WorkflowNode struct {
 	Triggers         []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
 }
 
+//GetHooks returns all hooks for the node and its children
+func (w *WorkflowNode) GetHooks() map[string]WorkflowNodeHook {
+	res := map[string]WorkflowNodeHook{}
+
+	for _, h := range w.Hooks {
+		res[h.UUID] = h
+	}
+
+	for _, t := range w.Triggers {
+		b := t.WorkflowDestNode.GetHooks()
+		for k, v := range b {
+			res[k] = v
+		}
+	}
+
+	return res
+}
+
 // EqualsTo returns true if a node has the same pipeline and context than another
 func (n *WorkflowNode) EqualsTo(n1 *WorkflowNode) bool {
 	if n.PipelineID != n1.PipelineID {
@@ -352,8 +394,8 @@ type WorkflowNodeContext struct {
 type WorkflowNodeHook struct {
 	ID                  int64                      `json:"id" db:"id"`
 	UUID                string                     `json:"uuid" db:"uuid"`
-	WorkflowNodeID      int64                      `json:"-" db:"workflow_node_id"`
-	WorkflowHookModelID int64                      `json:"-" db:"workflow_hook_model_id"`
+	WorkflowNodeID      int64                      `json:"workflow_node_id" db:"workflow_node_id"`
+	WorkflowHookModelID int64                      `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
 	WorkflowHookModel   WorkflowHookModel          `json:"model" db:"-"`
 	Conditions          []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
 	Config              WorkflowNodeHookConfig     `json:"config" db:"-"`

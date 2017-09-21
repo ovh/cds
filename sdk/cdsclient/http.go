@@ -35,6 +35,11 @@ type HTTPClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+// NoTimeout returns a http.DefaultClient from a HTTPClient
+func NoTimeout(c HTTPClient) HTTPClient {
+	return http.DefaultClient
+}
+
 // SetHeader modify headers of http.Request
 func SetHeader(key, value string) RequestModifier {
 	return func(req *http.Request) {
@@ -166,13 +171,14 @@ func (c *client) Stream(method string, path string, args []byte, noTimeout bool,
 			}
 		}
 
+		if c.config.Verbose {
+			log.Printf("Request Headers: %+v\n", req.Header)
+		}
+
 		var errDo error
 		var resp *http.Response
 		if noTimeout {
-			if c.HTTPClientWithoutTimeout == nil {
-				return nil, 0, fmt.Errorf("HTTPClientWithoutTimeout is not setted on this client")
-			}
-			resp, errDo = c.HTTPClientWithoutTimeout.Do(req)
+			resp, errDo = NoTimeout(c.HTTPClient).Do(req)
 		} else {
 			resp, errDo = c.HTTPClient.Do(req)
 		}

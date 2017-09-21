@@ -116,7 +116,9 @@ var (
 	ErrParameterNotExists                    = &Error{ID: 100, Status: http.StatusNotFound}
 	ErrUnknownKeyType                        = &Error{ID: 101, Status: http.StatusBadRequest}
 	ErrInvalidKeyPattern                     = &Error{ID: 102, Status: http.StatusBadRequest}
-	ErrPipelineUsedByWorkflow                = &Error{ID: 103, Status: http.StatusBadRequest}
+	ErrWebhookConfigDoesNotMatch             = &Error{ID: 103, Status: http.StatusBadRequest}
+	ErrPipelineUsedByWorkflow                = &Error{ID: 104, Status: http.StatusBadRequest}
+	ErrMethodNotAllowed                      = &Error{ID: 105, Status: http.StatusMethodNotAllowed}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -222,7 +224,9 @@ var errorsAmericanEnglish = map[int]string{
 	ErrParameterNotExists.ID:                    "This parameter doesn't exist",
 	ErrUnknownKeyType.ID:                        "Unknown key type",
 	ErrInvalidKeyPattern.ID:                     "key name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
+	ErrWebhookConfigDoesNotMatch.ID:             "Webhook config does not match",
 	ErrPipelineUsedByWorkflow.ID:                "pipeline still used by a workflow",
+	ErrMethodNotAllowed.ID:                      "Method not allowed",
 }
 
 var errorsFrench = map[int]string{
@@ -328,7 +332,9 @@ var errorsFrench = map[int]string{
 	ErrParameterNotExists.ID:                    "Ce paramètre n'existe pas",
 	ErrUnknownKeyType.ID:                        "Le type de clé n'est pas connu",
 	ErrInvalidKeyPattern.ID:                     "le nom de la clé doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
+	ErrWebhookConfigDoesNotMatch.ID:             "la configuration du webhook ne correspond pas",
 	ErrPipelineUsedByWorkflow.ID:                "le pipeline est utilisé par un workflow",
+	ErrMethodNotAllowed.ID:                      "La méthode n'est pas autorisée",
 }
 
 var errorsLanguages = []map[int]string{
