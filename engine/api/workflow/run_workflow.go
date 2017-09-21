@@ -73,7 +73,7 @@ func RunFromHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, e *sdk
 
 	run, err := LoadRun(db, w.ProjectKey, w.Name, number)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "RunFromHook> Unable to reload workflow run")
 	}
 
 	return run, nil
