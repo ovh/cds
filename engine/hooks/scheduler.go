@@ -134,6 +134,14 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		t.ProcessingTimestamp = time.Now().UnixNano()
 		s.Dao.SaveTaskExecution(&t)
 
+		//If the task is a scheduler, prepare the next execution
+		if t.ScheduledTask != nil {
+			task := s.Dao.FindTask(t.UUID)
+			if err := s.prepareNextScheduledTaskExecution(task); err != nil {
+				log.Error("Hooks> Unable to prepare next execition: %v", err)
+			}
+		}
+
 		continue
 	}
 }

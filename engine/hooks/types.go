@@ -80,7 +80,5 @@ type WebHookExecution struct {
 
 // ScheduledTaskExecution contains specific data for a scheduled task execution
 type ScheduledTaskExecution struct {
-	UUID                   string
-	Type                   string
 	DateScheduledExecution string
 }
