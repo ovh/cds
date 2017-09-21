@@ -180,11 +180,11 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			// search for version
 			lines := strings.Split(stdTagListOut.String(), "\n")
 			versions := semver.Versions{}
+			re := regexp.MustCompile("refs/tags/(.*)")
 			for _, l := range lines {
-				// example of returns of tagList: "04c48a6b5cf51339b0e23bdb72eebf510038b2e9 refs/tags/v0.1.2"
-				var tag string
-				if len(l) > 51 { // 04c48a6b5cf51339b0e23bdb72eebf510038b2e9 refs/tags/ --> length 52
-					tag = l[51:]
+				match := re.FindStringSubmatch(l)
+				if len(match) >= 1 {
+					tag := match[1]
 					if sv, err := semver.Parse(tag); err == nil {
 						versions = append(versions, sv)
 					}
