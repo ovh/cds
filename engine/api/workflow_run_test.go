@@ -585,8 +585,6 @@ func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
 
 	pip.Stages = append(pip.Stages, *s)
 
-
-
 	pipeline.InsertStage(db, s)
 	j = &sdk.Job{
 		Enabled: true,
@@ -641,12 +639,11 @@ func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
 	errS := pipeline.UpdateStage(db, &pip.Stages[0])
 	test.NoError(t, errS)
 
-
 	//Prepare request
 	vars = map[string]string{
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
-		"number" : fmt.Sprintf("%d", wr.Number),
+		"number":         fmt.Sprintf("%d", wr.Number),
 	}
 	uri = router.GetRoute("POST", api.resyncWorkflowRunPipelinesHandler, vars)
 	test.NotEmpty(t, uri)
