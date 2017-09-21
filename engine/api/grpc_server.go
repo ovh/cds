@@ -1,4 +1,4 @@
-package grpc
+package api
 
 import (
 	"fmt"
@@ -11,12 +11,13 @@ import (
 
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/database"
+	cdsgrpc "github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Init initialize all GRPC services
-func Init(dbConnectionFactory *database.DBConnectionFactory, port int, tls bool, certFile, keyFile string) error {
+// grpcInit initialize all GRPC services
+func grpcInit(dbConnectionFactory *database.DBConnectionFactory, port int, tls bool, certFile, keyFile string) error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		return err
@@ -24,13 +25,13 @@ func Init(dbConnectionFactory *database.DBConnectionFactory, port int, tls bool,
 
 	log.Info("Starting GRPC services on port %d", port)
 
-	handlers := &handlers{
+	grpcHandlers := &grpcHandlers{
 		dbConnectionFactory: dbConnectionFactory,
 	}
 
 	opts := []grpc.ServerOption{
-		grpc.StreamInterceptor(handlers.streamInterceptor),
-		grpc.UnaryInterceptor(handlers.unaryInterceptor),
+		grpc.StreamInterceptor(grpcHandlers.streamInterceptor),
+		grpc.UnaryInterceptor(grpcHandlers.unaryInterceptor),
 	}
 
 	if tls {
@@ -43,8 +44,8 @@ func Init(dbConnectionFactory *database.DBConnectionFactory, port int, tls bool,
 
 	grpcServer := grpc.NewServer(opts...)
 
-	RegisterBuildLogServer(grpcServer, handlers)
-	RegisterWorkflowQueueServer(grpcServer, handlers)
+	cdsgrpc.RegisterBuildLogServer(grpcServer, grpcHandlers)
+	cdsgrpc.RegisterWorkflowQueueServer(grpcServer, grpcHandlers)
 
 	return grpcServer.Serve(lis)
 }
@@ -52,11 +53,12 @@ func Init(dbConnectionFactory *database.DBConnectionFactory, port int, tls bool,
 type key string
 
 const (
-	keyWorkerID   key = "worker_id"
-	keyWorkerName key = "worker_name"
+	keyWorkerID    key = "worker_id"
+	keyWorkerName  key = "worker_name"
+	keyWorkerGroup key = "worker_group"
 )
 
-func (h *handlers) streamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+func (h *grpcHandlers) streamInterceptor(srv interface{}, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 	c := stream.Context()
 	w, err := h.authorize(c)
 	if err != nil {
@@ -69,7 +71,7 @@ func (h *handlers) streamInterceptor(srv interface{}, stream grpc.ServerStream, 
 	return handler(srv, stream)
 }
 
-func (h *handlers) unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+func (h *grpcHandlers) unaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 	w, err := h.authorize(ctx)
 	if err != nil {
 		log.Warning("unaryInterceptor> authorize failed : %s", err)
@@ -80,7 +82,7 @@ func (h *handlers) unaryInterceptor(ctx context.Context, req interface{}, info *
 	return handler(ctx, req)
 }
 
-func (h *handlers) authorize(ctx context.Context) (*sdk.Worker, error) {
+func (h *grpcHandlers) authorize(ctx context.Context) (*sdk.Worker, error) {
 	if md, ok := metadata.FromContext(ctx); ok {
 		if len(md["name"]) > 0 && len(md["token"]) > 0 {
 			w, err := auth.GetWorker(h.dbConnectionFactory.GetDBMap(), h.store, md["token"][0])
@@ -91,6 +93,14 @@ func (h *handlers) authorize(ctx context.Context) (*sdk.Worker, error) {
 			if w == nil {
 				return nil, sdk.ErrForbidden
 			}
+
+			group, errG := loadGroupPermissions(h.dbConnectionFactory.GetDBMap(), h.store, w.GroupID)
+			if errG != nil {
+				log.Error("grpc.authorize> Unable to get worker group permission: %s", err)
+				return nil, sdk.ErrServiceUnavailable
+			}
+			ctx = context.WithValue(ctx, keyWorkerGroup, group)
+
 			return w, nil
 		}
 		return nil, sdk.ErrForbidden

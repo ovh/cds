@@ -209,6 +209,7 @@ var LoadOptions = struct {
 	WithApplicationPipelines LoadOptionFunc
 	WithApplicationVariables LoadOptionFunc
 	WithKeys                 LoadOptionFunc
+	WithWorkflows            LoadOptionFunc
 }{
 	Default:                  &loadDefault,
 	WithPipelines:            &loadPipelines,
@@ -221,6 +222,30 @@ var LoadOptions = struct {
 	WithApplicationPipelines: &loadApplicationPipelines,
 	WithApplicationVariables: &loadApplicationVariables,
 	WithKeys:                 &loadKeys,
+	WithWorkflows:            &loadWorkflows,
+}
+
+// LoadProjectByNodeJobRunID return a project from node job run id
+func LoadProjectByNodeJobRunID(db gorp.SqlExecutor, store cache.Store, nodeJobRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	query := `
+		SELECT * FROM project
+		JOIN workflow_run ON workflow_run.project_id = project.id
+		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
+		JOIN workflow_node_run_job ON workflow_node_run_job.workflow_node_run_id = workflow_node_run.id
+		WHERE workflow_node_run_job.id = $1
+	`
+	return load(db, store, u, opts, query, nodeJobRunID)
+}
+
+// LoadProjectByNodeRunID return a project from node run id
+func LoadProjectByNodeRunID(db gorp.SqlExecutor, store cache.Store, nodeRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	query := `
+		SELECT * FROM project
+		JOIN workflow_run ON workflow_run.project_id = project.id
+		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
+		WHERE workflow_node_run.id = $1
+	`
+	return load(db, store, u, opts, query, nodeRunID)
 }
 
 // LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions

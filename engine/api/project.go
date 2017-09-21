@@ -87,6 +87,7 @@ func (api *API) getProjectHandler() Handler {
 		WithPermission := FormBool(r, "withPermission")
 		WithRepositoriesManagers := FormBool(r, "withRepositoriesManagers")
 		WithKeys := FormBool(r, "withKeys")
+		WithWorkflows := FormBool(r, "withWorkflows")
 
 		opts := []project.LoadOptionFunc{}
 		if WithVariables {
@@ -115,6 +116,9 @@ func (api *API) getProjectHandler() Handler {
 		}
 		if WithKeys {
 			opts = append(opts, project.LoadOptions.WithKeys)
+		}
+		if WithWorkflows {
+			opts = append(opts, project.LoadOptions.WithWorkflows)
 		}
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), opts...)

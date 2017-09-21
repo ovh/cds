@@ -15,6 +15,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/objectstore"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -54,6 +55,11 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot unmarshal request")
 		}
 
+		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		if errP != nil {
+			return sdk.WrapError(errP, "postTakeWorkflowJobHandler> Cannot load project")
+		}
+
 		// Start a tx
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
@@ -84,7 +90,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 
 		//Take node job run
-		job, errTake := workflow.TakeNodeJobRun(tx, api.Cache, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos)
+		job, errTake := workflow.TakeNodeJobRun(tx, api.Cache, p, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos)
 		if errTake != nil {
 			return sdk.WrapError(errTake, "postTakeWorkflowJobHandler> Cannot take job %d", id)
 		}
@@ -118,7 +124,12 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 
 		//Load the secrets
-		secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, job, nodeRun, workflowRun)
+		pv, err := project.GetAllVariableInProject(api.mustDB(), p.ID, project.WithClearPassword())
+		if err != nil {
+			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot load project variable")
+		}
+
+		secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, job, nodeRun, workflowRun, pv)
 		if errSecret != nil {
 			return sdk.WrapError(errSecret, "postTakeWorkflowJobHandler> Cannot load secrets")
 		}
@@ -130,7 +141,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		pbji.SubNumber = noderun.SubNumber
 		pbji.Secrets = secrets
 
-		params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, api.Cache, job, nodeRun, workflowRun)
+		params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, api.Cache, job, nodeRun, workflowRun, p)
 		if errK != nil {
 			return sdk.WrapError(errK, "postTakeWorkflowJobHandler> Cannot load keys")
 		}
@@ -184,13 +195,18 @@ func (api *API) postSpawnInfosWorkflowJobHandler() Handler {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> cannot unmarshal request")
 		}
 
+		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		if errP != nil {
+			return sdk.WrapError(errP, "postSpawnInfosWorkflowJobHandler> Cannot load project")
+		}
+
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "postSpawnInfosWorkflowJobHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if _, err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, id, s); err != nil {
+		if _, err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, id, s); err != nil {
 			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save job %d", id)
 		}
 
@@ -221,6 +237,11 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
 
+		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		if errP != nil {
+			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project")
+		}
+
 		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "postWorkflowJobResultHandler> Cannot begin tx")
@@ -244,14 +265,14 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 		}}
 
 		//Add spawn infos
-		if _, err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, job.ID, infos); err != nil {
+		if _, err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, job.ID, infos); err != nil {
 			log.Error("addQueueResultHandler> Cannot save spawn info job %d: %s", job.ID, err)
 			return err
 		}
 
 		// Update action status
 		log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", id, res.Status)
-		if err := workflow.UpdateNodeJobRunStatus(tx, api.Cache, job, sdk.Status(res.Status)); err != nil {
+		if err := workflow.UpdateNodeJobRunStatus(tx, api.Cache, p, job, sdk.Status(res.Status)); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", id)
 		}
 
@@ -295,7 +316,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
 		}
 
-		pbJob, errJob := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		nodeJobRun, errJob := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
 		if errJob != nil {
 			return sdk.WrapError(errJob, "postWorkflowJobStepStatusHandler> Cannot get job run %d", id)
 		}
@@ -306,15 +327,20 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 		}
 
 		found := false
-		for i := range pbJob.Job.StepStatus {
-			jobStep := &pbJob.Job.StepStatus[i]
+		for i := range nodeJobRun.Job.StepStatus {
+			jobStep := &nodeJobRun.Job.StepStatus[i]
 			if step.StepOrder == jobStep.StepOrder {
 				jobStep.Status = step.Status
 				found = true
 			}
 		}
 		if !found {
-			pbJob.Job.StepStatus = append(pbJob.Job.StepStatus, step)
+			nodeJobRun.Job.StepStatus = append(nodeJobRun.Job.StepStatus, step)
+		}
+
+		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		if errP != nil {
+			return sdk.WrapError(errP, "postWorkflowJobStepStatusHandler> Cannot load project")
 		}
 
 		tx, errB := api.mustDB().Begin()
@@ -323,7 +349,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.UpdateNodeJobRun(tx, api.Cache, pbJob); err != nil {
+		if err := workflow.UpdateNodeJobRun(tx, api.Cache, p, nodeJobRun); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run")
 		}
 
@@ -434,6 +460,11 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler")
 		}
 
+		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		if errP != nil {
+			return sdk.WrapError(errP, "postWorkflowJobVariableHandler> Cannot load project")
+		}
+
 		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "postWorkflowJobVariableHandler> Unable to start tx")
@@ -447,7 +478,7 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 
 		sdk.AddParameter(&job.Parameters, v.Name, sdk.StringParameter, v.Value)
 
-		if err := workflow.UpdateNodeJobRun(tx, api.Cache, job); err != nil {
+		if err := workflow.UpdateNodeJobRun(tx, api.Cache, p, job); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run")
 		}
 

@@ -7,8 +7,6 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -145,7 +143,7 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 	return params, nil
 }
 
-func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
+func getNodeRunBuildParameters(db gorp.SqlExecutor, proj *sdk.Project, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
 	//Load workflow run
 	w, err := LoadRunByID(db, run.WorkflowRunID)
 	if err != nil {
@@ -156,12 +154,6 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, run *sdk.
 	n := w.Workflow.GetNode(run.WorkflowNodeID)
 	if n == nil {
 		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeRunParameters>")
-	}
-
-	//Load project
-	proj, err := project.Load(db, store, w.Workflow.ProjectKey, nil, project.LoadOptions.WithVariables)
-	if err != nil {
-		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to load project")
 	}
 
 	//Get node build parameters

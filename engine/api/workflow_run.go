@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/api/project"
 )
 
 const (
@@ -235,6 +236,12 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 
 			return err
 		}
+
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
+		if errP != nil {
+			return sdk.WrapError(errP, "stopWorkflowNodeRunHandler> Cannot load project")
+		}
+
 		// Load node run
 		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id)
 		if err != nil {
@@ -266,7 +273,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 				return sdk.WrapError(errNRJ, "stopWorkflowNodeRunHandler> Cannot load node job run id")
 			}
 			njr.SpawnInfos = append(njr.SpawnInfos, infos)
-			if err := workflow.UpdateNodeJobRunStatus(tx, api.Cache, njr, sdk.StatusFail); err != nil {
+			if err := workflow.UpdateNodeJobRunStatus(tx, api.Cache, p, njr, sdk.StatusFail); err != nil {
 				return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Cannot update node job run")
 			}
 		}
@@ -313,6 +320,11 @@ func (api *API) postWorkflowRunHandler() Handler {
 		key := vars["permProjectKey"]
 		name := vars["workflowName"]
 
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
+		if errP != nil {
+			return sdk.WrapError(errP, "postWorkflowRunHandler> Cannot load project")
+		}
+
 		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return errb
@@ -343,7 +355,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		//Run from hook
 		if opts.Hook != nil {
 			var errfh error
-			wr, errfh = workflow.RunFromHook(tx, api.Cache, wf, opts.Hook)
+			wr, errfh = workflow.RunFromHook(tx, api.Cache, p, wf, opts.Hook)
 			if errfh != nil {
 				return sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
 			}
@@ -387,13 +399,13 @@ func (api *API) postWorkflowRunHandler() Handler {
 					opts.FromNodeID = &lastRun.Workflow.RootID
 				}
 				var errmr error
-				wr, errmr = workflow.ManualRunFromNode(tx, api.Cache, wf, lastRun.Number, opts.Manual, *opts.FromNodeID)
+				wr, errmr = workflow.ManualRunFromNode(tx, api.Cache, p, wf, lastRun.Number, opts.Manual, *opts.FromNodeID)
 				if errmr != nil {
 					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow from node")
 				}
 			} else {
 				var errmr error
-				wr, errmr = workflow.ManualRun(tx, api.Cache, wf, opts.Manual)
+				wr, errmr = workflow.ManualRun(tx, api.Cache, p, wf, opts.Manual)
 				if errmr != nil {
 					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
 				}
