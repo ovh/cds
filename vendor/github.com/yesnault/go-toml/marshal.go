@@ -12,7 +12,7 @@ import (
 
 type tomlOpts struct {
 	name      string
-	comment   *string
+	comment   string
 	commented bool
 	include   bool
 	omitempty bool
@@ -160,7 +160,7 @@ func valueToTree(mtype reflect.Type, mval reflect.Value) (*Tree, error) {
 			if err != nil {
 				return nil, err
 			}
-			tval.Set(key.String(), nil, false, val)
+			tval.Set(key.String(), "", false, val)
 		}
 	}
 	return tval, nil
@@ -451,9 +451,9 @@ func unwrapPointer(mtype reflect.Type, tval interface{}) (reflect.Value, error) 
 func tomlOptions(vf reflect.StructField) tomlOpts {
 	tag := vf.Tag.Get("toml")
 	parse := strings.Split(tag, ",")
-	var comment *string
+	var comment string
 	if c := vf.Tag.Get("comment"); c != "" {
-		comment = &c
+		comment = c
 	}
 	commented, _ := strconv.ParseBool(vf.Tag.Get("commented"))
 	result := tomlOpts{name: vf.Name, comment: comment, commented: commented, include: true, omitempty: false}

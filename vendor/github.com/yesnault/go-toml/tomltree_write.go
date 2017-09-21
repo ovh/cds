@@ -118,9 +118,13 @@ func (t *Tree) writeTo(w io.Writer, indent, keyspace string, bytesCount int64) (
 			return bytesCount, err
 		}
 
-		if v.comment != nil {
-			comment := strings.Replace(*v.comment, "\n", "\n"+indent+"#", -1)
-			writtenBytesCountComment, errc := writeStrings(w, "\n", indent, "# ", comment, "\n")
+		if v.comment != "" {
+			comment := strings.Replace(v.comment, "\n", "\n"+indent+"#", -1)
+			start := "# "
+			if strings.HasPrefix(comment, "#") {
+				start = ""
+			}
+			writtenBytesCountComment, errc := writeStrings(w, "\n", indent, start, comment, "\n")
 			bytesCount += int64(writtenBytesCountComment)
 			if errc != nil {
 				return bytesCount, errc
@@ -150,18 +154,25 @@ func (t *Tree) writeTo(w io.Writer, indent, keyspace string, bytesCount int64) (
 			commented = "# "
 		}
 
-		if t.comment != nil {
-			comment := strings.Replace(*t.comment, "\n", "\n"+indent+"#", -1)
-			writtenBytesCountComment, errc := writeStrings(w, "\n", indent, "# ", comment)
-			bytesCount += int64(writtenBytesCountComment)
-			if errc != nil {
-				return bytesCount, errc
-			}
-		}
-
 		switch node := v.(type) {
 		// node has to be of those two types given how keys are sorted above
 		case *Tree:
+			tv, ok := t.values[k].(*Tree)
+			if !ok {
+				return bytesCount, fmt.Errorf("invalid value type at %s: %T", k, t.values[k])
+			}
+			if tv.comment != "" {
+				comment := strings.Replace(tv.comment, "\n", "\n"+indent+"#", -1)
+				start := "# "
+				if strings.HasPrefix(comment, "#") {
+					start = ""
+				}
+				writtenBytesCountComment, errc := writeStrings(w, "\n", indent, start, comment)
+				bytesCount += int64(writtenBytesCountComment)
+				if errc != nil {
+					return bytesCount, errc
+				}
+			}
 			writtenBytesCount, err := writeStrings(w, "\n", indent, commented, "[", combinedKey, "]\n")
 			bytesCount += int64(writtenBytesCount)
 			if err != nil {

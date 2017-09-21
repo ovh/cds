@@ -44,7 +44,7 @@ type Configuration struct {
 	URL          struct {
 		API string `toml:"api" default:"http://localhost:8081"`
 		UI  string `toml:"ui" default:"http://localhost:4200"`
-	} `toml:"url" comment:"#####################\n# CDS URLs Settings #\n#####################"`
+	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################"`
 	HTTP struct {
 		Port       int `toml:"port" default:"8081"`
 		SessionTTL int `toml:"sessionTTL" default:"60"`
@@ -65,7 +65,7 @@ type Configuration struct {
 		MaxConn  int    `toml:"maxconn" default:"20"`
 		Timeout  int    `toml:"timeout" default:"3000"`
 		Secret   string `toml:"secret"`
-	} `toml:"database" comment:"################################\n# Postgresql Database settings #\n################################"`
+	} `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
 	Cache struct {
 		Mode  string `toml:"mode" default:"local" comment:"Cache Mode: redis or local"`
 		TTL   int    `toml:"ttl" default:"60"`
@@ -73,7 +73,7 @@ type Configuration struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379"`
 			Password string `toml:"password"`
 		} `toml:"redis" comment:"Connect CDS to a redis cache If you more than one CDS instance and to avoid losing data at startup"`
-	} `toml:"cache" comment:"######################\n# CDS Cache Settings #\n######################\nIf your CDS is made of a unique instance, a local cache if enough, but rememeber that all cached data will be lost on startup."`
+	} `toml:"cache" comment:"######################\n CDS Cache Settings \n#####################\nIf your CDS is made of a unique instance, a local cache if enough, but rememeber that all cached data will be lost on startup."`
 	Directories struct {
 		Download string `toml:"download" default:"/tmp/cds/download"`
 		Keys     string `toml:"keys" default:"/tmp/cds/keys"`
@@ -90,7 +90,7 @@ type Configuration struct {
 			DN       string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com"`
 			Fullname string `toml:"fullname" default:"{{.givenName}} {{.sn}}"`
 		} `toml:"ldap"`
-	} `toml:"auth" comment:"##############################\n# CDS Authentication Settings#\n##############################"`
+	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true"`
 		Host     string `toml:"host"`
@@ -99,7 +99,7 @@ type Configuration struct {
 		User     string `toml:"user"`
 		Password string `toml:"password"`
 		From     string `toml:"from" default:"no-reply@cds.local"`
-	} `toml:"smtp" comment:"#####################n# CDS SMTP Settings #\n#####################"`
+	} `toml:"smtp" comment:"#####################n# CDS SMTP Settings \n####################"`
 	Artifact struct {
 		Mode  string `toml:"mode" default:"local" comment:"swift or local"`
 		Local struct {
@@ -122,10 +122,10 @@ type Configuration struct {
 			User     string `toml:"user"`
 			Password string `toml:"password"`
 		} `toml:"kafka"`
-	} `toml:"events" comment:"#######################\n# CDS Events Settings #\n#######################"`
+	} `toml:"events" comment:"#######################\n CDS Events Settings \n######################"`
 	Schedulers struct {
 		Disabled bool `toml:"disabled" default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it"`
-	} `toml:"schedulers" comment:"###########################\n# CDS Schedulers Settings #\n###########################"`
+	} `toml:"schedulers" comment:"###########################\n CDS Schedulers Settings \n##########################"`
 	VCS struct {
 		Polling struct {
 			Disabled bool `toml:"disabled" default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it"`
@@ -135,12 +135,15 @@ type Configuration struct {
 			DisableStatus    bool   `toml:"disableStatus" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on Github API"`
 			DisableStatusURL bool   `toml:"disableStatusURL" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on Github API"`
 		} `toml:"github"`
+		Gitlab struct {
+			Secret string `toml:"secret"`
+		} `toml:"gitlab"`
 		Bitbucket struct {
 			DisableStatus bool   `toml:"disableStatus" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on Bitbucket API"`
 			ConsumerKey   string `toml:"consumerKey"`
 			PrivateKey    string `toml:"privateKey"`
 		} `toml:"bitbucket"`
-	} `toml:"vcs" comment:"####################\n# CDS VCS Settings #\n####################"`
+	} `toml:"vcs" comment:"####################\n CDS VCS Settings \n###################"`
 	Vault struct {
 		ConfigurationKey string `toml:"configurationKey"`
 	} `toml:"vault"`
@@ -421,6 +424,7 @@ func (a *API) Serve(ctx context.Context) error {
 		DisableGithubStatusURL: a.Config.VCS.Github.DisableStatusURL,
 		DisableStashSetStatus:  a.Config.VCS.Bitbucket.DisableStatus,
 		GithubSecret:           a.Config.VCS.Github.Secret,
+		GitlabSecret:           a.Config.VCS.Gitlab.Secret,
 		StashPrivateKey:        a.Config.VCS.Bitbucket.PrivateKey,
 		StashConsumerKey:       a.Config.VCS.Bitbucket.ConsumerKey,
 	}
