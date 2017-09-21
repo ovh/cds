@@ -20,8 +20,8 @@ import (
 type Configuration struct {
 	Log struct {
 		Level string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, critical"`
-	} `toml:"log" comment:"#####################\n# CDS Logs Settings #\n#####################"`
-	API      api.Configuration `toml:"api"`
+	} `toml:"log" comment:"#####################\n CDS Logs Settings \n####################"`
+	API      api.Configuration `toml:"api" comment:""`
 	Hatchery struct {
 		Docker    docker.HatcheryConfiguration    `toml:"docker" comment:"Hatchery Docker."`
 		Local     local.HatcheryConfiguration     `toml:"local" comment:"Hatchery Local."`
