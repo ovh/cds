@@ -68,6 +68,10 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, w *sdk.WorkflowR
 				for j := range node.Triggers {
 					t := &node.Triggers[j]
 
+					if t.Manual {
+						continue
+					}
+
 					//Check conditions
 					var params = nodeRun.BuildParameters
 					//Define specific destination parameters
@@ -173,6 +177,10 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, w *sdk.WorkflowR
 			//Checks the triggers
 			for x := range j.Triggers {
 				t := &j.Triggers[x]
+
+				if t.Manual {
+					continue
+				}
 
 				//Check conditions
 				params := sdk.ParametersFromMap(sourcesParams)
