@@ -11,7 +11,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -116,8 +115,8 @@ func loadWorkflowRoot(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u
 }
 
 // Insert inserts a new workflow
-func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.User) error {
-	if err := IsValid(db, store, w, u); err != nil {
+func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
+	if err := IsValid(w, p); err != nil {
 		return err
 	}
 
@@ -187,35 +186,34 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 
 func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode, mapMaxNumber *map[int64]int64, n *sdk.WorkflowNode) error {
 	// get pipeline ID
-	pipID := n.PipelineID
-	if pipID == 0 {
-		pipID = n.Pipeline.ID
+	if n.Pipeline.ID == 0 {
+		n.Pipeline.ID = n.PipelineID
+	} else if n.PipelineID == 0 {
+		n.PipelineID = n.Pipeline.ID
 	}
 
 	// Load pipeline to have name
-	pip := &n.Pipeline
-	if pip.Name == "" {
-		var errorP error
-		pip, errorP = pipeline.LoadPipelineByID(db, pipID, false)
+	if n.Pipeline.Name == "" {
+		pip, errorP := pipeline.LoadPipelineByID(db, n.PipelineID, false)
 		if errorP != nil {
-			return sdk.WrapError(errorP, "saveNodeByPipeline> Cannot load pipeline %d", pipID)
+			return sdk.WrapError(errorP, "saveNodeByPipeline> Cannot load pipeline %d", n.PipelineID)
 		}
 		n.Pipeline = *pip
 	}
 
 	// Save node in pipeline node map
-	if _, ok := (*dict)[pipID]; !ok {
-		(*dict)[pipID] = []*sdk.WorkflowNode{}
+	if _, ok := (*dict)[n.PipelineID]; !ok {
+		(*dict)[n.PipelineID] = []*sdk.WorkflowNode{}
 	}
-	(*dict)[pipID] = append((*dict)[pipID], n)
+	(*dict)[n.PipelineID] = append((*dict)[n.PipelineID], n)
 
 	// Check max number for current pipeline
-	if n.Name != "" && strings.HasPrefix(n.Name, pip.Name+"_") {
-		pipNumber, errI := strconv.ParseInt(strings.Replace(n.Name, pip.Name+"_", "", 1), 10, 64)
+	if n.Name != "" && strings.HasPrefix(n.Name, n.Pipeline.Name+"_") {
+		pipNumber, errI := strconv.ParseInt(strings.Replace(n.Name, n.Pipeline.Name+"_", "", 1), 10, 64)
 		if errI == nil {
-			currentMax, ok := (*mapMaxNumber)[pipID]
+			currentMax, ok := (*mapMaxNumber)[n.PipelineID]
 			if !ok || currentMax < pipNumber {
-				(*mapMaxNumber)[pipID] = pipNumber
+				(*mapMaxNumber)[n.PipelineID] = pipNumber
 			}
 		}
 	}
@@ -229,8 +227,8 @@ func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode
 }
 
 // Update updates a workflow
-func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow *sdk.Workflow, u *sdk.User) error {
-	if err := IsValid(db, store, w, u); err != nil {
+func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow *sdk.Workflow, p *sdk.Project, u *sdk.User) error {
+	if err := IsValid(w, p); err != nil {
 		return err
 	}
 
@@ -326,7 +324,7 @@ func HasAccessTo(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) (bool, error
 }
 
 // IsValid cheks workflow validity
-func IsValid(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.User) error {
+func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 	//Check project is not empty
 	if w.ProjectKey == "" {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
@@ -347,12 +345,6 @@ func IsValid(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.Use
 		if len(j.SourceNodeRefs) == 0 {
 			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Source node references is mandatory"))
 		}
-	}
-
-	//Load the project
-	proj, err := project.Load(db, store, w.ProjectKey, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
-	if err != nil {
-		return sdk.NewError(sdk.ErrWorkflowInvalid, err)
 	}
 
 	//Checks application are in the current project

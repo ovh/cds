@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -73,6 +74,15 @@ var (
 
 	loadKeys = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		return LoadAllKeys(db, proj)
+	}
+
+	loadWorkflows = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		workflows, errW := workflow.LoadAll(db, proj.Key)
+		if errW != nil {
+			return sdk.WrapError(errW, " workflow.LoadAll")
+		}
+		proj.Workflows = workflows
+		return nil
 	}
 
 	loadAllVariables = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, args ...GetAllVariableFuncArg) error {

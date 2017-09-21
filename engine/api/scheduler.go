@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -221,7 +221,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "addSchedulerApplicationPipelineHandler> cannot reload workflow")
 		}
@@ -323,7 +323,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updateSchedulerApplicationPipelineHandler> Cannot load workflow")
 		}
@@ -376,7 +376,7 @@ func (api *API) deleteSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "deleteSchedulerApplicationPipelineHandler> Cannot load workflow")
 		}

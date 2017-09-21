@@ -14,7 +14,7 @@ import (
 
 // processWorkflowRun triggers workflow node for every workflow.
 // It contains all the logic for triggers and joins processing.
-func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) error {
+func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) error {
 	t0 := time.Now()
 	log.Debug("processWorkflowRun> Begin [#%d]%s", w.Number, w.Workflow.Name)
 	defer func() {
@@ -29,7 +29,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, w *sdk.WorkflowR
 		}
 		//Run the node : manual or from an event
 		log.Debug("processWorkflowRun> starting from node %#v", startingFromNode)
-		if err := processWorkflowNodeRun(db, store, w, start, len(w.WorkflowNodeRuns[start.ID]), nil, hookEvent, manual); err != nil {
+		if err := processWorkflowNodeRun(db, store, p, w, start, len(w.WorkflowNodeRuns[start.ID]), nil, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
 		}
 		return nil
@@ -47,7 +47,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, w *sdk.WorkflowR
 			},
 		})
 
-		if err := processWorkflowNodeRun(db, store, w, w.Workflow.Root, 0, nil, hookEvent, manual); err != nil {
+		if err := processWorkflowNodeRun(db, store, p, w, w.Workflow.Root, 0, nil, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
 		}
 		return nil
@@ -111,7 +111,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, w *sdk.WorkflowR
 					if !abortTrigger {
 						//Keep the subnumber of the previous node in the graph
 						log.Debug("processWorkflowRun> starting from trigger %#v", t)
-						if err := processWorkflowNodeRun(db, store, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil); err != nil {
+						if err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil); err != nil {
 							log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, err)
 							AddWorkflowRunInfo(w, sdk.SpawnMsg{
 								ID:   sdk.MsgWorkflowError.ID,
@@ -219,7 +219,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, w *sdk.WorkflowR
 
 				if !abortTrigger {
 					//Keep the subnumber of the previous node in the graph
-					if err := processWorkflowNodeRun(db, store, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), nodeRunIDs, nil, nil); err != nil {
+					if err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), nodeRunIDs, nil, nil); err != nil {
 						AddWorkflowRunInfo(w, sdk.SpawnMsg{
 							ID:   sdk.MsgWorkflowError.ID,
 							Args: []interface{}{err},
@@ -240,7 +240,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, w *sdk.WorkflowR
 }
 
 //processWorkflowNodeRun triggers execution of a node run
-func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual) error {
+func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual) error {
 	t0 := time.Now()
 	log.Debug("processWorkflowNodeRun> Begin [#%d.%d]%s.%d", w.Number, subnumber, w.Workflow.Name, n.ID)
 	defer func() {
@@ -321,7 +321,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, w *sdk.Workf
 	}
 
 	// Process parameters for the jobs
-	jobParams, errParam := getNodeRunBuildParameters(db, store, run)
+	jobParams, errParam := getNodeRunBuildParameters(db, p, run)
 	if errParam != nil {
 		AddWorkflowRunInfo(w, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
@@ -362,7 +362,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, w *sdk.Workf
 	}
 
 	//Execute the node run !
-	if err := execute(db, store, run); err != nil {
+	if err := execute(db, store, p, run); err != nil {
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to execute workflow run")
 	}
 

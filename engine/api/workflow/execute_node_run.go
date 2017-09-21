@@ -12,36 +12,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func lockAndExecute(db *gorp.DbMap, store cache.Store, n *sdk.WorkflowNodeRun) error {
-	//Start a transaction
-	tx, errtx := db.Begin()
-	if errtx != nil {
-		return errtx
-	}
-	defer tx.Rollback()
-
-	//Select fobor update on table workflow_run, workflow_node_run
-	if _, err := tx.Exec("select workflow_run.* from workflow_run where id = $1 for update nowait", n.WorkflowRunID); err != nil {
-		return fmt.Errorf("Unable to take lock on workflow_run ID=%d (%v)", n.WorkflowRunID, err)
-	}
-	if _, err := tx.Exec("select workflow_node_run.* from workflow_node_run where id = $1 for update nowait", n.ID); err != nil {
-		return fmt.Errorf("Unable to take lock on workflow_run ID=%d (%v)", n.WorkflowRunID, err)
-	}
-
-	if err := execute(db, store, n); err != nil {
-		return err
-	}
-
-	//Commit all the things
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "workflow.execute> Unable to commit tx")
-	}
-
-	return nil
-}
-
 //execute is called by the scheduler. You should not call this by yourself
-func execute(db gorp.SqlExecutor, store cache.Store, n *sdk.WorkflowNodeRun) (err error) {
+func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun) (err error) {
 	t0 := time.Now()
 	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
 	defer func() {
@@ -145,7 +117,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, n *sdk.WorkflowNodeRun) (er
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	if n.Status == sdk.StatusSuccess.String() {
-		if err := processWorkflowRun(db, store, updatedWorkflowRun, nil, nil, nil); err != nil {
+		if err := processWorkflowRun(db, store, p, updatedWorkflowRun, nil, nil, nil); err != nil {
 			return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 		}
 	}

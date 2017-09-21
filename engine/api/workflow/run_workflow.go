@@ -10,7 +10,7 @@ import (
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook
-func RunFromHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error) {
+func RunFromHook(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error) {
 	hooks := w.GetHooks()
 	h, ok := hooks[e.WorkflowNodeHookUUID]
 	if !ok {
@@ -45,7 +45,7 @@ func RunFromHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, e *sdk
 		}
 
 		//Process it
-		if err := processWorkflowRun(db, store, wr, e, nil, nil); err != nil {
+		if err := processWorkflowRun(db, store, p, wr, e, nil, nil); err != nil {
 			return nil, sdk.WrapError(err, "RunFromHook> Unable to process workflow run")
 		}
 	} else {
@@ -66,7 +66,7 @@ func RunFromHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, e *sdk
 		}
 
 		//Process the workflow run from the node ID
-		if err := processWorkflowRun(db, store, lastWorkflowRun, e, nil, &oldH.WorkflowNodeID); err != nil {
+		if err := processWorkflowRun(db, store, p, lastWorkflowRun, e, nil, &oldH.WorkflowNodeID); err != nil {
 			return nil, sdk.WrapError(err, "RunFromHook> Unable to process workflow run")
 		}
 	}
@@ -80,13 +80,13 @@ func RunFromHook(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, e *sdk
 }
 
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
-func ManualRunFromNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, error) {
+func ManualRunFromNode(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, error) {
 	lastWorkflowRun, err := LoadRun(db, w.ProjectKey, w.Name, number)
 	if err != nil {
 		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to load last run")
 	}
 
-	if err := processWorkflowRun(db, store, lastWorkflowRun, nil, e, &nodeID); err != nil {
+	if err := processWorkflowRun(db, store, p, lastWorkflowRun, nil, e, &nodeID); err != nil {
 		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to process workflow run")
 	}
 
@@ -99,7 +99,7 @@ func ManualRunFromNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, 
 }
 
 //ManualRun is the entry point to trigger a workflow manually
-func ManualRun(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, error) {
+func ManualRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, error) {
 	number, err := nextRunNumber(db, w)
 	if err != nil {
 		return nil, sdk.WrapError(err, "ManualRun> Unable to get next number")
@@ -118,5 +118,5 @@ func ManualRun(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, e *sdk.W
 		return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
-	return wr, processWorkflowRun(db, store, wr, nil, e, nil)
+	return wr, processWorkflowRun(db, store, p, wr, nil, e, nil)
 }

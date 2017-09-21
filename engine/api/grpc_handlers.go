@@ -1,6 +1,7 @@
-package grpc
+package api
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/golang/protobuf/ptypes"
@@ -9,20 +10,22 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-type handlers struct {
+type grpcHandlers struct {
 	dbConnectionFactory *database.DBConnectionFactory
 	store               cache.Store
 }
 
 //AddBuildLog is the BuildLogServer implementation
-func (h *handlers) AddBuildLog(stream BuildLog_AddBuildLogServer) error {
+func (h *grpcHandlers) AddBuildLog(stream grpc.BuildLog_AddBuildLogServer) error {
 	log.Debug("grpc.AddBuildLog> started stream")
 	for {
 		in, err := stream.Recv()
@@ -43,7 +46,7 @@ func (h *handlers) AddBuildLog(stream BuildLog_AddBuildLogServer) error {
 }
 
 //SendLog is the WorkflowQueueServer implementation
-func (h *handlers) SendLog(stream WorkflowQueue_SendLogServer) error {
+func (h *grpcHandlers) SendLog(stream grpc.WorkflowQueue_SendLogServer) error {
 	log.Debug("grpc.SendLog> begin")
 	defer log.Debug("grpc.SendLog> end")
 	for {
@@ -65,7 +68,7 @@ func (h *handlers) SendLog(stream WorkflowQueue_SendLogServer) error {
 }
 
 //SendResult is the WorkflowQueueServer implementation
-func (h *handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty, error) {
+func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty, error) {
 	log.Debug("grpc.SendResult> begin")
 	defer log.Debug("grpc.SendResult> end")
 
@@ -112,15 +115,31 @@ func (h *handlers) SendResult(c context.Context, res *sdk.Result) (*empty.Empty,
 		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{workerName, res.Duration}},
 	}}
 
+	workerUser := &sdk.User{
+		Username: fmt.Sprintf("%s", c.Value(keyWorkerName)),
+	}
+
+	if c.Value(keyWorkerGroup) != nil {
+		g := c.Value(keyWorkerGroup).(*sdk.Group)
+		workerUser.Groups = []sdk.Group{
+			*g,
+		}
+	}
+
+	p, errP := project.LoadProjectByNodeRunID(tx, h.store, job.WorkflowNodeRunID, workerUser, project.LoadOptions.WithVariables)
+	if errP != nil {
+		return new(empty.Empty), sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project")
+	}
+
 	//Add spawn infos
-	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, h.store, job.ID, infos); err != nil {
+	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, h.store, p, job.ID, infos); err != nil {
 		log.Error("addQueueResultHandler> Cannot save spawn info job %d: %s", job.ID, err)
 		return nil, err
 	}
 
 	// Update action status
 	log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", workerID, res.Status)
-	if err := workflow.UpdateNodeJobRunStatus(tx, h.store, job, sdk.Status(res.Status)); err != nil {
+	if err := workflow.UpdateNodeJobRunStatus(tx, h.store, p, job, sdk.Status(res.Status)); err != nil {
 		return new(empty.Empty), sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", workerID)
 	}
 

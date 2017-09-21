@@ -22,7 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/trigger"
-	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -49,7 +49,7 @@ func (api *API) getApplicationTreeHandler() Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
-		tree, err := workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", 0)
+		tree, err := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", 0)
 		if err != nil {
 			log.Warning("getApplicationTreeHandler: Cannot load CD Tree for applications %s: %s\n", applicationName, err)
 			return err
@@ -169,7 +169,7 @@ func (api *API) getApplicationTreeStatusHandler() Handler {
 			return sdk.WrapError(errApp, "getApplicationTreeStatusHandler>Cannot get application")
 		}
 
-		pbs, schedulers, pollers, hooks, errPB := workflow.GetWorkflowStatus(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, version)
+		pbs, schedulers, pollers, hooks, errPB := workflowv0.GetWorkflowStatus(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, version)
 		if errPB != nil {
 			return sdk.WrapError(errPB, "getApplicationHandler> Cannot load CD Tree status %s", app.Name)
 		}
@@ -257,7 +257,7 @@ func (api *API) getApplicationHandler() Handler {
 
 		if withWorkflow {
 			var errWorflow error
-			app.Workflows, errWorflow = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", 0)
+			app.Workflows, errWorflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", 0)
 			if errWorflow != nil {
 				log.Warning("getApplicationHandler: Cannot load CD Tree for applications %s: %s\n", app.Name, errWorflow)
 				return errWorflow

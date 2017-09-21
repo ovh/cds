@@ -10,7 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -95,7 +95,7 @@ func (api *API) addPollerHandler() Handler {
 
 		app.RepositoryPollers = append(app.RepositoryPollers, h)
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "addPollerHandler> Cannot load workflow")
 		}
@@ -171,7 +171,7 @@ func (api *API) updatePollerHandler() Handler {
 			return sdk.WrapError(err, "updatePollerHandler> cannot load pollers")
 		}
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updatePollerHandler> Cannot load workflow")
 		}
@@ -282,7 +282,7 @@ func (api *API) deletePollerHandler() Handler {
 
 		}
 		var errW error
-		a.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
+		a.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "deletePollerHandler> Cannot load workflow")
 		}
