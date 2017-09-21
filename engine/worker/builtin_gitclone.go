@@ -150,7 +150,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			Stdout: stdTagListOut,
 		}
 
-		errTag := git.TagList(dir, outputGitTag)
+		errTag := git.TagList(url.Value, dir, auth, outputGitTag)
 
 		if len(stdTaglistErr.Bytes()) > 0 {
 			sendLog(stdTaglistErr.String())
