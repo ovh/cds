@@ -172,6 +172,7 @@ export class WorkflowShowComponent {
 
         let trigToUpdate = currentNode.triggers.find(trig => trig.id === this.selectedTrigger.id);
         trigToUpdate.conditions = this.selectedTrigger.conditions;
+        trigToUpdate.manual = this.selectedTrigger.manual;
         this.updateWorkflow(clonedWorkflow, this.editTriggerComponent.modal);
     }
 
@@ -181,6 +182,7 @@ export class WorkflowShowComponent {
 
         let trigToUpdate = currentJoin.triggers.find(trig => trig.id === this.selectedJoinTrigger.id);
         trigToUpdate.conditions = this.selectedJoinTrigger.conditions;
+        trigToUpdate.manual = this.selectedJoinTrigger.manual;
         this.updateWorkflow(clonedWorkflow, this.editJoinTriggerComponent.modal);
     }
 

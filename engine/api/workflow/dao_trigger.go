@@ -54,7 +54,7 @@ func insertTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode,
 // LoadTriggers loads trigger from a node
 func loadTriggers(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User) ([]sdk.WorkflowNodeTrigger, error) {
 	dbtriggers := []NodeTrigger{}
-	if _, err := db.Select(&dbtriggers, "select * from workflow_node_trigger where workflow_node_id = $1", node.ID); err != nil {
+	if _, err := db.Select(&dbtriggers, "select * from workflow_node_trigger where workflow_node_id = $1 ORDER by workflow_node_trigger.id ASC", node.ID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}

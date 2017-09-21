@@ -3,11 +3,14 @@ package workflow
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -127,6 +130,10 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.User
 		return sdk.ErrWorkflowInvalidRoot
 	}
 
+	if err := renameNode(db, w); err != nil {
+		return sdk.WrapError(err, "Insert> Cannot rename node")
+	}
+
 	if err := insertNode(db, w, w.Root, u, false); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow root node")
 	}
@@ -145,10 +152,90 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.User
 	return updateLastModified(db, store, w, u)
 }
 
+func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
+	nameByPipeline := map[int64][]*sdk.WorkflowNode{}
+	maxNumberByPipeline := map[int64]int64{}
+
+	// browse node
+	if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, w.Root); err != nil {
+		return err
+	}
+
+	// browse join
+	for i := range w.Joins {
+		join := &w.Joins[i]
+		for j := range join.Triggers {
+			if err := saveNodeByPipeline(db, &nameByPipeline, &maxNumberByPipeline, &join.Triggers[j].WorkflowDestNode); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Generate node name
+	for _, v := range nameByPipeline {
+		for _, n := range v {
+			if n.Name == "" {
+				nextNumber := maxNumberByPipeline[n.Pipeline.ID] + 1
+				n.Name = fmt.Sprintf("%s_%d", n.Pipeline.Name, nextNumber)
+				maxNumberByPipeline[n.Pipeline.ID] = nextNumber
+			}
+		}
+	}
+
+	return nil
+}
+
+func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode, mapMaxNumber *map[int64]int64, n *sdk.WorkflowNode) error {
+	// get pipeline ID
+	pipID := n.PipelineID
+	if pipID == 0 {
+		pipID = n.Pipeline.ID
+	}
+
+	// Load pipeline to have name
+	pip := &n.Pipeline
+	if pip.Name == "" {
+		var errorP error
+		pip, errorP = pipeline.LoadPipelineByID(db, pipID, false)
+		if errorP != nil {
+			return sdk.WrapError(errorP, "saveNodeByPipeline> Cannot load pipeline %d", pipID)
+		}
+		n.Pipeline = *pip
+	}
+
+	// Save node in pipeline node map
+	if _, ok := (*dict)[pipID]; !ok {
+		(*dict)[pipID] = []*sdk.WorkflowNode{}
+	}
+	(*dict)[pipID] = append((*dict)[pipID], n)
+
+	// Check max number for current pipeline
+	if n.Name != "" && strings.HasPrefix(n.Name, pip.Name+"_") {
+		pipNumber, errI := strconv.ParseInt(strings.Replace(n.Name, pip.Name+"_", "", 1), 10, 64)
+		if errI == nil {
+			currentMax, ok := (*mapMaxNumber)[pipID]
+			if !ok || currentMax < pipNumber {
+				(*mapMaxNumber)[pipID] = pipNumber
+			}
+		}
+	}
+
+	for k := range n.Triggers {
+		if err := saveNodeByPipeline(db, dict, mapMaxNumber, &n.Triggers[k].WorkflowDestNode); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Update updates a workflow
 func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow *sdk.Workflow, u *sdk.User) error {
 	if err := IsValid(db, store, w, u); err != nil {
 		return err
+	}
+
+	if err := renameNode(db, w); err != nil {
+		return sdk.WrapError(err, "Update> cannot check pipeline name")
 	}
 
 	// Delete all OLD JOIN

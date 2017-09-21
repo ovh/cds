@@ -548,6 +548,7 @@
   "workflow_node_trigger_condition_value" : "Valeur attendue",
   "workflow_node_trigger_condition_form_title": "Ajouter une condition de déclenchement",
   "workflow_node_trigger_condition_no": "Il n'y a aucune condition de déclenchement",
+  "workflow_node_trigger_manual" : "Trigger manuel",
   "workflow_node_trigger_title" : "Trigger à partir du pipeline {{pip}}",
   "workflow_root_context_application" : "Application (facultatif)",
   "workflow_root_context_environment" : "Environnement (facultatif)",

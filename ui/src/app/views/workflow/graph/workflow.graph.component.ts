@@ -263,7 +263,13 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         if (join.triggers) {
             join.triggers.forEach(t => {
                 this.createNode(t.workflow_dest_node);
-                this.createEdge('join-' + join.id, 'node-' + t.workflow_dest_node.id, {id: 'trigger-' + t.id});
+                let options = {
+                    id: 'trigger-' + t.id
+                };
+                if (t.manual) {
+                    options['style'] =  'stroke-dasharray: 5, 5';
+                }
+                this.createEdge('join-' + join.id, 'node-' + t.workflow_dest_node.id, options);
             });
         }
     }
@@ -284,7 +290,13 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         if (node.triggers) {
             node.triggers.forEach(t => {
                 this.createNode(t.workflow_dest_node);
-                this.createEdge('node-' + node.id, 'node-' + t.workflow_dest_node.id, {id: 'trigger-' + t.id});
+                let options = {
+                    id: 'trigger-' + t.id
+                };
+                if (t.manual) {
+                    options['style'] =  'stroke-dasharray: 5, 5';
+                }
+                this.createEdge('node-' + node.id, 'node-' + t.workflow_dest_node.id, options);
             });
         }
     }
