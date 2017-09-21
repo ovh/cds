@@ -107,11 +107,11 @@ func GetWorker(db *gorp.DbMap, store cache.Store, workerID string) (*sdk.Worker,
 	return w, nil
 }
 
-//GetService returns the worker instance from its id
+//GetService returns the service instance from its hash
 func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, error) {
-	// Load worker
+	//Load the service from the cache
+	//TODO: this should be embeded in the repository layer
 	var srv = &sdk.Service{}
-
 	key := cache.Key("services", hash)
 	// Else load it from DB
 	if !store.Get(key, srv) {

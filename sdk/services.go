@@ -2,6 +2,7 @@ package sdk
 
 import "time"
 
+// Service is a µService registered on CDS API
 type Service struct {
 	Name          string    `json:"name" db:"name"`
 	Type          string    `json:"type" db:"type"`

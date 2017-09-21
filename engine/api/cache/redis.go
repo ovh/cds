@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk"
-
 	"github.com/go-redis/redis"
+
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -281,6 +281,7 @@ func (s *RedisStore) Status() string {
 	return "KO (redis"
 }
 
+// SetAdd add a member (identified by a key) in the cached set
 func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}) {
 	s.Client.ZAdd(rootKey, redis.Z{
 		Member: memberKey,
@@ -289,10 +290,18 @@ func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}
 	s.SetWithTTL(Key(rootKey, memberKey), member, -1)
 }
 
+// SetRemove removes a member from a set
+func (s *RedisStore) SetRemove(rootKey string, memberKey string, member interface{}) {
+	s.Client.ZRem(rootKey, memberKey)
+	s.Delete(Key(rootKey, memberKey))
+}
+
+// SetCard returns the cardinality of a ZSet
 func (s *RedisStore) SetCard(key string) int {
 	return int(s.Client.ZCard(key).Val())
 }
 
+// SetScan scans a ZSet
 func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
 		Min: "-inf",

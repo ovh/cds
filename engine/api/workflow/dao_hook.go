@@ -35,12 +35,14 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 
 	//TODO Check configuration of the hook vs the model
 
-	uuid, erruuid := sessionstore.NewSessionKey()
-	if erruuid != nil {
-		return sdk.WrapError(erruuid, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
+	//Keep the uuid if provided
+	if hook.UUID == "" {
+		uuid, erruuid := sessionstore.NewSessionKey()
+		if erruuid != nil {
+			return sdk.WrapError(erruuid, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
+		}
+		hook.UUID = string(uuid)
 	}
-
-	hook.UUID = string(uuid)
 
 	dbhook := NodeHook(*hook)
 	if err := db.Insert(&dbhook); err != nil {
@@ -97,10 +99,11 @@ func (r *NodeHook) PostGet(db gorp.SqlExecutor) error {
 
 	//Load the model
 	model, err := LoadHookModelByID(db, r.WorkflowHookModelID)
-	r.WorkflowHookModel = *model
 	if err != nil {
 		return err
 	}
+
+	r.WorkflowHookModel = *model
 
 	return nil
 }

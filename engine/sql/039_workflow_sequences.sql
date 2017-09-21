@@ -13,11 +13,11 @@ DECLARE
     workflow_exists integer;
     cur_val integer;
 BEGIN
-    SELECT    count(1) INTO WORKFLOW_EXISTS
+    SELECT    COUNT(1) INTO workflow_exists
     FROM      workflow_sequences
     WHERE     workflow_id = $1;
 
-    IF WORKFLOW_EXISTS = 0 THEN
+    IF workflow_exists = 0 THEN
         BEGIN
             INSERT INTO workflow_sequences(workflow_id, current_val) VALUES ($1, 0);
         EXCEPTION WHEN others THEN
@@ -25,13 +25,13 @@ BEGIN
         END;
     END IF;
     
-    SELECT    current_val INTO CUR_VAL
+    SELECT    current_val INTO cur_val
     FROM      workflow_sequences
     WHERE     workflow_id = $1 FOR UPDATE;
 
-    UPDATE    workflow_sequences SET current_val = CUR_VAL + 1;
+    UPDATE    workflow_sequences SET current_val = cur_val + 1;
 
-    RETURN    CUR_VAL + 1;
+    RETURN    cur_val + 1;
 END;
 $$ LANGUAGE plpgsql;
 -- +migrate StatementEnd

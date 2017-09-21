@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
-
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -43,5 +42,10 @@ func (s *Service) doHeartbeat() error {
 		Type:          "hooks",
 	}
 	log.Debug("Hook> doHeartbeat: %+v", srv)
-	return s.cds.ServiceRegister(srv)
+	hash, err := s.cds.ServiceRegister(srv)
+	if err != nil {
+		return sdk.WrapError(err, "doHeartbeat")
+	}
+	s.hash = hash
+	return nil
 }

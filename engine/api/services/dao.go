@@ -3,7 +3,6 @@ package services
 import (
 	"database/sql"
 	"errors"
-	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -14,7 +13,6 @@ import (
 
 // Repository is the data persistence layer
 type Repository struct {
-	sync      *sync.Mutex
 	db        func() *gorp.DbMap
 	store     cache.Store
 	currentTX *gorp.Transaction
@@ -22,13 +20,11 @@ type Repository struct {
 
 // NewRepository returns a fresh repository
 func NewRepository(dbFunc func() *gorp.DbMap, store cache.Store) *Repository {
-	return &Repository{db: dbFunc, store: store, sync: new(sync.Mutex)}
+	return &Repository{db: dbFunc, store: store}
 }
 
 // Tx return the current gorp.SqlExecutor
 func (r *Repository) Tx() gorp.SqlExecutor {
-	r.sync.Lock()
-	defer r.sync.Unlock()
 	if r.currentTX != nil {
 		return r.currentTX
 	}
@@ -37,8 +33,6 @@ func (r *Repository) Tx() gorp.SqlExecutor {
 
 // Begin a transaction
 func (r *Repository) Begin() error {
-	r.sync.Lock()
-	defer r.sync.Unlock()
 	if r.currentTX != nil || r.db == nil {
 		return errors.New("Unable to start a new transaction on this repository")
 	}
@@ -49,8 +43,6 @@ func (r *Repository) Begin() error {
 
 // Commit a transaction
 func (r *Repository) Commit() error {
-	r.sync.Lock()
-	defer r.sync.Unlock()
 	if r.currentTX == nil || r.db == nil {
 		return errors.New("No current transaction")
 	}
@@ -61,8 +53,6 @@ func (r *Repository) Commit() error {
 
 // Rollback the transaction
 func (r *Repository) Rollback() error {
-	r.sync.Lock()
-	defer r.sync.Unlock()
 	if r.currentTX == nil || r.db == nil {
 		return errors.New("No current transaction")
 	}
@@ -153,7 +143,7 @@ func (r *Repository) FindDeadServices(t time.Duration) ([]sdk.Service, error) {
 	services, err := r.findAll(query, time.Now().Add(-1*t))
 	if err != nil {
 		if err == sdk.ErrNotFound {
-			return services, nil
+			return nil, nil
 		}
 		return nil, sdk.WrapError(err, "FindDeadServices> Unable to find dead services")
 	}

@@ -36,6 +36,7 @@ type Store interface {
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
 	Status() string
 	SetAdd(rootKey string, memberKey string, member interface{})
+	SetRemove(rootKey string, memberKey string, member interface{})
 	SetCard(key string) int
 	SetScan(key string, members ...interface{}) error
 }

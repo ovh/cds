@@ -8,7 +8,7 @@ import (
 // InitRouter initializes the router and all the routes
 func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
-	api.Router.SetHeaderFunc = defaultHeaders
+	api.Router.SetHeaderFunc = DefaultHeaders
 	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.deletePermissionMiddleware)
 	api.lastUpdateBroker = &lastUpdateBroker{
 		make(map[string]*lastUpdateBrokerSubscribe),

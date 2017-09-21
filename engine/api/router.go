@@ -145,7 +145,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-func defaultHeaders() map[string]string {
+func DefaultHeaders() map[string]string {
 	return map[string]string{
 		"Access-Control-Allow-Origin":   "*",
 		"Access-Control-Allow-Methods":  "GET,OPTIONS,PUT,POST,DELETE",

@@ -35,6 +35,7 @@ type HTTPClient interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+// NoTimeout returns a http.DefaultClient from a HTTPClient
 func NoTimeout(c HTTPClient) HTTPClient {
 	return http.DefaultClient
 }

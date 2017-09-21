@@ -255,6 +255,7 @@ func (s *LocalStore) Status() string {
 	return "OK (local)"
 }
 
+// SetAdd add a member (identified by a key) in the cached set
 func (s *LocalStore) SetAdd(rootKey string, memberKey string, member interface{}) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -269,6 +270,12 @@ func (s *LocalStore) SetAdd(rootKey string, memberKey string, member interface{}
 	s.Sets[rootKey] = set
 }
 
+// SetRemove removes a member from a set
+func (s *LocalStore) SetRemove(rootKey string, memberKey string, member interface{}) {
+
+}
+
+// SetCard returns the cardinality of a set
 func (s *LocalStore) SetCard(key string) int {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -277,7 +284,11 @@ func (s *LocalStore) SetCard(key string) int {
 	return len(set)
 }
 
+// SetScan scans a set as mush as members are given in the variadic
 func (s *LocalStore) SetScan(rootKey string, members ...interface{}) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	set := s.Sets[rootKey]
 	if len(members) > len(set) {
 		return errors.New("Too much members")
