@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/blang/semver"
@@ -146,12 +145,12 @@ func runGitClone(w *currentWorker) BuiltInAction {
 
 		stdTaglistErr := new(bytes.Buffer)
 		stdTagListOut := new(bytes.Buffer)
-		outputGitTar := &git.OutputOpts{
+		outputGitTag := &git.OutputOpts{
 			Stderr: stdTaglistErr,
 			Stdout: stdTagListOut,
 		}
 
-		errTag := git.TagList(dir, outputGitTar)
+		errTag := git.TagList(dir, outputGitTag)
 
 		if len(stdTaglistErr.Bytes()) > 0 {
 			sendLog(stdTaglistErr.String())
@@ -180,15 +179,22 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		if len(stdTagListOut.Bytes()) > 0 {
 			// search for version
 			lines := strings.Split(stdTagListOut.String(), "\n")
-			sort.Sort(sort.Reverse(sort.StringSlice(lines)))
-
+			versions := semver.Versions{}
+			re := regexp.MustCompile("refs/tags/(.*)")
 			for _, l := range lines {
-				var errorMake error
-				v, errorMake = semver.Make(l)
-				if errorMake == nil {
-					v.Patch++
-					break
+				match := re.FindStringSubmatch(l)
+				if len(match) >= 1 {
+					tag := match[1]
+					if sv, err := semver.Parse(tag); err == nil {
+						versions = append(versions, sv)
+					}
 				}
+			}
+			semver.Sort(versions)
+			if len(versions) > 0 {
+				// and we increment the last version found
+				v = versions[len(versions)-1]
+				v.Patch++
 			}
 		}
 
