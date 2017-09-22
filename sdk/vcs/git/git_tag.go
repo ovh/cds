@@ -2,13 +2,6 @@ package git
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/url"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
-	"strings"
 )
 
 // TagOpts represents options for git tag command
@@ -21,15 +14,15 @@ type TagOpts struct {
 	Username string
 }
 
-// Tag makes git tag action
-func Tag(repo string, auth *AuthOpts, opts *TagOpts, output *OutputOpts) error {
+// TagCreate makes git tag action
+func TagCreate(repo string, auth *AuthOpts, opts *TagOpts, output *OutputOpts) error {
 	var commands []cmd
 	repoURL, err := getRepoURL(repo, auth)
 	if err != nil {
 		return err
 	}
-	commands = gitTagCommand(repoURL, opts)
-	return gitTagOver(repo, commands, auth, output)
+	commands = prepareGitTagCreateCommands(repoURL, opts)
+	return runGitCommands(repo, commands, auth, output)
 }
 
 // TagList List tag from given git directory
@@ -38,61 +31,11 @@ func TagList(repo, dir string, auth *AuthOpts, output *OutputOpts) error {
 	if err != nil {
 		return err
 	}
-	commands := gitTagListCommand(repoURL, dir)
-	return gitTagOver(repo, commands, auth, output)
+	commands := prepareGitTagListCommands(repoURL, dir)
+	return runGitCommands(repo, commands, auth, output)
 }
 
-func getRepoURL(repo string, auth *AuthOpts) (string, error) {
-	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "ftp://") || strings.HasPrefix(repo, "ftps://") {
-		return "", fmt.Errorf("Git protocol not supported")
-	}
-	if strings.HasPrefix(repo, "https://") {
-		u, err := url.Parse(repo)
-		if err != nil {
-			return "", err
-		}
-		u.User = url.UserPassword(auth.Username, auth.Password)
-		return u.String(), nil
-	}
-	return repo, nil
-}
-
-func gitTagOver(repo string, commands []cmd, auth *AuthOpts, output *OutputOpts) error {
-	if strings.HasPrefix(repo, "https://") {
-		return runCommand(commands, output)
-	}
-	return gitTagOverSSH(commands, auth, output)
-}
-
-func gitTagOverSSH(commands []cmd, auth *AuthOpts, output *OutputOpts) error {
-	if auth == nil {
-		return fmt.Errorf("Authentication is required for git over ssh")
-	}
-
-	keyDir := filepath.Dir(auth.PrivateKey.Filename)
-
-	gitSSHCmd := exec.Command("ssh").Path
-	gitSSHCmd += " -i " + auth.PrivateKey.Filename
-
-	var wrapper string
-	if runtime.GOOS == "windows" {
-		gitSSHCmd += " %*"
-		wrapper = gitSSHCmd
-	} else {
-		gitSSHCmd += ` "$@"`
-		wrapper = `#!/bin/sh
-` + gitSSHCmd
-	}
-
-	wrapperPath := filepath.Join(keyDir, "gitwrapper")
-	if err := ioutil.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
-		return err
-	}
-
-	return runCommand(commands, output, "GIT_SSH="+wrapperPath)
-}
-
-func gitTagCommand(repo string, opts *TagOpts) cmds {
+func prepareGitTagCreateCommands(repo string, opts *TagOpts) cmds {
 	allCmd := []cmd{}
 
 	if opts != nil && opts.SignKey != "" {
@@ -139,11 +82,11 @@ func gitTagCommand(repo string, opts *TagOpts) cmds {
 	}
 
 	allCmd = append(allCmd, gitcmd)
-	allCmd = append(allCmd, gitPushCommand(optPush)...)
+	allCmd = append(allCmd, prepareGitPushCommands(repo, optPush)...)
 	return cmds(allCmd)
 }
 
-func gitTagListCommand(repo, dir string) cmds {
+func prepareGitTagListCommands(repo, dir string) cmds {
 	allCmd := []cmd{}
 
 	gitcmd := cmd{

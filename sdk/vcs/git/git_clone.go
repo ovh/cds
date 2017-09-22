@@ -2,12 +2,6 @@ package git
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/url"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -34,65 +28,17 @@ func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *Ou
 		defer LogFunc("Git clone %s (%v s)", path, int(time.Since(t1).Seconds()))
 	}
 
-	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "ftp://") || strings.HasPrefix(repo, "ftps://") {
-		return fmt.Errorf("Git protocol not supported")
-	}
-
-	if strings.HasPrefix(repo, "https://") {
-		return gitCloneOverHTTPS(repo, path, auth, opts, output)
-	}
-	return gitCloneOverSSH(repo, path, auth, opts, output)
-}
-
-func gitCloneOverHTTPS(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) error {
-	if auth == nil {
-		cmd := gitCloneCommand(repo, path, opts)
-		return runCommand(cmd, output)
-	}
-	u, err := url.Parse(repo)
+	var commands []cmd
+	repoURL, err := getRepoURL(repo, auth)
 	if err != nil {
 		return err
 	}
 
-	u.User = url.UserPassword(auth.Username, auth.Password)
-
-	cmd := gitCloneCommand(u.String(), path, opts)
-	return runCommand(cmd, output)
+	commands = prepareGitCloneCommands(repoURL, path, opts)
+	return runGitCommands(repo, commands, auth, output)
 }
 
-func gitCloneOverSSH(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) error {
-	if auth == nil {
-		return fmt.Errorf("Authentication is required for git over ssh")
-	}
-
-	keyDir := filepath.Dir(auth.PrivateKey.Filename)
-	allCmd := gitCloneCommand(repo, path, opts)
-
-	gitSSHCmd := exec.Command("ssh").Path
-	if opts != nil && opts.NoStrictHostKeyChecking {
-		gitSSHCmd += " -o StrictHostKeyChecking=no"
-	}
-	gitSSHCmd += " -i " + auth.PrivateKey.Filename
-
-	var wrapper string
-	if runtime.GOOS == "windows" {
-		gitSSHCmd += " %*"
-		wrapper = gitSSHCmd
-	} else {
-		gitSSHCmd += ` "$@"`
-		wrapper = `#!/bin/sh
-` + gitSSHCmd
-	}
-
-	wrapperPath := filepath.Join(keyDir, "gitwrapper")
-	if err := ioutil.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
-		return err
-	}
-
-	return runCommand(allCmd, output, "GIT_SSH="+wrapperPath)
-}
-
-func gitCloneCommand(repo string, path string, opts *CloneOpts) cmds {
+func prepareGitCloneCommands(repo string, path string, opts *CloneOpts) cmds {
 	allCmd := []cmd{}
 	gitcmd := cmd{
 		cmd:  "git",
