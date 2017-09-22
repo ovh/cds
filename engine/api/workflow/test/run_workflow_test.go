@@ -1,4 +1,4 @@
-package workflow
+package test
 
 import (
 	"sort"
@@ -10,10 +10,10 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/workflow"
 )
 
 func TestManualRun1(t *testing.T) {
@@ -83,11 +83,11 @@ func TestManualRun1(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
-	w1, err := Load(db, cache, key, "test_1", u)
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	_, err = ManualRun(db, cache, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 		Payload: map[string]string{
 			"git.branch": "master",
@@ -95,7 +95,7 @@ func TestManualRun1(t *testing.T) {
 	})
 	test.NoError(t, err)
 
-	wr1, err := ManualRun(db, cache, w1, &sdk.WorkflowNodeRunManual{User: *u})
+	wr1, err := workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u})
 	test.NoError(t, err)
 
 	m1, _ := dump.ToMap(wr1)
@@ -110,18 +110,18 @@ func TestManualRun1(t *testing.T) {
 		t.Logf("%s: \t%s", k, m1[k])
 	}
 
-	lastrun, err := LoadLastRun(db, proj.Key, "test_1")
+	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1")
 	test.NoError(t, err)
 
 	assert.Equal(t, int64(2), lastrun.Number)
 
 	//TestLoadNodeRun
-	nodeRun, err := LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.RootID][0].ID)
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.RootID][0].ID)
 	test.NoError(t, err)
 	test.Equal(t, lastrun.WorkflowNodeRuns[w1.RootID][0], nodeRun)
 
 	//TestLoadNodeJobRun
-	jobs, err := LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	//Print lastrun
@@ -148,7 +148,7 @@ func TestManualRun1(t *testing.T) {
 	}
 
 	//TestprocessWorkflowRun
-	wr2, err := ManualRunFromNode(db, cache, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	wr2, err := workflow.ManualRunFromNode(db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 	assert.NotNil(t, wr2)
 
@@ -163,7 +163,7 @@ func TestManualRun1(t *testing.T) {
 	}
 
 	//TestLoadRuns
-	runs, offset, limit, count, err := LoadRuns(db, proj.Key, w1.Name, 0, 50)
+	runs, offset, limit, count, err := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 50)
 	test.NoError(t, err)
 	assert.Equal(t, 0, offset)
 	assert.Equal(t, 50, limit)
@@ -171,7 +171,7 @@ func TestManualRun1(t *testing.T) {
 	assert.Len(t, runs, 2)
 
 	//TestLoadRunByID
-	_, err = LoadRunByIDAndProjectKey(db, proj.Key, wr2.ID)
+	_, err = workflow.LoadRunByIDAndProjectKey(db, proj.Key, wr2.ID)
 	test.NoError(t, err)
 
 }
@@ -181,8 +181,6 @@ func TestManualRun2(t *testing.T) {
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
-
-	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -245,23 +243,23 @@ func TestManualRun2(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
-	w1, err := Load(db, cache, key, "test_1", u)
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	_, err = ManualRun(db, cache, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
 
-	_, err = ManualRun(db, cache, w1, &sdk.WorkflowNodeRunManual{User: *u})
+	_, err = workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u})
 	test.NoError(t, err)
 
 	//TestprocessWorkflowRun
-	_, err = ManualRunFromNode(db, cache, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	_, err = workflow.ManualRunFromNode(db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
 	test.NoError(t, err)
 
-	jobs, err := LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	assert.Len(t, jobs, 3)
@@ -272,8 +270,6 @@ func TestManualRun3(t *testing.T) {
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
-
-	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -337,16 +333,16 @@ func TestManualRun3(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
-	w1, err := Load(db, cache, key, "test_1", u)
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	ManualRun(db, cache, w1, &sdk.WorkflowNodeRunManual{
+	workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
 
-	jobs, err := LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 
 	for i := range jobs {
@@ -354,7 +350,7 @@ func TestManualRun3(t *testing.T) {
 		tx, _ := db.Begin()
 
 		//BookNodeJobRun
-		_, err = BookNodeJobRun(cache, j.ID, &sdk.Hatchery{
+		_, err = workflow.BookNodeJobRun(cache, j.ID, &sdk.Hatchery{
 			Name: "Hatchery",
 			ID:   1,
 		})
@@ -365,7 +361,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//AddSpawnInfosNodeJobRun
-		j, err := AddSpawnInfosNodeJobRun(db, cache, j.ID, []sdk.SpawnInfo{
+		j, err := workflow.AddSpawnInfosNodeJobRun(db, cache, proj, j.ID, []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -381,7 +377,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TakeNodeJobRun
-		j, err = TakeNodeJobRun(db, cache, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
+		j, err = workflow.TakeNodeJobRun(db, cache, proj, j.ID, "model", "worker", "1", []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),
@@ -392,31 +388,31 @@ func TestManualRun3(t *testing.T) {
 		})
 
 		//Load workflow node run
-		nodeRun, err := LoadNodeRunByID(db, j.WorkflowNodeRunID)
+		nodeRun, err := workflow.LoadNodeRunByID(db, j.WorkflowNodeRunID)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		//Load workflow run
-		workflowRun, err := LoadRunByID(db, nodeRun.WorkflowRunID)
+		workflowRun, err := workflow.LoadRunByID(db, nodeRun.WorkflowRunID)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		//TestLoadNodeJobRunSecrets
-		secrets, err := LoadNodeJobRunSecrets(db, j, nodeRun, workflowRun)
+		secrets, err := workflow.LoadNodeJobRunSecrets(db, j, nodeRun, workflowRun, proj.Variable)
 		assert.NoError(t, err)
 		assert.Len(t, secrets, 1)
 
 		//TestAddLog
-		assert.NoError(t, AddLog(db, j, &sdk.Log{
+		assert.NoError(t, workflow.AddLog(db, j, &sdk.Log{
 			Val: "This is a log",
 		}))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()
 		}
-		assert.NoError(t, AddLog(db, j, &sdk.Log{
+		assert.NoError(t, workflow.AddLog(db, j, &sdk.Log{
 			Val: "This is another log",
 		}))
 		if t.Failed() {
@@ -425,13 +421,13 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TestUpdateNodeJobRunStatus
-		assert.NoError(t, UpdateNodeJobRunStatus(db, cache, j, sdk.StatusSuccess))
+		assert.NoError(t, workflow.UpdateNodeJobRunStatus(db, cache, proj, j, sdk.StatusSuccess))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()
 		}
 
-		logs, err := LoadLogs(db, j.ID)
+		logs, err := workflow.LoadLogs(db, j.ID)
 		assert.NoError(t, err)
 		if t.Failed() {
 			tx.Rollback()
@@ -442,7 +438,7 @@ func TestManualRun3(t *testing.T) {
 		tx.Commit()
 	}
 
-	jobs, err = LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
+	jobs, err = workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(jobs))
 

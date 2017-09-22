@@ -9,10 +9,10 @@ import (
 
 // Sort sorts all the workflow tree
 func Sort(w *sdk.Workflow) {
-	sortNode(w.Root)
+	SortNode(w.Root)
 }
 
-func sortNode(n *sdk.WorkflowNode) {
+func SortNode(n *sdk.WorkflowNode) {
 	sortNodeHooks(&n.Hooks)
 	sortNodeTriggers(&n.Triggers)
 }

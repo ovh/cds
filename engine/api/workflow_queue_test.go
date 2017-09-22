@@ -83,7 +83,7 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
