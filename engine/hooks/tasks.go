@@ -121,7 +121,9 @@ func (s *Service) startTasks(ctx context.Context) error {
 }
 
 func (s *Service) startTask(ctx context.Context, t *Task) error {
-	log.Info("Hooks> Starting task %s", t.UUID)
+	t.Stopped = false
+	s.Dao.SaveTask(t)
+
 	switch t.Type {
 	case TypeWebHook:
 		log.Debug("Hooks> Webhook tasks %s ready", t.UUID)
@@ -134,6 +136,10 @@ func (s *Service) startTask(ctx context.Context, t *Task) error {
 }
 
 func (s *Service) prepareNextScheduledTaskExecution(t *Task) error {
+	if t.Stopped {
+		return nil
+	}
+
 	//Load the last execution of this task
 	execs, err := s.Dao.FindAllTaskExecutions(t)
 	if err != nil {
@@ -142,7 +148,7 @@ func (s *Service) prepareNextScheduledTaskExecution(t *Task) error {
 
 	//The last execution has not been executed, let it go
 	if len(execs) > 0 && execs[len(execs)-1].ProcessingTimestamp == 0 {
-		log.Debug("Hooks> Scheduler tasks %s ready. Next execution scheduled on %v", time.Unix(0, execs[len(execs)-1].Timestamp))
+		log.Debug("Hooks> Scheduled tasks %s ready. Next execution scheduled on %v", t.UUID, time.Unix(0, execs[len(execs)-1].Timestamp))
 		return nil
 	}
 
@@ -152,18 +158,14 @@ func (s *Service) prepareNextScheduledTaskExecution(t *Task) error {
 		return sdk.WrapError(err, "startTask> unable to parse timezone: %s", t.Config["timezone"])
 	}
 
-	var t0 = time.Now().In(loc)
-	//The last execution is over, take its timestamp as reference
-	if len(execs) > 0 {
-		t0 = time.Unix(0, execs[len(execs)-1].Timestamp).In(loc)
-	}
-
+	//Parse the cron expr
 	cronExpr, err := cronexpr.Parse(t.Config["cron"])
 	if err != nil {
 		return sdk.WrapError(err, "startTask> unable to parse cron expression: %s", t.Config["cron"])
 	}
 
 	//Compute a new date
+	t0 := time.Now().In(loc)
 	t1 := cronExpr.Next(t0)
 
 	//Craft a new execution
@@ -180,35 +182,40 @@ func (s *Service) prepareNextScheduledTaskExecution(t *Task) error {
 	s.Dao.SaveTaskExecution(exec)
 	//We don't push in queue, we will the scheduler to run it
 
-	log.Debug("Hooks> Scheduler tasks %s ready. Next execution scheduled on %v", exec.UUID, time.Unix(0, exec.Timestamp))
+	log.Debug("Hooks> Scheduled tasks %v ready. Next execution scheduled on %v", t.UUID, time.Unix(0, exec.Timestamp))
 
 	return nil
 }
 
 func (s *Service) stopTask(ctx context.Context, t *Task) error {
 	log.Info("Hooks> Stopping task %s", t.UUID)
+	t.Stopped = true
+	s.Dao.SaveTask(t)
+
 	switch t.Type {
-	case TypeWebHook:
-		log.Debug("Hooks> Webhook tasks %s has been stopped", t.UUID)
+	case TypeWebHook, TypeScheduler:
+		log.Debug("Hooks> Tasks %s has been stopped", t.UUID)
 		return nil
 	default:
 		return fmt.Errorf("Unsupported task type %s", t.Type)
 	}
 }
 
-func (s *Service) doTask(ctx context.Context, t *TaskExecution) error {
+func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
+	if t.Stopped {
+		return nil
+	}
+
 	var h *sdk.WorkflowNodeRunHookEvent
 	var err error
 
 	switch {
-	case t.WebHook != nil:
-		h, err = s.doWebHookExecution(t)
-	case t.ScheduledTask != nil:
-		h, err = s.doScheduledTaskExecution(t)
-		task := s.Dao.FindTask(t.UUID)
-		defer s.prepareNextScheduledTaskExecution(task)
+	case e.WebHook != nil:
+		h, err = s.doWebHookExecution(e)
+	case e.ScheduledTask != nil:
+		h, err = s.doScheduledTaskExecution(e)
 	default:
-		err = fmt.Errorf("Unsupported task type %s", t.Type)
+		err = fmt.Errorf("Unsupported task type %s", e.Type)
 	}
 
 	if err != nil {
@@ -222,14 +229,14 @@ func (s *Service) doTask(ctx context.Context, t *TaskExecution) error {
 	}
 
 	//Save the run number
-	t.WorkflowRun = run.Number
+	e.WorkflowRun = run.Number
 	log.Info("Hooks> workflow %s/%s#%d has been triggered", t.Config["project"], t.Config["workflow"], run.Number)
 
 	return nil
 }
 
 func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing scheduled task %s", t.UUID)
+	log.Info("Hooks> Processing scheduled task %s", t.UUID)
 
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{
@@ -252,7 +259,7 @@ func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeR
 }
 
 func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing webhook %s", t.UUID)
+	log.Info("Hooks> Processing webhook %s", t.UUID)
 
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{
