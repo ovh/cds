@@ -19,7 +19,7 @@ type Service struct {
 
 // Configuration is the hooks configuration structure
 type Configuration struct {
-	Name string `toml:"name" default:"cdshooks" comment:"Name of this CDS Hooks Service"`
+	Name string `toml:"name" comment:"Name of this CDS Hooks Service"`
 	HTTP struct {
 		Port int `toml:"port" default:"8083" toml:"name"`
 	} `toml:"http" comment:"######################\n CDS Hooks HTTP Configuration \n######################\n"`
