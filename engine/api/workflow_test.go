@@ -235,6 +235,12 @@ func Test_postWorkflowWithHooksHandler(t *testing.T) {
 					},
 					WorkflowHookModelID: workflow.WebHookModel.ID,
 				},
+				{
+					Config: sdk.WorkflowNodeHookConfig{
+						"cron": "* * * * *",
+					},
+					WorkflowHookModelID: workflow.SchedulerModel.ID,
+				},
 			},
 		},
 	}

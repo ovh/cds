@@ -60,6 +60,7 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 				}
 				for _, e := range execs {
 					if e.ProcessingTimestamp == 0 && e.Timestamp <= time.Now().UnixNano() {
+						log.Debug("Hooks> retryTaskExecutionsRoutine > enqueing task %s (%v, %v)", t.UUID, e.Timestamp, time.Now().UnixNano())
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
 					}
@@ -114,25 +115,38 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 			return c.Err()
 		}
 
+		// Dequeuing context
 		var taskKey string
 		s.Cache.DequeueWithContext(c, schedulerQueueKey, &taskKey)
 
 		log.Debug("Dequeuing a task execution: %v", taskKey)
 
+		// Load the task execution
 		var t = TaskExecution{}
 		if !s.Cache.Get(taskKey, &t) {
 			continue
 		}
 
-		//Execute
-		if err := s.doTask(c, &t); err != nil {
-			log.Error("Hooks> doLongRunningTask failed: %v", err)
+		task := s.Dao.FindTask(t.UUID)
+		if task == nil {
+			log.Error("Hooks> dequeueTaskExecutions failed: Task not found")
+			t.LastError = "Internal Error: Task not found"
+			t.NbErrors++
+		} else if task.Stopped {
+			t.LastError = "Executions skipped: Task has been stopped"
+			t.NbErrors++
+		} else if err := s.doTask(c, task, &t); err != nil {
+			log.Error("Hooks> dequeueTaskExecutions failed: %v", err)
 			t.LastError = err.Error()
 			t.NbErrors++
 		}
+
 		//Save the execution
 		t.ProcessingTimestamp = time.Now().UnixNano()
 		s.Dao.SaveTaskExecution(&t)
+
+		//Start (or restart) the task
+		s.startTask(c, task)
 
 		continue
 	}

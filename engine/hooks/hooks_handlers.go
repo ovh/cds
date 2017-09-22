@@ -107,7 +107,7 @@ func (s *Service) putTaskHandler() api.Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task")
 		}
 
-		//Save the task
+		//Save it
 		s.Dao.SaveTask(t)
 
 		//Start the task

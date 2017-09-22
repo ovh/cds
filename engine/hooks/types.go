@@ -52,9 +52,10 @@ type Configuration struct {
 
 // Task is a generic hook tasks such as webhook, scheduler,... which will be started and wait for execution
 type Task struct {
-	UUID   string
-	Type   string
-	Config sdk.WorkflowNodeHookConfig
+	UUID    string
+	Type    string
+	Config  sdk.WorkflowNodeHookConfig
+	Stopped bool
 }
 
 // TaskExecution represents an execution instance of a task. It the task is a webhook; this represents the call of the webhook
@@ -80,7 +81,5 @@ type WebHookExecution struct {
 
 // ScheduledTaskExecution contains specific data for a scheduled task execution
 type ScheduledTaskExecution struct {
-	UUID                   string
-	Type                   string
 	DateScheduledExecution string
 }
