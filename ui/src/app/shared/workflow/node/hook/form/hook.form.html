@@ -1,0 +1,33 @@
+<ng-template let-context let-modal="modal" #nodeHookFormModal>
+    <div class="header">{{ 'workflow_node_hook_add' | translate }}</div>
+    <div class="content">
+        <div class="ui form" *ngIf="node">
+            <h3>{{ 'workflow_node_hook_form_title' | translate }}</h3>
+            <sui-select class="selection"
+                        [(ngModel)]="selectedHookModel"
+                        (ngModelChange)="updateHook()"
+                        [options]="hooksModel"
+                        [isSearchable]="true"
+                        labelField="name"
+                        #select>
+                <sui-select-option *ngFor="let option of select.filteredOptions"
+                                   [value]="option">{{option.name}}
+                </sui-select-option>
+            </sui-select>
+            <ng-container *ngIf="hookToAdd">
+                <h3>{{ 'workflow_node_hook_form_config'}}</h3>
+                <ng-container *ngIf="hookToAdd.config">
+                    <div class="inline fields" *ngFor="let k of hookToAdd.config | keys">
+                        <label>{{k}}</label>
+                        <input type="text" [(ngModel)]="hookToAdd.config[k]">
+                    </div>
+                </ng-container>
+                <div class="ui info message">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
+            </ng-container>
+        </div>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="addHook()">{{ 'btn_save' | translate }}</button>
+    </div>
+</ng-template>

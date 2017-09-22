@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnInit, Output, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeTrigger} from '../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeTrigger} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
@@ -16,6 +16,8 @@ import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {Router} from '@angular/router';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {WorkflowNodeHookFormComponent} from './hook/form/node.hook.component';
+import {WorkflowHookModel} from '../../../model/workflow.hook.model';
 
 declare var _: any;
 
@@ -39,6 +41,8 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     workflowDeleteNode: WorkflowDeleteNodeComponent;
     @ViewChild('workflowContext')
     workflowContext: WorkflowNodeContextComponent;
+    @ViewChild('worklflowAddHook')
+    worklflowAddHook: WorkflowNodeHookFormComponent;
 
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
     editableNode: WorkflowNode;
@@ -82,6 +86,14 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     }
 
+    addHook(h: WorkflowNodeHook): void {
+        if (!this.node.hooks) {
+            this.node.hooks = new Array<WorkflowNodeHook>();
+        }
+        this.node.hooks.push(h);
+        this.updateWorkflow(this.workflow, this.worklflowAddHook.modal);
+    }
+
     displayDropdown(): void {
         this.elementRef.nativeElement.style.zIndex = 50;
     }
@@ -91,6 +103,12 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         this.elementRef.nativeElement.style.top = 0;
     }
 
+    openAddHookModal(): void {
+        if (this.worklflowAddHook) {
+            this.worklflowAddHook.show();
+        }
+    }
+
     openTriggerModal(): void {
         this.newTrigger = new WorkflowNodeTrigger();
         this.newTrigger.workflow_node_id = this.node.id;
@@ -98,7 +116,9 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     openDeleteNodeModal(): void {
-        this.workflowDeleteNode.show();
+        if (this.workflowDeleteNode) {
+            this.workflowDeleteNode.show();
+        }
     }
 
     openEditContextModal(): void {

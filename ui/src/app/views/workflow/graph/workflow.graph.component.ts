@@ -274,6 +274,23 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         }
     }
 
+    createHookNode(node: WorkflowNode): void {
+        if (!node.hooks || node.hooks.length === 0) {
+            return;
+        }
+        node.hooks.forEach(h => {
+            this.g.setNode(
+                'hook-' + node.id + '-' + h.id, {
+                    shape: 'ellipse'
+                }
+            );
+            let options = {
+                id: 'hook-' + node.id + '-' + h.id
+            };
+            this.createEdge('hook-' + node.id + '-' + h.id, 'node-' + node.id, options);
+        });
+    }
+
     createNode(node: WorkflowNode): void {
         let componentRef = this.createNodeComponent(node);
         this.svgContainer.insert(componentRef.hostView);
@@ -287,6 +304,9 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             width: this.nodeWidth,
             height: this.nodeHeight
         });
+
+        this.createHookNode(node);
+
         if (node.triggers) {
             node.triggers.forEach(t => {
                 this.createNode(t.workflow_dest_node);

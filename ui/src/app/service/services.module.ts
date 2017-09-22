@@ -40,6 +40,7 @@ import {LastUpdateService} from './sse/lastupdate.sservice';
 import {HTTP_INTERCEPTORS} from '@angular/common/http';
 import {AuthentificationInterceptor} from './auth.interceptor.service';
 import {LogoutInterceptor} from './logout.interceptor.service';
+import {HookService} from './hook/hook.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -63,6 +64,7 @@ export class ServicesModule {
                 CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
                 GroupService,
+                HookService,
                 LanguageStore,
                 LastUpdateService,
                 NotificationService,
@@ -119,6 +121,7 @@ export {
     CanActivateAuthAdminRoute,
     EnvironmentAuditService,
     GroupService,
+    HookService,
     LanguageStore,
     LastUpdateService,
     ParameterService,

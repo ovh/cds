@@ -3,6 +3,7 @@ import {Application} from './application.model';
 import {Environment} from './environment.model';
 import {intersection} from 'lodash';
 import {Parameter} from './parameter.model';
+import {WorkflowHookModel} from './workflow.hook.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -169,15 +170,6 @@ export class WorkflowTriggerCondition {
     variable: string;
     operator: string;
     value: string;
-}
-
-export class WorkflowHookModel {
-    id: number;
-    name: string;
-    type: string;
-    images: string;
-    command: string;
-    default_config: {};
 }
 
 export class WorkflowTriggerConditionCache {
