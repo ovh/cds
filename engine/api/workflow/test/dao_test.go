@@ -1,4 +1,4 @@
-package workflow
+package test
 
 import (
 	"testing"
@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/workflow"
 )
 
 func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
@@ -24,7 +25,7 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
 
-	ws, err := LoadAll(db, proj.Key)
+	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
 	assert.Equal(t, 0, len(ws))
 }
@@ -54,9 +55,9 @@ func TestInsertSimpleWorkflow(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -66,7 +67,7 @@ func TestInsertSimpleWorkflow(t *testing.T) {
 	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
 	assertEqualNode(t, w.Root, w1.Root)
 
-	ws, err := LoadAll(db, proj.Key)
+	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
 
@@ -117,9 +118,9 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -219,9 +220,9 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -231,15 +232,15 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
 	test.Equal(t, len(w.Root.Triggers), len(w1.Root.Triggers))
 
-	Sort(&w)
+	workflow.Sort(&w)
 
 	assertEqualNode(t, w.Root, w1.Root)
 }
 
 func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
 	t.Logf("assertEqualNode : %d(%s) on %s", n2.ID, n2.Ref, n2.Pipeline.Name)
-	sortNode(n1)
-	sortNode(n2)
+	workflow.SortNode(n1)
+	workflow.SortNode(n2)
 	t.Logf("assertEqualNode : Checking hooks")
 	test.Equal(t, len(n1.Hooks), len(n2.Hooks))
 	t.Logf("assertEqualNode : Checking triggers")
@@ -359,12 +360,12 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	w1old, err := Load(db, cache, key, "test_1", u)
+	w1old, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
@@ -374,17 +375,17 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	w1.Root.Context.Application = &app2
 	w1.Root.Context.ApplicationID = app2.ID
 
-	test.NoError(t, Update(db, cache, w1, w1old, u))
+	test.NoError(t, workflow.Update(db, cache, w1, w1old, proj, u))
 
 	t.Logf("Reloading workflow...")
-	w2, err := LoadByID(db, cache, w1.ID, u)
+	w2, err := workflow.LoadByID(db, cache, w1.ID, u)
 	test.NoError(t, err)
 
 	assert.Equal(t, w1.ID, w2.ID)
 	assert.Equal(t, app2.ID, w2.Root.Context.Application.ID)
 	assert.Equal(t, env.ID, w2.Root.Context.Environment.ID)
 
-	test.NoError(t, Delete(db, w2, u))
+	test.NoError(t, workflow.Delete(db, w2, u))
 }
 
 func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
@@ -512,9 +513,9 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -524,7 +525,7 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
 	test.Equal(t, len(w.Root.Triggers), len(w1.Root.Triggers))
 
-	Sort(&w)
+	workflow.Sort(&w)
 
 	m1, _ := dump.ToMap(w)
 	m2, _ := dump.ToMap(w1)
@@ -742,12 +743,12 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	Sort(&w)
+	workflow.Sort(&w)
 
 	m1, _ := dump.ToMap(w)
 	m2, _ := dump.ToMap(w1)
@@ -824,9 +825,9 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	w1old := w1
@@ -849,10 +850,10 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Update(db, cache, w1, w1old, u))
+	test.NoError(t, workflow.Update(db, cache, w1, w1old, proj, u))
 
 	t.Logf("Reloading workflow...")
-	w2, err := LoadByID(db, cache, w1.ID, u)
+	w2, err := workflow.LoadByID(db, cache, w1.ID, u)
 	test.NoError(t, err)
 
 	m1, _ := dump.ToMap(w1)
@@ -879,12 +880,12 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		}
 	}
 
-	test.NoError(t, Delete(db, w2, u))
+	test.NoError(t, workflow.Delete(db, w2, u))
 }
 
 func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 	db, cache := test.SetupPG(t)
-	test.NoError(t, CreateBuiltinWorkflowHookModels(db))
+	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	u, _ := assets.InsertAdminUser(db)
 
 	key := sdk.RandomString(10)
@@ -908,7 +909,7 @@ func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 			Hooks: []sdk.WorkflowNodeHook{
 				{
 					WorkflowHookModel: sdk.WorkflowHookModel{
-						Name: WebHookModel.Name,
+						Name: workflow.WebHookModel.Name,
 					},
 					Conditions: []sdk.WorkflowTriggerCondition{
 						{
@@ -926,9 +927,9 @@ func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, Insert(db, cache, &w, u))
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -938,7 +939,7 @@ func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
 	assertEqualNode(t, w.Root, w1.Root)
 
-	ws, err := LoadAll(db, proj.Key)
+	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
 
@@ -949,5 +950,5 @@ func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 	assert.Len(t, w.Root.Hooks, 1)
 	t.Log(w.Root.Hooks)
 
-	test.NoError(t, Delete(db, &w, u))
+	test.NoError(t, workflow.Delete(db, &w, u))
 }

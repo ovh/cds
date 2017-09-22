@@ -83,18 +83,18 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, api.Cache, &w, u))
+	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u))
 	w1, err := workflow.Load(db, api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	wr, errMR := workflow.ManualRun(db, api.Cache, w1, &sdk.WorkflowNodeRunManual{
+	wr, errMR := workflow.ManualRun(db, api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	if errMR != nil {
 		test.NoError(t, errMR)
 	}
 
-	_, errMR2 := workflow.ManualRunFromNode(db, api.Cache, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.RootID)
+	_, errMR2 := workflow.ManualRunFromNode(db, api.Cache, proj, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.RootID)
 	if errMR2 != nil {
 		test.NoError(t, errMR2)
 	}
@@ -188,12 +188,12 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(api.mustDB(), api.Cache, w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 		})
 		test.NoError(t, err)
@@ -312,12 +312,12 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(api.mustDB(), api.Cache, w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": "master",
@@ -429,12 +429,12 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(api.mustDB(), api.Cache, w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 		})
 		test.NoError(t, err)
@@ -527,11 +527,11 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(api.mustDB(), api.Cache, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
@@ -610,7 +610,7 @@ func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, api.Cache, &w, u))
+	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u))
 	w1, err := workflow.Load(db, api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
@@ -727,7 +727,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
@@ -819,11 +819,11 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, u))
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(api.mustDB(), api.Cache, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
