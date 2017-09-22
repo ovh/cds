@@ -548,6 +548,7 @@
   "workflow_node_trigger_condition_value" : "Expected value",
   "workflow_node_trigger_condition_form_title": "Add a trigger condition",
   "workflow_node_trigger_condition_no": "There is no trigger condition",
+  "workflow_node_trigger_manual" : "Manual trigger",
   "workflow_node_trigger_title" : "Add a trigger from pipeline {{pip}}",
   "workflow_root_context_application" : "Application (optional)",
   "workflow_root_context_environment" : "Environnment (optional)",

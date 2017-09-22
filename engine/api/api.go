@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/mail"
@@ -552,7 +551,7 @@ func (a *API) Serve(ctx context.Context) error {
 
 	go func() {
 		//TLS is disabled for the moment. We need to serve TLS on HTTP too
-		if err := grpc.Init(a.DBConnectionFactory, a.Config.GRPC.Port, false, "", ""); err != nil {
+		if err := grpcInit(a.DBConnectionFactory, a.Config.GRPC.Port, false, "", ""); err != nil {
 			log.Fatalf("Cannot start grpc cds-server: %s", err)
 		}
 	}()

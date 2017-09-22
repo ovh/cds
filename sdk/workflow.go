@@ -201,6 +201,7 @@ type WorkflowNodeJoinTrigger struct {
 	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
 	Conditions         []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
+	Manual             bool                       `json:"manual" db:"manual"`
 }
 
 //WorkflowNode represents a node in w workflow tree
@@ -369,6 +370,7 @@ type WorkflowNodeTrigger struct {
 	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
 	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
 	Conditions         []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
+	Manual             bool                       `json:"manual" db:"manual"`
 }
 
 //WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex

@@ -79,6 +79,7 @@ export class WorkflowNodeJoinTrigger {
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
+    manual: boolean;
 
     constructor() {
         this.workflow_dest_node = new WorkflowNode();
@@ -156,6 +157,7 @@ export class WorkflowNodeTrigger {
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
+    manual: boolean;
 
     constructor() {
         this.workflow_dest_node = new WorkflowNode();

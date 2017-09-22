@@ -14,7 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
-	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -124,7 +124,7 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, project.Key, app.Name, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, project.Key, app.Name, getUser(ctx), "", 0)
 		if errW != nil {
 			log.Warning("attachPipelinesToApplicationHandler: Cannot load application workflow: %s\n", errW)
 			return errW
@@ -264,7 +264,7 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 		}
 
 		var errW error
-		a.Workflows, errW = workflow.LoadCDTree(api.mustDB(), api.Cache, key, a.Name, getUser(ctx), "", 0)
+		a.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, a.Name, getUser(ctx), "", 0)
 		if errW != nil {
 			log.Warning("removePipelineFromApplicationHandler> Cannot load workflow: %s\n", errW)
 			return errW
