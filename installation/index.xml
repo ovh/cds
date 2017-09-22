@@ -48,11 +48,12 @@ There is are two ways to set up CDS:
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/installation/installation.configuration/</guid>
-      <description>The toml configuration can be provided by a file or via consul k/v store.
+      <description>The toml configuration can be provided by a file, via consul k/v store or via vault.
 Start CDS with local configuration file You can also generate a configuration file template with the following command.
-$ $PATH_TO_CDS/api --config my_conf_file.toml Generating default config file my_conf_file.toml  Edit this file.
-Run CDS
-$ $PATH_TO_CDS/api --config my_conf_file.toml Reading configuration file my_new_file.toml 2017/04/04 16:33:17 [NOTICE] Starting CDS server... ...  Start CDS with Consul Upload your toml configuration to consul</description>
+$ $PATH_TO_CDS/engine config new &amp;gt; my_conf_file.toml  Edit this file.
+Check your configuration file with
+$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Run CDS
+$ $PATH_TO_CDS/engine start api --config my_conf_file.</description>
     </item>
     
     <item>
@@ -61,10 +62,10 @@ $ $PATH_TO_CDS/api --config my_conf_file.toml Reading configuration file my_new_
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/installation/installation.database/</guid>
-      <description>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the api binary.
+      <description>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the engine binary.
 The migration files are available to download on Github Releases and the archive is named sql.tar.gz. You have to download it and untar (tar xvzf sql.tar.gz).
 Creation On a brand new database run the following command:
-$ $PATH_TO_CDS/api database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir &amp;lt;pathToSQLMigrationDir&amp;gt; --limit 0  Upgrade On an existing database, run the following command on each CDS update:</description>
+$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Upgrade On an existing database, run the following command on each CDS update:</description>
     </item>
     
     <item>
@@ -73,7 +74,7 @@ $ $PATH_TO_CDS/api database upgrade --db-host &amp;lt;host&amp;gt; --db-port &am
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/installation/installation/</guid>
-      <description> Requirements Download Configuration Database Management Ready to RUN  </description>
+      <description> Requirements Download Configuration Database Management Ready to RUN Advanced Startup  </description>
     </item>
     
     <item>
@@ -83,6 +84,18 @@ $ $PATH_TO_CDS/api database upgrade --db-host &amp;lt;host&amp;gt; --db-port &am
       
       <guid>https://ovh.github.io/cds/installation/installation.ready-to-run/</guid>
       <description> Docker Compose  </description>
+    </item>
+    
+    <item>
+      <title>Advanced Startup</title>
+      <link>https://ovh.github.io/cds/installation/installation.advanced/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/installation/installation.advanced/</guid>
+      <description>Introduction This section will help you to undestand how to start all the differents components of CDS: UI, API and the other µServices.
+Pre-requisites You need :
+ to download the latest release a properly formatted configuration file, a properly configured database, the desired third-parties up and running.  Engine startup The CDS engine is made of following components:
+ API Hatcheries (local, docker, openstack, swarm, vshpere) Hooks  To start a services you just have to run $PATH_TO_CDS/engine start &amp;lt;service&amp;gt;.</description>
     </item>
     
   </channel>

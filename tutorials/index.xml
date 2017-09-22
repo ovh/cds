@@ -39,7 +39,7 @@ Bottom line, if you can access the application, your worker will too.</descripti
       
       <guid>https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-simple/</guid>
       <description>A worker model of type docker can be spawned by a Hatchery Docker or Docker Swarm.
-Register a worker Model from a existing Docker Image Docker Image golang:1.8.1 have a &amp;ldquo;curl&amp;rdquo; in $PATH, so it can be used as it is.
+Register a worker Model from an existing Docker Image Docker Image golang:1.8.1 have a &amp;ldquo;curl&amp;rdquo; in $PATH, so it can be used as it is.
  In the UI, click on the wheel on the hand right top corner and select *workers&amp;rdquo; (or go the the route #/worker) At the bottom of the page, fill the form  Name of your worker Golang-1.</description>
     </item>
     

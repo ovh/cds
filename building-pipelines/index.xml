@@ -259,9 +259,8 @@ Parameters  details: Output Details Level: low, medium, high exclude: Exclude so
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin/</guid>
-      <description>User actions use built-in action(s) and / or other existing action(s).
-There can be created by CLI and / or Web UI.
-User actions from CDS Contributions :
+      <description>Built-in actions are integred in CDS. You can’t modify it.
+Built-in actions :
 Artifact Download Artifact Upload GitClone JUnit Script </description>
     </item>
     
@@ -271,8 +270,9 @@ Artifact Download Artifact Upload GitClone JUnit Script </description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/</guid>
-      <description>CDS User Actions are developed in CDS. There are available on all CDS Installation.
-Built-in actions :
+      <description>CDS User Actions are developed in CDS. There are available on all CDS Installation. They use built-in action(s) and / or other existing action(s).
+There can be created by CLI and / or Web UI.
+User actions from CDS Contributions :
 cds-docker-package cds-go-build cds-nexus-upload cds-perl-test cds-publish-ovh-metrics </description>
     </item>
     

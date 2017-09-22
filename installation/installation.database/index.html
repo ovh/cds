@@ -219,6 +219,24 @@
 
                     
                 
+                    
+                        
+    
+    
+
+    <li data-nav-id="/installation/installation.advanced/" class="dd-item
+    
+    ">
+        <a href="https://ovh.github.io/cds/installation/installation.advanced/">
+            Advanced Startup
+            
+            
+        </a>
+        
+    </li>
+
+                    
+                
                 </ul>
              
         
@@ -376,7 +394,7 @@
 
 
 
-<p>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the <code>api</code> binary.</p>
+<p>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the <code>engine</code> binary.</p>
 
 <p>The migration files are available to download on <a href="https://github.com/ovh/cds/releases">Github Releases</a> and the archive is named <code>sql.tar.gz</code>. You have to download it and untar (<code>tar xvzf sql.tar.gz</code>).</p>
 
@@ -384,14 +402,14 @@
 
 <p>On a brand new database run the following command:</p>
 
-<pre><code class="language-bash">$ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir &lt;pathToSQLMigrationDir&gt; --limit 0
+<pre><code class="language-bash">$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0
 </code></pre>
 
 <h3 id="upgrade">Upgrade</h3>
 
 <p>On an existing database, run the following command on each CDS update:</p>
 
-<pre><code class="language-bash">$ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir &lt;pathToSQLMigrationDir&gt;
+<pre><code class="language-bash">$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql
 </code></pre>
 
 <h3 id="more-details">More details</h3>
@@ -451,6 +469,15 @@
                         
                             
                                 
+                            
+                        
+                    
+                
+            
+                
+                    
+                        
+                        
                             
                         
                     

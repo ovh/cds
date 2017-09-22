@@ -328,11 +328,12 @@ There is are two ways to set up CDS:
         <h2 class="post-title"><a href="https://ovh.github.io/cds/installation/installation.configuration/">Configuration</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>The toml configuration can be provided by a file or via consul k/v store.
+        <p>The toml configuration can be provided by a file, via consul k/v store or via vault.
 Start CDS with local configuration file You can also generate a configuration file template with the following command.
-$ $PATH_TO_CDS/api --config my_conf_file.toml Generating default config file my_conf_file.toml  Edit this file.
-Run CDS
-$ $PATH_TO_CDS/api --config my_conf_file.toml Reading configuration file my_new_file.toml 2017/04/04 16:33:17 [NOTICE] Starting CDS server... ...  Start CDS with Consul Upload your toml configuration to consul <a class="read-more" href="https://ovh.github.io/cds/installation/installation.configuration/">&raquo;</a></p>
+$ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml  Edit this file.
+Check your configuration file with
+$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Run CDS
+$ $PATH_TO_CDS/engine start api --config my_conf_file. <a class="read-more" href="https://ovh.github.io/cds/installation/installation.configuration/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -353,10 +354,10 @@ $ $PATH_TO_CDS/api --config my_conf_file.toml Reading configuration file my_new_
         <h2 class="post-title"><a href="https://ovh.github.io/cds/installation/installation.database/">Database Management</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the api binary.
+        <p>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the engine binary.
 The migration files are available to download on Github Releases and the archive is named sql.tar.gz. You have to download it and untar (tar xvzf sql.tar.gz).
 Creation On a brand new database run the following command:
-$ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir &lt;pathToSQLMigrationDir&gt; --limit 0  Upgrade On an existing database, run the following command on each CDS update: <a class="read-more" href="https://ovh.github.io/cds/installation/installation.database/">&raquo;</a></p>
+$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Upgrade On an existing database, run the following command on each CDS update: <a class="read-more" href="https://ovh.github.io/cds/installation/installation.database/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -377,7 +378,7 @@ $ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt
         <h2 class="post-title"><a href="https://ovh.github.io/cds/installation/installation/">Installation</a></h2>
     </header>
     <section class="post-excerpt">
-        <p> Requirements Download Configuration Database Management Ready to RUN   <a class="read-more" href="https://ovh.github.io/cds/installation/installation/">&raquo;</a></p>
+        <p> Requirements Download Configuration Database Management Ready to RUN Advanced Startup   <a class="read-more" href="https://ovh.github.io/cds/installation/installation/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -399,6 +400,30 @@ $ $PATH_TO_CDS/api database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt
     </header>
     <section class="post-excerpt">
         <p> Docker Compose   <a class="read-more" href="https://ovh.github.io/cds/installation/installation.ready-to-run/">&raquo;</a></p>
+    </section>
+    <footer class=" footline" >
+         
+        
+
+        
+        
+
+    </footer>
+</article>
+
+
+
+
+
+   <article class="post installation">
+    <header class="post-header">
+        <h2 class="post-title"><a href="https://ovh.github.io/cds/installation/installation.advanced/">Advanced Startup</a></h2>
+    </header>
+    <section class="post-excerpt">
+        <p>Introduction This section will help you to undestand how to start all the differents components of CDS: UI, API and the other µServices.
+Pre-requisites You need :
+ to download the latest release a properly formatted configuration file, a properly configured database, the desired third-parties up and running.  Engine startup The CDS engine is made of following components:
+ API Hatcheries (local, docker, openstack, swarm, vshpere) Hooks  To start a services you just have to run $PATH_TO_CDS/engine start &lt;service&gt;. <a class="read-more" href="https://ovh.github.io/cds/installation/installation.advanced/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
