@@ -23,7 +23,7 @@ type CommonConfiguration struct {
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
 		} `toml:"http"`
 		GRPC struct {
-			URL      string `toml:"url" default:"http://localhost:8082"`
+			URL      string `toml:"url" default:"http://localhost:8082" commented:"true"`
 			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
 		} `toml:"grpc"`
 		Token                string `toml:"token" default:"" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ "`

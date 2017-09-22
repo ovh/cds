@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	defaults "github.com/mcuadros/go-defaults"
+	"github.com/mcuadros/go-defaults"
 	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/secret"
@@ -19,19 +19,8 @@ func config() {
 		viper.BindEnv(strings.ToLower(strings.Replace(k, "_", ".", -1)), "CDS_"+k)
 	}
 
-	if cfgFile != "" {
-		//If the config file doesn't exists, let's exit
-		if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
-			sdk.Exit("File doesn't exist")
-		}
-		fmt.Println("Reading configuration file", cfgFile)
-
-		viper.SetConfigFile(cfgFile)
-		if err := viper.ReadInConfig(); err != nil {
-			sdk.Exit(err.Error())
-		}
-
-	} else if remoteCfg != "" {
+	switch {
+	case remoteCfg != "":
 		fmt.Println("Reading configuration from consul @", remoteCfg)
 		viper.AddRemoteProvider("consul", remoteCfg, remoteCfgKey)
 		viper.SetConfigType("toml")
@@ -39,7 +28,7 @@ func config() {
 		if err := viper.ReadRemoteConfig(); err != nil {
 			sdk.Exit(err.Error())
 		}
-	} else if vaultAddr != "" && vaultToken != "" {
+	case vaultAddr != "" && vaultToken != "":
 		//I hope one day viper will be a standard viper remote provider
 		fmt.Println("Reading configuration from vault @", vaultAddr)
 
@@ -58,10 +47,22 @@ func config() {
 		if err := viper.ReadConfig(cfgBuffer); err != nil {
 			sdk.Exit("Unable to read config: %v", err.Error())
 		}
+	case cfgFile != "":
+		//If the config file doesn't exists, let's exit
+		if _, err := os.Stat(cfgFile); os.IsNotExist(err) {
+			sdk.Exit("File doesn't exist")
+		}
+		fmt.Println("Reading configuration file", cfgFile)
+
+		viper.SetConfigFile(cfgFile)
+		if err := viper.ReadInConfig(); err != nil {
+			sdk.Exit(err.Error())
+		}
+	default:
+		defaults.SetDefaults(conf)
 	}
 
 	if err := viper.Unmarshal(conf); err != nil {
 		sdk.Exit("Unable to parse config: %v", err.Error())
 	}
-	defaults.SetDefaults(conf)
 }
