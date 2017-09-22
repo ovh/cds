@@ -2,13 +2,6 @@ package git
 
 import (
 	"fmt"
-	"io/ioutil"
-	"net/url"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"runtime"
-	"strings"
 )
 
 // TagOpts represents options for git tag command
@@ -21,63 +14,28 @@ type TagOpts struct {
 	Username string
 }
 
-// Tag makes git tag action
-func Tag(repo string, auth *AuthOpts, opts *TagOpts, output *OutputOpts) error {
-	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "ftp://") || strings.HasPrefix(repo, "ftps://") {
-		return fmt.Errorf("Git protocol not supported")
-	}
-	if strings.HasPrefix(repo, "https://") {
-		return gitTagOverHTTPS(repo, auth, opts, output)
-	}
-	return gitTagOverSSH(auth, opts, output)
-}
-
-func gitTagOverHTTPS(repo string, auth *AuthOpts, opts *TagOpts, output *OutputOpts) error {
-	if auth == nil {
-		cmd := gitTagCommand(opts)
-		return runCommand(cmd, output)
-	}
-	u, err := url.Parse(repo)
+// TagCreate makes git tag action
+func TagCreate(repo string, auth *AuthOpts, opts *TagOpts, output *OutputOpts) error {
+	var commands []cmd
+	repoURL, err := getRepoURL(repo, auth)
 	if err != nil {
 		return err
 	}
-
-	u.User = url.UserPassword(auth.Username, auth.Password)
-
-	cmd := gitTagCommand(opts)
-	return runCommand(cmd, output)
+	commands = prepareGitTagCreateCommands(repoURL, opts)
+	return runGitCommands(repo, commands, auth, output)
 }
 
-func gitTagOverSSH(auth *AuthOpts, opts *TagOpts, output *OutputOpts) error {
-	if auth == nil {
-		return fmt.Errorf("Authentication is required for git over ssh")
-	}
-
-	keyDir := filepath.Dir(auth.PrivateKey.Filename)
-	allCmd := gitTagCommand(opts)
-
-	gitSSHCmd := exec.Command("ssh").Path
-	gitSSHCmd += " -i " + auth.PrivateKey.Filename
-
-	var wrapper string
-	if runtime.GOOS == "windows" {
-		gitSSHCmd += " %*"
-		wrapper = gitSSHCmd
-	} else {
-		gitSSHCmd += ` "$@"`
-		wrapper = `#!/bin/sh
-` + gitSSHCmd
-	}
-
-	wrapperPath := filepath.Join(keyDir, "gitwrapper")
-	if err := ioutil.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
+// TagList List tag from given git directory
+func TagList(repo, dir string, auth *AuthOpts, output *OutputOpts) error {
+	repoURL, err := getRepoURL(repo, auth)
+	if err != nil {
 		return err
 	}
-
-	return runCommand(allCmd, output, "GIT_SSH="+wrapperPath)
+	commands := prepareGitTagListCommands(repoURL, dir)
+	return runGitCommands(repo, commands, auth, output)
 }
 
-func gitTagCommand(opts *TagOpts) cmds {
+func prepareGitTagCreateCommands(repo string, opts *TagOpts) cmds {
 	allCmd := []cmd{}
 
 	if opts != nil && opts.SignKey != "" {
@@ -124,21 +82,16 @@ func gitTagCommand(opts *TagOpts) cmds {
 	}
 
 	allCmd = append(allCmd, gitcmd)
-	allCmd = append(allCmd, gitPushCommand(optPush)...)
+	allCmd = append(allCmd, prepareGitPushCommands(repo, optPush)...)
 	return cmds(allCmd)
 }
 
-// TagList List tag from given git directory
-func TagList(dir string, output *OutputOpts) error {
-	return runCommand(gitTagListCommand(dir), output)
-}
-
-func gitTagListCommand(dir string) cmds {
+func prepareGitTagListCommands(repo, dir string) cmds {
 	allCmd := []cmd{}
 
 	gitcmd := cmd{
 		cmd:  "git",
-		args: []string{"ls-remote", "--tags", "--refs", "origin"},
+		args: []string{"ls-remote", "--tags", "--refs", repo},
 		dir:  dir,
 	}
 

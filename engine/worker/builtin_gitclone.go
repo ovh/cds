@@ -103,8 +103,6 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		r, _ := regexp.Compile("{{.*}}")
 		if commit != nil && commit.Value != "" && !r.MatchString(commit.Value) {
 			clone.CheckoutCommit = commit.Value
-		} else {
-			clone.Depth = 1
 		}
 
 		var dir string
@@ -150,7 +148,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			Stdout: stdTagListOut,
 		}
 
-		errTag := git.TagList(dir, outputGitTag)
+		errTag := git.TagList(url.Value, dir, auth, outputGitTag)
 
 		if len(stdTaglistErr.Bytes()) > 0 {
 			sendLog(stdTaglistErr.String())

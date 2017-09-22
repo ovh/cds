@@ -200,7 +200,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		}
 
 		//Perform the git tag
-		err := git.Tag(url.Value, auth, tagOpts, output)
+		err := git.TagCreate(url.Value, auth, tagOpts, output)
 
 		//Send the logs
 		if len(stdOut.Bytes()) > 0 {
