@@ -8,10 +8,8 @@ identifier = "actions-builtin"
 
 +++
 
-User actions use built-in action(s) and / or other existing action(s).
+Built-in actions are integred in CDS. You can’t modify it.
 
-There can be created by CLI and / or Web UI.
-
-User actions from [CDS Contributions](https://github.com/ovh/cds/tree/master/contrib/actions) :
+Built-in actions :
 
 {{%children style=""%}}
