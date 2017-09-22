@@ -43,7 +43,7 @@ type Configuration struct {
 	InstanceName string `toml:"instanceName" default:"cdsinstance" comment:"Name of this CDS Instance"`
 	URL          struct {
 		API string `toml:"api" default:"http://localhost:8081"`
-		UI  string `toml:"ui" default:"http://localhost:4200"`
+		UI  string `toml:"ui" default:"http://localhost:2015"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################"`
 	HTTP struct {
 		Port       int `toml:"port" default:"8081"`
