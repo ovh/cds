@@ -21,7 +21,7 @@ services:
 
   cds-api:
     image: ovhcom/cds-engine:latest
-    command: sh -c "mv cds-worker-linux-amd64 worker && ./cds-engine-linux-amd64 start api"
+    command: sh -c "/app/cds-engine-linux-amd64 start api"
     volumes:
       - cds-artifacts-volume:/app/artifacts
     environment:
@@ -70,7 +70,7 @@ services:
     image: ovhcom/cds-engine:latest
     command: sh -c "wget http://cds-api:8081/download/cds-worker-linux-amd64 -O worker && chmod +x worker && PATH=$PATH:. cds-engine-linux-amd64 start hatchery:local"
     environment:
-      CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
+      CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_API_HTTP_URL: http://cds-api:8081
     links:
        - cds-api
