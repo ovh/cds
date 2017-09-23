@@ -121,9 +121,6 @@ func SendMailVerifyToken(userMail, username, token, callback string) error {
 }
 
 func getCallbackURL(username, token, callback string) string {
-	if callback == "" {
-		return fmt.Sprintf(callback, username, token)
-	}
 	return fmt.Sprintf(callback, username, token)
 }
 

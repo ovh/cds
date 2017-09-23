@@ -71,7 +71,7 @@ func signupRun(v cli.Values) error {
 		fmt.Println("Email:", email)
 	}
 
-	if err := client.UserSignup(username, fullname, email, "cdscli"); err != nil {
+	if err := client.UserSignup(username, fullname, email, "cdsctl user verify %s %s"); err != nil {
 		return err
 	}
 
