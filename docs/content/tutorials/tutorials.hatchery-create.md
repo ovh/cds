@@ -12,7 +12,9 @@ identifier = "tutorials-hatchery-create"
 
 * First of all you need to create a new package like the other into the hatchery package. Let's call this package vsphere for our example.
 
-* You have to create a cli subcommand (see [here](https://github.com/ovh/cds/blob/master/engine/hatchery/vsphere/cmd.go)) in order to launch this new hatchery mode via cli and with right flags in order to configure our access to vsphere API.
+* You have to implement the Service interface (see [here](https://github.com/ovh/cds/blob/master/engine/types.go)) in order to configure launch this new hatchery mode via CDS engine CLI.
+
+* Your have to create a Configuration structure composed of the [hatchery.CommonConfiguration](https://godoc.org/github.com/ovh/cds/sdk/hatchery#CommonConfiguration) and the variables you need to access to Vsphere API. You finally have to update the [engine main.go file](https://github.com/ovh/cds/blob/master/engine/main.go) to manage this new service and add and manage the configuration structure as part of the [global configuration](https://github.com/ovh/cds/blob/master/engine/types.go).
 
 * You need to implement the hatchery interface (see [here](https://godoc.org/github.com/ovh/cds/sdk/hatchery#Interface))
 
@@ -43,13 +45,5 @@ identifier = "tutorials-hatchery-create"
 If you want to test that you just have to launch it like that :
 
 ```bash
-$ ./hatchery vsphere --api=http://localhost:8081 \
-  --token=6a132232b1baa5a0845466628d15963995bce1fc5997ae29eeb6b45c11111 \
-  --vsphere-user=user \
-  --vsphere-password=XXX \
-  --vsphere-datacenter=pcc-11-222-333-444_datacenter1111 \
-  --vsphere-network=VLAN16 \
-  --vsphere-datastore=pcc-000001 \
-  --vsphere-endpoint="pcc-11-222-333-444.ovh.com" \
-  --max-worker=5
+$ engine start hatchery:vsphere --config config.toml
 ```
