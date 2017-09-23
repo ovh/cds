@@ -15,7 +15,7 @@ import (
 
 // config reads in config file and ENV variables if set.
 func config() {
-	for k := range AsEnvVariables(conf, "") {
+	for k := range AsEnvVariables(conf, "", false) {
 		viper.BindEnv(strings.ToLower(strings.Replace(k, "_", ".", -1)), "CDS_"+k)
 	}
 

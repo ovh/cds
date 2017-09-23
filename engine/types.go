@@ -45,7 +45,7 @@ type Service interface {
 	CheckConfiguration(cfg interface{}) error
 }
 
-func AsEnvVariables(o interface{}, prefix string) map[string]string {
+func AsEnvVariables(o interface{}, prefix string, skipCommented bool) map[string]string {
 	r := map[string]string{}
 	prefix = strings.ToUpper(prefix)
 	delim := "_"
@@ -54,11 +54,13 @@ func AsEnvVariables(o interface{}, prefix string) map[string]string {
 	}
 	fields := structs.Fields(o)
 	for _, f := range fields {
-		if commented, _ := strconv.ParseBool(f.Tag("commented")); commented {
-			continue
+		if skipCommented {
+			if commented, _ := strconv.ParseBool(f.Tag("commented")); commented {
+				continue
+			}
 		}
 		if structs.IsStruct(f.Value()) {
-			rf := AsEnvVariables(f.Value(), prefix+delim+f.Name())
+			rf := AsEnvVariables(f.Value(), prefix+delim+f.Name(), skipCommented)
 			for k, v := range rf {
 				r[k] = v
 			}
