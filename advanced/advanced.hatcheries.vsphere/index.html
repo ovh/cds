@@ -478,15 +478,7 @@
 fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 </code></pre>
 
-<p>Then start hatchery:</p>
-
-<pre><code class="language-bash">VSPHERE-USER=&lt;user&gt; VSPHERE-ENDPOINT=&quot;pcc-11-222-333-444.ovh.com&quot; VSPHERE-PASSWORD=&lt;password&gt; VSPHERE-DATACENTER=&lt;datacenter&gt; VSPHERE-DATASTORE=&lt;datastore&gt; VSPHERE-NETWORK=&lt;vmNetwork&gt; VSPHERE-ETHERNET-CARD=&lt;ethernet card&gt; hatchery vsphere \
-        --api=https://api.cds.domain \
-        --max-worker=10 \
-        --provision=1 \
-        --token=fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
-# VSPHERE-ETHERNET-CARD aren't mandatory
-</code></pre>
+<p>Edit the CDS <a href="https://ovh.github.io/cds/installation/installation.configuration/">configuration</a> or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the VSphere variables.</p>
 
 <p>This hatchery will now start worker of model &lsquo;vsphere&rsquo; on Vsphere infrastructure.</p>
 

@@ -28,8 +28,8 @@ Bottom line, if you can access the application, your worker will too.</descripti
       
       <guid>https://ovh.github.io/cds/tutorials/tutorials.hatchery-create/</guid>
       <description>Example with a creation of a VSphere hatchery  First of all you need to create a new package like the other into the hatchery package. Let&amp;rsquo;s call this package vsphere for our example.
- You have to create a cli subcommand (see here) in order to launch this new hatchery mode via cli and with right flags in order to configure our access to vsphere API.
- You need to implement the hatchery interface (see here)</description>
+ You have to implement the Service interface (see here) in order to configure launch this new hatchery mode via CDS engine CLI.
+ Your have to create a Configuration structure composed of the hatchery.CommonConfiguration and the variables you need to access to Vsphere API.</description>
     </item>
     
     <item>

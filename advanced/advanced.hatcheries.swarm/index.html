@@ -471,20 +471,14 @@
 fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 </code></pre>
 
+<p>Edit the CDS <a href="https://ovh.github.io/cds/installation/installation.configuration/">configuration</a> or set the dedicated environment variables. To enable the hactchery, just set the API HTTP and GRPC URL, the token freshly generated.</p>
+
+<p>This hatchery use the standard docker environment variables to connect to a docker host.</p>
+
 <p>Then start hatchery:</p>
 
-<pre><code class="language-bash">export CDS_LOG_LEVEL=notice
-export CDS_RATIO_SERVICE=50
-export CDS_TOKEN=&quot;fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92&quot;
-export DOCKER_HOST=tcp://xx.xx.xx.xx:2375
-export CDS_API=http://your-cds-api
-export CDS_NAME=$(hostname)
-export CDS_MAX_WORKER=10
-export CDS_MAX_CONTAINERS=5
-export CDS_REQUEST_API_TIMEOUT=120
-./hatchery swarm
-
-# You can also use the flags instead of environment variable if you want
+<pre><code class="language-bash">export DOCKER_HOST=tcp://xx.xx.xx.xx:2375
+engine start hatchery:swarm --config config.toml
 </code></pre>
 
 <p>This hatchery will now start worker of model &lsquo;docker&rsquo; on you docker installation.</p>
