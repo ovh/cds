@@ -26,6 +26,7 @@ type CDSAction interface {
 //IJob is the Run() input args of every plugin
 type IJob interface {
 	ID() int64
+	WorkflowNodeRunID() int64
 	PipelineBuildID() int64
 	StepOrder() int
 	Arguments() Arguments
@@ -35,17 +36,19 @@ type IJob interface {
 //Job is the input of the plugin run function
 type Job struct {
 	IDPipelineJobBuild int64
+	IDWorkflowNodeRun  int64
 	IDPipelineBuild    int64
 	Args               Arguments
 	Secrts             Secrets
 	OrderStep          int
 }
 
-func (j Job) ID() int64              { return j.IDPipelineJobBuild }
-func (j Job) Arguments() Arguments   { return j.Args }
-func (j Job) Secrets() Secrets       { return j.Secrts }
-func (j Job) PipelineBuildID() int64 { return j.IDPipelineBuild }
-func (j Job) StepOrder() int         { return j.OrderStep }
+func (j Job) ID() int64                { return j.IDPipelineJobBuild }
+func (j Job) Arguments() Arguments     { return j.Args }
+func (j Job) Secrets() Secrets         { return j.Secrts }
+func (j Job) PipelineBuildID() int64   { return j.IDPipelineBuild }
+func (j Job) WorkflowNodeRunID() int64 { return j.IDWorkflowNodeRun }
+func (j Job) StepOrder() int           { return j.OrderStep }
 
 //IOptions is
 type IOptions interface {
