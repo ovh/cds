@@ -77,7 +77,7 @@ func runSignup() {
 	//Configure sdk
 	sdk.Options(conf.Host, "", "", "")
 
-	if err := sdk.AddUser(conf.User, fullname, email, "cdscli"); err != nil {
+	if err := sdk.AddUser(conf.User, fullname, email, "cds user verify %s %s"); err != nil {
 		sdk.Exit("Error: cannot add user %s (%s)\n", conf.User, err)
 	}
 
