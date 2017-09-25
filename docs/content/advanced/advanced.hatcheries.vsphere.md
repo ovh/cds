@@ -25,16 +25,7 @@ $ cds generate  token -g shared.infra -e persistent
 fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 ```
 
-Then start hatchery:
-
-```bash
-VSPHERE-USER=<user> VSPHERE-ENDPOINT="pcc-11-222-333-444.ovh.com" VSPHERE-PASSWORD=<password> VSPHERE-DATACENTER=<datacenter> VSPHERE-DATASTORE=<datastore> VSPHERE-NETWORK=<vmNetwork> VSPHERE-ETHERNET-CARD=<ethernet card> hatchery vsphere \
-        --api=https://api.cds.domain \
-        --max-worker=10 \
-        --provision=1 \
-        --token=fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
-# VSPHERE-ETHERNET-CARD aren't mandatory
-```
+Edit the CDS [configuration]({{< relref "installation.configuration.md">}}) or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the VSphere variables.
 
 This hatchery will now start worker of model 'vsphere' on Vsphere infrastructure.
 

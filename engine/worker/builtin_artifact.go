@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -183,7 +184,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 		number := sdk.ParameterValue(*params, "cds.run.number")
 		enabled := sdk.ParameterValue(*params, "enabled") != "false"
 
-		path := sdk.ParameterValue(a.Parameters, "path")
+		destPath := sdk.ParameterValue(a.Parameters, "path")
 		tag := sdk.ParameterValue(a.Parameters, "tag")
 
 		if !enabled {
@@ -195,7 +196,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			sendLog("tag variable can not be used with CDS Workflow - ignored.")
 		}
 
-		sendLog(fmt.Sprintf("Downloading artifacts from workflow into '%s'...", path))
+		sendLog(fmt.Sprintf("Downloading artifacts from workflow into '%s'...", destPath))
 
 		n, err := strconv.ParseInt(number, 10, 64)
 		if err != nil {
@@ -214,26 +215,27 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 		}
 
 		for _, a := range artifacts {
-			f, err := os.OpenFile(a.Name, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
+			destFile := path.Join(destPath, a.Name)
+			f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
 			if err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifact (OpenFile) %s: %s", a.Name, err)
+				log.Warning("Cannot download artifact (OpenFile) %s: %s", destFile, err)
 				sendLog(res.Reason)
 				return res
 			}
-			sendLog(fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", a.Name, project, workflow, n))
+			sendLog(fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
 			if err := w.client.WorkflowNodeRunArtifactDownload(project, workflow, a.ID, f); err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifact %s: %s", a.Name, err)
+				log.Warning("Cannot download artifact %s: %s", destFile, err)
 				sendLog(res.Reason)
 				return res
 			}
 			if err := f.Close(); err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = err.Error()
-				log.Warning("Cannot download artifact %s: %s", a.Name, err)
+				log.Warning("Cannot download artifact %s: %s", destFile, err)
 				sendLog(res.Reason)
 				return res
 			}

@@ -49,9 +49,8 @@ build: clean $(TARGET_DIR)
 		for GOARCH in $(TARGET_ARCH); do \
 			for plugin in plugin-*; do \
 				echo Compiling $(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH $(VERSION); \
-				cd $$plugin \
-				echo $(GO_BUILD) $(TARGET_LDFLAGS) -o $(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH; \
-				$(GO_BUILD) $(TARGET_LDFLAGS) -o ../$(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH; \
+				cd $$plugin; \
+				GOOS=$$GOOS GOARCH=$$GOARCH $(GO_BUILD) $(TARGET_LDFLAGS) -o ../$(TARGET_DIR)/$(TARGET_BINARY)$$plugin-$$GOOS-$$GOARCH; \
 				cd ..; \
 				done; \
 		done; \

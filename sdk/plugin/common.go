@@ -235,7 +235,13 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 		return err
 	}
 
-	path := fmt.Sprintf("/build/%d/log", j.ID())
+	var path string
+	if j.WorkflowNodeRunID() > 0 {
+		path = fmt.Sprintf("/queue/workflows/%d/log", j.ID())
+	} else {
+		path = fmt.Sprintf("/build/%d/log", j.ID())
+	}
+
 	if _, _, err := request("POST", path, data); err != nil {
 		return err
 	}

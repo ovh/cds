@@ -113,7 +113,7 @@ Comming soon...`,
 			}
 			fmt.Println(string(btes))
 		} else {
-			m := AsEnvVariables(conf, "cds")
+			m := AsEnvVariables(conf, "cds", true)
 			keys := []string{}
 
 			for k := range m {
