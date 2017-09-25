@@ -13,6 +13,7 @@ import (
 type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration `toml:"commonConfiguration"`
 	Basedir                      string `toml:"basedir" default:"/tmp" comment:"BaseDir for worker workspace"`
+	NbProvision                  int    `toml:"nbProvision" default:"1" comment:"Nb Workers to provision"`
 }
 
 // HatcheryLocal implements HatcheryMode interface for local usage
