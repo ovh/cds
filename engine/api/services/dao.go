@@ -73,6 +73,22 @@ func (r *Repository) FindByHash(hash string) (*sdk.Service, error) {
 	return r.findOne(query, hash)
 }
 
+// FindByType services by type
+func (r *Repository) FindByType(t string) ([]sdk.Service, error) {
+	query := `
+	SELECT name, type, http_url, last_heartbeat, hash 
+	FROM services 
+	WHERE type = $1`
+	services, err := r.findAll(query, t)
+	if err != nil {
+		if err == sdk.ErrNotFound {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "FindByType> Unable to find dead services")
+	}
+	return services, nil
+}
+
 func (r *Repository) findOne(query string, args ...interface{}) (*sdk.Service, error) {
 	sdb := service{}
 	if err := r.Tx().SelectOne(&sdb, query, args...); err != nil {

@@ -57,6 +57,10 @@ var (
 		return loadAllVariables(db, store, proj)
 	}
 
+	loadVariablesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		return loadAllVariables(db, store, proj, WithClearPassword())
+	}
+
 	loadApplicationVariables = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		if proj.Applications == nil {
 			if err := loadApplications(db, store, proj, u); err != nil {

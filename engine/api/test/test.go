@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/user"
 	"path"
@@ -133,4 +134,22 @@ func GetTestName(t *testing.T) string {
 	v := reflect.ValueOf(*t)
 	name := v.FieldByName("name")
 	return name.String()
+}
+
+//FakeHTTPClient implements sdk.HTTPClient and returns always the same response
+type FakeHTTPClient struct {
+	T        *testing.T
+	Response *http.Response
+	Error    error
+}
+
+//Do implements sdk.HTTPClient and returns always the same response
+func (f *FakeHTTPClient) Do(r *http.Request) (*http.Response, error) {
+	b, err := ioutil.ReadAll(r.Body)
+	if err == nil {
+		r.Body.Close()
+	}
+
+	f.T.Logf("FakeHTTPClient> Do> %s %s: Payload %s", r.Method, r.URL.String(), string(b))
+	return f.Response, f.Error
 }

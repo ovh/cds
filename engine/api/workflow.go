@@ -2,13 +2,16 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
@@ -72,6 +75,34 @@ func (api *API) postWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 
+		//Push the hook to hooks µService
+		dao := services.NewRepository(api.mustDB, api.Cache)
+		//Load service "hooks"
+		srvs, err := dao.FindByType("hooks")
+		if err != nil {
+			return sdk.WrapError(err, "putWorkflowHandler> Unable to get services dao")
+		}
+
+		//Perform the request on one off the hooks service
+		hooks := wf.GetHooks()
+		if len(hooks) > 0 {
+			if len(srvs) < 1 {
+				return sdk.WrapError(fmt.Errorf("postWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
+			}
+			var errHooks error
+			for _, s := range srvs {
+				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
+				errHooks = errBulk
+				if errBulk == nil {
+					log.Debug("postWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
+					break
+				}
+			}
+			if errHooks != nil {
+				return sdk.WrapError(errHooks, "postWorkflowHandler> Unable to create hooks")
+			}
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
@@ -94,12 +125,12 @@ func (api *API) putWorkflowHandler() Handler {
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
 		if errP != nil {
-			return sdk.WrapError(errP, "Cannot load Project %s", key)
+			return sdk.WrapError(errP, "putWorkflowHandler> Cannot load Project %s", key)
 		}
 
 		oldW, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if errW != nil {
-			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
+			return sdk.WrapError(errW, "putWorkflowHandler> Cannot load Workflow %s", key)
 		}
 
 		var wf sdk.Workflow
@@ -116,25 +147,53 @@ func (api *API) putWorkflowHandler() Handler {
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
-			return sdk.WrapError(errT, "Cannot start transaction")
+			return sdk.WrapError(errT, "putWorkflowHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if err := workflow.Update(tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "Cannot update workflow")
+			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			return sdk.WrapError(err, "Cannot update project last modified date")
+			return sdk.WrapError(err, "putWorkflowHandler> Cannot update project last modified date")
+		}
+
+		//Push the hook to hooks µService
+		dao := services.NewRepository(api.mustDB, api.Cache)
+		//Load service "hooks"
+		srvs, err := dao.FindByType("hooks")
+		if err != nil {
+			return sdk.WrapError(err, "putWorkflowHandler> Unable to get services dao")
+		}
+
+		//Perform the request on one off the hooks service
+		hooks := wf.GetHooks()
+		if len(hooks) > 0 {
+			if len(srvs) < 1 {
+				return sdk.WrapError(fmt.Errorf("putWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
+			}
+			var errHooks error
+			for _, s := range srvs {
+				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
+				errHooks = errBulk
+				if errBulk == nil {
+					log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
+					break
+				}
+			}
+			if errHooks != nil {
+				return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
+			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "Cannot commit transaction")
+			return sdk.WrapError(err, "putWorkflowHandler> Cannot commit transaction")
 		}
 
 		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, wf.ID, getUser(ctx))
 		if errl != nil {
-			return sdk.WrapError(errl, "Cannot load workflow")
+			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
 
 		return WriteJSON(w, r, wf1, http.StatusOK)

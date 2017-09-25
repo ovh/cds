@@ -180,3 +180,32 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 		return api.WriteJSON(w, r, execs, http.StatusOK)
 	}
 }
+
+func (s *Service) postTaskBulkHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//This handler read a sdk.WorkflowNodeHook from the body
+		hooks := map[string]sdk.WorkflowNodeHook{}
+		if err := api.UnmarshalBody(r, &hooks); err != nil {
+			return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
+		}
+
+		for _, hook := range hooks {
+			//Parse the hook as a task
+			t, err := s.hookToTask(hook)
+			if err != nil {
+				return sdk.WrapError(err, "Hooks> postTaskBulkHandler> Unable to parse hook")
+			}
+
+			//Save the task
+			s.Dao.SaveTask(t)
+
+			//Start the task
+			if err := s.startTask(ctx, t); err != nil {
+				return sdk.WrapError(err, "Hooks> postTaskBulkHandler> Unable start task %+v", t)
+			}
+		}
+
+		w.WriteHeader(http.StatusOK)
+		return nil
+	}
+}

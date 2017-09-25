@@ -1,22 +1,21 @@
 package test
 
 import (
+	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 
-	"sort"
-
-	"fmt"
-
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/sdk"
 )
 
 func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
@@ -24,6 +23,8 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
@@ -45,6 +46,8 @@ func TestInsertSimpleWorkflow(t *testing.T) {
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -104,6 +107,8 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	}
 
 	test.NoError(t, environment.InsertEnvironment(db, &env))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -170,6 +175,8 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip4, u))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -326,6 +333,8 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 
 	test.NoError(t, environment.InsertEnvironment(db, &env))
 
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
@@ -438,6 +447,8 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 	}
 
 	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip5, u))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -636,6 +647,8 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip7, u))
 
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
@@ -825,6 +838,8 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		},
 	}
 
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
 	w1, err := workflow.Load(db, cache, key, "test_1", u)
@@ -900,6 +915,8 @@ func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 
 	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
 
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
@@ -919,6 +936,7 @@ func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 						},
 					},
 					Config: sdk.WorkflowNodeHookConfig{
+						"method":   "POST",
 						"username": "test",
 						"password": "password",
 					},
