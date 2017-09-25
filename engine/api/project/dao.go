@@ -198,31 +198,33 @@ type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project, *sdk.User
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
-	Default                  LoadOptionFunc
-	WithApplications         LoadOptionFunc
-	WithVariables            LoadOptionFunc
-	WithPipelines            LoadOptionFunc
-	WithEnvironments         LoadOptionFunc
-	WithGroups               LoadOptionFunc
-	WithPermission           LoadOptionFunc
-	WithRepositoriesManagers LoadOptionFunc
-	WithApplicationPipelines LoadOptionFunc
-	WithApplicationVariables LoadOptionFunc
-	WithKeys                 LoadOptionFunc
-	WithWorkflows            LoadOptionFunc
+	Default                        LoadOptionFunc
+	WithApplications               LoadOptionFunc
+	WithVariables                  LoadOptionFunc
+	WithVariablesWithClearPassword LoadOptionFunc
+	WithPipelines                  LoadOptionFunc
+	WithEnvironments               LoadOptionFunc
+	WithGroups                     LoadOptionFunc
+	WithPermission                 LoadOptionFunc
+	WithRepositoriesManagers       LoadOptionFunc
+	WithApplicationPipelines       LoadOptionFunc
+	WithApplicationVariables       LoadOptionFunc
+	WithKeys                       LoadOptionFunc
+	WithWorkflows                  LoadOptionFunc
 }{
-	Default:                  &loadDefault,
-	WithPipelines:            &loadPipelines,
-	WithEnvironments:         &loadEnvironments,
-	WithGroups:               &loadGroups,
-	WithPermission:           &loadPermission,
-	WithRepositoriesManagers: &loadRepositoriesManagers,
-	WithApplications:         &loadApplications,
-	WithVariables:            &loadVariables,
-	WithApplicationPipelines: &loadApplicationPipelines,
-	WithApplicationVariables: &loadApplicationVariables,
-	WithKeys:                 &loadKeys,
-	WithWorkflows:            &loadWorkflows,
+	Default:                        &loadDefault,
+	WithPipelines:                  &loadPipelines,
+	WithEnvironments:               &loadEnvironments,
+	WithGroups:                     &loadGroups,
+	WithPermission:                 &loadPermission,
+	WithRepositoriesManagers:       &loadRepositoriesManagers,
+	WithApplications:               &loadApplications,
+	WithVariables:                  &loadVariables,
+	WithVariablesWithClearPassword: &loadVariablesWithClearPassword,
+	WithApplicationPipelines:       &loadApplicationPipelines,
+	WithApplicationVariables:       &loadApplicationVariables,
+	WithKeys:                       &loadKeys,
+	WithWorkflows:                  &loadWorkflows,
 }
 
 // LoadProjectByNodeJobRunID return a project from node job run id

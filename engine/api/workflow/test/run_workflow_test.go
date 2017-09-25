@@ -10,10 +10,11 @@ import (
 
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/sdk"
 )
 
 func TestManualRun1(t *testing.T) {
@@ -66,6 +67,8 @@ func TestManualRun1(t *testing.T) {
 	}
 	pipeline.InsertJob(db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
 	w := sdk.Workflow{
 		Name:       "test_1",
@@ -227,6 +230,8 @@ func TestManualRun2(t *testing.T) {
 	pipeline.InsertJob(db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
 	w := sdk.Workflow{
 		Name:       "test_1",
 		ProjectID:  proj.ID,
@@ -270,6 +275,8 @@ func TestManualRun3(t *testing.T) {
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	test.NoError(t, project.AddKeyPair(db, proj, "key", u))
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -332,6 +339,8 @@ func TestManualRun3(t *testing.T) {
 			},
 		},
 	}
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups, project.LoadOptions.WithVariablesWithClearPassword, project.LoadOptions.WithKeys)
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 	w1, err := workflow.Load(db, cache, key, "test_1", u)
@@ -400,6 +409,8 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TestLoadNodeJobRunSecrets
+		t.Logf("Proj.Variables: %+v", proj.Variable)
+
 		secrets, err := workflow.LoadNodeJobRunSecrets(db, j, nodeRun, workflowRun, proj.Variable)
 		assert.NoError(t, err)
 		assert.Len(t, secrets, 1)

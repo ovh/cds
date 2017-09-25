@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
 
@@ -33,7 +34,16 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 	}
 	hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
 
-	//TODO Check configuration of the hook vs the model
+	errmu := sdk.MultiError{}
+	// Check configuration of the hook vs the model
+	for k := range hook.WorkflowHookModel.DefaultConfig {
+		if _, ok := hook.Config[k]; !ok {
+			errmu = append(errmu, fmt.Errorf("Missing configuration key: %s", k))
+		}
+	}
+	if len(errmu) > 0 {
+		return sdk.WrapError(&errmu, "insertHook> Invalid hook configuration")
+	}
 
 	//Keep the uuid if provided
 	if hook.UUID == "" {
