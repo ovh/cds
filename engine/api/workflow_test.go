@@ -1,13 +1,17 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -176,7 +180,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	var workflow1 = &sdk.Workflow{
-		Name:        "Name 2",
+		Name:        "Name",
 		Description: "Description 2",
 		Root: &sdk.WorkflowNode{
 			PipelineID: pip.ID,
@@ -193,13 +197,29 @@ func Test_putWorkflowHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow1))
 
 	assert.NotEqual(t, 0, workflow1.ID)
-	assert.Equal(t, "Name 2", workflow1.Name)
+	assert.Equal(t, "Description 2", workflow1.Description)
 }
 
 func Test_postWorkflowWithHooksHandler(t *testing.T) {
 	// Init database
 	api, db, router := newTestAPI(t)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
+
+	repo := services.NewRepository(api.mustDB, api.Cache)
+	repo.Insert(&sdk.Service{
+		Name:    "test-hooks-service",
+		HTTPURL: "http://localhost",
+		Type:    "hooks",
+	})
+
+	services.HTTPClient = &test.FakeHTTPClient{
+		T: t,
+		Response: &http.Response{
+			Status:     "200 OK",
+			StatusCode: 200,
+			Body:       ioutil.NopCloser(new(bytes.Buffer)),
+		},
+	}
 
 	// Init user
 	u, pass := assets.InsertAdminUser(api.mustDB())
@@ -237,7 +257,8 @@ func Test_postWorkflowWithHooksHandler(t *testing.T) {
 				},
 				{
 					Config: sdk.WorkflowNodeHookConfig{
-						"cron": "* * * * *",
+						"cron":     "* * * * *",
+						"timezone": "",
 					},
 					WorkflowHookModelID: workflow.SchedulerModel.ID,
 				},

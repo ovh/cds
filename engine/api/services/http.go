@@ -12,6 +12,9 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// HTTPClient will be set to a default httpclient if not set
+var HTTPClient sdk.HTTPClient
+
 // DoJSONRequest performs an http request on service
 func DoJSONRequest(srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 	var b = []byte{}
@@ -41,8 +44,10 @@ func DoJSONRequest(srv *sdk.Service, method, path string, in interface{}, out in
 
 // DoRequest performs an http request on service
 func DoRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
-	c := http.Client{
-		Timeout: 2 * time.Second,
+	if HTTPClient == nil {
+		HTTPClient = &http.Client{
+			Timeout: 2 * time.Second,
+		}
 	}
 
 	var requestError error
@@ -69,7 +74,7 @@ func DoRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.R
 	req.Header.Set(sdk.AuthHeader, basedHash)
 
 	//Do the request
-	resp, errDo := c.Do(req)
+	resp, errDo := HTTPClient.Do(req)
 	if errDo != nil {
 		return nil, resp.StatusCode, sdk.WrapError(errDo, "services.DoRequest> Request failed")
 	}
