@@ -16,6 +16,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration) error {
@@ -47,6 +48,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				if _, err := c.GetJSON("/queue/workflows", &queue); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load old jobs")
 				}
+				log.Debug("QueuePolling> %d elements (old wJob) in queue", len(queue))
 				for _, j := range queue {
 					jobs <- j
 				}
@@ -62,6 +64,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 					errs <- sdk.WrapError(err, "Unable to load jobs")
 				}
 				t0 = time.Now()
+				log.Debug("QueuePolling> %d elements (wJob) in queue", len(queue))
 				for _, j := range queue {
 					jobs <- j
 				}
@@ -76,6 +79,7 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				if _, err := c.GetJSON("/queue?status=all", &queue); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load pipeline build jobs")
 				}
+				log.Debug("QueuePolling> %d elements (pbJob) in queue", len(queue))
 				for _, j := range queue {
 					pbjobs <- j
 				}

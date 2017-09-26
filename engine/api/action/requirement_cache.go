@@ -8,7 +8,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -44,20 +43,4 @@ func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func
 			}
 		}
 	}
-}
-
-//GetRequirements load action capabilities from cache
-func GetRequirements(db gorp.SqlExecutor, store cache.Store, id int64) ([]sdk.Requirement, error) {
-	k := cache.Key("action", "requirements", fmt.Sprintf("%d", id))
-	req := []sdk.Requirement{}
-	//if we didn't got any data, try to load from DB
-	if !store.Get(k, &req) {
-		var err error
-		req, err = LoadActionRequirements(db, id)
-		if err != nil {
-			return nil, fmt.Errorf("GetRequirements> cannot LoadActionRequirements: %s", err)
-		}
-		store.Set(k, req)
-	}
-	return req, nil
 }
