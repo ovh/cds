@@ -541,7 +541,7 @@
   "workflow_node_hook_add" : "Edition d'un hook",
   "workflow_node_hook_form_title" : "Type de hook",
   "workflow_node_hook_form_config" : "Configuration du hook",
-  "workflow_node_hook_no_configuration" : "Aucun configuration n'est necessaire",
+  "workflow_node_hook_no_configuration" : "Aucune configuration n'est nécessaire",
   "workflow_node_join_add" : "Ajouter une jointure",
   "workflow_node_join_link" : "Lier à une jointure",
   "workflow_node_pipeline_synchronized" : "Pipeline à jour",

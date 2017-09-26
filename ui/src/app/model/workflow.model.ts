@@ -24,14 +24,17 @@ export class Workflow {
         let oldH = WorkflowNode.findHook(workflow.root, h.id);
         if (!oldH) {
             if (workflow.joins) {
-                workflow.joins.forEach(j => {
+                quit: for (let i = 0; i < workflow.joins.length; i++) {
+                    let j = workflow.joins[i];
                     if (j.triggers) {
-                        j.triggers.forEach(t => {
-                            oldH = WorkflowNode.findHook(t.workflow_dest_node, h.id);
-                        });
-
+                        for (let k = 0; k < j.triggers.length; k++) {
+                            oldH = WorkflowNode.findHook(j.triggers[k].workflow_dest_node, h.id);
+                            if (oldH) {
+                                break quit;
+                            }
+                        }
                     }
-                });
+                }
             }
         }
 
@@ -154,12 +157,12 @@ export class WorkflowNode {
                 }
             }
             if (n.triggers) {
-                n.triggers.forEach(t => {
-                    let h = WorkflowNode.findHook(t.workflow_dest_node, id);
+                for (let i = 0; i < n.triggers.length; i++) {
+                    let h = WorkflowNode.findHook(n.triggers[i].workflow_dest_node, id);
                     if (h) {
                         return h;
                     }
-                });
+                }
             }
         }
         return null;
