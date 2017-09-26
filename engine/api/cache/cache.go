@@ -1,11 +1,9 @@
 package cache
 
 import (
-	"container/list"
 	"context"
 	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/ovh/cds/sdk/log"
 )
@@ -47,12 +45,9 @@ func New(mode, redisHost, redisPassword string, TTL int) (Store, error) {
 	switch mode {
 	case "local":
 		log.Info("Cache> Initialize local cache (TTL=%d seconds)", TTL)
-		return &LocalStore{
-			mutex:  &sync.Mutex{},
-			Data:   map[string][]byte{},
-			Queues: map[string]*list.List{},
-			TTL:    TTL,
-		}, nil
+		s := NewLocalStore()
+		s.TTL = TTL
+		return s, nil
 	case "redis":
 		log.Info("Cache> Initialize redis cache (Host=%s, TTL=%d seconds)", redisHost, TTL)
 		return NewRedisStore(redisHost, redisPassword, TTL)

@@ -9,6 +9,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // insertWorkflowRun inserts in table "workflow_run""
@@ -222,7 +223,7 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
 		}
-		return nil, err
+		return nil, sdk.WrapError(err, "loadRun> Unable to load workflow run", query, args)
 	}
 	wr := sdk.WorkflowRun(*runDB)
 
@@ -236,7 +237,7 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 
 	for _, n := range dbNodeRuns {
 		if err := n.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "loadRun> Unable to load workflow nodes run")
+			return nil, sdk.WrapError(err, "loadRun> Unable to load workflow nodes run; postGet Error")
 		}
 		wnr := sdk.WorkflowNodeRun(n)
 		if wr.WorkflowNodeRuns == nil {
@@ -306,5 +307,6 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	if err != nil {
 		return 0, sdk.WrapError(err, "nextRunNumber")
 	}
+	log.Debug("nextRunNumber> %s/%s %d", w.ProjectKey, w.Name, i)
 	return int64(i), nil
 }

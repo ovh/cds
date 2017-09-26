@@ -119,8 +119,6 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		var taskKey string
 		s.Cache.DequeueWithContext(c, schedulerQueueKey, &taskKey)
 
-		log.Debug("Dequeuing a task execution: %v", taskKey)
-
 		// Load the task execution
 		var t = TaskExecution{}
 		if !s.Cache.Get(taskKey, &t) {
