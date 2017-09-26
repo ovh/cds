@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -18,7 +19,7 @@ type LocalStore struct {
 	mutex  *sync.Mutex
 	Data   map[string][]byte
 	Queues map[string]*list.List
-	Sets   map[string][][]byte
+	Sets   map[string]map[int64]string
 	TTL    int
 }
 
@@ -28,7 +29,7 @@ func NewLocalStore() *LocalStore {
 		mutex:  &sync.Mutex{},
 		Data:   map[string][]byte{},
 		Queues: map[string]*list.List{},
-		Sets:   map[string][][]byte{},
+		Sets:   map[string]map[int64]string{},
 	}
 }
 
@@ -102,7 +103,6 @@ func (s *LocalStore) Enqueue(queueName string, value interface{}) {
 		return
 	}
 
-	log.Debug("[%p] Enqueueing to %s :%s", s, queueName, string(b))
 	l.PushFront(b)
 }
 
@@ -153,7 +153,6 @@ func (s *LocalStore) QueueLen(queueName string) int {
 
 //DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
 func (s *LocalStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
-	log.Debug("[%p] DequeueWithContext from %s", s, queueName)
 	s.mutex.Lock()
 	l := s.Queues[queueName]
 	s.mutex.Unlock()
@@ -258,21 +257,44 @@ func (s *LocalStore) Status() string {
 // SetAdd add a member (identified by a key) in the cached set
 func (s *LocalStore) SetAdd(rootKey string, memberKey string, member interface{}) {
 	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	set := s.Sets[rootKey]
-	btes, err := json.Marshal(member)
-	if err != nil {
-		log.Error("cache.local.SetAdd> Unable to marshal member value: %v", err)
-		return
+	if s.Sets == nil {
+		s.Sets = map[string]map[int64]string{}
 	}
-	set = append(set, btes)
+
+	set, ok := s.Sets[rootKey]
+	if !ok {
+		s.Sets[rootKey] = map[int64]string{}
+		set = s.Sets[rootKey]
+	}
+
+	set[time.Now().UnixNano()] = memberKey
 	s.Sets[rootKey] = set
+
+	s.mutex.Unlock()
+
+	s.SetWithTTL(Key(rootKey, memberKey), member, -1)
 }
 
 // SetRemove removes a member from a set
 func (s *LocalStore) SetRemove(rootKey string, memberKey string, member interface{}) {
+	s.mutex.Lock()
 
+	set := s.Sets[rootKey]
+	var key int64
+	for k, v := range set {
+		if reflect.DeepEqual(v, memberKey) {
+			key = k
+			break
+		}
+	}
+
+	if key > 0 {
+		delete(set, key)
+	}
+	s.Sets[rootKey] = set
+	s.mutex.Unlock()
+
+	s.Delete(Key(rootKey, memberKey))
 }
 
 // SetCard returns the cardinality of a set
@@ -287,16 +309,22 @@ func (s *LocalStore) SetCard(key string) int {
 // SetScan scans a set as mush as members are given in the variadic
 func (s *LocalStore) SetScan(rootKey string, members ...interface{}) error {
 	s.mutex.Lock()
-	defer s.mutex.Unlock()
 
 	set := s.Sets[rootKey]
 	if len(members) > len(set) {
+		s.mutex.Unlock()
 		return errors.New("Too much members")
 	}
+
+	keys := []int64{}
+	for k := range set {
+		keys = append(keys, k)
+	}
+
+	s.mutex.Unlock()
+
 	for i := range members {
-		if err := json.Unmarshal(set[i], members[i]); err != nil {
-			return err
-		}
+		s.Get(Key(rootKey, set[keys[i]]), &members[i])
 	}
 	return nil
 }
