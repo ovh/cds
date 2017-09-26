@@ -1,112 +1,22 @@
 @import '../../../../common';
 $boxHeight: 68px;
-$boxWidth: 176px;
+$boxWidth: 155px;
 .workflowNode {
-  width: 155px;
-  height: 58px;
+  width: 100%;
+  height: 100%;
 
-  .ui.segment.success {
-    background-color: $cds_color_light_green;
-    border: 2px solid $cds_color_green;
-  }
+  .nodePipeline {
+    position: relative;
+    background: white;
+    border: 1px solid grey;
+    border-radius: 5px;
+    width: 100%;
+    height: 100%;
 
-  .ui.segment.fail {
-    background-color: $cds_color_light_red;
-    border: 2px solid $cds_color_red;
-  }
-
-  .ui.segment.building {
-    background-color: $cds_color_light_teal;
-    border: 2px solid transparent;
-  }
-
-  .ui.segment.inactive {
-    background-color: $cds_color_light_grey;
-    border: 2px solid grey;
-  }
-
-  .ui.segment {
-    margin-top: -8px;
-    margin-left: -11px;
-    width: $boxWidth;
-    height: $boxHeight;
-    border-color: #333;
-    padding: 0;
-
-    .firstloop {
+    .footer {
       position: absolute;
-      top: 0px;
-      left: 0px;
-      margin: 0;
-      width: $boxWidth;
-      height: $boxHeight;
-      background-color: transparent;
-      border: none;
-
-      &::before,
-      &::after {
-        z-index: 1;
-        box-sizing: inherit;
-        content: '';
-        position: absolute;
-        width: $boxWidth;
-        height: $boxHeight;
-      }
-
-      &::before {
-        top: -2px;
-        left: -2px;
-        border: 2px solid transparent;
-        border-radius: 5px;
-        animation: spinBefore 4s infinite;
-      }
-
-      &::after {
-        border: 2px solid transparent;
-        bottom: 2px;
-        right: 2px;
-        border-radius: 5px;
-        animation: spinAfter 4s infinite;
-      }
-
-    }
-
-    .secondloop {
-      position: absolute;
-      top: 0px;
-      left: 0px;
-      margin: 0;
-      width: $boxWidth;
-      height: $boxHeight;
-      background-color: transparent;
-      border: none;
-
-      &::before,
-      &::after {
-        z-index: 2;
-        box-sizing: inherit;
-        content: '';
-        position: absolute;
-        width: $boxWidth;
-        height: $boxHeight;
-      }
-
-      &::before {
-        top: -2px;
-        left: -2px;
-        border: 2px solid transparent;
-        border-radius: 5px;
-        animation: spinSecondBefore 4s infinite;
-      }
-
-      &::after {
-        border: 2px solid transparent;
-        bottom: 2px;
-        right: 2px;
-        border-radius: 5px;
-        animation: spinSecondAfter 4s infinite;
-      }
-
+      bottom: 5px;
+      left: 10px;
     }
 
     .pipeline {
@@ -115,10 +25,9 @@ $boxWidth: 176px;
       padding-left: 10px;
       padding-top: 20px;
       height: 68px;
-      font-weight: 600;
 
       p {
-        width: 155px;
+        width: 90%;
         white-space: nowrap;
         overflow: hidden;
       }
@@ -126,173 +35,50 @@ $boxWidth: 176px;
         text-overflow: ellipsis;
       }
     }
-  }
 
-  .ui.segment.disabled {
-    background-color: #d0d0d0;
-    color: white;
-  }
+    .ribbon.label {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      font-size: 0.7em;
+      border: 1px solid black;
+      background-color: $cds_color_light_teal;
+      color: black;
+      border-radius: 2px;
+      padding-left: 10px;
+      z-index: 10;
+    }
+    .ui.ribbon.label:after {
+      content: none;
+    }
 
-  .ribbon.label {
-    position: absolute;
-    top: -20px;
-    left: -15px;
-    font-size: 0.7em;
-    border: 1px solid black;
+    sm-dropdown {
+      z-index: 3;
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      .dropdown.icon {
+        display: none;
+      }
+    }
+  }
+  .nodePipeline.running {
+    border: none;
+  }
+  .nodePipeline.success {
+    background-color: $cds_color_light_green;
+    border: 2px solid $cds_color_green;
+  }
+  .nodePipeline.fail {
+    background-color: $cds_color_light_red;
+    border: 2px solid $cds_color_red;
+  }
+  .nodePipeline.inactive {
+    background-color: $cds_color_light_grey;
+    border: 2px solid grey;
+  }
+  .nodePipeline.building {
     background-color: $cds_color_light_teal;
-    color: black;
-    border-radius: 2px;
-    a {
-      padding: 10px;
-    }
-  }
-  .ui.ribbon.label:after {
-    content: none;
-  }
-
-  sm-dropdown {
-    z-index: 3;
-    position: absolute;
-    right: -5px;
-    top: 0px;
-    .dropdown.icon {
-      display: none;
-    }
-  }
-
-  .footer {
-    position: absolute;
-    bottom: -5px;
-    width: 100%;
-
-    p {
-      color: #737373;
-      font-weight: 600;
-      font-size: 0.85em;
-    }
-  }
-}
-
-@keyframes spinBefore {
-  0% {
-    width: 0;
-    height: 0;
-    box-sizing: inherit;
-  }
-  12.5% {
-    width: $boxWidth;
-    height: 0;
-    border-top-color: $cds_color_teal;
-    transition: width 0.5s ease-in;
-  }
-  25% {
-    width: $boxWidth;
-    height: $boxHeight;
-    border-top-color: $cds_color_teal;
-    border-right-color: $cds_color_teal;
-    transition: height 0.5s;
-  }
-  50% {
-    width: $boxWidth;
-    height: $boxHeight;
-    border-top-color: $cds_color_teal;
-    border-right-color: $cds_color_teal;
-  }
-  100% {
-    width: $boxWidth;
-    height: $boxHeight;
-    border-top-color: $cds_color_teal;
-    border-right-color: $cds_color_teal;
-  }
-}
-
-@keyframes spinSecondBefore {
-  0% {
-    width: 0;
-    height: 0;
-  }
-  50% {
-    width: 0;
-    height: 0;
-  }
-  62.5% {
-    width: $boxWidth;
-    height: 0;
-    border-top-color: $cds_color_light_teal;
-    transition: width 0.5s ease-in;
-  }
-  75% {
-    width: $boxWidth;
-    height: $boxHeight;
-    border-top-color: $cds_color_light_teal;
-    border-right-color: $cds_color_light_teal;
-    transition: height 0.5s;
-  }
-  100% {
-    width: $boxWidth;
-    height: $boxHeight;
-    border-top-color: $cds_color_light_teal;
-    border-right-color: $cds_color_light_teal;
-  }
-}
-
-@keyframes spinAfter {
-  0% {
-    width: 0;
-    height: 0;
-  }
-  25% {
-    width: 0;
-    height: 0;
-  }
-  37.5% {
-    width: $boxWidth;
-    height: 0;
-    border-bottom-color: $cds_color_teal;
-    border-left-color: transparent;
-    transition:
-            width 0.5s ease-in
-  }
-  50% {
-    width: $boxWidth;
-    height: $boxHeight;
-    border-bottom-color: $cds_color_teal;
-    border-left-color: $cds_color_teal;
-    transition:
-          height 0.5s
-  }
-  100% {
-    width: $boxWidth;
-    height: $boxHeight;
-    border-bottom-color: $cds_color_teal;
-    border-left-color: $cds_color_teal;
-  }
-}
-
-@keyframes spinSecondAfter {
-  0% {
-    width: 0;
-    height: 0;
-  }
-  75% {
-    width: 0;
-    height: 0;
-  }
-  87.5% {
-    width: $boxWidth;
-    height: 0;
-    border-bottom-color: $cds_color_light_teal;
-    border-left-color: transparent;
-    transition:
-            width 0.5s ease-in
-
-  }
-  100% {
-    width: $boxWidth;
-    height: $boxHeight;
-    border-bottom-color: $cds_color_light_teal;
-    border-left-color: $cds_color_light_teal;
-    transition:
-            height 0.5s
+    border: 2px solid $cds_color_teal;
   }
 }

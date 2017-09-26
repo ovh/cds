@@ -40,7 +40,7 @@ var projectShowCmd = cli.Command{
 	Name:  "show",
 	Short: "Show a CDS project",
 	Args: []cli.Arg{
-		{Name: "key"},
+		{Name: "project-key"},
 	},
 }
 
@@ -55,7 +55,7 @@ func projectShowRun(v cli.Values) (interface{}, error) {
 			r.URL.RawQuery = q.Encode()
 		})
 	}
-	proj, err := client.ProjectGet(v["key"], mods...)
+	proj, err := client.ProjectGet(v["project-key"], mods...)
 	if err != nil {
 		return nil, err
 	}

@@ -39,6 +39,9 @@
                             </ul>
                         </div>
                     </li>
+                    <div class="ui info message" *ngIf="!nodeRun.stages || nodeRun.stages.length === 0">
+                        {{ 'pipeline_stage_no' | translate }}
+                    </div>
                 </ul>
             </div>
         </div>

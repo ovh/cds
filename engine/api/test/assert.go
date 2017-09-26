@@ -2,10 +2,10 @@ package test
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 
 	"github.com/fsamin/go-dump"
+	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,24 +29,9 @@ func NotEmpty(t *testing.T, i interface{}, msg ...interface{}) {
 	}
 }
 
-func interfaceSlice(slice interface{}) []interface{} {
-	s := reflect.ValueOf(slice)
-	if s.Kind() != reflect.Slice {
-		panic("interfaceSlice() given a non-slice type")
-	}
-
-	ret := make([]interface{}, s.Len())
-
-	for i := 0; i < s.Len(); i++ {
-		ret[i] = s.Index(i).Interface()
-	}
-
-	return ret
-}
-
 // ArrayContains check if an element exists in an array using DeepEquals function
 func ArrayContains(array interface{}, s interface{}) bool {
-	b := interfaceSlice(array)
+	b := sdk.InterfaceSlice(array)
 	for _, i := range b {
 		if DeepEquals(i, s) {
 			return true
@@ -99,8 +84,8 @@ func DeepEquals(a, b interface{}) bool {
 
 // EqualValuesWithoutOrder checks equality between two slices without respecting slide order
 func EqualValuesWithoutOrder(t *testing.T, a, b interface{}, msgAndArgs ...interface{}) {
-	s1 := interfaceSlice(a)
-	s2 := interfaceSlice(b)
+	s1 := sdk.InterfaceSlice(a)
+	s2 := sdk.InterfaceSlice(b)
 
 	for _, x := range s1 {
 		if !ArrayContains(s2, x) {

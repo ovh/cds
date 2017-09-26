@@ -1,9 +1,9 @@
 package cdsclient
 
 import (
-	"io"
-
 	"fmt"
+	"io"
+	"log"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -64,7 +64,7 @@ func (c *client) WorkflowNodeRunArtifacts(projectKey string, name string, number
 
 func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, name string, artifactID int64, w io.Writer) error {
 	url := fmt.Sprintf("/project/%s/workflows/%s/artifact/%d", projectKey, name, artifactID)
-	reader, _, err := c.Stream("GET", url, nil)
+	reader, _, err := c.Stream("GET", url, nil, true)
 	if err != nil {
 		return err
 	}
@@ -82,7 +82,29 @@ func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, 
 		return err
 	}
 	if code >= 300 {
-		return fmt.Errorf("Cannot create workflow node run release. Http code error : %d", code)
+		return fmt.Errorf("Cannot create workflow node run release. HTTP code error : %d", code)
 	}
 	return nil
+}
+
+func (c *client) WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error) {
+	if c.config.Verbose {
+		log.Println("Payload: ", hook.Payload)
+	}
+
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs", projectKey, workflowName)
+	h := struct {
+		Hook *sdk.WorkflowNodeRunHookEvent `json:"hook,omitempty"`
+	}{
+		Hook: &hook,
+	}
+	run := &sdk.WorkflowRun{}
+	code, err := c.PostJSON(url, &h, run)
+	if err != nil {
+		return nil, err
+	}
+	if code >= 300 {
+		return nil, fmt.Errorf("Cannot create workflow node run release. HTTP code error : %d", code)
+	}
+	return run, nil
 }

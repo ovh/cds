@@ -9,9 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ovh/cds/sdk/log"
-
 	"github.com/go-redis/redis"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //RedisStore a redis client and a default ttl
@@ -84,10 +85,10 @@ func (s *RedisStore) SetWithTTL(key string, value interface{}, ttl int) {
 	}
 	b, err := json.Marshal(value)
 	if err != nil {
-		log.Warning("redis> Error caching %s", key)
+		log.Warning("redis> Error caching %s: %s", key, err)
 	}
 	if err := s.Client.Set(key, string(b), time.Duration(ttl)*time.Second).Err(); err != nil {
-		log.Warning("redis> Error caching %s", key)
+		log.Warning("redis> Error caching %s: %s", key, err)
 	}
 }
 
@@ -265,10 +266,57 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 				log.Warning("redis.GetMessage> Message casting error for %v of type %T", msg, msg)
 				continue
 			}
-
 		case <-c.Done():
 			return "", nil
 		}
 	}
 	return redisMsg.Payload, nil
+}
+
+// Status returns the status of the local cache
+func (s *RedisStore) Status() string {
+	if s.Client.Ping().Err() == nil {
+		return "OK (redis)"
+	}
+	return "KO (redis"
+}
+
+// SetAdd add a member (identified by a key) in the cached set
+func (s *RedisStore) SetAdd(rootKey string, memberKey string, member interface{}) {
+	s.Client.ZAdd(rootKey, redis.Z{
+		Member: memberKey,
+		Score:  float64(time.Now().UnixNano()),
+	})
+	s.SetWithTTL(Key(rootKey, memberKey), member, -1)
+}
+
+// SetRemove removes a member from a set
+func (s *RedisStore) SetRemove(rootKey string, memberKey string, member interface{}) {
+	s.Client.ZRem(rootKey, memberKey)
+	s.Delete(Key(rootKey, memberKey))
+}
+
+// SetCard returns the cardinality of a ZSet
+func (s *RedisStore) SetCard(key string) int {
+	return int(s.Client.ZCard(key).Val())
+}
+
+// SetScan scans a ZSet
+func (s *RedisStore) SetScan(key string, members ...interface{}) error {
+	values, err := s.Client.ZRangeByScore(key, redis.ZRangeBy{
+		Min: "-inf",
+		Max: "+inf",
+	}).Result()
+	if err != nil {
+		return sdk.WrapError(err, "redis zrange error")
+	}
+
+	for i := range members {
+		val := values[i]
+		memKey := Key(key, val)
+		if !s.Get(memKey, members[i]) {
+			return fmt.Errorf("Member (%s) not found", memKey)
+		}
+	}
+	return nil
 }

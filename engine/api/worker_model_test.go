@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -6,12 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
-	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -20,17 +17,17 @@ import (
 )
 
 func Test_DeleteAllWorkerModel(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Loading all models
-	models, err := worker.LoadWorkerModels(db)
+	models, err := worker.LoadWorkerModels(api.mustDB())
 	if err != nil {
 		t.Fatalf("Error getting models : %s", err)
 	}
 
 	//Delete all of them
 	for _, m := range models {
-		if err := worker.DeleteWorkerModel(db, m.ID); err != nil {
+		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
 			t.Fatalf("Error deleting model : %s", err)
 		}
 	}
@@ -38,21 +35,27 @@ func Test_DeleteAllWorkerModel(t *testing.T) {
 }
 
 func Test_addWorkerModelAsAdmin(t *testing.T) {
-	Test_DeleteAllWorkerModel(t)
-	db := database.DBMap(database.DB())
-	if db == nil {
-		t.FailNow()
+	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	//Loading all models
+	models, err := worker.LoadWorkerModels(api.mustDB())
+	if err != nil {
+		t.Fatalf("Error getting models : %s", err)
 	}
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin")
-	router.init()
+	//Delete all of them
+	for _, m := range models {
+		if err := worker.DeleteWorkerModel(api.mustDB(), m.ID); err != nil {
+			t.Fatalf("Error deleting model : %s", err)
+		}
+	}
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(db, "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -72,14 +75,14 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addWorkerModel, nil)
+	uri := api.Router.GetRoute("POST", api.addWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -88,17 +91,14 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 
 func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DBMap(database.DB())
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin")
-	router.init()
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(db, "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -118,14 +118,14 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addWorkerModel, nil)
+	uri := api.Router.GetRoute("POST", api.addWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
 
@@ -149,7 +149,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
 
@@ -174,7 +174,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	api.Router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
 
@@ -187,7 +187,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 400, w.Code)
 
@@ -196,13 +196,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 
 func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DBMap(database.DB())
-	if db == nil {
-		t.FailNow()
-	}
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember")
-	router.init()
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create group
 	g := &sdk.Group{
@@ -210,7 +204,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(db, g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
@@ -229,14 +223,14 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addWorkerModel, nil)
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 403, w.Code)
 
@@ -245,13 +239,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 
 func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DBMap(database.DB())
-	if db == nil {
-		t.FailNow()
-	}
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember")
-	router.init()
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create group
 	g := &sdk.Group{
@@ -259,11 +247,11 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(db, g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(db, g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -282,14 +270,14 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addWorkerModel, nil)
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -298,13 +286,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 
 func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DBMap(database.DB())
-	if db == nil {
-		t.FailNow()
-	}
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAGroupMember")
-	router.init()
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create group
 	g := &sdk.Group{
@@ -316,16 +298,16 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 
-	if err := group.InsertGroup(db, g1); err != nil {
+	if err := group.InsertGroup(api.mustDB(), g1); err != nil {
 		t.Fatal(err)
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(db, g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(db, g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -344,14 +326,14 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addWorkerModel, nil)
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 403, w.Code)
 
@@ -360,13 +342,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 
 func Test_updateWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DBMap(database.DB())
-	if db == nil {
-		t.FailNow()
-	}
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updateWorkerModel")
-	router.init()
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create group
 	g := &sdk.Group{
@@ -374,11 +350,11 @@ func Test_updateWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(db, g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(db, g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -397,14 +373,14 @@ func Test_updateWorkerModel(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addWorkerModel, nil)
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -432,14 +408,14 @@ func Test_updateWorkerModel(t *testing.T) {
 	vars := map[string]string{
 		"permModelID": fmt.Sprintf("%d", model.ID),
 	}
-	uri = router.getRoute("PUT", updateWorkerModel, vars)
+	uri = router.GetRoute("PUT", api.updateWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "PUT", uri, model2)
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -449,13 +425,7 @@ func Test_updateWorkerModel(t *testing.T) {
 
 func Test_deleteWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DBMap(database.DB())
-	if db == nil {
-		t.FailNow()
-	}
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_deleteWorkerModel")
-	router.init()
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create group
 	g := &sdk.Group{
@@ -463,11 +433,11 @@ func Test_deleteWorkerModel(t *testing.T) {
 	}
 
 	//Create user
-	u, pass := assets.InsertLambdaUser(db, g)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	if err := group.SetUserGroupAdmin(db, g.ID, u.ID); err != nil {
+	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
 		t.Fatal(err)
 	}
 
@@ -486,14 +456,14 @@ func Test_deleteWorkerModel(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addWorkerModel, nil)
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -505,14 +475,14 @@ func Test_deleteWorkerModel(t *testing.T) {
 	vars := map[string]string{
 		"permModelID": fmt.Sprintf("%d", model.ID),
 	}
-	uri = router.getRoute("DELETE", deleteWorkerModel, vars)
+	uri = router.GetRoute("DELETE", api.deleteWorkerModelHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "DELETE", uri, nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -522,20 +492,14 @@ func Test_deleteWorkerModel(t *testing.T) {
 
 func Test_getWorkerModel(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DBMap(database.DB())
-	if db == nil {
-		t.FailNow()
-	}
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin")
-	router.init()
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(db, "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -555,28 +519,28 @@ func Test_getWorkerModel(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addWorkerModel, nil)
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
 
 	//Prepare request
-	uri = router.getRoute("GET", getWorkerModels, nil)
+	uri = router.GetRoute("GET", api.getWorkerModelsHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?name=Test1", nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
@@ -586,20 +550,14 @@ func Test_getWorkerModel(t *testing.T) {
 
 func Test_getWorkerModels(t *testing.T) {
 	Test_DeleteAllWorkerModel(t)
-	db := database.DBMap(database.DB())
-	if db == nil {
-		t.FailNow()
-	}
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addWorkerModelAsAdmin")
-	router.init()
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	g, err := group.LoadGroup(db, "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
@@ -619,28 +577,28 @@ func Test_getWorkerModels(t *testing.T) {
 	}
 
 	//Prepare request
-	uri := router.getRoute("POST", addWorkerModel, nil)
+	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
 
 	//Prepare request
-	uri = router.getRoute("GET", getWorkerModels, nil)
+	uri = router.GetRoute("GET", api.getWorkerModelsHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 

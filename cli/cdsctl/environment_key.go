@@ -23,23 +23,23 @@ var (
 
 var environmentKeyCreateCmd = cli.Command{
 	Name:  "add",
-	Short: "Add a new key on environment. key type can be ssh or pgp",
+	Short: "Add a new key on environment. key-type can be ssh or pgp",
 	Args: []cli.Arg{
-		{Name: "key"},
-		{Name: "envName"},
-		{Name: "keyName"},
-		{Name: "keyType"},
+		{Name: "project-key"},
+		{Name: "env-name"},
+		{Name: "key-name"},
+		{Name: "key-type"},
 	},
 }
 
 func environmentCreateKeyRun(v cli.Values) error {
 	key := &sdk.EnvironmentKey{
 		Key: sdk.Key{
-			Name: v["keyName"],
-			Type: v["keyType"],
+			Name: v["key-name"],
+			Type: v["key-type"],
 		},
 	}
-	if err := client.EnvironmentKeyCreate(v["key"], v["envName"], key); err != nil {
+	if err := client.EnvironmentKeyCreate(v["project-key"], v["env-name"], key); err != nil {
 		return err
 	}
 	return nil
@@ -49,13 +49,13 @@ var environmentKeyListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS environment keys",
 	Args: []cli.Arg{
-		{Name: "key"},
-		{Name: "envName"},
+		{Name: "project-key"},
+		{Name: "env-name"},
 	},
 }
 
 func environmentListKeyRun(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.EnvironmentKeysList(v["key"], v["envName"])
+	keys, err := client.EnvironmentKeysList(v["project-key"], v["env-name"])
 	if err != nil {
 		return nil, err
 	}
@@ -66,12 +66,12 @@ var environmentKeyDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS environment key",
 	Args: []cli.Arg{
-		{Name: "key"},
-		{Name: "envName"},
-		{Name: "keyName"},
+		{Name: "project-key"},
+		{Name: "env-name"},
+		{Name: "key-name"},
 	},
 }
 
 func environmentDeleteKeyRun(v cli.Values) error {
-	return client.EnvironmentKeysDelete(v["key"], v["envName"], v["keyName"])
+	return client.EnvironmentKeysDelete(v["project-key"], v["env-name"], v["key-name"])
 }

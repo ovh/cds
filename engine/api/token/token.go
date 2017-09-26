@@ -14,15 +14,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// Token describes tokens used by worker to access the API
-// on behalf of a group.
-type Token struct {
-	GroupID    int64          `json:"group_id"`
-	Token      string         `json:"token"`
-	Expiration sdk.Expiration `json:"expiration"`
-	Created    time.Time      `json:"created"`
-}
-
 // GenerateToken generate a random 64bytes hexadecimal string
 func GenerateToken() (string, error) {
 	size := 64
@@ -40,12 +31,12 @@ func GenerateToken() (string, error) {
 
 // InsertToken inserts a new token in database
 func InsertToken(db gorp.SqlExecutor, groupID int64, token string, e sdk.Expiration) error {
-	query := `INSERT INTO token (group_id, token, expiration, created) VALUES ($1, $2, $3, current_timestamp)`
+	query := `INSERT INTO token (group_id, token, expiration, created) VALUES ($1, $2, $3, $4)`
 
 	hasher := sha512.New()
 	hashedToken := base64.StdEncoding.EncodeToString(hasher.Sum([]byte(token)))
 
-	if _, err := db.Exec(query, groupID, hashedToken, int(e)); err != nil {
+	if _, err := db.Exec(query, groupID, hashedToken, int(e), time.Now()); err != nil {
 		return err
 	}
 	return nil
@@ -62,13 +53,13 @@ func CountToken(db gorp.SqlExecutor, groupID int64) (int, error) {
 }
 
 // LoadToken fetch token infos from database
-func LoadToken(db gorp.SqlExecutor, token string) (*Token, error) {
+func LoadToken(db gorp.SqlExecutor, token string) (*sdk.Token, error) {
 	query := `SELECT group_id, expiration, created FROM token WHERE token = $1`
 
 	hasher := sha512.New()
 	hashed := base64.StdEncoding.EncodeToString(hasher.Sum([]byte(token)))
 
-	var t Token
+	var t sdk.Token
 	var exp int
 	if err := db.QueryRow(query, hashed).Scan(&t.GroupID, &exp, &t.Created); err != nil {
 		if err == sql.ErrNoRows {

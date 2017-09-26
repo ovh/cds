@@ -7,7 +7,6 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -84,7 +83,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	vars["cds.project"] = w.ProjectKey
 	vars["cds.workflow"] = w.Name
 	vars["cds.pipeline"] = n.Pipeline.Name
-	vars["cds.version"] = fmt.Sprintf("%d.%d", 1, 0)
+	vars["cds.version"] = fmt.Sprintf("%d.%d", 1)
 	vars["cds.run"] = fmt.Sprintf("%d.%d", 1, 0)
 	vars["cds.run.number"] = fmt.Sprintf("%d", 1)
 	vars["cds.run.subnumber"] = fmt.Sprintf("%d", 0)
@@ -144,7 +143,7 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 	return params, nil
 }
 
-func getNodeRunBuildParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
+func getNodeRunBuildParameters(db gorp.SqlExecutor, proj *sdk.Project, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
 	//Load workflow run
 	w, err := LoadRunByID(db, run.WorkflowRunID)
 	if err != nil {
@@ -155,12 +154,6 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([
 	n := w.Workflow.GetNode(run.WorkflowNodeID)
 	if n == nil {
 		return nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", run.WorkflowNodeID), "getNodeRunParameters>")
-	}
-
-	//Load project
-	proj, err := project.Load(db, w.Workflow.ProjectKey, nil, project.LoadOptions.WithVariables)
-	if err != nil {
-		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to load project")
 	}
 
 	//Get node build parameters
@@ -177,7 +170,7 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun) ([
 
 	//override default parameters value
 	tmp := sdk.ParametersToMap(params)
-	tmp["cds.version"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
+	tmp["cds.version"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run"] = fmt.Sprintf("%d.%d", run.Number, run.SubNumber)
 	tmp["cds.run.number"] = fmt.Sprintf("%d", run.Number)
 	tmp["cds.run.subnumber"] = fmt.Sprintf("%d", run.SubNumber)

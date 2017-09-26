@@ -1,24 +1,13 @@
 package repogithub
 
-import "reflect"
+import (
+	"reflect"
 
-func interfaceSlice(slice interface{}) []interface{} {
-	s := reflect.ValueOf(slice)
-	if s.Kind() != reflect.Slice {
-		panic("interfaceSlice() given a non-slice type")
-	}
-
-	ret := make([]interface{}, s.Len())
-
-	for i := 0; i < s.Len(); i++ {
-		ret[i] = s.Index(i).Interface()
-	}
-
-	return ret
-}
+	"github.com/ovh/cds/sdk"
+)
 
 func arrayContains(array interface{}, s interface{}) bool {
-	b := interfaceSlice(array)
+	b := sdk.InterfaceSlice(array)
 	for _, i := range b {
 		if reflect.DeepEqual(i, s) {
 			return true

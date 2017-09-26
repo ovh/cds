@@ -29,7 +29,7 @@ func UpdatePipelineLastModified(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.P
 	t := time.Now()
 
 	if u != nil {
-		cache.SetWithTTL(cache.Key("lastModified", proj.Key, "pipeline", p.Name), sdk.LastModification{
+		Store.SetWithTTL(cache.Key("lastModified", proj.Key, "pipeline", p.Name), sdk.LastModification{
 			Name:         p.Name,
 			Username:     u.Username,
 			LastModified: t.Unix(),
@@ -44,7 +44,7 @@ func UpdatePipelineLastModified(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.P
 		}
 		b, errP := json.Marshal(updates)
 		if errP == nil {
-			cache.Publish("lastUpdates", string(b))
+			Store.Publish("lastUpdates", string(b))
 		}
 	}
 
@@ -81,18 +81,20 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 
 // LoadPipelineByID loads a pipeline from database
 func LoadPipelineByID(db gorp.SqlExecutor, pipelineID int64, deep bool) (*sdk.Pipeline, error) {
+	var lastModified time.Time
 	var p sdk.Pipeline
-	query := `SELECT pipeline.name, pipeline.type, project.projectKey FROM pipeline
+	query := `SELECT pipeline.name, pipeline.type, project.projectKey, pipeline.last_modified FROM pipeline
 	JOIN project on pipeline.project_id = project.id
 	WHERE pipeline.id = $1`
 
-	err := db.QueryRow(query, pipelineID).Scan(&p.Name, &p.Type, &p.ProjectKey)
+	err := db.QueryRow(query, pipelineID).Scan(&p.Name, &p.Type, &p.ProjectKey, &lastModified)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrPipelineNotFound
 		}
 		return nil, err
 	}
+	p.LastModified = lastModified.Unix()
 	p.ID = pipelineID
 
 	if deep {

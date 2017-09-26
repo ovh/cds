@@ -8,7 +8,7 @@ identifier = "hatchery_openstack"
 
 +++
 
-CDS build using Openstack infrastructure to spawn each CDS Workers inside dedicated VM.
+CDS build using Openstack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
 
 ## Start Opentack hatchery
 
@@ -19,14 +19,12 @@ $ cds generate  token -g shared.infra -e persistent
 fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 ```
 
+Edit the CDS [configuration]({{< relref "installation.configuration.md">}}) or set the dedicated environment variables. To enable the hactchery, just set the API HTTP and GRPC URL, the token freshly generated and the openstack variables.
+
 Then start hatchery:
 
 ```bash
-OPENSTACK_USER=<user> OPENSTACK_TENANT=<tenant> OPENSTACK_AUTH_ENDPOINT=https://auth.cloud.ovh.net OPENSTACK_PASSWORD=<password> OPENSTACK_REGION=SBG1 hatchery cloud \
-        --api=https://api.domain \
-        --max-worker=10 \
-        --provision=1 \
-        --token=fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
+engine start hatchery:openstack --config config.toml
 ```
 
 This hatchery will now start worker of model 'openstack' on Openstack infrastructure.

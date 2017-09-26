@@ -10,8 +10,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
+	"github.com/ovh/cds/engine/api/repositoriesmanager/repogitlab"
 	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -33,21 +34,18 @@ type InitializeOpts struct {
 	GithubSecret           string
 	StashPrivateKey        string
 	StashConsumerKey       string
+	GitlabSecret           string
 }
 
 //Initialize initialize private keys
 //For instance for a repositories manager named "github.com/ovh", the private key
-func Initialize(o InitializeOpts) error {
-	options = o
+func Initialize(o InitializeOpts, DBFunc func() *gorp.DbMap, store cache.Store) error {
 	repogithub.Init(o.APIBaseURL, o.UIBaseURL)
 	repostash.Init(o.APIBaseURL, o.UIBaseURL)
-
-	_db := database.DB()
-	if _db == nil {
-		return fmt.Errorf("Unable to init repositories manager")
-	}
-	if db := database.DBMap(_db); db != nil {
-		repositoriesManager, err := LoadAll(db)
+	repogitlab.Init(o.APIBaseURL, o.UIBaseURL)
+	options = o
+	if db := DBFunc(); db != nil {
+		repositoriesManager, err := LoadAll(db, store)
 		if err != nil {
 			return err
 		}
@@ -69,11 +67,19 @@ func Initialize(o InitializeOpts) error {
 					// GithubSecret is already the real secret, not a path to a file
 					found = true
 				}
+			case sdk.Gitlab:
+				// rmSecrets does not need to contains ["client-secret"] = o.GithubSecret
+				// GithubSecret is already the real secret, not a path to a file
+				found = true
+				if o.GitlabSecret != "" {
+					log.Info("RepositoriesManager> Found secret for %s", rm.Name)
+					rmSecrets["secret"] = o.GitlabSecret
+				}
 			}
 
 			if found {
 				if err := initRepositoriesManager(db, &rm, o.KeysDirectory, rmSecrets); err != nil {
-					log.Warning("RepositoriesManager> Unable init %s", rm.Name)
+					log.Warning("RepositoriesManager> Unable init %s: %s", rm.Name, err)
 				}
 			} else {
 				log.Warning("RepositoriesManager> Unable to find key for %s", rm.Name)
@@ -86,7 +92,7 @@ func Initialize(o InitializeOpts) error {
 }
 
 //New instanciate a new RepositoriesManager, act as a Factory with all supported repositories manager
-func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[string]string, consumerData string) (*sdk.RepositoriesManager, error) {
+func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[string]string, consumerData string, store cache.Store) (*sdk.RepositoriesManager, error) {
 	switch t {
 	case sdk.Stash:
 		//we have to compute the StashConsumer
@@ -97,7 +103,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 			if len(args) != 1 || args["key"] == "" {
 				return nil, fmt.Errorf("key args is mandatory to connect to stash")
 			}
-			stash = repostash.New(URL, options.StashConsumerKey, args["key"])
+			stash = repostash.New(URL, options.StashConsumerKey, args["key"], store)
 		} else {
 			//It's coming from the database, we just have to unmarshal data from the DB to get consumerData
 			var data map[string]interface{}
@@ -105,7 +111,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 				log.Warning("New> Error %s", err)
 				return nil, err
 			}
-			stash = repostash.New(URL, data["consumer_key"].(string), data["private_rsa_key"].(string))
+			stash = repostash.New(URL, data["consumer_key"].(string), data["private_rsa_key"].(string), store)
 		}
 		stash.DisableSetStatus = options.DisableStashSetStatus
 
@@ -134,7 +140,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 				return nil, fmt.Errorf("client-id args and client-secret (in cds configuration) are mandatory to connect to github : %v", args)
 			}
 
-			github = repogithub.New(args["client-id"], options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback")
+			github = repogithub.New(args["client-id"], options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback", store)
 			if args["with-hooks"] != "" {
 				b, err := strconv.ParseBool(args["with-hooks"])
 				if err == nil {
@@ -156,7 +162,7 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 				return nil, err
 			}
 
-			github = repogithub.New(data["client-id"].(string), options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback")
+			github = repogithub.New(data["client-id"].(string), options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback", store)
 			if data["with-hooks"] != nil {
 				b, ok := data["with-hooks"].(bool)
 				if !ok {
@@ -201,6 +207,23 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 		}
 
 		return &rm, nil
+	case sdk.Gitlab:
+		driver, err := repogitlab.NewGitlabDriver(id, name, URL, options.APIBaseURL+"/repositories_manager/oauth2/callback", options.GitlabSecret, args, consumerData)
+		if err != nil {
+			return nil, err
+		}
+
+		rm := sdk.RepositoriesManager{
+			ID:               id,
+			Consumer:         driver,
+			Name:             name,
+			URL:              URL,
+			Type:             sdk.Gitlab,
+			HooksSupported:   driver.HooksSupported(),
+			PollingSupported: driver.PollingSupported(),
+		}
+		return &rm, nil
+
 	}
 	return nil, fmt.Errorf("Unknown type %s. Cannot instanciate repositories manager t=%s id=%d name=%s url=%s args=%s consumerData=%s", t, t, id, name, URL, args, consumerData)
 }
@@ -230,5 +253,14 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 		// nothing to do here for github
 		return nil
 	}
+
+	if rm.Type == sdk.Gitlab {
+		if s, ok := secrets["secret"]; ok {
+			g := rm.Consumer.(*repogitlab.GitlabDriver)
+			g.Secret = s
+		}
+		return nil
+	}
+
 	return fmt.Errorf("Unsupported repositories manager : %s: %s", rm.Name, rm.Type)
 }

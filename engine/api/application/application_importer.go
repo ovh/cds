@@ -3,6 +3,7 @@ package application
 import (
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
@@ -14,9 +15,9 @@ import (
 )
 
 //Import is able to create a new application and all its components
-func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, u *sdk.User, msgChan chan<- sdk.Message) error {
+func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, repomanager *sdk.RepositoriesManager, u *sdk.User, msgChan chan<- sdk.Message) error {
 	//Save application in database
-	if err := Insert(db, proj, app, u); err != nil {
+	if err := Insert(db, store, proj, app, u); err != nil {
 		return sdk.WrapError(err, "application.Import")
 	}
 
@@ -32,11 +33,11 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 		app.ApplicationGroups = proj.ProjectGroups
 	}
 
-	if err := importVariables(db, proj, app, u, msgChan); err != nil {
+	if err := importVariables(db, store, proj, app, u, msgChan); err != nil {
 		return err
 	}
 
-	if err := ImportPipelines(db, proj, app, u, msgChan); err != nil {
+	if err := ImportPipelines(db, store, proj, app, u, msgChan); err != nil {
 		return err
 	}
 
@@ -48,7 +49,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 			return err
 		}
 		log.Debug("application.Import> Insert group %d in application", g.ID)
-		if err := AddGroup(db, proj, app, u, app.ApplicationGroups[i]); err != nil {
+		if err := AddGroup(db, store, proj, app, u, app.ApplicationGroups[i]); err != nil {
 			return err
 		}
 		if msgChan != nil {
@@ -63,7 +64,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 			return err
 		}
 		//Manage hook
-		if _, err := hook.CreateHook(db, proj.Key, repomanager, app.RepositoryFullname, app, &app.Pipelines[0].Pipeline); err != nil {
+		if _, err := hook.CreateHook(db, store, proj.Key, repomanager, app.RepositoryFullname, app, &app.Pipelines[0].Pipeline); err != nil {
 			return err
 		}
 		if msgChan != nil {
@@ -75,15 +76,15 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, repoma
 }
 
 //importVariables is able to create variable on an existing application
-func importVariables(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, u *sdk.User, msgChan chan<- sdk.Message) error {
+func importVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, u *sdk.User, msgChan chan<- sdk.Message) error {
 	for _, newVar := range app.Variable {
 		var errCreate error
 		switch newVar.Type {
 		case sdk.KeyVariable:
-			errCreate = AddKeyPairToApplication(db, app, newVar.Name, u)
+			errCreate = AddKeyPairToApplication(db, store, app, newVar.Name, u)
 			break
 		default:
-			errCreate = InsertVariable(db, app, newVar, u)
+			errCreate = InsertVariable(db, store, app, newVar, u)
 			break
 		}
 		if errCreate != nil {
@@ -100,7 +101,7 @@ func importVariables(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 }
 
 //ImportPipelines is able to create pipelines on an existing application
-func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Application, u *sdk.User, msgChan chan<- sdk.Message) error {
+func ImportPipelines(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, u *sdk.User, msgChan chan<- sdk.Message) error {
 	//Import pipelines
 	for i := range app.Pipelines {
 		//Import pipeline
@@ -141,7 +142,7 @@ func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 				log.Debug("ImportPipelines> current app")
 			} else {
 				log.Debug("Load t.SrcApplication.Name:%s", t.SrcApplication.Name)
-				srcApp, err := LoadByName(db, proj.Key, t.SrcApplication.Name, u, LoadOptions.Default)
+				srcApp, err := LoadByName(db, store, proj.Key, t.SrcApplication.Name, u, LoadOptions.Default)
 				if err != nil {
 					return err
 				}
@@ -166,7 +167,7 @@ func ImportPipelines(db gorp.SqlExecutor, proj *sdk.Project, app *sdk.Applicatio
 			if t.DestApplication.Name == "" {
 				t.DestApplication = *app
 			} else {
-				dest, err := LoadByName(db, proj.Key, t.DestApplication.Name, u, LoadOptions.Default)
+				dest, err := LoadByName(db, store, proj.Key, t.DestApplication.Name, u, LoadOptions.Default)
 				if err != nil {
 					return err
 				}

@@ -57,12 +57,12 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	cmd.Use = c.Name
 
 	sort.Sort(orderArgs(c.Args...))
-	sort.Sort(orderArgs(c.OptionnalArgs...))
+	sort.Sort(orderArgs(c.OptionalArgs...))
 
 	for _, a := range c.Args {
 		cmd.Use = cmd.Use + " " + strings.ToUpper(a.Name)
 	}
-	for _, a := range c.OptionnalArgs {
+	for _, a := range c.OptionalArgs {
 		cmd.Use = cmd.Use + " [" + strings.ToUpper(a.Name) + "]"
 	}
 	cmd.Aliases = c.Aliases
@@ -87,7 +87,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 		}
 	}
 
-	definedArgs := append(c.Args, c.OptionnalArgs...)
+	definedArgs := append(c.Args, c.OptionalArgs...)
 	sort.Sort(orderArgs(definedArgs...))
 
 	cmd.Short = c.Short
@@ -106,7 +106,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			ExitOnError(ErrWrongUsage, cmd.Help)
 		}
 		//If there is no optionnal args but there more args than expected
-		if len(c.OptionnalArgs) == 0 && len(args) > len(c.Args) {
+		if len(c.OptionalArgs) == 0 && len(args) > len(c.Args) {
 			ExitOnError(ErrWrongUsage, cmd.Help)
 		}
 

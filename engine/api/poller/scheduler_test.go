@@ -7,7 +7,7 @@ import (
 )
 
 func TestSchedulerRun(t *testing.T) {
-	db := test.SetupPG(t)
+	db, _ := test.SetupPG(t)
 	exs, status, err := SchedulerRun(db)
 	if err != nil {
 		t.Fatalf("%s: %s", status, err)

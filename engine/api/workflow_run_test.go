@@ -1,18 +1,13 @@
-package main
+package api
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http/httptest"
 	"testing"
-	"time"
 
-	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
@@ -21,11 +16,11 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func Test_getWorkflowRunsHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -88,36 +83,138 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, &w, u))
-	w1, err := workflow.Load(db, key, "test_1", u)
+	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u))
+	w1, err := workflow.Load(db, api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
-			User: *u,
-		})
-		test.NoError(t, err)
+	wr, errMR := workflow.ManualRun(db, api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+		User: *u,
+	})
+	if errMR != nil {
+		test.NoError(t, errMR)
 	}
 
-	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowRunsHandler")
-	router.init()
+	_, errMR2 := workflow.ManualRunFromNode(db, api.Cache, proj, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.RootID)
+	if errMR2 != nil {
+		test.NoError(t, errMR2)
+	}
+
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
+		"number":         fmt.Sprintf("%d", wr.Number),
+		"nodeID":         fmt.Sprintf("%d", wr.Workflow.RootID),
 	}
-	uri := router.getRoute("GET", getWorkflowRunsHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunHistoryHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	history := []sdk.WorkflowNodeRun{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &history))
+	assert.Equal(t, 2, len(history))
+	assert.Equal(t, int64(1), history[0].SubNumber)
+	assert.Equal(t, int64(0), history[1].SubNumber)
+}
+func Test_getWorkflowRunsHandler(t *testing.T) {
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	//Second pipeline
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip2, u))
+	s = sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip2.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	s.Jobs = append(s.Jobs, *j)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	test.NoError(t, err)
+
+	for i := 0; i < 10; i++ {
+		_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
+			User: *u,
+		})
+		test.NoError(t, err)
+	}
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+		"workflowName":   w1.Name,
+	}
+	uri := router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 	assert.Equal(t, "0-10/10", rec.Header().Get("Content-Range"))
 
-	uri = router.getRoute("GET", getWorkflowRunsHandler, vars)
+	uri = router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 	q := req.URL.Query()
@@ -126,7 +223,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 	//Do the request
 	rec = httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 206, rec.Code)
 	assert.Equal(t, "5-9/10", rec.Header().Get("Content-Range"))
 
@@ -142,17 +239,17 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	req.URL.RawQuery = q.Encode()
 	//Do the request
 	rec = httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 400, rec.Code)
 	assert.Equal(t, "", rec.Header().Get("Content-Range"))
 
 }
 
 func Test_getLatestWorkflowRunHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(db)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -161,19 +258,19 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(db, s)
+	pipeline.InsertStage(api.mustDB(), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -185,18 +282,18 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(db, s)
+	pipeline.InsertStage(api.mustDB(), s)
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -215,12 +312,12 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, &w, u))
-	w1, err := workflow.Load(db, key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 			Payload: map[string]string{
 				"git.branch": "master",
@@ -230,21 +327,18 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		test.NoError(t, err)
 	}
 
-	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getLatestWorkflowRunHandler")
-	router.init()
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 	}
-	uri := router.getRoute("GET", getLatestWorkflowRunHandler, vars)
+	uri := router.GetRoute("GET", api.getLatestWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
@@ -252,12 +346,12 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	assert.Equal(t, int64(10), wr.Number)
 
 	//Test getWorkflowRunTagsHandler
-	uri = router.getRoute("GET", getWorkflowRunTagsHandler, vars)
+	uri = router.GetRoute("GET", api.getWorkflowRunTagsHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 	//Do the request
 	rec = httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
 	tags := map[string][]string{}
@@ -269,10 +363,10 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowRunHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(db)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -281,19 +375,19 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(db, s)
+	pipeline.InsertStage(api.mustDB(), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -305,18 +399,18 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(db, s)
+	pipeline.InsertStage(api.mustDB(), s)
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -335,33 +429,30 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, &w, u))
-	w1, err := workflow.Load(db, key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
-		_, err = workflow.ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
+		_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
 		})
 		test.NoError(t, err)
 	}
 
-	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowRunHandler")
-	router.init()
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 		"number":         "9",
 	}
-	uri := router.getRoute("GET", getWorkflowRunHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
@@ -370,10 +461,10 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 }
 
 func Test_getWorkflowNodeRunHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-	u, pass := assets.InsertAdminUser(db)
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -382,19 +473,19 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
 
 	s := sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip.ID
-	pipeline.InsertStage(db, s)
+	pipeline.InsertStage(api.mustDB(), s)
 	j := &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
 	s.Jobs = append(s.Jobs, *j)
 
 	pip.Stages = append(pip.Stages, *s)
@@ -406,18 +497,18 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		Name:       "pip2",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip2, u))
 	s = sdk.NewStage("stage 1")
 	s.Enabled = true
 	s.PipelineID = pip2.ID
-	pipeline.InsertStage(db, s)
+	pipeline.InsertStage(api.mustDB(), s)
 	j = &sdk.Job{
 		Enabled: true,
 		Action: sdk.Action{
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -436,47 +527,39 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, &w, u))
-	w1, err := workflow.Load(db, key, "test_1", u)
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
+	_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
 
-	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	workflow.Scheduler(c, func() *gorp.DbMap { return db })
-	time.Sleep(2 * time.Second)
+	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name)
 
-	lastrun, err := workflow.LoadLastRun(db, proj.Key, w1.Name)
-
-	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowNodeRunHandler")
-	router.init()
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 		"number":         fmt.Sprintf("%d", lastrun.Number),
-		"id":             fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
+		"nodeRunID":      fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
 	}
-	uri := router.getRoute("GET", getWorkflowNodeRunHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 }
 
-func Test_postWorkflowRunHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
 	//First pipeline
 	pip := sdk.Pipeline{
@@ -502,17 +585,6 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 
 	pip.Stages = append(pip.Stages, *s)
 
-	//Second pipeline
-	pip2 := sdk.Pipeline{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
-	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
-	s = sdk.NewStage("stage 1")
-	s.Enabled = true
-	s.PipelineID = pip2.ID
 	pipeline.InsertStage(db, s)
 	j = &sdk.Job{
 		Enabled: true,
@@ -520,102 +592,6 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 			Enabled: true,
 		},
 	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
-	s.Jobs = append(s.Jobs, *j)
-
-	w := sdk.Workflow{
-		Name:       "test_1",
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Root: &sdk.WorkflowNode{
-			Pipeline: pip,
-			Triggers: []sdk.WorkflowNodeTrigger{
-				sdk.WorkflowNodeTrigger{
-					WorkflowDestNode: sdk.WorkflowNode{
-						Pipeline: pip,
-					},
-				},
-			},
-		},
-	}
-
-	test.NoError(t, workflow.Insert(db, &w, u))
-	w1, err := workflow.Load(db, key, "test_1", u)
-	test.NoError(t, err)
-
-	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_postWorkflowRunHandler")
-	router.init()
-	//Prepare request
-	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
-	}
-	uri := router.getRoute("POST", postWorkflowRunHandler, vars)
-	test.NotEmpty(t, uri)
-
-	opts := &postWorkflowRunHandlerOption{}
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
-
-	//Do the request
-	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
-
-	wr := &sdk.WorkflowRun{}
-	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
-	assert.Equal(t, int64(1), wr.Number)
-}
-
-func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
-	db := test.SetupPG(t)
-	u, pass := assets.InsertAdminUser(db)
-	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, key, key, u)
-
-	//First pipeline
-	pip := sdk.Pipeline{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       "pip1",
-		Type:       sdk.BuildPipeline,
-	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
-
-	s := sdk.NewStage("stage 1")
-	s.Enabled = true
-	s.PipelineID = pip.ID
-	pipeline.InsertStage(db, s)
-	j := &sdk.Job{
-		Enabled: true,
-		Action: sdk.Action{
-			Enabled: true,
-		},
-	}
-	pipeline.InsertJob(db, j, s.ID, &pip)
-	s.Jobs = append(s.Jobs, *j)
-
-	pip.Stages = append(pip.Stages, *s)
-
-	//Second pipeline
-	pip2 := sdk.Pipeline{
-		ProjectID:  proj.ID,
-		ProjectKey: proj.Key,
-		Name:       "pip2",
-		Type:       sdk.BuildPipeline,
-	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip2, u))
-	s = sdk.NewStage("stage 1")
-	s.Enabled = true
-	s.PipelineID = pip2.ID
-	pipeline.InsertStage(db, s)
-	j = &sdk.Job{
-		Enabled: true,
-		Action: sdk.Action{
-			Enabled: true,
-		},
-	}
-	pipeline.InsertJob(db, j, s.ID, &pip2)
 	s.Jobs = append(s.Jobs, *j)
 
 	w := sdk.Workflow{
@@ -634,21 +610,225 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, &w, u))
-	w1, err := workflow.Load(db, key, "test_1", u)
+	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u))
+	w1, err := workflow.Load(db, api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, w1, &sdk.WorkflowNodeRunManual{
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+		"workflowName":   w1.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := &postWorkflowRunHandlerOption{}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	wr := &sdk.WorkflowRun{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
+	assert.Equal(t, int64(1), wr.Number)
+	assert.Equal(t, "stage 1", wr.Workflow.Root.Pipeline.Stages[0].Name)
+
+	pip.Stages[0].Name = "New awesome stage"
+	errS := pipeline.UpdateStage(db, &pip.Stages[0])
+	test.NoError(t, errS)
+
+	//Prepare request
+	vars = map[string]string{
+		"permProjectKey": proj.Key,
+		"workflowName":   w1.Name,
+		"number":         fmt.Sprintf("%d", wr.Number),
+	}
+	uri = router.GetRoute("POST", api.resyncWorkflowRunPipelinesHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	workflowRun, errWR := workflow.LoadRunByID(db, wr.ID)
+	test.NoError(t, errWR)
+
+	assert.Equal(t, "New awesome stage", workflowRun.Workflow.Root.Pipeline.Stages[0].Name)
+}
+
+func Test_postWorkflowRunHandler(t *testing.T) {
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	//Second pipeline
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip2, u))
+	s = sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip2.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	s.Jobs = append(s.Jobs, *j)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	test.NoError(t, err)
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+		"workflowName":   w1.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := &postWorkflowRunHandlerOption{}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	wr := &sdk.WorkflowRun{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
+	assert.Equal(t, int64(1), wr.Number)
+}
+
+func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
+	api, db, router := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j := &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip)
+	s.Jobs = append(s.Jobs, *j)
+
+	pip.Stages = append(pip.Stages, *s)
+
+	//Second pipeline
+	pip2 := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip2",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip2, u))
+	s = sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip2.ID
+	pipeline.InsertStage(api.mustDB(), s)
+	j = &sdk.Job{
+		Enabled: true,
+		Action: sdk.Action{
+			Enabled: true,
+		},
+	}
+	pipeline.InsertJob(api.mustDB(), j, s.ID, &pip2)
+	s.Jobs = append(s.Jobs, *j)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	test.NoError(t, err)
+
+	_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
 	})
 	test.NoError(t, err)
 
-	c, cancel := context.WithTimeout(context.Background(), time.Second*2)
-	defer cancel()
-	workflow.Scheduler(c, func() *gorp.DbMap { return db })
-	time.Sleep(2 * time.Second)
-
-	lastrun, err := workflow.LoadLastRun(db, proj.Key, w1.Name)
+	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name)
 
 	// Update step status
 	jobRun := &lastrun.WorkflowNodeRuns[w1.RootID][0].Stages[0].RunJobs[0]
@@ -664,32 +844,29 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	}
 
 	// Update node job run
-	errUJ := workflow.UpdateNodeRun(db, &lastrun.WorkflowNodeRuns[w1.RootID][0])
+	errUJ := workflow.UpdateNodeRun(api.mustDB(), &lastrun.WorkflowNodeRuns[w1.RootID][0])
 	test.NoError(t, errUJ)
 
 	// Add log
-	errAL := workflow.AddLog(db, jobRun, log)
+	errAL := workflow.AddLog(api.mustDB(), jobRun, log)
 	test.NoError(t, errAL)
 
-	// Init router
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getWorkflowNodeRunJobStepHandler")
-	router.init()
 	//Prepare request
 	vars := map[string]string{
 		"permProjectKey": proj.Key,
 		"workflowName":   w1.Name,
 		"number":         fmt.Sprintf("%d", lastrun.Number),
-		"id":             fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
+		"nodeRunID":      fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
 		"runJobId":       fmt.Sprintf("%d", jobRun.ID),
 		"stepOrder":      "1",
 	}
-	uri := router.getRoute("GET", getWorkflowNodeRunJobStepHandler, vars)
+	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepHandler, vars)
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, vars)
 
 	//Do the request
 	rec := httptest.NewRecorder()
-	router.mux.ServeHTTP(rec, req)
+	router.Mux.ServeHTTP(rec, req)
 
 	stepState := &sdk.BuildState{}
 	json.Unmarshal(rec.Body.Bytes(), stepState)

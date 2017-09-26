@@ -33,6 +33,9 @@ type StashClient struct {
 	url              string
 	client           *stash.Client
 	disableSetStatus bool
+	cache            cache.Store
+	apiURL           string
+	uiURL            string
 }
 
 // Release not implemented on bitbucket
@@ -130,7 +133,7 @@ func (s *StashClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 
 	branches := []sdk.VCSBranch{}
 
-	cache.Get(stashBranchesKey, &branches)
+	s.cache.Get(stashBranchesKey, &branches)
 	if branches == nil || len(branches) == 0 {
 		t := strings.Split(fullname, "/")
 		if len(t) != 2 {
@@ -149,7 +152,7 @@ func (s *StashClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			}
 			branches = append(branches, b)
 		}
-		cache.SetWithTTL(stashBranchesKey, branches, 60)
+		s.cache.SetWithTTL(stashBranchesKey, branches, 60)
 	}
 	return branches, nil
 }
@@ -190,7 +193,7 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 
 	var stashCommits = []stash.Commit{}
 
-	cache.Get(stashCommitsKey, &stashCommits)
+	s.cache.Get(stashCommitsKey, &stashCommits)
 
 	if stashCommits == nil || len(stashCommits) == 0 {
 		var err error
@@ -198,7 +201,7 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 		if err != nil {
 			return commits, err
 		}
-		cache.Set(stashCommitsKey, stashCommits)
+		s.cache.Set(stashCommitsKey, stashCommits)
 	}
 
 	urlCommit := s.url + "/projects/" + t[0] + "/repos/" + t[1] + "/commits/"
@@ -216,15 +219,15 @@ func (s *StashClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommi
 		}
 		var stashUser = stash.User{}
 		var stashUserKey = cache.Key("reposmanager", "stash", stashURL.Host, sc.Author.Email)
-		if !cache.Get(stashUserKey, &stashUser) && sc.Author.Email != "" {
+		if !s.cache.Get(stashUserKey, &stashUser) && sc.Author.Email != "" {
 			newStashUser, err := s.client.Users.FindByEmail(sc.Author.Email)
 			if err != nil {
 				log.Warning("Unable to get stash user %s : %s", sc.Author.Email, err)
 				newStashUserUnknown := newUnknownStashUser(*sc.Author)
-				cache.SetWithTTL(stashUserKey, newStashUserUnknown, 86400) // 1 day
+				s.cache.SetWithTTL(stashUserKey, newStashUserUnknown, 86400) // 1 day
 				stashUser = *newStashUserUnknown
 			} else {
-				cache.Set(stashUserKey, newStashUser)
+				s.cache.Set(stashUserKey, newStashUser)
 				stashUser = *newStashUser
 			}
 		}
@@ -258,7 +261,7 @@ func (s *StashClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 	var stashCommitKey = cache.Key("reposmanager", "stash", stashURL.Host, repo, hash)
 	var stashCommit = &stash.Commit{}
 
-	cache.Get(stashCommitKey, stashCommit)
+	s.cache.Get(stashCommitKey, stashCommit)
 
 	if stashCommit.Hash == "" {
 		var err error
@@ -266,7 +269,7 @@ func (s *StashClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 		if err != nil {
 			return commit, err
 		}
-		cache.SetWithTTL(stashCommitKey, stashCommit, -1)
+		s.cache.SetWithTTL(stashCommitKey, stashCommit, -1)
 	}
 	urlCommit := s.url + "/projects/" + t[0] + "/repos/" + t[1] + "/commits/" + stashCommit.Hash
 	commit = sdk.VCSCommit{
@@ -282,16 +285,16 @@ func (s *StashClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 
 	var stashUser = stash.User{}
 	var stashUserKey = cache.Key("reposmanager", "stash", stashURL.Host, stashCommit.Author.Email)
-	cache.Get(stashUserKey, &stashUser)
-	if !cache.Get(stashUserKey, &stashUser) && stashCommit.Author.Email != "" {
+	s.cache.Get(stashUserKey, &stashUser)
+	if !s.cache.Get(stashUserKey, &stashUser) && stashCommit.Author.Email != "" {
 		newStashUser, err := s.client.Users.FindByEmail(stashCommit.Author.Email)
 		if err != nil {
 			log.Warning("Unable to get stash user %s : %s", stashCommit.Author.Email, err)
 			newStashUserUnknown := newUnknownStashUser(*stashCommit.Author)
-			cache.SetWithTTL(stashUserKey, newStashUserUnknown, 86400) // 1 day
+			s.cache.SetWithTTL(stashUserKey, newStashUserUnknown, 86400) // 1 day
 			stashUser = *newStashUserUnknown
 		} else {
-			cache.SetWithTTL(stashUserKey, newStashUser, -1)
+			s.cache.SetWithTTL(stashUserKey, newStashUser, -1)
 			stashUser = *newStashUser
 		}
 	}
@@ -405,7 +408,7 @@ func (s *StashClient) SetStatus(event sdk.Event) error {
 	)
 
 	url := fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s",
-		uiURL,
+		s.uiURL,
 		cdsProject,
 		cdsApplication,
 		cdsPipelineName,

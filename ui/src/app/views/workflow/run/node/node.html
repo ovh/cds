@@ -1,10 +1,7 @@
 <div id="WorkflowNodeRun" *ngIf="nodeRun">
-
-    <div class="CDSbreadcrumb">
-        <app-worflow-breadcrumb [project]="project" [workflowName]="workflowName" [run]="nodeRun?.num"></app-worflow-breadcrumb>
-    </div>
-
-
+    <ng-container *ngIf="nodeRun">
+        <app-workflow-node-run-summary [project]="project" [nodeRun]="nodeRun" [workflow]="workflowRun.workflow" [duration]="duration"></app-workflow-node-run-summary>
+    </ng-container>
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
             <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')">
@@ -14,26 +11,39 @@
             <a sm-item [class.active]="selectedTab === 'commit'">
                 Commit
             </a>
-            <a sm-item [class.active]="selectedTab === 'test'">
-                Test
+            <a sm-item [class.active]="selectedTab === 'test'" (click)="showTab('test')" [class.disabled]="!nodeRun || !nodeRun.tests || nodeRun.tests.total === 0">
+                <span *ngIf="nodeRun && nodeRun.tests && nodeRun.tests.total > 1">{{ 'common_tests' | translate }}</span>
+                <span *ngIf="!nodeRun || !nodeRun.tests || nodeRun.tests.total < 2">{{ 'common_test' | translate }}</span>
+                <span *ngIf="nodeRun && nodeRun.tests ">{{ ' (' +nodeRun.tests.total + ')'}}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'artifact'">
-                Artifact
+            <a sm-item [class.active]="selectedTab === 'artifact'" (click)="showTab('artifact')" [class.disabled]="!nodeRun || !nodeRun.artifacts || nodeRun.artifacts.length === 0">
+                <span *ngIf="nodeRun && nodeRun.artifacts && nodeRun.artifacts.length > 1">{{ 'common_artifacts' | translate }}</span>
+                <span *ngIf="!nodeRun || !nodeRun.artifacts || nodeRun.artifacts.length < 2">{{ 'common_artifact' | translate }}</span>
+                <span *ngIf="nodeRun && nodeRun.artifacts ">{{ ' (' +nodeRun.artifacts.length + ')'}}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'history'">
-                History
+            <a sm-item [class.active]="selectedTab === 'history'" (click)="showTab('history')" [class.disabled]="nodeRunsHistory.length === 0">
+                {{ 'common_history' | translate }}
+                {{ ' (' + nodeRunsHistory.length + ')'}}
             </a>
         </sm-menu>
     </div>
-
     <div class="scrollingContent">
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab">
                 <div *ngSwitchCase="'workflow'">
                     <app-node-run-pipeline [run]="nodeRun" [project]="project" [workflowName]="workflowName"></app-node-run-pipeline>
                 </div>
+                <div *ngSwitchCase="'artifact'">
+                    <app-workflow-artifact-list [artifacts]="nodeRun.artifacts"></app-workflow-artifact-list>
+                </div>
+                <div *ngSwitchCase="'test'">
+                    <app-workflow-tests-result [tests]="nodeRun.tests"></app-workflow-tests-result>
+                </div>
+                <div *ngSwitchCase="'history'">
+                    <app-workflow-node-run-history [project]="project" [currentBuild]="nodeRun" [history]="nodeRunsHistory"></app-workflow-node-run-history>
+                </div>
             </div>
         </div>
     </div>
 </div>
-<div class="ui text active loader" *ngIf="!nodeRun">{{ 'workflow_loading' | translate }}</div>
+<div class="ui text active loader" *ngIf="!nodeRun">{{ 'pipeline_loading' | translate }}</div>

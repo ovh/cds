@@ -28,12 +28,14 @@ export class WorkflowRunJobVariableComponent {
                     this.varEnvironment.push(p);
                 } else if (p.name.indexOf('cds.parent.', 0) === 0) {
                     this.varParent.push(p);
-                } else if (p.name.indexOf('cds.', 0) === 0) {
-                    this.varCDS.push(p);
+                } else if (p.name.indexOf('cds.build.', 0) === 0) {
+                    this.varBuild.push(p);
                 } else if (p.name.indexOf('git.', 0) === 0) {
                     this.varGit.push(p);
+                } else if (p.name.indexOf('workflow.', 0) === 0) {
+                    this.varWorkflow.push(p);
                 } else {
-                    this.varBuild.push(p);
+                    this.varCDS.push(p);
                 }
             });
         }
@@ -47,6 +49,7 @@ export class WorkflowRunJobVariableComponent {
     varPipeline: Array<Parameter>;
     varProject: Array<Parameter>;
     varParent: Array<Parameter>;
+    varWorkflow: Array<Parameter>;
 
 
     constructor() {
@@ -61,6 +64,7 @@ export class WorkflowRunJobVariableComponent {
         this.varPipeline = new Array<Parameter>();
         this.varProject = new Array<Parameter>();
         this.varParent = new Array<Parameter>();
+        this.varWorkflow = new Array<Parameter>();
     }
 
     show(data: {}): void {

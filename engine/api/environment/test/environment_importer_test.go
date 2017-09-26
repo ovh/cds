@@ -12,7 +12,7 @@ import (
 )
 
 func TestImportInto_Variable(t *testing.T) {
-	db := test.SetupPG(t)
+	db, cache := test.SetupPG(t)
 
 	u := &sdk.User{
 		Username: "foo",
@@ -23,9 +23,9 @@ func TestImportInto_Variable(t *testing.T) {
 		Name: "testimportenv",
 	}
 
-	project.Delete(db, proj.Key)
+	project.Delete(db, cache, proj.Key)
 
-	test.NoError(t, project.Insert(db, &proj, nil))
+	test.NoError(t, project.Insert(db, cache, &proj, nil))
 
 	env := sdk.Environment{
 		Name:      "testenv",
@@ -136,7 +136,7 @@ func TestImportInto_Variable(t *testing.T) {
 }
 
 func TestImportInto_Group(t *testing.T) {
-	db := test.SetupPG(t)
+	db, cache := test.SetupPG(t)
 
 	u := &sdk.User{
 		Username: "foo",
@@ -147,9 +147,9 @@ func TestImportInto_Group(t *testing.T) {
 		Name: "testimportenv",
 	}
 
-	project.Delete(db, proj.Key)
+	project.Delete(db, cache, proj.Key)
 
-	test.NoError(t, project.Insert(db, &proj, nil))
+	test.NoError(t, project.Insert(db, cache, &proj, nil))
 
 	oldEnv, _ := environment.LoadEnvironmentByName(db, proj.Key, "testenv")
 	if oldEnv != nil {
@@ -181,6 +181,112 @@ func TestImportInto_Group(t *testing.T) {
 	test.NoError(t, group.InsertGroup(db, &g2))
 	test.NoError(t, group.InsertGroup(db, &g3))
 
+	var err error
+	env.Variable, err = environment.GetAllVariableByID(db, env.ID)
+	test.NoError(t, err)
+
+	env2 := sdk.Environment{
+		Name:      "testenv2",
+		ProjectID: proj.ID,
+		EnvironmentGroups: []sdk.GroupPermission{
+			{
+				Group: sdk.Group{
+					Name: "g1",
+				},
+				Permission: 7,
+			},
+			{
+				Group: sdk.Group{
+					Name: "g2",
+				},
+				Permission: 7,
+			},
+		},
+	}
+
+	allMsg := []sdk.Message{}
+	msgChan := make(chan sdk.Message)
+	done := make(chan bool)
+
+	go func() {
+		for {
+			msg, ok := <-msgChan
+			allMsg = append(allMsg, msg)
+			if !ok {
+				done <- true
+			}
+		}
+	}()
+
+	environment.ImportInto(db, &proj, &env2, &env, msgChan, u)
+
+	close(msgChan)
+	<-done
+
+	env3, err := environment.LoadEnvironmentByID(db, env.ID)
+	assert.NoError(t, err)
+
+	var g0found, g1found, g2found, g3found bool
+	for _, eg := range env3.EnvironmentGroups {
+		if eg.Group.Name == "g1" {
+			g1found = true
+			assert.Equal(t, 7, eg.Permission)
+		}
+		if eg.Group.Name == "g2" {
+			g2found = true
+			assert.Equal(t, 7, eg.Permission)
+		}
+	}
+
+	assert.False(t, g0found, "Group g0 found")
+	assert.True(t, g1found, "Group g1 not found")
+	assert.True(t, g2found, "Group g2 not found")
+	assert.False(t, g3found, "Group g3 found")
+
+}
+
+func TestImportInto_WithOldAndNewGroup(t *testing.T) {
+	db, cache := test.SetupPG(t)
+
+	u := &sdk.User{
+		Username: "foo",
+	}
+
+	proj := sdk.Project{
+		Key:  "TestImportIntoWithOldAndNewGroup",
+		Name: "TestImportIntoWithOldAndNewGroup",
+	}
+
+	//Remove old stuff
+	project.Delete(db, cache, proj.Key)
+	oldEnv, _ := environment.LoadEnvironmentByName(db, proj.Key, "testenv")
+	if oldEnv != nil {
+		group.DeleteAllGroupFromEnvironment(db, oldEnv.ID)
+		environment.DeleteEnvironment(db, oldEnv.ID)
+	}
+	g0 := sdk.Group{Name: "g0"}
+	g1 := sdk.Group{Name: "g1"}
+	g2 := sdk.Group{Name: "g2"}
+	g3 := sdk.Group{Name: "g3"}
+	for _, g := range []sdk.Group{g0, g1, g2, g3} {
+		oldg, _ := group.LoadGroup(db, g.Name)
+		if oldg != nil {
+			group.DeleteGroupAndDependencies(db, oldg)
+		}
+	}
+
+	//Create new stuff
+	test.NoError(t, project.Insert(db, cache, &proj, nil))
+	env := sdk.Environment{
+		Name:      "testenv",
+		ProjectID: proj.ID,
+	}
+	test.NoError(t, environment.InsertEnvironment(db, &env))
+	test.NoError(t, group.InsertGroup(db, &g0))
+	test.NoError(t, group.InsertGroup(db, &g1))
+	test.NoError(t, group.InsertGroup(db, &g2))
+	test.NoError(t, group.InsertGroup(db, &g3))
+	//At this point groups g0, g1, g2 have addes to the environment
 	test.NoError(t, group.InsertGroupInEnvironment(db, env.ID, g0.ID, 1))
 	test.NoError(t, group.InsertGroupInEnvironment(db, env.ID, g1.ID, 2))
 	test.NoError(t, group.InsertGroupInEnvironment(db, env.ID, g2.ID, 3))
@@ -230,11 +336,11 @@ func TestImportInto_Group(t *testing.T) {
 	env3, err := environment.LoadEnvironmentByID(db, env.ID)
 	assert.NoError(t, err)
 
+	//We don't have to find g0 and g2
 	var g0found, g1found, g2found, g3found bool
 	for _, eg := range env3.EnvironmentGroups {
 		if eg.Group.Name == "g0" {
 			g0found = true
-			assert.Equal(t, 1, eg.Permission)
 		}
 		if eg.Group.Name == "g1" {
 			g1found = true
@@ -242,7 +348,6 @@ func TestImportInto_Group(t *testing.T) {
 		}
 		if eg.Group.Name == "g2" {
 			g2found = true
-			assert.Equal(t, 3, eg.Permission)
 		}
 		if eg.Group.Name == "g3" {
 			g3found = true
@@ -250,9 +355,9 @@ func TestImportInto_Group(t *testing.T) {
 		}
 	}
 
-	assert.True(t, g0found, "Group g0 not found")
+	assert.False(t, g0found, "Group g0 found")
 	assert.True(t, g1found, "Group g1 not found")
-	assert.True(t, g2found, "Group g2 not found")
+	assert.False(t, g2found, "Group g2 found")
 	assert.True(t, g3found, "Group g3 not found")
 
 }

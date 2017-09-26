@@ -22,7 +22,6 @@ func init() {
 	mapBuiltinActions[sdk.GitCloneAction] = runGitClone
 	mapBuiltinActions[sdk.GitTagAction] = runGitTag
 	mapBuiltinActions[sdk.ReleaseAction] = runRelease
-
 }
 
 // BuiltInAction defines builtin action signature
@@ -125,6 +124,9 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			OrderStep:          stepOrder,
 			Args:               pluginArgs,
 			Secrts:             pluginSecrets,
+		}
+		if w.currentJob.wJob != nil && w.currentJob.wJob.WorkflowNodeRunID > 0 {
+			pluginAction.IDWorkflowNodeRun = w.currentJob.wJob.WorkflowNodeRunID
 		}
 
 		pluginResult := _plugin.Run(pluginAction)

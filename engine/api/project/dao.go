@@ -16,7 +16,7 @@ import (
 )
 
 // LoadAll returns all projects
-func LoadAll(db gorp.SqlExecutor, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Project, error) {
+func LoadAll(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Project, error) {
 	var query string
 	var args []interface{}
 	// Admin can gets all project
@@ -45,7 +45,7 @@ func LoadAll(db gorp.SqlExecutor, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Pr
 		}
 		args = []interface{}{groupID, group.SharedInfraGroup.ID}
 	}
-	return loadprojects(db, u, opts, query, args...)
+	return loadprojects(db, store, u, opts, query, args...)
 }
 
 // LoadPermissions loads all projects where group has access
@@ -97,8 +97,8 @@ func Exist(db gorp.SqlExecutor, projectKey string) (bool, error) {
 }
 
 // Delete delete one or more projects given the key
-func Delete(db gorp.SqlExecutor, key string) error {
-	proj, err := Load(db, key, nil)
+func Delete(db gorp.SqlExecutor, store cache.Store, key string) error {
+	proj, err := Load(db, store, key, nil)
 	if err != nil {
 		return err
 	}
@@ -111,18 +111,18 @@ func Delete(db gorp.SqlExecutor, key string) error {
 }
 
 // Insert a new project in database
-func Insert(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
+func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	if err := db.Insert(&dbProj); err != nil {
 		return err
 	}
 	*proj = sdk.Project(dbProj)
-	return UpdateLastModified(db, u, proj)
+	return UpdateLastModified(db, store, u, proj)
 }
 
 // Update a new project in database
-func Update(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
+func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	n, err := db.Update(&dbProj)
@@ -133,15 +133,15 @@ func Update(db gorp.SqlExecutor, proj *sdk.Project, u *sdk.User) error {
 		return sdk.ErrNoProject
 	}
 	*proj = sdk.Project(dbProj)
-	return UpdateLastModified(db, u, proj)
+	return UpdateLastModified(db, store, u, proj)
 }
 
 // UpdateLastModified updates last_modified date on a project given its key
-func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, proj *sdk.Project) error {
+func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, proj *sdk.Project) error {
 	t := time.Now()
 
 	if u != nil {
-		cache.SetWithTTL(cache.Key("lastModified", proj.Key), sdk.LastModification{
+		store.SetWithTTL(cache.Key("lastModified", proj.Key), sdk.LastModification{
 			Name:         proj.Key,
 			Username:     u.Username,
 			LastModified: t.Unix(),
@@ -157,11 +157,11 @@ func UpdateLastModified(db gorp.SqlExecutor, u *sdk.User, proj *sdk.Project) err
 			Name:         proj.Name,
 			LastModified: t.Unix(),
 			Username:     u.Username,
-			Type:         sdk.ProjectLastModiciationType,
+			Type:         sdk.ProjectLastModificationType,
 		}
 		b, errP := json.Marshal(updates)
 		if errP == nil {
-			cache.Publish("lastUpdates", string(b))
+			store.Publish("lastUpdates", string(b))
 		}
 		return err
 	}
@@ -194,55 +194,82 @@ func DeleteByID(db gorp.SqlExecutor, id int64) error {
 	return nil
 }
 
-type LoadOptionFunc *func(gorp.SqlExecutor, *sdk.Project, *sdk.User) error
+type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project, *sdk.User) error
 
 // LoadOptions provides all options on project loads functions
 var LoadOptions = struct {
-	Default                  LoadOptionFunc
-	WithApplications         LoadOptionFunc
-	WithVariables            LoadOptionFunc
-	WithPipelines            LoadOptionFunc
-	WithEnvironments         LoadOptionFunc
-	WithGroups               LoadOptionFunc
-	WithPermission           LoadOptionFunc
-	WithRepositoriesManagers LoadOptionFunc
-	WithApplicationPipelines LoadOptionFunc
-	WithApplicationVariables LoadOptionFunc
-	WithKeys                 LoadOptionFunc
+	Default                        LoadOptionFunc
+	WithApplications               LoadOptionFunc
+	WithVariables                  LoadOptionFunc
+	WithVariablesWithClearPassword LoadOptionFunc
+	WithPipelines                  LoadOptionFunc
+	WithEnvironments               LoadOptionFunc
+	WithGroups                     LoadOptionFunc
+	WithPermission                 LoadOptionFunc
+	WithRepositoriesManagers       LoadOptionFunc
+	WithApplicationPipelines       LoadOptionFunc
+	WithApplicationVariables       LoadOptionFunc
+	WithKeys                       LoadOptionFunc
+	WithWorkflows                  LoadOptionFunc
 }{
-	Default:                  &loadDefault,
-	WithPipelines:            &loadPipelines,
-	WithEnvironments:         &loadEnvironments,
-	WithGroups:               &loadGroups,
-	WithPermission:           &loadPermission,
-	WithRepositoriesManagers: &loadRepositoriesManagers,
-	WithApplications:         &loadApplications,
-	WithVariables:            &loadVariables,
-	WithApplicationPipelines: &loadApplicationPipelines,
-	WithApplicationVariables: &loadApplicationVariables,
-	WithKeys:                 &loadKeys,
+	Default:                        &loadDefault,
+	WithPipelines:                  &loadPipelines,
+	WithEnvironments:               &loadEnvironments,
+	WithGroups:                     &loadGroups,
+	WithPermission:                 &loadPermission,
+	WithRepositoriesManagers:       &loadRepositoriesManagers,
+	WithApplications:               &loadApplications,
+	WithVariables:                  &loadVariables,
+	WithVariablesWithClearPassword: &loadVariablesWithClearPassword,
+	WithApplicationPipelines:       &loadApplicationPipelines,
+	WithApplicationVariables:       &loadApplicationVariables,
+	WithKeys:                       &loadKeys,
+	WithWorkflows:                  &loadWorkflows,
+}
+
+// LoadProjectByNodeJobRunID return a project from node job run id
+func LoadProjectByNodeJobRunID(db gorp.SqlExecutor, store cache.Store, nodeJobRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	query := `
+		SELECT * FROM project
+		JOIN workflow_run ON workflow_run.project_id = project.id
+		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
+		JOIN workflow_node_run_job ON workflow_node_run_job.workflow_node_run_id = workflow_node_run.id
+		WHERE workflow_node_run_job.id = $1
+	`
+	return load(db, store, u, opts, query, nodeJobRunID)
+}
+
+// LoadProjectByNodeRunID return a project from node run id
+func LoadProjectByNodeRunID(db gorp.SqlExecutor, store cache.Store, nodeRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	query := `
+		SELECT * FROM project
+		JOIN workflow_run ON workflow_run.project_id = project.id
+		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
+		WHERE workflow_node_run.id = $1
+	`
+	return load(db, store, u, opts, query, nodeRunID)
 }
 
 // LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
-func LoadByID(db gorp.SqlExecutor, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(db, u, opts, "select * from project where id = $1", id)
+func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	return load(db, store, u, opts, "select * from project where id = $1", id)
 }
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
-func Load(db gorp.SqlExecutor, key string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(db, u, opts, "select * from project where projectkey = $1", key)
+func Load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
+	return load(db, store, u, opts, "select * from project where projectkey = $1", key)
 }
 
 // LoadByPipelineID loads an project from pipeline iD
-func LoadByPipelineID(db gorp.SqlExecutor, u *sdk.User, pipelineID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
+func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, u *sdk.User, pipelineID int64, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `SELECT project.id, project.name, project.projectKey, project.last_modified
 	          FROM project
 	          JOIN pipeline ON pipeline.project_id = projecT.id
 	          WHERE pipeline.id = $1 `
-	return load(db, u, opts, query, pipelineID)
+	return load(db, store, u, opts, query, pipelineID)
 }
 
-func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
+func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
 	log.Debug("loadprojects> %s %v", query, args)
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
@@ -258,7 +285,7 @@ func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query
 		if err := p.PostGet(db); err != nil {
 			return nil, err
 		}
-		proj, err := unwrap(db, p, u, opts)
+		proj, err := unwrap(db, store, p, u, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -268,7 +295,7 @@ func loadprojects(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query
 	return projs, nil
 }
 
-func load(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
+func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	dbProj := &dbProject{}
 	if err := db.SelectOne(dbProj, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -277,14 +304,14 @@ func load(db gorp.SqlExecutor, u *sdk.User, opts []LoadOptionFunc, query string,
 		return nil, err
 	}
 
-	return unwrap(db, dbProj, u, opts)
+	return unwrap(db, store, dbProj, u, opts)
 }
 
-func unwrap(db gorp.SqlExecutor, p *dbProject, u *sdk.User, opts []LoadOptionFunc) (*sdk.Project, error) {
+func unwrap(db gorp.SqlExecutor, store cache.Store, p *dbProject, u *sdk.User, opts []LoadOptionFunc) (*sdk.Project, error) {
 	proj := sdk.Project(*p)
 
 	for _, f := range opts {
-		if err := (*f)(db, &proj, u); err != nil && err != sql.ErrNoRows {
+		if err := (*f)(db, store, &proj, u); err != nil && err != sql.ErrNoRows {
 			return nil, err
 		}
 	}

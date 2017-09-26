@@ -3,9 +3,13 @@ package git
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -57,7 +61,58 @@ func (c cmd) String() string {
 	return c.cmd + " " + strings.Join(c.args, " ")
 }
 
-func runCommand(cmds cmds, output *OutputOpts, envs ...string) error {
+func getRepoURL(repo string, auth *AuthOpts) (string, error) {
+	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "ftp://") || strings.HasPrefix(repo, "ftps://") {
+		return "", fmt.Errorf("Git protocol not supported")
+	}
+	if auth != nil && strings.HasPrefix(repo, "https://") {
+		u, err := url.Parse(repo)
+		if err != nil {
+			return "", err
+		}
+		u.User = url.UserPassword(auth.Username, auth.Password)
+		return u.String(), nil
+	}
+	return repo, nil
+}
+
+func runGitCommands(repo string, commands []cmd, auth *AuthOpts, output *OutputOpts) error {
+	if strings.HasPrefix(repo, "https://") {
+		return runGitCommandRaw(commands, output)
+	}
+	return runGitCommandsOverSSH(commands, auth, output)
+}
+
+func runGitCommandsOverSSH(commands []cmd, auth *AuthOpts, output *OutputOpts) error {
+	if auth == nil {
+		return fmt.Errorf("Authentication is required for git over ssh")
+	}
+
+	keyDir := filepath.Dir(auth.PrivateKey.Filename)
+
+	gitSSHCmd := exec.Command("ssh").Path
+	gitSSHCmd += " -i " + auth.PrivateKey.Filename
+	gitSSHCmd += " -o StrictHostKeyChecking=no"
+
+	var wrapper string
+	if runtime.GOOS == "windows" {
+		gitSSHCmd += " %*"
+		wrapper = gitSSHCmd
+	} else {
+		gitSSHCmd += ` "$@"`
+		wrapper = `#!/bin/sh
+` + gitSSHCmd
+	}
+
+	wrapperPath := filepath.Join(keyDir, "gitwrapper")
+	if err := ioutil.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
+		return err
+	}
+
+	return runGitCommandRaw(commands, output, "GIT_SSH="+wrapperPath)
+}
+
+func runGitCommandRaw(cmds cmds, output *OutputOpts, envs ...string) error {
 	osEnv := os.Environ()
 	for _, e := range envs {
 		osEnv = append(osEnv, e)

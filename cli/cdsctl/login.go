@@ -124,13 +124,12 @@ func doLogin(url, username, password string, env bool) error {
 			return err
 		}
 		configFile = path.Join(u.HomeDir, ".cdsrc")
-		fmt.Printf("You didn't specify config file location; %s will be used.", configFile)
+		fmt.Printf("You didn't specify config file location; %s will be used.\n", configFile)
 	}
 
 	//Check if file exists
 	if _, err := os.Stat(configFile); err == nil {
-		fmt.Printf("File %s exists, do you want to overwrite? [y/N]: ", configFile)
-		if !cli.AskForConfirmation(fmt.Sprintf("File %s exists, do you want to overwrite ? ", configFile)) {
+		if !cli.AskForConfirmation(fmt.Sprintf("File %s exists, do you want to overwrite?", configFile)) {
 			return fmt.Errorf("aborted")
 		}
 	}

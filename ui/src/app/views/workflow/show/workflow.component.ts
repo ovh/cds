@@ -6,7 +6,6 @@ import {Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger, Workf
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowTriggerComponent} from '../../../shared/workflow/trigger/workflow.trigger.component';
-import {SemanticModalComponent} from 'ng-semantic';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {cloneDeep} from 'lodash';
@@ -14,8 +13,13 @@ import {WorkflowTriggerJoinComponent} from '../../../shared/workflow/join/trigge
 import {WorkflowJoinTriggerSrcComponent} from '../../../shared/workflow/join/trigger/src/trigger.src.component';
 import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {WorkflowRunRequest} from '../../../model/workflow.run.model';
+import {SuiModalService} from 'ng2-semantic-ui';
+import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 
 declare var _: any;
+
 @Component({
     selector: 'app-workflow',
     templateUrl: './workflow.html',
@@ -36,6 +40,8 @@ export class WorkflowShowComponent {
     editJoinTriggerComponent: WorkflowTriggerJoinComponent;
     @ViewChild('workflowJoinTriggerSrc')
     workflowJoinTriggerSrc: WorkflowJoinTriggerSrcComponent;
+    @ViewChild('workflowNodeRunParam')
+    runWithParamComponent: WorkflowNodeRunParamComponent;
 
     selectedNode: WorkflowNode;
     selectedTrigger: WorkflowNodeTrigger;
@@ -45,7 +51,8 @@ export class WorkflowShowComponent {
     loading = false;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService) {
+                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService,
+                private _modalService: SuiModalService) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -82,7 +89,7 @@ export class WorkflowShowComponent {
         this.selectedJoin = this.detailedWorkflow.joins.find(j => j.id === cID);
 
         if (this.workflowJoinTriggerSrc) {
-            this.workflowJoinTriggerSrc.show({observable: true, closable: false, autofocus: false});
+            this.workflowJoinTriggerSrc.show();
         }
     }
 
@@ -101,7 +108,7 @@ export class WorkflowShowComponent {
         }
         if (this.editTriggerComponent) {
             setTimeout(() => {
-                this.editTriggerComponent.show({observable: true, closable: false, autofocus: false});
+                this.editTriggerComponent.show();
             }, 1);
 
         }
@@ -117,7 +124,7 @@ export class WorkflowShowComponent {
         }
         if (this.editJoinTriggerComponent) {
             setTimeout(() => {
-                this.editJoinTriggerComponent.show({observable: true, closable: false, autofocus: false});
+                this.editJoinTriggerComponent.show();
             }, 1);
 
         }
@@ -165,6 +172,7 @@ export class WorkflowShowComponent {
 
         let trigToUpdate = currentNode.triggers.find(trig => trig.id === this.selectedTrigger.id);
         trigToUpdate.conditions = this.selectedTrigger.conditions;
+        trigToUpdate.manual = this.selectedTrigger.manual;
         this.updateWorkflow(clonedWorkflow, this.editTriggerComponent.modal);
     }
 
@@ -174,14 +182,15 @@ export class WorkflowShowComponent {
 
         let trigToUpdate = currentJoin.triggers.find(trig => trig.id === this.selectedJoinTrigger.id);
         trigToUpdate.conditions = this.selectedJoinTrigger.conditions;
+        trigToUpdate.manual = this.selectedJoinTrigger.manual;
         this.updateWorkflow(clonedWorkflow, this.editJoinTriggerComponent.modal);
     }
 
-    updateWorkflow(w: Workflow, modal?: SemanticModalComponent): void {
+    updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
         this._workflowStore.updateWorkflow(this.project.key, w).first().subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_updated'));
             if (modal) {
-                modal.hide();
+                modal.approve(true);
             }
             if (this.workflowGraph) {
                 this.workflowGraph.toggleLinkJoin(false);
@@ -191,11 +200,18 @@ export class WorkflowShowComponent {
 
     runWorkflow(): void {
         this.loading = true;
-        this._workflowRun.runWorkflow(this.project.key, this.detailedWorkflow, {}).first().subscribe(wr => {
+        let request = new WorkflowRunRequest();
+        this._workflowRun.runWorkflow(this.project.key, this.detailedWorkflow, request).first().subscribe(wr => {
             this.loading = false;
             this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name, 'run', wr.num]);
         }, () => {
             this.loading = false;
         });
+    }
+
+    runWithParameter(): void {
+        if (this.runWithParamComponent) {
+            this.runWithParamComponent.show();
+        }
     }
 }

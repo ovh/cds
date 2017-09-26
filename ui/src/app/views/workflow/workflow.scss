@@ -1,6 +1,6 @@
 @import '../../../common';
 
-$sidebarWidth: 10%;
+$sidebarWidth: 255px;
 
 .content-wrap, .sidebar {
   transition: width 0.1s;
@@ -25,18 +25,18 @@ $sidebarWidth: 10%;
   float: right;
   width: calc(100% - #{$sidebarWidth});
   height: calc( 100% - #{$navbarHeight});
-  padding-left: 10px;
+  margin-left: 10px;
 
   &.expanded {
     width: 100%;
   }
 
   .open.button {
+    padding-left: -10px;
     border-top-left-radius: 0px;
     border-bottom-left-radius: 0px;
     border-top-right-radius: 0px;
     position: absolute;
     z-index: 10;
-    left: 0;
   }
 }

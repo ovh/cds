@@ -51,6 +51,10 @@ export class WorkflowRunComponent implements OnDestroy {
                 });
                 this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {
                     this.zone.run(() => {
+                        let wrUpdated = <WorkflowRun>JSON.parse(wrString);
+                        if (this.workflowRun && this.workflowRun.last_modified === wrUpdated.last_modified) {
+                            return;
+                        }
                        this.workflowRun = <WorkflowRun>JSON.parse(wrString);
                     });
                 });

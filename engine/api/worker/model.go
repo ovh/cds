@@ -47,10 +47,12 @@ func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 	return nil
 }
 
-// UpdateWorkerModel update a worker model
+// UpdateWorkerModel update a worker model. If worker model have SpawnErr -> clear them
 func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 	model.UserLastModified = time.Now()
 	model.NeedRegistration = true
+	model.NbSpawnErr = 0
+	model.LastSpawnErr = ""
 	dbmodel := WorkerModel(model)
 	if _, err := db.Update(&dbmodel); err != nil {
 		return err

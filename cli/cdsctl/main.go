@@ -22,20 +22,25 @@ func main() {
 	login := cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
 	signup := cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
 	health := cli.NewGetCommand(healthCmd, healthRun, nil, cli.CommandWithoutExtraFlags)
+	version := cli.NewCommand(versionCmd, versionRun, nil, cli.CommandWithoutExtraFlags)
 	monitoring := cli.NewGetCommand(monitoringCmd, monitoringRun, nil, cli.CommandWithoutExtraFlags)
 
 	root := cli.NewCommand(mainCmd, mainRun,
 		[]*cobra.Command{
-			application,
-			environment,
+			action,
 			login,
 			signup,
-			monitoring,
+			application,
+			environment,
+			pipeline,
+			group,
 			project,
 			worker,
 			workflow,
 			usr,
+			monitoring,
 			health,
+			version,
 		},
 	)
 
@@ -49,10 +54,11 @@ func main() {
 			return
 		}
 
-		config, err := loadConfig(configFile)
+		var err error
+		cfg, err = loadConfig(configFile)
 		cli.ExitOnError(err, login.Help)
 
-		client, err = loadClient(config)
+		client, err = loadClient(cfg)
 		cli.ExitOnError(err)
 
 		//Manage warnings

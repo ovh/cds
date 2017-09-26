@@ -17,6 +17,9 @@ var (
 		Identifier: "github.com/ovh/cds/hook/builtin/webhook",
 		Name:       "WebHook",
 		Icon:       "",
+		DefaultConfig: sdk.WorkflowNodeHookConfig{
+			"method": "POST",
+		},
 	}
 
 	GitPollerModel = &sdk.WorkflowHookModel{
@@ -33,6 +36,10 @@ var (
 		Identifier: "github.com/ovh/cds/hook/builtin/scheduler",
 		Name:       "Scheduler",
 		Icon:       "",
+		DefaultConfig: sdk.WorkflowNodeHookConfig{
+			"cron":     "0 * * * *",
+			"timezone": "UTC",
+		},
 	}
 
 	builtinModels = []*sdk.WorkflowHookModel{

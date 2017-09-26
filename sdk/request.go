@@ -59,6 +59,7 @@ const (
 	SDKAgent      = "CDS/sdk"
 	WorkerAgent   = "CDS/worker"
 	HatcheryAgent = "CDS/hatchery"
+	ServiceAgent  = "CDS/service"
 )
 
 //SetAgent set a agent value

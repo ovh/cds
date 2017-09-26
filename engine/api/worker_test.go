@@ -1,13 +1,11 @@
-package main
+package api
 
 import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
@@ -19,36 +17,36 @@ import (
 )
 
 func Test_workerCheckingHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
-	workers, err := worker.LoadWorkers(db)
+	workers, err := worker.LoadWorkers(api.mustDB())
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := hatchery.LoadHatcheries(db)
+	hs, err := hatchery.LoadHatcheries(api.mustDB())
 	if err != nil {
 		t.Fatalf("Unable to load hatcheries : %s", err)
 	}
 	//2. Delete all workers and hatcheries
 	for _, w := range workers {
-		if err := worker.DeleteWorker(db, w.ID); err != nil {
+		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
 			t.Fatal(err)
 		}
 	}
 	for _, h := range hs {
-		err := hatchery.DeleteHatchery(db, h.ID, 0)
+		err := hatchery.DeleteHatchery(api.mustDB(), h.ID, 0)
 		if err != nil {
 			t.Fatalf("Unable to delete hatcheries : %s", err)
 		}
 	}
 
 	//3. Create model
-	g, err := group.LoadGroup(db, "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(db, "Test1")
+	model, _ := worker.LoadWorkerModelByName(api.mustDB(), "Test1")
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -64,7 +62,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(db, model); err != nil {
+		if err := worker.InsertWorkerModel(api.mustDB(), model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}
@@ -75,24 +73,21 @@ func Test_workerCheckingHandler(t *testing.T) {
 		GroupID: g.ID,
 		UID:     "UUID",
 	}
-	if err := hatchery.InsertHatchery(db, &h); err != nil {
+	if err := hatchery.InsertHatchery(api.mustDB(), &h); err != nil {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(db, g.ID, "test-key", sdk.Persistent); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
-	workr, err := worker.RegisterWorker(db, "test-worker", "test-key", model.ID, &h, nil)
+	workr, err := worker.RegisterWorker(api.mustDB(), "test-worker", "test-key", model.ID, &h, nil)
 	if err != nil {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
 
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_workerCheckingHandler")
-	router.init()
-
 	//Prepare request
-	uri := router.getRoute("POST", workerCheckingHandler, nil)
+	uri := router.GetRoute("POST", api.workerCheckingHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
@@ -100,11 +95,11 @@ func Test_workerCheckingHandler(t *testing.T) {
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	workers, err = worker.LoadWorkers(db)
+	workers, err = worker.LoadWorkers(api.mustDB())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -115,36 +110,36 @@ func Test_workerCheckingHandler(t *testing.T) {
 }
 
 func Test_workerWaitingHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
-	workers, err := worker.LoadWorkers(db)
+	workers, err := worker.LoadWorkers(api.mustDB())
 	if err != nil {
 		t.Fatal(err)
 	}
-	hs, err := hatchery.LoadHatcheries(db)
+	hs, err := hatchery.LoadHatcheries(api.mustDB())
 	if err != nil {
 		t.Fatalf("Unable to load hatcheries : %s", err)
 	}
 	//2. Delete all workers and hatcheries
 	for _, w := range workers {
-		if err := worker.DeleteWorker(db, w.ID); err != nil {
+		if err := worker.DeleteWorker(api.mustDB(), w.ID); err != nil {
 			t.Fatal(err)
 		}
 	}
 	for _, h := range hs {
-		err := hatchery.DeleteHatchery(db, h.ID, 0)
+		err := hatchery.DeleteHatchery(api.mustDB(), h.ID, 0)
 		if err != nil {
 			t.Fatalf("Unable to delete hatcheries : %s", err)
 		}
 	}
 
 	//3. Create model
-	g, err := group.LoadGroup(db, "shared.infra")
+	g, err := group.LoadGroup(api.mustDB(), "shared.infra")
 	if err != nil {
 		t.Fatalf("Error getting group : %s", err)
 	}
-	model, _ := worker.LoadWorkerModelByName(db, "Test1")
+	model, _ := worker.LoadWorkerModelByName(api.mustDB(), "Test1")
 	if model == nil {
 		model = &sdk.Model{
 			Name:    "Test1",
@@ -160,7 +155,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 			},
 		}
 
-		if err := worker.InsertWorkerModel(db, model); err != nil {
+		if err := worker.InsertWorkerModel(api.mustDB(), model); err != nil {
 			t.Fatalf("Error inserting model : %s", err)
 		}
 	}
@@ -171,37 +166,34 @@ func Test_workerWaitingHandler(t *testing.T) {
 		GroupID: g.ID,
 		UID:     "UUID",
 	}
-	if err := hatchery.InsertHatchery(db, &h); err != nil {
+	if err := hatchery.InsertHatchery(api.mustDB(), &h); err != nil {
 		t.Fatalf("Error inserting hatchery : %s", err)
 	}
 
-	if err := token.InsertToken(db, g.ID, "test-key", sdk.Persistent); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, "test-key", sdk.Persistent); err != nil {
 		t.Fatalf("Error inserting token : %s", err)
 	}
 
-	workr, err := worker.RegisterWorker(db, "test-worker", "test-key", model.ID, &h, nil)
+	workr, err := worker.RegisterWorker(api.mustDB(), "test-worker", "test-key", model.ID, &h, nil)
 	if err != nil {
 		t.Fatalf("Error Registering worker : %s", err)
 	}
 
-	worker.SetStatus(db, workr.ID, sdk.StatusBuilding)
-
-	router = newRouter(auth.TestLocalAuth(t), mux.NewRouter(), "/Test_workerWaitingHandler")
-	router.init()
+	worker.SetStatus(api.mustDB(), workr.ID, sdk.StatusBuilding)
 
 	//Prepare request
-	uri := router.getRoute("POST", workerWaitingHandler, nil)
+	uri := router.GetRoute("POST", api.workerWaitingHandler, nil)
 	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequestFromWorker(t, workr, "POST", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 
-	workers, err = worker.LoadWorkers(db)
+	workers, err = worker.LoadWorkers(api.mustDB())
 	if err != nil {
 		t.Fatal(err)
 	}

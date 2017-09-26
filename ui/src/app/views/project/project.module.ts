@@ -12,7 +12,7 @@ import {ProjectEnvironmentComponent} from './show/environment/list/item/environm
 import {ProjectEnvironmentFormComponent} from './show/environment/form/environment.form.component';
 import {ProjectPipelinesComponent} from './show/pipeline/pipeline.list.component';
 import {ProjectApplicationListComponent} from './show/application/application.list.component';
-import {ProjectWorkflowListComponent} from './show/workflows/workflow.list.component';
+import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.component';
 
 @NgModule({
     declarations: [

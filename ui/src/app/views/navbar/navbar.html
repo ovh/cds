@@ -1,25 +1,20 @@
 <div class="ui inverted fixed menu navbar" *ngIf="ready">
     <a href="#" [routerLink]="['/']"><img src="assets/images/cds.png" class="item" title="{{'navbar_home' | translate}}"></a>
-    <sm-select
-            placeholder="{{'navbar_projects_placeholder' | translate}}"
-            class="search classic left"
-            [options]="{'fullTextSearch': true}"
-            [(model)]="selectedProjectKey"
-            (modelChange)="navigateToProject($event)">
-        <option [value]="'#NOPROJECT#'">{{'navbar_projects_placeholder' | translate}}</option>
-        <option *ngFor="let project of navProjects" [value]="project.key">{{project.name}}</option>
-    </sm-select>
-    <sm-select
-            placeholder="{{'navbar_applications_placeholder' | translate}}"
-            class="search classic right"
-            (keydown)="applicationKeyEvent($event)"
-            [options]="{'fullTextSearch': true}"
-            [(model)]="selectedApplicationName"
-            (modelChange)="navigateToApplication($event)"
-            (onSearchChange)="filterApplication($event)">
-        <option [value]="'#NOAPP#'"></option>
-        <option *ngFor="let app of listApplications" [value]="'/project/' + app.project_key + '/application/' + app.name">{{app.name}}</option>
-    </sm-select>
+
+    <sui-search placeholder="{{'navbar_search' | translate}}" [options]="searchItems" [maxResults]="15" (resultSelected)="navigateToResult($event)"></sui-search>
+
+    <sm-dropdown icon="browser" *ngIf="currentUser" class="search">
+        <ng-container *ngFor="let prj of navProjects">
+            <a sm-item href="#" [routerLink]="['project', prj.key]">{{ prj.name }}</a>
+        </ng-container>
+    </sm-dropdown>
+
+    <sm-dropdown icon="clock" *ngIf="currentUser">
+        <ng-container *ngFor="let app of listApplications">
+            <a sm-item href="#" [routerLink]="['project', app.project_key, 'application', app.name]">{{ app.project_key + '/' + app.name}}</a>
+        </ng-container>
+    </sm-dropdown>
+
     <div class="right menu">
         <div class="item link" *ngIf="currentUser">
             <a href="#" [routerLink]="['/project']"><i class="plus circle icon"></i>{{ 'project_create' | translate }}</a>

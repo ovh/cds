@@ -26,12 +26,12 @@ var environmentListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS environments",
 	Args: []cli.Arg{
-		{Name: "key"},
+		{Name: "project-key"},
 	},
 }
 
 func environmentListRun(v cli.Values) (cli.ListResult, error) {
-	apps, err := client.EnvironmentList(v["key"])
+	apps, err := client.EnvironmentList(v["project-key"])
 	if err != nil {
 		return nil, err
 	}

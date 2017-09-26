@@ -56,7 +56,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	}
 
 	url := fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s",
-		uiURL,
+		g.uiURL,
 		eventpb.ProjectKey,
 		eventpb.ApplicationName,
 		eventpb.PipelineName,
