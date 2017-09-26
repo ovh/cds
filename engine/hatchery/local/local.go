@@ -284,6 +284,7 @@ func (h *HatcheryLocal) Init() error {
 			Name:         genname,
 			Image:        genname,
 			Capabilities: capa,
+			Provision:    int64(h.Config.NbProvision),
 		},
 		Version: sdk.VERSION,
 	}
