@@ -41,8 +41,7 @@ type Configuration struct {
 		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10"`
 	} `toml:"api" comment:"######################\n CDS API Settings \n######################\n`
 	Cache struct {
-		Mode  string `toml:"mode" default:"local" comment:"Cache Mode: redis or local"`
-		TTL   int    `toml:"ttl" default:"60"`
+		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379"`
 			Password string `toml:"password"`

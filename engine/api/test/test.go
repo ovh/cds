@@ -2,7 +2,6 @@ package test
 
 import (
 	"encoding/json"
-	"flag"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -25,28 +24,19 @@ import (
 
 //DBDriver is exported for testing purpose
 var (
-	DBDriver   string
-	dbUser     string
-	dbPassword string
-	dbName     string
-	dbHost     string
-	dbPort     int64
-	dbSSLMode  string
+	DBDriver      string
+	dbUser        string
+	dbPassword    string
+	dbName        string
+	dbHost        string
+	dbPort        int64
+	dbSSLMode     string
+	RedisHost     string
+	RedisPassword string
 )
 
 func init() {
-	if flag.Lookup("dbDriver") == nil {
-		flag.String("dbDriver", "", "driver")
-		flag.String("dbUser", "cds", "user")
-		flag.String("dbPassword", "cds", "password")
-		flag.String("dbName", "cds", "database name")
-		flag.String("dbHost", "localhost", "host")
-		flag.Int("dbPort", 15432, "port")
-		flag.String("sslMode", "disable", "ssl mode")
-
-		log.Initialize(&log.Conf{Level: "debug"})
-		flag.Parse()
-	}
+	log.Initialize(&log.Conf{Level: "debug"})
 }
 
 type Bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
@@ -64,7 +54,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 		f = path.Join(u.HomeDir, ".cds", "tests.cfg.json")
 	}
 	if _, err := os.Stat(f); err == nil {
-		t.Logf("Tests database configuration read from %s", f)
+		t.Logf("Tests configuration read from %s", f)
 		btes, err := ioutil.ReadFile(f)
 		if err != nil {
 			t.Fatalf("Error reading %s: %v", f, err)
@@ -82,28 +72,20 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 					t.Errorf("Error when unmarshal config %s", err)
 				}
 				dbSSLMode = cfg["sslMode"]
+				RedisHost = cfg["redisHost"]
+				RedisPassword = cfg["redisPassword"]
 			} else {
 				t.Errorf("Error when unmarshal config %s", err)
 			}
 		}
 	} else {
-		t.Logf("Error reading %s: %v", f, err)
-		DBDriver = flag.Lookup("dbDriver").Value.String()
-		dbUser = flag.Lookup("dbUser").Value.String()
-		dbPassword = flag.Lookup("dbPassword").Value.String()
-		dbName = flag.Lookup("dbName").Value.String()
-		dbHost = flag.Lookup("dbHost").Value.String()
-		dbPort, err = strconv.ParseInt(flag.Lookup("dbPort").Value.String(), 10, 64)
-		if err != nil {
-			t.Errorf("Error when unmarshal config %s", err)
-		}
-		dbSSLMode = flag.Lookup("sslMode").Value.String()
+		t.Fatalf("Error reading %s: %v", f, err)
 	}
 
 	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 
 	if DBDriver == "" {
-		t.Skip("This should be run with a database")
+		t.Fatalf("This should be run with a database")
 		return nil, nil
 	}
 	if DBConnectionFactory == nil {
@@ -122,7 +104,10 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 		}
 	}
 
-	store := cache.NewLocalStore()
+	store, err := cache.NewRedisStore(RedisHost, RedisPassword, 60)
+	if err != nil {
+		t.Fatalf("Unable to connect to redis: %v", err)
+	}
 	event.Cache = store
 	pipeline.Store = store
 
