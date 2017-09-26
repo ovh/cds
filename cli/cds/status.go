@@ -30,7 +30,7 @@ var statusCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		if !stream {
-			fmt.Printf(strings.Join(status(nil, cmd, args), "\n"))
+			fmt.Printf(strings.Join(status(nil, cmd, args), "\n") + "\n")
 			return
 		}
 
