@@ -31,6 +31,7 @@ input[disabled] {
 }
 
 .CodeMirror {
+  min-height:40px;
   height: auto;
   border: 1px solid rgba(34, 36, 38, 0.14902);
   border-radius: 4px;
@@ -522,9 +523,7 @@ ngui-auto-complete .no-match-found {
 
 .node rect,
 .node ellipse {
-  //stroke: #333;
   fill: transparent;
-  //stroke-width: 1.5px;
 }
 
 .node circle {
@@ -552,4 +551,17 @@ ngui-auto-complete .no-match-found {
 
 foreignObject {
   overflow: visible;
+}
+
+// Ovveride of ng2-semantic-ui
+sui-search {
+  .ui.input {
+    input {
+      background-color: transparent;
+      border-color: #233332;
+    }
+  }
+}
+.ui.search .prompt {
+  border-radius: 5px;
 }

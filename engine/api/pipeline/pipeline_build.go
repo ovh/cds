@@ -204,7 +204,7 @@ func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.Pipel
 	return pbs, nil
 }
 
-// LoadPipelineBuildByApplicationPipelineEnvVersion Load pipeine build from application, pipeline, environment, version
+// LoadPipelineBuildByApplicationPipelineEnvVersion Load pipeline build from application, pipeline, environment, version
 func LoadPipelineBuildByApplicationPipelineEnvVersion(db gorp.SqlExecutor, applicationID, pipelineID, environmentID, version int64, limit int) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
 		WHERE pb.application_id = $1 AND pb.pipeline_id = $2 AND pb.environment_id = $3  AND pb.version = $4 ORDER by pb.id desc
@@ -305,9 +305,9 @@ func withRemoteName(remote string) ExecOptionFunc {
 	}
 }
 
-func withEmptyRemote(_ string) ExecOptionFunc {
+func withEmptyRemote(remote string) ExecOptionFunc {
 	return func(nbArg int) (string, string) {
-		return fmt.Sprintf(" OR pb.vcs_remote = $%d", nbArg), ""
+		return fmt.Sprintf(" AND (pb.vcs_remote = $%d OR pb.vcs_remote = '')", nbArg), remote
 	}
 }
 
@@ -343,6 +343,9 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 	}
 	args = append(args, limit)
 	query += fmt.Sprintf(" ORDER BY pb.version DESC, pb.id DESC LIMIT $%d", len(args))
+
+	fmt.Println(query)
+	fmt.Println(args)
 
 	var rows []PipelineBuildDbResult
 	if _, errQuery := db.Select(&rows, query, args...); errQuery != nil {
@@ -525,11 +528,12 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	}
 
 	k := cache.Key("application", pb.Application.ProjectKey, "*")
-	cache.DeleteAll(k)
+	Store.DeleteAll(k)
 
 	// Load repositorie manager if necessary
 	if pb.Application.RepositoriesManager == nil || pb.Application.RepositoryFullname == "" {
-		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID)
+		//We don't need to pass apiURL and uiURL because they are not usefull for sending events
+		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID, Store)
 		if errl != nil {
 			log.Error("UpdatePipelineBuildStatus> error while loading repoManager for appID %d err:%s", pb.Application.ID, errl)
 		}
@@ -663,7 +667,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 
 	res := []sdk.VCSCommit{}
 	//Get the RepositoriesManager Client
-	client, errclient := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name)
+	client, errclient := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name, Store)
 	if errclient != nil {
 		return nil, sdk.WrapError(errclient, "UpdatePipelineBuildCommits> Cannot get client")
 	}
@@ -739,7 +743,8 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 	//Initialize client for repository manager
 	if app.RepositoriesManager != nil && app.RepositoryFullname != "" {
-		client, _ = repositoriesmanager.AuthorizedClient(tx, project.Key, app.RepositoriesManager.Name)
+		//We don't need to pass apiURL and uiURL because they are not usefull for commit
+		client, _ = repositoriesmanager.AuthorizedClient(tx, project.Key, app.RepositoriesManager.Name, Store)
 	}
 
 	// Load last finished build
@@ -1321,18 +1326,17 @@ func GetAllLastBuildByApplication(db gorp.SqlExecutor, applicationID int64, remo
 	return pbs, nil
 }
 
-// TODO add remote param I think to display branch attached to this remote
 // GetBranches from pipeline build and pipeline history for the given application
-func GetBranches(db gorp.SqlExecutor, app *sdk.Application) ([]sdk.VCSBranch, error) {
+func GetBranches(db gorp.SqlExecutor, app *sdk.Application, remote string) ([]sdk.VCSBranch, error) {
 	branches := []sdk.VCSBranch{}
 	query := `
 		SELECT DISTINCT vcs_changes_branch
 		FROM pipeline_build
-		WHERE application_id = $1
+		WHERE application_id = $1 AND vcs_remote_name = $2
 		ORDER BY vcs_changes_branch DESC
-
 	`
-	rows, err := db.Query(query, app.ID)
+
+	rows, err := db.Query(query, app.ID, remote)
 	if err != nil {
 		return nil, err
 	}

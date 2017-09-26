@@ -13,7 +13,7 @@ import (
 )
 
 //RequirementsCacheLoader set all action requirement in the cache
-func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func() *gorp.DbMap) {
+func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func() *gorp.DbMap, store cache.Store) {
 	tick := time.NewTicker(delay).C
 
 	for {
@@ -28,8 +28,8 @@ func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func
 			if db != nil {
 				var mayIWork string
 				loaderKey := cache.Key("action", "requirements", "loading")
-				if cache.Get(loaderKey, &mayIWork) {
-					cache.SetWithTTL(loaderKey, "true", 60)
+				if store.Get(loaderKey, &mayIWork) {
+					store.SetWithTTL(loaderKey, "true", 60)
 					actions, err := LoadActions(db)
 					if err != nil {
 						log.Warning("RequirementsCacheLoader> Unable to load worker models: %s", err)
@@ -37,9 +37,9 @@ func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func
 					}
 					for _, a := range actions {
 						k := cache.Key("action", "requirements", fmt.Sprintf("%d", a.ID))
-						cache.Set(k, a.Requirements)
+						store.Set(k, a.Requirements)
 					}
-					cache.Delete(loaderKey)
+					store.Delete(loaderKey)
 				}
 			}
 		}
@@ -47,17 +47,17 @@ func RequirementsCacheLoader(c context.Context, delay time.Duration, DBFunc func
 }
 
 //GetRequirements load action capabilities from cache
-func GetRequirements(db gorp.SqlExecutor, id int64) ([]sdk.Requirement, error) {
+func GetRequirements(db gorp.SqlExecutor, store cache.Store, id int64) ([]sdk.Requirement, error) {
 	k := cache.Key("action", "requirements", fmt.Sprintf("%d", id))
 	req := []sdk.Requirement{}
 	//if we didn't got any data, try to load from DB
-	if !cache.Get(k, &req) {
+	if !store.Get(k, &req) {
 		var err error
 		req, err = LoadActionRequirements(db, id)
 		if err != nil {
 			return nil, fmt.Errorf("GetRequirements> cannot LoadActionRequirements: %s", err)
 		}
-		cache.Set(k, req)
+		store.Set(k, req)
 	}
 	return req, nil
 }

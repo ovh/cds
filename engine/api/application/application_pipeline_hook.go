@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
@@ -12,7 +13,7 @@ import (
 )
 
 // TriggerPipeline linked to received hook
-func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string, author string, p *sdk.Pipeline, projectData *sdk.Project) (*sdk.PipelineBuild, error) {
+func TriggerPipeline(tx gorp.SqlExecutor, store cache.Store, h sdk.Hook, branch string, hash string, author string, p *sdk.Pipeline, projectData *sdk.Project) (*sdk.PipelineBuild, error) {
 
 	// Create pipeline args
 	var args []sdk.Parameter
@@ -45,7 +46,7 @@ func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string
 	p.Parameter = parameters
 
 	// get application
-	a, err := LoadByID(tx, h.ApplicationID, nil, LoadOptions.WithRepositoryManager, LoadOptions.WithVariablesWithClearPassword)
+	a, err := LoadByID(tx, store, h.ApplicationID, nil, LoadOptions.WithRepositoryManager, LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +65,8 @@ func TriggerPipeline(tx gorp.SqlExecutor, h sdk.Hook, branch string, hash string
 	// Get commit message to check if we have to skip the build
 	if a.RepositoriesManager != nil {
 		if b, _ := repositoriesmanager.CheckApplicationIsAttached(tx, a.RepositoriesManager.Name, projectData.Key, a.Name); b && a.RepositoryFullname != "" {
-			//Get the RepositoriesManager Client
-			client, _ := repositoriesmanager.AuthorizedClient(tx, projectData.Key, a.RepositoriesManager.Name)
+			//Get the RepositoriesManager Client (the last args are useless to get commit)
+			client, _ := repositoriesmanager.AuthorizedClient(tx, projectData.Key, a.RepositoriesManager.Name, store)
 			if client != nil {
 				commit, err := client.Commit(a.RepositoryFullname, hash)
 				if err != nil {

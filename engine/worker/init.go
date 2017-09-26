@@ -67,7 +67,7 @@ func initViper(w *currentWorker) {
 	}
 	w.bookedJobID = viper.GetInt64("booked_job_id")
 
-	w.client = cdsclient.NewWorker(w.apiEndpoint)
+	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name)
 }
 
 func (w *currentWorker) initServer(c context.Context) {

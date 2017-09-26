@@ -31,8 +31,8 @@ Flags:
       --resume                Output Resume: one line with Total, TotalOK, TotalKO, TotalSkipped, TotalTestSuite (default true)
       --resumeFailures        Output Resume Failures (default true)
       --var stringSlice       --var cds='cds -f config.json' --var cds2='cds -f config.json'
-      --var-from-file         --var-from-file filename.yaml : yaml|json, must contains map[string]string
-
+      --var-from-file         --var-from-file filename.yaml : yaml|json, must contains map[string]string
+```
 
 ## TestSuite files
 

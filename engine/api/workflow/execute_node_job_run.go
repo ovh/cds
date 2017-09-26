@@ -11,14 +11,13 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
-func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, status sdk.Status) error {
+func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status) error {
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
 	var query string
@@ -57,6 +56,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 	//If the job has been set to building, set the stage to building
 	var stageUpdated bool
 	if job.Status == sdk.StatusBuilding.String() {
+		log.Debug("UpdateNodeJobRunStatus> job:%d", job.ID)
 		for i := range node.Stages {
 			s := &node.Stages[i]
 			var found bool
@@ -68,6 +68,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 				}
 			}
 			if found && s.Status == sdk.StatusWaiting {
+				log.Debug("UpdateNodeJobRunStatus> stage:%s status from %s to %s", s.Name, s.Status, sdk.StatusBuilding)
 				s.Status = sdk.StatusBuilding
 				stageUpdated = true
 				break
@@ -76,17 +77,19 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 	}
 
 	if stageUpdated {
+		log.Debug("UpdateNodeJobRunStatus> stageUpdated, set status node from %s to %s", node.Status, sdk.StatusBuilding.String())
 		node.Status = sdk.StatusBuilding.String()
 		if err := UpdateNodeRun(db, node); err != nil {
 			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to update workflow node run %d", node.ID)
 		}
 	} else {
-		if errE := execute(db, node); errE != nil {
+		log.Debug("UpdateNodeJobRunStatus> call execute node")
+		if errE := execute(db, store, p, node); errE != nil {
 			return sdk.WrapError(errE, "workflow.UpdateNodeJobRunStatus> Cannot execute sync node")
 		}
 	}
 
-	if err := UpdateNodeJobRun(db, job); err != nil {
+	if err := UpdateNodeJobRun(db, store, p, job); err != nil {
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
@@ -96,8 +99,8 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, st
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
-func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, id int64, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
-	j, err := LoadAndLockNodeJobRun(db, id)
+func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
+	j, err := LoadAndLockNodeJobRun(db, store, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot load node job run")
 	}
@@ -105,7 +108,7 @@ func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, id int64, infos []sdk.SpawnInf
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot prepare spawn infos")
 	}
 
-	if err := UpdateNodeJobRun(db, j); err != nil {
+	if err := UpdateNodeJobRun(db, store, p, j); err != nil {
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot update node job run")
 	}
 	return j, nil
@@ -124,15 +127,15 @@ func prepareSpawnInfos(j *sdk.WorkflowNodeJobRun, infos []sdk.SpawnInfo) error {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(db gorp.SqlExecutor, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
-	job, err := LoadAndLockNodeJobRun(db, id)
+func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
+	job, err := LoadAndLockNodeJobRun(db, store, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot load node job run")
 	}
 	if job.Status != sdk.StatusWaiting.String() {
 		k := keyBookJob(id)
 		h := sdk.Hatchery{}
-		if cache.Get(k, &h) {
+		if store.Get(k, &h) {
 			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakeNodeJobRun> job %d is not waiting status and was booked by hatchery %d. Current status:%s", id, h.ID, job.Status)
 		}
 		return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakeNodeJobRun> job %d is not waiting status. Current status:%s", id, job.Status)
@@ -147,7 +150,8 @@ func TakeNodeJobRun(db gorp.SqlExecutor, id int64, workerModel string, workerNam
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot prepare spawn infos")
 	}
 
-	if err := UpdateNodeJobRunStatus(db, job, sdk.StatusBuilding); err != nil {
+	if err := UpdateNodeJobRunStatus(db, store, p, job, sdk.StatusBuilding); err != nil {
+		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
 		return nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run")
 	}
 
@@ -155,14 +159,10 @@ func TakeNodeJobRun(db gorp.SqlExecutor, id int64, workerModel string, workerNam
 }
 
 // LoadNodeJobRunKeys loads all keys for a job run
-func LoadNodeJobRunKeys(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun) ([]sdk.Parameter, []sdk.Variable, error) {
+func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, p *sdk.Project) ([]sdk.Parameter, []sdk.Variable, error) {
 	params := []sdk.Parameter{}
 	secrets := []sdk.Variable{}
 
-	p, errP := project.LoadByID(db, w.Workflow.ProjectID, nil, project.LoadOptions.WithKeys)
-	if errP != nil {
-		return nil, nil, sdk.WrapError(errP, "LoadNodeJobRunKeys> Cannot load project keys")
-	}
 	for _, k := range p.Keys {
 		params = append(params, sdk.Parameter{
 			Name:  "cds.proj." + k.Name + ".pub",
@@ -187,7 +187,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRu
 		return nil, nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
 	}
 	if n.Context != nil && n.Context.Application != nil {
-		a, errA := application.LoadByID(db, n.Context.Application.ID, nil, application.LoadOptions.WithKeys)
+		a, errA := application.LoadByID(db, store, n.Context.Application.ID, nil, application.LoadOptions.WithKeys)
 		if errA != nil {
 			return nil, nil, sdk.WrapError(errA, "loadActionBuildKeys> Cannot load application keys")
 		}
@@ -238,16 +238,11 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRu
 }
 
 // LoadNodeJobRunSecrets loads all secrets for a job run
-func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun) ([]sdk.Variable, error) {
+func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, pv []sdk.Variable) ([]sdk.Variable, error) {
 	var secrets []sdk.Variable
 
-	// Load project secrets
-	pv, err := project.GetAllVariableInProject(db, w.Workflow.ProjectID, project.WithClearPassword())
-	if err != nil {
-		return nil, err
-	}
 	pv = sdk.VariablesFilter(pv, sdk.SecretVariable, sdk.KeyVariable)
-	pv = sdk.VariablesPrefix(pv, "cds.proj")
+	pv = sdk.VariablesPrefix(pv, "cds.proj.")
 	secrets = append(secrets, pv...)
 
 	//Load node definition
@@ -260,7 +255,7 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nod
 	av := []sdk.Variable{}
 	if n.Context != nil && n.Context.Application != nil {
 		av = sdk.VariablesFilter(n.Context.Application.Variable, sdk.SecretVariable, sdk.KeyVariable)
-		av = sdk.VariablesPrefix(pv, "cds.app")
+		av = sdk.VariablesPrefix(av, "cds.app.")
 	}
 	secrets = append(secrets, av...)
 
@@ -268,7 +263,7 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nod
 	ev := []sdk.Variable{}
 	if n.Context != nil && n.Context.Environment != nil {
 		ev = sdk.VariablesFilter(n.Context.Environment.Variable, sdk.SecretVariable, sdk.KeyVariable)
-		ev = sdk.VariablesPrefix(pv, "cds.env")
+		ev = sdk.VariablesPrefix(ev, "cds.env.")
 	}
 	secrets = append(secrets, ev...)
 
@@ -279,17 +274,16 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nod
 			return nil, sdk.WrapError(err, "LoadNodeJobRunSecrets> Unable to decrypt variables")
 		}
 	}
-
 	return secrets, nil
 }
 
 //BookNodeJobRun  Book a job for a hatchery
-func BookNodeJobRun(id int64, hatchery *sdk.Hatchery) (*sdk.Hatchery, error) {
+func BookNodeJobRun(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.Hatchery, error) {
 	k := keyBookJob(id)
 	h := sdk.Hatchery{}
-	if !cache.Get(k, &h) {
+	if !store.Get(k, &h) {
 		// job not already booked, book it for 2 min
-		cache.SetWithTTL(k, hatchery, 120)
+		store.SetWithTTL(k, hatchery, 120)
 		return nil, nil
 	}
 	return &h, sdk.WrapError(sdk.ErrJobAlreadyBooked, "BookNodeJobRun> job %d already booked by %s (%d)", id, h.Name, h.ID)

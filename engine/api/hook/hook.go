@@ -247,8 +247,8 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) er
 }
 
 // CreateHook in CDS db + repo manager webhook
-func CreateHook(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesManager, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
-	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name)
+func CreateHook(tx gorp.SqlExecutor, store cache.Store, projectKey string, rm *sdk.RepositoriesManager, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
+	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name, store)
 	if err != nil {
 		return nil, sdk.WrapError(err, "CreateHook> Cannot get client, got  %s %s", projectKey, rm.Name)
 	}
@@ -296,7 +296,7 @@ func CreateHook(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesMana
 }
 
 //Recovery try to recovers hook in case of error
-func Recovery(h ReceivedHook, err error) {
+func Recovery(store cache.Store, h ReceivedHook, err error) {
 	log.Debug("hook.Recovery> %s", h.Repository)
 	switch err.(type) {
 	case sdk.Error:
@@ -322,7 +322,7 @@ func Recovery(h ReceivedHook, err error) {
 		return
 	}
 
-	cache.Enqueue("hook:recovery", h)
+	store.Enqueue("hook:recovery", h)
 
 	return
 }

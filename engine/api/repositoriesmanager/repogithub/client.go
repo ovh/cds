@@ -22,6 +22,9 @@ type GithubClient struct {
 	OAuthToken       string
 	DisableSetStatus bool
 	DisableStatusURL bool
+	Cache            cache.Store
+	apiURL           string
+	uiURL            string
 }
 
 // ReleaseRequest Request sent to Github to create a release
@@ -115,7 +118,7 @@ func (g *GithubClient) Repos() ([]sdk.VCSRepo, error) {
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				cache.Get(cache.Key("reposmanager", "github", "repos", g.OAuthToken, "/user/repos"), &repos)
+				g.Cache.Get(cache.Key("reposmanager", "github", "repos", g.OAuthToken, "/user/repos"), &repos)
 				break
 			} else {
 				if err := json.Unmarshal(body, &nextRepos); err != nil {
@@ -132,7 +135,7 @@ func (g *GithubClient) Repos() ([]sdk.VCSRepo, error) {
 	}
 
 	//Put the body on cache for one hour and one minute
-	cache.SetWithTTL(cache.Key("reposmanager", "github", "repos", g.OAuthToken, "/user/repos"), repos, 61*60)
+	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "repos", g.OAuthToken, "/user/repos"), repos, 61*60)
 
 	responseRepos := []sdk.VCSRepo{}
 	for _, repo := range repos {
@@ -190,14 +193,14 @@ func (g *GithubClient) repoByFullname(fullname string) (Repository, error) {
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		cache.Get(cache.Key("reposmanager", "github", "repo", g.OAuthToken, url), &repo)
+		g.Cache.Get(cache.Key("reposmanager", "github", "repo", g.OAuthToken, url), &repo)
 	} else {
 		if err := json.Unmarshal(body, &repo); err != nil {
 			log.Warning("GithubClient.Repos> Unable to parse github repository: %s", err)
 			return Repository{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		cache.SetWithTTL(cache.Key("reposmanager", "github", "repo", g.OAuthToken, url), repo, 61*60)
+		g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "repo", g.OAuthToken, url), repo, 61*60)
 	}
 
 	return repo, nil
@@ -229,7 +232,7 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				cache.Get(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
+				g.Cache.Get(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
 				break
 			} else {
 				if err := json.Unmarshal(body, &nextBranches); err != nil {
@@ -247,7 +250,7 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 	}
 
 	//Put the body on cache for one hour and one minute
-	cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), branches, 61*60)
+	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), branches, 61*60)
 
 	branchesResult := []sdk.VCSBranch{}
 	for _, b := range branches {
@@ -277,11 +280,11 @@ func (g *GithubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error
 	url := "/repos/" + fullname + "/branches/" + theBranch
 	status, body, _, err := g.get(url)
 	if err != nil {
-		cache.Delete(cacheBranchKey)
+		g.Cache.Delete(cacheBranchKey)
 		return nil, err
 	}
 	if status >= 400 {
-		cache.Delete(cacheBranchKey)
+		g.Cache.Delete(cacheBranchKey)
 		return nil, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
 	}
 
@@ -289,7 +292,7 @@ func (g *GithubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error
 	var branch Branch
 	if status == http.StatusNotModified {
 		//If repos aren't updated, lets get them from cache
-		cache.Get(cacheBranchKey, &branch)
+		g.Cache.Get(cacheBranchKey, &branch)
 	} else {
 		if err := json.Unmarshal(body, &branch); err != nil {
 			log.Warning("GithubClient.Branch> Unable to parse github branch: %s", err)
@@ -299,12 +302,12 @@ func (g *GithubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error
 
 	if branch.Name == "" {
 		log.Warning("GithubClient.Branch> Cannot find branch %s: %v", branch, theBranch)
-		cache.Delete(cacheBranchKey)
+		g.Cache.Delete(cacheBranchKey)
 		return nil, fmt.Errorf("GithubClient.Branch > Cannot find branch %s", theBranch)
 	}
 
 	//Put the body on cache for one hour and one minute
-	cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch"+theBranch), branch, 61*60)
+	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch"+theBranch), branch, 61*60)
 
 	branchResult := &sdk.VCSBranch{
 		DisplayID:    branch.Name,
@@ -341,7 +344,7 @@ func (g *GithubClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, erro
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				cache.Get(cache.Key("reposmanager", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), &pullRequests)
+				g.Cache.Get(cache.Key("reposmanager", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), &pullRequests)
 				break
 			} else {
 				if err := json.Unmarshal(body, &nextPullRequests); err != nil {
@@ -359,7 +362,7 @@ func (g *GithubClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, erro
 	}
 
 	//Put the body on cache for one hour and one minute
-	cache.SetWithTTL(cache.Key("reposmanager", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), pullRequests, 61*60)
+	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), pullRequests, 61*60)
 
 	prResults := []sdk.VCSPullRequest{}
 	for _, pullr := range pullRequests {
@@ -420,7 +423,7 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 	var commitsResult []sdk.VCSCommit
 
 	log.Debug("Looking for commits on repo %s since = %s until = %s", repo, since, until)
-	if cache.Get(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), &commitsResult) {
+	if g.Cache.Get(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), &commitsResult) {
 		return commitsResult, nil
 	}
 
@@ -494,7 +497,7 @@ func (g *GithubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 		commitsResult = append(commitsResult, commit)
 	}
 
-	cache.SetWithTTL(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), commitsResult, 3*60*60)
+	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), commitsResult, 3*60*60)
 
 	return commitsResult, nil
 }
@@ -516,14 +519,14 @@ func (g *GithubClient) User(username string) (User, error) {
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		cache.Get(cache.Key("reposmanager", "github", "users", g.OAuthToken, url), &user)
+		g.Cache.Get(cache.Key("reposmanager", "github", "users", g.OAuthToken, url), &user)
 	} else {
 		if err := json.Unmarshal(body, &user); err != nil {
 			log.Warning("GithubClient.User> Unable to parse github user: %s", err)
 			return User{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		cache.SetWithTTL(cache.Key("reposmanager", "github", "users", g.OAuthToken, url), user, 61*60)
+		g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "users", g.OAuthToken, url), user, 61*60)
 	}
 
 	return user, nil
@@ -586,14 +589,14 @@ func (g *GithubClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		cache.Get(cache.Key("reposmanager", "github", "commit", g.OAuthToken, url), &c)
+		g.Cache.Get(cache.Key("reposmanager", "github", "commit", g.OAuthToken, url), &c)
 	} else {
 		if err := json.Unmarshal(body, &c); err != nil {
 			log.Warning("GithubClient.Commit> Unable to parse github commit: %s", err)
 			return sdk.VCSCommit{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		cache.SetWithTTL(cache.Key("reposmanager", "github", "commit", g.OAuthToken, url), c, 61*60)
+		g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "commit", g.OAuthToken, url), c, 61*60)
 	}
 
 	commit := sdk.VCSCommit{

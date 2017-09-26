@@ -1,11 +1,12 @@
 import {Component, ViewChild} from '@angular/core';
 import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
-import {ActivatedRoute, Router} from '@angular/router';
+import {ActivatedRoute, ResolveEnd, Router} from '@angular/router';
 import {Project} from '../../model/project.model';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {Workflow} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
+import {RouterService} from '../../service/router/router.service';
 
 @Component({
     selector: 'app-workflow',
@@ -20,11 +21,13 @@ export class WorkflowComponent {
     number: number;
     workflowSubscription: Subscription;
     sidebarOpen: boolean;
+    currentNodeName: string;
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router) {
+    constructor(private _activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
+        private _routerService: RouterService) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -51,10 +54,14 @@ export class WorkflowComponent {
 
         });
 
-        this._activatedRoute.children.forEach(c => {
-            c.params.subscribe(p => {
-                this.number = p['number'];
-            });
+        this._router.events.subscribe(p => {
+            if (p instanceof ResolveEnd) {
+                let params = this._routerService.getRouteSnapshotParams({}, p.state.root);
+                let queryParams = this._routerService.getRouteSnapshotQueryParams({}, p.state.root);
+
+                this.currentNodeName = queryParams['name'];
+                this.number = params['number'];
+            }
         });
     }
 }

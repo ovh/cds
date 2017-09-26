@@ -4,7 +4,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -13,7 +13,7 @@ import (
 )
 
 // RunPipeline  the given pipeline with the given parameters
-func RunPipeline(db gorp.SqlExecutor, projectKey string, app *sdk.Application, pipelineName string, environmentName string, params []sdk.Parameter, version int64, trigger sdk.PipelineBuildTrigger, user *sdk.User) (*sdk.PipelineBuild, error) {
+func RunPipeline(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecutor, projectKey string, app *sdk.Application, pipelineName string, environmentName string, params []sdk.Parameter, version int64, trigger sdk.PipelineBuildTrigger, user *sdk.User) (*sdk.PipelineBuild, error) {
 	// Load pipeline + Args + stage + action
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
@@ -39,7 +39,7 @@ func RunPipeline(db gorp.SqlExecutor, projectKey string, app *sdk.Application, p
 	}
 
 	// Load project + var
-	projectData, err := project.Load(db, projectKey, user)
+	projectData, err := project.Load(db, store, projectKey, user)
 	if err != nil {
 		return nil, sdk.WrapError(err, "queue.Run> Cannot load project %s", projectKey)
 	}
@@ -64,7 +64,7 @@ func RunPipeline(db gorp.SqlExecutor, projectKey string, app *sdk.Application, p
 	}
 
 	go func() {
-		db := database.GetDBMap()
+		db := DBFunc()
 		if _, err := pipeline.UpdatePipelineBuildCommits(db, projectData, p, app, env, pb); err != nil {
 			log.Warning("queue.Run> Unable to update pipeline build commits : %s", err)
 		}

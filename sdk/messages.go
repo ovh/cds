@@ -39,12 +39,17 @@ var (
 	MsgEnvironmentGroupCannotBeUpdated     = &Message{"MsgEnvironmentGroupCannotBeUpdated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être mis à jour : %s", EN: "Group %s on environment %s cannot be updated: %s"}, nil}
 	MsgEnvironmentGroupCreated             = &Message{"MsgEnvironmentGroupCreated", trad{FR: "Le groupe %s de l'environnement %s a été ajouté", EN: "Group %s on environment %s has been added"}, nil}
 	MsgEnvironmentGroupCannotBeCreated     = &Message{"MsgEnvironmentGroupCannotBeCreated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être ajouté : %s", EN: "Group %s on environment %s cannot be added: %s"}, nil}
+	MsgEnvironmentGroupDeleted             = &Message{"MsgEnvironmentGroupDeleted", trad{FR: "Le groupe %s de l'environnement %s a été supprimé", EN: "Group %s on environment %s has been deleted"}, nil}
+	MsgEnvironmentGroupCannotBeDeleted     = &Message{"MsgEnvironmentGMsgEnvironmentGroupCannotBeDeletedroupCannotBeCreated", trad{FR: "Le groupe %s de l'environnement %s n'a pu être supprimé : %s", EN: "Group %s on environment %s cannot be deleted: %s"}, nil}
 	MsgJobNotValidActionNotFound           = &Message{"MsgJobNotValidActionNotFound", trad{FR: "Erreur de validation du Job %s : L'action %s à l'étape %d n'a pas été trouvée", EN: "Job %s validation Failure: Unknown action %s on step #%d"}, nil}
 	MsgJobNotValidInvalidActionParameter   = &Message{"MsgJobNotValidInvalidActionParameter", trad{FR: "Erreur de validation du Job %s : Le paramètre %s de l'étape %d - %s est invalide", EN: "Job %s validation Failure: Invalid parameter %s on step #%d %s"}, nil}
 	MsgPipelineGroupUpdated                = &Message{"MsgPipelineGroupUpdated", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été mises à jour", EN: "Permission for group %s on pipeline %s has been updated"}, nil}
 	MsgPipelineGroupAdded                  = &Message{"MsgPipelineGroupAdded", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été ajoutées", EN: "Permission for group %s on pipeline %s has been added"}, nil}
 	MsgPipelineGroupDeleted                = &Message{"MsgPipelineGroupDeleted", trad{FR: "Les permissions du groupe %s sur le pipeline %s on été supprimées", EN: "Permission for group %s on pipeline %s has been deleted"}, nil}
 	MsgPipelineStageUpdated                = &Message{"MsgPipelineStageUpdated", trad{FR: "Le stage %s a été mis à jour", EN: "Stage %s updated"}, nil}
+	MsgPipelineStageUpdating               = &Message{"MsgPipelineStageUpdating", trad{FR: "Mise à jour du stage %s en cours...", EN: "Updating stage %s ..."}, nil}
+	MsgPipelineStageDeletingOldJobs        = &Message{"MsgPipelineStageDeletingOldJobs", trad{FR: "Suppression des anciens jobs du stage %s en cours...", EN: "Deleting old jobs in stage %s ..."}, nil}
+	MsgPipelineStageInsertingNewJobs       = &Message{"MsgPipelineStageInsertingNewJobs", trad{FR: "Insertion des nouveaux jobs dans le stage %s en cours...", EN: "Inserting new jobs in stage %s ..."}, nil}
 	MsgPipelineStageAdded                  = &Message{"MsgPipelineStageAdded", trad{FR: "Le stage %s a été ajouté", EN: "Stage %s added"}, nil}
 	MsgPipelineStageDeleted                = &Message{"MsgPipelineStageDeleted", trad{FR: "Le stage %s a été supprimé", EN: "Stage %s deleted"}, nil}
 	MsgPipelineJobUpdated                  = &Message{"MsgPipelineJobUpdated", trad{FR: "Le job %s du stage %s a été mis à jour", EN: "Job %s in stage %s updated"}, nil}
@@ -60,6 +65,7 @@ var (
 	MsgSpawnInfoJobError                   = &Message{"MsgSpawnInfoJobError", trad{FR: "Impossible de lancer ce job : %s", EN: "Unable to run this job: %s"}, nil}
 	MsgWorkflowStarting                    = &Message{"MsgWorkflowStarting", trad{FR: "Le workflow %s#%s a été démarré", EN: "Workflow %s#%s has been started"}, nil}
 	MsgWorkflowError                       = &Message{"MsgWorkflowError", trad{FR: "Une erreur est survenue: %v", EN: "An error has occured: %v"}, nil}
+	MsgWorkflowNodeStop                    = &Message{"MsgWorkflowNodeStop", trad{FR: "Le pipeline a été arrété par %s", EN: "The pipeline has been stopped by %s"}, nil}
 )
 
 // Messages contains all sdk Messages
@@ -84,12 +90,17 @@ var Messages = map[string]*Message{
 	MsgEnvironmentGroupCannotBeUpdated.ID:     MsgEnvironmentGroupCannotBeUpdated,
 	MsgEnvironmentGroupCreated.ID:             MsgEnvironmentGroupCreated,
 	MsgEnvironmentGroupCannotBeCreated.ID:     MsgEnvironmentGroupCannotBeCreated,
+	MsgEnvironmentGroupDeleted.ID:             MsgEnvironmentGroupDeleted,
+	MsgEnvironmentGroupCannotBeDeleted.ID:     MsgEnvironmentGroupCannotBeDeleted,
 	MsgJobNotValidActionNotFound.ID:           MsgJobNotValidActionNotFound,
 	MsgJobNotValidInvalidActionParameter.ID:   MsgJobNotValidInvalidActionParameter,
 	MsgPipelineGroupUpdated.ID:                MsgPipelineGroupUpdated,
 	MsgPipelineGroupAdded.ID:                  MsgPipelineGroupAdded,
 	MsgPipelineGroupDeleted.ID:                MsgPipelineGroupDeleted,
 	MsgPipelineStageUpdated.ID:                MsgPipelineStageUpdated,
+	MsgPipelineStageUpdating.ID:               MsgPipelineStageUpdating,
+	MsgPipelineStageDeletingOldJobs.ID:        MsgPipelineStageDeletingOldJobs,
+	MsgPipelineStageInsertingNewJobs.ID:       MsgPipelineStageInsertingNewJobs,
 	MsgPipelineStageAdded.ID:                  MsgPipelineStageAdded,
 	MsgPipelineStageDeleted.ID:                MsgPipelineStageDeleted,
 	MsgPipelineJobUpdated.ID:                  MsgPipelineJobUpdated,
@@ -102,7 +113,10 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoJobTaken.ID:                   MsgSpawnInfoJobTaken,
 	MsgSpawnInfoWorkerForJob.ID:               MsgSpawnInfoWorkerForJob,
 	MsgSpawnInfoWorkerForJobError.ID:          MsgSpawnInfoWorkerForJobError,
+	MsgSpawnInfoJobError.ID:                   MsgSpawnInfoJobError,
 	MsgWorkflowStarting.ID:                    MsgWorkflowStarting,
+	MsgWorkflowError.ID:                       MsgWorkflowError,
+	MsgWorkflowNodeStop.ID:                    MsgWorkflowNodeStop,
 }
 
 //Message represent a struc format translated messages

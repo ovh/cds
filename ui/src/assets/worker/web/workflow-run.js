@@ -11,7 +11,7 @@ onmessage = function (e) {
 };
 
 function loadWorkflowRuns(user, session, api) {
-    loop(2, function () {
+    loop(10, function () {
         var url = '/project/' + key + '/workflows/' + workflowName + '/runs';
 
         var xhr = httpCall(url, api, user, session);

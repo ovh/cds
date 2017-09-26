@@ -1,6 +1,7 @@
-package main
+package api
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,12 +11,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/actionplugin"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -72,187 +71,195 @@ func fileUploadAndGetPlugin(w http.ResponseWriter, r *http.Request) (*sdk.Action
 	return ap, params, content, deferFunc, nil
 }
 
-func addPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	//Upload file and get plugin information
-	ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
-	if deferFunc != nil {
-		defer deferFunc()
-	}
-	if err != nil {
-		return sdk.WrapError(err, "addPluginHandler>%T", err)
-	}
-	defer file.Close()
+func (api *API) addPluginHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Upload file and get plugin information
+		ap, params, file, deferFunc, err := fileUploadAndGetPlugin(w, r)
+		if deferFunc != nil {
+			defer deferFunc()
+		}
+		if err != nil {
+			return sdk.WrapError(err, "addPluginHandler>%T", err)
+		}
+		defer file.Close()
 
-	// Check that action does not already exists
-	conflict, err := action.Exists(db, ap.Name)
-	if err != nil {
-		return sdk.WrapError(err, "updatePluginHandler>%T", err)
-	}
-	if conflict {
-		return sdk.ErrConflict
-	}
+		// Check that action does not already exists
+		conflict, err := action.Exists(api.mustDB(), ap.Name)
+		if err != nil {
+			return sdk.WrapError(err, "updatePluginHandler>%T", err)
+		}
+		if conflict {
+			return sdk.ErrConflict
+		}
 
-	//Upload it to objectstore
-	objectPath, err := objectstore.StorePlugin(*ap, file)
-	if err != nil {
-		return sdk.WrapError(err, "addPluginHandler> Error while uploading to object store %s", ap.Name)
-	}
-	ap.ObjectPath = objectPath
+		//Upload it to objectstore
+		objectPath, err := objectstore.StorePlugin(*ap, file)
+		if err != nil {
+			return sdk.WrapError(err, "addPluginHandler> Error while uploading to object store %s", ap.Name)
+		}
+		ap.ObjectPath = objectPath
 
-	tx, err := db.Begin()
-	if err != nil {
-		return sdk.WrapError(err, "addPluginHandler> Cannot start transaction")
-	}
-	defer tx.Rollback()
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "addPluginHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
 
-	//Insert in database
-	a, err := actionplugin.Insert(tx, ap, params)
-	if err != nil {
-		objectstore.DeletePlugin(*ap)
-		return sdk.WrapError(err, "addPluginHandler> Error while inserting action %s in database", ap.Name)
-	}
+		//Insert in database
+		a, err := actionplugin.Insert(tx, ap, params)
+		if err != nil {
+			objectstore.DeletePlugin(*ap)
+			return sdk.WrapError(err, "addPluginHandler> Error while inserting action %s in database", ap.Name)
+		}
 
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "addPluginHandler> Cannot commit transaction")
-	}
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "addPluginHandler> Cannot commit transaction")
+		}
 
-	return WriteJSON(w, r, a, http.StatusCreated)
+		return WriteJSON(w, r, a, http.StatusCreated)
+	}
 }
 
-func updatePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	//Upload file and get plugin information
-	ap, params, file, deferFunc, errUpload := fileUploadAndGetPlugin(w, r)
-	if deferFunc != nil {
-		defer deferFunc()
-	}
-	if errUpload != nil {
-		return sdk.WrapError(errUpload, "updatePluginHandler> fileUploadAndGetPlugin error")
-	}
-
-	// Check that action does not already exists
-	exists, errExists := action.Exists(db, ap.Name)
-	if errExists != nil {
-		return sdk.WrapError(errExists, "updatePluginHandler> unable to check if action %s exists", ap.Name)
-	}
-	if !exists {
-		return sdk.WrapError(sdk.ErrNoAction, "updatePluginHandler")
-	}
-
-	//Store previous file from objectstore
-	buf, errFetch := objectstore.FetchPlugin(*ap)
-	if errFetch != nil {
-		log.Warning("updatePluginHandler>Unable to fetch plugin: %s", errFetch)
-		// do no raise error... it just mean that we cannot fetch the old version of the plugin
-	}
-
-	var tmpFile string
-	if buf != nil && errFetch == nil {
-		defer buf.Close()
-		//Read it
-		btes, errr := ioutil.ReadAll(buf)
-		if errr != nil {
-			return sdk.WrapError(errr, "updatePluginHandler> Unable to read old plugin buffer")
+func (api *API) updatePluginHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Upload file and get plugin information
+		ap, params, file, deferFunc, errUpload := fileUploadAndGetPlugin(w, r)
+		if deferFunc != nil {
+			defer deferFunc()
 		}
-		//Get a dir
-		tmpDir, errtmp := ioutil.TempDir("", "old-plugin")
-		if errtmp != nil {
-			return sdk.WrapError(errtmp, "updatePluginHandler> error with tempdir")
+		if errUpload != nil {
+			return sdk.WrapError(errUpload, "updatePluginHandler> fileUploadAndGetPlugin error")
 		}
-		os.MkdirAll(tmpDir, os.FileMode(0700))
 
-		//Get a temp file
-		tmpFile = path.Join(tmpDir, ap.Name)
-
-		//Write it
-		log.Debug("updatePluginHandler>store oldfile %s in case of error", tmpFile)
-		if err := ioutil.WriteFile(tmpFile, btes, os.FileMode(0600)); err != nil {
-			return sdk.WrapError(err, "updatePluginHandler>Error writing file %s", tmpFile)
+		// Check that action does not already exists
+		exists, errExists := action.Exists(api.mustDB(), ap.Name)
+		if errExists != nil {
+			return sdk.WrapError(errExists, "updatePluginHandler> unable to check if action %s exists", ap.Name)
 		}
-		defer func() {
-			log.Debug("updatePluginHandler> deleting file %s", tmpFile)
-			os.RemoveAll(tmpFile)
-		}()
-		//Delete previous file from objectstore
-		if err := objectstore.DeletePlugin(*ap); err != nil {
-			return sdk.WrapError(err, "updatePluginHandler>Error deleting file")
+		if !exists {
+			return sdk.WrapError(sdk.ErrNoAction, "updatePluginHandler")
 		}
-	}
 
-	//Upload it to objectstore
-	objectPath, errStore := objectstore.StorePlugin(*ap, file)
-	if errStore != nil {
-		return sdk.WrapError(errStore, "updatePluginHandler> Error while uploading to object store %s", ap.Name)
-	}
-	ap.ObjectPath = objectPath
-
-	tx, errBegin := db.Begin()
-	if errBegin != nil {
-		return sdk.WrapError(errBegin, "updatePluginHandler> Cannot start transaction")
-	}
-	defer tx.Rollback()
-
-	//Update in database
-	a, errDB := actionplugin.Update(tx, ap, params, c.User.ID)
-	if errDB != nil && tmpFile != "" {
-		log.Warning("updatePluginHandler> Error while updating action %s in database: %s\n", ap.Name, errDB)
-		//Restore previous file
-		oldFile, errO := os.Open(tmpFile)
-		if errO != nil {
-			return sdk.WrapError(errO, "updatePluginHandler>Error opening file %s ", tmpFile)
+		//Store previous file from objectstore
+		buf, errFetch := objectstore.FetchPlugin(*ap)
+		if errFetch != nil {
+			log.Warning("updatePluginHandler>Unable to fetch plugin: %s", errFetch)
+			// do no raise error... it just mean that we cannot fetch the old version of the plugin
 		}
-		//re-store the old plugin file
-		if _, errStore := objectstore.StorePlugin(*ap, oldFile); errStore != nil {
+
+		var tmpFile string
+		if buf != nil && errFetch == nil {
+			defer buf.Close()
+			//Read it
+			btes, errr := ioutil.ReadAll(buf)
+			if errr != nil {
+				return sdk.WrapError(errr, "updatePluginHandler> Unable to read old plugin buffer")
+			}
+			//Get a dir
+			tmpDir, errtmp := ioutil.TempDir("", "old-plugin")
+			if errtmp != nil {
+				return sdk.WrapError(errtmp, "updatePluginHandler> error with tempdir")
+			}
+			os.MkdirAll(tmpDir, os.FileMode(0700))
+
+			//Get a temp file
+			tmpFile = path.Join(tmpDir, ap.Name)
+
+			//Write it
+			log.Debug("updatePluginHandler>store oldfile %s in case of error", tmpFile)
+			if err := ioutil.WriteFile(tmpFile, btes, os.FileMode(0600)); err != nil {
+				return sdk.WrapError(err, "updatePluginHandler>Error writing file %s", tmpFile)
+			}
+			defer func() {
+				log.Debug("updatePluginHandler> deleting file %s", tmpFile)
+				os.RemoveAll(tmpFile)
+			}()
+			//Delete previous file from objectstore
+			if err := objectstore.DeletePlugin(*ap); err != nil {
+				return sdk.WrapError(err, "updatePluginHandler>Error deleting file")
+			}
+		}
+
+		//Upload it to objectstore
+		objectPath, errStore := objectstore.StorePlugin(*ap, file)
+		if errStore != nil {
 			return sdk.WrapError(errStore, "updatePluginHandler> Error while uploading to object store %s", ap.Name)
 		}
+		ap.ObjectPath = objectPath
 
-		return sdk.WrapError(errDB, "updatePluginHandler> Unable to update plugin", ap.Name)
-	}
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "updatePluginHandler> Cannot commit transaction")
-	}
+		tx, errBegin := api.mustDB().Begin()
+		if errBegin != nil {
+			return sdk.WrapError(errBegin, "updatePluginHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
 
-	return WriteJSON(w, r, a, http.StatusOK)
+		//Update in database
+		a, errDB := actionplugin.Update(tx, ap, params, getUser(ctx).ID)
+		if errDB != nil && tmpFile != "" {
+			log.Warning("updatePluginHandler> Error while updating action %s in database: %s\n", ap.Name, errDB)
+			//Restore previous file
+			oldFile, errO := os.Open(tmpFile)
+			if errO != nil {
+				return sdk.WrapError(errO, "updatePluginHandler>Error opening file %s ", tmpFile)
+			}
+			//re-store the old plugin file
+			if _, errStore := objectstore.StorePlugin(*ap, oldFile); errStore != nil {
+				return sdk.WrapError(errStore, "updatePluginHandler> Error while uploading to object store %s", ap.Name)
+			}
+
+			return sdk.WrapError(errDB, "updatePluginHandler> Unable to update plugin", ap.Name)
+		}
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "updatePluginHandler> Cannot commit transaction")
+		}
+
+		return WriteJSON(w, r, a, http.StatusOK)
+	}
 }
 
-func deletePluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	name := vars["name"]
+func (api *API) deletePluginHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
 
-	if name == "" {
-		return sdk.ErrWrongRequest
-	}
+		if name == "" {
+			return sdk.ErrWrongRequest
+		}
 
-	//Delete in database
-	if err := actionplugin.Delete(db, name, c.User.ID); err != nil {
-		return sdk.WrapError(err, "deletePluginHandler> Error while deleting action %s in database", name)
-	}
+		//Delete in database
+		if err := actionplugin.Delete(api.mustDB(), name, getUser(ctx).ID); err != nil {
+			return sdk.WrapError(err, "deletePluginHandler> Error while deleting action %s in database", name)
+		}
 
-	//Delete from objectstore
-	if err := objectstore.DeletePlugin(sdk.ActionPlugin{Name: name}); err != nil {
-		return sdk.WrapError(err, "deletePluginHandler> Error while deleting action %s in objectstore", name)
+		//Delete from objectstore
+		if err := objectstore.DeletePlugin(sdk.ActionPlugin{Name: name}); err != nil {
+			return sdk.WrapError(err, "deletePluginHandler> Error while deleting action %s in objectstore", name)
+		}
+		return nil
 	}
-	return nil
 }
 
-func downloadPluginHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	name := vars["name"]
+func (api *API) downloadPluginHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["name"]
 
-	if name == "" {
-		return sdk.ErrWrongRequest
+		if name == "" {
+			return sdk.ErrWrongRequest
+		}
+
+		f, err := objectstore.FetchPlugin(sdk.ActionPlugin{Name: name})
+		if err != nil {
+			return sdk.WrapError(err, "downloadPluginHandler> Error while fetching plugin", name)
+		}
+
+		w.Header().Add("Content-Type", "application/octet-stream")
+		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", name))
+
+		if err := objectstore.StreamFile(w, f); err != nil {
+			return sdk.WrapError(err, "downloadPluginHandler> Error while streaming plugin %s", name)
+		}
+
+		return nil
 	}
-
-	f, err := objectstore.FetchPlugin(sdk.ActionPlugin{Name: name})
-	if err != nil {
-		return sdk.WrapError(err, "downloadPluginHandler> Error while fetching plugin", name)
-	}
-
-	w.Header().Add("Content-Type", "application/octet-stream")
-	w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", name))
-
-	if err := objectstore.StreamFile(w, f); err != nil {
-		return sdk.WrapError(err, "downloadPluginHandler> Error while streaming plugin %s", name)
-	}
-
-	return nil
 }

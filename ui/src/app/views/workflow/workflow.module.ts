@@ -13,6 +13,12 @@ import {WorkflowRunJobSpawnInfoComponent} from './run/node/pipeline/spawninfo/sp
 import {WorkflowStepLogComponent} from './run/node/pipeline/step/step.log.component';
 import {WorkflowComponent} from './workflow.compoment';
 import {WorkflowSidebarComponent} from './sidebar/workflow.sidebar.component';
+import {WorkflowRunArtifactListComponent} from './run/node/artifact/artifact.list.component';
+import {WorkflowRunTestsResultComponent} from './run/node/test/tests.component';
+import {WorkflowRunTestTableComponent} from './run/node/test/table/test.table.component';
+import {WorkflowNodeRunHistoryComponent} from './run/node/history/history.component';
+import {WorkflowNodeRunSummaryComponent} from './run/node/summary/run.summary.component';
+import {WorkflowNodeRunParamComponent} from '../../shared/workflow/node/run/node.run.param.component';
 
 @NgModule({
     declarations: [
@@ -25,9 +31,15 @@ import {WorkflowSidebarComponent} from './sidebar/workflow.sidebar.component';
         WorkflowRunJobVariableComponent,
         WorkflowRunJobSpawnInfoComponent,
         WorkflowRunNodePipelineComponent,
+        WorkflowRunArtifactListComponent,
+        WorkflowRunTestsResultComponent,
+        WorkflowNodeRunParamComponent,
+        WorkflowRunTestTableComponent,
+        WorkflowNodeRunHistoryComponent,
         WorkflowSidebarComponent,
         WorkflowShowComponent,
         WorkflowStepLogComponent,
+        WorkflowNodeRunSummaryComponent
     ],
     imports: [
         SharedModule,

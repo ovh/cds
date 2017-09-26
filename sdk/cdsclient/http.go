@@ -23,6 +23,8 @@ const (
 	RequestedWithHeader = "X-Requested-With"
 	// RequestedWithValue is used as HTTP header
 	RequestedWithValue = "X-CDS-SDK"
+	// RequestedNameHeader is used as HTTP header
+	RequestedNameHeader = "X-Requested-Name"
 )
 
 // RequestModifier is used to modify behavior of Request and Steam functions
@@ -31,6 +33,11 @@ type RequestModifier func(req *http.Request)
 // HTTPClient is a interface for HTTPClient mock
 type HTTPClient interface {
 	Do(*http.Request) (*http.Response, error)
+}
+
+// NoTimeout returns a http.DefaultClient from a HTTPClient
+func NoTimeout(c HTTPClient) HTTPClient {
+	return http.DefaultClient
 }
 
 // SetHeader modify headers of http.Request
@@ -88,7 +95,7 @@ func (c *client) RequestJSON(method, path string, in interface{}, out interface{
 
 // Request executes an authentificated HTTP request on $path given $method and $args
 func (c *client) Request(method string, path string, args []byte, mods ...RequestModifier) ([]byte, int, error) {
-	respBody, code, err := c.Stream(method, path, args, mods...)
+	respBody, code, err := c.Stream(method, path, args, false, mods...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -118,7 +125,7 @@ func (c *client) Request(method string, path string, args []byte, mods ...Reques
 }
 
 // Stream makes an authenticated http request and return io.ReadCloser
-func (c *client) Stream(method string, path string, args []byte, mods ...RequestModifier) (io.ReadCloser, int, error) {
+func (c *client) Stream(method string, path string, args []byte, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, int, error) {
 	var savederror error
 
 	if c.config.Verbose {
@@ -142,9 +149,14 @@ func (c *client) Stream(method string, path string, args []byte, mods ...Request
 		req.Header.Set("User-Agent", c.config.userAgent)
 		req.Header.Set("Connection", "close")
 		req.Header.Add(RequestedWithHeader, RequestedWithValue)
+		if c.name != "" {
+			req.Header.Add(RequestedNameHeader, c.name)
+		}
 
 		for i := range mods {
-			mods[i](req)
+			if mods[i] != nil {
+				mods[i](req)
+			}
 		}
 
 		//No auth on /login route
@@ -159,24 +171,34 @@ func (c *client) Stream(method string, path string, args []byte, mods ...Request
 			}
 		}
 
-		resp, err := c.HTTPClient.Do(req)
+		if c.config.Verbose {
+			log.Printf("Request Headers: %+v\n", req.Header)
+		}
+
+		var errDo error
+		var resp *http.Response
+		if noTimeout {
+			resp, errDo = NoTimeout(c.HTTPClient).Do(req)
+		} else {
+			resp, errDo = c.HTTPClient.Do(req)
+		}
 
 		// if everything is fine, return body
-		if err == nil && resp.StatusCode < 500 {
+		if errDo == nil && resp.StatusCode < 500 {
 			return resp.Body, resp.StatusCode, nil
 		}
 
 		// if no request error by status > 500, check CDS error
 		// if there is a CDS errors, return it
-		if err == nil && resp.StatusCode == 500 {
+		if errDo == nil && resp.StatusCode == 500 {
 			var body []byte
-			body, err = ioutil.ReadAll(resp.Body)
-			if err != nil {
+			var errRead error
+			body, errRead = ioutil.ReadAll(resp.Body)
+			if errRead != nil {
 				resp.Body.Close()
 				continue
 			}
-			cdserr := sdk.DecodeError(body)
-			if cdserr != nil {
+			if cdserr := sdk.DecodeError(body); cdserr != nil {
 				resp.Body.Close()
 				return nil, resp.StatusCode, cdserr
 			}
@@ -190,17 +212,17 @@ func (c *client) Stream(method string, path string, args []byte, mods ...Request
 			continue
 		}
 
-		if err != nil && (strings.Contains(err.Error(), "connection reset by peer") ||
-			strings.Contains(err.Error(), "unexpected EOF")) {
-			savederror = err
+		if errDo != nil && (strings.Contains(errDo.Error(), "connection reset by peer") ||
+			strings.Contains(errDo.Error(), "unexpected EOF")) {
+			savederror = errDo
 			if resp != nil && resp.Body != nil {
 				resp.Body.Close()
 			}
 			continue
 		}
 
-		if err != nil {
-			return nil, 0, err
+		if errDo != nil {
+			return nil, 0, errDo
 		}
 	}
 

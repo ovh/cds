@@ -1,77 +1,95 @@
-package main
+package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
-func getWorkflowHookModelsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	m, err := workflow.LoadHookModels(db)
-	if err != nil {
-		return sdk.WrapError(err, "getWorkflowHookModelsHandler")
+func (api *API) getWorkflowHooksHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		hooks, err := workflow.LoadAllHooks(api.mustDB())
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowHooksHandler")
+		}
+
+		return WriteJSON(w, r, hooks, http.StatusOK)
 	}
-	return WriteJSON(w, r, m, http.StatusOK)
 }
 
-func getWorkflowHookModelHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	name := vars["model"]
-	m, err := workflow.LoadHookModelByName(db, name)
-	if err != nil {
-		return sdk.WrapError(err, "getWorkflowHookModelHandler")
+func (api *API) getWorkflowHookModelsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		m, err := workflow.LoadHookModels(api.mustDB())
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowHookModelsHandler")
+		}
+		return WriteJSON(w, r, m, http.StatusOK)
 	}
-	return WriteJSON(w, r, m, http.StatusOK)
 }
 
-func postWorkflowHookModelHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	m := &sdk.WorkflowHookModel{}
-	if err := UnmarshalBody(r, m); err != nil {
-		return sdk.WrapError(err, "postWorkflowHookModelHandler")
+func (api *API) getWorkflowHookModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		name := vars["model"]
+		m, err := workflow.LoadHookModelByName(api.mustDB(), name)
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowHookModelHandler")
+		}
+		return WriteJSON(w, r, m, http.StatusOK)
 	}
-
-	tx, errtx := db.Begin()
-	if errtx != nil {
-		return sdk.WrapError(errtx, "postWorkflowHookModelHandler> Unable to start transaction")
-	}
-	defer tx.Rollback()
-
-	if err := workflow.InsertHookModel(tx, m); err != nil {
-		return sdk.WrapError(err, "postWorkflowHookModelHandler")
-	}
-
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(err, "postWorkflowHookModelHandler> Unable to commit transaction")
-	}
-
-	return WriteJSON(w, r, m, http.StatusCreated)
 }
 
-func putWorkflowHookModelHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	m := &sdk.WorkflowHookModel{}
-	if err := UnmarshalBody(r, m); err != nil {
-		return err
+func (api *API) postWorkflowHookModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		m := &sdk.WorkflowHookModel{}
+		if err := UnmarshalBody(r, m); err != nil {
+			return sdk.WrapError(err, "postWorkflowHookModelHandler")
+		}
+
+		tx, errtx := api.mustDB().Begin()
+		if errtx != nil {
+			return sdk.WrapError(errtx, "postWorkflowHookModelHandler> Unable to start transaction")
+		}
+		defer tx.Rollback()
+
+		if err := workflow.InsertHookModel(tx, m); err != nil {
+			return sdk.WrapError(err, "postWorkflowHookModelHandler")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postWorkflowHookModelHandler> Unable to commit transaction")
+		}
+
+		return WriteJSON(w, r, m, http.StatusCreated)
 	}
+}
 
-	tx, errtx := db.Begin()
-	if errtx != nil {
-		return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to start transaction")
+func (api *API) putWorkflowHookModelHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		m := &sdk.WorkflowHookModel{}
+		if err := UnmarshalBody(r, m); err != nil {
+			return err
+		}
+
+		tx, errtx := api.mustDB().Begin()
+		if errtx != nil {
+			return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to start transaction")
+		}
+
+		defer tx.Rollback()
+
+		if err := workflow.UpdateHookModel(tx, m); err != nil {
+			return sdk.WrapError(err, "putWorkflowHookModelHandler")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to commit transaction")
+		}
+
+		return WriteJSON(w, r, m, http.StatusOK)
 	}
-
-	defer tx.Rollback()
-
-	if err := workflow.UpdateHookModel(tx, m); err != nil {
-		return sdk.WrapError(err, "putWorkflowHookModelHandler")
-	}
-
-	if err := tx.Commit(); err != nil {
-		return sdk.WrapError(errtx, "putWorkflowHookModelHandler> Unable to commit transaction")
-	}
-
-	return WriteJSON(w, r, m, http.StatusOK)
 }

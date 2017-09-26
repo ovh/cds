@@ -1,7 +1,8 @@
-package main
+package api
 
 import (
-	ctx "context"
+	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -12,29 +13,16 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/businesscontext"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	// Get body
-	data, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
-	if err = r.ParseForm(); err != nil {
-		log.Warning("receiveHook> cannot parse query params: %s\n", err)
-		return err
-	}
-
+func processStashHook(w http.ResponseWriter, r *http.Request, data []byte) hook.ReceivedHook {
 	rh := hook.ReceivedHook{
 		URL:        *r.URL,
 		Data:       data,
@@ -47,164 +35,231 @@ func receiveHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *busi
 		UID:        r.FormValue("uid"),
 	}
 
-	if db == nil {
-		hook.Recovery(rh, fmt.Errorf("database not available"))
-		return err
-
-	}
-
-	if err := processHook(db, rh); err != nil {
-		hook.Recovery(rh, err)
-		return err
-
-	}
-
-	return nil
+	return rh
 }
 
-func addHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	appName := vars["permApplicationName"]
+func processGitlabHook(w http.ResponseWriter, r *http.Request, data []byte) (hook.ReceivedHook, error) {
 
-	var h sdk.Hook
-	if err := UnmarshalBody(r, &h); err != nil {
-		return err
-	}
-	h.Enabled = true
-
-	// Insert hook in database
-	if err := hook.InsertHook(db, &h); err != nil {
-		log.Warning("addHook: cannot insert hook in db: %s\n", err)
-		return err
-
+	type gitlabEvent struct {
+		ObjectKind  string `json:"object_kind"`
+		Ref         string `json:"ref"`
+		UserName    string `json:"user_name"`
+		CheckoutSha string `json:"checkout_sha"`
 	}
 
-	app, errA := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithHooks)
-	if errA != nil {
-		return sdk.WrapError(errA, "addHook: Cannot load application")
-	}
-	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, appName, c.User, "", "", 0)
-	if errW != nil {
-		return sdk.WrapError(errA, "addHook: Cannot load workflow")
+	var ge gitlabEvent
+	if err := json.Unmarshal(data, &ge); err != nil {
+		return hook.ReceivedHook{}, err
 	}
 
-	return WriteJSON(w, r, app, http.StatusOK)
+	rh := hook.ReceivedHook{
+		URL:        *r.URL,
+		Data:       data,
+		ProjectKey: r.FormValue("project"),
+		Repository: r.FormValue("name"),
+		Branch:     ge.Ref,
+		Hash:       ge.CheckoutSha,
+		Author:     ge.UserName,
+		Message:    ge.ObjectKind,
+		UID:        r.FormValue("uid"),
+	}
+
+	return rh, nil
 }
 
-func updateHookHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	appName := vars["permApplicationName"]
+func (api *API) receiveHookHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get body
+		data, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			return sdk.ErrWrongRequest
 
-	var h sdk.Hook
-	if err := UnmarshalBody(r, &h); err != nil {
-		return sdk.WrapError(err, "updateHookHandler")
-	}
-
-	app, errA := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithHooks)
-	if errA != nil {
-		return sdk.WrapError(errA, "updateHookHandler> Cannot load application")
-	}
-
-	found := false
-	for _, hookInApp := range app.Hooks {
-		if hookInApp.ID == h.ID {
-			found = true
-			break
 		}
-	}
 
-	if !found {
-		return sdk.WrapError(sdk.ErrNoHook, "updateHookHandler")
-	}
-
-	// Update hook in database
-	if err := hook.UpdateHook(db, h); err != nil {
-		return sdk.WrapError(err, "updateHookHandler: cannot update hook")
-	}
-
-	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User, "", "", 0)
-	if errW != nil {
-		return sdk.WrapError(errW, "updateHookHandler: Cannot load workflow")
-	}
-
-	return WriteJSON(w, r, app, http.StatusOK)
-}
-
-func getApplicationHooksHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	projectName := vars["key"]
-	appName := vars["permApplicationName"]
-
-	a, err := application.LoadByName(db, projectName, appName, c.User, application.LoadOptions.WithHooks)
-	if err != nil {
-		log.Warning("getApplicationHooksHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
-		return err
-	}
-
-	return WriteJSON(w, r, a.Hooks, http.StatusOK)
-}
-
-func getHooks(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	projectName := vars["key"]
-	appName := vars["permApplicationName"]
-	pipelineName := vars["permPipelineKey"]
-
-	p, err := pipeline.LoadPipeline(db, projectName, pipelineName, false)
-	if err != nil {
-		if err != sdk.ErrPipelineNotFound {
-			log.Warning("getHooks> cannot load pipeline %s/%s: %s\n", projectName, pipelineName, err)
+		if err = r.ParseForm(); err != nil {
+			log.Warning("receiveHook> cannot parse query params: %s\n", err)
+			return err
 		}
-		return err
-	}
 
-	a, err := application.LoadByName(db, projectName, appName, c.User)
-	if err != nil {
-		log.Warning("getHooks> cannot load application %s/%s: %s\n", projectName, appName, err)
-		return err
-	}
+		var rh hook.ReceivedHook
+		if r.Header.Get("X-Gitlab-Event") != "" {
+			rh, err = processGitlabHook(w, r, data)
+			if err != nil {
+				return err
+			}
+		} else {
+			rh = processStashHook(w, r, data)
+		}
 
-	hooks, err := hook.LoadPipelineHooks(db, p.ID, a.ID)
-	if err != nil {
-		log.Warning("getHooks> cannot load hooks: %s\n", err)
-		return err
-	}
+		db := api.DBConnectionFactory.GetDBMap()
+		if db == nil {
+			hook.Recovery(api.Cache, rh, fmt.Errorf("database not available"))
+			return err
+		}
 
-	return WriteJSON(w, r, hooks, http.StatusOK)
+		if err := processHook(api.DBConnectionFactory.GetDBMap, api.Cache, rh); err != nil {
+			hook.Recovery(api.Cache, rh, err)
+			return err
+
+		}
+
+		return nil
+	}
 }
 
-func deleteHook(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *businesscontext.Ctx) error {
-	vars := mux.Vars(r)
-	idS := vars["id"]
+func (api *API) addHookHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		appName := vars["permApplicationName"]
 
-	id, err := strconv.ParseInt(idS, 10, 64)
-	if err != nil {
-		return sdk.ErrWrongRequest
+		var h sdk.Hook
+		if err := UnmarshalBody(r, &h); err != nil {
+			return err
+		}
+		h.Enabled = true
 
+		// Insert hook in database
+		if err := hook.InsertHook(api.mustDB(), &h); err != nil {
+			log.Warning("addHook: cannot insert hook in db: %s\n", err)
+			return err
+
+		}
+
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		if errA != nil {
+			return sdk.WrapError(errA, "addHook: Cannot load application")
+		}
+		var errW error
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", "", 0)
+		if errW != nil {
+			return sdk.WrapError(errA, "addHook: Cannot load workflow")
+		}
+
+		return WriteJSON(w, r, app, http.StatusOK)
 	}
+}
 
-	_, err = hook.LoadHook(db, id)
-	if err != nil {
-		log.Warning("deleteHook> cannot load hook: %s\n", err)
-		return err
+func (api *API) updateHookHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		appName := vars["permApplicationName"]
 
+		var h sdk.Hook
+		if err := UnmarshalBody(r, &h); err != nil {
+			return sdk.WrapError(err, "updateHookHandler")
+		}
+
+		app, errA := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		if errA != nil {
+			return sdk.WrapError(errA, "updateHookHandler> Cannot load application")
+		}
+
+		found := false
+		for _, hookInApp := range app.Hooks {
+			if hookInApp.ID == h.ID {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return sdk.WrapError(sdk.ErrNoHook, "updateHookHandler")
+		}
+
+		// Update hook in database
+		if err := hook.UpdateHook(api.mustDB(), h); err != nil {
+			return sdk.WrapError(err, "updateHookHandler: cannot update hook")
+		}
+
+		var errW error
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
+		if errW != nil {
+			return sdk.WrapError(errW, "updateHookHandler: Cannot load workflow")
+		}
+
+		return WriteJSON(w, r, app, http.StatusOK)
 	}
+}
 
-	err = hook.DeleteHook(db, id)
-	if err != nil {
-		log.Warning("deleteHook> cannot delete hook: %s\n", err)
-		return err
+func (api *API) getApplicationHooksHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectName := vars["key"]
+		appName := vars["permApplicationName"]
 
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectName, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		if err != nil {
+			log.Warning("getApplicationHooksHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
+			return err
+		}
+
+		return WriteJSON(w, r, a.Hooks, http.StatusOK)
 	}
-	return nil
+}
+
+func (api *API) getHooksHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectName := vars["key"]
+		appName := vars["permApplicationName"]
+		pipelineName := vars["permPipelineKey"]
+
+		p, err := pipeline.LoadPipeline(api.mustDB(), projectName, pipelineName, false)
+		if err != nil {
+			if err != sdk.ErrPipelineNotFound {
+				log.Warning("getHooks> cannot load pipeline %s/%s: %s\n", projectName, pipelineName, err)
+			}
+			return err
+		}
+
+		a, err := application.LoadByName(api.mustDB(), api.Cache, projectName, appName, getUser(ctx))
+		if err != nil {
+			log.Warning("getHooks> cannot load application %s/%s: %s\n", projectName, appName, err)
+			return err
+		}
+
+		hooks, err := hook.LoadPipelineHooks(api.mustDB(), p.ID, a.ID)
+		if err != nil {
+			log.Warning("getHooks> cannot load hooks: %s\n", err)
+			return err
+		}
+
+		return WriteJSON(w, r, hooks, http.StatusOK)
+	}
+}
+
+func (api *API) deleteHookHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		idS := vars["id"]
+
+		id, err := strconv.ParseInt(idS, 10, 64)
+		if err != nil {
+			return sdk.ErrWrongRequest
+
+		}
+
+		_, err = hook.LoadHook(api.mustDB(), id)
+		if err != nil {
+			log.Warning("deleteHook> cannot load hook: %s\n", err)
+			return err
+
+		}
+
+		err = hook.DeleteHook(api.mustDB(), id)
+		if err != nil {
+			log.Warning("deleteHook> cannot delete hook: %s\n", err)
+			return err
+
+		}
+		return nil
+	}
 }
 
 //hookRecoverer is the go-routine which catches on-error hook
-func hookRecoverer(c ctx.Context, DBFunc func() *gorp.DbMap) {
+func hookRecoverer(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	tick := time.NewTicker(10 * time.Second).C
 	for {
 		select {
@@ -215,14 +270,14 @@ func hookRecoverer(c ctx.Context, DBFunc func() *gorp.DbMap) {
 			}
 		case <-tick:
 			h := hook.ReceivedHook{}
-			cache.DequeueWithContext(c, "hook:recovery", &h)
+			store.DequeueWithContext(c, "hook:recovery", &h)
 			if err := c.Err(); err != nil {
 				log.Error("Exiting hookRecoverer: %v", err)
 				return
 			}
 			if h.Repository != "" {
-				if err := processHook(DBFunc(), h); err != nil {
-					hook.Recovery(h, err)
+				if err := processHook(DBFunc, store, h); err != nil {
+					hook.Recovery(store, h, err)
 				}
 			}
 		}
@@ -230,7 +285,8 @@ func hookRecoverer(c ctx.Context, DBFunc func() *gorp.DbMap) {
 }
 
 //processHook is the core function for hook processing
-func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
+func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHook) error {
+	db := DBFunc()
 	if db == nil {
 		return fmt.Errorf("database not available")
 	}
@@ -287,7 +343,7 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 
 		// get Project
 		// Load project
-		projectData, err := project.LoadByPipelineID(tx, nil, p.ID)
+		projectData, err := project.LoadByPipelineID(tx, store, nil, p.ID)
 		if err != nil {
 			log.Warning("processHook> Cannot load project for pipeline %s: %s\n", p.Name, err)
 			return err
@@ -300,7 +356,7 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 		}
 		projectData.Variable = projectsVar
 
-		pb, err := application.TriggerPipeline(tx, hooks[i], h.Branch, h.Hash, h.Author, p, projectData)
+		pb, err := application.TriggerPipeline(tx, store, hooks[i], h.Branch, h.Hash, h.Author, p, projectData)
 		if err != nil {
 			log.Warning("processHook> cannot trigger pipeline %d: %s\n", hooks[i].Pipeline.ID, err)
 			return err
@@ -317,12 +373,12 @@ func processHook(db *gorp.DbMap, h hook.ReceivedHook) error {
 		}
 
 		go func(h *sdk.Hook) {
-			app, errapp := application.LoadByID(db, h.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
+			app, errapp := application.LoadByID(DBFunc(), store, h.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
 			if errapp != nil {
 				log.Warning("processHook> Unable to load application %s", errapp)
 			}
 
-			if _, err := pipeline.UpdatePipelineBuildCommits(db, projectData, p, app, &sdk.DefaultEnv, pb); err != nil {
+			if _, err := pipeline.UpdatePipelineBuildCommits(DBFunc(), projectData, p, app, &sdk.DefaultEnv, pb); err != nil {
 				log.Warning("processHook> Unable to update pipeline build commits: %s", err)
 			}
 		}(&hooks[i])

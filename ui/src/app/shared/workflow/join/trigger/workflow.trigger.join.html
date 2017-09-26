@@ -1,5 +1,6 @@
-<sm-modal title="{{ 'workflow_join_trigger_title' | translate }}" #triggerJoinModal>
-    <modal-content>
+<ng-template let-context let-modal="modal" #triggerJoinModal>
+    <div class="header">{{ 'workflow_join_trigger_title' | translate }}</div>
+    <div class="content">
         <div class="ui form" *ngIf="project && trigger">
             <ng-container *ngIf="!trigger.workflow_dest_node || trigger.workflow_dest_node.id === 0 || !trigger.workflow_dest_node.id">
                 <h3>{{ 'workflow_node_form_title' | translate }}</h3>
@@ -11,9 +12,9 @@
             <h3>{{ 'workflow_node_trigger_condition_form_title' | translate }}</h3>
             <app-workflow-trigger-condition-form [names]="conditionNames" [operators]="operators" (addEvent)="addCondition($event)"></app-workflow-trigger-condition-form>
         </div>
-    </modal-content>
-    <modal-actions>
-        <button class="ui grey button" [disabled]="loading" (click)="hide()">{{ 'common_close' | translate }}</button>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
         <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="saveTrigger()">{{ 'btn_save' | translate }}</button>
-    </modal-actions>
-</sm-modal>
+    </div>
+</ng-template>

@@ -15,7 +15,7 @@ import (
 )
 
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
-func LoadNodeJobRunQueue(db gorp.SqlExecutor, groupsID []int64, since *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int64, since *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	if since == nil {
 		since = new(time.Time)
 	}
@@ -60,6 +60,7 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, groupsID []int64, since *time.Time
 
 	jobs := make([]sdk.WorkflowNodeJobRun, len(sqlJobs))
 	for i := range sqlJobs {
+		getHatcheryInfo(store, &sqlJobs[i])
 		if err := sqlJobs[i].PostGet(db); err != nil {
 			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs")
 		}
@@ -69,24 +70,45 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, groupsID []int64, since *time.Time
 	return jobs, nil
 }
 
+// LoadNodeJobRunIDByNodeRunID Load node run job id by node run id
+func LoadNodeJobRunIDByNodeRunID(db gorp.SqlExecutor, runNodeID int64) ([]int64, error) {
+	query := `SELECT workflow_node_run_job.id FROM workflow_node_run_job WHERE workflow_node_run_id = $1`
+	rows, err := db.Query(query, runNodeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var ids []int64
+	for rows.Next() {
+		var id int64
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 //LoadNodeJobRun load a NodeJobRun given its ID
-func LoadNodeJobRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1`
 	if err := db.SelectOne(&j, query, id); err != nil {
 		return nil, err
 	}
+	getHatcheryInfo(store, &j)
 	job := sdk.WorkflowNodeJobRun(j)
 	return &job, nil
 }
 
 //LoadAndLockNodeJobRun load for update a NodeJobRun given its ID
-func LoadAndLockNodeJobRun(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeJobRun, error) {
+func LoadAndLockNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update nowait`
 	if err := db.SelectOne(&j, query, id); err != nil {
 		return nil, err
 	}
+	getHatcheryInfo(store, &j)
 	job := sdk.WorkflowNodeJobRun(j)
 	return &job, nil
 }
@@ -108,7 +130,7 @@ func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
 }
 
 //UpdateNodeJobRun updates a workflow_node_run_job
-func UpdateNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
+func UpdateNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, j *sdk.WorkflowNodeJobRun) error {
 	dbj := JobRun(*j)
 	if _, err := db.Update(&dbj); err != nil {
 		return err
@@ -118,7 +140,7 @@ func UpdateNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
 	if errR != nil {
 		return errR
 	}
-	return execute(db, nRun)
+	return execute(db, store, p, nRun)
 }
 
 func keyBookJob(id int64) string {
@@ -157,13 +179,15 @@ func (j *JobRun) PostUpdate(s gorp.SqlExecutor) error {
 	return nil
 }
 
-// PostGet is a db hook on workflow_node_run_job
-func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
+func getHatcheryInfo(store cache.Store, j *JobRun) {
 	h := sdk.Hatchery{}
-	if cache.Get(keyBookJob(j.ID), &h) {
+	if store.Get(keyBookJob(j.ID), &h) {
 		j.BookedBy = h
 	}
+}
 
+// PostGet is a db hook on workflow_node_run_job
+func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 	query := "SELECT job, variables, spawninfos FROM workflow_node_run_job WHERE id = $1"
 	var params, job, spawn []byte
 	if err := s.QueryRow(query, j.ID).Scan(&job, &params, &spawn); err != nil {

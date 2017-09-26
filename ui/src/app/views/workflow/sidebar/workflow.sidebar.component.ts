@@ -7,6 +7,8 @@ import {AuthentificationStore} from '../../../service/auth/authentification.stor
 import {environment} from '../../../../environments/environment';
 import {Subscription} from 'rxjs/Subscription';
 import {WorkflowRun} from '../../../model/workflow.run.model';
+import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-workflow-sidebar',
@@ -25,6 +27,7 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
 
     // List of workflow run, updated by  webworker
     workflowRuns: Array<WorkflowRun>;
+    filteredWorkflowRuns: Array<WorkflowRun>;
 
     // Webworker
     runWorker: CDSWorker;
@@ -33,9 +36,13 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
     // Angular zone to update model with webworker data
     zone: NgZone;
 
+    // search part
+    selectedTags: Array<string>;
+    tagsSelectable: Array<string>;
+
     ready: boolean;
 
-    constructor(private _authStore: AuthentificationStore) {
+    constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService) {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
@@ -53,10 +60,42 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
         // Listening to web worker responses
         this.runWorkerSubscription = this.runWorker.response().subscribe(msg => {
             this.zone.run(() => {
+                if (msg === null) {
+                    return;
+                }
                 this.ready = true;
                 this.workflowRuns = <Array<WorkflowRun>>JSON.parse(msg);
+                this.refreshRun();
             });
 
+        });
+
+        this._workflowRunService.getTags(this.project.key, this.workflow.name).subscribe(tags => {
+            this.tagsSelectable = new Array<string>();
+            Object.keys(tags).forEach(k => {
+                if (tags.hasOwnProperty(k)) {
+                    tags[k].forEach(v => {
+                        this.tagsSelectable.push(k + ':' + v);
+                    });
+                }
+            });
+        });
+    }
+
+    refreshRun(): void {
+        this.filteredWorkflowRuns = cloneDeep(this.workflowRuns);
+        if (!this.selectedTags) {
+            return;
+        }
+        this.selectedTags.forEach(t => {
+            let splitted = t.split(':');
+            let key = splitted.shift();
+            let value = splitted.join(':');
+            this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
+                return r.tags.find(tag => {
+                    return tag.tag === key && tag.value === value;
+                });
+            });
         });
     }
 

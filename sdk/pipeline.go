@@ -17,7 +17,7 @@ import (
 // Pipeline represents the complete behavior of CDS for each projects
 type Pipeline struct {
 	ID                  int64             `json:"id" yaml:"-"`
-	Name                string            `json:"name"`
+	Name                string            `json:"name" cli:"name"`
 	Type                string            `json:"type"`
 	ProjectKey          string            `json:"projectKey"`
 	ProjectID           int64             `json:"-"`
@@ -27,7 +27,7 @@ type Pipeline struct {
 	Parameter           []Parameter       `json:"parameters,omitempty"`
 	AttachedApplication []Application     `json:"attached_application,omitempty"`
 	Permission          int               `json:"permission"`
-	LastModified        int64             `json:"last_modified"`
+	LastModified        int64             `json:"last_modified" cli:"modified"`
 }
 
 // PipelineBuild Struct for history table

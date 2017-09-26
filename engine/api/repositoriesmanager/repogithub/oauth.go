@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -46,14 +47,16 @@ type GithubConsumer struct {
 	WithPolling              bool   `json:"with-polling"`
 	DisableSetStatus         bool   `json:"-"`
 	DisableStatusURL         bool   `json:"-"`
+	Cache                    cache.Store
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret, AuthorizationCallbackURL string) *GithubConsumer {
+func New(ClientID, ClientSecret, AuthorizationCallbackURL string, store cache.Store) *GithubConsumer {
 	return &GithubConsumer{
 		ClientID:                 ClientID,
 		ClientSecret:             ClientSecret,
 		AuthorizationCallbackURL: AuthorizationCallbackURL,
+		Cache: store,
 	}
 }
 
@@ -157,6 +160,7 @@ func (g *GithubConsumer) GetAuthorized(accessToken, accessTokenSecret string) (s
 			OAuthToken:       accessToken,
 			DisableSetStatus: g.DisableSetStatus,
 			DisableStatusURL: g.DisableStatusURL,
+			Cache:            g.Cache,
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}

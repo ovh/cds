@@ -1,7 +1,7 @@
 <div id="WorkflowRun" *ngIf="workflowRun">
     <div class="scrollingContent">
         <div class="viewContent">
-            <app-workflow-graph [project]="project" [workflow]="workflowRun.workflow" [webworker]="runWorkflowWorker"></app-workflow-graph>
+            <app-workflow-graph [project]="project" [workflowData]="workflowRun.workflow" [webworker]="runWorkflowWorker"></app-workflow-graph>
         </div>
     </div>
 </div>

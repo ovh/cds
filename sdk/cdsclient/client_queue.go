@@ -224,7 +224,7 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
 	for i := 0; i <= c.config.Retry; i++ {
 		var code int
 		_, code, err = c.UploadMultiPart("POST", uri, body, SetHeader("Content-Disposition", "attachment; filename="+name), SetHeader("Content-Type", writer.FormDataContentType()))
-		if err == nil || code < 300 {
+		if err == nil && code < 300 {
 			return nil
 		}
 		time.Sleep(1 * time.Second)

@@ -16,6 +16,8 @@ const (
 	Stash RepositoriesManagerType = "STASH"
 	//Github is valued to "GITHUB"
 	Github RepositoriesManagerType = "GITHUB"
+	//Gitlab is valued to "GITLAB"
+	Gitlab RepositoriesManagerType = "GITLAB"
 )
 
 //RepositoriesManager is the struct for every repositories manager.

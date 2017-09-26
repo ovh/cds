@@ -47,14 +47,6 @@ export class WorkflowRunNodePipelineComponent {
     refreshNodeRun(data: WorkflowNodeRun): void {
         this.nodeRun = data;
 
-        /*
-        if (this.previousStatus && this.nodeRun && this.previousStatus === PipelineStatus.BUILDING &&
-            this.previousBuild && this.previousBuild.id !== this.currentBuild.id &&
-            this.nodeRun.status !== PipelineStatus.BUILDING) {
-            this.handleNotification(this.currentBuild);
-        }
-        */
-
         if (this.nodeRun) {
             this.previousStatus = this.nodeRun.status;
             if (this.nodeRun.status === PipelineStatus.SUCCESS) {
@@ -68,13 +60,6 @@ export class WorkflowRunNodePipelineComponent {
                     s.run_jobs.forEach((rj, rjIndex) => {
                         // Update job status
                         this.mapJobStatus.set(rj.job.pipeline_action_id, rj.status);
-
-                        // Update percent progression
-                        if (rj.status === PipelineStatus.BUILDING) {
-                            // this.updateJobProgression(rj);
-                        }
-                        // Update duration
-                        // this.updateJobDuration(rj);
 
                         // Update map step status
                         if (rj.job.step_status) {

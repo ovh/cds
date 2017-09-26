@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/blang/semver"
@@ -104,8 +103,6 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		r, _ := regexp.Compile("{{.*}}")
 		if commit != nil && commit.Value != "" && !r.MatchString(commit.Value) {
 			clone.CheckoutCommit = commit.Value
-		} else {
-			clone.Depth = 1
 		}
 
 		var dir string
@@ -146,71 +143,13 @@ func runGitClone(w *currentWorker) BuiltInAction {
 
 		stdTaglistErr := new(bytes.Buffer)
 		stdTagListOut := new(bytes.Buffer)
-		outputGitTar := &git.OutputOpts{
+		outputGitTag := &git.OutputOpts{
 			Stderr: stdTaglistErr,
 			Stdout: stdTagListOut,
 		}
 
-		errTag := git.TagList(dir, outputGitTar)
-		//Send the logs
-		if len(stdTagListOut.Bytes()) > 0 {
-			// search for version
-			lines := strings.Split(stdTagListOut.String(), "\n")
-			sort.Sort(sort.Reverse(sort.StringSlice(lines)))
-			var v semver.Version
-			found := false
-			for _, l := range lines {
-				var errorMake error
-				v, errorMake = semver.Make(l)
-				if errorMake == nil {
-					found = true
-					v.Patch++
-					break
-				}
-			}
-			if !found {
-				var errorMake error
-				v, errorMake = semver.Make("0.0.1")
-				if errorMake != nil {
-					res := sdk.Result{
-						Status: sdk.StatusFail.String(),
-						Reason: fmt.Sprintf("Unable init semver: %s", errorMake),
-					}
-					sendLog(res.Reason)
-					return res
-				}
-			}
+		errTag := git.TagList(url.Value, dir, auth, outputGitTag)
 
-			pr, errPR := semver.NewPRVersion("snapshot")
-			if errPR != nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable create snapshot version: %s", errTag),
-				}
-				sendLog(res.Reason)
-				return res
-			}
-			v.Pre = append(v.Pre, pr)
-
-			if cdsVersion != nil {
-				v.Build = append(v.Build, cdsVersion.Value, "cds")
-			}
-
-			semverVar := sdk.Variable{
-				Name:  "cds.semver",
-				Type:  sdk.StringVariable,
-				Value: v.String(),
-			}
-			_, err := w.addVariableInPipelineBuild(semverVar, params)
-			if err != nil {
-				res := sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
-				}
-				sendLog(res.Reason)
-				return res
-			}
-		}
 		if len(stdTaglistErr.Bytes()) > 0 {
 			sendLog(stdTaglistErr.String())
 		}
@@ -219,6 +158,69 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
 				Reason: fmt.Sprintf("Unable to list tag for getting current version: %s", errTag),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+
+		v, errorMake := semver.Make("0.0.1")
+		if errorMake != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable init semver: %s", errorMake),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+
+		//Send the logs
+		if len(stdTagListOut.Bytes()) > 0 {
+			// search for version
+			lines := strings.Split(stdTagListOut.String(), "\n")
+			versions := semver.Versions{}
+			re := regexp.MustCompile("refs/tags/(.*)")
+			for _, l := range lines {
+				match := re.FindStringSubmatch(l)
+				if len(match) >= 1 {
+					tag := match[1]
+					if sv, err := semver.Parse(tag); err == nil {
+						versions = append(versions, sv)
+					}
+				}
+			}
+			semver.Sort(versions)
+			if len(versions) > 0 {
+				// and we increment the last version found
+				v = versions[len(versions)-1]
+				v.Patch++
+			}
+		}
+
+		pr, errPR := semver.NewPRVersion("snapshot")
+		if errPR != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable create snapshot version: %s", errTag),
+			}
+			sendLog(res.Reason)
+			return res
+		}
+		v.Pre = append(v.Pre, pr)
+
+		if cdsVersion != nil {
+			v.Build = append(v.Build, cdsVersion.Value, "cds")
+		}
+
+		semverVar := sdk.Variable{
+			Name:  "cds.semver",
+			Type:  sdk.StringVariable,
+			Value: v.String(),
+		}
+
+		if _, err := w.addVariableInPipelineBuild(semverVar, params); err != nil {
+			res := sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: fmt.Sprintf("Unable to save semver variable: %s", err),
 			}
 			sendLog(res.Reason)
 			return res

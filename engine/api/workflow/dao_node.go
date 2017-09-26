@@ -8,6 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
@@ -38,14 +39,12 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 	n.WorkflowID = w.ID
 	n.ID = 0
 
+	// Set pipeline ID
 	if n.PipelineID == 0 {
 		n.PipelineID = n.Pipeline.ID
 	}
 
-	if n.Name == "" {
-		n.Name = n.Pipeline.Name
-	}
-
+	// Init context
 	if n.Context == nil {
 		n.Context = &sdk.WorkflowNodeContext{}
 	}
@@ -55,28 +54,6 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 	}
 	if n.Context.EnvironmentID == 0 && n.Context.Environment != nil {
 		n.Context.EnvironmentID = n.Context.Environment.ID
-	}
-
-	var nb int64
-	query := `
-		SELECT COUNT(workflow_node.*) FROM workflow_node
-		WHERE workflow_node.workflow_id = $1 AND workflow_node.pipeline_id = $2
-	`
-	if errCount := db.QueryRow(query, w.ID, n.PipelineID).Scan(&nb); errCount != nil {
-		return sdk.WrapError(errCount, "insertNode> Cannot count node")
-	}
-
-	// have to load pipeline to get the name
-	if n.Name == "" {
-		pip, errP := pipeline.LoadPipelineByID(db, n.PipelineID, false)
-		if errP != nil {
-			return sdk.WrapError(errP, "insertNode> cannot load pipeline")
-		}
-		n.Name = pip.Name
-	}
-
-	if nb > 0 {
-		n.Name = fmt.Sprintf("%s_%d", n.Name, nb+1)
 	}
 
 	//Insert new node
@@ -99,8 +76,12 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 	//Insert hooks
 	for i := range n.Hooks {
 		h := &n.Hooks[i]
+		//Configure the hook
+		h.Config["project"] = w.ProjectKey
+		h.Config["workflow"] = w.Name
+		//Insert the hook
 		if err := insertHook(db, n, h); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
+			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node hook")
 		}
 	}
 
@@ -168,8 +149,16 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	return nil
 }
 
+// CountPipeline Count the number of workflow that use the given pipeline
+func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
+	query := `SELECT count(1) FROM workflow_node WHERE pipeline_id= $1`
+	nbWorkfow := -1
+	err := db.QueryRow(query, pipelineID).Scan(&nbWorkfow)
+	return nbWorkfow != 0, err
+}
+
 // loadNode loads a node in a workflow
-func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk.WorkflowNode, error) {
+func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64, u *sdk.User) (*sdk.WorkflowNode, error) {
 	dbwn := Node{}
 	if err := db.SelectOne(&dbwn, "select * from workflow_node where workflow_id = $1 and id = $2", w.ID, id); err != nil {
 		if err == sql.ErrNoRows {
@@ -183,7 +172,7 @@ func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk
 	wn.Ref = fmt.Sprintf("%d", dbwn.ID)
 
 	//Load triggers
-	triggers, errTrig := loadTriggers(db, w, &wn, u)
+	triggers, errTrig := loadTriggers(db, store, w, &wn, u)
 	if errTrig != nil {
 		return nil, sdk.WrapError(errTrig, "LoadNode> Unable to load triggers of %d", id)
 	}
@@ -192,7 +181,7 @@ func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk
 	//TODO: Check user permission
 
 	//Load context
-	ctx, errCtx := loadNodeContext(db, &wn, u)
+	ctx, errCtx := loadNodeContext(db, store, &wn, u)
 	if errCtx != nil {
 		return nil, sdk.WrapError(errCtx, "LoadNode> Unable to load context of %d", id)
 	}
@@ -219,7 +208,7 @@ func loadNode(db gorp.SqlExecutor, w *sdk.Workflow, id int64, u *sdk.User) (*sdk
 	return &wn, nil
 }
 
-func loadNodeContext(db gorp.SqlExecutor, wn *sdk.WorkflowNode, u *sdk.User) (*sdk.WorkflowNodeContext, error) {
+func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNode, u *sdk.User) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
 	if err := db.SelectOne(&dbnc, "select id from workflow_node_context where workflow_node_id = $1", wn.ID); err != nil {
 		return nil, sdk.WrapError(err, "loadNodeContext> Unable to load node context %d", wn.ID)
@@ -255,7 +244,7 @@ func loadNodeContext(db gorp.SqlExecutor, wn *sdk.WorkflowNode, u *sdk.User) (*s
 
 	//Load the application in the context
 	if ctx.ApplicationID != 0 {
-		app, err := application.LoadByID(db, ctx.ApplicationID, u, application.LoadOptions.WithRepositoryManager)
+		app, err := application.LoadByID(db, store, ctx.ApplicationID, u, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithVariables)
 		if err != nil {
 			return nil, sdk.WrapError(err, "loadNodeContext> Unable to load application %d", ctx.ApplicationID)
 		}

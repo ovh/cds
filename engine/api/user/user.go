@@ -348,6 +348,7 @@ func PersistentSessionTokenCleaner(c context.Context, DBFunc func() *gorp.DbMap)
 			tick.Stop()
 			log.Error("Exiting user.PersistentSessionTokenCleaner: %v", c.Err())
 			return
+
 		case <-tick.C:
 			tx, err := DBFunc().Begin()
 			if err != nil {

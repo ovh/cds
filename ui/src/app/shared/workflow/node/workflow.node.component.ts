@@ -5,7 +5,6 @@ import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../toast/ToastService';
-import {SemanticModalComponent} from 'ng-semantic';
 import {WorkflowDeleteNodeComponent} from './delete/workflow.node.delete.component';
 import {WorkflowNodeContextComponent} from './context/workflow.node.context.component';
 import {cloneDeep} from 'lodash';
@@ -16,9 +15,10 @@ import {CDSWorker} from '../../worker/worker';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {Router} from '@angular/router';
 import {PipelineStatus} from '../../../model/pipeline.model';
-
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 declare var _: any;
+
 @Component({
     selector: 'app-workflow-node',
     templateUrl: './workflow.node.html',
@@ -30,8 +30,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
-
-    @Input () disabled = false;
 
     @Output() linkJoinEvent = new EventEmitter<WorkflowNode>();
 
@@ -52,14 +50,17 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     currentNodeRun: WorkflowNodeRun;
     pipelineStatus = PipelineStatus;
 
+
     loading = false;
     options: {};
+    disabled = false;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
                 private _toast: ToastService, private _pipelineStore: PipelineStore, private _router: Router) {
     }
 
     ngOnInit(): void {
+
         this.zone = new NgZone({enableLongStackTrace: false});
         if (this.webworker) {
             this.webworker.response().subscribe(wrString => {
@@ -88,27 +89,28 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
         this.elementRef.nativeElement.style.top = 0;
-
     }
 
     openTriggerModal(): void {
         this.newTrigger = new WorkflowNodeTrigger();
         this.newTrigger.workflow_node_id = this.node.id;
-        this.workflowTrigger.show({observable: true, closable: false, autofocus: false});
+        this.workflowTrigger.show();
     }
 
     openDeleteNodeModal(): void {
-        this.workflowDeleteNode.show({observable: true, closable: false, autofocus: false});
+        this.workflowDeleteNode.show();
     }
 
     openEditContextModal(): void {
-        this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
-           if (pips.get(this.project.key + '-' + this.node.pipeline.name)) {
-               setTimeout(() => {
-                   this.workflowContext.show({observable: true, closable: false, autofocus: false});
-               }, 100);
-           }
-        });
+        let sub = this.pipelineSubscription =
+            this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {
+                if (pips.get(this.project.key + '-' + this.node.pipeline.name)) {
+                    setTimeout(() => {
+                        this.workflowContext.show();
+                        sub.unsubscribe();
+                    }, 100);
+                }
+            });
     }
 
     saveTrigger(): void {
@@ -140,7 +142,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         node.context = cloneDeep(n.context);
         delete node.context.application;
         delete node.context.environment;
-        this.updateWorkflow(clonedWorkflow, this.workflowContext.nodeContextModal);
+        this.updateWorkflow(clonedWorkflow, this.workflowContext.modal);
     }
 
     deleteNode(b: boolean): void {
@@ -189,20 +191,21 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         }
     }
 
-    deleteWorkflow(w: Workflow, modal: SemanticModalComponent): void {
+    deleteWorkflow(w: Workflow, modal: ActiveModal<boolean, boolean, void>): void {
         this._workflowStore.deleteWorkflow(this.project.key, w).subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_deleted'));
-            modal.hide();
+            modal.approve(true);
         });
     }
 
-    updateWorkflow(w: Workflow, modal?: SemanticModalComponent): void {
+    updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
         this.loading = true;
+
         this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
             this.loading = false;
             this._toast.success('', this._translate.instant('workflow_updated'));
             if (modal) {
-                modal.hide();
+                modal.approve(null);
             }
         }, () => {
             this.loading = false;
@@ -231,10 +234,11 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         if (!this.webworker || !this.currentNodeRun) {
             return;
         }
+        let pip = Workflow.getNodeByID(this.currentNodeRun.workflow_node_id, this.workflow).pipeline.name;
         this._router.navigate([
             '/project', this.project.key,
             'workflow', this.workflow.name,
             'run', this.currentNodeRun.num,
-            'node', this.currentNodeRun.id]);
+            'node', this.currentNodeRun.id], {queryParams: { name: pip}});
     }
 }

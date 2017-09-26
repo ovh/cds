@@ -7,8 +7,7 @@ import (
 )
 
 func TestCleanerRun(t *testing.T) {
-	db := test.SetupPG(t)
-
+	db, _ := test.SetupPG(t)
 	exs, err := CleanerRun(db, 2)
 	test.NoError(t, err)
 	t.Logf("Has deleted %v", exs)

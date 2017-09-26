@@ -1,11 +1,12 @@
-<sm-modal title="{{ 'workflow_join_delete' | translate }}" #deleteModal>
-    <modal-content>
+<ng-template let-context let-modal="modal" #deleteModal>
+        <div class="header">{{ 'workflow_join_delete' | translate }}</div>
+    <div class="content">
         <div class="">
             {{ 'workflow_join_delete_alert' | translate }}
         </div>
-    </modal-content>
-    <modal-actions>
-        <button class="ui grey button" [disabled]="loading" (click)="hide()">{{ 'common_close' | translate }}</button>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
         <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="deleteJoin()">{{ 'btn_delete' | translate }}</button>
-    </modal-actions>
-</sm-modal>
+    </div>
+</ng-template>

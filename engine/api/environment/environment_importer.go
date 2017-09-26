@@ -113,6 +113,14 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentGroupCreated, groupName, into.Name)
 	}
 
+	var deleteGroupInEnv = func(groupName string) {
+		if err := group.DeleteGroupFromEnvironment(db, proj.Key, into.Name, groupName); err != nil {
+			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentGroupCannotBeDeleted, groupName, into.Name, err)
+			return
+		}
+		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentGroupDeleted, groupName, into.Name)
+	}
+
 	for i := range env.Variable {
 		log.Debug("ImportInto> Checking >> %s", env.Variable[i].Name)
 		var found bool
@@ -144,6 +152,18 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 		}
 		if !found {
 			insertGroupInEnv(env.EnvironmentGroups[i].Group.Name, env.EnvironmentGroups[i].Permission)
+		}
+	}
+
+	for i := range into.EnvironmentGroups {
+		var found bool
+		for j := range env.EnvironmentGroups {
+			if into.EnvironmentGroups[i].Group.Name == env.EnvironmentGroups[j].Group.Name {
+				found = true
+			}
+		}
+		if !found {
+			deleteGroupInEnv(into.EnvironmentGroups[i].Group.Name)
 		}
 	}
 

@@ -14,8 +14,10 @@ import (
 type client struct {
 	isWorker   bool
 	isHatchery bool
+	isService  bool
 	HTTPClient HTTPClient
 	config     Config
+	name       string
 }
 
 // New returns a client from a config struct
@@ -29,8 +31,24 @@ func New(c Config) Interface {
 	return cli
 }
 
+// NewService returns client for a service
+func NewService(endpoint string) Interface {
+	conf := Config{
+		Host:  endpoint,
+		Retry: 2,
+	}
+	cli := new(client)
+	cli.config = conf
+	cli.HTTPClient = &http.Client{
+		Timeout: time.Second * 10,
+	}
+	cli.isService = true
+	cli.init()
+	return cli
+}
+
 // NewWorker returns client for a worker
-func NewWorker(endpoint string) Interface {
+func NewWorker(endpoint string, name string) Interface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 2,
@@ -41,12 +59,13 @@ func NewWorker(endpoint string) Interface {
 		Timeout: time.Second * 10,
 	}
 	cli.isWorker = true
+	cli.name = name
 	cli.init()
 	return cli
 }
 
 // NewHatchery returns client for a hatchery
-func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) Interface {
+func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool, name string) Interface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 2,
@@ -61,7 +80,10 @@ func NewHatchery(endpoint string, token string, requestSecondsTimeout int, insec
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: insecureSkipVerifyTLS},
 		},
 	}
+
+	// hatchery don't need to make a request without timeout on API
 	cli.isHatchery = true
+	cli.name = name
 	cli.init()
 	return cli
 }
@@ -81,6 +103,8 @@ func (c *client) init() {
 		c.config.userAgent = sdk.WorkerAgent
 	} else if c.isHatchery {
 		c.config.userAgent = sdk.HatcheryAgent
+	} else if c.isService {
+		c.config.userAgent = sdk.ServiceAgent
 	} else {
 		c.config.userAgent = sdk.SDKAgent
 	}

@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -12,21 +13,31 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var s Store
-
 //LocalStore is a in memory cache for dev purpose only
 type LocalStore struct {
-	Mutex  *sync.Mutex
+	mutex  *sync.Mutex
 	Data   map[string][]byte
 	Queues map[string]*list.List
+	Sets   map[string][][]byte
 	TTL    int
+}
+
+// NewLocalStore returns a new localstore
+func NewLocalStore() *LocalStore {
+	return &LocalStore{
+		mutex:  &sync.Mutex{},
+		Data:   map[string][]byte{},
+		Queues: map[string]*list.List{},
+		Sets:   map[string][][]byte{},
+	}
 }
 
 //Get a key from local store
 func (s *LocalStore) Get(key string, value interface{}) bool {
-	s.Mutex.Lock()
+	s.mutex.Lock()
 	b := s.Data[key]
-	s.Mutex.Unlock()
+	s.mutex.Unlock()
+
 	if b != nil && len(b) > 0 {
 		if err := json.Unmarshal(b, value); err != nil {
 			log.Warning("Cache> Cannot unmarshal %s :%s", key, err)
@@ -43,16 +54,14 @@ func (s *LocalStore) SetWithTTL(key string, value interface{}, ttl int) {
 	if err != nil {
 		log.Warning("Error caching %s", key)
 	}
-	s.Mutex.Lock()
+	s.mutex.Lock()
 	s.Data[key] = b
-	s.Mutex.Unlock()
+	s.mutex.Unlock()
 
 	if ttl > 0 {
 		go func(s *LocalStore, key string) {
 			time.Sleep(time.Duration(ttl) * time.Second)
-			s.Mutex.Lock()
-			delete(s.Data, key)
-			s.Mutex.Unlock()
+			s.Delete(key)
 		}(s, key)
 	}
 }
@@ -64,57 +73,57 @@ func (s *LocalStore) Set(key string, value interface{}) {
 
 //Delete a key from local store
 func (s *LocalStore) Delete(key string) {
-	s.Mutex.Lock()
+	s.mutex.Lock()
 	delete(s.Data, key)
-	s.Mutex.Unlock()
+	s.mutex.Unlock()
 }
 
 //DeleteAll on locastore delete all the things
 func (s *LocalStore) DeleteAll(key string) {
 	for k := range s.Data {
 		if key == k || (strings.HasSuffix(key, "*") && strings.HasPrefix(k, key[:len(key)-1])) {
-			s.Mutex.Lock()
-			delete(s.Data, k)
-			s.Mutex.Unlock()
+			s.Delete(k)
 		}
 	}
 }
 
 //Enqueue pushes to queue
 func (s *LocalStore) Enqueue(queueName string, value interface{}) {
-	s.Mutex.Lock()
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	l := s.Queues[queueName]
 	if l == nil {
 		s.Queues[queueName] = &list.List{}
 		l = s.Queues[queueName]
 	}
-	s.Mutex.Unlock()
 	b, err := json.Marshal(value)
 	if err != nil {
 		return
 	}
-	s.Mutex.Lock()
+
+	log.Debug("[%p] Enqueueing to %s :%s", s, queueName, string(b))
 	l.PushFront(b)
-	s.Mutex.Unlock()
 }
 
 //Dequeue gets from queue This is blocking while there is nothing in the queue
 func (s *LocalStore) Dequeue(queueName string, value interface{}) {
+	s.mutex.Lock()
 	l := s.Queues[queueName]
 	if l == nil {
 		s.Queues[queueName] = &list.List{}
 		l = s.Queues[queueName]
 	}
-
+	s.mutex.Unlock()
 	elemChan := make(chan *list.Element)
 	go func() {
 		for {
 			time.Sleep(500 * time.Millisecond)
 			e := l.Back()
 			if e != nil {
-				s.Mutex.Lock()
+				s.mutex.Lock()
 				l.Remove(e)
-				s.Mutex.Unlock()
+				s.mutex.Unlock()
 				elemChan <- e
 				return
 			}
@@ -133,6 +142,8 @@ func (s *LocalStore) Dequeue(queueName string, value interface{}) {
 
 //QueueLen returns the length of a queue
 func (s *LocalStore) QueueLen(queueName string) int {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	l := s.Queues[queueName]
 	if l == nil {
 		return 0
@@ -142,10 +153,16 @@ func (s *LocalStore) QueueLen(queueName string) int {
 
 //DequeueWithContext gets from queue This is blocking while there is nothing in the queue, it can be cancelled with a context.Context
 func (s *LocalStore) DequeueWithContext(c context.Context, queueName string, value interface{}) {
+	log.Debug("[%p] DequeueWithContext from %s", s, queueName)
+	s.mutex.Lock()
 	l := s.Queues[queueName]
+	s.mutex.Unlock()
+
 	if l == nil {
+		s.mutex.Lock()
 		s.Queues[queueName] = &list.List{}
 		l = s.Queues[queueName]
+		s.mutex.Unlock()
 	}
 
 	elemChan := make(chan *list.Element)
@@ -157,9 +174,9 @@ func (s *LocalStore) DequeueWithContext(c context.Context, queueName string, val
 			case <-ticker:
 				e := l.Back()
 				if e != nil {
-					s.Mutex.Lock()
+					s.mutex.Lock()
 					l.Remove(e)
-					s.Mutex.Unlock()
+					s.mutex.Unlock()
 					elemChan <- e
 					return
 				}
@@ -199,20 +216,20 @@ func (s *LocalPubSub) Unsubscribe(channels ...string) error {
 
 // Publish a msg in a queue
 func (s *LocalStore) Publish(channel string, value interface{}) {
-	s.Mutex.Lock()
+	s.mutex.Lock()
 	l := s.Queues[channel]
 	if l == nil {
 		s.Queues[channel] = &list.List{}
 		l = s.Queues[channel]
 	}
-	s.Mutex.Unlock()
+	s.mutex.Unlock()
 	b, err := json.Marshal(value)
 	if err != nil {
 		return
 	}
-	s.Mutex.Lock()
+	s.mutex.Lock()
 	l.PushBack(b)
-	s.Mutex.Unlock()
+	s.mutex.Unlock()
 }
 
 // Subscribe to a channel
@@ -229,6 +246,57 @@ func (s *LocalStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 		return "", fmt.Errorf("GetMessage> PubSub is not a LocalPubSub. Got %T", pb)
 	}
 	var msg string
-	DequeueWithContext(c, lps.queueName, &msg)
+	s.DequeueWithContext(c, lps.queueName, &msg)
 	return msg, nil
+}
+
+// Status returns the status of the local cache
+func (s *LocalStore) Status() string {
+	return "OK (local)"
+}
+
+// SetAdd add a member (identified by a key) in the cached set
+func (s *LocalStore) SetAdd(rootKey string, memberKey string, member interface{}) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	set := s.Sets[rootKey]
+	btes, err := json.Marshal(member)
+	if err != nil {
+		log.Error("cache.local.SetAdd> Unable to marshal member value: %v", err)
+		return
+	}
+	set = append(set, btes)
+	s.Sets[rootKey] = set
+}
+
+// SetRemove removes a member from a set
+func (s *LocalStore) SetRemove(rootKey string, memberKey string, member interface{}) {
+
+}
+
+// SetCard returns the cardinality of a set
+func (s *LocalStore) SetCard(key string) int {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	set := s.Sets[key]
+	return len(set)
+}
+
+// SetScan scans a set as mush as members are given in the variadic
+func (s *LocalStore) SetScan(rootKey string, members ...interface{}) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	set := s.Sets[rootKey]
+	if len(members) > len(set) {
+		return errors.New("Too much members")
+	}
+	for i := range members {
+		if err := json.Unmarshal(set[i], members[i]); err != nil {
+			return err
+		}
+	}
+	return nil
 }

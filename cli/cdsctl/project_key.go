@@ -23,22 +23,22 @@ var (
 
 var projectKeyCreateCmd = cli.Command{
 	Name:  "add",
-	Short: "Add a new key on project. key type can be ssh or pgp",
+	Short: "Add a new key on project. key-type can be ssh or pgp",
 	Args: []cli.Arg{
-		{Name: "key"},
-		{Name: "keyName"},
-		{Name: "keyType"},
+		{Name: "project-key"},
+		{Name: "key-name"},
+		{Name: "key-type"},
 	},
 }
 
 func projectCreateKeyRun(v cli.Values) error {
 	key := &sdk.ProjectKey{
 		Key: sdk.Key{
-			Name: v["keyName"],
-			Type: v["keyType"],
+			Name: v["key-name"],
+			Type: v["key-type"],
 		},
 	}
-	if err := client.ProjectKeyCreate(v["key"], key); err != nil {
+	if err := client.ProjectKeyCreate(v["project-key"], key); err != nil {
 		return err
 	}
 	return nil
@@ -48,12 +48,12 @@ var projectKeyListCmd = cli.Command{
 	Name:  "list",
 	Short: "List CDS project keys",
 	Args: []cli.Arg{
-		{Name: "key"},
+		{Name: "project-key"},
 	},
 }
 
 func projectListKeyRun(v cli.Values) (cli.ListResult, error) {
-	keys, err := client.ProjectKeysList(v["key"])
+	keys, err := client.ProjectKeysList(v["project-key"])
 	if err != nil {
 		return nil, err
 	}
@@ -64,11 +64,11 @@ var projectKeyDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete CDS project key",
 	Args: []cli.Arg{
-		{Name: "key"},
-		{Name: "keyName"},
+		{Name: "project-key"},
+		{Name: "key-name"},
 	},
 }
 
 func projectDeleteKeyRun(v cli.Values) error {
-	return client.ProjectKeysDelete(v["key"], v["keyName"])
+	return client.ProjectKeysDelete(v["project-key"], v["key-name"])
 }

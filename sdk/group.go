@@ -9,7 +9,7 @@ import (
 // Group represent a group of user.
 type Group struct {
 	ID                int64              `json:"id" yaml:"-"`
-	Name              string             `json:"name" yaml:"name"`
+	Name              string             `json:"name" yaml:"name" cli:"name"`
 	Admins            []User             `json:"admins,omitempty" yaml:"admin,omitempty"`
 	Users             []User             `json:"users,omitempty" yaml:"users,omitempty"`
 	ProjectGroups     []ProjectGroup     `json:"projects,omitempty" yaml:"-"`

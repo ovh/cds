@@ -1,6 +1,7 @@
 package hatchery
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"sync/atomic"
@@ -13,18 +14,77 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// CommonConfiguration is the base configuration for all hatcheries
+type CommonConfiguration struct {
+	Name string `toml:"name" default:"" comment:"Name of Hatchery"`
+	API  struct {
+		HTTP struct {
+			URL      string `toml:"url" default:"http://localhost:8081" commented:"true" comment:"CDS API URL"`
+			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
+		} `toml:"http"`
+		GRPC struct {
+			URL      string `toml:"url" default:"http://localhost:8082" commented:"true"`
+			Insecure bool   `toml:"insecure" default:"false" commented:"true" comment:"sslInsecureSkipVerify, set to true if you use a self-signed SSL on CDS API"`
+		} `toml:"grpc"`
+		Token                string `toml:"token" default:"" comment:"CDS Token to reach CDS API. See https://ovh.github.io/cds/advanced/advanced.worker.token/ "`
+		RequestTimeout       int    `toml:"requestTimeout" default:"10" comment:"Request CDS API: timeout in seconds"`
+		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10" comment:"Maximum allowed consecutives failures on heatbeat routine"`
+	} `toml:"api"`
+	Provision struct {
+		Disabled          bool `toml:"disabled" default:"false" comment:"Disabled provisionning. Format:true or false"`
+		Frequency         int  `toml:"frequency" default:"30" comment:"Check provisioning each n Seconds"`
+		MaxWorker         int  `toml:"maxWorker" default:"10" comment:"Maximum allowed simultaneous workers"`
+		GraceTimeQueued   int  `toml:"graceTimeQueued" default:"4" comment:"if worker is queued less than this value (seconds), hatchery does not take care of it"`
+		RegisterFrequency int  `toml:"registerFrequency" default:"60" comment:"Check if some worker model have to be registered each n Seconds"`
+		WorkerLogsOptions struct {
+			Graylog struct {
+				Host       string `toml:"host"`
+				Port       int    `toml:"port"`
+				ExtraKey   string `toml:"extraKey"`
+				ExtraValue string `toml:"extraValue"`
+			} `toml:"graylog"`
+		} `toml:"workerLogsOptions" comment:"Worker Log Configuration"`
+	} `toml:"provision"`
+	LogOptions struct {
+		Graylog struct {
+			Host       string `toml:"host"`
+			Port       int    `toml:"port"`
+			ExtraKey   string `toml:"extraKey"`
+			ExtraValue string `toml:"extraValue"`
+		} `toml:"graylog"`
+		SpawnOptions struct {
+			ThresholdCritical int `toml:"thresholdCritical" default:"480" comment:"log critical if spawn take more than this value (in seconds)"`
+			ThresholdWarning  int `toml:"thresholdWarning" default:"360" comment:"log warning if spawn take more than this value (in seconds)"`
+		} `toml:"spawnOptions"`
+	} `toml:"logOptions" comment:"Hatchery Log Configuration"`
+	RemoteDebugURL string `toml:"remoteDebugURL" comment:"start a gops agent on specified URL. Ex: localhost:9999"`
+}
+
 // Interface describe an interface for each hatchery mode (mesos, local)
+// Interface describe an interface for each hatchery mode
+// Init create new clients for different api
+// SpawnWorker creates a new vm instance
+// CanSpawn return wether or not hatchery can spawn model
+// WorkersStartedByModel returns the number of instances of given model started but not necessarily register on CDS yet
+// WorkersStarted returns the number of instances started but not necessarily register on CDS yet
+// Hatchery returns hatchery instance
+// Client returns cdsclient instance
+// ModelType returns type of hatchery
+// NeedRegistration return true if worker model need regsitration
+// ID returns hatchery id
 type Interface interface {
-	Init(name, api, token string, requestSecondsTimeout int, insecureSkipVerifyTLS bool) error
+	Init() error
 	SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error)
 	CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
 	WorkersStartedByModel(model *sdk.Model) int
 	WorkersStarted() int
 	Hatchery() *sdk.Hatchery
 	Client() cdsclient.Interface
+	Configuration() CommonConfiguration
 	ModelType() string
 	NeedRegistration(model *sdk.Model) bool
 	ID() int64
+	Serve(ctx context.Context) error
 }
 
 var (
@@ -46,7 +106,7 @@ func CheckRequirement(r sdk.Requirement) (bool, error) {
 	}
 }
 
-func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, warningSeconds, criticalSeconds, graceSeconds int, hostname string) bool {
+func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID int64, jobQueuedSeconds int64, jobBookedBy sdk.Hatchery, requirements []sdk.Requirement, models []sdk.Model, nRoutines *int64, spawnIDs *cache.Cache, hostname string) bool {
 	if jobID == 0 {
 		return false
 	}
@@ -62,7 +122,7 @@ func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID i
 		return false
 	}
 
-	if jobQueuedSeconds < int64(graceSeconds) {
+	if jobQueuedSeconds < int64(h.Configuration().Provision.GraceTimeQueued) {
 		log.Debug("job %d is too fresh, queued since %d seconds, let existing waiting worker check it", jobID, jobQueuedSeconds)
 		return false
 	}
@@ -79,15 +139,15 @@ func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID i
 
 	atomic.AddInt64(nRoutines, 1)
 	defer atomic.AddInt64(nRoutines, -1)
-	if errR := routine(h, isWorkflowJob, models, execGroups, jobID, requirements, hostname, time.Now().Unix(), warningSeconds, criticalSeconds, graceSeconds); errR != nil {
+	if errR := routine(h, isWorkflowJob, models, execGroups, jobID, requirements, hostname, time.Now().Unix()); errR != nil {
 		log.Warning("Error on routine: %s", errR)
 		return false
 	}
 	return true
 }
 
-func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []sdk.Group, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64, warningSeconds, criticalSeconds, graceSeconds int) error {
-	defer logTime(fmt.Sprintf("routine> %d", timestamp), time.Now(), warningSeconds, criticalSeconds)
+func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []sdk.Group, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64) error {
+	defer logTime(h, fmt.Sprintf("routine> %d", timestamp), time.Now())
 	log.Debug("routine> %d enter", timestamp)
 
 	if h.Hatchery() == nil || h.Hatchery().ID == 0 {
@@ -201,6 +261,15 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 		}
 	}
 
+	var containsModelRequirement, containsHostnameRequirement bool
+	for _, r := range requirements {
+		switch r.Type {
+		case sdk.ModelRequirement:
+			containsModelRequirement = true
+		case sdk.HostnameRequirement:
+			containsHostnameRequirement = true
+		}
+	}
 	// Common check
 	for _, r := range requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
@@ -227,19 +296,27 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 			continue
 		}
 
-		if r.Type == sdk.BinaryRequirement {
-			found := false
-			// Check binary requirement against worker model capabilities
-			for _, c := range model.Capabilities {
-				if r.Value == c.Value || r.Value == c.Name {
-					found = true
-					break
-				}
-			}
+		// here, if there a model requirements, we don't need to check binaries
+		if r.Type == sdk.ModelRequirement && r.Value != model.Name {
+			log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) != model.Name(%s)", timestamp, jobID, r.Value, model.Name)
+			return false
+		}
 
-			if !found {
-				log.Debug("canRunJob> %d - job %d - model(%s) does not have binary %s(%s) for this job.", timestamp, jobID, model.Name, r.Name, r.Value)
-				return false
+		if !containsModelRequirement && !containsHostnameRequirement {
+			if r.Type == sdk.BinaryRequirement {
+				found := false
+				// Check binary requirement against worker model capabilities
+				for _, c := range model.Capabilities {
+					if r.Value == c.Value || r.Value == c.Name {
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					log.Debug("canRunJob> %d - job %d - model(%s) does not have binary %s(%s) for this job.", timestamp, jobID, model.Name, r.Name, r.Value)
+					return false
+				}
 			}
 		}
 	}
@@ -247,14 +324,14 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 	return h.CanSpawn(model, jobID, requirements)
 }
 
-func logTime(name string, then time.Time, warningSeconds, criticalSeconds int) {
+func logTime(h Interface, name string, then time.Time) {
 	d := time.Since(then)
-	if d > time.Duration(criticalSeconds)*time.Second {
+	if d > time.Duration(h.Configuration().LogOptions.SpawnOptions.ThresholdCritical)*time.Second {
 		log.Error("%s took %s to execute", name, d)
 		return
 	}
 
-	if d > time.Duration(warningSeconds)*time.Second {
+	if d > time.Duration(h.Configuration().LogOptions.SpawnOptions.ThresholdWarning)*time.Second {
 		log.Warning("%s took %s to execute", name, d)
 		return
 	}

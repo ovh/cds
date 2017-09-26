@@ -1,12 +1,13 @@
-<sm-modal title="{{ 'workflow_node_context_edit' | translate }}" #nodeContextModal>
-    <modal-content>
+<ng-template let-context let-modal="modal" #nodeContextModal>
+    <div class="header">{{ 'workflow_node_context_edit' | translate }}</div>
+    <div class="content">
         <div class="ui form" *ngIf="project && editableNode">
             <h3>{{ 'workflow_node_form_title' | translate }}</h3>
             <app-workflow-node-form [project]="project" [(node)]="editableNode"></app-workflow-node-form>
             <ng-container *ngIf="pipParamsReady && editableNode.context.default_pipeline_parameters && editableNode.context.default_pipeline_parameters.length > 0">
                 <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
                 <app-parameter-list [project]="project" [parameters]="editableNode.context.default_pipeline_parameters" mode="launcher"
-                 [suggest]="[]"></app-parameter-list>
+                                    [suggest]="[]"></app-parameter-list>
             </ng-container>
             <ng-container>
                 <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
@@ -21,9 +22,9 @@
                 </div>
             </ng-container>
         </div>
-    </modal-content>
-    <modal-actions>
-        <button class="ui grey button" [disabled]="loading" (click)="hide()">{{ 'common_close' | translate }}</button>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
         <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="saveContext()">{{ 'btn_save' | translate }}</button>
-    </modal-actions>
-</sm-modal>
+    </div>
+</ng-template>

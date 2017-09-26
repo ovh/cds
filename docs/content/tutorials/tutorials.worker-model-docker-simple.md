@@ -10,7 +10,7 @@ identifier = "tutorials-worker-model-docker"
 
 A worker model of type `docker` can be spawned by a Hatchery Docker or Docker Swarm.
 
-## Register a worker Model from a existing Docker Image
+## Register a worker Model from an existing Docker Image
 
 Docker Image *golang:1.8.1* have a "curl" in $PATH, so it can be used as it is.
 
