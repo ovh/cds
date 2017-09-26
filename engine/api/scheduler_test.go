@@ -32,7 +32,7 @@ func Test_getSchedulerApplicationPipelineHandler(t *testing.T) {
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
 		Name:       pkey + "_PIP",
-		Type:       sdk.BuildPipeline,
+		Type:       sdk.TestingPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
