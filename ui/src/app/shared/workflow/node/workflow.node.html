@@ -41,5 +41,5 @@
     <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
 </ng-container>
 <ng-container *ngIf="project && node">
-    <app-workflow-node-hook-form [loading]="loading" [node]="node" (addHookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-form>
+    <app-workflow-node-hook-form [loading]="loading" (hookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-form>
 </ng-container>

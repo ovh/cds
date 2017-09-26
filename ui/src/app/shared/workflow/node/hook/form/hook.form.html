@@ -1,7 +1,7 @@
 <ng-template let-context let-modal="modal" #nodeHookFormModal>
     <div class="header">{{ 'workflow_node_hook_add' | translate }}</div>
     <div class="content">
-        <div class="ui form" *ngIf="node">
+        <div class="ui form" *ngIf="hooksModel">
             <h3>{{ 'workflow_node_hook_form_title' | translate }}</h3>
             <sui-select class="selection"
                         [(ngModel)]="selectedHookModel"

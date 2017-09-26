@@ -63,6 +63,7 @@ import {NgxAutoScroll} from 'ngx-auto-scroll/src/ngx-auto-scroll.directive';
 import {SuiModule} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
 import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/node.hook.component';
+import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -110,6 +111,7 @@ import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/node.hook
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
         WorkflowNodeHookFormComponent,
+        WorkflowNodeHookComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         WorkflowTriggerConditionFormComponent,
@@ -172,6 +174,7 @@ import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/node.hook
         WorkflowJoinTriggerSrcComponent,
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
+        WorkflowNodeHookComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         WorkflowTriggerConditionFormComponent,

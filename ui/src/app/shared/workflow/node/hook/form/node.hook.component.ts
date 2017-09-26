@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {WorkflowNode, WorkflowNodeHook} from '../../../../../model/workflow.model';
+import {WorkflowNodeHook} from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
@@ -13,10 +13,9 @@ import {cloneDeep} from 'lodash';
 })
 export class WorkflowNodeHookFormComponent {
 
-    @Input() node: WorkflowNode;
     @Input() loading: boolean;
 
-    @Output() addHookEvent = new EventEmitter<WorkflowNodeHook>();
+    @Output() hookEvent = new EventEmitter<WorkflowNodeHook>();
 
     hookToAdd = new WorkflowNodeHook();
     hooksModel: Array<WorkflowHookModel>;
@@ -45,6 +44,6 @@ export class WorkflowNodeHookFormComponent {
     }
 
     addHook(): void {
-        this.addHookEvent.emit(this.hookToAdd);
+        this.hookEvent.emit(this.hookToAdd);
     }
 }
