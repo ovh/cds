@@ -158,6 +158,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if w.bookedJobID != 0 {
 			w.processBookedJob(pbjobs)
 		}
+		w.client.WorkerSetStatus(sdk.StatusWaiting)
 
 		go func(ctx context.Context) {
 			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second); err != nil {

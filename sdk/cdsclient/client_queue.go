@@ -19,10 +19,6 @@ import (
 )
 
 func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration) error {
-	if c.isWorker {
-		defer c.WorkerSetStatus(sdk.StatusWaiting)
-	}
-
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
 	pbjobsTicker := time.NewTicker(delay)
