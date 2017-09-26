@@ -7,6 +7,8 @@ RUN apt-get update && \
     cat files | sort | uniq > filesToDownload && \
     while read f; do wget $f; done < filesToDownload && \
     chmod +x cds-engine-linux-amd64 && \
+    cp cds-worker-linux-amd64 worker && \
+    chmod +x worker && \
     tar xzf sql.tar.gz && \
     chown -R nobody:nogroup /app && \
     rm -rf /var/lib/apt/lists/*
