@@ -13,11 +13,25 @@ import {cloneDeep} from 'lodash';
 })
 export class WorkflowNodeHookFormComponent {
 
+    _hook: WorkflowNodeHook = new WorkflowNodeHook();
+
     @Input() loading: boolean;
+    @Input('hook')
+    set hook(data: WorkflowNodeHook) {
+        if (data) {
+            this._hook = cloneDeep(data);
+            if (this.hooksModel) {
+                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
+            }
+            this.selectedHookModel = this._hook.model;
+        }
+    }
+    get hook() {
+        return this._hook;
+    }
 
     @Output() hookEvent = new EventEmitter<WorkflowNodeHook>();
 
-    hookToAdd = new WorkflowNodeHook();
     hooksModel: Array<WorkflowHookModel>;
     selectedHookModel: WorkflowHookModel;
 
@@ -30,12 +44,15 @@ export class WorkflowNodeHookFormComponent {
     constructor(private _hookService: HookService, private _modalService: SuiModalService) {
         this._hookService.getHookModel().first().subscribe(hms => {
             this.hooksModel = hms;
+            if (this._hook && this._hook.model) {
+                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
+            }
         });
     }
 
     updateHook(): void {
-        this.hookToAdd.model = this.selectedHookModel;
-        this.hookToAdd.config = cloneDeep(this.selectedHookModel.default_config);
+        this.hook.model = this.selectedHookModel;
+        this.hook.config = cloneDeep(this.selectedHookModel.default_config);
     }
 
     show(): void {
@@ -44,6 +61,6 @@ export class WorkflowNodeHookFormComponent {
     }
 
     addHook(): void {
-        this.hookEvent.emit(this.hookToAdd);
+        this.hookEvent.emit(this.hook);
     }
 }

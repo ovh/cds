@@ -291,6 +291,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             let hookComponent = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeHookComponent);
             let componentRef = hookComponent.create(this.svgContainer.parentInjector);
             componentRef.instance.hook = h;
+            componentRef.instance.workflow = this.workflow;
 
             if (this.webworker) {
                 componentRef.instance.readonly = true;
@@ -303,7 +304,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             this.g.setNode(
                 'hook-' + node.id + '-' + h.id, {
                     label: () => {
-                        console.log(componentRef.location.nativeElement);
                         return componentRef.location.nativeElement;
                     }
 

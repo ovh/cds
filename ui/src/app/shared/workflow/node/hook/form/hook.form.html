@@ -14,12 +14,12 @@
                                    [value]="option">{{option.name}}
                 </sui-select-option>
             </sui-select>
-            <ng-container *ngIf="hookToAdd">
+            <ng-container *ngIf="_hook.model">
                 <h3>{{ 'workflow_node_hook_form_config'}}</h3>
-                <ng-container *ngIf="hookToAdd.config">
-                    <div class="inline fields" *ngFor="let k of hookToAdd.config | keys">
+                <ng-container *ngIf="_hook.config">
+                    <div class="inline fields" *ngFor="let k of hook.config | keys">
                         <label>{{k}}</label>
-                        <input type="text" [(ngModel)]="hookToAdd.config[k]">
+                        <input type="text" [(ngModel)]="_hook.config[k]">
                     </div>
                 </ng-container>
                 <div class="ui info message">{{ 'workflow_node_hook_no_configuration' | translate }}</div>

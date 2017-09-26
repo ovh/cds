@@ -20,6 +20,27 @@ export class Workflow {
     // UI params
     externalChange: boolean;
 
+    static updateHook(workflow: Workflow, h: WorkflowNodeHook) {
+        let oldH = WorkflowNode.findHook(workflow.root, h.id);
+        if (!oldH) {
+            if (workflow.joins) {
+                workflow.joins.forEach(j => {
+                    if (j.triggers) {
+                        j.triggers.forEach(t => {
+                            oldH = WorkflowNode.findHook(t.workflow_dest_node, h.id);
+                        });
+
+                    }
+                });
+            }
+        }
+
+        if (oldH) {
+            oldH.config = h.config;
+            oldH.conditions = h.conditions;
+        }
+    };
+
     static getNodeByID(id: number, w: Workflow): WorkflowNode {
         let node = WorkflowNode.getNodeByID(w.root, id);
         if (!node && w.joins) {
@@ -125,9 +146,30 @@ export class WorkflowNode {
         }
     }
 
+    static findHook(n: WorkflowNode, id: number): WorkflowNodeHook {
+        if (n.hooks) {
+            for (let i = 0; i < n.hooks.length; i++) {
+                if (n.hooks[i].id === id) {
+                    return n.hooks[i];
+                }
+            }
+            if (n.triggers) {
+                n.triggers.forEach(t => {
+                    let h = WorkflowNode.findHook(t.workflow_dest_node, id);
+                    if (h) {
+                        return h;
+                    }
+                });
+            }
+        }
+        return null;
+    }
+
     constructor() {
         this.context = new WorkflowNodeContext();
     }
+
+
 }
 
 // WorkflowNodeContext represents a context attached on a node

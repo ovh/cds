@@ -538,7 +538,7 @@
   "workflow_node_delete_btn" : "Remove the pipeline",
   "workflow_node_delete_title" : "Remove pipeline '{{pip}}'",
   "workflow_node_form_title" : "Triggered pipeline",
-  "workflow_node_hook_add" : "Add a hook",
+  "workflow_node_hook_add" : "Hook edition",
   "workflow_node_hook_form_title" : "Hook type",
   "workflow_node_hook_form_config" : "Hook configuration",
   "workflow_node_hook_no_configuration" : "No configuration",
