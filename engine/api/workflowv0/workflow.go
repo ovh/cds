@@ -2,7 +2,6 @@ package workflowv0
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/go-gorp/gorp"
 
@@ -297,7 +296,6 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 								return nil, sdk.WrapError(errP, "LoadCDTree> Cannot load project")
 							}
 							for _, e := range p.Environments {
-								fmt.Println("iciii !!!!!!!!!!!!!!!!!!!!!! ", remote, root.Application.RepositoryFullname)
 
 								opts := []pipeline.ExecOptionFunc{
 									pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
@@ -317,7 +315,6 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 								pbs = append(pbs, builds...)
 							}
 						} else {
-							fmt.Println("iciii !!!!!!!!!!!!!!!!!!!!!! else ", remote, root.Application.RepositoryFullname)
 							opts := []pipeline.ExecOptionFunc{
 								pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
 							}

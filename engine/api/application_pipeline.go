@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Deprecated
@@ -88,7 +87,7 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 
 			id, errA := application.AttachPipeline(tx, app.ID, pipeline.ID)
 			if errA != nil {
-				return sdk.WrapError(errA, "attachPipelinesToApplicationHandler: Cannot attach pipeline %s to application %s:  %s", pipName, appName, errA)
+				return sdk.WrapError(errA, "attachPipelinesToApplicationHandler: Cannot attach pipeline %s to application %s", pipName, appName)
 			}
 
 			app.Pipelines = append(app.Pipelines, sdk.ApplicationPipeline{
@@ -184,7 +183,7 @@ func (api *API) updatePipelineToApplicationHandler() Handler {
 
 		err = application.UpdatePipelineApplicationString(api.mustDB(), api.Cache, app, pipeline.ID, string(data), getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s:  %s", appName, pipelineName, err)
+			return sdk.WrapError(err, "updatePipelineToApplicationHandler: Cannot update application %s pipeline %s parameters %s", appName, pipelineName)
 		}
 
 		return WriteJSON(w, r, app, http.StatusOK)
@@ -311,7 +310,7 @@ func (api *API) getUserNotificationApplicationPipelineHandler() Handler {
 		//Load notifs
 		notifs, err := notification.LoadUserNotificationSettings(api.mustDB(), application.ID, pipeline.ID, env.ID)
 		if err != nil {
-			return sdk.WrapError(err, "getUserNotificationApplicationPipelineHandler> cannot load notification settings %s", err)
+			return sdk.WrapError(err, "getUserNotificationApplicationPipelineHandler> cannot load notification settings")
 		}
 		if notifs == nil {
 			return WriteJSON(w, r, nil, http.StatusNoContent)
@@ -370,7 +369,7 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 
 		err = notification.DeleteNotification(tx, applicationData.ID, pipeline.ID, env.ID)
 		if err != nil {
-			return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> cannot delete user notification %s", err)
+			return sdk.WrapError(err, "deleteUserNotificationApplicationPipelineHandler> cannot delete user notification")
 		}
 
 		err = application.UpdateLastModified(tx, api.Cache, applicationData, getUser(ctx))
@@ -422,7 +421,7 @@ func (api *API) addNotificationsHandler() Handler {
 
 		for _, n := range notifs {
 			if _, ok := mapID[n.ApplicationPipelineID]; !ok {
-				return sdk.WrapError(sdk.ErrWrongRequest, "addNotificationsHandler: Cannot get pipeline for this application: %s")
+				return sdk.WrapError(sdk.ErrWrongRequest, "addNotificationsHandler: Cannot get pipeline for this application")
 			}
 
 			//Load environment
@@ -436,7 +435,7 @@ func (api *API) addNotificationsHandler() Handler {
 
 			// Insert or update notification
 			if err := notification.InsertOrUpdateUserNotificationSettings(tx, app.ID, n.Pipeline.ID, n.Environment.ID, &n); err != nil {
-				return sdk.WrapError(err, "addNotificationsHandler> cannot update user notification %s", err)
+				return sdk.WrapError(err, "addNotificationsHandler> cannot update user notification")
 
 			}
 		}
@@ -504,7 +503,7 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
 
 		// Insert or update notification
 		if err := notification.InsertOrUpdateUserNotificationSettings(tx, applicationData.ID, pipeline.ID, notifs.Environment.ID, notifs); err != nil {
-			return sdk.WrapError(err, "updateUserNotificationApplicationPipelineHandler> cannot update user notification %s", err)
+			return sdk.WrapError(err, "updateUserNotificationApplicationPipelineHandler> cannot update user notification")
 
 		}
 
@@ -523,11 +522,9 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
 		var errNotif error
 		applicationData.Notifications, errNotif = notification.LoadAllUserNotificationSettings(api.mustDB(), applicationData.ID)
 		if errNotif != nil {
-			log.Warning("updateUserNotificationApplicationPipelineHandler> Cannot load notifications: %s\n", errNotif)
-			return errNotif
+			return sdk.WrapError(errNotif, "updateUserNotificationApplicationPipelineHandler> Cannot load notifications")
 		}
 
 		return WriteJSON(w, r, applicationData, http.StatusOK)
-
 	}
 }
