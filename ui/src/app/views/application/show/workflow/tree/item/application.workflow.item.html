@@ -114,7 +114,7 @@
                 <a sm-item class="item" (click)="editPipeline()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'pipeline_label_edit' | translate
                     }}</a>
                 <div class="divider" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE"></div>
-                <a sm-item class="item" (click)="createHook()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE && application.repositories_manager?.hooks_supported">{{ 'hook_create_label' | translate }}</a>
+                <a sm-item class="item" (click)="createHook()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'hook_create_label' | translate }}</a>
                 <a sm-item class="item" (click)="createPoller()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE && application.repositories_manager?.polling_supported">{{ 'poller_create_label' | translate }}</a>
                 <div class="divider" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE"></div>
                 <a sm-item class="item" (click)="openCreateSchedulerModal()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE">{{
