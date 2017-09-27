@@ -3,6 +3,7 @@ package workflow
 import (
 	"database/sql"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -330,6 +331,12 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid project key"))
 	}
 
+	//Check workflow name
+	regexp := regexp.MustCompile(sdk.NamePattern)
+	if !regexp.MatchString(w.Name) {
+		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid workflow name. It should match %s", sdk.NamePattern))
+	}
+
 	//Check duplicate refs
 	refs := w.References()
 	for i, ref1 := range refs {
@@ -389,6 +396,17 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 		}
 		if !found {
 			return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Unknown environments %d", envID))
+		}
+	}
+
+	//Checks hooks conditions
+	hooks := w.GetHooks()
+	for _, h := range hooks {
+		for k := range h.Config {
+			switch k {
+			case "project", "workflow":
+				return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid hooks (%s) configuration %s on node %s", h.WorkflowHookModel.Name, h.UUID, w.GetNode(h.WorkflowNodeID).Name))
+			}
 		}
 	}
 

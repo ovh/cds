@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -273,6 +274,9 @@ func Test_postWorkflowWithHooksHandler(t *testing.T) {
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 201, w.Code)
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
+
+	t.Log("%s", dump.MustSdump(wf))
+
 }
 
 func Test_deleteWorkflowHandler(t *testing.T) {
