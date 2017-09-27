@@ -21,7 +21,6 @@ type GithubClient struct {
 	ClientID         string
 	OAuthToken       string
 	DisableSetStatus bool
-	DisableStatusURL bool
 	Cache            cache.Store
 	apiURL           string
 	uiURL            string

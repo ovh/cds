@@ -46,7 +46,6 @@ type GithubConsumer struct {
 	WithHooks                bool   `json:"with-hooks"`
 	WithPolling              bool   `json:"with-polling"`
 	DisableSetStatus         bool   `json:"-"`
-	DisableStatusURL         bool   `json:"-"`
 	Cache                    cache.Store
 }
 
@@ -159,7 +158,6 @@ func (g *GithubConsumer) GetAuthorized(accessToken, accessTokenSecret string) (s
 			ClientID:         g.ClientID,
 			OAuthToken:       accessToken,
 			DisableSetStatus: g.DisableSetStatus,
-			DisableStatusURL: g.DisableStatusURL,
 			Cache:            g.Cache,
 		}
 		instancesAuthorizedClient[accessToken] = c

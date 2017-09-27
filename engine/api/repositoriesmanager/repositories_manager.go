@@ -30,7 +30,6 @@ type InitializeOpts struct {
 	APIBaseURL             string
 	DisableStashSetStatus  bool
 	DisableGithubSetStatus bool
-	DisableGithubStatusURL bool
 	GithubSecret           string
 	StashPrivateKey        string
 	StashConsumerKey       string
@@ -181,7 +180,6 @@ func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[str
 		}
 
 		github.DisableSetStatus = options.DisableGithubSetStatus
-		github.DisableStatusURL = options.DisableGithubStatusURL
 
 		if withHook == nil {
 			log.Debug("with hooks : default")

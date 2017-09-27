@@ -130,9 +130,8 @@ type Configuration struct {
 			Disabled bool `toml:"disabled" default:"false" commented:"true" comment:"This is mainly for dev purpose, you should not have to change it"`
 		} `toml:"polling"`
 		Github struct {
-			Secret           string `toml:"secret"`
-			DisableStatus    bool   `toml:"disableStatus" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on Github API"`
-			DisableStatusURL bool   `toml:"disableStatusURL" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on Github API"`
+			Secret        string `toml:"secret"`
+			DisableStatus bool   `toml:"disableStatus" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on Github API"`
 		} `toml:"github"`
 		Gitlab struct {
 			Secret string `toml:"secret"`
@@ -425,7 +424,6 @@ func (a *API) Serve(ctx context.Context) error {
 		UIBaseURL:              a.Config.URL.UI,
 		APIBaseURL:             a.Config.URL.API,
 		DisableGithubSetStatus: a.Config.VCS.Github.DisableStatus,
-		DisableGithubStatusURL: a.Config.VCS.Github.DisableStatusURL,
 		DisableStashSetStatus:  a.Config.VCS.Bitbucket.DisableStatus,
 		GithubSecret:           a.Config.VCS.Github.Secret,
 		GitlabSecret:           a.Config.VCS.Gitlab.Secret,
