@@ -19,6 +19,21 @@ type Workflow struct {
 	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-" cli:"-"`
 }
 
+// FilterHooksConfig filter all hooks configuration and remove somme configuration key
+func (w *Workflow) FilterHooksConfig(s ...string) {
+	if w.Root == nil {
+		return
+	}
+
+	w.Root.FilterHooksConfig(s...)
+	for i := range w.Joins {
+		for j := range w.Joins[i].Triggers {
+			w.Joins[i].Triggers[j].WorkflowDestNode.FilterHooksConfig(s...)
+		}
+	}
+}
+
+// GetHooks returns the list of all hooks in the workflow tree
 func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
 	if w.Root == nil {
 		return nil
@@ -217,6 +232,24 @@ type WorkflowNode struct {
 	TriggerJoinSrcID int64                 `json:"-" db:"-"`
 	Hooks            []WorkflowNodeHook    `json:"hooks,omitempty" db:"-"`
 	Triggers         []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
+}
+
+// FilterHooksConfig filter all hooks configuration and remove somme configuration key
+func (w *WorkflowNode) FilterHooksConfig(s ...string) {
+	if w == nil {
+		return
+	}
+
+	for _, h := range w.Hooks {
+		for i := range s {
+			for k := range h.Config {
+				if k == s[i] {
+					delete(h.Config, k)
+					break
+				}
+			}
+		}
+	}
 }
 
 //GetHooks returns all hooks for the node and its children
