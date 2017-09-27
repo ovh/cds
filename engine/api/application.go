@@ -356,7 +356,7 @@ func (api *API) getApplicationBranchHandler() Handler {
 
 		} else {
 			var errg error
-			branches, errg = pipeline.GetBranches(api.mustDB(), app)
+			branches, errg = pipeline.GetBranches(api.mustDB(), app, remote)
 			if errg != nil {
 				log.Warning("getApplicationBranchHandler> Cannot get branches from builds: %s", errg)
 				return errg

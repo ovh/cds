@@ -502,11 +502,17 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 				var pbs []sdk.PipelineBuild
 				var errPB error
 				if version == 0 {
-					// TODO : AJOUTER EMPTY REMOTE
-					// if remote == "" || remote == root.Application.RepositoryFullname {
-					pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, 1,
+					opts := []pipeline.ExecOptionFunc{
 						pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
-						pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+					}
+
+					if remote == "" || remote == parent.Application.RepositoryFullname {
+						opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(parent.Application.RepositoryFullname))
+					} else {
+						opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+					}
+
+					pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, 1, opts...)
 				} else {
 					pbs, errPB = pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, version, 1)
 				}

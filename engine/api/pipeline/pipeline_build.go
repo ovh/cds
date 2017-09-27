@@ -1326,18 +1326,17 @@ func GetAllLastBuildByApplication(db gorp.SqlExecutor, applicationID int64, remo
 	return pbs, nil
 }
 
-// TODO add remote param I think to display branch attached to this remote
 // GetBranches from pipeline build and pipeline history for the given application
-func GetBranches(db gorp.SqlExecutor, app *sdk.Application) ([]sdk.VCSBranch, error) {
+func GetBranches(db gorp.SqlExecutor, app *sdk.Application, remote string) ([]sdk.VCSBranch, error) {
 	branches := []sdk.VCSBranch{}
 	query := `
 		SELECT DISTINCT vcs_changes_branch
 		FROM pipeline_build
-		WHERE application_id = $1
+		WHERE application_id = $1 AND vcs_remote_name = $2
 		ORDER BY vcs_changes_branch DESC
-
 	`
-	rows, err := db.Query(query, app.ID)
+
+	rows, err := db.Query(query, app.ID, remote)
 	if err != nil {
 		return nil, err
 	}
