@@ -33,6 +33,6 @@ type Store interface {
 
 //Options is a struct to switch from in memory to redis session store
 type Options struct {
-	Mode, RedisHost, RedisPassword string
-	TTL                            int
+	RedisHost, RedisPassword string
+	TTL                      int
 }

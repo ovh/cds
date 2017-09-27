@@ -48,12 +48,6 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
 	}
 
-	switch sConfig.Cache.Mode {
-	case "local", "redis":
-	default:
-		return fmt.Errorf("Invalid cache mode")
-	}
-
 	return nil
 }
 
@@ -80,7 +74,7 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Init the cache
 	var errCache error
-	s.Cache, errCache = cache.New(s.Cfg.Cache.Mode, s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
+	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
 	if errCache != nil {
 		return errCache
 	}

@@ -38,7 +38,7 @@ type Driver interface {
 //GetDriver is a factory
 func GetDriver(c context.Context, mode string, options interface{}, storeOptions sessionstore.Options, DBFunc func() *gorp.DbMap) (Driver, error) {
 	log.Info("Auth> Intializing driver (%s)", mode)
-	store, err := sessionstore.Get(c, storeOptions.Mode, storeOptions.RedisHost, storeOptions.RedisPassword, storeOptions.TTL)
+	store, err := sessionstore.Get(c, storeOptions.RedisHost, storeOptions.RedisPassword, storeOptions.TTL)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get AuthDriver : %v", err)
 	}
