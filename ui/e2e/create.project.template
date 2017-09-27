@@ -1,6 +1,6 @@
   - action:
       click:
-        find: a[href*="/project"]
+        find: '#createProjectURL'
     assertions:
     - result.url ShouldEqual {{.ui.url}}/project
     screenshot: e2e_1_project_create_1_navigate.png
