@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
@@ -554,18 +553,6 @@ func Test_SendPipeline(t *testing.T) {
 
 		err = tx.Commit()
 		test.NoError(t, err)
-
-		//t.SkipNow()
-
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-
-		var event = &sdk.Event{}
-		api.Cache.DequeueWithContext(ctx, "events", event)
-
-		assert.Equal(t, event.EventType, "sdk.EventNotif")
-		api.Cache.DequeueWithContext(ctx, "events", event)
-		assert.Equal(t, event.EventType, "sdk.EventPipelineBuild")
 
 		err = pipeline.DeletePipelineBuildByID(api.mustDB(), pb.ID)
 		test.NoError(t, err)

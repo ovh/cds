@@ -40,6 +40,8 @@ func (api *API) getWorkflowHandler() Handler {
 		if err != nil {
 			return err
 		}
+		//We filter project and workflow configurtaion key, because they are always set on insertHooks
+		w1.FilterHooksConfig("project", "workflow")
 		return WriteJSON(w, r, w1, http.StatusOK)
 	}
 }
@@ -111,6 +113,8 @@ func (api *API) postWorkflowHandler() Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
+		//We filter project and workflow configurtaion key, because they are always set on insertHooks
+		wf1.FilterHooksConfig("project", "workflow")
 
 		return WriteJSON(w, r, wf1, http.StatusCreated)
 	}
@@ -195,6 +199,9 @@ func (api *API) putWorkflowHandler() Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
+
+		//We filter project and workflow configurtaion key, because they are always set on insertHooks
+		wf1.FilterHooksConfig("project", "workflow")
 
 		return WriteJSON(w, r, wf1, http.StatusOK)
 	}

@@ -338,7 +338,7 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 		// Load worker
 		caller := getWorker(ctx)
 		if caller.Status != sdk.StatusChecking {
-			return sdk.WrapError(sdk.ErrWrongRequest, "takePipelineBuildJobHandler> worker %s is not available to for build (status = %s)", caller.ID, caller.Status)
+			return sdk.WrapError(sdk.ErrWrongRequest, "takePipelineBuildJobHandler> worker %s is not available to for build (status = %s)", caller.Name, caller.Status)
 		}
 
 		tx, errBegin := api.mustDB().Begin()

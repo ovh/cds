@@ -346,6 +346,44 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 	}
 
+	//Check
+	if h != nil {
+		hooks := w.Workflow.GetHooks()
+		hook, ok := hooks[h.WorkflowNodeHookUUID]
+		if !ok {
+			return sdk.WrapError(sdk.ErrNoHook, "processWorkflowNodeRun> Unable to find hook %s", h.WorkflowNodeHookUUID)
+		}
+
+		//Check conditions
+		var params = run.BuildParameters
+		//Define specific destination parameters
+		dest := w.Workflow.GetNode(hook.WorkflowNodeID)
+		if dest == nil {
+			return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "processWorkflowNodeRun> Unable to find node %d", hook.WorkflowNodeID)
+		}
+		sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, dest.Pipeline.Name)
+		if dest.Context.Application != nil {
+			sdk.AddParameter(&params, "cds.dest.application", sdk.StringParameter, dest.Context.Application.Name)
+		}
+		if dest.Context.Environment != nil {
+			sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, dest.Context.Environment.Name)
+		}
+
+		conditionsOK, errc := sdk.WorkflowCheckConditions(hook.Conditions, params)
+		if errc != nil {
+			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
+			AddWorkflowRunInfo(w, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowError.ID,
+				Args: []interface{}{errc},
+			})
+		}
+
+		if !conditionsOK {
+			log.Info("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
+			return nil
+		}
+	}
+
 	if err := insertWorkflowNodeRun(db, run); err != nil {
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run")
 	}

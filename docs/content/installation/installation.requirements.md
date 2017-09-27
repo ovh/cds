@@ -19,7 +19,7 @@ There is are two ways to set up CDS:
 
 ## CDS API Third-parties
 
-At the minimum, CDS needs a PostgreSQL Database >= 9.4. But for serious usage your may need :
+At the minimum, CDS needs a PostgreSQL Database >= 9.4 and Redis >= 3.2. But for serious usage your may need :
 
 - A [Redis](https://redis.io) server or sentinels based cluster used as a cache and session store
 - A LDAP Server for authentication

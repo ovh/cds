@@ -1,11 +1,8 @@
 package cache
 
 import (
-	"container/list"
 	"context"
-	"fmt"
 	"strings"
-	"sync"
 
 	"github.com/ovh/cds/sdk/log"
 )
@@ -42,21 +39,7 @@ type Store interface {
 }
 
 //New init a cache
-func New(mode, redisHost, redisPassword string, TTL int) (Store, error) {
-	log.Debug("New cache")
-	switch mode {
-	case "local":
-		log.Info("Cache> Initialize local cache (TTL=%d seconds)", TTL)
-		return &LocalStore{
-			mutex:  &sync.Mutex{},
-			Data:   map[string][]byte{},
-			Queues: map[string]*list.List{},
-			TTL:    TTL,
-		}, nil
-	case "redis":
-		log.Info("Cache> Initialize redis cache (Host=%s, TTL=%d seconds)", redisHost, TTL)
-		return NewRedisStore(redisHost, redisPassword, TTL)
-	default:
-		return nil, fmt.Errorf("Cache> Unsupported cache mode : %s", mode)
-	}
+func New(redisHost, redisPassword string, TTL int) (Store, error) {
+	log.Info("Cache> Initialize redis cache (Host=%s, TTL=%d seconds)", redisHost, TTL)
+	return NewRedisStore(redisHost, redisPassword, TTL)
 }

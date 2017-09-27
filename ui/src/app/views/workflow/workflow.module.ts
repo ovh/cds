@@ -18,7 +18,6 @@ import {WorkflowRunTestsResultComponent} from './run/node/test/tests.component';
 import {WorkflowRunTestTableComponent} from './run/node/test/table/test.table.component';
 import {WorkflowNodeRunHistoryComponent} from './run/node/history/history.component';
 import {WorkflowNodeRunSummaryComponent} from './run/node/summary/run.summary.component';
-import {WorkflowNodeRunParamComponent} from '../../shared/workflow/node/run/node.run.param.component';
 
 @NgModule({
     declarations: [
@@ -33,7 +32,6 @@ import {WorkflowNodeRunParamComponent} from '../../shared/workflow/node/run/node
         WorkflowRunNodePipelineComponent,
         WorkflowRunArtifactListComponent,
         WorkflowRunTestsResultComponent,
-        WorkflowNodeRunParamComponent,
         WorkflowRunTestTableComponent,
         WorkflowNodeRunHistoryComponent,
         WorkflowSidebarComponent,

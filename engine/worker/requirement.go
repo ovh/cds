@@ -30,7 +30,9 @@ var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement)
 func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, bookedJobID int64) (bool, []sdk.Requirement) {
 	requirementsOK := true
 	errRequirements := []sdk.Requirement{}
-	w.client.WorkerSetStatus(sdk.StatusChecking)
+	if err := w.client.WorkerSetStatus(sdk.StatusChecking); err != nil {
+		log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusChecking): %s", err)
+	}
 
 	log.Debug("checkRequirements> for JobID:%d model of worker: %+v", bookedJobID, w.model)
 	log.Debug("checkRequirements> for JobID:%d execGroups: %+v", bookedJobID, execGroups)

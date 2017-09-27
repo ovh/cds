@@ -26,6 +26,9 @@ export class ParameterService {
      * @returns {Observable<string[]>}
      */
     getTypesFromAPI(): Observable<string[]> {
-        return this._http.get('/parameter/type');
+        return this._http.get('/parameter/type').map( pts => {
+            this.parametersType = <string[]>pts;
+            return pts;
+        });
     }
 }

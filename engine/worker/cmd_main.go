@@ -158,6 +158,9 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if w.bookedJobID != 0 {
 			w.processBookedJob(pbjobs)
 		}
+		if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
+			log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+		}
 
 		go func(ctx context.Context) {
 			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second); err != nil {
@@ -228,13 +231,18 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 						continue
 					}
 				} else {
+					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
+						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+					}
 					log.Debug("Unable to run this job, let's continue %d%s", j.ID, t)
 					continue
 				}
 
 				if !viper.GetBool("single_use") {
 					//Continue
-					w.client.WorkerSetStatus(sdk.StatusWaiting)
+					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
+						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+					}
 					continue
 				}
 
@@ -263,13 +271,18 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 						errs <- err
 					}
 				} else {
+					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
+						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+					}
 					log.Debug("Unable to run this job, let's continue %d%s", j.ID, t)
 					continue
 				}
 
 				if !viper.GetBool("single_use") {
 					//Continue
-					w.client.WorkerSetStatus(sdk.StatusWaiting)
+					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
+						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
+					}
 					continue
 				}
 

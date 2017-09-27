@@ -67,8 +67,7 @@ type Configuration struct {
 		Secret   string `toml:"secret"`
 	} `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
 	Cache struct {
-		Mode  string `toml:"mode" default:"local" comment:"Cache Mode: redis or local"`
-		TTL   int    `toml:"ttl" default:"60"`
+		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {
 			Host     string `toml:"host" default:"localhost:6379" comment:"If your want to use a redis-sentinel based cluster, follow this syntax ! <clustername>@sentinel1:26379,sentinel2:26379sentinel3:26379"`
 			Password string `toml:"password"`
@@ -258,12 +257,6 @@ func (a *API) CheckConfiguration(config interface{}) error {
 		}
 	}
 
-	switch aConfig.Cache.Mode {
-	case "local", "redis":
-	default:
-		return fmt.Errorf("Invalid cache mode")
-	}
-
 	if len(aConfig.Secrets.Key) != 32 {
 		return fmt.Errorf("Invalid secret key. It should be 32 bits (%d)", len(aConfig.Secrets.Key))
 	}
@@ -412,7 +405,6 @@ func (a *API) Serve(ctx context.Context) error {
 	//Init the cache
 	var errCache error
 	a.Cache, errCache = cache.New(
-		a.Config.Cache.Mode,
 		a.Config.Cache.Redis.Host,
 		a.Config.Cache.Redis.Password,
 		a.Config.Cache.TTL)
@@ -475,7 +467,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	storeOptions := sessionstore.Options{
-		Mode:          a.Config.Cache.Mode,
 		TTL:           a.Config.Cache.TTL,
 		RedisHost:     a.Config.Cache.Redis.Host,
 		RedisPassword: a.Config.Cache.Redis.Password,

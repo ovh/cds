@@ -27,7 +27,10 @@ export class VariableService {
      * @returns {Observable<string[]>}
      */
     getTypesFromAPI(): Observable<string[]> {
-        return this._http.get('/variable/type');
+        return this._http.get('/variable/type').map(vts => {
+            this.variablesType = <string[]>vts;
+            return vts;
+        });
     }
 
     /**
