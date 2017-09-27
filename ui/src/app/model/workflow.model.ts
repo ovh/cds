@@ -3,6 +3,7 @@ import {Application} from './application.model';
 import {Environment} from './environment.model';
 import {intersection} from 'lodash';
 import {Parameter} from './parameter.model';
+import {WorkflowHookModel} from './workflow.hook.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -18,6 +19,30 @@ export class Workflow {
 
     // UI params
     externalChange: boolean;
+
+    static updateHook(workflow: Workflow, h: WorkflowNodeHook) {
+        let oldH = WorkflowNode.findHook(workflow.root, h.id);
+        if (!oldH) {
+            if (workflow.joins) {
+                quit: for (let i = 0; i < workflow.joins.length; i++) {
+                    let j = workflow.joins[i];
+                    if (j.triggers) {
+                        for (let k = 0; k < j.triggers.length; k++) {
+                            oldH = WorkflowNode.findHook(j.triggers[k].workflow_dest_node, h.id);
+                            if (oldH) {
+                                break quit;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if (oldH) {
+            oldH.config = h.config;
+            oldH.conditions = h.conditions;
+        }
+    };
 
     static getNodeByID(id: number, w: Workflow): WorkflowNode {
         let node = WorkflowNode.getNodeByID(w.root, id);
@@ -124,9 +149,30 @@ export class WorkflowNode {
         }
     }
 
+    static findHook(n: WorkflowNode, id: number): WorkflowNodeHook {
+        if (n.hooks) {
+            for (let i = 0; i < n.hooks.length; i++) {
+                if (n.hooks[i].id === id) {
+                    return n.hooks[i];
+                }
+            }
+            if (n.triggers) {
+                for (let i = 0; i < n.triggers.length; i++) {
+                    let h = WorkflowNode.findHook(n.triggers[i].workflow_dest_node, id);
+                    if (h) {
+                        return h;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     constructor() {
         this.context = new WorkflowNodeContext();
     }
+
+
 }
 
 // WorkflowNodeContext represents a context attached on a node
@@ -169,15 +215,6 @@ export class WorkflowTriggerCondition {
     variable: string;
     operator: string;
     value: string;
-}
-
-export class WorkflowHookModel {
-    id: number;
-    name: string;
-    type: string;
-    images: string;
-    command: string;
-    default_config: {};
 }
 
 export class WorkflowTriggerConditionCache {

@@ -61,6 +61,9 @@ import {ForMapPipe} from './pipes/map.pipe';
 import {PermissionEnvironmentFormComponent} from './permission/environment/form/permission.env.form.component';
 import {NgxAutoScroll} from 'ngx-auto-scroll/src/ngx-auto-scroll.directive';
 import {SuiModule} from 'ng2-semantic-ui';
+import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
+import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/node.hook.component';
+import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -100,12 +103,15 @@ import {SuiModule} from 'ng2-semantic-ui';
         VariableValueComponent,
         WarningModalComponent,
         WorkflowNodeComponent,
+        WorkflowNodeRunParamComponent,
         WorkflowDeleteJoinComponent,
         WorkflowDeleteNodeComponent,
         WorkflowJoinComponent,
         WorkflowJoinTriggerSrcComponent,
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
+        WorkflowNodeHookFormComponent,
+        WorkflowNodeHookComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         WorkflowTriggerConditionFormComponent,
@@ -168,6 +174,7 @@ import {SuiModule} from 'ng2-semantic-ui';
         WorkflowJoinTriggerSrcComponent,
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
+        WorkflowNodeHookComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         WorkflowTriggerConditionFormComponent,

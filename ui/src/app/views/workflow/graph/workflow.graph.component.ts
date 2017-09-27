@@ -22,6 +22,7 @@ import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
+import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook.component';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -29,18 +30,21 @@ import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
     styleUrls: ['./workflow.graph.scss'],
     entryComponents: [
         WorkflowNodeComponent,
-        WorkflowJoinComponent
+        WorkflowJoinComponent,
+        WorkflowNodeHookComponent
     ]
 })
 @AutoUnsubscribe()
 export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     workflow: Workflow;
+
     @Input('workflowData')
     set workflowData(data: Workflow) {
         this.workflow = data;
         this.changeDisplay(true);
     }
+
     @Input() project: Project;
     @Input() webworker: CDSWorker;
 
@@ -55,7 +59,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer;
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
-    svgWidth: number =  window.innerWidth;
+    svgWidth: number = window.innerWidth;
     svgHeight: number = window.innerHeight;
     direction: string;
 
@@ -67,6 +71,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     nodesComponent = new Map<number, ComponentRef<WorkflowNodeComponent>>();
     joinsComponent = new Map<number, ComponentRef<WorkflowJoinComponent>>();
+    hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
 
     nodeWidth: number;
     nodeHeight: number;
@@ -115,7 +120,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     changeDisplay(resize: boolean): void {
         if (!this.ready) {
-           return;
+            return;
         }
         this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
         this.joinsComponent.forEach(j => {
@@ -124,8 +129,12 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.nodesComponent.forEach(j => {
             j.destroy();
         });
+        this.hooksComponent.forEach(h => {
+            h.destroy();
+        });
         this.joinsComponent.clear();
         this.nodesComponent.clear();
+        this.hooksComponent.clear();
 
         this.initWorkflow(resize);
     }
@@ -250,8 +259,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             shape: 'circle',
             label: () => {
                 return componentRef.location.nativeElement;
-            },
-            class: 'join'
+            }
         });
 
         if (join.source_node_id) {
@@ -267,11 +275,46 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                     id: 'trigger-' + t.id
                 };
                 if (t.manual) {
-                    options['style'] =  'stroke-dasharray: 5, 5';
+                    options['style'] = 'stroke-dasharray: 5, 5';
                 }
                 this.createEdge('join-' + join.id, 'node-' + t.workflow_dest_node.id, options);
             });
         }
+    }
+
+    createHookNode(node: WorkflowNode): void {
+        if (!node.hooks || node.hooks.length === 0) {
+            return;
+        }
+
+        node.hooks.forEach(h => {
+            let hookComponent = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeHookComponent);
+            let componentRef = hookComponent.create(this.svgContainer.parentInjector);
+            componentRef.instance.hook = h;
+            componentRef.instance.workflow = this.workflow;
+
+            if (this.webworker) {
+                componentRef.instance.readonly = true;
+            }
+
+            this.svgContainer.insert(componentRef.hostView);
+
+            this.hooksComponent.set(h.id, componentRef);
+
+            this.g.setNode(
+                'hook-' + node.id + '-' + h.id, {
+                    label: () => {
+                        return componentRef.location.nativeElement;
+                    }
+
+                }
+            );
+
+            let options = {
+                id: 'hook-' + node.id + '-' + h.id
+            };
+            this.createEdge('hook-' + node.id + '-' + h.id, 'node-' + node.id, options);
+        });
     }
 
     createNode(node: WorkflowNode): void {
@@ -287,6 +330,9 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             width: this.nodeWidth,
             height: this.nodeHeight
         });
+
+        this.createHookNode(node);
+
         if (node.triggers) {
             node.triggers.forEach(t => {
                 this.createNode(t.workflow_dest_node);
@@ -294,7 +340,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                     id: 'trigger-' + t.id
                 };
                 if (t.manual) {
-                    options['style'] =  'stroke-dasharray: 5, 5';
+                    options['style'] = 'stroke-dasharray: 5, 5';
                 }
                 this.createEdge('node-' + node.id, 'node-' + t.workflow_dest_node.id, options);
             });
