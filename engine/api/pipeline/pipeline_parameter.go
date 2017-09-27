@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"fmt"
+
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
 
@@ -60,20 +62,14 @@ func GetAllParametersInPipeline(db gorp.SqlExecutor, pipelineID int64 /*, args .
 
 // InsertParameterInPipeline Insert a new parameter in the given pipeline
 func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk.Parameter) error {
+	if param.Name == "" || param.Type == "" {
+		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid parameter"))
+	}
+
 	if string(param.Type) == string(sdk.SecretVariable) {
 		return sdk.WrapError(sdk.ErrNoDirectSecretUse, "InsertParameterInPipeline>")
 	}
 
-	/* DEPRECATED: no more password in parameter type
-	clear, cipher, err := secret.EncryptS(param.Type, param.Value)
-	if err != nil {
-		return err
-	}
-
-	query := `INSERT INTO pipeline_parameter(pipeline_id, name, value, cipher_value, type, description)
-		  VALUES($1, $2, $3, $4, $5, $6) RETURNING id`
-	err = db.QueryRow(query, pipelineID, param.Name, clear, cipher, string(param.Type), param.Description).Scan(&param.ID)
-	*/
 	query := `INSERT INTO pipeline_parameter(pipeline_id, name, value, type, description)
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 	err := db.QueryRow(query, pipelineID, param.Name, param.Value, string(param.Type), param.Description).Scan(&param.ID)
@@ -107,6 +103,10 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 
 // UpdateParameterInPipeline Update a parameter in the given pipeline
 func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, oldParamName string, param sdk.Parameter) error {
+	if param.Name == "" || param.Type == "" {
+		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid parameter"))
+	}
+
 	// update parameter
 	query := `UPDATE pipeline_parameter SET value=$1, type=$2, description=$3, name=$4 WHERE pipeline_id=$5 AND name=$6`
 	_, err := db.Exec(query, param.Value, string(param.Type), param.Description, param.Name, pipelineID, oldParamName)
