@@ -143,3 +143,16 @@ func (s *Redis) Get(token SessionKey, f string, data interface{}) error {
 
 	return nil
 }
+
+//Delete delete a session
+func (s *Redis) Delete(token SessionKey) error {
+	key := cache.Key("session", string(token))
+	if err := s.store.Client.Del(key).Err(); err != nil {
+		return err
+	}
+	keyData := cache.Key("session", string(token), "data")
+	if err := s.store.Client.Del(keyData).Err(); err != nil {
+		return err
+	}
+	return nil
+}
