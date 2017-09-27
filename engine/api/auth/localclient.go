@@ -40,6 +40,7 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 		if ok {
 			return ctx, nil
 		}
+		return ctx, fmt.Errorf("invalid session")
 	}
 
 	//Check other session
@@ -76,6 +77,9 @@ func (c *LocalClient) Authentify(username, password string) (bool, error) {
 		log.Warning("Auth> Authorization failed")
 		return false, err
 	}
+
+	log.Debug("Authentify> %+v", u)
+
 	b := user.IsCheckValid(password, u.Auth.HashedPassword)
 	return b, err
 }

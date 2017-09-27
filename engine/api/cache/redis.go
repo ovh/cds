@@ -312,6 +312,9 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 	}
 
 	for i := range members {
+		if i > len(values) {
+			break
+		}
 		val := values[i]
 		memKey := Key(key, val)
 		if !s.Get(memKey, members[i]) {
