@@ -797,7 +797,6 @@ func (api *API) getPipelineHistoryHandler() Handler {
 			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
 		}
 
-		fmt.Println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n\n")
 		pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), a.ID, p.ID, env.ID, limit, opts...)
 
 		if errl != nil {

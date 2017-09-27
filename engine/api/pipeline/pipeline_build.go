@@ -344,9 +344,6 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 	args = append(args, limit)
 	query += fmt.Sprintf(" ORDER BY pb.version DESC, pb.id DESC LIMIT $%d", len(args))
 
-	fmt.Println(query)
-	fmt.Println(args)
-
 	var rows []PipelineBuildDbResult
 	if _, errQuery := db.Select(&rows, query, args...); errQuery != nil {
 		return nil, errQuery
