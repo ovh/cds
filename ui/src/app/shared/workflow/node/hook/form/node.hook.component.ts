@@ -14,7 +14,7 @@ import {HookEvent} from '../hook.event';
     templateUrl: './hook.form.html',
     styleUrls: ['./hook.form.scss']
 })
-export class WorkflowNodeHookFormComponent implements OnInit {
+export class WorkflowNodeHookFormComponent {
 
     _hook: WorkflowNodeHook = new WorkflowNodeHook();
     canDelete = false;
@@ -51,19 +51,6 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
     constructor(private _hookService: HookService, private _modalService: SuiModalService, private _workflowStore: WorkflowStore) {
-        this._hookService.getHookModel().first().subscribe(hms => {
-            this.hooksModel = hms;
-            if (this._hook && this._hook.model) {
-                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
-            }
-        });
-    }
-
-    ngOnInit(): void {
-        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).first().subscribe( wtc => {
-            this.operators = wtc.operators;
-            this.conditionNames = wtc.names;
-        });
     }
 
     updateHook(): void {
@@ -72,6 +59,16 @@ export class WorkflowNodeHookFormComponent implements OnInit {
     }
 
     show(): void {
+        this._hookService.getHookModel().first().subscribe(hms => {
+            this.hooksModel = hms;
+            if (this._hook && this._hook.model) {
+                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
+            }
+        });
+        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).first().subscribe( wtc => {
+            this.operators = wtc.operators;
+            this.conditionNames = wtc.names;
+        });
         this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookFormModal);
         this.modal = this._modalService.open(this.modalConfig);
     }
