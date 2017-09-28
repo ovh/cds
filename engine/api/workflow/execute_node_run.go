@@ -130,6 +130,12 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 		}
 	}
 
+	if n.Status == sdk.StatusFail.String() {
+		if err := updateWorkflowRunStatus(db, updatedWorkflowRun.ID, sdk.StatusFail.String()); err != nil {
+			return sdk.WrapError(err, "workflow.execute> Unable to update workflow run status with id %d for status %s ", updatedWorkflowRun.ID, sdk.StatusFail.String())
+		}
+	}
+
 	return nil
 }
 

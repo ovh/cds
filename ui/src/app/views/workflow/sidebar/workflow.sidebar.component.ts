@@ -40,14 +40,14 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
     selectedTags: Array<string>;
     tagsSelectable: Array<string>;
 
-    ready: boolean;
+    ready: boolean = false;
 
     constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService) {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
     ngOnInit(): void {
-        // Star  webworker
+        // Start webworker
         this.runWorker = new CDSWorker('./assets/worker/web/workflow-run.js');
         this.runWorker.start({
             'user': this._authStore.getUser(),
@@ -60,10 +60,10 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
         // Listening to web worker responses
         this.runWorkerSubscription = this.runWorker.response().subscribe(msg => {
             this.zone.run(() => {
-                if (msg === null) {
+                this.ready = true;
+                if (!msg) {
                     return;
                 }
-                this.ready = true;
                 this.workflowRuns = <Array<WorkflowRun>>JSON.parse(msg);
                 this.refreshRun();
             });

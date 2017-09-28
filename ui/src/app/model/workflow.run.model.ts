@@ -22,6 +22,7 @@ export class WorkflowRun {
     workflow_id: number;
     workflow: Workflow;
     start: string;
+    status: string;
     last_modified: string;
     nodes: { [key: string]: Array<WorkflowNodeRun>; };
     tags: Array<WorkflowRunTags>;
