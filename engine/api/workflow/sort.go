@@ -74,9 +74,9 @@ func sortNodeTriggers(triggers *[]sdk.WorkflowNodeTrigger) {
 	})
 }
 
-func sortConditions(conditions *[]sdk.WorkflowTriggerCondition) {
+func sortConditions(conditions *sdk.WorkflowTriggerConditions) {
 	sort.Slice(*conditions, func(i, j int) bool {
-		return strings.Compare((*conditions)[i].Variable, (*conditions)[j].Variable) < 0
+		return strings.Compare(conditions.PlainConditions[i].Variable, conditions.PlainConditions[j].Variable) < 0
 	})
 }
 

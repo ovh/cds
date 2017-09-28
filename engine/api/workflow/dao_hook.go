@@ -64,10 +64,6 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 
 //PostInsert is a db hook
 func (r *NodeHook) PostInsert(db gorp.SqlExecutor) error {
-	if r.Conditions == nil {
-		r.Conditions = []sdk.WorkflowTriggerCondition{}
-	}
-
 	sConditions, err := gorpmapping.JSONToNullString(r.Conditions)
 	if err != nil {
 		return err
@@ -95,16 +91,24 @@ func (r *NodeHook) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	conf := sdk.WorkflowNodeHookConfig{}
-	conditions := []sdk.WorkflowTriggerCondition{}
 
-	if err := gorpmapping.JSONNullString(res.Conditions, &conditions); err != nil {
-		return err
+	//TODO this will have to be cleaned
+	oldConditions := []sdk.WorkflowTriggerCondition{}
+	newConditions := sdk.WorkflowTriggerConditions{}
+	//We try to unmarshall the conditions with the old and the new struct
+	if err := gorpmapping.JSONNullString(res.Conditions, &oldConditions); err != nil {
+		if err := gorpmapping.JSONNullString(res.Conditions, &newConditions); err != nil {
+			return err
+		}
+		r.Conditions = newConditions
+	} else {
+		r.Conditions = sdk.WorkflowTriggerConditions{PlainConditions: oldConditions}
 	}
 
 	if err := gorpmapping.JSONNullString(res.Config, &conf); err != nil {
 		return err
 	}
-	r.Conditions = conditions
+
 	r.Config = conf
 
 	//Load the model

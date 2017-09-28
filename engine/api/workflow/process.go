@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/luascript"
 )
 
 // processWorkflowRun triggers workflow node for every workflow.
@@ -92,7 +93,17 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 						sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, t.WorkflowDestNode.Context.Environment.Name)
 					}
 
-					conditionsOK, errc := sdk.WorkflowCheckConditions(t.Conditions, params)
+					var conditionsOK bool
+					var errc error
+					if t.Conditions.LuaScript == "" {
+						conditionsOK, errc = sdk.WorkflowCheckConditions(t.Conditions.PlainConditions, params)
+					} else {
+						luacheck := luascript.NewCheck()
+						luacheck.SetVariables(sdk.ParametersToMap(params))
+						errc = luacheck.Perform(t.Conditions.LuaScript)
+						conditionsOK = *luacheck.Result
+					}
+
 					if errc != nil {
 						log.Warning("processWorkflowRun> WorkflowCheckConditions error: %s", errc)
 						AddWorkflowRunInfo(w, sdk.SpawnMsg{
@@ -387,7 +398,17 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, dest.Context.Environment.Name)
 		}
 
-		conditionsOK, errc := sdk.WorkflowCheckConditions(hook.Conditions, params)
+		var conditionsOK bool
+		var errc error
+		if hook.Conditions.LuaScript == "" {
+			conditionsOK, errc = sdk.WorkflowCheckConditions(hook.Conditions.PlainConditions, params)
+		} else {
+			luacheck := luascript.NewCheck()
+			luacheck.SetVariables(sdk.ParametersToMap(params))
+			errc = luacheck.Perform(hook.Conditions.LuaScript)
+			conditionsOK = *luacheck.Result
+		}
+
 		if errc != nil {
 			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
 			AddWorkflowRunInfo(w, sdk.SpawnMsg{
@@ -395,7 +416,6 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 				Args: []interface{}{errc},
 			})
 		}
-
 		if !conditionsOK {
 			log.Info("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
 			return nil
