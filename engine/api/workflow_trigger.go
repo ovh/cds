@@ -51,8 +51,16 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			Operators: sdk.WorkflowConditionsOperators,
 		}
 
+		var statusParamFound bool
 		for _, p := range params {
+			if p.Name == "cds.status" {
+				statusParamFound = true
+			}
 			data.ConditionNames = append(data.ConditionNames, p.Name)
+		}
+
+		if !statusParamFound {
+			data.ConditionNames = append(data.ConditionNames, "cds.status")
 		}
 
 		data.ConditionNames = append(data.ConditionNames, "cds.dest.pipeline")
@@ -66,6 +74,23 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 		}
 		if refNode.Context != nil && refNode.Context.Environment != nil {
 			data.ConditionNames = append(data.ConditionNames, "cds.dest.environment")
+		}
+
+		ancestorIds := refNode.Ancestors(wf)
+		for _, aID := range ancestorIds {
+			ancestor := wf.GetNode(aID)
+			if ancestor == nil {
+				continue
+			}
+			var found bool
+			for _, s := range data.ConditionNames {
+				if s == "workflow."+ancestor.Name+".status" {
+					found = true
+				}
+			}
+			if !found {
+				data.ConditionNames = append(data.ConditionNames, "workflow."+ancestor.Name+".status")
+			}
 		}
 
 		return WriteJSON(w, r, data, http.StatusOK)
