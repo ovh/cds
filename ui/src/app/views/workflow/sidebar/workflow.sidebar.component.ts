@@ -40,7 +40,7 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
     selectedTags: Array<string>;
     tagsSelectable: Array<string>;
 
-    ready: boolean = false;
+    ready = false;
 
     constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService) {
         this.zone = new NgZone({enableLongStackTrace: false});

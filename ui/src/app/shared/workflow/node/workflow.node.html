@@ -2,15 +2,34 @@
     <div class="nodePipeline" [class.running]="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"
          [class.building]="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"
          [class.success]="currentNodeRun?.status === pipelineStatus.SUCCESS"
-         [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL"
+         [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL || currentNodeRun?.status === pipelineStatus.STOPPED"
          [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED"
          [class.pointing]="webworker"
          (click)="goToNodeRun()"
     >
         <div class="pipeline">
             <p class="ellipsis">
-                <span *ngIf="webworker"><i class="video play outline icon" (click)="openRunNode($event)"></i></span>
-                <span class="ui black circular label" *ngIf="currentNodeRun">{{currentNodeRun?.num + '.' + currentNodeRun?.subnumber}}</span>
+                <span *ngIf="webworker &&
+                    workflowRunStatus !== pipelineStatus.BUILDING &&
+                    workflowRunStatus !== pipelineStatus.WAITING &&
+                    currentNodeRun?.status !== pipelineStatus.BUILDING &&
+                    currentNodeRun?.status !== pipelineStatus.WAITING">
+                    <i class="video play outline icon" (click)="openRunNode($event)"></i>
+                </span>
+                <span *ngIf="webworker && (currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING)">
+                    <i class="circular black stop icon build" (click)="stopNodeRun($event)"></i>
+                </span>
+                <ng-container *ngIf="currentNodeRun">
+                    <div class="ui active inline blue loader"
+                        *ngIf="currentNodeRun?.status === pipelineStatus.WAITING || currentNodeRun?.status === pipelineStatus.BUILDING"
+                        [class.medium]="currentNodeRun?.num < 10 || currentNodeRun?.subnumber < 10"
+                        [class.large]="(currentNodeRun?.num >= 10 && currentNodeRun?.num < 10000) || (currentNodeRun?.subnumber >= 10 && currentNodeRun?.subnumber < 10000)"
+                        [class.huge]="(currentNodeRun?.num >= 10000 && currentNodeRun?.num < 100000) || (currentNodeRun?.subnumber >= 10000 && currentNodeRun?.subnumber < 100000)"
+                        [class.massive]="currentNodeRun?.num >= 100000 || currentNodeRun?.subnumber >= 100000">
+                        <span class="ui blue circular label">v{{ currentNodeRun?.num + '.' + currentNodeRun?.subnumber }}</span>
+                    </div>
+                    <span *ngIf="currentNodeRun?.status !== pipelineStatus.WAITING && currentNodeRun?.status !== pipelineStatus.BUILDING" class="ui black circular label">v{{ currentNodeRun?.num + '.' + currentNodeRun?.subnumber }}</span>
+                </ng-container>
                 <b>{{node.name}}</b><span *ngIf="node.name !== node.pipeline.name">{{' - ' + node.pipeline.name}}</span>
             </p>
 

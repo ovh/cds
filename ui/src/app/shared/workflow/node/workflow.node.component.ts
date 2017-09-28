@@ -1,4 +1,7 @@
-import {AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, OnInit, Output, ViewChild} from '@angular/core';
+import {
+    AfterViewInit, Component, ElementRef,
+    EventEmitter, Input, NgZone, OnInit, Output, ViewChild, ChangeDetectorRef
+} from '@angular/core';
 import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeTrigger} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
@@ -36,6 +39,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
+    @Input() workflowRunStatus: string;
 
     @Output() linkJoinEvent = new EventEmitter<WorkflowNode>();
 
@@ -64,9 +68,12 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     loading = false;
     options: {};
     disabled = false;
+    loadingStop = false;
 
-    constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _translate: TranslateService,
-                private _toast: ToastService, private _pipelineStore: PipelineStore, private _router: Router) {
+    constructor(private elementRef: ElementRef, private _changeDetectorRef: ChangeDetectorRef,
+        private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
+        private _wrService: WorkflowRunService, private _pipelineStore: PipelineStore, private _router: Router) {
+
     }
 
     ngOnInit(): void {
@@ -265,7 +272,21 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
             '/project', this.project.key,
             'workflow', this.workflow.name,
             'run', this.currentNodeRun.num,
-            'node', this.currentNodeRun.id], {queryParams: { name: pip}});
+            'node', this.currentNodeRun.id], {queryParams: { name: pip }});
+    }
+
+    stopNodeRun($event): void {
+        $event.stopPropagation();
+        this.loadingStop = true;
+        this._wrService.stopNodeRun(this.project.key, this.workflow.name, this.currentNodeRun.num, this.currentNodeRun.id)
+            .finally(() => this.loadingStop = false)
+            .first()
+            .subscribe(() => {
+                this.currentNodeRun.status = this.pipelineStatus.STOPPED;
+                this._changeDetectorRef.detach();
+                setTimeout(() => this._changeDetectorRef.reattach(), 2000);
+                this._toast.success('', this._translate.instant('pipeline_stop'));
+            });
     }
 
     openRunNode($event): void {

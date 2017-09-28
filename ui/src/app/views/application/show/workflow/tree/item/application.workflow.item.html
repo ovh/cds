@@ -9,7 +9,7 @@
             <div class="ui raised segment"
                  [class.green]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.SUCCESS"
                  [class.blue]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING"
-                 [class.red]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.FAIL">
+                 [class.red]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.FAIL || workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.STOPPED">
 
 
                 <!-- User + date -->
@@ -29,7 +29,7 @@
                       class="ui right ribbon label"
                       [class.green]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.SUCCESS"
                       [class.blue]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING"
-                      [class.red]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.FAIL"
+                      [class.red]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.FAIL || workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.STOPPED"
 
                 ><div smDirTooltip="{{workflowItem.environment.name}}">{{workflowItem.environment.name | truncate : 20 }}</div></span>
 

@@ -53,7 +53,8 @@ export class WorkflowRunComponent implements OnDestroy {
                     if (wrString) {
                         this.zone.run(() => {
                             let wrUpdated = <WorkflowRun>JSON.parse(wrString);
-                            if (this.workflowRun && this.workflowRun.last_modified === wrUpdated.last_modified && this.workflowRun.id === wrUpdated.id) {
+                            if (this.workflowRun && this.workflowRun.last_modified === wrUpdated.last_modified
+                              && this.workflowRun.id === wrUpdated.id) {
                                 return;
                             }
                             this.workflowRun = <WorkflowRun>JSON.parse(wrString);
