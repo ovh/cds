@@ -37,7 +37,7 @@ func RunFromHook(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.
 			Start:        time.Now(),
 			LastModified: time.Now(),
 			ProjectID:    w.ProjectID,
-			Status:       string(sdk.StatusBuilding),
+			Status:       string(sdk.StatusWaiting),
 		}
 
 		//Insert it
@@ -113,7 +113,7 @@ func ManualRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Wo
 		Start:        time.Now(),
 		LastModified: time.Now(),
 		ProjectID:    w.ProjectID,
-		Status:       string(sdk.StatusBuilding),
+		Status:       string(sdk.StatusWaiting),
 	}
 
 	if err := insertWorkflowRun(db, wr); err != nil {

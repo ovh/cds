@@ -55,12 +55,17 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		return nil
 	}
 
+	maxsn := maxSubNumber(w.WorkflowNodeRuns)
 	//Checks the triggers
 	for k, v := range w.WorkflowNodeRuns {
 		// Subversion of workflowNodeRun
 		for i := range v {
 			nodeRun := &w.WorkflowNodeRuns[k][i]
-			updateNodesRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed)
+
+			// Only the last subversion
+			if maxsn == nodeRun.SubNumber {
+				updateNodesRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed)
+			}
 
 			//Trigger only if the node is over (successfull or not)
 			if nodeRun.Status == string(sdk.StatusSuccess) || nodeRun.Status == string(sdk.StatusFail) {
@@ -122,7 +127,10 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 								Args: []interface{}{err},
 							})
 						}
-						nodesRunBuilding++
+						// Only the last subversion
+						if maxsn == nodeRun.SubNumber {
+							nodesRunBuilding++
+						}
 					}
 				}
 			}
@@ -231,7 +239,10 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 						})
 						log.Error("processWorkflowRun> Unable to process node ID=%d: %v", t.WorkflowDestNode.ID, err)
 					}
-					nodesRunBuilding++
+
+					if maxsn == nodeRun.SubNumber {
+						nodesRunBuilding++
+					}
 				}
 			}
 		}
@@ -443,9 +454,22 @@ func updateNodesRunStatus(status string, success, building, fail *int) {
 	switch status {
 	case string(sdk.StatusSuccess):
 		*success++
-	case string(sdk.StatusBuilding):
+	case string(sdk.StatusBuilding), string(sdk.StatusWaiting):
 		*building++
 	case string(sdk.StatusFail):
 		*fail++
 	}
+}
+
+func maxSubNumber(workflowNodeRuns map[int64][]sdk.WorkflowNodeRun) int64 {
+	var maxsn int64
+	for _, wNodeRuns := range workflowNodeRuns {
+		for _, wNodeRun := range wNodeRuns {
+			if maxsn < wNodeRun.SubNumber {
+				maxsn = wNodeRun.SubNumber
+			}
+		}
+	}
+
+	return maxsn
 }
