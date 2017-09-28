@@ -47,6 +47,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     @Input() project: Project;
     @Input() webworker: CDSWorker;
+    @Input() status: string;
 
     @Output() editTriggerEvent = new EventEmitter<{ source, target }>();
     @Output() editTriggerJoinEvent = new EventEmitter<{ source, target }>();
@@ -357,6 +358,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         componentRef.instance.project = this.project;
         componentRef.instance.disabled = this.linkWithJoin;
         componentRef.instance.webworker = this.webworker;
+        componentRef.instance.workflowRunStatus = this.status;
         this.nodesComponent.set(node.id, componentRef);
         componentRef.instance.linkJoinEvent.subscribe(n => {
             this.nodeToLink = n;
