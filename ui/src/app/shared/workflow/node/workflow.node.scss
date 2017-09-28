@@ -17,22 +17,39 @@ $boxWidth: 155px;
       position: absolute;
       bottom: 5px;
       left: 10px;
-    }
-
-    .pipeline {
-      display: flex;
-      text-align: left;
-      padding-left: 10px;
-      padding-top: 20px;
-      height: 68px;
-
+      width: 90%;
       p {
-        width: 90%;
+        width: 100%;
+        margin: 0;
+        padding: 0 0 0 10px;
         white-space: nowrap;
         overflow: hidden;
       }
       p.ellipsis {
         text-overflow: ellipsis;
+      }
+    }
+
+    .pipeline {
+      height: 100%;
+      width: 90%;
+      p {
+        width: 100%;
+        margin: 0;
+        padding: 0 0 0 20px;
+        white-space: nowrap;
+        overflow: hidden;
+        height:100%;
+        display: flex;
+        align-items: center;
+      }
+      p.ellipsis {
+        text-overflow: ellipsis;
+      }
+
+      i {
+        margin-top: 10px;
+        font-size: 2em;
       }
     }
 

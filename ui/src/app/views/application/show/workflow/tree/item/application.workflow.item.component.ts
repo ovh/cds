@@ -375,7 +375,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         }
     }
 
-    ngDoCheck() {
+    ngDoCheck(): void {
         if (this.workflowItem.pipeline && this.workflowItem.pipeline.last_pipeline_build &&
             this.workflowItem.pipeline.last_pipeline_build.status) {
 
@@ -392,6 +392,5 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
             this.oldPipelineId = this.workflowItem.pipeline.last_pipeline_build.id;
             this.oldPipelineStatus = this.workflowItem.pipeline.last_pipeline_build.status;
         }
-
     }
 }

@@ -1,9 +1,13 @@
 import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNodeHook} from '../../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../model/workflow.model';
 import {WorkflowService} from '../../../../service/workflow/workflow.service';
 import {ToastService} from '../../../toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {WorkflowNodeHookFormComponent} from './form/node.hook.component';
+import {Project} from '../../../../model/project.model';
+import {HookEvent} from './hook.event';
+import {cloneDeep} from 'lodash';
+import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -15,13 +19,15 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
     @Input() hook: WorkflowNodeHook;
     @Input() readonly = false;
     @Input() workflow: Workflow;
+    @Input() project: Project;
+    @Input() node: WorkflowNode;
 
     @ViewChild('editHook')
     editHook: WorkflowNodeHookFormComponent;
 
     loading = false;
 
-    constructor(private elementRef: ElementRef, private _workflowService: WorkflowService, private _toast: ToastService,
+    constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _toast: ToastService,
                 private _translate: TranslateService) {
     }
 
@@ -36,10 +42,16 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
         }
     }
 
-    updateHook(h: WorkflowNodeHook): void {
+    updateHook(h: HookEvent): void {
+        let workflowToUpdate = cloneDeep(this.workflow);
         this.loading = true;
-        Workflow.updateHook(this.workflow, h);
-        this._workflowService.updateWorkflow(this.workflow.project_key, this.workflow).finally(() => {
+        if (h.type === 'delete') {
+            Workflow.removeHook(workflowToUpdate, h.hook);
+        } else {
+            Workflow.updateHook(workflowToUpdate, h.hook);
+
+        }
+        this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate).finally(() => {
             this.loading = false;
         }).subscribe(() => {
             this.editHook.modal.approve(true);

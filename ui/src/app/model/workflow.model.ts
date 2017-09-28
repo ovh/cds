@@ -44,6 +44,26 @@ export class Workflow {
         }
     };
 
+    static removeHook(workflow: Workflow, h: WorkflowNodeHook) {
+        let done = WorkflowNode.removeHook(workflow.root, h.id);
+        if (!done) {
+            if (workflow.joins) {
+                for (let i = 0; i < workflow.joins.length; i++) {
+                    let j = workflow.joins[i];
+                    if (j.triggers) {
+                        for (let k = 0; k < j.triggers.length; k++) {
+                            done = WorkflowNode.removeHook(j.triggers[k].workflow_dest_node, h.id);
+                            if (done) {
+                                return
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return
+    }
+
     static getNodeByID(id: number, w: Workflow): WorkflowNode {
         let node = WorkflowNode.getNodeByID(w.root, id);
         if (!node && w.joins) {
@@ -84,6 +104,8 @@ export class Workflow {
     constructor() {
         this.root = new WorkflowNode();
     }
+
+
 }
 
 export class WorkflowNodeJoin {
@@ -149,6 +171,25 @@ export class WorkflowNode {
         }
     }
 
+    static removeHook(n: WorkflowNode, id: number): boolean {
+        if (n.hooks) {
+            let lengthBefore = n.hooks.length;
+            n.hooks = n.hooks.filter(h => h.id !== id);
+            if (lengthBefore !== n.hooks.length) {
+                return true;
+            }
+        }
+        if (n.triggers) {
+            for (let i = 0; i < n.triggers.length; i++) {
+                let h = WorkflowNode.removeHook(n.triggers[i].workflow_dest_node, id);
+                if (h) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     static findHook(n: WorkflowNode, id: number): WorkflowNodeHook {
         if (n.hooks) {
             for (let i = 0; i < n.hooks.length; i++) {
@@ -171,8 +212,6 @@ export class WorkflowNode {
     constructor() {
         this.context = new WorkflowNodeContext();
     }
-
-
 }
 
 // WorkflowNodeContext represents a context attached on a node

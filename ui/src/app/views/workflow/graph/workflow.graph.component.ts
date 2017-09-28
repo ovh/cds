@@ -292,6 +292,8 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             let componentRef = hookComponent.create(this.svgContainer.parentInjector);
             componentRef.instance.hook = h;
             componentRef.instance.workflow = this.workflow;
+            componentRef.instance.project = this.project;
+            componentRef.instance.node = node;
 
             if (this.webworker) {
                 componentRef.instance.readonly = true;

@@ -122,8 +122,8 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}()
 
 		time.AfterFunc(time.Duration(viper.GetInt("ttl"))*time.Minute, func() {
-			log.Debug("Suicide")
 			if w.nbActionsDone == 0 {
+				log.Debug("Suicide")
 				cancel()
 			}
 		})

@@ -102,6 +102,7 @@ const (
 	StatusNeverBuilt Status = "Never Built"
 	StatusUnknown    Status = "Unknown"
 	StatusSkipped    Status = "Skipped"
+	StatusStopped    Status = "Stopped"
 )
 
 // Translate translates messages in pipelineBuildJob

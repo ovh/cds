@@ -16,6 +16,14 @@ import (
 
 // takePipelineBuildJob takes pipeline build job. If failed, this func return true if worker can safely check another job
 func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJobID int64, isBooked bool) bool {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	log.Debug("takePipelineBuildJob> Begin %p", ctx)
+	defer func() {
+		log.Debug("takePipelineBuildJob> End %p (%s)", ctx, ctx.Err())
+	}()
+
 	in := worker.TakeForm{Time: time.Now()}
 	if isBooked {
 		in.BookedJobID = pipelineBuildJobID
@@ -48,15 +56,15 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	w.currentJob.pbJob = pbji.PipelineBuildJob
 
 	//This goroutine try to get the pipeline build job every 5 seconds, if it fails, it cancel the build.
-	ctx, cancel := context.WithCancel(ctx)
 	tick := time.NewTicker(5 * time.Second)
-	go func(cancel context.CancelFunc, jobID int64, tick *time.Ticker) {
+	go func(jobID int64, tick *time.Ticker) {
 		for {
 			select {
 			case <-ctx.Done():
-				log.Debug("Exiting pipeline build job info goroutine: %v", ctx.Err())
+				log.Info("Exiting pipeline build job info goroutine: %v", ctx.Err())
 				tick.Stop()
 				return
+
 			case _, ok := <-tick.C:
 				if !ok {
 					return
@@ -64,6 +72,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
 				if err != nil {
 					log.Error("Unable to load pipeline build job %d", jobID)
+					log.Error("Cancelling context")
 					cancel()
 					return
 				}
@@ -71,21 +80,24 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 				j := &sdk.PipelineBuildJob{}
 				if err := json.Unmarshal(b, j); err != nil {
 					log.Error("Unable to load pipeline build job %d: %v", jobID, err)
+					log.Error("Cancelling context")
 					cancel()
 					return
 				}
 				if j.Status != sdk.StatusBuilding.String() {
+					log.Error("Cancelling context")
 					cancel()
 					return
 				}
 
 			}
 		}
-	}(cancel, pipelineBuildJobID, tick)
+	}(pipelineBuildJobID, tick)
 
 	// Reset build variables
 	w.currentJob.buildVariables = nil
 	start := time.Now()
+
 	//Run !
 	res := w.run(ctx, &pbji)
 	tick.Stop()

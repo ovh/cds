@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 
 	"github.com/howeyc/gopass"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk/cdsclient"
 )
 
 var signupCmd = cli.Command{
@@ -70,6 +72,12 @@ func signupRun(v cli.Values) error {
 	} else {
 		fmt.Println("Email:", email)
 	}
+
+	conf := cdsclient.Config{
+		Host:    url,
+		Verbose: os.Getenv("CDS_VERBOSE") == "true",
+	}
+	client = cdsclient.New(conf)
 
 	if err := client.UserSignup(username, fullname, email, "your username:%s, your confirmation code:%s"); err != nil {
 		return err

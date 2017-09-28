@@ -1,7 +1,6 @@
 package user
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -14,10 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-)
-
-const (
-	threeMonthsAgo = -3 * 30 * 24 * time.Hour
 )
 
 // Verify verify user token
@@ -336,47 +331,4 @@ func DeletePersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
 		return sdk.WrapError(err, "DeletePersistentSessionToken> Unable to delete persistent session token for user %d", t.UserID)
 	}
 	return nil
-}
-
-// PersistentSessionTokenCleaner cleans unused session token in DB
-func PersistentSessionTokenCleaner(c context.Context, DBFunc func() *gorp.DbMap) {
-	tick := time.NewTicker(10 * time.Minute)
-
-	for {
-		select {
-		case <-c.Done():
-			tick.Stop()
-			log.Error("Exiting user.PersistentSessionTokenCleaner: %v", c.Err())
-			return
-
-		case <-tick.C:
-			tx, err := DBFunc().Begin()
-			if err != nil {
-				continue
-			}
-
-			query := "select * from user_persistent_session where last_connection_date < $1"
-			tokens := []sdk.UserToken{}
-
-			if _, err := tx.Select(&tokens, query, time.Now().Add(threeMonthsAgo)); err != nil {
-				log.Error("PersistentSessionTokenCleaner> %s", err)
-				tx.Rollback()
-				continue
-			}
-
-			for _, t := range tokens {
-				if err := DeletePersistentSessionToken(tx, t); err != nil {
-					log.Error("PersistentSessionTokenCleaner> %s", err)
-					tx.Rollback()
-					break
-				}
-			}
-
-			if err := tx.Commit(); err != nil {
-				log.Error("PersistentSessionTokenCleaner> %s", err)
-				tx.Rollback()
-				continue
-			}
-		}
-	}
 }

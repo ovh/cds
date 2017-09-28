@@ -68,9 +68,8 @@ func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, s
 		select {
 		case <-c.Done():
 			// Close all channels
-			for c, v := range b.clients {
+			for c := range b.clients {
 				delete(b.clients, c)
-				close(v.Queue)
 			}
 			if c.Err() != nil {
 				log.Error("lastUpdate.CacheSubscribe> Exiting: %v", c.Err())
@@ -167,13 +166,8 @@ func (b *lastUpdateBroker) ServeHTTP() Handler {
 			select {
 			case <-w.(http.CloseNotifier).CloseNotify():
 				delete(b.clients, messageChan.UIID)
-				close(messageChan.Queue)
 				break leave
-			case msg, open := <-messageChan.Queue:
-				if !open {
-					delete(b.clients, messageChan.UIID)
-					break leave
-				}
+			case msg := <-messageChan.Queue:
 				fmt.Fprintf(w, "data: %s\n\n", msg)
 				f.Flush()
 			}

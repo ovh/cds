@@ -1,10 +1,13 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {WorkflowNodeHook} from '../../../../../model/workflow.model';
+import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowTriggerCondition} from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {cloneDeep} from 'lodash';
+import {Project} from '../../../../../model/project.model';
+import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
+import {HookEvent} from '../hook.event';
 
 @Component({
     selector: 'app-workflow-node-hook-form',
@@ -14,11 +17,16 @@ import {cloneDeep} from 'lodash';
 export class WorkflowNodeHookFormComponent {
 
     _hook: WorkflowNodeHook = new WorkflowNodeHook();
+    canDelete = false;
 
+    @Input() project: Project;
+    @Input() workflow: Workflow;
+    @Input() node: WorkflowNode;
     @Input() loading: boolean;
     @Input('hook')
     set hook(data: WorkflowNodeHook) {
         if (data) {
+            this.canDelete = true;
             this._hook = cloneDeep(data);
             if (this.hooksModel) {
                 this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
@@ -29,10 +37,12 @@ export class WorkflowNodeHookFormComponent {
         return this._hook;
     }
 
-    @Output() hookEvent = new EventEmitter<WorkflowNodeHook>();
+    @Output() hookEvent = new EventEmitter<HookEvent>();
 
     hooksModel: Array<WorkflowHookModel>;
     selectedHookModel: WorkflowHookModel;
+    operators: {};
+    conditionNames: Array<string>;
 
     // Ng semantic modal
     @ViewChild('nodeHookFormModal')
@@ -40,13 +50,7 @@ export class WorkflowNodeHookFormComponent {
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
-    constructor(private _hookService: HookService, private _modalService: SuiModalService) {
-        this._hookService.getHookModel().first().subscribe(hms => {
-            this.hooksModel = hms;
-            if (this._hook && this._hook.model) {
-                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
-            }
-        });
+    constructor(private _hookService: HookService, private _modalService: SuiModalService, private _workflowStore: WorkflowStore) {
     }
 
     updateHook(): void {
@@ -55,11 +59,36 @@ export class WorkflowNodeHookFormComponent {
     }
 
     show(): void {
+        this._hookService.getHookModel().first().subscribe(hms => {
+            this.hooksModel = hms;
+            if (this._hook && this._hook.model) {
+                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
+            }
+        });
+        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).first().subscribe( wtc => {
+            this.operators = wtc.operators;
+            this.conditionNames = wtc.names;
+        });
         this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeHookFormModal);
         this.modal = this._modalService.open(this.modalConfig);
     }
 
     addHook(): void {
-        this.hookEvent.emit(this.hook);
+        this.hookEvent.emit(new HookEvent('add', this.hook));
+    }
+
+    addConditions(condition: WorkflowTriggerCondition): void {
+        if (!this.hook.conditions) {
+            this.hook.conditions = new Array<WorkflowTriggerCondition>();
+        }
+
+        let index = this.hook.conditions.findIndex(c => c.variable === condition.variable);
+        if (index === -1) {
+            this.hook.conditions.push(condition);
+        }
+    }
+
+    deleteHook(): void {
+        this.hookEvent.emit(new HookEvent('delete', this.hook));
     }
 }

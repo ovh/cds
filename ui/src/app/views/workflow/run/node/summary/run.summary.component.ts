@@ -70,7 +70,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
         request.manual = this.nodeRun.manual;
         request.hook = this.nodeRun.hook_event;
         this._wrService.runWorkflow(this.project.key, this.workflow, request).subscribe(wr => {
-            this._router.navigate(['project', this.project.key, 'workflow', this.workflow.name, 'run', this.nodeRun.num])
+            this._router.navigate(['project', this.project.key, 'workflow', this.workflow.name, 'run', this.nodeRun.num]);
         });
 
     }

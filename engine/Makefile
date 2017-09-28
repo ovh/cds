@@ -71,7 +71,7 @@ test-config: ${HOME}/.cds/tests.cfg.json
 
 ${HOME}/.cds/tests.cfg.json:
 		@mkdir -p ${HOME}/.cds
-		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\",  \"dbPassword\" :\"$(TEST_DB_PASSWORD)\"  ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_PASSWORD)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/tests.cfg.json
+		@echo "{\"dbDriver\": \"postgres\", \"dbUser\" :\"$(TEST_DB_USER)\",  \"dbPassword\" :\"$(TEST_DB_PASSWORD)\"  ,\"dbName\": \"$(TEST_DB_NAME)\", \"dbHost\": \"$(TEST_DB_HOST)\", \"dbPort\" : \"$(TEST_DB_PORT)\", \"sslMode\": \"disable\", \"redisHost\" : \"$(TEST_REDIS_HOST)\", \"redisPassword\" : \"$(TEST_REDIS_PASSWORD)\"}" > ${HOME}/.cds/tests.cfg.json
 
 test: test-config clean
 	@for PKG in $(TEST_PKGS); do \

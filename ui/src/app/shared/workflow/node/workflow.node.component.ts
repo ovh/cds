@@ -18,6 +18,10 @@ import {PipelineStatus} from '../../../model/pipeline.model';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowNodeHookFormComponent} from './hook/form/node.hook.component';
 import {WorkflowHookModel} from '../../../model/workflow.hook.model';
+import {HookEvent} from './hook/hook.event';
+import {WorkflowService} from '../../../service/workflow/workflow.service';
+import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 
 declare var _: any;
 
@@ -43,6 +47,8 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     workflowContext: WorkflowNodeContextComponent;
     @ViewChild('worklflowAddHook')
     worklflowAddHook: WorkflowNodeHookFormComponent;
+    @ViewChild('workflowRunNode')
+    workflowRunNode: WorkflowNodeRunParamComponent;
 
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
     editableNode: WorkflowNode;
@@ -86,11 +92,11 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     }
 
-    addHook(h: WorkflowNodeHook): void {
+    addHook(he: HookEvent): void {
         if (!this.node.hooks) {
             this.node.hooks = new Array<WorkflowNodeHook>();
         }
-        this.node.hooks.push(h);
+        this.node.hooks.push(he.hook);
         this.updateWorkflow(this.workflow, this.worklflowAddHook.modal);
     }
 
@@ -260,5 +266,10 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
             'workflow', this.workflow.name,
             'run', this.currentNodeRun.num,
             'node', this.currentNodeRun.id], {queryParams: { name: pip}});
+    }
+
+    openRunNode($event): void {
+        $event.stopPropagation();
+        this.workflowRunNode.show();
     }
 }
