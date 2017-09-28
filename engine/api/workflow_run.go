@@ -233,7 +233,6 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 		}
 		id, err := requestVarInt(r, "nodeRunID")
 		if err != nil {
-
 			return err
 		}
 

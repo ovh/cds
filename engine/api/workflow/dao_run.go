@@ -33,6 +33,15 @@ func updateWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun) error {
 	return nil
 }
 
+func updateWorkflowRunStatus(db gorp.SqlExecutor, ID int64, status string) error {
+	//Update node
+	query := "UPDATE workflow_run SET status = $1 WHERE id = $2"
+	if _, err := db.Exec(query, status, ID); err != nil {
+		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", ID, status)
+	}
+	return nil
+}
+
 //PostInsert is a db hook on WorkflowRun
 func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 	w, errw := json.Marshal(r.Workflow)
@@ -115,47 +124,47 @@ func updateTags(db gorp.SqlExecutor, r *Run) error {
 // LoadLastRun returns the last run for a workflow
 func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.*
-	from workflow_run 
-	join project on workflow_run.project_id = project.id 
+	from workflow_run
+	join project on workflow_run.project_id = project.id
 	join workflow on workflow_run.workflow_id = workflow.id
-	where project.projectkey = $1 
-	and workflow.name = $2 
+	where project.projectkey = $1
+	and workflow.name = $2
 	order by workflow_run.num desc limit 1`
 	return loadRun(db, query, projectkey, workflowname)
 }
 
 // LoadRun returns a specific run
 func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64) (*sdk.WorkflowRun, error) {
-	query := `select workflow_run.* 
-	from workflow_run 
-	join project on workflow_run.project_id = project.id 
+	query := `select workflow_run.*
+	from workflow_run
+	join project on workflow_run.project_id = project.id
 	join workflow on workflow_run.workflow_id = workflow.id
-	where project.projectkey = $1 
-	and workflow.name = $2 
+	where project.projectkey = $1
+	and workflow.name = $2
 	and workflow_run.num = $3`
 	return loadRun(db, query, projectkey, workflowname, number)
 }
 
 // LoadRunByIDAndProjectKey returns a specific run
 func LoadRunByIDAndProjectKey(db gorp.SqlExecutor, projectkey string, id int64) (*sdk.WorkflowRun, error) {
-	query := `select workflow_run.* 
-	from workflow_run 
-	join project on workflow_run.project_id = project.id 
-	where project.projectkey = $1 
+	query := `select workflow_run.*
+	from workflow_run
+	join project on workflow_run.project_id = project.id
+	where project.projectkey = $1
 	and workflow_run.id = $2`
 	return loadRun(db, query, projectkey, id)
 }
 
 func LoadRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
-	query := `select workflow_run.* 
-	from workflow_run 
+	query := `select workflow_run.*
+	from workflow_run
 	where workflow_run.id = $1`
 	return loadRun(db, query, id)
 }
 
 func loadAndLockRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
-	query := `select workflow_run.* 
-	from workflow_run 
+	query := `select workflow_run.*
+	from workflow_run
 	where workflow_run.id = $1 for update nowait`
 	return loadRun(db, query, id)
 }
@@ -164,10 +173,10 @@ func loadAndLockRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error)
 //It retuns runs, offset, limit count and an error
 func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int) ([]sdk.WorkflowRun, int, int, int, error) {
 	queryCount := `select count(workflow_run.id)
-	from workflow_run 
-	join project on workflow_run.project_id = project.id 
+	from workflow_run
+	join project on workflow_run.project_id = project.id
 	join workflow on workflow_run.workflow_id = workflow.id
-	where project.projectkey = $1 
+	where project.projectkey = $1
 	and workflow.name = $2`
 
 	count, errc := db.SelectInt(queryCount, projectkey, workflowname)
@@ -178,13 +187,13 @@ func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limi
 		return nil, 0, 0, 0, nil
 	}
 
-	query := `select workflow_run.* 
-	from workflow_run 
-	join project on workflow_run.project_id = project.id 
+	query := `select workflow_run.*
+	from workflow_run
+	join project on workflow_run.project_id = project.id
 	join workflow on workflow_run.workflow_id = workflow.id
-	where project.projectkey = $1 
-	and workflow.name = $2 
-	order by workflow_run.start desc 
+	where project.projectkey = $1
+	and workflow.name = $2
+	order by workflow_run.start desc
 	limit $3 offset $4`
 
 	runs := []Run{}

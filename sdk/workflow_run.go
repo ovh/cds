@@ -15,6 +15,7 @@ type WorkflowRun struct {
 	Number           int64                       `json:"num" db:"num"`
 	ProjectID        int64                       `json:"project_id,omitempty" db:"project_id"`
 	WorkflowID       int64                       `json:"workflow_id" db:"workflow_id"`
+	Status           string                      `json:"status" db:"status"`
 	Workflow         Workflow                    `json:"workflow" db:"-"`
 	Start            time.Time                   `json:"start" db:"start"`
 	LastModified     time.Time                   `json:"last_modified" db:"last_modified"`

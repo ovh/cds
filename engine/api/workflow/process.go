@@ -15,7 +15,9 @@ import (
 // processWorkflowRun triggers workflow node for every workflow.
 // It contains all the logic for triggers and joins processing.
 func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) error {
+	var nodesRunFailed, nodesRunBuilding, nodesRunSuccess int
 	t0 := time.Now()
+	w.Status = string(sdk.StatusBuilding)
 	log.Debug("processWorkflowRun> Begin [#%d]%s", w.Number, w.Workflow.Name)
 	defer func() {
 		log.Debug("processWorkflowRun> End [#%d]%s - %.3fs", w.Number, w.Workflow.Name, time.Since(t0).Seconds())
@@ -55,8 +57,10 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 	//Checks the triggers
 	for k, v := range w.WorkflowNodeRuns {
+		// Subversion of workflowNodeRun
 		for i := range v {
 			nodeRun := &w.WorkflowNodeRuns[k][i]
+			updateNodesRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed)
 
 			//Trigger only if the node is over (successfull or not)
 			if nodeRun.Status == string(sdk.StatusSuccess) || nodeRun.Status == string(sdk.StatusFail) {
@@ -118,6 +122,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 								Args: []interface{}{err},
 							})
 						}
+						nodesRunBuilding++
 					}
 				}
 			}
@@ -226,11 +231,13 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 						})
 						log.Error("processWorkflowRun> Unable to process node ID=%d: %v", t.WorkflowDestNode.ID, err)
 					}
+					nodesRunBuilding++
 				}
 			}
 		}
-
 	}
+
+	w.Status = getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed)
 
 	if err := updateWorkflowRun(db, w); err != nil {
 		return sdk.WrapError(err, "processWorkflowRun>")
@@ -414,5 +421,31 @@ func AddWorkflowRunInfo(run *sdk.WorkflowRun, infos ...sdk.SpawnMsg) {
 			APITime: time.Now(),
 			Message: i,
 		})
+	}
+}
+
+// getWorkflowRunStatus return the status depending on number of workflowNodeRuns in success, building and fail
+func getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed int) string {
+	switch {
+	case nodesRunFailed > 0:
+		return string(sdk.StatusFail)
+	case nodesRunBuilding > 0:
+		return string(sdk.StatusBuilding)
+	case nodesRunSuccess > 0:
+		return string(sdk.StatusSuccess)
+	default:
+		return string(sdk.StatusNeverBuilt)
+	}
+}
+
+// updateNodesRunStatus is useful to compute number of nodeRun in success, building and fail
+func updateNodesRunStatus(status string, success, building, fail *int) {
+	switch status {
+	case string(sdk.StatusSuccess):
+		*success++
+	case string(sdk.StatusBuilding):
+		*building++
+	case string(sdk.StatusFail):
+		*fail++
 	}
 }
