@@ -9,9 +9,11 @@
     >
         <div class="pipeline">
             <p class="ellipsis">
+                <span *ngIf="webworker"><i class="video play outline icon" (click)="openRunNode($event)"></i></span>
                 <span class="ui black circular label" *ngIf="currentNodeRun">{{currentNodeRun?.num + '.' + currentNodeRun?.subnumber}}</span>
-                <b>{{node.name}}</b>{{' - ' + node.pipeline.name}}
+                <b>{{node.name}}</b><span *ngIf="node.name !== node.pipeline.name">{{' - ' + node.pipeline.name}}</span>
             </p>
+
         </div>
         <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0">
             <p class="ellipsis">{{node.context.application.name}}</p>
@@ -31,15 +33,18 @@
     </div>
 
 </div>
-<ng-container *ngIf="project && node">
+<ng-container *ngIf="project && node && !webworker">
     <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [triggerSrcNode]="node" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowTrigger></app-workflow-trigger>
 </ng-container>
-<ng-container *ngIf="node">
+<ng-container *ngIf="node && !webworker">
     <app-workflow-node-delete [loading]="loading" [node]="node" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
 </ng-container>
-<ng-container *ngIf="project && node">
+<ng-container *ngIf="project && node && !webworker">
     <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
 </ng-container>
-<ng-container *ngIf="project && node">
+<ng-container *ngIf="project && node && !webworker">
     <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-form>
+</ng-container>
+<ng-container *ngIf="project && node && currentNodeRun">
+    <app-workflow-node-run-param [workflow]="workflow" [project]="project" [nodeRun]="currentNodeRun" [nodeToRun]="node" #workflowRunNode></app-workflow-node-run-param>
 </ng-container>
