@@ -262,6 +262,9 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 			case sdk.StatusFail.String():
 				finalStatus = sdk.StatusFail
 				break finalStageLoop
+			case sdk.StatusStopped.String():
+				finalStatus = sdk.StatusFail
+				break finalStageLoop
 			case sdk.StatusSuccess.String():
 				if finalStatus != sdk.StatusFail {
 					finalStatus = sdk.StatusSuccess

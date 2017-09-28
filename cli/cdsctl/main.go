@@ -50,7 +50,7 @@ func main() {
 	root.PersistentFlags().BoolVarP(&insecureSkipVerifyTLS, "insecure", "k", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
 		//Do not load config nor display warnings on login
-		if cmd == login || (cmd.Run == nil && cmd.RunE == nil) {
+		if cmd == login || cmd == signup || (cmd.Run == nil && cmd.RunE == nil) {
 			return
 		}
 

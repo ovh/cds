@@ -19,7 +19,7 @@
                                          [class.active]="selectedPipJob && selectedPipJob.job.pipeline_action_id === j.pipeline_action_id"
                                          [class.success]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.SUCCESS"
                                          [class.inactive]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.DISABLED || mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.SKIPPED"
-                                         [class.fail]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.FAIL"
+                                         [class.fail]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.FAIL || mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.STOPPED"
                                          [class.building]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.BUILDING"
                                          (click)="selectedJob(j, stage)">
                                         <div class="warningPip"

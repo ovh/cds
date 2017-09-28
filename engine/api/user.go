@@ -319,9 +319,25 @@ func (api *API) confirmUserHandler() Handler {
 			User: *u,
 		}
 
-		sessionKey, err := auth.NewSession(api.Router.AuthDriver, u)
-		if err != nil {
-			log.Error("Auth> Error while creating new session: %s\n", err)
+		var logFromCLI bool
+		if r.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
+			log.Info("LoginUser> login from CLI")
+			logFromCLI = true
+		}
+
+		var sessionKey sessionstore.SessionKey
+		var errs error
+		if !logFromCLI {
+			sessionKey, errs = auth.NewSession(api.Router.AuthDriver, u)
+			if err != nil {
+				log.Error("Auth> Error while creating new session: %s\n", err)
+			}
+		} else {
+			//CLI login, generate user key as persistent session
+			sessionKey, errs = auth.NewPersistentSession(api.mustDB(), api.Router.AuthDriver, u)
+			if errs != nil {
+				log.Error("Auth> Error while creating new session: %s\n", errs)
+			}
 		}
 
 		response.Token = string(sessionKey)

@@ -75,6 +75,11 @@ input[disabled] {
   min-width: 14em;
 }
 
+.ui.circular.labels .label, .ui.circular.label {
+  min-width: inherit;
+  min-height: inherit;
+}
+
 
 // icon
 

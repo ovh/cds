@@ -43,6 +43,10 @@ func getLogger(w *currentWorker, buildID int64, stepOrder int) LoggerFunc {
 }
 
 func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int) sdk.Result {
+	log.Debug("runBuiltin> Begin %p", ctx)
+	defer func() {
+		log.Debug("runBuiltin> End %p (%s)", ctx, ctx.Err())
+	}()
 	defer w.drainLogsAndCloseLogger(ctx)
 
 	//Define a loggin function
@@ -138,17 +142,15 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		chanRes <- res
 	}(buildID, *params)
 
-	for {
-		select {
-		case <-ctx.Done():
-			log.Error("CDS Worker execution canceled: %v", ctx.Err())
-			w.sendLog(buildID, "CDS Worker execution canceled\n", stepOrder, false)
-			return sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: "CDS Worker execution canceled",
-			}
-		case res := <-chanRes:
-			return res
+	select {
+	case <-ctx.Done():
+		log.Error("CDS Worker execution canceled: %v", ctx.Err())
+		w.sendLog(buildID, "CDS Worker execution canceled\n", stepOrder, false)
+		return sdk.Result{
+			Status: sdk.StatusFail.String(),
+			Reason: "CDS Worker execution canceled",
 		}
+	case res := <-chanRes:
+		return res
 	}
 }

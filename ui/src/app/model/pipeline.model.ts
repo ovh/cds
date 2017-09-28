@@ -17,6 +17,7 @@ export class PipelineStatus {
     static DISABLED = 'Disabled';
     static SKIPPED = 'Skipped';
     static NEVER_BUILT = 'Never Built';
+    static STOPPED = 'Stopped';
 }
 
 export class Pipeline {
