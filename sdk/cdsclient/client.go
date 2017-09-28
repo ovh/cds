@@ -51,7 +51,7 @@ func NewService(endpoint string) Interface {
 func NewWorker(endpoint string, name string) Interface {
 	conf := Config{
 		Host:  endpoint,
-		Retry: 2,
+		Retry: 5,
 	}
 	cli := new(client)
 	cli.config = conf
