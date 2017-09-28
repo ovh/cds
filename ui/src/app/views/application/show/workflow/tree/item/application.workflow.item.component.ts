@@ -146,7 +146,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
             this.workflowItem.environment.name
         ).finally(() => this.loadingPipAction = false)
         .subscribe(() => {
-            this.workflowItem.pipeline.last_pipeline_build.status = this.pipelineStatusEnum.FAIL;
+            this.workflowItem.pipeline.last_pipeline_build.status = this.pipelineStatusEnum.STOPPED;
             this._changeDetectorRef.detach();
             setTimeout(() => this._changeDetectorRef.reattach(), 2000);
         });

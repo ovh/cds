@@ -49,7 +49,13 @@ $boxWidth: 155px;
 
       i {
         margin-top: 10px;
-        font-size: 2em;
+        font-size: 2.2em;
+        &.circular.icon.build {
+          box-shadow: 0em 0em 0em 0.22em black inset;
+          margin-bottom: 11px;
+          font-size: 1em;
+          margin-right: 7px;
+        }
       }
     }
 
@@ -98,4 +104,32 @@ $boxWidth: 155px;
     background-color: $cds_color_light_teal;
     border: 2px solid $cds_color_teal;
   }
+
+  // Loader
+  .ui.medium.loader {
+    margin-right: 5px;
+    .ui.circular.label {
+      margin-top: 4px;
+    }
+  }
+  .ui.large.loader {
+    margin-right: 5px;
+    .ui.circular.label {
+      margin-top: 12px;
+    }
+  }
+  .ui.huge.loader {
+    margin-right: 5px;
+    margin-top: 4px;
+    .ui.circular.label {
+      margin-top: 15px;
+    }
+  }
+  .ui.massive.loader {
+    margin-right: 5px;
+    .ui.circular.label {
+      margin-top: 20px;
+    }
+  }
+  // End loader
 }
