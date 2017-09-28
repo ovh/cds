@@ -19,6 +19,10 @@ import (
 
 func runScriptAction(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
+		log.Debug("runScriptAction> Begin %p", ctx)
+		defer func() {
+			log.Debug("runScriptAction> End %p (%s)", ctx, ctx.Err())
+		}()
 		chanRes := make(chan sdk.Result)
 
 		go func() {
@@ -256,20 +260,24 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 
 		defer w.drainLogsAndCloseLogger(ctx)
 
-		for {
-			select {
-			case <-ctx.Done():
-				log.Error("CDS Worker execution canceled: %v", ctx.Err())
-				sendLog("CDS Worker execution canceled")
-				return sdk.Result{
-					Status: sdk.StatusFail.String(),
-					Reason: "CDS Worker execution canceled",
-				}
-
-			case res := <-chanRes:
-				return res
+		var res sdk.Result
+		// Wait for a result
+		select {
+		case <-ctx.Done():
+			log.Error("CDS Worker execution canceled: %v", ctx.Err())
+			sendLog("CDS Worker execution canceled")
+			res = sdk.Result{
+				Status: sdk.StatusFail.String(),
+				Reason: "CDS Worker execution canceled",
 			}
+			break
+
+		case res = <-chanRes:
+			break
 		}
+
+		log.Info("runScriptAction> %s %s", res.GetStatus(), res.GetReason())
+		return res
 	}
 }
 
