@@ -2,10 +2,11 @@ package pipeline
 
 import (
 	"encoding/json"
-	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/sdk"
 	"time"
-	"github.com/ovh/cds/sdk/log"
+
+	"github.com/go-gorp/gorp"
+
+	"github.com/ovh/cds/sdk"
 )
 
 // CreateAudit insert current pipeline version on audit table
@@ -29,6 +30,7 @@ func LoadAudit(db gorp.SqlExecutor, key string, pipName string) ([]sdk.PipelineA
 		JOIN project ON project.id = pipeline.project_id
 		WHERE project.projectkey = $1 AND pipeline.name = $2
 		ORDER BY pipeline_audit.id DESC
+		LIMIT 100
 	`
 	var auditGorp []PipelineAudit
 	if _, err := db.Select(&auditGorp, query, key, pipName); err != nil {
@@ -51,6 +53,7 @@ func DeleteAudit(db gorp.SqlExecutor, pipID int64) error {
 	return err
 }
 
+// PostGet is a dbHook on Select to get json column
 func (p *PipelineAudit) PostGet(s gorp.SqlExecutor) error {
 
 	query := "SELECT pipeline FROM pipeline_audit WHERE id = $1"
