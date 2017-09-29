@@ -41,6 +41,7 @@ import {HTTP_INTERCEPTORS} from '@angular/common/http';
 import {AuthentificationInterceptor} from './auth.interceptor.service';
 import {LogoutInterceptor} from './logout.interceptor.service';
 import {HookService} from './hook/hook.service';
+import {PipelineAuditService} from './pipeline/pipeline.audit.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -71,6 +72,7 @@ export class ServicesModule {
                 ParameterService,
                 PipelineResolver,
                 PipelineService,
+                PipelineAuditService,
                 PipelineStore,
                 ProjectResolver,
                 ProjectService,
@@ -127,6 +129,7 @@ export {
     ParameterService,
     PipelineResolver,
     PipelineStore,
+    PipelineAuditService,
     ProjectResolver,
     ProjectStore,
     ProjectAuditService,

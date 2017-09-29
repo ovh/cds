@@ -16,7 +16,10 @@
                     <i class="users icon"></i>{{ 'common_permissions' | translate }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'applications'" (click)="showTab('applications')">
-                    <i class="users icon"></i>{{ 'common_applications' | translate }}{{ ' (' + applications.length + ')' }}
+                    <i class="rocket icon"></i>{{ 'common_applications' | translate }}{{ ' (' + applications.length + ')' }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'audits'" (click)="showTab('audits')">
+                    <i class="history icon"></i>{{'common_audit' | translate }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="pipeline.permission === 7">
                     <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
@@ -55,6 +58,9 @@
                     </div>
                     <div *ngSwitchCase="'advanced'">
                         <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>
+                    </div>
+                    <div *ngSwitchCase="'audits'">
+                        <app-pipeline-audit [project]="project" [pipeline]="pipeline"></app-pipeline-audit>
                     </div>
                 </div>
             </div>
