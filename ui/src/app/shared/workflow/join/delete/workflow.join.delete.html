@@ -7,6 +7,6 @@
     </div>
     <div class="actions">
         <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="deleteJoin()">{{ 'btn_delete' | translate }}</button>
+        <button class="ui red button" [disabled]="loading" [class.loading]="loading" (click)="deleteJoin()">{{ 'btn_delete' | translate }}</button>
     </div>
 </ng-template>
