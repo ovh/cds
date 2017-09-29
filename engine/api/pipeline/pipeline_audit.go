@@ -30,7 +30,6 @@ func LoadAudit(db gorp.SqlExecutor, key string, pipName string) ([]sdk.PipelineA
 		WHERE project.projectkey = $1 AND pipeline.name = $2
 		ORDER BY pipeline_audit.id DESC
 	`
-	log.Warning("%s %s %s", query, key, pipName)
 	var auditGorp []PipelineAudit
 	if _, err := db.Select(&auditGorp, query, key, pipName); err != nil {
 		return nil, err
