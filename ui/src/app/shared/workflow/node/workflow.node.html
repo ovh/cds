@@ -21,7 +21,7 @@
                         <i class="black stop icon build"></i>
                     </div>
                 </ng-container>
-                <span class="ui black circular label mr5">
+                <span class="ui black circular label mr5" *ngIf="currentNodeRun">
                     v{{ currentNodeRun?.num + '.' + currentNodeRun?.subnumber }}
                 </span>
                 <b>{{node.name}}</b><span *ngIf="node.name !== node.pipeline.name">{{' - ' + node.pipeline.name}}</span>
