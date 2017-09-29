@@ -4,7 +4,7 @@
         <tr>
             <th class="four wide">{{ 'audit_action' | translate}}</th>
             <th class="four wide">{{ 'audit_username' | translate }}</th>
-            <th class="three wide">{{ 'audit_date' | translate }}</th>
+            <th class="three wide">{{ 'audit_time_author' | translate }}</th>
         </tr>
         </thead>
         <tbody>
@@ -41,7 +41,7 @@
         {{ 'variable_no' | translate }}
     </div>
 </div>
-<div *ngIf="currentCompare">
+<div *ngIf="currentCompare" class="area">
     <table class="ui fixed celled table">
         <thead>
         <tr>
