@@ -129,7 +129,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot load project variable")
 		}
 
-		secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, job, nodeRun, workflowRun, pv)
+		secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, api.Cache, job, nodeRun, workflowRun, pv)
 		if errSecret != nil {
 			return sdk.WrapError(errSecret, "postTakeWorkflowJobHandler> Cannot load secrets")
 		}

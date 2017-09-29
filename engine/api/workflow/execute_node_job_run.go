@@ -238,7 +238,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 }
 
 // LoadNodeJobRunSecrets loads all secrets for a job run
-func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, pv []sdk.Variable) ([]sdk.Variable, error) {
+func LoadNodeJobRunSecrets(db gorp.SqlExecutor, store cache.Store, job *sdk.WorkflowNodeJobRun, nodeRun *sdk.WorkflowNodeRun, w *sdk.WorkflowRun, pv []sdk.Variable) ([]sdk.Variable, error) {
 	var secrets []sdk.Variable
 
 	pv = sdk.VariablesFilter(pv, sdk.SecretVariable, sdk.KeyVariable)
@@ -254,7 +254,11 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nod
 	//Application variables
 	av := []sdk.Variable{}
 	if n.Context != nil && n.Context.Application != nil {
-		av = sdk.VariablesFilter(n.Context.Application.Variable, sdk.SecretVariable, sdk.KeyVariable)
+		appv, errA := application.GetAllVariableByID(db, n.Context.Application.ID, application.WithClearPassword())
+		if errA != nil {
+			return nil, sdk.WrapError(errA, "LoadNodeJobRunSecrets> Cannot load application variables")
+		}
+		av = sdk.VariablesFilter(appv, sdk.SecretVariable, sdk.KeyVariable)
 		av = sdk.VariablesPrefix(av, "cds.app.")
 	}
 	secrets = append(secrets, av...)
@@ -262,7 +266,11 @@ func LoadNodeJobRunSecrets(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, nod
 	//Environment variables
 	ev := []sdk.Variable{}
 	if n.Context != nil && n.Context.Environment != nil {
-		ev = sdk.VariablesFilter(n.Context.Environment.Variable, sdk.SecretVariable, sdk.KeyVariable)
+		envv, errE := environment.GetAllVariableByID(db, n.Context.Environment.ID, environment.WithClearPassword())
+		if errE != nil {
+			return nil, sdk.WrapError(errE, "LoadNodeJobRunSecrets> Cannot load environment variables")
+		}
+		ev = sdk.VariablesFilter(envv, sdk.SecretVariable, sdk.KeyVariable)
 		ev = sdk.VariablesPrefix(ev, "cds.env.")
 	}
 	secrets = append(secrets, ev...)
