@@ -9,7 +9,7 @@
     >
         <div class="pipeline">
             <p class="ellipsis">
-                <span *ngIf="webworker &&
+                <span *ngIf="webworker && !loadingStop &&
                     workflowRunStatus !== pipelineStatus.BUILDING &&
                     workflowRunStatus !== pipelineStatus.WAITING &&
                     currentNodeRun?.status !== pipelineStatus.BUILDING &&
@@ -18,7 +18,7 @@
                 </span>
                 <ng-container *ngIf="webworker && (currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING)">
                     <div class="ui active inline blue loader mr5"  (click)="stopNodeRun($event)">
-                        <i class="black stop icon build"></i>
+                        <i class="black stop icon build" *ngIf="!loadingStop"></i>
                     </div>
                 </ng-container>
                 <span class="ui black circular label mr5" *ngIf="currentNodeRun">

@@ -22,6 +22,7 @@ export class WorkflowRunComponent implements OnDestroy {
     workflowRun: WorkflowRun;
     zone: NgZone;
     workflowName: string;
+    version: string;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore, private _router: Router) {
         this.zone = new NgZone({enableLongStackTrace: false});
@@ -58,6 +59,7 @@ export class WorkflowRunComponent implements OnDestroy {
                                 return;
                             }
                             this.workflowRun = <WorkflowRun>JSON.parse(wrString);
+                            this.getVersion();
                         });
                     }
                 });
@@ -69,5 +71,23 @@ export class WorkflowRunComponent implements OnDestroy {
         if (this.runWorkflowWorker) {
             this.runWorkflowWorker.stop();
         }
+    }
+
+    getVersion() {
+      let maxNum = 0;
+      let maxSubV = 0;
+
+      Object.keys(this.workflowRun.nodes).forEach((keyWr) => {
+        this.workflowRun.nodes[keyWr].forEach((wrnv) => {
+          if (maxNum < wrnv.num) {
+            maxNum = wrnv.num
+          }
+          if (maxSubV < wrnv.subnumber) {
+            maxSubV = wrnv.subnumber
+          }
+        });
+      });
+
+      this.version = maxNum + '.' + maxSubV;
     }
 }

@@ -1,4 +1,51 @@
 <div id="WorkflowRun" *ngIf="workflowRun">
+    <div class="ui grid">
+        <div class="row">
+            <div class="five wide column"></div>
+            <div class="six wide column">
+                <div class="ui raised card winfo">
+                    <div class="content">
+                        <div class="ui grid">
+                            <div class="row">
+                                <div class="five wide column">
+                                    <i class="calendar icon"></i>
+                                    <span>{{workflowRun.start | amCalendar}}</span>
+                                </div>
+                                <div class="six wide column centered">
+                                    <i class="tag icon"></i>
+                                    <span>v{{version}}</span>
+                                </div>
+                                <div class="five wide column">
+                                    <div class="right floated">
+                                        <i class="checked calendar icon"></i>
+                                        <span>{{workflowRun.start | amCalendar}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="extra content">
+                        <div class="left floated">
+                            <button class="ui labeled icon button">
+                                <i class="resize horizontal icon"></i>
+                                Horizontal
+                            </button>
+                        </div>
+                        <!-- <div class="centered author"> -->
+                            <i class="user circle outline icon centered"></i> bnjjj
+                        <!-- </div> -->
+                        <div class="right floated">
+                            <button class="ui labeled icon button">
+                                <i class="stop icon"></i>
+                                Stop
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="five wide column"></div>
+        </div>
+    </div>
     <div class="scrollingContent">
         <div class="viewContent">
             <app-workflow-graph [project]="project" [workflowData]="workflowRun.workflow" [status]="workflowRun.status" [webworker]="runWorkflowWorker"></app-workflow-graph>
