@@ -104,6 +104,11 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
 	n.Status = newStatus
+	//If the node is over, push the status in the build parameter, so it would be availabe in children build parameters
+	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
+		sdk.AddParameter(&n.BuildParameters, "cds.status", sdk.StringParameter, n.Status)
+	}
+
 	// Save the node run in database
 	if err := UpdateNodeRun(db, n); err != nil {
 		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s", n.ID, n.Status), "workflow.execute> Unable to execute node")
@@ -116,23 +121,15 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 	}
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
-	if n.Status == sdk.StatusSuccess.String() {
+	//Delete jobs only when node is over
+	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
 		if err := processWorkflowRun(db, store, p, updatedWorkflowRun, nil, nil, nil); err != nil {
 			return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 		}
-	}
 
-	//Delete jobs only when node is over
-	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
 		//Delete the line in workflow_node_run_job
 		if err := DeleteNodeJobRuns(db, n.ID); err != nil {
 			return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
-		}
-	}
-
-	if n.Status == sdk.StatusFail.String() {
-		if err := updateWorkflowRunStatus(db, updatedWorkflowRun.ID, sdk.StatusFail.String()); err != nil {
-			return sdk.WrapError(err, "workflow.execute> Unable to update workflow run status with id %d for status %s ", updatedWorkflowRun.ID, sdk.StatusFail.String())
 		}
 	}
 

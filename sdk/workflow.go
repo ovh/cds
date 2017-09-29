@@ -235,12 +235,12 @@ type WorkflowNode struct {
 }
 
 // FilterHooksConfig filter all hooks configuration and remove somme configuration key
-func (w *WorkflowNode) FilterHooksConfig(s ...string) {
-	if w == nil {
+func (n *WorkflowNode) FilterHooksConfig(s ...string) {
+	if n == nil {
 		return
 	}
 
-	for _, h := range w.Hooks {
+	for _, h := range n.Hooks {
 		for i := range s {
 			for k := range h.Config {
 				if k == s[i] {
@@ -253,14 +253,14 @@ func (w *WorkflowNode) FilterHooksConfig(s ...string) {
 }
 
 //GetHooks returns all hooks for the node and its children
-func (w *WorkflowNode) GetHooks() map[string]WorkflowNodeHook {
+func (n *WorkflowNode) GetHooks() map[string]WorkflowNodeHook {
 	res := map[string]WorkflowNodeHook{}
 
-	for _, h := range w.Hooks {
+	for _, h := range n.Hooks {
 		res[h.UUID] = h
 	}
 
-	for _, t := range w.Triggers {
+	for _, t := range n.Triggers {
 		b := t.WorkflowDestNode.GetHooks()
 		for k, v := range b {
 			res[k] = v
@@ -314,6 +314,49 @@ func (n *WorkflowNode) Nodes() []int64 {
 		res = append(res, t.WorkflowDestNode.Nodes()...)
 	}
 	return res
+}
+
+func ancestor(id int64, node *WorkflowNode) ([]int64, bool) {
+	if id == node.ID {
+		return nil, true
+	}
+	for _, t := range node.Triggers {
+		if t.WorkflowDestNodeID == id {
+			return []int64{node.ID}, true
+		}
+		ids, ok := ancestor(id, &t.WorkflowDestNode)
+		if ok {
+			return append(ids, node.ID), true
+		}
+	}
+	return nil, false
+}
+
+//Ancestors returns node is of all node ancestors
+func (n *WorkflowNode) Ancestors(w *Workflow) []int64 {
+	res := []int64{}
+	res, ok := ancestor(n.ID, w.Root)
+
+	if ok {
+		return res
+	}
+
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res, ok := ancestor(n.ID, &t.WorkflowDestNode)
+			if ok {
+				for _, id := range j.SourceNodeIDs {
+					node := w.GetNode(id)
+					if node != nil {
+						ancerstorRes := n.Ancestors(w)
+						res = append(res, ancerstorRes...)
+					}
+				}
+				return res
+			}
+		}
+	}
+	return nil
 }
 
 //TriggersID returns a slides of triggers IDs

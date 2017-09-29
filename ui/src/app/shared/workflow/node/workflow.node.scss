@@ -49,7 +49,12 @@ $boxWidth: 155px;
 
       i {
         margin-top: 10px;
-        font-size: 2em;
+        font-size: 2.2em;
+        &.icon.build {
+          margin-left: 3px;
+          margin-top: 8px;
+          font-size: 1.2em;
+        }
       }
     }
 
@@ -97,5 +102,37 @@ $boxWidth: 155px;
   .nodePipeline.building {
     background-color: $cds_color_light_teal;
     border: 2px solid $cds_color_teal;
+  }
+
+  // Loader
+  .ui.medium.loader {
+    margin-right: 5px;
+    .ui.circular.label {
+      margin-top: 4px;
+    }
+  }
+  .ui.large.loader {
+    margin-right: 5px;
+    .ui.circular.label {
+      margin-top: 12px;
+    }
+  }
+  .ui.huge.loader {
+    margin-right: 5px;
+    margin-top: 4px;
+    .ui.circular.label {
+      margin-top: 15px;
+    }
+  }
+  .ui.massive.loader {
+    margin-right: 5px;
+    .ui.circular.label {
+      margin-top: 20px;
+    }
+  }
+  // End loader
+
+  .mr5 {
+    margin-right: 5px;
   }
 }

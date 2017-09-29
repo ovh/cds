@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getWorkflowTriggerConditionHandler() Handler {
@@ -51,8 +52,16 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			Operators: sdk.WorkflowConditionsOperators,
 		}
 
+		var statusParamFound bool
 		for _, p := range params {
+			if p.Name == "cds.status" {
+				statusParamFound = true
+			}
 			data.ConditionNames = append(data.ConditionNames, p.Name)
+		}
+
+		if !statusParamFound {
+			data.ConditionNames = append(data.ConditionNames, "cds.status")
 		}
 
 		data.ConditionNames = append(data.ConditionNames, "cds.dest.pipeline")
@@ -66,6 +75,23 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 		}
 		if refNode.Context != nil && refNode.Context.Environment != nil {
 			data.ConditionNames = append(data.ConditionNames, "cds.dest.environment")
+		}
+
+		ancestorIds := refNode.Ancestors(wf)
+		for _, aID := range ancestorIds {
+			ancestor := wf.GetNode(aID)
+			if ancestor == nil {
+				continue
+			}
+			var found bool
+			for _, s := range data.ConditionNames {
+				if s == "workflow."+ancestor.Name+".status" {
+					found = true
+				}
+			}
+			if !found {
+				data.ConditionNames = append(data.ConditionNames, "workflow."+ancestor.Name+".status")
+			}
 		}
 
 		return WriteJSON(w, r, data, http.StatusOK)
@@ -112,6 +138,7 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 			Operators: sdk.WorkflowConditionsOperators,
 		}
 
+		//First we merge all build parameters from all source nodes
 		allparams := map[string]string{}
 		for _, i := range j.SourceNodeIDs {
 			params, errp := workflow.NodeBuildParameters(proj, wf, wr, i, getUser(ctx))
@@ -120,9 +147,42 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 			}
 			allparams = sdk.ParametersMapMerge(allparams, sdk.ParametersToMap(params))
 		}
-
 		for k := range allparams {
 			data.ConditionNames = append(data.ConditionNames, k)
+		}
+
+		//Then we push all ancestors status if needed
+		for _, i := range j.SourceNodeIDs {
+			refNode := wf.GetNode(i)
+			if refNode == nil {
+				log.Error("getWorkflowTriggerJoinConditionHandler> Unable to get node %d", i)
+				continue
+			}
+			var found bool
+			for _, s := range data.ConditionNames {
+				if s == "workflow."+refNode.Name+".status" {
+					found = true
+				}
+			}
+			if !found {
+				data.ConditionNames = append(data.ConditionNames, "workflow."+refNode.Name+".status")
+			}
+			ancestorIds := refNode.Ancestors(wf)
+			for _, aID := range ancestorIds {
+				ancestor := wf.GetNode(aID)
+				if ancestor == nil {
+					continue
+				}
+				var found bool
+				for _, s := range data.ConditionNames {
+					if s == "workflow."+ancestor.Name+".status" {
+						found = true
+					}
+				}
+				if !found {
+					data.ConditionNames = append(data.ConditionNames, "workflow."+ancestor.Name+".status")
+				}
+			}
 		}
 
 		return WriteJSON(w, r, data, http.StatusOK)

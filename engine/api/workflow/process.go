@@ -438,10 +438,10 @@ func AddWorkflowRunInfo(run *sdk.WorkflowRun, infos ...sdk.SpawnMsg) {
 // getWorkflowRunStatus return the status depending on number of workflowNodeRuns in success, building and fail
 func getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed int) string {
 	switch {
-	case nodesRunFailed > 0:
-		return string(sdk.StatusFail)
 	case nodesRunBuilding > 0:
 		return string(sdk.StatusBuilding)
+	case nodesRunFailed > 0:
+		return string(sdk.StatusFail)
 	case nodesRunSuccess > 0:
 		return string(sdk.StatusSuccess)
 	default:
