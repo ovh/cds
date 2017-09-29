@@ -2,7 +2,7 @@
 export abstract class Table {
 
     protected currentPage = 1;
-    nbElementsByPage = 10;
+    protected nbElementsByPage = 10;
 
    abstract getData(): any[];
 

@@ -33,6 +33,7 @@
     "dragula": "^3.7.2",
     "duration-js": "^3.9.2",
     "enhanced-resolve": "3.3.0",
+    "fast-json-patch": "^2.0.5",
     "font-awesome": "^4.6.3",
     "immutable": "^3.8.1",
     "js-beautify": "1.6.14",
