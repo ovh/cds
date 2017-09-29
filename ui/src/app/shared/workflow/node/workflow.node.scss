@@ -50,11 +50,10 @@ $boxWidth: 155px;
       i {
         margin-top: 10px;
         font-size: 2.2em;
-        &.circular.icon.build {
-          box-shadow: 0em 0em 0em 0.22em black inset;
-          margin-bottom: 11px;
-          font-size: 1em;
-          margin-right: 7px;
+        &.icon.build {
+          margin-left: 3px;
+          margin-top: 8px;
+          font-size: 1.2em;
         }
       }
     }
@@ -132,4 +131,8 @@ $boxWidth: 155px;
     }
   }
   // End loader
+
+  .mr5 {
+    margin-right: 5px;
+  }
 }
