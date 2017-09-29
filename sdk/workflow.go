@@ -334,6 +334,9 @@ func ancestor(id int64, node *WorkflowNode) ([]int64, bool) {
 
 //Ancestors returns node is of all node ancestors
 func (n *WorkflowNode) Ancestors(w *Workflow) []int64 {
+	if n == nil {
+		return nil
+	}
 	res := []int64{}
 	res, ok := ancestor(n.ID, w.Root)
 
@@ -348,7 +351,7 @@ func (n *WorkflowNode) Ancestors(w *Workflow) []int64 {
 				for _, id := range j.SourceNodeIDs {
 					node := w.GetNode(id)
 					if node != nil {
-						ancerstorRes := n.Ancestors(w)
+						ancerstorRes := node.Ancestors(w)
 						res = append(res, ancerstorRes...)
 					}
 				}
