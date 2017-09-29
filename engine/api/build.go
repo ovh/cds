@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -317,7 +318,10 @@ func (api *API) getPipelineBuildJobHandler() Handler {
 
 		j, err := pipeline.GetPipelineBuildJob(api.mustDB(), id)
 		if err != nil {
-			return sdk.WrapError(err, "Unable to load pipeline build job id")
+			if err == sql.ErrNoRows {
+				err = sdk.ErrPipelineBuildNotFound
+			}
+			return sdk.WrapError(err, "getPipelineBuildJobHandler> Unable to load pipeline build job id")
 		}
 		return WriteJSON(w, r, j, http.StatusOK)
 	}

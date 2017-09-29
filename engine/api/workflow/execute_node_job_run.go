@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
@@ -130,6 +131,9 @@ func prepareSpawnInfos(j *sdk.WorkflowNodeJobRun, infos []sdk.SpawnInfo) error {
 func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
 	job, err := LoadAndLockNodeJobRun(db, store, id)
 	if err != nil {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
+			err = sdk.ErrJobAlreadyBooked
+		}
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot load node job run")
 	}
 	if job.Status != sdk.StatusWaiting.String() {
