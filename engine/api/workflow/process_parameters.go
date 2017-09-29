@@ -75,7 +75,9 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 		errm.Append(errdump)
 	}
 	for k, v := range payloadMap {
-		vars[k] = v
+		if !strings.HasPrefix(k, "__") {
+			vars[k] = v
+		}
 	}
 
 	// TODO Update suggest.go  with new variable
@@ -83,7 +85,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	vars["cds.project"] = w.ProjectKey
 	vars["cds.workflow"] = w.Name
 	vars["cds.pipeline"] = n.Pipeline.Name
-	vars["cds.version"] = fmt.Sprintf("%d.%d", 1)
+	vars["cds.version"] = fmt.Sprintf("%d.%d", 1, 1)
 	vars["cds.run"] = fmt.Sprintf("%d.%d", 1, 0)
 	vars["cds.run.number"] = fmt.Sprintf("%d", 1)
 	vars["cds.run.subnumber"] = fmt.Sprintf("%d", 0)
@@ -127,7 +129,7 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 		for i := range parentNodeRun.BuildParameters {
 			p := &parentNodeRun.BuildParameters[i]
 
-			if p.Name == "cds.semver" || p.Name == "cds.release.version" || strings.HasPrefix(p.Name, "cds.proj") || strings.HasPrefix(p.Name, "workflow.") {
+			if p.Name == "" || p.Name == "cds.semver" || p.Name == "cds.release.version" || strings.HasPrefix(p.Name, "cds.proj") || strings.HasPrefix(p.Name, "workflow.") {
 				continue
 			}
 
