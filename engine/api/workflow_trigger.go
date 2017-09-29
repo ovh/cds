@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"sort"
 
 	"github.com/gorilla/mux"
 
@@ -93,6 +94,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 				data.ConditionNames = append(data.ConditionNames, "workflow."+ancestor.Name+".status")
 			}
 		}
+		sort.Strings(data.ConditionNames)
 
 		return WriteJSON(w, r, data, http.StatusOK)
 	}
@@ -184,6 +186,7 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 				}
 			}
 		}
+		sort.Strings(data.ConditionNames)
 
 		return WriteJSON(w, r, data, http.StatusOK)
 	}
