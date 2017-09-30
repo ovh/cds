@@ -1,12 +1,14 @@
-import {Component, NgZone, OnDestroy} from '@angular/core';
+import {Component, NgZone, OnDestroy, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {WorkflowRun} from '../../../model/workflow.run.model';
+import {PipelineStatus} from '../../../model/pipeline.model';
 import {environment} from '../../../../environments/environment';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {WorkflowStore} from '../../../service/workflow/workflow.store';
 
 @Component({
     selector: 'app-workflow-run',
@@ -14,8 +16,7 @@ import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
     styleUrls: ['./workflow.run.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowRunComponent implements OnDestroy {
-
+export class WorkflowRunComponent implements OnDestroy, OnInit {
     project: Project;
     runWorkflowWorker: CDSWorker;
     runSubsription: Subscription;
@@ -23,9 +24,14 @@ export class WorkflowRunComponent implements OnDestroy {
     zone: NgZone;
     workflowName: string;
     version: string;
+    direction: string;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore, private _router: Router) {
+    pipelineStatusEnum = PipelineStatus;
+
+    constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
+      private _router: Router, private _workflowStore: WorkflowStore) {
         this.zone = new NgZone({enableLongStackTrace: false});
+
         // Update data if route change
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -73,6 +79,10 @@ export class WorkflowRunComponent implements OnDestroy {
         }
     }
 
+    ngOnInit(): void {
+      this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);
+    }
+
     getVersion() {
       let maxNum = 0;
       let maxSubV = 0;
@@ -89,5 +99,19 @@ export class WorkflowRunComponent implements OnDestroy {
       });
 
       this.version = maxNum + '.' + maxSubV;
+    }
+
+    changeDirection() {
+      this.direction = this.direction === 'LR' ? 'TB' : 'LR';
+    }
+
+    relaunchWorkflow() {
+      if (this.workflowRun && this.workflowRun.nodes && Object.keys(this.workflowRun.nodes).length) {
+
+      }
+    }
+
+    stopWorkflow() {
+      
     }
 }

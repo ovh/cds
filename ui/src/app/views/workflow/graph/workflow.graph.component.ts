@@ -48,6 +48,11 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     @Input() project: Project;
     @Input() webworker: CDSWorker;
     @Input() status: string;
+    @Input('direction')
+    set direction(data: string) {
+        this._direction = data;
+        this.changeDisplay(false);
+    }
 
     @Output() editTriggerEvent = new EventEmitter<{ source, target }>();
     @Output() editTriggerJoinEvent = new EventEmitter<{ source, target }>();
@@ -55,6 +60,8 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     @Output() addSrcToJoinEvent = new EventEmitter<{ source, target }>();
 
     ready: boolean;
+    _direction: string;
+    displayDirection = false;
 
     // workflow graph
     @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer;
@@ -62,7 +69,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     render = new dagreD3.render();
     svgWidth: number = window.innerWidth;
     svgHeight: number = window.innerHeight;
-    direction: string;
 
     @ViewChild('dimmer')
     dimmer: SemanticDimmerComponent;
@@ -82,7 +88,10 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     }
 
     ngOnInit(): void {
-        this.direction = this._workflowStore.getDirection(this.project.key, this.workflow.name);
+        if (!this._direction) {
+            this.displayDirection = true;
+            this._direction = this._workflowStore.getDirection(this.project.key, this.workflow.name);
+        }
     }
 
     @HostListener('window:resize', ['$event'])
@@ -90,7 +99,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         // Resize svg
         let svg = d3.select('svg');
         let inner = d3.select('svg g');
-        if (this.direction === 'LR') {
+        if (this._direction === 'LR') {
             let w = 0;
             inner.each(function () {
                 w = this.getBBox().width;
@@ -123,7 +132,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         if (!this.ready) {
             return;
         }
-        this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
+        this._workflowStore.setDirection(this.project.key, this.workflow.name, this._direction);
         this.joinsComponent.forEach(j => {
             j.destroy();
         });
@@ -142,7 +151,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     initWorkflow(resize: boolean) {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
-        this.g = new dagreD3.graphlib.Graph().setGraph({rankdir: this.direction});
+        this.g = new dagreD3.graphlib.Graph().setGraph({rankdir: this._direction});
 
         // Calculate node width
         this.nodeHeight = 78;

@@ -1,8 +1,8 @@
 <div id="WorkflowRun" *ngIf="workflowRun">
     <div class="ui grid">
         <div class="row">
-            <div class="five wide column"></div>
-            <div class="six wide column">
+            <div class="four wide column"></div>
+            <div class="seven wide column animated fadeInDown">
                 <div class="ui raised card winfo">
                     <div class="content">
                         <div class="ui grid">
@@ -25,30 +25,63 @@
                         </div>
                     </div>
                     <div class="extra content">
-                        <div class="left floated">
-                            <button class="ui labeled icon button">
-                                <i class="resize horizontal icon"></i>
-                                Horizontal
-                            </button>
-                        </div>
-                        <!-- <div class="centered author"> -->
-                            <i class="user circle outline icon centered"></i> bnjjj
-                        <!-- </div> -->
-                        <div class="right floated">
-                            <button class="ui labeled icon button">
-                                <i class="stop icon"></i>
-                                Stop
-                            </button>
+                        <div class="ui grid">
+                            <div class="row">
+                                <div class="five wide column">
+                                    <button class="ui labeled icon button"
+                                        *ngIf="direction === 'TB'"
+                                        (click)="changeDirection()">
+                                        <i class="resize horizontal icon"></i>
+                                        Horizontal
+                                    </button>
+                                    <button class="ui labeled icon button"
+                                        *ngIf="direction === 'LR'"
+                                        (click)="changeDirection()">
+                                        <i class="resize vertical icon"></i>
+                                        Vertical
+                                    </button>
+                                </div>
+                                <div class="six wide column centered">
+                                    <div>
+                                        <i class="user circle outline icon centered"></i>
+                                    </div>
+                                     bnjjj
+                                </div>
+                                <div class="five wide column">
+                                    <div class="right floated">
+                                        <button class="ui labeled icon button red"
+                                            (click)="stopWorkflow()"
+                                            *ngIf="workflowRun.status === pipelineStatusEnum.WAITING ||
+                                                workflowRun.status === pipelineStatusEnum.BUILDING">
+                                            <i class="stop icon"></i>
+                                            Stop
+                                        </button>
+                                        <button class="ui labeled icon button blue"
+                                            (click)="relaunchWorkflow()"
+                                            *ngIf="workflowRun.status !== pipelineStatusEnum.WAITING &&
+                                                workflowRun.status !== pipelineStatusEnum.BUILDING">
+                                            <i class="repeat icon"></i>
+                                            Relaunch
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="five wide column"></div>
+            <div class="four wide column"></div>
         </div>
     </div>
     <div class="scrollingContent">
         <div class="viewContent">
-            <app-workflow-graph [project]="project" [workflowData]="workflowRun.workflow" [status]="workflowRun.status" [webworker]="runWorkflowWorker"></app-workflow-graph>
+            <app-workflow-graph
+                [direction]="direction"
+                [project]="project"
+                [workflowData]="workflowRun.workflow"
+                [status]="workflowRun.status"
+                [webworker]="runWorkflowWorker">
+            </app-workflow-graph>
         </div>
     </div>
 </div>
