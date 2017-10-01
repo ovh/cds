@@ -79,12 +79,14 @@ type Interface interface {
 	WorkerSetStatus(sdk.Status) error
 	WorkflowList(projectKey string) ([]sdk.Workflow, error)
 	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
-	WorkflowRun(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)
+	WorkflowRunGet(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.Artifact, error)
 	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
+	WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, error)
 	WorkflowNodeRun(projectKey string, name string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRunArtifacts(projectKey string, name string, number int64, nodeRunID int64) ([]sdk.Artifact, error)
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, artifactID int64, w io.Writer) error
+	WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error)
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
 }
