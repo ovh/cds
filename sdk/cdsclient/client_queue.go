@@ -18,7 +18,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration) error {
+func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJobRun, pbjobs chan<- sdk.PipelineBuildJob, errs chan<- error, delay time.Duration, graceTime int) error {
 	t0 := time.Unix(0, 0)
 	jobsTicker := time.NewTicker(delay)
 	pbjobsTicker := time.NewTicker(delay)
@@ -61,9 +61,19 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 				if _, err := c.GetJSON("/queue/workflows", &queue, SetHeader("If-Modified-Since", t0.Format(time.RFC1123))); err != nil {
 					errs <- sdk.WrapError(err, "Unable to load jobs")
 				}
-				t0 = time.Now()
+				t0 = time.Now().Add(-time.Duration(graceTime) * time.Second)
 				for _, j := range queue {
-					jobs <- j
+					// if there is a grace time, check it
+					if j.QueuedSeconds > int64(graceTime) {
+						if c.config.Verbose {
+							fmt.Printf("job %d send on chan\n", j.ID)
+						}
+						jobs <- j
+					} else {
+						if c.config.Verbose {
+							fmt.Printf("job %d too new\n", j.ID)
+						}
+					}
 				}
 			}
 		case <-pbjobsTicker.C:
