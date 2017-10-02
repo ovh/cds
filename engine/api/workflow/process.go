@@ -156,6 +156,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					if nodeRun.WorkflowNodeID == id {
 						//We found the source in the list of the noderuns
 						sources[id] = nodeRun
+						log.Debug("processWorkflowRun> found source node run %d(%d.%d) for join %d", nodeRun.ID, nodeRun.Number, nodeRun.SubNumber, j.ID)
 					}
 				}
 			}
@@ -190,10 +191,10 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		//All the sources are completed
 		if ok {
 			//Keep a ref to the sources
-			nodeRun := sources[j.SourceNodeIDs[0]]
-			if nodeRun == nil {
-				return fmt.Errorf("processWorkflowRun> this should not append")
-			}
+			//nodeRun := sources[j.SourceNodeIDs[0]]
+			//if nodeRun == nil {
+			//	return fmt.Errorf("processWorkflowRun> this should not append")
+			//}
 
 			//All the sources are completed
 			//Checks the triggers
@@ -232,8 +233,8 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 			previousJoinRuns:
 				for _, previousRunArray := range w.WorkflowNodeRuns {
 					for _, previousRun := range previousRunArray {
-						log.Info("processWorkflowRun> Checking run %d(%d) %d.%d with %d", previousRun.ID, previousRun.WorkflowNodeID, previousRun.Number, previousRun.SubNumber, nodeRun.SubNumber)
-						if previousRun.WorkflowNodeID == t.WorkflowDestNode.ID && previousRun.SubNumber == nodeRun.SubNumber {
+						log.Info("processWorkflowRun> Checking run %d(%d %s) %d.%d with %d", previousRun.ID, previousRun.WorkflowNodeID, w.Workflow.GetNode(previousRun.WorkflowNodeID).Name, previousRun.Number, previousRun.SubNumber, maxsn)
+						if previousRun.WorkflowNodeID == t.WorkflowDestNode.ID && previousRun.SubNumber == maxsn {
 							abortTrigger = true
 							break previousJoinRuns
 						}
@@ -244,7 +245,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 				if !abortTrigger {
 					//Keep the subnumber of the previous node in the graph
-					if err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), nodeRunIDs, nil, nil); err != nil {
+					if err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil); err != nil {
 						AddWorkflowRunInfo(w, sdk.SpawnMsg{
 							ID:   sdk.MsgWorkflowError.ID,
 							Args: []interface{}{err},
@@ -252,9 +253,9 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 						log.Error("processWorkflowRun> Unable to process node ID=%d: %v", t.WorkflowDestNode.ID, err)
 					}
 
-					if maxsn == nodeRun.SubNumber {
-						nodesRunBuilding++
-					}
+					//if maxsn == nodeRun.SubNumber {
+					nodesRunBuilding++
+					//}
 				}
 			}
 		}
