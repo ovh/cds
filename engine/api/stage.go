@@ -136,8 +136,7 @@ func (api *API) moveStageHandler() Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("addStageHandler> Cannot start transaction: %s", err)
-			return err
+			return sdk.WrapError(err, "addStageHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -212,15 +211,13 @@ func (api *API) updateStageHandler() Handler {
 		// check if stage exist
 		s, err := pipeline.LoadStage(api.mustDB(), pipelineData.ID, stageData.ID)
 		if err != nil {
-			log.Warning("updateStageHandler> Cannot Load stage: %s", err)
-			return err
+			return sdk.WrapError(err, "updateStageHandler> Cannot Load stage")
 		}
 		stageData.ID = s.ID
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("updateStageHandler> Cannot start transaction: %s", err)
-			return err
+			return sdk.WrapError(err, "updateStageHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -229,8 +226,7 @@ func (api *API) updateStageHandler() Handler {
 		}
 
 		if err := pipeline.UpdateStage(tx, stageData); err != nil {
-			log.Warning("updateStageHandler> Cannot update stage: %s", err)
-			return err
+			return sdk.WrapError(err, "updateStageHandler> Cannot update stage")
 		}
 
 		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
@@ -239,19 +235,16 @@ func (api *API) updateStageHandler() Handler {
 		}
 
 		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
-			log.Warning("updateStageHandler> Cannot update pipeline last_modified: %s", err)
-			return err
+			return sdk.WrapError(err, "updateStageHandler> Cannot update pipeline last_modified")
 		}
 
 		err = tx.Commit()
 		if err != nil {
-			log.Warning("updateStageHandler> Cannot commit transaction: %s", err)
-			return err
+			return sdk.WrapError(err, "updateStageHandler> Cannot commit transaction")
 		}
 
 		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
-			log.Warning("updateStageHandler> Cannot load stages: %s", err)
-			return err
+			return sdk.WrapError(err, "updateStageHandler> Cannot load stages")
 		}
 
 		return WriteJSON(w, r, pipelineData, http.StatusOK)

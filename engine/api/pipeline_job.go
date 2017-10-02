@@ -159,7 +159,7 @@ func (api *API) updateJobHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, "updateJob",getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, "updateJob", getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot create audit")
 		}
 
