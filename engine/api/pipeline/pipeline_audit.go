@@ -55,7 +55,6 @@ func DeleteAudit(db gorp.SqlExecutor, pipID int64) error {
 
 // PostGet is a dbHook on Select to get json column
 func (p *PipelineAudit) PostGet(s gorp.SqlExecutor) error {
-
 	query := "SELECT pipeline FROM pipeline_audit WHERE id = $1"
 	var pip []byte
 	if err := s.QueryRow(query, p.ID).Scan(&pip); err != nil {

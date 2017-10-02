@@ -669,7 +669,6 @@ func (api *API) addPipelineHandler() Handler {
 
 func (api *API) getPipelineAuditHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get pipeline and action name in URL
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		pipelineName := vars["permPipelineKey"]
