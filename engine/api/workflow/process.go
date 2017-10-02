@@ -24,7 +24,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 	}()
 
 	maxsn := maxSubNumber(w.WorkflowNodeRuns)
-	log.Info("processWorkflowRun> max sub number is %d", maxsn)
+	log.Info("processWorkflowRun> %d.%d", w.Number, maxsn)
 	w.LastSubNumber = maxsn
 
 	//Checks startingFromNode
@@ -122,16 +122,13 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 					if !abortTrigger {
 						//Keep the subnumber of the previous node in the graph
-						log.Debug("processWorkflowRun> starting from trigger %#v", t)
 						if err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil); err != nil {
 							log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, err)
 							AddWorkflowRunInfo(w, sdk.SpawnMsg{
 								ID:   sdk.MsgWorkflowError.ID,
 								Args: []interface{}{err},
 							})
-						}
-						// Only the last subversion
-						if maxsn == nodeRun.SubNumber {
+						} else {
 							nodesRunBuilding++
 						}
 					}
@@ -139,8 +136,6 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 			}
 		}
 	}
-
-	log.Info("processWorkflowRun> There is %d workflow node runs", len(w.WorkflowNodeRuns))
 
 	//Checks the joins
 	for i := range w.Workflow.Joins {
@@ -154,9 +149,14 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				for x := range v {
 					nodeRun := &w.WorkflowNodeRuns[k][x]
 					if nodeRun.WorkflowNodeID == id {
+						if sources[id] == nil {
+							sources[id] = nodeRun
+							continue
+						}
 						//We found the source in the list of the noderuns
-						sources[id] = nodeRun
-						log.Debug("processWorkflowRun> found source node run %d(%d.%d) for join %d", nodeRun.ID, nodeRun.Number, nodeRun.SubNumber, j.ID)
+						if sources[id].SubNumber < nodeRun.SubNumber {
+							sources[id] = nodeRun
+						}
 					}
 				}
 			}
@@ -171,13 +171,10 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				ok = false
 				break
 			}
-			log.Info("Checkin join %d source %d (%d.%d)", j.ID, nodeRun.ID, nodeRun.Number, nodeRun.SubNumber)
-			if nodeRun == nil {
-				//One of the sources have not been started
-				ok = false
-				break
-			}
-			if nodeRun.Status != string(sdk.StatusSuccess) && nodeRun.Status != string(sdk.StatusFail) {
+
+			log.Debug("Checking source %s (#%d.%d) status = %s", w.Workflow.GetNode(nodeRun.WorkflowNodeID).Name, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
+
+			if (nodeRun.Status != string(sdk.StatusSuccess) && nodeRun.Status != string(sdk.StatusFail)) || nodeRun.SubNumber < maxsn {
 				//One of the sources have not been completed
 				ok = false
 				break
@@ -190,17 +187,9 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 		//All the sources are completed
 		if ok {
-			//Keep a ref to the sources
-			//nodeRun := sources[j.SourceNodeIDs[0]]
-			//if nodeRun == nil {
-			//	return fmt.Errorf("processWorkflowRun> this should not append")
-			//}
-
-			//All the sources are completed
 			//Checks the triggers
 			for x := range j.Triggers {
 				t := &j.Triggers[x]
-
 				if t.Manual {
 					continue
 				}
@@ -233,15 +222,12 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 			previousJoinRuns:
 				for _, previousRunArray := range w.WorkflowNodeRuns {
 					for _, previousRun := range previousRunArray {
-						log.Info("processWorkflowRun> Checking run %d(%d %s) %d.%d with %d", previousRun.ID, previousRun.WorkflowNodeID, w.Workflow.GetNode(previousRun.WorkflowNodeID).Name, previousRun.Number, previousRun.SubNumber, maxsn)
 						if previousRun.WorkflowNodeID == t.WorkflowDestNode.ID && previousRun.SubNumber == maxsn {
 							abortTrigger = true
 							break previousJoinRuns
 						}
 					}
 				}
-
-				log.Info("processWorkflowRun> Run the trigger %d of the join %d ? %v", t.ID, j.ID, !abortTrigger)
 
 				if !abortTrigger {
 					//Keep the subnumber of the previous node in the graph
@@ -251,11 +237,9 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 							Args: []interface{}{err},
 						})
 						log.Error("processWorkflowRun> Unable to process node ID=%d: %v", t.WorkflowDestNode.ID, err)
+					} else {
+						nodesRunBuilding++
 					}
-
-					//if maxsn == nodeRun.SubNumber {
-					nodesRunBuilding++
-					//}
 				}
 			}
 		}
