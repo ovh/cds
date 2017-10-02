@@ -28,6 +28,13 @@ export class PipelineAudit {
     action: string;
 }
 
+export class PipelineAuditDiff {
+    type: string;
+    before: any;
+    after: any;
+    title: string;
+}
+
 export class Pipeline {
     id: number;
     name: string;

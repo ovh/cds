@@ -117,7 +117,7 @@
   "commit_date" : "Date",
 
   "common_action" : "Action",
-  "common_audit" : "Historique des modifications",
+  "common_audit" : "Audit",
   "common_loading" : "Chargement...",
   "common_advanced" : "Administration",
   "common_application": "Application",

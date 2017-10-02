@@ -1,12 +1,12 @@
 import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {Project} from '../../../../model/project.model';
-import {Pipeline, PipelineAudit} from '../../../../model/pipeline.model';
+import {Pipeline, PipelineAudit, PipelineAuditDiff} from '../../../../model/pipeline.model';
 import {PipelineAuditService} from '../../../../service/pipeline/pipeline.audit.service';
 import {Table} from '../../../../shared/table/table';
 import {compare} from 'fast-json-patch'
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {cloneDeep} from 'lodash';
+import {cloneDeep, omit} from 'lodash';
 import {Stage} from '../../../../model/stage.model';
 import {Job} from '../../../../model/job.model';
 import {Action} from '../../../../model/action.model';
@@ -23,7 +23,7 @@ export class PipelineAuditComponent extends Table implements OnInit {
 
     audits: Array<PipelineAudit>;
 
-    currentCompare: Array<{ title, before, after, type }>;
+    currentCompare: Array<PipelineAuditDiff>;
 
     @ViewChild('auditModal')
     public auditModalTmpl: ModalTemplate<boolean, boolean, void>;
@@ -55,32 +55,26 @@ export class PipelineAuditComponent extends Table implements OnInit {
     }
 
     compareIndex(i): void {
-        let indexToCompate = (this.currentPage - 1) * this.nbElementsByPage + i;
+        let indexToCompare = (this.currentPage - 1) * this.nbElementsByPage + i;
 
-        let pipFrom = cloneDeep(this.audits[indexToCompate].pipeline);
+        let pipFrom = cloneDeep(this.audits[indexToCompare].pipeline);
         let pipTo: Pipeline;
-        if (indexToCompate === 0) {
+        if (indexToCompare === 0) {
             pipTo = cloneDeep(this.pipeline);
         } else {
-            pipTo = cloneDeep(this.audits[indexToCompate - 1].pipeline);
+            pipTo = cloneDeep(this.audits[indexToCompare - 1].pipeline);
         }
 
         pipFrom = this.cleanPipeline(pipFrom);
         pipTo = this.cleanPipeline(pipTo);
 
-        this.currentCompare = new Array<{ title, before, after, type }>();
+        this.currentCompare = new Array<PipelineAuditDiff>();
         compare(pipFrom, pipTo).forEach(c => {
-            let diff = {
-                before: '',
-                after: '',
-                title: '',
-                type: 'string'
-            };
-
+            let diff = new PipelineAuditDiff();
             let path = c.path;
             let pathSplitted = path.split('/').filter(p => p !== '');
 
-            switch (this.audits[indexToCompate].action) {
+            switch (this.audits[indexToCompare].action) {
                 case 'addStage':
                     diff = this.getAddStageDiff(pathSplitted, pipTo);
                     break;
@@ -107,8 +101,8 @@ export class PipelineAuditComponent extends Table implements OnInit {
         });
     }
 
-    getAddJobDiff(path: Array<string>, pipTo: Pipeline): { title, before, after, type } {
-        let diff = {title: '', before: '', after: '', type: ''};
+    getAddJobDiff(path: Array<string>, pipTo: Pipeline): PipelineAuditDiff {
+        let diff = new PipelineAuditDiff();
         let jobIndex = 0;
         if (path.length > 3) {
             jobIndex = Number(path[3]);
@@ -121,8 +115,8 @@ export class PipelineAuditComponent extends Table implements OnInit {
         return diff;
     }
 
-    getAddStageDiff(path: Array<string>, pipTo: Pipeline): { title, before, after, type } {
-        let diff = {title: '', before: '', after: '', type: ''};
+    getAddStageDiff(path: Array<string>, pipTo: Pipeline): PipelineAuditDiff {
+        let diff = new PipelineAuditDiff();
         diff.title = 'Add ' + pipTo[path[0]][path[1]].name;
         diff.type = 'json';
 
@@ -194,8 +188,8 @@ export class PipelineAuditComponent extends Table implements OnInit {
         return steps;
     }
 
-    getDeleteStageDiff(path: Array<string>, pipFrom: Pipeline): { title, before, after, type } {
-        let diff = {title: '', before: '', after: '', type: ''};
+    getDeleteStageDiff(path: Array<string>, pipFrom: Pipeline): PipelineAuditDiff {
+        let diff = new PipelineAuditDiff();
         diff.title = 'Delete ' + pipFrom[path[0]][path[1]].name;
         diff.type = 'json';
         diff.before = JSON.stringify(this.cleanStage(pipFrom[path[0]][path[1]]), undefined, 4);
@@ -203,9 +197,9 @@ export class PipelineAuditComponent extends Table implements OnInit {
         return diff;
     }
 
-    getDeleteJobDiff(path: Array<string>, pipFrom: Pipeline): { title, before, after, type } {
+    getDeleteJobDiff(path: Array<string>, pipFrom: Pipeline): PipelineAuditDiff {
 
-        let diff = {title: '', before: '', after: '', type: ''};
+        let diff = new PipelineAuditDiff();
         let jobIndex = 0;
         if (path.length > 3) {
             jobIndex = Number(path[3]);
@@ -217,8 +211,8 @@ export class PipelineAuditComponent extends Table implements OnInit {
         return diff;
     }
 
-    getUpdateJobDiff(path: string, pathSplitted: Array<string>, pipTo: Pipeline, pipFrom: Pipeline): { title, before, after, type } {
-        let diff = {title: '', before: '', after: '', type: ''};
+    getUpdateJobDiff(path: string, pathSplitted: Array<string>, pipTo: Pipeline, pipFrom: Pipeline): PipelineAuditDiff {
+        let diff = new PipelineAuditDiff();
 
         let stage: Stage = pipTo[pathSplitted[0]][pathSplitted[1]];
         let job: Job = stage.jobs[pathSplitted[3]];
@@ -254,8 +248,8 @@ export class PipelineAuditComponent extends Table implements OnInit {
         return diff;
     }
 
-    getUpdateStageDiff(path: Array<string>, pipTo: Pipeline, pipFrom: Pipeline): { title, before, after, type } {
-        let diff = {title: '', before: '', after: '', type: ''};
+    getUpdateStageDiff(path: Array<string>, pipTo: Pipeline, pipFrom: Pipeline): PipelineAuditDiff {
+        let diff = new PipelineAuditDiff();
         if (path.length === 3 && (path[2] === 'enabled' || path[2] === 'name')) {
             diff.type = 'string';
             diff.after = pipTo[path[0]][path[1]][path[2]];
