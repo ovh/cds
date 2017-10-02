@@ -566,6 +566,7 @@
   "workflow_run_with_parameters" : "Lancer le workflow",
   "workflow_updated" : "Workflow mis à jour",
   "workflow_resync_pipeline" : "Resynchroniser tous les pipelines du workflow",
+  "workflow_stopped" : "Workflow arrêté",
 
   "workflow_orientation_tree" : "Arborescence",
   "workflow_orientation_horizontal" : "Horizontale",

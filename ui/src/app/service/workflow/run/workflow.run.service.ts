@@ -43,6 +43,17 @@ export class WorkflowRunService {
     }
 
     /**
+     * Stop a workflow run
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name
+     * @param {number} number Number of the workflow run
+     * @returns {Observable<boolean>}
+     */
+    stopWorkflowRun(key: string, workflowName: string, num: number): Observable<boolean> {
+        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/stop', null);
+    }
+
+    /**
      * Stop a workflow node run
      * @param {string} key Project unique key
      * @param {string} workflowName Workflow name

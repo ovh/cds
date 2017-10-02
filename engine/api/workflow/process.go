@@ -55,7 +55,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		return nil
 	}
 
-	maxsn := maxSubNumber(w.WorkflowNodeRuns)
+	maxsn := MaxSubNumber(w.WorkflowNodeRuns)
 	//Checks the triggers
 	for k, v := range w.WorkflowNodeRuns {
 		// Subversion of workflowNodeRun
@@ -461,7 +461,8 @@ func updateNodesRunStatus(status string, success, building, fail *int) {
 	}
 }
 
-func maxSubNumber(workflowNodeRuns map[int64][]sdk.WorkflowNodeRun) int64 {
+// MaxSubNumber returns the MaxSubNumber of workflowNodeRuns
+func MaxSubNumber(workflowNodeRuns map[int64][]sdk.WorkflowNodeRun) int64 {
 	var maxsn int64
 	for _, wNodeRuns := range workflowNodeRuns {
 		for _, wNodeRun := range wNodeRuns {

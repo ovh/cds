@@ -195,6 +195,53 @@ func (api *API) getWorkflowRunHandler() Handler {
 	}
 }
 
+func (api *API) stopWorkflowRunHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		name := vars["workflowName"]
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+
+		run, errL := workflow.LoadRun(api.mustDB(), key, name, number)
+		if errL != nil {
+			return sdk.WrapError(errL, "stopWorkflowRunHandler> Unable to load last workflow run")
+		}
+
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "stopWorkflowRunHandler> Unable to load project")
+		}
+
+		stopInfos := sdk.SpawnInfo{
+			APITime:    time.Now(),
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getUser(ctx).Username}},
+		}
+
+		//TODO: change with maxSubNumber into the worflowRun data
+		maxSn := workflow.MaxSubNumber(run.WorkflowNodeRuns)
+		for _, wn := range run.WorkflowNodeRuns {
+			for _, wnr := range wn {
+				if wnr.SubNumber == maxSn && (wnr.Status == sdk.StatusBuilding.String() || wnr.Status == sdk.StatusChecking.String()) {
+					if errS := workflow.StopWorkflowNodeRun(api.mustDB(), api.Cache, proj, wnr, stopInfos); errS != nil {
+						return sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
+					}
+					wnr.Status = sdk.StatusStopped.String()
+				}
+			}
+		}
+
+		if errU := workflow.UpdateWorkflowRunStatus(api.mustDB(), run.ID, sdk.StatusStopped.String()); errU != nil {
+			return sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run status %d", run.ID)
+		}
+
+		return WriteJSON(w, r, run, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -247,40 +294,15 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
 		}
 
-		// Load node job run ID
-		ids, errIDS := workflow.LoadNodeJobRunIDByNodeRunID(api.mustDB(), nodeRun.ID)
-		if errIDS != nil {
-			return sdk.WrapError(errIDS, "stopWorkflowNodeRunHandler> Cannot load node job run id")
-		}
-
-		infos := sdk.SpawnInfo{
+		stopInfos := sdk.SpawnInfo{
 			APITime:    time.Now(),
 			RemoteTime: time.Now(),
 			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getUser(ctx).Username}},
 		}
 
-		// Update node job run
-		tx, errT := api.mustDB().Begin()
-		if errT != nil {
-			return sdk.WrapError(errT, "stopWorkflowNodeRunHandler> Cannot start transaction")
-		}
-		defer tx.Rollback()
+		errS := workflow.StopWorkflowNodeRun(api.mustDB(), api.Cache, p, *nodeRun, stopInfos)
 
-		for _, nrjID := range ids {
-			njr, errNRJ := workflow.LoadAndLockNodeJobRun(tx, api.Cache, nrjID)
-			if errNRJ != nil {
-				return sdk.WrapError(errNRJ, "stopWorkflowNodeRunHandler> Cannot load node job run id")
-			}
-			njr.SpawnInfos = append(njr.SpawnInfos, infos)
-			if err := workflow.UpdateNodeJobRunStatus(tx, api.Cache, p, njr, sdk.StatusFail); err != nil {
-				return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Cannot update node job run")
-			}
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Cannot commit transaction")
-		}
-		return nil
+		return errS
 	}
 }
 

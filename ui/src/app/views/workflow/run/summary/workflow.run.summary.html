@@ -1,0 +1,80 @@
+<div id="workflowRunStatus">
+    <div class="ui grid">
+        <div class="row">
+            <div class="four wide column"></div>
+            <div class="seven wide column animated fadeInDown">
+                <div class="ui raised card winfo"
+                    [class.building]="workflowRun.status === pipelineStatusEnum.BUILDING || workflowRun.status === pipelineStatusEnum.WAITING"
+                    [class.success]="workflowRun.status === pipelineStatusEnum.SUCCESS"
+                    [class.fail]="workflowRun.status === pipelineStatusEnum.FAIL || workflowRun.status === pipelineStatusEnum.STOPPED"
+                    [class.inactive]="workflowRun.status === pipelineStatusEnum.DISABLED || workflowRun.status === pipelineStatusEnum.SKIPPED">
+                    <div class="content">
+                        <div class="ui grid">
+                            <div class="row">
+                                <div class="five wide column">
+                                    <i class="calendar icon"></i>
+                                    <span>{{workflowRun.start | amCalendar}}</span>
+                                </div>
+                                <div class="six wide column centered">
+                                    <i class="tag icon"></i>
+                                    <span>v{{version}}</span>
+                                </div>
+                                <div class="five wide column">
+                                    <div class="right floated">
+                                        <i class="checked calendar icon"></i>
+                                        <span>{{workflowRun.start | amCalendar}}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="extra content">
+                        <div class="ui grid">
+                            <div class="row">
+                                <div class="five wide column">
+                                    <button class="ui labeled icon button"
+                                        *ngIf="direction === 'TB'"
+                                        (click)="changeDirection()">
+                                        <i class="resize horizontal icon"></i>
+                                        Horizontal
+                                    </button>
+                                    <button class="ui labeled icon button"
+                                        *ngIf="direction === 'LR'"
+                                        (click)="changeDirection()">
+                                        <i class="resize vertical icon"></i>
+                                        Vertical
+                                    </button>
+                                </div>
+                                <div class="six wide column centered">
+                                    <div>
+                                        <i class="user circle outline icon centered"></i>
+                                    </div>
+                                     bnjjj
+                                </div>
+                                <div class="five wide column">
+                                    <div class="right floated">
+                                        <button class="ui labeled icon button red"
+                                            (click)="stopWorkflow()"
+                                            *ngIf="workflowRun.status === pipelineStatusEnum.WAITING ||
+                                                workflowRun.status === pipelineStatusEnum.BUILDING">
+                                            <i class="stop icon"></i>
+                                            Stop
+                                        </button>
+                                        <button class="ui labeled icon button blue"
+                                            (click)="relaunchWorkflow()"
+                                            *ngIf="workflowRun.status !== pipelineStatusEnum.WAITING &&
+                                                workflowRun.status !== pipelineStatusEnum.BUILDING">
+                                            <i class="repeat icon"></i>
+                                            Relaunch
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="four wide column"></div>
+        </div>
+    </div>
+</div>

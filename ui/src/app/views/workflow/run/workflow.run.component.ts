@@ -9,6 +9,7 @@ import {AuthentificationStore} from '../../../service/auth/authentification.stor
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
+import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 
 @Component({
     selector: 'app-workflow-run',
@@ -29,7 +30,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     pipelineStatusEnum = PipelineStatus;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-      private _router: Router, private _workflowStore: WorkflowStore) {
+      private _router: Router, private _workflowStore: WorkflowStore, private _workflowRunService: WorkflowRunService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         // Update data if route change
@@ -64,8 +65,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                               && this.workflowRun.id === wrUpdated.id) {
                                 return;
                             }
-                            this.workflowRun = <WorkflowRun>JSON.parse(wrString);
-                            this.getVersion();
+                            this.workflowRun = wrUpdated;
                         });
                     }
                 });
@@ -81,37 +81,5 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
 
     ngOnInit(): void {
       this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);
-    }
-
-    getVersion() {
-      let maxNum = 0;
-      let maxSubV = 0;
-
-      Object.keys(this.workflowRun.nodes).forEach((keyWr) => {
-        this.workflowRun.nodes[keyWr].forEach((wrnv) => {
-          if (maxNum < wrnv.num) {
-            maxNum = wrnv.num
-          }
-          if (maxSubV < wrnv.subnumber) {
-            maxSubV = wrnv.subnumber
-          }
-        });
-      });
-
-      this.version = maxNum + '.' + maxSubV;
-    }
-
-    changeDirection() {
-      this.direction = this.direction === 'LR' ? 'TB' : 'LR';
-    }
-
-    relaunchWorkflow() {
-      if (this.workflowRun && this.workflowRun.nodes && Object.keys(this.workflowRun.nodes).length) {
-
-      }
-    }
-
-    stopWorkflow() {
-      
     }
 }
