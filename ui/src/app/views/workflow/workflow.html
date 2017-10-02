@@ -10,6 +10,6 @@
     </div>
 </aside>
 <section class="content-wrap" [class.expanded]="!sidebarOpen">
-    <button class="ui small icon blue open button" (click)="sidebarOpen = !sidebarOpen"><i class="content icon"></i></button>
+    <button class="ui small icon blue open button" (click)="toggleSidebar()"><i class="content icon"></i></button>
     <router-outlet></router-outlet>
 </section>
