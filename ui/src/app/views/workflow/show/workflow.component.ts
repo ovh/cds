@@ -17,6 +17,7 @@ import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowRunRequest} from '../../../model/workflow.run.model';
 import {SuiModalService} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
+import {WorkflowCoreService} from '../workflow.service';
 
 declare var _: any;
 
@@ -51,8 +52,7 @@ export class WorkflowShowComponent {
     loading = false;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService,
-                private _modalService: SuiModalService) {
+                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];

@@ -23,6 +23,7 @@ import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
 import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook.component';
+import {WorkflowCoreService} from '../workflow.service';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -38,11 +39,12 @@ import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook
 export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     workflow: Workflow;
+    sidebarOpen: boolean;
 
     @Input('workflowData')
     set workflowData(data: Workflow) {
         this.workflow = data;
-        this.changeDisplay(true);
+        this.changeDisplay();
     }
 
     @Input() project: Project;
@@ -78,7 +80,16 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     nodeHeight: number;
 
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private _cd: ChangeDetectorRef,
-                private _workflowStore: WorkflowStore) {
+                private _workflowStore: WorkflowStore, private _workflowCore: WorkflowCoreService) {
+        this._workflowCore.get().subscribe(b => {
+            this.sidebarOpen = b;
+            if (this.ready) {
+                this.changeDisplay();
+                setTimeout(() => {
+                    window.dispatchEvent(new Event('resize'));
+                }, 1);
+            }
+        });
     }
 
     ngOnInit(): void {
@@ -87,6 +98,11 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     @HostListener('window:resize', ['$event'])
     onResize(event) {
+        this.resizeGraph(event);
+        this.changeDisplay();
+    }
+
+    private resizeGraph(event) {
         // Resize svg
         let svg = d3.select('svg');
         let inner = d3.select('svg g');
@@ -111,19 +127,26 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         }
         this.svgHeight = this.g.graph().height + 40;
         svg.attr('height', this.svgHeight);
-        this.changeDisplay(false);
     }
 
     ngAfterViewInit(): void {
         this.ready = true;
-        this.changeDisplay(true);
+        this.changeDisplay();
     }
 
-    changeDisplay(resize: boolean): void {
+    changeDisplay(): void {
         if (!this.ready) {
             return;
         }
         this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
+
+        this.destroyGraphComponent();
+
+        this.initWorkflow();
+        this._cd.detectChanges();
+    }
+
+    private destroyGraphComponent() {
         this.joinsComponent.forEach(j => {
             j.destroy();
         });
@@ -136,11 +159,9 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.joinsComponent.clear();
         this.nodesComponent.clear();
         this.hooksComponent.clear();
-
-        this.initWorkflow(resize);
     }
 
-    initWorkflow(resize: boolean) {
+    initWorkflow() {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
         this.g = new dagreD3.graphlib.Graph().setGraph({rankdir: this.direction});
 
@@ -172,7 +193,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         // Add listener on graph element
         this.addListener(d3.select('svg'));
         this.svgHeight = this.g.graph().height + 40;
-        this._cd.detectChanges();
     }
 
     private createCustomArraow() {
@@ -222,7 +242,12 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.getWorkflowNodeDeep(this.workflow.root, mapDeep);
         this.getWorkflowJoinDeep(mapDeep);
 
-        this.nodeWidth = Math.floor(window.innerWidth * .85 / Math.max(...Array.from(mapDeep.values())));
+        let windowsWidth = window.innerWidth;
+        if (this.sidebarOpen) {
+            windowsWidth -= 250;
+        }
+
+        this.nodeWidth = Math.floor(windowsWidth * .85 / Math.max(...Array.from(mapDeep.values())));
         if (this.nodeWidth < 155) {
             this.nodeWidth = 155;
         }
