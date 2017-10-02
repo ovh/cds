@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -51,6 +52,8 @@ func processGitlabHook(w http.ResponseWriter, r *http.Request, data []byte) (hoo
 	if err := json.Unmarshal(data, &ge); err != nil {
 		return hook.ReceivedHook{}, err
 	}
+
+	ge.Ref = strings.TrimPrefix(ge.Ref, "refs/heads/")
 
 	rh := hook.ReceivedHook{
 		URL:        *r.URL,

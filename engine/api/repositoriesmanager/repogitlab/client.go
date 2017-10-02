@@ -35,7 +35,11 @@ func (c *GitlabClient) Repos() ([]sdk.VCSRepo, error) {
 
 	var repos []sdk.VCSRepo
 
-	projects, _, err := c.client.Projects.ListProjects(&gitlab.ListProjectsOptions{})
+	pp := 1000
+	opts := &gitlab.ListProjectsOptions{}
+	opts.PerPage = pp
+
+	projects, resp, err := c.client.Projects.ListProjects(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -51,6 +55,28 @@ func (c *GitlabClient) Repos() ([]sdk.VCSRepo, error) {
 			SSHCloneURL:  p.SSHURLToRepo,
 		}
 		repos = append(repos, r)
+	}
+
+	for resp.NextPage != 0 {
+		opts.Page = resp.NextPage
+
+		projects, resp, err = c.client.Projects.ListProjects(opts)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, p := range projects {
+			r := sdk.VCSRepo{
+				ID:           fmt.Sprintf("%d", p.ID),
+				Name:         p.NameWithNamespace,
+				Slug:         p.PathWithNamespace,
+				Fullname:     p.PathWithNamespace,
+				URL:          p.WebURL,
+				HTTPCloneURL: p.HTTPURLToRepo,
+				SSHCloneURL:  p.SSHURLToRepo,
+			}
+			repos = append(repos, r)
+		}
 	}
 
 	return repos, nil
