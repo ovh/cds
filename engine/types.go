@@ -18,11 +18,16 @@ import (
 	"github.com/ovh/cds/engine/hooks"
 )
 
+// Configuration contains CDS Configuration and toml description
 type Configuration struct {
 	Log struct {
 		Level string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, critical"`
 	} `toml:"log" comment:"#####################\n CDS Logs Settings \n####################"`
-	API      api.Configuration `toml:"api" comment:""`
+	Debug struct {
+		Enable         bool   `toml:"enable" default:"false" comment:"allow debugging with gops"`
+		RemoteDebugURL string `toml:"remoteDebugURL" comment:"start a gops agent on specified URL. Ex: localhost:9999"`
+	} `toml:"debug" comment:"#####################\n Debug with gops \n####################"`
+	API      api.Configuration `toml:"api" comment:"#####################\n API Configuration \n####################"`
 	Hatchery struct {
 		Docker    docker.HatcheryConfiguration    `toml:"docker" comment:"Hatchery Docker."`
 		Local     local.HatcheryConfiguration     `toml:"local" comment:"Hatchery Local."`
