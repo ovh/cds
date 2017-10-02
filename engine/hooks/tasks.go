@@ -70,6 +70,7 @@ func (s *Service) synchronizeTasks() error {
 		for _, h := range hooks {
 			if h.UUID == t.UUID {
 				found = true
+				break
 			}
 		}
 		if !found {
