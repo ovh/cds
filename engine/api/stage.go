@@ -42,7 +42,7 @@ func (api *API) addStageHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, "addStage", getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditAddStage, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addStageHandler> Cannot create pipeline audit")
 		}
 
@@ -140,7 +140,7 @@ func (api *API) moveStageHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, "moveJob", getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditMoveStage, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addStageHandler> Cannot create pipeline audit")
 		}
 
@@ -221,7 +221,7 @@ func (api *API) updateStageHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, "updateStage", getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateStage, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateStageHandler> Cannot create audit")
 		}
 
@@ -286,7 +286,7 @@ func (api *API) deleteStageHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineData, "deleteStage", getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteStage, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteStageHandler> Cannot create audit")
 		}
 

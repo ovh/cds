@@ -9,6 +9,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+const (
+	AuditAddJob         = "addJob"
+	AuditUpdateJob      = "updateJob"
+	AuditDeleteJob      = "deleteJob"
+	AuditAddStage       = "addStage"
+	AuditUpdateStage    = "updateStage"
+	AuditDeleteStage    = "deleteStage"
+	AuditMoveStage      = "moveStage"
+	AuditUpdatePipeline = "updateStage"
+)
+
 // CreateAudit insert current pipeline version on audit table
 func CreateAudit(db gorp.SqlExecutor, pip *sdk.Pipeline, action string, u *sdk.User) error {
 	pipAudit := &sdk.PipelineAudit{

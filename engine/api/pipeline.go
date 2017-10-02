@@ -529,7 +529,7 @@ func (api *API) updatePipelineHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.CreateAudit(tx, pipelineDB, "updatePipeline", getUser(ctx)); err != nil {
+		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot create audit")
 		}
 
