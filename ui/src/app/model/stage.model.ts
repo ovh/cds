@@ -7,6 +7,7 @@ import {WorkflowNodeJobRun} from './workflow.run.model';
 export class Stage {
   id: number;
   name: string;
+  status: string;
   build_order: number;
   enabled: boolean;
   jobs: Array<Job>;

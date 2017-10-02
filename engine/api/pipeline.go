@@ -518,19 +518,23 @@ func (api *API) updatePipelineHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updatePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 		}
 
-		pipelineDB, err := pipeline.LoadPipeline(api.mustDB(), key, name, false)
+		pipelineDB, err := pipeline.LoadPipeline(api.mustDB(), key, name, true)
 		if err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> cannot load pipeline %s", name)
 		}
-
-		pipelineDB.Name = p.Name
-		pipelineDB.Type = p.Type
 
 		tx, errB := api.mustDB().Begin()
 		if errB != nil {
 			sdk.WrapError(errB, "updatePipelineHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
+
+		if err := pipeline.CreateAudit(tx, pipelineDB, pipeline.AuditUpdatePipeline, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "updatePipelineHandler> Cannot create audit")
+		}
+
+		pipelineDB.Name = p.Name
+		pipelineDB.Type = p.Type
 
 		if err := pipeline.UpdatePipeline(tx, pipelineDB); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> cannot update pipeline %s", name)
@@ -660,6 +664,20 @@ func (api *API) addPipelineHandler() Handler {
 		p.Permission = permission.PermissionReadWriteExecute
 
 		return WriteJSON(w, r, p, http.StatusOK)
+	}
+}
+
+func (api *API) getPipelineAuditHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		pipelineName := vars["permPipelineKey"]
+
+		audits, err := pipeline.LoadAudit(api.mustDB(), projectKey, pipelineName)
+		if err != nil {
+			return sdk.WrapError(err, "getPipelineAuditHandler> Cannot load pipeline audit")
+		}
+		return WriteJSON(w, r, audits, http.StatusOK)
 	}
 }
 
@@ -831,6 +849,10 @@ func (api *API) deletePipelineHandler() Handler {
 			return sdk.WrapError(errT, "deletePipeline> Cannot begin transaction")
 		}
 		defer tx.Rollback()
+
+		if err := pipeline.DeleteAudit(tx, p.ID); err != nil {
+			return sdk.WrapError(err, "deletePipeline> Cannot delete pipeline audit")
+		}
 
 		if err := pipeline.DeletePipeline(tx, p.ID, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "deletePipeline> Cannot delete pipeline %s", pipelineName)

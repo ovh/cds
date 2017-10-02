@@ -87,6 +87,11 @@
   "audit_no": "Aucun audit pour cette variable",
   "audit_time_author": "Heure de modification",
   "audit_title_variable": "Historique des modifications",
+  "audit_action" : "Action",
+  "audit_username" : "Utilisateur",
+  "audit_before" : "Avant modification",
+  "audit_after" : "Après modification",
+  "audit_context" : "Contexte",
 
   "btn_cancel" : "Annuler",
   "btn_close" : "Fermer",
@@ -112,6 +117,7 @@
   "commit_date" : "Date",
 
   "common_action" : "Action",
+  "common_audit" : "Audit",
   "common_loading" : "Chargement...",
   "common_advanced" : "Administration",
   "common_application": "Application",
