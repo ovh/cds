@@ -57,7 +57,6 @@ type CommonConfiguration struct {
 			ThresholdWarning  int `toml:"thresholdWarning" default:"360" comment:"log warning if spawn take more than this value (in seconds)"`
 		} `toml:"spawnOptions"`
 	} `toml:"logOptions" comment:"Hatchery Log Configuration"`
-	RemoteDebugURL string `toml:"remoteDebugURL" comment:"start a gops agent on specified URL. Ex: localhost:9999"`
 }
 
 // Interface describe an interface for each hatchery mode (mesos, local)
