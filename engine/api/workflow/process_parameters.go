@@ -67,7 +67,6 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	}
 
 	// compute payload
-	log.Debug("GetNodeBuildParameters> compute payload :%#v", payload)
 	errm := &sdk.MultiError{}
 	payloadMap, errdump := dump.ToMap(payload, dump.WithLowerCaseFormatter())
 	if errdump != nil {
@@ -75,10 +74,12 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 		errm.Append(errdump)
 	}
 	for k, v := range payloadMap {
-		if !strings.HasPrefix(k, "__") {
+		if !strings.HasSuffix(k, "__") && k != "" {
 			vars[k] = v
 		}
 	}
+
+	log.Debug("GetNodeBuildParameters> compute payload :%#v", payload)
 
 	// TODO Update suggest.go  with new variable
 
