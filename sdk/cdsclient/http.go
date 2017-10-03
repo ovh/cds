@@ -237,7 +237,7 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 		return nil, 0, errRequest
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/octet-stream")
 	req.Header.Set("User-Agent", c.config.userAgent)
 	req.Header.Set("Connection", "close")
 	req.Header.Add(RequestedWithHeader, RequestedWithValue)
