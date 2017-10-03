@@ -1,12 +1,16 @@
-import {Component, NgZone, OnDestroy} from '@angular/core';
+import {Component, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {WorkflowRun} from '../../../model/workflow.run.model';
+import {PipelineStatus} from '../../../model/pipeline.model';
 import {environment} from '../../../../environments/environment';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {WorkflowStore} from '../../../service/workflow/workflow.store';
+import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 
 @Component({
     selector: 'app-workflow-run',
@@ -14,7 +18,9 @@ import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
     styleUrls: ['./workflow.run.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowRunComponent implements OnDestroy {
+export class WorkflowRunComponent implements OnDestroy, OnInit {
+    @ViewChild('workflowNodeRunParam')
+    runWithParamComponent: WorkflowNodeRunParamComponent;
 
     project: Project;
     runWorkflowWorker: CDSWorker;
@@ -22,9 +28,15 @@ export class WorkflowRunComponent implements OnDestroy {
     workflowRun: WorkflowRun;
     zone: NgZone;
     workflowName: string;
+    version: string;
+    direction: string;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore, private _router: Router) {
+    pipelineStatusEnum = PipelineStatus;
+
+    constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
+      private _router: Router, private _workflowStore: WorkflowStore, private _workflowRunService: WorkflowRunService) {
         this.zone = new NgZone({enableLongStackTrace: false});
+
         // Update data if route change
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -57,7 +69,7 @@ export class WorkflowRunComponent implements OnDestroy {
                               && this.workflowRun.id === wrUpdated.id) {
                                 return;
                             }
-                            this.workflowRun = <WorkflowRun>JSON.parse(wrString);
+                            this.workflowRun = wrUpdated;
                         });
                     }
                 });
@@ -65,9 +77,19 @@ export class WorkflowRunComponent implements OnDestroy {
         });
     }
 
+    relaunch() {
+        if (this.runWithParamComponent && this.runWithParamComponent.show) {
+            this.runWithParamComponent.show();
+        }
+    }
+
     ngOnDestroy(): void {
         if (this.runWorkflowWorker) {
             this.runWorkflowWorker.stop();
         }
+    }
+
+    ngOnInit(): void {
+      this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);
     }
 }

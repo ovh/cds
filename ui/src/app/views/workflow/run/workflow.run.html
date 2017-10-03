@@ -1,8 +1,28 @@
 <div id="WorkflowRun" *ngIf="workflowRun">
+    <app-workflow-run-summary
+        [(direction)]="direction"
+        [project]="project"
+        [workflowRun]="workflowRun"
+        [workflowName]="workflowName"
+        (relaunch)="relaunch()">
+    </app-workflow-run-summary>
     <div class="scrollingContent">
         <div class="viewContent">
-            <app-workflow-graph [project]="project" [workflowData]="workflowRun.workflow" [status]="workflowRun.status" [webworker]="runWorkflowWorker"></app-workflow-graph>
+            <app-workflow-graph
+                [direction]="direction"
+                [project]="project"
+                [workflowData]="workflowRun.workflow"
+                [status]="workflowRun.status"
+                [webworker]="runWorkflowWorker">
+            </app-workflow-graph>
         </div>
     </div>
 </div>
 <div class="ui text active loader" *ngIf="!workflowRun">{{ 'workflow_loading' | translate }}</div>
+<app-workflow-node-run-param
+  *ngIf="workflowRun"
+  #workflowNodeRunParam
+  [project]="project"
+  [workflow]="workflowRun.workflow"
+  [nodeToRun]="workflowRun.workflow.root">
+</app-workflow-node-run-param>

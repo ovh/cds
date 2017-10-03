@@ -165,6 +165,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler))
+	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/stop", r.POST(api.stopWorkflowRunHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/resync", r.POST(api.resyncWorkflowRunPipelinesHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/artifacts", r.GET(api.getWorkflowRunArtifactsHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}", r.GET(api.getWorkflowNodeRunHandler))
@@ -192,7 +193,7 @@ func (api *API) InitRouter() {
 	// Environment
 	r.Handle("/project/{permProjectKey}/environment", r.GET(api.getEnvironmentsHandler), r.POST(api.addEnvironmentHandler), r.PUT(api.updateEnvironmentsHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/environment/import", r.POST(api.importNewEnvironmentHandler))
-	r.Handle("/project/{permProjectKey}/environment/import/{permEnvironmentName}", r.POST(api.importIntoEnvironmentHandler))
+	r.Handle("/project/{key}/environment/import/{permEnvironmentName}", r.POST(api.importIntoEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}", r.GET(api.getEnvironmentHandler), r.PUT(api.updateEnvironmentHandler), r.DELETE(api.deleteEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/keys", r.GET(api.getKeysInEnvironmentHandler), r.POST(api.addKeyInEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/keys/{name}", r.DELETE(api.deleteKeyInEnvironmentHandler))
