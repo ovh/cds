@@ -64,12 +64,11 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                 this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {
                     if (wrString) {
                         this.zone.run(() => {
-                            let wrUpdated = <WorkflowRun>JSON.parse(wrString);
-                            if (this.workflowRun && this.workflowRun.last_modified === wrUpdated.last_modified
-                              && this.workflowRun.id === wrUpdated.id) {
-                                return;
+                            this.workflowRun = <WorkflowRun>JSON.parse(wrString);
+                            if (this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
+                                this.runWorkflowWorker.stop();
+                                this.runSubsription.unsubscribe();
                             }
-                            this.workflowRun = wrUpdated;
                         });
                     }
                 });

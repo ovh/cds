@@ -100,7 +100,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                 this.changeDisplay();
                 setTimeout(() => {
                     window.dispatchEvent(new Event('resize'));
-                }, 1);
+                }, 200);
             }
         });
     }
