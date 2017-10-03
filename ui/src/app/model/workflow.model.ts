@@ -247,7 +247,6 @@ export class WorkflowNode {
             n.triggers.forEach(t => {
                 if (t.conditions) {
                     t.conditions.forEach(c => {
-                        console.log(c);
                         if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
                             nodeWarn.triggers.push(t);
                         }
