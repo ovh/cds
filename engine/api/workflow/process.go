@@ -324,8 +324,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 				ID:   sdk.MsgWorkflowError.ID,
 				Args: []interface{}{errm1},
 			})
-			log.Error("processWorkflowNodeRun> Unable to compute payload: %v", errm1)
-			return errm1
+			return sdk.WrapError(errm1, "processWorkflowNodeRun> Unable to compute payload")
 		}
 		run.Payload = m1
 		run.PipelineParameters = m.PipelineParameters
