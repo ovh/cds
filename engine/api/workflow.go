@@ -174,22 +174,20 @@ func (api *API) putWorkflowHandler() Handler {
 			}
 
 			//Perform the request on one off the hooks service
-			if len(hooks) > 0 {
-				if len(srvs) < 1 {
-					return sdk.WrapError(fmt.Errorf("putWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
+			if len(srvs) < 1 {
+				return sdk.WrapError(fmt.Errorf("putWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
+			}
+			var errHooks error
+			for _, s := range srvs {
+				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
+				errHooks = errBulk
+				if errBulk == nil {
+					log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
+					break
 				}
-				var errHooks error
-				for _, s := range srvs {
-					code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
-					errHooks = errBulk
-					if errBulk == nil {
-						log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
-						break
-					}
-				}
-				if errHooks != nil {
-					return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
-				}
+			}
+			if errHooks != nil {
+				return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
 			}
 		}
 
