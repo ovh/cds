@@ -336,13 +336,10 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 		if err := UpdateNodeJobRunStatus(tx, store, proj, njr, sdk.StatusStopped); err != nil {
 			return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
 		}
+	}
 
-		nodeRun.Status = sdk.StatusStopped.String()
-		nodeRun.LastModified = time.Now()
-		nodeRun.Done = time.Now()
-		if err := UpdateNodeRun(tx, &nodeRun); err != nil {
-			return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node run")
-		}
+	if err := updateNodeRunStatus(tx, nodeRun.ID, sdk.StatusStopped.String()); err != nil {
+		return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node run status")
 	}
 
 	if err := tx.Commit(); err != nil {

@@ -223,13 +223,16 @@ func (api *API) stopWorkflowRunHandler() Handler {
 
 		for _, wn := range run.WorkflowNodeRuns {
 			for _, wnr := range wn {
-				if wnr.SubNumber == run.LastSubNumber &&
-					(wnr.Status == sdk.StatusBuilding.String() || wnr.Status == sdk.StatusChecking.String() || wnr.Status == sdk.StatusWaiting.String()) {
-					if errS := workflow.StopWorkflowNodeRun(api.mustDB(), api.Cache, proj, wnr, stopInfos); errS != nil {
-						return sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
-					}
-					wnr.Status = sdk.StatusStopped.String()
+				if wnr.SubNumber != run.LastSubNumber || (wnr.Status == sdk.StatusSuccess.String() ||
+					wnr.Status == sdk.StatusFail.String() || wnr.Status == sdk.StatusSkipped.String()) {
+					log.Debug("stopWorkflowRunHandler> cannot stop this workflow node run with current status %s", wnr.Status)
+					continue
 				}
+
+				if errS := workflow.StopWorkflowNodeRun(api.mustDB(), api.Cache, proj, wnr, stopInfos); errS != nil {
+					return sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
+				}
+				wnr.Status = sdk.StatusStopped.String()
 			}
 		}
 
@@ -293,11 +296,6 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
 		}
 
-		wr, errLw := workflow.LoadRun(api.mustDB(), key, name, number)
-		if errLw != nil {
-			return sdk.WrapError(errLw, "stopWorkflowNodeRunHandler> Unable to load workflow run %s", name)
-		}
-
 		tx, errTx := api.mustDB().Begin()
 		if errTx != nil {
 			return sdk.WrapError(errTx, "stopWorkflowNodeRunHandler> Unable to create transaction")
@@ -313,7 +311,12 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 			return sdk.WrapError(errS, "stopWorkflowNodeRunHandler> Unable to stop workflow node run")
 		}
 
-		if errR := workflow.ResyncWorkflowRunStatus(tx, *wr); errR != nil {
+		wr, errLw := workflow.LoadRun(tx, key, name, number)
+		if errLw != nil {
+			return sdk.WrapError(errLw, "stopWorkflowNodeRunHandler> Unable to load workflow run %s", name)
+		}
+
+		if errR := workflow.ResyncWorkflowRunStatus(tx, wr); errR != nil {
 			return sdk.WrapError(errR, "stopWorkflowNodeRunHandler> Unable to resync workflow run status")
 		}
 

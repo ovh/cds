@@ -57,6 +57,7 @@
                                     <div class="right floated">
                                         <button class="ui labeled icon button red"
                                             [disabled]="loadingAction"
+                                            [class.loading]="loadingAction"
                                             (click)="stopWorkflow()"
                                             *ngIf="workflowRun.status === pipelineStatusEnum.WAITING ||
                                                 workflowRun.status === pipelineStatusEnum.BUILDING">
@@ -66,6 +67,7 @@
                                         <button class="ui labeled icon button blue"
                                             (click)="relaunch.emit(null)"
                                             [disabled]="loadingAction"
+                                            [class.loading]="loadingAction"
                                             *ngIf="workflowRun.status !== pipelineStatusEnum.WAITING &&
                                                 workflowRun.status !== pipelineStatusEnum.BUILDING">
                                             <i class="repeat icon"></i>

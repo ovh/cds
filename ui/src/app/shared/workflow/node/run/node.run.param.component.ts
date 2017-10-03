@@ -113,7 +113,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     run(): void {
         let request = new WorkflowRunRequest();
         request.manual = new WorkflowNodeRunManual();
-        request.manual.payload = JSON.parse(this.payloadString);
+        request.manual.payload = this.payloadString ? JSON.parse(this.payloadString) : null;
         request.manual.pipeline_parameter = this.nodeToRun.context.default_pipeline_parameters;
 
         if (this.nodeRun) {
