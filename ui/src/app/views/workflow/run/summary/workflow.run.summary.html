@@ -20,7 +20,8 @@
                                     <span>v{{workflowRun.num}}.{{workflowRun.last_subnumber}}</span>
                                 </div>
                                 <div class="five wide column">
-                                    <div class="right floated">
+                                    <div class="right floated"
+                                      *ngIf="workflowRun.status !== pipelineStatusEnum.BUILDING &&  workflowRun.status !== pipelineStatusEnum.WAITING">
                                         <i class="checked calendar icon"></i>
                                         <span>{{workflowRun.last_execution | amCalendar}}</span>
                                     </div>
@@ -32,17 +33,15 @@
                         <div class="ui grid">
                             <div class="row">
                                 <div class="five wide column">
-                                    <button class="ui labeled icon button"
+                                    <button class="ui icon button"
                                         *ngIf="direction === 'TB'"
                                         (click)="changeDirection()">
                                         <i class="resize horizontal icon"></i>
-                                        {{ 'workflow_orientation_horizontal' | translate }}
                                     </button>
-                                    <button class="ui labeled icon button"
+                                    <button class="ui icon button"
                                         *ngIf="direction === 'LR'"
                                         (click)="changeDirection()">
                                         <i class="resize vertical icon"></i>
-                                        {{ 'workflow_orientation_vertical' | translate }}
                                     </button>
                                 </div>
                                 <div class="six wide column centered">
