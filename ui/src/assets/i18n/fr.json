@@ -569,7 +569,7 @@
   "workflow_node_name_warning" : "Warnings",
   "workflow_node_name_warning_modal_title" : "Attention, le nom du noeud est utilisé",
   "workflow_node_name_warning_modal_hooks" : "Le nom du noeud est utilisé dans les hooks suivant : ",
-  "workflow_node_name_warning_modal_triggers" : "Le nom do noeud est utilisé dans les triggers suivant : ",
+  "workflow_node_name_warning_modal_triggers" : "Le nom du noeud est utilisé dans les triggers suivant : ",
   "workflow_root_context_application" : "Application (facultatif)",
   "workflow_root_context_environment" : "Environnement (facultatif)",
   "workflow_root_context_pipeline" : "Pipeline",
