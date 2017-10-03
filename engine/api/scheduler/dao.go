@@ -243,12 +243,6 @@ func LoadUnscheduledPipelines(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, err
 	return ps, nil
 }
 
-//LockPipelineExecutions locks table LockPipelineExecutions
-func LockPipelineExecutions(db gorp.SqlExecutor) error {
-	_, err := db.Exec("LOCK TABLE pipeline_scheduler_execution IN ACCESS EXCLUSIVE MODE NOWAIT")
-	return err
-}
-
 //GetByApplication get all pipeline schedulers for an application
 func GetByApplication(db gorp.SqlExecutor, app *sdk.Application) ([]sdk.PipelineScheduler, error) {
 	return loadPipelineSchedulers(db, "select * from pipeline_scheduler where application_id = $1", app.ID)
