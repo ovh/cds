@@ -3,7 +3,8 @@
         [(direction)]="direction"
         [project]="project"
         [workflowRun]="workflowRun"
-        [workflowName]="workflowName">
+        [workflowName]="workflowName"
+        (relaunch)="relaunch()">
     </app-workflow-run-summary>
     <div class="scrollingContent">
         <div class="viewContent">
@@ -18,3 +19,10 @@
     </div>
 </div>
 <div class="ui text active loader" *ngIf="!workflowRun">{{ 'workflow_loading' | translate }}</div>
+<app-workflow-node-run-param
+  *ngIf="workflowRun"
+  #workflowNodeRunParam
+  [project]="project"
+  [workflow]="workflowRun.workflow"
+  [nodeToRun]="workflowRun.workflow.root">
+</app-workflow-node-run-param>

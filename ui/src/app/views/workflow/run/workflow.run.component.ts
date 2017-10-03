@@ -1,4 +1,4 @@
-import {Component, NgZone, OnDestroy, OnInit} from '@angular/core';
+import {Component, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
 import {CDSWorker} from '../../../shared/worker/worker';
@@ -10,6 +10,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 
 @Component({
     selector: 'app-workflow-run',
@@ -18,6 +19,9 @@ import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.ser
 })
 @AutoUnsubscribe()
 export class WorkflowRunComponent implements OnDestroy, OnInit {
+    @ViewChild('workflowNodeRunParam')
+    runWithParamComponent: WorkflowNodeRunParamComponent;
+
     project: Project;
     runWorkflowWorker: CDSWorker;
     runSubsription: Subscription;
@@ -71,6 +75,12 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                 });
             }
         });
+    }
+
+    relaunch() {
+        if (this.runWithParamComponent && this.runWithParamComponent.show) {
+            this.runWithParamComponent.show();
+        }
     }
 
     ngOnDestroy(): void {

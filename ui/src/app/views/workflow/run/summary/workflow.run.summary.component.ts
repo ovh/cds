@@ -28,9 +28,9 @@ export class WorkflowRunSummaryComponent implements OnInit {
     @Input() workflowRun: WorkflowRun;
     @Input() workflowName: string;
     @Output() directionChange = new EventEmitter();
+    @Output() relaunch = new EventEmitter();
 
     stopSubsription: Subscription;
-    version: string;
     _direction: string;
     author: string;
     loadingAction = false;
@@ -45,55 +45,13 @@ export class WorkflowRunSummaryComponent implements OnInit {
     ngOnInit() {
         let tagTriggeredBy = this.workflowRun.tags.find((tag) => tag.tag === 'triggered_by');
 
-        this.getVersion();
         if (tagTriggeredBy) {
             this.author = tagTriggeredBy.value;
         }
     }
 
-    getVersion() {
-      let maxNum = 0;
-      let maxSubV = 0;
-
-      Object.keys(this.workflowRun.nodes).forEach((keyWr) => {
-        this.workflowRun.nodes[keyWr].forEach((wrnv) => {
-          if (maxNum < wrnv.num) {
-            maxNum = wrnv.num
-          }
-          if (maxSubV < wrnv.subnumber) {
-            maxSubV = wrnv.subnumber
-          }
-        });
-      });
-
-      this.version = maxNum + '.' + maxSubV;
-    }
-
     changeDirection() {
       this.direction = this.direction === 'LR' ? 'TB' : 'LR';
-    }
-
-    relaunchWorkflow() {
-      if (this.workflowRun && this.workflowRun.nodes && Object.keys(this.workflowRun.nodes).length) {
-          let firstNodeIdx = Object.keys(this.workflowRun.nodes)[0];
-
-          if (!this.workflowRun.nodes[firstNodeIdx].length) {
-              return;
-          }
-
-          let nodeToRun = this.workflowRun.nodes[firstNodeIdx][0];
-          this.loadingAction = true;
-
-          let request = new WorkflowRunRequest();
-          request.manual = new WorkflowNodeRunManual();
-          request.manual.payload = JSON.stringify(nodeToRun.payload, null, 4);
-          request.from_node = nodeToRun.workflow_node_id;
-          request.number = nodeToRun.num;
-
-          this._workflowRunService.runWorkflow(this.project.key, this.workflowName, request)
-            .finally(() => this.loadingAction = false)
-            .subscribe(wr => this._toast.success('', this._translate.instant('workflow_relaunched')));
-      }
     }
 
     stopWorkflow() {

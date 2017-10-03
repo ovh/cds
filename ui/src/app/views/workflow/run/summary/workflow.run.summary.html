@@ -65,7 +65,7 @@
                                             {{ 'common_stop' | translate }}
                                         </button>
                                         <button class="ui labeled icon button blue"
-                                            (click)="relaunchWorkflow()"
+                                            (click)="relaunch.emit(null)"
                                             [disabled]="loadingAction"
                                             *ngIf="workflowRun.status !== pipelineStatusEnum.WAITING &&
                                                 workflowRun.status !== pipelineStatusEnum.BUILDING">
