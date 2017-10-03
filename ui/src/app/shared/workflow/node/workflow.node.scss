@@ -30,6 +30,35 @@ $boxWidth: 155px;
       }
     }
 
+    .rename {
+      width: 100%;
+      position: absolute;
+      top: 0;
+      display:flex;
+      align-items:center;
+      height:100%;
+      padding: 17px 5px 5px 5px;
+
+      .full {
+        width: 100%;
+
+        .buttonLine {
+          margin-top: 6px;
+          text-align:center;
+          color: $cds_color_red;
+          font-weight: 600;
+
+          button {
+            margin-top: -3px;
+          }
+        }
+
+        .ui.mini.input {
+          width: 100%;
+        }
+      }
+    }
+
     .pipeline {
       height: 100%;
       width: 90%;
@@ -45,6 +74,15 @@ $boxWidth: 155px;
       }
       p.ellipsis {
         text-overflow: ellipsis;
+
+        a {
+          color: black;
+
+          i {
+            font-size: 1em;
+            margin: 0;
+          }
+        }
       }
 
       i {

@@ -2,7 +2,10 @@ import {
     AfterViewInit, Component, ElementRef,
     EventEmitter, Input, NgZone, OnInit, Output, ViewChild, ChangeDetectorRef
 } from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeTrigger} from '../../../model/workflow.model';
+import {
+    Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeTrigger,
+    WorkflowPipelineNameImpact
+} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
@@ -23,6 +26,7 @@ import {WorkflowNodeHookFormComponent} from './hook/form/node.hook.component';
 import {HookEvent} from './hook/hook.event';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 
 declare var _: any;
 
@@ -41,6 +45,8 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     @Output() linkJoinEvent = new EventEmitter<WorkflowNode>();
 
+    // Child component
+
     @ViewChild('workflowTrigger')
     workflowTrigger: WorkflowTriggerComponent;
     @ViewChild('workflowDeleteNode')
@@ -51,6 +57,11 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     worklflowAddHook: WorkflowNodeHookFormComponent;
     @ViewChild('workflowRunNode')
     workflowRunNode: WorkflowNodeRunParamComponent;
+
+    // Modal
+    @ViewChild('nodeNameWarningModal')
+    nodeNameWarningModal: ModalTemplate<boolean, boolean, void>;
+
 
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
     editableNode: WorkflowNode;
@@ -67,10 +78,14 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     options: {};
     disabled = false;
     loadingStop = false;
+    displayInputName = false;
+    displayPencil = false;
+    nameWarning: WorkflowPipelineNameImpact;
 
     constructor(private elementRef: ElementRef, private _changeDetectorRef: ChangeDetectorRef,
         private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
-        private _wrService: WorkflowRunService, private _pipelineStore: PipelineStore, private _router: Router) {
+        private _wrService: WorkflowRunService, private _pipelineStore: PipelineStore, private _router: Router,
+        private _modalService: SuiModalService) {
 
     }
 
@@ -273,6 +288,10 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
             'node', this.currentNodeRun.id], {queryParams: { name: pip }});
     }
 
+    rename(): void {
+        this.updateNode(this.node);
+    }
+
     stopNodeRun($event): void {
         $event.stopPropagation();
         this.loadingStop = true;
@@ -290,5 +309,15 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     openRunNode($event): void {
         $event.stopPropagation();
         this.workflowRunNode.show();
+    }
+
+    openRenameArea(): void {
+        this.nameWarning = Workflow.getNodeNameImpact(this.workflow, this.node.name);
+        this.displayInputName = true;
+    }
+
+    openWarningModal(): void {
+        let tmpl = new TemplateModalConfig<boolean, boolean, void>(this.nodeNameWarningModal);
+        this._modalService.open(tmpl);
     }
 }

@@ -101,11 +101,32 @@ export class Workflow {
         });
     }
 
+    static getNodeNameImpact(workflow: Workflow, name: string) {
+        let varName = 'workflow.' + name;
+        let warnings = new WorkflowPipelineNameImpact();
+        WorkflowNode.getNodeNameImpact(workflow.root, name, warnings);
+        if (workflow.joins) {
+            workflow.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        if (t.conditions) {
+                            t.conditions.forEach(c => {
+                                if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
+                                    warnings.joinTriggers.push(t);
+                                }
+                            });
+                        }
+                        WorkflowNode.getNodeNameImpact(t.workflow_dest_node, name, warnings);
+                    });
+                }
+            });
+        }
+        return warnings;
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }
-
-
 }
 
 export class WorkflowNodeJoin {
@@ -209,9 +230,45 @@ export class WorkflowNode {
         return null;
     }
 
+    static getNodeNameImpact(n: WorkflowNode, name: string, nodeWarn: WorkflowPipelineNameImpact): void {
+        let varName = 'workflow.' + name;
+        if (n.hooks) {
+            n.hooks.forEach(h => {
+                if (h.conditions) {
+                    h.conditions.forEach(c => {
+                        if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
+                            nodeWarn.hooks.push(h);
+                        }
+                    });
+                }
+            });
+        }
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                if (t.conditions) {
+                    t.conditions.forEach(c => {
+                        console.log(c);
+                        if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
+                            nodeWarn.triggers.push(t);
+                        }
+                    });
+                }
+                WorkflowNode.getNodeNameImpact(t.workflow_dest_node, name, nodeWarn);
+            });
+        }
+    }
+
     constructor() {
         this.context = new WorkflowNodeContext();
     }
+
+
+}
+
+export class WorkflowPipelineNameImpact {
+    triggers = new Array<WorkflowNodeTrigger>();
+    joinTriggers = new Array<WorkflowNodeJoinTrigger>();
+    hooks = new Array<WorkflowNodeHook>();
 }
 
 // WorkflowNodeContext represents a context attached on a node
