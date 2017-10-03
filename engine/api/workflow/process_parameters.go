@@ -67,7 +67,6 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	}
 
 	// compute payload
-	log.Debug("GetNodeBuildParameters> compute payload :%#v", payload)
 	errm := &sdk.MultiError{}
 	payloadMap, errdump := dump.ToMap(payload, dump.WithLowerCaseFormatter())
 	if errdump != nil {
@@ -75,27 +74,22 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 		errm.Append(errdump)
 	}
 	for k, v := range payloadMap {
-		vars[k] = v
+		if !strings.HasSuffix(k, "__") && k != "" {
+			vars[k] = v
+		}
 	}
+
+	log.Debug("GetNodeBuildParameters> compute payload :%#v", payload)
 
 	// TODO Update suggest.go  with new variable
 
 	vars["cds.project"] = w.ProjectKey
 	vars["cds.workflow"] = w.Name
 	vars["cds.pipeline"] = n.Pipeline.Name
-	vars["cds.version"] = fmt.Sprintf("%d.%d", 1)
-	vars["cds.run"] = fmt.Sprintf("%d.%d", 1, 0)
-	vars["cds.run.number"] = fmt.Sprintf("%d", 1)
-	vars["cds.run.subnumber"] = fmt.Sprintf("%d", 0)
 
 	params := []sdk.Parameter{}
 	for k, v := range vars {
-		s, err := sdk.Interpolate(v, vars)
-		if err != nil {
-			errm.Append(err)
-			continue
-		}
-		sdk.AddParameter(&params, k, sdk.StringParameter, s)
+		sdk.AddParameter(&params, k, sdk.StringParameter, v)
 	}
 
 	if errm.IsEmpty() {
@@ -127,7 +121,7 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 		for i := range parentNodeRun.BuildParameters {
 			p := &parentNodeRun.BuildParameters[i]
 
-			if p.Name == "cds.semver" || p.Name == "cds.release.version" || strings.HasPrefix(p.Name, "cds.proj") || strings.HasPrefix(p.Name, "workflow.") {
+			if p.Name == "" || p.Name == "cds.semver" || p.Name == "cds.release.version" || strings.HasPrefix(p.Name, "cds.proj") || strings.HasPrefix(p.Name, "workflow.") {
 				continue
 			}
 

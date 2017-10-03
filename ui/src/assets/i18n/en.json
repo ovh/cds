@@ -87,6 +87,11 @@
   "audit_no": "No audit for this variable",
   "audit_time_author": "Change date",
   "audit_title_variable": "Change history",
+  "audit_action" : "Action",
+  "audit_username" : "User",
+  "audit_before" : "Before modification",
+  "audit_after" : "After modification",
+  "audit_context" : "Context",
 
   "btn_cancel" : "Cancel",
   "btn_continue" : "Continue",
@@ -112,6 +117,7 @@
   "commit_date" : "Date",
 
   "common_action" : "Action",
+  "common_audit" : "Audit",
   "common_advanced" : "Advanced",
   "common_application": "Application",
   "common_application_title": "Application: ",
@@ -159,6 +165,8 @@
   "common_clone" : "Clone",
   "common_click_here" : "Click here",
   "common_workflows" : "Workflows",
+  "common_stop" : "Stop",
+  "common_relaunch" : "Relaunch",
 
   "danger_zone" : "Danger Zone",
 
@@ -470,6 +478,7 @@
   "wizard_app_template" : "Apply a template",
   "wizard_ssh_key_name" : "Ssh key name",
 
+  "worker_model_type": "Type",
   "worker_model_capabilities": "Executable binaries in the directories named by the PATH environment variable",
   "worker_model_capabilities_up_to_date": "Binaries list is up to date",
   "worker_model_capabilities_need_refresh": "Binaries list need to be refresh by CDS. Last Registration:",
@@ -514,7 +523,6 @@
   "worker_model_status": "Status",
   "worker_model_template": "Template",
   "worker_model_title": "Worker Models",
-  "worker_model_type": "Type",
   "worker_model_warning": "This worker model is in error. Please check it",
 
   "workflow_added" : "Workflow added",
@@ -536,7 +544,7 @@
 
   "workflow_node_delete_alert" : "BE CAREFUL, this will remove the pipeline and all his children",
   "workflow_node_delete_btn" : "Remove the pipeline",
-  "workflow_node_delete_title" : "Remove pipeline '{{pip}}'",
+  "workflow_node_delete_title" : "Remove '{{node}}'",
   "workflow_node_form_title" : "Triggered pipeline",
   "workflow_node_hook_add" : "Add a Hook",
   "workflow_node_hook_modal_title" : "Hook edition",
@@ -546,7 +554,6 @@
   "workflow_node_hook_form_title" : "Hook type",
   "workflow_node_hook_form_config" : "Hook configuration",
   "workflow_node_hook_no_configuration" : "No configuration",
-  "workflow_node_join_add" : "Ajouter une jointure",
   "workflow_node_join_add" : "Add a join",
   "workflow_node_join_link" : "Link to a join",
   "workflow_node_pipeline_synchronized" : "Pipeline up to date",
@@ -559,6 +566,10 @@
   "workflow_node_trigger_condition_no": "There is no trigger condition",
   "workflow_node_trigger_manual" : "Manual trigger",
   "workflow_node_trigger_title" : "Add a trigger from pipeline {{pip}}",
+  "workflow_node_name_warning" : "Warnings",
+  "workflow_node_name_warning_modal_title" : "Be careful, node name in use",
+  "workflow_node_name_warning_modal_hooks" : "The node name is used on theses hooks: ",
+  "workflow_node_name_warning_modal_triggers" : "The node name is used on theses triggers: ",
   "workflow_root_context_application" : "Application (optional)",
   "workflow_root_context_environment" : "Environnment (optional)",
   "workflow_root_context_pipeline" : "Pipeline",
@@ -567,6 +578,8 @@
   "workflow_run_with_parameters" : "Run workflow",
   "workflow_updated" : "Workflow updated",
   "workflow_resync_pipeline" : "Resynchronize all workflow pipelines",
+  "workflow_stopped" : "Workflow stopped",
+  "workflow_relaunched" : "Workflow relaunched",
 
   "workflow_orientation_horizontal" : "Horizontal",
   "workflow_orientation_vertical" : "Vertical",

@@ -31,7 +31,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return err
 		}
 
-		pip, errl := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
+		pip, errl := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
 		if errl != nil {
 			return sdk.WrapError(sdk.ErrPipelineNotFound, "addJobToStageHandler> Cannot load pipeline %s for project %s: %s", pipelineName, projectKey, errl)
 		}
@@ -59,6 +59,10 @@ func (api *API) addJobToStageHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		if err := pipeline.CreateAudit(tx, pip, pipeline.AuditAddJob, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "addJobToStageHandler> Cannot create audit")
+		}
+
 		reqs, errlb := action.LoadAllBinaryRequirements(tx)
 		if errlb != nil {
 			return sdk.WrapError(errlb, "addJobToStageHandler> cannot load all binary requirements")
@@ -71,7 +75,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot insert job in database")
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
 		}
@@ -123,7 +127,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "updateJobHandler>Pipeline action does not match")
 		}
 
-		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, false)
+		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, true)
 		if errl != nil {
 			return sdk.WrapError(errl, "updateJobHandler>Cannot load pipeline %s", pipName)
 		}
@@ -155,6 +159,10 @@ func (api *API) updateJobHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditUpdateJob, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "updateJobHandler> Cannot create audit")
+		}
+
 		reqs, errlb := action.LoadAllBinaryRequirements(tx)
 		if errlb != nil {
 			return sdk.WrapError(errlb, "updateJobHandler> cannot load all binary requirements")
@@ -168,7 +176,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(err, "updateJobHandler> Cannot compute registration needs")
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errproj := project.Load(tx, api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
 		}
@@ -201,7 +209,7 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "deleteJobHandler>ID is not a int: %s", errp)
 		}
 
-		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, false)
+		pipelineData, errl := pipeline.LoadPipeline(api.mustDB(), key, pipName, true)
 		if errl != nil {
 			return sdk.WrapError(errl, "deleteJobHandler>Cannot load pipeline %s", pipName)
 		}
@@ -234,11 +242,15 @@ func (api *API) deleteJobHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		if err := pipeline.CreateAudit(tx, pipelineData, pipeline.AuditDeleteJob, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "deleteJobHandler> Cannot create audit")
+		}
+
 		if err := pipeline.DeleteJob(tx, jobToDelete, getUser(ctx).ID); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot delete pipeline action")
 		}
 
-		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		proj, errproj := project.Load(tx, api.Cache, key, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(errproj, "deleteJobHandler> unable to load project")
 		}

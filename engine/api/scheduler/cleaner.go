@@ -39,12 +39,6 @@ func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.PipelineSchedulerExecution,
 	}
 	defer tx.Rollback()
 
-	//Starting with exclusive lock on the table
-	if err := LockPipelineExecutions(tx); err != nil {
-		log.Debug("CleanerRun> Unable to take lock : %s", err)
-		return nil, nil
-	}
-
 	//Load schedulers
 	ps, err := LoadAll(tx)
 	if err != nil {

@@ -58,6 +58,27 @@ func (s *Service) synchronizeTasks() error {
 		return sdk.WrapError(err, "synchronizeTasks> Unable to get hooks")
 	}
 
+	allOldTasks, err := s.Dao.FindAllTasks()
+	if err != nil {
+		return sdk.WrapError(err, "synchronizeTasks> Unable to get allOldTasks")
+	}
+
+	//Delete all old task which are not referenced in CDS API anymore
+	for i := range allOldTasks {
+		t := &allOldTasks[i]
+		var found bool
+		for _, h := range hooks {
+			if h.UUID == t.UUID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			s.Dao.DeleteTask(t)
+			log.Info("Hook> Task %s deleted on synchronization", t.UUID)
+		}
+	}
+
 	for _, h := range hooks {
 		if h.Config["project"] == "" || h.Config["workflow"] == "" {
 			log.Error("Hook> Unable to synchronize task %+v: %v", h, err)

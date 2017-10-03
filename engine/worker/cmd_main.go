@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/gops/agent"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -96,6 +97,13 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		w.alive = true
 		initViper(w)
+
+		if viper.GetString("log_level") == "debug" {
+			if err := agent.Listen(nil); err != nil {
+				sdk.Exit("Error on starting gops agent", err)
+			}
+		}
+
 		hostname, errh := os.Hostname() // no check of err here
 		if errh != nil {
 			hostname = fmt.Sprintf("error compute hostname: %s", errh)
@@ -163,10 +171,19 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		go func(ctx context.Context) {
-			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second); err != nil {
+			if err := w.client.QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, 0); err != nil {
 				log.Error("Queues polling stopped: %v", err)
 			}
 		}(ctx)
+
+		go func(errs chan error) {
+			for {
+				select {
+				case err := <-errs:
+					log.Error("%v", err)
+				}
+			}
+		}(errs)
 
 		// main loop
 		for {
@@ -292,12 +309,10 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					log.Warning("takeJob> could not unregister: %s", err)
 				}
 
-			case err := <-errs:
-				log.Error("%v", err)
-
 			case <-registerTick.C:
 				w.doRegister()
 			}
+
 		}
 	}
 }

@@ -29,8 +29,6 @@ export class WorkflowTriggerJoinComponent {
     operators: Array<string>;
     conditionNames: Array<string>;
 
-
-
     constructor(private _workflowStore: WorkflowStore, private _modalService: SuiModalService) {
     }
 
@@ -41,8 +39,6 @@ export class WorkflowTriggerJoinComponent {
             this.operators = wtc.operators;
             this.conditionNames = wtc.names;
         });
-
-
     }
 
     destNodeChange(node: WorkflowNode): void {

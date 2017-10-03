@@ -22,6 +22,8 @@ type WorkflowRun struct {
 	WorkflowNodeRuns map[int64][]WorkflowNodeRun `json:"nodes" db:"-"`
 	Infos            []WorkflowRunInfo           `json:"infos" db:"-"`
 	Tags             []WorkflowRunTag            `json:"tags" db:"-"`
+	LastSubNumber    int64                       `json:"last_subnumber" db:"last_sub_num"`
+	LastExecution    time.Time                   `json:"last_execution" db:"last_execution"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow

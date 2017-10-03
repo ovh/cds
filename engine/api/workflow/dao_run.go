@@ -3,6 +3,7 @@ package workflow
 import (
 	"database/sql"
 	"encoding/json"
+	"sort"
 	"strings"
 	"time"
 
@@ -33,10 +34,11 @@ func updateWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun) error {
 	return nil
 }
 
-func updateWorkflowRunStatus(db gorp.SqlExecutor, ID int64, status string) error {
+//UpdateWorkflowRunStatus update status of a workflow run
+func UpdateWorkflowRunStatus(db gorp.SqlExecutor, ID int64, status string) error {
 	//Update workflow run status
-	query := "UPDATE workflow_run SET status = $1 WHERE id = $2"
-	if _, err := db.Exec(query, status, ID); err != nil {
+	query := "UPDATE workflow_run SET status = $1, last_modified = $2 WHERE id = $3"
+	if _, err := db.Exec(query, status, time.Now(), ID); err != nil {
 		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", ID, status)
 	}
 	return nil
@@ -253,6 +255,12 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 			wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
 		}
 		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], wnr)
+	}
+
+	for k := range wr.WorkflowNodeRuns {
+		sort.Slice(wr.WorkflowNodeRuns[k], func(i, j int) bool {
+			return wr.WorkflowNodeRuns[k][i].SubNumber > wr.WorkflowNodeRuns[k][j].SubNumber
+		})
 	}
 
 	tags, errT := loadTagsByRunID(db, wr.ID)

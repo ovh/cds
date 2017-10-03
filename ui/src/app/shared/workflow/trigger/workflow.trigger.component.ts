@@ -36,8 +36,6 @@ export class WorkflowTriggerComponent {
             this.operators = wtc.operators;
             this.conditionNames = wtc.names;
         });
-
-
     }
 
     hide(): void {

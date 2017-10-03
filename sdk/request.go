@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"path"
 	"strings"
@@ -193,12 +194,6 @@ func Request(method string, path string, args []byte, mods ...RequestModifier) (
 		return nil, code, err
 	}
 
-	if verbose {
-		if len(body) > 0 {
-			log.Printf("Response Body: %s\n", body)
-		}
-	}
-
 	if err := DecodeError(body); err != nil {
 		return nil, code, err
 	}
@@ -214,10 +209,6 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading configuration: %s\n", err)
 		os.Exit(1)
-	}
-
-	if verbose {
-		log.Printf("Request %s Body : %s", Host+path, string(args))
 	}
 
 	for i := 0; i < retry; i++ {
@@ -238,7 +229,9 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		}
 
 		if verbose {
-
+			fmt.Println("********REQUEST**********")
+			dmp, _ := httputil.DumpRequestOut(req, true)
+			fmt.Printf("%s", string(dmp))
 		}
 
 		//No auth on /login route
@@ -254,6 +247,13 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		}
 
 		resp, err := client.Do(req)
+
+		if err == nil && verbose {
+			fmt.Println("********RESPONSE**********")
+			dmp, _ := httputil.DumpResponse(resp, true)
+			fmt.Printf("%s", string(dmp))
+			fmt.Println("**************************")
+		}
 
 		// if everything is fine, return body
 		if err == nil && resp.StatusCode < 500 {

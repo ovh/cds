@@ -87,6 +87,11 @@
   "audit_no": "Aucun audit pour cette variable",
   "audit_time_author": "Heure de modification",
   "audit_title_variable": "Historique des modifications",
+  "audit_action" : "Action",
+  "audit_username" : "Utilisateur",
+  "audit_before" : "Avant modification",
+  "audit_after" : "Après modification",
+  "audit_context" : "Contexte",
 
   "btn_cancel" : "Annuler",
   "btn_close" : "Fermer",
@@ -112,6 +117,7 @@
   "commit_date" : "Date",
 
   "common_action" : "Action",
+  "common_audit" : "Audit",
   "common_loading" : "Chargement...",
   "common_advanced" : "Administration",
   "common_application": "Application",
@@ -159,6 +165,8 @@
   "common_clone" : "Cloner",
   "common_click_here" : "Cliquez ici",
   "common_workflows" : "Workflows",
+  "common_stop" : "Stop",
+  "common_relaunch" : "Relancer",
 
   "danger_zone" : "Zone dangereuse",
 
@@ -536,7 +544,7 @@
 
   "workflow_node_delete_alert" : "ATTENTION, cela va supprimer le pipeline et tout ce qu'il déclenche",
   "workflow_node_delete_btn" : "Supprimer le pipeline",
-  "workflow_node_delete_title" : "Suppression du pipeline '{{pip}}'",
+  "workflow_node_delete_title" : "Suppression de '{{node}}'",
   "workflow_node_hook_form_title" : "Pipeline à déclencher",
   "workflow_node_hook_add" : "Ajout d'un hook",
   "workflow_node_hook_modal_title" : "Edition du hook",
@@ -558,6 +566,10 @@
   "workflow_node_trigger_condition_no": "Il n'y a aucune condition de déclenchement",
   "workflow_node_trigger_manual" : "Trigger manuel",
   "workflow_node_trigger_title" : "Trigger à partir du pipeline {{pip}}",
+  "workflow_node_name_warning" : "Warnings",
+  "workflow_node_name_warning_modal_title" : "Attention, le nom du noeud est utilisé",
+  "workflow_node_name_warning_modal_hooks" : "Le nom du noeud est utilisé dans les hooks suivant : ",
+  "workflow_node_name_warning_modal_triggers" : "Le nom du noeud est utilisé dans les triggers suivant : ",
   "workflow_root_context_application" : "Application (facultatif)",
   "workflow_root_context_environment" : "Environnement (facultatif)",
   "workflow_root_context_pipeline" : "Pipeline",
@@ -566,6 +578,8 @@
   "workflow_run_with_parameters" : "Lancer le workflow",
   "workflow_updated" : "Workflow mis à jour",
   "workflow_resync_pipeline" : "Resynchroniser tous les pipelines du workflow",
+  "workflow_stopped" : "Workflow arrêté",
+  "workflow_relaunched" : "Workflow relancé",
 
   "workflow_orientation_tree" : "Arborescence",
   "workflow_orientation_horizontal" : "Horizontale",

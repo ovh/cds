@@ -30,6 +30,35 @@ $boxWidth: 155px;
       }
     }
 
+    .rename {
+      width: 100%;
+      position: absolute;
+      top: 0;
+      display:flex;
+      align-items:center;
+      height:100%;
+      padding: 17px 5px 5px 5px;
+
+      .full {
+        width: 100%;
+
+        .buttonLine {
+          margin-top: 6px;
+          text-align:center;
+          color: $cds_color_red;
+          font-weight: 600;
+
+          button {
+            margin-top: -3px;
+          }
+        }
+
+        .ui.mini.input {
+          width: 100%;
+        }
+      }
+    }
+
     .pipeline {
       height: 100%;
       width: 90%;
@@ -45,16 +74,24 @@ $boxWidth: 155px;
       }
       p.ellipsis {
         text-overflow: ellipsis;
+
+        a {
+          color: black;
+
+          i {
+            font-size: 1em;
+            margin: 0;
+          }
+        }
       }
 
       i {
         margin-top: 10px;
         font-size: 2.2em;
-        &.circular.icon.build {
-          box-shadow: 0em 0em 0em 0.22em black inset;
-          margin-bottom: 11px;
-          font-size: 1em;
-          margin-right: 7px;
+        &.icon.build {
+          margin-left: 3px;
+          margin-top: 7px;
+          font-size: 1.2em;
         }
       }
     }
@@ -132,4 +169,8 @@ $boxWidth: 155px;
     }
   }
   // End loader
+
+  .mr5 {
+    margin-right: 5px;
+  }
 }

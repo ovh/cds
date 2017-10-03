@@ -104,6 +104,11 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
 	n.Status = newStatus
+	//If the node is over, push the status in the build parameter, so it would be availabe in children build parameters
+	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
+		sdk.AddParameter(&n.BuildParameters, "cds.status", sdk.StringParameter, n.Status)
+	}
+
 	// Save the node run in database
 	if err := UpdateNodeRun(db, n); err != nil {
 		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s", n.ID, n.Status), "workflow.execute> Unable to execute node")
@@ -116,23 +121,15 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 	}
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
-	if n.Status == sdk.StatusSuccess.String() {
+	//Delete jobs only when node is over
+	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
 		if err := processWorkflowRun(db, store, p, updatedWorkflowRun, nil, nil, nil); err != nil {
 			return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 		}
-	}
 
-	//Delete jobs only when node is over
-	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
 		//Delete the line in workflow_node_run_job
 		if err := DeleteNodeJobRuns(db, n.ID); err != nil {
 			return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
-		}
-	}
-
-	if n.Status == sdk.StatusFail.String() {
-		if err := updateWorkflowRunStatus(db, updatedWorkflowRun.ID, sdk.StatusFail.String()); err != nil {
-			return sdk.WrapError(err, "workflow.execute> Unable to update workflow run status with id %d for status %s ", updatedWorkflowRun.ID, sdk.StatusFail.String())
 		}
 	}
 
@@ -314,4 +311,43 @@ func NodeBuildParameters(proj *sdk.Project, wf *sdk.Workflow, wr *sdk.WorkflowRu
 	}
 
 	return res, nil
+}
+
+// StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
+func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) error {
+	// Load node job run ID
+	ids, errIDS := LoadNodeJobRunIDByNodeRunID(db, nodeRun.ID)
+	if errIDS != nil {
+		return sdk.WrapError(errIDS, "stopWorkflowNodeRunHandler> Cannot load node job run id")
+	}
+
+	tx, errT := db.Begin()
+	if errT != nil {
+		return sdk.WrapError(errT, "StopWorkflowNodeRun> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	for _, nrjID := range ids {
+		njr, errNRJ := LoadAndLockNodeJobRun(tx, store, nrjID)
+		if errNRJ != nil {
+			return sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
+		}
+		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
+		if err := UpdateNodeJobRunStatus(tx, store, proj, njr, sdk.StatusStopped); err != nil {
+			return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
+		}
+
+		nodeRun.Status = sdk.StatusStopped.String()
+		nodeRun.LastModified = time.Now()
+		nodeRun.Done = time.Now()
+		if err := UpdateNodeRun(tx, &nodeRun); err != nil {
+			return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node run")
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot commit transaction")
+	}
+
+	return nil
 }

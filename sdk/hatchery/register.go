@@ -58,7 +58,7 @@ func Create(h Interface) {
 	var nRoutines, workersStarted int64
 
 	go func(ctx context.Context) {
-		if err := h.Client().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second); err != nil {
+		if err := h.Client().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued); err != nil {
 			log.Error("Queues polling stopped: %v", err)
 		}
 	}(ctx)

@@ -15,8 +15,8 @@ export class WorkflowRunService {
      * @param key Project unique key
      * @param workflow Workflow to create
      */
-    runWorkflow(key: string, workflow: Workflow, request: WorkflowRunRequest): Observable<WorkflowRun> {
-        return this._http.post('/project/' + key + '/workflows/' + workflow.name + '/runs', request);
+    runWorkflow(key: string, workflowName: string, request: WorkflowRunRequest): Observable<WorkflowRun> {
+        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs', request);
     }
 
     /**
@@ -40,6 +40,17 @@ export class WorkflowRunService {
      */
     getWorkflowRun(key: string, workflowName: string, number: number): Observable<WorkflowRun> {
         return this._http.get('/project/' + key + '/workflows/' + workflowName + '/runs/' + number);
+    }
+
+    /**
+     * Stop a workflow run
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name
+     * @param {number} number Number of the workflow run
+     * @returns {Observable<boolean>}
+     */
+    stopWorkflowRun(key: string, workflowName: string, num: number): Observable<boolean> {
+        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/stop', null);
     }
 
     /**

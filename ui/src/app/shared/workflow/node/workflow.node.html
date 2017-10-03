@@ -5,40 +5,63 @@
          [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL || currentNodeRun?.status === pipelineStatus.STOPPED"
          [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED"
          [class.pointing]="webworker"
-         (click)="goToNodeRun()"
-    >
+         (click)="goToNodeRun()">
+
+        <!-- Node name + pipeline name -->
         <div class="pipeline">
             <p class="ellipsis">
-                <span *ngIf="webworker &&
+                <span *ngIf="webworker && !loadingStop &&
                     workflowRunStatus !== pipelineStatus.BUILDING &&
                     workflowRunStatus !== pipelineStatus.WAITING &&
                     currentNodeRun?.status !== pipelineStatus.BUILDING &&
                     currentNodeRun?.status !== pipelineStatus.WAITING">
                     <i class="video play outline icon" (click)="openRunNode($event)"></i>
                 </span>
-                <span *ngIf="webworker && (currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING)">
-                    <i class="circular black stop icon build" (click)="stopNodeRun($event)"></i>
-                </span>
-                <ng-container *ngIf="currentNodeRun">
-                    <div class="ui active inline blue loader"
-                        *ngIf="currentNodeRun?.status === pipelineStatus.WAITING || currentNodeRun?.status === pipelineStatus.BUILDING"
-                        [class.medium]="currentNodeRun?.num < 10 || currentNodeRun?.subnumber < 10"
-                        [class.large]="(currentNodeRun?.num >= 10 && currentNodeRun?.num < 10000) || (currentNodeRun?.subnumber >= 10 && currentNodeRun?.subnumber < 10000)"
-                        [class.huge]="(currentNodeRun?.num >= 10000 && currentNodeRun?.num < 100000) || (currentNodeRun?.subnumber >= 10000 && currentNodeRun?.subnumber < 100000)"
-                        [class.massive]="currentNodeRun?.num >= 100000 || currentNodeRun?.subnumber >= 100000">
-                        <span class="ui blue circular label">v{{ currentNodeRun?.num + '.' + currentNodeRun?.subnumber }}</span>
+                <ng-container *ngIf="webworker && (currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING)">
+                    <div class="ui active inline blue loader mr5"  (click)="stopNodeRun($event)">
+                        <i class="black stop icon build" *ngIf="!loadingStop"></i>
                     </div>
-                    <span *ngIf="currentNodeRun?.status !== pipelineStatus.WAITING && currentNodeRun?.status !== pipelineStatus.BUILDING" class="ui black circular label">v{{ currentNodeRun?.num + '.' + currentNodeRun?.subnumber }}</span>
                 </ng-container>
-                <b>{{node.name}}</b><span *ngIf="node.name !== node.pipeline.name">{{' - ' + node.pipeline.name}}</span>
+                <span class="ui black circular label mr5" *ngIf="currentNodeRun">
+                    v{{ currentNodeRun?.num + '.' + currentNodeRun?.subnumber }}
+                </span>
+                <span (mouseenter)="displayPencil = true" (mouseleave)="displayPencil = false">
+                    <a class="pointing" (click)="openRenameArea()" *ngIf="!displayInputName">
+                        <b>{{node.name}}</b>
+                        <span *ngIf="node.name !== node.pipeline.name">{{' - ' + node.pipeline.name}}</span>
+                        <i class="pencil icon" *ngIf="displayPencil"></i>
+                    </a>
+                </span>
             </p>
-
         </div>
-        <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0">
+
+        <!-- area to change node name -->
+        <div class="rename" *ngIf="displayInputName">
+            <div class="full">
+                <div class="ui mini input">
+                    <input type="text" id="nodeName" [(ngModel)]="node.name">
+                </div>
+                <div class="buttonLine">
+                    <button class="ui mini icon left floated button" (click)="displayInputName = false"><i class="ban icon"></i></button>
+                    <span class="pointing" (click)="openWarningModal()" *ngIf="nameWarning &&
+                    (nameWarning.hooks.length > 0 || nameWarning.joinTriggers.length > 0 || nameWarning.triggers.length > 0)">
+                        {{ 'workflow_node_name_warning'  | translate }}
+                    </span>
+                    <button class="ui mini icon right floated green button" (click)="rename()" [class.loading]="loading" [disabled]="loading"><i class="check icon"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- area to display application name -->
+        <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0 && !displayInputName">
             <p class="ellipsis">{{node.context.application.name}}</p>
         </div>
+
+        <!-- environment name on a semantic ui ribbon -->
         <a class="ui white ribbon label" *ngIf="node.context.environment_id && node.context.environment_id > 0">{{node.context.environment?.name}}</a>
-        <ng-container *ngIf="!webworker">
+
+        <!-- drop down menu -->
+        <ng-container *ngIf="!webworker && !displayInputName">
             <sm-dropdown class="nocaret right pointing link" icon="settings" [disabled]="disabled" (click)="displayDropdown()" [options]="options">
                 <a sm-item href="#" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]">{{ 'pipeline_label_edit' | translate }}</a>
                 <sm-item (click)="openAddHookModal()">{{'workflow_node_hook_add' | translate }}</sm-item>
@@ -67,3 +90,30 @@
 <ng-container *ngIf="project && node && currentNodeRun">
     <app-workflow-node-run-param [workflow]="workflow" [project]="project" [nodeRun]="currentNodeRun" [nodeToRun]="node" #workflowRunNode></app-workflow-node-run-param>
 </ng-container>
+<ng-template let-context let-modal="modal" #nodeNameWarningModal>
+    <div class="header">{{ 'workflow_node_name_warning_modal_title' | translate }}</div>
+    <div class="content">
+        <ng-container *ngIf="nameWarning && nameWarning.hooks.length > 0">
+            <h3>{{'workflow_node_name_warning_modal_hooks' | translate }}</h3>
+            <ul>
+                <li *ngFor="let h of nameWarning.hooks">
+                    {{h.model.name}}
+                </li>
+            </ul>
+        </ng-container>
+        <ng-container *ngIf="nameWarning && (nameWarning.triggers.length > 0 || nameWarning.joinTriggers.length > 0)">
+            <h3>{{'workflow_node_name_warning_modal_triggers' | translate }}</h3>
+            <ul>
+                <li *ngFor="let t of nameWarning.triggers">
+                    {{t.workflow_dest_node.name}}
+                </li>
+                <li *ngFor="let t of nameWarning.joinTriggers">
+                    {{t.workflow_dest_node.name}}
+                </li>
+            </ul>
+        </ng-container>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+    </div>
+</ng-template>

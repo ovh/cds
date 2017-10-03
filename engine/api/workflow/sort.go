@@ -12,6 +12,7 @@ func Sort(w *sdk.Workflow) {
 	SortNode(w.Root)
 }
 
+// SortNode sort the content of a node
 func SortNode(n *sdk.WorkflowNode) {
 	sortNodeHooks(&n.Hooks)
 	sortNodeTriggers(&n.Triggers)
@@ -38,39 +39,7 @@ func sortNodeTriggers(triggers *[]sdk.WorkflowNodeTrigger) {
 		t1 := &(*triggers)[i]
 		t2 := &(*triggers)[j]
 
-		if t1.WorkflowDestNode.Pipeline.Name != t2.WorkflowDestNode.Pipeline.Name {
-			return strings.Compare(t1.WorkflowDestNode.Pipeline.Name, t2.WorkflowDestNode.Pipeline.Name) < 0
-		}
-
-		// Without context first
-		if t1.WorkflowDestNode.Context == nil {
-			return true
-		}
-
-		if t1.WorkflowDestNode.Context != nil && t2.WorkflowDestNode.Context != nil {
-
-			// Without app first
-			if t1.WorkflowDestNode.Context.Application == nil && t2.WorkflowDestNode.Context.Application != nil {
-				return true
-			}
-
-			if t1.WorkflowDestNode.Context.Application == nil && t2.WorkflowDestNode.Context.Application == nil {
-				// Check Env
-				return sortEnvironment(t1.WorkflowDestNode.Context, t2.WorkflowDestNode.Context)
-			}
-
-			if t1.WorkflowDestNode.Context.Application != nil && t2.WorkflowDestNode.Context.Application != nil {
-				// Check app Name
-				if t1.WorkflowDestNode.Context.Application.Name == t2.WorkflowDestNode.Context.Application.Name {
-					// Check Env
-					return sortEnvironment(t1.WorkflowDestNode.Context, t2.WorkflowDestNode.Context)
-				}
-				return strings.Compare(t1.WorkflowDestNode.Context.Application.Name, t2.WorkflowDestNode.Context.Application.Name) < 0
-			}
-
-		}
-
-		return false
+		return strings.Compare(t1.WorkflowDestNode.Name, t2.WorkflowDestNode.Name) < 0
 	})
 }
 

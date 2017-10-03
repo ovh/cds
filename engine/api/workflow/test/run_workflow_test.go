@@ -411,7 +411,7 @@ func TestManualRun3(t *testing.T) {
 		//TestLoadNodeJobRunSecrets
 		t.Logf("Proj.Variables: %+v", proj.Variable)
 
-		secrets, err := workflow.LoadNodeJobRunSecrets(db, j, nodeRun, workflowRun, proj.Variable)
+		secrets, err := workflow.LoadNodeJobRunSecrets(db, cache, j, nodeRun, workflowRun, proj.Variable)
 		assert.NoError(t, err)
 		assert.Len(t, secrets, 1)
 
