@@ -2,11 +2,13 @@ package scheduler
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorhill/cronexpr"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -37,19 +39,8 @@ func Scheduler(c context.Context, DBFunc func() *gorp.DbMap) {
 
 //Run is the core function of Scheduler goroutine
 func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
-	tx, errb := db.Begin()
-	if errb != nil {
-		return nil, "Run> Unable to start a transaction", errb
-	}
-	defer tx.Rollback()
-
-	//Starting with exclusive lock on the table
-	if err := LockPipelineExecutions(tx); err != nil {
-		return nil, "OK", nil
-	}
-
 	//Load unscheduled pipelines
-	ps, errl := LoadUnscheduledPipelines(tx)
+	ps, errl := LoadUnscheduledPipelines(db)
 	if errl != nil {
 		return nil, "Run> Unable to load unscheduled pipelines : %s", errl
 	}
@@ -57,26 +48,59 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 	execs := []sdk.PipelineSchedulerExecution{}
 
 	for i := range ps {
+		tx, errb := db.Begin()
+		if errb != nil {
+			return nil, "Run> Unable to start a transaction", errb
+		}
+
+		query := `
+			SELECT pipeline_scheduler.* 
+			FROM pipeline_scheduler 
+			JOIN (
+				SELECT 	pipeline_scheduler_id 
+				FROM  	pipeline_scheduler_execution 
+				WHERE 	pipeline_scheduler_id = $1
+				AND 	executed = 'true' 
+				ORDER BY  execution_planned_date DESC 
+				LIMIT 1
+				) execs ON pipeline_scheduler.id = execs.pipeline_scheduler_id 
+			WHERE pipeline_scheduler.id = $1
+			FOR UPDATE NOWAIT`
+
+		var gorpPS = &PipelineScheduler{}
+		if err := tx.SelectOne(gorpPS, query, ps[i].ID); err != nil {
+			if pqerr, ok := err.(*pq.Error); ok && pqerr.Code != "55P03" || err != sql.ErrNoRows {
+				log.Error("Run> Unable to lock to pipeline_scheduler %s", err)
+			}
+			_ = tx.Rollback()
+			continue
+		}
+
+		s := sdk.PipelineScheduler(*gorpPS)
 		//Skip disabled scheduler
-		if ps[i].Disabled {
+		if s.Disabled {
+			_ = tx.Rollback()
 			continue
 		}
 
 		//Compute a new execution
-		e, errn := Next(tx, &ps[i])
+		e, errn := Next(tx, &s)
 		if errn != nil {
 			//Nothing to compute
+			_ = tx.Rollback()
 			continue
 		}
 		//Insert it
 		if err := InsertExecution(tx, e); err != nil {
-			return nil, "Run> Unable to insert an execution : %s", err
+			_ = tx.Rollback()
+			continue
 		}
 		execs = append(execs, *e)
-	}
 
-	if err := tx.Commit(); err != nil {
-		return nil, "Run> Unable to commit a transaction : %s", err
+		if err := tx.Commit(); err != nil {
+			_ = tx.Rollback()
+			return nil, "Run> Unable to commit a transaction : %s", err
+		}
 	}
 
 	return execs, "OK", nil
