@@ -324,12 +324,12 @@ func (api *API) getApplicationBranchHandler() Handler {
 				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, erra)
 			}
 			if remote != "" && remote != app.RepositoryFullname {
-				prs, errP := client.PullRequests(app.RepositoryFullname)
-				if errP != nil {
-					return sdk.WrapError(errP, "getApplicationBranchHandler> Cannot get pull requests from repository")
+				brs, errB := client.Branches(remote)
+				if errB != nil {
+					return sdk.WrapError(errB, "getApplicationBranchHandler> Cannot get branches from repository %s", remote)
 				}
-				for _, pr := range prs {
-					branches = append(branches, pr.Head.Branch)
+				for _, br := range brs {
+					branches = append(branches, br)
 				}
 			} else {
 				var errb error
@@ -338,7 +338,6 @@ func (api *API) getApplicationBranchHandler() Handler {
 					return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get branches from repository %s: %s", app.RepositoryFullname, errb)
 				}
 			}
-
 		} else {
 			var errg error
 			branches, errg = pipeline.GetBranches(api.mustDB(), app, remote)
