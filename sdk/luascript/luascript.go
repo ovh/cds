@@ -13,7 +13,7 @@ type Check struct {
 	exceptionHandlerFunction *lua.LFunction
 	variables                map[string]string
 	IsError                  bool
-	Result                   *bool
+	Result                   bool
 	ctx                      context.Context
 }
 
@@ -46,19 +46,20 @@ func (c *Check) SetVariables(vars map[string]string) {
 }
 
 //Perform the lua script
-func (c *Check) Perform(script string) (err error) {
+func (c *Check) Perform(script string) error {
 	var ok bool
 
-	if err = c.state.DoString(script); err != nil {
+	if err := c.state.DoString(script); err != nil {
 		c.IsError = true
-	} else {
-		lv := c.state.Get(-1)  // get the value at the top of the stack
-		if !lua.LVAsBool(lv) { // lv is neither nil nor false
-			ok = true
-		}
+		return err
 	}
 
-	c.IsError = (err != nil)
-	c.Result = &ok
-	return
+	lv := c.state.Get(-1)  // get the value at the top of the stack
+	if !lua.LVAsBool(lv) { // lv is neither nil nor false
+		ok = true
+	}
+
+	c.IsError = false
+	c.Result = ok
+	return nil
 }
