@@ -7,6 +7,7 @@ import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {Workflow} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {RouterService} from '../../service/router/router.service';
+import {WorkflowCoreService} from './workflow.service';
 
 @Component({
     selector: 'app-workflow',
@@ -27,9 +28,13 @@ export class WorkflowComponent {
     sidebar: SemanticSidebarComponent;
 
     constructor(private _activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-        private _routerService: RouterService) {
+        private _routerService: RouterService, private _workflowCore: WorkflowCoreService) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
+        });
+
+        this._workflowCore.get().subscribe(b => {
+            this.sidebarOpen = b;
         });
 
         this._activatedRoute.params.subscribe(p => {
@@ -63,5 +68,9 @@ export class WorkflowComponent {
                 this.number = params['number'];
             }
         });
+    }
+
+    toggleSidebar(): void {
+        this._workflowCore.moveSideBar(!this.sidebarOpen);
     }
 }

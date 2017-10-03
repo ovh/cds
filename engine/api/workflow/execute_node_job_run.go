@@ -21,6 +21,16 @@ import (
 func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status) error {
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
+	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID)
+	if errLoad != nil {
+		sdk.WrapError(errLoad, "workflow.UpdateNodeJobRunStatus> Unable to load node run id %d", job.WorkflowNodeRunID)
+	}
+
+	wf, errLoadWf := LoadRunByID(db, node.WorkflowRunID)
+	if errLoadWf != nil {
+		return sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", node.WorkflowRunID)
+	}
+
 	var query string
 	query = `SELECT status FROM workflow_node_run_job WHERE id = $1 FOR UPDATE`
 	var currentStatus string
@@ -45,13 +55,9 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 		job.Done = time.Now()
 		job.Status = status.String()
+		wf.LastExecution = time.Now()
 	default:
 		return fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d to status %v", job.ID, status.String())
-	}
-
-	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID)
-	if errLoad != nil {
-		return errLoad
 	}
 
 	//If the job has been set to building, set the stage to building
@@ -88,6 +94,10 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		if errE := execute(db, store, p, node); errE != nil {
 			return sdk.WrapError(errE, "workflow.UpdateNodeJobRunStatus> Cannot execute sync node")
 		}
+	}
+
+	if err := updateWorkflowRun(db, wf); err != nil {
+		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowRun %d", wf.ID)
 	}
 
 	if err := UpdateNodeJobRun(db, store, p, job); err != nil {

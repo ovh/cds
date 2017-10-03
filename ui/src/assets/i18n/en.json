@@ -87,6 +87,11 @@
   "audit_no": "No audit for this variable",
   "audit_time_author": "Change date",
   "audit_title_variable": "Change history",
+  "audit_action" : "Action",
+  "audit_username" : "User",
+  "audit_before" : "Before modification",
+  "audit_after" : "After modification",
+  "audit_context" : "Context",
 
   "btn_cancel" : "Cancel",
   "btn_continue" : "Continue",
@@ -112,6 +117,7 @@
   "commit_date" : "Date",
 
   "common_action" : "Action",
+  "common_audit" : "Audit",
   "common_advanced" : "Advanced",
   "common_application": "Application",
   "common_application_title": "Application: ",
@@ -536,7 +542,7 @@
 
   "workflow_node_delete_alert" : "BE CAREFUL, this will remove the pipeline and all his children",
   "workflow_node_delete_btn" : "Remove the pipeline",
-  "workflow_node_delete_title" : "Remove pipeline '{{pip}}'",
+  "workflow_node_delete_title" : "Remove '{{node}}'",
   "workflow_node_form_title" : "Triggered pipeline",
   "workflow_node_hook_add" : "Add a Hook",
   "workflow_node_hook_modal_title" : "Hook edition",

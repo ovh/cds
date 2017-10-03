@@ -420,29 +420,23 @@ func DeleteAllStage(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 }
 
 // MoveStage Move a stage
-func MoveStage(db *gorp.DbMap, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pipeline) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+func MoveStage(db gorp.SqlExecutor, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pipeline) error {
 
 	if stageToMove.BuildOrder > newBuildOrder {
-		if err := moveUpStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
+		if err := moveUpStages(db, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
 			return err
 		}
 	} else if stageToMove.BuildOrder < newBuildOrder {
-		if err := moveDownStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
+		if err := moveDownStages(db, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
 			return err
 		}
 	}
 
 	stageToMove.BuildOrder = newBuildOrder
-	if err := UpdateStage(tx, stageToMove); err != nil {
+	if err := UpdateStage(db, stageToMove); err != nil {
 		return err
 	}
-
-	return tx.Commit()
+	return nil
 }
 
 func moveUpStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosition int) error {

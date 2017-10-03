@@ -85,19 +85,10 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	vars["cds.project"] = w.ProjectKey
 	vars["cds.workflow"] = w.Name
 	vars["cds.pipeline"] = n.Pipeline.Name
-	vars["cds.version"] = fmt.Sprintf("%d.%d", 1, 1)
-	vars["cds.run"] = fmt.Sprintf("%d.%d", 1, 0)
-	vars["cds.run.number"] = fmt.Sprintf("%d", 1)
-	vars["cds.run.subnumber"] = fmt.Sprintf("%d", 0)
 
 	params := []sdk.Parameter{}
 	for k, v := range vars {
-		s, err := sdk.Interpolate(v, vars)
-		if err != nil {
-			errm.Append(err)
-			continue
-		}
-		sdk.AddParameter(&params, k, sdk.StringParameter, s)
+		sdk.AddParameter(&params, k, sdk.StringParameter, v)
 	}
 
 	if errm.IsEmpty() {

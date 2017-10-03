@@ -1,5 +1,5 @@
 <div id="WorkflowNodeRun" *ngIf="nodeRun">
-    <ng-container *ngIf="nodeRun">
+    <ng-container *ngIf="nodeRun && workflowRun">
         <app-workflow-node-run-summary [project]="project" [nodeRun]="nodeRun" [workflow]="workflowRun.workflow" [duration]="duration"></app-workflow-node-run-summary>
     </ng-container>
     <div class="CDSmenu">

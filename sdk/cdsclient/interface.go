@@ -54,7 +54,7 @@ type Interface interface {
 	ProjectKeyCreate(string, *sdk.ProjectKey) error
 	ProjectKeysDelete(string, string) error
 	Queue() ([]sdk.WorkflowNodeJobRun, []sdk.PipelineBuildJob, error)
-	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration) error
+	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
 	QueueJobBook(isWorkflowJob bool, id int64) error
 	QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error)

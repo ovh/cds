@@ -1,5 +1,5 @@
 <ng-template let-context let-modal="modal" #deleteModal>
-    <div class="header">{{ 'workflow_node_delete_title' | translate: { pip: node.pipeline.name} }}</div>
+    <div class="header">{{ 'workflow_node_delete_title' | translate: { node: node.name} }}</div>
     <div class="content">
         <div class="">
             {{ 'workflow_node_delete_alert' | translate }}

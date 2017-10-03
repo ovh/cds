@@ -17,6 +17,9 @@ type PipelineBuildJob sdk.PipelineBuildJob
 // Log is a gorp wrapper around sdk.Log
 type Log sdk.Log
 
+// PipelineAudit is a gorp wrapper around sdk.PipelineAudit
+type PipelineAudit sdk.PipelineAudit
+
 var Store cache.Store
 
 //PostInsert is a DB Hook on PipelineBuildJob to store jobs and params as JSON in DB
@@ -114,5 +117,6 @@ func init() {
 	gorpmapping.Register(
 		gorpmapping.New(PipelineBuildJob{}, "pipeline_build_job", true, "id"),
 		gorpmapping.New(Log{}, "pipeline_build_log", true, "id"),
+		gorpmapping.New(PipelineAudit{}, "pipeline_audit", true, "id"),
 	)
 }

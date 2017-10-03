@@ -174,6 +174,7 @@ import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
         WorkflowJoinTriggerSrcComponent,
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
+        WorkflowNodeRunParamComponent,
         WorkflowNodeHookComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,

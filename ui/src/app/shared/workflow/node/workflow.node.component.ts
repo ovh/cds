@@ -20,11 +20,9 @@ import {Router} from '@angular/router';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowNodeHookFormComponent} from './hook/form/node.hook.component';
-import {WorkflowHookModel} from '../../../model/workflow.hook.model';
 import {HookEvent} from './hook/hook.event';
-import {WorkflowService} from '../../../service/workflow/workflow.service';
-import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
+import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 
 declare var _: any;
 

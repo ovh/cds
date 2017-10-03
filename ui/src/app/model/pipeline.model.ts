@@ -20,6 +20,21 @@ export class PipelineStatus {
     static STOPPED = 'Stopped';
 }
 
+export class PipelineAudit {
+    id: number;
+    user: User;
+    versionned: Date;
+    pipeline: Pipeline;
+    action: string;
+}
+
+export class PipelineAuditDiff {
+    type: string;
+    before: any;
+    after: any;
+    title: string;
+}
+
 export class Pipeline {
     id: number;
     name: string;
