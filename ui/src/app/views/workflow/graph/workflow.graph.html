@@ -1,4 +1,4 @@
-<div class="ui grid" *ngIf="direction">
+<div class="ui grid" *ngIf="displayDirection">
     <div class="three wide column">
         <sm-select [(model)]="direction" (onChange)="changeDisplay()">
             <option value="TB">{{ 'workflow_orientation_vertical' | translate }}</option>

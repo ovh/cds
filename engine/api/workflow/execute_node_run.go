@@ -312,3 +312,35 @@ func NodeBuildParameters(proj *sdk.Project, wf *sdk.Workflow, wr *sdk.WorkflowRu
 
 	return res, nil
 }
+
+// StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
+func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo) error {
+	// Load node job run ID
+	ids, errIDS := LoadNodeJobRunIDByNodeRunID(db, nodeRun.ID)
+	if errIDS != nil {
+		return sdk.WrapError(errIDS, "stopWorkflowNodeRunHandler> Cannot load node job run id")
+	}
+
+	tx, errT := db.Begin()
+	if errT != nil {
+		return sdk.WrapError(errT, "StopWorkflowNodeRun> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	for _, nrjID := range ids {
+		njr, errNRJ := LoadAndLockNodeJobRun(tx, store, nrjID)
+		if errNRJ != nil {
+			return sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
+		}
+		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
+		if err := UpdateNodeJobRunStatus(tx, store, proj, njr, sdk.StatusStopped); err != nil {
+			return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot commit transaction")
+	}
+
+	return nil
+}

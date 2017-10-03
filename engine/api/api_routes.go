@@ -164,6 +164,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler))
+	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/stop", r.POST(api.stopWorkflowRunHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/resync", r.POST(api.resyncWorkflowRunPipelinesHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/artifacts", r.GET(api.getWorkflowRunArtifactsHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}", r.GET(api.getWorkflowNodeRunHandler))

@@ -23,7 +23,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		log.Debug("processWorkflowRun> End [#%d]%s - %.3fs", w.Number, w.Workflow.Name, time.Since(t0).Seconds())
 	}()
 
-	maxsn := maxSubNumber(w.WorkflowNodeRuns)
+	maxsn := MaxSubNumber(w.WorkflowNodeRuns)
 	log.Info("processWorkflowRun> %d.%d", w.Number, maxsn)
 	w.LastSubNumber = maxsn
 
@@ -408,7 +408,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		w.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
 	}
 	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
-	w.LastSubNumber = maxSubNumber(w.WorkflowNodeRuns)
+	w.LastSubNumber = MaxSubNumber(w.WorkflowNodeRuns)
 	if err := updateWorkflowRun(db, w); err != nil {
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
 	}
@@ -457,7 +457,8 @@ func updateNodesRunStatus(status string, success, building, fail *int) {
 	}
 }
 
-func maxSubNumber(workflowNodeRuns map[int64][]sdk.WorkflowNodeRun) int64 {
+// MaxSubNumber returns the MaxSubNumber of workflowNodeRuns
+func MaxSubNumber(workflowNodeRuns map[int64][]sdk.WorkflowNodeRun) int64 {
 	var maxsn int64
 	for _, wNodeRuns := range workflowNodeRuns {
 		for _, wNodeRun := range wNodeRuns {

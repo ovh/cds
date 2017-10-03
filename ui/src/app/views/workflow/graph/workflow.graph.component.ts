@@ -49,7 +49,18 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     @Input() project: Project;
     @Input() webworker: CDSWorker;
-    @Input() status: string;
+    @Input('status')
+    set status(data: string) {
+        this._status = data;
+        this.changeDisplay();
+    }
+    get status() {return this._status}
+    @Input('direction')
+    set direction(data: string) {
+        this._direction = data;
+        this.changeDisplay();
+    }
+    get direction() {return this._direction}
 
     @Output() editTriggerEvent = new EventEmitter<{ source, target }>();
     @Output() editTriggerJoinEvent = new EventEmitter<{ source, target }>();
@@ -57,6 +68,9 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     @Output() addSrcToJoinEvent = new EventEmitter<{ source, target }>();
 
     ready: boolean;
+    _direction: string;
+    _status: string;
+    displayDirection = false;
 
     // workflow graph
     @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer;
@@ -64,7 +78,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     render = new dagreD3.render();
     svgWidth: number = window.innerWidth;
     svgHeight: number = window.innerHeight;
-    direction: string;
 
     @ViewChild('dimmer')
     dimmer: SemanticDimmerComponent;
@@ -93,7 +106,10 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     }
 
     ngOnInit(): void {
-        this.direction = this._workflowStore.getDirection(this.project.key, this.workflow.name);
+        if (!this.direction) {
+            this.displayDirection = true;
+            this.direction = this._workflowStore.getDirection(this.project.key, this.workflow.name);
+        }
     }
 
     @HostListener('window:resize', ['$event'])

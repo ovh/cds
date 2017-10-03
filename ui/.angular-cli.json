@@ -25,6 +25,7 @@
         "../node_modules/semantic-ui/dist/semantic.css",
         "../node_modules/angular2-toaster/toaster.css",
         "../node_modules/font-awesome/css/font-awesome.css",
+        "../node_modules/animate.css/animate.min.css",
         "styles.scss"
       ],
       "scripts": [

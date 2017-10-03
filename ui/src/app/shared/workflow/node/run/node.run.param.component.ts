@@ -121,7 +121,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
             request.number = this.nodeRun.num;
         }
 
-        this._workflowRunService.runWorkflow(this.project.key, this.workflow, request).subscribe(wr => {
+        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).subscribe(wr => {
             this.modal.approve(true);
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num]);
         });
