@@ -49,15 +49,18 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     @Input() project: Project;
     @Input() webworker: CDSWorker;
-    @Input() status: string;
+    @Input('status')
+    set status(data: string) {
+        this._status = data;
+        this.changeDisplay();
+    }
+    get status() {return this._status}
     @Input('direction')
     set direction(data: string) {
         this._direction = data;
         this.changeDisplay();
     }
-    get direction() {
-        return this._direction;
-    }
+    get direction() {return this._direction}
 
     @Output() editTriggerEvent = new EventEmitter<{ source, target }>();
     @Output() editTriggerJoinEvent = new EventEmitter<{ source, target }>();
@@ -66,6 +69,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     ready: boolean;
     _direction: string;
+    _status: string;
     displayDirection = false;
 
     // workflow graph

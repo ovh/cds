@@ -15,8 +15,8 @@ export class WorkflowRunService {
      * @param key Project unique key
      * @param workflow Workflow to create
      */
-    runWorkflow(key: string, workflow: Workflow, request: WorkflowRunRequest): Observable<WorkflowRun> {
-        return this._http.post('/project/' + key + '/workflows/' + workflow.name + '/runs', request);
+    runWorkflow(key: string, workflowName: string, request: WorkflowRunRequest): Observable<WorkflowRun> {
+        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs', request);
     }
 
     /**

@@ -221,11 +221,9 @@ func (api *API) stopWorkflowRunHandler() Handler {
 			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getUser(ctx).Username}},
 		}
 
-		//TODO: change with maxSubNumber into the worflowRun data
-		maxSn := workflow.MaxSubNumber(run.WorkflowNodeRuns)
 		for _, wn := range run.WorkflowNodeRuns {
 			for _, wnr := range wn {
-				if wnr.SubNumber == maxSn && (wnr.Status == sdk.StatusBuilding.String() || wnr.Status == sdk.StatusChecking.String()) {
+				if wnr.SubNumber == run.LastSubNumber && (wnr.Status == sdk.StatusBuilding.String() || wnr.Status == sdk.StatusChecking.String()) {
 					if errS := workflow.StopWorkflowNodeRun(api.mustDB(), api.Cache, proj, wnr, stopInfos); errS != nil {
 						return sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
 					}

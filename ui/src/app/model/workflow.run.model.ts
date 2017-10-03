@@ -18,12 +18,14 @@ export class WorkflowRunRequest {
 export class WorkflowRun {
     id: number;
     num: number;
+    last_subnumber: number;
     project_id: number;
     workflow_id: number;
     workflow: Workflow;
     start: string;
     status: string;
     last_modified: string;
+    last_execution: string;
     nodes: { [key: string]: Array<WorkflowNodeRun>; };
     tags: Array<WorkflowRunTags>;
 }

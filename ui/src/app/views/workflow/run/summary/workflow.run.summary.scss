@@ -2,10 +2,13 @@
 
 #workflowRunStatus{
   .winfo{
-    border-radius: 0 0 0.28571429rem 0.28571429rem;
     z-index: 1;
   }
 
+  .cardinfo {
+    border-radius: 0 0 0.28571429rem 0.28571429rem;
+  }
+  
   .running {
     border: none;
   }

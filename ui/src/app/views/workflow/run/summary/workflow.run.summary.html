@@ -2,8 +2,8 @@
     <div class="ui grid">
         <div class="row">
             <div class="four wide column"></div>
-            <div class="seven wide column animated fadeInDown">
-                <div class="ui raised card winfo"
+            <div class="seven wide column animated fadeInDown winfo">
+                <div class="ui raised card cardinfo"
                     [class.building]="workflowRun.status === pipelineStatusEnum.BUILDING || workflowRun.status === pipelineStatusEnum.WAITING"
                     [class.success]="workflowRun.status === pipelineStatusEnum.SUCCESS"
                     [class.fail]="workflowRun.status === pipelineStatusEnum.FAIL || workflowRun.status === pipelineStatusEnum.STOPPED"
@@ -17,12 +17,12 @@
                                 </div>
                                 <div class="six wide column centered">
                                     <i class="tag icon"></i>
-                                    <span>v{{version}}</span>
+                                    <span>v{{workflowRun.num}}.{{workflowRun.last_subnumber}}</span>
                                 </div>
                                 <div class="five wide column">
                                     <div class="right floated">
                                         <i class="checked calendar icon"></i>
-                                        <span>{{workflowRun.start | amCalendar}}</span>
+                                        <span>{{workflowRun.last_execution | amCalendar}}</span>
                                     </div>
                                 </div>
                             </div>
@@ -36,36 +36,41 @@
                                         *ngIf="direction === 'TB'"
                                         (click)="changeDirection()">
                                         <i class="resize horizontal icon"></i>
-                                        Horizontal
+                                        {{ 'workflow_orientation_horizontal' | translate }}
                                     </button>
                                     <button class="ui labeled icon button"
                                         *ngIf="direction === 'LR'"
                                         (click)="changeDirection()">
                                         <i class="resize vertical icon"></i>
-                                        Vertical
+                                        {{ 'workflow_orientation_vertical' | translate }}
                                     </button>
                                 </div>
                                 <div class="six wide column centered">
-                                    <div>
-                                        <i class="user circle outline icon centered"></i>
-                                    </div>
-                                     bnjjj
+                                    <ng-container *ngIf="author">
+                                        <div>
+                                            <i class="user circle outline icon centered"></i>
+                                        </div>
+                                        {{author}}
+                                    </ng-container>
+
                                 </div>
                                 <div class="five wide column">
                                     <div class="right floated">
                                         <button class="ui labeled icon button red"
+                                            [disabled]="loadingAction"
                                             (click)="stopWorkflow()"
                                             *ngIf="workflowRun.status === pipelineStatusEnum.WAITING ||
                                                 workflowRun.status === pipelineStatusEnum.BUILDING">
                                             <i class="stop icon"></i>
-                                            Stop
+                                            {{ 'common_stop' | translate }}
                                         </button>
                                         <button class="ui labeled icon button blue"
                                             (click)="relaunchWorkflow()"
+                                            [disabled]="loadingAction"
                                             *ngIf="workflowRun.status !== pipelineStatusEnum.WAITING &&
                                                 workflowRun.status !== pipelineStatusEnum.BUILDING">
                                             <i class="repeat icon"></i>
-                                            Relaunch
+                                            {{ 'common_relaunch' | translate }}
                                         </button>
                                     </div>
                                 </div>

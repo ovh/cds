@@ -165,6 +165,8 @@
   "common_clone" : "Cloner",
   "common_click_here" : "Cliquez ici",
   "common_workflows" : "Workflows",
+  "common_stop" : "Stop",
+  "common_relaunch" : "Relancer",
 
   "danger_zone" : "Zone dangereuse",
 
@@ -573,6 +575,7 @@
   "workflow_updated" : "Workflow mis à jour",
   "workflow_resync_pipeline" : "Resynchroniser tous les pipelines du workflow",
   "workflow_stopped" : "Workflow arrêté",
+  "workflow_relaunched" : "Workflow relancé",
 
   "workflow_orientation_tree" : "Arborescence",
   "workflow_orientation_horizontal" : "Horizontale",
