@@ -119,6 +119,7 @@ var (
 	ErrWebhookConfigDoesNotMatch             = &Error{ID: 103, Status: http.StatusBadRequest}
 	ErrPipelineUsedByWorkflow                = &Error{ID: 104, Status: http.StatusBadRequest}
 	ErrMethodNotAllowed                      = &Error{ID: 105, Status: http.StatusMethodNotAllowed}
+	ErrInvalidNodeNamePattern                = &Error{ID: 106, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -227,6 +228,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWebhookConfigDoesNotMatch.ID:             "Webhook config does not match",
 	ErrPipelineUsedByWorkflow.ID:                "pipeline still used by a workflow",
 	ErrMethodNotAllowed.ID:                      "Method not allowed",
+	ErrInvalidNodeNamePattern.ID:                "Node name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
 }
 
 var errorsFrench = map[int]string{
@@ -335,6 +337,7 @@ var errorsFrench = map[int]string{
 	ErrWebhookConfigDoesNotMatch.ID:             "la configuration du webhook ne correspond pas",
 	ErrPipelineUsedByWorkflow.ID:                "le pipeline est utilisé par un workflow",
 	ErrMethodNotAllowed.ID:                      "La méthode n'est pas autorisée",
+	ErrInvalidNodeNamePattern.ID:                "Le nom du noeud du workflow doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
 }
 
 var errorsLanguages = []map[int]string{

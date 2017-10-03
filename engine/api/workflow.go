@@ -163,31 +163,33 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot update project last modified date")
 		}
 
-		//Push the hook to hooks µService
-		dao := services.NewRepository(api.mustDB, api.Cache)
-		//Load service "hooks"
-		srvs, err := dao.FindByType("hooks")
-		if err != nil {
-			return sdk.WrapError(err, "putWorkflowHandler> Unable to get services dao")
-		}
-
-		//Perform the request on one off the hooks service
 		hooks := wf.GetHooks()
 		if len(hooks) > 0 {
-			if len(srvs) < 1 {
-				return sdk.WrapError(fmt.Errorf("putWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
+			//Push the hook to hooks µService
+			dao := services.NewRepository(api.mustDB, api.Cache)
+			//Load service "hooks"
+			srvs, err := dao.FindByType("hooks")
+			if err != nil {
+				return sdk.WrapError(err, "putWorkflowHandler> Unable to get services dao")
 			}
-			var errHooks error
-			for _, s := range srvs {
-				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
-				errHooks = errBulk
-				if errBulk == nil {
-					log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
-					break
+
+			//Perform the request on one off the hooks service
+			if len(hooks) > 0 {
+				if len(srvs) < 1 {
+					return sdk.WrapError(fmt.Errorf("putWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
 				}
-			}
-			if errHooks != nil {
-				return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
+				var errHooks error
+				for _, s := range srvs {
+					code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
+					errHooks = errBulk
+					if errBulk == nil {
+						log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
+						break
+					}
+				}
+				if errHooks != nil {
+					return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
+				}
 			}
 		}
 
