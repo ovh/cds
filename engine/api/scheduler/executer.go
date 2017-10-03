@@ -5,12 +5,12 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -38,55 +38,47 @@ func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSc
 	if db == nil {
 		return nil, sdk.WrapError(sdk.ErrServiceUnavailable, "ExecuterRun> Unable to load pending execution")
 	}
-	tx, errb := db.Begin()
-	if errb != nil {
-		log.Warning("ExecuterRun> %s", errb)
-		return nil, errb
-	}
-	defer tx.Rollback()
-
-	//Starting with exclusive lock on the table
-	if err := LockPipelineExecutions(tx); err != nil {
-		return nil, err
-	}
 
 	//Load pending executions
-	exs, err := LoadPendingExecutions(tx)
+	exs, err := LoadPendingExecutions(db)
 	if err != nil {
 		return nil, sdk.WrapError(err, "ExecuterRun> Unable to load pending execution")
 	}
 
-	var pbs []sdk.PipelineBuild
 	//Process all
+	//We are opening a new tx for each execution with a lock on each execution: one by one
 	for i := range exs {
-		pb, err := executerProcess(DBFunc, store, tx, &exs[i])
-		if err != nil {
-			log.Error("ExecuterRun> Unable to process %+v : %s", exs[i], err)
-		}
-		if pb != nil {
-			pbs = append(pbs, *pb)
-		}
-	}
-
-	//Commit
-	if err := tx.Commit(); err != nil {
-		log.Warning("ExecuterRun> %s", err)
-		return nil, err
-	}
-
-	for _, pb := range pbs {
-		proj, errproj := project.Load(db, store, pb.Application.ProjectKey, nil)
-		if errproj != nil {
-			log.Warning("ExecuterRun> Unable to load project: %s", errproj)
+		var gorpEx = &PipelineSchedulerExecution{}
+		tx, errb := db.Begin()
+		if errb != nil {
+			log.Warning("ExecuterRun> %s", errb)
+			return nil, errb
 		}
 
-		app, errapp := application.LoadByID(db, store, pb.Application.ID, nil, application.LoadOptions.WithRepositoryManager)
-		if errapp != nil {
-			log.Warning("ExecuterRun> Unable to load app: %s", errapp)
+		query := "SELECT * FROM pipeline_scheduler_execution WHERE id = $1 and executed = 'false' FOR UPDATE NOWAIT"
+		if err := tx.SelectOne(gorpEx, query, exs[i].ID); err != nil {
+			pqerr, ok := err.(*pq.Error)
+			// Cannot get lock (FOR UPDATE NOWAIT), someone else is on it
+			if ok && pqerr.Code != "55P03" {
+				log.Error("ExecuterRun> Unable to get lock on the pipeline_scheduler_execution %d: %v", exs[i].ID, err)
+			}
+			//Rollback
+			if err := tx.Rollback(); err != nil {
+				log.Warning("ExecuterRun> %s", err)
+				return nil, err
+			}
+			continue
 		}
 
-		if _, err := pipeline.UpdatePipelineBuildCommits(db, proj, &pb.Pipeline, app, &pb.Environment, &pb); err != nil {
-			log.Warning("ExecuterRun> Unable to update pipeline build commits : %s", err)
+		ex := sdk.PipelineSchedulerExecution(*gorpEx)
+		if _, errProcess := executerProcess(DBFunc, store, tx, &ex); errProcess != nil {
+			log.Error("ExecuterRun> Unable to process %+v : %s", ex, errProcess)
+		}
+
+		//Commit
+		if err := tx.Commit(); err != nil {
+			log.Warning("ExecuterRun> %s", err)
+			return nil, err
 		}
 	}
 
