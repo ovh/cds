@@ -318,7 +318,16 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 	run.Manual = m
 	if m != nil {
-		run.Payload = m.Payload
+		m1, errm1 := dump.ToMap(m.Payload, dump.WithDefaultLowerCaseFormatter())
+		if errm1 != nil {
+			AddWorkflowRunInfo(w, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowError.ID,
+				Args: []interface{}{errm1},
+			})
+			log.Error("processWorkflowNodeRun> Unable to compute payload: %v", errm1)
+			return errm1
+		}
+		run.Payload = m1
 		run.PipelineParameters = m.PipelineParameters
 		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
