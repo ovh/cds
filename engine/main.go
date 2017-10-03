@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/google/gops/agent"
 	defaults "github.com/mcuadros/go-defaults"
 	"github.com/spf13/cobra"
 	_ "github.com/spf13/viper/remote"
@@ -229,6 +230,21 @@ See $ engine config command for more details.
 
 		//Initialize logs
 		log.Initialize(&log.Conf{Level: conf.Log.Level})
+
+		// gops debug
+		if conf.Debug.Enable {
+			if conf.Debug.RemoteDebugURL != "" {
+				log.Info("Starting gops agent on %s", conf.Debug.RemoteDebugURL)
+				if err := agent.Listen(&agent.Options{Addr: conf.Debug.RemoteDebugURL}); err != nil {
+					log.Error("Error on starting gops agent", err)
+				}
+			} else {
+				log.Info("Starting gops agent locally")
+				if err := agent.Listen(nil); err != nil {
+					log.Error("Error on starting gops agent locally", err)
+				}
+			}
+		}
 
 		//Initialize context
 		ctx := context.Background()

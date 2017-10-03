@@ -45,7 +45,7 @@ func Interpolate(input string, vars map[string]string, filters ...InterpolateFil
 		kb := strings.Replace(k, ".", "__", -1)
 		data[kb] = v
 		re := regexp.MustCompile("{{." + k + "(.*)}}")
-		for {
+		for i := 0; i < 10; i++ {
 			sm := re.FindStringSubmatch(input)
 			if len(sm) > 0 {
 				input = strings.Replace(input, sm[0], "{{."+kb+sm[1]+"}}", -1)

@@ -203,19 +203,6 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         }
     }
 
-    rollback(): void {
-        let runRequest: PipelineRunRequest = new PipelineRunRequest();
-        runRequest.env = this.workflowItem.environment;
-        this._appPipService.rollback(
-            this.workflowItem.project.key,
-            this.workflowItem.application.name,
-            this.workflowItem.pipeline.name,
-            runRequest
-        ).subscribe(pb => {
-            this.navigateToBuild(pb);
-        });
-    }
-
     editPipeline(): void {
         this._router.navigate([
             '/project', this.workflowItem.project.key,

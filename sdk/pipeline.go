@@ -30,6 +30,16 @@ type Pipeline struct {
 	LastModified        int64             `json:"last_modified" cli:"modified"`
 }
 
+// PipelineAudit represents pipeline audit
+type PipelineAudit struct {
+	ID         int64     `json:"id" db:"id"`
+	PipelineID int64     `json:"pipeline_id" db:"pipeline_id"`
+	UserName   string    `json:"username" db:"username"`
+	Versionned time.Time `json:"versionned" db:"versionned"`
+	Pipeline   *Pipeline `json:"pipeline" db:"-"`
+	Action     string    `json:"action" db:"action"`
+}
+
 // PipelineBuild Struct for history table
 type PipelineBuild struct {
 	ID          int64                  `json:"id"`

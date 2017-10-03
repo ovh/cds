@@ -124,7 +124,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}", r.GET(api.getVariableInApplicationHandler), r.POST(api.addVariableInApplicationHandler), r.PUT(api.updateVariableInApplicationHandler), r.DELETE(api.deleteVariableFromApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}/audit", r.GET(api.getVariableAuditInApplicationHandler))
 
-	// Pipeline
+	// Pipeline Build
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/history", r.GET(api.getPipelineHistoryHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/build/{build}/log", r.GET(api.getBuildLogsHandler))
 	r.Handle("/project/{key}/application/{app}/pipeline/{permPipelineKey}/build/{build}/test", r.POSTEXECUTE(api.addBuildTestResultsHandler), r.GET(api.getBuildTestResultsHandler))
@@ -141,6 +141,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/runwithlastparent", r.POSTEXECUTE(api.runPipelineWithLastParentHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/rollback", r.POSTEXECUTE(api.rollbackPipelineHandler))
 
+	// Pipeline
 	r.Handle("/project/{permProjectKey}/pipeline", r.GET(api.getPipelinesHandler), r.POST(api.addPipelineHandler))
 	r.Handle("/project/{permProjectKey}/import/pipeline", r.POST(api.importPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/application", r.GET(api.getApplicationUsingPipelineHandler))
@@ -149,6 +150,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter", r.GET(api.getParametersInPipelineHandler), r.PUT(api.updateParametersInPipelineHandler, DEPRECATED))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter/{name}", r.POST(api.addParameterInPipelineHandler), r.PUT(api.updateParameterInPipelineHandler), r.DELETE(api.deleteParameterFromPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}", r.GET(api.getPipelineHandler), r.PUT(api.updatePipelineHandler), r.DELETE(api.deletePipelineHandler))
+	r.Handle("/project/{key}/pipeline/{permPipelineKey}/audits", r.GET(api.getPipelineAuditHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage", r.POST(api.addStageHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/move", r.POST(api.moveStageHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}", r.GET(api.getStageHandler), r.PUT(api.updateStageHandler), r.DELETE(api.deleteStageHandler))
