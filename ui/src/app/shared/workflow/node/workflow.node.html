@@ -47,13 +47,13 @@
                     (nameWarning.hooks.length > 0 || nameWarning.joinTriggers.length > 0 || nameWarning.triggers.length > 0)">
                         {{ 'workflow_node_name_warning'  | translate }}
                     </span>
-                    <button class="ui mini icon right floated green button" (click)="rename()"><i class="check icon"></i></button>
+                    <button class="ui mini icon right floated green button" (click)="rename()" [class.loading]="loading" [disabled]="loading"><i class="check icon"></i></button>
                 </div>
             </div>
         </div>
 
         <!-- area to display application name -->
-        <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0">
+        <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0 && !displayInputName">
             <p class="ellipsis">{{node.context.application.name}}</p>
         </div>
 

@@ -1,3 +1,4 @@
+import { WorkflowNode } from '../../../model/workflow.model';
 import {Component, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
@@ -11,6 +12,7 @@ import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-workflow-run',
@@ -30,6 +32,8 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     workflowName: string;
     version: string;
     direction: string;
+
+    nodeToRun: WorkflowNode;
 
     pipelineStatusEnum = PipelineStatus;
 
@@ -79,6 +83,16 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
 
     relaunch() {
         if (this.runWithParamComponent && this.runWithParamComponent.show) {
+            let rootNodeRun = this.workflowRun.nodes[this.workflowRun.workflow.root.id][0];
+            this.nodeToRun = cloneDeep(this.workflowRun.workflow.root);
+            if (rootNodeRun.hook_event) {
+                this.nodeToRun.context.default_payload = rootNodeRun.hook_event.payload;
+                this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.hook_event.pipeline_parameter;
+            }
+            if (rootNodeRun.manual) {
+                this.nodeToRun.context.default_payload = rootNodeRun.manual.payload;
+                this.nodeToRun.context.default_pipeline_parameters = rootNodeRun.manual.pipeline_parameter;
+            }
             this.runWithParamComponent.show();
         }
     }
