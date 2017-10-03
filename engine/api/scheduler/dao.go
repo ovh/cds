@@ -213,7 +213,7 @@ func LoadPastExecutions(db gorp.SqlExecutor, id int64) ([]sdk.PipelineSchedulerE
 //LoadPendingExecutions loads all pipeline execution
 func LoadPendingExecutions(db gorp.SqlExecutor) ([]sdk.PipelineSchedulerExecution, error) {
 	as := []PipelineSchedulerExecution{}
-	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution where executed = 'false' and execution_planned_date <=  now()"); err != nil {
+	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution where executed = 'false' and execution_planned_date <=  $1", time.Now()); err != nil {
 		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
 		return nil, err
 	}
