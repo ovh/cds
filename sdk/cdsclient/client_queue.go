@@ -230,7 +230,9 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
 	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s", id, tag)
 	for i := 0; i <= c.config.Retry; i++ {
 		var code int
-		_, code, err = c.UploadMultiPart("POST", uri, body, SetHeader("Content-Disposition", "attachment; filename="+name), SetHeader("Content-Type", writer.FormDataContentType()))
+		_, code, err = c.UploadMultiPart("POST", uri, body,
+			SetHeader("Content-Disposition", "attachment; filename="+name),
+			SetHeader("Content-Type", writer.FormDataContentType()))
 		if err == nil && code < 300 {
 			return nil
 		}

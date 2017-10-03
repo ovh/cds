@@ -258,7 +258,7 @@ func (c *client) UploadMultiPart(method string, path string, body *bytes.Buffer,
 		}
 	}
 
-	resp, err := c.HTTPClient.Do(req)
+	resp, err := NoTimeout(c.HTTPClient).Do(req)
 	if err != nil {
 		return nil, 0, err
 	}

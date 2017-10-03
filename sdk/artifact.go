@@ -235,7 +235,9 @@ func uploadArtifact(project string, pipeline string, application string, tag str
 		return errclose
 	}
 
-	_, code, err := UploadMultiPart("POST", uri, body, SetHeader(ArtifactFileName, name), SetHeader("Content-Type", writer.FormDataContentType()))
+	_, code, err := UploadMultiPart("POST", uri, body,
+		SetHeader(ArtifactFileName, name),
+		SetHeader("Content-Type", writer.FormDataContentType()))
 	if err != nil {
 		return err
 	}
