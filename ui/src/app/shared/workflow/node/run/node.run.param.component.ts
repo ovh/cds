@@ -18,7 +18,7 @@ import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
     styleUrls: ['./node.run.param.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowNodeRunParamComponent implements OnInit {
+export class WorkflowNodeRunParamComponent {
 
     @ViewChild('runWithParamModal')
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
@@ -30,10 +30,13 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     @Input() workflow: Workflow;
     @Input('nodeToRun')
     set nodeToRun (data: WorkflowNode) {
-        this._nodeToRun = cloneDeep(data);
-        this.updateDefaultPipelineParameters();
-        if (this._nodeToRun.context) {
-            this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload);
+        if (data) {
+            this._nodeToRun = cloneDeep(data);
+            this.updateDefaultPipelineParameters();
+            if (this._nodeToRun.context) {
+                this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload);
+            }
+            this.getPipeline();
         }
     };
     get nodeToRun(): WorkflowNode {
@@ -59,16 +62,19 @@ export class WorkflowNodeRunParamComponent implements OnInit {
         };
     }
 
-    ngOnInit(): void {
-        this.pipelineSubscription = this._pipStore.getPipelines(this.project.key, this.nodeToRun.pipeline.name).subscribe(ps => {
-            let pipkey = this.project.key + '-' + this.nodeToRun.pipeline.name;
-            let pip = ps.get(pipkey);
-            if (pip) {
-                if (pip.last_modified === this.nodeToRun.pipeline.last_modified) {
-                    this.isSync = true;
+    getPipeline(): void {
+        if (!this.pipelineSubscription) {
+            this.pipelineSubscription = this._pipStore.getPipelines(this.project.key, this.nodeToRun.pipeline.name).subscribe(ps => {
+                let pipkey = this.project.key + '-' + this.nodeToRun.pipeline.name;
+                let pip = ps.get(pipkey);
+                if (pip) {
+                    if (pip.last_modified === this.nodeToRun.pipeline.last_modified) {
+                        this.isSync = true;
+                    }
                 }
-            }
-        })
+            });
+        }
+
     }
 
     show(): void {
