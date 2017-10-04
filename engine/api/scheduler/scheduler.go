@@ -1,8 +1,6 @@
 package scheduler
 
 import (
-	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -15,27 +13,6 @@ import (
 )
 
 var schedulerStatus = "Not Running"
-
-//Scheduler is the goroutine which compute date of next execution for pipeline scheduler
-func Scheduler(c context.Context, DBFunc func() *gorp.DbMap) {
-	tick := time.NewTicker(2 * time.Second).C
-	for {
-		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting scheduler.Scheduler: %v", c.Err())
-				return
-			}
-		case <-tick:
-			_, status, err := Run(DBFunc())
-
-			if err != nil {
-				log.Error("%s: %s", status, err)
-			}
-			schedulerStatus = status
-		}
-	}
-}
 
 //Run is the core function of Scheduler goroutine
 func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
@@ -54,23 +31,30 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 		}
 
 		query := `
-			SELECT pipeline_scheduler.* 
-			FROM pipeline_scheduler ,
-			(
-				SELECT 	count(pipeline_scheduler_id) as total
-				FROM  	pipeline_scheduler_execution 
-				WHERE 	pipeline_scheduler_id = $1
-				AND     executed = 'false'
-			) nb_execs 
+			SELECT 	pipeline_scheduler.* 
+			FROM 	pipeline_scheduler 
 			WHERE   pipeline_scheduler.id = $1
-			AND     nb_execs.total = 0
 			FOR UPDATE NOWAIT`
 
 		var gorpPS = &PipelineScheduler{}
 		if err := tx.SelectOne(gorpPS, query, ps[i].ID); err != nil {
-			if pqerr, ok := err.(*pq.Error); ok && pqerr.Code != "55P03" || err != sql.ErrNoRows {
+			if pqerr, ok := err.(*pq.Error); ok && pqerr.Code != "55P03" {
 				log.Error("Run> Unable to lock to pipeline_scheduler %s", err)
 			}
+			_ = tx.Rollback()
+			continue
+		}
+
+		//Reload the last execution
+		ex, errex := LoadLastExecution(tx, gorpPS.ID)
+		if errex != nil {
+			log.Error("Run> Unable to load to pipeline scheduler execution %s", errex)
+			_ = tx.Rollback()
+			continue
+		}
+
+		//If the last execution has not been executed, it means that the scheduler is already scheduled
+		if ex != nil && !ex.Executed {
 			_ = tx.Rollback()
 			continue
 		}

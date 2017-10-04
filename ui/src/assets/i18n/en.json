@@ -167,6 +167,7 @@
   "common_workflows" : "Workflows",
   "common_stop" : "Stop",
   "common_relaunch" : "Relaunch",
+  "common_deprecated" : "Deprecated",
 
   "danger_zone" : "Danger Zone",
 

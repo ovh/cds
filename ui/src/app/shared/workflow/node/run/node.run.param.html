@@ -31,7 +31,7 @@
         </div>
     </div>
     <div class="actions">
-        <button class="ui red button" (click)="modal.approve(false)">Cancel</button>
-        <button class="ui green button" (click)="run()" autofocus>OK</button>
+        <button class="ui red button" [disabled]="loading" (click)="modal.approve(false)">Cancel</button>
+        <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="run()" autofocus>OK</button>
     </div>
 </ng-template>

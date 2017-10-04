@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -15,22 +14,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-//Executer is the goroutine which run the pipelines
-func Executer(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
-	tick := time.NewTicker(5 * time.Second).C
-	for {
-		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting scheduler.Executer: %v", c.Err())
-				return
-			}
-		case <-tick:
-			ExecuterRun(DBFunc, store)
-		}
-	}
-}
 
 //ExecuterRun is the core function of Executer goroutine
 func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSchedulerExecution, error) {

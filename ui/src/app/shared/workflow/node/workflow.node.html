@@ -87,7 +87,7 @@
 <ng-container *ngIf="project && node && !webworker">
     <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-form>
 </ng-container>
-<ng-container *ngIf="project && node && currentNodeRun">
+<ng-container *ngIf="project && node">
     <app-workflow-node-run-param [workflow]="workflow" [project]="project" [nodeRun]="currentNodeRun" [nodeToRun]="node" #workflowRunNode></app-workflow-node-run-param>
 </ng-container>
 <ng-template let-context let-modal="modal" #nodeNameWarningModal>

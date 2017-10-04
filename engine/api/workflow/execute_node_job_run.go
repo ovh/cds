@@ -62,7 +62,8 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 	//If the job has been set to building, set the stage to building
 	var stageUpdated bool
-	if job.Status == sdk.StatusBuilding.String() {
+	switch job.Status {
+	case sdk.StatusBuilding.String():
 		log.Debug("UpdateNodeJobRunStatus> job:%d", job.ID)
 		for i := range node.Stages {
 			s := &node.Stages[i]
@@ -81,11 +82,22 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 				break
 			}
 		}
+	case sdk.StatusStopped.String():
+		for i := range node.Stages {
+			s := &node.Stages[i]
+			s.Status = sdk.StatusStopped
+			for idxJ := range s.RunJobs {
+				runJob := &node.Stages[i].RunJobs[idxJ]
+				runJob.Status = sdk.StatusStopped.String()
+				runJob.Done = time.Now()
+			}
+		}
+		stageUpdated = true
 	}
 
 	if stageUpdated {
-		log.Debug("UpdateNodeJobRunStatus> stageUpdated, set status node from %s to %s", node.Status, sdk.StatusBuilding.String())
-		node.Status = sdk.StatusBuilding.String()
+		log.Debug("UpdateNodeJobRunStatus> stageUpdated, set status node from %s to %s", node.Status, job.Status)
+		node.Status = job.Status
 		if err := UpdateNodeRun(db, node); err != nil {
 			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to update workflow node run %d", node.ID)
 		}

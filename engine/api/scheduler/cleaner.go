@@ -1,33 +1,11 @@
 package scheduler
 
 import (
-	"context"
-	"time"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-//Cleaner is the cleaner main goroutine
-func Cleaner(c context.Context, DBFunc func() *gorp.DbMap, nbToKeep int) {
-	tick := time.NewTicker(10 * time.Minute).C
-	for {
-		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting scheduler.Cleaner: %v", c.Err())
-				return
-			}
-		case <-tick:
-			if _, err := CleanerRun(DBFunc(), nbToKeep); err != nil {
-				log.Warning("cleander.Cleaner> Error : %s", err)
-				continue
-			}
-		}
-	}
-}
 
 //CleanerRun is the core function of the cleaner goroutine
 func CleanerRun(db *gorp.DbMap, nbToKeep int) ([]sdk.PipelineSchedulerExecution, error) {
