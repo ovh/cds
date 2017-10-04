@@ -132,8 +132,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                  this.svgWidth = window.innerWidth;
              }
              let svgWidth = +svg.attr('width');
-             let xCenterOffset = (svgWidth - this.g.graph().width) / 2;
-             inner.attr('transform', 'translate(' + xCenterOffset + ', 0)');
          }
 
          this.svgHeight = this.g.graph().height + 40;
@@ -156,7 +154,8 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     initWorkflow() {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
-        this.g = new dagreD3.graphlib.Graph().setGraph({ rankdir: this.direction });
+        this.g = new dagreD3.graphlib.Graph().setGraph({ align: 'UL', rankdir: this.direction});
+
         // Create all nodes
         if (this.workflow.root) {
             this.createNode(this.workflow.root);
