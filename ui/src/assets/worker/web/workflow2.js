@@ -5,6 +5,7 @@ var workflowName = '';
 var number = '';
 
 var previousLastModified;
+var previousId;
 
 onmessage = function (e) {
     key = e.data.key;
@@ -22,11 +23,12 @@ function loadWorkflow (user, session, api) {
             return true;
         }
         if (xhr.status === 200 && xhr.responseText !== null) {
-            let wr = JSON.parse(xhr.responseText);
-            if (previousLastModified && wr.last_modified === previousLastModified) {
+            var wr = JSON.parse(xhr.responseText);
+            if (previousLastModified && wr.last_modified === previousLastModified && previousId === wr.id) {
                 return;
             }
             previousLastModified = wr.last_modified;
+            previousId = wr.id
             postMessage(xhr.responseText);
         }
         return false;

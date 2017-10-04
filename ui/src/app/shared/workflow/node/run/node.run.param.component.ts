@@ -45,6 +45,7 @@ export class WorkflowNodeRunParamComponent implements OnInit {
     payloadString: string;
     invalidJSON: boolean;
     isSync = false;
+    loading = false;
 
     pipelineSubscription: Subscription;
 
