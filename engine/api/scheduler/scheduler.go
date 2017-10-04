@@ -1,9 +1,7 @@
 package scheduler
 
 import (
-	"context"
 	"fmt"
-	"math/rand"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -15,29 +13,6 @@ import (
 )
 
 var schedulerStatus = "Not Running"
-
-//Scheduler is the goroutine which compute date of next execution for pipeline scheduler
-func Scheduler(c context.Context, DBFunc func() *gorp.DbMap) {
-	rand.Seed(time.Now().Unix())
-	tick := time.NewTicker(2 * time.Second).C
-	for {
-		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting scheduler.Scheduler: %v", c.Err())
-				return
-			}
-		case <-tick:
-			time.Sleep(time.Duration(rand.Intn(500)) * time.Millisecond)
-			_, status, err := Run(DBFunc())
-
-			if err != nil {
-				log.Error("%s: %s", status, err)
-			}
-			schedulerStatus = status
-		}
-	}
-}
 
 //Run is the core function of Scheduler goroutine
 func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
