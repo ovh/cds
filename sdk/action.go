@@ -17,6 +17,7 @@ type Action struct {
 	Parameters     []Parameter   `json:"parameters"`
 	Actions        []Action      `json:"actions" yaml:"actions,omitempty"`
 	Enabled        bool          `json:"enabled" yaml:"-"`
+	Deprecated     bool          `json:"deprecated" yaml:"-"`
 	Optional       bool          `json:"optional" yaml:"-"`
 	AlwaysExecuted bool          `json:"always_executed" yaml:"-"`
 	LastModified   int64         `json:"last_modified" cli:"modified"`

@@ -14,7 +14,16 @@
                 [options]="{'fullTextSearch': true}"
                 [model]="step.name"
                 (onChange)="selectPublicAction($event)">
-                <option *ngFor="let a of publicActions" value="{{a.name}}">{{a.name}}</option>
+                <option
+                    *ngFor="let a of publicActions"
+                    value="{{a.name}}"
+                    [disabled]="a.deprecated">
+                    {{a.name}}
+                    <span class="right floated" *ngIf="a.deprecated">
+                        <i class="warning orange sign icon"></i>
+                        {{'common_deprecated' | translate}}
+                    </span>
+                </option>
             </sm-select>
         </div>
     </div>

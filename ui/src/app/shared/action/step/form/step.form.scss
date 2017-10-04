@@ -6,3 +6,9 @@
 .addbtn {
   margin-bottom: 1em;
 }
+
+.ui.dropdown {
+  &.text:not(.icon) {
+    width: 100%;
+  }
+}
