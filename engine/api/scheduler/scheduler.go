@@ -78,7 +78,7 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 			continue
 		}
 
-		//If the last execition has not been executed, it means that the scheduler is already scheduled
+		//If the last execution has not been executed, it means that the scheduler is already scheduled
 		if ex != nil && !ex.Executed {
 			_ = tx.Rollback()
 			continue
