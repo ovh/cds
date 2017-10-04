@@ -55,16 +55,15 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 
 		query := `
 			SELECT pipeline_scheduler.* 
-			FROM pipeline_scheduler 
-			JOIN (
-				SELECT 	pipeline_scheduler_id 
+			FROM pipeline_scheduler ,
+			(
+				SELECT 	count(pipeline_scheduler_id) as total
 				FROM  	pipeline_scheduler_execution 
 				WHERE 	pipeline_scheduler_id = $1
-				AND 	executed = 'true' 
-				ORDER BY  execution_planned_date DESC 
-				LIMIT 1
-				) execs ON pipeline_scheduler.id = execs.pipeline_scheduler_id 
-			WHERE pipeline_scheduler.id = $1
+				AND     executed = 'false'
+			) nb_execs 
+			WHERE   pipeline_scheduler.id = $1
+			AND     nb_execs.total = 0
 			FOR UPDATE NOWAIT`
 
 		var gorpPS = &PipelineScheduler{}
