@@ -48,6 +48,7 @@ export class WorkflowNodeRunParamComponent {
     payloadString: string;
     invalidJSON: boolean;
     isSync = false;
+    loading = false;
 
     pipelineSubscription: Subscription;
 

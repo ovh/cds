@@ -43,18 +43,12 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     @Input('workflowData')
     set workflowData(data: Workflow) {
+        // check if nodes have to be updated
         this.workflow = data;
-        this.changeDisplay();
     }
 
     @Input() project: Project;
     @Input() webworker: CDSWorker;
-    @Input('status')
-    set status(data: string) {
-        this._status = data;
-        this.changeDisplay();
-    }
-    get status() {return this._status}
     @Input('direction')
     set direction(data: string) {
         this._direction = data;
@@ -69,7 +63,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     ready: boolean;
     _direction: string;
-    _status: string;
     displayDirection = false;
 
     // workflow graph
@@ -100,7 +93,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                 this.changeDisplay();
                 setTimeout(() => {
                     window.dispatchEvent(new Event('resize'));
-                }, 1);
+                }, 200);
             }
         });
     }
@@ -399,7 +392,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         componentRef.instance.project = this.project;
         componentRef.instance.disabled = this.linkWithJoin;
         componentRef.instance.webworker = this.webworker;
-        componentRef.instance.workflowRunStatus = this.status;
         this.nodesComponent.set(node.id, componentRef);
         componentRef.instance.linkJoinEvent.subscribe(n => {
             this.nodeToLink = n;
