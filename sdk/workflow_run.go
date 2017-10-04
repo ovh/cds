@@ -34,6 +34,14 @@ type WorkflowNodeRunRelease struct {
 	Artifacts      []string `json:"artifacts"`
 }
 
+// WorkflowRunPostHandlerOption contains the body content for launch a workflow
+type WorkflowRunPostHandlerOption struct {
+	Hook       *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
+	Manual     *WorkflowNodeRunManual    `json:"manual,omitempty"`
+	Number     *int64                    `json:"number,omitempty"`
+	FromNodeID *int64                    `json:"from_node,omitempty"`
+}
+
 // Translate translates messages in WorkflowNodeRun
 func (r *WorkflowRun) Translate(lang string) {
 	for ki, info := range r.Infos {

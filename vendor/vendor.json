@@ -71,6 +71,12 @@
 			"revisionTime": "2016-11-21T17:29:28Z"
 		},
 		{
+			"checksumSHA1": "grvilwEz6bkGZQUsPE9eqXazN8g=",
+			"path": "github.com/buger/goterm",
+			"revision": "d443b9114f9c050367638a536310fbec36a0de11",
+			"revisionTime": "2017-09-18T17:19:49Z"
+		},
+		{
 			"checksumSHA1": "BJXHEdzHxRPmVnt6GFaPpwgns2c=",
 			"path": "github.com/coreos/go-etcd/etcd",
 			"revision": "003851be7bb0694fe3cc457a49529a19388ee7cf",

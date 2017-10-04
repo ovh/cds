@@ -350,13 +350,6 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 	}
 }
 
-type postWorkflowRunHandlerOption struct {
-	Hook       *sdk.WorkflowNodeRunHookEvent `json:"hook,omitempty"`
-	Manual     *sdk.WorkflowNodeRunManual    `json:"manual,omitempty"`
-	Number     *int64                        `json:"number,omitempty"`
-	FromNodeID *int64                        `json:"from_node,omitempty"`
-}
-
 func (api *API) postWorkflowRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -374,7 +367,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		opts := &postWorkflowRunHandlerOption{}
+		opts := &sdk.WorkflowRunPostHandlerOption{}
 		if err := UnmarshalBody(r, opts); err != nil {
 			return err
 		}
