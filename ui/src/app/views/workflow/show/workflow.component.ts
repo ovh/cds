@@ -70,6 +70,9 @@ export class WorkflowShowComponent {
                         if (ws) {
                             let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
                             if (updatedWorkflow && !updatedWorkflow.externalChange) {
+                                if (this.detailedWorkflow && this.detailedWorkflow.last_modified === updatedWorkflow.last_modified) {
+                                    return;
+                                }
                                 this.detailedWorkflow = updatedWorkflow;
                             }
                         }
