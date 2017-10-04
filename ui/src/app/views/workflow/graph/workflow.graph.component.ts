@@ -44,8 +44,9 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     @Input('workflowData')
     set workflowData(data: Workflow) {
         // check if nodes have to be updated
-        console.log('workflwodata', data);
         this.workflow = data;
+        this.nodeHeight = 78;
+        this.calculateDynamicWidth();
         this.changeDisplay();
     }
 
@@ -53,7 +54,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     @Input() webworker: CDSWorker;
     @Input('direction')
     set direction(data: string) {
-        console.log('change direction');
         this._direction = data;
         this._workflowStore.setDirection(this.project.key, this.workflow.name, this.direction);
         this.changeDisplay();
@@ -94,7 +94,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this._workflowCore.get().subscribe(b => {
             this.sidebarOpen = b;
             if (this.ready) {
-                console.log('sidebar');
                 this.changeDisplay();
                 window.dispatchEvent(new Event('resize'));
             }
@@ -110,12 +109,10 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     @HostListener('window:resize', ['$event'])
     onResize(event) {
-        console.log('on resize');
         this.resize(event);
     }
 
     resize(event) {
-        console.log('resize');
          // Resize svg
          let svg = d3.select('svg');
          let inner = d3.select('svg g');
@@ -138,18 +135,12 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
              let xCenterOffset = (svgWidth - this.g.graph().width) / 2;
              inner.attr('transform', 'translate(' + xCenterOffset + ', 0)');
          }
-         if (event) {
-            console.log(event.target.innerWidth);
-        } else {
-            console.log(window.innerWidth);
-        }
-         console.log(this.svgWidth);
+
          this.svgHeight = this.g.graph().height + 40;
          svg.attr('height', this.svgHeight);
     }
 
     ngAfterViewInit(): void {
-        console.log('after view init');
         this.ready = true;
         this.changeDisplay();
         this.resize(null);
@@ -160,19 +151,12 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         if (!this.ready && this.workflow) {
             return;
         }
-        console.log('change display');
         this.initWorkflow();
     }
 
     initWorkflow() {
-        console.log('init workflow');
-
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
         this.g = new dagreD3.graphlib.Graph().setGraph({ rankdir: this.direction });
-        // Calculate node width
-        this.nodeHeight = 78;
-        this.calculateDynamicWidth();
-        console.log(this.nodeWidth, this.nodeHeight);
         // Create all nodes
         if (this.workflow.root) {
             this.createNode(this.workflow.root);
@@ -267,7 +251,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     createJoin(join: WorkflowNodeJoin): void {
         let componentRef = this.joinsComponent.get(join.id);
         if (!componentRef) {
-            console.log('create angular join component');
             let nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowJoinComponent);
             componentRef = nodeComponentFactory.create(this.svgContainer.parentInjector);
             componentRef.instance.workflow = this.workflow;
@@ -328,7 +311,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         node.hooks.forEach(h => {
             let componentRef = this.hooksComponent.get(h.id);
             if (!componentRef) {
-                console.log('create angular hook component');
                 let hookComponent = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeHookComponent);
                 componentRef = hookComponent.create(this.svgContainer.parentInjector);
                 componentRef.instance.hook = h;
@@ -366,7 +348,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     createNode(node: WorkflowNode): void {
         let componentRef = this.nodesComponent.get(node.id);
         if (!componentRef) {
-            console.log('create angular node component');
             componentRef = this.createNodeComponent(node);
             this.nodesComponent.set(node.id, componentRef);
         }
