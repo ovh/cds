@@ -2,6 +2,9 @@ package main
 
 import (
 	"fmt"
+	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -70,6 +73,22 @@ var workflowRunManualCmd = cli.Command{
 	OptionalArgs: []cli.Arg{
 		{Name: "payload"},
 	},
+	Flags: []cli.Flag{
+		{
+			Name:  "run-number",
+			Usage: "Existing Workflow RUN Number",
+			IsValid: func(s string) bool {
+				match, _ := regexp.MatchString(`[0-9]?`, s)
+				return match
+			},
+			Kind: reflect.String,
+		},
+		{
+			Name:  "node-name",
+			Usage: "Node Name to relaunch; Flag run-number is mandatory",
+			Kind:  reflect.String,
+		},
+	},
 }
 
 func workflowRunManualRun(v cli.Values) error {
@@ -77,7 +96,37 @@ func workflowRunManualRun(v cli.Values) error {
 	if v["payload"] != "" {
 		manual.Payload = v["payload"]
 	}
-	w, err := client.WorkflowRunFromManual(v["project-key"], v["workflow-name"], manual)
+
+	var runNumber, fromNodeID int64
+
+	if v.GetString("run-number") != "" {
+		var errp error
+		runNumber, errp = strconv.ParseInt(v.GetString("run-number"), 10, 64)
+		if errp != nil {
+			return fmt.Errorf("run-number invalid: not a integer")
+		}
+	}
+
+	if v.GetString("node-name") != "" {
+		if runNumber <= 0 {
+			return fmt.Errorf("You can use flag node-name without flag run-number")
+		}
+		wr, err := client.WorkflowRunGet(v["project-key"], v["workflow-name"], runNumber)
+		if err != nil {
+			return err
+		}
+		for _, wnrs := range wr.WorkflowNodeRuns {
+			for _, wnr := range wnrs {
+				wn := wr.Workflow.GetNode(wnr.WorkflowNodeID)
+				if wn.Name == v.GetString("node-name") {
+					fromNodeID = wnr.WorkflowNodeID
+					break
+				}
+			}
+		}
+	}
+
+	w, err := client.WorkflowRunFromManual(v["project-key"], v["workflow-name"], manual, runNumber, fromNodeID)
 	if err != nil {
 		return err
 	}

@@ -82,7 +82,7 @@ type Interface interface {
 	WorkflowRunGet(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.Artifact, error)
 	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
-	WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, error)
+	WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual, number, fromNodeID int64) (*sdk.WorkflowRun, error)
 	WorkflowNodeRun(projectKey string, name string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRunArtifacts(projectKey string, name string, number int64, nodeRunID int64) ([]sdk.Artifact, error)
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, artifactID int64, w io.Writer) error

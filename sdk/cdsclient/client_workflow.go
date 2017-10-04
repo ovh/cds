@@ -114,13 +114,19 @@ func (c *client) WorkflowRunFromHook(projectKey string, workflowName string, hoo
 	return run, nil
 }
 
-func (c *client) WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual) (*sdk.WorkflowRun, error) {
+func (c *client) WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual, number, fromNodeID int64) (*sdk.WorkflowRun, error) {
 	if c.config.Verbose {
 		log.Println("Payload: ", manual.Payload)
 	}
 
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs", projectKey, workflowName)
 	content := sdk.WorkflowRunPostHandlerOption{Manual: &manual}
+	if number > 0 {
+		content.Number = &number
+	}
+	if fromNodeID > 0 {
+		content.FromNodeID = &fromNodeID
+	}
 	run := &sdk.WorkflowRun{}
 	code, err := c.PostJSON(url, &content, run)
 	if err != nil {
