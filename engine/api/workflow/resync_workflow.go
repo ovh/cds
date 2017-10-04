@@ -44,7 +44,7 @@ func resyncNode(db gorp.SqlExecutor, n *sdk.WorkflowNode) error {
 }
 
 //ResyncWorkflowRunStatus resync the status of wofkflow if you stop a node run when workflow run is building
-func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr sdk.WorkflowRun) error {
+func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	var success, building, failed, stopped int
 	for _, wnrs := range wr.WorkflowNodeRuns {
 		for _, wnr := range wnrs {
@@ -56,6 +56,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr sdk.WorkflowRun) error {
 
 	newStatus := getWorkflowRunStatus(success, building, failed, stopped)
 	if newStatus != wr.Status {
+		wr.Status = newStatus
 		return UpdateWorkflowRunStatus(db, wr.ID, newStatus)
 	}
 
