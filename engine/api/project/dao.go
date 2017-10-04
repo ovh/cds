@@ -22,14 +22,14 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOp
 	// Admin can gets all project
 	// Users can gets only their projects
 	if u == nil || u.Admin {
-		query = "select * from project ORDER by project.name, project.projectkey ASC"
+		query = "select project.* from project ORDER by project.name, project.projectkey ASC"
 	} else {
-		query = `SELECT * 
-				FROM project 
+		query = `SELECT project.*
+				FROM project
 				WHERE project.id IN (
 					SELECT project_group.project_id
 					FROM project_group
-					WHERE 
+					WHERE
 						project_group.group_id = ANY(string_to_array($1, ',')::int[])
 						OR
 						$2 = ANY(string_to_array($1, ',')::int[])
@@ -230,7 +230,7 @@ var LoadOptions = struct {
 // LoadProjectByNodeJobRunID return a project from node job run id
 func LoadProjectByNodeJobRunID(db gorp.SqlExecutor, store cache.Store, nodeJobRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `
-		SELECT * FROM project
+		SELECT project.* FROM project
 		JOIN workflow_run ON workflow_run.project_id = project.id
 		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
 		JOIN workflow_node_run_job ON workflow_node_run_job.workflow_node_run_id = workflow_node_run.id
@@ -242,7 +242,7 @@ func LoadProjectByNodeJobRunID(db gorp.SqlExecutor, store cache.Store, nodeJobRu
 // LoadProjectByNodeRunID return a project from node run id
 func LoadProjectByNodeRunID(db gorp.SqlExecutor, store cache.Store, nodeRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `
-		SELECT * FROM project
+		SELECT project.* FROM project
 		JOIN workflow_run ON workflow_run.project_id = project.id
 		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
 		WHERE workflow_node_run.id = $1
@@ -252,12 +252,12 @@ func LoadProjectByNodeRunID(db gorp.SqlExecutor, store cache.Store, nodeRunID in
 
 // LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(db, store, u, opts, "select * from project where id = $1", id)
+	return load(db, store, u, opts, "select project.* from project where id = $1", id)
 }
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func Load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(db, store, u, opts, "select * from project where projectkey = $1", key)
+	return load(db, store, u, opts, "select project.* from project where projectkey = $1", key)
 }
 
 // LoadByPipelineID loads an project from pipeline iD

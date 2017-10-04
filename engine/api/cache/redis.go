@@ -312,7 +312,7 @@ func (s *RedisStore) SetScan(key string, members ...interface{}) error {
 	}
 
 	for i := range members {
-		if i > len(values) {
+		if i >= len(values) {
 			break
 		}
 		val := values[i]

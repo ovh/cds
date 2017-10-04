@@ -14,7 +14,7 @@
                 <div class="ui input field">{{c.variable}}</div>
             </td>
             <td>
-                <div *ngIf="project.permission === 7; then operatorWrite;else operatorRead"></div>
+                <div *ngIf="c && operators && project.permission === 7; then operatorWrite;else operatorRead"></div>
                 <ng-template #operatorWrite>
                     <sm-select [(model)]="c.operator">
                         <option *ngFor="let k of operators | keys" [value]="k">{{operators[k]}}</option>

@@ -15,7 +15,7 @@ import (
 // processWorkflowRun triggers workflow node for every workflow.
 // It contains all the logic for triggers and joins processing.
 func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64) error {
-	var nodesRunFailed, nodesRunBuilding, nodesRunSuccess int
+	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess int
 	t0 := time.Now()
 	w.Status = string(sdk.StatusBuilding)
 	log.Debug("processWorkflowRun> Begin [#%d]%s", w.Number, w.Workflow.Name)
@@ -67,7 +67,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 			// Only the last subversion
 			if maxsn == nodeRun.SubNumber {
-				updateNodesRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed)
+				updateNodesRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped)
 			}
 
 			//Trigger only if the node is over (successfull or not)
@@ -245,7 +245,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		}
 	}
 
-	w.Status = getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed)
+	w.Status = getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped)
 
 	if err := updateWorkflowRun(db, w); err != nil {
 		return sdk.WrapError(err, "processWorkflowRun>")
@@ -318,7 +318,15 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 	run.Manual = m
 	if m != nil {
-		run.Payload = m.Payload
+		m1, errm1 := dump.ToMap(m.Payload, dump.WithDefaultLowerCaseFormatter())
+		if errm1 != nil {
+			AddWorkflowRunInfo(w, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowError.ID,
+				Args: []interface{}{errm1},
+			})
+			return sdk.WrapError(errm1, "processWorkflowNodeRun> Unable to compute payload")
+		}
+		run.Payload = m1
 		run.PipelineParameters = m.PipelineParameters
 		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
@@ -431,8 +439,8 @@ func AddWorkflowRunInfo(run *sdk.WorkflowRun, infos ...sdk.SpawnMsg) {
 	}
 }
 
-// getWorkflowRunStatus return the status depending on number of workflowNodeRuns in success, building and fail
-func getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed int) string {
+// getWorkflowRunStatus return the status depending on number of workflowNodeRuns in success, building, stopped and fail
+func getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped int) string {
 	switch {
 	case nodesRunBuilding > 0:
 		return string(sdk.StatusBuilding)
@@ -440,13 +448,15 @@ func getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed int)
 		return string(sdk.StatusFail)
 	case nodesRunSuccess > 0:
 		return string(sdk.StatusSuccess)
+	case nodesRunStopped > 0:
+		return string(sdk.StatusStopped)
 	default:
 		return string(sdk.StatusNeverBuilt)
 	}
 }
 
 // updateNodesRunStatus is useful to compute number of nodeRun in success, building and fail
-func updateNodesRunStatus(status string, success, building, fail *int) {
+func updateNodesRunStatus(status string, success, building, fail, stop *int) {
 	switch status {
 	case string(sdk.StatusSuccess):
 		*success++
@@ -454,6 +464,8 @@ func updateNodesRunStatus(status string, success, building, fail *int) {
 		*building++
 	case string(sdk.StatusFail):
 		*fail++
+	case string(sdk.StatusStopped):
+		*stop++
 	}
 }
 
