@@ -811,6 +811,8 @@ func (api *API) getPipelineHistoryHandler() Handler {
 
 		if a.RepositoryFullname != "" && (remote == "" || remote == a.RepositoryFullname) {
 			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(a.RepositoryFullname))
+		} else if remote == "" {
+			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(remote))
 		} else {
 			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
 		}

@@ -81,7 +81,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                 this.currentBuild = undefined;
                 this.histories = undefined;
             }
-            this.remote = q['remote'];
+            this.remote = q['remote'] || null;
         });
         // Current route param
         this._activatedRoute.params.subscribe(params => {
@@ -156,11 +156,19 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     }
 
     showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.project.key +
+        let url = '/project/' + this.project.key +
             '/application/' + this.application.name +
             '/pipeline/' + this.pipeline.name +
             '/build/' + this.currentBuildNumber +
-            '?envName=' + this.envName + '&tab=' + tab);
+            '?envName=' + this.envName + '&tab=' + tab;
+
+        if (this.remote) {
+            url += '&remote=' + this.remote;
+        }
+        if (this.branch) {
+            url += '&branch=' + this.branch;
+        }
+        this._router.navigateByUrl(url);
     }
 
     loadHistory(pb: PipelineBuild): void {

@@ -79,6 +79,7 @@
   "application_workflow_orientation_title" : "Orientation du workflow : ",
   "application_workflow_pipeline_add" : "Lier un pipeline",
   "application_workflow_version_title" : "Version",
+  "application_workflow_remote_title" : "Dépot distant",
 
   "artifact_name" : "Nom de l'artefact",
   "artifact_tag" : "Tag",
@@ -118,7 +119,6 @@
 
   "common_action" : "Action",
   "common_audit" : "Audit",
-  "common_loading" : "Chargement...",
   "common_advanced" : "Administration",
   "common_application": "Application",
   "common_application_title": "Application : ",
@@ -143,6 +143,8 @@
   "common_environment_title" : "Environnement : ",
   "common_environments" : "Environnements",
   "common_history" : "Historique",
+  "common_loading" : "Chargement...",
+  "common_loading_project" : "Chargement du projet...",
   "common_name" : "Nom",
   "common_no" : "Non",
   "common_notifications": "Notifications",

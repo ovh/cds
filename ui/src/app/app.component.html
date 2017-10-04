@@ -12,6 +12,7 @@
                 <toaster-container></toaster-container>
             </div>
             <router-outlet></router-outlet>
+            <div class="ui active text loader" *ngIf="displayResolver">{{ 'common_loading_project' | translate }}</div>
         </div>
     </div>
 </div>

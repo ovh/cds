@@ -10,8 +10,8 @@
         </div>
         <div class="four wide column">
           <sm-select class="search"
-              placeholder="{{'application_workflow_branch_title' | translate}}"
-              *ngIf="remotes && remotes.length"
+              placeholder="{{'application_workflow_remote_title' | translate}}"
+              *ngIf="remotes"
               [options]="{'fullTextSearch': true}"
               [(model)]="applicationFilter.remote"
               (modelChange)="changeRemote()">

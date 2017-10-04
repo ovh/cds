@@ -310,7 +310,7 @@ func withRemoteName(remote string) ExecOptionFunc {
 
 func withEmptyRemote(remote string) ExecOptionFunc {
 	return func(nbArg int) (string, string, int) {
-		return fmt.Sprintf(" AND (pb.vcs_remote = $%d OR pb.vcs_remote IS NULL)", nbArg), remote, nbArg + 1
+		return fmt.Sprintf(" AND (pb.vcs_remote = $%d OR pb.vcs_remote IS NULL OR pb.vcs_remote = '')", nbArg), remote, nbArg + 1
 	}
 }
 
@@ -339,13 +339,16 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 	nbArgs := 4
 	for _, opt := range opts {
 		var cond, arg string
-		cond, arg, nbArgs = opt(nbArgs)
+		previousNbArgs := nbArgs
+		cond, arg, nbArgs = opt(previousNbArgs)
 		if cond == "" {
 			continue
 		}
 
 		query += cond
-		args = append(args, arg)
+		if previousNbArgs < nbArgs {
+			args = append(args, arg)
+		}
 	}
 	args = append(args, limit)
 	query += fmt.Sprintf(" ORDER BY pb.version DESC, pb.id DESC LIMIT $%d", nbArgs)
@@ -1335,7 +1338,7 @@ func GetBranches(db gorp.SqlExecutor, app *sdk.Application, remote string) ([]sd
 	query := `
 		SELECT DISTINCT vcs_changes_branch
 		FROM pipeline_build
-		WHERE application_id = $1 AND vcs_remote_name = $2
+		WHERE application_id = $1 AND vcs_remote = $2
 		ORDER BY vcs_changes_branch DESC
 	`
 

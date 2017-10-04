@@ -76,11 +76,19 @@ export class ApplicationPipelineService {
                  envName: string, limit: number, status: string, branchName: string, remote: string): Observable<Array<PipelineBuild>> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/history';
         let params = new HttpParams();
-        params = params.append('envName', envName);
-        params = params.append('limit', String(limit));
-        params = params.append('status', status);
-        params = params.append('branchName', branchName);
-        params = params.append('remote', remote);
+
+        [
+          {key: 'envName', value: envName},
+          {key: 'limit', value: limit},
+          {key: 'status', value: status},
+          {key: 'branchName', value: branchName},
+          {key: 'remote', value: remote}
+      ].forEach((param: any) => {
+          if (param.value != null) {
+            params = params.append(param.key, param.value);
+          }
+        })
+
         return this._http.get(url, {params: params});
     }
 

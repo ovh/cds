@@ -240,7 +240,7 @@ func LoadUnscheduledPipelines(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, err
 			res = append(res, s)
 		}
 	}
-	return ps, nil
+	return res, nil
 }
 
 //GetByApplication get all pipeline schedulers for an application
