@@ -24,12 +24,12 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOp
 	if u == nil || u.Admin {
 		query = "select * from project ORDER by project.name, project.projectkey ASC"
 	} else {
-		query = `SELECT * 
-				FROM project 
+		query = `SELECT *
+				FROM project
 				WHERE project.id IN (
 					SELECT project_group.project_id
 					FROM project_group
-					WHERE 
+					WHERE
 						project_group.group_id = ANY(string_to_array($1, ',')::int[])
 						OR
 						$2 = ANY(string_to_array($1, ',')::int[])
@@ -230,7 +230,7 @@ var LoadOptions = struct {
 // LoadProjectByNodeJobRunID return a project from node job run id
 func LoadProjectByNodeJobRunID(db gorp.SqlExecutor, store cache.Store, nodeJobRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `
-		SELECT * FROM project
+		SELECT project.* FROM project
 		JOIN workflow_run ON workflow_run.project_id = project.id
 		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
 		JOIN workflow_node_run_job ON workflow_node_run_job.workflow_node_run_id = workflow_node_run.id
@@ -242,7 +242,7 @@ func LoadProjectByNodeJobRunID(db gorp.SqlExecutor, store cache.Store, nodeJobRu
 // LoadProjectByNodeRunID return a project from node run id
 func LoadProjectByNodeRunID(db gorp.SqlExecutor, store cache.Store, nodeRunID int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
 	query := `
-		SELECT * FROM project
+		SELECT project.* FROM project
 		JOIN workflow_run ON workflow_run.project_id = project.id
 		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = workflow_run.id
 		WHERE workflow_node_run.id = $1
