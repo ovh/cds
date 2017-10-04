@@ -55,11 +55,10 @@ export class PipelineLaunchModalComponent {
         gitBranchParam.type = 'string';
         this.launchGitParams.push(gitBranchParam);
 
-        if (this.applicationFilter.remote != null && this.applicationFilter.remote !== '' &&
-                this.applicationFilter.remote !== this.application.repository_fullname) {
+        if (this.applicationFilter.remote && this.applicationFilter.remote !== this.application.repository_fullname) {
               let remote = this.remotes.find((rem) => rem.name === this.applicationFilter.remote);
 
-              if (remote) {
+            if (remote) {
                 let urlParam = new Parameter();
                 urlParam.name = 'git.http_url';
                 urlParam.type = 'string';
@@ -77,8 +76,8 @@ export class PipelineLaunchModalComponent {
                 urlParam.type = 'string';
                 urlParam.value = remote.name;
                 this.launchGitParams.push(urlParam);
-              }
             }
+        }
 
         if (this.workflowItem.trigger) {
             this.launchPipelineParams = Pipeline.mergeParams(
@@ -96,7 +95,9 @@ export class PipelineLaunchModalComponent {
                 this.workflowItem.trigger.src_environment.name, 20, 'Success', this.applicationFilter.branch, this.applicationFilter.remote)
                 .subscribe(pbs => {
                     this.launchOldBuilds = pbs;
-                    this.launchParentBuildNumber = pbs[0].build_number;
+                    if (Array.isArray(pbs) && pbs.length) {
+                        this.launchParentBuildNumber = pbs[0].build_number;
+                    }
                     this.loadCommits();
                 });
         }
@@ -127,10 +128,9 @@ export class PipelineLaunchModalComponent {
             request.parent_pipeline_id = this.workflowItem.parent.pipeline_id;
             request.parent_environment_id = this.workflowItem.parent.environment_id;
             request.parent_build_number = Number(this.launchParentBuildNumber);
-        } else {
-            request.parameters.push(...this.launchGitParams);
         }
 
+        request.parameters.push(...this.launchGitParams);
         request.parameters = Parameter.formatForAPI(request.parameters);
 
         this.launchModal.hide();

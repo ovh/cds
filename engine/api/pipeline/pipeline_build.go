@@ -274,7 +274,7 @@ func LoadPipelineBuildByHash(db gorp.SqlExecutor, hash string) ([]sdk.PipelineBu
 	return pbs, nil
 }
 
-type ExecOptionFunc func(nbArg int) (string, string)
+type ExecOptionFunc func(nbArg int) (string, string, int)
 type LoadOptionFunc func(val string) ExecOptionFunc
 
 var LoadPipelineBuildOpts = struct {
@@ -290,34 +290,37 @@ var LoadPipelineBuildOpts = struct {
 }
 
 func withBranchName(branchName string) ExecOptionFunc {
-	return func(nbArg int) (string, string) {
+	return func(nbArg int) (string, string, int) {
 		if branchName == "" {
-			return "", ""
+			return "", "", nbArg
 		}
 
-		return fmt.Sprintf(" AND pb.vcs_changes_branch = $%d", nbArg), branchName
+		return fmt.Sprintf(" AND pb.vcs_changes_branch = $%d", nbArg), branchName, nbArg + 1
 	}
 }
 
 func withRemoteName(remote string) ExecOptionFunc {
-	return func(nbArg int) (string, string) {
-		return fmt.Sprintf(" AND pb.vcs_remote = $%d", nbArg), remote
+	return func(nbArg int) (string, string, int) {
+		if remote == "" {
+			return " AND pb.vcs_remote IS NULL", "", nbArg
+		}
+		return fmt.Sprintf(" AND pb.vcs_remote = $%d", nbArg), remote, nbArg + 1
 	}
 }
 
 func withEmptyRemote(remote string) ExecOptionFunc {
-	return func(nbArg int) (string, string) {
-		return fmt.Sprintf(" AND (pb.vcs_remote = $%d OR pb.vcs_remote = '')", nbArg), remote
+	return func(nbArg int) (string, string, int) {
+		return fmt.Sprintf(" AND (pb.vcs_remote = $%d OR pb.vcs_remote IS NULL)", nbArg), remote, nbArg + 1
 	}
 }
 
 func withStatus(status string) ExecOptionFunc {
-	return func(nbArg int) (string, string) {
+	return func(nbArg int) (string, string, int) {
 		if status == "" {
-			return "", ""
+			return "", "", nbArg
 		}
 
-		return fmt.Sprintf(" AND pb.status = $%d", nbArg), status
+		return fmt.Sprintf(" AND pb.status = $%d", nbArg), status, nbArg + 1
 	}
 }
 
@@ -333,16 +336,19 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 		pipelineID,
 		environmentID,
 	}
+	nbArgs := 4
 	for _, opt := range opts {
-		cond, arg := opt(len(args) + 1)
+		var cond, arg string
+		cond, arg, nbArgs = opt(nbArgs)
 		if cond == "" {
 			continue
 		}
+
 		query += cond
 		args = append(args, arg)
 	}
 	args = append(args, limit)
-	query += fmt.Sprintf(" ORDER BY pb.version DESC, pb.id DESC LIMIT $%d", len(args))
+	query += fmt.Sprintf(" ORDER BY pb.version DESC, pb.id DESC LIMIT $%d", nbArgs)
 
 	var rows []PipelineBuildDbResult
 	if _, errQuery := db.Select(&rows, query, args...); errQuery != nil {
