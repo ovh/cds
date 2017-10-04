@@ -95,7 +95,7 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 
-	opts := &postWorkflowRunHandlerOption{}
+	opts := &sdk.WorkflowRunPostHandlerOption{}
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
 
 	//Do the request

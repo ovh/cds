@@ -622,7 +622,7 @@ func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 
-	opts := &postWorkflowRunHandlerOption{}
+	opts := &sdk.WorkflowRunPostHandlerOption{}
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
 
 	//Do the request
@@ -739,7 +739,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 
-	opts := &postWorkflowRunHandlerOption{}
+	opts := &sdk.WorkflowRunPostHandlerOption{}
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
 
 	//Do the request
