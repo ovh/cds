@@ -1,8 +1,10 @@
+import { RouterService } from './service/router/router.service';
 import {Component, OnInit, NgZone} from '@angular/core';
 import {TranslateService} from 'ng2-translate';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {environment} from '../environments/environment';
 import {WarningStore} from './service/warning/warning.store';
+import { ResolveEnd, ResolveStart, Router } from '@angular/router';
 import {CDSWorker} from './shared/worker/worker';
 import {Subscription} from 'rxjs/Subscription';
 import {LanguageStore} from './service/language/language.store';
@@ -33,8 +35,10 @@ export class AppComponent  implements OnInit {
     languageSubscriber: Subscription;
     versionWorkerSubscription: Subscription;
 
-    constructor(private _translate: TranslateService, private _language: LanguageStore,
-                private _authStore: AuthentificationStore, private _warnStore: WarningStore,
+    displayResolver = false;
+
+    constructor(private _translate: TranslateService, private _language: LanguageStore, private _routerService: RouterService,
+                private _authStore: AuthentificationStore, private _warnStore: WarningStore, private _router: Router,
                 private _notification: NotificationService, private _appService: AppService, private _last: LastUpdateService) {
         this.zone = new NgZone({enableLongStackTrace: false});
         _translate.addLangs(['en', 'fr']);
@@ -64,6 +68,15 @@ export class AppComponent  implements OnInit {
                 this.startWarningWorker();
             }
             this.startVersionWorker();
+        });
+
+        this._router.events.subscribe(e => {
+            if (e instanceof ResolveStart) {
+                this.displayResolver = true;
+            }
+            if (e instanceof ResolveEnd) {
+                this.displayResolver = false;
+            }
         });
     }
 
