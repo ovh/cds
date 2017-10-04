@@ -22,9 +22,9 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOp
 	// Admin can gets all project
 	// Users can gets only their projects
 	if u == nil || u.Admin {
-		query = "select * from project ORDER by project.name, project.projectkey ASC"
+		query = "select project.* from project ORDER by project.name, project.projectkey ASC"
 	} else {
-		query = `SELECT *
+		query = `SELECT project.*
 				FROM project
 				WHERE project.id IN (
 					SELECT project_group.project_id
@@ -252,12 +252,12 @@ func LoadProjectByNodeRunID(db gorp.SqlExecutor, store cache.Store, nodeRunID in
 
 // LoadByID returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(db, store, u, opts, "select * from project where id = $1", id)
+	return load(db, store, u, opts, "select project.* from project where id = $1", id)
 }
 
 // Load  returns a project with all its variables and applications given a user. It can also returns pipelines, environments, groups, permission, and repositorires manager. See LoadOptions
 func Load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Project, error) {
-	return load(db, store, u, opts, "select * from project where projectkey = $1", key)
+	return load(db, store, u, opts, "select project.* from project where projectkey = $1", key)
 }
 
 // LoadByPipelineID loads an project from pipeline iD
