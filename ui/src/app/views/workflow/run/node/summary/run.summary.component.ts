@@ -69,7 +69,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
         request.number = this.nodeRun.num;
         request.manual = this.nodeRun.manual;
         request.hook = this.nodeRun.hook_event;
-        
+
         this.loading = true;
         this._wrService.runWorkflow(this.project.key, this.workflow.name, request)
           .finally(() => this.loading = false)
