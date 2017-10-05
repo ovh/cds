@@ -29,6 +29,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     applications: Array<Application> = new Array<Application>();
 
     // optionnal application data
+    workflowName: string;
     application: Application;
     version: string;
     buildNumber: string;
@@ -63,6 +64,9 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         }
         if (this._routeActivated.snapshot.queryParams['branch']) {
             this.branch = this._routeActivated.snapshot.queryParams['branch'];
+        }
+        if (this._routeActivated.snapshot.queryParams['workflow']) {
+            this.workflowName = this._routeActivated.snapshot.queryParams['workflow'];
         }
     }
 

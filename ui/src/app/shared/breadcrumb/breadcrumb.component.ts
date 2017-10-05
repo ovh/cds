@@ -19,6 +19,7 @@ export class BreadcrumbComponent {
     @Input() envName: string;
     @Input() branch: string;
     @Input() appVersion: number;
+    @Input() workflow: string;
 
     constructor() {
     }

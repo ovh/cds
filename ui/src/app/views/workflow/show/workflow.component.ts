@@ -52,7 +52,8 @@ export class WorkflowShowComponent {
     loading = false;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService) {
+                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService,
+                private _workflowCoreService: WorkflowCoreService) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -82,6 +83,8 @@ export class WorkflowShowComponent {
                 }
             }
         });
+
+        this._workflowCoreService.setCurrentWorkflowRun(null);
     }
 
     public openDeleteJoinSrcModal(data: { source, target }) {

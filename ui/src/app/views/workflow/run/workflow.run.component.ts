@@ -51,32 +51,41 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
         this._activatedRoute.parent.params.subscribe(params => {
             this.workflowName = params['workflowName'];
         });
+        this._activatedRoute.queryParams.subscribe( p => {
+            if (this.workflowRun && p['subnum'] && p['subnum'] > this.workflowRun.last_subnumber) {
+                this.startWorker(this.workflowRun.num);
+            }
+        });
         this._activatedRoute.params.subscribe(params => {
             let number = params['number'];
             if (this.project.key && this.workflowName && number) {
-                // Start web worker
-                if (this.runWorkflowWorker) {
-                    this.runWorkflowWorker.stop();
-                }
-                this.runWorkflowWorker = new CDSWorker('./assets/worker/web/workflow2.js');
-                this.runWorkflowWorker.start({
-                    'user': this._authStore.getUser(),
-                    'session': this._authStore.getSessionToken(),
-                    'api': environment.apiURL,
-                    key: this.project.key,
-                    workflowName: this.workflowName,
-                    number: number
-                });
-                this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {
-                    if (wrString) {
-                        this.zone.run(() => {
-                            this.workflowRun = <WorkflowRun>JSON.parse(wrString);
-                            this._workflowCoreService.setCurrentWorkflowRun(this.workflowRun);
-                            if (this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
-                                this.runWorkflowWorker.stop();
-                                this.runSubsription.unsubscribe();
-                            }
-                        });
+                this.startWorker(number);
+            }
+        });
+    }
+
+    startWorker(num: number): void {
+        // Start web worker
+        if (this.runWorkflowWorker) {
+            this.runWorkflowWorker.stop();
+        }
+        this.runWorkflowWorker = new CDSWorker('./assets/worker/web/workflow2.js');
+        this.runWorkflowWorker.start({
+            'user': this._authStore.getUser(),
+            'session': this._authStore.getSessionToken(),
+            'api': environment.apiURL,
+            key: this.project.key,
+            workflowName: this.workflowName,
+            number: num
+        });
+        this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {
+            if (wrString) {
+                this.zone.run(() => {
+                    this.workflowRun = <WorkflowRun>JSON.parse(wrString);
+                    this._workflowCoreService.setCurrentWorkflowRun(this.workflowRun);
+                    if (this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
+                        this.runWorkflowWorker.stop();
+                        this.runSubsription.unsubscribe();
                     }
                 });
             }
