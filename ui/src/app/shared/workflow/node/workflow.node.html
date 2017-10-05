@@ -10,7 +10,7 @@
         <!-- Node name + pipeline name -->
         <div class="pipeline">
             <p class="ellipsis">
-                <span *ngIf="currentNodeRun && !loadingStop &&
+                <span *ngIf="workflowRunStatus && !loadingStop &&
                     workflowRunStatus !== pipelineStatus.BUILDING &&
                     workflowRunStatus !== pipelineStatus.WAITING &&
                     currentNodeRun?.status !== pipelineStatus.BUILDING &&
@@ -25,11 +25,11 @@
                 <span class="ui black circular label mr5" *ngIf="currentNodeRun">
                     v{{ currentNodeRun?.num + '.' + currentNodeRun?.subnumber }}
                 </span>
-                <span (mouseenter)="displayPencil = true" (mouseleave)="displayPencil = false">
+                <span (mouseenter)="displayPencil = true" (mouseleave)="displayPencil = false" title="{{node.name}}">
                     <a class="pointing" (click)="openRenameArea()" *ngIf="!displayInputName">
                         <b>{{node.name}}</b>
                         <span *ngIf="node.name !== node.pipeline.name">{{' - ' + node.pipeline.name}}</span>
-                        <i class="pencil icon" *ngIf="displayPencil"></i>
+                        <i class="pencil icon" *ngIf="displayPencil && !workflowRunStatus"></i>
                     </a>
                 </span>
             </p>

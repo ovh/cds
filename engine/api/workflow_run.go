@@ -128,7 +128,6 @@ func (api *API) getWorkflowRunsHandler() Handler {
 		for i := range runs {
 			runs[i].Translate(r.Header.Get("Accept-Language"))
 		}
-
 		return WriteJSON(w, r, runs, code)
 	}
 }
@@ -455,6 +454,27 @@ func (api *API) postWorkflowRunHandler() Handler {
 
 		wr.Translate(r.Header.Get("Accept-Language"))
 		return WriteJSON(w, r, wr, http.StatusOK)
+	}
+}
+
+func (api *API) downloadworkflowArtifactDirectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		hash := vars["hash"]
+
+		art, err := workflow.LoadWorkfowArtifactByHash(api.mustDB(), hash)
+		if err != nil {
+			return sdk.WrapError(err, "downloadworkflowArtifactDirectHandler> Could not load artifact with hash %s", hash)
+		}
+
+		w.Header().Add("Content-Type", "application/octet-stream")
+		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
+
+		log.Debug("downloadworkflowArtifactDirectHandler: Serving %+v", art)
+		if err := artifact.StreamFile(w, art); err != nil {
+			return sdk.WrapError(err, "downloadworkflowArtifactDirectHandler: Cannot stream artifact")
+		}
+		return nil
 	}
 }
 
