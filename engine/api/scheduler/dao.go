@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -34,6 +35,25 @@ func loadPipelineSchedulers(db gorp.SqlExecutor, query string, args ...interface
 		ps = append(ps, x)
 	}
 	return ps, nil
+}
+
+func loadAndLockPipelineScheduler(db gorp.SqlExecutor, id int64) (*sdk.PipelineScheduler, error) {
+	query := `
+			SELECT 	pipeline_scheduler.* 
+			FROM 	pipeline_scheduler 
+			WHERE   pipeline_scheduler.id = $1
+			FOR UPDATE NOWAIT`
+
+	var gorpPS = &PipelineScheduler{}
+	if err := db.SelectOne(gorpPS, query, id); err != nil {
+		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code != "55P03" {
+			log.Error("Run> Unable to lock to pipeline_scheduler %s", err)
+			return nil, nil
+		}
+		return nil, err
+	}
+	ps := sdk.PipelineScheduler(*gorpPS)
+	return &ps, nil
 }
 
 // LoadAll retrieves all pipeline scheduler from database

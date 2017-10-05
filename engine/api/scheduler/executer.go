@@ -38,6 +38,17 @@ func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSc
 			return nil, errb
 		}
 
+		s, errlock := loadAndLockPipelineScheduler(tx, exs[i].PipelineSchedulerID)
+		if errlock != nil {
+			log.Error("Run> Unable to load to pipeline scheduler %d %s", exs[i].PipelineSchedulerID, errlock)
+			_ = tx.Rollback()
+			continue
+		}
+		if s == nil {
+			_ = tx.Rollback()
+			continue
+		}
+
 		query := "SELECT * FROM pipeline_scheduler_execution WHERE id = $1 and executed = 'false' FOR UPDATE NOWAIT"
 		if err := tx.SelectOne(gorpEx, query, exs[i].ID); err != nil {
 			pqerr, ok := err.(*pq.Error)
@@ -56,6 +67,8 @@ func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSc
 		ex := sdk.PipelineSchedulerExecution(*gorpEx)
 		if _, errProcess := executerProcess(DBFunc, store, tx, &ex); errProcess != nil {
 			log.Error("ExecuterRun> Unable to process %+v : %s", ex, errProcess)
+			_ = tx.Rollback()
+			continue
 		}
 
 		//Commit
