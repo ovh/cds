@@ -98,7 +98,7 @@ func Create(h Interface) {
 			var errwm error
 			models, errwm = h.Client().WorkerModelsEnabled()
 			if errwm != nil {
-				log.Error("error on h.Client().WorkerModelsEnabled():%e", errwm)
+				log.Error("error on h.Client().WorkerModelsEnabled(): %v", errwm)
 			}
 		case j := <-pbjobs:
 			if maxWorkersReached {
