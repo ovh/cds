@@ -10,7 +10,6 @@ import (
 )
 
 type currentWorker struct {
-	alive         bool
 	apiEndpoint   string
 	token         string
 	id            string
