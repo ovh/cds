@@ -101,6 +101,10 @@ func (api *API) disableWorkerHandler() Handler {
 			return sdk.WrapError(err, "disableWorkerHandler> cannot commit tx")
 		}
 
+		//Remove the worker from the cache
+		key := cache.Key("worker", wor.ID)
+		api.Cache.Delete(key)
+
 		return nil
 	}
 }
