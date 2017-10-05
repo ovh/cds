@@ -464,15 +464,15 @@ func (api *API) downloadworkflowArtifactDirectHandler() Handler {
 
 		art, err := workflow.LoadWorkfowArtifactByHash(api.mustDB(), hash)
 		if err != nil {
-			return sdk.WrapError(err, "downloadArtifactDirectHandler> Could not load artifact with hash %s", hash)
+			return sdk.WrapError(err, "downloadworkflowArtifactDirectHandler> Could not load artifact with hash %s", hash)
 		}
 
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		log.Debug("downloadArtifactDirectHandler: Serving %+v", art)
+		log.Debug("downloadworkflowArtifactDirectHandler: Serving %+v", art)
 		if err := artifact.StreamFile(w, art); err != nil {
-			return sdk.WrapError(err, "downloadArtifactDirectHandler: Cannot stream artifact")
+			return sdk.WrapError(err, "downloadworkflowArtifactDirectHandler: Cannot stream artifact")
 		}
 		return nil
 	}
