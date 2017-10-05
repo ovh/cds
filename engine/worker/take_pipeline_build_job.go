@@ -61,7 +61,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 		for {
 			select {
 			case <-ctx.Done():
-				log.Info("Exiting pipeline build job info goroutine: %v", ctx.Err())
+				log.Error("Exiting pipeline build job info goroutine: %v", ctx.Err())
 				tick.Stop()
 				return
 
