@@ -17,7 +17,7 @@ import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowRunRequest} from '../../../model/workflow.run.model';
 import {SuiModalService} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
-import {WorkflowCoreService} from '../workflow.service';
+import {WorkflowCoreService} from '../../../shared/workflow/workflow.service';
 
 declare var _: any;
 
