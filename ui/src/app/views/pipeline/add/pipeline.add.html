@@ -18,7 +18,6 @@
                         <sm-select [(model)]="newPipeline.type">
                             <option *ngFor="let t of pipelineType" value="{{t}}">{{t}}</option>
                         </sm-select>
-                        {{newPipeline | json }}
                     </div>
                     <div class="field" *ngIf="project.applications && project.applications.length > 0">
                         <label>{{'pipeline_attach_application' | translate}}</label>
