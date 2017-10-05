@@ -129,7 +129,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
         this._pipelineStore.addJob(this.project.key, this.pipeline.name, s.id, jobToAdd).subscribe((pip) => {
             this._toast.success('', this._translate.instant('stage_job_added'));
 
-            let currentStage = pip.stages.find((s) => this.selectedStage.id === s.id);
+            let currentStage = pip.stages.find((stage) => this.selectedStage.id === stage.id);
             if (currentStage) {
                 this.selectJob(currentStage.jobs[currentStage.jobs.length - 1], this.selectedStage);
             }
