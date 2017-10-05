@@ -1,0 +1,7 @@
+<div class="ui segment" *ngIf="workflows">
+    <div class="ui grid">
+        <div class="four wide center aligned column" *ngFor="let workflow of workflows">
+            <a [routerLink]="['/project/', project.key, 'worklow', workflow.name]">{{workflow.name}}</a>
+        </div>
+    </div>
+</div>

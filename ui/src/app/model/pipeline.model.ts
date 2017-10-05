@@ -3,6 +3,7 @@ import {Stage} from './stage.model';
 import {GroupPermission} from './group.model';
 import {User} from './user.model';
 import {Application} from './application.model';
+import {Workflow} from './workflow.model';
 import {Environment} from './environment.model';
 import {Artifact} from './artifact.model';
 import {ActionWarning} from './action.model';
@@ -47,6 +48,7 @@ export class Pipeline {
     last_modified: number;
     projectKey: string;
     attached_application: Array<Application>;
+    attached_workflow: Array<Workflow>;
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;

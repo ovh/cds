@@ -71,6 +71,35 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User) (*s
 	return res, nil
 }
 
+// LoadByPipelineName loads a workflow for a given project key and pipeline name (ie. checking permissions)
+func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) ([]sdk.Workflow, error) {
+	res := []sdk.Workflow{}
+	dbRes := []Workflow{}
+
+	query := `
+		select DISTINCT(workflow.id) as _, workflow.*
+		from workflow
+		join project on project.id = workflow.project_id
+		join workflow_node on workflow_node.workflow_id = workflow.id
+		join pipeline on pipeline.id = workflow_node.pipeline_id
+		where project.projectkey = $1 and pipeline.name = $2
+		order by workflow.name asc`
+
+	if _, err := db.Select(&dbRes, query, projectKey, pipName); err != nil {
+		if err == sql.ErrNoRows {
+			return res, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByPipelineID> Unable to load workflows for project %s and pipeline %s", projectKey, pipName)
+	}
+
+	for _, w := range dbRes {
+		w.ProjectKey = projectKey
+		res = append(res, sdk.Workflow(w))
+	}
+
+	return res, nil
+}
+
 func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, query string, args ...interface{}) (*sdk.Workflow, error) {
 	t0 := time.Now()
 	dbRes := Workflow{}

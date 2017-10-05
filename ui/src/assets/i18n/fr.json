@@ -279,6 +279,7 @@
 
   "pipeline_added" : "Pipeline créé",
   "pipeline_application" : "Applications utilisant ce pipeline",
+  "pipeline_workflows" : "Workflows utilisant ce pipeline",
   "pipeline_attach_application" : "Lier le pipeline à des applications",
   "pipeline_build_deleted" : "Build supprimé",
   "pipeline_create" : "Créer un pipeline",

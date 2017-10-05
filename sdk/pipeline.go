@@ -26,6 +26,7 @@ type Pipeline struct {
 	GroupPermission     []GroupPermission `json:"groups,omitempty"`
 	Parameter           []Parameter       `json:"parameters,omitempty"`
 	AttachedApplication []Application     `json:"attached_application,omitempty"`
+	AttachedWorkflow    []Workflow        `json:"attached_workflow,omitempty"`
 	Permission          int               `json:"permission"`
 	LastModified        int64             `json:"last_modified" cli:"modified"`
 }
