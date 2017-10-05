@@ -20,7 +20,6 @@ import {WorkflowRunSummaryComponent} from './run/summary/workflow.run.summary.co
 import {WorkflowNodeRunHistoryComponent} from './run/node/history/history.component';
 import {WorkflowNodeRunSummaryComponent} from './run/node/summary/run.summary.component';
 import {SidebarService} from 'ng2-semantic-ui/dist';
-import {WorkflowCoreService} from './workflow.service';
 
 @NgModule({
     declarations: [
@@ -42,9 +41,6 @@ import {WorkflowCoreService} from './workflow.service';
         WorkflowShowComponent,
         WorkflowStepLogComponent,
         WorkflowNodeRunSummaryComponent
-    ],
-    providers: [
-        WorkflowCoreService
     ],
     imports: [
         SharedModule,
