@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorhill/cronexpr"
-	"github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -30,23 +29,19 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 			return nil, "Run> Unable to start a transaction", errb
 		}
 
-		query := `
-			SELECT 	pipeline_scheduler.* 
-			FROM 	pipeline_scheduler 
-			WHERE   pipeline_scheduler.id = $1
-			FOR UPDATE NOWAIT`
-
-		var gorpPS = &PipelineScheduler{}
-		if err := tx.SelectOne(gorpPS, query, ps[i].ID); err != nil {
-			if pqerr, ok := err.(*pq.Error); ok && pqerr.Code != "55P03" {
-				log.Error("Run> Unable to lock to pipeline_scheduler %s", err)
-			}
+		s, errlock := loadAndLockPipelineScheduler(tx, ps[i].ID)
+		if errlock != nil {
+			log.Error("Run> Unable to load to pipeline scheduler %s", errlock)
+			_ = tx.Rollback()
+			continue
+		}
+		if s == nil {
 			_ = tx.Rollback()
 			continue
 		}
 
 		//Reload the last execution
-		ex, errex := LoadLastExecution(tx, gorpPS.ID)
+		ex, errex := LoadLastExecution(tx, s.ID)
 		if errex != nil {
 			log.Error("Run> Unable to load to pipeline scheduler execution %s", errex)
 			_ = tx.Rollback()
@@ -59,7 +54,6 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 			continue
 		}
 
-		s := sdk.PipelineScheduler(*gorpPS)
 		//Skip disabled scheduler
 		if s.Disabled {
 			_ = tx.Rollback()
@@ -67,7 +61,7 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 		}
 
 		//Compute a new execution
-		e, errn := Next(tx, &s)
+		e, errn := Next(tx, s)
 		if errn != nil {
 			//Nothing to compute
 			_ = tx.Rollback()
