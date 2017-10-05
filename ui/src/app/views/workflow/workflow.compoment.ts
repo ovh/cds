@@ -7,7 +7,7 @@ import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {Workflow} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {RouterService} from '../../service/router/router.service';
-import {WorkflowCoreService} from './workflow.service';
+import {WorkflowCoreService} from '../../shared/workflow/workflow.service';
 
 @Component({
     selector: 'app-workflow',
@@ -33,7 +33,7 @@ export class WorkflowComponent {
             this.project = datas['project'];
         });
 
-        this._workflowCore.get().subscribe(b => {
+        this._workflowCore.getSidebarStatus().subscribe(b => {
             this.sidebarOpen = b;
         });
 

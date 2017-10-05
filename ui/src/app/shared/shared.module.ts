@@ -1,3 +1,4 @@
+import { WorkflowCoreService } from './workflow/workflow.service';
 import {NgModule, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {VariableComponent} from './variable/list/variable.component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -123,7 +124,8 @@ import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
         DurationService,
         PermissionService,
         SharedService,
-        ToastService
+        ToastService,
+        WorkflowCoreService
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA

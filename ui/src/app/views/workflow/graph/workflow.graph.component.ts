@@ -23,7 +23,7 @@ import { WorkflowStore } from '../../../service/workflow/workflow.store';
 import { CDSWorker } from '../../../shared/worker/worker';
 import { SemanticDimmerComponent } from 'ng-semantic/ng-semantic';
 import { WorkflowNodeHookComponent } from '../../../shared/workflow/node/hook/hook.component';
-import { WorkflowCoreService } from '../workflow.service';
+import { WorkflowCoreService } from '../../../shared/workflow/workflow.service';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -91,7 +91,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private _cd: ChangeDetectorRef,
         private _workflowStore: WorkflowStore, private _workflowCore: WorkflowCoreService) {
-        this._workflowCore.get().subscribe(b => {
+        this._workflowCore.getSidebarStatus().subscribe(b => {
             this.sidebarOpen = b;
             if (this.ready) {
                 this.changeDisplay();
@@ -386,7 +386,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;
         componentRef.instance.disabled = this.linkWithJoin;
-        componentRef.instance.webworker = this.webworker;
         componentRef.instance.linkJoinEvent.subscribe(n => {
             this.nodeToLink = n;
             this.toggleLinkJoin(true);
