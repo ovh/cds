@@ -141,7 +141,7 @@ func (api *API) disableWorkerHandler() Handler {
 
 func (api *API) refreshWorkerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx).ID); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
+		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "refreshWorkerHandler> cannot refresh last beat of %s", getWorker(ctx).ID)
 		}
 		return nil
