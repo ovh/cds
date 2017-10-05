@@ -31,6 +31,6 @@ export class WorkflowRunArtifactListComponent extends Table {
     }
 
     getUrl(a: WorkflowNodeRunArtifact): string {
-        return environment.apiURL + '/artifact/' + a.download_hash;
+        return environment.apiURL + '/workflow/artifact/' + a.download_hash;
     }
 }

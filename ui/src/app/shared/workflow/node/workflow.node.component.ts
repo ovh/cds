@@ -93,8 +93,11 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     ngOnInit(): void {
         this.zone = new NgZone({enableLongStackTrace: false});
         this._workflowCoreService.getCurrentWorkflowRun().subscribe(wr => {
-            if (wr && wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
-                this.currentNodeRun = wr.nodes[this.node.id][0];
+            if (wr) {
+                this.workflowRunStatus = wr.status;
+                if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
+                    this.currentNodeRun = wr.nodes[this.node.id][0];
+                }
             }
             this.workflowRunStatus = wr.status;
             this.workflowRunNum = wr.num;
