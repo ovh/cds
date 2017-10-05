@@ -119,6 +119,12 @@ export class WorkflowNodeRunParamComponent {
     }
 
     run(): void {
+        if (this.payloadString !== '') {
+            this.reindent();
+            if (this.invalidJSON) {
+                return;
+            }
+        }
         let request = new WorkflowRunRequest();
         request.manual = new WorkflowNodeRunManual();
         request.manual.payload = this.payloadString ? JSON.parse(this.payloadString) : null;
