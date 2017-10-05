@@ -6,6 +6,20 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// LoadWorkfowArtifactByHash retrieves an artiface using its download hash
+func LoadWorkfowArtifactByHash(db gorp.SqlExecutor, hash string) (*sdk.WorkflowNodeRunArtifact, error) {
+	var artGorp NodeRunArtifact
+	query := `SELECT workflow_node_run_artifacts.*
+		  FROM workflow_node_run_artifacts
+		  WHERE workflow_node_run_artifacts.download_hash = $1`
+	if err := db.SelectOne(&artGorp, query, hash); err != nil {
+		return nil, err
+	}
+	art := sdk.WorkflowNodeRunArtifact(artGorp)
+	return &art, nil
+
+}
+
 // LoadArtifactByIDs Load artifact by workflow ID and artifact ID
 func LoadArtifactByIDs(db gorp.SqlExecutor, workflowID, artifactID int64) (*sdk.WorkflowNodeRunArtifact, error) {
 	var artGorp NodeRunArtifact

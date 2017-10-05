@@ -22,7 +22,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 	dbRes := []Workflow{}
 
 	query := `
-		select workflow.* 
+		select workflow.*
 		from workflow
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
@@ -46,7 +46,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 // Load loads a workflow for a given user (ie. checking permissions)
 func Load(db gorp.SqlExecutor, store cache.Store, projectKey, name string, u *sdk.User) (*sdk.Workflow, error) {
 	query := `
-		select workflow.* 
+		select workflow.*
 		from workflow
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
@@ -61,7 +61,7 @@ func Load(db gorp.SqlExecutor, store cache.Store, projectKey, name string, u *sd
 // LoadByID loads a workflow for a given user (ie. checking permissions)
 func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User) (*sdk.Workflow, error) {
 	query := `
-		select * 
+		select *
 		from workflow
 		where id = $1`
 	res, err := load(db, store, u, query, id)

@@ -15,7 +15,7 @@ import (
 func Initialize(c context.Context, store cache.Store, nbExecToKeep int, DBFunc func() *gorp.DbMap) {
 	rand.Seed(time.Now().Unix())
 	tickCleaner := time.NewTicker(10 * time.Minute)
-	tickScheduler := time.NewTicker(30 * time.Second)
+	tickScheduler := time.NewTicker(10 * time.Second)
 	tickExecuter := time.NewTicker(10 * time.Second)
 
 	for {

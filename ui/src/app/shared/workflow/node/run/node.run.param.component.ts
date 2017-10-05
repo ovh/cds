@@ -28,6 +28,7 @@ export class WorkflowNodeRunParamComponent {
     @Input() nodeRun: WorkflowNodeRun;
     @Input() project: Project;
     @Input() workflow: Workflow;
+    @Input() num: number;
     @Input('nodeToRun')
     set nodeToRun (data: WorkflowNode) {
         if (data) {
@@ -118,6 +119,12 @@ export class WorkflowNodeRunParamComponent {
     }
 
     run(): void {
+        if (this.payloadString !== '') {
+            this.reindent();
+            if (this.invalidJSON) {
+                return;
+            }
+        }
         let request = new WorkflowRunRequest();
         request.manual = new WorkflowNodeRunManual();
         request.manual.payload = this.payloadString ? JSON.parse(this.payloadString) : null;
@@ -126,6 +133,9 @@ export class WorkflowNodeRunParamComponent {
         if (this.nodeRun) {
             request.from_node = this.nodeRun.workflow_node_id;
             request.number = this.nodeRun.num;
+        } else if (this.nodeToRun && this.num) {
+            request.from_node = this.nodeToRun.id;
+            request.number = this.num;
         }
 
         this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).subscribe(wr => {

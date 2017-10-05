@@ -384,11 +384,14 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 		if errApps != nil {
 			return sdk.WrapError(errApps, "addVariableInEnvironmentHandler: Cannot load applications")
 		}
-		for _, a := range apps {
-			if err := sanity.CheckApplication(api.mustDB(), p, &a); err != nil {
-				return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot check application sanity")
+		go func() {
+			for _, a := range apps {
+				if err := sanity.CheckApplication(api.mustDB(), p, &a); err != nil {
+					log.Warning("addVariableInEnvironmentHandler: Cannot check application sanity: %s", err)
+				}
 			}
-		}
+		}()
+
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getUser(ctx))

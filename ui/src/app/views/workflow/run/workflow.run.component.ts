@@ -12,6 +12,7 @@ import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
+import {WorkflowCoreService} from '../../../shared/workflow/workflow.service';
 import {cloneDeep} from 'lodash';
 
 @Component({
@@ -38,7 +39,8 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     pipelineStatusEnum = PipelineStatus;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-      private _router: Router, private _workflowStore: WorkflowStore, private _workflowRunService: WorkflowRunService) {
+      private _router: Router, private _workflowStore: WorkflowStore, private _workflowRunService: WorkflowRunService,
+      private _workflowCoreService: WorkflowCoreService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         // Update data if route change
@@ -69,6 +71,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                     if (wrString) {
                         this.zone.run(() => {
                             this.workflowRun = <WorkflowRun>JSON.parse(wrString);
+                            this._workflowCoreService.setCurrentWorkflowRun(this.workflowRun);
                             if (this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
                                 this.runWorkflowWorker.stop();
                                 this.runSubsription.unsubscribe();

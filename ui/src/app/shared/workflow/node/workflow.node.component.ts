@@ -27,6 +27,7 @@ import {HookEvent} from './hook/hook.event';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {WorkflowCoreService} from '../workflow.service';
 
 declare var _: any;
 
@@ -41,7 +42,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
-    workflowRunStatus: string;
 
     @Output() linkJoinEvent = new EventEmitter<WorkflowNode>();
 
@@ -65,9 +65,10 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
     editableNode: WorkflowNode;
+    workflowRunStatus: string;
+    workflowRunNum: number;
 
     pipelineSubscription: Subscription;
-    webworker: CDSWorker;
 
     zone: NgZone;
     currentNodeRun: WorkflowNodeRun;
@@ -85,22 +86,23 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     constructor(private elementRef: ElementRef, private _changeDetectorRef: ChangeDetectorRef,
         private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
         private _wrService: WorkflowRunService, private _pipelineStore: PipelineStore, private _router: Router,
-        private _modalService: SuiModalService) {
+        private _modalService: SuiModalService, private _workflowCoreService: WorkflowCoreService) {
 
     }
 
     ngOnInit(): void {
-
         this.zone = new NgZone({enableLongStackTrace: false});
-        if (this.webworker) {
-            this.webworker.response().subscribe(wrString => {
-                let wr = <WorkflowRun>JSON.parse(wrString);
+        this._workflowCoreService.getCurrentWorkflowRun().subscribe(wr => {
+            if (wr) {
+                this.workflowRunStatus = wr.status;
                 if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
                     this.currentNodeRun = wr.nodes[this.node.id][0];
-                    this.workflowRunStatus = wr.status;
                 }
-            });
-        } else {
+            }
+            this.workflowRunStatus = wr.status;
+            this.workflowRunNum = wr.num;
+        });
+        if (!this.currentNodeRun) {
             this.options = {
                 'fullTextSearch': true,
                 onHide: () => {
@@ -278,7 +280,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     goToNodeRun(): void {
-        if (!this.webworker || !this.currentNodeRun) {
+        if (!this.currentNodeRun) {
             return;
         }
         let pip = Workflow.getNodeByID(this.currentNodeRun.workflow_node_id, this.workflow).pipeline.name;
