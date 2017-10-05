@@ -25,7 +25,7 @@
                 <span class="ui black circular label mr5" *ngIf="currentNodeRun">
                     v{{ currentNodeRun?.num + '.' + currentNodeRun?.subnumber }}
                 </span>
-                <span (mouseenter)="displayPencil = true" (mouseleave)="displayPencil = false">
+                <span (mouseenter)="displayPencil = true" (mouseleave)="displayPencil = false" title="{{node.name}}">
                     <a class="pointing" (click)="openRenameArea()" *ngIf="!displayInputName">
                         <b>{{node.name}}</b>
                         <span *ngIf="node.name !== node.pipeline.name">{{' - ' + node.pipeline.name}}</span>
