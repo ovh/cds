@@ -28,6 +28,7 @@ export class WorkflowNodeRunParamComponent {
     @Input() nodeRun: WorkflowNodeRun;
     @Input() project: Project;
     @Input() workflow: Workflow;
+    @Input() num: number;
     @Input('nodeToRun')
     set nodeToRun (data: WorkflowNode) {
         if (data) {
@@ -126,6 +127,9 @@ export class WorkflowNodeRunParamComponent {
         if (this.nodeRun) {
             request.from_node = this.nodeRun.workflow_node_id;
             request.number = this.nodeRun.num;
+        } else if (this.nodeToRun && this.num) {
+            request.from_node = this.nodeToRun.id;
+            request.number = this.num;
         }
 
         this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).subscribe(wr => {

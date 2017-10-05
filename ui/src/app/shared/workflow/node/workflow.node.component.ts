@@ -41,7 +41,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
-    workflowRunStatus: string;
 
     @Output() linkJoinEvent = new EventEmitter<WorkflowNode>();
 
@@ -65,6 +64,8 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
     editableNode: WorkflowNode;
+    workflowRunStatus: string;
+    workflowRunNum: number;
 
     pipelineSubscription: Subscription;
     webworker: CDSWorker;
@@ -97,8 +98,9 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                 let wr = <WorkflowRun>JSON.parse(wrString);
                 if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
                     this.currentNodeRun = wr.nodes[this.node.id][0];
-                    this.workflowRunStatus = wr.status;
                 }
+                this.workflowRunStatus = wr.status;
+                this.workflowRunNum = wr.num;
             });
         } else {
             this.options = {
