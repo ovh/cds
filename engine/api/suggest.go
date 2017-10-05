@@ -107,6 +107,7 @@ func (api *API) getVariablesHandler() Handler {
 
 		// add cds variable
 		cdsVar := []string{
+			"{{.cds.version}}",
 			"{{.cds.application}}",
 			"{{.cds.buildNumber}}",
 			"{{.cds.environment}}",
