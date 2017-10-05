@@ -40,7 +40,7 @@ export class VariableService {
      */
     getContextVariable(key: string, pipelineId?: number): Observable<Array<string>> {
         let params = new HttpParams();
-        if (pipelineId) {
+        if (pipelineId != null) {
             params = params.append('pipId', pipelineId.toString());
         }
 

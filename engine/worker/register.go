@@ -51,7 +51,6 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 
 func (w *currentWorker) unregister() error {
 	log.Info("Unregistering worker")
-	w.alive = false
 	w.id = ""
 	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
 	if err != nil {

@@ -184,22 +184,28 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error)
 }
 
 // RefreshWorker Update worker last_beat
-func RefreshWorker(db gorp.SqlExecutor, workerID string) error {
+func RefreshWorker(db gorp.SqlExecutor, w *sdk.Worker) error {
+	if w == nil {
+		return sdk.WrapError(sdk.ErrUnknownError, "RefreshWorker> Invalid worker")
+	}
 	query := `UPDATE worker SET last_beat = $1 WHERE id = $2`
-	res, err := db.Exec(query, time.Now(), workerID)
+	res, err := db.Exec(query, time.Now(), w.ID)
 	if err != nil {
-		log.Warning("RefreshWorker> Unable to update worker: %s", workerID)
-		return err
+		return sdk.WrapError(err, "RefreshWorker> Unable to update worker: %s", w.ID)
 	}
 
 	n, err := res.RowsAffected()
 	if err != nil {
-		log.Warning("RefreshWorker> Unable to refresh worker: %s", workerID)
-		return err
+		return sdk.WrapError(err, "RefreshWorker> Unable to refresh worker: %s", w.ID)
 	}
 
+	var mname string
+	if w.Model != nil {
+		mname = w.Model.Name
+	}
 	if n != 1 {
-		return sdk.NewError(sdk.ErrForbidden, fmt.Errorf("unknown worker '%s'", workerID))
+		return sdk.NewError(sdk.ErrForbidden, fmt.Errorf("unknown worker '%s' Name:%s GroupID:%d ModelID:%d Model:%s HatcheryID:%d HatcheryName:%s",
+			w.ID, w.Name, w.GroupID, w.ModelID, mname, w.HatcheryID, w.HatcheryName))
 	}
 
 	return nil
