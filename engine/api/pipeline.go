@@ -689,6 +689,7 @@ func (api *API) getPipelineHandler() Handler {
 		pipelineName := vars["permPipelineKey"]
 		withApp := FormBool(r, "withApplications")
 		withWorkflows := FormBool(r, "withWorkflows")
+		withEnvironments := FormBool(r, "withEnvironments")
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
@@ -712,6 +713,14 @@ func (api *API) getPipelineHandler() Handler {
 				return sdk.WrapError(errW, "getApplicationUsingPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
 			}
 			p.AttachedWorkflow = wf
+		}
+
+		if withEnvironments {
+			envs, errE := environment.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
+			if errE != nil {
+				return sdk.WrapError(errE, "getApplicationUsingPipelineHandler> Cannot load environments using pipeline %s", p.Name)
+			}
+			p.AttachedEnvironment = envs
 		}
 
 		return WriteJSON(w, r, p, http.StatusOK)

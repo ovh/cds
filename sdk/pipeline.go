@@ -27,6 +27,7 @@ type Pipeline struct {
 	Parameter           []Parameter       `json:"parameters,omitempty"`
 	AttachedApplication []Application     `json:"attached_application,omitempty"`
 	AttachedWorkflow    []Workflow        `json:"attached_workflow,omitempty"`
+	AttachedEnvironment []Environment     `json:"attached_environment,omitempty"`
 	Permission          int               `json:"permission"`
 	LastModified        int64             `json:"last_modified" cli:"modified"`
 }

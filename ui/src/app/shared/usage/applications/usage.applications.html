@@ -1,0 +1,14 @@
+<h3><i class="rocket icon"></i> {{'usage_application_list' | translate}}</h3>
+<div class="ui segment" *ngIf="applications">
+    <div class="ui grid">
+        <ng-container *ngIf="applications.length">
+            <div class="four wide center aligned column" *ngFor="let app of applications">
+                <a [routerLink]="['/project/', project.key, 'application', app.name]">{{app.name}}</a>
+            </div>
+        </ng-container>
+
+        <div class="four wide center aligned column" *ngIf="!applications.length">
+            <span>{{ 'common_no_application' | translate }}</span>
+        </div>
+    </div>
+</div>

@@ -27,6 +27,7 @@ export class PipelineService {
         let params = new HttpParams();
         params = params.append('withApplications', 'true');
         params = params.append('withWorkflows', 'true');
+        params = params.append('withEnvironments', 'true');
         return this._http.get('/project/' + key + '/pipeline/' + pipName, {params: params});
     }
 

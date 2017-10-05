@@ -49,6 +49,7 @@ export class Pipeline {
     projectKey: string;
     attached_application: Array<Application>;
     attached_workflow: Array<Workflow>;
+    attached_environment: Array<Environment>;
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;

@@ -6,12 +6,10 @@ import {PipelineAdminComponent} from './show/admin/pipeline.admin.component';
 import {PipelineAddComponent} from './add/pipeline.add.component';
 import {PipelineStageFormComponent} from './show/workflow/stage/form/pipeline.stage.form.component';
 import {PipelineApplicationComponent} from './show/application/pipeline.application.component';
-import {PipelineWorkflowsComponent} from './show/workflows/pipeline.workflows.component';
 import {PipelineWorkflowComponent} from './show/workflow/pipeline.workflow.component';
 import {PipelineAuditComponent} from './show/audit/pipeline.audit.component';
 @NgModule({
     declarations: [
-        PipelineWorkflowsComponent,
         PipelineApplicationComponent,
         PipelineShowComponent,
         PipelineAddComponent,

@@ -1,0 +1,14 @@
+<h3><i class="sitemap icon"></i> {{'usage_pipeline_list' | translate}}</h3>
+<div class="ui segment">
+    <div *ngIf="pipelines && pipelines.length > 0;then pipelinesDisplay; else nopipelines"></div>
+    <ng-template #pipelinesDisplay>
+        <div class="ui stackable four column grid">
+            <div class="center aligned column" *ngFor="let pip of pipelines">
+                <a [routerLink]="['/project/', project.key, 'pipeline', pip.name]">{{pip.name}}</a>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template #nopipelines>
+        <span>{{ 'common_no_pipeline' | translate }}</span>
+    </ng-template>
+</div>

@@ -3,6 +3,7 @@ import {ActivatedRoute, Params, Router} from '@angular/router';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {User} from '../../../model/user.model';
 import {Workflow} from '../../../model/workflow.model';
+import {Environment} from '../../../model/environment.model';
 import {Pipeline} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
@@ -31,6 +32,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
 
     applications: Array<Application> = new Array<Application>();
     workflows: Array<Workflow> = new Array<Workflow>();
+    environments: Array<Environment> = new Array<Environment>();
     currentUser: User;
 
     // optionnal application data
@@ -112,6 +114,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                         this.pipeline = pipelineUpdated;
                         this.applications = pipelineUpdated.attached_application || [];
                         this.workflows = pipelineUpdated.attached_workflow || [];
+                        this.environments = pipelineUpdated.attached_environment || [];
                     } else if (pipelineUpdated && pipelineUpdated.externalChange) {
                         this._toast.info('', this._translate.instant('warning_pipeline'));
                     }

@@ -6,7 +6,7 @@
         </div>
         <div class="CDSmenu">
             <sm-menu title="" class="pointing secondary">
-                <a *ngIf="currentUser.admin" sm-item [class.active]="selectedTab === 'pipeline'" (click)="showTab('pipeline')">
+                <a sm-item [class.active]="selectedTab === 'pipeline'" (click)="showTab('pipeline')">
                     <i class="sitemap icon"></i>{{ 'common_pipeline' | translate }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'parameters'" (click)="showTab('parameters')">
@@ -15,11 +15,8 @@
                 <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')">
                     <i class="users icon"></i>{{ 'common_permissions' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'applications'" (click)="showTab('applications')">
-                    <i class="rocket icon"></i>{{ 'common_applications' | translate }}{{ ' (' + applications.length + ')' }}
-                </a>
-                <a sm-item [class.active]="selectedTab === 'workflows'" (click)="showTab('workflows')">
-                    <i class="sitemap icon"></i>{{ 'common_workflows' | translate }}{{ ' (' + workflows.length + ')' }}
+                <a sm-item [class.active]="selectedTab === 'usage'" (click)="showTab('usage')">
+                    <i class="sitemap icon"></i>{{ 'common_usage' | translate }}{{ ' (' + (applications?.length + workflows?.length + environments?.length) + ')' }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'audits'" (click)="showTab('audits')">
                     <i class="history icon"></i>{{'common_audit' | translate }}
@@ -55,13 +52,8 @@
                         </ng-container>
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                     </div>
-                    <div *ngSwitchCase="'applications'">
-                        <h3>{{ 'pipeline_application' | translate }}</h3>
-                        <app-pipeline-application [project]="project" [applications]="applications"></app-pipeline-application>
-                    </div>
-                    <div *ngSwitchCase="'workflows'">
-                        <h3>{{ 'pipeline_workflows' | translate }}</h3>
-                        <app-pipeline-workflows [project]="project" [workflows]="workflows"></app-pipeline-workflows>
+                    <div *ngSwitchCase="'usage'">
+                        <app-usage [project]="project" [applications]="applications" [workflows]="workflows" [environments]="environments" [currentUser]="currentUser"></app-usage>
                     </div>
                     <div *ngSwitchCase="'advanced'">
                         <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>
