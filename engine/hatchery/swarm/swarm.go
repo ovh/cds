@@ -165,42 +165,7 @@ func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error)
 	return nil, nil
 }
 
-func (h *HatcherySwarm) killAndRemove(ID string) error {
-
-	/*
-
-		container, err := h.dockerClient.InspectContainer(ID)
-		if err != nil {
-			return sdk.WrapError(err, "killAndRemove> cannot InspectContainer")
-		}
-
-			network, err := h.dockerClient.NetworkInfo(container.NetworkSettings.NetworkID)
-			if err != nil {
-				return sdk.WrapError(err, "killAndRemove> cannot NetworkInfo")
-			}
-
-			if netname, ok := network.Labels["worker_net"]; ok {
-				log.Info("killAndRemove> Remove network %s", netname)
-				for id := range network.Containers {
-					log.Info("killAndRemove> Remove container %s", id)
-					if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
-						ID:     id,
-						Signal: docker.SIGKILL,
-					}); err != nil {
-						log.Debug("killAndRemove> Unable to kill container %s", err)
-						continue
-					}
-
-					if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-						ID:            id,
-						RemoveVolumes: true,
-						Force:         true,
-					}); err != nil {
-						log.Warning("killAndRemove> Unable to remove container %s", err)
-					}
-				}
-			} else {
-	*/
+func (h *HatcherySwarm) killAndRemoveContainer(ID string) {
 	log.Info("killAndRemove>Remove container %s", ID)
 	if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
 		ID:     ID,
@@ -219,8 +184,30 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			log.Warning("killAndRemove> Unable to remove container %s", err)
 		}
 	}
+}
 
-	return nil
+func (h *HatcherySwarm) killAndRemove(ID string) {
+	container, err := h.dockerClient.InspectContainer(ID)
+	if err != nil {
+		log.Info("killAndRemove> cannot InspectContainer: %v", err)
+		h.killAndRemoveContainer(ID)
+		return
+	}
+
+	network, err := h.dockerClient.NetworkInfo(container.NetworkSettings.NetworkID)
+	if err != nil {
+		log.Info("killAndRemove> cannot NetworkInfo: %v", err)
+		h.killAndRemoveContainer(ID)
+		return
+	}
+
+	// If we succeed to get the network, kill and remove all the container on the network
+	if netname, ok := network.Labels["worker_net"]; ok {
+		log.Info("killAndRemove> Remove network %s", netname)
+		for id := range network.Containers {
+			h.killAndRemoveContainer(id)
+		}
+	}
 }
 
 //SpawnWorker start a new docker container
@@ -641,9 +628,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 	//Delete the workers
 	for _, c := range oldContainers {
 		log.Info("killAwolWorker> Delete worker %s", c.Names[0])
-		if err := h.killAndRemove(c.ID); err != nil {
-			log.Warning("killAwolWorker> Cannot killAndRemove worker id: %s, err:%s", c.ID, err)
-		}
+		h.killAndRemove(c.ID)
 	}
 
 	var errC error
@@ -676,7 +661,13 @@ func (h *HatcherySwarm) killAwolWorker() {
 		return
 	}
 
-	for _, n := range nets {
+	for i := range nets {
+		n, err := h.dockerClient.NetworkInfo(nets[i].ID)
+		if err != nil {
+			log.Warning("killAwolWorker> Unable to get network info: %v", err)
+			continue
+		}
+
 		if n.Driver != "bridge" || n.Name == "docker0" || n.Name == "bridge" {
 			continue
 		}
