@@ -222,8 +222,8 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []
 		return "", fmt.Errorf("cannot handle %s worker model", wm.Type)
 	}
 
-	if len(h.workers) >= viper.GetInt("max-worker") {
-		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+	if len(h.workers) >= h.Configuration().Provision.MaxWorker {
+		return "", fmt.Errorf("Max capacity reached (%d)", h.Configuration().Provision.MaxWorker)
 	}
 
 	if jobID > 0 {

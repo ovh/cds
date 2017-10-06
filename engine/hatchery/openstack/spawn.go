@@ -38,8 +38,8 @@ func (h *HatcheryOpenstack) SpawnWorker(model *sdk.Model, jobID int64, requireme
 		return "", fmt.Errorf("hatchery disconnected from engine")
 	}
 
-	if len(h.getServers()) == viper.GetInt("max-worker") {
-		log.Debug("MaxWorker limit (%d) reached", viper.GetInt("max-worker"))
+	if len(h.getServers()) == h.Configuration().Provision.MaxWorker {
+		log.Debug("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker)
 		return "", nil
 	}
 
