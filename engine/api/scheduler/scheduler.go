@@ -115,7 +115,8 @@ func Next(db gorp.SqlExecutor, s *sdk.PipelineScheduler) (*sdk.PipelineScheduler
 	}
 	//Don't take last execution date as reference: time.Now() is enough
 	e := &sdk.PipelineSchedulerExecution{
-		ExecutionPlannedDate: cronExpr.Next(t),
+		// Next from now + 10 seconds, to potentially avoid desyncronisation time with many instances of API
+		ExecutionPlannedDate: cronExpr.Next(t.Add(10 * time.Second)),
 		PipelineSchedulerID:  s.ID,
 		Executed:             false,
 	}
