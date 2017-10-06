@@ -8,7 +8,7 @@
 
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
-            <a *ngIf="currentUser.admin" sm-item [class.active]="selectedTab === 'workflows'" id="ProjectWorkflowTab" (click)="showTab('workflows')"><i class="sitemap icon"></i>{{
+            <a *ngIf="currentUser.admin" sm-item [class.active]="selectedTab === 'workflows'" id="ProjectWorkflowTab" (click)="showTab('workflows')"><i class="share alternate icon"></i>{{
                 'common_workflows' | translate }}</a>
             <a sm-item [class.active]="selectedTab === 'applications'" id="ProjectApplicationTab" (click)="showTab('applications')"><i class="rocket icon"></i>{{
                 'common_applications' | translate }}</a>

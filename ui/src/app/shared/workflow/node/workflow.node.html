@@ -63,7 +63,7 @@
         <!-- drop down menu -->
         <ng-container *ngIf="!currentNodeRun && !displayInputName">
             <sm-dropdown class="nocaret right pointing link" icon="settings" [disabled]="disabled" (click)="displayDropdown()" [options]="options">
-                <a sm-item href="#" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]">{{ 'pipeline_label_edit' | translate }}</a>
+                <a sm-item href="#" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" [queryParams]="{workflow: workflow.name }">{{ 'pipeline_label_edit' | translate }}</a>
                 <sm-item (click)="openAddHookModal()">{{'workflow_node_hook_add' | translate }}</sm-item>
                 <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
                 <sm-item (click)="createJoin()">{{ 'workflow_node_join_add' | translate }}</sm-item>
