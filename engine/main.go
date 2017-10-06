@@ -24,6 +24,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
+	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -107,6 +108,7 @@ Comming soon...`,
 		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
+		conf.VCS.API.Token = conf.API.Auth.SharedInfraToken
 
 		if !configNewAsEnvFlag {
 			btes, err := toml.Marshal(*conf)
@@ -210,9 +212,11 @@ Start CDS Engine Services:
 	 * Vsphere
  * Hooks:
  	This component operates CDS workflow hooks
+ * VCS:
+ 	This component operates CDS VCS connectivity
 
 Start all of this with a single command:
-	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks]
+	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]
 All the services are using the same configuration file format.
 You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.
 You can also use or override toml file with environment variable.
@@ -290,6 +294,9 @@ See $ engine config command for more details.
 			case "hooks":
 				s = hooks.New()
 				cfg = conf.Hooks
+			case "vcs":
+				s = vcs.New()
+				cfg = conf.VCS
 			}
 
 			go start(ctx, s, cfg)
