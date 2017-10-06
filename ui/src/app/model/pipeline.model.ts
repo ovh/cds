@@ -9,6 +9,7 @@ import {Artifact} from './artifact.model';
 import {ActionWarning} from './action.model';
 import {Job} from './job.model';
 import {Commit} from './repositories.model';
+import {Usage} from './usage.model';
 
 export class PipelineStatus {
     static BUILDING = 'Building';
@@ -47,9 +48,7 @@ export class Pipeline {
     permission: number;
     last_modified: number;
     projectKey: string;
-    attached_application: Array<Application>;
-    attached_workflow: Array<Workflow>;
-    attached_environment: Array<Environment>;
+    usage: Usage;
 
     // true if someone has updated the pipeline ( used for warnings )
     externalChange: boolean;
@@ -86,7 +85,7 @@ export class Pipeline {
     }
 
     constructor() {
-        this.attached_application = new Array<Application>();
+        this.usage = new Usage();
     }
 }
 

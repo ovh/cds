@@ -34,6 +34,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     workflows: Array<Workflow> = new Array<Workflow>();
     environments: Array<Environment> = new Array<Environment>();
     currentUser: User;
+    usageCount = 0;
 
     // optionnal application data
     application: Application;
@@ -112,9 +113,10 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                     if (pipelineUpdated && !pipelineUpdated.externalChange &&
                         (!this.pipeline || this.pipeline.last_modified < pipelineUpdated.last_modified)) {
                         this.pipeline = pipelineUpdated;
-                        this.applications = pipelineUpdated.attached_application || [];
-                        this.workflows = pipelineUpdated.attached_workflow || [];
-                        this.environments = pipelineUpdated.attached_environment || [];
+                        this.applications = pipelineUpdated.usage.applications || [];
+                        this.workflows = pipelineUpdated.usage.workflows || [];
+                        this.environments = pipelineUpdated.usage.environments || [];
+                        this.usageCount = this.applications.length + this.environments.length + this.workflows.length;
                     } else if (pipelineUpdated && pipelineUpdated.externalChange) {
                         this._toast.info('', this._translate.instant('warning_pipeline'));
                     }

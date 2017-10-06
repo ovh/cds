@@ -106,7 +106,7 @@ describe('CDS: Pipeline Add Component', () => {
         });
 
         fixture.componentInstance.createPipeline();
-        expect(fixture.componentInstance.newPipeline.attached_application.length).toBe(1);
+        expect(fixture.componentInstance.newPipeline.usage.applications.length).toBe(1);
         expect(pipStore.createPipeline).toHaveBeenCalledWith(project.key, fixture.componentInstance.newPipeline);
 
     }));

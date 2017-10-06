@@ -644,7 +644,7 @@ func (api *API) addPipelineHandler() Handler {
 			return sdk.WrapError(err, "Cannot add groups on pipeline")
 		}
 
-		for _, app := range p.AttachedApplication {
+		for _, app := range p.Usage.Applications {
 			if _, err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
 				return sdk.WrapError(err, "Cannot attach pipeline %d to %d", app.ID, p.ID)
 			}
@@ -704,7 +704,7 @@ func (api *API) getPipelineHandler() Handler {
 			if errA != nil {
 				return sdk.WrapError(errA, "getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s", p.Name)
 			}
-			p.AttachedApplication = apps
+			p.Usage.Applications = apps
 		}
 
 		if withWorkflows {
@@ -712,7 +712,7 @@ func (api *API) getPipelineHandler() Handler {
 			if errW != nil {
 				return sdk.WrapError(errW, "getApplicationUsingPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
 			}
-			p.AttachedWorkflow = wf
+			p.Usage.Workflows = wf
 		}
 
 		if withEnvironments {
@@ -720,7 +720,7 @@ func (api *API) getPipelineHandler() Handler {
 			if errE != nil {
 				return sdk.WrapError(errE, "getApplicationUsingPipelineHandler> Cannot load environments using pipeline %s", p.Name)
 			}
-			p.AttachedEnvironment = envs
+			p.Usage.Environments = envs
 		}
 
 		return WriteJSON(w, r, p, http.StatusOK)

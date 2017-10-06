@@ -77,7 +77,7 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) 
 	dbRes := []Workflow{}
 
 	query := `
-		select DISTINCT(workflow.id) as _, workflow.*
+		select distinct workflow.*
 		from workflow
 		join project on project.id = workflow.project_id
 		join workflow_node on workflow_node.workflow_id = workflow.id
@@ -89,7 +89,37 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) 
 		if err == sql.ErrNoRows {
 			return res, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByPipelineID> Unable to load workflows for project %s and pipeline %s", projectKey, pipName)
+		return nil, sdk.WrapError(err, "LoadByPipelineName> Unable to load workflows for project %s and pipeline %s", projectKey, pipName)
+	}
+
+	for _, w := range dbRes {
+		w.ProjectKey = projectKey
+		res = append(res, sdk.Workflow(w))
+	}
+
+	return res, nil
+}
+
+// LoadByEnvName loads a workflow for a given project key and environment name (ie. checking permissions)
+func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sdk.Workflow, error) {
+	res := []sdk.Workflow{}
+	dbRes := []Workflow{}
+
+	query := `
+		select distinct workflow.*
+		from workflow
+		join project on project.id = workflow.project_id
+		join workflow_node on workflow_node.workflow_id = workflow.id
+		join workflow_node_context on workflow_node_context.workflow_node_id = workflow_node.id
+		join environment on workflow_node_context.environment_id = environment.id
+		where project.projectkey = $1 and environment.name = $2
+		order by workflow.name asc`
+
+	if _, err := db.Select(&dbRes, query, projectKey, envName); err != nil {
+		if err == sql.ErrNoRows {
+			return res, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByEnvName> Unable to load workflows for project %s and environment %s", projectKey, envName)
 	}
 
 	for _, w := range dbRes {

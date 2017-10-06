@@ -129,7 +129,7 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 // LoadByPipelineName load environments linked to a pipeline
 func LoadByPipelineName(db gorp.SqlExecutor, projectKey, pipName string) ([]sdk.Environment, error) {
 	envs := []sdk.Environment{}
-	query := `SELECT DISTINCT(environment.id) as _, environment.*
+	query := `SELECT DISTINCT environment.*
 	FROM environment
 	JOIN project ON project.id = environment.project_id
 	JOIN pipeline_trigger ON pipeline_trigger.dest_environment_id = environment.id OR pipeline_trigger.src_environment_id = environment.id

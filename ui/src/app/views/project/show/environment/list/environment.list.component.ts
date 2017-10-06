@@ -1,6 +1,7 @@
 import {Component, DoCheck, Input, OnDestroy, OnInit} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {Environment} from '../../../../../model/environment.model';
+import {EnvironmentService} from '../../../../../service/environment/environment.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs/Rx';
 
@@ -15,10 +16,13 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     oldLastModifiedDate: number;
     selectedEnv: Environment;
     envInRoute: string;
+    loading: boolean;
 
     routerSubscription: Subscription;
+    envSub: Subscription;
 
-    constructor(private _routerActivatedRoute: ActivatedRoute, private _router: Router) {
+    constructor(private _routerActivatedRoute: ActivatedRoute, private _router: Router,
+      private _environmentService: EnvironmentService) {
         this.routerSubscription = this._routerActivatedRoute.queryParams.subscribe(q => {
            if (q['envName']) {
                this.envInRoute = q['envName'];
@@ -29,6 +33,7 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     ngOnDestroy(): void {
         if (this.routerSubscription) {
             this.routerSubscription.unsubscribe();
+            this.envSub.unsubscribe();
         }
     }
 
@@ -41,6 +46,24 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
             }
         }
         this.oldLastModifiedDate = new Date(this.project.last_modified).getTime();
+        this.loadUsage();
+    }
+
+    loadUsage() {
+        this.loading = true;
+        this.envSub = this._environmentService.get(this.project.key)
+            .finally(() => this.loading = false)
+            .subscribe((envs) => {
+                if (Array.isArray(this.project.environments)) {
+                    this.project.environments = this.project.environments.map((env) => {
+                        let envFound = envs.find((e) => e.id === env.id);
+                        if (envFound) {
+                            env.usage = envFound.usage;
+                        }
+                        return env;
+                    });
+                }
+            });
     }
 
     /**
@@ -56,7 +79,7 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
                 if (index >= -1) {
                     this.selectedEnv = this.project.environments[index];
                 } else {
-                    this.selectedEnv = undefined;
+                    this.selectedEnv = null;
                 }
             } else if (this.project.environments && this.project.environments.length > 0) {
                 if (this.envInRoute) {
@@ -68,7 +91,7 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
                     this.selectedEnv = this.project.environments[0];
                 }
             } else {
-                this.selectedEnv = undefined;
+                this.selectedEnv = null;
             }
         }
     }

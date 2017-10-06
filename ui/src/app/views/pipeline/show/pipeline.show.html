@@ -15,8 +15,8 @@
                 <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')">
                     <i class="users icon"></i>{{ 'common_permissions' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'usage'" (click)="showTab('usage')">
-                    <i class="sitemap icon"></i>{{ 'common_usage' | translate }}{{ ' (' + (applications?.length + workflows?.length + environments?.length) + ')' }}
+                <a sm-item [class.active]="selectedTab === 'usage'" [class.disabled]="usageCount === 0" (click)="usageCount > 0 && showTab('usage')">
+                    <i class="plug icon"></i>{{ 'common_usage' | translate }}{{ ' (' + (applications?.length + workflows?.length + environments?.length) + ')' }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'audits'" (click)="showTab('audits')">
                     <i class="history icon"></i>{{'common_audit' | translate }}

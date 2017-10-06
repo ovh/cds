@@ -114,8 +114,8 @@ export class AppService {
                 // delete linked applications from cache
                 this._pipStore.getPipelineResolver(lastUpdate.key, lastUpdate.name)
                     .subscribe((pip) => {
-                        if (pip && Array.isArray(pip.attached_application)) {
-                            pip.attached_application.forEach((app) => this._appStore.removeFromStore(lastUpdate.key + '-' + app.name));
+                        if (pip && pip.usage && Array.isArray(pip.usage.applications)) {
+                            pip.usage.applications.forEach((app) => this._appStore.removeFromStore(lastUpdate.key + '-' + app.name));
                         }
                     });
 
