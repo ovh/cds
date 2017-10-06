@@ -88,9 +88,12 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                this.startWorker(this.project.key);
            }
         });
-        this.workflowName = this._route.snapshot.queryParams['workflow'];
-        this.workflowNum = this._route.snapshot.queryParams['run'];
-        this.workflowNodeRun = this._route.snapshot.queryParams['node'];
+
+        if (this._route.snapshot && this._route.queryParams) {
+            this.workflowName = this._route.snapshot.queryParams['workflow'];
+            this.workflowNum = this._route.snapshot.queryParams['run'];
+            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
+        }
         this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
         this._route.params.subscribe(params => {
             let key = params['key'];
