@@ -21,6 +21,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
+	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
 	"github.com/ovh/cds/sdk"
@@ -180,7 +181,7 @@ var configCheckCmd = &cobra.Command{
 		}
 
 		if conf.Hatchery.Swarm.API.HTTP.URL != "" {
-			if err := openstack.New().CheckConfiguration(conf.Hatchery.Swarm); err != nil {
+			if err := swarm.New().CheckConfiguration(conf.Hatchery.Swarm); err != nil {
 				fmt.Println(err)
 				hasError = true
 			}
@@ -269,19 +270,19 @@ See $ engine config command for more details.
 				s = api.New()
 				cfg = conf.API
 			case "hatchery:docker":
-				s = local.New()
+				s = docker.New()
 				cfg = conf.Hatchery.Docker
 			case "hatchery:local":
 				s = local.New()
 				cfg = conf.Hatchery.Local
 			case "hatchery:marathon":
-				s = local.New()
+				s = marathon.New()
 				cfg = conf.Hatchery.Marathon
 			case "hatchery:openstack":
-				s = local.New()
+				s = openstack.New()
 				cfg = conf.Hatchery.Openstack
 			case "hatchery:swarm":
-				s = local.New()
+				s = swarm.New()
 				cfg = conf.Hatchery.Swarm
 			case "hatchery:vsphere":
 				s = vsphere.New()

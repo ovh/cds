@@ -20,6 +20,9 @@ export class BreadcrumbComponent {
     @Input() branch: string;
     @Input() appVersion: number;
     @Input() workflow: string;
+    @Input() workflowRun: string;
+    @Input() workflowRunNode: string;
+    @Input() wPipeline: string;
 
     constructor() {
     }
