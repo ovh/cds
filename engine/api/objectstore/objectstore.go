@@ -11,9 +11,9 @@ import (
 var storage Driver
 
 //Status is for status handler
-func Status() string {
+func Status() (string, string, bool, error) {
 	if storage == nil {
-		return "KO : Store not initialized"
+		return "Storage", "Store not initialized", false, fmt.Errorf("Store not initialized")
 	}
 
 	return storage.Status()
@@ -95,7 +95,7 @@ func DeleteTemplateExtension(tmpl sdk.TemplateExtension) error {
 // - Openstack / Swift
 // - Filesystem
 type Driver interface {
-	Status() string
+	Status() (string, string, bool, error)
 	Store(o Object, data io.ReadCloser) (string, error)
 	Fetch(o Object) (io.ReadCloser, error)
 	Delete(o Object) error

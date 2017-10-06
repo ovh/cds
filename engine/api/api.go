@@ -157,6 +157,40 @@ type DefaultValues struct {
 	SN        string
 }
 
+// Status is the struct used in ServiceStatus
+type Status struct {
+	Label   string
+	Value   string
+	Healthy bool
+	Warning bool
+}
+
+// RouterStatus is the struct returned by /mon/status
+type RouterStatus struct {
+	NbCall         int64 `json:"nb_calls"`
+	NbPanics       int64 `json:"nb_panics"`
+	NbErrors       int64 `json:"nb_errors"`
+	LastUpdateUser int64 `json:"last_update_user"`
+	Healthy        bool  `json:"healthy"`
+	Warning        bool  `json:"warning"`
+}
+
+// ServiceStatus is the struct returned by /mon/status
+type ServiceStatus struct {
+	Version            string       `json:"version"`
+	Uptime             string       `json:"uptime"`
+	Router             RouterStatus `json:"router"`
+	EventQueue         Status       `json:"event_queue"`
+	InternalEventQueue Status       `json:"internal_event_queue"`
+	Cache              Status       `json:"cache"`
+	Database           Status       `json:"database"`
+	SessionStore       Status       `json:"session_store"`
+	ObjectStorage      Status       `json:"object_storage"`
+	Mail               Status       `json:"mail"`
+	Models             Status       `json:"worker_models"`
+	Hooks              Status       `json:"hooks"`
+}
+
 // New instanciates a new API object
 func New() *API {
 	return &API{}

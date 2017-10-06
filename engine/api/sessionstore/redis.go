@@ -3,6 +3,7 @@ package sessionstore
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -13,8 +14,15 @@ import (
 
 //Redis is a redis client
 type Redis struct {
-	ttl   int
-	store *cache.RedisStore
+	ttl       int
+	store     *cache.RedisStore
+	nbSession int
+}
+
+// Status return status of the session store
+func (s *Redis) Status() (string, string, bool, error) {
+	_, _, ok, err := s.store.Status()
+	return "Redis", fmt.Sprintf("%d sessions", s.nbSession), ok, err
 }
 
 //Keep redis in good health and remove HSet for expired session
@@ -29,6 +37,7 @@ func (s *Redis) vacuumCleaner(c context.Context) {
 			}
 		case <-tick:
 			keys, err := s.store.Client.Keys("session:*:data").Result()
+			s.nbSession = len(keys)
 			if err != nil {
 				log.Error("RedisSessionStore> Unable to get keys in store : %s", err)
 			}
@@ -55,7 +64,7 @@ func NewRedis(c context.Context, redisHost, redisPassword string, ttl int) (*Red
 		return nil, err
 	}
 	log.Info("Redis> Store ready")
-	redisStore := &Redis{ttl * 1440, r}
+	redisStore := &Redis{ttl * 1440, r, 0}
 	go redisStore.vacuumCleaner(c)
 	return redisStore, nil
 }

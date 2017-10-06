@@ -31,7 +31,7 @@ type Store interface {
 	Publish(queueName string, value interface{})
 	Subscribe(queueName string) PubSub
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
-	Status() string
+	Status() (string, string, bool, error)
 	SetAdd(rootKey string, memberKey string, member interface{})
 	SetRemove(rootKey string, memberKey string, member interface{})
 	SetCard(key string) int

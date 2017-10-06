@@ -30,6 +30,7 @@ type Store interface {
 	Get(SessionKey, string, interface{}) error
 	Set(SessionKey, string, interface{}) error
 	Delete(SessionKey) error
+	Status() (string, string, bool, error)
 }
 
 //Options is a struct to switch from in memory to redis session store

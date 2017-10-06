@@ -43,11 +43,14 @@ func Init(user, password, from, host, port string, tls, disable bool) {
 }
 
 // Status verification of smtp configuration, returns OK or KO
-func Status() string {
-	if _, err := smtpClient(); err != nil {
-		return fmt.Sprintf("KO (%s)", err)
+func Status() (string, string, bool, error) {
+	if !smtpEnable {
+		return "SMTP", "disabled", true, nil
 	}
-	return "OK"
+	if _, err := smtpClient(); err != nil {
+		return "SMTP", smtpHost + ":" + smtpPort, false, err
+	}
+	return "SMTP", smtpHost + ":" + smtpPort, true, nil
 }
 
 func smtpClient() (*smtp.Client, error) {

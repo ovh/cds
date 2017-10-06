@@ -26,11 +26,11 @@ func NewFilesystemStore(basedir string) (*FilesystemStore, error) {
 }
 
 //Status return filesystem storage status
-func (fss *FilesystemStore) Status() string {
+func (fss *FilesystemStore) Status() (string, string, bool, error) {
 	if _, err := os.Stat(fss.basedir); os.IsNotExist(err) {
-		return "Filesystem Storage KO (" + err.Error() + ")"
+		return "Local", fss.basedir, false, err
 	}
-	return "Filesystem Storage OK"
+	return "Local", fss.basedir, true, nil
 }
 
 // Store store a object on disk

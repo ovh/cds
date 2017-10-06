@@ -15,8 +15,9 @@ var producer sarama.SyncProducer
 
 // KafkaClient enbeddes the Kafka connecion
 type KafkaClient struct {
-	options  KafkaConfig
-	producer sarama.SyncProducer
+	options   KafkaConfig
+	producer  sarama.SyncProducer
+	lastError error
 }
 
 // KafkaConfig handles all config to connect to Kafka
@@ -89,6 +90,7 @@ func (c *KafkaClient) sendEvent(event *sdk.Event) error {
 	msg := &sarama.ProducerMessage{Topic: c.options.Topic, Value: sarama.ByteEncoder(data)}
 	partition, offset, errs := c.producer.SendMessage(msg)
 	if errs != nil {
+		c.lastError = errs
 		return errs
 	}
 	log.Debug("Event %+v sent to topic %s partition %d offset %d", event, c.options.Topic, partition, offset)
@@ -96,6 +98,7 @@ func (c *KafkaClient) sendEvent(event *sdk.Event) error {
 }
 
 // status: here, if c is initialized, Kafka is ok
-func (c *KafkaClient) status() string {
-	return "Kafka OK"
+func (c *KafkaClient) status() (string, string, bool, error) {
+	healthy := c.producer != nil
+	return "Kafka", c.options.BrokerAddresses, healthy, c.lastError
 }

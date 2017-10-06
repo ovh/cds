@@ -2,7 +2,6 @@ package worker
 
 import (
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -10,27 +9,33 @@ import (
 
 var (
 	lastRequest time.Time
+
 	status      string
-	mux         sync.Mutex
+	healthy     bool
+	statusError error
 )
 
 //Status returns info about worker Model Status
-func Status(db *gorp.DbMap) string {
+func Status(db *gorp.DbMap) (string, bool, error) {
 	if time.Now().Sub(lastRequest) > 2*time.Second {
 		queryCount := `select count(worker_model.id)
     from worker_model
     where nb_spawn_err > 0`
 
 		count, errc := db.SelectInt(queryCount)
-		mux.Lock()
 		if errc != nil {
-			status = fmt.Sprintf("Status> unable to load worker_model in error:%s", errc)
+			status = "Unable to load worker_model in error"
+			statusError = errc
+			healthy = false
 		} else {
-			status = fmt.Sprintf("%d", count)
+			healthy = true
+			status = fmt.Sprintf("%d Errors", count)
+			if count > 0 {
+				statusError = fmt.Errorf("%d Errors", count)
+			}
 		}
-		mux.Unlock()
 
 		lastRequest = time.Now()
 	}
-	return status
+	return status, healthy, statusError
 }

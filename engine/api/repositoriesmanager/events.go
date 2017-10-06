@@ -13,8 +13,8 @@ import (
 )
 
 //EventsStatus returns info about length of events queue
-func EventsStatus(store cache.Store) string {
-	return fmt.Sprintf("%d", store.QueueLen("events_repositoriesmanager"))
+func EventsStatus(store cache.Store) int {
+	return store.QueueLen("events_repositoriesmanager")
 }
 
 //ReceiveEvents has to be launched as a goroutine.
