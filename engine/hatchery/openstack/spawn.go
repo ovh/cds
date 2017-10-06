@@ -11,7 +11,6 @@ import (
 
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -38,8 +37,8 @@ func (h *HatcheryOpenstack) SpawnWorker(model *sdk.Model, jobID int64, requireme
 		return "", fmt.Errorf("hatchery disconnected from engine")
 	}
 
-	if len(h.getServers()) == viper.GetInt("max-worker") {
-		log.Debug("MaxWorker limit (%d) reached", viper.GetInt("max-worker"))
+	if len(h.getServers()) == h.Configuration().Provision.MaxWorker {
+		log.Debug("MaxWorker limit (%d) reached", h.Configuration().Provision.MaxWorker)
 		return "", nil
 	}
 
@@ -66,23 +65,23 @@ func (h *HatcheryOpenstack) SpawnWorker(model *sdk.Model, jobID int64, requireme
 	}
 
 	graylog := ""
-	if viper.GetString("worker_graylog_host") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_HOST=%s ", viper.GetString("worker_graylog_host"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_HOST=%s ", h.Configuration().Provision.WorkerLogsOptions.Graylog.Host)
 	}
-	if viper.GetString("worker_graylog_port") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_PORT=%s ", viper.GetString("worker_graylog_port"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_PORT=%d ", h.Configuration().Provision.WorkerLogsOptions.Graylog.Port)
 	}
-	if viper.GetString("worker_graylog_extra_key") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_KEY=%s ", viper.GetString("worker_graylog_extra_key"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_KEY=%s ", h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey)
 	}
-	if viper.GetString("worker_graylog_extra_value") != "" {
-		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s ", viper.GetString("worker_graylog_extra_value"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
+		graylog += fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s ", h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue)
 	}
 
 	grpc := ""
-	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
-		grpc += fmt.Sprintf("export CDS_GRPC_API=%s ", viper.GetString("grpc_api"))
-		grpc += fmt.Sprintf("export CDS_GRPC_INSECURE=%t ", viper.GetBool("grpc_insecure"))
+	if h.Configuration().API.GRPC.URL != "" && model.Communication == sdk.GRPC {
+		grpc += fmt.Sprintf("export CDS_GRPC_API=%s ", h.Configuration().API.GRPC.URL)
+		grpc += fmt.Sprintf("export CDS_GRPC_INSECURE=%t ", h.Configuration().API.GRPC.Insecure)
 	}
 
 	udataEnd := `
@@ -146,9 +145,9 @@ export CDS_TTL={{.TTL}}
 		Graylog      string
 		Grpc         string
 	}{
-		API:          viper.GetString("api"),
+		API:          h.Configuration().API.HTTP.URL,
 		Name:         name,
-		Key:          viper.GetString("token"),
+		Key:          h.Configuration().API.Token,
 		Model:        model.ID,
 		Hatchery:     h.hatch.ID,
 		HatcheryName: h.hatch.Name,
