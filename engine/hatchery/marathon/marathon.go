@@ -59,7 +59,7 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	}
 
 	if hconfig.MarathonURL == "" {
-		return fmt.Errorf("Marathon Host is mandatory")
+		return fmt.Errorf("Marathon URL is mandatory")
 	}
 
 	if hconfig.MarathonIDPrefix == "" {

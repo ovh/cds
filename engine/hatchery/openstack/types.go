@@ -15,37 +15,37 @@ import (
 
 // HatcheryConfiguration is the configuration for hatchery
 type HatcheryConfiguration struct {
-	hatchery.CommonConfiguration `toml:"commonConfiguration"`
+	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration"`
 
 	// Tenant openstack-tenant
-	Tenant string `toml:"tenant" default:"" commented:"true" comment:"Openstack tenant (string)"`
+	Tenant string `mapstructure:"tenant" toml:"tenant" default:"" commented:"true" comment:"Openstack tenant (string)"`
 
 	// User  openstack-user
-	User string `toml:"user" default:"" commented:"true" comment:"Openstack User"`
+	User string `mapstructure:"user" toml:"user" default:"" commented:"true" comment:"Openstack User"`
 
 	// Address  openstack-auth-endpoint
-	Address string `toml:"address" default:"https://auth.cloud.ovh.net/v2.0" commented:"true" comment:"Opentack Auth Endpoint"`
+	Address string `mapstructure:"address" toml:"address" default:"https://auth.cloud.ovh.net/v2.0" commented:"true" comment:"Opentack Auth Endpoint"`
 
 	// Password openstack-password
-	Password string `toml:"password" default:"" commented:"true" comment:"Openstack Password"`
+	Password string `mapstructure:"password" toml:"password" default:"" commented:"true" comment:"Openstack Password"`
 
 	// Region openstack-region
-	Region string `toml:"region" default:"" commented:"true" comment:"Openstack Region"`
+	Region string `mapstructure:"region" toml:"region" default:"" commented:"true" comment:"Openstack Region"`
 
 	// NetworkString openstack-network
-	NetworkString string `toml:"networkString" default:"Ext-Net" commented:"true" comment:"Hatchery will use this Network to spawn CDS Worker (Virtual Machine)."`
+	NetworkString string `mapstructure:"networkString" toml:"networkString" default:"Ext-Net" commented:"true" comment:"Hatchery will use this Network to spawn CDS Worker (Virtual Machine)."`
 
 	// IPRange IP Range
-	IPRange string `toml:"iprange" default:"" commented:"true" comment:"Facultative. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).\nIf not set, it will get an address from the neutron service"`
+	IPRange string `mapstructure:"iprange" toml:"iprange" default:"" commented:"true" comment:"Facultative. IP Range for spawned workers. \n Format: a.a.a.a/b,c.c.c.c/e \n Hatchery will use an IP from this range to create Virtual Machine (Fixed IP Attribute).\nIf not set, it will get an address from the neutron service"`
 
 	// WorkerTTL Worker TTL (minutes)
-	WorkerTTL int `toml:"workerTTL" default:"30" commented:"true" comment:"Worker TTL (minutes)"`
+	WorkerTTL int `mapstructure:"workerTTL" toml:"workerTTL" default:"30" commented:"true" comment:"Worker TTL (minutes)"`
 
 	// DisableCreateImage if true: hatchery does not create openstack image when a worker model is updated
-	DisableCreateImage bool `toml:"disableCreateImage" default:"false" commented:"true" comment:"if true: hatchery does not create openstack image when a worker model is updated"`
+	DisableCreateImage bool `mapstructure:"disableCreateImage" toml:"disableCreateImage" default:"false" commented:"true" comment:"if true: hatchery does not create openstack image when a worker model is updated"`
 
 	// CreateImageTimeout max wait for create an openstack image (in seconds)
-	CreateImageTimeout int `toml:"createImageTimeout" default:"180" commented:"true" comment:"max wait for create an openstack image (in seconds)"`
+	CreateImageTimeout int `mapstructure:"createImageTimeout" toml:"createImageTimeout" default:"180" commented:"true" comment:"max wait for create an openstack image (in seconds)"`
 }
 
 // HatcheryOpenstack spawns instances of worker model with type 'ISO'
