@@ -64,11 +64,13 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 		e, errn := Next(tx, s)
 		if errn != nil {
 			//Nothing to compute
+			log.Error("Run> Error while compute next execution: %s", errn)
 			_ = tx.Rollback()
 			continue
 		}
 		//Insert it
 		if err := InsertExecution(tx, e); err != nil {
+			log.Error("Run> Error while insert Execution: %s", err)
 			_ = tx.Rollback()
 			continue
 		}
