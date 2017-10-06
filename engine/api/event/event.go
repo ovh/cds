@@ -19,7 +19,7 @@ var brokers []Broker
 type Broker interface {
 	initialize(options interface{}) (Broker, error)
 	sendEvent(event *sdk.Event) error
-	status() string
+	status() (string, string, bool, error)
 	close()
 }
 
@@ -79,15 +79,11 @@ func Close() {
 }
 
 // Status returns Event status
-func Status() string {
-	o := ""
+func Status() (string, string, bool, error) {
+	//For the moment only broker is supported, this may change with other brokers
 	for _, b := range brokers {
-		o += b.status() + " "
+		return b.status()
 	}
 
-	if o == "" {
-		o = "⚠ "
-	}
-
-	return o
+	return "Events", "No broker defined", true, nil
 }

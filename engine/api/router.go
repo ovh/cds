@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"sync/atomic"
 	"time"
 
 	"github.com/gorilla/handlers"
@@ -30,8 +31,10 @@ type Router struct {
 	Middlewares      []Middleware
 	mapRouterConfigs map[string]*RouterConfig
 	panicked         bool
-	nbPanic          int
-	lastPanic        *time.Time
+	nbPanic          int64
+	lastPanic        time.Time
+	nbCall           int64
+	nbCallInError    int64
 }
 
 // Handler defines the HTTP handler used in CDS engine
@@ -119,19 +122,18 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 
 				//Checking if there are two much panics in two minutes
 				//If last panic was more than 2 minutes ago, reinit the panic counter
-				if r.lastPanic == nil {
+				if r.lastPanic.IsZero() {
 					r.nbPanic = 0
 				} else {
-					dur := time.Since(*r.lastPanic)
+					dur := time.Since(r.lastPanic)
 					if dur.Minutes() > float64(2) {
 						log.Info("[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
-						r.nbPanic = 0
+						atomic.SwapInt64(&r.nbPanic, 0)
 					}
 				}
 
-				r.nbPanic++
-				now := time.Now()
-				r.lastPanic = &now
+				atomic.AddInt64(&r.nbPanic, 1)
+				r.lastPanic = time.Now()
 				//If two much panic, change the status of /mon/status with panicked = true
 				if r.nbPanic > nbPanicsBeforeFail {
 					r.panicked = true
@@ -198,6 +200,8 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 			return
 		}
 
+		atomic.AddInt64(&r.nbCall, 1)
+
 		//Log request
 		start := time.Now()
 		defer func() {
@@ -216,11 +220,13 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 			ctx, err = m(ctx, w, req, rc)
 			if err != nil {
 				WriteError(w, req, err)
+				atomic.AddInt64(&r.nbCallInError, 1)
 				return
 			}
 		}
 
 		if err := rc.Handler(ctx, w, req); err != nil {
+			atomic.AddInt64(&r.nbCallInError, 1)
 			WriteError(w, req, err)
 			return
 		}

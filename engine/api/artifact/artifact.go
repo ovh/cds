@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -12,6 +14,27 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+var totalSize struct {
+	sync.Mutex
+	size int64
+	last time.Time
+}
+
+// TotalSize returns sum of all artifact size
+func TotalSize(db gorp.SqlExecutor) int64 {
+	totalSize.Lock()
+	defer totalSize.Unlock()
+	if totalSize.last.Add(2 * time.Minute).Before(time.Now()) {
+
+		i, err := db.SelectInt("select sum(size) from artifact")
+		if err == nil {
+			totalSize.size = i
+			totalSize.last = time.Now()
+		}
+	}
+	return totalSize.size
+}
 
 // LoadArtifactByHash retrieves an artiface using its download hash
 func LoadArtifactByHash(db gorp.SqlExecutor, hash string) (*sdk.Artifact, error) {

@@ -62,11 +62,11 @@ func NewOpenstackStore(c context.Context, address, user, password, tenant, regio
 }
 
 //Status return Openstack storage status
-func (ops *OpenstackStore) Status() string {
+func (ops *OpenstackStore) Status() (string, string, bool, error) {
 	if err := account(ops.token.ID, ops.endpoint); err != nil {
-		return "Openstack KO (" + err.Error() + ")"
+		return "Openstack", ops.containerprefix, false, err
 	}
-	return "Openstack OK"
+	return "Openstack", ops.containerprefix, true, nil
 }
 
 // Delete should delete on openstack

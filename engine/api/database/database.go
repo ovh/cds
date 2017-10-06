@@ -128,16 +128,22 @@ func Init(user, password, name, host string, port int, sslmode string, timeout, 
 }
 
 // Status returns database driver and status in a printable string
-func (f *DBConnectionFactory) Status() string {
+func (f *DBConnectionFactory) Status() (string, string, bool, error) {
+	label := f.dbDriver + ": " + f.dbName + "@" + f.dbHost
 	if f.db == nil {
-		return fmt.Sprintf("Database: %s KO (no connection)", f.dbDriver)
+		return label, "Database unavailabe", false, fmt.Errorf("Database unavailable")
 	}
 
 	if err := f.db.Ping(); err != nil {
-		return fmt.Sprintf("Database: %s KO (%s)", f.dbDriver, err)
+		return label, err.Error(), false, err
 	}
 
-	return fmt.Sprintf("Database: %s OK (%d conns)", f.dbDriver, f.db.Stats().OpenConnections)
+	var warningErr error
+	if f.db.Stats().OpenConnections > f.dbMaxConn/2 {
+		warningErr = fmt.Errorf("%d/%d opened connections", f.db.Stats().OpenConnections, f.dbMaxConn)
+	}
+
+	return label, fmt.Sprintf("%d/%d conns", f.db.Stats().OpenConnections, f.dbMaxConn), true, warningErr
 }
 
 // Close closes the database, releasing any open resources.
