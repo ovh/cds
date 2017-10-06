@@ -112,7 +112,7 @@ func LoadPastExecutions(db gorp.SqlExecutor, appID, pipID int64) ([]sdk.Reposito
 //LoadPendingExecutions loads all poller execution
 func LoadPendingExecutions(db gorp.SqlExecutor) ([]sdk.RepositoryPollerExecution, error) {
 	as := []RepositoryPollerExecution{}
-	if _, err := db.Select(&as, "select * from poller_execution where executed = false and execution_planned_date <=  now()"); err != nil {
+	if _, err := db.Select(&as, "select * from poller_execution where executed = false and execution_planned_date <= now()"); err != nil {
 		return nil, sdk.WrapError(err, "poller.LoadPendingExecutions> Unable to load poller execution execution : %T", err)
 	}
 	ps := []sdk.RepositoryPollerExecution{}

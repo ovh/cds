@@ -76,6 +76,9 @@ func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSc
 			log.Warning("ExecuterRun> %s", err)
 			return nil, err
 		}
+
+		// wait, this avoid to re-run this job in another instance of API
+		time.Sleep(1 * time.Second)
 	}
 
 	return exs, nil
