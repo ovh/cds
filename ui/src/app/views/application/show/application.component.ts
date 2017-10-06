@@ -64,6 +64,12 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         version: ' '
     };
 
+    // queryparam for breadcrum
+    workflowName: string;
+    workflowNum: string;
+    workflowNodeRun: string;
+    workflowPipeline: string;
+
     constructor(private _applicationStore: ApplicationStore, private _route: ActivatedRoute,
                 private _router: Router, private _authStore: AuthentificationStore,
                 private _toast: ToastService, public _translate: TranslateService) {
@@ -82,6 +88,10 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                this.startWorker(this.project.key);
            }
         });
+        this.workflowName = this._route.snapshot.queryParams['workflow'];
+        this.workflowNum = this._route.snapshot.queryParams['run'];
+        this.workflowNodeRun = this._route.snapshot.queryParams['node'];
+        this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
         this._route.params.subscribe(params => {
             let key = params['key'];
             let appName = params['appName'];
