@@ -15,7 +15,6 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
