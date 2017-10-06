@@ -15,7 +15,7 @@ import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectModule} from '../project.module';
 import {SharedModule} from '../../../shared/shared.module';
 import {ProjectShowComponent} from './project.component';
-import {ActivatedRoute} from '@angular/router';
+import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {Observable} from 'rxjs/Rx';
 import {Project} from '../../../model/project.model';
 import {Map} from 'immutable';
@@ -177,5 +177,10 @@ class MockActivatedRoutes extends ActivatedRoute {
         this.params = Observable.of({key: 'key1'});
 
         this.queryParams = Observable.of({tab: 'application'});
+        this.snapshot = new MockActivatedRouteSnapshot();
     }
+}
+
+class MockActivatedRouteSnapshot extends ActivatedRouteSnapshot {
+
 }
