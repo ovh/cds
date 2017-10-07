@@ -350,7 +350,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 		if w.Name == "" {
 			// if no name on api, and worker create less than 10 seconds, don't kill it
 			if time.Now().Unix()-10 < workerCmd.created.Unix() {
-				log.Info("killAwolWorkers> Avoid kill baby worker %s born at %s", name, workerCmd.created)
+				log.Debug("killAwolWorkers> Avoid killing baby worker %s born at %s", name, workerCmd.created)
 				continue
 			}
 			w.Name = name
