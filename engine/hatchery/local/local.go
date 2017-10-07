@@ -119,14 +119,13 @@ func (h *HatcheryLocal) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 
 // killWorker kill a local process
 func (h *HatcheryLocal) killWorker(worker sdk.Worker) error {
-	for name, cmd := range h.workers {
+	for name, workerCmd := range h.workers {
 		if worker.Name == name {
 			log.Info("KillLocalWorker> Killing %s", worker.Name)
-			return cmd.Process.Kill()
+			return workerCmd.cmd.Process.Kill()
 		}
 	}
-
-	return fmt.Errorf("Worker not found")
+	return fmt.Errorf("Worker %s not found", worker.Name)
 }
 
 // SpawnWorker starts a new worker process
@@ -137,15 +136,15 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 		return "", fmt.Errorf("Max capacity reached (%d)", h.Config.Provision.MaxWorker)
 	}
 
-	if jobID > 0 {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wm.Name, wm.Image, jobID, logInfo)
-	} else {
-		log.Info("spawnWorker> spawning worker %s (%s) - %s", wm.Name, wm.Image, logInfo)
-	}
-
 	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomName(0))
 	if registerOnly {
 		wName = "register-" + wName
+	}
+
+	if jobID > 0 {
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wName, wm.Image, jobID, logInfo)
+	} else {
+		log.Info("spawnWorker> spawning worker %s (%s) - %s", wName, wm.Image, logInfo)
 	}
 
 	var args []string
@@ -175,6 +174,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 	}
 
 	args = append(args, "--single-use")
+	args = append(args, "--force-exit")
 
 	if jobID > 0 {
 		args = append(args, fmt.Sprintf("--booked-job-id=%d", jobID))
@@ -199,7 +199,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 		return "", err
 	}
 	h.Lock()
-	h.workers[wName] = cmd
+	h.workers[wName] = workerCmd{cmd: cmd, created: time.Now()}
 	h.Unlock()
 
 	// Wait in a goroutine so that when process exits, Wait() update cmd.ProcessState
@@ -256,7 +256,7 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 
 // Init register local hatchery with its worker model
 func (h *HatcheryLocal) Init() error {
-	h.workers = make(map[string]*exec.Cmd)
+	h.workers = make(map[string]workerCmd)
 
 	genname := hatchery.GenerateName("local", h.Configuration().Name)
 
@@ -302,9 +302,9 @@ func (h *HatcheryLocal) localWorkerIndexCleanup() {
 	defer h.Unlock()
 
 	needToDeleteWorkers := []string{}
-	for name, cmd := range h.workers {
+	for name, workerCmd := range h.workers {
 		// check if worker is still alive
-		if cmd.ProcessState != nil && cmd.ProcessState.Exited() {
+		if workerCmd.cmd.ProcessState != nil && workerCmd.cmd.ProcessState.Exited() {
 			needToDeleteWorkers = append(needToDeleteWorkers, name)
 		}
 	}
@@ -312,12 +312,11 @@ func (h *HatcheryLocal) localWorkerIndexCleanup() {
 	for _, name := range needToDeleteWorkers {
 		delete(h.workers, name)
 	}
-
 }
 
 func (h *HatcheryLocal) startKillAwolWorkerRoutine() {
 	for {
-		time.Sleep(30 * time.Second)
+		time.Sleep(5 * time.Second)
 		err := h.killAwolWorkers()
 		if err != nil {
 			log.Warning("Cannot kill awol workers: %s", err)
@@ -337,7 +336,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 	}
 
 	killedWorkers := []string{}
-	for name := range h.workers {
+	for name, workerCmd := range h.workers {
 		// look for worker in apiworkers
 		var w sdk.Worker
 		for i := range apiworkers {
@@ -346,15 +345,21 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 				break
 			}
 		}
+
 		// Worker not found on api side. kill it
 		if w.Name == "" {
+			// if no name on api, and worker create less than 10 seconds, don't kill it
+			if time.Now().Unix()-10 < workerCmd.created.Unix() {
+				log.Info("killAwolWorkers> Avoid kill baby worker %s born at %s", name, workerCmd.created)
+				continue
+			}
 			w.Name = name
 			log.Info("Killing AWOL worker %s", w.Name)
 			if err := h.killWorker(w); err != nil {
 				log.Warning("Error killing worker %s :%s", name, err)
 			}
 			killedWorkers = append(killedWorkers, name)
-			break
+			continue
 		}
 		// Worker is disabled. kill it
 		if w.Status == sdk.StatusDisabled {
@@ -364,7 +369,7 @@ func (h *HatcheryLocal) killAwolWorkers() error {
 				log.Warning("Error killing worker %s :%s", name, err)
 			}
 			killedWorkers = append(killedWorkers, name)
-			break
+			continue
 		}
 	}
 

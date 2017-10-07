@@ -3,6 +3,7 @@ package local
 import (
 	"os/exec"
 	"sync"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -21,8 +22,13 @@ type HatcheryLocal struct {
 	Config HatcheryConfiguration
 	sync.Mutex
 	hatch   *sdk.Hatchery
-	workers map[string]*exec.Cmd
+	workers map[string]workerCmd
 	client  cdsclient.Interface
 	os      string
 	arch    string
+}
+
+type workerCmd struct {
+	cmd     *exec.Cmd
+	created time.Time
 }
