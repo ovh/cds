@@ -10,6 +10,8 @@ import (
 	"github.com/Masterminds/sprig"
 )
 
+var interpolateRegex = regexp.MustCompile("{{(\\.[a-zA-Z0-9._|\\s]+)}}")
+
 // Interpolate returns interpolated input with vars
 func Interpolate(input string, vars map[string]string) (string, error) {
 	data := map[string]string{}
@@ -30,10 +32,13 @@ func Interpolate(input string, vars map[string]string) (string, error) {
 
 	// in input, replace {{.cds.foo.bar}} per {{ default "{{.cds.foo.bar}}" .cds.foo.bar}}
 	// t.Execute will call "default" function, documented on http://masterminds.github.io/sprig/defaults.html
-	re := regexp.MustCompile("{{\\.(.*)}}")
-	sm := re.FindStringSubmatch(input)
+	sm := interpolateRegex.FindAllStringSubmatch(input, -1)
 	if len(sm) > 0 {
-		input = strings.Replace(input, sm[0], "{{ default \"{{."+sm[1]+"}}\" ."+sm[1]+"}}", -1)
+		for i := 0; i < len(sm); i++ {
+			for j := 1; j < len(sm[i]); j++ {
+				input = strings.Replace(input, sm[i][j], " default \"{{"+sm[i][j]+"}}\" "+sm[i][j]+" ", -1)
+			}
+		}
 	}
 
 	t, err := template.New("input").Funcs(sprig.FuncMap()).Parse(input)
