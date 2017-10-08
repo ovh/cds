@@ -61,6 +61,14 @@ func TestInterpolate(t *testing.T) {
 			},
 			want: "{{.cds.app.bar}} a VALUEA, a Valueb.valuec-{{.cds.app.foo}}",
 		},
+		{
+			name: "two same unknown",
+			args: args{
+				input: `A:{{.cds.env.myenvpassword}} B:{{.cds.env.myenvpassword}}`,
+				vars:  map[string]string{},
+			},
+			want: `A:{{.cds.env.myenvpassword}} B:{{.cds.env.myenvpassword}}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

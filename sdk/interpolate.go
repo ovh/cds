@@ -34,9 +34,15 @@ func Interpolate(input string, vars map[string]string) (string, error) {
 	// t.Execute will call "default" function, documented on http://masterminds.github.io/sprig/defaults.html
 	sm := interpolateRegex.FindAllStringSubmatch(input, -1)
 	if len(sm) > 0 {
+		alreadyReplaced := map[string]string{}
 		for i := 0; i < len(sm); i++ {
-			for j := 1; j < len(sm[i]); j++ {
-				input = strings.Replace(input, sm[i][j], " default \"{{"+sm[i][j]+"}}\" "+sm[i][j]+" ", -1)
+			if len(sm[i]) > 0 {
+				// alreadyReplaced: check if var is already replaced.
+				// see test "two same unknown" on InterpolateTest
+				if _, ok := alreadyReplaced[sm[i][1]]; !ok {
+					input = strings.Replace(input, sm[i][1], " default \"{{"+sm[i][1]+"}}\" "+sm[i][1]+" ", -1)
+					alreadyReplaced[sm[i][1]] = sm[i][1]
+				}
 			}
 		}
 	}
