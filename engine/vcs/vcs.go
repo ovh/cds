@@ -84,7 +84,6 @@ func (s *Service) Serve(c context.Context) error {
 	var errCache error
 	s.Cache, errCache = cache.New(s.Cfg.Cache.Redis.Host, s.Cfg.Cache.Redis.Password, s.Cfg.Cache.TTL)
 	if errCache != nil {
-
 		return errCache
 	}
 
@@ -102,15 +101,15 @@ func (s *Service) Serve(c context.Context) error {
 	go func() {
 		select {
 		case <-ctx.Done():
-			log.Info("Hooks> Shutdown HTTP Server")
+			log.Info("VCS> Shutdown HTTP Server")
 			server.Shutdown(ctx)
 		}
 	}()
 
 	//Start the http server
-	log.Info("Hooks> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
+	log.Info("VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("Hooks> Cannot start cds-hooks: %s", err)
+		log.Fatalf("VCS> Cannot start cds-hooks: %s", err)
 	}
 
 	return ctx.Err()
