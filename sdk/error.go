@@ -230,7 +230,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrPipelineUsedByWorkflow.ID:                "pipeline still used by a workflow",
 	ErrMethodNotAllowed.ID:                      "Method not allowed",
 	ErrInvalidNodeNamePattern.ID:                "Node name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
-	ErrWorkflowNodeParentNotRun.ID:              "Cannot run a node if his parents have never been launched",
+	ErrWorkflowNodeParentNotRun.ID:              "Cannot run a node if their parents have never been launched",
 }
 
 var errorsFrench = map[int]string{
@@ -340,7 +340,7 @@ var errorsFrench = map[int]string{
 	ErrPipelineUsedByWorkflow.ID:                "le pipeline est utilisé par un workflow",
 	ErrMethodNotAllowed.ID:                      "La méthode n'est pas autorisée",
 	ErrInvalidNodeNamePattern.ID:                "Le nom du noeud du workflow doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
-	ErrWorkflowNodeParentNotRun.ID:              "Il est interdit de lancer un noeud, si ses parents n'ont jamais été lancés",
+	ErrWorkflowNodeParentNotRun.ID:              "Il est interdit de lancer un noeuds si ses parents n'ont jamais été lancés",
 }
 
 var errorsLanguages = []map[int]string{

@@ -40,11 +40,11 @@ func TestWorkflowNode_AncestorsWithTriggers(t *testing.T) {
 	}
 
 	ids := node4.Ancestors(&w, true)
-	fmt.Printf("Deep node4.Ancestors: %v\n", ids)
+	t.Logf("Deep node4.Ancestors: %v\n", ids)
 	assert.Equal(t, 3, len(ids))
 
 	ids = node4.Ancestors(&w, false)
-	fmt.Printf("Not deep node4.Ancestors: %v\n", ids)
+	t.Logf("Not deep node4.Ancestors: %v\n", ids)
 	assert.Equal(t, 1, len(ids))
 	assert.Equal(t, 3, ids[0])
 }
@@ -85,11 +85,11 @@ func TestWorkflowNode_AncestorsDirectAfterJoin(t *testing.T) {
 	}
 
 	ids := node4.Ancestors(&w, true)
-	fmt.Printf("Deep node4.Ancestors: %v\n", ids)
+	t.Logf("Deep node4.Ancestors: %v\n", ids)
 	assert.Equal(t, 3, len(ids))
 
 	ids = node4.Ancestors(&w, false)
-	fmt.Printf("Not deep node4.Ancestors: %v\n", ids)
+	t.Logf("Not deep node4.Ancestors: %v\n", ids)
 	assert.Equal(t, 2, len(ids))
 
 	if !((ids[0] == 2 && ids[1] == 3) || (ids[0] == 3 && ids[1] == 2)) {
@@ -140,11 +140,11 @@ func TestWorkflowNode_AncestorsAfterJoin(t *testing.T) {
 	}
 
 	ids := node5.Ancestors(&w, true)
-	fmt.Printf("Deep node5.Ancestors: %v\n", ids)
+	t.Logf("Deep node5.Ancestors: %v\n", ids)
 	assert.Equal(t, 4, len(ids))
 
 	ids = node5.Ancestors(&w, false)
-	fmt.Printf("Not deep node5.Ancestors: %v\n", ids)
+	t.Logf("Not deep node5.Ancestors: %v\n", ids)
 	assert.Equal(t, 1, len(ids))
 	assert.Equal(t, int64(4), ids[0])
 }
