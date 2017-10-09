@@ -317,50 +317,79 @@ func (n *WorkflowNode) Nodes() []int64 {
 	return res
 }
 
-func ancestor(id int64, node *WorkflowNode) ([]int64, bool) {
+func ancestor(id int64, node *WorkflowNode, deep bool) (map[int64]bool, bool) {
+	res := map[int64]bool{}
 	if id == node.ID {
-		return nil, true
+		return res, true
 	}
 	for _, t := range node.Triggers {
-		if t.WorkflowDestNodeID == id {
-			return []int64{node.ID}, true
+		if t.WorkflowDestNode.ID == id {
+			res[node.ID] = true
+			return res, true
 		}
-		ids, ok := ancestor(id, &t.WorkflowDestNode)
+		ids, ok := ancestor(id, &t.WorkflowDestNode, deep)
 		if ok {
-			return append(ids, node.ID), true
+			if len(ids) == 1 || deep {
+				for k := range ids {
+					res[k] = true
+				}
+			}
+			if deep {
+				res[node.ID] = true
+			}
+			return res, true
 		}
 	}
-	return nil, false
+	return res, false
 }
 
-//Ancestors returns node is of all node ancestors
-func (n *WorkflowNode) Ancestors(w *Workflow) []int64 {
+// Ancestors returns  all node ancestors if deep equal true, and only his direct ancestors if deep equal false
+func (n *WorkflowNode) Ancestors(w *Workflow, deep bool) []int64 {
 	if n == nil {
 		return nil
 	}
-	res := []int64{}
-	res, ok := ancestor(n.ID, w.Root)
 
-	if ok {
-		return res
-	}
+	res, ok := ancestor(n.ID, w.Root, deep)
 
-	for _, j := range w.Joins {
-		for _, t := range j.Triggers {
-			res, ok := ancestor(n.ID, &t.WorkflowDestNode)
-			if ok {
-				for _, id := range j.SourceNodeIDs {
-					node := w.GetNode(id)
-					if node != nil {
-						ancerstorRes := node.Ancestors(w)
-						res = append(res, ancerstorRes...)
+	if !ok {
+	joinLoop:
+		for _, j := range w.Joins {
+			for _, t := range j.Triggers {
+				resAncestor, ok := ancestor(n.ID, &t.WorkflowDestNode, deep)
+				if ok {
+					if len(resAncestor) == 1 || deep {
+						for id := range resAncestor {
+							res[id] = true
+						}
 					}
+
+					if len(resAncestor) == 0 || deep {
+						for _, id := range j.SourceNodeIDs {
+							res[id] = true
+							if deep {
+								node := w.GetNode(id)
+								if node != nil {
+									ancerstorRes := node.Ancestors(w, deep)
+									for _, id := range ancerstorRes {
+										res[id] = true
+									}
+								}
+							}
+						}
+					}
+					break joinLoop
 				}
-				return res
 			}
 		}
 	}
-	return nil
+
+	keys := make([]int64, len(res))
+	i := 0
+	for k := range res {
+		keys[i] = k
+		i++
+	}
+	return keys
 }
 
 //TriggersID returns a slides of triggers IDs
