@@ -138,6 +138,7 @@ func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 		containersCache.list = s
 		containersCache.mu.Unlock()
 
+		log.Debug("getContainers> %s containers on this host", len(s))
 		for _, v := range s {
 			log.Debug("getContainers> container ID:%s names:%+v image:%s created:%d state:%s, status:%s", v.ID, v.Names, v.Image, v.Created, v.State, v.Status)
 		}
