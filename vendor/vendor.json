@@ -23,6 +23,12 @@
 			"revisionTime": "2016-07-17T15:07:09Z"
 		},
 		{
+			"checksumSHA1": "3w1n33TKtV0aoqU6skNPiOiyX3g=",
+			"path": "github.com/Masterminds/semver",
+			"revision": "15d8430ab86497c5c0da827b748823945e1cf1e1",
+			"revisionTime": "2017-10-04T14:25:31Z"
+		},
+		{
 			"checksumSHA1": "B+j14FiZi1hdMphadHis8T+vsRY=",
 			"path": "github.com/Masterminds/sprig",
 			"revision": "efda631a76d70875162cdc25ffa0d0164bf69758",
@@ -45,6 +51,12 @@
 			"path": "github.com/Sirupsen/logrus",
 			"revision": "10f801ebc38b33738c9d17d50860f484a0988ff5",
 			"revisionTime": "2017-03-17T14:32:14Z"
+		},
+		{
+			"checksumSHA1": "X0xGt0e0IkZeviF+pFRlpHP+xkE=",
+			"path": "github.com/aokoli/goutils",
+			"revision": "3391d3790d23d03408670993e957e8f408993c34",
+			"revisionTime": "2017-05-31T11:00:25Z"
 		},
 		{
 			"checksumSHA1": "mEPx03tDisj6nvPDxzIeb1gt4xg=",
@@ -704,6 +716,18 @@
 			"path": "github.com/howeyc/gopass",
 			"revision": "66487b23f2880ba32e185121d2cd51a338ea069a",
 			"revisionTime": "2016-03-03T20:01:16Z"
+		},
+		{
+			"checksumSHA1": "mWeNctRQE955ZxV4HAx7KCDtVQE=",
+			"path": "github.com/huandu/xstrings",
+			"revision": "d6590c0c31d16526217fa60fbd2067f7afcd78c5",
+			"revisionTime": "2017-09-08T06:10:42Z"
+		},
+		{
+			"checksumSHA1": "66lykxpWgSmQodnhkADqn6tnroQ=",
+			"path": "github.com/imdario/mergo",
+			"revision": "e3000cb3d28c72b837601cac94debd91032d19fe",
+			"revisionTime": "2017-06-20T10:47:01Z"
 		},
 		{
 			"checksumSHA1": "YjZiQ5N552dJ7GpJ2P4TTRu4PKI=",
@@ -1429,6 +1453,12 @@
 			"path": "golang.org/x/crypto/openpgp/s2k",
 			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
 			"revisionTime": "2016-10-19T17:38:27Z"
+		},
+		{
+			"checksumSHA1": "dHh6VeHcbNg11miGjGEl8LbPe7w=",
+			"path": "golang.org/x/crypto/scrypt",
+			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"revisionTime": "2017-09-30T17:45:11Z"
 		},
 		{
 			"checksumSHA1": "LlElMHeTC34ng8eHzjvtUhAgrr8=",
