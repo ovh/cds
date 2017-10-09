@@ -228,10 +228,18 @@ func (api *API) runPipelineWithLastParentHandler() Handler {
 		//Branch
 		branch, remote := pipeline.GetVCSInfosInParams(request.Params)
 
-		builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), request.ParentApplicationID, request.ParentPipelineID, envID, 1,
-			pipeline.LoadPipelineBuildOpts.WithStatus(string(sdk.StatusSuccess)),
+		opts := []pipeline.ExecOptionFunc{
+			pipeline.LoadPipelineBuildOpts.WithStatus(sdk.StatusSuccess.String()),
 			pipeline.LoadPipelineBuildOpts.WithBranchName(branch),
-			pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+		}
+
+		if remote == "" {
+			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(remote))
+		} else {
+			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+		}
+
+		builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), request.ParentApplicationID, request.ParentPipelineID, envID, 1, opts...)
 
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoParentBuildFound, "runPipelineWithLastParentHandler> Unable to find any successful pipeline build")
