@@ -371,6 +371,7 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 	return pbs, nil
 }
 
+// LoadPipelineBuildByID Load a pipeline build for a given id
 func LoadPipelineBuildByID(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuild, error) {
 	whereCondition := `
 		WHERE pb.id = $1
@@ -384,6 +385,7 @@ func LoadPipelineBuildByID(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuild, e
 	return scanPipelineBuild(row)
 }
 
+// LoadPipelineBuildByBuildNumber load a pipeline build for a given build number, pipeline ID, application ID, env ID
 func LoadPipelineBuildByBuildNumber(db gorp.SqlExecutor, buildNumber, pipID, appID, envID int64) (*sdk.PipelineBuild, error) {
 	whereCondition := `
 		WHERE pb.build_number = $1 AND pb.pipeline_id = $2 AND pb.application_id = $3 AND pb.environment_id = $4
@@ -1603,6 +1605,7 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
 	return nil
 }
 
+// GetVCSInfosInParams return the branch and the repository found in pipeline parameters
 func GetVCSInfosInParams(params []sdk.Parameter) (string, string) {
 	var branch, remote string
 	for _, param := range params {

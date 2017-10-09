@@ -325,6 +325,7 @@ func (g *GithubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error
 	return branchResult, nil
 }
 
+// PullRequests fetch all the pull request for a repository
 func (g *GithubClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) {
 	var pullRequests = []PullRequest{}
 	var nextPage = "/repos/" + fullname + "/pulls"

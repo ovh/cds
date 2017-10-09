@@ -157,6 +157,7 @@ func (s *StashClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 	return branches, nil
 }
 
+// PullRequests fetch all the pull request for a repository
 func (s *StashClient) PullRequests(string) ([]sdk.VCSPullRequest, error) {
 	return []sdk.VCSPullRequest{}, nil
 }

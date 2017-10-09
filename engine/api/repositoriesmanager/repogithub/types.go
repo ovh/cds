@@ -424,6 +424,7 @@ func (r *RateLimit) String() string {
 	return fmt.Sprintf("Limit: %d - Remaining: %d - Reset: %d", r.Rate.Limit, r.Rate.Remaining, r.Rate.Reset)
 }
 
+// Cursor represents cursor from github api
 type Cursor struct {
 	Label string     `json:"label"`
 	Ref   string     `json:"ref"`
@@ -432,6 +433,7 @@ type Cursor struct {
 	Repo  Repository `json:"repo"`
 }
 
+// PullRequest represents pull request from github api
 type PullRequest struct {
 	URL                 string    `json:"url"`
 	ID                  int       `json:"id"`
