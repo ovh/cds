@@ -428,15 +428,17 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 
 	// hatcherySwarm.ratioService: Percent reserved for spawning worker with service requirement
 	// if no link -> we need to check ratioService
-	if len(links) == 0 && len(cs) > 0 {
+	if len(links) == 0 {
 		if h.Config.RatioService >= 100 {
 			log.Debug("CanSpawn> ratioService 100 by conf - no spawn worker without CDS Service")
 			return false
 		}
-		percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
-		if percentFree <= h.Config.RatioService {
-			log.Debug("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
-			return false
+		if len(cs) > 0 {
+			percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
+			if percentFree <= h.Config.RatioService {
+				log.Debug("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
+				return false
+			}
 		}
 	}
 
