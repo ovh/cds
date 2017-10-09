@@ -1,0 +1,84 @@
+package github
+
+import (
+	"reflect"
+
+	"github.com/ovh/cds/sdk"
+)
+
+func arrayContains(array interface{}, s interface{}) bool {
+	b := sdk.InterfaceSlice(array)
+	for _, i := range b {
+		if reflect.DeepEqual(i, s) {
+			return true
+		}
+	}
+	return false
+}
+
+func findAncestors(allCommits []Commit, since string) []string {
+	ancestors := []string{}
+	var i int
+	var limit = len(allCommits) * len(allCommits)
+
+ancestorLoop:
+	if i > limit {
+		return ancestors
+	}
+
+	for _, c := range allCommits {
+		i++
+		if c.Sha == since {
+			for _, p := range c.Parents {
+				if !arrayContains(ancestors, p.Sha) {
+					ancestors = append(ancestors, p.Sha)
+					goto ancestorLoop
+				}
+			}
+		} else if arrayContains(ancestors, c.Sha) {
+			for _, p := range c.Parents {
+				if !arrayContains(ancestors, p.Sha) {
+					ancestors = append(ancestors, p.Sha)
+					goto ancestorLoop
+				}
+			}
+		}
+
+	}
+	return ancestors
+}
+
+func filterCommits(allCommits []Commit, since, until string) []Commit {
+	commits := []Commit{}
+
+	sinceAncestors := findAncestors(allCommits, since)
+	untilAncestors := findAncestors(allCommits, until)
+
+	//We have to delete all common ancestors between sinceAncestors and untilAncestors
+	toDelete := []string{}
+	for _, c := range untilAncestors {
+		if c == since {
+			toDelete = append(toDelete, c)
+		}
+		if arrayContains(sinceAncestors, c) {
+			toDelete = append(toDelete, c)
+		}
+	}
+
+	for _, d := range toDelete {
+		for i, x := range untilAncestors {
+			if x == d {
+				untilAncestors = append(untilAncestors[:i], untilAncestors[i+1:]...)
+			}
+		}
+	}
+
+	untilAncestors = append(untilAncestors, until)
+	for _, c := range allCommits {
+		if arrayContains(untilAncestors, c.Sha) {
+			commits = append(commits, c)
+		}
+	}
+
+	return commits
+}

@@ -1,7 +1,9 @@
 package vcs
 
 import (
+	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
@@ -166,4 +168,45 @@ func (s ServerConfiguration) check() error {
 	}
 
 	return nil
+}
+
+type Server interface {
+	AuthorizeRedirect() (string, string, error)
+	AuthorizeToken(string, string) (string, string, error)
+	GetAuthorized(string, string) (AuthorizedClient, error)
+}
+
+type AuthorizedClient interface {
+	//Repos
+	Repos() ([]sdk.VCSRepo, error)
+	RepoByFullname(fullname string) (sdk.VCSRepo, error)
+
+	//Branches
+	Branches(string) ([]sdk.VCSBranch, error)
+	Branch(string, string) (*sdk.VCSBranch, error)
+
+	//Commits
+	Commits(repo, branch, since, until string) ([]sdk.VCSCommit, error)
+	Commit(repo, hash string) (sdk.VCSCommit, error)
+
+	// PullRequests
+	PullRequests(string) ([]sdk.VCSPullRequest, error)
+
+	//Hooks
+	CreateHook(repo, url string) error
+	DeleteHook(repo, url string) error
+
+	//Events
+	GetEvents(repo string, dateRef time.Time) ([]interface{}, time.Duration, error)
+	PushEvents(string, []interface{}) ([]sdk.VCSPushEvent, error)
+	CreateEvents(string, []interface{}) ([]sdk.VCSCreateEvent, error)
+	DeleteEvents(string, []interface{}) ([]sdk.VCSDeleteEvent, error)
+	PullRequestEvents(string, []interface{}) ([]sdk.VCSPullRequestEvent, error)
+
+	// Set build status on repository
+	SetStatus(event sdk.Event) error
+
+	// Release
+	Release(repo, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error)
+	UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, file *bytes.Buffer) error
 }
