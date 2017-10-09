@@ -14,11 +14,12 @@
                     workflowRun.status !== pipelineStatus.BUILDING &&
                     workflowRun.status !== pipelineStatus.WAITING &&
                     currentNodeRun?.status !== pipelineStatus.BUILDING &&
-                    currentNodeRun?.status !== pipelineStatus.WAITING">
+                    currentNodeRun?.status !== pipelineStatus.WAITING"
+                    class="pointing">
                     <i class="video play outline icon" (click)="openRunNode($event)"></i>
                 </span>
                 <ng-container *ngIf="currentNodeRun && (currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING)">
-                    <div class="ui active inline blue loader mr5"  (click)="stopNodeRun($event)">
+                    <div class="ui active inline blue loader mr5 pointing"  (click)="stopNodeRun($event)">
                         <i class="black stop icon build" *ngIf="!loadingStop"></i>
                     </div>
                 </ng-container>

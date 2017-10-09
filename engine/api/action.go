@@ -160,7 +160,6 @@ func (api *API) updateActionHandler() Handler {
 		}
 
 		// Check that action  already exists
-		//actionDB, err := action.LoadPublicAction(api.mustDB(), name, action.WithClearPasswords())
 		actionDB, err := action.LoadPublicAction(api.mustDB(), name)
 		if err != nil {
 			return sdk.WrapError(err, "updateAction> Cannot check if action %s exist", a.Name)
