@@ -120,6 +120,7 @@ var (
 	ErrPipelineUsedByWorkflow                = &Error{ID: 104, Status: http.StatusBadRequest}
 	ErrMethodNotAllowed                      = &Error{ID: 105, Status: http.StatusMethodNotAllowed}
 	ErrInvalidNodeNamePattern                = &Error{ID: 106, Status: http.StatusBadRequest}
+	ErrWorkflowNodeParentNotRun              = Error{ID: 107, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -229,6 +230,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrPipelineUsedByWorkflow.ID:                "pipeline still used by a workflow",
 	ErrMethodNotAllowed.ID:                      "Method not allowed",
 	ErrInvalidNodeNamePattern.ID:                "Node name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
+	ErrWorkflowNodeParentNotRun.ID:              "Cannot run a node if his parents have never been launched",
 }
 
 var errorsFrench = map[int]string{
@@ -338,6 +340,7 @@ var errorsFrench = map[int]string{
 	ErrPipelineUsedByWorkflow.ID:                "le pipeline est utilisé par un workflow",
 	ErrMethodNotAllowed.ID:                      "La méthode n'est pas autorisée",
 	ErrInvalidNodeNamePattern.ID:                "Le nom du noeud du workflow doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
+	ErrWorkflowNodeParentNotRun.ID:              "Il est interdit de lancer un noeud, si ses parents n'ont jamais été lancés",
 }
 
 var errorsLanguages = []map[int]string{

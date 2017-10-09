@@ -41,7 +41,18 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		}
 
 		log.Debug("processWorkflowRun> starting from node %#v", startingFromNode)
-		if err := processWorkflowNodeRun(db, store, p, w, start, int(nextSubNumber), nil, hookEvent, manual); err != nil {
+		// Find ancestors
+		nodeIds := start.Ancestors(&w.Workflow, false)
+		sourceNodesRunID := make([]int64, len(nodeIds))
+		for i := range nodeIds {
+			nodesRuns, ok := w.WorkflowNodeRuns[nodeIds[i]]
+			if ok && len(nodesRuns) > 0 {
+				sourceNodesRunID[i] = nodesRuns[0].ID
+			} else {
+				return sdk.ErrWorkflowNodeParentNotRun
+			}
+		}
+		if err := processWorkflowNodeRun(db, store, p, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
 		}
 		return nil
