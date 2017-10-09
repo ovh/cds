@@ -121,7 +121,7 @@ var containersCache = struct {
 func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 	t := time.Now()
 
-	defer log.Debug("getContainers() : %d s", time.Since(t).Seconds())
+	defer log.Debug("getContainers() : %f s", time.Since(t).Seconds())
 
 	containersCache.mu.RLock()
 	nbServers := len(containersCache.list)
@@ -137,6 +137,10 @@ func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 		containersCache.mu.Lock()
 		containersCache.list = s
 		containersCache.mu.Unlock()
+
+		for _, v := range s {
+			log.Debug("getContainers> container ID:%s names:%+v image:%s created:%d state:%s, status:%s", v.ID, v.Names, v.Image, v.Created, v.State, v.Status)
+		}
 		//Remove data from the cache after 2 seconds
 		go func() {
 			time.Sleep(2 * time.Second)
@@ -426,7 +430,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	if len(links) == 0 && len(cs) > 0 {
 		percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
 		if percentFree <= h.Config.RatioService {
-			log.Info("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
+			log.Debug("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
 			return false
 		}
 	}

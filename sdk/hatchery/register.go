@@ -109,7 +109,7 @@ func Create(h Interface) {
 			}
 		case j := <-pbjobs:
 			if maxWorkersReached {
-				log.Debug("maxWorkerReached:%d", workersStarted)
+				log.Debug("maxWorkersReached:%d", workersStarted)
 				continue
 			}
 			go func(job sdk.PipelineBuildJob) {
@@ -120,7 +120,7 @@ func Create(h Interface) {
 			}(j)
 		case j := <-wjobs:
 			if maxWorkersReached {
-				log.Debug("maxWorkerReached:%d", workersStarted)
+				log.Debug("maxWorkersReached:%d", workersStarted)
 				continue
 			}
 			go func(job sdk.WorkflowNodeJobRun) {
