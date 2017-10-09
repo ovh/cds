@@ -52,7 +52,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
             this.workflowName = params['workflowName'];
         });
         this._activatedRoute.queryParams.subscribe( p => {
-            if (this.workflowRun && p['subnum'] && p['subnum'] > this.workflowRun.last_subnumber) {
+            if (this.workflowRun && p['subnum']) {
                 this.startWorker(this.workflowRun.num);
             }
         });
