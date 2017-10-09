@@ -77,7 +77,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 			}
 
 			//Trigger only if the node is over (successfull or not)
-			if nodeRun.Status == string(sdk.StatusSuccess) || nodeRun.Status == string(sdk.StatusFail) {
+			if nodeRun.Status == sdk.StatusSuccess.String() || nodeRun.Status == sdk.StatusFail.String() {
 				//Find the node in the workflow
 				node := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
 				if node == nil {
@@ -87,6 +87,10 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					t := &node.Triggers[j]
 
 					if t.Manual {
+						continue
+					}
+
+					if !t.ContinueOnError && nodeRun.Status == sdk.StatusFail.String() {
 						continue
 					}
 
@@ -172,6 +176,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		var ok = true
 		nodeRunIDs := []int64{}
 		sourcesParams := map[string]string{}
+		sourcesFail := 0
 		for _, nodeRun := range sources {
 			if nodeRun == nil {
 				ok = false
@@ -186,6 +191,10 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				break
 			}
 
+			if nodeRun.Status == sdk.StatusFail.String() {
+				sourcesFail++
+			}
+
 			nodeRunIDs = append(nodeRunIDs, nodeRun.ID)
 			//Merge build parameters from all sources
 			sourcesParams = sdk.ParametersMapMerge(sourcesParams, sdk.ParametersToMap(nodeRun.BuildParameters))
@@ -197,6 +206,10 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 			for x := range j.Triggers {
 				t := &j.Triggers[x]
 				if t.Manual {
+					continue
+				}
+
+				if !t.ContinueOnError && sourcesFail > 0 {
 					continue
 				}
 
