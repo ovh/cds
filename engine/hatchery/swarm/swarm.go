@@ -138,7 +138,7 @@ func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 		containersCache.list = s
 		containersCache.mu.Unlock()
 
-		log.Debug("getContainers> %s containers on this host", len(s))
+		log.Debug("getContainers> %d containers on this host", len(s))
 		for _, v := range s {
 			log.Debug("getContainers> container ID:%s names:%+v image:%s created:%d state:%s, status:%s", v.ID, v.Names, v.Image, v.Created, v.State, v.Status)
 		}
@@ -426,9 +426,13 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 	}
 
-	// hatcherySwarm.ratioService: Percent reserved for spwaning worker with service requirement
+	// hatcherySwarm.ratioService: Percent reserved for spawning worker with service requirement
 	// if no link -> we need to check ratioService
 	if len(links) == 0 && len(cs) > 0 {
+		if h.Config.RatioService >= 100 {
+			log.Debug("CanSpawn> ratioService 100 by conf - no spawn worker without CDS Service")
+			return false
+		}
 		percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
 		if percentFree <= h.Config.RatioService {
 			log.Debug("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
