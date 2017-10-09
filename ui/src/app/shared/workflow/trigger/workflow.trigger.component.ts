@@ -32,7 +32,7 @@ export class WorkflowTriggerComponent {
     show(): void {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.triggerModal);
         this.modal = this._modalService.open(config);
-        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.triggerSrcNode.id).first().subscribe( wtc => {
+        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.triggerSrcNode.id).first().subscribe(wtc => {
             this.operators = wtc.operators;
             this.conditionNames = wtc.names;
         });

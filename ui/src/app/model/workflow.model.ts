@@ -148,6 +148,7 @@ export class WorkflowNodeJoinTrigger {
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
     manual: boolean;
+    continue_on_error: boolean;
 
     constructor() {
         this.workflow_dest_node = new WorkflowNode();
@@ -299,6 +300,7 @@ export class WorkflowNodeTrigger {
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
     manual: boolean;
+    continue_on_error: boolean;
 
     constructor() {
         this.workflow_dest_node = new WorkflowNode();
