@@ -138,24 +138,25 @@ func receiveJob(h Interface, isWorkflowJob bool, execGroups []sdk.Group, jobID i
 
 	atomic.AddInt64(nRoutines, 1)
 	defer atomic.AddInt64(nRoutines, -1)
-	if errR := routine(h, isWorkflowJob, models, execGroups, jobID, requirements, hostname, time.Now().Unix()); errR != nil {
+	isSpawned, errR := routine(h, isWorkflowJob, models, execGroups, jobID, requirements, hostname, time.Now().Unix())
+	if errR != nil {
 		log.Warning("Error on routine: %s", errR)
 		return false
 	}
-	return true
+	return isSpawned
 }
 
-func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []sdk.Group, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64) error {
+func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []sdk.Group, jobID int64, requirements []sdk.Requirement, hostname string, timestamp int64) (bool, error) {
 	defer logTime(h, fmt.Sprintf("routine> %d", timestamp), time.Now())
 	log.Debug("routine> %d enter", timestamp)
 
 	if h.Hatchery() == nil || h.Hatchery().ID == 0 {
 		log.Debug("Create> continue")
-		return nil
+		return false, nil
 	}
 
 	if len(models) == 0 {
-		return fmt.Errorf("routine> %d - No model returned by CDS api", timestamp)
+		return false, fmt.Errorf("routine> %d - No model returned by CDS api", timestamp)
 	}
 	log.Debug("routine> %d - models received: %d", timestamp, len(models))
 
@@ -205,11 +206,11 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []s
 			if err := h.Client().QueueJobSendSpawnInfo(isWorkflowJob, jobID, infos); err != nil {
 				log.Warning("routine> %d - cannot client.QueueJobSendSpawnInfo for job %d: %s", timestamp, jobID, err)
 			}
-			break // ok for this job
+			return true, nil // ok for this job
 		}
 	}
 
-	return nil
+	return false, nil
 }
 
 func provisioning(h Interface, provisionDisabled bool, models []sdk.Model) {
