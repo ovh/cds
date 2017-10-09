@@ -25,12 +25,9 @@ type Pipeline struct {
 	Stages            []Stage           `json:"stages"`
 	GroupPermission   []GroupPermission `json:"groups,omitempty"`
 	Parameter         []Parameter       `json:"parameters,omitempty"`
-	// AttachedApplication []Application     `json:"attached_application,omitempty"`
-	// AttachedWorkflow    []Workflow        `json:"attached_workflow,omitempty"`
-	// AttachedEnvironment []Environment     `json:"attached_environment,omitempty"`
-	Usage        Usage `json:"usage"`
-	Permission   int   `json:"permission"`
-	LastModified int64 `json:"last_modified" cli:"modified"`
+	Usage             Usage             `json:"usage"`
+	Permission        int               `json:"permission"`
+	LastModified      int64             `json:"last_modified" cli:"modified"`
 }
 
 // PipelineAudit represents pipeline audit

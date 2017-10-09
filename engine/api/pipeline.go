@@ -702,7 +702,7 @@ func (api *API) getPipelineHandler() Handler {
 		if withApp {
 			apps, errA := application.LoadByPipeline(api.mustDB(), api.Cache, p.ID, getUser(ctx))
 			if errA != nil {
-				return sdk.WrapError(errA, "getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s", p.Name)
+				return sdk.WrapError(errA, "getPipelineHandler> Cannot load applications using pipeline %s", p.Name)
 			}
 			p.Usage.Applications = apps
 		}
@@ -710,7 +710,7 @@ func (api *API) getPipelineHandler() Handler {
 		if withWorkflows {
 			wf, errW := workflow.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
 			if errW != nil {
-				return sdk.WrapError(errW, "getApplicationUsingPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
+				return sdk.WrapError(errW, "getPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
 			}
 			p.Usage.Workflows = wf
 		}
@@ -718,7 +718,7 @@ func (api *API) getPipelineHandler() Handler {
 		if withEnvironments {
 			envs, errE := environment.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
 			if errE != nil {
-				return sdk.WrapError(errE, "getApplicationUsingPipelineHandler> Cannot load environments using pipeline %s", p.Name)
+				return sdk.WrapError(errE, "getPipelineHandler> Cannot load environments using pipeline %s", p.Name)
 			}
 			p.Usage.Environments = envs
 		}
