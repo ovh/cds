@@ -52,11 +52,14 @@ func (r *WorkflowRun) Translate(lang string) {
 
 // Tag push a new Tag in WorkflowRunTag
 func (r *WorkflowRun) Tag(tag, value string) {
+	if value == "" {
+		return
+	}
 	var found bool
 	for i := range r.Tags {
 		if r.Tags[i].Tag == tag {
 			found = true
-			if r.Tags[i].Value != value {
+			if !strings.Contains(r.Tags[i].Value, value) {
 				r.Tags[i].Value = strings.Join([]string{r.Tags[i].Value, value}, ",")
 			}
 		}
