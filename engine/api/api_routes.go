@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"path"
+	"sync"
 )
 
 // InitRouter initializes the router and all the routes
@@ -14,6 +15,7 @@ func (api *API) InitRouter() {
 		make(map[string]*lastUpdateBrokerSubscribe),
 		make(chan *lastUpdateBrokerSubscribe),
 		make(chan string),
+		&sync.Mutex{},
 	}
 	api.lastUpdateBroker.Init(api.Router.Background, api.DBConnectionFactory.GetDBMap, api.Cache)
 
