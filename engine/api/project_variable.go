@@ -21,8 +21,7 @@ func (api *API) getVariablesAuditInProjectnHandler() Handler {
 
 		audits, err := project.GetVariableAudit(api.mustDB(), key)
 		if err != nil {
-			log.Warning("getVariablesAuditInProjectnHandler: Cannot get variable audit for project %s: %s\n", key, err)
-			return err
+			return sdk.WrapError(err, "getVariablesAuditInProjectnHandler: Cannot get variable audit for project %s", key)
 
 		}
 		return WriteJSON(w, r, audits, http.StatusOK)
@@ -38,36 +37,31 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 
 		auditID, err := strconv.ParseInt(auditIDString, 10, 64)
 		if err != nil {
-			log.Warning("restoreProjectVariableAuditHandler: Cannot parse auditID %s: %s\n", auditIDString, err)
-			return sdk.ErrInvalidID
+			return sdk.WrapError(sdk.ErrInvalidID, "restoreProjectVariableAuditHandler: Cannot parse auditID %s", auditIDString)
 
 		}
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
-			log.Warning("restoreProjectVariableAuditHandler: Cannot load %s: %s\n", key, err)
-			return err
+			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot load %s", key)
 
 		}
 
 		variables, err := project.GetAudit(api.mustDB(), key, auditID)
 		if err != nil {
-			log.Warning("restoreProjectVariableAuditHandler: Cannot get variable audit for project %s: %s\n", key, err)
-			return err
+			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot get variable audit for project %s", key)
 
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("restoreProjectVariableAuditHandler: Cannot start transaction : %s\n", err)
-			return sdk.ErrUnknownError
+			return sdk.WrapError(sdk.ErrUnknownError, "restoreProjectVariableAuditHandler: Cannot start transaction ")
 
 		}
 		defer tx.Rollback()
 
 		if err := project.DeleteAllVariable(tx, p.ID); err != nil {
-			log.Warning("restoreProjectVariableAuditHandler: Cannot delete variables for project %s:  %s\n", key, err)
-			return sdk.ErrUnknownError
+			return sdk.WrapError(sdk.ErrUnknownError, "restoreProjectVariableAuditHandler: Cannot delete variables for project %s:  %s", key, err)
 
 		}
 
@@ -75,26 +69,22 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 			if sdk.NeedPlaceholder(v.Type) {
 				value, err := secret.Decrypt([]byte(v.Value))
 				if err != nil {
-					log.Warning("restoreProjectVariableAuditHandler: Cannot decrypt variable %s for project %s:  %s\n", v.Name, key, err)
-					return err
+					return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot decrypt variable %s for project %s:  %s", v.Name, key, err)
 
 				}
 				v.Value = string(value)
 			}
 			if err := project.InsertVariable(tx, p, &v, getUser(ctx)); err != nil {
-				log.Warning("restoreProjectVariableAuditHandler: Cannot insert variable %s for project %s:  %s\n", v.Name, key, err)
-				return err
+				return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot insert variable %s for project %s:  %s", v.Name, key, err)
 			}
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			log.Warning("restoreProjectVariableAuditHandler: Cannot update last modified:  %s\n", err)
-			return err
+			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot update last modified:  %s", err)
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("restoreProjectVariableAuditHandler: Cannot commit transaction:  %s\n", err)
-			return err
+			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot commit transaction:  %s", err)
 		}
 
 		go func() {
@@ -115,8 +105,7 @@ func (api *API) getVariablesInProjectHandler() Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
 		if err != nil {
-			log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
-			return sdk.ErrNotFound
+			return sdk.WrapError(sdk.ErrNotFound, "deleteVariableFromProject: Cannot load %s", key)
 		}
 
 		return WriteJSON(w, r, p.Variable, http.StatusOK)
@@ -132,14 +121,12 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
-			log.Warning("deleteVariableFromProject: Cannot load %s: %s\n", key, err)
-			return err
+			return sdk.WrapError(err, "deleteVariableFromProject: Cannot load %s", key)
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("deleteVariableFromProject: Cannot start transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteVariableFromProject: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -149,18 +136,15 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 		}
 
 		if err := project.DeleteVariable(tx, p, varToDelete, getUser(ctx)); err != nil {
-			log.Warning("deleteVariableFromProject: Cannot delete %s: %s\n", varName, err)
-			return err
+			return sdk.WrapError(err, "deleteVariableFromProject: Cannot delete %s", varName)
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			log.Warning("deleteVariableFromProject: Cannot update last modified date: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteVariableFromProject: Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("deleteVariableFromProject: Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteVariableFromProject: Cannot commit transaction")
 		}
 
 		return WriteJSON(w, r, nil, http.StatusOK)
@@ -181,15 +165,13 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
-			log.Warning("updateVariablesInProjectHandler: Cannot load %s: %s\n", key, err)
-			return sdk.ErrNotFound
+			return sdk.WrapError(sdk.ErrNotFound, "updateVariablesInProjectHandler: Cannot load %s", key)
 
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("updateVariablesInProjectHandler: Cannot start transaction: %s\n", err)
-			return sdk.ErrNotFound
+			return sdk.WrapError(sdk.ErrNotFound, "updateVariablesInProjectHandler: Cannot start transaction")
 
 		}
 		defer tx.Rollback()
@@ -198,14 +180,12 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 		// the placeholder !
 		preload, err := project.GetAllVariableInProject(tx, p.ID, project.WithClearPassword())
 		if err != nil {
-			log.Warning("updateVariablesInProjectHandler: Cannot preload variables values: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot preload variables values")
 
 		}
 
 		if err := project.DeleteAllVariable(tx, p.ID); err != nil {
-			log.Warning("updateVariablesInProjectHandler: Cannot delete all variables for project %s: %s\n", p.Key, err)
-			return sdk.ErrNotFound
+			return sdk.WrapError(sdk.ErrNotFound, "updateVariablesInProjectHandler: Cannot delete all variables for project %s", p.Key)
 
 		}
 
@@ -221,8 +201,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 				}
 				err = project.InsertVariable(tx, p, &v, getUser(ctx))
 				if err != nil {
-					log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
-					return err
+					return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot insert variable %s in project %s", v.Name, p.Key)
 
 				}
 				break
@@ -231,8 +210,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 				if v.Value == "" {
 					err := project.AddKeyPair(tx, p, v.Name, getUser(ctx))
 					if err != nil {
-						log.Warning("updateVariablesInProjectHandler> cannot generate keypair: %s\n", err)
-						return err
+						return sdk.WrapError(err, "updateVariablesInProjectHandler> cannot generate keypair")
 
 					}
 				} else if v.Value == sdk.PasswordPlaceholder {
@@ -243,8 +221,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 					}
 					err = project.InsertVariable(tx, p, &v, getUser(ctx))
 					if err != nil {
-						log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
-						return err
+						return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot insert variable %s in project %s", v.Name, p.Key)
 
 					}
 				}
@@ -252,21 +229,18 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 			default:
 				err = project.InsertVariable(tx, p, &v, getUser(ctx))
 				if err != nil {
-					log.Warning("updateVariablesInProjectHandler: Cannot insert variable %s in project %s: %s\n", v.Name, p.Key, err)
-					return err
+					return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot insert variable %s in project %s", v.Name, p.Key)
 
 				}
 			}
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			log.Warning("updateVariablesInProjectHandler: Cannot update last modified:  %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot update last modified:  %s", err)
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("updateVariablesInProjectHandler: Cannot commit transaction: %s\n", err)
-			return sdk.ErrNotFound
+			return sdk.WrapError(sdk.ErrNotFound, "updateVariablesInProjectHandler: Cannot commit transaction")
 		}
 
 		go func() {
@@ -297,32 +271,27 @@ func (api *API) updateVariableInProjectHandler() Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
-			log.Warning("updateVariableInProject: Cannot load %s: %s\n", key, err)
-			return err
+			return sdk.WrapError(err, "updateVariableInProject: Cannot load %s", key)
 
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("updateVariableInProject: cannot start transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateVariableInProject: cannot start transaction")
 
 		}
 		defer tx.Rollback()
 
 		if err := project.UpdateVariable(tx, p, &newVar, getUser(ctx)); err != nil {
-			log.Warning("updateVariableInProject: Cannot update variable %s in project %s:  %s\n", varName, p.Name, err)
-			return err
+			return sdk.WrapError(err, "updateVariableInProject: Cannot update variable %s in project %s:  %s", varName, p.Name, err)
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			log.Warning("updateVariableInProject: Cannot update last modified date: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateVariableInProject: Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("updateVariableInProject: cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateVariableInProject: cannot commit transaction")
 
 		}
 
@@ -346,15 +315,13 @@ func (api *API) getVariableInProjectHandler() Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if err != nil {
-			log.Warning("getVariableInProjectHandler: Cannot load project %s: %s\n", key, err)
-			return err
+			return sdk.WrapError(err, "getVariableInProjectHandler: Cannot load project %s", key)
 
 		}
 
 		v, err := project.GetVariableInProject(api.mustDB(), proj.ID, varName)
 		if err != nil {
-			log.Warning("getVariableInProjectHandler: Cannot get variable %s in project %s: %s\n", varName, key, err)
-			return err
+			return sdk.WrapError(err, "getVariableInProjectHandler: Cannot get variable %s in project %s", varName, key)
 
 		}
 
@@ -380,14 +347,12 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
-			log.Warning("AddVariableInProject: Cannot load %s: %s\n", key, err)
-			return err
+			return sdk.WrapError(err, "AddVariableInProject: Cannot load %s", key)
 		}
 
 		varInProject, err := project.CheckVariableInProject(api.mustDB(), p.ID, varName)
 		if err != nil {
-			log.Warning("AddVariableInProject: Cannot check if variable %s is already in the project %s: %s\n", varName, p.Name, err)
-			return err
+			return sdk.WrapError(err, "AddVariableInProject: Cannot check if variable %s is already in the project %s", varName, p.Name)
 		}
 
 		if varInProject {
@@ -396,8 +361,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("addVariableInProjectHandler: cannot begin tx: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addVariableInProjectHandler: cannot begin tx")
 		}
 		defer tx.Rollback()
 
@@ -410,19 +374,16 @@ func (api *API) addVariableInProjectHandler() Handler {
 			break
 		}
 		if err != nil {
-			log.Warning("AddVariableInProject: Cannot add variable %s in project %s:  %s\n", varName, p.Name, err)
-			return err
+			return sdk.WrapError(err, "AddVariableInProject: Cannot add variable %s in project %s:  %s", varName, p.Name, err)
 
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			log.Warning("updateVariablesInProjectHandler: Cannot update last modified:  %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot update last modified:  %s", err)
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("addVariableInProjectHandler: cannot commit tx: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addVariableInProjectHandler: cannot commit tx")
 		}
 
 		go func() {
@@ -433,8 +394,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		p.Variable, err = project.GetAllVariableInProject(api.mustDB(), p.ID)
 		if err != nil {
-			log.Warning("AddVariableInProject: Cannot get variables: %s\n", err)
-			return err
+			return sdk.WrapError(err, "AddVariableInProject: Cannot get variables")
 
 		}
 

@@ -4,14 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk"
 )
 
 func (api *API) adminTruncateWarningsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, err := api.mustDB().Exec("delete from warning"); err != nil {
-			log.Warning("adminTruncateWarningsHandler> Unable to truncate warning : %s", err)
-			return err
+			return sdk.WrapError(err, "adminTruncateWarningsHandler> Unable to truncate warning : %s", err)
 		}
 		return nil
 	}

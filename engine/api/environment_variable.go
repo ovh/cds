@@ -25,8 +25,7 @@ func (api *API) getEnvironmentsAuditHandler() Handler {
 
 		audits, errAudit := environment.GetEnvironmentAudit(api.mustDB(), key, envName)
 		if errAudit != nil {
-			log.Warning("getEnvironmentsAuditHandler: Cannot get environment audit for project %s: %s\n", key, errAudit)
-			return errAudit
+			return sdk.WrapError(errAudit, "getEnvironmentsAuditHandler: Cannot get environment audit for project %s", key)
 		}
 		return WriteJSON(w, r, audits, http.StatusOK)
 	}
@@ -42,38 +41,32 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 
 		auditID, errAudit := strconv.ParseInt(auditIDString, 10, 64)
 		if errAudit != nil {
-			log.Warning("restoreEnvironmentAuditHandler: Cannot parse auditID %s: %s\n", auditIDString, errAudit)
-			return sdk.ErrInvalidID
+			return sdk.WrapError(sdk.ErrInvalidID, "restoreEnvironmentAuditHandler: Cannot parse auditID %s", auditIDString)
 		}
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
-			log.Warning("restoreEnvironmentAuditHandler: Cannot load project %s: %s\n", key, errProj)
-			return errProj
+			return sdk.WrapError(errProj, "restoreEnvironmentAuditHandler: Cannot load project %s", key)
 		}
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errEnv != nil {
-			log.Warning("restoreEnvironmentAuditHandler: Cannot load environment %s: %s\n", envName, errEnv)
-			return errEnv
+			return sdk.WrapError(errEnv, "restoreEnvironmentAuditHandler: Cannot load environment %s", envName)
 		}
 
 		auditVars, errGetAudit := environment.GetAudit(api.mustDB(), auditID)
 		if errGetAudit != nil {
-			log.Warning("restoreEnvironmentAuditHandler: Cannot get environment audit for project %s: %s\n", key, errGetAudit)
-			return errGetAudit
+			return sdk.WrapError(errGetAudit, "restoreEnvironmentAuditHandler: Cannot get environment audit for project %s", key)
 		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			log.Warning("restoreEnvironmentAuditHandler: Cannot start transaction : %s\n", errBegin)
-			return errBegin
+			return sdk.WrapError(errBegin, "restoreEnvironmentAuditHandler: Cannot start transaction ")
 		}
 		defer tx.Rollback()
 
 		if err := environment.DeleteAllVariable(tx, env.ID); err != nil {
-			log.Warning("restoreEnvironmentAuditHandler> Cannot delete variables on environments for update: %s\n", err)
-			return err
+			return sdk.WrapError(err, "restoreEnvironmentAuditHandler> Cannot delete variables on environments for update")
 		}
 
 		for varIndex := range auditVars {
@@ -81,48 +74,40 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 			if sdk.NeedPlaceholder(varEnv.Type) {
 				value, errDecrypt := secret.Decrypt([]byte(varEnv.Value))
 				if errDecrypt != nil {
-					log.Warning("restoreEnvironmentAuditHandler> Cannot decrypt variable %s on environment %s: %s\n", varEnv.Name, envName, errDecrypt)
-					return errDecrypt
+					return sdk.WrapError(errDecrypt, "restoreEnvironmentAuditHandler> Cannot decrypt variable %s on environment %s", varEnv.Name, envName)
 				}
 				varEnv.Value = string(value)
 			}
 			if err := environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx)); err != nil {
-				log.Warning("restoreEnvironmentAuditHandler> Cannot insert variables on environments: %s\n", err)
-				return err
+				return sdk.WrapError(err, "restoreEnvironmentAuditHandler> Cannot insert variables on environments")
 			}
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			log.Warning("restoreEnvironmentAuditHandler> Cannot update last modified date: %s\n", err)
-			return err
+			return sdk.WrapError(err, "restoreEnvironmentAuditHandler> Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("restoreEnvironmentAuditHandler: Cannot commit transaction:  %s\n", err)
-			return err
+			return sdk.WrapError(err, "restoreEnvironmentAuditHandler: Cannot commit transaction:  %s", err)
 		}
 
 		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-			log.Warning("restoreEnvironmentAuditHandler: Cannot check warnings: %s\n", err)
-			return err
+			return sdk.WrapError(err, "restoreEnvironmentAuditHandler: Cannot check warnings")
 		}
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
 		if errEnvs != nil {
-			log.Warning("restoreEnvironmentAuditHandler: Cannot load environments: %s\n", errEnvs)
-			return errEnvs
+			return sdk.WrapError(errEnvs, "restoreEnvironmentAuditHandler: Cannot load environments")
 		}
 
 		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
-			log.Warning("updateVariableInEnvironmentHandler: Cannot load applications: %s\n", errApps)
-			return errApps
+			return sdk.WrapError(errApps, "updateVariableInEnvironmentHandler: Cannot load applications")
 		}
 		for _, a := range apps {
 			if err := sanity.CheckApplication(api.mustDB(), p, &a); err != nil {
-				log.Warning("restoreAuditHandler: Cannot check application sanity: %s\n", err)
-				return err
+				return sdk.WrapError(err, "restoreAuditHandler: Cannot check application sanity")
 			}
 		}
 
@@ -165,8 +150,7 @@ func (api *API) getVariableInEnvironmentHandler() Handler {
 
 		v, errVar := environment.GetVariable(api.mustDB(), key, envName, name)
 		if errVar != nil {
-			log.Warning("getVariableInEnvironmentHandler: Cannot get variable %s for environment %s: %s\n", name, envName, errVar)
-			return errVar
+			return sdk.WrapError(errVar, "getVariableInEnvironmentHandler: Cannot get variable %s for environment %s", name, envName)
 		}
 
 		return WriteJSON(w, r, v, http.StatusOK)
@@ -181,8 +165,7 @@ func (api *API) getVariablesInEnvironmentHandler() Handler {
 
 		variables, errVar := environment.GetAllVariable(api.mustDB(), key, envName)
 		if errVar != nil {
-			log.Warning("getVariablesInEnvironmentHandler: Cannot get variables for environment %s: %s\n", envName, errVar)
-			return errVar
+			return sdk.WrapError(errVar, "getVariablesInEnvironmentHandler: Cannot get variables for environment %s", envName)
 		}
 
 		return WriteJSON(w, r, variables, http.StatusOK)

@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getParametersInPipelineHandler() Handler {
@@ -21,14 +20,12 @@ func (api *API) getParametersInPipelineHandler() Handler {
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
-			log.Warning("getParametersInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
-			return err
+			return sdk.WrapError(err, "getParametersInPipelineHandler: Cannot load %s", pipelineName)
 		}
 
 		parameters, err := pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
 		if err != nil {
-			log.Warning("getParametersInPipelineHandler: Cannot get parameters for pipeline %s: %s\n", pipelineName, err)
-			return err
+			return sdk.WrapError(err, "getParametersInPipelineHandler: Cannot get parameters for pipeline %s", pipelineName)
 		}
 
 		return WriteJSON(w, r, parameters, http.StatusOK)
@@ -44,20 +41,17 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
-			log.Warning("deleteParameterFromPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
-			return err
+			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot load %s", pipelineName)
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("deleteParameterFromPipelineHandler: Cannot start transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if err := pipeline.DeleteParameterFromPipeline(tx, p.ID, paramName); err != nil {
-			log.Warning("deleteParameterFromPipelineHandler: Cannot delete %s: %s\n", paramName, err)
-			return err
+			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot delete %s", paramName)
 		}
 
 		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
@@ -66,19 +60,16 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 		}
 
 		if err := pipeline.UpdatePipelineLastModified(tx, proj, p, getUser(ctx)); err != nil {
-			log.Warning("deleteParameterFromPipelineHandler> Cannot update pipeline last_modified date: %s", err)
-			return err
+			return sdk.WrapError(err, "deleteParameterFromPipelineHandler> Cannot update pipeline last_modified date: %s", err)
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("deleteParameterFromPipelineHandler: Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot commit transaction")
 		}
 
 		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
 		if err != nil {
-			log.Warning("deleteParameterFromPipelineHandler: Cannot load pipeline parameters: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteParameterFromPipelineHandler: Cannot load pipeline parameters")
 		}
 		return WriteJSON(w, r, p, http.StatusOK)
 	}
@@ -103,19 +94,16 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 
 		pip, err := pipeline.LoadPipeline(api.mustDB(), proj.Key, pipelineName, false)
 		if err != nil {
-			log.Warning("updateParametersInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
-			return err
+			return sdk.WrapError(err, "updateParametersInPipelineHandler: Cannot load %s", pipelineName)
 		}
 		pip.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), pip.ID)
 		if err != nil {
-			log.Warning("updateParametersInPipelineHandler> Cannot GetAllParametersInPipeline: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateParametersInPipelineHandler> Cannot GetAllParametersInPipeline")
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("updateParametersInPipelineHandler: Cannot start transaction: %s", err)
-			return sdk.ErrUnknownError
+			return sdk.WrapError(sdk.ErrUnknownError, "updateParametersInPipelineHandler: Cannot start transaction: %s", err)
 		}
 		defer tx.Rollback()
 
@@ -156,27 +144,23 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 		for i := range added {
 			p := &added[i]
 			if err := pipeline.InsertParameterInPipeline(tx, pip.ID, p); err != nil {
-				log.Warning("UpdatePipelineParameters> Cannot insert new params %s: %s", p.Name, err)
-				return err
+				return sdk.WrapError(err, "UpdatePipelineParameters> Cannot insert new params %s: %s", p.Name, err)
 			}
 		}
 		for _, p := range updated {
 			if err := pipeline.UpdateParameterInPipeline(tx, pip.ID, p.Name, p); err != nil {
-				log.Warning("UpdatePipelineParameters> Cannot update parameter %s: %s", p.Name, err)
-				return err
+				return sdk.WrapError(err, "UpdatePipelineParameters> Cannot update parameter %s: %s", p.Name, err)
 			}
 		}
 		for _, p := range deleted {
 			if err := pipeline.DeleteParameterFromPipeline(tx, pip.ID, p.Name); err != nil {
-				log.Warning("UpdatePipelineParameters> Cannot delete parameter %s: %s", p.Name, err)
-				return err
+				return sdk.WrapError(err, "UpdatePipelineParameters> Cannot delete parameter %s: %s", p.Name, err)
 			}
 		}
 
 		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, getUser(ctx)); err != nil {
 
-			log.Warning("UpdatePipelineParameters> Cannot update pipeline last_modified date: %s", err)
-			return err
+			return sdk.WrapError(err, "UpdatePipelineParameters> Cannot update pipeline last_modified date: %s", err)
 		}
 
 		apps, errA := application.LoadByPipeline(tx, api.Cache, pip.ID, getUser(ctx))
@@ -191,8 +175,7 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("updateParametersInPipelineHandler: Cannot commit transaction: %s", err)
-			return sdk.ErrUnknownError
+			return sdk.WrapError(sdk.ErrUnknownError, "updateParametersInPipelineHandler: Cannot commit transaction: %s", err)
 		}
 
 		return WriteJSON(w, r, append(added, updated...), http.StatusOK)
@@ -268,37 +251,31 @@ func (api *API) addParameterInPipelineHandler() Handler {
 			return err
 		}
 		if newParam.Name != paramName {
-			log.Warning("addParameterInPipelineHandler> Wrong param name got %s instead of %s", newParam.Name, paramName)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "addParameterInPipelineHandler> Wrong param name got %s instead of %s", newParam.Name, paramName)
 		}
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if err != nil {
-			log.Warning("addParameterInPipelineHandler: Cannot load %s: %s\n", pipelineName, err)
-			return err
+			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot load %s", pipelineName)
 		}
 
 		paramInProject, err := pipeline.CheckParameterInPipeline(api.mustDB(), p.ID, paramName)
 		if err != nil {
-			log.Warning("addParameterInPipelineHandler: Cannot check if parameter %s is already in the pipeline %s: %s\n", paramName, pipelineName, err)
-			return err
+			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot check if parameter %s is already in the pipeline %s", paramName, pipelineName)
 		}
 		if paramInProject {
-			log.Warning("addParameterInPipelineHandler:Parameter %s is already in the pipeline %s\n", paramName, pipelineName)
-			return sdk.ErrParameterExists
+			return sdk.WrapError(sdk.ErrParameterExists, "addParameterInPipelineHandler:Parameter %s is already in the pipeline %s", paramName, pipelineName)
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("addParameterInPipelineHandler: Cannot start transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if !paramInProject {
 			if err := pipeline.InsertParameterInPipeline(tx, p.ID, &newParam); err != nil {
-				log.Warning("addParameterInPipelineHandler: Cannot add parameter %s in pipeline %s:  %s\n", paramName, pipelineName, err)
-				return err
+				return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot add parameter %s in pipeline %s:  %s", paramName, pipelineName, err)
 			}
 		}
 
@@ -308,19 +285,16 @@ func (api *API) addParameterInPipelineHandler() Handler {
 		}
 
 		if err := pipeline.UpdatePipelineLastModified(tx, proj, p, getUser(ctx)); err != nil {
-			log.Warning("addParameterInPipelineHandler> Cannot update pipeline last_modified date: %s", err)
-			return err
+			return sdk.WrapError(err, "addParameterInPipelineHandler> Cannot update pipeline last_modified date: %s", err)
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("addParameterInPipelineHandler: Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot commit transaction")
 		}
 
 		p.Parameter, err = pipeline.GetAllParametersInPipeline(api.mustDB(), p.ID)
 		if err != nil {
-			log.Warning("addParameterInPipelineHandler: Cannot get pipeline parameters: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addParameterInPipelineHandler: Cannot get pipeline parameters")
 		}
 
 		return WriteJSON(w, r, p, http.StatusOK)

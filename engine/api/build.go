@@ -55,8 +55,7 @@ func (api *API) updateStepStatusHandler() Handler {
 		}
 
 		if err := pipeline.UpdatePipelineBuildJob(api.mustDB(), pbJob); err != nil {
-			log.Warning("updateStepStatusHandler> Cannot update pipeline build job: %s", err)
-			return err
+			return sdk.WrapError(err, "updateStepStatusHandler> Cannot update pipeline build job: %s", err)
 		}
 		return nil
 	}

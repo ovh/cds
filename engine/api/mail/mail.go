@@ -9,6 +9,7 @@ import (
 	"net/smtp"
 	"text/template"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -174,39 +175,33 @@ func SendEmail(subject string, mailContent *bytes.Buffer, userMail string) error
 
 	c, err := smtpClient()
 	if err != nil {
-		log.Warning("Cannot get smtp client:%s\n", err.Error())
-		return err
+		return sdk.WrapError(err, "Cannot get smtp client:%s", err.Error())
 	}
 	defer c.Close()
 
 	// To && From
 	if err = c.Mail(from.Address); err != nil {
-		log.Warning("Error with c.Mail:%s\n", err.Error())
-		return err
+		return sdk.WrapError(err, "Error with c.Mail:%s", err.Error())
 	}
 
 	if err = c.Rcpt(to.Address); err != nil {
-		log.Warning("Error with c.Rcpt:%s\n", err.Error())
-		return err
+		return sdk.WrapError(err, "Error with c.Rcpt:%s", err.Error())
 	}
 
 	// Data
 	w, err := c.Data()
 	if err != nil {
-		log.Warning("Error with c.Data:%s\n", err.Error())
-		return err
+		return sdk.WrapError(err, "Error with c.Data:%s", err.Error())
 	}
 
 	_, err = w.Write([]byte(message))
 	if err != nil {
-		log.Warning("Error with c.Write:%s", err.Error())
-		return err
+		return sdk.WrapError(err, "Error with c.Write:%s", err.Error())
 	}
 
 	err = w.Close()
 	if err != nil {
-		log.Warning("Error with c.Close:%s", err.Error())
-		return err
+		return sdk.WrapError(err, "Error with c.Close:%s", err.Error())
 	}
 
 	c.Quit()

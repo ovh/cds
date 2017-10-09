@@ -173,30 +173,25 @@ func (api *API) addGroupInEnvironmentHandler() Handler {
 
 		env, err := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if err != nil {
-			log.Warning("addGroupInEnvironmentHandler: Cannot load %s: %s\n", envName, err)
-			return err
+			return sdk.WrapError(err, "addGroupInEnvironmentHandler: Cannot load %s", envName)
 		}
 
 		g, err := group.LoadGroup(api.mustDB(), groupPermission.Group.Name)
 		if err != nil {
-			log.Warning("addGroupInEnvironmentHandler: Cannot find %s: %s\n", groupPermission.Group.Name, err)
-			return err
+			return sdk.WrapError(err, "addGroupInEnvironmentHandler: Cannot find %s", groupPermission.Group.Name)
 		}
 
 		alreadyAdded, err := group.IsInEnvironment(api.mustDB(), env.ID, g.ID)
 		if err != nil {
-			log.Warning("addGroupInEnvironmentHandler> Cannot check if group is in env: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addGroupInEnvironmentHandler> Cannot check if group is in env")
 		}
 
 		if alreadyAdded {
-			log.Warning("addGroupInEnvironmentHandler> Group %s is already present in env %s\n", g.Name, env.Name)
-			return sdk.ErrGroupPresent
+			return sdk.WrapError(sdk.ErrGroupPresent, "addGroupInEnvironmentHandler> Group %s is already present in env %s", g.Name, env.Name)
 		}
 
 		if err := group.InsertGroupInEnvironment(api.mustDB(), env.ID, g.ID, groupPermission.Permission); err != nil {
-			log.Warning("addGroupInEnvironmentHandler: Cannot add group %s in environment %s:  %s\n", g.Name, env.Name, err)
-			return err
+			return sdk.WrapError(err, "addGroupInEnvironmentHandler: Cannot add group %s in environment %s:  %s", g.Name, env.Name, err)
 		}
 
 		return nil

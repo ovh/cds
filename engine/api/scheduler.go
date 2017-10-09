@@ -29,23 +29,20 @@ func (api *API) getSchedulerApplicationPipelineHandler() Handler {
 		///Load application
 		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
-			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
-			return errA
+			return sdk.WrapError(errA, "getSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db", appName, key)
 
 		}
 
 		//Load pipeline
 		pip, errP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if errP != nil {
-			log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, errP)
-			return errP
+			return sdk.WrapError(errP, "getSchedulerApplicationPipelineHandler> Cannot load pipeline %s", pipelineName)
 
 		}
 
 		//Load environment
 		if err := r.ParseForm(); err != nil {
-			log.Warning("getSchedulerApplicationPipelineHandler> Cannot parse form: %s\n", err)
-			return sdk.ErrUnknownError
+			return sdk.WrapError(sdk.ErrUnknownError, "getSchedulerApplicationPipelineHandler> Cannot parse form")
 
 		}
 		envName := r.Form.Get("envName")
@@ -65,16 +62,14 @@ func (api *API) getSchedulerApplicationPipelineHandler() Handler {
 			var err error
 			schedulers, err = scheduler.GetByApplicationPipeline(api.mustDB(), app, pip)
 			if err != nil {
-				log.Warning("getSchedulerApplicationPipelineHandler> cmdApplicationPipelineSchedulerAddEnvCannot load pipeline schedulers: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> cmdApplicationPipelineSchedulerAddEnvCannot load pipeline schedulers")
 
 			}
 		} else {
 			var err error
 			schedulers, err = scheduler.GetByApplicationPipelineEnv(api.mustDB(), app, pip, env)
 			if err != nil {
-				log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers")
 
 			}
 		}
@@ -93,23 +88,20 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		///Load application
 		app, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
-			log.Warning("addSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db: %s\n", appName, key, errA)
-			return errA
+			return sdk.WrapError(errA, "addSchedulerApplicationPipelineHandler> Cannot load application %s for project %s from db", appName, key)
 
 		}
 
 		//Load pipeline
 		pip, errP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if errP != nil {
-			log.Warning("addSchedulerApplicationPipelineHandler> Cannot load pipeline %s: %s\n", pipelineName, errP)
-			return errP
+			return sdk.WrapError(errP, "addSchedulerApplicationPipelineHandler> Cannot load pipeline %s", pipelineName)
 
 		}
 
 		//Load environment
 		if err := r.ParseForm(); err != nil {
-			log.Warning("getSchedulerApplicationPipelineHandler> Cannot parse form: %s\n", err)
-			return sdk.ErrUnknownError
+			return sdk.WrapError(sdk.ErrUnknownError, "getSchedulerApplicationPipelineHandler> Cannot parse form")
 
 		}
 		envName := r.Form.Get("envName")
@@ -125,8 +117,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 
 		if env != nil {
 			if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
-				log.Warning("getSchedulerApplicationPipelineHandler> Cannot access to this environment")
-				return sdk.ErrForbidden
+				return sdk.WrapError(sdk.ErrForbidden, "getSchedulerApplicationPipelineHandler> Cannot access to this environment")
 			}
 		}
 
@@ -137,16 +128,14 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 			env = &sdk.DefaultEnv
 			schedulers, err = scheduler.GetByApplicationPipeline(api.mustDB(), app, pip)
 			if err != nil {
-				log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers")
 
 			}
 		} else {
 			var err error
 			schedulers, err = scheduler.GetByApplicationPipelineEnv(api.mustDB(), app, pip, env)
 			if err != nil {
-				log.Warning("getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getSchedulerApplicationPipelineHandler> Cannot load pipeline schedulers")
 
 			}
 		}
@@ -164,8 +153,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		//Check timezone
 		if s.Timezone != "" {
 			if _, err := time.LoadLocation(s.Timezone); err != nil {
-				log.Warning("addSchedulerApplicationPipelineHandler> invalid timezone %s  %s\n", s.Timezone, err)
-				return sdk.ErrInvalidTimezone
+				return sdk.WrapError(sdk.ErrInvalidTimezone, "addSchedulerApplicationPipelineHandler> invalid timezone %s  %s", s.Timezone, err)
 			}
 		}
 
@@ -255,13 +243,11 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 			var err error
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if err != nil {
-				log.Warning("updateSchedulerApplicationPipelineHandler> %s", err)
-				return err
+				return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> %s", err)
 			}
 
 			if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
-				log.Warning("updateSchedulerApplicationPipelineHandler> Cannot access to this environment")
-				return sdk.ErrForbidden
+				return sdk.WrapError(sdk.ErrForbidden, "updateSchedulerApplicationPipelineHandler> Cannot access to this environment")
 
 			}
 		}
@@ -275,8 +261,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 		//Load the scheduler
 		sOld, err := scheduler.Load(api.mustDB(), s.ID)
 		if err != nil {
-			log.Warning("updateSchedulerApplicationPipelineHandler> %s", err)
-			return err
+			return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> %s", err)
 
 		}
 

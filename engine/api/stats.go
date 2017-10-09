@@ -8,7 +8,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getStatsHandler() Handler {
@@ -18,16 +17,14 @@ func (api *API) getStatsHandler() Handler {
 
 		st.History, err = initHistory(api.mustDB())
 		if err != nil {
-			log.Warning("getStats> cannot initialize history: %s\n", err)
-			return err
+			return sdk.WrapError(err, "getStats> cannot initialize history")
 
 		}
 
 		for i := range st.History {
 			n, err := getNewUsers(api.mustDB(), i+1, i)
 			if err != nil {
-				log.Warning("getStats> cannot getNewUsers: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getStats> cannot getNewUsers")
 
 			}
 			st.History[i].NewUsers = n
@@ -35,56 +32,49 @@ func (api *API) getStatsHandler() Handler {
 			// Number of users back then
 			n, err = getNewUsers(api.mustDB(), 540, i)
 			if err != nil {
-				log.Warning("getStats> cannot getPeriodTotalUsers: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getStats> cannot getPeriodTotalUsers")
 
 			}
 			st.History[i].Users = n
 
 			n, err = getNewProjects(api.mustDB(), i+1, i)
 			if err != nil {
-				log.Warning("getStats> cannot getNewProjects: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getStats> cannot getNewProjects")
 
 			}
 			st.History[i].NewProjects = n
 
 			n, err = getNewProjects(api.mustDB(), 540, i)
 			if err != nil {
-				log.Warning("getStats> cannot getPeriodTotalUsers: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getStats> cannot getPeriodTotalUsers")
 
 			}
 			st.History[i].Projects = n
 
 			n, err = getNewApplications(api.mustDB(), i+1, i)
 			if err != nil {
-				log.Warning("getStats> cannot getNewApplications: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getStats> cannot getNewApplications")
 
 			}
 			st.History[i].NewApplications = n
 
 			n, err = getNewApplications(api.mustDB(), 540, i)
 			if err != nil {
-				log.Warning("getStats> cannot getNewApplications: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getStats> cannot getNewApplications")
 
 			}
 			st.History[i].Applications = n
 
 			n, err = getNewPipelines(api.mustDB(), i+1, i)
 			if err != nil {
-				log.Warning("getStats> cannot getNewPipelines: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getStats> cannot getNewPipelines")
 
 			}
 			st.History[i].NewPipelines = n
 
 			st.History[i].Pipelines.Build, st.History[i].Pipelines.Testing, st.History[i].Pipelines.Deploy, err = getPeriodTotalPipelinesByType(api.mustDB(), i)
 			if err != nil {
-				log.Warning("getStats> cannot getPeriodTotalPipelinesByType: %s\n", err)
-				return err
+				return sdk.WrapError(err, "getStats> cannot getPeriodTotalPipelinesByType")
 
 			}
 		}

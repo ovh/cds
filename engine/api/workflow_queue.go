@@ -26,8 +26,7 @@ func (api *API) postWorkflowJobRequirementsErrorHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		body, err := ioutil.ReadAll(r.Body)
 		if err != nil {
-			log.Warning("requirementsErrorHandler> %s", err)
-			return err
+			return sdk.WrapError(err, "requirementsErrorHandler> %s", err)
 		}
 
 		if getWorker(ctx).ID != "" {

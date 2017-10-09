@@ -27,8 +27,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 
 		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
-			log.Warning("importNewEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
-			return errProj
+			return sdk.WrapError(errProj, "importNewEnvironmentHandler> Cannot load %s", key)
 		}
 
 		var payload = &exportentities.Environment{}
@@ -36,14 +35,12 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			log.Warning("importNewEnvironmentHandler> Unable to read body : %s\n", errRead)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Unable to read body ")
 		}
 
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			log.Warning("importNewEnvironmentHandler> Unable to get format : %s\n", errF)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Unable to get format ")
 		}
 
 		var errorParse error
@@ -55,8 +52,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		}
 
 		if errorParse != nil {
-			log.Warning("importNewEnvironmentHandler> Cannot parsing: %s\n", errorParse)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Cannot parsing")
 		}
 
 		env := payload.Environment()
@@ -64,8 +60,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 			eg := &env.EnvironmentGroups[i]
 			g, err := group.LoadGroup(api.mustDB(), eg.Group.Name)
 			if err != nil {
-				log.Warning("importNewEnvironmentHandler> Error on import : %s", err)
-				return err
+				return sdk.WrapError(err, "importNewEnvironmentHandler> Error on import : %s", err)
 			}
 			eg.Group = *g
 		}
@@ -87,15 +82,13 @@ func (api *API) importNewEnvironmentHandler() Handler {
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			log.Warning("importNewEnvironmentHandler: Cannot start transaction: %s\n", errBegin)
-			return errBegin
+			return sdk.WrapError(errBegin, "importNewEnvironmentHandler: Cannot start transaction")
 		}
 
 		defer tx.Rollback()
 
 		if err := environment.Import(api.mustDB(), proj, env, msgChan, getUser(ctx)); err != nil {
-			log.Warning("importNewEnvironmentHandler> Error on import : %s", err)
-			return err
+			return sdk.WrapError(err, "importNewEnvironmentHandler> Error on import : %s", err)
 		}
 
 		close(msgChan)
@@ -112,13 +105,11 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		}
 
 		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-			log.Warning("importNewEnvironmentHandler> Cannot check warnings: %s\n", err)
-			return err
+			return sdk.WrapError(err, "importNewEnvironmentHandler> Cannot check warnings")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("importNewEnvironmentHandler> Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "importNewEnvironmentHandler> Cannot commit transaction")
 		}
 
 		return WriteJSON(w, r, msgListString, http.StatusOK)
@@ -135,27 +126,23 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 
 		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithGroups, project.LoadOptions.WithPermission)
 		if errProj != nil {
-			log.Warning("importIntoEnvironmentHandler> Cannot load %s: %s\n", key, errProj)
-			return errProj
+			return sdk.WrapError(errProj, "importIntoEnvironmentHandler> Cannot load %s", key)
 		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			log.Warning("importIntoEnvironmentHandler: Cannot start transaction: %s\n", errBegin)
-			return errBegin
+			return sdk.WrapError(errBegin, "importIntoEnvironmentHandler: Cannot start transaction")
 		}
 
 		defer tx.Rollback()
 
 		if err := environment.Lock(tx, key, envName); err != nil {
-			log.Warning("importIntoEnvironmentHandler> Cannot lock env %s/%s: %s\n", key, envName, err)
-			return err
+			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot lock env %s/%s", key, envName)
 		}
 
 		env, errEnv := environment.LoadEnvironmentByName(tx, key, envName)
 		if errEnv != nil {
-			log.Warning("importIntoEnvironmentHandler> Cannot load env %s/%s: %s\n", key, envName, errEnv)
-			return errEnv
+			return sdk.WrapError(errEnv, "importIntoEnvironmentHandler> Cannot load env %s/%s", key, envName)
 		}
 
 		var payload = &exportentities.Environment{}
@@ -163,14 +150,12 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			log.Warning("importIntoEnvironmentHandler> Unable to read body : %s\n", errRead)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "importIntoEnvironmentHandler> Unable to read body ")
 		}
 
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			log.Warning("importIntoEnvironmentHandler> Unable to get format : %s\n", errF)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "importIntoEnvironmentHandler> Unable to get format ")
 		}
 
 		var errorParse error
@@ -182,8 +167,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		}
 
 		if errorParse != nil {
-			log.Warning("importIntoEnvironmentHandler> Cannot parsing: %s\n", errorParse)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "importIntoEnvironmentHandler> Cannot parsing")
 		}
 
 		newEnv := payload.Environment()
@@ -212,8 +196,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		}()
 
 		if err := environment.ImportInto(tx, proj, newEnv, env, msgChan, getUser(ctx)); err != nil {
-			log.Warning("importIntoEnvironmentHandler> Error on import : %s", err)
-			return err
+			return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import : %s", err)
 		}
 
 		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj); err != nil {
@@ -234,13 +217,11 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("importIntoEnvironmentHandler> Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot commit transaction")
 		}
 
 		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-			log.Warning("importIntoEnvironmentHandler> Cannot check warnings: %s\n", err)
-			return err
+			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot check warnings")
 		}
 
 		return WriteJSON(w, r, msgListString, http.StatusOK)

@@ -6,7 +6,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 //InsertExecution a poller execution execution
@@ -23,8 +22,7 @@ func InsertExecution(db gorp.SqlExecutor, s *sdk.RepositoryPollerExecution) erro
 func UpdateExecution(db gorp.SqlExecutor, s *sdk.RepositoryPollerExecution) error {
 	ds := RepositoryPollerExecution(*s)
 	if n, err := db.Update(&ds); err != nil {
-		log.Warning("poller.UpdateExecution> Unable to update poller execution execution : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "poller.UpdateExecution> Unable to update poller execution execution : %T %s", err, err)
 	} else if n == 0 {
 		return sdk.ErrNotFound
 	}
