@@ -1,51 +1,42 @@
 @import '../../../../../../common';
 
-.summary {
-  margin: 10px 50px 10px 50px;
-  padding: 10px;
-  border: 2px solid;
-  border-radius: 5px;
-  font-size: 1.1em;
-
-  .title {
-
-    font-weight: 600;
-  }
-  .content {
-
+#summary{
+  .winfo{
+    z-index: 1;
   }
 
-  .ui.grid {
-    .row {
-      padding-top: 0px;
-      padding-bottom: 0px;
-      .column {
-        padding-top: 5px;
-      }
-    }
-    .row:first-child {
-      .column {
-        padding-top: 10px;
-      }
-    }
-    .row:last-child {
-      .column {
-        padding-bottom: 10px;
-      }
+  .cardinfo {
+    border-radius: 0 0 0.28571429rem 0.28571429rem;
+  }
+  
+  .running {
+    border: none;
+  }
+  .success {
+    background-color: $cds_color_light_green;
+    border: 2px solid $cds_color_green;
+    border-top: none;
+  }
+  .fail {
+    background-color: $cds_color_light_red;
+    border: 2px solid $cds_color_red;
+    border-top: none;
+  }
+  .inactive {
+    background-color: $cds_color_light_grey;
+    border: 2px solid grey;
+    border-top: none;
+  }
+  .building {
+    background-color: $cds_color_light_teal;
+    border: 2px solid $cds_color_teal;
+    border-top: none;
+  }
+
+  .row {
+    a {
+      color: black;
+      font-weight: 600;
     }
   }
-}
-.action.grid {
-  position: absolute;
-  top: 65px;
-  right: 0px;
-}
-.summary.success {
-  border-color: $cds_color_green;
-}
-.summary.fail {
-  border-color: $cds_color_red;
-}
-.summary.building {
-  border-color: $cds_color_teal;
 }

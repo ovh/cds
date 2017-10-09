@@ -174,6 +174,19 @@ export class ProjectService {
     }
 
     /**
+     * Get specific environment by his name in the given project
+     * @param key Project unique key
+     * @param environment name
+     * @returns {Observable<Project>}
+     */
+    getEnvironment(key: string, envName: string): Observable<Environment> {
+        let params = new HttpParams();
+        params = params.append('withWorkflows', 'true');
+
+        return this._http.get('/project/' + key + '/environment/' + envName, {params});
+    }
+
+    /**
      * Add a new environment in the given project
      * @param key Project unique key
      * @param environment Environment to add

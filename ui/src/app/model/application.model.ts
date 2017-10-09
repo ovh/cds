@@ -43,6 +43,7 @@ export class ApplicationPipeline {
 }
 
 export interface ApplicationFilter {
+    remote: string;
     branch: string;
     version: string;
 };

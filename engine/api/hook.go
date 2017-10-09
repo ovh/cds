@@ -98,7 +98,6 @@ func (api *API) receiveHookHandler() Handler {
 		if db == nil {
 			hook.Recovery(api.Cache, rh, fmt.Errorf("database not available"))
 			return err
-
 		}
 
 		if err := processHook(api.DBConnectionFactory.GetDBMap, api.Cache, rh); err != nil {
@@ -135,7 +134,7 @@ func (api *API) addHookHandler() Handler {
 			return sdk.WrapError(errA, "addHook: Cannot load application")
 		}
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errA, "addHook: Cannot load workflow")
 		}
@@ -178,7 +177,7 @@ func (api *API) updateHookHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updateHookHandler: Cannot load workflow")
 		}

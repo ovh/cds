@@ -297,6 +297,9 @@ See $ engine config command for more details.
 			case "vcs":
 				s = vcs.New()
 				cfg = conf.VCS
+			default:
+				fmt.Printf("Error: service '%s' unknown\n", a)
+				os.Exit(1)
 			}
 
 			go start(ctx, s, cfg)

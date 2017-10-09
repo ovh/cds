@@ -40,6 +40,12 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
 
     permissionEnum = PermissionValue;
 
+    // queryparam for breadcrum
+    workflowName: string;
+    workflowNum: string;
+    workflowNodeRun: string;
+    workflowPipeline: string;
+
     constructor(private _projectStore: ProjectStore, private _route: ActivatedRoute, private _router: Router,
                 private _toast: ToastService, public _translate: TranslateService,
                 private _authentificationStore: AuthentificationStore) {
@@ -70,6 +76,12 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
                 this.selectedTab = params['tab'];
             }
         });
+        if (this._route.snapshot && this._route.snapshot.queryParams) {
+            this.workflowName = this._route.snapshot.queryParams['workflow'];
+            this.workflowNum = this._route.snapshot.queryParams['run'];
+            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
+            this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
+        }
     }
 
     refreshDatas(key: string): void {

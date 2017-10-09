@@ -52,7 +52,8 @@ export class WorkflowShowComponent {
     loading = false;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService) {
+                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService,
+                private _workflowCoreService: WorkflowCoreService) {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -82,6 +83,8 @@ export class WorkflowShowComponent {
                 }
             }
         });
+
+        this._workflowCoreService.setCurrentWorkflowRun(null);
     }
 
     public openDeleteJoinSrcModal(data: { source, target }) {
@@ -176,6 +179,7 @@ export class WorkflowShowComponent {
         let trigToUpdate = currentNode.triggers.find(trig => trig.id === this.selectedTrigger.id);
         trigToUpdate.conditions = this.selectedTrigger.conditions;
         trigToUpdate.manual = this.selectedTrigger.manual;
+        trigToUpdate.continue_on_error = this.selectedTrigger.continue_on_error;
         this.updateWorkflow(clonedWorkflow, this.editTriggerComponent.modal);
     }
 
@@ -186,6 +190,7 @@ export class WorkflowShowComponent {
         let trigToUpdate = currentJoin.triggers.find(trig => trig.id === this.selectedJoinTrigger.id);
         trigToUpdate.conditions = this.selectedJoinTrigger.conditions;
         trigToUpdate.manual = this.selectedJoinTrigger.manual;
+        trigToUpdate.continue_on_error = this.selectedJoinTrigger.continue_on_error;
         this.updateWorkflow(clonedWorkflow, this.editJoinTriggerComponent.modal);
     }
 

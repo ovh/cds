@@ -42,6 +42,7 @@ import {AuthentificationInterceptor} from './auth.interceptor.service';
 import {LogoutInterceptor} from './logout.interceptor.service';
 import {HookService} from './hook/hook.service';
 import {PipelineAuditService} from './pipeline/pipeline.audit.service';
+import {EnvironmentService} from './environment/environment.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -64,6 +65,7 @@ export class ServicesModule {
                 CanActivateAuthRoute,
                 CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
+                EnvironmentService,
                 GroupService,
                 HookService,
                 LanguageStore,

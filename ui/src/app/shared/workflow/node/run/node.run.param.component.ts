@@ -119,7 +119,7 @@ export class WorkflowNodeRunParamComponent {
     }
 
     run(): void {
-        if (this.payloadString !== '') {
+        if (this.payloadString && this.payloadString !== '') {
             this.reindent();
             if (this.invalidJSON) {
                 return;
@@ -138,9 +138,13 @@ export class WorkflowNodeRunParamComponent {
             request.number = this.num;
         }
 
-        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).subscribe(wr => {
+        this.loading = true;
+        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).finally(() => {
+            this.loading = false;
+        }).subscribe(wr => {
             this.modal.approve(true);
-            this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num]);
+            this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
+            {queryParams: { subnum: wr.last_subnumber }});
         });
     }
 }

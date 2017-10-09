@@ -64,11 +64,13 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 		e, errn := Next(tx, s)
 		if errn != nil {
 			//Nothing to compute
+			log.Error("Run> Error while compute next execution: %s", errn)
 			_ = tx.Rollback()
 			continue
 		}
 		//Insert it
 		if err := InsertExecution(tx, e); err != nil {
+			log.Error("Run> Error while insert Execution: %s", err)
 			_ = tx.Rollback()
 			continue
 		}
@@ -113,7 +115,8 @@ func Next(db gorp.SqlExecutor, s *sdk.PipelineScheduler) (*sdk.PipelineScheduler
 	}
 	//Don't take last execution date as reference: time.Now() is enough
 	e := &sdk.PipelineSchedulerExecution{
-		ExecutionPlannedDate: cronExpr.Next(t),
+		// Next from now + 10 seconds, to potentially avoid desyncronisation time with many instances of API
+		ExecutionPlannedDate: cronExpr.Next(t.Add(10 * time.Second)),
 		PipelineSchedulerID:  s.ID,
 		Executed:             false,
 	}

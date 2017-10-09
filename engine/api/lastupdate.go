@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -27,6 +28,7 @@ type lastUpdateBroker struct {
 	clients    map[string]*lastUpdateBrokerSubscribe
 	newClients chan *lastUpdateBrokerSubscribe
 	messages   chan string
+	mutex      *sync.Mutex
 }
 
 //Init the lastUpdateBroker
@@ -68,16 +70,20 @@ func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, s
 		select {
 		case <-c.Done():
 			// Close all channels
+			b.mutex.Lock()
 			for c := range b.clients {
 				delete(b.clients, c)
 			}
+			b.mutex.Unlock()
 			if c.Err() != nil {
 				log.Error("lastUpdate.CacheSubscribe> Exiting: %v", c.Err())
 				return
 			}
 		case s := <-b.newClients:
 			// Register new client
+			b.mutex.Lock()
 			b.clients[s.UIID] = s
+			b.mutex.Unlock()
 		case msg := <-b.messages:
 			var lastModif sdk.LastModification
 			if err := json.Unmarshal([]byte(msg), &lastModif); err != nil {
@@ -86,6 +92,7 @@ func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, s
 			}
 
 			//Receive new message
+			b.mutex.Lock()
 			for _, i := range b.clients {
 				if err := loadUserPermissions(DBFunc(), store, i.User); err != nil {
 					log.Warning("lastUpdate.CacheSubscribe> Cannot load auser permission: %s", err)
@@ -129,6 +136,7 @@ func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, s
 					i.Queue <- msg
 				}
 			}
+			b.mutex.Unlock()
 		}
 	}
 }
@@ -165,7 +173,9 @@ func (b *lastUpdateBroker) ServeHTTP() Handler {
 		for {
 			select {
 			case <-w.(http.CloseNotifier).CloseNotify():
+				b.mutex.Lock()
 				delete(b.clients, messageChan.UIID)
+				b.mutex.Unlock()
 				break leave
 			case msg := <-messageChan.Queue:
 				fmt.Fprintf(w, "data: %s\n\n", msg)

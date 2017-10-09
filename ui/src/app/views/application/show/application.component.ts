@@ -60,9 +60,16 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
     // Filter
     appFilter: ApplicationFilter = {
+        remote: '',
         branch: '',
         version: ' '
     };
+
+    // queryparam for breadcrum
+    workflowName: string;
+    workflowNum: string;
+    workflowNodeRun: string;
+    workflowPipeline: string;
 
     constructor(private _applicationStore: ApplicationStore, private _route: ActivatedRoute,
                 private _router: Router, private _authStore: AuthentificationStore,
@@ -74,6 +81,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
         this._route.queryParams.subscribe(queryParams => {
            this.appFilter = {
+               remote: queryParams['remote'] || '',
                branch: queryParams['branch'] || 'master',
                version: queryParams['version'] || ' '
            };
@@ -82,6 +90,13 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                this.startWorker(this.project.key);
            }
         });
+
+        if (this._route.snapshot && this._route.queryParams) {
+            this.workflowName = this._route.snapshot.queryParams['workflow'];
+            this.workflowNum = this._route.snapshot.queryParams['run'];
+            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
+        }
+        this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
         this._route.params.subscribe(params => {
             let key = params['key'];
             let appName = params['appName'];
@@ -158,6 +173,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 'key': key,
                 'appName': this.application.name,
                 'branch': this.appFilter.branch,
+                'remote': this.appFilter.remote,
                 'version': this.appFilter.version
             };
 

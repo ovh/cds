@@ -79,6 +79,7 @@
   "application_workflow_orientation_title" : "Workflow orientation: ",
   "application_workflow_pipeline_add" : "Attach a pipeline",
   "application_workflow_version_title" : "Version",
+  "application_workflow_remote_title" : "Remote",
 
   "artifact_name" : "Artifact name",
   "artifact_tag" : "Tag",
@@ -169,6 +170,16 @@
   "common_stop" : "Stop",
   "common_relaunch" : "Relaunch",
   "common_deprecated" : "Deprecated",
+  "common_no_pipeline" : "There is no pipeline linked",
+  "common_no_application" : "There is no application linked",
+  "common_no_workflow" : "There is no workflow linked",
+  "common_no_environment" : "There is no environment linked",
+  "common_usage" : "Usage",
+
+  "usage_application_list" : "Applications linked",
+  "usage_workflow_list" : "Workflows linked",
+  "usage_pipeline_list" : "Pipelines linked",
+  "usage_environment_list" : "Environments linked",
 
   "danger_zone" : "Danger Zone",
 
@@ -279,6 +290,7 @@
 
   "pipeline_added" : "Pipeline added",
   "pipeline_application" : "Applications using this pipeline",
+  "pipeline_workflows" : "Workflows using this pipeline",
   "pipeline_attach_application" : "Link pipeline to applications",
   "pipeline_build_deleted" : "Build deleted",
   "pipeline_create" : "Create a pipeline",
@@ -567,7 +579,9 @@
   "workflow_node_trigger_condition_form_title": "Add a trigger condition",
   "workflow_node_trigger_condition_no": "There is no trigger condition",
   "workflow_node_trigger_manual" : "Manual trigger",
+  "workflow_node_trigger_continue_on_error" : "Continue on error",
   "workflow_node_trigger_title" : "Add a trigger from pipeline {{pip}}",
+  "workflow_node_trigger_title_edit" : "Edit a trigger from pipeline {{pip}}",
   "workflow_node_name_warning" : "Warnings",
   "workflow_node_name_warning_modal_title" : "Be careful, node name in use",
   "workflow_node_name_warning_modal_hooks" : "The node name is used on theses hooks: ",

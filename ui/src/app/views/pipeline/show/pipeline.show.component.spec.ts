@@ -21,6 +21,7 @@ import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
 import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
+import {AuthentificationStore} from '../../../service/auth/authentification.store';
 
 describe('CDS: Pipeline Show', () => {
 
@@ -38,6 +39,7 @@ describe('CDS: Pipeline Show', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
+                AuthentificationStore
             ],
             imports: [
                 PipelineModule,

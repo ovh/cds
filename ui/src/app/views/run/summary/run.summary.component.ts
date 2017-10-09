@@ -77,7 +77,8 @@ export class RunSummaryComponent implements OnInit {
             this.currentBuild.application.name,
             this.currentBuild.pipeline.name,
             this.currentBuild.build_number,
-            this.currentBuild.environment.name).subscribe(pb => {
+            this.currentBuild.environment.name
+        ).subscribe(pb => {
             this.loading = false;
             this.navigateToBuild(pb);
         }, () => {
@@ -88,6 +89,7 @@ export class RunSummaryComponent implements OnInit {
     navigateToBuild(pb: PipelineBuild): void {
         let queryParams = {queryParams: {envName: pb.environment.name}};
         queryParams.queryParams['branch'] = this.currentBuild.trigger.vcs_branch;
+        queryParams.queryParams['remote'] = this.currentBuild.trigger.vcs_remote;
         queryParams.queryParams['version'] = this.currentBuild.version;
 
         // Force url change
@@ -114,16 +116,7 @@ export class RunSummaryComponent implements OnInit {
 
     runNew(): void {
         let request: PipelineRunRequest = new PipelineRunRequest();
-        let pipParameters = new Array<Parameter>();
-        let gitBranchParam: Parameter = new Parameter();
-        gitBranchParam.name = 'git.branch';
-        gitBranchParam.value = this.currentBuild.trigger.vcs_branch;
-        gitBranchParam.description = 'Git branch to use';
-        gitBranchParam.type = 'string';
-        pipParameters.push(gitBranchParam);
-        pipParameters.push(...this.getCurrentPipelineParameters());
-
-        request.parameters = pipParameters;
+        request.parameters = this.getCurrentPipelineParameters();
         request.env = this.currentWI.environment;
 
         if (this.parent) {
@@ -137,14 +130,16 @@ export class RunSummaryComponent implements OnInit {
         this._appPipService.run(
             this.currentBuild.pipeline.projectKey,
             this.currentBuild.application.name,
-            this.currentBuild.pipeline.name, request).subscribe(pipelineBuild => {
+            this.currentBuild.pipeline.name,
+            request
+        ).subscribe(pipelineBuild => {
             this.navigateToBuild(pipelineBuild);
         });
     }
 
     getCurrentPipelineParameters(): Array<Parameter> {
         return this.currentBuild.parameters.filter(p => {
-            return p.name.indexOf('.cds.pip.') === 0;
+            return p.name.indexOf('cds.pip.') === 0 || p.name.indexOf('git.') === 0;
         });
     }
 }

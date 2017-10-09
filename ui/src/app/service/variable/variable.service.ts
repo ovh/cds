@@ -43,6 +43,7 @@ export class VariableService {
         if (pipelineId != null) {
             params = params.append('pipId', pipelineId.toString());
         }
+
         return this._http.get('/suggest/variable/' + key, {params: params});
     }
 }

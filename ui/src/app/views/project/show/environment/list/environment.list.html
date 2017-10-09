@@ -13,10 +13,12 @@
         </div>
     </div>
     <div class="thirteen wide stretched detailed column">
-        <ng-container *ngIf="selectedEnv">
+        <ng-container *ngIf="!loading && selectedEnv">
             <app-environment [environment]="selectedEnv" [project]="project" (deletedEnv)="deleteEnv($event)"></app-environment>
         </ng-container>
-
+        <ng-container *ngIf="loading">
+            <div class="ui text active center loader"></div>
+        </ng-container>
     </div>
 </div>
 <div class="ui info message" *ngIf="!project.environments || project.environments.length === 0">

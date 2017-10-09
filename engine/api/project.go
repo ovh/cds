@@ -78,46 +78,46 @@ func (api *API) getProjectHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		WithVariables := FormBool(r, "withVariables")
-		WithApplications := FormBool(r, "withApplications")
-		WithApplicationPipelines := FormBool(r, "withApplicationPipelines")
-		WithPipelines := FormBool(r, "withPipelines")
-		WithEnvironments := FormBool(r, "withEnvironments")
-		WithGroups := FormBool(r, "withGroups")
-		WithPermission := FormBool(r, "withPermission")
-		WithRepositoriesManagers := FormBool(r, "withRepositoriesManagers")
-		WithKeys := FormBool(r, "withKeys")
-		WithWorkflows := FormBool(r, "withWorkflows")
+		withVariables := FormBool(r, "withVariables")
+		withApplications := FormBool(r, "withApplications")
+		withApplicationPipelines := FormBool(r, "withApplicationPipelines")
+		withPipelines := FormBool(r, "withPipelines")
+		withEnvironments := FormBool(r, "withEnvironments")
+		withGroups := FormBool(r, "withGroups")
+		withPermission := FormBool(r, "withPermission")
+		withRepositoriesManagers := FormBool(r, "withRepositoriesManagers")
+		withKeys := FormBool(r, "withKeys")
+		withWorkflows := FormBool(r, "withWorkflows")
 
 		opts := []project.LoadOptionFunc{}
-		if WithVariables {
+		if withVariables {
 			opts = append(opts, project.LoadOptions.WithVariables)
 		}
-		if WithApplications {
+		if withApplications {
 			opts = append(opts, project.LoadOptions.WithApplications)
 		}
-		if WithApplicationPipelines {
+		if withApplicationPipelines {
 			opts = append(opts, project.LoadOptions.WithApplicationPipelines)
 		}
-		if WithPipelines {
+		if withPipelines {
 			opts = append(opts, project.LoadOptions.WithPipelines)
 		}
-		if WithEnvironments {
+		if withEnvironments {
 			opts = append(opts, project.LoadOptions.WithEnvironments)
 		}
-		if WithGroups {
+		if withGroups {
 			opts = append(opts, project.LoadOptions.WithGroups)
 		}
-		if WithPermission {
+		if withPermission {
 			opts = append(opts, project.LoadOptions.WithPermission)
 		}
-		if WithRepositoriesManagers {
+		if withRepositoriesManagers {
 			opts = append(opts, project.LoadOptions.WithRepositoriesManagers)
 		}
-		if WithKeys {
+		if withKeys {
 			opts = append(opts, project.LoadOptions.WithKeys)
 		}
-		if WithWorkflows {
+		if withWorkflows {
 			opts = append(opts, project.LoadOptions.WithWorkflows)
 		}
 

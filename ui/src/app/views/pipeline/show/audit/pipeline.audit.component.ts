@@ -128,7 +128,9 @@ export class PipelineAuditComponent extends Table implements OnInit {
     cleanPipeline(p: Pipeline): Pipeline {
         delete p.last_modified;
         delete p.permission;
-        delete p.attached_application;
+        if (p.usage) {
+            delete p.usage.applications;
+        }
         return p;
     }
 

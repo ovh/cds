@@ -85,7 +85,7 @@ func (h *grpcHandlers) unaryInterceptor(ctx context.Context, req interface{}, in
 func (h *grpcHandlers) authorize(ctx context.Context) (*sdk.Worker, error) {
 	if md, ok := metadata.FromContext(ctx); ok {
 		if len(md["name"]) > 0 && len(md["token"]) > 0 {
-			w, err := auth.GetWorker(h.dbConnectionFactory.GetDBMap(), h.store, md["token"][0])
+			w, err := auth.GetWorker(h.dbConnectionFactory.GetDBMap(), h.store, md["token"][0], md["name"][0])
 			if err != nil {
 				log.Error("grpc.authorize> Unable to get worker %v:%v => %s", md["name"], md["token"], err)
 				return nil, sdk.ErrServiceUnavailable

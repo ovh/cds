@@ -78,7 +78,6 @@ func (api *API) rollbackPipelineHandler() Handler {
 				log.Warning("rollbackPipelineHandler> No enought right on this environment %s: \n", request.Env.Name)
 				return sdk.ErrForbidden
 			}
-
 		} else {
 			env = &sdk.DefaultEnv
 		}
@@ -88,7 +87,8 @@ func (api *API) rollbackPipelineHandler() Handler {
 			return sdk.ErrNoEnvExecution
 		}
 
-		pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), app.ID, pip.ID, env.ID, 2, string(sdk.StatusSuccess), "")
+		pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), app.ID, pip.ID, env.ID, 2,
+			pipeline.LoadPipelineBuildOpts.WithStatus(string(sdk.StatusSuccess)))
 		if err != nil {
 			log.Warning("rollbackPipelineHandler> Cannot load pipeline build history %s", err)
 			return sdk.ErrNoPipelineBuild
@@ -226,17 +226,25 @@ func (api *API) runPipelineWithLastParentHandler() Handler {
 		}
 
 		//Branch
-		var branch string
-		for _, p := range request.Params {
-			if p.Name == "git.branch" {
-				branch = p.Value
-			}
+		branch, remote := pipeline.GetVCSInfosInParams(request.Params)
+
+		opts := []pipeline.ExecOptionFunc{
+			pipeline.LoadPipelineBuildOpts.WithStatus(sdk.StatusSuccess.String()),
+			pipeline.LoadPipelineBuildOpts.WithBranchName(branch),
 		}
 
-		builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), request.ParentApplicationID, request.ParentPipelineID, envID, 1, string(sdk.StatusSuccess), branch)
+		if remote == "" {
+			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(remote))
+		} else {
+			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+		}
+
+		builds, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), request.ParentApplicationID, request.ParentPipelineID, envID, 1, opts...)
+
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoParentBuildFound, "runPipelineWithLastParentHandler> Unable to find any successful pipeline build")
 		}
+
 		if len(builds) == 0 {
 			return sdk.ErrNoPipelineBuild
 		}
@@ -302,9 +310,10 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 		if request.ParentEnvironmentID != 0 {
 			envID = request.ParentEnvironmentID
 		}
-		pbs, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(api.mustDB(), request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentVersion, 1)
-		if err != nil {
-			return sdk.WrapError(err, "runPipelineHandler> Cannot load parent pipeline build by version")
+
+		pbs, errP := pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(api.mustDB(), request.ParentApplicationID, request.ParentPipelineID, envID, request.ParentVersion, 1)
+		if errP != nil {
+			return sdk.WrapError(errP, "runPipelineHandler> Cannot load parent pipeline build by version")
 		}
 		if len(pbs) == 0 {
 			return sdk.WrapError(sdk.ErrNoParentBuildFound, "runPipelineHandler> No parent build found")
@@ -340,6 +349,8 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 		trigger.VCSChangesAuthor = parentPipelineBuild.Trigger.VCSChangesAuthor
 		trigger.VCSChangesHash = parentPipelineBuild.Trigger.VCSChangesHash
 		trigger.VCSChangesBranch = parentPipelineBuild.Trigger.VCSChangesBranch
+		trigger.VCSRemote = parentPipelineBuild.Trigger.VCSRemote
+		trigger.VCSRemoteURL = parentPipelineBuild.Trigger.VCSRemoteURL
 	}
 
 	env, errenv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, envDest.Name)
@@ -644,7 +655,7 @@ func (api *API) addPipelineHandler() Handler {
 			return sdk.WrapError(err, "Cannot add groups on pipeline")
 		}
 
-		for _, app := range p.AttachedApplication {
+		for _, app := range p.Usage.Applications {
 			if _, err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
 				return sdk.WrapError(err, "Cannot attach pipeline %d to %d", app.ID, p.ID)
 			}
@@ -688,6 +699,8 @@ func (api *API) getPipelineHandler() Handler {
 		projectKey := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 		withApp := FormBool(r, "withApplications")
+		withWorkflows := FormBool(r, "withWorkflows")
+		withEnvironments := FormBool(r, "withEnvironments")
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
@@ -700,9 +713,25 @@ func (api *API) getPipelineHandler() Handler {
 		if withApp {
 			apps, errA := application.LoadByPipeline(api.mustDB(), api.Cache, p.ID, getUser(ctx))
 			if errA != nil {
-				return sdk.WrapError(errA, "getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s", p.Name)
+				return sdk.WrapError(errA, "getPipelineHandler> Cannot load applications using pipeline %s", p.Name)
 			}
-			p.AttachedApplication = apps
+			p.Usage.Applications = apps
+		}
+
+		if withWorkflows {
+			wf, errW := workflow.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
+			if errW != nil {
+				return sdk.WrapError(errW, "getPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
+			}
+			p.Usage.Workflows = wf
+		}
+
+		if withEnvironments {
+			envs, errE := environment.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
+			if errE != nil {
+				return sdk.WrapError(errE, "getPipelineHandler> Cannot load environments using pipeline %s", p.Name)
+			}
+			p.Usage.Environments = envs
 		}
 
 		return WriteJSON(w, r, p, http.StatusOK)
@@ -756,6 +785,7 @@ func (api *API) getPipelineHistoryHandler() Handler {
 		limitString := r.Form.Get("limit")
 		status := r.Form.Get("status")
 		branchName := r.Form.Get("branchName")
+		remote := r.Form.Get("remote")
 
 		var limit int
 		if limitString != "" {
@@ -800,7 +830,21 @@ func (api *API) getPipelineHistoryHandler() Handler {
 			return sdk.WrapError(sdk.ErrForbidden, "getPipelineHistoryHandler> No enought right on this environment %s", envName)
 		}
 
-		pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), a.ID, p.ID, env.ID, limit, status, branchName)
+		opts := []pipeline.ExecOptionFunc{
+			pipeline.LoadPipelineBuildOpts.WithStatus(status),
+			pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
+		}
+
+		if a.RepositoryFullname != "" && (remote == "" || remote == a.RepositoryFullname) {
+			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(a.RepositoryFullname))
+		} else if remote == "" {
+			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(remote))
+		} else {
+			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+		}
+
+		pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), a.ID, p.ID, env.ID, limit, opts...)
+
 		if errl != nil {
 			return sdk.WrapError(errl, "getPipelineHistoryHandler> cannot load pipeline %s history", p.Name)
 		}
@@ -1352,7 +1396,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 			return WriteJSON(w, r, commits, http.StatusOK)
 		}
 
-		pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), app.ID, pip.ID, env.ID, 1, string(sdk.StatusSuccess), "")
+		pbs, errpb := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), app.ID, pip.ID, env.ID, 1, pipeline.LoadPipelineBuildOpts.WithStatus(string(sdk.StatusSuccess)))
 		if errpb != nil {
 			return sdk.WrapError(errpb, "getPipelineCommitsHandler> Cannot load pipeline build")
 		}

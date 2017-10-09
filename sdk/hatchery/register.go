@@ -75,6 +75,13 @@ func Create(h Interface) {
 	var maxWorkersReached bool
 	var models []sdk.Model
 
+	// Call WorkerModel Enabled first
+	var errwm error
+	models, errwm = h.Client().WorkerModelsEnabled()
+	if errwm != nil {
+		log.Error("error on h.Client().WorkerModelsEnabled() (init call): %v", errwm)
+	}
+
 	for {
 		select {
 		case <-ctx.Done():

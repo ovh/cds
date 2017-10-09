@@ -140,13 +140,13 @@ func (g *GithubClient) Repos() ([]sdk.VCSRepo, error) {
 	responseRepos := []sdk.VCSRepo{}
 	for _, repo := range repos {
 		r := sdk.VCSRepo{
-			ID:           strconv.Itoa(*repo.ID),
-			Name:         *repo.Name,
-			Slug:         strings.Split(*repo.FullName, "/")[0],
-			Fullname:     *repo.FullName,
-			URL:          *repo.HTMLURL,
-			HTTPCloneURL: *repo.CloneURL,
-			SSHCloneURL:  *repo.SSHURL,
+			ID:           strconv.Itoa(repo.ID),
+			Name:         repo.Name,
+			Slug:         strings.Split(repo.FullName, "/")[0],
+			Fullname:     repo.FullName,
+			URL:          repo.HTMLURL,
+			HTTPCloneURL: repo.CloneURL,
+			SSHCloneURL:  repo.SSHURL,
 		}
 		responseRepos = append(responseRepos, r)
 	}
@@ -162,18 +162,18 @@ func (g *GithubClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 		return sdk.VCSRepo{}, err
 	}
 
-	if repo.ID == nil {
+	if repo.ID == 0 {
 		return sdk.VCSRepo{}, err
 	}
 
 	r := sdk.VCSRepo{
-		ID:           strconv.Itoa(*repo.ID),
-		Name:         *repo.Name,
-		Slug:         strings.Split(*repo.FullName, "/")[0],
-		Fullname:     *repo.FullName,
-		URL:          *repo.HTMLURL,
-		HTTPCloneURL: *repo.CloneURL,
-		SSHCloneURL:  *repo.SSHURL,
+		ID:           strconv.Itoa(repo.ID),
+		Name:         repo.Name,
+		Slug:         strings.Split(repo.FullName, "/")[0],
+		Fullname:     repo.FullName,
+		URL:          repo.HTMLURL,
+		HTTPCloneURL: repo.CloneURL,
+		SSHCloneURL:  repo.SSHURL,
 	}
 	return r, nil
 }
@@ -255,10 +255,10 @@ func (g *GithubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 	branchesResult := []sdk.VCSBranch{}
 	for _, b := range branches {
 		branch := sdk.VCSBranch{
-			DisplayID:    *b.Name,
-			ID:           *b.Name,
+			DisplayID:    b.Name,
+			ID:           b.Name,
 			LatestCommit: b.Commit.Sha,
-			Default:      *b.Name == *repo.DefaultBranch,
+			Default:      b.Name == repo.DefaultBranch,
 		}
 		for _, p := range b.Commit.Parents {
 			branch.Parents = append(branch.Parents, p.Sha)
@@ -300,7 +300,7 @@ func (g *GithubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error
 		}
 	}
 
-	if branch.Name == nil {
+	if branch.Name == "" {
 		log.Warning("GithubClient.Branch> Cannot find branch %s: %v", branch, theBranch)
 		g.Cache.Delete(cacheBranchKey)
 		return nil, fmt.Errorf("GithubClient.Branch > Cannot find branch %s", theBranch)
@@ -310,19 +310,113 @@ func (g *GithubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error
 	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch"+theBranch), branch, 61*60)
 
 	branchResult := &sdk.VCSBranch{
-		DisplayID:    *branch.Name,
-		ID:           *branch.Name,
+		DisplayID:    branch.Name,
+		ID:           branch.Name,
 		LatestCommit: branch.Commit.Sha,
-		Default:      *branch.Name == *repo.DefaultBranch,
+		Default:      branch.Name == repo.DefaultBranch,
 	}
 
-	if branch.Commit != nil {
+	if branch.Commit.Sha != "" {
 		for _, p := range branch.Commit.Parents {
 			branchResult.Parents = append(branchResult.Parents, p.Sha)
 		}
 	}
 
 	return branchResult, nil
+}
+
+// PullRequests fetch all the pull request for a repository
+func (g *GithubClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) {
+	var pullRequests = []PullRequest{}
+	var nextPage = "/repos/" + fullname + "/pulls"
+
+	for {
+		if nextPage != "" {
+			status, body, headers, err := g.get(nextPage)
+			if err != nil {
+				log.Warning("GithubClient.PullRequests> Error %s", err)
+				return nil, err
+			}
+			if status >= 400 {
+				return nil, sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
+			}
+			nextPullRequests := []PullRequest{}
+
+			//Github may return 304 status because we are using conditional request with ETag based headers
+			if status == http.StatusNotModified {
+				//If repos aren't updated, lets get them from cache
+				g.Cache.Get(cache.Key("reposmanager", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), &pullRequests)
+				break
+			} else {
+				if err := json.Unmarshal(body, &nextPullRequests); err != nil {
+					log.Warning("GithubClient.Branches> Unable to parse github branches: %s", err)
+					return nil, err
+				}
+			}
+
+			pullRequests = append(pullRequests, nextPullRequests...)
+
+			nextPage = getNextPage(headers)
+		} else {
+			break
+		}
+	}
+
+	//Put the body on cache for one hour and one minute
+	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), pullRequests, 61*60)
+
+	prResults := []sdk.VCSPullRequest{}
+	for _, pullr := range pullRequests {
+		pr := sdk.VCSPullRequest{
+			Base: sdk.VCSPushEvent{
+				Repo: pullr.Base.Repo.FullName,
+				Branch: sdk.VCSBranch{
+					ID:           pullr.Base.Ref,
+					DisplayID:    pullr.Base.Ref,
+					LatestCommit: pullr.Base.Sha,
+				},
+				CloneURL: pullr.Base.Repo.CloneURL,
+				Commit: sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Avatar:      pullr.Base.User.AvatarURL,
+						DisplayName: pullr.Base.User.Login,
+						Name:        pullr.Base.User.Name,
+					},
+					Hash:      pullr.Base.Sha,
+					Message:   pullr.Base.Label,
+					Timestamp: pullr.UpdatedAt.Unix(),
+				},
+			},
+			Head: sdk.VCSPushEvent{
+				Repo: pullr.Head.Repo.FullName,
+				Branch: sdk.VCSBranch{
+					ID:           pullr.Head.Ref,
+					DisplayID:    pullr.Head.Ref,
+					LatestCommit: pullr.Head.Sha,
+				},
+				CloneURL: pullr.Head.Repo.CloneURL,
+				Commit: sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Avatar:      pullr.Head.User.AvatarURL,
+						DisplayName: pullr.Head.User.Login,
+						Name:        pullr.Head.User.Name,
+					},
+					Hash:      pullr.Head.Sha,
+					Message:   pullr.Head.Label,
+					Timestamp: pullr.UpdatedAt.Unix(),
+				},
+			},
+			URL: pullr.URL,
+			User: sdk.VCSAuthor{
+				Avatar:      pullr.User.AvatarURL,
+				DisplayName: pullr.User.Login,
+				Name:        pullr.User.Name,
+			},
+		}
+		prResults = append(prResults, pr)
+	}
+
+	return prResults, nil
 }
 
 // Commits returns the commits list on a branch between a commit SHA (since) until another commit SHA (until). The branch is given by the branch of the first commit SHA (since)
@@ -584,6 +678,7 @@ func (g *GithubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 		log.Warning("GithubClient.GetEvents> Unable to parse github events: %s", err)
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}
+
 	//Check here only events after the reference date and only of type PushEvent or CreateEvent
 	for _, e := range nextEvents {
 		var skipEvent bool
@@ -607,6 +702,15 @@ func (g *GithubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 						}
 						break
 					}
+				}
+			}
+
+			if e.Type == "PullRequestEvent" {
+				switch e.Payload.Action {
+				case "opened", "edited", "reopened":
+					skipEvent = false
+				default:
+					skipEvent = true
 				}
 			}
 
@@ -672,6 +776,7 @@ func (g *GithubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk
 		res = append(res, sdk.VCSPushEvent{
 			Branch: *branch,
 			Commit: c,
+			Repo:   fullname,
 		})
 	}
 
@@ -743,5 +848,59 @@ func (g *GithubClient) DeleteEvents(fullname string, iEvents []interface{}) ([]s
 
 //PullRequestEvents checks pull request events from a event list
 func (g *GithubClient) PullRequestEvents(fullname string, iEvents []interface{}) ([]sdk.VCSPullRequestEvent, error) {
-	return nil, nil
+	events := Events{}
+	//Cast all the events
+	for _, i := range iEvents {
+		e := i.(Event)
+		if e.Type == "PullRequestEvent" {
+			events = append(events, e)
+		}
+	}
+
+	res := []sdk.VCSPullRequestEvent{}
+	for _, e := range events {
+		event := sdk.VCSPullRequestEvent{
+			Action: e.Payload.Action,
+			Repo:   e.Payload.PullRequest.Head.Repo.FullName,
+			Head: sdk.VCSPushEvent{
+				Branch: sdk.VCSBranch{
+					ID:           e.Payload.PullRequest.Head.Ref,
+					DisplayID:    e.Payload.PullRequest.Head.Ref,
+					LatestCommit: e.Payload.PullRequest.Head.Sha,
+				},
+				Commit: sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Name:        e.Payload.PullRequest.Head.User.Name,
+						DisplayName: e.Payload.PullRequest.Head.User.Login,
+						Email:       e.Payload.PullRequest.Head.User.Email,
+					},
+					Hash:    e.Payload.PullRequest.Head.Sha,
+					Message: e.Payload.PullRequest.Head.Label,
+				},
+				CloneURL: e.Payload.PullRequest.Head.Repo.CloneURL,
+			},
+			Base: sdk.VCSPushEvent{
+				Branch: sdk.VCSBranch{
+					ID:           e.Payload.PullRequest.Base.Ref,
+					DisplayID:    e.Payload.PullRequest.Base.Ref,
+					LatestCommit: e.Payload.PullRequest.Base.Sha,
+				},
+				Commit: sdk.VCSCommit{
+					Author: sdk.VCSAuthor{
+						Name:        e.Payload.PullRequest.Base.User.Name,
+						DisplayName: e.Payload.PullRequest.Base.User.Login,
+						Email:       e.Payload.PullRequest.Base.User.Email,
+					},
+					Hash:    e.Payload.PullRequest.Base.Sha,
+					Message: e.Payload.PullRequest.Base.Label,
+				},
+				CloneURL: e.Payload.PullRequest.Base.Repo.CloneURL,
+			},
+		}
+		res = append(res, event)
+	}
+
+	log.Debug("GithubClient.PullRequestEvents> found %d pull request events : %#v", len(res), res)
+
+	return res, nil
 }

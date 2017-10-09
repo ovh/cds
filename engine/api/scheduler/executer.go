@@ -71,6 +71,18 @@ func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSc
 			continue
 		}
 
+		nextExec, errNext := Next(tx, s)
+		if errNext != nil {
+			log.Error("ExecuterRun> Unable to compute next execution %+v : %s", ex, errNext)
+			_ = tx.Rollback()
+			continue
+		}
+		if err := InsertExecution(tx, nextExec); err != nil {
+			log.Error("ExecuterRun> Unable to compute next execution %+v : %s", nextExec, errNext)
+			_ = tx.Rollback()
+			continue
+		}
+
 		//Commit
 		if err := tx.Commit(); err != nil {
 			log.Warning("ExecuterRun> %s", err)
