@@ -208,7 +208,7 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 
 	env := map[string]string{
 		"CDS_API":           h.Client().APIURL(),
-		"CDS_TOKEN":         h.token,
+		"CDS_TOKEN":         h.Configuration().API.Token,
 		"CDS_NAME":          workerName,
 		"CDS_MODEL":         fmt.Sprintf("%d", model.ID),
 		"CDS_HATCHERY":      fmt.Sprintf("%d", h.hatch.ID),
