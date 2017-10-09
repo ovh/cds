@@ -144,7 +144,7 @@ export class WorkflowNodeRunParamComponent {
         }).subscribe(wr => {
             this.modal.approve(true);
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
-            {queryParams: { subnum: wr.last_subnumber}});
+            {queryParams: { subnum: wr.last_subnumber }});
         });
     }
 }

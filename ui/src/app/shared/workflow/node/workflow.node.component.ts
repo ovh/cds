@@ -62,6 +62,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     @ViewChild('nodeNameWarningModal')
     nodeNameWarningModal: ModalTemplate<boolean, boolean, void>;
 
+    workflowRun: WorkflowRun;
 
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
     editableNode: WorkflowNode;
@@ -83,6 +84,8 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     displayPencil = false;
     nameWarning: WorkflowPipelineNameImpact;
 
+    workflowCoreSub: Subscription;
+
     constructor(private elementRef: ElementRef, private _changeDetectorRef: ChangeDetectorRef,
         private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
         private _wrService: WorkflowRunService, private _pipelineStore: PipelineStore, private _router: Router,
@@ -92,19 +95,20 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     ngOnInit(): void {
         this.zone = new NgZone({enableLongStackTrace: false});
-        this._workflowCoreService.getCurrentWorkflowRun().subscribe(wr => {
+        this.workflowCoreSub = this._workflowCoreService.getCurrentWorkflowRun().subscribe(wr => {
             if (wr) {
-                this.workflowRunStatus = wr.status;
-                this.workflowRunNum = wr.num;
+                if (this.workflowRun && this.workflowRun.id !== wr.id) {
+                    this.currentNodeRun = null;
+                }
+                this.workflowRun = wr;
                 if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
                     this.currentNodeRun = wr.nodes[this.node.id][0];
                 }
             } else {
-                this.workflowRunNum = null;
-                this.workflowRunStatus = null;
+                this.workflowRun = null;
             }
         });
-        if (!this.currentNodeRun) {
+        if (!this.workflowRun) {
             this.options = {
                 'fullTextSearch': true,
                 onHide: () => {
@@ -114,7 +118,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                 }
             };
         }
-
     }
 
     addHook(he: HookEvent): void {

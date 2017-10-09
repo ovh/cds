@@ -34,8 +34,14 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 			return sdk.ErrWorkflowNodeNotFound
 		}
 		//Run the node : manual or from an event
+		nextSubNumber := maxsn
+		nodeRuns, ok := w.WorkflowNodeRuns[*startingFromNode]
+		if ok && len(nodeRuns) > 0 {
+			nextSubNumber++
+		}
+
 		log.Debug("processWorkflowRun> starting from node %#v", startingFromNode)
-		if err := processWorkflowNodeRun(db, store, p, w, start, int(maxsn)+1, nil, hookEvent, manual); err != nil {
+		if err := processWorkflowNodeRun(db, store, p, w, start, int(nextSubNumber), nil, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
 		}
 		return nil
