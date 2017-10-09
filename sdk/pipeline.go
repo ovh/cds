@@ -84,6 +84,8 @@ type PipelineBuildDbResult struct {
 	VCSChangesBranch      sql.NullString `db:"vcs_branch"`
 	VCSChangesHash        sql.NullString `db:"vcs_hash"`
 	VCSChangesAuthor      sql.NullString `db:"vcs_author"`
+	VCSRemoteURL          sql.NullString `db:"vcs_remote_url"`
+	VCSRemote             sql.NullString `db:"vcs_remote"`
 	ParentPipelineBuildID sql.NullInt64  `db:"parent_pipeline_build"`
 	Username              sql.NullString `db:"username"`
 	ScheduledTrigger      bool           `db:"scheduled_trigger"`
@@ -98,6 +100,8 @@ type PipelineBuildTrigger struct {
 	VCSChangesBranch    string         `json:"vcs_branch"`
 	VCSChangesHash      string         `json:"vcs_hash"`
 	VCSChangesAuthor    string         `json:"vcs_author"`
+	VCSRemote           string         `json:"vcs_remote,omitempty"`
+	VCSRemoteURL        string         `json:"vcs_remote_url,omitempty"`
 }
 
 // PipelineBuildWarning Struct for display warnings about build

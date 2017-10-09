@@ -188,7 +188,14 @@
 </sm-modal>
 
 <!-- Application launch -->
-<app-pipeline-launch-modal #pipelineLaunchModal [project]="project" [applicationFilter]="applicationFilter" [workflowItem]="workflowItem" (pipelineRunEvent)="navigateToBuild($event)"></app-pipeline-launch-modal>
+<app-pipeline-launch-modal #pipelineLaunchModal
+  [project]="project"
+  [application]="application"
+  [remotes]="remotes"
+  [applicationFilter]="applicationFilter"
+  [workflowItem]="workflowItem"
+  (pipelineRunEvent)="navigateToBuild($event)">
+</app-pipeline-launch-modal>
 
 <!-- Detach pipeline modal -->
 <sm-modal title="{{ 'application_detach_pipeline' | translate}}" class="fluid" #detachPipelineModal>

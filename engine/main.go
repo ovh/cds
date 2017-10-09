@@ -290,6 +290,9 @@ See $ engine config command for more details.
 			case "hooks":
 				s = hooks.New()
 				cfg = conf.Hooks
+			default:
+				fmt.Printf("Error: service '%s' unknown\n", a)
+				os.Exit(1)
 			}
 
 			go start(ctx, s, cfg)

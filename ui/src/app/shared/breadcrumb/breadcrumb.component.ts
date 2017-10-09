@@ -18,6 +18,7 @@ export class BreadcrumbComponent {
     @Input() buildNumber = 0;
     @Input() envName: string;
     @Input() branch: string;
+    @Input() remote: string;
     @Input() appVersion: number;
     @Input() workflow: string;
     @Input() workflowRun: string;
@@ -39,37 +40,37 @@ export class BreadcrumbComponent {
     }
 
     getApplicationQueryParams(): {} {
-        let queryParams = {};
-        if (this.branch) {
-            queryParams['branch'] = this.branch;
-        }
+        let queryParams = {
+          remote: this.remote || '',
+          branch: this.branch || ''
+        };
+
         return queryParams;
     }
 
     getPipelineQueryParams(): {} {
-        let queryParams = {};
+        let queryParams = {
+          version: this.version || '',
+          remote: this.remote || '',
+          buildNumber: this.buildNumber || '',
+          envName: this.envName || '',
+          branch: this.branch || ''
+        };
+
         if (this.application) {
-            queryParams['application'] = this.application.name;
+          queryParams['application'] = this.application.name;
         }
-        if (this.version) {
-            queryParams['version'] = this.version;
-        }
-        if (this.buildNumber) {
-            queryParams['buildNumber'] = this.buildNumber;
-        }
-        if (this.envName) {
-            queryParams['envName'] = this.envName;
-        }
-        if (this.branch) {
-            queryParams['branch'] = this.branch;
-        }
+
         return queryParams;
     }
 
     getBuildQueryParams(): {} {
-        let queryParams = {};
-        queryParams['envName'] = this.envName;
-        queryParams['branch'] = this.branch;
+        let queryParams = {
+          envName: this.envName || '',
+          branch: this.branch || '',
+          remote: this.remote || ''
+        };
+
         return queryParams;
     }
 }

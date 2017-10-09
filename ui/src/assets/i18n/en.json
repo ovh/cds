@@ -79,6 +79,7 @@
   "application_workflow_orientation_title" : "Workflow orientation: ",
   "application_workflow_pipeline_add" : "Attach a pipeline",
   "application_workflow_version_title" : "Version",
+  "application_workflow_remote_title" : "Remote",
 
   "artifact_name" : "Artifact name",
   "artifact_tag" : "Tag",

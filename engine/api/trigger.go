@@ -141,7 +141,7 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, project, t.SrcApplication.Name, getUser(ctx), "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, project, t.SrcApplication.Name, getUser(ctx), "", "", 0)
 		if errWorkflow != nil {
 			log.Warning("addTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 			return errWorkflow
@@ -267,7 +267,7 @@ func (api *API) deleteTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", "", 0)
 		if errWorkflow != nil {
 			log.Warning("deleteTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 			return errWorkflow
@@ -327,7 +327,7 @@ func (api *API) updateTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", "", 0)
 		if errWorkflow != nil {
 			log.Warning("updateTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
 			return errWorkflow

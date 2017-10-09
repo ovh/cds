@@ -177,6 +177,14 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 		}
 	}
 
+	if len(e.PullRequestEvents) > 0 {
+		pbsPull, errPull := triggerPipelines(tx, store, projectKey, rm, p, e)
+		if errPull != nil {
+			return nil, sdk.WrapError(errPull, "Polling> Unable for pull request to trigger pipeline %s for repository %s", p.Pipeline.Name, p.Application.RepositoryFullname)
+		}
+		pbs = append(pbs, pbsPull...)
+	}
+
 	if err := UpdateExecution(tx, e); err != nil {
 		return nil, err
 	}
@@ -202,6 +210,20 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 		if pb != nil {
 			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Branch, event.Commit.Hash)
 			e.PipelineBuildVersions[event.Branch.ID+"/"+event.Commit.Hash[:7]] = pb.Version
+			pbs = append(pbs, *pb)
+		}
+	}
+
+	for _, event := range e.PullRequestEvents {
+		pb, err := triggerPipeline(tx, rm, poller, event.Head, proj)
+		if err != nil {
+			log.Error("Polling.triggerPipelines> cannot trigger pipeline %d: %s\n", poller.Pipeline.ID, err)
+			return nil, err
+		}
+
+		if pb != nil {
+			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Head.Branch, event.Head.Commit.Hash)
+			e.PipelineBuildVersions[event.Head.Branch.ID+"/"+event.Head.Commit.Hash[:7]] = pb.Version
 			pbs = append(pbs, *pb)
 		}
 	}
@@ -253,6 +275,8 @@ func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *s
 		VCSChangesBranch: e.Branch.ID,
 		VCSChangesHash:   e.Commit.Hash,
 		VCSChangesAuthor: e.Commit.Author.DisplayName,
+		VCSRemoteURL:     e.CloneURL,
+		VCSRemote:        e.Repo,
 	}
 
 	// Get commit message to check if we have to skip the build

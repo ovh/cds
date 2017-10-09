@@ -43,6 +43,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     buildNumber: string;
     envName: string;
     branch: string;
+    remote: string;
 
     queryParams: Params;
 
@@ -59,23 +60,18 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         private _appPipService: ApplicationPipelineService, private _authentificationStore: AuthentificationStore) {
         this.currentUser = this._authentificationStore.getUser();
         this.project = this._routeActivated.snapshot.data['project'];
-        if (this._routeActivated.snapshot.data['application']) {
-            this.application = this._routeActivated.snapshot.data['application'];
-        }
-        if (this._routeActivated.snapshot.queryParams['version']) {
-            this.version = this._routeActivated.snapshot.queryParams['version'];
-        }
-        if (this._routeActivated.snapshot.queryParams['buildNumber']) {
-            this.buildNumber = this._routeActivated.snapshot.queryParams['buildNumber'];
-        }
-        if (this._routeActivated.snapshot.queryParams['envName']) {
-            this.envName = this._routeActivated.snapshot.queryParams['envName'];
-        }
-        if (this._routeActivated.snapshot.queryParams['branch']) {
-            this.branch = this._routeActivated.snapshot.queryParams['branch'];
-        }
-        if (this._routeActivated.snapshot.queryParams['workflow']) {
-            this.workflowName = this._routeActivated.snapshot.queryParams['workflow'];
+        this.application = this._routeActivated.snapshot.data['application'];
+
+        this.buildNumber = this.getQueryParam('buildNumber');
+        this.version = this.getQueryParam('version');
+        this.envName = this.getQueryParam('envName');
+        this.branch = this.getQueryParam('branch');
+        this.remote = this.getQueryParam('remote');
+    }
+
+    getQueryParam(name: string): string {
+        if (this._routeActivated.snapshot.queryParams[name]) {
+            return this._routeActivated.snapshot.queryParams[name];
         }
     }
 

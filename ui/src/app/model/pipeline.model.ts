@@ -187,6 +187,8 @@ export class PipelineBuildTrigger {
     vcs_branch: string;
     vcs_hash: string;
     vcs_author: string;
+    vcs_remote: string;
+    vcs_remote_url: string;
 }
 
 export enum PipelineType {

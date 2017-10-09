@@ -104,6 +104,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/keys", r.GET(api.getKeysInApplicationHandler), r.POST(api.addKeyInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/keys/{name}", r.DELETE(api.deleteKeyInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/branches", r.GET(api.getApplicationBranchHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/remotes", r.GET(api.getApplicationRemoteHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/version", r.GET(api.getApplicationBranchVersionHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/clone", r.POST(api.cloneApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/group", r.POST(api.addGroupInApplicationHandler), r.PUT(api.updateGroupsInApplicationHandler, DEPRECATED))

@@ -79,6 +79,7 @@
   "application_workflow_orientation_title" : "Orientation du workflow : ",
   "application_workflow_pipeline_add" : "Lier un pipeline",
   "application_workflow_version_title" : "Version",
+  "application_workflow_remote_title" : "Dépot distant",
 
   "artifact_name" : "Nom de l'artefact",
   "artifact_tag" : "Tag",
