@@ -51,12 +51,11 @@ export class WorkflowNodeRunComponent implements OnDestroy {
             if (q['tab']) {
                 this.selectedTab = q['tab'];
             } else {
-                this.selectedTab = 'workflow';
+                this.selectedTab = 'pipeline';
             }
         });
 
         this.workflowName = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root)['workflowName'];
-
 
         this._activatedRoute.params.subscribe(params => {
             let number = params['number'];

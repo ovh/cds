@@ -100,28 +100,29 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	case getWorker(ctx) != nil:
 		//Refresh the worker
-		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil {
+		workerCtx := getWorker(ctx)
+		if err := worker.RefreshWorker(api.mustDB(), workerCtx); err != nil {
 			return ctx, sdk.WrapError(err, "Router> Unable to refresh worker")
 		}
 
-		g, err := loadGroupPermissions(api.mustDB(), api.Cache, getWorker(ctx).GroupID)
+		g, err := loadGroupPermissions(api.mustDB(), api.Cache, workerCtx.GroupID)
 		if err != nil {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions: %s", err)
 		}
 		getUser(ctx).Groups = append(getUser(ctx).Groups, *g)
 
-		if getWorker(ctx).ModelID != 0 {
+		if workerCtx.ModelID != 0 {
 			//Load model
-			m, err := worker.LoadWorkerModelByID(api.mustDB(), getWorker(ctx).ModelID)
+			m, err := worker.LoadWorkerModelByID(api.mustDB(), workerCtx.ModelID)
 			if err != nil {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s", err)
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s - name:%s modelID:%d", err, workerCtx.Name, workerCtx.ModelID)
 			}
 
 			//If worker model is owned by shared.infra, let's add SharedInfraGroup in user's group
 			if m.GroupID == group.SharedInfraGroup.ID {
 				getUser(ctx).Groups = append(getUser(ctx).Groups, *group.SharedInfraGroup)
 			} else {
-				log.Debug("Router> loading groups permission for model %d", getWorker(ctx).ModelID)
+				log.Debug("Router> loading groups permission for model %d", workerCtx.ModelID)
 				modelGroup, errLoad2 := loadGroupPermissions(api.mustDB(), api.Cache, m.GroupID)
 				if errLoad2 != nil {
 					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Cannot load group: %s", errLoad2)

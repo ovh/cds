@@ -2,7 +2,16 @@
 <ng-template #showPipeline>
     <div id="PipelineShow">
         <div class="CDSbreadcrumb">
-            <app-breadcrumb [project]="project" [pipeline]="pipeline" [application]="application" [version]="version" [buildNumber]="buildNumber" [envName]="envName" [branch]="branch" [remote]="remote"></app-breadcrumb>
+            <app-breadcrumb [project]="project"
+                            [pipeline]="pipeline"
+                            [application]="application"
+                            [workflow]="workflowName"
+                            [version]="version"
+                            [buildNumber]="buildNumber"
+                            [envName]="envName"
+                            [remote]="remote"
+                            [branch]="branch">
+            </app-breadcrumb>
         </div>
         <div class="CDSmenu">
             <sm-menu title="" class="pointing secondary">
@@ -15,8 +24,8 @@
                 <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')">
                     <i class="users icon"></i>{{ 'common_permissions' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'applications'" (click)="showTab('applications')">
-                    <i class="rocket icon"></i>{{ 'common_applications' | translate }}{{ ' (' + applications.length + ')' }}
+                <a sm-item [class.active]="selectedTab === 'usage'" [class.disabled]="usageCount === 0" (click)="usageCount > 0 && showTab('usage')">
+                    <i class="plug icon"></i>{{ 'common_usage' | translate }}{{ ' (' + (applications?.length + workflows?.length + environments?.length) + ')' }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'audits'" (click)="showTab('audits')">
                     <i class="history icon"></i>{{'common_audit' | translate }}
@@ -52,9 +61,8 @@
                         </ng-container>
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                     </div>
-                    <div *ngSwitchCase="'applications'">
-                        <h3>{{ 'pipeline_application' | translate }}</h3>
-                        <app-pipeline-application [project]="project" [applications]="applications"></app-pipeline-application>
+                    <div *ngSwitchCase="'usage'">
+                        <app-usage [project]="project" [applications]="applications" [workflows]="workflows" [environments]="environments" [currentUser]="currentUser"></app-usage>
                     </div>
                     <div *ngSwitchCase="'advanced'">
                         <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>

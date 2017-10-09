@@ -95,12 +95,14 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         this._workflowCoreService.getCurrentWorkflowRun().subscribe(wr => {
             if (wr) {
                 this.workflowRunStatus = wr.status;
+                this.workflowRunNum = wr.num;
                 if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
                     this.currentNodeRun = wr.nodes[this.node.id][0];
                 }
+            } else {
+                this.workflowRunNum = null;
+                this.workflowRunStatus = null;
             }
-            this.workflowRunStatus = wr.status;
-            this.workflowRunNum = wr.num;
         });
         if (!this.currentNodeRun) {
             this.options = {

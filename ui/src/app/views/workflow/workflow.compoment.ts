@@ -59,11 +59,19 @@ export class WorkflowComponent {
 
         });
 
+        let snapshotparams = this._routerService.getRouteSnapshotParams({}, this._activatedRoute.snapshot);
+        if (snapshotparams) {
+            this.number = snapshotparams['number'];
+        }
+        let qp = this._routerService.getRouteSnapshotQueryParams({}, this._activatedRoute.snapshot);
+        if (qp) {
+            this.currentNodeName = qp['name'];
+        }
+
         this._router.events.subscribe(p => {
             if (p instanceof ResolveEnd) {
                 let params = this._routerService.getRouteSnapshotParams({}, p.state.root);
                 let queryParams = this._routerService.getRouteSnapshotQueryParams({}, p.state.root);
-
                 this.currentNodeName = queryParams['name'];
                 this.number = params['number'];
             }

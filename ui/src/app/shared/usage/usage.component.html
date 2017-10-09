@@ -1,0 +1,12 @@
+<div *ngIf="applications && applications.length" class="mb15">
+    <app-usage-applications [project]="project" [applications]="applications"></app-usage-applications>
+</div>
+<div *ngIf="pipelines && pipelines.length" class="mb15">
+    <app-usage-pipelines [project]="project" [pipelines]="pipelines"></app-usage-pipelines>
+</div>
+<div *ngIf="currentUser?.admin && workflows && workflows.length" class="mb15">
+    <app-usage-workflows [project]="project" [workflows]="workflows"></app-usage-workflows>
+</div>
+<div *ngIf="environments && environments.length" class="mb15">
+    <app-usage-environments [project]="project" [environments]="environments"></app-usage-environments>
+</div>

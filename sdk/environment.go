@@ -19,6 +19,7 @@ type Environment struct {
 	Permission        int               `json:"permission"`
 	LastModified      int64             `json:"last_modified"`
 	Keys              []EnvironmentKey  `json:"keys"`
+	Usage             Usage             `json:"usage"`
 }
 
 // EnvironmentVariableAudit represents an audit on an environment variable

@@ -15,7 +15,6 @@ import (
 	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -59,7 +58,7 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 	}
 
 	if hconfig.MarathonURL == "" {
-		return fmt.Errorf("Marathon Host is mandatory")
+		return fmt.Errorf("Marathon URL is mandatory")
 	}
 
 	if hconfig.MarathonIDPrefix == "" {
@@ -106,7 +105,7 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 
 	marathonClient, err := marathon.NewClient(config)
 	if err != nil {
-		return fmt.Errorf("Connection failed on %s", viper.GetString("marathon-host"))
+		return fmt.Errorf("Connection failed on %s", h.Config.MarathonURL)
 	}
 
 	h.marathonClient = marathonClient
@@ -174,8 +173,8 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 		log.Info("CanSpawn> Error on m.listApplications() : %s", errd)
 		return false
 	}
-	if len(apps) >= viper.GetInt("max-worker") {
-		log.Info("CanSpawn> max number of containers reached, aborting. Current: %d. Max: %d", len(apps), viper.GetInt("max-worker"))
+	if len(apps) >= h.Configuration().Provision.MaxWorker {
+		log.Info("CanSpawn> max number of containers reached, aborting. Current: %d. Max: %d", len(apps), h.Configuration().Provision.MaxWorker)
 		return false
 	}
 
@@ -209,7 +208,7 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 
 	env := map[string]string{
 		"CDS_API":           h.Client().APIURL(),
-		"CDS_TOKEN":         h.token,
+		"CDS_TOKEN":         h.Configuration().API.Token,
 		"CDS_NAME":          workerName,
 		"CDS_MODEL":         fmt.Sprintf("%d", model.ID),
 		"CDS_HATCHERY":      fmt.Sprintf("%d", h.hatch.ID),
@@ -218,21 +217,21 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 		"CDS_TTL":           fmt.Sprintf("%d", h.Config.WorkerTTL),
 	}
 
-	if viper.GetString("worker_graylog_host") != "" {
-		env["CDS_GRAYLOG_HOST"] = viper.GetString("worker_graylog_host")
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
+		env["CDS_GRAYLOG_HOST"] = h.Configuration().Provision.WorkerLogsOptions.Graylog.Host
 	}
-	if viper.GetString("worker_graylog_port") != "" {
-		env["CDS_GRAYLOG_PORT"] = viper.GetString("worker_graylog_port")
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
+		env["CDS_GRAYLOG_PORT"] = strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port)
 	}
-	if viper.GetString("worker_graylog_extra_key") != "" {
-		env["CDS_GRAYLOG_EXTRA_KEY"] = viper.GetString("worker_graylog_extra_key")
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
+		env["CDS_GRAYLOG_EXTRA_KEY"] = h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey
 	}
-	if viper.GetString("worker_graylog_extra_value") != "" {
-		env["CDS_GRAYLOG_EXTRA_VALUE"] = viper.GetString("worker_graylog_extra_value")
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
+		env["CDS_GRAYLOG_EXTRA_VALUE"] = h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue
 	}
-	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
-		env["CDS_GRPC_API"] = viper.GetString("grpc_api")
-		env["CDS_GRPC_INSECURE"] = strconv.FormatBool(viper.GetBool("grpc_insecure"))
+	if h.Configuration().API.GRPC.URL != "" && model.Communication == sdk.GRPC {
+		env["CDS_GRPC_API"] = h.Configuration().API.GRPC.URL
+		env["CDS_GRPC_INSECURE"] = strconv.FormatBool(h.Configuration().API.GRPC.Insecure)
 	}
 
 	//Check if there is a memory requirement

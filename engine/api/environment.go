@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -20,11 +21,31 @@ func (api *API) getEnvironmentsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
+		withUsage := FormBool(r, "withUsage")
 
-		environments, errEnv := environment.LoadEnvironments(api.mustDB(), projectKey, true, getUser(ctx))
+		tx, errTx := api.mustDB().Begin()
+		if errTx != nil {
+			return sdk.WrapError(errTx, "getEnvironmentsHandler> Cannot start transaction from db")
+		}
+		defer tx.Rollback()
+
+		environments, errEnv := environment.LoadEnvironments(tx, projectKey, true, getUser(ctx))
 		if errEnv != nil {
-			log.Warning("getEnvironmentsHandler: Cannot load environments from db: %s\n", errEnv)
-			return errEnv
+			return sdk.WrapError(errEnv, "getEnvironmentsHandler> Cannot load environments from db")
+		}
+
+		if withUsage {
+			for iEnv := range environments {
+				wf, errW := workflow.LoadByEnvName(tx, projectKey, environments[iEnv].Name)
+				if errW != nil {
+					return sdk.WrapError(errW, "getEnvironmentsHandler> Cannot load workflows linked to environment %s from db", environments[iEnv].Name)
+				}
+				environments[iEnv].Usage.Workflows = append(environments[iEnv].Usage.Workflows, wf...)
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "getEnvironmentsHandler> Cannot commit transaction from db")
 		}
 
 		return WriteJSON(w, r, environments, http.StatusOK)
@@ -36,16 +57,51 @@ func (api *API) getEnvironmentHandler() Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		environmentName := vars["permEnvironmentName"]
+		withWorkflows := FormBool(r, "withWorkflows")
 
-		environment, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
+		tx, errTx := api.mustDB().Begin()
+		if errTx != nil {
+			return sdk.WrapError(errTx, "getEnvironmentHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		environment, errEnv := environment.LoadEnvironmentByName(tx, projectKey, environmentName)
 		if errEnv != nil {
-			log.Warning("getEnvironmentHandler: Cannot load environment %s for project %s from db: %s\n", environmentName, projectKey, errEnv)
-			return errEnv
+			return sdk.WrapError(errEnv, "getEnvironmentHandler> Cannot load environment %s for project %s from db", environmentName, projectKey)
+		}
+
+		if withWorkflows {
+			wf, errW := workflow.LoadByEnvName(tx, projectKey, environmentName)
+			if errW != nil {
+				return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environments %s in project %s", environmentName, projectKey)
+			}
+			environment.Usage.Workflows = wf
 		}
 
 		environment.Permission = permission.EnvironmentPermission(environment.ID, getUser(ctx))
 
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "getEnvironmentHandler> Cannot commit transaction")
+		}
+
 		return WriteJSON(w, r, environment, http.StatusOK)
+	}
+}
+
+func (api *API) getEnvironmentUsageHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		environmentName := vars["permEnvironmentName"]
+		usage := sdk.Usage{}
+
+		wf, errW := workflow.LoadByEnvName(api.mustDB(), projectKey, environmentName)
+		if errW != nil {
+			return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environments %s in project %s", environmentName, projectKey)
+		}
+		usage.Workflows = wf
+
+		return WriteJSON(w, r, usage, http.StatusOK)
 	}
 }
 

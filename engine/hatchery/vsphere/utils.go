@@ -3,31 +3,29 @@ package vsphere
 import (
 	"fmt"
 
-	"github.com/spf13/viper"
-
 	"github.com/ovh/cds/sdk"
 )
 
 // getGraylogGrpcEnv fetch the graylog and grpc configuration from viper and return environement variable in a slice
-func getGraylogGrpcEnv(model *sdk.Model) []string {
+func (h *HatcheryVSphere) getGraylogGrpcEnv(model *sdk.Model) []string {
 	env := []string{}
 
-	if viper.GetString("worker_graylog_host") != "" {
-		env = append(env, fmt.Sprintf("CDS_GRAYLOG_HOST=%s", viper.GetString("worker_graylog_host")))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
+		env = append(env, fmt.Sprintf("CDS_GRAYLOG_HOST=%s", h.Configuration().Provision.WorkerLogsOptions.Graylog.Host))
 	}
-	if viper.GetString("worker_graylog_port") != "" {
-		env = append(env, fmt.Sprintf("export CDS_GRAYLOG_PORT=%s", viper.GetString("worker_graylog_port")))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
+		env = append(env, fmt.Sprintf("export CDS_GRAYLOG_PORT=%d", h.Configuration().Provision.WorkerLogsOptions.Graylog.Port))
 	}
-	if viper.GetString("worker_graylog_extra_key") != "" {
-		env = append(env, fmt.Sprintf("export CDS_GRAYLOG_EXTRA_KEY=%s", viper.GetString("worker_graylog_extra_key")))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
+		env = append(env, fmt.Sprintf("export CDS_GRAYLOG_EXTRA_KEY=%s", h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey))
 	}
-	if viper.GetString("worker_graylog_extra_value") != "" {
-		env = append(env, fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s", viper.GetString("worker_graylog_extra_value")))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
+		env = append(env, fmt.Sprintf("export CDS_GRAYLOG_EXTRA_VALUE=%s", h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue))
 	}
 
-	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
-		env = append(env, fmt.Sprintf("export CDS_GRPC_API=%s", viper.GetString("grpc_api")))
-		env = append(env, fmt.Sprintf("export CDS_GRPC_INSECURE=%t", viper.GetBool("grpc_insecure")))
+	if h.Configuration().API.GRPC.URL != "" && model.Communication == sdk.GRPC {
+		env = append(env, fmt.Sprintf("export CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
+		env = append(env, fmt.Sprintf("export CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
 	}
 
 	return env

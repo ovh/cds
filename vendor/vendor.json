@@ -23,6 +23,12 @@
 			"revisionTime": "2016-07-17T15:07:09Z"
 		},
 		{
+			"checksumSHA1": "B+j14FiZi1hdMphadHis8T+vsRY=",
+			"path": "github.com/Masterminds/sprig",
+			"revision": "efda631a76d70875162cdc25ffa0d0164bf69758",
+			"revisionTime": "2017-10-06T14:55:04Z"
+		},
+		{
 			"checksumSHA1": "L9njXCkN30+qHaLayiiA2Q9jDlY=",
 			"path": "github.com/Microsoft/go-winio",
 			"revision": "fff283ad5116362ca252298cfc9b95828956d85d",

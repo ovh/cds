@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/spf13/viper"
 )
 
 // New instanciates a new Hatchery Swarm
@@ -287,9 +286,9 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 
 	//CDS env needed by the worker binary
 	env := []string{
-		"CDS_API" + "=" + h.Client().APIURL(),
+		"CDS_API" + "=" + h.Configuration().API.HTTP.URL,
 		"CDS_NAME" + "=" + name,
-		"CDS_TOKEN" + "=" + viper.GetString("token"),
+		"CDS_TOKEN" + "=" + h.Configuration().API.Token,
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
 		"CDS_HATCHERY_NAME" + "=" + h.hatch.Name,
@@ -297,21 +296,21 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 		"CDS_SINGLE_USE=1",
 	}
 
-	if viper.GetString("worker_graylog_host") != "" {
-		env = append(env, "CDS_GRAYLOG_HOST"+"="+viper.GetString("worker_graylog_host"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
+		env = append(env, "CDS_GRAYLOG_HOST"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.Host)
 	}
-	if viper.GetString("worker_graylog_port") != "" {
-		env = append(env, "CDS_GRAYLOG_PORT"+"="+viper.GetString("worker_graylog_port"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
+		env = append(env, fmt.Sprintf("CDS_GRAYLOG_PORT=%d", h.Configuration().Provision.WorkerLogsOptions.Graylog.Port))
 	}
-	if viper.GetString("worker_graylog_extra_key") != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+viper.GetString("worker_graylog_extra_key"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey)
 	}
-	if viper.GetString("worker_graylog_extra_value") != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+viper.GetString("worker_graylog_extra_value"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue)
 	}
-	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
-		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", viper.GetString("grpc_api")))
-		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", viper.GetBool("grpc_insecure")))
+	if h.Configuration().API.GRPC.URL != "" && model.Communication == sdk.GRPC {
+		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
+		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
 	}
 
 	if jobID > 0 {

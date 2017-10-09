@@ -647,7 +647,7 @@ func (api *API) addPipelineHandler() Handler {
 			return sdk.WrapError(err, "Cannot add groups on pipeline")
 		}
 
-		for _, app := range p.AttachedApplication {
+		for _, app := range p.Usage.Applications {
 			if _, err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
 				return sdk.WrapError(err, "Cannot attach pipeline %d to %d", app.ID, p.ID)
 			}
@@ -691,6 +691,8 @@ func (api *API) getPipelineHandler() Handler {
 		projectKey := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 		withApp := FormBool(r, "withApplications")
+		withWorkflows := FormBool(r, "withWorkflows")
+		withEnvironments := FormBool(r, "withEnvironments")
 
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, true)
 		if err != nil {
@@ -703,9 +705,25 @@ func (api *API) getPipelineHandler() Handler {
 		if withApp {
 			apps, errA := application.LoadByPipeline(api.mustDB(), api.Cache, p.ID, getUser(ctx))
 			if errA != nil {
-				return sdk.WrapError(errA, "getApplicationUsingPipelineHandler> Cannot load applications using pipeline %s", p.Name)
+				return sdk.WrapError(errA, "getPipelineHandler> Cannot load applications using pipeline %s", p.Name)
 			}
-			p.AttachedApplication = apps
+			p.Usage.Applications = apps
+		}
+
+		if withWorkflows {
+			wf, errW := workflow.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
+			if errW != nil {
+				return sdk.WrapError(errW, "getPipelineHandler> Cannot load workflows using pipeline %s", p.Name)
+			}
+			p.Usage.Workflows = wf
+		}
+
+		if withEnvironments {
+			envs, errE := environment.LoadByPipelineName(api.mustDB(), projectKey, pipelineName)
+			if errE != nil {
+				return sdk.WrapError(errE, "getPipelineHandler> Cannot load environments using pipeline %s", p.Name)
+			}
+			p.Usage.Environments = envs
 		}
 
 		return WriteJSON(w, r, p, http.StatusOK)

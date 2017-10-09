@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -89,7 +90,7 @@ func GetUsername(store sessionstore.Store, token string) (string, error) {
 }
 
 //GetWorker returns the worker instance from its id
-func GetWorker(db *gorp.DbMap, store cache.Store, workerID string) (*sdk.Worker, error) {
+func GetWorker(db *gorp.DbMap, store cache.Store, workerID, workerName string) (*sdk.Worker, error) {
 	// Load worker
 	var w = &sdk.Worker{}
 
@@ -99,7 +100,7 @@ func GetWorker(db *gorp.DbMap, store cache.Store, workerID string) (*sdk.Worker,
 		var err error
 		w, err = worker.LoadWorker(db, workerID)
 		if err != nil {
-			return nil, fmt.Errorf("cannot load worker: %s", err)
+			return nil, fmt.Errorf("cannot load worker '%s': %s", workerName, err)
 		}
 		store.Set(key, w)
 	}
@@ -119,7 +120,7 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 		repo := services.NewRepository(func() *gorp.DbMap { return db }, store)
 		srv, err = repo.FindByHash(hash)
 		if err != nil {
-			return nil, fmt.Errorf("cannot load worker: %s", err)
+			return nil, fmt.Errorf("cannot load service: %s", err)
 		}
 		store.Set(key, srv)
 	}
@@ -135,7 +136,8 @@ func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, hea
 	}
 	workerID := string(id)
 
-	w, err := GetWorker(db, store, workerID)
+	name := headers.Get(cdsclient.RequestedNameHeader)
+	w, err := GetWorker(db, store, workerID, name)
 	if err != nil {
 		return ctx, err
 	}
