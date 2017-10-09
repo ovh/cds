@@ -198,18 +198,19 @@ func (h *HatcherySwarm) killAndRemove(ID string) {
 		return
 	}
 
-	network, err := h.dockerClient.NetworkInfo(container.NetworkSettings.NetworkID)
-	if err != nil {
-		log.Info("killAndRemove> cannot NetworkInfo: %v", err)
-		h.killAndRemoveContainer(ID)
-		return
-	}
-
-	// If we succeed to get the network, kill and remove all the container on the network
-	if netname, ok := network.Labels["worker_net"]; ok {
-		log.Info("killAndRemove> Remove network %s", netname)
-		for id := range network.Containers {
-			h.killAndRemoveContainer(id)
+	for _, cnetwork := range container.NetworkSettings.Networks {
+		network, err := h.dockerClient.NetworkInfo(cnetwork.NetworkID)
+		if err != nil {
+			log.Info("killAndRemove> cannot NetworkInfo: %v", err)
+			h.killAndRemoveContainer(ID)
+			return
+		}
+		// If we succeed to get the network, kill and remove all the container on the network
+		if netname, ok := network.Labels["worker_net"]; ok {
+			log.Info("killAndRemove> Remove network %s", netname)
+			for id := range network.Containers {
+				h.killAndRemoveContainer(id)
+			}
 		}
 	}
 }
