@@ -126,6 +126,25 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 	return &env, loadDependencies(db, &env)
 }
 
+// LoadByPipelineName load environments linked to a pipeline
+func LoadByPipelineName(db gorp.SqlExecutor, projectKey, pipName string) ([]sdk.Environment, error) {
+	envs := []sdk.Environment{}
+	query := `SELECT DISTINCT environment.*
+	FROM environment
+	JOIN project ON project.id = environment.project_id
+	JOIN pipeline_trigger ON pipeline_trigger.dest_environment_id = environment.id OR pipeline_trigger.src_environment_id = environment.id
+	JOIN pipeline ON pipeline.id = pipeline_trigger.src_pipeline_id OR pipeline.id = pipeline_trigger.dest_pipeline_id
+	WHERE project.projectKey = $1 AND environment.name != $2 AND pipeline.name = $3`
+
+	if _, err := db.Select(&envs, query, projectKey, sdk.DefaultEnv.Name, pipName); err != nil {
+		if err == sql.ErrNoRows {
+			return envs, nil
+		}
+		return nil, err
+	}
+	return envs, nil
+}
+
 //Exists checks if an environment already exists on the project
 func Exists(db gorp.SqlExecutor, projectKey, envName string) (bool, error) {
 	var n int

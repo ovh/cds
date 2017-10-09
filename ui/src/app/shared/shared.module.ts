@@ -65,6 +65,11 @@ import {SuiModule} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
 import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/node.hook.component';
 import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
+import {UsageWorkflowsComponent} from './usage/workflows/usage.workflows.component';
+import {UsageApplicationsComponent} from './usage/applications/usage.applications.component';
+import {UsagePipelinesComponent} from './usage/pipelines/usage.pipelines.component';
+import {UsageEnvironmentsComponent} from './usage/environments/usage.environments.component';
+import {UsageComponent} from './usage/usage.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -118,7 +123,12 @@ import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
         WorkflowTriggerConditionFormComponent,
         WorkflowTriggerConditionListComponent,
         ZoneComponent,
-        ZoneContentComponent
+        ZoneContentComponent,
+        UsageWorkflowsComponent,
+        UsageApplicationsComponent,
+        UsagePipelinesComponent,
+        UsageEnvironmentsComponent,
+        UsageComponent
     ],
     providers: [
         DurationService,
@@ -183,7 +193,12 @@ import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
         WorkflowTriggerConditionFormComponent,
         WorkflowTriggerConditionListComponent,
         ZoneComponent,
-        ZoneContentComponent
+        ZoneContentComponent,
+        UsageWorkflowsComponent,
+        UsageApplicationsComponent,
+        UsagePipelinesComponent,
+        UsageEnvironmentsComponent,
+        UsageComponent
     ]
 })
 export class SharedModule {

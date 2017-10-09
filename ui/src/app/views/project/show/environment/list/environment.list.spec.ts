@@ -14,9 +14,11 @@ import {Environment} from '../../../../../model/environment.model';
 import {ProjectEnvironmentListComponent} from './environment.list.component';
 import {ToasterService} from 'angular2-toaster';
 import {ToastService} from '../../../../../shared/toast/ToastService';
+import {EnvironmentService} from '../../../../../service/environment/environment.service';
 import {VariableService} from '../../../../../service/variable/variable.service';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Observable} from 'rxjs/Rx';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Environment List Component', () => {
 
@@ -36,13 +38,15 @@ describe('CDS: Environment List Component', () => {
                 VariableService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: Router, useClass: MockRouter},
+                EnvironmentService
             ],
             imports : [
                 ProjectModule,
                 SharedModule,
                 RouterTestingModule.withRoutes([
                     { path: 'project/:key', component: ProjectEnvironmentListComponent },
-                ])
+                ]),
+                HttpClientTestingModule
             ]
         });
 
@@ -86,5 +90,3 @@ class MockRouter {
     public navigate() {
     }
 }
-
-

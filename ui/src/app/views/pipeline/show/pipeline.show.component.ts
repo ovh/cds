@@ -1,5 +1,9 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Params, Router} from '@angular/router';
+import {AuthentificationStore} from '../../../service/auth/authentification.store';
+import {User} from '../../../model/user.model';
+import {Workflow} from '../../../model/workflow.model';
+import {Environment} from '../../../model/environment.model';
 import {Pipeline} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
@@ -27,6 +31,10 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
     pipelineSubscriber: Subscription;
 
     applications: Array<Application> = new Array<Application>();
+    workflows: Array<Workflow> = new Array<Workflow>();
+    environments: Array<Environment> = new Array<Environment>();
+    currentUser: User;
+    usageCount = 0;
 
     // optionnal application data
     workflowName: string;
@@ -48,7 +56,8 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
 
     constructor(private _routeActivated: ActivatedRoute, private _pipStore: PipelineStore,
         private _router: Router, private _toast: ToastService, public _translate: TranslateService,
-        private _appPipService: ApplicationPipelineService) {
+        private _appPipService: ApplicationPipelineService, private _authentificationStore: AuthentificationStore) {
+        this.currentUser = this._authentificationStore.getUser();
         this.project = this._routeActivated.snapshot.data['project'];
         if (this._routeActivated.snapshot.data['application']) {
             this.application = this._routeActivated.snapshot.data['application'];
@@ -108,7 +117,10 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                     if (pipelineUpdated && !pipelineUpdated.externalChange &&
                         (!this.pipeline || this.pipeline.last_modified < pipelineUpdated.last_modified)) {
                         this.pipeline = pipelineUpdated;
-                        this.applications = pipelineUpdated.attached_application || [];
+                        this.applications = pipelineUpdated.usage.applications || [];
+                        this.workflows = pipelineUpdated.usage.workflows || [];
+                        this.environments = pipelineUpdated.usage.environments || [];
+                        this.usageCount = this.applications.length + this.environments.length + this.workflows.length;
                     } else if (pipelineUpdated && pipelineUpdated.externalChange) {
                         this._toast.info('', this._translate.instant('warning_pipeline'));
                     }

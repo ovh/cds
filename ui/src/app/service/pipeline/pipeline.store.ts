@@ -385,7 +385,9 @@ export class PipelineStore {
         let pipKey = key + '-' + pipName;
         let pipelineToUpdate = cache.get(pipKey);
         if (pipelineToUpdate) {
-            pipelineToUpdate.attached_application = apps;
+            if (pipelineToUpdate.usage) {
+                pipelineToUpdate.usage.applications = apps;
+            }
             this._pipeline.next(cache.set(pipKey, pipelineToUpdate));
         }
         return pipelineToUpdate;

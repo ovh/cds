@@ -169,6 +169,16 @@
   "common_stop" : "Stop",
   "common_relaunch" : "Relaunch",
   "common_deprecated" : "Deprecated",
+  "common_no_pipeline" : "There is no pipeline linked",
+  "common_no_application" : "There is no application linked",
+  "common_no_workflow" : "There is no workflow linked",
+  "common_no_environment" : "There is no environment linked",
+  "common_usage" : "Usage",
+
+  "usage_application_list" : "Applications linked",
+  "usage_workflow_list" : "Workflows linked",
+  "usage_pipeline_list" : "Pipelines linked",
+  "usage_environment_list" : "Environments linked",
 
   "danger_zone" : "Danger Zone",
 
@@ -279,6 +289,7 @@
 
   "pipeline_added" : "Pipeline added",
   "pipeline_application" : "Applications using this pipeline",
+  "pipeline_workflows" : "Workflows using this pipeline",
   "pipeline_attach_application" : "Link pipeline to applications",
   "pipeline_build_deleted" : "Build deleted",
   "pipeline_create" : "Create a pipeline",
