@@ -39,7 +39,7 @@ func (h *grpcHandlers) AddBuildLog(stream grpc.BuildLog_AddBuildLogServer) error
 
 		db := h.dbConnectionFactory.GetDBMap()
 		if err := pipeline.AddBuildLog(db, in); err != nil {
-			return sdk.WrapError(err, "grpc.AddBuildLog> Unable to insert log : %s", err)
+			return sdk.WrapError(err, "grpc.AddBuildLog> Unable to insert log ")
 		}
 	}
 }
@@ -60,7 +60,7 @@ func (h *grpcHandlers) SendLog(stream grpc.WorkflowQueue_SendLogServer) error {
 
 		db := h.dbConnectionFactory.GetDBMap()
 		if err := workflow.AddLog(db, nil, in); err != nil {
-			return sdk.WrapError(err, "grpc.SendLog> Unable to insert log : %s", err)
+			return sdk.WrapError(err, "grpc.SendLog> Unable to insert log ")
 		}
 	}
 }

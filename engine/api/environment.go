@@ -498,33 +498,33 @@ func (api *API) cloneEnvironmentHandler() Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to start a transaction: %s", err)
+			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to start a transaction")
 		}
 
 		defer tx.Rollback()
 
 		//Insert environment
 		if err := environment.InsertEnvironment(tx, &envPost); err != nil {
-			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert environment %s: %s", envPost.Name, err)
+			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert environment %s", envPost.Name)
 		}
 
 		//Insert variables
 		for _, v := range envPost.Variable {
 			if environment.InsertVariable(tx, envPost.ID, &v, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert variable: %s", err)
+				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert variable")
 			}
 		}
 
 		//Insert environment
 		for _, e := range envPost.EnvironmentGroups {
 			if err := group.InsertGroupInEnvironment(tx, envPost.ID, e.Group.ID, e.Permission); err != nil {
-				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert group in environment: %s", err)
+				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert group in environment")
 			}
 		}
 
 		//Update the poroject
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			return sdk.WrapError(err, "cloneEnvironmentHandler> Cannot update last modified date: %s", err)
+			return sdk.WrapError(err, "cloneEnvironmentHandler> Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

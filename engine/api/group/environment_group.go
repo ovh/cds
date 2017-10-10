@@ -53,7 +53,7 @@ func InsertGroupInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64,
 func InsertGroupsInEnvironment(db gorp.SqlExecutor, groupPermission []sdk.GroupPermission, envID int64) error {
 	for _, g := range groupPermission {
 		if err := InsertGroupInEnvironment(db, envID, g.Group.ID, g.Permission); err != nil {
-			return sdk.WrapError(err, "InsertGroupsInEnvironment> unable to insert group %d %s on env %d : %s", g.Group.ID, g.Group.Name, envID, err)
+			return sdk.WrapError(err, "InsertGroupsInEnvironment> unable to insert group %d %s on env %d ", g.Group.ID, g.Group.Name, envID)
 		}
 	}
 	return nil

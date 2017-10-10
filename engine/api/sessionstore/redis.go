@@ -115,7 +115,7 @@ func (s *Redis) Set(token SessionKey, f string, data interface{}) error {
 	}
 
 	if err := s.store.Client.HSet(key, f, string(b)).Err(); err != nil {
-		return sdk.WrapError(err, "Redis> unable create redis session %s : %s", key, err)
+		return sdk.WrapError(err, "Redis> unable create redis session %s ", key)
 	}
 	return nil
 }
@@ -134,7 +134,7 @@ func (s *Redis) Get(token SessionKey, f string, data interface{}) error {
 
 	if sval != "" {
 		if err := json.Unmarshal([]byte(sval), data); err != nil {
-			return sdk.WrapError(err, "Redis> Cannot unmarshal %s :%s", key, err)
+			return sdk.WrapError(err, "Redis> Cannot unmarshal %s ", key)
 		}
 	}
 

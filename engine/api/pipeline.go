@@ -96,7 +96,7 @@ func (api *API) rollbackPipelineHandler() Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "rollbackPipelineHandler> Cannot start tx: %s", err)
+			return sdk.WrapError(err, "rollbackPipelineHandler> Cannot start tx")
 		}
 		defer tx.Rollback()
 
@@ -109,7 +109,7 @@ func (api *API) rollbackPipelineHandler() Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "rollbackPipelineHandler> Cannot commit tx: %s", err)
+			return sdk.WrapError(err, "rollbackPipelineHandler> Cannot commit tx")
 		}
 
 		go func() {
@@ -462,7 +462,7 @@ func (api *API) deletePipelineActionHandler() Handler {
 
 		err = pipeline.DeletePipelineAction(tx, pipelineActionID)
 		if err != nil {
-			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot delete pipeline action: %s", err)
+			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot delete pipeline action")
 		}
 
 		//Load the project
@@ -473,11 +473,11 @@ func (api *API) deletePipelineActionHandler() Handler {
 
 		err = pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot update pipeline last_modified: %s", err)
+			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot update pipeline last_modified")
 		}
 		err = tx.Commit()
 		if err != nil {
-			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot commit transaction: %s", err)
+			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot commit transaction")
 		}
 
 		return nil
@@ -1132,7 +1132,7 @@ func (api *API) getBuildingPipelinesHandler() Handler {
 			recent, err = pipeline.LoadUserRecentPipelineBuild(api.mustDB(), getUser(ctx).ID)
 		}
 		if err != nil {
-			return sdk.WrapError(err, "getBuildingPipelines> cannot load recent pipelines: %s", err)
+			return sdk.WrapError(err, "getBuildingPipelines> cannot load recent pipelines")
 
 		}
 		pbs = append(pbs, recent...)

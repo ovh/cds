@@ -36,7 +36,7 @@ func (api *API) addStageHandler() Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "addStageHandler> Cannot start transaction: %s", err)
+			return sdk.WrapError(err, "addStageHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -45,7 +45,7 @@ func (api *API) addStageHandler() Handler {
 		}
 
 		if err := pipeline.InsertStage(tx, stageData); err != nil {
-			return sdk.WrapError(err, "addStageHandler> Cannot insert stage: %s", err)
+			return sdk.WrapError(err, "addStageHandler> Cannot insert stage")
 		}
 
 		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
@@ -54,15 +54,15 @@ func (api *API) addStageHandler() Handler {
 		}
 
 		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "addStageHandler> Cannot update pipeline last modified date: %s", err)
+			return sdk.WrapError(err, "addStageHandler> Cannot update pipeline last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addStageHandler> Cannot commit transaction: %s", err)
+			return sdk.WrapError(err, "addStageHandler> Cannot commit transaction")
 		}
 
 		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
-			return sdk.WrapError(err, "addStageHandler> Cannot load pipeline stages: %s", err)
+			return sdk.WrapError(err, "addStageHandler> Cannot load pipeline stages")
 		}
 
 		return WriteJSON(w, r, pipelineData, http.StatusCreated)
@@ -122,7 +122,7 @@ func (api *API) moveStageHandler() Handler {
 		// count stage for this pipeline
 		nbStage, err := pipeline.CountStageByPipelineID(api.mustDB(), pipelineData.ID)
 		if err != nil {
-			return sdk.WrapError(err, "moveStageHandler> Cannot count stage for pipeline %s : %s", pipelineData.Name, err)
+			return sdk.WrapError(err, "moveStageHandler> Cannot count stage for pipeline %s ", pipelineData.Name)
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -139,16 +139,16 @@ func (api *API) moveStageHandler() Handler {
 			// check if stage exist
 			s, err := pipeline.LoadStage(tx, pipelineData.ID, stageData.ID)
 			if err != nil {
-				return sdk.WrapError(err, "moveStageHandler> Cannot load stage: %s", err)
+				return sdk.WrapError(err, "moveStageHandler> Cannot load stage")
 			}
 
 			if err := pipeline.MoveStage(tx, s, stageData.BuildOrder, pipelineData); err != nil {
-				return sdk.WrapError(err, "moveStageHandler> Cannot move stage: %s", err)
+				return sdk.WrapError(err, "moveStageHandler> Cannot move stage")
 			}
 		}
 
 		if err := pipeline.LoadPipelineStage(tx, pipelineData); err != nil {
-			return sdk.WrapError(err, "moveStageHandler> Cannot load stages: %s", err)
+			return sdk.WrapError(err, "moveStageHandler> Cannot load stages")
 		}
 
 		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
@@ -248,7 +248,7 @@ func (api *API) deleteStageHandler() Handler {
 		// Check if pipeline exist
 		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
-			return sdk.WrapError(err, "deleteStageHandler> Cannot load pipeline %s: %s", pipelineKey, err)
+			return sdk.WrapError(err, "deleteStageHandler> Cannot load pipeline %s", pipelineKey)
 		}
 
 		stageID, err := strconv.ParseInt(stageIDString, 10, 60)
@@ -259,12 +259,12 @@ func (api *API) deleteStageHandler() Handler {
 		// check if stage exist
 		s, err := pipeline.LoadStage(api.mustDB(), pipelineData.ID, stageID)
 		if err != nil {
-			return sdk.WrapError(err, "deleteStageHandler> Cannot Load stage: %s", err)
+			return sdk.WrapError(err, "deleteStageHandler> Cannot Load stage")
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "deleteStageHandler> Cannot start transaction: %s", err)
+			return sdk.WrapError(err, "deleteStageHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -273,7 +273,7 @@ func (api *API) deleteStageHandler() Handler {
 		}
 
 		if err := pipeline.DeleteStageByID(tx, s, getUser(ctx).ID); err != nil {
-			return sdk.WrapError(err, "deleteStageHandler> Cannot Delete stage: %s", err)
+			return sdk.WrapError(err, "deleteStageHandler> Cannot Delete stage")
 		}
 
 		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
@@ -282,15 +282,15 @@ func (api *API) deleteStageHandler() Handler {
 		}
 
 		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "deleteStageHandler> Cannot Update pipeline last_modified: %s", err)
+			return sdk.WrapError(err, "deleteStageHandler> Cannot Update pipeline last_modified")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "deleteStageHandler> Cannot commit transaction: %s", err)
+			return sdk.WrapError(err, "deleteStageHandler> Cannot commit transaction")
 		}
 
 		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
-			return sdk.WrapError(err, "deleteStageHandler> Cannot load stages: %s", err)
+			return sdk.WrapError(err, "deleteStageHandler> Cannot load stages")
 		}
 
 		return WriteJSON(w, r, pipelineData, http.StatusOK)

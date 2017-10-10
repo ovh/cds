@@ -10,7 +10,7 @@ import (
 func (api *API) adminTruncateWarningsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if _, err := api.mustDB().Exec("delete from warning"); err != nil {
-			return sdk.WrapError(err, "adminTruncateWarningsHandler> Unable to truncate warning : %s", err)
+			return sdk.WrapError(err, "adminTruncateWarningsHandler> Unable to truncate warning ")
 		}
 		return nil
 	}

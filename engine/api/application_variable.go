@@ -73,13 +73,13 @@ func (api *API) restoreAuditHandler() Handler {
 			if sdk.NeedPlaceholder(v.Type) {
 				value, err := secret.Decrypt([]byte(v.Value))
 				if err != nil {
-					return sdk.WrapError(err, "restoreAuditHandler: Cannot decrypt variable %s for application %s:  %s", v.Name, appName, err)
+					return sdk.WrapError(err, "restoreAuditHandler: Cannot decrypt variable %s for application %s", v.Name, appName)
 				}
 				v.Value = string(value)
 			}
 			err := application.InsertVariable(tx, api.Cache, app, v, getUser(ctx))
 			if err != nil {
-				return sdk.WrapError(err, "restoreAuditHandler: Cannot insert variable %s for application %s:  %s", v.Name, appName, err)
+				return sdk.WrapError(err, "restoreAuditHandler: Cannot insert variable %s for application %s", v.Name, appName)
 			}
 		}
 
@@ -268,7 +268,7 @@ func (api *API) updateVariablesInApplicationHandler() Handler {
 				}
 
 				if err := application.InsertVariable(tx, api.Cache, app, v, getUser(ctx)); err != nil {
-					return sdk.WrapError(err, "updateVariablesInApplicationHandler: Cannot insert variable %s for application %s:  %s", v.Name, appName, err)
+					return sdk.WrapError(err, "updateVariablesInApplicationHandler: Cannot insert variable %s for application %s", v.Name, appName)
 				}
 				break
 			case sdk.KeyVariable:
@@ -289,7 +289,7 @@ func (api *API) updateVariablesInApplicationHandler() Handler {
 				break
 			default:
 				if err := application.InsertVariable(tx, api.Cache, app, v, getUser(ctx)); err != nil {
-					return sdk.WrapError(err, "updateVariablesInApplicationHandler: Cannot insert variable %s for application %s:  %s", v.Name, appName, err)
+					return sdk.WrapError(err, "updateVariablesInApplicationHandler: Cannot insert variable %s for application %s", v.Name, appName)
 				}
 			}
 		}
@@ -392,12 +392,12 @@ func (api *API) addVariableInApplicationHandler() Handler {
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(err, "addVariableInApplicationHandler: Cannot load application %s :  %s", appName, err)
+			return sdk.WrapError(err, "addVariableInApplicationHandler: Cannot load application %s ", appName)
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "addVariableInApplicationHandler: Cannot start transaction:  %s", err)
+			return sdk.WrapError(err, "addVariableInApplicationHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -410,11 +410,11 @@ func (api *API) addVariableInApplicationHandler() Handler {
 			break
 		}
 		if err != nil {
-			return sdk.WrapError(err, "addVariableInApplicationHandler: Cannot add variable %s in application %s:  %s", varName, appName, err)
+			return sdk.WrapError(err, "addVariableInApplicationHandler: Cannot add variable %s in application %s", varName, appName)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "addVariableInApplicationHandler: Cannot commit transaction:  %s", err)
+			return sdk.WrapError(err, "addVariableInApplicationHandler: Cannot commit transaction")
 		}
 
 		app.Variable, err = application.GetAllVariableByID(api.mustDB(), app.ID)

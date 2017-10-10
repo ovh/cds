@@ -238,7 +238,7 @@ func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, d
 		path := filepath.Join(directory, fmt.Sprintf("%s.%s", rm.Name, "privateKey"))
 		log.Info("RepositoriesManager> Writing stash private key %s", path)
 		if err := ioutil.WriteFile(path, []byte(privateKey), 0600); err != nil {
-			return sdk.WrapError(err, "RepositoriesManager> Unable to write stash private key %s : %s", path, err)
+			return sdk.WrapError(err, "RepositoriesManager> Unable to write stash private key %s ", path)
 		}
 		stash := rm.Consumer.(*repostash.StashConsumer)
 		stash.PrivateRSAKey = path

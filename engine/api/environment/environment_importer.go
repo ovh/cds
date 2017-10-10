@@ -35,7 +35,7 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, msgCha
 	env.ProjectID = proj.ID
 	env.ProjectKey = proj.Key
 	if err := InsertEnvironment(db, env); err != nil {
-		return sdk.WrapError(err, "environment.Exists> Unable to create env %s on project %s(%d) : %s", env.Name, env.ProjectKey, env.ProjectID, err)
+		return sdk.WrapError(err, "environment.Exists> Unable to create env %s on project %s(%d) ", env.Name, env.ProjectKey, env.ProjectID)
 	}
 
 	//If no GroupPermission provided, inherit from project

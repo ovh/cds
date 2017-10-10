@@ -191,7 +191,7 @@ func (api *API) addGroupInEnvironmentHandler() Handler {
 		}
 
 		if err := group.InsertGroupInEnvironment(api.mustDB(), env.ID, g.ID, groupPermission.Permission); err != nil {
-			return sdk.WrapError(err, "addGroupInEnvironmentHandler: Cannot add group %s in environment %s:  %s", g.Name, env.Name, err)
+			return sdk.WrapError(err, "addGroupInEnvironmentHandler: Cannot add group %s in environment %s", g.Name, env.Name)
 		}
 
 		return nil

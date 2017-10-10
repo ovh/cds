@@ -88,7 +88,7 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "restoreEnvironmentAuditHandler: Cannot commit transaction:  %s", err)
+			return sdk.WrapError(err, "restoreEnvironmentAuditHandler: Cannot commit transaction")
 		}
 
 		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {

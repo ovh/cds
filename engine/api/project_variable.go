@@ -69,22 +69,22 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 			if sdk.NeedPlaceholder(v.Type) {
 				value, err := secret.Decrypt([]byte(v.Value))
 				if err != nil {
-					return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot decrypt variable %s for project %s:  %s", v.Name, key, err)
+					return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot decrypt variable %s for project %s", v.Name, key)
 
 				}
 				v.Value = string(value)
 			}
 			if err := project.InsertVariable(tx, p, &v, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot insert variable %s for project %s:  %s", v.Name, key, err)
+				return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot insert variable %s for project %s", v.Name, key)
 			}
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot update last modified:  %s", err)
+			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot update last modified")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot commit transaction:  %s", err)
+			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot commit transaction")
 		}
 
 		go func() {
@@ -236,7 +236,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot update last modified:  %s", err)
+			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot update last modified")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -283,7 +283,7 @@ func (api *API) updateVariableInProjectHandler() Handler {
 		defer tx.Rollback()
 
 		if err := project.UpdateVariable(tx, p, &newVar, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "updateVariableInProject: Cannot update variable %s in project %s:  %s", varName, p.Name, err)
+			return sdk.WrapError(err, "updateVariableInProject: Cannot update variable %s in project %s", varName, p.Name)
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
@@ -374,12 +374,12 @@ func (api *API) addVariableInProjectHandler() Handler {
 			break
 		}
 		if err != nil {
-			return sdk.WrapError(err, "AddVariableInProject: Cannot add variable %s in project %s:  %s", varName, p.Name, err)
+			return sdk.WrapError(err, "AddVariableInProject: Cannot add variable %s in project %s", varName, p.Name)
 
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot update last modified:  %s", err)
+			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot update last modified")
 		}
 
 		if err := tx.Commit(); err != nil {
