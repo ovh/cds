@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) addStageHandler() Handler {
@@ -37,8 +36,7 @@ func (api *API) addStageHandler() Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("addStageHandler> Cannot start transaction: %s", err)
-			return err
+			return sdk.WrapError(err, "addStageHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -47,8 +45,7 @@ func (api *API) addStageHandler() Handler {
 		}
 
 		if err := pipeline.InsertStage(tx, stageData); err != nil {
-			log.Warning("addStageHandler> Cannot insert stage: %s", err)
-			return err
+			return sdk.WrapError(err, "addStageHandler> Cannot insert stage")
 		}
 
 		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
@@ -57,18 +54,15 @@ func (api *API) addStageHandler() Handler {
 		}
 
 		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
-			log.Warning("addStageHandler> Cannot update pipeline last modified date: %s", err)
-			return err
+			return sdk.WrapError(err, "addStageHandler> Cannot update pipeline last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("addStageHandler> Cannot commit transaction: %s", err)
-			return err
+			return sdk.WrapError(err, "addStageHandler> Cannot commit transaction")
 		}
 
 		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
-			log.Warning("addStageHandler> Cannot load pipeline stages: %s", err)
-			return err
+			return sdk.WrapError(err, "addStageHandler> Cannot load pipeline stages")
 		}
 
 		return WriteJSON(w, r, pipelineData, http.StatusCreated)
@@ -85,19 +79,18 @@ func (api *API) getStageHandler() Handler {
 
 		stageID, err := strconv.ParseInt(stageIDString, 10, 60)
 		if err != nil {
-			log.Warning("getStageHandler> Stage ID must be an int: %s", err)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrInvalidID, "getStageHandler> Stage ID must be an int: %s", err)
 		}
 
 		// Check if pipeline exist
 		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, false)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "getStageHandler> error on pipeline load")
 		}
 
 		s, err := pipeline.LoadStage(api.mustDB(), pipelineData.ID, stageID)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "getStageHandler> Error on load stage")
 		}
 
 		return WriteJSON(w, r, s, http.StatusOK)
@@ -117,8 +110,7 @@ func (api *API) moveStageHandler() Handler {
 		}
 
 		if stageData.BuildOrder < 1 {
-			log.Warning("moveStageHandler> Build Order must be greater than 0")
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "moveStageHandler> Build Order must be greater than 0")
 		}
 
 		// Check if pipeline exist
@@ -130,8 +122,7 @@ func (api *API) moveStageHandler() Handler {
 		// count stage for this pipeline
 		nbStage, err := pipeline.CountStageByPipelineID(api.mustDB(), pipelineData.ID)
 		if err != nil {
-			log.Warning("moveStageHandler> Cannot count stage for pipeline %s : %s", pipelineData.Name, err)
-			return err
+			return sdk.WrapError(err, "moveStageHandler> Cannot count stage for pipeline %s ", pipelineData.Name)
 		}
 
 		tx, err := api.mustDB().Begin()
@@ -148,19 +139,16 @@ func (api *API) moveStageHandler() Handler {
 			// check if stage exist
 			s, err := pipeline.LoadStage(tx, pipelineData.ID, stageData.ID)
 			if err != nil {
-				log.Warning("moveStageHandler> Cannot load stage: %s", err)
-				return err
+				return sdk.WrapError(err, "moveStageHandler> Cannot load stage")
 			}
 
 			if err := pipeline.MoveStage(tx, s, stageData.BuildOrder, pipelineData); err != nil {
-				log.Warning("moveStageHandler> Cannot move stage: %s", err)
-				return err
+				return sdk.WrapError(err, "moveStageHandler> Cannot move stage")
 			}
 		}
 
 		if err := pipeline.LoadPipelineStage(tx, pipelineData); err != nil {
-			log.Warning("moveStageHandler> Cannot load stages: %s", err)
-			return err
+			return sdk.WrapError(err, "moveStageHandler> Cannot load stages")
 		}
 
 		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
@@ -194,12 +182,10 @@ func (api *API) updateStageHandler() Handler {
 
 		stageID, err := strconv.ParseInt(stageIDString, 10, 60)
 		if err != nil {
-			log.Warning("updateStageHandler> Stage ID must be an int: %s", err)
-			return sdk.ErrInvalidID
+			return sdk.WrapError(sdk.ErrInvalidID, "updateStageHandler> Stage ID must be an int: %s", err)
 		}
 		if stageID != stageData.ID {
-			log.Warning("updateStageHandler> Stage ID doest not match")
-			return sdk.ErrInvalidID
+			return sdk.WrapError(sdk.ErrInvalidID, "updateStageHandler> Stage ID doest not match")
 		}
 
 		// Check if pipeline exist
@@ -262,27 +248,23 @@ func (api *API) deleteStageHandler() Handler {
 		// Check if pipeline exist
 		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, true)
 		if err != nil {
-			log.Warning("deleteStageHandler> Cannot load pipeline %s: %s", pipelineKey, err)
-			return err
+			return sdk.WrapError(err, "deleteStageHandler> Cannot load pipeline %s", pipelineKey)
 		}
 
 		stageID, err := strconv.ParseInt(stageIDString, 10, 60)
 		if err != nil {
-			log.Warning("deleteStageHandler> Stage ID must be an int: %s", err)
-			return sdk.ErrInvalidID
+			return sdk.WrapError(sdk.ErrInvalidID, "deleteStageHandler> Stage ID must be an int: %s", err)
 		}
 
 		// check if stage exist
 		s, err := pipeline.LoadStage(api.mustDB(), pipelineData.ID, stageID)
 		if err != nil {
-			log.Warning("deleteStageHandler> Cannot Load stage: %s", err)
-			return err
+			return sdk.WrapError(err, "deleteStageHandler> Cannot Load stage")
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("deleteStageHandler> Cannot start transaction: %s", err)
-			return err
+			return sdk.WrapError(err, "deleteStageHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -291,8 +273,7 @@ func (api *API) deleteStageHandler() Handler {
 		}
 
 		if err := pipeline.DeleteStageByID(tx, s, getUser(ctx).ID); err != nil {
-			log.Warning("deleteStageHandler> Cannot Delete stage: %s", err)
-			return err
+			return sdk.WrapError(err, "deleteStageHandler> Cannot Delete stage")
 		}
 
 		proj, errproj := project.Load(tx, api.Cache, projectKey, getUser(ctx))
@@ -301,18 +282,15 @@ func (api *API) deleteStageHandler() Handler {
 		}
 
 		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
-			log.Warning("deleteStageHandler> Cannot Update pipeline last_modified: %s", err)
-			return err
+			return sdk.WrapError(err, "deleteStageHandler> Cannot Update pipeline last_modified")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("deleteStageHandler> Cannot commit transaction: %s", err)
-			return err
+			return sdk.WrapError(err, "deleteStageHandler> Cannot commit transaction")
 		}
 
 		if err := pipeline.LoadPipelineStage(api.mustDB(), pipelineData); err != nil {
-			log.Warning("deleteStageHandler> Cannot load stages: %s", err)
-			return err
+			return sdk.WrapError(err, "deleteStageHandler> Cannot load stages")
 		}
 
 		return WriteJSON(w, r, pipelineData, http.StatusOK)

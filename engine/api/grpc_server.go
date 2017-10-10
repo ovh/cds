@@ -62,8 +62,7 @@ func (h *grpcHandlers) streamInterceptor(srv interface{}, stream grpc.ServerStre
 	c := stream.Context()
 	w, err := h.authorize(c)
 	if err != nil {
-		log.Warning("streamInterceptor> authorize failed : %s", err)
-		return err
+		return sdk.WrapError(err, "streamInterceptor> authorize failed ")
 	}
 	m := metadata.Pairs(string(keyWorkerID), w.ID, string(keyWorkerName), w.Name)
 	stream.SendHeader(m)

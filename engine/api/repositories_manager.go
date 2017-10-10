@@ -182,15 +182,13 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 		//Load the repositories manager from the DB
 		rm, err := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName, api.Cache)
 		if err != nil {
-			log.Warning("repositoriesManagerAuthorizeCallback> error %s\n", err)
-			return sdk.ErrNoReposManager
+			return sdk.WrapError(sdk.ErrNoReposManager, "repositoriesManagerAuthorizeCallback> error %s", err)
 
 		}
 
 		accessToken, accessTokenSecret, err := rm.Consumer.AuthorizeToken(state, code)
 		if err != nil {
-			log.Warning("repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
-			return sdk.ErrNoReposManagerClientAuth
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
 
 		}
 

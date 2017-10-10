@@ -130,8 +130,7 @@ func (api *API) deleteActionHandler() Handler {
 
 		tx, errbegin := api.mustDB().Begin()
 		if errbegin != nil {
-			log.Warning("deleteAction> Cannot start transaction: %s\n", errbegin)
-			return errbegin
+			return sdk.WrapError(errbegin, "deleteAction> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -178,8 +177,7 @@ func (api *API) updateActionHandler() Handler {
 		}
 
 		if err = tx.Commit(); err != nil {
-			log.Warning("updateAction> Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateAction> Cannot commit transaction")
 		}
 
 		return WriteJSON(w, r, a, http.StatusOK)

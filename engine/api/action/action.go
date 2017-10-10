@@ -102,8 +102,7 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 
 	for i := range a.Parameters {
 		if err := InsertActionParameter(tx, a.ID, a.Parameters[i]); err != nil {
-			log.Warning("InsertAction> Cannot InsertActionParameter %s: %s\n", a.Parameters[i].Name, err)
-			return err
+			return sdk.WrapError(err, "InsertAction> Cannot InsertActionParameter %s", a.Parameters[i].Name)
 		}
 	}
 
@@ -284,8 +283,7 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 	}
 	for i := range a.Parameters {
 		if err := InsertActionParameter(db, a.ID, a.Parameters[i]); err != nil {
-			log.Warning("UpdateAction> InsertActionParameter for %s failed: %s\n", a.Parameters[i].Name, err)
-			return err
+			return sdk.WrapError(err, "UpdateAction> InsertActionParameter for %s failed", a.Parameters[i].Name)
 		}
 	}
 

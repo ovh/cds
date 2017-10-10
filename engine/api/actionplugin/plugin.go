@@ -176,8 +176,7 @@ func Delete(db *gorp.DbMap, name string, userID int64) error {
 
 	a, err := action.LoadPublicAction(tx, name)
 	if err != nil {
-		log.Warning("plugin.Delete> Action: Cannot get action %s: %s\n", name, err)
-		return err
+		return sdk.WrapError(err, "plugin.Delete> Action: Cannot get action %s", name)
 	}
 
 	query := "DELETE FROM plugin WHERE name = $1"

@@ -27,8 +27,7 @@ func deleteUserPermissionCache(ctx context.Context, store cache.Store) {
 func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status int) error {
 	b, e := json.Marshal(data)
 	if e != nil {
-		log.Warning("WriteJSON> unable to marshal : %s", e)
-		return sdk.ErrUnknownError
+		return sdk.WrapError(e, "WriteJSON> unable to marshal : %s", e)
 	}
 
 	w.Header().Add("Content-Type", "application/json")

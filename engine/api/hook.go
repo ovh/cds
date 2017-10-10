@@ -80,8 +80,7 @@ func (api *API) receiveHookHandler() Handler {
 		}
 
 		if err = r.ParseForm(); err != nil {
-			log.Warning("receiveHook> cannot parse query params: %s\n", err)
-			return err
+			return sdk.WrapError(err, "receiveHook> cannot parse query params")
 		}
 
 		var rh hook.ReceivedHook
@@ -124,8 +123,7 @@ func (api *API) addHookHandler() Handler {
 
 		// Insert hook in database
 		if err := hook.InsertHook(api.mustDB(), &h); err != nil {
-			log.Warning("addHook: cannot insert hook in db: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addHook: cannot insert hook in db")
 
 		}
 
@@ -194,8 +192,7 @@ func (api *API) getApplicationHooksHandler() Handler {
 
 		a, err := application.LoadByName(api.mustDB(), api.Cache, projectName, appName, getUser(ctx), application.LoadOptions.WithHooks)
 		if err != nil {
-			log.Warning("getApplicationHooksHandler> cannot load application %s/%s: %s\n", projectName, appName, err)
-			return err
+			return sdk.WrapError(err, "getApplicationHooksHandler> cannot load application %s/%s", projectName, appName)
 		}
 
 		return WriteJSON(w, r, a.Hooks, http.StatusOK)
@@ -219,14 +216,12 @@ func (api *API) getHooksHandler() Handler {
 
 		a, err := application.LoadByName(api.mustDB(), api.Cache, projectName, appName, getUser(ctx))
 		if err != nil {
-			log.Warning("getHooks> cannot load application %s/%s: %s\n", projectName, appName, err)
-			return err
+			return sdk.WrapError(err, "getHooks> cannot load application %s/%s", projectName, appName)
 		}
 
 		hooks, err := hook.LoadPipelineHooks(api.mustDB(), p.ID, a.ID)
 		if err != nil {
-			log.Warning("getHooks> cannot load hooks: %s\n", err)
-			return err
+			return sdk.WrapError(err, "getHooks> cannot load hooks")
 		}
 
 		return WriteJSON(w, r, hooks, http.StatusOK)
@@ -246,15 +241,13 @@ func (api *API) deleteHookHandler() Handler {
 
 		_, err = hook.LoadHook(api.mustDB(), id)
 		if err != nil {
-			log.Warning("deleteHook> cannot load hook: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteHook> cannot load hook")
 
 		}
 
 		err = hook.DeleteHook(api.mustDB(), id)
 		if err != nil {
-			log.Warning("deleteHook> cannot delete hook: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteHook> cannot delete hook")
 
 		}
 		return nil
@@ -296,15 +289,13 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 
 	// Logging stuff
 	if err := hook.InsertReceivedHook(db, h.URL.String(), string(h.Data)); err != nil {
-		log.Warning("processHook> cannot insert received hook in db: %s\n", err)
-		return err
+		return sdk.WrapError(err, "processHook> cannot insert received hook in db")
 	}
 
 	// Actual search of hook binding
 	hooks, err := hook.LoadHooks(db, h.ProjectKey, h.Repository)
 	if err != nil {
-		log.Warning("processHook> cannot load hook for %s/%s: %s\n", h.ProjectKey, h.Repository, err)
-		return err
+		return sdk.WrapError(err, "processHook> cannot load hook for %s/%s", h.ProjectKey, h.Repository)
 	}
 
 	// If branch is DELETE'd, remove all builds related to this branch
@@ -340,29 +331,25 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 		// create pipeline object
 		p, err := pipeline.LoadPipelineByID(tx, hooks[i].Pipeline.ID, true)
 		if err != nil {
-			log.Warning("processHook> Cannot load pipeline: %s\n", err)
-			return err
+			return sdk.WrapError(err, "processHook> Cannot load pipeline")
 		}
 
 		// get Project
 		// Load project
 		projectData, err := project.LoadByPipelineID(tx, store, nil, p.ID)
 		if err != nil {
-			log.Warning("processHook> Cannot load project for pipeline %s: %s\n", p.Name, err)
-			return err
+			return sdk.WrapError(err, "processHook> Cannot load project for pipeline %s", p.Name)
 		}
 
 		projectsVar, err := project.GetAllVariableInProject(tx, projectData.ID)
 		if err != nil {
-			log.Warning("processHook> Cannot load project variable: %s\n", err)
-			return err
+			return sdk.WrapError(err, "processHook> Cannot load project variable")
 		}
 		projectData.Variable = projectsVar
 
 		pb, err := application.TriggerPipeline(tx, store, hooks[i], h.Branch, h.Hash, h.Author, p, projectData)
 		if err != nil {
-			log.Warning("processHook> cannot trigger pipeline %d: %s\n", hooks[i].Pipeline.ID, err)
-			return err
+			return sdk.WrapError(err, "processHook> cannot trigger pipeline %d", hooks[i].Pipeline.ID)
 		}
 		if pb != nil {
 			log.Debug("processHook> Triggered %s/%s/%s", h.ProjectKey, h.Repository, h.Branch)
@@ -388,8 +375,7 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 	}
 
 	if !found {
-		log.Warning("processHook> Bad uid for hook [%s/%s], got uid='%s'", h.ProjectKey, h.Repository, h.UID)
-		return sdk.ErrUnauthorized
+		return sdk.WrapError(sdk.ErrUnauthorized, "processHook> Bad uid for hook [%s/%s], got uid='%s'", h.ProjectKey, h.Repository, h.UID)
 	}
 
 	return nil
