@@ -21,6 +21,7 @@ type DBConnectionFactory struct {
 	dbPort           int
 	dbSSLMode        string
 	dbTimeout        int
+	dbConnectTimeout int
 	dbMaxConn        int
 	db               *sql.DB
 	mutex            *sync.Mutex
@@ -34,7 +35,7 @@ func (f *DBConnectionFactory) DB() *sql.DB {
 		if f.dbName == "" {
 			return nil
 		}
-		newF, err := Init(f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbTimeout, f.dbMaxConn)
+		newF, err := Init(f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbConnectTimeout, f.dbTimeout, f.dbMaxConn)
 		if err != nil {
 			log.Error("Database> cannot init db connection : %s", err)
 			return nil
@@ -60,18 +61,19 @@ func (f *DBConnectionFactory) Set(d *sql.DB) {
 }
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
-func Init(user, password, name, host string, port int, sslmode string, timeout, maxconn int) (*DBConnectionFactory, error) {
+func Init(user, password, name, host string, port int, sslmode string, connectTimeout, timeout, maxconn int) (*DBConnectionFactory, error) {
 	f := &DBConnectionFactory{
-		dbDriver:   "postgres",
-		dbUser:     user,
-		dbPassword: password,
-		dbName:     name,
-		dbHost:     host,
-		dbPort:     port,
-		dbSSLMode:  sslmode,
-		dbTimeout:  timeout,
-		dbMaxConn:  maxconn,
-		mutex:      &sync.Mutex{},
+		dbDriver:         "postgres",
+		dbUser:           user,
+		dbPassword:       password,
+		dbName:           name,
+		dbHost:           host,
+		dbPort:           port,
+		dbSSLMode:        sslmode,
+		dbTimeout:        timeout,
+		dbConnectTimeout: connectTimeout,
+		dbMaxConn:        maxconn,
+		mutex:            &sync.Mutex{},
 	}
 
 	f.mutex.Lock()
@@ -106,9 +108,13 @@ func Init(user, password, name, host string, port int, sslmode string, timeout, 
 		f.dbTimeout = 3000
 	}
 
+	if f.dbConnectTimeout <= 0 {
+		f.dbConnectTimeout = 10
+	}
+
 	// connect_timeout in seconds
 	// statement_timeout in milliseconds
-	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=10 statement_timeout=%d", f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbTimeout)
+	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d statement_timeout=%d", f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbConnectTimeout, f.dbTimeout)
 	f.db, err = sql.Open(f.dbDriver, dsn)
 	if err != nil {
 		f.db = nil

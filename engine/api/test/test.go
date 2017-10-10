@@ -90,7 +90,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	}
 	if DBConnectionFactory == nil {
 		var err error
-		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 2000, 100)
+		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s", err)
 			return nil, nil

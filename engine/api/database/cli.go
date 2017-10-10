@@ -59,7 +59,8 @@ func setFlags(cmd *cobra.Command) {
 	pflags.StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	pflags.StringVarP(&connFactrory.dbSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
 	pflags.IntVarP(&connFactrory.dbMaxConn, "db-maxconn", "", 20, "DB Max connection")
-	pflags.IntVarP(&connFactrory.dbTimeout, "db-timeout", "", 3000, "Statement timeout value")
+	pflags.IntVarP(&connFactrory.dbTimeout, "db-timeout", "", 3000, "Statement timeout value in milliseconds")
+	pflags.IntVarP(&connFactrory.dbConnectTimeout, "db-connect-timeout", "", 10, "Maximum wait for connection, in seconds")
 }
 
 func init() {
@@ -97,7 +98,7 @@ func downgradeCmdFunc(cmd *cobra.Command, args []string) {
 
 func statusCmdFunc(cmd *cobra.Command, args []string) {
 	var err error
-	connFactrory, err = Init(connFactrory.dbUser, connFactrory.dbPassword, connFactrory.dbName, connFactrory.dbHost, connFactrory.dbPort, connFactrory.dbSSLMode, connFactrory.dbTimeout, connFactrory.dbMaxConn)
+	connFactrory, err = Init(connFactrory.dbUser, connFactrory.dbPassword, connFactrory.dbName, connFactrory.dbHost, connFactrory.dbPort, connFactrory.dbSSLMode, connFactrory.dbConnectTimeout, connFactrory.dbTimeout, connFactrory.dbMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
@@ -160,7 +161,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 //ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
 	var err error
-	connFactrory, err = Init(connFactrory.dbUser, connFactrory.dbPassword, connFactrory.dbName, connFactrory.dbHost, connFactrory.dbPort, connFactrory.dbSSLMode, connFactrory.dbTimeout, connFactrory.dbMaxConn)
+	connFactrory, err = Init(connFactrory.dbUser, connFactrory.dbPassword, connFactrory.dbName, connFactrory.dbHost, connFactrory.dbPort, connFactrory.dbSSLMode, connFactrory.dbConnectTimeout, connFactrory.dbTimeout, connFactrory.dbMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
