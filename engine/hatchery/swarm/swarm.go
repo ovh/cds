@@ -121,7 +121,7 @@ var containersCache = struct {
 func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 	t := time.Now()
 
-	defer log.Debug("getContainers() : %d s", time.Since(t).Seconds())
+	defer log.Debug("getContainers() : %f s", time.Since(t).Seconds())
 
 	containersCache.mu.RLock()
 	nbServers := len(containersCache.list)
@@ -137,6 +137,11 @@ func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 		containersCache.mu.Lock()
 		containersCache.list = s
 		containersCache.mu.Unlock()
+
+		log.Debug("getContainers> %d containers on this host", len(s))
+		for _, v := range s {
+			log.Debug("getContainers> container ID:%s names:%+v image:%s created:%d state:%s, status:%s", v.ID, v.Names, v.Image, v.Created, v.State, v.Status)
+		}
 		//Remove data from the cache after 2 seconds
 		go func() {
 			time.Sleep(2 * time.Second)
@@ -193,18 +198,19 @@ func (h *HatcherySwarm) killAndRemove(ID string) {
 		return
 	}
 
-	network, err := h.dockerClient.NetworkInfo(container.NetworkSettings.NetworkID)
-	if err != nil {
-		log.Info("killAndRemove> cannot NetworkInfo: %v", err)
-		h.killAndRemoveContainer(ID)
-		return
-	}
-
-	// If we succeed to get the network, kill and remove all the container on the network
-	if netname, ok := network.Labels["worker_net"]; ok {
-		log.Info("killAndRemove> Remove network %s", netname)
-		for id := range network.Containers {
-			h.killAndRemoveContainer(id)
+	for _, cnetwork := range container.NetworkSettings.Networks {
+		network, err := h.dockerClient.NetworkInfo(cnetwork.NetworkID)
+		if err != nil {
+			log.Info("killAndRemove> cannot NetworkInfo: %v", err)
+			h.killAndRemoveContainer(ID)
+			return
+		}
+		// If we succeed to get the network, kill and remove all the container on the network
+		if netname, ok := network.Labels["worker_net"]; ok {
+			log.Info("killAndRemove> Remove network %s", netname)
+			for id := range network.Containers {
+				h.killAndRemoveContainer(id)
+			}
 		}
 	}
 }
@@ -421,13 +427,19 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 	}
 
-	// hatcherySwarm.ratioService: Percent reserved for spwaning worker with service requirement
+	// hatcherySwarm.ratioService: Percent reserved for spawning worker with service requirement
 	// if no link -> we need to check ratioService
-	if len(links) == 0 && len(cs) > 0 {
-		percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
-		if percentFree <= h.Config.RatioService {
-			log.Info("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
+	if len(links) == 0 {
+		if h.Config.RatioService >= 100 {
+			log.Debug("CanSpawn> ratioService 100 by conf - no spawn worker without CDS Service")
 			return false
+		}
+		if len(cs) > 0 {
+			percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
+			if percentFree <= h.Config.RatioService {
+				log.Debug("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
+				return false
+			}
 		}
 	}
 
