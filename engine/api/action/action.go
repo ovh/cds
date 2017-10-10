@@ -39,7 +39,7 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 	}
 
 	query := `INSERT INTO action (name, description, type, enabled, deprecated, public) VALUES($1, $2, $3, $4, $5, $6) RETURNING id`
-	if err := tx.QueryRow(query, a.Name, a.Description, a.Type, a.Deprecated, a.Enabled, public).Scan(&a.ID); err != nil {
+	if err := tx.QueryRow(query, a.Name, a.Description, a.Type, a.Enabled, a.Deprecated, public).Scan(&a.ID); err != nil {
 		return err
 	}
 
