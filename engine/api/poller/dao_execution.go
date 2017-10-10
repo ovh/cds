@@ -22,7 +22,7 @@ func InsertExecution(db gorp.SqlExecutor, s *sdk.RepositoryPollerExecution) erro
 func UpdateExecution(db gorp.SqlExecutor, s *sdk.RepositoryPollerExecution) error {
 	ds := RepositoryPollerExecution(*s)
 	if n, err := db.Update(&ds); err != nil {
-		return sdk.WrapError(err, "poller.UpdateExecution> Unable to update poller execution execution : %T %s", err, err)
+		return sdk.WrapError(err, "poller.UpdateExecution> Unable to update poller execution execution : %T ", err)
 	} else if n == 0 {
 		return sdk.ErrNotFound
 	}

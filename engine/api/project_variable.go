@@ -61,8 +61,7 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 		defer tx.Rollback()
 
 		if err := project.DeleteAllVariable(tx, p.ID); err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "restoreProjectVariableAuditHandler: Cannot delete variables for project %s:  %s", key, err)
-
+			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot delete variables for project %s", key)
 		}
 
 		for _, v := range variables {
@@ -105,7 +104,7 @@ func (api *API) getVariablesInProjectHandler() Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "deleteVariableFromProject: Cannot load %s", key)
+			return sdk.WrapError(err, "deleteVariableFromProject: Cannot load %s", key)
 		}
 
 		return WriteJSON(w, r, p.Variable, http.StatusOK)
@@ -165,13 +164,13 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 
 		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "updateVariablesInProjectHandler: Cannot load %s", key)
+			return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot load %s", key)
 
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "updateVariablesInProjectHandler: Cannot start transaction")
+			return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot start transaction")
 
 		}
 		defer tx.Rollback()
@@ -180,12 +179,12 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 		// the placeholder !
 		preload, err := project.GetAllVariableInProject(tx, p.ID, project.WithClearPassword())
 		if err != nil {
-			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot preload variables values")
+			return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot preload variables values")
 
 		}
 
 		if err := project.DeleteAllVariable(tx, p.ID); err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "updateVariablesInProjectHandler: Cannot delete all variables for project %s", p.Key)
+			return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot delete all variables for project %s", p.Key)
 
 		}
 
@@ -201,7 +200,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 				}
 				err = project.InsertVariable(tx, p, &v, getUser(ctx))
 				if err != nil {
-					return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot insert variable %s in project %s", v.Name, p.Key)
+					return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot insert variable %s in project %s", v.Name, p.Key)
 
 				}
 				break
@@ -221,7 +220,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 					}
 					err = project.InsertVariable(tx, p, &v, getUser(ctx))
 					if err != nil {
-						return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot insert variable %s in project %s", v.Name, p.Key)
+						return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot insert variable %s in project %s", v.Name, p.Key)
 
 					}
 				}
@@ -229,23 +228,23 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 			default:
 				err = project.InsertVariable(tx, p, &v, getUser(ctx))
 				if err != nil {
-					return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot insert variable %s in project %s", v.Name, p.Key)
+					return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot insert variable %s in project %s", v.Name, p.Key)
 
 				}
 			}
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot update last modified")
+			return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot update last modified")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(sdk.ErrNotFound, "updateVariablesInProjectHandler: Cannot commit transaction")
+			return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot commit transaction")
 		}
 
 		go func() {
 			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s")
+				log.Warning("updateVariablesInApplicationHandler> Cannot check warnings: %s")
 			}
 		}()
 

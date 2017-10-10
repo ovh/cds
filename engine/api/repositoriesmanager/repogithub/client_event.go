@@ -115,7 +115,6 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 
 	if res.StatusCode != 201 {
 		err := fmt.Errorf("Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
-		log.Warning("SetStatus> %s", err)
 		return sdk.WrapError(err, "SetStatus> Sent data %s", b)
 	}
 

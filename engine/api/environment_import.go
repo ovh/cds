@@ -35,12 +35,12 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Unable to read body ")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Unable to read body")
 		}
 
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Unable to get format ")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Unable to get format")
 		}
 
 		var errorParse error
@@ -60,7 +60,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 			eg := &env.EnvironmentGroups[i]
 			g, err := group.LoadGroup(api.mustDB(), eg.Group.Name)
 			if err != nil {
-				return sdk.WrapError(err, "importNewEnvironmentHandler> Error on import ")
+				return sdk.WrapError(err, "importNewEnvironmentHandler> Error on import")
 			}
 			eg.Group = *g
 		}
@@ -88,7 +88,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		defer tx.Rollback()
 
 		if err := environment.Import(api.mustDB(), proj, env, msgChan, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "importNewEnvironmentHandler> Error on import ")
+			return sdk.WrapError(err, "importNewEnvironmentHandler> Error on import")
 		}
 
 		close(msgChan)
@@ -150,12 +150,12 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importIntoEnvironmentHandler> Unable to read body ")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importIntoEnvironmentHandler> Unable to read body")
 		}
 
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importIntoEnvironmentHandler> Unable to get format ")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importIntoEnvironmentHandler> Unable to get format")
 		}
 
 		var errorParse error
@@ -196,7 +196,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		}()
 
 		if err := environment.ImportInto(tx, proj, newEnv, env, msgChan, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import ")
+			return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import")
 		}
 
 		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj); err != nil {

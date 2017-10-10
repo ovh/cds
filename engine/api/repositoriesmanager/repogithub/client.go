@@ -632,14 +632,14 @@ func (g *GithubClient) RateLimit() error {
 	url := "/rate_limit"
 	status, body, _, err := g.get(url)
 	if err != nil {
-		return sdk.WrapError(err, "GithubClient.RateLimit> Error %s", err)
+		return sdk.WrapError(err, "GithubClient.RateLimit> Error ")
 	}
 	if status >= 400 {
 		return sdk.NewError(sdk.ErrUnknownError, ErrorAPI(body))
 	}
 	rateLimit := &RateLimit{}
 	if err := json.Unmarshal(body, rateLimit); err != nil {
-		return sdk.WrapError(err, "GithubClient.RateLimit> Error %s", err)
+		return sdk.WrapError(err, "GithubClient.RateLimit> Error ")
 	}
 	if rateLimit.Rate.Remaining < 100 {
 		log.Error("Github Rate Limit nearly exceeded %v", rateLimit)

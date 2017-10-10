@@ -141,7 +141,7 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 
 	conditionsOK, err := sdk.WorkflowCheckConditions(stage.Conditions(), run.BuildParameters)
 	if err != nil {
-		return sdk.WrapError(err, "addJobsToQueue> Cannot compute prerequisites on stage %s(%d): err", stage.Name, stage.ID, err)
+		return sdk.WrapError(err, "addJobsToQueue> Cannot compute prerequisites on stage %s(%d)", stage.Name, stage.ID)
 	}
 
 	if !conditionsOK {

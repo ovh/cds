@@ -79,18 +79,18 @@ func (api *API) getStageHandler() Handler {
 
 		stageID, err := strconv.ParseInt(stageIDString, 10, 60)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "getStageHandler> Stage ID must be an int: %s", err)
+			return sdk.WrapError(sdk.ErrInvalidID, "getStageHandler> Stage ID must be an int: %s", err)
 		}
 
 		// Check if pipeline exist
 		pipelineData, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineKey, false)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "getStageHandler> error on pipeline load")
 		}
 
 		s, err := pipeline.LoadStage(api.mustDB(), pipelineData.ID, stageID)
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "getStageHandler> Error on load stage")
 		}
 
 		return WriteJSON(w, r, s, http.StatusOK)

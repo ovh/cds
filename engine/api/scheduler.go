@@ -42,7 +42,7 @@ func (api *API) getSchedulerApplicationPipelineHandler() Handler {
 
 		//Load environment
 		if err := r.ParseForm(); err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "getSchedulerApplicationPipelineHandler> Cannot parse form")
+			return sdk.WrapError(sdk.ErrWrongRequest, "getSchedulerApplicationPipelineHandler> Cannot parse form")
 
 		}
 		envName := r.Form.Get("envName")
@@ -101,7 +101,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 
 		//Load environment
 		if err := r.ParseForm(); err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "getSchedulerApplicationPipelineHandler> Cannot parse form")
+			return sdk.WrapError(sdk.ErrWrongRequest, "getSchedulerApplicationPipelineHandler> Cannot parse form")
 
 		}
 		envName := r.Form.Get("envName")
@@ -243,7 +243,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 			var err error
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if err != nil {
-				return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> %s", err)
+				return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> ")
 			}
 
 			if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
@@ -261,7 +261,7 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 		//Load the scheduler
 		sOld, err := scheduler.Load(api.mustDB(), s.ID)
 		if err != nil {
-			return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> %s", err)
+			return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> ")
 
 		}
 

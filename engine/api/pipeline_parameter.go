@@ -103,7 +103,7 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "updateParametersInPipelineHandler: Cannot start transaction: %s", err)
+			return sdk.WrapError(err, "updateParametersInPipelineHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -175,7 +175,7 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(sdk.ErrUnknownError, "updateParametersInPipelineHandler: Cannot commit transaction: %s", err)
+			return sdk.WrapError(err, "updateParametersInPipelineHandler: Cannot commit transaction")
 		}
 
 		return WriteJSON(w, r, append(added, updated...), http.StatusOK)

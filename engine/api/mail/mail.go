@@ -175,33 +175,33 @@ func SendEmail(subject string, mailContent *bytes.Buffer, userMail string) error
 
 	c, err := smtpClient()
 	if err != nil {
-		return sdk.WrapError(err, "Cannot get smtp client:%s", err.Error())
+		return sdk.WrapError(err, "Cannot get smtp client")
 	}
 	defer c.Close()
 
 	// To && From
 	if err = c.Mail(from.Address); err != nil {
-		return sdk.WrapError(err, "Error with c.Mail:%s", err.Error())
+		return sdk.WrapError(err, "Error with c.Mail")
 	}
 
 	if err = c.Rcpt(to.Address); err != nil {
-		return sdk.WrapError(err, "Error with c.Rcpt:%s", err.Error())
+		return sdk.WrapError(err, "Error with c.Rcpt")
 	}
 
 	// Data
 	w, err := c.Data()
 	if err != nil {
-		return sdk.WrapError(err, "Error with c.Data:%s", err.Error())
+		return sdk.WrapError(err, "Error with c.Data")
 	}
 
 	_, err = w.Write([]byte(message))
 	if err != nil {
-		return sdk.WrapError(err, "Error with c.Write:%s", err.Error())
+		return sdk.WrapError(err, "Error with c.Write")
 	}
 
 	err = w.Close()
 	if err != nil {
-		return sdk.WrapError(err, "Error with c.Close:%s", err.Error())
+		return sdk.WrapError(err, "Error with c.Close")
 	}
 
 	c.Quit()

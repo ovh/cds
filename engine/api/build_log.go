@@ -49,7 +49,7 @@ func (api *API) getStepBuildLogsHandler() Handler {
 		}
 
 		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "getStepBuildLogsHandler> No enought right on this environment %s: ", envName)
+			return sdk.WrapError(sdk.ErrForbidden, "getStepBuildLogsHandler> No enought right on this environment %s", envName)
 		}
 
 		// Check that pipeline exists
@@ -124,21 +124,20 @@ func (api *API) getBuildLogsHandler() Handler {
 		}
 
 		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "getBuildLogsHandler> No enought right on this environment %s: ", envName)
+			return sdk.WrapError(sdk.ErrForbidden, "getBuildLogsHandler> No enought right on this environment %s", envName)
 
 		}
 
 		// Check that pipeline exists
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrPipelineNotFound, "getBuildLogsHandler> Cannot load pipeline %s", pipelineName)
-
+			return sdk.WrapError(err, "getBuildLogsHandler> Cannot load pipeline %s", pipelineName)
 		}
 
 		// Check that application exists
 		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(sdk.ErrApplicationNotFound, "getBuildLogsHandler> Cannot load application %s", appName)
+			return sdk.WrapError(err, "getBuildLogsHandler> Cannot load application %s", appName)
 
 		}
 
@@ -196,7 +195,7 @@ func (api *API) getPipelineBuildJobLogsHandler() Handler {
 
 		pipelineActionID, err := strconv.ParseInt(pipelineActionIDString, 10, 64)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "getPipelineBuildJobLogsHandler> actionID should be an integer ")
+			return sdk.WrapError(sdk.ErrInvalidID, "getPipelineBuildJobLogsHandler> actionID should be an integer")
 		}
 
 		// Check that pipeline exists
@@ -223,7 +222,7 @@ func (api *API) getPipelineBuildJobLogsHandler() Handler {
 		}
 
 		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
-			return sdk.WrapError(sdk.ErrForbidden, "getPipelineBuildJobLogsHandler> No enought right on this environment %s: ", envName)
+			return sdk.WrapError(sdk.ErrForbidden, "getPipelineBuildJobLogsHandler> No enought right on this environment %s", envName)
 		}
 
 		// if buildNumber is 'last' fetch last build number
