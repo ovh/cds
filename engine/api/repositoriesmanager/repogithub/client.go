@@ -772,9 +772,10 @@ func (g *GithubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk
 			continue
 		}
 		res = append(res, sdk.VCSPushEvent{
-			Branch: *branch,
-			Commit: c,
-			Repo:   fullname,
+			Branch:   *branch,
+			Commit:   c,
+			Repo:     fullname,
+			CloneURL: c.URL,
 		})
 	}
 

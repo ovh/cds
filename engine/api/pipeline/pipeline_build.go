@@ -998,8 +998,10 @@ func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipeli
 		return sdk.WrapError(errMarshal, "insertPipelineBuild> Unable to marshal commits")
 	}
 
-	if pb.Trigger.VCSRemote != "" && pb.Trigger.VCSRemoteURL != "" && !strings.Contains(pb.Trigger.VCSRemoteURL, pb.Trigger.VCSRemote) {
-		return sdk.WrapError(fmt.Errorf("remote aren't correct for this remote_url"), "insertPipelineBuild> Remote %s with url %s in error", pb.Trigger.VCSRemote, pb.Trigger.VCSRemoteURL)
+	remoteURL := strings.ToLower(pb.Trigger.VCSRemoteURL)
+	remote := strings.ToLower(pb.Trigger.VCSRemote)
+	if pb.Trigger.VCSRemote != "" && pb.Trigger.VCSRemoteURL != "" && !strings.Contains(remoteURL, remote) {
+		return sdk.WrapError(fmt.Errorf("remote aren't correct for this remote_url"), "insertPipelineBuild> Remote %s with url %s in error", remote, remoteURL)
 	}
 
 	statement := db.QueryRow(
