@@ -49,6 +49,8 @@ export class WorkflowShowComponent {
     selectedJoin: WorkflowNodeJoin;
     selectedJoinTrigger: WorkflowNodeJoinTrigger;
 
+    selectedTab = 'workflows';
+
     loading = false;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
@@ -57,6 +59,12 @@ export class WorkflowShowComponent {
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
+        });
+
+        this.activatedRoute.queryParams.subscribe(params => {
+            if (params['tab']) {
+                this.selectedTab = params['tab'];
+            }
         });
 
         this.activatedRoute.params.subscribe(params => {
@@ -85,6 +93,10 @@ export class WorkflowShowComponent {
         });
 
         this._workflowCoreService.setCurrentWorkflowRun(null);
+    }
+
+    showTab(tab: string): void {
+        this._router.navigateByUrl('/project/' + this.project.key + '/workflow/' + this.detailedWorkflow.name + '?tab=' + tab);
     }
 
     public openDeleteJoinSrcModal(data: { source, target }) {

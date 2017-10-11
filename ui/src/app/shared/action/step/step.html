@@ -59,8 +59,8 @@
             </label>
         </div>
         <div class="fourteen wide column">
-            <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"
-                                 (valueUpdating)="action.hasChanged = true"></app-parameter-value>
+            <app-parameter-value [edit]="edit" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"
+                                 (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)"></app-parameter-value>
         </div>
     </div>
 </div>

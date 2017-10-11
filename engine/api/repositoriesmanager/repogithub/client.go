@@ -23,8 +23,6 @@ type GithubClient struct {
 	DisableSetStatus bool
 	DisableStatusURL bool
 	Cache            cache.Store
-	apiURL           string
-	uiURL            string
 }
 
 // ReleaseRequest Request sent to Github to create a release
