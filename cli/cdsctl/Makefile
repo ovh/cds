@@ -6,7 +6,7 @@ TARGET_DIR = ./dist
 TARGET_BINARY = cdsctl
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 
 GO_BUILD = go build
 GO_LINT = ${GOPATH}/bin/gometalinter
