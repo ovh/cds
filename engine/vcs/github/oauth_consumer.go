@@ -8,8 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -21,7 +20,7 @@ const (
 
 //Github const
 var (
-	RequestedScope = []string{"user", "repo", "admin:repo_hook", "admin:org_hook"} //https://developer.github.com/v3/oauth/#scopes
+	requestedScope = []string{"user:email", "repo", "admin:repo_hook"} //https://developer.github.com/v3/oauth/#scopes
 )
 
 func generateHash() (string, error) {
@@ -38,37 +37,9 @@ func generateHash() (string, error) {
 	return string(token), nil
 }
 
-//GithubConsumer embeds a github oauth2 consumer
-type GithubConsumer struct {
-	ClientID                 string `json:"client-id"`
-	ClientSecret             string `json:"-"`
-	AuthorizationCallbackURL string `json:"-"`
-	WithHooks                bool   `json:"with-hooks"`
-	WithPolling              bool   `json:"with-polling"`
-	DisableSetStatus         bool   `json:"-"`
-	DisableStatusURL         bool   `json:"-"`
-	Cache                    cache.Store
-}
-
-//New creates a new GithubConsumer
-func New(ClientID, ClientSecret, AuthorizationCallbackURL string, store cache.Store) *GithubConsumer {
-	return &GithubConsumer{
-		ClientID:                 ClientID,
-		ClientSecret:             ClientSecret,
-		AuthorizationCallbackURL: AuthorizationCallbackURL,
-		Cache: store,
-	}
-}
-
-//Data returns a serilized version of specific data
-func (g *GithubConsumer) Data() string {
-	b, _ := json.Marshal(g)
-	return string(b)
-}
-
 //AuthorizeRedirect returns the request token, the Authorize URL
 //doc: https://developer.github.com/v3/oauth/#web-application-flow
-func (g *GithubConsumer) AuthorizeRedirect() (string, string, error) {
+func (g *githubConsumer) AuthorizeRedirect() (string, string, error) {
 	// GET https://github.com/login/oauth/authorize
 	// with parameters : client_id, redirect_uri, scope, state
 	requestToken, err := generateHash()
@@ -80,7 +51,7 @@ func (g *GithubConsumer) AuthorizeRedirect() (string, string, error) {
 	val.Add("client_id", g.ClientID)
 	//Leave the default value set in github
 	//val.Add("redirect_uri", g.AuthorizationCallbackURL)
-	val.Add("scope", strings.Join(RequestedScope, " "))
+	val.Add("scope", strings.Join(requestedScope, " "))
 	val.Add("state", requestToken)
 
 	authorizeURL := fmt.Sprintf("%s/login/oauth/authorize?%s", URL, val.Encode())
@@ -90,7 +61,7 @@ func (g *GithubConsumer) AuthorizeRedirect() (string, string, error) {
 
 //AuthorizeToken returns the authorized token (and its secret)
 //from the request token and the verifier got on authorize url
-func (g *GithubConsumer) AuthorizeToken(state, code string) (string, string, error) {
+func (g *githubConsumer) AuthorizeToken(state, code string) (string, string, error) {
 	log.Debug("AuthorizeToken> Github send code %s for state %s", code, state)
 	//POST https://github.com/login/oauth/access_token
 	//Parameters:
@@ -128,7 +99,7 @@ func (g *GithubConsumer) AuthorizeToken(state, code string) (string, string, err
 	//  When requesting multiple scopes, the token will be saved with a normalized list of scopes, discarding those that are implicitly included by another requested scope
 	ghScope := strings.Split(ghResponse["scope"], ",")
 	var allFound = true
-	for _, s := range RequestedScope {
+	for _, s := range requestedScope {
 		var found bool
 		for i := range ghScope {
 			if ghScope[i] == s {
@@ -142,38 +113,25 @@ func (g *GithubConsumer) AuthorizeToken(state, code string) (string, string, err
 		}
 	}
 	if !allFound {
-		return "", "", fmt.Errorf("Scopes doesn't match with request : %s %s", strings.Join(RequestedScope, " "), string(res))
+		return "", "", fmt.Errorf("Scopes doesn't match with request : %s %s", strings.Join(requestedScope, " "), string(res))
 	}
 
 	return ghResponse["access_token"], state, nil
 }
 
 //keep client in memory
-var instancesAuthorizedClient = map[string]sdk.RepositoriesManagerClient{}
+var instancesAuthorizedClient = map[string]vcs.AuthorizedClient{}
 
 //GetAuthorized returns an authorized client
-func (g *GithubConsumer) GetAuthorized(accessToken, accessTokenSecret string) (sdk.RepositoriesManagerClient, error) {
-	c := instancesAuthorizedClient[accessToken]
-	if c == nil {
-		c = &GithubClient{
-			ClientID:         g.ClientID,
-			OAuthToken:       accessToken,
-			DisableSetStatus: g.DisableSetStatus,
-			DisableStatusURL: g.DisableStatusURL,
-			Cache:            g.Cache,
+func (g *githubConsumer) GetAuthorizedClient(accessToken, accessTokenSecret string) (vcs.AuthorizedClient, error) {
+	c, ok := instancesAuthorizedClient[accessToken]
+	if !ok {
+		c = &githubClient{
+			ClientID:   g.ClientID,
+			OAuthToken: accessToken,
+			Cache:      g.Cache,
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}
-
-	return c, c.(*GithubClient).RateLimit()
-}
-
-//HooksSupported returns true if the driver technically support hook
-func (g *GithubConsumer) HooksSupported() bool {
-	return false
-}
-
-//PollingSupported returns true if the driver technically support polling
-func (g *GithubConsumer) PollingSupported() bool {
-	return true
+	return c, c.(*githubClient).RateLimit()
 }

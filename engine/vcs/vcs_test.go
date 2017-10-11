@@ -4,11 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
-	"os"
-	"os/user"
-	"path"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -32,29 +28,9 @@ func init() {
 func newTestService(t *testing.T) (*Service, error) {
 	//Read the test config file
 	if RedisHost == "" {
-		var f string
-		u, _ := user.Current()
-		if u != nil {
-			f = path.Join(u.HomeDir, ".cds", "tests.cfg.json")
-		}
-		if _, err := os.Stat(f); err == nil {
-			t.Logf("Tests configuration read from %s", f)
-			btes, err := ioutil.ReadFile(f)
-			if err != nil {
-				t.Fatalf("Error reading %s: %v", f, err)
-			}
-			if len(btes) != 0 {
-				cfg := map[string]string{}
-				if err := json.Unmarshal(btes, &cfg); err == nil {
-					RedisHost = cfg["redisHost"]
-					RedisPassword = cfg["redisPassword"]
-				} else {
-					t.Errorf("Error when unmarshal config %s", err)
-				}
-			}
-		} else {
-			t.Fatalf("Error reading %s: %v", f, err)
-		}
+		cfg := test.LoadTestingConf(t)
+		RedisHost = cfg["redisHost"]
+		RedisPassword = cfg["redisPassword"]
 	}
 
 	//Prepare the configuration

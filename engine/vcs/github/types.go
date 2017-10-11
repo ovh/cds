@@ -471,3 +471,16 @@ type PullRequest struct {
 	Deletions           int       `json:"deletions"`
 	ChangedFiles        int       `json:"changed_files"`
 }
+
+// ReleaseRequest Request sent to Github to create a release
+type ReleaseRequest struct {
+	TagName string `json:"tag_name"`
+	Name    string `json:"name"`
+	Body    string `json:"body"`
+}
+
+// ReleaseResponse Response return by Github after release creation
+type ReleaseResponse struct {
+	ID        int64  `json:"id"`
+	UploadURL string `json:"upload_url"`
+}

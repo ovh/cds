@@ -6,40 +6,40 @@ import (
 )
 
 //Error wraps github error format
-type Error struct {
+type ghError struct {
 	ID   string `json:"error"`
 	Desc string `json:"error_description"`
 	URI  string `json:"error_uri"`
 }
 
-func (e Error) Error() string {
+func (e ghError) Error() string {
 	return fmt.Sprintf("(gh_%s) %s", e.ID, e.Desc)
 }
 
-func (e Error) String() string {
+func (e ghError) String() string {
 	return e.Error()
 }
 
 //Github errors
 var (
-	ErrorRateLimit = &Error{
+	ErrorRateLimit = &ghError{
 		ID:   "rate_limit",
 		Desc: "Rate Limit reached",
 		URI:  "https://developer.github.com/v3/#rate-limiting",
 	}
 
-	ErrorUnauthorized = &Error{
+	ErrorUnauthorized = &ghError{
 		ID:   "bad_credentials",
 		Desc: "Bad credentials",
 		URI:  "https://developer.github.com/v3",
 	}
 )
 
-//ErrorAPI creates a new error
-func ErrorAPI(body []byte) Error {
+//errorAPI creates a new error
+func errorAPI(body []byte) error {
 	res := map[string]string{}
 	json.Unmarshal(body, &res)
-	return Error{
+	return ghError{
 		ID:   "api_error",
 		Desc: res["message"],
 		URI:  res["documentation_url"],

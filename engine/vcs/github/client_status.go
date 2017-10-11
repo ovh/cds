@@ -8,14 +8,13 @@ import (
 	"net/url"
 
 	"github.com/mitchellh/mapstructure"
-
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //SetStatus Users with push access can create commit statuses for a given ref:
 //https://developer.github.com/v3/repos/statuses/#create-a-status
-func (g *GithubClient) SetStatus(event sdk.Event) error {
+func (g *githubClient) SetStatus(event sdk.Event) error {
 	log.Debug("github.SetStatus> receive: type:%s all: %+v", event.EventType, event)
 	var eventpb sdk.EventPipelineBuild
 

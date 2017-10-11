@@ -31,7 +31,7 @@ var (
 	}
 )
 
-func (g *GithubConsumer) postForm(path string, data url.Values, headers map[string][]string) (int, []byte, error) {
+func (g *githubConsumer) postForm(path string, data url.Values, headers map[string][]string) (int, []byte, error) {
 	body := strings.NewReader(data.Encode())
 
 	req, err := http.NewRequest(http.MethodPost, URL+path, body)
@@ -58,7 +58,7 @@ func (g *GithubConsumer) postForm(path string, data url.Values, headers map[stri
 	}
 
 	if res.StatusCode > 400 {
-		ghErr := &Error{}
+		ghErr := &ghError{}
 		if err := json.Unmarshal(resBody, ghErr); err == nil {
 			return res.StatusCode, resBody, ghErr
 		}
@@ -67,7 +67,7 @@ func (g *GithubConsumer) postForm(path string, data url.Values, headers map[stri
 	return res.StatusCode, resBody, nil
 }
 
-func (c *GithubClient) setETag(path string, headers http.Header) {
+func (c *githubClient) setETag(path string, headers http.Header) {
 	etag := headers.Get("ETag")
 
 	r, _ := regexp.Compile(".*\"(.*)\".*")
@@ -82,7 +82,7 @@ func (c *GithubClient) setETag(path string, headers http.Header) {
 	}
 }
 
-func (c *GithubClient) getETag(path string) string {
+func (c *githubClient) getETag(path string) string {
 	var s string
 	c.Cache.Get(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), &s)
 	return s
@@ -106,17 +106,17 @@ func getNextPage(headers http.Header) string {
 	return ""
 }
 
-type getArgFunc func(c *GithubClient, req *http.Request, path string)
+type getArgFunc func(c *githubClient, req *http.Request, path string)
 
-func withETag(c *GithubClient, req *http.Request, path string) {
+func withETag(c *githubClient, req *http.Request, path string) {
 	etag := c.getETag(path)
 	if etag != "" {
 		req.Header.Add("If-None-Match", fmt.Sprintf("W/\"%s\"", etag))
 	}
 }
-func withoutETag(c *GithubClient, req *http.Request, path string) {}
+func withoutETag(c *githubClient, req *http.Request, path string) {}
 
-func (c *GithubClient) post(path string, bodyType string, body io.Reader, skipDefaultBaseURL bool) (*http.Response, error) {
+func (c *githubClient) post(path string, bodyType string, body io.Reader, skipDefaultBaseURL bool) (*http.Response, error) {
 	if !skipDefaultBaseURL && !strings.HasPrefix(path, APIURL) {
 		path = APIURL + path
 	}
@@ -136,7 +136,7 @@ func (c *GithubClient) post(path string, bodyType string, body io.Reader, skipDe
 	return httpClient.Do(req)
 }
 
-func (c *GithubClient) get(path string, opts ...getArgFunc) (int, []byte, http.Header, error) {
+func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.Header, error) {
 	if RateLimitRemaining < 100 {
 		return 0, nil, nil, ErrorRateLimit
 	}

@@ -173,7 +173,7 @@ func (s ServerConfiguration) check() error {
 type Server interface {
 	AuthorizeRedirect() (string, string, error)
 	AuthorizeToken(string, string) (string, string, error)
-	GetAuthorized(string, string) (AuthorizedClient, error)
+	GetAuthorizedClient(string, string) (AuthorizedClient, error)
 }
 
 type AuthorizedClient interface {
