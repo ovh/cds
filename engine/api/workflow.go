@@ -146,8 +146,6 @@ func (api *API) putWorkflowHandler() Handler {
 		wf.Root.ID = oldW.RootID
 		wf.ProjectID = p.ID
 		wf.ProjectKey = key
-		//This is forbidden to update the workflow name
-		wf.Name = name
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
@@ -165,12 +163,22 @@ func (api *API) putWorkflowHandler() Handler {
 
 		hooks := wf.GetHooks()
 		if len(hooks) > 0 {
+
 			//Push the hook to hooks µService
 			dao := services.NewRepository(api.mustDB, api.Cache)
 			//Load service "hooks"
 			srvs, err := dao.FindByType("hooks")
 			if err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> Unable to get services dao")
+			}
+
+			if wf.Name != name {
+				// update hook
+				for i := range hooks {
+					h := hooks[i]
+					h.Config["workflow"] = wf.Name
+					hooks[i] = h
+				}
 			}
 
 			//Perform the request on one off the hooks service

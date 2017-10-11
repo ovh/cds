@@ -2,6 +2,7 @@ import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 import {HttpClient} from '@angular/common/http';
+import {GroupPermission} from '../../model/group.model';
 
 @Injectable()
 export class WorkflowService {
@@ -32,8 +33,8 @@ export class WorkflowService {
      * @param key Project unique key
      * @param workflow Workflow to update
      */
-    updateWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
-        return this._http.put('/project/' + key + '/workflows/' + workflow.name, workflow);
+    updateWorkflow(key: string, name: string, workflow: Workflow): Observable<Workflow> {
+        return this._http.put('/project/' + key + '/workflows/' + name, workflow);
     }
 
     /**
@@ -54,5 +55,38 @@ export class WorkflowService {
     getTriggerJoinCondition(key: string, workflowName: string, joinID: number): any {
         return this._http.get('/project/' + key + '/workflows/' + workflowName + '/join/' + joinID + '/triggers/condition')
             ;
+    }
+
+    /**
+     * Add a permission on a workflow
+     * @param {string} key Project key
+     * @param {string} workflowName Workflow name
+     * @param {GroupPermission} gp Permission to add
+     * @returns {Observable<Workflow>}
+     */
+    addPermission(key: string, workflowName: string, gp: GroupPermission): Observable<Workflow> {
+        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/groups', gp);
+    }
+
+    /**
+     * Update a permission on a workflow
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name
+     * @param {GroupPermission} gp Permission to update
+     * @returns {Observable<Workflow>}
+     */
+    updatePermission(key: string, workflowName: string, gp: GroupPermission): Observable<Workflow> {
+        return this._http.put('/project/' + key + '/workflows/' + workflowName + '/groups/' + gp.group.name, gp);
+    }
+
+    /**
+     * Delete Permission
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow Name
+     * @param {GroupPermission} gp Permission to delete
+     * @returns {Observable<Workflow>}
+     */
+    deletePermission(key: string, workflowName: string, gp: GroupPermission): Observable<Workflow> {
+        return this._http.delete('/project/' + key + '/workflows/' + workflowName + '/groups/' + gp.group.name);
     }
 }
