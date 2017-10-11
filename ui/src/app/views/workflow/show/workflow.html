@@ -34,49 +34,28 @@
                             </div>
                         </ng-container>
                     </div>
-                    <div *ngSwitchCase="'permissions'">
-                        <app-permission-list [edit]="detailedWorkflow.permission === permission.READ_WRITE_EXECUTE" [permissions]="detailedWorkflow.groups" (event)="groupManagement($event)"></app-permission-list>
-                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupManagement($event, true)" #permWarning></app-warning-modal>
-                        <ng-container *ngIf="detailedWorkflow.permission === permission.READ_WRITE_EXECUTE">
-                            <h3>{{ 'workflow_permission_form_title' | translate }}</h3>
-                            <app-permission-form (createGroupPermissionEvent)="groupManagement($event)" [loading]="permFormLoading"></app-permission-form>
-                        </ng-container>
-                    </div>
                     <div *ngSwitchCase="'advanced'">
                         <app-workflow-admin [project]="project" [workflow]="detailedWorkflow"></app-workflow-admin>
                     </div>
                 </div>
             </div>
         </div>
-
-        <ng-container *ngIf="project && detailedWorkflow">
-            <app-workflow-trigger
-                    [project]="project"
-                    [workflow]="detailedWorkflow"
-                    [triggerSrcNode]="selectedNode"
-                    [(trigger)]="selectedTrigger"
-                    (triggerChange)="updateTrigger()"
-                    #editTriggerComponent></app-workflow-trigger>
+        <ng-container>
+            <app-workflow-trigger [project]="project" [workflow]="detailedWorkflow" [triggerSrcNode]="selectedNode" [(trigger)]="selectedTrigger"
+                (triggerChange)="updateTrigger()" #editTriggerComponent></app-workflow-trigger>
         </ng-container>
-        <ng-container *ngIf="project && detailedWorkflow">
-            <app-workflow-trigger-join
-                    [project]="project"
-                    [workflow]="detailedWorkflow"
-                    [join]="selectedJoin"
-                    [(trigger)]="selectedJoinTrigger"
-                    (triggerChange)="updateJoinTrigger()"
-                    #editJoinTriggerComponent></app-workflow-trigger-join>
+        <ng-container>
+            <app-workflow-trigger-join [project]="project" [workflow]="detailedWorkflow" [join]="selectedJoin" [(trigger)]="selectedJoinTrigger"
+                (triggerChange)="updateJoinTrigger()" #editJoinTriggerComponent></app-workflow-trigger-join>
         </ng-container>
-        <ng-container *ngIf="project && detailedWorkflow">
-            <app-workflow-trigger-join-src [join]="selectedJoin" (event)="deleteJoinSrc($event)"
-                                           #workflowJoinTriggerSrc></app-workflow-trigger-join-src>
+        <ng-container>
+            <app-workflow-trigger-join-src [join]="selectedJoin" (event)="deleteJoinSrc($event)" #workflowJoinTriggerSrc></app-workflow-trigger-join-src>
         </ng-container>
-
-        <ng-container *ngIf="detailedWorkflow">
+        <ng-container>
             <app-workflow-node-run-param #workflowNodeRunParam [project]="project" [workflow]="detailedWorkflow" [nodeToRun]="detailedWorkflow.root"></app-workflow-node-run-param>
         </ng-container>
     </div>
 </ng-template>
 <ng-template #loadingPart>
-    <div class="ui text active loader">Loading workflow...</div>
+    <div class="ui text active loader" *ngIf="!detailedWorkflow || !project">Loading workflow...</div>
 </ng-template>

@@ -87,13 +87,22 @@ export class WorkflowStore {
         return this._workflowService.addWorkflow(key, workflow);
     }
 
+    renameWorkflow(key: string, name: string, workflow: Workflow): Observable<Workflow> {
+        return this._workflowService.updateWorkflow(key, name, workflow).map(w => {
+            let workflowKey = key + '-' + workflow.name;
+            let store = this._workflows.getValue();
+            this._workflows.next(store.set(workflowKey, w));
+            return w;
+        });
+    }
+
     /**
      * Update a workflow
      * @param key Project unique key
      * @param workflow workflow to update
      */
     updateWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
-        return this._workflowService.updateWorkflow(key, workflow).map(w => {
+        return this._workflowService.updateWorkflow(key, workflow.name, workflow).map(w => {
             let workflowKey = key + '-' + workflow.name;
             let store = this._workflows.getValue();
             this._workflows.next(store.set(workflowKey, w));

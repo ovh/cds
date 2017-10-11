@@ -33,8 +33,8 @@ export class WorkflowService {
      * @param key Project unique key
      * @param workflow Workflow to update
      */
-    updateWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
-        return this._http.put('/project/' + key + '/workflows/' + workflow.name, workflow);
+    updateWorkflow(key: string, name: string, workflow: Workflow): Observable<Workflow> {
+        return this._http.put('/project/' + key + '/workflows/' + name, workflow);
     }
 
     /**
