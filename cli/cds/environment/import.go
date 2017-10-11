@@ -64,12 +64,20 @@ func importCmd() *cobra.Command {
 			if importInto == "" {
 				url = fmt.Sprintf("/project/%s/environment/import?format=%s", projectKey, importFormat)
 			} else {
-				_, errOldEnv := sdk.GetEnvironment(projectKey, importInto)
-				if errOldEnv != nil && !sdk.ErrorIs(errOldEnv, sdk.ErrNoEnvironment) {
-					sdk.Exit("Error: %s\n", errOldEnv)
+				p, errP := sdk.GetProject(projectKey, sdk.WithEnvs())
+				if errP != nil {
+					sdk.Exit("Error: %s\n", errP)
 				}
+
+				envExist := false
+				for _, e := range p.Environments {
+					if e.Name == importInto {
+						envExist = true
+					}
+				}
+
 				//If user import into a non existing env, lets change the name existing in the file and call the import handler
-				if sdk.ErrorIs(errOldEnv, sdk.ErrNoEnvironment) {
+				if !envExist {
 					fmt.Println("Environment doesn't exist. It will be created.")
 					payload.Name = importInto
 					btes, err = yaml.Marshal(payload)
