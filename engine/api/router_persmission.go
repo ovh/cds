@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/workflow"
 )
 
 // loadUserPermissions retrieves all group memberships
@@ -48,6 +49,9 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, user *sdk.User)
 			}
 			if err := environment.LoadEnvironmentByGroup(db, &group); err != nil {
 				return sdk.WrapError(err, "loadUserPermissions> Unable to load environment permissions for  %s", user.Username)
+			}
+			if err := workflow.LoadWorkflowByGroup(db, &group); err != nil {
+				return sdk.WrapError(err, "loadUserPermissions> Unable to load workflow permissions for  %s", user.Username)
 			}
 			if admin {
 				usr := *user

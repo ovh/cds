@@ -164,8 +164,10 @@ func (api *API) InitRouter() {
 
 	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler), r.GET(api.getWorkflowsHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}", r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/groups", r.POST(api.postWorkflowGroupHandler))
+	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))
 	// Workflows run
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler))
+	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true)))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
 	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler))

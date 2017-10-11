@@ -16,12 +16,13 @@ type Group struct {
 	PipelineGroups    []PipelineGroup    `json:"pipelines,omitempty" yaml:"-"`
 	ApplicationGroups []ApplicationGroup `json:"applications,omitempty" yaml:"-"`
 	EnvironmentGroups []EnvironmentGroup `json:"environments,omitempty" yaml:"-"`
+	WorkflowGroups    []WorkflowGroup    `json:"workflows,omitempty" yaml:"-"`
 }
 
 // GroupPermission represent a group and his role in the project
 type GroupPermission struct {
-	Group      Group `json:"group"`
-	Permission int   `json:"permission"`
+	Group      Group `json:"group" db="-"`
+	Permission int   `json:"permission" db="permission"`
 }
 
 // EnvironmentGroup represent a link with a pipeline
@@ -46,6 +47,12 @@ type PipelineGroup struct {
 type ProjectGroup struct {
 	Project    Project `json:"project"`
 	Permission int     `json:"permission"`
+}
+
+// WorkflowGroup represents the permission to a workflow
+type WorkflowGroup struct {
+	Workflow   Workflow `json:"workflow"`
+	Permission int      `json:"permission"`
 }
 
 // AddGroup creates a new group

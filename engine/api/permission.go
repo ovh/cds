@@ -131,7 +131,6 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 				getUser(ctx).Groups = append(getUser(ctx).Groups, *modelGroup)
 			}
 		}
-
 	case getUser(ctx) != nil:
 		if err := loadUserPermissions(api.mustDB(), api.Cache, getUser(ctx)); err != nil {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %s permission: %s", getUser(ctx).ID, err)
@@ -155,6 +154,10 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		if !permissionOk {
 			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> Worker not authorized")
 		}
+		return ctx, nil
+	}
+
+	if rc.Options["allowServices"] == "true" && getService(ctx) != nil {
 		return ctx, nil
 	}
 

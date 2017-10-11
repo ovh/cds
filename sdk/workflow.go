@@ -17,6 +17,7 @@ type Workflow struct {
 	RootID       int64              `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
 	Root         *WorkflowNode      `json:"root" db:"-" cli:"-"`
 	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-" cli:"-"`
+	Groups       []GroupPermission  `json:"groups,omitempty" db:"-" cli:"-"`
 }
 
 // FilterHooksConfig filter all hooks configuration and remove somme configuration key
