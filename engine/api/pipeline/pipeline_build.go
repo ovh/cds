@@ -812,6 +812,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 			sdk.AddParameter(&params, "git.repository", sdk.StringParameter, mapParams["git.repository"])
 			pb.Trigger.VCSRemote = mapParams["git.repository"]
 		}
+
 	case parentBuildNumberFound && trigger.ParentPipelineBuild != nil:
 		parentPip, errL := LoadPipelineBuildByID(tx, trigger.ParentPipelineBuild.ID)
 
@@ -1027,7 +1028,6 @@ func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipeli
 	if pb.Trigger.VCSRemote != "" && pb.Trigger.VCSRemoteURL != "" && !strings.Contains(remoteURL, remote) {
 		return sdk.WrapError(fmt.Errorf("remote aren't correct for this remote_url"), "insertPipelineBuild> Remote %s with url %s in error", remote, remoteURL)
 	}
-
 	statement := db.QueryRow(
 		query, pipelineID, pb.BuildNumber, pb.Version, sdk.StatusBuilding.String(),
 		args, time.Now(), applicationID, envID, time.Now(), pb.Trigger.ManualTrigger,
@@ -1069,8 +1069,8 @@ func BuildExists(db gorp.SqlExecutor, appID, pipID, envID int64, trigger *sdk.Pi
 	var count int
 	var err error
 
-	if trigger.VCSRemoteURL != "" {
-		err = db.QueryRow(query+" and vcs_remote_url = $6", appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch, trigger.VCSRemoteURL).Scan(&count)
+	if trigger.VCSRemote != "" {
+		err = db.QueryRow(query+" and vcs_remote = $6", appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch, trigger.VCSRemote).Scan(&count)
 	} else {
 		err = db.QueryRow(query, appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch).Scan(&count)
 	}

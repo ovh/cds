@@ -874,6 +874,7 @@ func (g *GithubClient) PullRequestEvents(fullname string, iEvents []interface{})
 					Message: e.Payload.PullRequest.Head.Label,
 				},
 				CloneURL: e.Payload.PullRequest.Head.Repo.CloneURL,
+				Repo:     e.Payload.PullRequest.Head.Repo.FullName,
 			},
 			Base: sdk.VCSPushEvent{
 				Branch: sdk.VCSBranch{
@@ -891,6 +892,7 @@ func (g *GithubClient) PullRequestEvents(fullname string, iEvents []interface{})
 					Message: e.Payload.PullRequest.Base.Label,
 				},
 				CloneURL: e.Payload.PullRequest.Base.Repo.CloneURL,
+				Repo:     e.Payload.PullRequest.Base.Repo.FullName,
 			},
 		}
 		res = append(res, event)
