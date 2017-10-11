@@ -5,6 +5,7 @@ import (
 
 	"database/sql"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadWorkflowByGroup loads all workflows where group has access
@@ -41,7 +42,7 @@ func LoadWorkflowByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 
 // AddGroup Add permission on the given workflow for the given group
 func AddGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
-	query := `INSERT INTO workflow_group (group_id, workflow_id, permission) VALUES ($1, $2, $3)`
+	query := `INSERT INTO workflow_group (group_id, workflow_id, role) VALUES ($1, $2, $3)`
 	if _, err := db.Exec(query, gp.Group.ID, w.ID, gp.Permission); err != nil {
 		return sdk.WrapError(err, "AddGroup")
 	}
@@ -51,11 +52,17 @@ func AddGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) erro
 
 // UpdateGroup  update group permission for the given group on the current workflow
 func UpdateGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) error {
-	query := `UPDATE  workflow_group SET permission = $1 WHERE workflow_id = $2 AND group_id = $3`
+	query := `UPDATE  workflow_group SET role = $1 WHERE workflow_id = $2 AND group_id = $3`
 	if _, err := db.Exec(query, gp.Permission, w.ID, gp.Group.ID); err != nil {
 		return sdk.WrapError(err, "UpdateGroup")
 	}
-	w.Groups = append(w.Groups, gp)
+
+	for i := range w.Groups {
+		g := &w.Groups[i]
+		if g.Group.Name == gp.Group.Name {
+			g.Permission = gp.Permission
+		}
+	}
 	return nil
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -40,6 +41,7 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteWorkflowGroupHandler> Cannot start transaction")
 		}
+		defer tx.Rollback()
 
 		if err := workflow.DeleteGroup(tx, wf, groupID, groupIndex); err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler> Cannot add group")
@@ -94,6 +96,7 @@ func (api *API) putWorkflowGroupHandler() Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "putWorkflowGroupHandler> Cannot start transaction")
 		}
+		defer tx.Rollback()
 
 		if err := workflow.UpdateGroup(tx, wf, gp); err != nil {
 			return sdk.WrapError(err, "putWorkflowGroupHandler> Cannot add group")
@@ -134,10 +137,19 @@ func (api *API) postWorkflowGroupHandler() Handler {
 			}
 		}
 
+		if gp.Group.ID == 0 {
+			g, errG := group.LoadGroup(api.mustDB(), gp.Group.Name)
+			if errG != nil {
+				return sdk.WrapError(errG, "postWorkflowGroupHandler")
+			}
+			gp.Group = *g
+		}
+
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "postWorkflowGroupHandler> Cannot start transaction")
 		}
+		defer tx.Rollback()
 
 		if err := workflow.AddGroup(tx, wf, gp); err != nil {
 			return sdk.WrapError(err, "postWorkflowGroupHandler> Cannot add group")

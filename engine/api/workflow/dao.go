@@ -11,6 +11,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -19,7 +20,7 @@ import (
 // UpdateLastModifiedDate Update workflow last modified date
 func UpdateLastModifiedDate(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	query := `UPDATE workflow set last_modified = current_timestamp WHERE id = $1 RETURNING last_modified`
-	return db.QueryRow(query, w.ID).Scan(w.LastModified)
+	return db.QueryRow(query, w.ID).Scan(&w.LastModified)
 }
 
 // LoadAll loads all workflows for a project. All users in a project can list all workflows in a project
@@ -152,13 +153,14 @@ func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, query string, arg
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
 	}
 
+	res.Permission = permission.WorkflowPermission(res.ID, u)
+
 	// Load groups
 	gps, err := loadWorkflowGroups(db, res)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow groups")
 	}
 	res.Groups = gps
-
 
 	// Load joins
 	joins, errJ := loadJoins(db, store, &res, u)

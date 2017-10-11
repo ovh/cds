@@ -11,8 +11,8 @@ import (
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/api/workflow"
+	"github.com/ovh/cds/sdk"
 )
 
 // loadUserPermissions retrieves all group memberships
