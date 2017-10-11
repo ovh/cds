@@ -86,6 +86,12 @@ Clone a repository into a new directory.`
 		Value:       "{{.cds.workspace}}",
 		Type:        sdk.StringParameter,
 	})
+	gitclone.Parameter(sdk.Parameter{
+		Name:        "recursive",
+		Description: "Set the recursive git clone parameter.",
+		Value:       "true",
+		Type:        sdk.BooleanParameter,
+	})
 	gitclone.Requirement("git", sdk.BinaryRequirement, "git")
 
 	if err := checkBuiltinAction(db, gitclone); err != nil {
