@@ -104,7 +104,7 @@ func Init(user, password, name, host string, port int, sslmode string, connectTi
 		f.dbPassword = f.SecretDBPassword
 	}
 
-	if f.dbTimeout < 200 || f.dbTimeout > 15000 {
+	if f.dbTimeout < 200 || f.dbTimeout > 30000 {
 		f.dbTimeout = 3000
 	}
 
