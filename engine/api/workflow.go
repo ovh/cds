@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -52,7 +53,7 @@ func (api *API) postWorkflowHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
@@ -71,6 +72,15 @@ func (api *API) postWorkflowHandler() Handler {
 
 		if err := workflow.Insert(tx, api.Cache, &wf, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert workflow")
+		}
+
+		// Add group
+		for _, gp := range p.ProjectGroups {
+			if gp.Permission == permission.PermissionReadWriteExecute {
+				if err := workflow.AddGroup(tx, &wf, gp); err != nil {
+					return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)
+				}
+			}
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
