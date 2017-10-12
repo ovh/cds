@@ -44,6 +44,7 @@ func config() {
 
 		// Put the content in a buffer and ask viper to read the buffer
 		cfgBuffer := bytes.NewBufferString(cfgFileContent)
+		viper.SetConfigType("toml")
 		if err := viper.ReadConfig(cfgBuffer); err != nil {
 			sdk.Exit("Unable to read config: %v", err.Error())
 		}

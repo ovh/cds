@@ -115,8 +115,7 @@ func (s *Redis) Set(token SessionKey, f string, data interface{}) error {
 	}
 
 	if err := s.store.Client.HSet(key, f, string(b)).Err(); err != nil {
-		log.Warning("Redis> unable create redis session %s : %s", key, err)
-		return err
+		return sdk.WrapError(err, "Redis> unable create redis session %s ", key)
 	}
 	return nil
 }
@@ -130,14 +129,12 @@ func (s *Redis) Get(token SessionKey, f string, data interface{}) error {
 	key := cache.Key("session", string(token), "data")
 	sval, err := s.store.Client.HGet(key, f).Result()
 	if err != nil {
-		log.Warning("Redis> unable to get %s %s", key, f)
-		return err
+		return sdk.WrapError(err, "Redis> unable to get %s %s", key, f)
 	}
 
 	if sval != "" {
 		if err := json.Unmarshal([]byte(sval), data); err != nil {
-			log.Warning("Redis> Cannot unmarshal %s :%s", key, err)
-			return err
+			return sdk.WrapError(err, "Redis> Cannot unmarshal %s ", key)
 		}
 	}
 

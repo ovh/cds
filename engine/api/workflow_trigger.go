@@ -78,7 +78,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			data.ConditionNames = append(data.ConditionNames, "cds.dest.environment")
 		}
 
-		ancestorIds := refNode.Ancestors(wf)
+		ancestorIds := refNode.Ancestors(wf, true)
 		for _, aID := range ancestorIds {
 			ancestor := wf.GetNode(aID)
 			if ancestor == nil {
@@ -169,7 +169,7 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 			if !found {
 				data.ConditionNames = append(data.ConditionNames, "workflow."+refNode.Name+".status")
 			}
-			ancestorIds := refNode.Ancestors(wf)
+			ancestorIds := refNode.Ancestors(wf, true)
 			for _, aID := range ancestorIds {
 				ancestor := wf.GetNode(aID)
 				if ancestor == nil {

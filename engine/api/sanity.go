@@ -6,7 +6,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getUserWarningsHandler() Handler {
@@ -21,8 +20,7 @@ func (api *API) getUserWarningsHandler() Handler {
 			warnings, err = sanity.LoadUserWarnings(api.mustDB(), al, getUser(ctx).ID)
 		}
 		if err != nil {
-			log.Warning("getUserWarnings> Cannot load user %d warnings: %s\n", getUser(ctx).ID, err)
-			return err
+			return sdk.WrapError(err, "getUserWarnings> Cannot load user %d warnings", getUser(ctx).ID)
 
 		}
 

@@ -68,10 +68,10 @@
     <div class="subtitle normalStep">
         <h3 class="inline">{{ 'action_step_title' | translate }}</h3>
     </div>
-    <div class="ui segment" *ngIf="steps.length > 0" [class.off]="!editableAction.enabled">
+    <div class="ui segment" *ngIf="steps.length > 0 && publicActions" [class.off]="!editableAction.enabled">
         <div class="dragula-container" [dragula]="'bag-nonfinal'" [dragulaModel]="steps" *ngIf="steps">
             <div *ngFor="let step of steps" class="step" [class.off]="!step.enabled">
-                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest"
+                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest" [publicActions]="publicActions"
                                  (removeEvent)="stepManagement($event)"></app-action-step>
                 <hr>
             </div>

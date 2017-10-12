@@ -88,8 +88,7 @@ func importVariables(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, 
 			break
 		}
 		if errCreate != nil {
-			log.Warning("importVariables> Cannot add variable %s in application %s:  %s\n", newVar.Name, app.Name, errCreate)
-			return errCreate
+			return sdk.WrapError(errCreate, "importVariables> Cannot add variable %s in application %s:  %s", newVar.Name, app.Name, errCreate)
 		}
 	}
 

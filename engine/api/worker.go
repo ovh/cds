@@ -83,7 +83,7 @@ func (api *API) disableWorkerHandler() Handler {
 		}
 
 		if wor.Status == sdk.StatusBuilding || wor.Status == sdk.StatusChecking {
-			return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s\n", wor.Status)
+			return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wor.Status)
 		}
 
 		if wor.HatcheryID == 0 {

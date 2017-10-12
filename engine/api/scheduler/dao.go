@@ -68,8 +68,7 @@ func Insert(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 	}
 	ds := PipelineScheduler(*s)
 	if err := db.Insert(&ds); err != nil {
-		log.Warning("Insert> Unable to insert pipeline scheduler : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "Insert> Unable to insert pipeline scheduler : %T ", err)
 	}
 	*s = sdk.PipelineScheduler(ds)
 	return nil
@@ -79,8 +78,7 @@ func Insert(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 func Update(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 	ds := PipelineScheduler(*s)
 	if n, err := db.Update(&ds); err != nil {
-		log.Warning("Update> Unable to update pipeline scheduler : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "Update> Unable to update pipeline scheduler : %T ", err)
 	} else if n == 0 {
 		return sdk.ErrNotFound
 	}
@@ -92,8 +90,7 @@ func Update(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 func Delete(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 	ds := PipelineScheduler(*s)
 	if n, err := db.Delete(&ds); err != nil {
-		log.Warning("Delete> Unable to delete pipeline scheduler : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "Delete> Unable to delete pipeline scheduler : %T ", err)
 	} else if n == 0 {
 		return sdk.ErrNotFound
 	}
@@ -116,8 +113,7 @@ func Load(db gorp.SqlExecutor, id int64) (*sdk.PipelineScheduler, error) {
 func InsertExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) error {
 	ds := PipelineSchedulerExecution(*s)
 	if err := db.Insert(&ds); err != nil {
-		log.Warning("InsertExecution> Unable to insert pipeline scheduler execution : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "InsertExecution> Unable to insert pipeline scheduler execution : %T ", err)
 	}
 	*s = sdk.PipelineSchedulerExecution(ds)
 	return nil
@@ -127,8 +123,7 @@ func InsertExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) err
 func UpdateExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) error {
 	ds := PipelineSchedulerExecution(*s)
 	if n, err := db.Update(&ds); err != nil {
-		log.Warning("UpdateExecution> Unable to update pipeline scheduler execution : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "UpdateExecution> Unable to update pipeline scheduler execution : %T ", err)
 	} else if n == 0 {
 		return sdk.ErrNotFound
 	}
@@ -140,8 +135,7 @@ func UpdateExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) err
 func DeleteExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) error {
 	ds := PipelineSchedulerExecution(*s)
 	if n, err := db.Delete(&ds); err != nil {
-		log.Warning("DeleteExecution> Unable to delete pipeline scheduler execution : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "DeleteExecution> Unable to delete pipeline scheduler execution : %T ", err)
 	} else if n == 0 {
 		return sdk.ErrNotFound
 	}

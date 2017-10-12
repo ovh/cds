@@ -41,7 +41,18 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		}
 
 		log.Debug("processWorkflowRun> starting from node %#v", startingFromNode)
-		if err := processWorkflowNodeRun(db, store, p, w, start, int(nextSubNumber), nil, hookEvent, manual); err != nil {
+		// Find ancestors
+		nodeIds := start.Ancestors(&w.Workflow, false)
+		sourceNodesRunID := make([]int64, len(nodeIds))
+		for i := range nodeIds {
+			nodesRuns, ok := w.WorkflowNodeRuns[nodeIds[i]]
+			if ok && len(nodesRuns) > 0 {
+				sourceNodesRunID[i] = nodesRuns[0].ID
+			} else {
+				return sdk.ErrWorkflowNodeParentNotRun
+			}
+		}
+		if err := processWorkflowNodeRun(db, store, p, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
 		}
 		return nil
@@ -67,12 +78,14 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 	//Checks the triggers
 	for k, v := range w.WorkflowNodeRuns {
+		lastCurrentSn := lastSubNumber(w.WorkflowNodeRuns[k])
 		// Subversion of workflowNodeRun
 		for i := range v {
 			nodeRun := &w.WorkflowNodeRuns[k][i]
 
+			log.Debug("last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 			// Only the last subversion
-			if maxsn == nodeRun.SubNumber {
+			if lastCurrentSn == nodeRun.SubNumber {
 				updateNodesRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped)
 			}
 
@@ -465,10 +478,10 @@ func getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nod
 		return string(sdk.StatusBuilding)
 	case nodesRunFailed > 0:
 		return string(sdk.StatusFail)
-	case nodesRunSuccess > 0:
-		return string(sdk.StatusSuccess)
 	case nodesRunStopped > 0:
 		return string(sdk.StatusStopped)
+	case nodesRunSuccess > 0:
+		return string(sdk.StatusSuccess)
 	default:
 		return string(sdk.StatusNeverBuilt)
 	}
@@ -500,4 +513,15 @@ func MaxSubNumber(workflowNodeRuns map[int64][]sdk.WorkflowNodeRun) int64 {
 	}
 
 	return maxsn
+}
+
+func lastSubNumber(workflowNodeRuns []sdk.WorkflowNodeRun) int64 {
+	var lastSn int64
+	for _, wNodeRun := range workflowNodeRuns {
+		if lastSn < wNodeRun.SubNumber {
+			lastSn = wNodeRun.SubNumber
+		}
+	}
+
+	return lastSn
 }
