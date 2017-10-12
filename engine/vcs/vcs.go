@@ -10,6 +10,8 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/vcs/github"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
@@ -49,6 +51,14 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 	}
 
 	return nil
+}
+
+func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
+	serverCfg := s.Cfg.Servers[name]
+	if serverCfg.Github != nil {
+		return github.New(serverCfg.Github.ClientID, serverCfg.Github.ClientSecret, s.Cache), nil
+	}
+	return nil, sdk.ErrNotFound
 }
 
 // Serve will start the http api server

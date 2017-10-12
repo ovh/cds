@@ -29,7 +29,7 @@ func (g *githubClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, erro
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				g.Cache.Get(cache.Key("reposmanager", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), &pullRequests)
+				g.Cache.Get(cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), &pullRequests)
 				break
 			} else {
 				if err := json.Unmarshal(body, &nextPullRequests); err != nil {
@@ -47,7 +47,7 @@ func (g *githubClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, erro
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), pullRequests, 61*60)
+	g.Cache.SetWithTTL(cache.Key("vcs", "github", "pullrequests", g.OAuthToken, "/repos/"+fullname+"/pulls"), pullRequests, 61*60)
 
 	prResults := []sdk.VCSPullRequest{}
 	for _, pullr := range pullRequests {

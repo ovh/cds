@@ -78,13 +78,13 @@ func (c *githubClient) setETag(path string, headers http.Header) {
 
 	if etag != "" {
 		//Put etag for this path in cache for 59 minutes
-		c.Cache.SetWithTTL(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 59*60)
+		c.Cache.SetWithTTL(cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 59*60)
 	}
 }
 
 func (c *githubClient) getETag(path string) string {
 	var s string
-	c.Cache.Get(cache.Key("reposmanager", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), &s)
+	c.Cache.Get(cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), &s)
 	return s
 }
 

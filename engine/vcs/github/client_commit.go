@@ -96,7 +96,7 @@ func (g *githubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 	var commitsResult []sdk.VCSCommit
 
 	log.Debug("Looking for commits on repo %s since = %s until = %s", repo, since, until)
-	if g.Cache.Get(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), &commitsResult) {
+	if g.Cache.Get(cache.Key("vcs", "github", "commits", repo, "since="+since, "until="+until), &commitsResult) {
 		return commitsResult, nil
 	}
 
@@ -152,7 +152,7 @@ func (g *githubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 		theCommits = filterCommits(theCommits, since, until)
 	}
 
-	//5. convert to sdk.VCSCommit
+	//Convert to sdk.VCSCommit
 	for _, c := range theCommits {
 		commit := sdk.VCSCommit{
 			Timestamp: c.Commit.Author.Date.Unix() * 1000,
@@ -170,7 +170,7 @@ func (g *githubClient) Commits(repo, theBranch, since, until string) ([]sdk.VCSC
 		commitsResult = append(commitsResult, commit)
 	}
 
-	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "commits", repo, "since="+since, "until="+until), commitsResult, 3*60*60)
+	g.Cache.SetWithTTL(cache.Key("vcs", "github", "commits", repo, "since="+since, "until="+until), commitsResult, 3*60*60)
 
 	return commitsResult, nil
 }
@@ -232,14 +232,14 @@ func (g *githubClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 	//Github may return 304 status because we are using conditional request with ETag based headers
 	if status == http.StatusNotModified {
 		//If repo isn't updated, lets get them from cache
-		g.Cache.Get(cache.Key("reposmanager", "github", "commit", g.OAuthToken, url), &c)
+		g.Cache.Get(cache.Key("vcs", "github", "commit", g.OAuthToken, url), &c)
 	} else {
 		if err := json.Unmarshal(body, &c); err != nil {
 			log.Warning("githubClient.Commit> Unable to parse github commit: %s", err)
 			return sdk.VCSCommit{}, err
 		}
 		//Put the body on cache for one hour and one minute
-		g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "commit", g.OAuthToken, url), c, 61*60)
+		g.Cache.SetWithTTL(cache.Key("vcs", "github", "commit", g.OAuthToken, url), c, 61*60)
 	}
 
 	commit := sdk.VCSCommit{

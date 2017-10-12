@@ -1,25 +1,22 @@
 package vcs
 
 import (
-	"bytes"
 	"fmt"
-	"time"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Service is the stuct representing a vcs µService
 type Service struct {
-	Cfg     Configuration
-	Router  *api.Router
-	Cache   cache.Store
-	cds     cdsclient.Interface
-	hash    string
-	servers []ServerConfiguration
+	Cfg    Configuration
+	Router *api.Router
+	Cache  cache.Store
+	cds    cdsclient.Interface
+	hash   string
 }
 
 // Configuration is the vcs configuration structure
@@ -49,13 +46,11 @@ type Configuration struct {
 			Password string `toml:"password"`
 		} `toml:"redis"`
 	} `toml:"cache" comment:"######################\n CDS VCS Cache Settings \n######################"`
-	Servers []ServerConfiguration `toml:"servers" comment:"######################\n CDS VCS Server Settings \n######################"`
+	Servers map[string]ServerConfiguration `toml:"servers" comment:"######################\n CDS VCS Server Settings \n######################"`
 }
 
 // ServerConfiguration is the configuration for a VCS server
 type ServerConfiguration struct {
-	UUID      string                        `toml:"-" json:"uuid"`
-	Name      string                        `toml:"name" comment:"Name of this VCS Server" json:"name"`
 	URL       string                        `toml:"url" comment:"URL of this VCS Server" json:"url"`
 	Github    *GithubServerConfiguration    `toml:"github" json:"github,omitempty"`
 	Gitlab    *GitlabServerConfiguration    `toml:"gitlab" json:"gitlab,omitempty"`
@@ -64,18 +59,22 @@ type ServerConfiguration struct {
 
 // GithubServerConfiguration represents the github configuration
 type GithubServerConfiguration struct {
-	Secret string `toml:"secret"`
-	Status struct {
-		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server"`
-		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server"`
+	ClientID     string `toml:"client_id" json:"-" comment:"Github OAuth Application Client ID"`
+	ClientSecret string `toml:"client_secret" json:"-"  comment:"Github OAuth Application Client Secret"`
+	Status       struct {
+		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
+		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
-	DisableWebHooks         bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server"`
-	DisableWebHooksCreation bool `toml:"disableWebHooksCreation" comment:"Does webhooks creation are supported by VCS Server"`
-	DisablePolling          bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server"`
+	DisableWebHooks         bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisableWebHooksCreation bool `toml:"disableWebHooksCreation" comment:"Does webhooks creation are supported by VCS Server" json:"disable_web_hook_creation"`
+	DisablePolling          bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 }
 
 func (s GithubServerConfiguration) check() error {
-	if s.Secret == "" {
+	if s.ClientID == "" {
+		return errGithubConfigurationError
+	}
+	if s.ClientSecret == "" {
 		return errGithubConfigurationError
 	}
 	return nil
@@ -85,14 +84,14 @@ var errGithubConfigurationError = fmt.Errorf("Github configuration Error")
 
 // GitlabServerConfiguration represents the gitlab configuration
 type GitlabServerConfiguration struct {
-	Secret string `toml:"secret"`
+	Secret string `toml:"secret" json:"-"`
 	Status struct {
-		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server"`
-		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server"`
+		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
+		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
-	DisableWebHooks         bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server"`
-	DisableWebHooksCreation bool `toml:"disableWebHooksCreation" comment:"Does webhooks creation are supported by VCS Server"`
-	DisablePolling          bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server"`
+	DisableWebHooks         bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisableWebHooksCreation bool `toml:"disableWebHooksCreation" comment:"Does webhooks creation are supported by VCS Server" json:"disable_web_hook_creation"`
+	DisablePolling          bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 }
 
 func (s GitlabServerConfiguration) check() error {
@@ -101,46 +100,38 @@ func (s GitlabServerConfiguration) check() error {
 
 // BitbucketServerConfiguration represents the bitbucket configuration
 type BitbucketServerConfiguration struct {
-	ConsumerKey string `toml:"consumerKey"`
-	PrivateKey  string `toml:"privateKey"`
+	ConsumerKey string `toml:"consumerKey" json:"-"`
+	PrivateKey  string `toml:"privateKey" json:"-"`
 	Status      struct {
-		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server"`
-		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server"`
+		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
+		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
-	DisableWebHooks         bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server"`
-	DisableWebHooksCreation bool `toml:"disableWebHooksCreation" comment:"Does webhooks creation are supported by VCS Server"`
-	DisablePolling          bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server"`
+	DisableWebHooks         bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisableWebHooksCreation bool `toml:"disableWebHooksCreation" comment:"Does webhooks creation are supported by VCS Server" json:"disable_web_hook_creation"`
+	DisablePolling          bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 }
 
 func (s BitbucketServerConfiguration) check() error {
 	return nil
 }
 
-func (s *Service) addServerConfiguration(c *ServerConfiguration) error {
-	if c.UUID == "" {
-		uuid, erruuid := sessionstore.NewSessionKey()
-		if erruuid != nil {
-			return sdk.WrapError(erruuid, "Unable to generate UUID")
-		}
-		c.UUID = string(uuid)
+func (s *Service) addServerConfiguration(name string, c ServerConfiguration) error {
+	if name == "" {
+		return fmt.Errorf("Invalid VCS server name")
 	}
 
 	if err := c.check(); err != nil {
 		return sdk.WrapError(err, "Unable to add server configuration")
 	}
-	s.servers = append(s.servers, *c)
+	if s.Cfg.Servers == nil {
+		s.Cfg.Servers = map[string]ServerConfiguration{}
+	}
+	s.Cfg.Servers[name] = c
+	log.Debug("VCS> addServerConfiguration %+v %+v", s.Cfg.Servers[name], s.Cfg.Servers[name].Github)
 	return nil
 }
 
 func (s ServerConfiguration) check() error {
-	if s.UUID == "" {
-		return fmt.Errorf("Invalid VCS server uuid")
-	}
-
-	if s.Name == "" {
-		return fmt.Errorf("Invalid VCS server name")
-	}
-
 	if s.URL == "" {
 		return fmt.Errorf("Invalid VCS server URL")
 	}
@@ -168,45 +159,4 @@ func (s ServerConfiguration) check() error {
 	}
 
 	return nil
-}
-
-type Server interface {
-	AuthorizeRedirect() (string, string, error)
-	AuthorizeToken(string, string) (string, string, error)
-	GetAuthorizedClient(string, string) (AuthorizedClient, error)
-}
-
-type AuthorizedClient interface {
-	//Repos
-	Repos() ([]sdk.VCSRepo, error)
-	RepoByFullname(fullname string) (sdk.VCSRepo, error)
-
-	//Branches
-	Branches(string) ([]sdk.VCSBranch, error)
-	Branch(string, string) (*sdk.VCSBranch, error)
-
-	//Commits
-	Commits(repo, branch, since, until string) ([]sdk.VCSCommit, error)
-	Commit(repo, hash string) (sdk.VCSCommit, error)
-
-	// PullRequests
-	PullRequests(string) ([]sdk.VCSPullRequest, error)
-
-	//Hooks
-	CreateHook(repo, url string) error
-	DeleteHook(repo, url string) error
-
-	//Events
-	GetEvents(repo string, dateRef time.Time) ([]interface{}, time.Duration, error)
-	PushEvents(string, []interface{}) ([]sdk.VCSPushEvent, error)
-	CreateEvents(string, []interface{}) ([]sdk.VCSCreateEvent, error)
-	DeleteEvents(string, []interface{}) ([]sdk.VCSDeleteEvent, error)
-	PullRequestEvents(string, []interface{}) ([]sdk.VCSPullRequestEvent, error)
-
-	// Set build status on repository
-	SetStatus(event sdk.Event) error
-
-	// Release
-	Release(repo, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error)
-	UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, file *bytes.Buffer) error
 }

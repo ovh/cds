@@ -36,7 +36,7 @@ func (g *githubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			//Github may return 304 status because we are using conditional request with ETag based headers
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
-				g.Cache.Get(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
+				g.Cache.Get(cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
 				break
 			} else {
 				if err := json.Unmarshal(body, &nextBranches); err != nil {
@@ -54,7 +54,7 @@ func (g *githubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), branches, 61*60)
+	g.Cache.SetWithTTL(cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), branches, 61*60)
 
 	branchesResult := []sdk.VCSBranch{}
 	for _, b := range branches {
@@ -75,7 +75,7 @@ func (g *githubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 
 // Branch returns only detail of a branch
 func (g *githubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error) {
-	cacheBranchKey := cache.Key("reposmanager", "github", "branch", g.OAuthToken, "/repos/"+fullname+"/branch"+theBranch)
+	cacheBranchKey := cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+theBranch)
 	repo, err := g.repoByFullname(fullname)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,10 @@ func (g *githubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error
 	var branch Branch
 	if status == http.StatusNotModified {
 		//If repos aren't updated, lets get them from cache
-		g.Cache.Get(cacheBranchKey, &branch)
+		if !g.Cache.Get(cacheBranchKey, &branch) {
+			log.Error("Unable to get branch (%s) from the cache", cacheBranchKey)
+		}
+
 	} else {
 		if err := json.Unmarshal(body, &branch); err != nil {
 			log.Warning("githubClient.Branch> Unable to parse github branch: %s", err)
@@ -111,7 +114,7 @@ func (g *githubClient) Branch(fullname, theBranch string) (*sdk.VCSBranch, error
 	}
 
 	//Put the body on cache for one hour and one minute
-	g.Cache.SetWithTTL(cache.Key("reposmanager", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch"+theBranch), branch, 61*60)
+	g.Cache.SetWithTTL(cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branch/"+theBranch), branch, 61*60)
 
 	branchResult := &sdk.VCSBranch{
 		DisplayID:    branch.Name,

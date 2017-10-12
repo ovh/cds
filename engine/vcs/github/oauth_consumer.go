@@ -8,7 +8,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/ovh/cds/engine/vcs"
+	"github.com/ovh/cds/sdk"
+
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -120,10 +121,10 @@ func (g *githubConsumer) AuthorizeToken(state, code string) (string, string, err
 }
 
 //keep client in memory
-var instancesAuthorizedClient = map[string]vcs.AuthorizedClient{}
+var instancesAuthorizedClient = map[string]*githubClient{}
 
 //GetAuthorized returns an authorized client
-func (g *githubConsumer) GetAuthorizedClient(accessToken, accessTokenSecret string) (vcs.AuthorizedClient, error) {
+func (g *githubConsumer) GetAuthorizedClient(accessToken, accessTokenSecret string) (sdk.VCSAuthorizedClient, error) {
 	c, ok := instancesAuthorizedClient[accessToken]
 	if !ok {
 		c = &githubClient{
@@ -133,5 +134,5 @@ func (g *githubConsumer) GetAuthorizedClient(accessToken, accessTokenSecret stri
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}
-	return c, c.(*githubClient).RateLimit()
+	return c, c.RateLimit()
 }

@@ -109,6 +109,14 @@ Comming soon...`,
 		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
 		conf.VCS.API.Token = conf.API.Auth.SharedInfraToken
+		conf.VCS.Servers = map[string]vcs.ServerConfiguration{}
+		conf.VCS.Servers["Github"] = vcs.ServerConfiguration{
+			URL: "https://github.com",
+			Github: &vcs.GithubServerConfiguration{
+				ClientID:     "xxxx",
+				ClientSecret: "xxxx",
+			},
+		}
 
 		if !configNewAsEnvFlag {
 			btes, err := toml.Marshal(*conf)

@@ -1,9 +1,7 @@
 package github
 
-import (
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/vcs"
-)
+import "github.com/ovh/cds/engine/api/cache"
+import "github.com/ovh/cds/sdk"
 
 // githubClient is a github.com wrapper for CDS vcs. interface
 type githubClient struct {
@@ -24,7 +22,7 @@ type githubConsumer struct {
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret string, store cache.Store) vcs.Server {
+func New(ClientID, ClientSecret string, store cache.Store) sdk.VCSServer {
 	return &githubConsumer{
 		ClientID:     ClientID,
 		ClientSecret: ClientSecret,

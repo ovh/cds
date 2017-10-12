@@ -2,28 +2,27 @@ package github
 
 import (
 	"context"
-	"fmt"
-	"io"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/ovh/cds/sdk"
 
 	"github.com/pkg/browser"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/test"
-	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // TestNew needs githubClientID and githubClientSecret
 func TestNewClient(t *testing.T) {
-	ghConsummer := getNewClient(t)
+	ghConsummer := getNewConsumer(t)
 	assert.NotNil(t, ghConsummer)
 }
 
-func getNewClient(t *testing.T) vcs.Server {
+func getNewConsumer(t *testing.T) sdk.VCSServer {
 	log.SetLogger(t)
 	cfg := test.LoadTestingConf(t)
 	clientID := cfg["githubClientID"]
@@ -45,8 +44,36 @@ func getNewClient(t *testing.T) vcs.Server {
 	return ghConsummer
 }
 
+func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
+	log.SetLogger(t)
+	cfg := test.LoadTestingConf(t)
+	clientID := cfg["githubClientID"]
+	clientSecret := cfg["githubClientSecret"]
+	accessToken := cfg["githubAccessToken"]
+	redisHost := cfg["redisHost"]
+	redisPassword := cfg["redisPassword"]
+
+	if clientID == "" && clientSecret == "" {
+		t.Logf("Unable to read github configuration. Skipping this tests.")
+		t.SkipNow()
+	}
+
+	cache, err := cache.New(redisHost, redisPassword, 30)
+	if err != nil {
+		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
+	}
+
+	ghConsummer := New(clientID, clientSecret, cache)
+	cli, err := ghConsummer.GetAuthorizedClient(accessToken, "")
+	if err != nil {
+		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)
+	}
+
+	return cli
+}
+
 func TestClientAuthorizeToken(t *testing.T) {
-	ghConsummer := getNewClient(t)
+	ghConsummer := getNewConsumer(t)
 	token, url, err := ghConsummer.AuthorizeRedirect()
 	t.Logf("token: %s", token)
 	t.Logf("url: %s", url)
@@ -88,31 +115,59 @@ func TestClientAuthorizeToken(t *testing.T) {
 	assert.NotEmpty(t, accessTokenSecret)
 	test.NoError(t, err)
 
+	t.Logf("Token is %s", accessToken)
+
 	ghClient, err := ghConsummer.GetAuthorizedClient(accessToken, accessTokenSecret)
 	test.NoError(t, err)
 	assert.NotNil(t, ghClient)
-
 }
 
-func callbackServer(ctx context.Context, t *testing.T, out chan http.Request) {
-	srv := &http.Server{Addr: ":8081"}
+func TestAuthorizedClient(t *testing.T) {
+	ghClient := getNewAuthorizedClient(t)
+	assert.NotNil(t, ghClient)
+}
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		out <- *r
-		io.WriteString(w, "Yeah !\n")
-		fmt.Println("Handler")
-	})
+func TestRepos(t *testing.T) {
+	ghClient := getNewAuthorizedClient(t)
+	assert.NotNil(t, ghClient)
 
-	go func() {
-		fmt.Println("Starting server")
-		if err := srv.ListenAndServe(); err != nil {
-			// cannot panic, because this probably is an intentional close
-			t.Logf("Httpserver: ListenAndServe() error: %s", err)
-		}
-		close(out)
-	}()
+	repos, err := ghClient.Repos()
+	test.NoError(t, err)
+	assert.NotEmpty(t, repos)
+}
 
-	<-ctx.Done()
-	fmt.Println("Stopping server")
-	srv.Shutdown(ctx)
+func TestRepoByFullname(t *testing.T) {
+	ghClient := getNewAuthorizedClient(t)
+	assert.NotNil(t, ghClient)
+
+	repo, err := ghClient.RepoByFullname("ovh/cds")
+	test.NoError(t, err)
+	assert.NotNil(t, repo)
+}
+
+func TestBranches(t *testing.T) {
+	ghClient := getNewAuthorizedClient(t)
+	assert.NotNil(t, ghClient)
+
+	branches, err := ghClient.Branches("ovh/cds")
+	test.NoError(t, err)
+	assert.NotEmpty(t, branches)
+}
+
+func TestBranch(t *testing.T) {
+	ghClient := getNewAuthorizedClient(t)
+	assert.NotNil(t, ghClient)
+
+	branch, err := ghClient.Branch("ovh/cds", "master")
+	test.NoError(t, err)
+	assert.NotNil(t, branch)
+}
+
+func TestCommits(t *testing.T) {
+	ghClient := getNewAuthorizedClient(t)
+	assert.NotNil(t, ghClient)
+
+	commits, err := ghClient.Commits("ovh/cds", "master", "", "")
+	test.NoError(t, err)
+	assert.NotNil(t, commits)
 }
