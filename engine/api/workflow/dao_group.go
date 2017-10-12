@@ -1,11 +1,11 @@
 package workflow
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
-	"database/sql"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadWorkflowByGroup loads all workflows where group has access
