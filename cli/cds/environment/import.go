@@ -73,6 +73,7 @@ func importCmd() *cobra.Command {
 				for _, e := range p.Environments {
 					if e.Name == importInto {
 						envExist = true
+						break
 					}
 				}
 
