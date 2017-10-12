@@ -21,8 +21,8 @@ type Group struct {
 
 // GroupPermission represent a group and his role in the project
 type GroupPermission struct {
-	Group      Group `json:"group" db="-"`
-	Permission int   `json:"permission" db="permission"`
+	Group      Group `json:"group"`
+	Permission int   `json:"permission"`
 }
 
 // EnvironmentGroup represent a link with a pipeline
