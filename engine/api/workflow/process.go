@@ -284,9 +284,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		}
 	}
 
-	w.Status = getWorkflowRunStatus(w, nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped)
-	log.Debug("processWorkflowRun> id:%d num:%d status:%s", w.ID, w.Number, w.Status)
-
+	w.Status = getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped)
 	if err := updateWorkflowRun(db, w); err != nil {
 		return sdk.WrapError(err, "processWorkflowRun>")
 	}
@@ -489,14 +487,7 @@ func AddWorkflowRunInfo(run *sdk.WorkflowRun, isError bool, infos ...sdk.SpawnMs
 }
 
 // getWorkflowRunStatus return the status depending on number of workflowNodeRuns in success, building, stopped and fail
-func getWorkflowRunStatus(w *sdk.WorkflowRun, nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped int) string {
-	if w != nil {
-		for _, info := range w.Infos {
-			if info.IsError {
-				return string(sdk.StatusFail)
-			}
-		}
-	}
+func getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped int) string {
 	switch {
 	case nodesRunBuilding > 0:
 		return string(sdk.StatusBuilding)
