@@ -26,6 +26,7 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permPipelineKey":     api.checkPipelinePermissions,
 		"permApplicationName": api.checkApplicationPermissions,
 		"appID":               api.checkApplicationIDPermissions,
+		"permWorkflowName":    api.checkWorkflowPermissions,
 		"permGroupName":       api.checkGroupPermissions,
 		"permActionName":      api.checkActionPermissions,
 		"permEnvironmentName": api.checkEnvironmentPermissions,
@@ -250,13 +251,18 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 	return false
 }
 
-func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName string, permission int, routeVar map[string]string) bool {
+func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName string, perm int, routeVar map[string]string) bool {
 	// Check if param key exist
 	if projectKey, ok := routeVar["key"]; ok {
-		for _, g := range getUser(ctx).Groups {
-			for _, p := range g.PipelineGroups {
-				if pipelineName == p.Pipeline.Name && p.Permission >= permission && projectKey == p.Pipeline.ProjectKey {
-					return true
+		switch perm {
+		case permission.PermissionRead:
+			return checkProjectReadPermission(ctx, projectKey)
+		default:
+			for _, g := range getUser(ctx).Groups {
+				for _, p := range g.PipelineGroups {
+					if pipelineName == p.Pipeline.Name && p.Permission >= permission && projectKey == p.Pipeline.ProjectKey {
+						return true
+					}
 				}
 			}
 		}
@@ -267,10 +273,13 @@ func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName strin
 	return false
 }
 
-func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string, permission int, routeVar map[string]string) bool {
+func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string, perm int, routeVar map[string]string) bool {
 	// Check if param key exist
 	if projectKey, ok := routeVar["key"]; ok {
-		if getUser(ctx).Groups != nil {
+		switch perm {
+		case permission.PermissionRead:
+			return checkProjectReadPermission(ctx, projectKey)
+		default:
 			for _, g := range getUser(ctx).Groups {
 				for _, p := range g.EnvironmentGroups {
 					if envName == p.Environment.Name && p.Permission >= permission && projectKey == p.Environment.ProjectKey {
@@ -286,10 +295,46 @@ func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string,
 	return false
 }
 
-func (api *API) checkApplicationPermissions(ctx context.Context, applicationName string, permission int, routeVar map[string]string) bool {
+func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName string, perm int, routeVar map[string]string) bool {
+	if projectKey, ok := routeVar["key"]; ok {
+		// If need read permission, just check project read permission
+		switch perm {
+		case permission.PermissionRead:
+			return checkProjectReadPermission(ctx, projectKey)
+		default:
+			for _, g := range getUser(ctx).Groups {
+				for _, w := range g.WorkflowGroups {
+					if workflowName == w.Workflow.Name && w.Permission >= permission && projectKey == w.Workflow.ProjectKey {
+						return true
+					}
+				}
+			}
+		}
+		log.Warning("Access denied. user %s on workflow %s", getUser(ctx).Username, workflowName)
+	} else {
+		log.Warning("Wrong route configuration. need key parameter")
+	}
+	return false
+}
+
+func checkProjectReadPermission(ctx context.Context, projectKey string) bool {
+	for _, g := range getUser(ctx).Groups {
+		for _, p := range g.ProjectGroups {
+			if projectKey == p.Project.Key {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (api *API) checkApplicationPermissions(ctx context.Context, applicationName string, perm int, routeVar map[string]string) bool {
 	// Check if param key exist
 	if projectKey, ok := routeVar["key"]; ok {
-		if getUser(ctx).Groups != nil {
+		switch perm {
+		case permission.PermissionRead:
+			return checkProjectReadPermission(ctx, projectKey)
+		default:
 			for _, g := range getUser(ctx).Groups {
 				for _, a := range g.ApplicationGroups {
 					if applicationName == a.Application.Name && a.Permission >= permission && projectKey == a.Application.ProjectKey {
@@ -297,6 +342,7 @@ func (api *API) checkApplicationPermissions(ctx context.Context, applicationName
 					}
 				}
 			}
+
 		}
 		log.Warning("Access denied. user %s on application %s", getUser(ctx).Username, applicationName)
 	} else {
@@ -312,12 +358,10 @@ func (api *API) checkApplicationIDPermissions(ctx context.Context, appIDS string
 		return false
 	}
 
-	if getUser(ctx).Groups != nil {
-		for _, g := range getUser(ctx).Groups {
-			for _, a := range g.ApplicationGroups {
-				if appID == a.Application.ID && a.Permission >= permission {
-					return true
-				}
+	for _, g := range getUser(ctx).Groups {
+		for _, a := range g.ApplicationGroups {
+			if appID == a.Application.ID && a.Permission >= permission {
+				return true
 			}
 		}
 	}
