@@ -382,7 +382,8 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			ID:   sdk.MsgWorkflowError.ID,
 			Args: []interface{}{errParam},
 		})
-		return sdk.WrapError(errParam, "processWorkflowNodeRun> getNodeRunBuildParameters failed")
+		// if there an error -> display it in workflowRunInfo and not stop the launch
+		log.Error("processWorkflowNodeRun> getNodeRunBuildParameters failed. Project:%s Begin [#%d.%d]%s.%d err:%s", p.Name, w.Number, subnumber, w.Workflow.Name, n.ID, errParam)
 	}
 	run.BuildParameters = append(run.BuildParameters, jobParams...)
 
