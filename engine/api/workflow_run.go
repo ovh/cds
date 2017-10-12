@@ -453,7 +453,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		}
 
 		wr.Translate(r.Header.Get("Accept-Language"))
-		return WriteJSON(w, r, wr, http.StatusOK)
+		return WriteJSON(w, r, wr, http.StatusAccepted)
 	}
 }
 

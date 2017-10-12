@@ -26,6 +26,13 @@ func insertWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun) error {
 // updateWorkflowRun updates in table "workflow_run""
 func updateWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun) error {
 	w.LastModified = time.Now()
+
+	for _, info := range w.Infos {
+		if info.IsError {
+			w.Status = string(sdk.StatusFail)
+		}
+	}
+
 	runDB := Run(*w)
 	if _, err := db.Update(&runDB); err != nil {
 		return sdk.WrapError(err, "updateWorkflowRun> Unable to update run")
@@ -157,6 +164,7 @@ func LoadRunByIDAndProjectKey(db gorp.SqlExecutor, projectkey string, id int64) 
 	return loadRun(db, query, projectkey, id)
 }
 
+// LoadRunByID loads run by ID
 func LoadRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.*
 	from workflow_run

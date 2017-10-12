@@ -54,7 +54,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 		}
 	}
 
-	newStatus := getWorkflowRunStatus(success, building, failed, stopped)
+	newStatus := getWorkflowRunStatus(wr, success, building, failed, stopped)
 	if newStatus != wr.Status {
 		wr.Status = newStatus
 		return UpdateWorkflowRunStatus(db, wr.ID, newStatus)

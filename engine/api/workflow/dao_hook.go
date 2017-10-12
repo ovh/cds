@@ -68,20 +68,20 @@ func (r *NodeHook) PostInsert(db gorp.SqlExecutor) error {
 		r.Conditions = []sdk.WorkflowTriggerCondition{}
 	}
 
-	sConditions, err := gorpmapping.JSONToNullString(r.Conditions)
-	if err != nil {
-		return err
+	sConditions, errg := gorpmapping.JSONToNullString(r.Conditions)
+	if errg != nil {
+		return errg
 	}
 
-	sConfig, err := gorpmapping.JSONToNullString(r.Config)
-	if err != nil {
-		return err
+	sConfig, errgo := gorpmapping.JSONToNullString(r.Config)
+	if errgo != nil {
+		return errgo
 	}
 
 	if _, err := db.Exec("update workflow_node_hook set conditions = $2, config = $3 where id = $1", r.ID, sConditions, sConfig); err != nil {
 		return err
 	}
-	return err
+	return nil
 }
 
 //PostGet is a db hook
