@@ -801,6 +801,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 		sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
 		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, repo.HTTPCloneURL)
+		sdk.AddParameter(&params, "git.repository", sdk.StringParameter, app.RepositoryFullname)
 		pb.Trigger.VCSRemoteURL = repo.HTTPCloneURL
 		pb.Trigger.VCSRemote = app.RepositoryFullname
 		log.Warning("first --> ", pb.Trigger.VCSRemote, pb.Trigger.VCSRemoteURL)
@@ -812,7 +813,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 		if gitURL != "" {
 			sdk.AddParameter(&params, "git.url", sdk.StringParameter, gitURL)
-			sdk.AddParameter(&params, "git.repository", sdk.StringParameter, mapParams["git.repository"])
+			sdk.AddParameter(&params, "git.repository", sdk.StringParameter, getRemoteName(mapParams["git.project"], mapParams["git.repository"]))
 			pb.Trigger.VCSRemote = getRemoteName(mapParams["git.project"], mapParams["git.repository"])
 		}
 		log.Warning("second --> ", pb.Trigger.VCSRemote, pb.Trigger.VCSRemoteURL)
