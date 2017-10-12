@@ -1,5 +1,7 @@
-<div id="summary" *ngIf="nodeRun" [class.success]="nodeRun.status === pipelineStatusEnum.SUCCESS" [class.fail]="nodeRun.status === pipelineStatusEnum.FAIL"
-    [class.building]="nodeRun.status === pipelineStatusEnum.BUILDING">
+<div id="summary" *ngIf="nodeRun"
+    [class.success]="nodeRun.status === pipelineStatusEnum.SUCCESS"
+    [class.fail]="nodeRun.status === pipelineStatusEnum.FAIL || nodeRun.status === pipelineStatusEnum.STOPPED"
+    [class.building]="nodeRun.status === pipelineStatusEnum.BUILDING || nodeRun.status === pipelineStatusEnum.WAITING">
     <div class="ui grid">
         <div class="row">
             <div class="three wide column"></div>
@@ -19,7 +21,7 @@
                                 <div class="five wide column" title="{{ 'common_pipeline_start_title' | translate }}">
                                     <i class="calendar icon"></i>{{nodeRun.start | amCalendar }}
                                 </div>
-                                <div class="five wide column" *ngIf="nodeRun.status !== pipelineStatusEnum.BUILDING" title="{{ 'common_duration_title' | translate }}">
+                                <div class="five wide column" *ngIf="nodeRun.status !== pipelineStatusEnum.BUILDING && nodeRun.status !== pipelineStatusEnum.WAITING" title="{{ 'common_duration_title' | translate }}">
                                     <i class="clock outline icon"></i>{{duration}}
                                 </div>
                             </div>

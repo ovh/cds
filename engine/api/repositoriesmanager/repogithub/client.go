@@ -855,6 +855,9 @@ func (g *GithubClient) PullRequestEvents(fullname string, iEvents []interface{})
 
 	res := []sdk.VCSPullRequestEvent{}
 	for _, e := range events {
+		if e.Payload.PullRequest.State != "open" {
+			continue
+		}
 		event := sdk.VCSPullRequestEvent{
 			Action: e.Payload.Action,
 			Repo:   e.Payload.PullRequest.Head.Repo.FullName,
