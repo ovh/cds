@@ -55,7 +55,7 @@ export class WorkflowShowComponent {
 
     selectedTab = 'workflows';
 
-    permission = PermissionValue;
+    permissionEnum = PermissionValue;
     permFormLoading = false;
 
     loading = false;

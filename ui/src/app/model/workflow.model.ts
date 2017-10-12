@@ -18,6 +18,7 @@ export class Workflow {
     joins: Array<WorkflowNodeJoin>;
     last_modified: Date;
     groups: Array<GroupPermission>;
+    permission: number;
 
     // UI params
     externalChange: boolean;
