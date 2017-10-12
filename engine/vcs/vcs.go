@@ -119,7 +119,7 @@ func (s *Service) Serve(c context.Context) error {
 	//Start the http server
 	log.Info("VCS> Starting HTTP Server on port %d", s.Cfg.HTTP.Port)
 	if err := server.ListenAndServe(); err != nil {
-		log.Fatalf("VCS> Cannot start cds-hooks: %s", err)
+		log.Error("VCS> Listen and serve failed: %s", err)
 	}
 
 	return ctx.Err()

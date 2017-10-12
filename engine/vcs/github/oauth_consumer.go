@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/ovh/cds/sdk"
-
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -50,8 +49,7 @@ func (g *githubConsumer) AuthorizeRedirect() (string, string, error) {
 
 	val := url.Values{}
 	val.Add("client_id", g.ClientID)
-	//Leave the default value set in github
-	//val.Add("redirect_uri", g.AuthorizationCallbackURL)
+	//Leave the default value set in github. If we would it to be tweakable; we should do it this way: val.Add("redirect_uri", g.AuthorizationCallbackURL)
 	val.Add("scope", strings.Join(requestedScope, " "))
 	val.Add("state", requestToken)
 

@@ -37,7 +37,7 @@ type Configuration struct {
 		Swarm     swarm.HatcheryConfiguration     `toml:"swarm" comment:"Hatchery Swarm. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/"`
 		VSphere   vsphere.HatcheryConfiguration   `toml:"vsphere" comment:"Hatchery VShpere. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/"`
 	} `toml:"hatchery"`
-	Hooks hooks.Configuration `toml:"vcs" comment:"######################\n CDS Hooks Settings \n######################"`
+	Hooks hooks.Configuration `toml:"hooks" comment:"######################\n CDS Hooks Settings \n######################"`
 	VCS   vcs.Configuration   `toml:"vcs" comment:"######################\n CDS VCS Settings \n######################"`
 }
 
