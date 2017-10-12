@@ -101,10 +101,10 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
-		"number":         fmt.Sprintf("%d", wr.Number),
-		"nodeID":         fmt.Sprintf("%d", wr.Workflow.RootID),
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+		"number":           fmt.Sprintf("%d", wr.Number),
+		"nodeID":           fmt.Sprintf("%d", wr.Workflow.RootID),
 	}
 	uri := router.GetRoute("GET", api.getWorkflowNodeRunHistoryHandler, vars)
 	test.NotEmpty(t, uri)
@@ -201,8 +201,8 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
 	}
 	uri := router.GetRoute("GET", api.getWorkflowRunsHandler, vars)
 	test.NotEmpty(t, uri)
@@ -329,8 +329,8 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
 	}
 	uri := router.GetRoute("GET", api.getLatestWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -442,9 +442,9 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
-		"number":         "9",
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+		"number":           "9",
 	}
 	uri := router.GetRoute("GET", api.getWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -540,10 +540,10 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
-		"number":         fmt.Sprintf("%d", lastrun.Number),
-		"nodeRunID":      fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+		"number":           fmt.Sprintf("%d", lastrun.Number),
+		"nodeRunID":        fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
 	}
 	uri := router.GetRoute("GET", api.getWorkflowNodeRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -616,8 +616,8 @@ func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -641,9 +641,9 @@ func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
-		"number":         fmt.Sprintf("%d", wr.Number),
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+		"number":           fmt.Sprintf("%d", wr.Number),
 	}
 	uri = router.GetRoute("POST", api.resyncWorkflowRunPipelinesHandler, vars)
 	test.NotEmpty(t, uri)
@@ -733,8 +733,8 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
@@ -853,12 +853,12 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
-		"number":         fmt.Sprintf("%d", lastrun.Number),
-		"nodeRunID":      fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
-		"runJobId":       fmt.Sprintf("%d", jobRun.ID),
-		"stepOrder":      "1",
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
+		"number":           fmt.Sprintf("%d", lastrun.Number),
+		"nodeRunID":        fmt.Sprintf("%d", lastrun.WorkflowNodeRuns[w1.RootID][0].ID),
+		"runJobId":         fmt.Sprintf("%d", jobRun.ID),
+		"stepOrder":        "1",
 	}
 	uri := router.GetRoute("GET", api.getWorkflowNodeRunJobStepHandler, vars)
 	test.NotEmpty(t, uri)

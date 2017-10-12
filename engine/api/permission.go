@@ -260,7 +260,7 @@ func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName strin
 		default:
 			for _, g := range getUser(ctx).Groups {
 				for _, p := range g.PipelineGroups {
-					if pipelineName == p.Pipeline.Name && p.Permission >= permission && projectKey == p.Pipeline.ProjectKey {
+					if pipelineName == p.Pipeline.Name && p.Permission >= perm && projectKey == p.Pipeline.ProjectKey {
 						return true
 					}
 				}
@@ -282,7 +282,7 @@ func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string,
 		default:
 			for _, g := range getUser(ctx).Groups {
 				for _, p := range g.EnvironmentGroups {
-					if envName == p.Environment.Name && p.Permission >= permission && projectKey == p.Environment.ProjectKey {
+					if envName == p.Environment.Name && p.Permission >= perm && projectKey == p.Environment.ProjectKey {
 						return true
 					}
 				}
@@ -304,7 +304,7 @@ func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName strin
 		default:
 			for _, g := range getUser(ctx).Groups {
 				for _, w := range g.WorkflowGroups {
-					if workflowName == w.Workflow.Name && w.Permission >= permission && projectKey == w.Workflow.ProjectKey {
+					if workflowName == w.Workflow.Name && w.Permission >= perm && projectKey == w.Workflow.ProjectKey {
 						return true
 					}
 				}
@@ -337,7 +337,7 @@ func (api *API) checkApplicationPermissions(ctx context.Context, applicationName
 		default:
 			for _, g := range getUser(ctx).Groups {
 				for _, a := range g.ApplicationGroups {
-					if applicationName == a.Application.Name && a.Permission >= permission && projectKey == a.Application.ProjectKey {
+					if applicationName == a.Application.Name && a.Permission >= perm && projectKey == a.Application.ProjectKey {
 						return true
 					}
 				}

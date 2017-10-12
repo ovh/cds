@@ -15,8 +15,8 @@ import (
 func (api *API) deleteWorkflowGroupHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		groupName := vars["groupName"]
 
 		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
@@ -63,8 +63,8 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 func (api *API) putWorkflowGroupHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		groupName := vars["groupName"]
 
 		var gp sdk.GroupPermission
@@ -118,8 +118,8 @@ func (api *API) putWorkflowGroupHandler() Handler {
 func (api *API) postWorkflowGroupHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		var gp sdk.GroupPermission
 		if err := UnmarshalBody(r, &gp); err != nil {

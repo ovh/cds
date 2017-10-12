@@ -33,8 +33,8 @@ func (api *API) getWorkflowsHandler() Handler {
 func (api *API) getWorkflowHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if err != nil {
@@ -124,8 +124,8 @@ func (api *API) postWorkflowHandler() Handler {
 func (api *API) putWorkflowHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
 		if errP != nil {
@@ -219,8 +219,8 @@ func (api *API) putWorkflowHandler() Handler {
 func (api *API) deleteWorkflowHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {

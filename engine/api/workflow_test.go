@@ -53,8 +53,8 @@ func Test_getWorkflowHandler(t *testing.T) {
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   "workflow1",
+		"key":              proj.Key,
+		"permWorkflowName": "workflow1",
 	}
 	uri := router.GetRoute("GET", api.getWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
@@ -174,8 +174,8 @@ func Test_putWorkflowHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   "Name",
+		"key":              proj.Key,
+		"permWorkflowName": "Name",
 	}
 	uri = router.GetRoute("PUT", api.putWorkflowHandler, vars)
 	test.NotEmpty(t, uri)
@@ -329,8 +329,8 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &workflow))
 
 	vars = map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   "Name",
+		"key":              proj.Key,
+		"permWorkflowName": "Name",
 	}
 	uri = router.GetRoute("DELETE", api.deleteWorkflowHandler, vars)
 	test.NotEmpty(t, uri)

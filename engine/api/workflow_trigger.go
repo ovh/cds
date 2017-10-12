@@ -16,8 +16,8 @@ import (
 func (api *API) getWorkflowTriggerConditionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		id, errID := requestVarInt(r, "nodeID")
 		if errID != nil {
@@ -103,8 +103,8 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		id, errID := requestVarInt(r, "joinID")
 		if errID != nil {

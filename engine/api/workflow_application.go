@@ -18,8 +18,8 @@ import (
 func (api *API) releaseApplicationWorkflowHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		nodeRunID, errN := requestVarInt(r, "nodeRunID")
 		if errN != nil {
 			return errN

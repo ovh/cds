@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -57,8 +58,8 @@ func (api *API) getWorkflowRunsHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "getWorkflowRunsHandler> Requested range %d not allowed", (limit - offset))
 		}
 
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		runs, offset, limit, count, err := workflow.LoadRuns(api.mustDB(), key, name, offset, limit)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunsHandler> Unable to load workflow runs")
@@ -135,8 +136,8 @@ func (api *API) getWorkflowRunsHandler() Handler {
 func (api *API) getLatestWorkflowRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		run, err := workflow.LoadLastRun(api.mustDB(), key, name)
 		if err != nil {
 			return sdk.WrapError(err, "getLatestWorkflowRunHandler> Unable to load last workflow run")
@@ -149,8 +150,8 @@ func (api *API) getLatestWorkflowRunHandler() Handler {
 func (api *API) resyncWorkflowRunPipelinesHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
@@ -179,8 +180,8 @@ func (api *API) resyncWorkflowRunPipelinesHandler() Handler {
 func (api *API) getWorkflowRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
@@ -197,8 +198,8 @@ func (api *API) getWorkflowRunHandler() Handler {
 func (api *API) stopWorkflowRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
@@ -246,8 +247,8 @@ func (api *API) stopWorkflowRunHandler() Handler {
 func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
@@ -273,8 +274,8 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 func (api *API) stopWorkflowNodeRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
@@ -330,8 +331,8 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 func (api *API) getWorkflowNodeRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
@@ -352,8 +353,8 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 func (api *API) postWorkflowRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithVariables)
 		if errP != nil {
@@ -402,39 +403,39 @@ func (api *API) postWorkflowRunHandler() Handler {
 				}
 			}
 
+			var fromNode *sdk.WorkflowNode
+			if opts.FromNodeID != nil {
+				fromNode = lastRun.Workflow.GetNode(*opts.FromNodeID)
+				if fromNode == nil {
+					return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node")
+				}
+			} else {
+				fromNode = wf.Root
+			}
+
+			// Check Env Permission
+			if fromNode.Context.Environment != nil {
+				if !permission.AccessToEnvironment(fromNode.Context.Environment.ID, getUser(ctx), permission.PermissionReadExecute) {
+					return sdk.WrapError(sdk.ErrNoEnvExecution, "postWorkflowRunHandler> Not enough right to run on environment %s", fromNode.Context.Environment.Name)
+				}
+			}
+
 			//If payload is not set, keep the default payload
 			if opts.Manual.Payload == interface{}(nil) {
-				n := wf.Root
-				if opts.FromNodeID != nil {
-					n = lastRun.Workflow.GetNode(*opts.FromNodeID)
-					if n == nil {
-						return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node")
-					}
-				}
-				opts.Manual.Payload = n.Context.DefaultPayload
+				opts.Manual.Payload = fromNode.Context.DefaultPayload
 			}
 
 			//If PipelineParameters are not set, keep the default PipelineParameters
 			if len(opts.Manual.PipelineParameters) == 0 {
-				n := wf.Root
-				if opts.FromNodeID != nil {
-					n = lastRun.Workflow.GetNode(*opts.FromNodeID)
-					if n == nil {
-						return sdk.WrapError(sdk.ErrWorkflowNotFound, "postWorkflowRunHandler> Pipeline Param: Unable to get node")
-					}
-				}
-				opts.Manual.PipelineParameters = n.Context.DefaultPipelineParameters
+				opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
 			}
 
 			log.Debug("Manual run: %#v", opts.Manual)
 
 			//Manual run
 			if lastRun != nil {
-				if opts.FromNodeID == nil {
-					opts.FromNodeID = &lastRun.Workflow.RootID
-				}
 				var errmr error
-				wr, errmr = workflow.ManualRunFromNode(tx, api.Cache, p, wf, lastRun.Number, opts.Manual, *opts.FromNodeID)
+				wr, errmr = workflow.ManualRunFromNode(tx, api.Cache, p, wf, lastRun.Number, opts.Manual, fromNode.ID)
 				if errmr != nil {
 					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow from node")
 				}
@@ -481,8 +482,8 @@ func (api *API) downloadworkflowArtifactDirectHandler() Handler {
 func (api *API) getWorkflowNodeRunArtifactsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		number, errNu := requestVarInt(r, "number")
 		if errNu != nil {
@@ -505,8 +506,8 @@ func (api *API) getWorkflowNodeRunArtifactsHandler() Handler {
 func (api *API) getDownloadArtifactHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		id, errI := requestVarInt(r, "artifactId")
 		if errI != nil {
@@ -536,8 +537,8 @@ func (api *API) getDownloadArtifactHandler() Handler {
 func (api *API) getWorkflowRunArtifactsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		number, errNu := requestVarInt(r, "number")
 		if errNu != nil {
@@ -569,8 +570,8 @@ func (api *API) getWorkflowRunArtifactsHandler() Handler {
 func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
-		workflowName := vars["workflowName"]
+		projectKey := vars["key"]
+		workflowName := vars["permWorkflowName"]
 		number, errN := requestVarInt(r, "number")
 		if errN != nil {
 			return sdk.WrapError(errN, "getWorkflowNodeRunJobBuildLogsHandler> Number: invalid number")
@@ -644,8 +645,8 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 func (api *API) getWorkflowRunTagsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		projectKey := vars["permProjectKey"]
-		workflowName := vars["workflowName"]
+		projectKey := vars["key"]
+		workflowName := vars["permWorkflowName"]
 
 		res, err := workflow.GetTagsAndValue(api.mustDB(), projectKey, workflowName)
 		if err != nil {
