@@ -41,7 +41,7 @@ func (api *API) InitRouter() {
 
 	// Download file
 	r.ServeAbsoluteFile("/download/cli/x86_64", path.Join(api.Config.Directories.Download, "cds-linux-amd64"), "cds")
-	r.ServeAbsoluteFile("/download/worker/x86_64", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "worker")
+	r.ServeAbsoluteFile("/download/worker/x86_64", path.Join(api.Config.Directories.Download, "cds-worker-linux-amd64"), "worker")
 	r.ServeAbsoluteFile("/download/worker/windows_x86_64", path.Join(api.Config.Directories.Download, "cds-worker-windows-amd64"), "worker.exe")
 	r.ServeAbsoluteFile("/download/worker/i386", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "worker")
 	r.ServeAbsoluteFile("/download/worker/i686", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "worker")
