@@ -93,17 +93,20 @@ func (api *API) receiveHookHandler() Handler {
 			rh = processStashHook(w, r, data)
 		}
 
-		db := api.DBConnectionFactory.GetDBMap()
-		if db == nil {
-			hook.Recovery(api.Cache, rh, fmt.Errorf("database not available"))
-			return err
-		}
+		go func() {
+			db := api.DBConnectionFactory.GetDBMap()
+			if db == nil {
+				err := fmt.Errorf("database not available")
+				hook.Recovery(api.Cache, rh, err)
+				log.Error("receiveHookHandler> Error, try to recover...: %v", err)
+				return
+			}
 
-		if err := processHook(api.DBConnectionFactory.GetDBMap, api.Cache, rh); err != nil {
-			hook.Recovery(api.Cache, rh, err)
-			return err
-
-		}
+			if err := processHook(api.DBConnectionFactory.GetDBMap, api.Cache, rh); err != nil {
+				log.Error("receiveHookHandler> Error, try to recover...: %v", err)
+				hook.Recovery(api.Cache, rh, err)
+			}
+		}()
 
 		return nil
 	}
