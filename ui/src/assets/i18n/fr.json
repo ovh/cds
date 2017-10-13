@@ -175,6 +175,7 @@
   "common_no_workflow" : "Il n'y a aucun workflow lié",
   "common_no_environment" : "Il n'y a aucun environnement lié",
   "common_usage" : "Usage",
+  "common_orientation" : "Orientation",
 
   "usage_application_list" : "Applications liées",
   "usage_workflow_list" : "Workflows liés",
@@ -602,9 +603,10 @@
   "workflow_resync_pipeline" : "Resynchroniser tous les pipelines du workflow",
   "workflow_stopped" : "Workflow arrêté",
   "workflow_relaunched" : "Workflow relancé",
-
   "workflow_orientation_tree" : "Arborescence",
   "workflow_orientation_horizontal" : "Horizontale",
-  "workflow_orientation_vertical" : "Verticale"
+  "workflow_orientation_vertical" : "Verticale",
+  "workflow_last_execution" : "Date de dernière exécution",
+  "workflow_first_execution" : "Date de première exécution"
 
 }
