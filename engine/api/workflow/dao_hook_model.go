@@ -60,14 +60,14 @@ func (r *NodeHookModel) PostUpdate(db gorp.SqlExecutor) error {
 		r.DefaultConfig = sdk.WorkflowNodeHookConfig{}
 	}
 
-	btes, err := json.Marshal(r.DefaultConfig)
-	if err != nil {
-		return err
+	btes, errm := json.Marshal(r.DefaultConfig)
+	if errm != nil {
+		return errm
 	}
 	if _, err := db.Exec("update workflow_hook_model set default_config = $2 where id = $1", r.ID, btes); err != nil {
 		return err
 	}
-	return err
+	return nil
 }
 
 //PostGet is a db hook
