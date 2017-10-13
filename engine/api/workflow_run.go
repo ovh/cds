@@ -398,10 +398,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 		} else {
 			//Default manual run
 			if opts.Manual == nil {
-				opts.Manual = &sdk.WorkflowNodeRunManual{
-					User: *getUser(ctx),
-				}
+				opts.Manual = &sdk.WorkflowNodeRunManual{}
 			}
+			opts.Manual.User = *getUser(ctx)
 
 			var fromNode *sdk.WorkflowNode
 			if opts.FromNodeID != nil {
@@ -412,7 +411,6 @@ func (api *API) postWorkflowRunHandler() Handler {
 			} else {
 				fromNode = wf.Root
 			}
-
 			// Check Env Permission
 			if fromNode.Context.Environment != nil {
 				if !permission.AccessToEnvironment(fromNode.Context.Environment.ID, getUser(ctx), permission.PermissionReadExecute) {

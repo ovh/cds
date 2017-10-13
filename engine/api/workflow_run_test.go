@@ -9,9 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/bootstrap"
+	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -750,6 +754,68 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
 	assert.Equal(t, int64(1), wr.Number)
+}
+
+func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
+
+	env := &sdk.Environment{
+		Name:       sdk.RandomString(10),
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+	test.NoError(t, environment.InsertEnvironment(api.mustDB(), env))
+
+	proj2, errp := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
+	test.NoError(t, errp)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Context: &sdk.WorkflowNodeContext{
+				Environment: env,
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
+
+	// Remove execution right for group
+	test.NoError(t, group.UpdateGroupRoleInEnvironment(api.mustDB(), proj.Key, env.Name, proj.ProjectGroups[0].Group.Name, 4))
+
+	u.Admin = false
+	test.NoError(t, user.UpdateUser(api.mustDB(), *u))
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": w.Name,
+	}
+	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
+	test.NotEmpty(t, uri)
+
+	opts := &sdk.WorkflowRunPostHandlerOption{}
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 403, rec.Code)
 }
 
 func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {

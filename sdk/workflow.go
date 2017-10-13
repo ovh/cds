@@ -436,12 +436,12 @@ func (n *WorkflowNode) InvolvedApplications() []int64 {
 //InvolvedPipelines returns all pipelines used in the workflow
 func (n *WorkflowNode) InvolvedPipelines() []int64 {
 	res := []int64{}
-	if n.Context != nil {
-		if n.PipelineID == 0 {
-			n.PipelineID = n.Pipeline.ID
-		}
-		res = []int64{n.PipelineID}
+
+	if n.PipelineID == 0 {
+		n.PipelineID = n.Pipeline.ID
 	}
+	res = []int64{n.PipelineID}
+
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedPipelines()...)
 	}

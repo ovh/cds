@@ -242,6 +242,42 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			},
 			want: false,
 		},
+		{
+			name: "Should return true for user [execution]",
+			args: args{
+				u: &sdk.User{
+					Admin: false,
+					Groups: []sdk.Group{
+						{
+							ProjectGroups:  []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
+							WorkflowGroups: []sdk.WorkflowGroup{{Permission: 5, Workflow: sdk.Workflow{ProjectKey: "key1", Name: "workflow1"}}},
+						},
+					},
+				},
+				wName: "workflow1",
+				pKey:  "key1",
+				p:     5,
+			},
+			want: true,
+		},
+		{
+			name: "Should return false for user [execution]",
+			args: args{
+				u: &sdk.User{
+					Admin: false,
+					Groups: []sdk.Group{
+						{
+							ProjectGroups:  []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
+							WorkflowGroups: []sdk.WorkflowGroup{{Permission: 4, Workflow: sdk.Workflow{ProjectKey: "key1", Name: "workflow1"}}},
+						},
+					},
+				},
+				wName: "workflow1",
+				pKey:  "key1",
+				p:     5,
+			},
+			want: false,
+		},
 	}
 	for _, tt := range tests {
 		ctx := context.WithValue(context.Background(), auth.ContextUser, tt.args.u)
