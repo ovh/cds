@@ -1063,6 +1063,12 @@
 			"revisionTime": "2016-01-12T16:53:51Z"
 		},
 		{
+			"checksumSHA1": "VQ8m0ncYJSbzslI7nVjiAdGEOeQ=",
+			"path": "github.com/pkg/browser",
+			"revision": "c90ca0c84f15f81c982e32665bffd8d7aac8f097",
+			"revisionTime": "2017-05-05T12:59:00Z"
+		},
+		{
 			"checksumSHA1": "ynJSWoF6v+3zMnh9R0QmmG6iGV8=",
 			"path": "github.com/pkg/errors",
 			"revision": "839d9e913e063e28dfd0e6c7b7512793e0a48be9",
