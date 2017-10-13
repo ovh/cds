@@ -144,8 +144,8 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey, pipName string) ([]sdk.
 	return envs, nil
 }
 
-// LoadByWorkflow loads environements from database
-func LoadByWorkflow(db gorp.SqlExecutor, wf sdk.Workflow) ([]sdk.Environment, error) {
+// LoadByWorkflowID loads environments from database for a given workflow id
+func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Environment, error) {
 	envs := []sdk.Environment{}
 	query := `SELECT DISTINCT environment.* FROM environment
 	JOIN workflow_node_context ON workflow_node_context.environment_id = environment.id
@@ -153,11 +153,11 @@ func LoadByWorkflow(db gorp.SqlExecutor, wf sdk.Workflow) ([]sdk.Environment, er
 	JOIN workflow ON workflow.id = workflow_node.workflow_id
 	WHERE workflow.id = $1`
 
-	if _, err := db.Select(&envs, query, wf.ID); err != nil {
+	if _, err := db.Select(&envs, query, workflowID); err != nil {
 		if err == sql.ErrNoRows {
 			return envs, nil
 		}
-		return nil, sdk.WrapError(err, "LoadByWorkflow> Unable to load environments linked to workflow id %d and workflow name %s", wf.ID, wf.Name)
+		return nil, sdk.WrapError(err, "LoadByWorkflow> Unable to load environments linked to workflow id %d", workflowID)
 	}
 
 	return envs, nil

@@ -118,25 +118,6 @@ func GetAllPipelinesByID(db gorp.SqlExecutor, applicationID int64) ([]sdk.Applic
 	return appPipelines, nil
 }
 
-// LoadByWorkflow loads applications from database
-func LoadByWorkflow(db gorp.SqlExecutor, wf sdk.Workflow) ([]sdk.Application, error) {
-	apps := []sdk.Application{}
-	query := `SELECT DISTINCT application.* FROM application
-	JOIN workflow_node_context ON workflow_node_context.application_id = application.id
-	JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
-	JOIN workflow ON workflow.id = workflow_node.workflow_id
-	WHERE workflow.id = $1`
-
-	if _, err := db.Select(&apps, query, wf.ID); err != nil {
-		if err == sql.ErrNoRows {
-			return apps, nil
-		}
-		return nil, sdk.WrapError(err, "LoadByWorkflow> Unable to load applications linked to workflow id %d and workflow name %s", wf.ID, wf.Name)
-	}
-
-	return apps, nil
-}
-
 // DeleteAllApplicationPipeline Detach all pipeline
 func DeleteAllApplicationPipeline(db gorp.SqlExecutor, applicationID int64) error {
 	query := `

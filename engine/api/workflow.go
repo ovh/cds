@@ -50,15 +50,15 @@ func (api *API) getWorkflowHandler() Handler {
 
 		w1, err := workflow.Load(tx, api.Cache, key, name, getUser(ctx))
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
 		}
 
 		if withUsage {
-			var errU error
-			w1.Usage, errU = loadWorfklowUsage(tx, *w1)
+			usage, errU := loadWorfklowUsage(tx, *w1)
 			if errU != nil {
 				return sdk.WrapError(errU, "getWorkflowHandler> Cannot load usage for workflow %s", name)
 			}
+			w1.Usage = &usage
 		}
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig("project", "workflow")
@@ -73,19 +73,19 @@ func (api *API) getWorkflowHandler() Handler {
 
 func loadWorfklowUsage(db gorp.SqlExecutor, wf sdk.Workflow) (sdk.Usage, error) {
 	usage := sdk.Usage{}
-	pips, errP := pipeline.LoadByWorkflow(db, wf)
+	pips, errP := pipeline.LoadByWorkflowID(db, wf.ID)
 	if errP != nil {
 		return usage, sdk.WrapError(errP, "loadWorfklowUsage> Cannot load pipelines linked to a workflow %s", wf.Name)
 	}
 	usage.Pipelines = pips
 
-	envs, errE := environment.LoadByWorkflow(db, wf)
+	envs, errE := environment.LoadByWorkflowID(db, wf.ID)
 	if errE != nil {
 		return usage, sdk.WrapError(errE, "loadWorfklowUsage> Cannot load environments linked to a workflow %s", wf.Name)
 	}
 	usage.Environments = envs
 
-	apps, errA := application.LoadByWorkflow(db, wf)
+	apps, errA := application.LoadByWorkflowID(db, wf.ID)
 	if errA != nil {
 		return usage, sdk.WrapError(errA, "loadWorfklowUsage> Cannot load applications linked to a workflow %s", wf.Name)
 	}

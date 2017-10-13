@@ -121,6 +121,25 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opt
 	return load(db, store, "", u, opts, query, args...)
 }
 
+// LoadByWorkflowID loads applications from database for a given workflow id
+func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application, error) {
+	apps := []sdk.Application{}
+	query := `SELECT DISTINCT application.* FROM application
+	JOIN workflow_node_context ON workflow_node_context.application_id = application.id
+	JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
+	JOIN workflow ON workflow.id = workflow_node.workflow_id
+	WHERE workflow.id = $1`
+
+	if _, err := db.Select(&apps, query, workflowID); err != nil {
+		if err == sql.ErrNoRows {
+			return apps, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByWorkflow> Unable to load applications linked to workflow id %d", workflowID)
+	}
+
+	return apps, nil
+}
+
 // LoadByPipeline Load application where pipeline is attached
 func LoadByPipeline(db gorp.SqlExecutor, store cache.Store, pipelineID int64, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
 	query := `SELECT distinct application.*
