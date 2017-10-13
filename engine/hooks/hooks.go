@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -44,7 +43,7 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	if sConfig.URL == "" {
+	if sConfig.URL == "" || sConfig.Name == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
 	}
 
@@ -53,10 +52,6 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 
 // Serve will start the http api server
 func (s *Service) Serve(c context.Context) error {
-	if s.Cfg.Name == "" {
-		s.Cfg.Name = hatchery.GenerateName("hooks", "")
-	}
-
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 

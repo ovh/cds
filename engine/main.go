@@ -25,6 +25,7 @@ import (
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -106,6 +107,7 @@ Comming soon...`,
 		conf.Hatchery.VSphere.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
+		conf.Hooks.Name = hatchery.GenerateName("hooks", "")
 		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
 
 		if !configNewAsEnvFlag {
