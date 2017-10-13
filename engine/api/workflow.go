@@ -54,7 +54,7 @@ func (api *API) getWorkflowHandler() Handler {
 		}
 
 		if withUsage {
-			usage, errU := loadWorfklowUsage(tx, *w1)
+			usage, errU := loadWorfklowUsage(tx, w1.ID)
 			if errU != nil {
 				return sdk.WrapError(errU, "getWorkflowHandler> Cannot load usage for workflow %s", name)
 			}
@@ -71,23 +71,23 @@ func (api *API) getWorkflowHandler() Handler {
 	}
 }
 
-func loadWorfklowUsage(db gorp.SqlExecutor, wf sdk.Workflow) (sdk.Usage, error) {
+func loadWorfklowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error) {
 	usage := sdk.Usage{}
-	pips, errP := pipeline.LoadByWorkflowID(db, wf.ID)
+	pips, errP := pipeline.LoadByWorkflowID(db, workflowID)
 	if errP != nil {
-		return usage, sdk.WrapError(errP, "loadWorfklowUsage> Cannot load pipelines linked to a workflow %s", wf.Name)
+		return usage, sdk.WrapError(errP, "loadWorfklowUsage> Cannot load pipelines linked to a workflow id %d", workflowID)
 	}
 	usage.Pipelines = pips
 
-	envs, errE := environment.LoadByWorkflowID(db, wf.ID)
+	envs, errE := environment.LoadByWorkflowID(db, workflowID)
 	if errE != nil {
-		return usage, sdk.WrapError(errE, "loadWorfklowUsage> Cannot load environments linked to a workflow %s", wf.Name)
+		return usage, sdk.WrapError(errE, "loadWorfklowUsage> Cannot load environments linked to a workflow id %d", workflowID)
 	}
 	usage.Environments = envs
 
-	apps, errA := application.LoadByWorkflowID(db, wf.ID)
+	apps, errA := application.LoadByWorkflowID(db, workflowID)
 	if errA != nil {
-		return usage, sdk.WrapError(errA, "loadWorfklowUsage> Cannot load applications linked to a workflow %s", wf.Name)
+		return usage, sdk.WrapError(errA, "loadWorfklowUsage> Cannot load applications linked to a workflow id %d", workflowID)
 	}
 	usage.Applications = apps
 
