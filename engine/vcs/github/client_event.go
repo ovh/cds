@@ -221,6 +221,9 @@ func (g *githubClient) PullRequestEvents(fullname string, iEvents []interface{})
 
 	res := []sdk.VCSPullRequestEvent{}
 	for _, e := range events {
+		if e.Payload.PullRequest.State != "open" {
+			continue
+		}
 		event := sdk.VCSPullRequestEvent{
 			Action: e.Payload.Action,
 			Repo:   e.Payload.PullRequest.Head.Repo.FullName,
@@ -240,6 +243,7 @@ func (g *githubClient) PullRequestEvents(fullname string, iEvents []interface{})
 					Message: e.Payload.PullRequest.Head.Label,
 				},
 				CloneURL: e.Payload.PullRequest.Head.Repo.CloneURL,
+				Repo:     e.Payload.PullRequest.Head.Repo.FullName,
 			},
 			Base: sdk.VCSPushEvent{
 				Branch: sdk.VCSBranch{
@@ -257,6 +261,7 @@ func (g *githubClient) PullRequestEvents(fullname string, iEvents []interface{})
 					Message: e.Payload.PullRequest.Base.Label,
 				},
 				CloneURL: e.Payload.PullRequest.Base.Repo.CloneURL,
+				Repo:     e.Payload.PullRequest.Base.Repo.FullName,
 			},
 		}
 		res = append(res, event)

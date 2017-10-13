@@ -329,6 +329,8 @@ func pipelineBuildEnd(DBFunc func() *gorp.DbMap, store cache.Store, tx gorp.SqlE
 			VCSChangesAuthor:    pb.Trigger.VCSChangesAuthor,
 			VCSChangesBranch:    pb.Trigger.VCSChangesBranch,
 			VCSChangesHash:      pb.Trigger.VCSChangesHash,
+			VCSRemote:           pb.Trigger.VCSRemote,
+			VCSRemoteURL:        pb.Trigger.VCSRemoteURL,
 			ScheduledTrigger:    pb.Trigger.ScheduledTrigger,
 		}
 

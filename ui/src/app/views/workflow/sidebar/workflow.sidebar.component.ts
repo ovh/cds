@@ -60,12 +60,12 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
         // Listening to web worker responses
         this.runWorkerSubscription = this.runWorker.response().subscribe(msg => {
             this.zone.run(() => {
-                this.ready = true;
                 if (!msg) {
                     return;
                 }
                 this.workflowRuns = <Array<WorkflowRun>>JSON.parse(msg);
                 this.refreshRun();
+                this.ready = true;
             });
 
         });

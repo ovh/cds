@@ -786,11 +786,12 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	sdk.AddParameter(&params, "cds.version", sdk.StringParameter, strconv.FormatInt(pb.Version, 10))
 
 	mapParams := paramsToMap(params)
-	_, gitURLfound := mapParams["git.url"]
-	_, gitHTTPURLFound := mapParams["git.http_url"]
+	gitURL, gitURLfound := mapParams["git.url"]
+	gitHTTPURL, gitHTTPURLFound := mapParams["git.http_url"]
 	_, parentBuildNumberFound := mapParams["cds.parent.buildNumber"]
 
-	if client != nil && (!gitURLfound || !gitHTTPURLFound) && !parentBuildNumberFound {
+	switch {
+	case client != nil && (!gitURLfound || !gitHTTPURLFound) && !parentBuildNumberFound: // For root pipeline
 		repo, errC := client.RepoByFullname(app.RepositoryFullname)
 		if errC != nil {
 			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.RepositoriesManager.Name, app.RepositoryFullname)
@@ -798,17 +799,41 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 		sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
 		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, repo.HTTPCloneURL)
-	} else if parentBuildNumberFound && trigger.ParentPipelineBuild != nil {
-		parentPip, errL := LoadPipelineBuildByID(tx, trigger.ParentPipelineBuild.ID)
+		sdk.AddParameter(&params, "git.repository", sdk.StringParameter, app.RepositoryFullname)
+		pb.Trigger.VCSRemoteURL = repo.HTTPCloneURL
+		pb.Trigger.VCSRemote = app.RepositoryFullname
 
-		if errL != nil {
-			return nil, sdk.WrapError(errL, "InsertPipelineBuild> Cannot LoadPipelineBuildByBuildNumber (parentBuildID %d, pipeline id: %d, appId: %d, envId: %d)", trigger.ParentPipelineBuild, p.ID, app.ID, env.ID)
+	case gitHTTPURL != "" || gitURL != "": // For pull request event
+		if gitHTTPURL != "" {
+			sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, gitHTTPURL)
+			pb.Trigger.VCSRemoteURL = gitHTTPURL
 		}
 
-		sdk.AddParameter(&params, "git.url", sdk.StringParameter, parentPip.Trigger.VCSRemoteURL)
-		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, parentPip.Trigger.VCSRemoteURL)
-		sdk.AddParameter(&params, "git.repository", sdk.StringParameter, parentPip.Trigger.VCSRemote)
-		pb.Trigger.VCSRemote = parentPip.Trigger.VCSRemote
+		if gitURL != "" {
+			sdk.AddParameter(&params, "git.url", sdk.StringParameter, gitURL)
+			sdk.AddParameter(&params, "git.repository", sdk.StringParameter, getRemoteName(mapParams["git.project"], mapParams["git.repository"]))
+			pb.Trigger.VCSRemote = getRemoteName(mapParams["git.project"], mapParams["git.repository"])
+		}
+
+	case parentBuildNumberFound && trigger.ParentPipelineBuild != nil: // For pipeline triggered after root
+		mapPreviousParams := paramsToMap(trigger.ParentPipelineBuild.Parameters)
+		if _, ok := mapPreviousParams["git.url"]; ok && mapPreviousParams["git.url"] != "" {
+			sdk.AddParameter(&params, "git.url", sdk.StringParameter, mapPreviousParams["git.url"])
+		}
+		if _, ok := mapPreviousParams["git.http_url"]; ok && mapPreviousParams["git.http_url"] != "" {
+			sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, mapPreviousParams["git.http_url"])
+			pb.Trigger.VCSRemoteURL = mapPreviousParams["git.http_url"]
+		} else if trigger.ParentPipelineBuild.Trigger.VCSRemoteURL != "" {
+			sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, trigger.ParentPipelineBuild.Trigger.VCSRemoteURL)
+			pb.Trigger.VCSRemoteURL = trigger.ParentPipelineBuild.Trigger.VCSRemoteURL
+		}
+		if _, ok := mapPreviousParams["git.repository"]; ok && mapPreviousParams["git.repository"] != "" {
+			sdk.AddParameter(&params, "git.repository", sdk.StringParameter, mapPreviousParams["git.repository"])
+			pb.Trigger.VCSRemote = getRemoteName(mapParams["git.project"], mapPreviousParams["git.repository"])
+		} else if trigger.ParentPipelineBuild.Trigger.VCSRemote != "" {
+			sdk.AddParameter(&params, "git.repository", sdk.StringParameter, trigger.ParentPipelineBuild.Trigger.VCSRemote)
+			pb.Trigger.VCSRemote = trigger.ParentPipelineBuild.Trigger.VCSRemote
+		}
 	}
 
 	if pb.Trigger.TriggeredBy != nil {
@@ -882,9 +907,9 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 
 	//Retreive commit information
 	if client != nil && pb.Trigger.VCSChangesHash != "" {
-		commit, err := client.Commit(pb.Trigger.VCSRemote, pb.Trigger.VCSChangesHash)
-		if err != nil {
-			log.Warning("InsertPipelineBuild> Cannot get commit: %s", err)
+		commit, errC := client.Commit(pb.Trigger.VCSRemote, pb.Trigger.VCSChangesHash)
+		if errC != nil {
+			log.Warning("InsertPipelineBuild> Cannot get commit: %s", errC)
 		} else {
 			sdk.AddParameter(&params, "git.author", sdk.StringParameter, commit.Author.Name)
 			sdk.AddParameter(&params, "git.message", sdk.StringParameter, commit.Message)
@@ -895,7 +920,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	// Process Pipeline Argument
 	mapVar, errprocess := ProcessPipelineBuildVariables(p.Parameter, applicationPipelineArgs, params)
 	if errprocess != nil {
-		log.Warning("InsertPipelineBuild> Cannot process args: %s\n", errprocess)
+		log.Warning("InsertPipelineBuild> Cannot process args: %s", errprocess)
 		return nil, errprocess
 	}
 
@@ -910,8 +935,8 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 		return nil, sdk.WrapError(errmarshal, "InsertPipelineBuild> Cannot marshal build parameters")
 	}
 
-	if err := LoadPipelineStage(tx, p); err != nil {
-		return nil, sdk.WrapError(err, "InsertPipelineBuild> Unable to load pipeline stages")
+	if errL := LoadPipelineStage(tx, p); errL != nil {
+		return nil, sdk.WrapError(errL, "InsertPipelineBuild> Unable to load pipeline stages")
 	}
 
 	// Init Action build
@@ -928,8 +953,8 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	}
 
 	//Insert pipeline build
-	if err := insertPipelineBuild(tx, string(argsJSON), app.ID, p.ID, &pb, env.ID, string(stages), []sdk.VCSCommit{}); err != nil {
-		return nil, sdk.WrapError(err, "InsertPipelineBuild> Cannot insert pipeline build")
+	if errI := insertPipelineBuild(tx, string(argsJSON), app.ID, p.ID, &pb, env.ID, string(stages), []sdk.VCSCommit{}); errI != nil {
+		return nil, sdk.WrapError(errI, "InsertPipelineBuild> Cannot insert pipeline build")
 	}
 
 	pb.Status = sdk.StatusBuilding
@@ -998,10 +1023,11 @@ func insertPipelineBuild(db gorp.SqlExecutor, args string, applicationID, pipeli
 		return sdk.WrapError(errMarshal, "insertPipelineBuild> Unable to marshal commits")
 	}
 
-	if pb.Trigger.VCSRemote != "" && pb.Trigger.VCSRemoteURL != "" && !strings.Contains(pb.Trigger.VCSRemoteURL, pb.Trigger.VCSRemote) {
-		return sdk.WrapError(fmt.Errorf("remote aren't correct for this remote_url"), "insertPipelineBuild> Remote %s with url %s in error", pb.Trigger.VCSRemote, pb.Trigger.VCSRemoteURL)
+	remoteURL := strings.ToLower(pb.Trigger.VCSRemoteURL)
+	remote := strings.ToLower(pb.Trigger.VCSRemote)
+	if pb.Trigger.VCSRemote != "" && pb.Trigger.VCSRemoteURL != "" && !strings.Contains(remoteURL, remote) {
+		return sdk.WrapError(fmt.Errorf("remote aren't correct for this remote_url"), "insertPipelineBuild> Remote %s with url %s in error", remote, remoteURL)
 	}
-
 	statement := db.QueryRow(
 		query, pipelineID, pb.BuildNumber, pb.Version, sdk.StatusBuilding.String(),
 		args, time.Now(), applicationID, envID, time.Now(), pb.Trigger.ManualTrigger,
@@ -1043,8 +1069,8 @@ func BuildExists(db gorp.SqlExecutor, appID, pipID, envID int64, trigger *sdk.Pi
 	var count int
 	var err error
 
-	if trigger.VCSRemoteURL != "" {
-		err = db.QueryRow(query+" and vcs_remote_url = $6", appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch, trigger.VCSRemoteURL).Scan(&count)
+	if trigger.VCSRemote != "" {
+		err = db.QueryRow(query+" and vcs_remote = $6", appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch, trigger.VCSRemote).Scan(&count)
 	} else {
 		err = db.QueryRow(query, appID, pipID, envID, trigger.VCSChangesHash, trigger.VCSChangesBranch).Scan(&count)
 	}
@@ -1627,4 +1653,11 @@ func paramsToMap(params []sdk.Parameter) map[string]string {
 	}
 
 	return mapParams
+}
+
+func getRemoteName(project, repo string) string {
+	if project != "" {
+		return project + "/" + repo
+	}
+	return repo
 }
