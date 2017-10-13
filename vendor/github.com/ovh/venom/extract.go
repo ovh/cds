@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -15,14 +16,14 @@ func applyExtracts(executorResult *ExecutorResult, step TestStep, l Logger) (boo
 	var failures []Failure
 
 	if err := mapstructure.Decode(step, &se); err != nil {
-		return false, []Failure{{Value: fmt.Sprintf("error decoding extracts: %s", err)}}, failures
+		return false, []Failure{{Value: RemoveNotPrintableChar(fmt.Sprintf("error decoding extracts: %s", err))}}, failures
 	}
 
 	isOK := true
 	for key, pattern := range se.Extracts {
 		e := *executorResult
 		if _, ok := e[key]; !ok {
-			return false, []Failure{{Value: fmt.Sprintf("key %s in result is not found", key)}}, failures
+			return false, []Failure{{Value: RemoveNotPrintableChar(fmt.Sprintf("key %s in result is not found", key))}}, failures
 		}
 		errs, fails := checkExtracts(transformPattern(pattern), e[key], executorResult, l)
 		if errs != nil {
@@ -59,7 +60,7 @@ func checkExtracts(pattern, instring string, executorResult *ExecutorResult, l L
 	r := regexp.MustCompile(pattern)
 	match := r.FindStringSubmatch(instring)
 	if match == nil {
-		return &Failure{Value: fmt.Sprintf("Pattern '%s' does not match string '%s'", pattern, instring)}, nil
+		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("Pattern '%s' does not match string '%s'", pattern, instring))}, nil
 	}
 
 	e := *executorResult
@@ -72,7 +73,17 @@ func checkExtracts(pattern, instring string, executorResult *ExecutorResult, l L
 	}
 
 	if !found {
-		return nil, &Failure{Value: fmt.Sprintf("pattern '%s' match nothing in result '%s'", pattern, instring)}
+		return nil, &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("pattern '%s' match nothing in result '%s'", pattern, instring))}
 	}
 	return nil, nil
+}
+
+func RemoveNotPrintableChar(in string) string {
+	m := func(r rune) rune {
+		if unicode.IsPrint(r) {
+			return r
+		}
+		return ' '
+	}
+	return strings.Map(m, in)
 }
