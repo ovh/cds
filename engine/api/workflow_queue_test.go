@@ -26,6 +26,7 @@ import (
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/project"
 )
 
 type test_runWorkflowCtx struct {
@@ -83,7 +84,10 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
