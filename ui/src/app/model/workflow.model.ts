@@ -19,6 +19,7 @@ export class Workflow {
     last_modified: Date;
     groups: Array<GroupPermission>;
     permission: number;
+    metadata: Map<string, string>;
 
     // UI params
     externalChange: boolean;

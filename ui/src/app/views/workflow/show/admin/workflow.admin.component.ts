@@ -7,6 +7,8 @@ import { Workflow } from '../../../../model/workflow.model';
 import { WorkflowStore } from '../../../../service/workflow/workflow.store';
 import { WarningModalComponent } from '../../../../shared/modal/warning/warning.component';
 import { ToastService } from '../../../../shared/toast/ToastService';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-workflow-admin',
@@ -17,9 +19,22 @@ import { ToastService } from '../../../../shared/toast/ToastService';
 export class WorkflowAdminComponent implements OnInit {
 
     @Input() project: Project;
-    @Input() workflow: Workflow;
+
+    _tagWorkflow: Workflow;
+    _workflow: Workflow;
+    @Input('workflow')
+    set workflow (data: Workflow) {
+        if (data) {
+            this._workflow = cloneDeep(data);
+            this._tagWorkflow = cloneDeep(data);
+        }
+    };
+    get workflow() { return this._workflow};
 
     oldName: string;
+
+    existingTags = new Array<string>();
+    selectedTags = new Array<string>();
 
     @ViewChild('updateWarning')
     private warningUpdateModal: WarningModalComponent;
@@ -27,13 +42,41 @@ export class WorkflowAdminComponent implements OnInit {
     loading = false;
 
     constructor(public _translate: TranslateService, private _toast: ToastService, private _workflowStore: WorkflowStore,
-        private _router: Router) { }
+        private _router: Router, private _workflowRunService: WorkflowRunService) { }
 
     ngOnInit(): void {
+        if (!this._tagWorkflow.metadata) {
+            this._tagWorkflow.metadata = new Map<string, string>();
+        }
+        if (this._tagWorkflow.metadata['default_tags']) {
+            this.selectedTags = this._tagWorkflow.metadata['default_tags'].split(',');
+        }
+
         if (this.project.permission !== 7) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' } });
         }
         this.oldName = this.workflow.name;
+
+        this._workflowRunService.getTags(this.project.key, this._tagWorkflow.name).subscribe(tags => {
+            Object.keys(tags).forEach(k => {
+                if (tags.hasOwnProperty(k)) {
+                    this.existingTags.push(k)
+                }
+            });
+        });
+    }
+
+    saveTags(): void {
+        this.loading = true;
+        this._workflowStore.updateWorkflow(this.project.key, this._tagWorkflow).finally(() => {
+            this.loading = false;
+        }).subscribe(() => {
+            this._toast.success('', this._translate.instant('workflow_updated'));
+        });
+    }
+
+    updateTagMetadata(m): void {
+        this._tagWorkflow.metadata['default_tags'] = m.join(',');
     }
 
     onSubmitWorkflowUpdate(skip?: boolean) {
