@@ -55,10 +55,6 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		if err := processWorkflowNodeRun(db, store, p, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
 		}
-
-		if err := updateWorkflowRun(db, w); err != nil {
-			return sdk.WrapError(err, "processWorkflowRun> (startingFromNode)")
-		}
 		return nil
 	}
 
@@ -76,9 +72,6 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 		if err := processWorkflowNodeRun(db, store, p, w, w.Workflow.Root, 0, nil, hookEvent, manual); err != nil {
 			return sdk.WrapError(err, "processWorkflowRun> Unable to process workflow node run")
-		}
-		if err := updateWorkflowRun(db, w); err != nil {
-			return sdk.WrapError(err, "processWorkflowRun> (the root)")
 		}
 		return nil
 	}
@@ -326,7 +319,6 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 						runs = append(runs, run)
 					}
 				}
-
 			}
 		}
 

@@ -49,7 +49,7 @@ func TestGetWorkflowRunStatus(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		status := getWorkflowRunStatus(nil, tc.success, tc.building, tc.fail, tc.stop)
+		status := getWorkflowRunStatus(tc.success, tc.building, tc.fail, tc.stop)
 		assert.Equal(t, tc.status, status)
 	}
 }
