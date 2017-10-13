@@ -21,7 +21,7 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 
 		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
 		}
 
 		var groupID int64
@@ -78,7 +78,7 @@ func (api *API) putWorkflowGroupHandler() Handler {
 
 		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "putWorkflowGroupHandler")
 		}
 
 		found := false
@@ -128,7 +128,7 @@ func (api *API) postWorkflowGroupHandler() Handler {
 
 		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "postWorkflowGroupHandler")
 		}
 
 		for _, gpr := range wf.Groups {
