@@ -436,6 +436,15 @@ func WithEnvironments() Mod {
 	return f
 }
 
+// WithEnvs is a func parameter of GetProject
+func WithEnvs() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withEnvironments", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
 // WithPipelines is a func parameter of ListProject
 func WithPipelines() Mod {
 	f := func(s string) string {

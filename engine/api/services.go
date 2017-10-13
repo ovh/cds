@@ -5,10 +5,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ovh/cds/engine/api/sessionstore"
-
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 )
@@ -31,32 +30,33 @@ func (api *API) postServiceRegisterHandler() Handler {
 			return sdk.WrapError(sdk.ErrUnauthorized, "postServiceRegisterHandler> Cannot register service")
 		}
 
-		//Generate a hash
-		hash, errsession := sessionstore.NewSessionKey()
-		if errsession != nil {
-			return sdk.WrapError(errsession, "postServiceRegisterHandler> Unable to create session")
-		}
-
-		srv.LastHeartbeat = time.Now()
-		srv.Hash = string(hash)
-		srv.Token = ""
-
 		//Insert or update the service
 		repo := services.NewRepository(api.mustDB, api.Cache)
 		if err := repo.Begin(); err != nil {
 			return sdk.WrapError(err, "postServiceRegisterHandler")
 		}
 
-		defer repo.Rollback()
-
-		var exists = true
-		if _, err := repo.Find(srv.Name); err == sdk.ErrNotFound {
-			exists = false
-		} else if err != nil {
-			return sdk.WrapError(err, "postServiceRegisterHandler")
+		//Try to find the service, and keep; else generate a new one
+		oldSrv, errOldSrv := repo.Find(srv.Name)
+		if oldSrv != nil {
+			srv.Hash = oldSrv.Hash
+		} else if errOldSrv == sdk.ErrNotFound {
+			//Generate a hash
+			hash, errsession := sessionstore.NewSessionKey()
+			if errsession != nil {
+				return sdk.WrapError(errsession, "postServiceRegisterHandler> Unable to create session")
+			}
+			srv.Hash = string(hash)
+		} else {
+			return sdk.WrapError(errOldSrv, "postServiceRegisterHandler")
 		}
 
-		if exists {
+		srv.LastHeartbeat = time.Now()
+		srv.Token = ""
+
+		defer repo.Rollback()
+
+		if oldSrv != nil {
 			if err := repo.Update(srv); err != nil {
 				return sdk.WrapError(err, "postServiceRegisterHandler> Unable to update service %s", srv.Name)
 			}

@@ -123,6 +123,12 @@ func AuthentifyRequestFromHatchery(t *testing.T, req *http.Request, h *sdk.Hatch
 	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(h.UID)))
 }
 
+// AuthentifyRequestFromService have to be used only for tests
+func AuthentifyRequestFromService(t *testing.T, req *http.Request, hash string) {
+	req.Header.Add("User-Agent", string(sdk.ServiceAgent))
+	req.Header.Add(sdk.AuthHeader, base64.StdEncoding.EncodeToString([]byte(hash)))
+}
+
 // NewAuthentifiedRequestFromWorker prepare a request
 func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri string, i interface{}) *http.Request {
 	var btes []byte

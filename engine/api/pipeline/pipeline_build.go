@@ -155,7 +155,7 @@ func LoadBuildingPipelinesIDs(db gorp.SqlExecutor) ([]int64, error) {
 // less than a minute ago
 func LoadRecentPipelineBuild(db gorp.SqlExecutor, args ...FuncArg) ([]sdk.PipelineBuild, error) {
 	whereCondition := `
-		WHERE pb.status = $1 OR (pb.status != $1 AND pb.done > NOW() -  INTERVAL '1 minutes')
+		WHERE pb.status = $1
 		ORDER by pb.id ASC
 	`
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
@@ -182,7 +182,7 @@ func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.Pipel
 	whereCondition := `
 		JOIN pipeline_group ON pipeline_group.pipeline_id = pb.pipeline_id
 		JOIN group_user ON group_user.group_id = pipeline_group.group_id
-		WHERE pb.status = $1 OR (pb.status != $1 AND pb.done > NOW() - INTERVAL '1 minutes')
+		WHERE pb.status = $1
 		AND group_user.user_id = $2
 		ORDER by pb.id ASC`
 

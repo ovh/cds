@@ -375,7 +375,6 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 			}
 		}()
 
-
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), key, true, getUser(ctx))
 		if errEnvs != nil {

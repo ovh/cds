@@ -4,6 +4,7 @@ import {Environment} from './environment.model';
 import {intersection} from 'lodash';
 import {Parameter} from './parameter.model';
 import {WorkflowHookModel} from './workflow.hook.model';
+import {GroupPermission} from './group.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -16,6 +17,8 @@ export class Workflow {
     root_id: number;
     joins: Array<WorkflowNodeJoin>;
     last_modified: Date;
+    groups: Array<GroupPermission>;
+    permission: number;
 
     // UI params
     externalChange: boolean;
