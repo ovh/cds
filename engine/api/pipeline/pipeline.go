@@ -106,6 +106,24 @@ func LoadPipelineByID(db gorp.SqlExecutor, pipelineID int64, deep bool) (*sdk.Pi
 	return &p, nil
 }
 
+// LoadByWorkflow loads pipelines from database
+func LoadByWorkflow(db gorp.SqlExecutor, wf sdk.Workflow) ([]sdk.Pipeline, error) {
+	pips := []sdk.Pipeline{}
+	query := `SELECT DISTINCT pipeline.* FROM pipeline
+	JOIN workflow_node ON pipeline.id = workflow_node.pipeline_id
+	JOIN workflow ON workflow_node.workflow_id = workflow.id
+	WHERE workflow.id = $1`
+
+	if _, err := db.Select(&pips, query, wf.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return pips, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByWorkflow> Unable to load pipelines linked to workflow id %d and workflow name %s", wf.ID, wf.Name)
+	}
+
+	return pips, nil
+}
+
 func loadPipelineDependencies(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	if err := LoadPipelineStage(db, p); err != nil {
 		return err

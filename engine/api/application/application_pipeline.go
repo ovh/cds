@@ -17,8 +17,8 @@ import (
 
 // IsAttached checks if an application is attach to a pipeline given its name
 func IsAttached(db gorp.SqlExecutor, projectID, appID int64, pipelineName string) (bool, error) {
-	query := `SELECT count(1) 
-		from application_pipeline, pipeline 
+	query := `SELECT count(1)
+		from application_pipeline, pipeline
 		WHERE application_pipeline.pipeline_id = pipeline.id
 		AND pipeline.name = $3
 		AND pipeline.project_id = $1
@@ -118,6 +118,25 @@ func GetAllPipelinesByID(db gorp.SqlExecutor, applicationID int64) ([]sdk.Applic
 	return appPipelines, nil
 }
 
+// LoadByWorkflow loads applications from database
+func LoadByWorkflow(db gorp.SqlExecutor, wf sdk.Workflow) ([]sdk.Application, error) {
+	apps := []sdk.Application{}
+	query := `SELECT DISTINCT application.* FROM application
+	JOIN workflow_node_context ON workflow_node_context.application_id = application.id
+	JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
+	JOIN workflow ON workflow.id = workflow_node.workflow_id
+	WHERE workflow.id = $1`
+
+	if _, err := db.Select(&apps, query, wf.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return apps, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByWorkflow> Unable to load applications linked to workflow id %d and workflow name %s", wf.ID, wf.Name)
+	}
+
+	return apps, nil
+}
+
 // DeleteAllApplicationPipeline Detach all pipeline
 func DeleteAllApplicationPipeline(db gorp.SqlExecutor, applicationID int64) error {
 	query := `
@@ -208,12 +227,12 @@ func RemovePipeline(db gorp.SqlExecutor, key, appName, pipelineName string) erro
 	query = `
 		DELETE	FROM application_pipeline_notif
 		USING 	application_pipeline, application, project, pipeline
-		WHERE 	application_pipeline_notif.application_pipeline_id = application_pipeline.id 
-		AND 	application.project_id = project.id 
-		AND 	application.id = application_pipeline.application_id 
+		WHERE 	application_pipeline_notif.application_pipeline_id = application_pipeline.id
+		AND 	application.project_id = project.id
+		AND 	application.id = application_pipeline.application_id
 		AND 	pipeline.id = application_pipeline.pipeline_id
-	    AND 	application.name = $1 
-		AND 	project.projectKey = $2 
+	    AND 	application.name = $1
+		AND 	project.projectKey = $2
 		AND  	pipeline.name = $3`
 	_, err = db.Exec(query, appName, key, pipelineName)
 	if err != nil {
@@ -224,11 +243,11 @@ func RemovePipeline(db gorp.SqlExecutor, key, appName, pipelineName string) erro
 	query = `
 		DELETE 	FROM pipeline_scheduler
 		USING	application, project, pipeline
-		WHERE 	pipeline_scheduler.application_id = application.id 
-		AND 	pipeline_scheduler.pipeline_id = pipeline.id 
-		AND 	application.project_id = project.id 
-	    AND 	application.name = $1 
-		AND 	project.projectKey = $2 
+		WHERE 	pipeline_scheduler.application_id = application.id
+		AND 	pipeline_scheduler.pipeline_id = pipeline.id
+		AND 	application.project_id = project.id
+	    AND 	application.name = $1
+		AND 	project.projectKey = $2
 		AND  	pipeline.name = $3`
 	res, err := db.Exec(query, appName, key, pipelineName)
 	if err != nil {
@@ -241,11 +260,11 @@ func RemovePipeline(db gorp.SqlExecutor, key, appName, pipelineName string) erro
 	query = `
 		DELETE 	FROM poller
 		USING	application, project, pipeline
-		WHERE 	poller.application_id = application.id 
+		WHERE 	poller.application_id = application.id
 		AND 	poller.pipeline_id = pipeline.id
-		AND 	application.project_id = project.id 
-	    AND 	application.name = $1 
-		AND 	project.projectKey = $2 
+		AND 	application.project_id = project.id
+	    AND 	application.name = $1
+		AND 	project.projectKey = $2
 		AND  	pipeline.name = $3`
 	res, err = db.Exec(query, appName, key, pipelineName)
 	if err != nil {
@@ -258,11 +277,11 @@ func RemovePipeline(db gorp.SqlExecutor, key, appName, pipelineName string) erro
 	query = `
 		DELETE 	FROM poller_execution
 		USING	application, project, pipeline
-		WHERE 	poller_execution.application_id = application.id 
+		WHERE 	poller_execution.application_id = application.id
 		AND 	poller_execution.pipeline_id = pipeline.id
-		AND 	application.project_id = project.id 
-	    AND 	application.name = $1 
-		AND 	project.projectKey = $2 
+		AND 	application.project_id = project.id
+	    AND 	application.name = $1
+		AND 	project.projectKey = $2
 		AND  	pipeline.name = $3`
 	res, err = db.Exec(query, appName, key, pipelineName)
 	if err != nil {

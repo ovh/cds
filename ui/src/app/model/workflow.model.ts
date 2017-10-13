@@ -5,6 +5,7 @@ import {intersection} from 'lodash';
 import {Parameter} from './parameter.model';
 import {WorkflowHookModel} from './workflow.hook.model';
 import {GroupPermission} from './group.model';
+import {Usage} from './usage.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -19,6 +20,7 @@ export class Workflow {
     last_modified: Date;
     groups: Array<GroupPermission>;
     permission: number;
+    usage: Usage;
 
     // UI params
     externalChange: boolean;
