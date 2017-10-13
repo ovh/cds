@@ -28,7 +28,7 @@ func RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCa
 		result, err = runTestStepExecutor(tcc, e, ts, step, templater, l)
 
 		if err != nil {
-			tc.Failures = append(tc.Failures, Failure{Value: err.Error()})
+			tc.Failures = append(tc.Failures, Failure{Value: RemoveNotPrintableChar(err.Error())})
 			continue
 		}
 

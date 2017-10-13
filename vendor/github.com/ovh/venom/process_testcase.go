@@ -10,16 +10,16 @@ func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, l
 	var errContext error
 	tc.Context, errContext = ts.Templater.ApplyOnContext(tc.Context)
 	if errContext != nil {
-		tc.Errors = append(tc.Errors, Failure{Value: errContext.Error()})
+		tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(errContext.Error())})
 		return
 	}
 	tcc, errContext := ContextWrap(tc)
 	if errContext != nil {
-		tc.Errors = append(tc.Errors, Failure{Value: errContext.Error()})
+		tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(errContext.Error())})
 		return
 	}
 	if err := tcc.Init(); err != nil {
-		tc.Errors = append(tc.Errors, Failure{Value: err.Error()})
+		tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
 		return
 	}
 	defer tcc.Close()
@@ -33,13 +33,13 @@ func runTestCase(ts *TestSuite, tc *TestCase, bars map[string]*pb.ProgressBar, l
 
 		step, erra := ts.Templater.ApplyOnStep(stepIn)
 		if erra != nil {
-			tc.Errors = append(tc.Errors, Failure{Value: erra.Error()})
+			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(erra.Error())})
 			break
 		}
 
 		e, err := WrapExecutor(step, tcc)
 		if err != nil {
-			tc.Errors = append(tc.Errors, Failure{Value: err.Error()})
+			tc.Errors = append(tc.Errors, Failure{Value: RemoveNotPrintableChar(err.Error())})
 			break
 		}
 

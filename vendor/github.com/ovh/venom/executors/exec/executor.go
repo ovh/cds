@@ -190,8 +190,8 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
 
-	result.Systemout = strings.TrimRight(result.Systemout, "\n")
-	result.Systemerr = strings.TrimRight(result.Systemerr, "\n")
+	result.Systemout = venom.RemoveNotPrintableChar(strings.TrimRight(result.Systemout, "\n"))
+	result.Systemerr = venom.RemoveNotPrintableChar(strings.TrimRight(result.Systemerr, "\n"))
 
 	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
 }
