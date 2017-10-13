@@ -8,7 +8,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/tat/api/cache"
+	"github.com/ovh/cds/engine/api/cache"
 )
 
 // Repos list repositories that are accessible to the authenticated user

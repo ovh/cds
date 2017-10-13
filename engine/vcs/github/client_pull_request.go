@@ -6,7 +6,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/tat/api/cache"
+	"github.com/ovh/cds/engine/api/cache"
 )
 
 // PullRequests fetch all the pull request for a repository
