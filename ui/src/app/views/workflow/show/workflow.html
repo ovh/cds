@@ -1,4 +1,4 @@
-<div *ngIf="detailedWorkflow; then workflowPart;else loadingPart"></div>
+<div *ngIf="detailedWorkflow && project; then workflowPart;else loadingPart"></div>
 <ng-template #workflowPart>
     <div id="WorkflowShow">
         <div class="CDSmenu">
@@ -6,6 +6,9 @@
                 <a sm-item [class.active]="selectedTab === 'workflows'" id="WorkflowGraphTabs" (click)="showTab('workflows')">
                         <i class="share alternate icon"></i>
                         {{'common_workflows' | translate }}</a>
+                <a sm-item [class.active]="selectedTab === 'permissions'" id="WorkflowPermissionsTabs" (click)="showTab('permissions')">
+                    <i class="users icon"></i>
+                    {{'common_permissions' | translate }}</a>
                 <a sm-item [class.active]="selectedTab === 'advanced'" id="WorkflowAdvancesTabs" (click)="showTab('advanced')">
                                 <i class="graduation icon"></i>
                                 {{'common_advanced' | translate }}</a>
@@ -30,6 +33,15 @@
                                     #workflowGraph></app-workflow-graph>
                             </div>
                         </ng-container>
+                    </div>
+                    <div *ngSwitchCase="'permissions'">
+                        <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
+                        <app-permission-list [permissions]="detailedWorkflow.groups" (event)="groupManagement($event)" [edit]="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+                        <ng-container *ngIf="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE">
+                            <h3>{{ 'workflow_permission_form_title' | translate }}</h3>
+                            <app-permission-form (createGroupPermissionEvent)="groupManagement($event)" [loading]="permFormLoading"></app-permission-form>
+                        </ng-container>
+                        <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupManagement($event, null, true)" #permWarning></app-warning-modal>
                     </div>
                     <div *ngSwitchCase="'advanced'">
                         <app-workflow-admin [project]="project" [workflow]="detailedWorkflow"></app-workflow-admin>

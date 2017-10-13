@@ -15,9 +15,11 @@ import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowRunRequest} from '../../../model/workflow.run.model';
-import {SuiModalService} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 import {WorkflowCoreService} from '../../../shared/workflow/workflow.service';
+import {PermissionValue} from '../../../model/permission.model';
+import {PermissionEvent} from '../../../shared/permission/permission.event.model';
+import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 
 declare var _: any;
 
@@ -43,6 +45,8 @@ export class WorkflowShowComponent {
     workflowJoinTriggerSrc: WorkflowJoinTriggerSrcComponent;
     @ViewChild('workflowNodeRunParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
+    @ViewChild('permWarning')
+    permWarningModal: WarningModalComponent;
 
     selectedNode: WorkflowNode;
     selectedTrigger: WorkflowNodeTrigger;
@@ -50,6 +54,9 @@ export class WorkflowShowComponent {
     selectedJoinTrigger: WorkflowNodeJoinTrigger;
 
     selectedTab = 'workflows';
+
+    permissionEnum = PermissionValue;
+    permFormLoading = false;
 
     loading = false;
 
@@ -145,6 +152,34 @@ export class WorkflowShowComponent {
                 this.editJoinTriggerComponent.show();
             }, 1);
 
+        }
+    }
+
+    groupManagement(event: PermissionEvent, skip?: boolean): void {
+        if (!skip && this.detailedWorkflow.externalChange) {
+            this.permWarningModal.show(event);
+        } else {
+            switch (event.type) {
+                case 'add':
+                    this.permFormLoading = true;
+                    this._workflowStore.addPermission(this.project.key, this.detailedWorkflow, event.gp).finally(() => {
+                        this.permFormLoading = false;
+                    }).subscribe(() => {
+                        this._toast.success('', this._translate.instant('permission_added'));
+
+                    });
+                    break;
+                case 'update':
+                    this._workflowStore.updatePermission(this.project.key, this.detailedWorkflow, event.gp).subscribe(() => {
+                        this._toast.success('', this._translate.instant('permission_updated'));
+                    });
+                    break;
+                case 'delete':
+                    this._workflowStore.deletePermission(this.project.key, this.detailedWorkflow, event.gp).subscribe(() => {
+                        this._toast.success('', this._translate.instant('permission_deleted'));
+                    });
+                    break;
+            }
         }
     }
 

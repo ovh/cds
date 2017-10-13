@@ -17,6 +17,8 @@ type Workflow struct {
 	RootID       int64              `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
 	Root         *WorkflowNode      `json:"root" db:"-" cli:"-"`
 	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-" cli:"-"`
+	Groups       []GroupPermission  `json:"groups,omitempty" db:"-" cli:"-"`
+	Permission   int                `json:"permission,omitempty" db:"-" cli:"-"`
 }
 
 // FilterHooksConfig filter all hooks configuration and remove somme configuration key
@@ -434,12 +436,12 @@ func (n *WorkflowNode) InvolvedApplications() []int64 {
 //InvolvedPipelines returns all pipelines used in the workflow
 func (n *WorkflowNode) InvolvedPipelines() []int64 {
 	res := []int64{}
-	if n.Context != nil {
-		if n.PipelineID == 0 {
-			n.PipelineID = n.Pipeline.ID
-		}
-		res = []int64{n.PipelineID}
+
+	if n.PipelineID == 0 {
+		n.PipelineID = n.Pipeline.ID
 	}
+	res = []int64{n.PipelineID}
+
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedPipelines()...)
 	}

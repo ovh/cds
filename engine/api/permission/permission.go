@@ -56,6 +56,22 @@ func ProjectPermission(projectKey string, user *sdk.User) int {
 	return max
 }
 
+// WorkflowPermission  Get the permission for the given workflow
+func WorkflowPermission(workflowID int64, user *sdk.User) int {
+	if user.Admin {
+		return PermissionReadWriteExecute
+	}
+	max := 0
+	for _, g := range user.Groups {
+		for _, wg := range g.WorkflowGroups {
+			if wg.Workflow.ID == workflowID && wg.Permission > max {
+				max = wg.Permission
+			}
+		}
+	}
+	return max
+}
+
 // PipelinePermission  Get the permission for the given pipeline
 func PipelinePermission(pipelineID int64, user *sdk.User) int {
 	if user.Admin {
