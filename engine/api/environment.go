@@ -36,6 +36,7 @@ func (api *API) getEnvironmentsHandler() Handler {
 
 		if withUsage {
 			for iEnv := range environments {
+				environments[iEnv].Usage = &sdk.Usage{}
 				wf, errW := workflow.LoadByEnvName(tx, projectKey, environments[iEnv].Name)
 				if errW != nil {
 					return sdk.WrapError(errW, "getEnvironmentsHandler> Cannot load workflows linked to environment %s from db", environments[iEnv].Name)
@@ -71,6 +72,7 @@ func (api *API) getEnvironmentHandler() Handler {
 		}
 
 		if withWorkflows {
+			environment.Usage = &sdk.Usage{}
 			wf, errW := workflow.LoadByEnvName(tx, projectKey, environmentName)
 			if errW != nil {
 				return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environments %s in project %s", environmentName, projectKey)

@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -64,6 +65,60 @@ func Test_getWorkflowHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 	assert.Equal(t, 404, w.Code)
+}
+
+func Test_getWorkflowHandler_withUsage(t *testing.T) {
+	// Init database
+	api, db, router := newTestAPI(t)
+
+	// Init user
+	u, pass := assets.InsertAdminUser(api.mustDB())
+	// Init project
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
+	//Prepare request
+	vars := map[string]string{
+		"key":              proj.Key,
+		"permWorkflowName": "workflow1",
+	}
+	uri := router.GetRoute("GET", api.getWorkflowHandler, vars)
+	test.NotEmpty(t, uri)
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+
+	proj, _ = project.LoadByID(db, api.Cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	wf := sdk.Workflow{
+		Name:       "workflow1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+		},
+	}
+
+	test.NoError(t, workflow.Insert(db, api.Cache, &wf, proj, u))
+
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri+"?withUsage=true", nil)
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	workflowResp := &sdk.Workflow{}
+	test.NoError(t, json.Unmarshal(w.Body.Bytes(), workflowResp))
+
+	assert.NotNil(t, workflowResp.Usage)
+	assert.NotNil(t, workflowResp.Usage.Pipelines)
+	assert.Equal(t, 1, len(workflowResp.Usage.Pipelines))
+	assert.Equal(t, "pip1", workflowResp.Usage.Pipelines[0].Name)
 }
 
 func Test_postWorkflowHandlerWithoutRootShouldFail(t *testing.T) {

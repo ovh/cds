@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -36,15 +40,58 @@ func (api *API) getWorkflowHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
+		withUsage := FormBool(r, "withUsage")
 
-		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		tx, errTx := api.mustDB().Begin()
+		if errTx != nil {
+			return sdk.WrapError(errTx, "getWorkflowHandler> Cannot start transaction for workflow %s", name)
+		}
+		defer tx.Rollback()
+
+		w1, err := workflow.Load(tx, api.Cache, key, name, getUser(ctx))
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
+		}
+
+		if withUsage {
+			usage, errU := loadWorfklowUsage(tx, w1.ID)
+			if errU != nil {
+				return sdk.WrapError(errU, "getWorkflowHandler> Cannot load usage for workflow %s", name)
+			}
+			w1.Usage = &usage
 		}
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig("project", "workflow")
+
+		if errTxc := tx.Commit(); errTxc != nil {
+			return sdk.WrapError(errTxc, "getWorkflowHandler> Cannot commit transaction for workflow %s", name)
+		}
+
 		return WriteJSON(w, r, w1, http.StatusOK)
 	}
+}
+
+func loadWorfklowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error) {
+	usage := sdk.Usage{}
+	pips, errP := pipeline.LoadByWorkflowID(db, workflowID)
+	if errP != nil {
+		return usage, sdk.WrapError(errP, "loadWorfklowUsage> Cannot load pipelines linked to a workflow id %d", workflowID)
+	}
+	usage.Pipelines = pips
+
+	envs, errE := environment.LoadByWorkflowID(db, workflowID)
+	if errE != nil {
+		return usage, sdk.WrapError(errE, "loadWorfklowUsage> Cannot load environments linked to a workflow id %d", workflowID)
+	}
+	usage.Environments = envs
+
+	apps, errA := application.LoadByWorkflowID(db, workflowID)
+	if errA != nil {
+		return usage, sdk.WrapError(errA, "loadWorfklowUsage> Cannot load applications linked to a workflow id %d", workflowID)
+	}
+	usage.Applications = apps
+
+	return usage, nil
 }
 
 // postWorkflowHandler create a new workflow

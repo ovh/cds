@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -21,6 +22,35 @@ import (
 func UpdateLastModifiedDate(db gorp.SqlExecutor, w *sdk.Workflow) error {
 	query := `UPDATE workflow set last_modified = current_timestamp WHERE id = $1 RETURNING last_modified`
 	return db.QueryRow(query, w.ID).Scan(&w.LastModified)
+}
+
+// PostGet is a db hook
+func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
+	metadataStr, err := db.SelectNullStr("select metadata from workflow where id = $1", w.ID)
+	if err != nil {
+		return err
+	}
+
+	if metadataStr.Valid {
+		metadata := sdk.Metadata{}
+		if err := json.Unmarshal([]byte(metadataStr.String), &metadata); err != nil {
+			return err
+		}
+		w.Metadata = metadata
+	}
+	return nil
+}
+
+// PostUpdate is a db hook
+func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
+	b, err := json.Marshal(w.Metadata)
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec("update workflow set metadata = $2 where id = $1", w.ID, b); err != nil {
+		return err
+	}
+	return nil
 }
 
 // LoadAll loads all workflows for a project. All users in a project can list all workflows in a project
@@ -44,6 +74,9 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 
 	for _, w := range dbRes {
 		w.ProjectKey = projectKey
+		if err := w.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "LoadAll> Unable to execute post get")
+		}
 		res = append(res, sdk.Workflow(w))
 	}
 
@@ -101,6 +134,9 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) 
 
 	for _, w := range dbRes {
 		w.ProjectKey = projectKey
+		if err := w.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "LoadByPipelineName> Unable to execute post get")
+		}
 		res = append(res, sdk.Workflow(w))
 	}
 
@@ -131,6 +167,9 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 
 	for _, w := range dbRes {
 		w.ProjectKey = projectKey
+		if err := w.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "LoadByEnvName> Unable to execute post get")
+		}
 		res = append(res, sdk.Workflow(w))
 	}
 

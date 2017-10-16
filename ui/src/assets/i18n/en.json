@@ -601,6 +601,7 @@
   "workflow_run_loading" : "Loading runs...",
   "workflow_run_never" : "This workflow has never been run",
   "workflow_run_with_parameters" : "Run workflow",
+  "workflow_sidebar_tag_zone" : "Tags to display in the sidebar",
   "workflow_updated" : "Workflow updated",
   "workflow_resync_pipeline" : "Resynchronize all workflow pipelines",
   "workflow_stopped" : "Workflow stopped",
