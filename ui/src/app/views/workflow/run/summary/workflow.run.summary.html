@@ -11,15 +11,15 @@
                     <div class="content">
                         <div class="ui grid">
                             <div class="row">
-                                <div class="five wide column">
+                                <div class="five wide column" title="{{'workflow_first_execution' | translate}}">
                                     <i class="calendar icon"></i>
                                     <span>{{workflowRun.start | amCalendar}}</span>
                                 </div>
-                                <div class="six wide column centered">
+                                <div class="six wide column centered" title="{{'common_version' | translate}}">
                                     <i class="tag icon"></i>
                                     <span>v{{workflowRun.num}}.{{workflowRun.last_subnumber}}</span>
                                 </div>
-                                <div class="five wide column">
+                                <div class="five wide column" title="{{'workflow_last_execution' | translate}}">
                                     <div class="right floated"
                                       *ngIf="workflowRun.status !== pipelineStatusEnum.BUILDING && workflowRun.status !== pipelineStatusEnum.WAITING">
                                         <i class="checked calendar icon"></i>
@@ -32,7 +32,7 @@
                     <div class="extra content">
                         <div class="ui grid">
                             <div class="row">
-                                <div class="five wide column">
+                                <div class="five wide column" title="{{'common_orientation' | translate}}">
                                     <button class="ui icon button"
                                         *ngIf="direction === 'TB'"
                                         (click)="changeDirection()">
@@ -44,14 +44,13 @@
                                         <i class="resize vertical icon"></i>
                                     </button>
                                 </div>
-                                <div class="six wide column centered">
+                                <div class="six wide column centered" title="{{ 'commit_author' | translate }}">
                                     <ng-container *ngIf="author">
                                         <div>
                                             <i class="user circle outline icon centered"></i>
                                         </div>
                                         {{author}}
                                     </ng-container>
-
                                 </div>
                                 <div class="five wide column">
                                     <div class="right floated">
