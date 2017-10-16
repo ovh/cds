@@ -256,6 +256,8 @@
   "notification_on_pipeline" : "On pipeline: ",
   "notification_on_pipeline_success" : "SUCCESS on pipeline '{{pipelineName}}'",
   "notification_on_pipeline_failing" : "FAILURE on pipeline '{{pipelineName}}'",
+  "notification_on_workflow_success" : "SUCCESS on workflow '{{workflowName}}'",
+  "notification_on_workflow_failing" : "FAILURE on workflow '{{workflowName}}'",
   "notification_on_environment_s" : "On environments: ",
   "notification_on_environment" : "On environment: ",
   "notification_on_failure" : "Send on failure",
