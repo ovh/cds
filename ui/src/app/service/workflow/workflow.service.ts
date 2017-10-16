@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {GroupPermission} from '../../model/group.model';
 
 @Injectable()
@@ -16,7 +16,10 @@ export class WorkflowService {
      * @param workflowName Workflow Name
      */
     getWorkflow(key: string, workflowName: string): Observable<Workflow> {
-        return this._http.get('/project/' + key + '/workflows/' + workflowName);
+        let params = new HttpParams();
+        params = params.append('withUsage', 'true');
+
+        return this._http.get('/project/' + key + '/workflows/' + workflowName, {params});
     }
 
     /**

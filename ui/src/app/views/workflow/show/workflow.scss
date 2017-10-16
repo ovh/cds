@@ -4,6 +4,9 @@
   flex-direction: column;
   align-content: stretch;
   height: 100%;
+  .over {
+    z-index: 1;
+  }
   .scrollingContent {
     overflow-x: auto;
 

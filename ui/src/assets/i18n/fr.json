@@ -175,6 +175,7 @@
   "common_no_workflow" : "Il n'y a aucun workflow lié",
   "common_no_environment" : "Il n'y a aucun environnement lié",
   "common_usage" : "Usage",
+  "common_orientation" : "Orientation",
 
   "usage_application_list" : "Applications liées",
   "usage_workflow_list" : "Workflows liés",
@@ -255,7 +256,9 @@
   "notification_on_pipeline_s" : "Sur les pipelines : ",
   "notification_on_pipeline" : "Sur le pipeline : ",
   "notification_on_pipeline_success" : "SUCCÈS sur le pipeline '{{pipelineName}}'",
-  "notification_on_pipeline_failing" : "ÉCHEC sur pipeline '{{pipelineName}}'",
+  "notification_on_pipeline_failing" : "ÉCHEC sur le pipeline '{{pipelineName}}'",
+  "notification_on_workflow_success" : "SUCCÈS sur le workflow '{{workflowName}}'",
+  "notification_on_workflow_failing" : "ÉCHEC sur le workflow '{{workflowName}}'",
   "notification_on_environment_s" : "Sur les environnements : ",
   "notification_on_environment" : "Sur l'environnement : ",
   "notification_on_failure" : "Envoyer en cas d'échec",
@@ -392,9 +395,10 @@
   "project_ssh_error" : "La clé ssh du projet doit avoir un nom",
   "project_update_msg_ok" : "Le projet a été mis à jour.",
   "project_update_name_error" : "Le nom du projet est obligatoire et doit être au format alphanumérique ([a-zA-Z0-9]*)",
-  "project_variable_list_title" : "Liste des variables du projet : ",
-  "project_variable_form_title" : "Ajouter une nouvelle variable : ",
-  "project_pipelines_list" : "Liste des workflows du projet : ",
+  "project_variable_list_title" : "Liste des variables du projet: ",
+  "project_variable_form_title" : "Ajouter une nouvelle variable: ",
+  "project_pipelines_list" : "Liste des pipelines du projet: ",
+  "project_workflows_list" : "Liste des workflows du projet: ",
 
   "repo_name" : "Nom du dépôt",
   "repoman_delete_msg_ok" : "Le gestionnaire de dépôt n'est plus lié au projet",
@@ -603,9 +607,10 @@
   "workflow_resync_pipeline" : "Resynchroniser tous les pipelines du workflow",
   "workflow_stopped" : "Workflow arrêté",
   "workflow_relaunched" : "Workflow relancé",
-
   "workflow_orientation_tree" : "Arborescence",
   "workflow_orientation_horizontal" : "Horizontale",
-  "workflow_orientation_vertical" : "Verticale"
+  "workflow_orientation_vertical" : "Verticale",
+  "workflow_last_execution" : "Date de dernière exécution",
+  "workflow_first_execution" : "Date de première exécution"
 
 }

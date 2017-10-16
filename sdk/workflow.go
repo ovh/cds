@@ -20,6 +20,7 @@ type Workflow struct {
 	Groups       []GroupPermission  `json:"groups,omitempty" db:"-" cli:"-"`
 	Permission   int                `json:"permission,omitempty" db:"-" cli:"-"`
 	Metadata     Metadata           `json:"metadata" yaml:"metadata" db:"-"`
+	Usage        *Usage             `json:"usage,omitempty" db:"-" cli:"-"`
 }
 
 // FilterHooksConfig filter all hooks configuration and remove somme configuration key
