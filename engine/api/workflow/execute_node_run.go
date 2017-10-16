@@ -13,21 +13,21 @@ import (
 )
 
 //execute is called by the scheduler. You should not call this by yourself
-func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun) (err error) {
+func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun) (errExecute error) {
 	t0 := time.Now()
 	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
 	defer func() {
 		log.Debug("workflow.execute> End [#%d.%d] runID=%d (%s) - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, n.Status, time.Since(t0).Seconds())
-		if err != nil {
-			log.Error("workflow.execute> Unable to execute run %d: %v", n.WorkflowRunID, err)
+		if errExecute != nil {
+			log.Error("workflow.execute> Unable to execute run %d: %v", n.WorkflowRunID, errExecute)
 			run, errw := loadAndLockRunByID(db, n.WorkflowRunID)
 			if errw != nil {
 				log.Error("workflow.execute> Unable to add infos on run %d: %v", n.WorkflowRunID, errw)
 				return
 			}
-			AddWorkflowRunInfo(run, sdk.SpawnMsg{
+			AddWorkflowRunInfo(run, true, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{err},
+				Args: []interface{}{errExecute},
 			})
 		}
 	}()

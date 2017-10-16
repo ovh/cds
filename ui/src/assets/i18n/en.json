@@ -175,6 +175,7 @@
   "common_no_workflow" : "There is no workflow linked",
   "common_no_environment" : "There is no environment linked",
   "common_usage" : "Usage",
+  "common_orientation" : "Orientation",
 
   "usage_application_list" : "Applications linked",
   "usage_workflow_list" : "Workflows linked",
@@ -256,6 +257,8 @@
   "notification_on_pipeline" : "On pipeline: ",
   "notification_on_pipeline_success" : "SUCCESS on pipeline '{{pipelineName}}'",
   "notification_on_pipeline_failing" : "FAILURE on pipeline '{{pipelineName}}'",
+  "notification_on_workflow_success" : "SUCCESS on workflow '{{workflowName}}'",
+  "notification_on_workflow_failing" : "FAILURE on workflow '{{workflowName}}'",
   "notification_on_environment_s" : "On environments: ",
   "notification_on_environment" : "On environment: ",
   "notification_on_failure" : "Send on failure",
@@ -602,9 +605,10 @@
   "workflow_resync_pipeline" : "Resynchronize all workflow pipelines",
   "workflow_stopped" : "Workflow stopped",
   "workflow_relaunched" : "Workflow relaunched",
-
   "workflow_orientation_horizontal" : "Horizontal",
   "workflow_orientation_vertical" : "Vertical",
-  "workflow_orientation_tree" : "Tree"
+  "workflow_orientation_tree" : "Tree",
+  "workflow_last_execution" : "Last execution date",
+  "workflow_first_execution" : "First execution date"
 
 }

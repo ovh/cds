@@ -3,6 +3,8 @@ package venom
 import (
 	"fmt"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
@@ -46,7 +48,7 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 	var systemerr, systemout string
 
 	if err := mapstructure.Decode(step, &sa); err != nil {
-		return false, []Failure{{Value: fmt.Sprintf("error decoding assertions: %s", err)}}, failures, systemout, systemerr
+		return false, []Failure{{Value: RemoveNotPrintableChar(fmt.Sprintf("error decoding assertions: %s", err))}}, failures, systemout, systemerr
 	}
 
 	if len(sa.Assertions) == 0 && defaultAssertions != nil {
@@ -78,9 +80,9 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 }
 
 func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure, *Failure) {
-	assert := strings.Split(assertion, " ")
+	assert := splitAssertion(assertion)
 	if len(assert) < 2 {
-		return &Failure{Value: fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert))}, nil
+		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("invalid assertion '%s' len:'%d'", assertion, len(assert)))}, nil
 	}
 
 	actual, ok := executorResult[assert[0]]
@@ -88,14 +90,14 @@ func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure,
 		if assert[1] == "ShouldNotExist" {
 			return nil, nil
 		}
-		return &Failure{Value: fmt.Sprintf("key '%s' does not exist in result of executor: %+v", assert[0], executorResult)}, nil
+		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' does not exist in result of executor: %+v", assert[0], executorResult))}, nil
 	} else if assert[1] == "ShouldNotExist" {
-		return &Failure{Value: fmt.Sprintf("key '%s' should not exist in result of executor. Value: %+v", assert[0], actual)}, nil
+		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("key '%s' should not exist in result of executor. Value: %+v", assert[0], actual))}, nil
 	}
 
 	f, ok := assertMap[assert[1]]
 	if !ok {
-		return &Failure{Value: fmt.Sprintf("Method not found '%s'", assert[1])}, nil
+		return &Failure{Value: RemoveNotPrintableChar(fmt.Sprintf("Method not found '%s'", assert[1]))}, nil
 	}
 	args := make([]interface{}, len(assert[2:]))
 	for i, v := range assert[2:] { // convert []string to []interface for assertions.func()...
@@ -107,9 +109,38 @@ func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure,
 	if out != "" {
 		prefix := "assertion: " + assertion
 		sdump, _ := dump.Sdump(executorResult)
-		return nil, &Failure{Value: prefix + "\n" + out + "\n" + sdump}
+		return nil, &Failure{Value: RemoveNotPrintableChar(prefix + "\n" + out + "\n" + sdump)}
 	}
 	return nil, nil
+}
+
+// splitAssertion splits the assertion string a, with support
+// for quoted arguments.
+func splitAssertion(a string) []string {
+	lastQuote := rune(0)
+	f := func(c rune) bool {
+		switch {
+		case c == lastQuote:
+			lastQuote = rune(0)
+			return false
+		case lastQuote != rune(0):
+			return false
+		case unicode.In(c, unicode.Quotation_Mark):
+			lastQuote = c
+			return false
+		default:
+			return unicode.IsSpace(c)
+		}
+	}
+	m := strings.FieldsFunc(a, f)
+	for i, e := range m {
+		first, _ := utf8.DecodeRuneInString(e)
+		last, _ := utf8.DecodeLastRuneInString(e)
+		if unicode.In(first, unicode.Quotation_Mark) && first == last {
+			m[i] = string([]rune(e)[1 : utf8.RuneCountInString(e)-1])
+		}
+	}
+	return m
 }
 
 // assertMap contains list of assertions func
