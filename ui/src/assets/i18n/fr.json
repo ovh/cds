@@ -598,7 +598,7 @@
   "workflow_run_loading" : "Chargement des exécutions",
   "workflow_run_never" : "Ce workflow n'a jamais été lancé",
   "workflow_run_with_parameters" : "Lancer le workflow",
-  "workflow_sidebar_tag_zone" : "Tag à afficher dans la sidebar",
+  "workflow_sidebar_tag_zone" : "Tags à afficher dans la sidebar",
   "workflow_updated" : "Workflow mis à jour",
   "workflow_resync_pipeline" : "Resynchroniser tous les pipelines du workflow",
   "workflow_stopped" : "Workflow arrêté",
