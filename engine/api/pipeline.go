@@ -629,13 +629,15 @@ func (api *API) addPipelineHandler() Handler {
 			return sdk.WrapError(err, "Cannot add groups on pipeline")
 		}
 
-		for _, app := range p.Usage.Applications {
-			if _, err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
-				return sdk.WrapError(err, "Cannot attach pipeline %d to %d", app.ID, p.ID)
-			}
+		if p.Usage != nil {
+			for _, app := range p.Usage.Applications {
+				if _, err := application.AttachPipeline(tx, app.ID, p.ID); err != nil {
+					return sdk.WrapError(err, "Cannot attach pipeline %d to %d", app.ID, p.ID)
+				}
 
-			if err := application.UpdateLastModified(tx, api.Cache, &app, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "Cannot update application last modified date")
+				if err := application.UpdateLastModified(tx, api.Cache, &app, getUser(ctx)); err != nil {
+					return sdk.WrapError(err, "Cannot update application last modified date")
+				}
 			}
 		}
 
@@ -682,6 +684,10 @@ func (api *API) getPipelineHandler() Handler {
 		}
 
 		p.Permission = permission.PipelinePermission(p.ID, getUser(ctx))
+
+		if withApp || withWorkflows || withEnvironments {
+			p.Usage = &sdk.Usage{}
+		}
 
 		if withApp {
 			apps, errA := application.LoadByPipeline(api.mustDB(), api.Cache, p.ID, getUser(ctx))

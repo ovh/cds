@@ -3,9 +3,13 @@ package test
 import (
 	"testing"
 
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
 )
@@ -100,4 +104,49 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 	test.NoError(t, err)
 
 	assert.Equal(t, len(pip.Parameter), len(pip1.Parameter))
+}
+
+func TestLoadByWorkflowID(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+
+	proj := assets.InsertTestProject(t, db, cache, key, key, nil)
+	app := sdk.Application{
+		Name:       "my-app",
+		ProjectKey: proj.Key,
+		ProjectID:  proj.ID,
+	}
+	test.NoError(t, application.Insert(db, cache, proj, &app, u))
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Context: &sdk.WorkflowNodeContext{
+				Application: &app,
+			},
+		},
+	}
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+
+	actuals, err := pipeline.LoadByWorkflowID(db, w.ID)
+	assert.NoError(t, err)
+
+	assert.Equal(t, 1, len(actuals))
+	assert.Equal(t, pip.ID, actuals[0].ID)
 }
