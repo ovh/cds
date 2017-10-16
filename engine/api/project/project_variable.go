@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -231,6 +233,12 @@ func GetVariableInProject(db gorp.SqlExecutor, projectID int64, variableName str
 
 // InsertVariable Insert a new variable in the given project
 func InsertVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variable, u *sdk.User) error {
+	//Check variable name
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(variable.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+	}
+
 	query := `INSERT INTO project_variable(project_id, var_name, var_value, cipher_value, var_type)
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 
@@ -263,6 +271,12 @@ func UpdateVariable(db gorp.SqlExecutor, proj *sdk.Project, variable *sdk.Variab
 	varValue := variable.Value
 	// Clear password for audit
 	previousVar, err := GetVariableByID(db, proj.ID, variable.ID, WithClearPassword())
+
+	//Check variable name
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(variable.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+	}
 
 	// If we are updating a batch of variables, some of them might be secrets, we don't want to crush the value
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {

@@ -3,6 +3,7 @@ package environment
 import (
 	"database/sql"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -197,8 +198,9 @@ func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {
 func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 	query := `INSERT INTO environment (name, project_id) VALUES($1, $2) RETURNING id, last_modified`
 
-	if env.Name == "" {
-		return sdk.ErrInvalidName
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(env.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid environment name. It should match %s", sdk.NamePattern))
 	}
 
 	var lastModified time.Time
@@ -218,6 +220,11 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 
 // UpdateEnvironment Update an environment
 func UpdateEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(environment.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid environment name. It should match %s", sdk.NamePattern))
+	}
+
 	query := `UPDATE environment SET name=$1 WHERE id=$2`
 	if _, err := db.Exec(query, environment.Name, environment.ID); err != nil {
 		return err

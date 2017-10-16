@@ -76,6 +76,36 @@ func TestInsertSimpleWorkflow(t *testing.T) {
 
 }
 
+func TestInsertSimpleWorkflowWithWrongName(t *testing.T) {
+	db, cache := test.SetupPG(t)
+	u, _ := assets.InsertAdminUser(db)
+
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+
+	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_ 1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+		},
+	}
+
+	assert.Error(t, workflow.Insert(db, cache, &w, proj, u))
+}
+
 func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	db, cache := test.SetupPG(t)
 

@@ -408,8 +408,8 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 	}
 
 	//Check workflow name
-	regexp := regexp.MustCompile(sdk.NamePattern)
-	if !regexp.MatchString(w.Name) {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(w.Name) {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid workflow name. It should match %s", sdk.NamePattern))
 	}
 

@@ -101,3 +101,35 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 
 	assert.Equal(t, len(pip.Parameter), len(pip1.Parameter))
 }
+
+func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
+	db, cache := test.SetupPG(t)
+	pk := sdk.RandomString(8)
+
+	p := sdk.Project{
+		Key:  pk,
+		Name: pk,
+	}
+	if err := project.Insert(db, cache, &p, nil); err != nil {
+		t.Fatalf("Cannot insert project : %s", err)
+	}
+
+	pip := &sdk.Pipeline{
+		Name:      "Name",
+		Type:      sdk.DeploymentPipeline,
+		ProjectID: p.ID,
+		Parameter: []sdk.Parameter{
+			{
+				Value: "V1",
+				Type:  sdk.StringParameter,
+			},
+			{
+				Name:  "P2 2",
+				Value: "V2",
+				Type:  sdk.StringParameter,
+			},
+		},
+	}
+
+	assert.Error(t, pipeline.InsertPipeline(db, &p, pip, nil))
+}
