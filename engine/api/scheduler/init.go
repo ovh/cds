@@ -15,6 +15,7 @@ import (
 func Initialize(c context.Context, store cache.Store, nbExecToKeep int, DBFunc func() *gorp.DbMap) {
 	rand.Seed(time.Now().Unix())
 	tickCleaner := time.NewTicker(10 * time.Minute)
+	tickPurge := time.NewTicker(24 * time.Hour)
 	tickScheduler := time.NewTicker(10 * time.Second)
 	tickExecuter := time.NewTicker(10 * time.Second)
 
@@ -29,7 +30,11 @@ func Initialize(c context.Context, store cache.Store, nbExecToKeep int, DBFunc f
 			}
 		case <-tickCleaner.C:
 			if _, err := CleanerRun(DBFunc(), nbExecToKeep); err != nil {
-				log.Warning("cleander.Cleaner> Error : %s", err)
+				log.Warning("scheduler.Cleaner> Error : %s", err)
+			}
+		case <-tickPurge.C:
+			if err := PurgeRun(DBFunc()); err != nil {
+				log.Warning("scheduler.Purge> Error : %s", err)
 			}
 		case <-tickExecuter.C:
 			_, err := ExecuterRun(DBFunc, store)
