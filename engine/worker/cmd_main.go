@@ -272,8 +272,13 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				//Take the job
 				if requirementsOK {
 					log.Info("checkQueue> Taking job %d%s", j.ID, t)
-					if err := w.takeWorkflowJob(ctx, j); err != nil {
-						errs <- err
+					if canWorkOnAnotherJob, err := w.takeWorkflowJob(ctx, j); err != nil {
+						if !canWorkOnAnotherJob {
+							errs <- err
+						} else {
+							log.Debug("Unable to run this job, take info:%s, let's continue %d%s", err, j.ID, t)
+							continue
+						}
 					}
 				} else {
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
