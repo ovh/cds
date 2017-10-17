@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import {Component, OnInit} from '@angular/core';
 import {ProjectStore} from '../../../service/project/project.store';
 import {Project} from '../../../model/project.model';
 
@@ -7,36 +7,56 @@ import {Project} from '../../../model/project.model';
     templateUrl: './migration-overview.html',
     styleUrls: ['./migration-overview.scss']
 })
-export class MigrationOverviewComponent {
+export class MigrationOverviewComponent implements OnInit {
 
     projects: Array<Project>;
-    mapProgress: Map<string, ProgressData>;
-    keys: Array<string>;
+    mapStarted: Map<string, ProgressData>;
+    keysDone: Array<string>;
+    keysStarted: Array<string>;
+    keysNotBegun: Array<string>;
+
+    selectedTab = 'NOT_BEGUN';
 
     constructor(private _projectStore: ProjectStore) {
+    }
+
+    ngOnInit() {
         this._projectStore.getProjectsList().subscribe(p => {
             this.projects = p.toArray();
-            this.mapProgress = new Map<string, ProgressData>();
-            this.keys = new Array<string>();
+            this.mapStarted = new Map<string, ProgressData>();
+            this.keysDone = new Array<string>();
+            this.keysStarted = new Array<string>();
+            this.keysNotBegun = new Array<string>();
             this.projects.forEach(proj => {
-               let data = new ProgressData();
-               if (proj.applications) {
-                   data.total = proj.applications.length;
-                   proj.applications.forEach( app => {
-                      if (app.workflow_migration === 'DONE') {
-                          data.progress++;
-                      } else if (app.workflow_migration === 'STARTED') {
-                          data.progress += 0.5;
-                      }
-                   });
-               } else {
-                   data.total = 1;
-                   data.progress = 1;
-               }
-               this.keys.push(proj.key);
-               this.mapProgress.set(proj.key, data);
+                let data = new ProgressData();
+                if (proj.applications && proj.applications.length > 0) {
+                    data.total = proj.applications.length;
+                    proj.applications.forEach( app => {
+                        if (app.workflow_migration === 'DONE') {
+                            data.progress++;
+                        } else if (app.workflow_migration === 'STARTED') {
+                            data.progress += 0.5;
+                        }
+                    });
+                    if (data.progress === 0) {
+                        this.keysNotBegun.push(proj.key);
+                    } else if (data.progress === data.total) {
+                        this.keysDone.push(proj.key);
+                    } else {
+                        this.keysStarted.push(proj.key);
+                        this.mapStarted.set(proj.key, data);
+                    }
+                } else {
+                    data.total = 1;
+                    data.progress = 1;
+                    this.keysDone.push(proj.key);
+                }
             });
         });
+    }
+
+    showTab(tab: string): void {
+        this.selectedTab = tab;
     }
 }
 

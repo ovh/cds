@@ -35,6 +35,10 @@
   "action_always_executed": "Always executed",
   "action_always_executed_details": "If checked, this step will be executed even if previous steps fail",
 
+  "admin_migration_not_started": "Not started",
+  "admin_migration_started": "Started",
+  "admin_migration_done": "Done",
+
   "application_create" : "Create a new application",
   "application_created" : "Application created",
   "application_deleted" : "Application deleted",

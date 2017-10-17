@@ -35,6 +35,10 @@
   "action_always_executed": "Toujours executée",
   "action_always_executed_details": "Cochée, cela signifie que cette étape sera toujours executée même si les étapes précédentes tombent en erreur",
 
+  "admin_migration_not_started": "Non commencé",
+  "admin_migration_started": "En cours",
+  "admin_migration_not_started": "Terminé",
+
   "application_create" : "Créer une application",
   "application_created" : "Application créée",
   "application_deleted" : "Application supprimée",

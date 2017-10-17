@@ -1,9 +1,41 @@
-<ul *ngIf="keys">
-    <li *ngFor="let k of keys">
-        <sui-progress class="indicating"
-                      [value]="mapProgress.get(k).progress"
-                      [maximum]="mapProgress.get(k).total">
-            <a href="#" [routerLink]="['/admin', 'migration', k]">{{k}}</a>
-        </sui-progress>
-    </li>
-</ul>
+<div class="migration-overview" *ngIf="keysNotBegun">
+    <sm-menu title="" class="pointing secondary">
+        <a sm-item [class.active]="selectedTab === 'NOT_BEGUN'" (click)="showTab('NOT_BEGUN')">
+            <i class="rocket icon"></i>{{ 'admin_migration_not_started' | translate }} {{ ' (' + keysNotBegun.length + ')'}}
+        </a>
+        <a sm-item [class.active]="selectedTab === 'STARTED'" (click)="showTab('STARTED')">
+            <i class="font icon"></i>{{ 'admin_migration_started' | translate }}{{ ' (' + mapStarted.size + ')'}}
+        </a>
+        <a sm-item [class.active]="selectedTab === 'DONE'" (click)="showTab('DONE')">
+            <i class="users icon"></i>{{ 'admin_migration_done' | translate }}{{ ' (' + keysDone.length + ')'}}
+        </a>
+    </sm-menu>
+
+    <div [ngSwitch]="selectedTab">
+        <div *ngSwitchCase="'NOT_BEGUN'">
+            <ul *ngIf="keysNotBegun">
+                <li *ngFor="let k of keysNotBegun">
+                    <a href="#" [routerLink]="['/project', k]" [queryParams]="{ tab: 'applications'}">{{k}}</a>
+                </li>
+            </ul>
+        </div>
+        <div *ngSwitchCase="'STARTED'">
+            <ul *ngIf="keysStarted">
+                <li *ngFor="let k of keysStarted">
+                    <sui-progress class="indicating"
+                                  [value]="mapStarted.get(k).progress"
+                                  [maximum]="mapStarted.get(k).total">
+                        <a href="#" [routerLink]="['/admin', 'migration', k]">{{k}}</a>
+                    </sui-progress>
+                </li>
+            </ul>
+        </div>
+        <div *ngSwitchCase="'DONE'">
+            <ul *ngIf="keysDone">
+                <li *ngFor="let k of keysDone">
+                    <a href="#" [routerLink]="['/admin', 'migration', k]">{{k}}</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
