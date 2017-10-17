@@ -7,6 +7,8 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {Project} from '../../../../model/project.model';
 import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
 import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
+import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {ActiveModal} from 'ng2-semantic-ui/dist';
 
 @Component({
     selector: 'app-application-admin',
@@ -20,10 +22,14 @@ export class ApplicationAdminComponent implements OnInit {
     @ViewChild('updateWarning')
         private updateWarningModal: WarningModalComponent;
 
+    @ViewChild('doneMigrationTmpl')
+    doneMigrationTmpl: ModalTemplate<boolean, boolean, void>;
+    migrationModal: ActiveModal<boolean, boolean, void>;
+
     newName: string;
     public loading = false;
 
-    constructor(private _applicationStore: ApplicationStore, private _toast: ToastService,
+    constructor(private _applicationStore: ApplicationStore, private _toast: ToastService, private _modalService: SuiModalService,
                 public _translate: TranslateService, private _router: Router, private _appMigrateSerivce: ApplicationMigrateService) {
     }
 
@@ -54,6 +60,17 @@ export class ApplicationAdminComponent implements OnInit {
                 this.loading = false;
             });
         }
+    }
+
+    openDoneMigrationPopup(): void {
+        let tmpl = new TemplateModalConfig<boolean, boolean, void>(this.doneMigrationTmpl);
+        this.migrationModal = this._modalService.open(tmpl);
+    }
+
+    migrationClean(): void {
+        this._appMigrateSerivce.cleanWorkflow(this.project.key, this.application.name).subscribe(() => {
+           this._toast.success('', this._translate.instant('application_workflow_migration_ok'));
+        });
     }
 
     deleteApplication(): void {
