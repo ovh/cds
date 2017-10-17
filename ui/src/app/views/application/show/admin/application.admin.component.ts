@@ -6,6 +6,7 @@ import {Router} from '@angular/router';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {Project} from '../../../../model/project.model';
 import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
+import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
 
 @Component({
     selector: 'app-application-admin',
@@ -23,7 +24,7 @@ export class ApplicationAdminComponent implements OnInit {
     public loading = false;
 
     constructor(private _applicationStore: ApplicationStore, private _toast: ToastService,
-                public _translate: TranslateService, private _router: Router) {
+                public _translate: TranslateService, private _router: Router, private _appMigrateSerivce: ApplicationMigrateService) {
     }
 
     ngOnInit() {
@@ -32,6 +33,12 @@ export class ApplicationAdminComponent implements OnInit {
             this._router.navigate(['/project', this.project.key, 'application', this.application.name],
                 { queryParams: {tab: 'workflow'}});
         }
+    }
+
+    generateWorkflow(force: boolean): void {
+        this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name, force).subscribe(() => {
+            this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows'} });
+        });
     }
 
     onSubmitApplicationUpdate(skip?: boolean): void {

@@ -18,6 +18,7 @@ export class ProjectAdminComponent implements OnInit {
         private warningUpdateModal: WarningModalComponent;
 
     loading = false;
+    migrationValue = 0.0;
 
     constructor(private _projectStore: ProjectStore, private _toast: ToastService,
                 public _translate: TranslateService, private _router: Router) {};
@@ -26,6 +27,13 @@ export class ProjectAdminComponent implements OnInit {
         if (this.project.permission !== 7) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' }});
         }
+        this.project.applications.forEach(app => {
+            if (app.workflow_migration === 'STARTED') {
+                this.migrationValue += 0.5;
+            } else if (app.workflow_migration === 'DONE') {
+                this.migrationValue++;
+            }
+        });
     }
 
     onSubmitProjectUpdate(skip?: boolean) {

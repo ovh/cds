@@ -43,6 +43,7 @@ import {LogoutInterceptor} from './logout.interceptor.service';
 import {HookService} from './hook/hook.service';
 import {PipelineAuditService} from './pipeline/pipeline.audit.service';
 import {EnvironmentService} from './environment/environment.service';
+import {ApplicationMigrateService} from './application/application.migration.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -60,6 +61,7 @@ export class ServicesModule {
                 ApplicationWorkflowService,
                 ApplicationPipelineService,
                 ApplicationTemplateService,
+                ApplicationMigrateService,
                 ApplicationStore,
                 AuthentificationStore,
                 CanActivateAuthRoute,
@@ -120,6 +122,7 @@ export {
     ApplicationPipelineService,
     ApplicationWorkflowService,
     ApplicationTemplateService,
+    ApplicationMigrateService,
     AuthentificationStore,
     CanActivateAuthRoute,
     CanActivateAuthAdminRoute,

@@ -80,6 +80,7 @@
   "application_workflow_pipeline_add" : "Lier un pipeline",
   "application_workflow_version_title" : "Version",
   "application_workflow_remote_title" : "Dépot distant",
+  "application_migration_generate" : "Générer un workflow",
 
   "artifact_name" : "Nom de l'artefact",
   "artifact_tag" : "Tag",
@@ -380,6 +381,7 @@
   "project_env_permission_form_title"  : "Ajouter des permissions sur des environnements",
   "project_key" : "Identifiant du projet",
   "project_key_error" : "L'identifiant est obligatoire et doit etre en majuscule",
+  "project_workflow_migration_title"  : "Avancement de la migration vers les workflows",
   "project_name" : "Nom du projet",
   "project_name_error" : "Le nom du projet est obligatoire",
   "project_no_application" : "Le projet ne contient aucune application",

@@ -1,4 +1,10 @@
 <div id="projectAdmin">
+    <app-zone header="{{ 'project_workflow_migration_title' | translate }}">
+        <app-zone-content class="bottom">
+            <sui-progress class="indicating" [value]="migrationValue" [showProgress]="true" [maximum]="project.applications.length" [precision]="1">
+            </sui-progress>
+        </app-zone-content>
+    </app-zone>
     <app-zone header="{{ 'project_rename_title' | translate }}">
         <app-zone-content class="bottom">
             <form class="ui form" (ngSubmit)="onSubmitProjectUpdate()" #projectUpdateFrom="ngForm">

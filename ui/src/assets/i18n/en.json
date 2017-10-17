@@ -80,6 +80,7 @@
   "application_workflow_pipeline_add" : "Attach a pipeline",
   "application_workflow_version_title" : "Version",
   "application_workflow_remote_title" : "Remote",
+  "application_migration_generate" : "Générate a workflow",
 
   "artifact_name" : "Artifact name",
   "artifact_tag" : "Tag",
@@ -380,6 +381,7 @@
   "project_env_permission_form_title"  : "Add permissions on environments",
   "project_key" : "Project unique key",
   "project_key_error" : "Project unique key is mandatory and must be in upper case",
+  "project_workflow_migration_title"  : "Workflow migration progress",
   "project_name" : "Project name",
   "project_name_error" : "project name is mandatory",
   "project_no_application" : "There is no application in this project",
