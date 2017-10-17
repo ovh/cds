@@ -1,0 +1,12 @@
+<ul *ngIf="project">
+    <li *ngFor="let app of project.applications">
+        <a href="#" [routerLink]="['/project', project.key, 'application', app.name]">
+            {{app.name + ': '}}
+            <span *ngIf="app.workflow_migration && app.workflow_migration !== ''">{{app.workflow_migration}}</span>
+            <span *ngIf="!app.workflow_migration || app.workflow_migration === ''">NOT_BEGUN</span>
+        </a>
+    </li>
+    <div class="ui info message" *ngIf="!project.applications || project.applications.length === 0">
+        {{ 'common_no_application' | translate }}
+    </div>
+</ul>

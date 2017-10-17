@@ -1,0 +1,9 @@
+<ul *ngIf="keys">
+    <li *ngFor="let k of keys">
+        <sui-progress class="indicating"
+                      [value]="mapProgress.get(k).progress"
+                      [maximum]="mapProgress.get(k).total">
+            <a href="#" [routerLink]="['/admin', 'migration', k]">{{k}}</a>
+        </sui-progress>
+    </li>
+</ul>
