@@ -3,6 +3,7 @@ package workflow
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -334,4 +335,40 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	}
 	log.Debug("nextRunNumber> %s/%s %d", w.ProjectKey, w.Name, i)
 	return int64(i), nil
+}
+
+// PurgeWorkflowRun mark all worfklow run to delete
+func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow, branch string) error {
+	if wf.HistoryLength == 0 {
+		log.Warning("purgeWorkflowRun> history length equals 0, skipping purge")
+		return nil
+	}
+
+	queryUpdate := `UPDATE workflow_run SET to_delete = true WHERE workflow_run.id IN ( %s )`
+	args := []interface{}{wf.ID}
+	if branch == "" {
+		queryUpdate = fmt.Sprintf(queryUpdate, `SELECT workflow_run.id FROM workflow_run
+			LEFT JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
+			WHERE workflow_run.workflow_id = $1
+			AND (workflow_run_tag.tag IS NULL
+				OR (workflow_run_tag.tag = 'git.branch' AND (workflow_run_tag.value IS NULL OR workflow_run_tag.value = ''))
+			) ORDER BY workflow_run.id DESC OFFSET $2 ROWS
+		`)
+	} else {
+		queryUpdate = fmt.Sprintf(queryUpdate, `SELECT workflow_run.id FROM workflow_run
+			JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
+			WHERE workflow_run.workflow_id = $1
+			AND workflow_run_tag.tag = 'git.branch'
+			AND workflow_run_tag.value = $2
+			ORDER BY workflow_run.id DESC
+			OFFSET $3 ROWS
+		`)
+		args = append(args, branch)
+	}
+	args = append(args, wf.HistoryLength)
+
+	if _, err := db.Exec(queryUpdate, args...); err != nil {
+		log.Warning("purgeWorkflowRun> Unable to update workflow run for purge for id %d, branch %s and history length %d : %s", wf.ID, branch, wf.HistoryLength, err)
+	}
+	return nil
 }

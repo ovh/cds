@@ -451,6 +451,10 @@ func (api *API) postWorkflowRunHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
 		}
 
+		// Purge workflow run
+		branch, _ := workflow.GetTag(wr.Tags, "git.branch")
+		go workflow.PurgeWorkflowRun(api.mustDB(), *wf, branch.Value)
+
 		wr.Translate(r.Header.Get("Accept-Language"))
 		return WriteJSON(w, r, wr, http.StatusAccepted)
 	}
