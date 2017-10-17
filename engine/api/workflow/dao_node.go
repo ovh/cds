@@ -141,7 +141,7 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	}
 
 	// Set PipelineParameters in context
-	if c.DefaultPayload != nil {
+	if c.DefaultPipelineParameters != nil {
 		b, errM := json.Marshal(c.DefaultPipelineParameters)
 		if errM != nil {
 			return sdk.WrapError(errM, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) default pipeline parameters", c.ID)
