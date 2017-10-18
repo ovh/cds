@@ -16,12 +16,12 @@ func (g *bitbucketConsumer) AuthorizeRedirect() (string, string, error) {
 	requestToken, err := g.RequestToken()
 	if err != nil {
 		log.Warning("requestToken>%s\n", err)
-		return "", "", err
+		return "", "", sdk.WrapError(err, "vcs> bitbucket> Unable to get request token")
 	}
 
 	redirect, err := url.Parse(g.authorizationURL)
 	if err != nil {
-		return "", "", err
+		return "", "", sdk.WrapError(err, "vcs> bitbucket> Unable to parse authorization url")
 	}
 
 	params := make(url.Values)
@@ -48,17 +48,17 @@ func (g *bitbucketConsumer) AuthorizeToken(token, verifier string) (string, stri
 	t := NewAccessToken(token, "", map[string]string{})
 	err := g.SignParams(&req, t, map[string]string{"oauth_verifier": verifier})
 	if err != nil {
-		return "", "", err
+		return "", "", sdk.WrapError(err, "vcs> bitbucket> Unable to sign params")
 	}
 
 	resp, err := httpClient.Do(&req)
 	if err != nil {
-		return "", "", err
+		return "", "", sdk.WrapError(err, "vcs> bitbucket> Unable to parse get authorize url")
 	}
 
 	accessToken, err := ParseAccessToken(resp.Body)
 	if err != nil {
-		return "", "", err
+		return "", "", sdk.WrapError(err, "vcs> bitbucket> Unable to parse access token")
 	}
 
 	return accessToken.Token(), accessToken.Secret(), nil

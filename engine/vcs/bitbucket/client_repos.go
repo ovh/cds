@@ -21,7 +21,7 @@ func (b *bitbucketClient) Repos() ([]sdk.VCSRepo, error) {
 
 		var response Response
 		if err := b.do("GET", "core", path, params, nil, &response); err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "vcs> bitbucket> Repos> Unable to get repos")
 		}
 
 		bbRepos = append(bbRepos, response.Values...)
@@ -72,7 +72,7 @@ func (b *bitbucketClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 
 	var repo sdk.VCSRepo
 	if err := b.do("GET", "core", path, nil, nil, &r); err != nil {
-		return repo, err
+		return repo, sdk.WrapError(err, "vcs> bitbucket> RepoByFullname> Unable to get repo")
 	}
 
 	var sshURL, httpURL, repoURL string

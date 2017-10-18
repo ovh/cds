@@ -3,7 +3,6 @@ package bitbucket
 import (
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -12,13 +11,10 @@ import (
 
 func (b *bitbucketClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommit, error) {
 	commits := []sdk.VCSCommit{}
-	t := strings.Split(repo, "/")
-	if len(t) != 2 {
-		return commits, fmt.Errorf("fullname %s must be <project>/<slug>", repo)
+	project, slug, err := getRepo(repo)
+	if err != nil {
+		return nil, sdk.WrapError(err, "vcs> bitbucket> commits>")
 	}
-
-	project := t[0]
-	slug := t[1]
 
 	stashCommits := []Commit{}
 
@@ -41,7 +37,7 @@ func (b *bitbucketClient) Commits(repo, branch, since, until string) ([]sdk.VCSC
 			}
 
 			if err := b.do("GET", "core", path, params, nil, &response); err != nil {
-				return nil, err
+				return nil, sdk.WrapError(err, "vcs> bitbucket> commits> Unable to get commits %s", path)
 			}
 
 			stashCommits = append(stashCommits, response.Values...)
@@ -52,7 +48,7 @@ func (b *bitbucketClient) Commits(repo, branch, since, until string) ([]sdk.VCSC
 		b.consumer.cache.SetWithTTL(stashCommitsKey, stashCommits, 3*60*60) //3 hours
 	}
 
-	urlCommit := b.consumer.URL + "/projects/" + t[0] + "/repos/" + t[1] + "/commits/"
+	urlCommit := b.consumer.URL + "/projects/" + project + "/repos/" + slug + "/commits/"
 	for _, sc := range stashCommits {
 		c := sdk.VCSCommit{
 			Hash:      sc.Hash,
@@ -98,20 +94,19 @@ func (b *bitbucketClient) findUser(email string) *User {
 
 func (b *bitbucketClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 	commit := sdk.VCSCommit{}
-	t := strings.Split(repo, "/")
-	if len(t) != 2 {
-		return commit, fmt.Errorf("fullname %s must be <project>/<slug>", repo)
+	project, slug, err := getRepo(repo)
+	if err != nil {
+		return commit, sdk.WrapError(err, "vcs> bitbucket> commit>")
 	}
-
 	var stashURL, _ = url.Parse(b.consumer.URL)
 
 	sc := Commit{}
-	path := fmt.Sprintf("/projects/%s/repos/%s/commits/%s", t[0], t[1], hash)
+	path := fmt.Sprintf("/projects/%s/repos/%s/commits/%s", project, slug, hash)
 	if err := b.do("GET", "core", path, nil, nil, &sc); err != nil {
-		return commit, err
+		return commit, sdk.WrapError(err, "vcs> bitbucket> commits> Unable to get commit %s", path)
 	}
 
-	urlCommit := stashURL.String() + "/projects/" + t[0] + "/repos/" + t[1] + "/commits/" + sc.Hash
+	urlCommit := stashURL.String() + "/projects/" + project + "/repos/" + slug + "/commits/" + sc.Hash
 	commit = sdk.VCSCommit{
 		Hash:      sc.Hash,
 		Timestamp: sc.Timestamp,

@@ -26,7 +26,6 @@ func (c *bitbucketConsumer) SignParams(req *http.Request, token Token, params ma
 	}
 
 	// ensure default parameters are set
-	//params["oauth_token"] = token.Token()
 	params["oauth_consumer_key"] = c.ConsumerKey
 	params["oauth_nonce"] = nonce()
 	params["oauth_signature_method"] = "RSA-SHA1"
@@ -48,12 +47,10 @@ func (c *bitbucketConsumer) SignParams(req *http.Request, token Token, params ma
 
 	//var tokenSecret string
 	if token != nil {
-		//tokenSecret = token.Secret()
 		params["oauth_token"] = token.Token()
 	}
 
 	// create the oauth signature
-	//key := escape(c.ConsumerSecret) + "&" + escape(tokenSecret)
 	key := c.PrivateKey
 	url := fmt.Sprintf("%s://%s%s", req.URL.Scheme, req.URL.Host, req.URL.Path)
 	base := requestString(req.Method, url, params)
