@@ -13,7 +13,7 @@ const oauth1OOB = "oob"
 
 //AuthorizeRedirect returns the request token, the Authorize URL
 func (g *bitbucketConsumer) AuthorizeRedirect() (string, string, error) {
-	requestToken, err := g.requestToken()
+	requestToken, err := g.RequestToken()
 	if err != nil {
 		log.Warning("requestToken>%s\n", err)
 		return "", "", err
@@ -33,7 +33,7 @@ func (g *bitbucketConsumer) AuthorizeRedirect() (string, string, error) {
 		u = strings.Replace(u, "/%21api/", "/!api/", -1)
 	}
 
-	return "", u, nil
+	return requestToken.Token(), u, nil
 }
 
 //AuthorizeToken returns the authorized token (and its secret)
@@ -45,7 +45,7 @@ func (g *bitbucketConsumer) AuthorizeToken(token, verifier string) (string, stri
 		Method: "POST",
 		Close:  true,
 	}
-	t := newAccessToken(token, "", map[string]string{})
+	t := NewAccessToken(token, "", map[string]string{})
 	err := g.SignParams(&req, t, map[string]string{"oauth_verifier": verifier})
 	if err != nil {
 		return "", "", err
@@ -72,10 +72,9 @@ func (g *bitbucketConsumer) GetAuthorizedClient(accessToken, accessTokenSecret s
 	c, ok := instancesAuthorizedClient[accessToken]
 	if !ok {
 		c = &bitbucketClient{
-			cache:        g.cache,
-			consumerKey:  g.ConsumerKey,
-			privateKey:   g.PrivateKey,
-			bitBucketURL: g.URL,
+			consumer:          *g,
+			accessToken:       accessToken,
+			accessTokenSecret: accessTokenSecret,
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}

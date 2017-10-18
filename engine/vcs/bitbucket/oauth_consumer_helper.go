@@ -51,7 +51,7 @@ func authorizationString(params map[string]string) string {
 
 	// loop through params, add keys to map
 	var keys []string
-	for key, _ := range params {
+	for key := range params {
 		keys = append(keys, key)
 	}
 

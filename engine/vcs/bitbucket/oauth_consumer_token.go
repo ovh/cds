@@ -9,6 +9,7 @@ import (
 	"strconv"
 )
 
+// Token is an interface for RequestToken and AccessToken
 type Token interface {
 	Token() string  // Gets the oauth_token value.
 	Secret() string // Gets the oauth_token_secret.
@@ -26,7 +27,7 @@ type AccessToken struct {
 
 // NewAccessToken returns a new instance of AccessToken with the specified
 // token, secret and additional parameters.
-func newAccessToken(token, secret string, params map[string]string) *AccessToken {
+func NewAccessToken(token, secret string, params map[string]string) *AccessToken {
 	return &AccessToken{
 		token:  token,
 		secret: secret,
@@ -95,13 +96,13 @@ func (a *AccessToken) Encode() string {
 	return values.Encode()
 }
 
-// Gets the oauth_token value
+// Token gets the oauth_token value
 func (a *AccessToken) Token() string { return a.token }
 
-// Gets the oauth_token_secret value
+// Secret gets the oauth_token_secret value
 func (a *AccessToken) Secret() string { return a.secret }
 
-// Gets any additional parameters, as defined by the Service Provider.
+// Params gets any additional parameters, as defined by the Service Provider.
 func (a *AccessToken) Params() map[string]string { return a.params }
 
 // RequestToken represents a value used by the Consumer to obtain
@@ -159,7 +160,7 @@ func (r *RequestToken) Encode() string {
 	return values.Encode()
 }
 
-func (c *bitbucketConsumer) requestToken() (*RequestToken, error) {
+func (c *bitbucketConsumer) RequestToken() (*RequestToken, error) {
 	// create the http request to fetch a Request Token.
 	requestTokenURL, _ := url.Parse(c.requestTokenURL)
 	req := http.Request{
@@ -189,8 +190,8 @@ func (c *bitbucketConsumer) requestToken() (*RequestToken, error) {
 	return requestToken, nil
 }
 
-// Gets the oauth_token value
+// Token gets the oauth_token value
 func (r *RequestToken) Token() string { return r.token }
 
-// Gets the oauth_token_secret value
+// Secret gets the oauth_token_secret value
 func (r *RequestToken) Secret() string { return r.secret }

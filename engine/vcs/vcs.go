@@ -60,7 +60,7 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 		return github.New(serverCfg.Github.ClientID, serverCfg.Github.ClientSecret, s.Cache), nil
 	}
 	if serverCfg.Bitbucket != nil {
-		return bitbucket.New(serverCfg.Bitbucket.ConsumerKey, serverCfg.Bitbucket.PrivateKey, s.Cache), nil
+		return bitbucket.New(serverCfg.Bitbucket.ConsumerKey, []byte(serverCfg.Bitbucket.PrivateKey), serverCfg.URL, s.Cache), nil
 	}
 	return nil, sdk.ErrNotFound
 }

@@ -1,5 +1,11 @@
 package bitbucket
 
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
+
 type Branch struct {
 	ID         string `json:"id"`
 	DisplayID  string `json:"displayId"`
@@ -26,7 +32,7 @@ type CommitsResponse struct {
 }
 
 type Commit struct {
-	Hash      string  `json:"Id"`
+	Hash      string  `json:"id"`
 	Author    *Author `json:"author"`
 	Timestamp int64   `json:"authorTimestamp"`
 	Message   string  `json:"message"`
@@ -41,11 +47,11 @@ type Status struct {
 }
 
 type Lines struct {
-	Text string `"json:text"`
+	Text string `json:"text"`
 }
 
 type Content struct {
-	Lines []Lines `"json:lines"`
+	Lines []Lines `json:"lines"`
 }
 
 type HookDetail struct {
@@ -55,6 +61,75 @@ type HookDetail struct {
 	Description   string `json:"description"`
 	Version       string `json:"version"`
 	ConfigFormKey string `json:"configFormKey"`
+}
+
+type HooksConfig struct {
+	Version       string
+	LocationCount string
+	Details       []HookConfigDetail
+}
+
+func (h *HooksConfig) MarshalJSON() ([]byte, error) {
+	m := make(map[string]string)
+	m["version"] = h.Version
+	m["locationCount"] = fmt.Sprintf("%d", len(h.Details))
+	for i, d := range h.Details {
+		var keySuffix string
+		if i > 0 {
+			keySuffix = fmt.Sprintf("%d", i+1)
+		}
+
+		m["httpMethod"+keySuffix] = d.Method
+		m["url"+keySuffix] = d.URL
+		m["postContentType"+keySuffix] = d.PostContentType
+		m["postData"+keySuffix] = d.PostData
+		m["branchFilter"+keySuffix] = d.BranchFilter
+		m["tagFilter"+keySuffix] = d.TagFilter
+		m["userFilter"+keySuffix] = d.UserFilter
+	}
+	return json.Marshal(m)
+}
+
+func (h *HooksConfig) UnmarshalJSON(b []byte) error {
+	m := make(map[string]string)
+	if err := json.Unmarshal(b, &m); err != nil {
+		return err
+	}
+	var nbLocation int
+	for k := range m {
+		if strings.HasPrefix(k, "url") {
+			nbLocation++
+		}
+	}
+	h.LocationCount = fmt.Sprintf("%d", nbLocation)
+	h.Version = "3"
+	h.Details = make([]HookConfigDetail, nbLocation)
+	for i := 0; i < nbLocation; i++ {
+		var keySuffix string
+		if i > 0 {
+			keySuffix = fmt.Sprintf("%d", i+1)
+		}
+		h.Details[i] = HookConfigDetail{
+			BranchFilter:    m["branchFilter"+keySuffix],
+			Method:          m["httpMethod"+keySuffix],
+			PostContentType: m["postContentType"+keySuffix],
+			PostData:        m["postData"+keySuffix],
+			TagFilter:       m["tagFilter"+keySuffix],
+			URL:             m["url"+keySuffix],
+			UserFilter:      m["userFilter"+keySuffix],
+		}
+	}
+	return nil
+}
+
+type HookConfigDetail struct {
+	Method          string `json:"httpMethod"`
+	URL             string `json:"url"`
+	PostContentType string `json:"postContentType"`
+	PostData        string `json:"postData"`
+	BranchFilter    string `json:"branchFilter"`
+	TagFilter       string `json:"tagFilter"`
+	UserFilter      string `json:"userFilter"`
 }
 
 type Hook struct {
@@ -70,4 +145,54 @@ type Key struct {
 
 type Keys struct {
 	Values []Key `json:"values"`
+}
+
+type Response struct {
+	Values        []Repo `json:"values"`
+	Size          int    `json:"size"`
+	NextPageStart int    `json:"nextPageStart"`
+	IsLastPage    bool   `json:"isLastPage"`
+}
+
+type Project struct {
+	Key string `json:"key"`
+}
+
+type Repo struct {
+	Name    string   `json:"name"`
+	Slug    string   `json:"slug"`
+	Public  bool     `json:"public"`
+	ScmId   string   `json:"scmId"`
+	Project *Project `json:"project"`
+	Link    *Link    `json:"link"`
+	Links   *Links   `json:"links"`
+}
+
+type Links struct {
+	Clone []Clone `json:"clone"`
+	Self  []Clone `json:"self"`
+}
+
+type Clone struct {
+	URL  string `json:"href"`
+	Name string `json:"name"`
+}
+
+type Link struct {
+	URL string `json:"url"`
+	Rel string `json:"rel"`
+}
+
+type UsersResponse struct {
+	Values        []User `json:"values"`
+	Size          int    `json:"size"`
+	NextPageStart int    `json:"nextPageStart"`
+	IsLastPage    bool   `json:"isLastPage"`
+}
+
+type User struct {
+	Username     string `json:"name"`
+	EmailAddress string `json:"emailAddress"`
+	DisplayName  string `json:"displayName"`
+	Slug         string `json:"slug"`
 }

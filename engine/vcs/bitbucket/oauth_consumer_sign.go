@@ -35,14 +35,14 @@ func (c *bitbucketConsumer) SignParams(req *http.Request, token Token, params ma
 
 	// we'll need to sign any form values?
 	if req.Form != nil {
-		for k, _ := range req.Form {
+		for k := range req.Form {
 			params[k] = req.Form.Get(k)
 		}
 	}
 
 	// we'll also need to sign any URL parameter
 	queryParams := req.URL.Query()
-	for k, _ := range queryParams {
+	for k := range queryParams {
 		params[k] = queryParams.Get(k)
 	}
 
