@@ -478,6 +478,7 @@ func ErrorIs(err error, t *Error) bool {
 	return false
 }
 
+// MultiError is just an array of error
 type MultiError []error
 
 func (e *MultiError) Error() string {
@@ -491,10 +492,19 @@ func (e *MultiError) Error() string {
 	return s
 }
 
+// Join joins errors from MultiError to another errors MultiError
+func (e *MultiError) Join(j MultiError) {
+	for _, err := range j {
+		*e = append(*e, err)
+	}
+}
+
+// Append appends an error to a MultiError
 func (e *MultiError) Append(err error) {
 	*e = append(*e, err)
 }
 
+// IsEmpty return true if MultiError is empty, false otherwise
 func (e *MultiError) IsEmpty() bool {
 	return len(*e) == 0
 }
