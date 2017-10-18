@@ -404,3 +404,15 @@ type VCSPullRequestEvent struct {
 	Base   VCSPushEvent `json:"base"`
 	Branch VCSBranch    `json:"branch"`
 }
+
+type VCSHook struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Disable     bool     `json:"disable"`
+	Events      []string `json:"events"`
+	Method      string   `json:"method"`
+	URL         string   `json:"url"`
+	ContentType string   `json:"content_type"`
+	Body        string   `json:"body"`
+	InsecureSSL bool     `json:"insecure_ssl"`
+}

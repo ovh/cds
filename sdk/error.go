@@ -121,6 +121,7 @@ var (
 	ErrMethodNotAllowed                      = &Error{ID: 105, Status: http.StatusMethodNotAllowed}
 	ErrInvalidNodeNamePattern                = &Error{ID: 106, Status: http.StatusBadRequest}
 	ErrWorkflowNodeParentNotRun              = Error{ID: 107, Status: http.StatusForbidden}
+	ErrHookNotFound                          = Error{ID: 108, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{

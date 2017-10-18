@@ -28,8 +28,10 @@ type VCSAuthorizedClient interface {
 	PullRequests(string) ([]VCSPullRequest, error)
 
 	//Hooks
-	CreateHook(repo, url string) error
-	DeleteHook(repo, url string) error
+	CreateHook(repo string, hook VCSHook) error
+	GetHook(repo, url string) (VCSHook, error)
+	UpdateHook(repo, url string, hook VCSHook) error
+	DeleteHook(repo string, hook VCSHook) error
 
 	//Events
 	GetEvents(repo string, dateRef time.Time) ([]interface{}, time.Duration, error)
