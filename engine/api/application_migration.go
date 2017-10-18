@@ -31,40 +31,58 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 			return sdk.WrapError(errA, "migrationApplicationWorkflowHandler")
 		}
 
+		cdTree, errT := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", "", 0)
+		if errT != nil {
+			return sdk.WrapError(errT, "migrationApplicationWorkflowCleanHandler")
+		}
+
+		appIDs := map[int64]bool{}
+		for _, tree := range cdTree {
+			getApplicationFromCDPipeline(tree, &appIDs)
+		}
+
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "migrationApplicationWorkflowHandler > Cannot start transaction")
 		}
 
-		for _, appPip := range app.Pipelines {
-			if err := trigger.DeletePipelineTriggers(tx, appPip.Pipeline.ID); err != nil {
+		for appID := range appIDs {
+			appToClean, errA := application.LoadByID(api.mustDB(), api.Cache, appID, getUser(ctx), application.LoadOptions.WithPipelines)
+			if errA != nil {
+				return sdk.WrapError(errA, "migrationApplicationWorkflowHandler> Cannot load app")
+			}
+
+			for _, appPip := range appToClean.Pipelines {
+				if err := trigger.DeletePipelineTriggers(tx, appPip.Pipeline.ID); err != nil {
+					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
+				}
+				if err := application.DeleteAllApplicationPipeline(tx, appToClean.ID); err != nil {
+					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
+				}
+				// Delete test results
+				if err := pipeline.DeletePipelineTestResults(tx, appPip.Pipeline.ID); err != nil {
+					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
+				}
+
+				if err := artifact.DeleteArtifactsByPipelineID(tx, appPip.Pipeline.ID); err != nil {
+					return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeleteArtifactsByPipelineID")
+				}
+
+				// Delete application_pipeline_notif
+				query := `DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (SELECT id FROM application_pipeline WHERE pipeline_id = $1)`
+				if _, err := tx.Exec(query, appPip.Pipeline.ID); err != nil {
+					return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Delete notification")
+				}
+			}
+
+			if err := pipeline.DeletePipelineBuildByApplicationID(tx, appToClean.ID); err != nil {
+				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeletePipelineBuildByApplicationID")
+			}
+
+			app.WorkflowMigration = migrate.STATUS_DONE
+			if err := application.Update(tx, api.Cache, appToClean, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 			}
-			if err := application.DeleteAllApplicationPipeline(tx, app.ID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-			}
-			// Delete test results
-			if err := pipeline.DeletePipelineTestResults(tx, appPip.Pipeline.ID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-			}
-
-			if err := artifact.DeleteArtifactsByPipelineID(tx, appPip.Pipeline.ID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeleteArtifactsByPipelineID")
-			}
-
-			// Delete application_pipeline_notif
-			query := `DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (SELECT id FROM application_pipeline WHERE pipeline_id = $1)`
-			if _, err := tx.Exec(query, appPip.Pipeline.ID); err != nil {
-				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Delete notification")
-			}
-		}
-
-		if err := pipeline.DeletePipelineBuildByApplicationID(tx, app.ID); err != nil {
-			return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeletePipelineBuildByApplicationID")
-		}
-
-		if err := application.Update(tx, api.Cache, app, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 		}
 
 		p.WorkflowMigration = migrate.STATUS_START
@@ -80,6 +98,13 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 			return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Cannot commit transaction")
 		}
 		return nil
+	}
+}
+
+func getApplicationFromCDPipeline(tree sdk.CDPipeline, appIDs *map[int64]bool) {
+	(*appIDs)[tree.Application.ID] = true
+	for _, cdtree := range tree.SubPipelines {
+		getApplicationFromCDPipeline(cdtree, appIDs)
 	}
 }
 
