@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"math"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -60,13 +61,26 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	//Check if every file exist
 	artifactsList := job.Arguments().Get("artifacts")
 	if strings.TrimSpace(artifactsList) != "" {
-		artifacts := strings.Split(artifactsList, ",")
-		for _, f := range artifacts {
-			if _, err := os.Stat(f); os.IsNotExist(err) {
-				Logf("%s : no such file", f)
+
+		var artifacts []string
+		//If the parameter contains a comma, consider it as a list; else glob it
+		if strings.Contains(artifactsList, ",") {
+			artifacts := strings.Split(artifactsList, ",")
+			for _, f := range artifacts {
+				if _, err := os.Stat(f); os.IsNotExist(err) {
+					Logf("%s : no such file", f)
+					return plugin.Fail
+				}
+			}
+		} else {
+			filesPath, err := filepath.Glob(artifactsList)
+			if err != nil {
+				Logf("Unable to parse files %s: %s", artifactsList, err)
 				return plugin.Fail
 			}
+			artifacts = filesPath
 		}
+
 		files = append(files, artifacts...)
 	}
 
