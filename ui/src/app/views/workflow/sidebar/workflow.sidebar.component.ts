@@ -6,8 +6,7 @@ import {CDSWorker} from '../../../shared/worker/worker';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {environment} from '../../../../environments/environment';
 import {Subscription} from 'rxjs/Subscription';
-import {WorkflowRun} from '../../../model/workflow.run.model';
-import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {WorkflowRun, WorkflowRunTags} from '../../../model/workflow.run.model';
 import {cloneDeep} from 'lodash';
 
 @Component({
@@ -20,8 +19,17 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;
+
     // Workflow
-    @Input() workflow: Workflow;
+    _workflow: Workflow;
+    @Input('workflow')
+    set workflow(data: Workflow) {
+        if (data) {
+            this._workflow = data;
+            this.initSelectableTags();
+        }
+    }
+    get workflow() { return this._workflow; }
     // Flag indicate if sidebar is open
     @Input() open: boolean;
 
@@ -42,7 +50,7 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
 
     ready = false;
 
-    constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService) {
+    constructor(private _authStore: AuthentificationStore) {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
@@ -60,43 +68,49 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
         // Listening to web worker responses
         this.runWorkerSubscription = this.runWorker.response().subscribe(msg => {
             this.zone.run(() => {
-                this.ready = true;
                 if (!msg) {
                     return;
                 }
                 this.workflowRuns = <Array<WorkflowRun>>JSON.parse(msg);
                 this.refreshRun();
+                this.ready = true;
             });
 
-        });
-
-        this._workflowRunService.getTags(this.project.key, this.workflow.name).subscribe(tags => {
-            this.tagsSelectable = new Array<string>();
-            Object.keys(tags).forEach(k => {
-                if (tags.hasOwnProperty(k)) {
-                    tags[k].forEach(v => {
-                        this.tagsSelectable.push(k + ':' + v);
-                    });
-                }
-            });
         });
     }
 
-    refreshRun(): void {
-        this.filteredWorkflowRuns = cloneDeep(this.workflowRuns);
-        if (!this.selectedTags) {
-            return;
+    initSelectableTags(): void {
+        this.tagsSelectable = new Array<string>();
+        if (this.workflow.metadata && this.workflow.metadata['default_tags']) {
+            this.tagsSelectable = this.workflow.metadata['default_tags'].split(',');
         }
-        this.selectedTags.forEach(t => {
-            let splitted = t.split(':');
-            let key = splitted.shift();
-            let value = splitted.join(':');
-            this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
-                return r.tags.find(tag => {
-                    return tag.tag === key && tag.value === value;
+        this.refreshRun();
+    }
+
+    refreshRun(): void {
+        if (this.workflowRuns) {
+            this.filteredWorkflowRuns = cloneDeep(this.workflowRuns);
+            if (!this.selectedTags) {
+                return;
+            }
+            this.selectedTags.forEach(t => {
+                let splitted = t.split(':');
+                let key = splitted.shift();
+                let value = splitted.join(':');
+                this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
+                    return r.tags.find(tag => {
+                        return tag.tag === key && tag.value === value;
+                    });
                 });
             });
-        });
+        }
+    }
+
+    canDisplayTag(tg: WorkflowRunTags): boolean {
+        if (this.tagsSelectable) {
+            return this.tagsSelectable.indexOf(tg.tag) !== -1;
+        }
+        return false;
     }
 
     ngOnDestroy(): void {

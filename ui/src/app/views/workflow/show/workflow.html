@@ -1,7 +1,7 @@
 <div *ngIf="detailedWorkflow && project; then workflowPart;else loadingPart"></div>
 <ng-template #workflowPart>
     <div id="WorkflowShow">
-        <div class="CDSmenu">
+        <div class="CDSmenu over">
             <sm-menu title="" class="pointing secondary">
                 <a sm-item [class.active]="selectedTab === 'workflows'" id="WorkflowGraphTabs" (click)="showTab('workflows')">
                         <i class="share alternate icon"></i>
@@ -9,6 +9,12 @@
                 <a sm-item [class.active]="selectedTab === 'permissions'" id="WorkflowPermissionsTabs" (click)="showTab('permissions')">
                     <i class="users icon"></i>
                     {{'common_permissions' | translate }}</a>
+                <a sm-item [class.active]="selectedTab === 'usage'" id="WorkflowUsageTabs"
+                    [class.disabled]="usageCount === 0"
+                    (click)="usageCount !== 0 && showTab('usage')">
+                    <i class="plug icon"></i>
+                    {{'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
+                </a>
                 <a sm-item [class.active]="selectedTab === 'advanced'" id="WorkflowAdvancesTabs" (click)="showTab('advanced')">
                                 <i class="graduation icon"></i>
                                 {{'common_advanced' | translate }}</a>
@@ -45,6 +51,14 @@
                     </div>
                     <div *ngSwitchCase="'advanced'">
                         <app-workflow-admin [project]="project" [workflow]="detailedWorkflow"></app-workflow-admin>
+                    </div>
+                    <div *ngSwitchCase="'usage'">
+                        <app-usage [project]="project"
+                            [pipelines]="detailedWorkflow.usage.pipelines"
+                            [applications]="detailedWorkflow.usage.applications"
+                            [environments]="detailedWorkflow.usage.environments"
+                            [currentUser]="currentUser">
+                        </app-usage>
                     </div>
                 </div>
             </div>

@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/go-gorp/gorp"
 	"github.com/lib/pq"
@@ -62,8 +63,13 @@ func GetAllParametersInPipeline(db gorp.SqlExecutor, pipelineID int64 /*, args .
 
 // InsertParameterInPipeline Insert a new parameter in the given pipeline
 func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk.Parameter) error {
-	if param.Name == "" || param.Type == "" {
-		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid parameter"))
+	if param.Type == "" {
+		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid parameter, wrong type"))
+	}
+
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(param.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid parameter name. It should match %s", sdk.NamePattern))
 	}
 
 	if string(param.Type) == string(sdk.SecretVariable) {
@@ -103,8 +109,13 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 
 // UpdateParameterInPipeline Update a parameter in the given pipeline
 func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, oldParamName string, param sdk.Parameter) error {
-	if param.Name == "" || param.Type == "" {
-		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid parameter"))
+	if param.Type == "" {
+		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid parameter, wrong type"))
+	}
+
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(param.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid parameter name. It should match %s", sdk.NamePattern))
 	}
 
 	// update parameter

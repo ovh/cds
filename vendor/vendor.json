@@ -961,70 +961,70 @@
 			"revisionTime": "2017-02-07T20:18:59Z"
 		},
 		{
-			"checksumSHA1": "jicW/kiRRpd+sm5PrSoabLGG+Tc=",
+			"checksumSHA1": "Fut+0GvpmnyMB/owUmpKgyfqJEo=",
 			"path": "github.com/ovh/venom",
-			"revision": "4b6c1761f06ee00dc91a86802876b2ab59d0b5f4",
-			"revisionTime": "2017-09-13T12:47:17Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
 			"checksumSHA1": "ZxaXX+psoog6mnNzexP84cAJYMI=",
 			"path": "github.com/ovh/venom/context/default",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
 			"checksumSHA1": "n4+TbU3Jhy2u+dPscLYQgk1p6zg=",
 			"path": "github.com/ovh/venom/context/webctx",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
-			"checksumSHA1": "mixSNt6GsyTJtAYb52sa8azA+eY=",
+			"checksumSHA1": "o5E5ud9XT8Qx7+9t4Puno8PNOBg=",
 			"path": "github.com/ovh/venom/executors/exec",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
 			"checksumSHA1": "l+P3lidAThSCLpuSE5DaZNjFiPQ=",
 			"path": "github.com/ovh/venom/executors/http",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
 			"checksumSHA1": "2EOaEXj+ti/6g3YchoDwNkwS1w4=",
 			"path": "github.com/ovh/venom/executors/imap",
-			"revision": "4b6c1761f06ee00dc91a86802876b2ab59d0b5f4",
-			"revisionTime": "2017-09-13T12:47:17Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
 			"checksumSHA1": "7YJ/vcpYxhPHrooaiY9l3pgFSQc=",
 			"path": "github.com/ovh/venom/executors/ovhapi",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
 			"checksumSHA1": "/wWDr1LFOdC90VxKQDH1Wyun4MA=",
 			"path": "github.com/ovh/venom/executors/readfile",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
 			"checksumSHA1": "IjW8/Bmdx1C23USRC1f5/vRHuLg=",
 			"path": "github.com/ovh/venom/executors/smtp",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
 			"checksumSHA1": "CYKP2nSv/5AVV9lp3eXnMt6OEyk=",
 			"path": "github.com/ovh/venom/executors/ssh",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
 			"checksumSHA1": "iBO+FhLXbOx5NzhqHIco07oCwDw=",
 			"path": "github.com/ovh/venom/executors/web",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
+			"revisionTime": "2017-10-13T11:58:48Z"
 		},
 		{
 			"checksumSHA1": "JVGDxPn66bpe6xEiexs1r+y6jF0=",
@@ -1061,6 +1061,12 @@
 			"path": "github.com/pierrec/xxHash/xxHash32",
 			"revision": "5a004441f897722c627870a981d02b29924215fa",
 			"revisionTime": "2016-01-12T16:53:51Z"
+		},
+		{
+			"checksumSHA1": "VQ8m0ncYJSbzslI7nVjiAdGEOeQ=",
+			"path": "github.com/pkg/browser",
+			"revision": "c90ca0c84f15f81c982e32665bffd8d7aac8f097",
+			"revisionTime": "2017-05-05T12:59:00Z"
 		},
 		{
 			"checksumSHA1": "ynJSWoF6v+3zMnh9R0QmmG6iGV8=",

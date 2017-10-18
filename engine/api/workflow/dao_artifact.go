@@ -50,7 +50,7 @@ func loadArtifactByNodeRunID(db gorp.SqlExecutor, nodeRunID int64) ([]sdk.Workfl
 	return artifacts, nil
 }
 
-//insertArtifact insert in table workflow_artifacts
+// InsertArtifact insert in table workflow_artifacts
 func InsertArtifact(db gorp.SqlExecutor, a *sdk.WorkflowNodeRunArtifact) error {
 	wArtifactDB := NodeRunArtifact(*a)
 	if err := db.Insert(&wArtifactDB); err != nil {

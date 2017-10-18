@@ -75,6 +75,7 @@ type WorkflowRunInfo struct {
 	Message SpawnMsg  `json:"message,omitempty" db:"-"`
 	// UserMessage contains msg translated for end user
 	UserMessage string `json:"user_message,omitempty" db:"-"`
+	IsError     bool   `json:"is_error" db:"-"`
 }
 
 //WorkflowRunTag is a tag on workflow run

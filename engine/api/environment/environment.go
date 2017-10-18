@@ -3,6 +3,7 @@ package environment
 import (
 	"database/sql"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -144,6 +145,25 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey, pipName string) ([]sdk.
 	return envs, nil
 }
 
+// LoadByWorkflowID loads environments from database for a given workflow id
+func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Environment, error) {
+	envs := []sdk.Environment{}
+	query := `SELECT DISTINCT environment.* FROM environment
+	JOIN workflow_node_context ON workflow_node_context.environment_id = environment.id
+	JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
+	JOIN workflow ON workflow.id = workflow_node.workflow_id
+	WHERE workflow.id = $1`
+
+	if _, err := db.Select(&envs, query, workflowID); err != nil {
+		if err == sql.ErrNoRows {
+			return envs, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByWorkflow> Unable to load environments linked to workflow id %d", workflowID)
+	}
+
+	return envs, nil
+}
+
 //Exists checks if an environment already exists on the project
 func Exists(db gorp.SqlExecutor, projectKey, envName string) (bool, error) {
 	var n int
@@ -197,8 +217,9 @@ func loadDependencies(db gorp.SqlExecutor, env *sdk.Environment) error {
 func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 	query := `INSERT INTO environment (name, project_id) VALUES($1, $2) RETURNING id, last_modified`
 
-	if env.Name == "" {
-		return sdk.ErrInvalidName
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(env.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid environment name. It should match %s", sdk.NamePattern))
 	}
 
 	var lastModified time.Time
@@ -218,6 +239,11 @@ func InsertEnvironment(db gorp.SqlExecutor, env *sdk.Environment) error {
 
 // UpdateEnvironment Update an environment
 func UpdateEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) error {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(environment.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid environment name. It should match %s", sdk.NamePattern))
+	}
+
 	query := `UPDATE environment SET name=$1 WHERE id=$2`
 	if _, err := db.Exec(query, environment.Name, environment.ID); err != nil {
 		return err

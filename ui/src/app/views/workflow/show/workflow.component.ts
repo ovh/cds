@@ -19,6 +19,7 @@ import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/n
 import {WorkflowCoreService} from '../../../shared/workflow/workflow.service';
 import {PermissionValue} from '../../../model/permission.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
+import {User} from '../../../model/user.model';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 
 declare var _: any;
@@ -59,10 +60,17 @@ export class WorkflowShowComponent {
     permFormLoading = false;
 
     loading = false;
+    // For usage
+    usageCount = 0;
+    currentUser: User;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
                 private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService,
                 private _workflowCoreService: WorkflowCoreService) {
+        // TODO: DELETE THIS WHEN WORKFLOW IS PUBLIC
+        this.currentUser = new User();
+        this.currentUser.admin = true;
+
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -90,6 +98,9 @@ export class WorkflowShowComponent {
                                     return;
                                 }
                                 this.detailedWorkflow = updatedWorkflow;
+                                this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
+                                    return total + this.detailedWorkflow.usage[key].length;
+                                }, 0);
                             }
                         }
                     }, () => {

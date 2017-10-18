@@ -25,7 +25,7 @@ type Pipeline struct {
 	Stages            []Stage           `json:"stages"`
 	GroupPermission   []GroupPermission `json:"groups,omitempty"`
 	Parameter         []Parameter       `json:"parameters,omitempty"`
-	Usage             Usage             `json:"usage"`
+	Usage             *Usage            `json:"usage,omitempty"`
 	Permission        int               `json:"permission"`
 	LastModified      int64             `json:"last_modified" cli:"modified"`
 }

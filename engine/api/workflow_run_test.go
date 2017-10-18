@@ -87,7 +87,10 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(db, api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
@@ -192,7 +195,10 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
@@ -316,7 +322,10 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
@@ -433,7 +442,10 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
@@ -531,7 +543,10 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
@@ -614,7 +629,10 @@ func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(db, api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
@@ -632,7 +650,7 @@ func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
 	//Do the request
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 202, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
@@ -731,7 +749,10 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
@@ -749,7 +770,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	//Do the request
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 202, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
@@ -885,7 +906,10 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
