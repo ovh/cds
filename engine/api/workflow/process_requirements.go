@@ -4,7 +4,6 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
-	//	"github.com/ovh/cds/sdk/log"
 )
 
 func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun) ([]sdk.Requirement, *sdk.MultiError) {
