@@ -1,4 +1,4 @@
-import {Component, Output, EventEmitter} from '@angular/core';
+import {Component, Input, Output, EventEmitter} from '@angular/core';
 import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
@@ -12,12 +12,20 @@ import {WorkerModel} from '../../../model/worker-model.model';
 })
 export class RequirementsFormComponent {
 
+    @Input('suggest')
+    set suggest(data: Array<string>) {
+        if (Array.isArray(this.workerModels) && data) {
+            this.workerModels = this.workerModels.concat(data);
+        } else if (data) {
+            this.workerModels = data;
+        }
+    }
     @Output() event = new EventEmitter<RequirementEvent>();
 
     newRequirement: Requirement = new Requirement('binary');
     availableRequirements: Array<string>;
     isWriting = false;
-    workerModels: Array<WorkerModel>;
+    workerModels: Array<string>;
 
     constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
         this._requirementStore.getAvailableRequirements().subscribe(r => {
@@ -26,7 +34,7 @@ export class RequirementsFormComponent {
         });
 
         this._workerModelService.getWorkerModels().first().subscribe( wms => {
-            this.workerModels = wms;
+            this.workerModels = wms.map((wm) => wm.name).concat(this.workerModels);
         });
     }
 

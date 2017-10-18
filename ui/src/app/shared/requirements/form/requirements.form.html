@@ -20,7 +20,7 @@
                 [(model)]="newRequirement.value"
                 [options]="{'fullTextSearch': true}"
                 placeholder="{{ 'requirement_value' | translate }}">
-                <option *ngFor="let m of workerModels" value="{{m.name}}">{{m.name}}</option>
+                <option *ngFor="let m of workerModels" [value]="m">{{m}}</option>
             </sm-select>
         </div>
         <div class="three wide center field">
