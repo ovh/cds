@@ -4,7 +4,7 @@
             <div [ngSwitch]="application.workflow_migration">
                 <div *ngSwitchCase="'STARTED'">
                     <button class="ui green button" (click)="generateWorkflow(true)">{{ 'application_migration_regenerate' | translate }}</button>
-                    <button class="ui green button" (click)="openDoneMigrationPopup()">{{ 'application_migration_generate_done' | translate }}</button>
+                    <button class="ui red button" (click)="openDoneMigrationPopup()">{{ 'application_migration_generate_done' | translate }}</button>
                 </div>
                 <div *ngSwitchCase="'DONE'">
                     <i class="green check icon"></i>
@@ -60,10 +60,10 @@
 <ng-template let-context let-modal="modal" #doneMigrationTmpl>
     <div class="header">{{ 'application_workflow_migration_modal_title' | translate }}</div>
     <div class="content">
-        <div class="ui red message">{{'application_workflow_migration_modal_content' | translate}}</div>
+        <div class="ui red message"><span [innerHTML]="migrationText"></span></div>
     </div>
     <div class="actions">
         <button class="ui grey button" [disabled]="loading" (click)="migrationModal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui red button" [disabled]="loading" (click)="migrationClean()">{{ 'common_clean' | translate }}</button>
+        <button class="ui red button" [disabled]="loading" (click)="migrationClean()">{{ 'common_clean_app' | translate }}</button>
     </div>
 </ng-template>

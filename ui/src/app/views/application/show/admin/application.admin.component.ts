@@ -25,6 +25,8 @@ export class ApplicationAdminComponent implements OnInit {
     @ViewChild('doneMigrationTmpl')
     doneMigrationTmpl: ModalTemplate<boolean, boolean, void>;
     migrationModal: ActiveModal<boolean, boolean, void>;
+    migrationText: string;
+
 
     newName: string;
     public loading = false;
@@ -39,6 +41,7 @@ export class ApplicationAdminComponent implements OnInit {
             this._router.navigate(['/project', this.project.key, 'application', this.application.name],
                 { queryParams: {tab: 'workflow'}});
         }
+        this.migrationText = this._translate.instant('application_workflow_migration_modal_content');
     }
 
     generateWorkflow(force: boolean): void {
