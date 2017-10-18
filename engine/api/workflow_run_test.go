@@ -650,7 +650,7 @@ func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
 	//Do the request
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 202, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
@@ -770,7 +770,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	//Do the request
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 202, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
