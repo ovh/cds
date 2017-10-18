@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -244,6 +245,11 @@ func GetAllVariableByID(db gorp.SqlExecutor, applicationID int64, fargs ...FuncA
 
 // InsertVariable Insert a new variable in the given application
 func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable sdk.Variable, u *sdk.User) error {
+	//Check variable name
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(variable.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
+	}
 
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
 		return fmt.Errorf("You try to insert a placeholder for new variable %s", variable.Name)
@@ -285,6 +291,11 @@ func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	variableBefore, err := LoadVariableByID(db, app.ID, variable.ID, WithClearPassword())
 	if err != nil {
 		return sdk.WrapError(err, "UpdateVariable> cannot load variable %d", variable.ID)
+	}
+
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(variable.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
 	}
 
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {

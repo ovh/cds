@@ -306,6 +306,11 @@ func DeleteGroupUserByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 
 // UpdateGroup updates group informations in database
 func UpdateGroup(db gorp.SqlExecutor, g *sdk.Group, oldName string) error {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(g.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid group name. It should match %s", sdk.NamePattern))
+	}
+
 	query := `UPDATE "group" set name=$1 WHERE name=$2`
 	_, err := db.Exec(query, g.Name, oldName)
 
@@ -318,6 +323,11 @@ func UpdateGroup(db gorp.SqlExecutor, g *sdk.Group, oldName string) error {
 
 // InsertGroup insert given group into given database
 func InsertGroup(db gorp.SqlExecutor, g *sdk.Group) error {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(g.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid group name. It should match %s", sdk.NamePattern))
+	}
+
 	query := `INSERT INTO "group" (name) VALUES($1) RETURNING id`
 	err := db.QueryRow(query, g.Name).Scan(&g.ID)
 	return err

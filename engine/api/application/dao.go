@@ -198,6 +198,11 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Insert: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
 	}
 
+	// TODO Remove after application migration to workflow
+	if app.WorkflowMigration == "" {
+		app.WorkflowMigration = "NOT_BEGUN"
+	}
+
 	app.ProjectID = proj.ID
 	app.ProjectKey = proj.Key
 	app.LastModified = time.Now()
@@ -214,6 +219,11 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 
 // Update updates application id database
 func Update(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(app.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid application name. It should match %s", sdk.NamePattern))
+	}
+
 	app.LastModified = time.Now()
 	dbApp := dbApplication(*app)
 	n, err := db.Update(&dbApp)

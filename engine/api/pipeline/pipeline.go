@@ -3,6 +3,8 @@ package pipeline
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -338,6 +340,11 @@ func LoadGroupByPipeline(db gorp.SqlExecutor, pipeline *sdk.Pipeline) error {
 
 // UpdatePipeline update the pipeline
 func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(p.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid pipeline name. It should match %s", sdk.NamePattern))
+	}
+
 	//Update pipeline
 	query := `UPDATE pipeline SET name=$1, type=$2 WHERE id=$3`
 	_, err := db.Exec(query, p.Name, string(p.Type), p.ID)
@@ -348,8 +355,9 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 func InsertPipeline(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
 	query := `INSERT INTO pipeline (name, project_id, type, last_modified) VALUES ($1,$2,$3, current_timestamp) RETURNING id`
 
-	if p.Name == "" {
-		return sdk.ErrInvalidName
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(p.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid pipeline name. It should match %s", sdk.NamePattern))
 	}
 
 	if p.Type != sdk.BuildPipeline && p.Type != sdk.DeploymentPipeline && p.Type != sdk.TestingPipeline {

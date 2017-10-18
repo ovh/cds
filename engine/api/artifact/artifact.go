@@ -158,6 +158,40 @@ func LoadArtifact(db gorp.SqlExecutor, id int64) (*sdk.Artifact, error) {
 	return s, err
 }
 
+// DeleteArtifactsByPipelineID Delete all artifact related to given pipeline
+func DeleteArtifactsByPipelineID(db gorp.SqlExecutor, id int64) error {
+	query := `SELECT artifact.name, artifact.tag, pipeline.name, project.projectKey, application.name, environment.name FROM artifact
+						JOIN pipeline ON artifact.pipeline_id = pipeline.id
+						JOIN project ON pipeline.project_id = project.id
+						JOIN application ON application.id = artifact.application_id
+						JOIN environment ON environment.id = artifact.environment_id
+						WHERE artifact.pipeline_id = $1 FOR UPDATE`
+
+	arts := []sdk.Artifact{}
+	rows, errR := db.Query(query, id)
+	if errR != nil {
+		return sdk.WrapError(errR, "DeleteArtifactsByPipelineID> Cannot select artifact")
+	}
+	for rows.Next() {
+		s := sdk.Artifact{}
+		if err := rows.Scan(&s.Name, &s.Tag, &s.Pipeline, &s.Project, &s.Application, &s.Environment); err != nil {
+			return sdk.WrapError(err, "DeleteArtifact> Cannot select artifact")
+		}
+		arts = append(arts, s)
+	}
+
+	for _, a := range arts {
+		if err := objectstore.DeleteArtifact(&a); err != nil && !strings.Contains(err.Error(), "404") {
+			return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in store")
+		}
+		query = `DELETE FROM artifact WHERE id = $1`
+		if _, err := db.Exec(query, id); err != nil {
+			return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in DB")
+		}
+	}
+	return nil
+}
+
 // DeleteArtifact lock the artifact in database,
 // then remove the actual object using storage driver,
 // finally remove artifact from database if actual delete is performed
