@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -112,6 +113,11 @@ func Delete(db gorp.SqlExecutor, store cache.Store, key string) error {
 
 // Insert a new project in database
 func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(proj.Key) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", sdk.NamePattern))
+	}
+
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	if err := db.Insert(&dbProj); err != nil {
@@ -123,6 +129,11 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 
 // Update a new project in database
 func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(proj.Key) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", sdk.NamePattern))
+	}
+
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	n, err := db.Update(&dbProj)
