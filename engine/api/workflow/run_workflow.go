@@ -132,12 +132,12 @@ func ManualRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Wo
 }
 
 // GetTag return a specific tag from a list of tags
-func GetTag(tags []sdk.WorkflowRunTag, tag string) (sdk.WorkflowRunTag, bool) {
+func GetTag(tags []sdk.WorkflowRunTag, tag string) sdk.WorkflowRunTag {
 	for _, currentTag := range tags {
 		if currentTag.Tag == tag {
-			return currentTag, true
+			return currentTag
 		}
 	}
 
-	return sdk.WorkflowRunTag{}, false
+	return sdk.WorkflowRunTag{}
 }

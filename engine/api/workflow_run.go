@@ -452,7 +452,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		}
 
 		// Purge workflow run
-		branch, _ := workflow.GetTag(wr.Tags, "git.branch")
+		branch := workflow.GetTag(wr.Tags, "git.branch")
 		go workflow.PurgeWorkflowRun(api.mustDB(), *wf, branch.Value)
 
 		wr.Translate(r.Header.Get("Accept-Language"))
