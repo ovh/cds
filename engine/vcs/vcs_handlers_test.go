@@ -104,6 +104,7 @@ func Test_getReposHandler(t *testing.T) {
 	s, err := newTestService(t)
 	test.NoError(t, err)
 
+	checkConfigGithub(cfg, t)
 	err = s.addServerConfiguration("github", ServerConfiguration{
 		URL: "https://github.com",
 		Github: &GithubServerConfiguration{
@@ -140,6 +141,8 @@ func Test_getRepoHandler(t *testing.T) {
 	//Bootstrap the service
 	s, err := newTestService(t)
 	test.NoError(t, err)
+
+	checkConfigGithub(cfg, t)
 
 	err = s.addServerConfiguration("github", ServerConfiguration{
 		URL: "https://github.com",
@@ -180,6 +183,8 @@ func Test_getBranchesHandler(t *testing.T) {
 	s, err := newTestService(t)
 	test.NoError(t, err)
 
+	checkConfigGithub(cfg, t)
+
 	err = s.addServerConfiguration("github", ServerConfiguration{
 		URL: "https://github.com",
 		Github: &GithubServerConfiguration{
@@ -218,6 +223,8 @@ func Test_getBranchHandler(t *testing.T) {
 	//Bootstrap the service
 	s, err := newTestService(t)
 	test.NoError(t, err)
+
+	checkConfigGithub(cfg, t)
 
 	err = s.addServerConfiguration("github", ServerConfiguration{
 		URL: "https://github.com",
@@ -259,6 +266,8 @@ func Test_getCommitsHandler(t *testing.T) {
 	s, err := newTestService(t)
 	test.NoError(t, err)
 
+	checkConfigGithub(cfg, t)
+
 	err = s.addServerConfiguration("github", ServerConfiguration{
 		URL: "https://github.com",
 		Github: &GithubServerConfiguration{
@@ -299,6 +308,8 @@ func Test_getCommitHandler(t *testing.T) {
 	s, err := newTestService(t)
 	test.NoError(t, err)
 
+	checkConfigGithub(cfg, t)
+
 	err = s.addServerConfiguration("github", ServerConfiguration{
 		URL: "https://github.com",
 		Github: &GithubServerConfiguration{
@@ -330,4 +341,11 @@ func Test_getCommitHandler(t *testing.T) {
 
 	//Asserts
 	assert.Equal(t, 200, rec.Code)
+}
+
+func checkConfigGithub(cfg map[string]string, t *testing.T) {
+	if cfg["githubClientID"] == "" || cfg["githubClientSecret"] == "" {
+		log.Debug("Skip Github Test - no configuration")
+		t.SkipNow()
+	}
 }
