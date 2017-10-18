@@ -36,14 +36,25 @@
             </td>
             <td>
                 <div *ngIf="edit;else rValue">
-                    <input [(ngModel)]="r.value" name="requirementvalue" *ngIf="r.type !== 'model'">
-                    <sm-select class="search"
-                        *ngIf="r.type === 'model' && workerModels"
-                        [options]="{'fullTextSearch': true}"
-                        [(model)]="r.value"
-                        (modelChange)="change()">
-                        <option *ngFor="let wm of workerModels" value="{{wm.name}}">{{wm.name}}</option>
-                    </sm-select>
+                    <div *ngIf="r.type !== 'model'">
+                        <input
+                            name="requirementvalue"
+                            auto-complete
+                            autocomplete="off"
+                            type="text"
+                            [source]="suggest"
+                            [min-chars]="3"
+                            [(ngModel)]="r.value"
+                            [no-match-found-text]="false">
+                    </div>
+                    <div *ngIf="r.type === 'model' && workerModels">
+                        <sm-select class="search"
+                            [options]="{'fullTextSearch': true}"
+                            [(model)]="r.value"
+                            (modelChange)="change()">
+                            <option *ngFor="let wm of workerModels" value="{{wm}}">{{wm}}</option>
+                        </sm-select>
+                    </div>
                 </div>
                 <ng-template #rValue>
                     <span>{{r.value}}</span>

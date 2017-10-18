@@ -14,14 +14,28 @@
             </sm-select>
         </div>
         <div class="five wide field">
-            <input name="value" [(ngModel)]="newRequirement.value" placeholder="{{ 'requirement_value' | translate }}" (keyup)="setName($event)" *ngIf="newRequirement.type !== 'model'">
-            <sm-select class="search"
-                *ngIf="newRequirement.type === 'model'"
-                [(model)]="newRequirement.value"
-                [options]="{'fullTextSearch': true}"
-                placeholder="{{ 'requirement_value' | translate }}">
-                <option *ngFor="let m of workerModels" [value]="m">{{m}}</option>
-            </sm-select>
+            <div *ngIf="newRequirement.type !== 'model'">
+                <input
+                    name="value"
+                    auto-complete
+                    autocomplete="off"
+                    type="text"
+                    [source]="suggest"
+                    [min-chars]="3"
+                    [(ngModel)]="newRequirement.value"
+                    (keyup)="setName($event)"
+                    [no-match-found-text]="false">
+            </div>
+            <div *ngIf="newRequirement.type === 'model'">
+                <sm-select class="search"
+                    [(model)]="newRequirement.value"
+                    [options]="{'fullTextSearch': true}"
+                    placeholder="{{ 'requirement_value' | translate }}">
+                    <option *ngFor="let m of workerModels" [value]="m">{{m}}</option>
+                </sm-select>
+            </div>
+
+
         </div>
         <div class="three wide center field">
             <button class="ui blue icon button" (click)="addRequirement()"><i class="plus icon"></i></button>

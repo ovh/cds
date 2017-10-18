@@ -35,9 +35,11 @@
                         <modal-content>
                             <div class="ui form">
                                 <div class="field">
-                                    <app-requirements-list [requirements]="editableAction.requirements" [edit]="edit"
-                                                           (onChange)="editableAction.hasChanged = true"
-                                                           (event)="requirementEvent($event)"></app-requirements-list>
+                                    <app-requirements-list
+                                        [suggest]="suggest"
+                                        [requirements]="editableAction.requirements" [edit]="edit"
+                                       (onChange)="editableAction.hasChanged = true"
+                                       (event)="requirementEvent($event)"></app-requirements-list>
                                     <div class="requirementForm" *ngIf="edit">
                                         <app-requirements-form [suggest]="suggest" (event)="requirementEvent($event)"></app-requirements-form>
                                     </div>

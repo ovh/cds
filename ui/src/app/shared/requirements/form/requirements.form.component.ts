@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter} from '@angular/core';
+import {Component, Input, Output, EventEmitter, ViewChild} from '@angular/core';
 import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
@@ -19,6 +19,10 @@ export class RequirementsFormComponent {
         } else if (data) {
             this.workerModels = data;
         }
+        this._suggest = data || [];
+    }
+    get suggest() {
+        return this._suggest;
     }
     @Output() event = new EventEmitter<RequirementEvent>();
 
@@ -26,6 +30,7 @@ export class RequirementsFormComponent {
     availableRequirements: Array<string>;
     isWriting = false;
     workerModels: Array<string>;
+    _suggest: Array<string> = [];
 
     constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
         this._requirementStore.getAvailableRequirements().subscribe(r => {
