@@ -13,4 +13,8 @@ export class ApplicationMigrateService {
         p = p.append('force', f.toString());
         return this._http.post('/project/' + key + '/application/' + appName + '/workflow/migrate', null, {params: p});
     }
+
+    cleanWorkflow(key: string, appName: string): Observable<any> {
+        return this._http.post('/project/' + key + '/application/' + appName + '/workflow/clean', null);
+    }
 }
