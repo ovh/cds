@@ -50,6 +50,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.applicationFilter.remote = '';
         this.changeWorkerEvent.emit(true);
     }
 
