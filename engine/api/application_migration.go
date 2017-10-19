@@ -63,16 +63,16 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 				if err := pipeline.DeletePipelineTestResults(tx, appPip.Pipeline.ID); err != nil {
 					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 				}
+			}
 
-				if err := artifact.DeleteArtifactsByPipelineID(tx, appPip.Pipeline.ID); err != nil {
-					return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeleteArtifactsByPipelineID")
-				}
+			if err := artifact.DeleteArtifactsByApplicationID(tx, appID); err != nil {
+				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
+			}
 
-				// Delete application_pipeline_notif
-				query := `DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (SELECT id FROM application_pipeline WHERE pipeline_id = $1)`
-				if _, err := tx.Exec(query, appPip.Pipeline.ID); err != nil {
-					return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Delete notification")
-				}
+			// Delete application_pipeline_notif
+			query := `DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (SELECT id FROM application_pipeline WHERE application_id = $1)`
+			if _, err := tx.Exec(query, appID); err != nil {
+				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Delete notification")
 			}
 
 			if err := pipeline.DeletePipelineBuildByApplicationID(tx, appToClean.ID); err != nil {
