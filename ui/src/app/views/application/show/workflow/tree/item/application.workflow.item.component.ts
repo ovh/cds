@@ -32,6 +32,7 @@ import {Remote} from '../../../../../../model/repositories.model';
 @AutoUnsubscribe()
 export class ApplicationWorkflowItemComponent implements DoCheck {
 
+    @Input() ready: boolean;
     @Input() project: Project;
     @Input() remotes: Array<Remote>;
     @Input() workflowItem: WorkflowItem;
