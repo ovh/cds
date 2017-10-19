@@ -45,7 +45,9 @@ export class ApplicationAdminComponent implements OnInit {
     }
 
     generateWorkflow(force: boolean): void {
-        this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name, force).subscribe(() => {
+        this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name, force).first().finally(() => {
+            this.loading = true;
+        }).subscribe(() => {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows'} });
         });
     }
@@ -71,8 +73,12 @@ export class ApplicationAdminComponent implements OnInit {
     }
 
     migrationClean(): void {
-        this._appMigrateSerivce.cleanWorkflow(this.project.key, this.application.name).subscribe(() => {
+        this.loading = true;
+        this._appMigrateSerivce.cleanWorkflow(this.project.key, this.application.name).finally(() => {
+            this.loading = false;
+        }).subscribe(() => {
            this._toast.success('', this._translate.instant('application_workflow_migration_ok'));
+           this.migrationModal.approve(true);
         });
     }
 
