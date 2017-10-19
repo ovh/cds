@@ -36,7 +36,7 @@
             </td>
             <td>
                 <div *ngIf="edit;else rValue">
-                    <input [(ngModel)]="r.value" name="requirementvalue" *ngIf="r.type !== 'model'">
+                    <input [(ngModel)]="r.value" name="requirementvalue" *ngIf="r.type !== 'model'" (ngModelChange)="change()">
                     <sm-select class="search"
                         *ngIf="r.type === 'model' && workerModels"
                         [options]="{'fullTextSearch': true}"
