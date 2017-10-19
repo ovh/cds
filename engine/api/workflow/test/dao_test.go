@@ -5,6 +5,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/ovh/cds/sdk/exportentities"
+
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 
@@ -163,7 +165,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	assert.Equal(t, w.Root.Context.EnvironmentID, w1.Root.Context.EnvironmentID)
 }
 
-func TestInsertComplexeWorkflow(t *testing.T) {
+func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -213,6 +215,7 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
+			Name:     "Root",
 			Pipeline: pip1,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
@@ -224,6 +227,7 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 						},
 					},
 					WorkflowDestNode: sdk.WorkflowNode{
+						Name:     "First",
 						Pipeline: pip2,
 						Triggers: []sdk.WorkflowNodeTrigger{
 							sdk.WorkflowNodeTrigger{
@@ -235,6 +239,7 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 									},
 								},
 								WorkflowDestNode: sdk.WorkflowNode{
+									Name:     "Second",
 									Pipeline: pip3,
 								},
 							},
@@ -250,6 +255,7 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 						},
 					},
 					WorkflowDestNode: sdk.WorkflowNode{
+						Name:     "Last",
 						Pipeline: pip4,
 					},
 				},
@@ -272,6 +278,13 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 	workflow.Sort(&w)
 
 	assertEqualNode(t, w.Root, w1.Root)
+
+	exp, err := exportentities.NewWorkflow(w, false)
+	test.NoError(t, err)
+	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
+	test.NoError(t, err)
+
+	fmt.Println(string(btes))
 }
 
 func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
