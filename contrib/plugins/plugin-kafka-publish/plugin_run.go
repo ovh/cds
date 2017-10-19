@@ -179,7 +179,9 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 
 	//Check the ack
 	Logf("Got ACK from %s : %s", ackTopic, ack.Result)
-	Logf(string(ack.Log))
+	if len(ack.Log) > 0 {
+		Logf(string(ack.Log))
+	}
 	if ack.Result == "OK" {
 		return plugin.Success
 	}
