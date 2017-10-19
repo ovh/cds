@@ -9,7 +9,7 @@
                                [(ngModel)]="workflow.name"
                                [disabled]="loading"
                                required
-                               #formProjectUpdateName="ngModel"
+                               #formWorkflowUpdateName="ngModel"
                                pattern="[a-zA-Z0-9]*">
                         <div *ngIf="formWorkflowUpdateName && !formWorkflowUpdateName.valid && !formWorkflowUpdateName.pristine"
                              class="ui error message">

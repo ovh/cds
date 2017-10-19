@@ -8,6 +8,7 @@ import {environment} from '../../../../environments/environment';
 import {Subscription} from 'rxjs/Subscription';
 import {WorkflowRun, WorkflowRunTags} from '../../../model/workflow.run.model';
 import {cloneDeep} from 'lodash';
+import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 
 @Component({
     selector: 'app-workflow-sidebar',
@@ -54,10 +55,11 @@ export class WorkflowSidebarComponent implements OnDestroy {
     // search part
     selectedTags: Array<string>;
     tagsSelectable: Array<string>;
+    tagToDisplay: Array<string>;
 
     ready = false;
 
-    constructor(private _authStore: AuthentificationStore) {
+    constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService) {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
@@ -94,10 +96,25 @@ export class WorkflowSidebarComponent implements OnDestroy {
     }
 
     initSelectableTags(): void {
-        this.tagsSelectable = new Array<string>();
+        this.tagToDisplay = new Array<string>();
         if (this.workflow.metadata && this.workflow.metadata['default_tags']) {
-            this.tagsSelectable = this.workflow.metadata['default_tags'].split(',');
+            this.tagToDisplay = this.workflow.metadata['default_tags'].split(',');
         }
+        this._workflowRunService.getTags(this.project.key, this.workflow.name).subscribe(tags => {
+            this.tagsSelectable = new Array<string>();
+            Object.keys(tags).forEach(k => {
+                if (tags.hasOwnProperty(k)) {
+                    tags[k].forEach(v => {
+                        if (v !== '') {
+                            let newEntry = k + ':' + v;
+                            if (this.tagsSelectable.indexOf(newEntry) === -1) {
+                                this.tagsSelectable.push(newEntry);
+                            }
+                        }
+                    });
+                }
+            });
+        });
         this.refreshRun();
     }
 
@@ -113,7 +130,7 @@ export class WorkflowSidebarComponent implements OnDestroy {
                 let value = splitted.join(':');
                 this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
                     return r.tags.find(tag => {
-                        return tag.tag === key && tag.value === value;
+                        return tag.tag === key && tag.value.indexOf(value) !== -1;
                     });
                 });
             });
@@ -121,8 +138,8 @@ export class WorkflowSidebarComponent implements OnDestroy {
     }
 
     canDisplayTag(tg: WorkflowRunTags): boolean {
-        if (this.tagsSelectable) {
-            return this.tagsSelectable.indexOf(tg.tag) !== -1;
+        if (this.tagToDisplay) {
+            return this.tagToDisplay.indexOf(tg.tag) !== -1;
         }
         return false;
     }
