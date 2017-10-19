@@ -395,9 +395,14 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 	for _, p := range jobParams {
 		switch p.Name {
-		case "git.hash", "git.branch", "git.tag", "git.author":
+		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor:
 			w.Tag(p.Name, p.Value)
 		}
+	}
+
+	// Add env tag
+	if n.Context != nil && n.Context.Environment != nil {
+		w.Tag(tagEnvironment, n.Context.Environment.Name)
 	}
 
 	//Check
