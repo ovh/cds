@@ -15,7 +15,7 @@ import {cloneDeep} from 'lodash';
     styleUrls: ['./workflow.sidebar.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarComponent implements OnInit, OnDestroy {
+export class WorkflowSidebarComponent implements OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;
@@ -25,8 +25,15 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
     @Input('workflow')
     set workflow(data: Workflow) {
         if (data) {
+            let haveToStar = false;
+            if (!this._workflow || (this._workflow && data.name !== this._workflow.name)) {
+                haveToStar = true;
+            }
             this._workflow = data;
             this.initSelectableTags();
+            if (haveToStar) {
+                this.startWorker();
+            }
         }
     }
     get workflow() { return this._workflow; }
@@ -54,8 +61,15 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
-    ngOnInit(): void {
+    startWorker(): void {
         // Start webworker
+        if (this.runWorkerSubscription) {
+            this.runWorkerSubscription.unsubscribe();
+        }
+        if (this.runWorker) {
+            this.runWorker.stop();
+        }
+
         this.runWorker = new CDSWorker('./assets/worker/web/workflow-run.js');
         this.runWorker.start({
             'user': this._authStore.getUser(),

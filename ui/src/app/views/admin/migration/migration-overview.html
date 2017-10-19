@@ -1,4 +1,5 @@
-<div class="migration-overview" *ngIf="keysNotBegun">
+<div class="migration-overview ui segment" *ngIf="keysNotBegun">
+    <h3>{{'admin_migration_title' | translate }}</h3>
     <sm-menu title="" class="pointing secondary">
         <a sm-item [class.active]="selectedTab === 'NOT_BEGUN'" (click)="showTab('NOT_BEGUN')">
             <i class="rocket icon"></i>{{ 'admin_migration_not_started' | translate }} {{ ' (' + keysNotBegun.length + ')'}}
@@ -13,11 +14,13 @@
 
     <div [ngSwitch]="selectedTab">
         <div *ngSwitchCase="'NOT_BEGUN'">
-            <ul *ngIf="keysNotBegun">
-                <li *ngFor="let k of keysNotBegun">
-                    <a href="#" [routerLink]="['/project', k]" [queryParams]="{ tab: 'applications'}">{{k}}</a>
-                </li>
-            </ul>
+            <div class="ui grid" *ngIf="keysNotBegun">
+                <div class="ui stackable four column grid">
+                    <div class="center aligned column" *ngFor="let k of keysNotBegun">
+                        <a href="#" [routerLink]="['/project', k]" [queryParams]="{ tab: 'applications'}">{{k}}</a>
+                    </div>
+                </div>
+            </div>
         </div>
         <div *ngSwitchCase="'STARTED'">
             <ul *ngIf="keysStarted">
@@ -31,11 +34,13 @@
             </ul>
         </div>
         <div *ngSwitchCase="'DONE'">
-            <ul *ngIf="keysDone">
-                <li *ngFor="let k of keysDone">
-                    <a href="#" [routerLink]="['/admin', 'migration', k]">{{k}}</a>
-                </li>
-            </ul>
+            <div class="ui grid" *ngIf="keysDone">
+                <div class="ui stackable four column grid">
+                    <div class="center aligned column" *ngFor="let k of keysDone">
+                        <a href="#" [routerLink]="['/admin', 'migration', k]">{{k}}</a>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

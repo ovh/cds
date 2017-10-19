@@ -35,9 +35,10 @@
   "action_always_executed": "Always executed",
   "action_always_executed_details": "If checked, this step will be executed even if previous steps fail",
 
-  "admin_migration_not_started": "Not started",
-  "admin_migration_started": "Started",
-  "admin_migration_done": "Done",
+  "admin_migration_not_started" : "Not started",
+  "admin_migration_started" : "Started",
+  "admin_migration_done" : "Done",
+  "admin_migration_title" : "Status of application migration to workflow",
 
   "application_create" : "Create a new application",
   "application_created" : "Application created",
@@ -56,6 +57,7 @@
   "application_migration_generate_done" : "Clean the application",
   "application_migration_generate" : "Generate a workflow",
   "application_migration_regenerate" : "Re-generate a workflow",
+  "application_workflow_migration" : "Migration to workflow",
   "application_workflow_migration_modal_title" : "Deletion of old application workflow",
   "application_workflow_migration_modal_content" : "Be careful, this will delete your previous application workflow. There is no going back.  <ul><li>All pipelines will be detached from your application</li><li>All triggers will be deleted.</li><li>Your history will be deleted</li><li>All your artifacts will be deleted</li></ul>",
   "application_notifications_form_title_add" : "Add a notification",
@@ -249,6 +251,7 @@
   "job_spawn_title" : "Information",
 
   "navbar_actions" : "Actions",
+  "navbar_admin_migration" : "Migrate to workflows",
   "navbar_search" : "Search an application...",
   "navbar_documentation" : "Documentation",
   "navbar_download" : "Download",

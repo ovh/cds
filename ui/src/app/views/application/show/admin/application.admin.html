@@ -3,7 +3,7 @@
         <app-zone-content class="bottom">
             <div [ngSwitch]="application.workflow_migration">
                 <div *ngSwitchCase="'STARTED'">
-                    <button class="ui green button" (click)="generateWorkflow(true)">{{ 'application_migration_regenerate' | translate }}</button>
+                    <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="generateWorkflow(true)">{{ 'application_migration_regenerate' | translate }}</button>
                     <button class="ui red button" (click)="openDoneMigrationPopup()">{{ 'application_migration_generate_done' | translate }}</button>
                 </div>
                 <div *ngSwitchCase="'DONE'">
@@ -64,6 +64,6 @@
     </div>
     <div class="actions">
         <button class="ui grey button" [disabled]="loading" (click)="migrationModal.approve(true)">{{ 'common_close' | translate }}</button>
-        <button class="ui red button" [disabled]="loading" (click)="migrationClean()">{{ 'common_clean_app' | translate }}</button>
+        <button class="ui red button" [class.loading]="loading" [disabled]="loading" (click)="migrationClean()">{{ 'common_clean_app' | translate }}</button>
     </div>
 </ng-template>

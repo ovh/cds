@@ -28,7 +28,7 @@ export class WorkflowComponent {
     sidebar: SemanticSidebarComponent;
 
     constructor(private _activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-        private _routerService: RouterService, private _workflowCore: WorkflowCoreService) {
+                private _routerService: RouterService, private _workflowCore: WorkflowCoreService) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -43,18 +43,18 @@ export class WorkflowComponent {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
                 }
-                if (!this.workflow) {
-                    this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
-                        if (ws) {
-                            let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
-                            if (updatedWorkflow && !updatedWorkflow.externalChange) {
-                                this.workflow = updatedWorkflow;
-                            }
+
+                this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
+                    if (ws) {
+                        let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
+                        if (updatedWorkflow && !updatedWorkflow.externalChange) {
+                            this.workflow = updatedWorkflow;
                         }
-                    }, () => {
-                        this._router.navigate(['/project', this.project.key]);
-                    });
-                }
+                    }
+                }, () => {
+                    this._router.navigate(['/project', this.project.key]);
+                });
+
             }
 
         });
