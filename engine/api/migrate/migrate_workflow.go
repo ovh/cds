@@ -37,7 +37,7 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 
 		currentApplicationID := oldW.Application.ID
 
-		n, err := migratePipeline(db, store, oldW, currentApplicationID, u)
+		n, err := migratePipeline(db, store, proj, oldW, currentApplicationID, u)
 		if err != nil {
 			return sdk.WrapError(err, "MigrateToWorkflow")
 		}
@@ -67,7 +67,7 @@ func addGroupOnWorkflow(w *sdk.Workflow, proj *sdk.Project) {
 	}
 }
 
-func migratePipeline(db gorp.SqlExecutor, store cache.Store, oldPipeline sdk.CDPipeline, appID int64, u *sdk.User) (*sdk.WorkflowNode, error) {
+func migratePipeline(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, oldPipeline sdk.CDPipeline, appID int64, u *sdk.User) (*sdk.WorkflowNode, error) {
 	newNode := &sdk.WorkflowNode{
 		PipelineID: oldPipeline.Pipeline.ID,
 		Context:    &sdk.WorkflowNodeContext{},
@@ -132,7 +132,7 @@ bigloop:
 			}
 
 			// Migrate child pipeline
-			n, err := migratePipeline(db, store, childPip, appID, u)
+			n, err := migratePipeline(db, store, p, childPip, appID, u)
 			if err != nil {
 				return nil, err
 			}
@@ -146,6 +146,7 @@ bigloop:
 			// is sub App
 			if childPip.Application.ID != 0 && childPip.Application.ID != appID {
 				childPip.Application.WorkflowMigration = STATUS_DONE
+				childPip.Application.ProjectID = p.ID
 				if errA := application.Update(db, store, &childPip.Application, u); errA != nil {
 					return nil, sdk.WrapError(errA, "Cannot update subapplication %s", childPip.Application.Name)
 				}
