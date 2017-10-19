@@ -37,14 +37,14 @@
                     <div class="row">
                         <div class="three wide column verticalPlayIcon">
                             <div *ngIf="application.permission > permissionEnum.READ">
-                                <a class="pointing" (click)="runPipeline()"
+                                <a [class.pointing]="ready" (click)="ready && runPipeline()"
                                   *ngIf="!loadingPipAction && workflowItem.pipeline.last_pipeline_build?.status !== pipelineStatusEnum.BUILDING">
-                                  <i class="video play outline icon run"></i>
+                                  <i class="video play outline icon run" [class.disabled]="!ready"></i>
 
                                 </a>
-                                <a class="pointing" (click)="stopPipeline()"
+                                <a [class.pointing]="ready" (click)="ready && stopPipeline()"
                                   *ngIf="!loadingPipAction && workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING">
-                                  <i class="circular black stop icon build"></i>
+                                  <i class="circular black stop icon build" [class.disabled]="!ready"></i>
                                 </a>
                                 <div *ngIf="loadingPipAction" class="ui text active loader"></div>
                             </div>
