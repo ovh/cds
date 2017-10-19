@@ -130,20 +130,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 		w.currentJob.params = nil
 	}()
 
-	if a.Type == sdk.BuiltinAction {
-		return w.runBuiltin(ctx, a, buildID, params, stepOrder)
-	}
-	if a.Type == sdk.PluginAction {
-		//Define a loggin function
-		sendLog := func(s string) {
-			if !strings.HasSuffix(s, "\n") {
-				s += "\n"
-			}
-			w.sendLog(buildID, s, stepOrder, false)
-		}
-		return w.runPlugin(ctx, a, buildID, params, stepOrder, sendLog)
-	}
-
+	//If the action is disabled; skip it
 	if !a.Enabled {
 		return sdk.Result{
 			Status:  sdk.StatusDisabled.String(),
@@ -151,7 +138,23 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 		}
 	}
 
-	// Nothing to do, success !
+	//If the action if a edge of the action tree; run it
+	switch a.Type {
+	case sdk.BuiltinAction:
+		return w.runBuiltin(ctx, a, buildID, params, stepOrder)
+	case sdk.PluginAction:
+		//Define a loggin function
+		sendLog := func(s string) {
+			if !strings.HasSuffix(s, "\n") {
+				s += "\n"
+			}
+			w.sendLog(buildID, s, stepOrder, false)
+		}
+		//Run the plugin
+		return w.runPlugin(ctx, a, buildID, params, stepOrder, sendLog)
+	}
+
+	// There is is no children actions (action is empty) to do, success !
 	if len(a.Actions) == 0 {
 		return sdk.Result{
 			Status:  sdk.StatusSuccess.String(),
@@ -159,6 +162,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 		}
 	}
 
+	//Run children actions
 	r, nDisabled := w.runSteps(ctx, a.Actions, a, buildID, params, stepOrder, stepName, 0)
 	//If all steps are disabled, set action status to disabled
 	if nDisabled >= len(a.Actions) {
