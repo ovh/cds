@@ -158,27 +158,29 @@ func LoadArtifact(db gorp.SqlExecutor, id int64) (*sdk.Artifact, error) {
 	return s, err
 }
 
-// DeleteArtifactsByPipelineID Delete all artifact related to given pipeline
-func DeleteArtifactsByPipelineID(db gorp.SqlExecutor, id int64) error {
+// DeleteArtifactsByApplicationID Delete all artifact related to given application
+func DeleteArtifactsByApplicationID(db gorp.SqlExecutor, id int64) error {
 	query := `SELECT artifact.name, artifact.tag, pipeline.name, project.projectKey, application.name, environment.name FROM artifact
 						JOIN pipeline ON artifact.pipeline_id = pipeline.id
 						JOIN project ON pipeline.project_id = project.id
 						JOIN application ON application.id = artifact.application_id
 						JOIN environment ON environment.id = artifact.environment_id
-						WHERE artifact.pipeline_id = $1 FOR UPDATE`
+						WHERE artifact.application_id = $1 FOR UPDATE`
 
 	arts := []sdk.Artifact{}
 	rows, errR := db.Query(query, id)
 	if errR != nil {
-		return sdk.WrapError(errR, "DeleteArtifactsByPipelineID> Cannot select artifact")
+		return sdk.WrapError(errR, "DeleteArtifactsByApplicationID> Cannot select artifact")
 	}
 	for rows.Next() {
 		s := sdk.Artifact{}
 		if err := rows.Scan(&s.Name, &s.Tag, &s.Pipeline, &s.Project, &s.Application, &s.Environment); err != nil {
-			return sdk.WrapError(err, "DeleteArtifact> Cannot select artifact")
+			rows.Close()
+			return sdk.WrapError(err, "DeleteArtifactsByApplicationID> Cannot select artifact")
 		}
 		arts = append(arts, s)
 	}
+	rows.Close()
 
 	for _, a := range arts {
 		if err := objectstore.DeleteArtifact(&a); err != nil && !strings.Contains(err.Error(), "404") {

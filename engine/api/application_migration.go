@@ -10,7 +10,9 @@ import (
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/migrate"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
@@ -63,16 +65,23 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 				if err := pipeline.DeletePipelineTestResults(tx, appPip.Pipeline.ID); err != nil {
 					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 				}
+			}
+			if err := scheduler.DeleteByApplicationID(tx, appID); err != nil {
+				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
+			}
 
-				if err := artifact.DeleteArtifactsByPipelineID(tx, appPip.Pipeline.ID); err != nil {
-					return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeleteArtifactsByPipelineID")
-				}
+			if err := poller.DeleteAll(tx, appID); err != nil {
+				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
+			}
 
-				// Delete application_pipeline_notif
-				query := `DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (SELECT id FROM application_pipeline WHERE pipeline_id = $1)`
-				if _, err := tx.Exec(query, appPip.Pipeline.ID); err != nil {
-					return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Delete notification")
-				}
+			if err := artifact.DeleteArtifactsByApplicationID(tx, appID); err != nil {
+				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
+			}
+
+			// Delete application_pipeline_notif
+			query := `DELETE FROM application_pipeline_notif WHERE application_pipeline_id IN (SELECT id FROM application_pipeline WHERE application_id = $1)`
+			if _, err := tx.Exec(query, appID); err != nil {
+				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> Delete notification")
 			}
 
 			if err := pipeline.DeletePipelineBuildByApplicationID(tx, appToClean.ID); err != nil {
@@ -80,6 +89,7 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 			}
 
 			app.WorkflowMigration = migrate.STATUS_DONE
+			appToClean.ProjectID = p.ID
 			if err := application.Update(tx, api.Cache, appToClean, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 			}

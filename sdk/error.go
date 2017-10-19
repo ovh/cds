@@ -121,6 +121,7 @@ var (
 	ErrMethodNotAllowed                      = &Error{ID: 105, Status: http.StatusMethodNotAllowed}
 	ErrInvalidNodeNamePattern                = &Error{ID: 106, Status: http.StatusBadRequest}
 	ErrWorkflowNodeParentNotRun              = Error{ID: 107, Status: http.StatusForbidden}
+	ErrHookNotFound                          = Error{ID: 108, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -478,6 +479,7 @@ func ErrorIs(err error, t *Error) bool {
 	return false
 }
 
+// MultiError is just an array of error
 type MultiError []error
 
 func (e *MultiError) Error() string {
@@ -491,10 +493,19 @@ func (e *MultiError) Error() string {
 	return s
 }
 
+// Join joins errors from MultiError to another errors MultiError
+func (e *MultiError) Join(j MultiError) {
+	for _, err := range j {
+		*e = append(*e, err)
+	}
+}
+
+// Append appends an error to a MultiError
 func (e *MultiError) Append(err error) {
 	*e = append(*e, err)
 }
 
+// IsEmpty return true if MultiError is empty, false otherwise
 func (e *MultiError) IsEmpty() bool {
 	return len(*e) == 0
 }

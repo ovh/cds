@@ -65,7 +65,7 @@ func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID i
 }
 
 func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
-	chanRes := make(chan sdk.Result)
+	chanRes := make(chan sdk.Result, 1)
 
 	go func(buildID int64, params []sdk.Parameter) {
 		res := sdk.Result{Status: sdk.StatusFail.String()}
@@ -133,10 +133,15 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			pluginAction.IDWorkflowNodeRun = w.currentJob.wJob.WorkflowNodeRunID
 		}
 
+		sendLog("Starting plugin...")
 		pluginResult := _plugin.Run(pluginAction)
+		sendLog("Plugin stopped")
 
 		if pluginResult == plugin.Success {
 			res.Status = sdk.StatusSuccess.String()
+		} else {
+			res.Status = sdk.StatusFail.String()
+			res.Reason = fmt.Sprintf("Plugin Failure")
 		}
 
 		chanRes <- res
