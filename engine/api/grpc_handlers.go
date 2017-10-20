@@ -85,7 +85,7 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	db := h.dbConnectionFactory.GetDBMap()
 
 	//Load workflow node job run
-	job, errj := workflow.LoadAndLockNodeJobRun(db, h.store, res.BuildID)
+	job, errj := workflow.LoadAndLockNodeJobRunNoWait(db, h.store, res.BuildID)
 	if errj != nil {
 		return new(empty.Empty), sdk.WrapError(errj, "postWorkflowJobResultHandler> Unable to load node run job")
 	}
