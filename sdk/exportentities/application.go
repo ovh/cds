@@ -62,8 +62,8 @@ func NewApplication(app *sdk.Application) (a *Application) {
 	a = new(Application)
 	a.Name = app.Name
 
-	if app.RepositoriesManager != nil {
-		a.RepositoryManager = app.RepositoriesManager.Name
+	if app.RepositoriesManager != "" {
+		a.RepositoryManager = app.RepositoriesManager
 		a.RepositoryName = app.RepositoryFullname
 	}
 

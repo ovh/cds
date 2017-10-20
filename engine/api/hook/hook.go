@@ -247,26 +247,30 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) er
 }
 
 // CreateHook in CDS db + repo manager webhook
-func CreateHook(tx gorp.SqlExecutor, store cache.Store, projectKey string, rm *sdk.RepositoriesManager, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
-	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name, store)
+func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
+	server := repositoriesmanager.GetVCSServer(proj, rm)
+	if server == nil {
+		return nil, fmt.Errorf("Unable to find repository manager")
+	}
+	client, err := repositoriesmanager.AuthorizedClient(tx, store, server)
 	if err != nil {
-		return nil, sdk.WrapError(err, "CreateHook> Cannot get client, got  %s %s", projectKey, rm.Name)
+		return nil, sdk.WrapError(err, "CreateHook> Cannot get client, got  %s %s", proj.Key, rm)
 	}
 
 	t := strings.Split(repoFullName, "/")
 	if len(t) != 2 {
-		return nil, sdk.WrapError(fmt.Errorf("CreateHook> Wrong repo fullname %s.", repoFullName), "")
+		return nil, sdk.WrapError(fmt.Errorf("CreateHook> Wrong repo fullname %s", repoFullName), "")
 	}
 
 	var h sdk.Hook
 
-	h, err = FindHook(tx, application.ID, pipeline.ID, string(rm.Type), rm.URL, t[0], t[1])
+	h, err = FindHook(tx, application.ID, pipeline.ID, rm, rm, t[0], t[1])
 	if err == sql.ErrNoRows {
 		h = sdk.Hook{
 			Pipeline:      *pipeline,
 			ApplicationID: application.ID,
-			Kind:          string(rm.Type),
-			Host:          rm.URL,
+			Kind:          rm,
+			Host:          rm,
 			Project:       t[0],
 			Repository:    t[1],
 			Enabled:       true,
@@ -279,11 +283,14 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, projectKey string, rm *s
 	}
 
 	s := apiURL + HookLink
-	link := fmt.Sprintf(s, h.UID, t[0], t[1])
+	h.Link = fmt.Sprintf(s, h.UID, t[0], t[1])
 
-	h.Link = link
+	hook := sdk.VCSHook{
+		Method: "POST",
+		URL:    h.Link,
+	}
 
-	if err := client.CreateHook(repoFullName, link); err != nil {
+	if err := client.CreateHook(repoFullName, hook); err != nil {
 		log.Warning("Cannot create hook on repository manager: %s", err)
 		if strings.Contains(err.Error(), "Not yet implemented") {
 			return nil, sdk.WrapError(sdk.ErrNotImplemented, "CreateHook> Cannot create hook on repository manager")

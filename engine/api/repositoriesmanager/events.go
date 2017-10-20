@@ -48,7 +48,7 @@ func retryEvent(e *sdk.Event, err error, store cache.Store) {
 	store.Enqueue("events_repositoriesmanager", e)
 }
 
-func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store) error {
+func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 	log.Debug("repositoriesmanager>processEvent> receive: type:%s all: %+v", event.EventType, event)
 
 	if event.EventType != fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
@@ -67,7 +67,12 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store) error
 
 	log.Debug("repositoriesmanager>processEvent> event:%+v", event)
 
-	c, erra := AuthorizedClient(db, eventpb.ProjectKey, eventpb.RepositoryManagerName, store)
+	vcsServer, err := LoadForProject(db, eventpb.ProjectKey, eventpb.RepositoryManagerName)
+	if err != nil {
+		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, err)
+	}
+
+	c, erra := AuthorizedClient(db, store, vcsServer)
 	if erra != nil {
 		return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, erra)
 	}

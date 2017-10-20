@@ -1,265 +1,129 @@
 package repositoriesmanager
 
 import (
-	"encoding/json"
-	"errors"
+	"bytes"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
-	"strconv"
+	"net/http"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
-	"github.com/ovh/cds/engine/api/repositoriesmanager/repogitlab"
-	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
-var (
-	initialized bool
-	options     InitializeOpts
-)
-
-//InitializeOpts is the struct to init the package
-type InitializeOpts struct {
-	KeysDirectory          string
-	UIBaseURL              string
-	APIBaseURL             string
-	DisableStashSetStatus  bool
-	DisableGithubSetStatus bool
-	DisableGithubStatusURL bool
-	GithubSecret           string
-	StashPrivateKey        string
-	StashConsumerKey       string
-	GitlabSecret           string
+type vcsClient struct {
+	name   string
+	token  string
+	secret string
+	srvs   []sdk.Service
 }
 
-//Initialize initialize private keys
-//For instance for a repositories manager named "github.com/ovh", the private key
-func Initialize(o InitializeOpts, DBFunc func() *gorp.DbMap, store cache.Store) error {
-	repogithub.Init(o.APIBaseURL, o.UIBaseURL)
-	repostash.Init(o.APIBaseURL, o.UIBaseURL)
-	repogitlab.Init(o.APIBaseURL, o.UIBaseURL)
-	options = o
-	if db := DBFunc(); db != nil {
-		repositoriesManager, err := LoadAll(db, store)
-		if err != nil {
-			return err
+// GetVCSServer returns sdk.ProjectVCSServer for a project
+func GetVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
+	for _, v := range p.VCSServers {
+		if v.Name == name {
+			return &v
 		}
-		for _, rm := range repositoriesManager {
-			var found bool
-			rmSecrets := map[string]string{}
-
-			switch rm.Type {
-			case sdk.Stash:
-				if o.StashPrivateKey != "" {
-					log.Info("RepositoriesManager> Found a key for %s", rm.Name)
-					rmSecrets["privatekey"] = o.StashPrivateKey
-					found = true
-				}
-			case sdk.Github:
-				if o.GithubSecret != "" {
-					log.Info("RepositoriesManager> Found a client-secret for %s", rm.Name)
-					// rmSecrets does not need to contains ["client-secret"] = o.GithubSecret
-					// GithubSecret is already the real secret, not a path to a file
-					found = true
-				}
-			case sdk.Gitlab:
-				// rmSecrets does not need to contains ["client-secret"] = o.GithubSecret
-				// GithubSecret is already the real secret, not a path to a file
-				found = true
-				if o.GitlabSecret != "" {
-					log.Info("RepositoriesManager> Found secret for %s", rm.Name)
-					rmSecrets["secret"] = o.GitlabSecret
-				}
-			}
-
-			if found {
-				if err := initRepositoriesManager(db, &rm, o.KeysDirectory, rmSecrets); err != nil {
-					log.Warning("RepositoriesManager> Unable init %s: %s", rm.Name, err)
-				}
-			} else {
-				log.Warning("RepositoriesManager> Unable to find key for %s", rm.Name)
-			}
-		}
-		initialized = true
-		return nil
 	}
-	return errors.New("Cannot init repositories manager")
+
+	return nil
 }
 
-//New instanciate a new RepositoriesManager, act as a Factory with all supported repositories manager
-func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[string]string, consumerData string, store cache.Store) (*sdk.RepositoriesManager, error) {
-	switch t {
-	case sdk.Stash:
-		//we have to compute the StashConsumer
-		var stash *repostash.StashConsumer
-		//Check if it isn't coming from the DB
-		if id == 0 || consumerData == "" {
-			//Check args
-			if len(args) != 1 || args["key"] == "" {
-				return nil, fmt.Errorf("key args is mandatory to connect to stash")
-			}
-			stash = repostash.New(URL, options.StashConsumerKey, args["key"], store)
-		} else {
-			//It's coming from the database, we just have to unmarshal data from the DB to get consumerData
-			var data map[string]interface{}
-			if err := json.Unmarshal([]byte(consumerData), &data); err != nil {
-				log.Warning("New> Error %s", err)
-				return nil, err
-			}
-			stash = repostash.New(URL, data["consumer_key"].(string), data["private_rsa_key"].(string), store)
-		}
-		stash.DisableSetStatus = options.DisableStashSetStatus
-
-		if stash.DisableSetStatus {
-			log.Debug("RepositoriesManager> ⚠ Stash Statuses are disabled")
-		}
-
-		rm := sdk.RepositoriesManager{
-			ID:               id,
-			Consumer:         stash,
-			Name:             name,
-			URL:              URL,
-			Type:             sdk.Stash,
-			HooksSupported:   stash.HooksSupported(),
-			PollingSupported: stash.PollingSupported(),
-		}
-		return &rm, nil
-	case sdk.Github:
-		var github *repogithub.GithubConsumer
-		var withHook, withPolling *bool
-
-		//Check if it isn't coming from the DB
-		if id == 0 || consumerData == "" {
-			//Check args
-			if len(args) < 1 || args["client-id"] == "" || options.GithubSecret == "" {
-				return nil, fmt.Errorf("client-id args and client-secret (in cds configuration) are mandatory to connect to github : %v", args)
-			}
-
-			github = repogithub.New(args["client-id"], options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback", store)
-			if args["with-hooks"] != "" {
-				b, err := strconv.ParseBool(args["with-hooks"])
-				if err == nil {
-					withHook = &b
-				}
-			}
-
-			if args["with-polling"] != "" {
-				b, err := strconv.ParseBool(args["with-polling"])
-				if err == nil {
-					withPolling = &b
-				}
-			}
-		} else {
-			//It's coming from the database, we just have to unmarshal data from the DB to get consumerData
-			var data map[string]interface{}
-			if err := json.Unmarshal([]byte(consumerData), &data); err != nil {
-				log.Warning("New> Error %s", err)
-				return nil, err
-			}
-
-			github = repogithub.New(data["client-id"].(string), options.GithubSecret, options.APIBaseURL+"/repositories_manager/oauth2/callback", store)
-			if data["with-hooks"] != nil {
-				b, ok := data["with-hooks"].(bool)
-				if !ok {
-					b = github.HooksSupported()
-				}
-				withHook = &b
-			}
-
-			if data["with-polling"] != nil {
-				b, ok := data["with-polling"].(bool)
-				if !ok {
-					b = github.PollingSupported()
-				}
-				withPolling = &b
-			}
-		}
-
-		github.DisableSetStatus = options.DisableGithubSetStatus
-		github.DisableStatusURL = options.DisableGithubStatusURL
-
-		if withHook == nil {
-			log.Debug("with hooks : default")
-			b := github.HooksSupported()
-			withHook = &b
-		}
-		github.WithHooks = *withHook
-		if withPolling == nil {
-			log.Debug("with polling : default")
-			b := github.PollingSupported()
-			withPolling = &b
-		}
-		github.WithPolling = *withPolling
-
-		rm := sdk.RepositoriesManager{
-			ID:               id,
-			Consumer:         github,
-			Name:             name,
-			URL:              repogithub.URL,
-			Type:             sdk.Github,
-			HooksSupported:   *withHook && github.HooksSupported(),
-			PollingSupported: *withPolling && github.PollingSupported(),
-		}
-
-		return &rm, nil
-	case sdk.Gitlab:
-		driver, err := repogitlab.NewGitlabDriver(id, name, URL, options.APIBaseURL+"/repositories_manager/oauth2/callback", options.GitlabSecret, args, consumerData)
-		if err != nil {
-			return nil, err
-		}
-
-		rm := sdk.RepositoriesManager{
-			ID:               id,
-			Consumer:         driver,
-			Name:             name,
-			URL:              URL,
-			Type:             sdk.Gitlab,
-			HooksSupported:   driver.HooksSupported(),
-			PollingSupported: driver.PollingSupported(),
-		}
-		return &rm, nil
-
+//AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
+func AuthorizedClient(db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, error) {
+	if repo == nil {
+		return nil, sdk.ErrUnauthorized
 	}
-	return nil, fmt.Errorf("Unknown type %s. Cannot instanciate repositories manager t=%s id=%d name=%s url=%s args=%s consumerData=%s", t, t, id, name, URL, args, consumerData)
+
+	servicesDao := services.Querier(db, store)
+	srvs, err := servicesDao.FindByType("vcs")
+	if err != nil {
+		return nil, err
+	}
+
+	return &vcsClient{
+		name:   repo.Name,
+		token:  repo.Data["token"],
+		secret: repo.Data["secret"],
+		srvs:   srvs,
+	}, nil
 }
 
-//Init initializes all repositories
-func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, directory string, secrets map[string]string) error {
-	if rm.Type == sdk.Stash {
-		privateKey := secrets["privatekey"]
-		if privateKey == "" {
-			return fmt.Errorf("Cannot init %s. Missing private key", privateKey)
-		}
-		path := filepath.Join(directory, fmt.Sprintf("%s.%s", rm.Name, "privateKey"))
-		log.Info("RepositoriesManager> Writing stash private key %s", path)
-		if err := ioutil.WriteFile(path, []byte(privateKey), 0600); err != nil {
-			return sdk.WrapError(err, "RepositoriesManager> Unable to write stash private key %s ", path)
-		}
-		stash := rm.Consumer.(*repostash.StashConsumer)
-		stash.PrivateRSAKey = path
-		if err := Update(db, rm); err != nil {
-			return err
-		}
-		return nil
-	}
+func (c *vcsClient) doJSONRequest(method, path string, in interface{}, out interface{}) (int, error) {
+	return services.DoJSONRequest(c.srvs, method, path, in, out, func(req *http.Request) {
+		req.Header.Set("X-CDS-ACCESS-TOKEN", c.token)
+		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", c.token)
+	})
+}
 
-	if rm.Type == sdk.Github {
-		// nothing to do here for github
-		return nil
+func (c *vcsClient) Repos() ([]sdk.VCSRepo, error) {
+	repos := []sdk.VCSRepo{}
+	path := fmt.Sprintf("/vcs/%s/repos", c.name)
+	if _, err := c.doJSONRequest("GET", path, nil, &repos); err != nil {
+		return nil, err
 	}
+	return repos, nil
+}
 
-	if rm.Type == sdk.Gitlab {
-		if s, ok := secrets["secret"]; ok {
-			g := rm.Consumer.(*repogitlab.GitlabDriver)
-			g.Secret = s
-		}
-		return nil
+func (c *vcsClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
+	repo := sdk.VCSRepo{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s", c.name, fullname)
+	if _, err := c.doJSONRequest("GET", path, nil, &repo); err != nil {
+		return repo, err
 	}
+	return repo, nil
+}
 
-	return fmt.Errorf("Unsupported repositories manager : %s: %s", rm.Name, rm.Type)
+func (c *vcsClient) Branches(string) ([]sdk.VCSBranch, error) {
+	return nil, nil
+}
+func (c *vcsClient) Branch(string, string) (*sdk.VCSBranch, error) {
+	return nil, nil
+}
+func (c *vcsClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommit, error) {
+	return nil, nil
+}
+func (c *vcsClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
+	return sdk.VCSCommit{}, nil
+}
+func (c *vcsClient) PullRequests(string) ([]sdk.VCSPullRequest, error) {
+	return nil, nil
+}
+func (c *vcsClient) CreateHook(repo string, hook sdk.VCSHook) error {
+	return nil
+}
+func (c *vcsClient) GetHook(repo, url string) (sdk.VCSHook, error) {
+	return sdk.VCSHook{}, nil
+}
+func (c *vcsClient) UpdateHook(repo, url string, hook sdk.VCSHook) error {
+	return nil
+}
+func (c *vcsClient) DeleteHook(repo string, hook sdk.VCSHook) error {
+	return nil
+}
+func (c *vcsClient) GetEvents(repo string, dateRef time.Time) ([]interface{}, time.Duration, error) {
+	return nil, time.Duration(0), nil
+}
+func (c *vcsClient) PushEvents(string, []interface{}) ([]sdk.VCSPushEvent, error) {
+	return nil, nil
+}
+func (c *vcsClient) CreateEvents(string, []interface{}) ([]sdk.VCSCreateEvent, error) {
+	return nil, nil
+}
+func (c *vcsClient) DeleteEvents(string, []interface{}) ([]sdk.VCSDeleteEvent, error) {
+	return nil, nil
+}
+func (c *vcsClient) PullRequestEvents(string, []interface{}) ([]sdk.VCSPullRequestEvent, error) {
+	return nil, nil
+}
+func (c *vcsClient) SetStatus(event sdk.Event) error {
+	return nil
+}
+func (c *vcsClient) Release(repo, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error) {
+	return nil, nil
+}
+func (c *vcsClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, file *bytes.Buffer) error {
+	return nil
 }

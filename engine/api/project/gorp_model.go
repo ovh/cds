@@ -25,17 +25,20 @@ func init() {
 
 // PostGet is a db hook
 func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
-	metadataStr, err := db.SelectNullStr("select metadata from project where id = $1", p.ID)
+	var fields := struct {
+		Metadata sql.NullString `db:"metadata"`
+		VCSServers sql.NullString `db:"vcs_servers"`
+	}{}
+	metadataStr, err := db.Selec(&fields, "select metadata,vcs_servers from project where id = $1", p.ID)
 	if err != nil {
 		return err
 	}
 
-	if metadataStr.Valid {
-		metadata := sdk.Metadata{}
-		if err := json.Unmarshal([]byte(metadataStr.String), &metadata); err != nil {
-			return err
-		}
-		p.Metadata = metadata
+	if err := gorpmapping.JSONNullString(fields.Metadata, &p.Metadata); err != nil {
+		return err
+	}
+	if err := gorpmapping.JSONNullString(fields.VCSServers, &p.ReposManager); err != nil {
+		return err
 	}
 	return nil
 }
@@ -46,7 +49,13 @@ func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.Exec("update project set metadata = $2 where id = $1", p.ID, b); err != nil {
+
+	b1, err := json.Marshal(p.ReposManager)
+	if err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, b, b1); err != nil {
 		return err
 	}
 	return nil

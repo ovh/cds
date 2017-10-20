@@ -8,30 +8,6 @@ import (
 	"time"
 )
 
-//RepositoriesManagerType lists the different repositories manager currently planned to be supported
-type RepositoriesManagerType string
-
-const (
-	//Stash is valued to "STASH"
-	Stash RepositoriesManagerType = "STASH"
-	//Github is valued to "GITHUB"
-	Github RepositoriesManagerType = "GITHUB"
-	//Gitlab is valued to "GITLAB"
-	Gitlab RepositoriesManagerType = "GITLAB"
-)
-
-//RepositoriesManager is the struct for every repositories manager.
-//It can be stored in CDS DB in repositories_manager table
-type RepositoriesManager struct {
-	ID               int64                     `json:"id"`
-	Consumer         RepositoriesManagerDriver `json:"-"`
-	Type             RepositoriesManagerType   `json:"type"`
-	Name             string                    `json:"name"`
-	URL              string                    `json:"url"`
-	HooksSupported   bool                      `json:"hooks_supported"`
-	PollingSupported bool                      `json:"polling_supported"`
-}
-
 //RepositoryPoller is an alternative to hooks
 type RepositoryPoller struct {
 	Name          string                     `json:"name" db:"name"`
@@ -60,19 +36,9 @@ type RepositoryPollerExecution struct {
 	Error                 string                `json:"error" db:"error"`
 }
 
-//RepositoriesManagerDriver is the consumer interface
-type RepositoriesManagerDriver interface {
-	AuthorizeRedirect() (string, string, error)
-	AuthorizeToken(string, string) (string, string, error)
-	GetAuthorized(string, string) (RepositoriesManagerClient, error)
-	Data() string
-	HooksSupported() bool
-	PollingSupported() bool
-}
-
 //GetReposManager calls API to get list of repositories manager
-func GetReposManager() ([]RepositoriesManager, error) {
-	var rms []RepositoriesManager
+func GetReposManager() ([]string, error) {
+	var rms = []string{}
 	uri := fmt.Sprintf("/repositories_manager")
 
 	data, code, err := Request("GET", uri, nil)
@@ -88,28 +54,6 @@ func GetReposManager() ([]RepositoriesManager, error) {
 		return rms, err
 	}
 	return rms, nil
-}
-
-//AddReposManager add a new repositories manager in CDS
-func AddReposManager(args map[string]string) (*RepositoriesManager, error) {
-	var rm RepositoriesManager
-	uri := fmt.Sprintf("/repositories_manager/add")
-	b, err := json.Marshal(args)
-	if err != nil {
-		return nil, err
-	}
-	data, code, err := Request("POST", uri, b)
-	if err != nil {
-		return nil, err
-	}
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	if err := json.Unmarshal(data, &rm); err != nil {
-		return nil, err
-	}
-	return &rm, nil
 }
 
 //ConnectReposManager add a new repositories manager in CDS for a project
@@ -171,8 +115,8 @@ func DisconnectReposManager(key, name string) error {
 }
 
 //GetProjectReposManager returns connected repository manager for a specific project
-func GetProjectReposManager(k string) ([]RepositoriesManager, error) {
-	var rms []RepositoriesManager
+func GetProjectReposManager(k string) ([]string, error) {
+	var rms []string
 	uri := fmt.Sprintf("/project/%s/repositories_manager", k)
 	data, code, err := Request("GET", uri, nil)
 	if err != nil {

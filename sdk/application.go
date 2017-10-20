@@ -28,7 +28,7 @@ type Application struct {
 	Permission          int                   `json:"permission" db:"-"`
 	Notifications       []UserNotification    `json:"notifications,omitempty" db:"-"`
 	LastModified        time.Time             `json:"last_modified" db:"last_modified"`
-	RepositoriesManager *RepositoriesManager  `json:"repositories_manager,omitempty" db:"-"`
+	RepositoriesManager string                `json:"repositories_manager,omitempty" db:"vcs_server"`
 	RepositoryFullname  string                `json:"repository_fullname,omitempty" db:"repo_fullname"`
 	RepositoryPollers   []RepositoryPoller    `json:"pollers,omitempty" db:"-"`
 	Hooks               []Hook                `json:"hooks,omitempty" db:"-"`

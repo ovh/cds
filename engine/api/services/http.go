@@ -15,8 +15,24 @@ import (
 // HTTPClient will be set to a default httpclient if not set
 var HTTPClient sdk.HTTPClient
 
+// DoJSONRequest performs an http request on a service
+func DoJSONRequest(srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+	var lastErr error
+	var lastCode int
+	for i := range srvs {
+		srv := &srvs[i]
+		code, err := doJSONRequest(srv, "GET", "/vcs", in, out, mods...)
+		if err == nil {
+			return code, nil
+		}
+		lastErr = err
+		lastCode = code
+	}
+	return lastCode, lastErr
+}
+
 // DoJSONRequest performs an http request on service
-func DoJSONRequest(srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+func doJSONRequest(srv *sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 	var b = []byte{}
 	var err error
 
