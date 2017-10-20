@@ -89,7 +89,7 @@ var errGithubConfigurationError = fmt.Errorf("Github configuration Error")
 
 // GitlabServerConfiguration represents the gitlab configuration
 type GitlabServerConfiguration struct {
-	AppID  string `toml:"app-id" json:"-"`
+	AppID  string `toml:"app_id" json:"-"`
 	Secret string `toml:"secret" json:"-"`
 	Status struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
