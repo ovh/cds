@@ -1,5 +1,5 @@
 <div id="ApplicationAdmin">
-    <app-zone header="{{ 'application_workflow_migration' | translate }}">
+    <app-zone header="{{ 'application_workflow_migration' | translate }}" *ngIf="user.admin">
         <app-zone-content class="bottom">
             <div [ngSwitch]="application.workflow_migration">
                 <div *ngSwitchCase="'STARTED'">
@@ -10,7 +10,7 @@
                     <i class="green check icon"></i>
                 </div>
                 <div *ngSwitchDefault>
-                    <button class="ui green button" (click)="generateWorkflow(false)">{{ 'application_migration_generate' | translate }}</button>
+                    <button class="ui green button" (click)="generateWorkflow(false)" [class.loading]="loading" [disabled]="loading" >{{ 'application_migration_generate' | translate }}</button>
                 </div>
             </div>
         </app-zone-content>

@@ -9,6 +9,8 @@ import {WarningModalComponent} from '../../../../shared/modal/warning/warning.co
 import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {User} from '../../../../model/user.model';
 
 @Component({
     selector: 'app-application-admin',
@@ -27,15 +29,18 @@ export class ApplicationAdminComponent implements OnInit {
     migrationModal: ActiveModal<boolean, boolean, void>;
     migrationText: string;
 
+    user: User;
 
     newName: string;
     public loading = false;
 
     constructor(private _applicationStore: ApplicationStore, private _toast: ToastService, private _modalService: SuiModalService,
-                public _translate: TranslateService, private _router: Router, private _appMigrateSerivce: ApplicationMigrateService) {
+                public _translate: TranslateService, private _router: Router, private _appMigrateSerivce: ApplicationMigrateService,
+                private _authStore: AuthentificationStore) {
     }
 
     ngOnInit() {
+        this.user = this._authStore.getUser();
         this.newName = this.application.name;
         if (this.application.permission !== 7) {
             this._router.navigate(['/project', this.project.key, 'application', this.application.name],
