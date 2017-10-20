@@ -1,4 +1,4 @@
-package github
+package gitlab
 
 import (
 	"context"
@@ -18,19 +18,19 @@ import (
 
 // TestNew needs githubClientID and githubClientSecret
 func TestNewClient(t *testing.T) {
-	ghConsummer := getNewConsumer(t)
-	assert.NotNil(t, ghConsummer)
+	glConsummer := getNewConsumer(t)
+	assert.NotNil(t, glConsummer)
 }
 
 func getNewConsumer(t *testing.T) sdk.VCSServer {
 	log.SetLogger(t)
 	cfg := test.LoadTestingConf(t)
-	clientID := cfg["githubClientID"]
-	clientSecret := cfg["githubClientSecret"]
+	appID := cfg["gitlabClientID"]
+	secret := cfg["gitlabClientSecret"]
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
 
-	if clientID == "" && clientSecret == "" {
+	if appID == "" && secret == "" {
 		t.Logf("Unable to read github configuration. Skipping this tests.")
 		t.SkipNow()
 	}
@@ -40,20 +40,20 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	ghConsummer := New(clientID, clientSecret, "", cache)
-	return ghConsummer
+	glConsummer := New(appID, secret, "https://gitlab.com", "http://localhost:8081", "", cache)
+	return glConsummer
 }
 
 func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 	log.SetLogger(t)
 	cfg := test.LoadTestingConf(t)
-	clientID := cfg["githubClientID"]
-	clientSecret := cfg["githubClientSecret"]
-	accessToken := cfg["githubAccessToken"]
+	appID := cfg["gitlabClientID"]
+	secret := cfg["gitlabClientSecret"]
+	accessToken := cfg["gitlabAccessToken"]
 	redisHost := cfg["redisHost"]
 	redisPassword := cfg["redisPassword"]
 
-	if clientID == "" && clientSecret == "" {
+	if appID == "" && secret == "" {
 		t.Logf("Unable to read github configuration. Skipping this tests.")
 		t.SkipNow()
 	}
@@ -63,8 +63,8 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	ghConsummer := New(clientID, clientSecret, "", cache)
-	cli, err := ghConsummer.GetAuthorizedClient(accessToken, "")
+	glConsummer := New(appID, secret, "https://gitlab.com", "http://localhost:8081", "", cache)
+	cli, err := glConsummer.GetAuthorizedClient(accessToken, "")
 	if err != nil {
 		t.Fatalf("Unable to init authorized client (%s): %v", redisHost, err)
 	}
@@ -73,8 +73,8 @@ func getNewAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 }
 
 func TestClientAuthorizeToken(t *testing.T) {
-	ghConsummer := getNewConsumer(t)
-	token, url, err := ghConsummer.AuthorizeRedirect()
+	glConsumer := getNewConsumer(t)
+	token, url, err := glConsumer.AuthorizeRedirect()
 	t.Logf("token: %s", token)
 	t.Logf("url: %s", url)
 	assert.NotEmpty(t, token)
@@ -110,14 +110,14 @@ func TestClientAuthorizeToken(t *testing.T) {
 	assert.NotEmpty(t, code)
 	assert.NotEmpty(t, state)
 
-	accessToken, accessTokenSecret, err := ghConsummer.AuthorizeToken(state, code)
+	accessToken, accessTokenSecret, err := glConsumer.AuthorizeToken(state, code)
 	assert.NotEmpty(t, accessToken)
 	assert.NotEmpty(t, accessTokenSecret)
 	test.NoError(t, err)
 
 	t.Logf("Token is %s", accessToken)
 
-	ghClient, err := ghConsummer.GetAuthorizedClient(accessToken, accessTokenSecret)
+	ghClient, err := glConsumer.GetAuthorizedClient(accessToken, accessTokenSecret)
 	test.NoError(t, err)
 	assert.NotNil(t, ghClient)
 }
@@ -140,8 +140,10 @@ func TestRepoByFullname(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	repo, err := ghClient.RepoByFullname("ovh/cds")
+	repo, err := ghClient.RepoByFullname("vaevictis35/proj1")
+
 	test.NoError(t, err)
+	t.Logf("%+v", repo)
 	assert.NotNil(t, repo)
 }
 
@@ -149,8 +151,9 @@ func TestBranches(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	branches, err := ghClient.Branches("ovh/cds")
+	branches, err := ghClient.Branches("vaevictis35/proj1")
 	test.NoError(t, err)
+	t.Logf("%+v", branches)
 	assert.NotEmpty(t, branches)
 }
 
@@ -158,8 +161,9 @@ func TestBranch(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	branch, err := ghClient.Branch("ovh/cds", "master")
+	branch, err := ghClient.Branch("vaevictis35/proj1", "master")
 	test.NoError(t, err)
+	t.Logf("%+v", branch)
 	assert.NotNil(t, branch)
 }
 
@@ -167,7 +171,8 @@ func TestCommits(t *testing.T) {
 	ghClient := getNewAuthorizedClient(t)
 	assert.NotNil(t, ghClient)
 
-	commits, err := ghClient.Commits("ovh/cds", "master", "", "")
+	commits, err := ghClient.Commits("vaevictis35/proj1", "master", "", "")
 	test.NoError(t, err)
+	t.Logf("%+v", commits)
 	assert.NotNil(t, commits)
 }
