@@ -144,12 +144,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 		return w.runBuiltin(ctx, a, buildID, params, stepOrder)
 	case sdk.PluginAction:
 		//Define a loggin function
-		sendLog := func(s string) {
-			if !strings.HasSuffix(s, "\n") {
-				s += "\n"
-			}
-			w.sendLog(buildID, s, stepOrder, false)
-		}
+		sendLog := getLogger(w, buildID, stepOrder)
 		//Run the plugin
 		return w.runPlugin(ctx, a, buildID, params, stepOrder, sendLog)
 	}
