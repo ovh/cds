@@ -80,8 +80,26 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			tlsskipverify = true
 		}
 
+		env := []string{}
+		//set up environment variables from pipeline build job parameters
+		for _, p := range params {
+			// avoid put private key in environment var as it's a binary value
+			if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
+				continue
+			}
+			envName := strings.Replace(p.Name, ".", "_", -1)
+			envName = strings.ToUpper(envName)
+			env = append(env, fmt.Sprintf("%s=%s", envName, p.Value))
+		}
+
+		for _, p := range w.currentJob.buildVariables {
+			envName := strings.Replace(p.Name, ".", "_", -1)
+			envName = strings.ToUpper(envName)
+			env = append(env, fmt.Sprintf("%s=%s", envName, p.Value))
+		}
+
 		//Create the rpc server
-		pluginClient := plugin.NewClient(ctx, pluginName, pluginBinary, w.id, w.apiEndpoint, tlsskipverify)
+		pluginClient := plugin.NewClient(ctx, pluginName, pluginBinary, w.id, w.apiEndpoint, tlsskipverify, env...)
 		defer pluginClient.Kill()
 
 		//Get the plugin interface
@@ -133,10 +151,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			pluginAction.IDWorkflowNodeRun = w.currentJob.wJob.WorkflowNodeRunID
 		}
 
-		sendLog("Starting plugin...")
 		pluginResult := _plugin.Run(pluginAction)
-		sendLog("Plugin stopped")
-
 		if pluginResult == plugin.Success {
 			res.Status = sdk.StatusSuccess.String()
 		} else {
