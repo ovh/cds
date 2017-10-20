@@ -6,13 +6,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ovh/cds/sdk"
-
 	"github.com/pkg/browser"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 

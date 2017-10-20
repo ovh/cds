@@ -1,9 +1,11 @@
 package gitlab
 
 import (
-	"github.com/ovh/cds/sdk"
-	"github.com/xanzy/go-gitlab"
 	"fmt"
+
+	"github.com/xanzy/go-gitlab"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //Repos returns the list of accessible repositories
@@ -77,5 +79,3 @@ func (c *gitlabClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 
 	return repo, nil
 }
-
-

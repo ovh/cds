@@ -4,14 +4,16 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
-	"github.com/xanzy/go-gitlab"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/xanzy/go-gitlab"
+
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type authorizeResponse struct {

@@ -1,8 +1,9 @@
 package gitlab
 
 import (
-	"time"
 	"fmt"
+	"time"
+
 	"github.com/ovh/cds/sdk"
 )
 

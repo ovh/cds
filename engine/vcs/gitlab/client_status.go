@@ -1,11 +1,13 @@
 package gitlab
 
 import (
-	"github.com/mitchellh/mapstructure"
-	"net/url"
-	"github.com/ovh/cds/sdk"
-	"github.com/xanzy/go-gitlab"
 	"fmt"
+	"net/url"
+
+	"github.com/mitchellh/mapstructure"
+	"github.com/xanzy/go-gitlab"
+
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
