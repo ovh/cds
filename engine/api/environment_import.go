@@ -104,13 +104,15 @@ func (api *API) importNewEnvironmentHandler() Handler {
 			}
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-			return sdk.WrapError(err, "importNewEnvironmentHandler> Cannot check warnings")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "importNewEnvironmentHandler> Cannot commit transaction")
 		}
+
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
+				log.Error("importNewEnvironmentHandler> Cannot check warnings: %s", err)
+			}
+		}()
 
 		return WriteJSON(w, r, msgListString, http.StatusOK)
 	}
@@ -220,9 +222,11 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot commit transaction")
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot check warnings")
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
+				log.Error("importIntoEnvironmentHandler> Cannot check warnings: %s", err)
+			}
+		}()
 
 		return WriteJSON(w, r, msgListString, http.StatusOK)
 	}

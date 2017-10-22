@@ -300,7 +300,7 @@ func (api *API) updateVariablesInApplicationHandler() Handler {
 
 		go func() {
 			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("updateVariableInApplicationHandler> Cannot check warnings: %s\n", err)
+				log.Warning("updateVariableInApplicationHandler> Cannot check warnings: %s", err)
 			}
 
 			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
@@ -355,6 +355,7 @@ func (api *API) updateVariableInApplicationHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "updateVariableInApplicationHandler> Cannot load variables")
 		}
+
 		go func() {
 			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
 				log.Warning("updateVariableInApplicationHandler> Cannot check warnings: %v", err)
@@ -424,7 +425,7 @@ func (api *API) addVariableInApplicationHandler() Handler {
 
 		go func() {
 			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("addVariableInApplicationHandler> Cannot check warnings: %s\n", err)
+				log.Warning("addVariableInApplicationHandler> Cannot check warnings: %s", err)
 			}
 
 			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {

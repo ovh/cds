@@ -302,10 +302,11 @@ func (api *API) applyTemplateHandler() Handler {
 			msgList = append(msgList, s)
 		}
 
-		log.Debug("applyTemplatesHandler> Check warnings on project")
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-			return sdk.WrapError(err, "applyTemplatesHandler> Cannot check warnings")
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
+				log.Error("applyTemplatesHandler> Cannot check warnings: %s", err)
+			}
+		}()
 
 		proj, errPrj := project.Load(api.mustDB(), api.Cache, proj.Key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithPipelines)
 		if errPrj != nil {
@@ -366,10 +367,11 @@ func (api *API) applyTemplateOnApplicationHandler() Handler {
 			msgList = append(msgList, s)
 		}
 
-		log.Debug("applyTemplatesHandler> Check warnings on project")
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-			return sdk.WrapError(err, "applyTemplatesHandler> Cannot check warnings")
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
+				log.Error("applyTemplatesHandler> Cannot check warnings: %s", err)
+			}
+		}()
 
 		return WriteJSON(w, r, msgList, http.StatusOK)
 	}
