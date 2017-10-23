@@ -64,7 +64,7 @@
             </div>
         </div>
         <ng-container>
-            <app-workflow-trigger [project]="project" [workflow]="detailedWorkflow" [triggerSrcNode]="selectedNode" [(trigger)]="selectedTrigger"
+            <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="detailedWorkflow" [triggerSrcNode]="selectedNode" [(trigger)]="selectedTrigger"
                 (triggerChange)="updateTrigger()" #editTriggerComponent></app-workflow-trigger>
         </ng-container>
         <ng-container>

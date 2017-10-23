@@ -380,6 +380,13 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         }
     }
 
+    @HostListener('document:keydown', ['$event'])
+    handleKeyboardEvent(event: KeyboardEvent) {
+        if (event.code === 'Escape' && this.linkWithJoin) {
+            this.toggleLinkJoin(false);
+        }
+    }
+
     createNodeComponent(node: WorkflowNode): ComponentRef<WorkflowNodeComponent> {
         let nodeComponentFactory = this.componentFactoryResolver.resolveComponentFactory(WorkflowNodeComponent);
         let componentRef = nodeComponentFactory.create(this.svgContainer.parentInjector);
