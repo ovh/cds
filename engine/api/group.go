@@ -315,11 +315,7 @@ func (api *API) addUserInGroupHandler() Handler {
 			}
 		}
 
-		if err := tx.Commit(); err != nil {
-			return err
-		}
-
-		return nil
+		return tx.Commit()
 	}
 }
 

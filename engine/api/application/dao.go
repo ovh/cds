@@ -40,7 +40,6 @@ var LoadOptions = struct {
 	WithGroups:                     &loadGroups,
 	WithHooks:                      &loadHooks,
 	WithNotifs:                     &loadNotifs,
-	WithRepositoryManager:          &loadRepositoryManager,
 	WithKeys:                       &loadKeys,
 }
 

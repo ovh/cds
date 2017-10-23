@@ -13,6 +13,13 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+type vcsConsumer struct {
+	name   string
+	proj   *sdk.Project
+	dbFunc func() *gorp.DbMap
+	cache  cache.Store
+}
+
 type vcsClient struct {
 	name   string
 	token  string
@@ -29,6 +36,68 @@ func GetVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
 	}
 
 	return nil
+}
+
+// NewVCSServer returns a sdk.VCSServer wrapping vcs uservices calls
+func NewVCSServer(dbFunc func() *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
+	return &vcsConsumer{name: name}, nil
+}
+
+func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {
+	srvDAO := services.Querier(c.dbFunc(), c.cache)
+	srv, err := srvDAO.FindByType("vcs")
+	if err != nil {
+		return "", "", err
+	}
+
+	res := map[string]string{}
+	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
+	if _, err := services.DoJSONRequest(srv, "GET", path, nil, &res); err != nil {
+		return "", "", err
+	}
+
+	return res["token"], res["url"], nil
+}
+
+func (c *vcsConsumer) AuthorizeToken(token string, secret string) (string, string, error) {
+	srvDAO := services.Querier(c.dbFunc(), c.cache)
+	srv, err := srvDAO.FindByType("vcs")
+	if err != nil {
+		return "", "", err
+	}
+
+	body := map[string]string{
+		"token":  token,
+		"secret": secret,
+	}
+
+	res := map[string]string{}
+	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
+	if _, err := services.DoJSONRequest(srv, "POST", path, body, &res); err != nil {
+		return "", "", err
+	}
+
+	return res["token"], res["secret"], nil
+}
+
+func (c *vcsConsumer) GetAuthorizedClient(token string, secret string) (sdk.VCSAuthorizedClient, error) {
+	s := GetVCSServer(c.proj, c.name)
+	if s == nil {
+		return nil, sdk.ErrNoReposManagerClientAuth
+	}
+
+	servicesDao := services.Querier(c.dbFunc(), c.cache)
+	srvs, err := servicesDao.FindByType("vcs")
+	if err != nil {
+		return nil, err
+	}
+
+	return &vcsClient{
+		name:   c.name,
+		token:  token,
+		secret: secret,
+		srvs:   srvs,
+	}, nil
 }
 
 //AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService

@@ -26,8 +26,71 @@ func LoadAll(db *gorp.DbMap, store cache.Store) ([]string, error) {
 	return vcsServers, nil
 }
 
-//LoadForProject loads a repomanager link for a project
-func LoadForProject(db gorp.SqlExecutor, projectKey string, repomanagerName string) (*sdk.ProjectVCSServer, error) {
+//InsertForProject link a project with a repository manager
+func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.ProjectVCSServer) error {
+	servers, err := LoadAllForProject(db, proj.Key)
+	for _, server := range servers {
+		if server.Name == vcsServer.Name {
+			return sdk.ErrConflict
+		}
+	}
+	servers = append(servers, *vcsServer)
+
+	b1, err := json.Marshal(servers)
+	if err != nil {
+		return err
+	}
+
+	encryptedVCSServerStr, err := secret.Encrypt(b1)
+	if err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("update project set vcs_servers = $2 where projectkey = $1", proj.Key, encryptedVCSServerStr); err != nil {
+		return err
+	}
+
+	proj.VCSServers = servers
+
+	return nil
+}
+
+//DeleteForProject unlink a project with a repository manager
+func DeleteForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.ProjectVCSServer) error {
+	servers, err := LoadAllForProject(db, proj.Key)
+	for _, server := range servers {
+		if server.Name == vcsServer.Name {
+			return sdk.ErrConflict
+		}
+	}
+
+	for i := range servers {
+		if servers[i].Name == vcsServer.Name {
+			servers = append(servers[:i], servers[i+1:]...)
+			break
+		}
+	}
+
+	b1, err := json.Marshal(servers)
+	if err != nil {
+		return err
+	}
+
+	encryptedVCSServerStr, err := secret.Encrypt(b1)
+	if err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("update project set vcs_servers = $2 where projectkey = $1", proj.VCSServers, encryptedVCSServerStr); err != nil {
+		return err
+	}
+
+	proj.VCSServers = servers
+	return nil
+}
+
+//LoadAllForProject loads all repomanager link for a project
+func LoadAllForProject(db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVCSServer, error) {
 	vcsServerStr, err := db.SelectNullStr("select vcs_servers from project where projectkey = $1", projectKey)
 	if err != nil {
 		return nil, err
@@ -38,13 +101,40 @@ func LoadForProject(db gorp.SqlExecutor, projectKey string, repomanagerName stri
 	}
 
 	clearVCSServer, err := secret.Decrypt([]byte(vcsServerStr.String))
-	vcsServer := &sdk.ProjectVCSServer{}
+	vcsServer := []sdk.ProjectVCSServer{}
 
 	if err := json.Unmarshal(clearVCSServer, vcsServer); err != nil {
 		return nil, err
 	}
 
 	return vcsServer, nil
+}
+
+//LoadForProject loads a repomanager link for a project
+func LoadForProject(db gorp.SqlExecutor, projectKey, rmName string) (*sdk.ProjectVCSServer, error) {
+	vcsServerStr, err := db.SelectNullStr("select vcs_servers from project where projectkey = $1", projectKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if !vcsServerStr.Valid {
+		return nil, sdk.ErrNotFound
+	}
+
+	clearVCSServer, err := secret.Decrypt([]byte(vcsServerStr.String))
+	vcsServer := []sdk.ProjectVCSServer{}
+
+	if err := json.Unmarshal(clearVCSServer, vcsServer); err != nil {
+		return nil, err
+	}
+
+	for _, v := range vcsServer {
+		if v.Name == rmName {
+			return &v, nil
+		}
+	}
+
+	return nil, sdk.ErrNotFound
 }
 
 //InsertForApplication associates a repositories manager with an application

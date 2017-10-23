@@ -16,8 +16,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Middlewares = append(r.Middlewares, s.authMiddleware)
 
 	r.Handle("/vcs", r.GET(s.getAllVCSServersHandler))
-	r.Handle("/vcs/{name}/authorize")
-	r.Handle("/vcs/{name}/authorize/callback")
+	r.Handle("/vcs/{name}/authorize", r.GET(s.getAuthorizeHandler), r.POST(s.postAuhorizeHandler))
 
 	r.Handle("/vcs/{name}/repos", r.GET(s.getReposHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}", r.GET(s.getRepoHandler))

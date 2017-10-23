@@ -11,15 +11,60 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func muxVar(r *http.Request, s string) string {
+	vars := mux.Vars(r)
+	return vars[s]
+}
+
 func (s *Service) getAllVCSServersHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return api.WriteJSON(w, r, s.Cfg.Servers, http.StatusOK)
 	}
 }
 
-func muxVar(r *http.Request, s string) string {
-	vars := mux.Vars(r)
-	return vars[s]
+func (s *Service) getAuthorizeHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getAuthorizeHandler> VCS server unavailable")
+		}
+
+		token, url, err := consumer.AuthorizeRedirect()
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getAuthorizeHandler>")
+		}
+
+		return api.WriteJSON(w, r, map[string]string{
+			"token": token,
+			"url":   url,
+		}, http.StatusOK)
+	}
+}
+
+func (s *Service) postAuhorizeHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getAuthorizeHandler> VCS server unavailable")
+		}
+
+		body := map[string]string{}
+		if err := api.UnmarshalBody(r, body); err != nil {
+			return err
+		}
+
+		token, secret, err := consumer.AuthorizeToken(body["token"], body["secret"])
+		if err != nil {
+			return err
+		}
+
+		return api.WriteJSON(w, r, map[string]string{
+			"token":  token,
+			"secret": secret,
+		}, http.StatusOK)
+	}
 }
 
 func (s *Service) getReposHandler() api.Handler {

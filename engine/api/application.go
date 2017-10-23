@@ -196,7 +196,6 @@ func (api *API) getApplicationHandler() Handler {
 		withHooks := FormBool(r, "withHooks")
 		withNotifs := FormBool(r, "withNotifs")
 		withWorkflow := FormBool(r, "withWorkflow")
-		withRepoManager := FormBool(r, "withRepoMan")
 		withTriggers := FormBool(r, "withTriggers")
 		withSchedulers := FormBool(r, "withSchedulers")
 		withKeys := FormBool(r, "withKeys")
@@ -256,14 +255,6 @@ func (api *API) getApplicationHandler() Handler {
 			}
 		}
 
-		if withRepoManager {
-			var errRepo error
-			_, app.RepositoriesManager, errRepo = repositoriesmanager.LoadFromApplicationByID(api.mustDB(), app.ID, api.Cache)
-			if errRepo != nil {
-				return sdk.WrapError(errRepo, "getApplicationHandler> Cannot load repo manager for application %s", app.Name)
-			}
-		}
-
 		if applicationStatus {
 			var pipelineBuilds []sdk.PipelineBuild
 
@@ -312,16 +303,22 @@ func (api *API) getApplicationBranchHandler() Handler {
 		applicationName := vars["permApplicationName"]
 		remote := r.FormValue("remote")
 
+		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load project %s from db", projectKey, projectKey)
+		}
+
 		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load application %s for project %s from db", applicationName, projectKey)
 		}
 
 		var branches []sdk.VCSBranch
-		if app.RepositoryFullname != "" && app.RepositoriesManager != nil {
-			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, app.RepositoriesManager.Name, api.Cache)
+		if app.RepositoryFullname != "" && app.RepositoriesManager != "" {
+			vcsServer := repositoriesmanager.GetVCSServer(proj, app.RepositoriesManager)
+			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 			if erra != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, erra)
+				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager, erra)
 			}
 			if remote != "" && remote != app.RepositoryFullname {
 				brs, errB := client.Branches(remote)
@@ -358,6 +355,11 @@ func (api *API) getApplicationRemoteHandler() Handler {
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
 
+		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load project %s from db", projectKey, projectKey)
+		}
+
 		app, errL := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
 		if errL != nil {
 			return sdk.WrapError(errL, "getApplicationRemoteHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
@@ -365,10 +367,11 @@ func (api *API) getApplicationRemoteHandler() Handler {
 
 		remotes := []sdk.VCSRemote{}
 		var prs []sdk.VCSPullRequest
-		if app.RepositoryFullname != "" && app.RepositoriesManager != nil {
-			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, app.RepositoriesManager.Name, api.Cache)
+		if app.RepositoryFullname != "" && app.RepositoriesManager != "" {
+			vcsServer := repositoriesmanager.GetVCSServer(proj, app.RepositoriesManager)
+			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 			if erra != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationRemoteHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager.Name, erra)
+				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationRemoteHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager, erra)
 			}
 			var errb error
 			prs, errb = client.PullRequests(app.RepositoryFullname)

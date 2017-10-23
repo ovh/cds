@@ -228,7 +228,6 @@ var LoadOptions = struct {
 	WithEnvironments:               &loadEnvironments,
 	WithGroups:                     &loadGroups,
 	WithPermission:                 &loadPermission,
-	WithRepositoriesManagers:       &loadRepositoriesManagers,
 	WithApplications:               &loadApplications,
 	WithVariables:                  &loadVariables,
 	WithVariablesWithClearPassword: &loadVariablesWithClearPassword,

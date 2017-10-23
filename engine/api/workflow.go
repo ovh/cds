@@ -16,7 +16,6 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
@@ -148,16 +147,7 @@ func (api *API) postWorkflowHandler() Handler {
 			if len(srvs) < 1 {
 				return sdk.WrapError(fmt.Errorf("postWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
 			}
-			var errHooks error
-			for _, s := range srvs {
-				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
-				errHooks = errBulk
-				if errBulk == nil {
-					log.Debug("postWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
-					break
-				}
-			}
-			if errHooks != nil {
+			if _, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hooks, nil); errHooks != nil {
 				return sdk.WrapError(errHooks, "postWorkflowHandler> Unable to create hooks")
 			}
 		}

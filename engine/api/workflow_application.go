@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -33,6 +34,11 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 		var req sdk.WorkflowNodeRunRelease
 		if errU := UnmarshalBody(r, &req); errU != nil {
 			return errU
+		}
+
+		proj, errprod := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errprod != nil {
+			return sdk.WrapError(errprod, "releaseApplicationWorkflowHandler")
 		}
 
 		wNodeRun, errWNR := workflow.LoadNodeRun(api.mustDB(), key, name, number, nodeRunID)
@@ -65,13 +71,18 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			return sdk.WrapError(sdk.ErrApplicationNotFound, "releaseApplicationWorkflowHandler")
 		}
 
-		if workflowNode.Context.Application.RepositoriesManager == nil {
+		if workflowNode.Context.Application.RepositoriesManager == "" {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), key, workflowNode.Context.Application.RepositoriesManager.Name, api.Cache)
+		rm := repositoriesmanager.GetVCSServer(proj, workflowNode.Context.Application.RepositoriesManager)
+		if rm == nil {
+			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
+		}
+
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
 		if err != nil {
-			return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.RepositoriesManager.Name)
+			return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.RepositoriesManager)
 		}
 
 		release, errRelease := client.Release(workflowNode.Context.Application.RepositoryFullname, req.TagName, req.ReleaseTitle, req.ReleaseContent)

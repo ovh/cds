@@ -304,10 +304,7 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 	// If branch is DELETE'd, remove all builds related to this branch
 	if h.Message == "DELETE" {
 		log.Warning("processHook> Removing builds in %s/%s on branch %s\n", h.ProjectKey, h.Repository, h.Branch)
-		if err := hook.DeleteBranchBuilds(db, hooks, h.Branch); err != nil {
-			return err
-		}
-		return nil
+		return hook.DeleteBranchBuilds(db, hooks, h.Branch)
 	}
 
 	log.Debug("Executing %d hooks for %s/%s on branch %s\n", len(hooks), h.ProjectKey, h.Repository, h.Branch)

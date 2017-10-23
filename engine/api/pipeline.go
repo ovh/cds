@@ -1323,6 +1323,12 @@ func (api *API) getPipelineCommitsHandler() Handler {
 		envName := r.Form.Get("envName")
 		hash := r.Form.Get("hash")
 
+		// Load project
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if errproj != nil {
+			return sdk.WrapError(errproj, "getPipelineCommitsHandler> Cannot load project")
+		}
+
 		// Load pipeline
 		pip, errpip := pipeline.LoadPipeline(api.mustDB(), projectKey, pipName, false)
 		if errpip != nil {
@@ -1354,7 +1360,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 		commits := []sdk.VCSCommit{}
 
 		//Check it the application is attached to a repository
-		if app.RepositoriesManager == nil {
+		if app.RepositoriesManager == "" {
 			log.Warning("getPipelineCommitsHandler> Application %s/%s not attached to a repository manager", projectKey, appName)
 			return WriteJSON(w, r, commits, http.StatusOK)
 		}
@@ -1369,19 +1375,14 @@ func (api *API) getPipelineCommitsHandler() Handler {
 			return WriteJSON(w, r, commits, http.StatusOK)
 		}
 
-		b, e := repositoriesmanager.CheckApplicationIsAttached(api.mustDB(), app.RepositoriesManager.Name, projectKey, appName)
-		if e != nil {
-			log.Warning("getPipelineCommitsHandler> Cannot check app (%s,%s,%s): %s", app.RepositoriesManager.Name, projectKey, appName, e)
-			return e
-		}
-
-		if !b && app.RepositoryFullname == "" {
+		if app.RepositoryFullname == "" {
 			log.Debug("getPipelineCommitsHandler> No repository on the application %s", appName)
 			return WriteJSON(w, r, commits, http.StatusOK)
 		}
 
 		//Get the RepositoriesManager Client
-		client, errclient := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, app.RepositoriesManager.Name, api.Cache)
+		vcsServer := repositoriesmanager.GetVCSServer(proj, app.RepositoriesManager)
+		client, errclient := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 		if errclient != nil {
 			return sdk.WrapError(errclient, "getPipelineCommitsHandler> Cannot get client")
 		}
@@ -1462,17 +1463,7 @@ func (api *API) getPipelineBuildCommitsHandler() Handler {
 		}
 
 		//Check it the application is attached to a repository
-		if app.RepositoriesManager == nil {
-			return sdk.ErrNoReposManagerClientAuth
-		}
-
-		b, e := repositoriesmanager.CheckApplicationIsAttached(api.mustDB(), app.RepositoriesManager.Name, projectKey, appName)
-		if e != nil {
-			log.Warning("getPipelineBuildCommitsHandler> Cannot check app (%s,%s,%s): %s", app.RepositoriesManager.Name, projectKey, appName, e)
-			return e
-		}
-
-		if !b && app.RepositoryFullname == "" {
+		if app.RepositoriesManager == "" || app.RepositoryFullname == "" {
 			return sdk.ErrNoReposManagerClientAuth
 		}
 

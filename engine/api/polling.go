@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -58,22 +57,13 @@ func (api *API) addPollerHandler() Handler {
 		h.Enabled = true
 
 		//Check it the application is attached to a repository
-		if app.RepositoriesManager == nil {
-			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addPollerHandler> No repository on application")
-		}
-
-		b, e := repositoriesmanager.CheckApplicationIsAttached(api.mustDB(), app.RepositoriesManager.Name, projectKey, appName)
-		if e != nil {
-			return sdk.WrapError(e, "addPollerHandler> Cannot check app (%s,%s,%s)", app.RepositoriesManager.Name, projectKey, appName)
-		}
-
-		if !b && app.RepositoryFullname == "" {
+		if app.RepositoriesManager == "" || app.RepositoryFullname == "" {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addPollerHandler> No repository on application")
 		}
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(e, "addPollerHandler> Cannot start transaction")
+			return sdk.WrapError(err, "addPollerHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 

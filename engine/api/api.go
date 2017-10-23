@@ -420,23 +420,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 
-	//Intialize repositories manager
-	rmInitOpts := repositoriesmanager.InitializeOpts{
-		KeysDirectory:          a.Config.Directories.Keys,
-		UIBaseURL:              a.Config.URL.UI,
-		APIBaseURL:             a.Config.URL.API,
-		DisableGithubSetStatus: a.Config.VCS.Github.DisableStatus,
-		DisableGithubStatusURL: a.Config.VCS.Github.DisableStatusURL,
-		DisableStashSetStatus:  a.Config.VCS.Bitbucket.DisableStatus,
-		GithubSecret:           a.Config.VCS.Github.Secret,
-		GitlabSecret:           a.Config.VCS.Gitlab.Secret,
-		StashPrivateKey:        a.Config.VCS.Bitbucket.PrivateKey,
-		StashConsumerKey:       a.Config.VCS.Bitbucket.ConsumerKey,
-	}
-	if err := repositoriesmanager.Initialize(rmInitOpts, a.DBConnectionFactory.GetDBMap, a.Cache); err != nil {
-		log.Warning("Error initializing repositories manager connections: %s", err)
-	}
-
 	//Init pipeline package
 	pipeline.Store = a.Cache
 

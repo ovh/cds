@@ -25,21 +25,30 @@ func init() {
 
 // PostGet is a db hook
 func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
-	var fields := struct {
-		Metadata sql.NullString `db:"metadata"`
+	var fields = struct {
+		Metadata   sql.NullString `db:"metadata"`
 		VCSServers sql.NullString `db:"vcs_servers"`
 	}{}
-	metadataStr, err := db.Selec(&fields, "select metadata,vcs_servers from project where id = $1", p.ID)
-	if err != nil {
+
+	if _, err := db.Select(&fields, "select metadata,vcs_servers from project where id = $1", p.ID); err != nil {
 		return err
 	}
 
 	if err := gorpmapping.JSONNullString(fields.Metadata, &p.Metadata); err != nil {
 		return err
 	}
-	if err := gorpmapping.JSONNullString(fields.VCSServers, &p.ReposManager); err != nil {
-		return err
+
+	if fields.VCSServers.Valid {
+		clearVCSServer, err := secret.Decrypt([]byte(fields.VCSServers.String))
+		if err != nil {
+			return err
+		}
+
+		if err := json.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
 
@@ -50,12 +59,17 @@ func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
 		return err
 	}
 
-	b1, err := json.Marshal(p.ReposManager)
+	b1, err := json.Marshal(p.VCSServers)
 	if err != nil {
 		return err
 	}
 
-	if _, err := db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, b, b1); err != nil {
+	encryptedVCSServerStr, err := secret.Encrypt(b1)
+	if err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, b, encryptedVCSServerStr); err != nil {
 		return err
 	}
 	return nil
