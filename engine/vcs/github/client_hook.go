@@ -1,13 +1,20 @@
 package github
 
-import "fmt"
+import (
+	"fmt"
 
-//CreateHook is not implemented
-func (g *githubClient) CreateHook(repo, url string) error {
-	return fmt.Errorf("Not yet implemented on github")
+	"github.com/ovh/cds/sdk"
+)
+
+func (g *githubClient) CreateHook(repo string, hook sdk.VCSHook) error {
+	return fmt.Errorf("Not yet implemented")
 }
-
-//DeleteHook is not implemented
-func (g *githubClient) DeleteHook(repo, url string) error {
-	return fmt.Errorf("Not yet implemented on github")
+func (g *githubClient) GetHook(repo, id string) (sdk.VCSHook, error) {
+	return sdk.VCSHook{}, fmt.Errorf("Not yet implemented")
+}
+func (g *githubClient) UpdateHook(repo, id string, hook sdk.VCSHook) error {
+	return fmt.Errorf("Not yet implemented")
+}
+func (g *githubClient) DeleteHook(repo string, hook sdk.VCSHook) error {
+	return fmt.Errorf("Not yet implemented")
 }

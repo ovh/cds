@@ -75,7 +75,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 private _router: Router, private _authStore: AuthentificationStore,
                 private _toast: ToastService, public _translate: TranslateService) {
         // Update data if route change
-        this._route.data.subscribe( datas => {
+        this._route.data.subscribe(datas => {
             this.project = datas['project'];
         });
 
@@ -101,11 +101,11 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
             let key = params['key'];
             let appName = params['appName'];
             if (key && appName) {
-                 if (this.applicationSubscription) {
+                if (this.applicationSubscription) {
                     this.applicationSubscription.unsubscribe();
                 }
                 if (this.application && this.application.name !== appName) {
-                    this.application = undefined;
+                    this.application = null;
                     this.stopWorker();
                 }
                 if (!this.application) {
@@ -124,7 +124,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
                                 // Switch workflow
                                 if (this.workflowComponentList && this.workflowComponentList.length > 0) {
-                                    this.workflowComponentList.first.switchApplication();
+                                    this.workflowComponentList.first.switchApplication(this.application);
                                 }
                             } else if (updatedApplication && updatedApplication.externalChange) {
                                 this._toast.info('', this._translate.instant('warning_application'));
@@ -139,7 +139,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-       this.stopWorker();
+        this.appFilter.remote = '';
+        this.stopWorker();
     }
 
     ngOnInit() {
@@ -149,12 +150,11 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 this.selectedTab = tab;
             }
         });
-
-
     }
 
     stopWorker(): void {
        if (this.worker) {
+           this.appFilter.remote = '';
            this.worker.stop();
        }
     }

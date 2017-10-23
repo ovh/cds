@@ -177,7 +177,7 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 	for _, ts := range tests.TestSuites {
 		for _, tc := range ts.TestCases {
 			name := ts.Name + " / " + tc.Name
-			if tc.Skipped > 0 {
+			if len(tc.Skipped) > 0 {
 				t.Skip(1, name)
 				continue
 			}

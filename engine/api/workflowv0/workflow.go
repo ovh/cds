@@ -495,30 +495,28 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 			child.Pipeline.Parameter = pipParams
 
 			// Load Status
-			if branchName != "" {
-				var pbs []sdk.PipelineBuild
-				var errPB error
-				if version == 0 {
-					opts := []pipeline.ExecOptionFunc{
-						pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
-					}
+			var pbs []sdk.PipelineBuild
+			var errPB error
+			if version == 0 {
+				opts := []pipeline.ExecOptionFunc{
+					pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
+				}
 
-					if remote == "" || remote == parent.Application.RepositoryFullname {
-						opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(parent.Application.RepositoryFullname))
-					} else {
-						opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
-					}
-
-					pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, 1, opts...)
+				if remote == "" || remote == parent.Application.RepositoryFullname {
+					opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(parent.Application.RepositoryFullname))
 				} else {
-					pbs, errPB = pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, version, 1)
+					opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
 				}
-				if errPB != nil {
-					return sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build")
-				}
-				if len(pbs) > 0 {
-					child.Pipeline.LastPipelineBuild = &pbs[0]
-				}
+
+				pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, 1, opts...)
+			} else {
+				pbs, errPB = pipeline.LoadPipelineBuildByApplicationPipelineEnvVersion(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, version, 1)
+			}
+			if errPB != nil {
+				return sdk.WrapError(errPB, "LoadCDTree> Cannot load last pipeline build")
+			}
+			if len(pbs) > 0 {
+				child.Pipeline.LastPipelineBuild = &pbs[0]
 			}
 
 			// Calculate permission

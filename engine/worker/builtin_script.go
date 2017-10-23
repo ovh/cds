@@ -131,13 +131,7 @@ func runScriptAction(w *currentWorker) BuiltInAction {
 			cmd.Env = []string{}
 			// filter technical env variables
 			for _, e := range env {
-				if strings.HasPrefix(e, "CDS_MODEL=") ||
-					strings.HasPrefix(e, "CDS_TTL=") ||
-					strings.HasPrefix(e, "CDS_SINGLE_USE=") ||
-					strings.HasPrefix(e, "CDS_NAME=") ||
-					strings.HasPrefix(e, "CDS_TOKEN=") ||
-					strings.HasPrefix(e, "CDS_API=") ||
-					strings.HasPrefix(e, "CDS_HATCHERY=") {
+				if strings.HasPrefix(e, "CDS_") {
 					continue
 				}
 				cmd.Env = append(cmd.Env, e)

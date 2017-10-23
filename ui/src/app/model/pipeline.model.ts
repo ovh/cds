@@ -227,7 +227,7 @@ export class TestCase {
     errors: Array<Failure>;
     failures: Array<Failure>;
     status: string;
-    skipped: number;
+    skipped: Array<Skipped>;
     systemout: InnerResult;
     systemerr: InnerResult;
 
@@ -240,6 +240,11 @@ export class Failure {
     value: string;
     type: string;
     message: string;
+}
+
+// Skipped contains data related to a skipped test.
+export class Skipped {
+    value: string;
 }
 
 // InnerResult is used by TestCase

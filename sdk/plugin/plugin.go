@@ -29,22 +29,20 @@ func Serve(a CDSAction) {
 }
 
 //NewClient has to be called every time we nedd to call a plugin
-func NewClient(ctx context.Context, name, binary, id, url string, tlsSkipVerify bool) *Client {
+func NewClient(ctx context.Context, name, binary, id, url string, tlsSkipVerify bool, envs ...string) *Client {
 	cmd := exec.CommandContext(ctx, binary)
 
 	env := os.Environ()
 	cmd.Env = []string{}
 	// filter technical env variables
 	for _, e := range env {
-		if strings.HasPrefix(e, "CDS_MODEL=") ||
-			strings.HasPrefix(e, "CDS_TTL=") ||
-			strings.HasPrefix(e, "CDS_SINGLE_USE=") ||
-			strings.HasPrefix(e, "CDS_NAME=") ||
-			strings.HasPrefix(e, "CDS_TOKEN=") ||
-			strings.HasPrefix(e, "CDS_API=") ||
-			strings.HasPrefix(e, "CDS_HATCHERY=") {
+		if strings.HasPrefix(e, "CDS_") {
 			continue
 		}
+		cmd.Env = append(cmd.Env, e)
+	}
+	// additionnal env variables
+	for _, e := range envs {
 		cmd.Env = append(cmd.Env, e)
 	}
 

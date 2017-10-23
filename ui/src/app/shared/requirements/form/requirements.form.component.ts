@@ -28,7 +28,7 @@ export class RequirementsFormComponent {
 
     newRequirement: Requirement = new Requirement('binary');
     availableRequirements: Array<string>;
-    isWriting = false;
+    valueChanged = false;
     workerModels: Array<string>;
     _suggest: Array<string> = [];
 
@@ -46,19 +46,18 @@ export class RequirementsFormComponent {
     addRequirement(): void {
         this.event.emit(new RequirementEvent('add', this.newRequirement));
         this.newRequirement = new Requirement('binary');
-        this.isWriting = false;
+        this.valueChanged = false;
     }
 
     setValue(event: any): void  {
-        if (this.isWriting || (this.newRequirement.value === '' && this.newRequirement.type === 'binary')) {
-            this.isWriting = true;
+        if (!this.valueChanged || this.newRequirement.value === '') {
             this.newRequirement.value = event.target.value;
         }
     }
 
     setName(event: any): void {
-        if (this.isWriting || ((this.newRequirement.name === '') && this.newRequirement.type === 'binary')) {
-            this.isWriting = true;
+        this.valueChanged = true;
+        if (this.newRequirement.name === '') {
             this.newRequirement.name = event.target.value;
         }
     }

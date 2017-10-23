@@ -13,10 +13,13 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) error {
+// takeWorkflowJob try to take a job.
+// If Take is not possible (as Job already booked for example)
+// it will return true (-> can work on another job), false, otherwise
+func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (bool, error) {
 	info, err := w.client.QueueTakeJob(job, w.bookedJobID == job.ID)
 	if err != nil {
-		return sdk.WrapError(err, "takeWorkflowJob> Unable to take workflob node run job")
+		return true, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job")
 	}
 
 	w.nbActionsDone++
@@ -82,10 +85,10 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 		res.BuildID = job.ID
 		_, err := client.SendResult(ctx, &res)
 		if err == nil {
-			return nil
+			return false, nil
 		}
 		log.Error("Unable to send result through grpc: %v", err)
 	}
 
-	return w.client.QueueSendResult(job.ID, res)
+	return false, w.client.QueueSendResult(job.ID, res)
 }

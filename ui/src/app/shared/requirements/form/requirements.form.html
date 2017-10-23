@@ -1,15 +1,23 @@
 <div class="ui form">
     <div class="fields">
         <div class="five wide field">
-            <input name="name" [(ngModel)]="newRequirement.name" placeholder="{{ 'requirement_name' | translate }}" (keyup)="setValue($event)">
+            <input
+                name="name"
+                auto-complete
+                autocomplete="off"
+                type="text"
+                [source]="suggest"
+                [min-chars]="3"
+                [(ngModel)]="newRequirement.name"
+                (keyup)="setValue($event)"
+                [no-match-found-text]="false">
         </div>
         <div class="three wide field">
             <sm-select class="search"
                 *ngIf="availableRequirements.length > 0"
                 [(model)]="newRequirement.type"
                 [options]="{'fullTextSearch': true}"
-                placeholder="{{ 'requirement_type' | translate }}"
-                (onChange)="isWriting = false">
+                placeholder="{{ 'requirement_type' | translate }}">
                 <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
             </sm-select>
         </div>

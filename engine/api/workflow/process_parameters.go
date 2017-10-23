@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, error) {
+func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun, stage *sdk.Stage) ([]sdk.Parameter, *sdk.MultiError) {
 	params := run.BuildParameters
 	tmp := map[string]string{}
 

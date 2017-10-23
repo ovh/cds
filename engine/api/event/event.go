@@ -71,6 +71,16 @@ func DequeueEvent(c context.Context) {
 	}
 }
 
+// GetHostname returns Hostname of this cds instance
+func GetHostname() string {
+	return hostname
+}
+
+// GetCDSName returns cdsname of this cds instance
+func GetCDSName() string {
+	return cdsname
+}
+
 // Close closes event system
 func Close() {
 	for _, b := range brokers {

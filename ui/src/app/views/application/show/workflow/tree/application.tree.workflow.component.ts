@@ -10,6 +10,7 @@ import {Remote} from '../../../../../model/repositories.model';
 })
 export class ApplicationTreeWorkflowComponent {
 
+    @Input() ready: boolean;
     @Input() project: Project;
     @Input() remotes: Array<Remote>;
     @Input() application: Application;

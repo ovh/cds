@@ -118,7 +118,7 @@ type TestCase struct {
 	Errors     []Failure              `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`
 	Failures   []Failure              `xml:"failure,omitempty" json:"failures" yaml:"failures,omitempty"`
 	Name       string                 `xml:"name,attr" json:"name" yaml:"name"`
-	Skipped    int                    `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
+	Skipped    []Skipped              `xml:"skipped,omitempty" json:"skipped" yaml:"skipped,omitempty"`
 	Status     string                 `xml:"status,attr,omitempty" json:"status" yaml:"status,omitempty"`
 	Systemout  InnerResult            `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
 	Systemerr  InnerResult            `xml:"system-err,omitempty" json:"systemerr" yaml:"systemerr,omitempty"`
@@ -131,6 +131,9 @@ type TestCase struct {
 type TestStep map[string]interface{}
 
 // Failure contains data related to a failed test.
+type Skipped struct {
+	Value string `xml:",cdata" json:"value" yaml:"value,omitempty"`
+}
 type Failure struct {
 	Value   string `xml:",cdata" json:"value" yaml:"value,omitempty"`
 	Type    string `xml:"type,attr,omitempty" json:"type" yaml:"type,omitempty"`
