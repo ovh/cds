@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/timestamp"
 
 	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/sdk"
@@ -34,7 +33,7 @@ func (w *currentWorker) sendLog(buildID int64, value string, stepOrder int, fina
 	if final {
 		l.Done, _ = ptypes.TimestampProto(time.Now())
 	} else {
-		l.Done = &timestamp.Timestamp{}
+		l.Done, _ = ptypes.TimestampProto(time.Time{})
 	}
 	w.logger.logChan <- *l
 	return nil
@@ -112,7 +111,7 @@ func (w *currentWorker) logProcessor(ctx context.Context) error {
 					// Buffer log list is empty, sending batch to API
 					data, err := json.Marshal(l)
 					if err != nil {
-						fmt.Printf("Error: cannot marshal logs: %s\n", err)
+						log.Error("Error: cannot marshal logs: %s", err)
 						continue
 					}
 
@@ -124,7 +123,7 @@ func (w *currentWorker) logProcessor(ctx context.Context) error {
 					}
 
 					if _, _, err := sdk.Request("POST", path, data); err != nil {
-						fmt.Printf("error: cannot send logs: %s\n", err)
+						log.Error("error: cannot send logs: %s", err)
 						continue
 					}
 				}

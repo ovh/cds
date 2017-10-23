@@ -67,6 +67,9 @@ test-db-start:
 	@sleep 5
 	$(TEST_DB_INIT)
 
+test-db-init:
+	$(TEST_DB_INIT)
+
 test-config: ${HOME}/.cds/tests.cfg.json
 
 ${HOME}/.cds/tests.cfg.json:

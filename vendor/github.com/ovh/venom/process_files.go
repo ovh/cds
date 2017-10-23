@@ -90,8 +90,8 @@ func readFiles(variables map[string]string, detailsLevel string, filesPath []str
 		nSteps := 0
 		for _, tc := range ts.TestCases {
 			nSteps += len(tc.TestSteps)
-			if tc.Skipped == 1 {
-				ts.Skipped++
+			if len(tc.Skipped) >= 1 {
+				ts.Skipped += len(tc.Skipped)
 			}
 		}
 		ts.Total = len(ts.TestCases)

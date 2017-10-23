@@ -470,7 +470,7 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		job, errj := workflow.LoadAndLockNodeJobRun(tx, api.Cache, id)
+		job, errj := workflow.LoadAndLockNodeJobRunNoWait(tx, api.Cache, id)
 		if errj != nil {
 			return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job")
 		}

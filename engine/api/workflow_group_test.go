@@ -15,6 +15,7 @@ import (
 	"github.com/ovh/cds/sdk"
 
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/project"
 )
 
 func Test_postWorkflowGroupHandler(t *testing.T) {
@@ -40,7 +41,11 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 
 	//Prepare request
 	vars := map[string]string{
@@ -93,7 +98,11 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),
@@ -162,7 +171,11 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 	}
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 
 	gr := sdk.Group{
 		Name: sdk.RandomString(10),

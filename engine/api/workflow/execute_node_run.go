@@ -152,60 +152,63 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 	}
 
 	//Browse the jobs
-	for _, job := range stage.Jobs {
+	for j := range stage.Jobs {
+		job := &stage.Jobs[j]
+		errs := sdk.MultiError{}
 		//Process variables for the jobs
-		jobParams, errParam := getNodeJobRunParameters(db, job, run, stage)
+		jobParams, errParam := getNodeJobRunParameters(db, *job, run, stage)
+		if errParam != nil {
+			errs.Join(*errParam)
+		}
+		jobRequirements, errReq := getNodeJobRunRequirements(db, *job, run)
+		if errReq != nil {
+			errs.Join(*errReq)
+		}
+		job.Action.Requirements = jobRequirements
 
 		//Create the job run
-		job := sdk.WorkflowNodeJobRun{
+		wjob := sdk.WorkflowNodeJobRun{
 			WorkflowNodeRunID: run.ID,
 			Start:             time.Time{},
 			Queued:            time.Now(),
 			Status:            sdk.StatusWaiting.String(),
 			Parameters:        jobParams,
 			Job: sdk.ExecutedJob{
-				Job: job,
+				Job: *job,
 			},
 		}
 
-		if !stage.Enabled || !job.Job.Enabled {
-			job.Status = sdk.StatusDisabled.String()
+		if !stage.Enabled || !wjob.Job.Enabled {
+			wjob.Status = sdk.StatusDisabled.String()
 		} else if !conditionsOK {
-			job.Status = sdk.StatusSkipped.String()
+			wjob.Status = sdk.StatusSkipped.String()
 		}
 
 		if errParam != nil {
-			job.Status = sdk.StatusFail.String()
-
-			errm, ok := errParam.(*sdk.MultiError)
+			wjob.Status = sdk.StatusFail.String()
 			spawnInfos := sdk.SpawnMsg{
 				ID: sdk.MsgSpawnInfoJobError.ID,
 			}
 
-			if ok {
-				for _, e := range *errm {
-					spawnInfos.Args = append(spawnInfos.Args, e.Error())
-				}
-			} else {
-				spawnInfos.Args = []interface{}{errParam.Error()}
+			for _, e := range *errParam {
+				spawnInfos.Args = append(spawnInfos.Args, e.Error())
 			}
 
-			job.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
+			wjob.SpawnInfos = []sdk.SpawnInfo{sdk.SpawnInfo{
 				APITime:    time.Now(),
 				Message:    spawnInfos,
 				RemoteTime: time.Now(),
 			}}
-
 		}
 
 		//Insert in database
-		if err := insertWorkflowNodeJobRun(db, &job); err != nil {
+		if err := insertWorkflowNodeJobRun(db, &wjob); err != nil {
 			return sdk.WrapError(err, "addJobsToQueue> Unable to insert in table workflow_node_run_job")
 		}
 
 		//Put the job run in database
-		event.PublishJobRun(run, &job)
-		stage.RunJobs = append(stage.RunJobs, job)
+		event.PublishJobRun(run, &wjob)
+		stage.RunJobs = append(stage.RunJobs, wjob)
 	}
 
 	return nil
@@ -327,7 +330,7 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 	defer tx.Rollback()
 
 	for _, nrjID := range ids {
-		njr, errNRJ := LoadAndLockNodeJobRun(tx, store, nrjID)
+		njr, errNRJ := LoadAndLockNodeJobRunWait(tx, store, nrjID)
 		if errNRJ != nil {
 			return sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
 		}

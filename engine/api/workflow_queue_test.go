@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
@@ -83,7 +84,10 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
@@ -101,7 +105,7 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 	//Do the request
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 202, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
