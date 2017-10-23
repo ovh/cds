@@ -130,19 +130,19 @@ type TestCase struct {
 	Context    map[string]interface{} `xml:"-" json:"-" yaml:"context,omitempty"`
 }
 
-// TestsBefore contains all informations about tests in a pipeline build
-type TestsBefore struct {
+// testsBefore contains all informations about tests in a pipeline build
+type testsBefore struct {
 	XMLName      xml.Name          `xml:"testsuites" json:"-" yaml:"-"`
 	Total        int               `xml:"-" json:"total"`
 	TotalOK      int               `xml:"-" json:"ok"`
 	TotalKO      int               `xml:"-" json:"ko"`
 	TotalSkipped int               `xml:"-" json:"skipped"`
-	TestSuites   []TestSuiteBefore `xml:"testsuite" json:"test_suites"`
+	TestSuites   []testSuiteBefore `xml:"testsuite" json:"test_suites"`
 }
 
-// TestSuiteBefore is a single JUnit test suite which may contain many
+// testSuiteBefore is a single JUnit test suite which may contain many
 // testcases.
-type TestSuiteBefore struct {
+type testSuiteBefore struct {
 	XMLName    xml.Name               `xml:"testsuite" json:"-" yaml:"-"`
 	Disabled   int                    `xml:"disabled,attr,omitempty" json:"disabled" yaml:"-"`
 	Errors     int                    `xml:"errors,attr,omitempty" json:"errors" yaml:"-"`
@@ -154,15 +154,15 @@ type TestSuiteBefore struct {
 	Properties []Property             `xml:"-" json:"properties" yaml:"-"`
 	Skipped    int                    `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
 	Total      int                    `xml:"tests,attr" json:"total" yaml:"total,omitempty"`
-	TestCases  []TestCaseBefore       `xml:"testcase" json:"tests" yaml:"testcases"`
+	TestCases  []testCaseBefore       `xml:"testcase" json:"tests" yaml:"testcases"`
 	Time       string                 `xml:"time,attr,omitempty" json:"time" yaml:"-"`
 	Timestamp  string                 `xml:"timestamp,attr,omitempty" json:"timestamp" yaml:"-"`
 	Vars       map[string]interface{} `xml:"-" json:"-" yaml:"vars"`
 	Templater  *Templater             `xml:"-" json:"-" yaml:"-"`
 }
 
-// TestCaseBefore is a single test case with its result.
-type TestCaseBefore struct {
+// testCaseBefore is a single test case with its result.
+type testCaseBefore struct {
 	XMLName    xml.Name               `xml:"testcase" json:"-" yaml:"-"`
 	Assertions string                 `xml:"assertions,attr,omitempty" json:"assertions" yaml:"-"`
 	Classname  string                 `xml:"classname,attr,omitempty" json:"classname" yaml:"-"`
@@ -183,7 +183,7 @@ func (t *Tests) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 
-	before := &TestsBefore{}
+	before := &testsBefore{}
 	if err := json.Unmarshal(b, before); err != nil {
 		return err
 	}
