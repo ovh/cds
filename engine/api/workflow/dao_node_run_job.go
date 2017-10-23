@@ -101,8 +101,20 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 	return &job, nil
 }
 
-//LoadAndLockNodeJobRun load for update a NodeJobRun given its ID
-func LoadAndLockNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+//LoadAndLockNodeJobRunWait load for update a NodeJobRun given its ID
+func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+	j := JobRun{}
+	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update`
+	if err := db.SelectOne(&j, query, id); err != nil {
+		return nil, err
+	}
+	getHatcheryInfo(store, &j)
+	job := sdk.WorkflowNodeJobRun(j)
+	return &job, nil
+}
+
+//LoadAndLockNodeJobRunNoWait load for update a NodeJobRun given its ID
+func LoadAndLockNodeJobRunNoWait(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update nowait`
 	if err := db.SelectOne(&j, query, id); err != nil {

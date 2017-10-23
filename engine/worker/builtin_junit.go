@@ -107,7 +107,7 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 	for _, ts := range v.TestSuites {
 		nSkipped := 0
 		for _, tc := range ts.TestCases {
-			nSkipped += tc.Skipped
+			nSkipped += len(tc.Skipped)
 		}
 		if ts.Skipped < nSkipped {
 			ts.Skipped = nSkipped
@@ -121,13 +121,13 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 		v.TotalSkipped += ts.Skipped
 	}
 
-	var nbOK, nbKO int
+	var nbOK, nbKO, nbSkipped int
 
 	reasons := []string{}
 	reasons = append(reasons, fmt.Sprintf("JUnit parser: %d testsuite(s)", len(v.TestSuites)))
 
 	for i, ts := range v.TestSuites {
-		var nbKOTC, nbFailures, nbErrors int
+		var nbKOTC, nbFailures, nbErrors, nbSkippedTC int
 		if ts.Name == "" {
 			ts.Name = fmt.Sprintf("TestSuite.%d", i)
 		}
@@ -146,11 +146,14 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 			}
 			if len(tc.Failures) > 0 || len(tc.Errors) > 0 {
 				nbKOTC++
+			} else if len(tc.Skipped) > 0 {
+				nbSkippedTC += len(tc.Skipped)
 			}
 			v.TestSuites[i].TestCases[k] = tc
 		}
 		nbOK += len(ts.TestCases) - nbKOTC
 		nbKO += nbKOTC
+		nbSkipped += nbSkippedTC
 		if ts.Failures > nbFailures {
 			nbFailures = ts.Failures
 		}
@@ -167,6 +170,9 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 		if nbKOTC > 0 {
 			reasons = append(reasons, fmt.Sprintf("JUnit parser: testsuite %s has %d test(s) failed", ts.Name, nbKOTC))
 		}
+		if nbSkippedTC > 0 {
+			reasons = append(reasons, fmt.Sprintf("JUnit parser: testsuite %s has %d test(s) skipped", ts.Name, nbSkippedTC))
+		}
 		v.TestSuites[i] = ts
 	}
 
@@ -178,8 +184,12 @@ func computeStats(res *sdk.Result, v *venom.Tests) []string {
 		v.TotalOK = nbOK
 	}
 
+	if nbSkipped != v.TotalSkipped {
+		v.TotalSkipped = nbSkipped
+	}
+
 	if v.TotalKO+v.TotalOK != v.Total {
-		v.Total = v.TotalKO + v.TotalOK
+		v.Total = v.TotalKO + v.TotalOK + v.TotalSkipped
 	}
 
 	res.Status = sdk.StatusFail.String()

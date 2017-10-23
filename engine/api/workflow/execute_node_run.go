@@ -330,7 +330,7 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 	defer tx.Rollback()
 
 	for _, nrjID := range ids {
-		njr, errNRJ := LoadAndLockNodeJobRun(tx, store, nrjID)
+		njr, errNRJ := LoadAndLockNodeJobRunWait(tx, store, nrjID)
 		if errNRJ != nil {
 			return sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
 		}
