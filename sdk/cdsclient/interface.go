@@ -22,6 +22,10 @@ type Interface interface {
 	ApplicationKeysList(string, string) ([]sdk.ApplicationKey, error)
 	ApplicationKeyCreate(string, string, *sdk.ApplicationKey) error
 	ApplicationKeysDelete(string, string, string) error
+	ApplicationVariablesList(key string, appName string) ([]sdk.Variable, error)
+	ApplicationVariableCreate(projectKey string, appName string, variable *sdk.Variable) error
+	ApplicationVariableDelete(projectKey string, appName string, variable string) error
+	ApplicationVariableUpdate(projectKey string, appName string, variable *sdk.Variable) error
 	ConfigUser() (map[string]string, error)
 	EnvironmentCreate(string, *sdk.Environment) error
 	EnvironmentDelete(string, string) error
