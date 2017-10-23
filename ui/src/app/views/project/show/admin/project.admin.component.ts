@@ -5,6 +5,8 @@ import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
 import {Router} from '@angular/router';
+import {User} from '../../../../model/user.model';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 
 @Component({
     selector: 'app-project-admin',
@@ -19,9 +21,10 @@ export class ProjectAdminComponent implements OnInit {
 
     loading = false;
     migrationValue = 0.0;
+    user: User;
 
     constructor(private _projectStore: ProjectStore, private _toast: ToastService,
-                public _translate: TranslateService, private _router: Router) {};
+                public _translate: TranslateService, private _router: Router, private _authStore: AuthentificationStore) {};
 
     ngOnInit(): void {
         if (this.project.permission !== 7) {
@@ -34,6 +37,7 @@ export class ProjectAdminComponent implements OnInit {
                 this.migrationValue++;
             }
         });
+        this.user = this._authStore.getUser();
     }
 
     onSubmitProjectUpdate(skip?: boolean) {

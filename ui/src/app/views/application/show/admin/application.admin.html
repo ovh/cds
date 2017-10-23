@@ -1,5 +1,5 @@
 <div id="ApplicationAdmin">
-    <app-zone header="{{ 'application_workflow_migration' | translate }}" *ngIf="user.admin">
+    <app-zone header="{{ 'application_workflow_migration' | translate }}" *ngIf="user.admin || project.workflow_migration !== 'NOT_BEGUN'">
         <app-zone-content class="bottom">
             <div [ngSwitch]="application.workflow_migration">
                 <div *ngSwitchCase="'STARTED'">

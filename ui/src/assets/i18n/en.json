@@ -410,6 +410,7 @@
   "project_update_msg_ok" : "The project has just been updated.",
   "project_ssh_error" : "Project ssh key must have a name",
   "project_update_name_error" : "Project name is mandatory and must respect the alphanumeric pattern ([a-zA-Z0-9]*)",
+  "project_updated" : "Project updated",
   "project_variable_list_title" : "List of project variables: ",
   "project_variable_form_title" : "Add a new variable: ",
   "project_workflows_list" : "List of workflows in the project: ",

@@ -17,6 +17,7 @@
             <div class="ui grid" *ngIf="keysNotBegun">
                 <div class="ui stackable four column grid">
                     <div class="center aligned column" *ngFor="let k of keysNotBegun">
+                        <sui-checkbox class="slider" (checkChange)="enableProject(k)"></sui-checkbox>
                         <a href="#" [routerLink]="['/project', k]" [queryParams]="{ tab: 'applications'}">{{k}}</a>
                     </div>
                 </div>

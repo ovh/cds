@@ -410,6 +410,7 @@
   "project_ssh_error" : "La clé ssh du projet doit avoir un nom",
   "project_update_msg_ok" : "Le projet a été mis à jour.",
   "project_update_name_error" : "Le nom du projet est obligatoire et doit être au format alphanumérique ([a-zA-Z0-9]*)",
+  "project_updated" : "Projet mis à jour",
   "project_variable_list_title" : "Liste des variables du projet: ",
   "project_variable_form_title" : "Ajouter une nouvelle variable: ",
   "project_pipelines_list" : "Liste des pipelines du projet: ",
