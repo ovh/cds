@@ -51,7 +51,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 		if wr != nil {
 			params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, getUser(ctx))
 			if errp != nil {
-				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
+				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
 			}
 
 			var statusParamFound bool

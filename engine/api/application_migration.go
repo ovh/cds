@@ -47,6 +47,7 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "migrationApplicationWorkflowHandler > Cannot start transaction")
 		}
+		defer tx.Rollback()
 
 		for appID := range appIDs {
 			appToClean, errA := application.LoadByID(api.mustDB(), api.Cache, appID, getUser(ctx), application.LoadOptions.WithPipelines)
@@ -144,6 +145,7 @@ func (api *API) migrationApplicationWorkflowHandler() Handler {
 		if errT != nil {
 			return sdk.WrapError(errT, "migrationApplicationWorkflowHandler > Cannot start transaction")
 		}
+		defer tx.Rollback()
 
 		if len(cdTree) == 0 {
 			app.WorkflowMigration = migrate.STATUS_DONE
