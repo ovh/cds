@@ -30,6 +30,10 @@ type Interface interface {
 	EnvironmentKeysList(string, string) ([]sdk.EnvironmentKey, error)
 	EnvironmentKeyCreate(string, string, *sdk.EnvironmentKey) error
 	EnvironmentKeysDelete(string, string, string) error
+	EnvironmentVariablesList(key string, envName string) ([]sdk.Variable, error)
+	EnvironmentVariableCreate(projectKey string, envName string, variable *sdk.Variable) error
+	EnvironmentVariableDelete(projectKey string, envName string, keyName string) error
+	EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error
 	GroupCreate(group *sdk.Group) error
 	GroupDelete(name string) error
 	GroupGenerateToken(groupName, expiration string) (*sdk.Token, error)
