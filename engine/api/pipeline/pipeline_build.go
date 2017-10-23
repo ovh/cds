@@ -1656,7 +1656,7 @@ func paramsToMap(params []sdk.Parameter) map[string]string {
 }
 
 func getRemoteName(project, repo string) string {
-	if project != "" {
+	if project != "" && !strings.Contains(repo, project+"/") {
 		return project + "/" + repo
 	}
 	return repo
