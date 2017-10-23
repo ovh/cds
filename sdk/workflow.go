@@ -22,6 +22,7 @@ type Workflow struct {
 	Metadata      Metadata           `json:"metadata" yaml:"metadata" db:"-"`
 	Usage         *Usage             `json:"usage,omitempty" db:"-" cli:"-"`
 	HistoryLength int64              `json:"history_length" db:"history_length" cli:"-"`
+	PurgeTags     []string           `json:"purge_tags,omitempty" db:"-" cli:"-"`
 }
 
 // FilterHooksConfig filter all hooks configuration and remove somme configuration key

@@ -22,6 +22,8 @@ export class Workflow {
     permission: number;
     metadata: Map<string, string>;
     usage: Usage;
+    history_length: number;
+    purge_tags: Array<string>;
 
     // UI params
     externalChange: boolean;

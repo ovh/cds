@@ -26,18 +26,30 @@ func UpdateLastModifiedDate(db gorp.SqlExecutor, w *sdk.Workflow) error {
 
 // PostGet is a db hook
 func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
-	metadataStr, err := db.SelectNullStr("select metadata from workflow where id = $1", w.ID)
-	if err != nil {
-		return err
-	}
+	var res = struct {
+		Metadata  sql.NullString `db:"metadata"`
+		PurgeTags sql.NullString `db:"purge_tags"`
+	}{}
 
-	if metadataStr.Valid {
+	if err := db.SelectOne(&res, "SELECT metadata, purge_tags FROM workflow WHERE id = $1", w.ID); err != nil {
+		return sdk.WrapError(err, "PostGet> Unable to load marshalled workflow")
+	}
+	if res.Metadata.Valid {
 		metadata := sdk.Metadata{}
-		if err := json.Unmarshal([]byte(metadataStr.String), &metadata); err != nil {
+		if err := json.Unmarshal([]byte(res.Metadata.String), &metadata); err != nil {
 			return err
 		}
 		w.Metadata = metadata
 	}
+
+	if res.PurgeTags.Valid {
+		purgeTags := []string{}
+		if err := json.Unmarshal([]byte(res.PurgeTags.String), &purgeTags); err != nil {
+			return err
+		}
+		w.PurgeTags = purgeTags
+	}
+
 	return nil
 }
 
@@ -47,9 +59,18 @@ func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.Exec("update workflow set metadata = $2 where id = $1", w.ID, b); err != nil {
+	if _, err := db.Exec("update workflow set metadata = $1 where id = $2", b, w.ID); err != nil {
 		return err
 	}
+
+	pt, errPt := json.Marshal(w.PurgeTags)
+	if errPt != nil {
+		return errPt
+	}
+	if _, err := db.Exec("update workflow set purge_tags = $1 where id = $2", pt, w.ID); err != nil {
+		return err
+	}
+
 	return nil
 }
 

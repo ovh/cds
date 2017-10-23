@@ -3,7 +3,6 @@ package workflow
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -338,47 +337,63 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 }
 
 // PurgeWorkflowRun mark all worfklow run to delete
-func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow, branch string) error {
+func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
+	ids := []struct {
+		Ids string `json:"ids" db:"ids"`
+	}{}
+
 	if wf.HistoryLength == 0 {
 		log.Warning("PurgeWorkflowRun> history length equals 0, skipping purge")
 		return nil
 	}
 
-	queryUpdate := `UPDATE workflow_run SET to_delete = true WHERE workflow_run.id IN ( %s )`
-	args := []interface{}{wf.ID}
-	if branch == "" {
-		queryUpdate = fmt.Sprintf(queryUpdate, `SELECT workflow_run.id FROM workflow_run
-			LEFT JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
-			WHERE workflow_run.workflow_id = $1
-			AND (workflow_run_tag.tag IS NULL
-				OR (workflow_run_tag.tag = 'git.branch' AND (workflow_run_tag.value IS NULL OR workflow_run_tag.value = ''))
-			) ORDER BY workflow_run.id DESC OFFSET $2 ROWS
-		`)
-	} else {
-		queryUpdate = fmt.Sprintf(queryUpdate, `SELECT workflow_run.id FROM workflow_run
-			JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
-			WHERE workflow_run.workflow_id = $1
-			AND workflow_run_tag.tag = 'git.branch'
-			AND workflow_run_tag.value = $2
-			ORDER BY workflow_run.id DESC
-			OFFSET $3 ROWS
-		`)
-		args = append(args, branch)
-	}
-	args = append(args, wf.HistoryLength)
+	if len(wf.PurgeTags) == 0 {
+		qDelete := `
+			UPDATE workflow_run SET to_delete = true
+			WHERE workflow_run.id IN (
+				SELECT workflow_run.id FROM workflow_run ORDER BY workflow_run.id DESC OFFSET $1 ROWS
+			)
+		`
+		if _, err := db.Exec(qDelete, wf.HistoryLength); err != nil {
+			log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
+			return err
+		}
 
-	if _, err := db.Exec(queryUpdate, args...); err != nil {
-		log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge for id %d, branch %s and history length %d : %s", wf.ID, branch, wf.HistoryLength, err)
+		return nil
+	}
+
+	queryGetIds := `SELECT string_agg(id::text, ',') AS ids FROM
+		(SELECT workflow_run.id AS id, workflow_run_tag.tag AS tag, workflow_run_tag.value AS value FROM workflow_run
+		JOIN workflow_run_tag ON workflow_run.id = workflow_run_tag.workflow_run_id
+		WHERE workflow_run.workflow_id = $1 AND workflow_run_tag.tag = ANY(string_to_array($2, ',')::text[]) ORDER BY workflow_run.id DESC) as wr
+		GROUP BY tag, value HAVING COUNT(id) > $3
+	`
+	if _, errS := db.Select(&ids, queryGetIds, wf.ID, strings.Join(wf.PurgeTags, ","), wf.HistoryLength); errS != nil {
+		log.Warning("PurgeWorkflowRun> Unable to get workflow run for purge with workflow id %d, tags %v and history length %d : %s", wf.ID, wf.PurgeTags, wf.HistoryLength, errS)
+		return errS
+	}
+
+	idsToUpdate := []string{}
+	for _, idToUp := range ids {
+		if idToUp.Ids != "" {
+			idsToUpdate = append(idsToUpdate, strings.Join(strings.Split(idToUp.Ids, ",")[wf.HistoryLength:], ","))
+		}
+	}
+
+	queryUpdate := `UPDATE workflow_run SET to_delete = true WHERE workflow_run.id = ANY(string_to_array($1, ',')::bigint[])`
+	if _, err := db.Exec(queryUpdate, strings.Join(idsToUpdate, ",")); err != nil {
+		log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
+		return err
 	}
 	return nil
 }
 
-// DeleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
-func DeleteWorkflowRunsHistory(db gorp.SqlExecutor) error {
+// deleteWorkflowRunsHistory is useful to delete all the workflow run marked with to delete flag in db
+func deleteWorkflowRunsHistory(db gorp.SqlExecutor) error {
 	query := `DELETE FROM workflow_run WHERE to_delete = true`
 
 	if _, err := db.Exec(query); err != nil {
-		log.Warning("DeleteWorkflowRunsHistory> Unable to delete workflow history %s", err)
+		log.Warning("deleteWorkflowRunsHistory> Unable to delete workflow history %s", err)
 		return err
 	}
 	return nil
