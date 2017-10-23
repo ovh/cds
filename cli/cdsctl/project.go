@@ -20,6 +20,7 @@ var (
 			cli.NewListCommand(projectListCmd, projectListRun, nil),
 			cli.NewGetCommand(projectShowCmd, projectShowRun, nil),
 			projectKey,
+			projectVariable,
 		})
 )
 

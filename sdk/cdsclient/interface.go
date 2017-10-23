@@ -24,7 +24,8 @@ type Interface interface {
 	ApplicationKeysDelete(string, string, string) error
 	ApplicationVariablesList(key string, appName string) ([]sdk.Variable, error)
 	ApplicationVariableCreate(projectKey string, appName string, variable *sdk.Variable) error
-	ApplicationVariableDelete(projectKey string, appName string, variable string) error
+	ApplicationVariableDelete(projectKey string, appName string, varName string) error
+	ApplicationVariableGet(projectKey string, appName string, varName string) (*sdk.Variable, error)
 	ApplicationVariableUpdate(projectKey string, appName string, variable *sdk.Variable) error
 	ConfigUser() (map[string]string, error)
 	EnvironmentCreate(string, *sdk.Environment) error
@@ -36,7 +37,8 @@ type Interface interface {
 	EnvironmentKeysDelete(string, string, string) error
 	EnvironmentVariablesList(key string, envName string) ([]sdk.Variable, error)
 	EnvironmentVariableCreate(projectKey string, envName string, variable *sdk.Variable) error
-	EnvironmentVariableDelete(projectKey string, envName string, keyName string) error
+	EnvironmentVariableDelete(projectKey string, envName string, varName string) error
+	EnvironmentVariableGet(projectKey string, envName string, varName string) (*sdk.Variable, error)
 	EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error
 	GroupCreate(group *sdk.Group) error
 	GroupDelete(name string) error
@@ -63,7 +65,8 @@ type Interface interface {
 	ProjectKeysDelete(string, string) error
 	ProjectVariablesList(key string) ([]sdk.Variable, error)
 	ProjectVariableCreate(projectKey string, variable *sdk.Variable) error
-	ProjectVariableDelete(projectKey string, variable string) error
+	ProjectVariableDelete(projectKey string, varName string) error
+	ProjectVariableGet(projectKey string, varName string) (*sdk.Variable, error)
 	ProjectVariableUpdate(projectKey string, variable *sdk.Variable) error
 	Queue() ([]sdk.WorkflowNodeJobRun, []sdk.PipelineBuildJob, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int) error
