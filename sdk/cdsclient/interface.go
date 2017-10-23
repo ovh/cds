@@ -22,6 +22,10 @@ type Interface interface {
 	ApplicationKeysList(string, string) ([]sdk.ApplicationKey, error)
 	ApplicationKeyCreate(string, string, *sdk.ApplicationKey) error
 	ApplicationKeysDelete(string, string, string) error
+	ApplicationVariablesList(key string, appName string) ([]sdk.Variable, error)
+	ApplicationVariableCreate(projectKey string, appName string, variable *sdk.Variable) error
+	ApplicationVariableDelete(projectKey string, appName string, variable string) error
+	ApplicationVariableUpdate(projectKey string, appName string, variable *sdk.Variable) error
 	ConfigUser() (map[string]string, error)
 	EnvironmentCreate(string, *sdk.Environment) error
 	EnvironmentDelete(string, string) error
@@ -30,6 +34,10 @@ type Interface interface {
 	EnvironmentKeysList(string, string) ([]sdk.EnvironmentKey, error)
 	EnvironmentKeyCreate(string, string, *sdk.EnvironmentKey) error
 	EnvironmentKeysDelete(string, string, string) error
+	EnvironmentVariablesList(key string, envName string) ([]sdk.Variable, error)
+	EnvironmentVariableCreate(projectKey string, envName string, variable *sdk.Variable) error
+	EnvironmentVariableDelete(projectKey string, envName string, keyName string) error
+	EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error
 	GroupCreate(group *sdk.Group) error
 	GroupDelete(name string) error
 	GroupGenerateToken(groupName, expiration string) (*sdk.Token, error)
@@ -53,6 +61,10 @@ type Interface interface {
 	ProjectKeysList(string) ([]sdk.ProjectKey, error)
 	ProjectKeyCreate(string, *sdk.ProjectKey) error
 	ProjectKeysDelete(string, string) error
+	ProjectVariablesList(key string) ([]sdk.Variable, error)
+	ProjectVariableCreate(projectKey string, variable *sdk.Variable) error
+	ProjectVariableDelete(projectKey string, variable string) error
+	ProjectVariableUpdate(projectKey string, variable *sdk.Variable) error
 	Queue() ([]sdk.WorkflowNodeJobRun, []sdk.PipelineBuildJob, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
