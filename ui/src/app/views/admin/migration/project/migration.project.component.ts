@@ -15,7 +15,6 @@ export class MigrationProjectComponent implements OnInit {
     constructor(private _projectStore: ProjectStore, private _activatedRoute: ActivatedRoute) { }
 
     ngOnInit(): void {
-        console.log(this._activatedRoute);
         this._activatedRoute.params.subscribe(d => {
             if (d['key']) {
                 let key = d['key'];
