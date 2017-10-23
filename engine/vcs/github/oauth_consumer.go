@@ -129,6 +129,7 @@ func (g *githubConsumer) GetAuthorizedClient(accessToken, accessTokenSecret stri
 			ClientID:   g.ClientID,
 			OAuthToken: accessToken,
 			Cache:      g.Cache,
+			uiURL:      g.uiURL,
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}

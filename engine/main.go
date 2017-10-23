@@ -119,6 +119,13 @@ Comming soon...`,
 				ClientSecret: "xxxx",
 			},
 		}
+		conf.VCS.Servers["Gitlab"] = vcs.ServerConfiguration{
+			URL: "https://gitlab.com",
+			Gitlab: &vcs.GitlabServerConfiguration{
+				AppID:  "xxxx",
+				Secret: "xxxx",
+			},
+		}
 
 		if !configNewAsEnvFlag {
 			btes, err := toml.Marshal(*conf)

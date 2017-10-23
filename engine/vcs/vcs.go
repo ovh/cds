@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/vcs/bitbucket"
 	"github.com/ovh/cds/engine/vcs/github"
+	"github.com/ovh/cds/engine/vcs/gitlab"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
@@ -57,10 +58,13 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 	serverCfg := s.Cfg.Servers[name]
 	if serverCfg.Github != nil {
-		return github.New(serverCfg.Github.ClientID, serverCfg.Github.ClientSecret, s.Cache), nil
+		return github.New(serverCfg.Github.ClientID, serverCfg.Github.ClientSecret, s.Cfg.UI.HTTP.URL, s.Cache), nil
 	}
 	if serverCfg.Bitbucket != nil {
 		return bitbucket.New(serverCfg.Bitbucket.ConsumerKey, []byte(serverCfg.Bitbucket.PrivateKey), serverCfg.URL, s.Cache), nil
+	}
+	if serverCfg.Gitlab != nil {
+		return gitlab.New(serverCfg.Gitlab.AppID, serverCfg.Gitlab.Secret, serverCfg.URL, s.Cfg.API.HTTP.URL+"/repositories_manager/oauth2/callback", s.Cfg.UI.HTTP.URL, s.Cache), nil
 	}
 	return nil, sdk.ErrNotFound
 }
