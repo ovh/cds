@@ -37,7 +37,7 @@
 
   "admin_migration_not_started": "Non commencé",
   "admin_migration_started": "En cours",
-  "admin_migration_not_started": "Terminé",
+  "admin_migration_done": "Terminé",
   "admin_migration_title" : "Statut de la migration des applications vers les workflows",
 
   "application_create" : "Créer une application",
