@@ -45,5 +45,5 @@ type VCSAuthorizedClient interface {
 
 	// Release
 	Release(repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
-	UploadReleaseFile(repo string, uploadURL string, runArtifact WorkflowNodeRunArtifact, r io.Reader) error
+	UploadReleaseFile(repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error
 }

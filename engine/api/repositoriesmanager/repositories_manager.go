@@ -1,8 +1,9 @@
 package repositoriesmanager
 
 import (
-	"bytes"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
@@ -123,6 +124,13 @@ func AuthorizedClient(db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectV
 
 func (c *vcsClient) doJSONRequest(method, path string, in interface{}, out interface{}) (int, error) {
 	return services.DoJSONRequest(c.srvs, method, path, in, out, func(req *http.Request) {
+		req.Header.Set("X-CDS-ACCESS-TOKEN", c.token)
+		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", c.token)
+	})
+}
+
+func (c *vcsClient) postMultipart(path string, fileContent []byte, out interface{}) (int, error) {
+	return services.PostMultipart(c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
 		req.Header.Set("X-CDS-ACCESS-TOKEN", c.token)
 		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", c.token)
 	})
@@ -283,6 +291,16 @@ func (c *vcsClient) Release(fullname, tagName, releaseTitle, releaseDescription 
 	return &release, nil
 }
 
-func (c *vcsClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, file *bytes.Buffer) error {
+func (c *vcsClient) UploadReleaseFile(fullname string, releaseName, uploadURL string, artifactName string, r io.ReadCloser) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/releases/%s/artifacts/%s", c.name, fullname, releaseName, artifactName)
+
+	fileContent, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
+	if _, err := c.postMultipart(path, fileContent, nil); err != nil {
+		return err
+	}
 	return nil
 }

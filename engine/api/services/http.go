@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"time"
 
@@ -63,6 +64,49 @@ func doJSONRequest(srv *sdk.Service, method, path string, in interface{}, out in
 	}
 
 	return code, nil
+}
+
+// PostMultipart post a file content through multipart upload
+func PostMultipart(srvs []sdk.Service, path string, filename string, fileContents []byte, out interface{}, mods ...sdk.RequestModifier) (int, error) {
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("file", filename)
+	if err != nil {
+		return 0, err
+	}
+	part.Write(fileContents)
+	if err := writer.Close(); err != nil {
+		return 0, err
+	}
+
+	mods = append(mods, sdk.SetHeader("Content-Type", "multipart/form-data"))
+
+	var lastErr error
+	var lastCode int
+	var attempt int
+	for {
+		attempt++
+		for i := range srvs {
+			srv := &srvs[i]
+			res, code, err := DoRequest(srv, "POST", path, body.Bytes(), mods...)
+			lastCode = code
+			lastErr = err
+
+			if err == nil {
+				return code, nil
+			}
+
+			if out != nil {
+				if err := json.Unmarshal(res, out); err != nil {
+					return code, err
+				}
+			}
+		}
+		if lastErr == nil {
+			break
+		}
+	}
+	return lastCode, lastErr
 }
 
 // DoRequest performs an http request on service

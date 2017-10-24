@@ -1,8 +1,8 @@
 package bitbucket
 
 import (
-	"bytes"
 	"fmt"
+	"io"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -10,6 +10,6 @@ import (
 func (b *bitbucketClient) Release(repo, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error) {
 	return nil, fmt.Errorf("Not yet implemented")
 }
-func (b *bitbucketClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, file *bytes.Buffer) error {
+func (b *bitbucketClient) UploadReleaseFile(repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error {
 	return fmt.Errorf("Not yet implemented")
 }

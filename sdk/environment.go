@@ -345,7 +345,7 @@ func UpdateGroupInEnvironment(projectKey, envName, groupName string, permission 
 func AddGroupInEnvironment(projectKey, envName, groupName string, permission int) error {
 
 	if permission < 4 || permission > 7 {
-		return fmt.Errorf("Permission should be between 4-7 \n")
+		return fmt.Errorf("Permission should be between 4-7")
 	}
 
 	groupPipeline := GroupPermission{

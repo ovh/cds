@@ -27,7 +27,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests", r.GET(s.getPullRequestsHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/events", r.GET(s.getEventsHandler), r.POST(s.postFilterEventsHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases", r.POST(s.postReleaseHandler))
-	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases/{release}", r.POST(s.postUploadReleaseFileHandler))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases/{release}/artifacts/{artifactName}", r.POST(s.postUploadReleaseFileHandler))
 
 	r.Handle("/vcs/{name}/status", r.POST(s.postStatusHandler))
 

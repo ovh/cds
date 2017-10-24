@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -459,6 +460,17 @@ func (s *Service) postUploadReleaseFileHandler() api.Handler {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
+		release := muxVar(r, "release")
+		artifactName := muxVar(r, "artifactName")
+
+		uploadURL, err := url.QueryUnescape(r.URL.Query().Get("upload_url"))
+		if err != nil {
+			return err
+		}
+
+		if _, err := url.Parse(uploadURL); err != nil {
+			return err
+		}
 
 		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
 		if !ok {
@@ -467,12 +479,16 @@ func (s *Service) postUploadReleaseFileHandler() api.Handler {
 
 		consumer, err := s.getConsumer(name)
 		if err != nil {
-			return sdk.WrapError(err, "VCS> postReleaseHandler> VCS server unavailable")
+			return sdk.WrapError(err, "VCS> postUploadReleaseFileHandler> VCS server unavailable")
 		}
 
 		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
 		if err != nil {
-			return sdk.WrapError(err, "VCS> postReleaseHandler> Unable to get authorized client")
+			return sdk.WrapError(err, "VCS> postUploadReleaseFileHandler> Unable to get authorized client")
+		}
+
+		if err := client.UploadReleaseFile(fmt.Sprintf("%s/%s", owner, repo), release, uploadURL, artifactName, r.Body); err != nil {
+			return sdk.WrapError(err, "VCS> postUploadReleaseFileHandler> Unable to upload release file")
 		}
 
 		return nil

@@ -538,6 +538,7 @@ func (h *HatcherySwarm) WorkersStarted() int {
 		log.Error("WorkersStarted> Unable to list containers: %s", errList)
 		return 0
 	}
+
 	return len(containers)
 }
 

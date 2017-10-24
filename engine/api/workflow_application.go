@@ -3,6 +3,8 @@ package api
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"sort"
@@ -110,7 +112,7 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			if err := artifact.StreamFile(b, &a); err != nil {
 				return sdk.WrapError(err, "Cannot get artifact")
 			}
-			if err := client.UploadReleaseFile(workflowNode.Context.Application.RepositoryFullname, release, a, b); err != nil {
+			if err := client.UploadReleaseFile(workflowNode.Context.Application.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, ioutil.NopCloser(b)); err != nil {
 				return sdk.WrapError(err, "releaseApplicationWorkflowHandler")
 			}
 		}
