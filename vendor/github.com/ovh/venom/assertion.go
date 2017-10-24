@@ -104,7 +104,16 @@ func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure,
 		args[i] = v
 	}
 
-	out := f(actual, args...)
+	var out string
+	if assert[1] == "ShouldBeTrue" || assert[1] == "ShouldBeFalse" {
+		var bactual bool
+		if actual == "true" {
+			bactual = true
+		}
+		out = f(bactual, args...)
+	} else {
+		out = f(actual, args...)
+	}
 
 	if out != "" {
 		prefix := "assertion: " + assertion
