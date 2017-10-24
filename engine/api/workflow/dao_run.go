@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -90,21 +91,18 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	if err := db.SelectOne(&res, "select workflow, infos from workflow_run where id = $1", r.ID); err != nil {
 		return sdk.WrapError(err, "Run.PostGet> Unable to load marshalled workflow")
 	}
-	if res.W.Valid {
-		w := sdk.Workflow{}
-		if err := json.Unmarshal([]byte(res.W.String), &w); err != nil {
-			return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal workflow")
-		}
-		r.Workflow = w
-	}
 
-	if res.I.Valid {
-		i := []sdk.WorkflowRunInfo{}
-		if err := json.Unmarshal([]byte(res.I.String), &i); err != nil {
-			return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal infos")
-		}
-		r.Infos = i
+	w := sdk.Workflow{}
+	if err := gorpmapping.JSONNullString(res.W, &w); err != nil {
+		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal workflow")
 	}
+	r.Workflow = w
+
+	i := []sdk.WorkflowRunInfo{}
+	if err := gorpmapping.JSONNullString(res.I, &i); err != nil {
+		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal infos")
+	}
+	r.Infos = i
 
 	return nil
 }

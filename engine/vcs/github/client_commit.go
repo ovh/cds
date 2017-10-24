@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/engine/api/cache"
 )
 
 func arrayContains(array interface{}, s interface{}) bool {

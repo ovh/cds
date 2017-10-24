@@ -12,6 +12,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
@@ -34,21 +35,18 @@ func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
 	if err := db.SelectOne(&res, "SELECT metadata, purge_tags FROM workflow WHERE id = $1", w.ID); err != nil {
 		return sdk.WrapError(err, "PostGet> Unable to load marshalled workflow")
 	}
-	if res.Metadata.Valid {
-		metadata := sdk.Metadata{}
-		if err := json.Unmarshal([]byte(res.Metadata.String), &metadata); err != nil {
-			return err
-		}
-		w.Metadata = metadata
-	}
 
-	if res.PurgeTags.Valid {
-		purgeTags := []string{}
-		if err := json.Unmarshal([]byte(res.PurgeTags.String), &purgeTags); err != nil {
-			return err
-		}
-		w.PurgeTags = purgeTags
+	metadata := sdk.Metadata{}
+	if err := gorpmapping.JSONNullString(res.Metadata, &metadata); err != nil {
+		return err
 	}
+	w.Metadata = metadata
+
+	purgeTags := []string{}
+	if err := gorpmapping.JSONNullString(res.PurgeTags, &purgeTags); err != nil {
+		return err
+	}
+	w.PurgeTags = purgeTags
 
 	return nil
 }
