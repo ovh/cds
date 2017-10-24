@@ -89,6 +89,10 @@ func (api *API) updateGroupRoleOnProjectHandler() Handler {
 			return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleHandler: Group is not attached to this project: %s")
 		}
 
+		if group.IsDefaultGroupID(g.ID) && groupProject.Permission > permission.PermissionRead {
+			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "updateGroupRoleHandler: only read permission is allowed to default group")
+		}
+
 		if groupProject.Permission != permission.PermissionReadWriteExecute {
 			permissions, err := group.LoadAllProjectGroupByRole(api.mustDB(), p.ID, permission.PermissionReadWriteExecute)
 			if err != nil {
@@ -209,6 +213,10 @@ func (api *API) addGroupInProjectHandler() Handler {
 		}
 		if groupInProject {
 			return sdk.WrapError(sdk.ErrGroupExists, "AddGroupInProject: Group already in the project %s", p.Name)
+		}
+
+		if group.IsDefaultGroupID(g.ID) && groupProject.Permission > permission.PermissionRead {
+			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "AddGroupInProject: only read permission is allowed to default group")
 		}
 
 		tx, errb := api.mustDB().Begin()
