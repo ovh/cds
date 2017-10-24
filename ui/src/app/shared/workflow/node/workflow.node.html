@@ -66,6 +66,7 @@
             <sm-dropdown class="nocaret right pointing link" icon="settings" [disabled]="disabled" (click)="displayDropdown()" [options]="options">
                 <a sm-item href="#" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" [queryParams]="{workflow: workflow.name }">{{ 'pipeline_label_edit' | translate }}</a>
                 <sm-item (click)="openAddHookModal()">{{'workflow_node_hook_add' | translate }}</sm-item>
+                <sm-item (click)="openAddParentModal()" *ngIf="node.id === workflow.root.id">{{ 'workflow_node_parent' | translate }}</sm-item>
                 <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
                 <sm-item (click)="createJoin()">{{ 'workflow_node_join_add' | translate }}</sm-item>
                 <sm-item (click)="linkJoin()">{{ 'workflow_node_join_link' | translate }}</sm-item>
@@ -78,6 +79,18 @@
 </div>
 <ng-container *ngIf="project && node && !workflowRun">
     <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [triggerSrcNode]="node" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowTrigger></app-workflow-trigger>
+</ng-container>
+<ng-container *ngIf="project && node && !workflowRun && node.id === workflow.root.id">
+    <ng-template let-context let-modal="modal" #nodeParentModal>
+        <div class="header">{{ 'workflow_node_parent' | translate }}</div>
+        <div class="content">
+            <app-workflow-node-form [project]="project" [(node)]="newParentNode"></app-workflow-node-form>
+        </div>
+        <div class="actions">
+            <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+            <button class="ui green button" [disabled]="loading" (click)="addNewParentNode($event)">{{ 'btn_save' | translate }}</button>
+        </div>
+    </ng-template>
 </ng-container>
 <ng-container *ngIf="node && !workflowRun">
     <app-workflow-node-delete [loading]="loading" [node]="node" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>

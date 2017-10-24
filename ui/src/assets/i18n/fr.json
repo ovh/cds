@@ -593,6 +593,7 @@
   "workflow_node_hook_no_configuration" : "Aucune configuration n'est nécessaire",
   "workflow_node_join_add" : "Ajouter une jointure",
   "workflow_node_join_link" : "Lier à une jointure",
+  "workflow_node_parent" : "Ajouter un noeud parent",
   "workflow_node_pipeline_synchronized" : "Pipeline à jour",
   "workflow_node_trigger_add" : "Ajouter un trigger",
   "workflow_node_trigger_condition_list_title": "Liste des conditions de déclenchement",
