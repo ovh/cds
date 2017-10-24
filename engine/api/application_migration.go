@@ -28,10 +28,6 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "migrationApplicationWorkflowHandler")
 		}
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.WithPipelines)
-		if errA != nil {
-			return sdk.WrapError(errA, "migrationApplicationWorkflowHandler")
-		}
 
 		cdTree, errT := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", "", 0)
 		if errT != nil {
