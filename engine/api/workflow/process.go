@@ -127,7 +127,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 						luacheck := luascript.NewCheck()
 						luacheck.SetVariables(sdk.ParametersToMap(params))
 						errc = luacheck.Perform(t.Conditions.LuaScript)
-						conditionsOK = *luacheck.Result
+						conditionsOK = luacheck.Result
 					}
 
 					if errc != nil {
@@ -248,7 +248,17 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, t.WorkflowDestNode.Context.Environment.Name)
 				}
 
-				conditionOK, errc := sdk.WorkflowCheckConditions(t.Conditions, params)
+				var errc error
+				var conditionsOK bool
+				if t.Conditions.LuaScript == "" {
+					conditionsOK, errc = sdk.WorkflowCheckConditions(t.Conditions.PlainConditions, params)
+				} else {
+					luacheck := luascript.NewCheck()
+					luacheck.SetVariables(sdk.ParametersToMap(params))
+					errc = luacheck.Perform(t.Conditions.LuaScript)
+					conditionsOK = luacheck.Result
+				}
+
 				if errc != nil {
 					AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 						ID:   sdk.MsgWorkflowError.ID,
@@ -256,7 +266,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					})
 				}
 				//If conditions are not met, skip this trigger
-				if !conditionOK {
+				if !conditionsOK {
 					continue
 				}
 
@@ -447,7 +457,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			luacheck := luascript.NewCheck()
 			luacheck.SetVariables(sdk.ParametersToMap(params))
 			errc = luacheck.Perform(hook.Conditions.LuaScript)
-			conditionsOK = *luacheck.Result
+			conditionsOK = luacheck.Result
 		}
 
 		if errc != nil {
