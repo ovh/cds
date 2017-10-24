@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {Project} from '../../../model/project.model';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs/Subscription';
@@ -35,6 +35,7 @@ export class WorkflowShowComponent {
     project: Project;
     detailedWorkflow: Workflow;
     workflowSubscription: Subscription;
+    direction: string;
 
     @ViewChild('workflowGraph')
     workflowGraph: WorkflowGraphComponent;
@@ -98,6 +99,7 @@ export class WorkflowShowComponent {
                                     return;
                                 }
                                 this.detailedWorkflow = updatedWorkflow;
+                                this.direction = this._workflowStore.getDirection(this.project.key, this.detailedWorkflow.name);
                                 this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
                                     return total + this.detailedWorkflow.usage[key].length;
                                 }, 0);
@@ -111,6 +113,10 @@ export class WorkflowShowComponent {
         });
 
         this._workflowCoreService.setCurrentWorkflowRun(null);
+    }
+
+    changeDirection() {
+        this.direction = this.direction === 'LR' ? 'TB' : 'LR';
     }
 
     showTab(tab: string): void {

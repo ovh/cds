@@ -27,7 +27,7 @@ import { WorkflowCoreService } from '../../../shared/workflow/workflow.service';
     ]
 })
 @AutoUnsubscribe()
-export class WorkflowGraphComponent implements AfterViewInit, OnInit {
+export class WorkflowGraphComponent implements AfterViewInit {
 
     workflow: Workflow;
     sidebarOpen: boolean;
@@ -59,7 +59,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     ready: boolean;
     _direction: string;
-    displayDirection = false;
 
     // workflow graph
     @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer;
@@ -90,13 +89,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                 window.dispatchEvent(new Event('resize'));
             }
         });
-    }
-
-    ngOnInit(): void {
-        if (!this.direction) {
-            this.displayDirection = true;
-            this.direction = this._workflowStore.getDirection(this.project.key, this.workflow.name);
-        }
     }
 
     @HostListener('window:resize', ['$event'])

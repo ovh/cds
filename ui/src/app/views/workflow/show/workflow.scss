@@ -10,10 +10,25 @@
   .scrollingContent {
     overflow-x: auto;
 
-    .center {
-      text-align: center;
+    .paddingContent {
+      .viewContent {
+        #WorkflowShowGraph {
+          margin-top: -35px;
+
+          .winfo{
+            z-index: 1;
+          }
+
+          .cardinfo {
+            border-radius: 0 0 0.28571429rem 0.28571429rem;
+          }
+
+          .center {
+            text-align: center;
+          }
+        }
+
+      }
     }
   }
-
-
 }
