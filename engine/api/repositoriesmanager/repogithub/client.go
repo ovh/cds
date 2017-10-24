@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -82,9 +83,9 @@ func (g *GithubClient) Release(fullname string, tagName string, title string, re
 }
 
 // UploadReleaseFile Attach a file into the release
-func (g *GithubClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, buf *bytes.Buffer) error {
+func (g *GithubClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, r io.Reader) error {
 	var url = strings.Split(release.UploadURL, "{")[0] + "?name=" + runArtifact.Name
-	res, err := g.post(url, "application/octet-stream", buf, true)
+	res, err := g.post(url, "application/octet-stream", r, true)
 	if err != nil {
 		return err
 	}

@@ -19,14 +19,21 @@ var HTTPClient sdk.HTTPClient
 func DoJSONRequest(srvs []sdk.Service, method, path string, in interface{}, out interface{}, mods ...sdk.RequestModifier) (int, error) {
 	var lastErr error
 	var lastCode int
-	for i := range srvs {
-		srv := &srvs[i]
-		code, err := doJSONRequest(srv, "GET", "/vcs", in, out, mods...)
-		if err == nil {
-			return code, nil
+	var attempt int
+	for {
+		attempt++
+		for i := range srvs {
+			srv := &srvs[i]
+			code, err := doJSONRequest(srv, "GET", "/vcs", in, out, mods...)
+			if err == nil {
+				return code, nil
+			}
+			lastErr = err
+			lastCode = code
 		}
-		lastErr = err
-		lastCode = code
+		if lastErr != nil || attempt > 5 {
+			break
+		}
 	}
 	return lastCode, lastErr
 }

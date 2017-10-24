@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -145,54 +146,143 @@ func (c *vcsClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 	return repo, nil
 }
 
-func (c *vcsClient) Branches(string) ([]sdk.VCSBranch, error) {
-	return nil, nil
+func (c *vcsClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
+	branches := []sdk.VCSBranch{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches", c.name, fullname)
+	if _, err := c.doJSONRequest("GET", path, nil, &branches); err != nil {
+		return nil, err
+	}
+	return branches, nil
 }
-func (c *vcsClient) Branch(string, string) (*sdk.VCSBranch, error) {
-	return nil, nil
+
+func (c *vcsClient) Branch(fullname string, branchName string) (*sdk.VCSBranch, error) {
+	branch := sdk.VCSBranch{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/%s", c.name, fullname, branchName)
+	if _, err := c.doJSONRequest("GET", path, nil, &branch); err != nil {
+		return nil, err
+	}
+	return &branch, nil
 }
-func (c *vcsClient) Commits(repo, branch, since, until string) ([]sdk.VCSCommit, error) {
-	return nil, nil
+
+func (c *vcsClient) Commits(fullname, branch, since, until string) ([]sdk.VCSCommit, error) {
+	commits := []sdk.VCSCommit{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/%s/commits?since=%s&until=?", c.name, fullname, url.QueryEscape(since), url.QueryEscape(until))
+	if _, err := c.doJSONRequest("GET", path, nil, &commits); err != nil {
+		return nil, err
+	}
+	return commits, nil
 }
-func (c *vcsClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
-	return sdk.VCSCommit{}, nil
+
+func (c *vcsClient) Commit(fullname, hash string) (sdk.VCSCommit, error) {
+	commit := sdk.VCSCommit{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s", c.name, fullname, hash)
+	if _, err := c.doJSONRequest("GET", path, nil, &commit); err != nil {
+		return commit, err
+	}
+	return commit, nil
 }
-func (c *vcsClient) PullRequests(string) ([]sdk.VCSPullRequest, error) {
-	return nil, nil
+
+func (c *vcsClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) {
+	prs := []sdk.VCSPullRequest{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests", c.name, fullname)
+	if _, err := c.doJSONRequest("GET", path, nil, &prs); err != nil {
+		return nil, err
+	}
+	return prs, nil
 }
-func (c *vcsClient) CreateHook(repo string, hook sdk.VCSHook) error {
+
+func (c *vcsClient) CreateHook(fullname string, hook sdk.VCSHook) error {
 	return nil
 }
-func (c *vcsClient) GetHook(repo, url string) (sdk.VCSHook, error) {
+
+func (c *vcsClient) GetHook(fullname, url string) (sdk.VCSHook, error) {
 	return sdk.VCSHook{}, nil
 }
-func (c *vcsClient) UpdateHook(repo, url string, hook sdk.VCSHook) error {
+
+func (c *vcsClient) UpdateHook(fullname, url string, hook sdk.VCSHook) error {
 	return nil
 }
-func (c *vcsClient) DeleteHook(repo string, hook sdk.VCSHook) error {
+
+func (c *vcsClient) DeleteHook(fullname string, hook sdk.VCSHook) error {
 	return nil
 }
-func (c *vcsClient) GetEvents(repo string, dateRef time.Time) ([]interface{}, time.Duration, error) {
-	return nil, time.Duration(0), nil
+
+func (c *vcsClient) GetEvents(fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
+	res := struct {
+		Events []interface{} `json:"events"`
+		Delay  time.Duration `json:"delay"`
+	}{}
+
+	path := fmt.Sprintf("/vcs/%s/repos/%s/events?since=%d", c.name, fullname, dateRef.Unix())
+	if _, err := c.doJSONRequest("GET", path, nil, &res); err != nil {
+		return nil, time.Duration(0), err
+	}
+
+	return res.Events, res.Delay, nil
 }
-func (c *vcsClient) PushEvents(string, []interface{}) ([]sdk.VCSPushEvent, error) {
-	return nil, nil
+
+func (c *vcsClient) PushEvents(fullname string, evts []interface{}) ([]sdk.VCSPushEvent, error) {
+	events := []sdk.VCSPushEvent{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=push", c.name, fullname)
+	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+		return nil, err
+	}
+	return events, nil
 }
-func (c *vcsClient) CreateEvents(string, []interface{}) ([]sdk.VCSCreateEvent, error) {
-	return nil, nil
+
+func (c *vcsClient) CreateEvents(fullname string, evts []interface{}) ([]sdk.VCSCreateEvent, error) {
+	events := []sdk.VCSCreateEvent{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=create", c.name, fullname)
+	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+		return nil, err
+	}
+	return events, nil
 }
-func (c *vcsClient) DeleteEvents(string, []interface{}) ([]sdk.VCSDeleteEvent, error) {
-	return nil, nil
+
+func (c *vcsClient) DeleteEvents(fullname string, evts []interface{}) ([]sdk.VCSDeleteEvent, error) {
+	events := []sdk.VCSDeleteEvent{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=delete", c.name, fullname)
+	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+		return nil, err
+	}
+	return events, nil
 }
-func (c *vcsClient) PullRequestEvents(string, []interface{}) ([]sdk.VCSPullRequestEvent, error) {
-	return nil, nil
+
+func (c *vcsClient) PullRequestEvents(fullname string, evts []interface{}) ([]sdk.VCSPullRequestEvent, error) {
+	events := []sdk.VCSPullRequestEvent{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=pullrequests", c.name, fullname)
+	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+		return nil, err
+	}
+	return events, nil
 }
+
 func (c *vcsClient) SetStatus(event sdk.Event) error {
-	return nil
+	path := fmt.Sprintf("/vcs/%s/status", c.name)
+	_, err := c.doJSONRequest("POST", path, event, nil)
+	return err
 }
-func (c *vcsClient) Release(repo, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error) {
-	return nil, nil
+
+func (c *vcsClient) Release(fullname, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error) {
+	res := struct {
+		Tag         string `json:"tag"`
+		Title       string `json:"title"`
+		Description string `json:"description"`
+	}{
+		Tag:         tagName,
+		Title:       releaseTitle,
+		Description: releaseDescription,
+	}
+
+	release := sdk.VCSRelease{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/releases", c.name, fullname)
+	_, err := c.doJSONRequest("POST", path, &res, &release)
+	if err != nil {
+		return nil, err
+	}
+	return &release, nil
 }
+
 func (c *vcsClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, file *bytes.Buffer) error {
 	return nil
 }

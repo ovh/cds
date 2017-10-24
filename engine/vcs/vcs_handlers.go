@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
 
@@ -243,5 +245,236 @@ func (s *Service) getCommitHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> getCommitHandler> Unable to get commit %s on %s/%s", commit, owner, repo)
 		}
 		return api.WriteJSON(w, r, c, http.StatusOK)
+	}
+}
+
+func (s *Service) getPullRequestsHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getPullRequestsHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getPullRequestsHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getPullRequestsHandler> Unable to get authorized client")
+		}
+
+		c, err := client.PullRequests(fmt.Sprintf("%s/%s", owner, repo))
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getPullRequestsHandler> Unable to get pull requests on %s/%s", owner, repo)
+		}
+		return api.WriteJSON(w, r, c, http.StatusOK)
+	}
+}
+
+func (s *Service) getEventsHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+		dateRefStr := r.URL.Query().Get("since")
+		dateRef := time.Time{}
+
+		if dateRefStr != "" {
+			dateRefInt, err := strconv.Atoi(dateRefStr)
+			if err != nil {
+				return sdk.WrapError(sdk.ErrWrongRequest, "VCS> getEventsHandler>")
+			}
+			dateRef = time.Unix(int64(dateRefInt), 0)
+		}
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getEventsHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getEventsHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getEventsHandler> Unable to get authorized client")
+		}
+
+		evts, delay, err := client.GetEvents(fmt.Sprintf("%s/%s", owner, repo), dateRef)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getEventsHandler> Unable to get pull requests on %s/%s", owner, repo)
+		}
+		res := struct {
+			Events []interface{} `json:"events"`
+			Delay  time.Duration `json:"delay"`
+		}{
+			Events: evts,
+			Delay:  delay,
+		}
+		return api.WriteJSON(w, r, res, http.StatusOK)
+	}
+}
+
+func (s *Service) postFilterEventsHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		evts := []interface{}{}
+		if err := api.UnmarshalBody(r, &evts); err != nil {
+			return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to read body")
+		}
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postFilterEventsHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postFilterEventsHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to get authorized client")
+		}
+
+		filter := r.URL.Query().Get("filter")
+
+		switch filter {
+		case "push":
+			events, err := client.PushEvents(fmt.Sprintf("%s/%s", owner, repo), evts)
+			if err != nil {
+				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter push events")
+			}
+			return api.WriteJSON(w, r, events, http.StatusOK)
+		case "create":
+			events, err := client.CreateEvents(fmt.Sprintf("%s/%s", owner, repo), evts)
+			if err != nil {
+				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter create events")
+			}
+			return api.WriteJSON(w, r, events, http.StatusOK)
+		case "delete":
+			events, err := client.DeleteEvents(fmt.Sprintf("%s/%s", owner, repo), evts)
+			if err != nil {
+				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter delete events")
+			}
+			return api.WriteJSON(w, r, events, http.StatusOK)
+		case "pullrequests":
+			events, err := client.PullRequestEvents(fmt.Sprintf("%s/%s", owner, repo), evts)
+			if err != nil {
+				return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to filter pullrequests events")
+			}
+			return api.WriteJSON(w, r, events, http.StatusOK)
+		default:
+			return sdk.WrapError(sdk.ErrWrongRequest, "VCS> postFilterEventsHandler> Unrecognized filter")
+		}
+	}
+}
+
+func (s *Service) postStatusHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+
+		evt := sdk.Event{}
+		if err := api.UnmarshalBody(r, &evt); err != nil {
+			return sdk.WrapError(err, "VCS> postStatusHandler> unable to read body")
+		}
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postFilterEventsHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postFilterEventsHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to get authorized client")
+		}
+
+		if err := client.SetStatus(evt); err != nil {
+			return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to set status")
+		}
+
+		return nil
+	}
+}
+
+func (s *Service) postReleaseHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postReleaseHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postReleaseHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postReleaseHandler> Unable to get authorized client")
+		}
+
+		body := struct {
+			Tag        string `json:"tag"`
+			Title      string `json:"title"`
+			Descrition string `json:"description"`
+		}{}
+
+		if err := api.UnmarshalBody(r, &body); err != nil {
+			return sdk.WrapError(err, "VCS> postReleaseHandler> Unable to read body")
+		}
+
+		re, err := client.Release(fmt.Sprintf("%s/%s", owner, repo), body.Tag, body.Title, body.Descrition)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postReleaseHandler> Unable to create release")
+		}
+
+		return api.WriteJSON(w, r, re, http.StatusOK)
+	}
+}
+
+func (s *Service) postUploadReleaseFileHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postReleaseHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postReleaseHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postReleaseHandler> Unable to get authorized client")
+		}
+
+		return nil
 	}
 }
