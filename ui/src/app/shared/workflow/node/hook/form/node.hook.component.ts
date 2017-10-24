@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowTriggerCondition} from '../../../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowTriggerCondition, WorkflowTriggerConditions} from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
@@ -79,12 +79,15 @@ export class WorkflowNodeHookFormComponent {
 
     addConditions(condition: WorkflowTriggerCondition): void {
         if (!this.hook.conditions) {
-            this.hook.conditions = new Array<WorkflowTriggerCondition>();
+            this.hook.conditions = new WorkflowTriggerConditions();
+        }
+        if (!this.hook.conditions.plain) {
+            this.hook.conditions.plain = new Array<WorkflowTriggerCondition>();
         }
 
-        let index = this.hook.conditions.findIndex(c => c.variable === condition.variable);
+        let index = this.hook.conditions.plain.findIndex(c => c.variable === condition.variable);
         if (index === -1) {
-            this.hook.conditions.push(condition);
+            this.hook.conditions.plain.push(condition);
         }
     }
 

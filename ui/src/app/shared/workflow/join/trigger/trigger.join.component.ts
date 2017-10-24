@@ -1,7 +1,7 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {
     Workflow, WorkflowNode, WorkflowNodeJoin, WorkflowNodeJoinTrigger,
-    WorkflowTriggerCondition
+    WorkflowTriggerCondition, WorkflowTriggerConditions
 } from '../../../../model/workflow.model';
 import {Project} from '../../../../model/project.model';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
@@ -51,11 +51,14 @@ export class WorkflowTriggerJoinComponent {
 
     addCondition(condition: WorkflowTriggerCondition): void {
         if (!this.trigger.conditions) {
-            this.trigger.conditions = new Array<WorkflowTriggerCondition>();
+            this.trigger.conditions = new WorkflowTriggerConditions();
         }
-        let index = this.trigger.conditions.findIndex(c => c.variable === condition.variable);
+        if (!this.trigger.conditions.plain) {
+            this.trigger.conditions.plain = new Array<WorkflowTriggerCondition>();
+        }
+        let index = this.trigger.conditions.plain.findIndex(c => c.variable === condition.variable);
         if (index === -1) {
-            this.trigger.conditions.push(condition);
+            this.trigger.conditions.plain.push(condition);
         }
     }
 }

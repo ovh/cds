@@ -492,7 +492,7 @@ type WorkflowNodeTrigger struct {
 //WorkflowTriggerConditions is either an array of WorkflowTriggerCondition or a lua script
 type WorkflowTriggerConditions struct {
 	PlainConditions []WorkflowTriggerCondition `json:"plain"`
-	LuaScript       string                     `json:"lua_Script"`
+	LuaScript       string                     `json:"lua_script"`
 }
 
 //WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
