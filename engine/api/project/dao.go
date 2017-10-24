@@ -118,6 +118,10 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", sdk.NamePattern))
 	}
 
+	if proj.WorkflowMigration == "" {
+		proj.WorkflowMigration = "NOT_BEGUN"
+	}
+
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	if err := db.Insert(&dbProj); err != nil {

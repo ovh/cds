@@ -129,6 +129,8 @@ func (api *API) getWorkflowRunsHandler() Handler {
 		for i := range runs {
 			runs[i].Translate(r.Header.Get("Accept-Language"))
 		}
+
+		// Return empty array instead of nil
 		if runs == nil {
 			runs = []sdk.WorkflowRun{}
 		}

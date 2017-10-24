@@ -35,6 +35,7 @@ type Application struct {
 	Workflows           []CDPipeline          `json:"workflows,omitempty" db:"-"`
 	Schedulers          []PipelineScheduler   `json:"schedulers,omitempty" db:"-"`
 	Metadata            Metadata              `json:"metadata" yaml:"metadata" db:"-"`
+	WorkflowMigration   string                `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
 	Keys                []ApplicationKey      `json:"keys" yaml:"keys" db:"-"`
 }
 

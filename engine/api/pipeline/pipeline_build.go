@@ -558,6 +558,24 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	return nil
 }
 
+func DeletePipelineBuildByApplicationID(db gorp.SqlExecutor, appID int64) error {
+	if err := DeleteBuildLogsByApplicationID(db, appID); err != nil {
+		return err
+	}
+	if err := DeletePipelineBuildJobByApplicationID(db, appID); err != nil {
+		return err
+	}
+
+	query := `
+		DELETE FROM pipeline_build
+		WHERE application_id = $1
+	`
+
+	_, errDelete := db.Exec(query, appID)
+	return errDelete
+
+}
+
 // DeletePipelineBuildByID  Delete pipeline build by his ID
 func DeletePipelineBuildByID(db gorp.SqlExecutor, pbID int64) error {
 	if err := DeleteBuildLogsByPipelineBuildID(db, pbID); err != nil {
@@ -1656,7 +1674,7 @@ func paramsToMap(params []sdk.Parameter) map[string]string {
 }
 
 func getRemoteName(project, repo string) string {
-	if project != "" {
+	if project != "" && !strings.Contains(repo, project+"/") {
 		return project + "/" + repo
 	}
 	return repo
