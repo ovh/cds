@@ -125,7 +125,7 @@ func (c *client) WorkflowRunFromManual(projectKey string, workflowName string, m
 		content.Number = &number
 	}
 	if fromNodeID > 0 {
-		content.FromNodeID = &fromNodeID
+		content.FromNodeIDs = []int64{fromNodeID}
 	}
 	run := &sdk.WorkflowRun{}
 	code, err := c.PostJSON(url, &content, run)

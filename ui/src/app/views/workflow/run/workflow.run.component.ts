@@ -92,8 +92,9 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                           this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
                         this.runWorkflowWorker.stop();
                         this.runSubsription.unsubscribe();
-                        if (this.tmpWorkflowRun != null && this.tmpWorkflowRun.status !== PipelineStatus.STOPPED &&
-                          this.tmpWorkflowRun.status !== PipelineStatus.FAIL && this.tmpWorkflowRun.status !== PipelineStatus.SUCCESS) {
+                        if (this.tmpWorkflowRun != null && this.tmpWorkflowRun.id === this.workflowRun.id &&
+                          this.tmpWorkflowRun.status !== PipelineStatus.STOPPED && this.tmpWorkflowRun.status !== PipelineStatus.FAIL &&
+                          this.tmpWorkflowRun.status !== PipelineStatus.SUCCESS) {
                           this.handleNotification();
                         }
                     }

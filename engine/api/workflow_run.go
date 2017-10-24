@@ -407,42 +407,49 @@ func (api *API) postWorkflowRunHandler() Handler {
 			}
 			opts.Manual.User = *getUser(ctx)
 
-			var fromNode *sdk.WorkflowNode
-			if opts.FromNodeID != nil {
-				fromNode = lastRun.Workflow.GetNode(*opts.FromNodeID)
-				if fromNode == nil {
-					return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node")
+			fromNodes := []*sdk.WorkflowNode{}
+			if len(opts.FromNodeIDs) > 0 {
+				for _, fromNodeID := range opts.FromNodeIDs {
+					fromNode := lastRun.Workflow.GetNode(fromNodeID)
+					if fromNode == nil {
+						return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node %d", fromNodeID)
+					}
+					fromNodes = append(fromNodes, fromNode)
 				}
 			} else {
-				fromNode = wf.Root
+				fromNodes = append(fromNodes, wf.Root)
 			}
-			// Check Env Permission
-			if fromNode.Context.Environment != nil {
-				if !permission.AccessToEnvironment(fromNode.Context.Environment.ID, getUser(ctx), permission.PermissionReadExecute) {
-					return sdk.WrapError(sdk.ErrNoEnvExecution, "postWorkflowRunHandler> Not enough right to run on environment %s", fromNode.Context.Environment.Name)
+
+			for _, fromNode := range fromNodes {
+				// Check Env Permission
+				if fromNode.Context.Environment != nil {
+					if !permission.AccessToEnvironment(fromNode.Context.Environment.ID, getUser(ctx), permission.PermissionReadExecute) {
+						return sdk.WrapError(sdk.ErrNoEnvExecution, "postWorkflowRunHandler> Not enough right to run on environment %s", fromNode.Context.Environment.Name)
+					}
+				}
+
+				//If payload is not set, keep the default payload
+				if opts.Manual.Payload == interface{}(nil) {
+					opts.Manual.Payload = fromNode.Context.DefaultPayload
+				}
+
+				//If PipelineParameters are not set, keep the default PipelineParameters
+				if len(opts.Manual.PipelineParameters) == 0 {
+					opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
+				}
+				log.Debug("Manual run: %#v", opts.Manual)
+
+				//Manual run
+				if lastRun != nil {
+					var errmr error
+					wr, errmr = workflow.ManualRunFromNode(tx, api.Cache, p, wf, lastRun.Number, opts.Manual, fromNode.ID)
+					if errmr != nil {
+						return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow from node")
+					}
 				}
 			}
 
-			//If payload is not set, keep the default payload
-			if opts.Manual.Payload == interface{}(nil) {
-				opts.Manual.Payload = fromNode.Context.DefaultPayload
-			}
-
-			//If PipelineParameters are not set, keep the default PipelineParameters
-			if len(opts.Manual.PipelineParameters) == 0 {
-				opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
-			}
-
-			log.Debug("Manual run: %#v", opts.Manual)
-
-			//Manual run
-			if lastRun != nil {
-				var errmr error
-				wr, errmr = workflow.ManualRunFromNode(tx, api.Cache, p, wf, lastRun.Number, opts.Manual, fromNode.ID)
-				if errmr != nil {
-					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow from node")
-				}
-			} else {
+			if lastRun == nil {
 				var errmr error
 				wr, errmr = workflow.ManualRun(tx, api.Cache, p, wf, opts.Manual)
 				if errmr != nil {

@@ -131,10 +131,10 @@ export class WorkflowNodeRunParamComponent {
         request.manual.pipeline_parameter = this.nodeToRun.context.default_pipeline_parameters;
 
         if (this.nodeRun) {
-            request.from_node = this.nodeRun.workflow_node_id;
+            request.from_nodes = [this.nodeRun.workflow_node_id];
             request.number = this.nodeRun.num;
         } else if (this.nodeToRun && this.num) {
-            request.from_node = this.nodeToRun.id;
+            request.from_nodes = [this.nodeToRun.id];
             request.number = this.num;
         }
 

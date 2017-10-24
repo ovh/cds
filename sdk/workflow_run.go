@@ -37,10 +37,10 @@ type WorkflowNodeRunRelease struct {
 
 // WorkflowRunPostHandlerOption contains the body content for launch a workflow
 type WorkflowRunPostHandlerOption struct {
-	Hook       *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
-	Manual     *WorkflowNodeRunManual    `json:"manual,omitempty"`
-	Number     *int64                    `json:"number,omitempty"`
-	FromNodeID *int64                    `json:"from_node,omitempty"`
+	Hook        *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
+	Manual      *WorkflowNodeRunManual    `json:"manual,omitempty"`
+	Number      *int64                    `json:"number,omitempty"`
+	FromNodeIDs []int64                   `json:"from_nodes,omitempty"`
 }
 
 // Translate translates messages in WorkflowNodeRun
