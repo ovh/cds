@@ -68,7 +68,7 @@ func (api *API) updateProjectHandler() Handler {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, r, proj, http.StatusOK)
 	}
 }
 
