@@ -99,7 +99,13 @@ export class WorkflowShowComponent {
                                     return;
                                 }
                                 this.detailedWorkflow = updatedWorkflow;
+
                                 this.direction = this._workflowStore.getDirection(this.project.key, this.detailedWorkflow.name);
+
+                                if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
+                                    return;
+                                }
+
                                 this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
                                     return total + this.detailedWorkflow.usage[key].length;
                                 }, 0);

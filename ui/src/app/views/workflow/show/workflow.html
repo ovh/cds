@@ -110,7 +110,7 @@
         <ng-container>
             <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="detailedWorkflow" [triggerSrcNode]="selectedNode"
                                   [(trigger)]="selectedTrigger"
-                                  (triggerChange)="updateTrigger()" #editTriggerComponent></app-workflow-trigger>
+                                 (triggerChange)="updateTrigger()" #editTriggerComponent></app-workflow-trigger>
         </ng-container>
         <ng-container>
             <app-workflow-trigger-join [project]="project" [workflow]="detailedWorkflow" [join]="selectedJoin"

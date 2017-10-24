@@ -66,7 +66,7 @@ export class WorkflowAdminComponent implements OnInit {
         });
     }
 
-    saveTags(): void {
+    updateWorkflow(): void {
         this.loading = true;
         this._workflowStore.updateWorkflow(this.project.key, this._tagWorkflow).finally(() => {
             this.loading = false;
