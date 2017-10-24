@@ -98,6 +98,9 @@ export class WorkflowShowComponent {
                                     return;
                                 }
                                 this.detailedWorkflow = updatedWorkflow;
+                                if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
+                                    return;
+                                }
                                 this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
                                     return total + this.detailedWorkflow.usage[key].length;
                                 }, 0);

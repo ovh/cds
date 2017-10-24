@@ -519,6 +519,8 @@ func (a *API) Serve(ctx context.Context) error {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
 
+	go workflow.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
+
 	s := &http.Server{
 		Addr:           fmt.Sprintf(":%d", a.Config.HTTP.Port),
 		Handler:        a.Router.Mux,
