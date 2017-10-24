@@ -229,7 +229,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
             windowsWidth -= 250;
         }
 
-        this.nodeWidth = Math.floor(windowsWidth * .85 / nbofNodes);
+        this.nodeWidth = Math.floor(windowsWidth * .75 / nbofNodes);
         if (this.nodeWidth < 155) {
             this.nodeWidth = 155;
         }

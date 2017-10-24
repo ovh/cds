@@ -80,7 +80,7 @@
                             </ng-container>
                         </div>
                     </div>
-                    <div *ngSwitchCase="'permissions'">
+                    <div *ngSwitchCase="'permissions'" class="padded">
                         <h3>{{ 'workflow_permission_list_title' | translate }}</h3>
                         <app-permission-list [permissions]="detailedWorkflow.groups" (event)="groupManagement($event)"
                                              [edit]="detailedWorkflow.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
@@ -93,10 +93,10 @@
                                            [msg]="_translate.instant('warning_modal_body')" (event)="groupManagement($event, null, true)"
                                            #permWarning></app-warning-modal>
                     </div>
-                    <div *ngSwitchCase="'advanced'">
+                    <div *ngSwitchCase="'advanced'" class="padded">
                         <app-workflow-admin [project]="project" [workflow]="detailedWorkflow"></app-workflow-admin>
                     </div>
-                    <div *ngSwitchCase="'usage'">
+                    <div *ngSwitchCase="'usage'" class="padded">
                         <app-usage [project]="project"
                                    [pipelines]="detailedWorkflow.usage.pipelines"
                                    [applications]="detailedWorkflow.usage.applications"
@@ -114,11 +114,11 @@
         </ng-container>
         <ng-container>
             <app-workflow-trigger-join [project]="project" [workflow]="detailedWorkflow" [join]="selectedJoin"
-                                       [(trigger)]="selectedJoinTrigger"
+                                       [(trigger)]="selectedJoinTrigger" [loading]="loading"
                                        (triggerChange)="updateJoinTrigger()" #editJoinTriggerComponent></app-workflow-trigger-join>
         </ng-container>
         <ng-container>
-            <app-workflow-trigger-join-src [join]="selectedJoin" (event)="deleteJoinSrc($event)"
+            <app-workflow-trigger-join-src [join]="selectedJoin" [loading]="loading" (event)="deleteJoinSrc($event)"
                                            #workflowJoinTriggerSrc></app-workflow-trigger-join-src>
         </ng-container>
         <ng-container>

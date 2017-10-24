@@ -11,6 +11,7 @@ import {ActiveModal} from 'ng2-semantic-ui/dist';
 export class WorkflowJoinTriggerSrcComponent {
 
     @Input() join: WorkflowNodeJoin;
+    @Input() loading: boolean;
 
     @Output() event = new EventEmitter<string>();
 

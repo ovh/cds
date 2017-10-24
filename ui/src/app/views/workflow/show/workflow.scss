@@ -11,6 +11,7 @@
     overflow-x: auto;
 
     .paddingContent {
+      padding: 0;
       .viewContent {
         #WorkflowShowGraph {
           margin-top: -35px;
@@ -26,8 +27,14 @@
           .center {
             text-align: center;
           }
-        }
 
+          .graph {
+            margin-top: 10px;
+          }
+        }
+        .padded {
+          padding: 0 100px 0 100px;
+        }
       }
     }
   }
