@@ -20,6 +20,7 @@ import (
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/token"
@@ -83,25 +84,28 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 		},
 	}
 
-	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
+	proj2, errP := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
+	test.NoError(t, errP)
+
+	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
 	test.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": proj.Key,
-		"workflowName":   w1.Name,
+		"key":              proj.Key,
+		"permWorkflowName": w1.Name,
 	}
 	uri := router.GetRoute("POST", api.postWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 
-	opts := &postWorkflowRunHandlerOption{}
+	opts := &sdk.WorkflowRunPostHandlerOption{}
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, opts)
 
 	//Do the request
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 202, rec.Code)
 
 	wr := &sdk.WorkflowRun{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), wr))
@@ -217,9 +221,9 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"id":             fmt.Sprintf("%d", ctx.job.ID),
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"id":               fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	//Register the worker
@@ -253,9 +257,9 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"id":             fmt.Sprintf("%d", ctx.job.ID),
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"id":               fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	//Register the hatchery
@@ -280,9 +284,9 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"id":             fmt.Sprintf("%d", ctx.job.ID),
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"id":               fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	//Register the worker
@@ -303,9 +307,9 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	vars = map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"permID":         fmt.Sprintf("%d", ctx.job.ID),
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"permID":           fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	//Send logs
@@ -348,9 +352,9 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"id":             fmt.Sprintf("%d", ctx.job.ID),
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"id":               fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	//Register the worker
@@ -460,9 +464,9 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"id":             fmt.Sprintf("%d", ctx.job.ID),
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"id":               fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	//Register the worker
@@ -483,9 +487,9 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 
 	vars = map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"permID":         fmt.Sprintf("%d", ctx.job.ID),
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"permID":           fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	//Send result
@@ -524,9 +528,9 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"id":             fmt.Sprintf("%d", ctx.job.ID),
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"id":               fmt.Sprintf("%d", ctx.job.ID),
 	}
 
 	//Register the worker
@@ -583,10 +587,10 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 
 	//Prepare request
 	vars = map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"number":         fmt.Sprintf("%d", updatedNodeRun.Number),
-		"nodeRunID":      fmt.Sprintf("%d", wNodeJobRun.WorkflowNodeRunID),
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"number":           fmt.Sprintf("%d", updatedNodeRun.Number),
+		"nodeRunID":        fmt.Sprintf("%d", wNodeJobRun.WorkflowNodeRunID),
 	}
 	uri = router.GetRoute("GET", api.getWorkflowNodeRunArtifactsHandler, vars)
 	test.NotEmpty(t, uri)
@@ -603,9 +607,9 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	// Download artifact
 	//Prepare request
 	vars = map[string]string{
-		"permProjectKey": ctx.project.Key,
-		"workflowName":   ctx.workflow.Name,
-		"artifactId":     fmt.Sprintf("%d", arts[0].ID),
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"artifactId":       fmt.Sprintf("%d", arts[0].ID),
 	}
 	uri = router.GetRoute("GET", api.getDownloadArtifactHandler, vars)
 	test.NotEmpty(t, uri)

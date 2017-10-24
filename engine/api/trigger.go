@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) addTriggerHandler() Handler {
@@ -32,43 +31,37 @@ func (api *API) addTriggerHandler() Handler {
 		if t.SrcApplication.ID == 0 {
 			a, errSrcApp := application.LoadByName(api.mustDB(), api.Cache, project, t.SrcApplication.Name, getUser(ctx))
 			if errSrcApp != nil {
-				log.Warning("addTriggersHandler> cannot load src application: %s\n", errSrcApp)
-				return errSrcApp
+				return sdk.WrapError(errSrcApp, "addTriggersHandler> cannot load src application")
 			}
 			t.SrcApplication.ID = a.ID
 		}
 		if !permission.AccessToApplication(t.SrcApplication.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
-			log.Warning("addTriggersHandler> You don't have enought right on this application %s", t.SrcApplication.Name)
-			return sdk.ErrForbidden
+			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> You don't have enought right on this application %s", t.SrcApplication.Name)
 		}
 
 		if t.SrcPipeline.ID == 0 {
 			p, errSrcPip := pipeline.LoadPipeline(api.mustDB(), project, t.SrcPipeline.Name, false)
 			if errSrcPip != nil {
-				log.Warning("addTriggersHandler> cannot load src pipeline: %s\n", errSrcPip)
-				return errSrcPip
+				return sdk.WrapError(errSrcPip, "addTriggersHandler> cannot load src pipeline")
 			}
 			t.SrcPipeline.ID = p.ID
 		}
 		if !permission.AccessToPipeline(sdk.DefaultEnv.ID, t.SrcPipeline.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
-			log.Warning("addTriggersHandler> You don't have enought right on this pipeline %s", t.SrcPipeline.Name)
-			return sdk.ErrForbidden
+			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> You don't have enought right on this pipeline %s", t.SrcPipeline.Name)
 
 		}
 
 		if t.SrcEnvironment.ID == 0 && t.SrcEnvironment.Name != "" && t.SrcEnvironment.Name != sdk.DefaultEnv.Name {
 			e, errSrcEnv := environment.LoadEnvironmentByName(api.mustDB(), project, t.SrcEnvironment.Name)
 			if errSrcEnv != nil {
-				log.Warning("addTriggersHandler> cannot load src environment: %s\n", errSrcEnv)
-				return errSrcEnv
+				return sdk.WrapError(errSrcEnv, "addTriggersHandler> cannot load src environment")
 			}
 			t.SrcEnvironment.ID = e.ID
 		} else if t.SrcEnvironment.ID == 0 {
 			t.SrcEnvironment = sdk.DefaultEnv
 		}
 		if !permission.AccessToEnvironment(t.SrcEnvironment.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
-			log.Warning("addTriggersHandler> No enought right on this environment %s: \n", t.SrcEnvironment.Name)
-			return sdk.ErrForbidden
+			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> No enought right on this environment %s: ", t.SrcEnvironment.Name)
 
 		}
 
@@ -76,35 +69,30 @@ func (api *API) addTriggerHandler() Handler {
 		if t.DestApplication.ID == 0 {
 			a, errDestApp := application.LoadByName(api.mustDB(), api.Cache, project, t.DestApplication.Name, getUser(ctx))
 			if errDestApp != nil {
-				log.Warning("addTriggersHandler> cannot load dst application: %s\n", errDestApp)
-				return errDestApp
+				return sdk.WrapError(errDestApp, "addTriggersHandler> cannot load dst application")
 			}
 			t.DestApplication.ID = a.ID
 		}
 		if !permission.AccessToApplication(t.DestApplication.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
-			log.Warning("addTriggersHandler> You don't have enought right on this application %s", t.DestApplication.Name)
-			return sdk.ErrForbidden
+			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> You don't have enought right on this application %s", t.DestApplication.Name)
 		}
 
 		if t.DestPipeline.ID == 0 {
 			p, errDestPip := pipeline.LoadPipeline(api.mustDB(), project, t.DestPipeline.Name, false)
 			if errDestPip != nil {
-				log.Warning("addTriggersHandler> cannot load dst pipeline: %s\n", errDestPip)
-				return errDestPip
+				return sdk.WrapError(errDestPip, "addTriggersHandler> cannot load dst pipeline")
 			}
 			t.DestPipeline.ID = p.ID
 		}
 		if !permission.AccessToPipeline(sdk.DefaultEnv.ID, t.DestPipeline.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
-			log.Warning("addTriggersHandler> You don't have enought right on this pipeline %s", t.DestPipeline.Name)
-			return sdk.ErrForbidden
+			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> You don't have enought right on this pipeline %s", t.DestPipeline.Name)
 
 		}
 
 		if t.DestEnvironment.ID == 0 && t.DestEnvironment.Name != "" && t.DestEnvironment.Name != sdk.DefaultEnv.Name {
 			e, errDestEnv := environment.LoadEnvironmentByName(api.mustDB(), project, t.DestEnvironment.Name)
 			if errDestEnv != nil {
-				log.Warning("addTriggersHandler> cannot load dst environment: %s\n", errDestEnv)
-				return errDestEnv
+				return sdk.WrapError(errDestEnv, "addTriggersHandler> cannot load dst environment")
 			}
 			t.DestEnvironment.ID = e.ID
 		} else if t.DestEnvironment.ID == 0 {
@@ -112,8 +100,7 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		if !permission.AccessToEnvironment(t.DestEnvironment.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
-			log.Warning("addTriggersHandler> No enought right on this environment %s: \n", t.DestEnvironment.Name)
-			return sdk.ErrForbidden
+			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> No enought right on this environment %s: ", t.DestEnvironment.Name)
 
 		}
 
@@ -125,15 +112,13 @@ func (api *API) addTriggerHandler() Handler {
 		defer tx.Rollback()
 
 		if err := trigger.InsertTrigger(tx, &t); err != nil {
-			log.Warning("addTriggerHandler> cannot insert trigger: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addTriggerHandler> cannot insert trigger")
 
 		}
 
 		// Update src application
 		if err := application.UpdateLastModified(tx, api.Cache, &t.SrcApplication, getUser(ctx)); err != nil {
-			log.Warning("addTriggerHandler> cannot update loast modified date on src application: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addTriggerHandler> cannot update loast modified date on src application")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -141,10 +126,9 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, project, t.SrcApplication.Name, getUser(ctx), "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, project, t.SrcApplication.Name, getUser(ctx), "", "", 0)
 		if errWorkflow != nil {
-			log.Warning("addTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
-			return errWorkflow
+			return sdk.WrapError(errWorkflow, "addTriggerHandler> cannot load updated workflow")
 		}
 
 		return WriteJSON(w, r, t.SrcApplication, http.StatusOK)
@@ -158,14 +142,12 @@ func (api *API) getTriggerHandler() Handler {
 
 		triggerID, errParse := strconv.ParseInt(striggerID, 10, 64)
 		if errParse != nil {
-			log.Warning("getTriggerHandler> TriggerId %s should be an int: %s\n", striggerID, errParse)
-			return sdk.ErrInvalidID
+			return sdk.WrapError(sdk.ErrInvalidID, "getTriggerHandler> TriggerId %s should be an int", striggerID)
 		}
 
 		t, errTrig := trigger.LoadTrigger(api.mustDB(), triggerID)
 		if errTrig != nil {
-			log.Warning("getTriggerHandler> Cannot load trigger %d: %s\n", triggerID, errTrig)
-			return errTrig
+			return sdk.WrapError(errTrig, "getTriggerHandler> Cannot load trigger %d", triggerID)
 		}
 
 		return WriteJSON(w, r, t, http.StatusOK)
@@ -180,44 +162,38 @@ func (api *API) getTriggersHandler() Handler {
 		pip := vars["permPipelineKey"]
 
 		if err := r.ParseForm(); err != nil {
-			log.Warning("getTriggersHandler> Cannot parse form: %s\n", err)
-			return sdk.ErrUnknownError
+			return sdk.WrapError(sdk.ErrUnknownError, "getTriggersHandler> Cannot parse form")
 
 		}
 		env := r.Form.Get("env")
 
 		a, errApp := application.LoadByName(api.mustDB(), api.Cache, project, app, getUser(ctx))
 		if errApp != nil {
-			log.Warning("getTriggersHandler> cannot load application: %s\n", errApp)
-			return errApp
+			return sdk.WrapError(errApp, "getTriggersHandler> cannot load application")
 		}
 
 		p, errPip := pipeline.LoadPipeline(api.mustDB(), project, pip, false)
 		if errPip != nil {
-			log.Warning("getTriggersHandler> cannot load pipeline: %s\n", errPip)
-			return errPip
+			return sdk.WrapError(errPip, "getTriggersHandler> cannot load pipeline")
 		}
 
 		var envID int64
 		if env != "" && env != sdk.DefaultEnv.Name {
 			e, errEnv := environment.LoadEnvironmentByName(api.mustDB(), project, env)
 			if errEnv != nil {
-				log.Warning("getTriggersHandler> cannot load environment: %s\n", errEnv)
-				return errEnv
+				return sdk.WrapError(errEnv, "getTriggersHandler> cannot load environment")
 			}
 			envID = e.ID
 
 			if !permission.AccessToEnvironment(e.ID, getUser(ctx), permission.PermissionRead) {
-				log.Warning("getTriggersHandler> No enought right on this environment %s: \n", e.Name)
-				return sdk.ErrForbidden
+				return sdk.WrapError(sdk.ErrForbidden, "getTriggersHandler> No enought right on this environment %s: ", e.Name)
 
 			}
 		}
 
 		triggers, errTri := trigger.LoadTriggers(api.mustDB(), a.ID, p.ID, envID)
 		if errTri != nil {
-			log.Warning("getTriggersHandler> cannot load triggers: %s\n", errTri)
-			return errTri
+			return sdk.WrapError(errTri, "getTriggersHandler> cannot load triggers")
 		}
 
 		return WriteJSON(w, r, triggers, http.StatusOK)
@@ -232,45 +208,38 @@ func (api *API) deleteTriggerHandler() Handler {
 
 		triggerID, errParse := strconv.ParseInt(triggerIDS, 10, 64)
 		if errParse != nil {
-			log.Warning("deleteTriggerHandler> invalid id (%s)\n", errParse)
-			return sdk.ErrInvalidID
+			return sdk.WrapError(sdk.ErrInvalidID, "deleteTriggerHandler> invalid id (%s)", errParse)
 		}
 
 		t, errTrigger := trigger.LoadTrigger(api.mustDB(), triggerID)
 		if errTrigger != nil {
-			log.Warning("deleteTriggerHandler> Cannot load trigger: %s\n", errTrigger)
-			return errTrigger
+			return sdk.WrapError(errTrigger, "deleteTriggerHandler> Cannot load trigger")
 		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			log.Warning("deleteTriggerHandler> Cannot start transaction: %s\n", errBegin)
-			return errBegin
+			return sdk.WrapError(errBegin, "deleteTriggerHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if err := trigger.DeleteTrigger(tx, triggerID); err != nil {
-			log.Warning("deleteTriggerHandler> cannot delete trigger: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteTriggerHandler> cannot delete trigger")
 		}
 
 		if err := application.UpdateLastModified(tx, api.Cache, &t.SrcApplication, getUser(ctx)); err != nil {
-			log.Warning("deleteTriggerHandler> cannot update src application last modified date: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteTriggerHandler> cannot update src application last modified date")
 
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("deleteTriggerHandler> cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteTriggerHandler> cannot commit transaction")
 
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", "", 0)
 		if errWorkflow != nil {
-			log.Warning("deleteTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
-			return errWorkflow
+			return sdk.WrapError(errWorkflow, "deleteTriggerHandler> cannot load updated workflow")
 		}
 
 		return WriteJSON(w, r, t.SrcApplication, http.StatusOK)
@@ -285,8 +254,7 @@ func (api *API) updateTriggerHandler() Handler {
 
 		triggerID, errParse := strconv.ParseInt(triggerIDS, 10, 64)
 		if errParse != nil {
-			log.Warning("updateTriggerHandler> invalid id (%s)\n", errParse)
-			return sdk.ErrInvalidID
+			return sdk.WrapError(sdk.ErrInvalidID, "updateTriggerHandler> invalid id (%s)", errParse)
 
 		}
 
@@ -297,40 +265,34 @@ func (api *API) updateTriggerHandler() Handler {
 
 		if t.SrcApplication.ID == 0 || t.DestApplication.ID == 0 ||
 			t.SrcPipeline.ID == 0 || t.DestPipeline.ID == 0 {
-			log.Warning("updateTriggerHandler> IDs should not be zero\n")
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "updateTriggerHandler> IDs should not be zero")
 
 		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			log.Warning("updateTriggerHandler> cannot start transaction: %s\n", errBegin)
-			return errBegin
+			return sdk.WrapError(errBegin, "updateTriggerHandler> cannot start transaction")
 
 		}
 		defer tx.Rollback()
 
 		t.ID = triggerID
 		if err := trigger.UpdateTrigger(tx, &t); err != nil {
-			log.Warning("updateTriggerHandler> cannot update trigger: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateTriggerHandler> cannot update trigger")
 		}
 
 		if err := application.UpdateLastModified(tx, api.Cache, &t.SrcApplication, getUser(ctx)); err != nil {
-			log.Warning("updateTriggerHandler> cannot update src application last modified date: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateTriggerHandler> cannot update src application last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("updateTriggerHandler> cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateTriggerHandler> cannot commit transaction")
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, t.SrcApplication.Name, getUser(ctx), "", "", 0)
 		if errWorkflow != nil {
-			log.Warning("updateTriggerHandler> cannot load updated workflow: %s\n", errWorkflow)
-			return errWorkflow
+			return sdk.WrapError(errWorkflow, "updateTriggerHandler> cannot load updated workflow")
 		}
 
 		return WriteJSON(w, r, t.SrcApplication, http.StatusOK)
@@ -345,42 +307,36 @@ func (api *API) getTriggersAsSourceHandler() Handler {
 		pip := vars["permPipelineKey"]
 
 		if err := r.ParseForm(); err != nil {
-			log.Warning("getTriggersAsSourceHandler> Cannot parse form: %s\n", err)
-			return sdk.ErrWrongRequest
+			return sdk.WrapError(sdk.ErrWrongRequest, "getTriggersAsSourceHandler> Cannot parse form")
 		}
 		env := r.Form.Get("env")
 
 		a, errApp := application.LoadByName(api.mustDB(), api.Cache, project, app, getUser(ctx))
 		if errApp != nil {
-			log.Warning("getTriggersAsSourceHandler> cannot load application: %s\n", errApp)
-			return errApp
+			return sdk.WrapError(errApp, "getTriggersAsSourceHandler> cannot load application")
 		}
 
 		p, errPip := pipeline.LoadPipeline(api.mustDB(), project, pip, false)
 		if errPip != nil {
-			log.Warning("getTriggersAsSourceHandler> cannot load pipeline: %s\n", errPip)
-			return errPip
+			return sdk.WrapError(errPip, "getTriggersAsSourceHandler> cannot load pipeline")
 		}
 
 		var envID int64
 		if env != "" && env != sdk.DefaultEnv.Name {
 			e, errEnv := environment.LoadEnvironmentByName(api.mustDB(), project, env)
 			if errEnv != nil {
-				log.Warning("getTriggersAsSourceHandler> cannot load environment: %s\n", errEnv)
-				return errEnv
+				return sdk.WrapError(errEnv, "getTriggersAsSourceHandler> cannot load environment")
 			}
 			envID = e.ID
 
 			if !permission.AccessToEnvironment(e.ID, getUser(ctx), permission.PermissionRead) {
-				log.Warning("getTriggersAsSourceHandler> No enought right on this environment %s: \n", e.Name)
-				return sdk.ErrForbidden
+				return sdk.WrapError(sdk.ErrForbidden, "getTriggersAsSourceHandler> No enought right on this environment %s: ", e.Name)
 			}
 		}
 
 		triggers, errTri := trigger.LoadTriggersAsSource(api.mustDB(), a.ID, p.ID, envID)
 		if errTri != nil {
-			log.Warning("getTriggersAsSourceHandler> cannot load triggers: %s\n", errTri)
-			return errTri
+			return sdk.WrapError(errTri, "getTriggersAsSourceHandler> cannot load triggers")
 		}
 
 		return WriteJSON(w, r, triggers, http.StatusOK)

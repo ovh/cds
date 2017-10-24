@@ -157,6 +157,11 @@ func (s *StashClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 	return branches, nil
 }
 
+// PullRequests fetch all the pull request for a repository
+func (s *StashClient) PullRequests(string) ([]sdk.VCSPullRequest, error) {
+	return []sdk.VCSPullRequest{}, nil
+}
+
 //Branch retrieves the branch from Stash
 func (s *StashClient) Branch(fullname, branchName string) (*sdk.VCSBranch, error) {
 	t := strings.Split(fullname, "/")
@@ -385,8 +390,7 @@ func (s *StashClient) SetStatus(event sdk.Event) error {
 	}
 
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-		log.Warning("Error during consumption: %s", err)
-		return err
+		return sdk.WrapError(err, "Error during consumption")
 	}
 
 	log.Debug("Process event:%+v", event)

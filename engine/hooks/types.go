@@ -22,7 +22,7 @@ type Configuration struct {
 	Name string `toml:"name" comment:"Name of this CDS Hooks Service"`
 	HTTP struct {
 		Port int `toml:"port" default:"8083" toml:"name"`
-	} `toml:"http" comment:"######################\n CDS Hooks HTTP Configuration \n######################\n"`
+	} `toml:"http" comment:"######################\n CDS Hooks HTTP Configuration \n######################"`
 	URL              string `default:"http://localhost:8083"`
 	RetryDelay       int64  `toml:"retryDelay" default:"1" comment:"Execution retry delay in seconds"`
 	RetryError       int64  `toml:"retryError" default:"3" comment:"Retry execution while this number of error is not reached"`
@@ -39,7 +39,7 @@ type Configuration struct {
 		Token                string `toml:"token" default:"************"`
 		RequestTimeout       int    `toml:"requestTimeout" default:"10"`
 		MaxHeartbeatFailures int    `toml:"maxHeartbeatFailures" default:"10"`
-	} `toml:"api" comment:"######################\n CDS API Settings \n######################\n`
+	} `toml:"api" comment:"######################\n CDS API Settings \n######################`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
 		Redis struct {

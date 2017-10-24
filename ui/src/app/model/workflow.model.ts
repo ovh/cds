@@ -4,6 +4,8 @@ import {Environment} from './environment.model';
 import {intersection} from 'lodash';
 import {Parameter} from './parameter.model';
 import {WorkflowHookModel} from './workflow.hook.model';
+import {GroupPermission} from './group.model';
+import {Usage} from './usage.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -16,6 +18,12 @@ export class Workflow {
     root_id: number;
     joins: Array<WorkflowNodeJoin>;
     last_modified: Date;
+    groups: Array<GroupPermission>;
+    permission: number;
+    metadata: Map<string, string>;
+    usage: Usage;
+    history_length: number;
+    purge_tags: Array<string>;
 
     // UI params
     externalChange: boolean;
@@ -148,6 +156,7 @@ export class WorkflowNodeJoinTrigger {
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
     manual: boolean;
+    continue_on_error: boolean;
 
     constructor() {
         this.workflow_dest_node = new WorkflowNode();
@@ -299,6 +308,7 @@ export class WorkflowNodeTrigger {
     workflow_dest_node: WorkflowNode;
     conditions: Array<WorkflowTriggerCondition>;
     manual: boolean;
+    continue_on_error: boolean;
 
     constructor() {
         this.workflow_dest_node = new WorkflowNode();

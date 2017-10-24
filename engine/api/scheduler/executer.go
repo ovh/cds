@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -15,22 +14,6 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-//Executer is the goroutine which run the pipelines
-func Executer(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
-	tick := time.NewTicker(5 * time.Second).C
-	for {
-		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting scheduler.Executer: %v", c.Err())
-				return
-			}
-		case <-tick:
-			ExecuterRun(DBFunc, store)
-		}
-	}
-}
 
 //ExecuterRun is the core function of Executer goroutine
 func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSchedulerExecution, error) {
@@ -55,6 +38,17 @@ func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSc
 			return nil, errb
 		}
 
+		s, errlock := loadAndLockPipelineScheduler(tx, exs[i].PipelineSchedulerID)
+		if errlock != nil {
+			log.Error("Run> Unable to load to pipeline scheduler %d %s", exs[i].PipelineSchedulerID, errlock)
+			_ = tx.Rollback()
+			continue
+		}
+		if s == nil {
+			_ = tx.Rollback()
+			continue
+		}
+
 		query := "SELECT * FROM pipeline_scheduler_execution WHERE id = $1 and executed = 'false' FOR UPDATE NOWAIT"
 		if err := tx.SelectOne(gorpEx, query, exs[i].ID); err != nil {
 			pqerr, ok := err.(*pq.Error)
@@ -73,6 +67,20 @@ func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSc
 		ex := sdk.PipelineSchedulerExecution(*gorpEx)
 		if _, errProcess := executerProcess(DBFunc, store, tx, &ex); errProcess != nil {
 			log.Error("ExecuterRun> Unable to process %+v : %s", ex, errProcess)
+			_ = tx.Rollback()
+			continue
+		}
+
+		nextExec, errNext := Next(tx, s)
+		if errNext != nil {
+			log.Error("ExecuterRun> Unable to compute next execution %+v : %s", ex, errNext)
+			_ = tx.Rollback()
+			continue
+		}
+		if err := InsertExecution(tx, nextExec); err != nil {
+			log.Error("ExecuterRun> Unable to compute next execution %+v : %s", nextExec, errNext)
+			_ = tx.Rollback()
+			continue
 		}
 
 		//Commit

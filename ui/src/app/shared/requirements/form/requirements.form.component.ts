@@ -1,4 +1,4 @@
-import {Component, Output, EventEmitter} from '@angular/core';
+import {Component, Input, Output, EventEmitter, ViewChild} from '@angular/core';
 import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
@@ -12,12 +12,25 @@ import {WorkerModel} from '../../../model/worker-model.model';
 })
 export class RequirementsFormComponent {
 
+    @Input('suggest')
+    set suggest(data: Array<string>) {
+        if (Array.isArray(this.workerModels) && data) {
+            this.workerModels = this.workerModels.concat(data);
+        } else if (data) {
+            this.workerModels = data;
+        }
+        this._suggest = data || [];
+    }
+    get suggest() {
+        return this._suggest;
+    }
     @Output() event = new EventEmitter<RequirementEvent>();
 
     newRequirement: Requirement = new Requirement('binary');
     availableRequirements: Array<string>;
-    isWriting = false;
-    workerModels: Array<WorkerModel>;
+    valueChanged = false;
+    workerModels: Array<string>;
+    _suggest: Array<string> = [];
 
     constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
         this._requirementStore.getAvailableRequirements().subscribe(r => {
@@ -26,26 +39,25 @@ export class RequirementsFormComponent {
         });
 
         this._workerModelService.getWorkerModels().first().subscribe( wms => {
-            this.workerModels = wms;
+            this.workerModels = wms.map((wm) => wm.name).concat(this.workerModels);
         });
     }
 
     addRequirement(): void {
         this.event.emit(new RequirementEvent('add', this.newRequirement));
         this.newRequirement = new Requirement('binary');
-        this.isWriting = false;
+        this.valueChanged = false;
     }
 
     setValue(event: any): void  {
-        if (this.isWriting || (this.newRequirement.value === '' && this.newRequirement.type === 'binary')) {
-            this.isWriting = true;
+        if (!this.valueChanged || this.newRequirement.value === '') {
             this.newRequirement.value = event.target.value;
         }
     }
 
     setName(event: any): void {
-        if (this.isWriting || ((this.newRequirement.name === '') && this.newRequirement.type === 'binary')) {
-            this.isWriting = true;
+        this.valueChanged = true;
+        if (this.newRequirement.name === '') {
             this.newRequirement.name = event.target.value;
         }
     }

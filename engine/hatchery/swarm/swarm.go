@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
-	"github.com/spf13/viper"
 )
 
 // New instanciates a new Hatchery Swarm
@@ -122,7 +121,7 @@ var containersCache = struct {
 func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 	t := time.Now()
 
-	defer log.Debug("getContainers() : %d s", time.Since(t).Seconds())
+	defer log.Debug("getContainers() : %f s", time.Since(t).Seconds())
 
 	containersCache.mu.RLock()
 	nbServers := len(containersCache.list)
@@ -138,6 +137,11 @@ func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 		containersCache.mu.Lock()
 		containersCache.list = s
 		containersCache.mu.Unlock()
+
+		log.Debug("getContainers> %d containers on this host", len(s))
+		for _, v := range s {
+			log.Debug("getContainers> container ID:%s names:%+v image:%s created:%d state:%s, status:%s", v.ID, v.Names, v.Image, v.Created, v.State, v.Status)
+		}
 		//Remove data from the cache after 2 seconds
 		go func() {
 			time.Sleep(2 * time.Second)
@@ -165,42 +169,7 @@ func (h *HatcherySwarm) getContainer(name string) (*docker.APIContainers, error)
 	return nil, nil
 }
 
-func (h *HatcherySwarm) killAndRemove(ID string) error {
-
-	/*
-
-		container, err := h.dockerClient.InspectContainer(ID)
-		if err != nil {
-			return sdk.WrapError(err, "killAndRemove> cannot InspectContainer")
-		}
-
-			network, err := h.dockerClient.NetworkInfo(container.NetworkSettings.NetworkID)
-			if err != nil {
-				return sdk.WrapError(err, "killAndRemove> cannot NetworkInfo")
-			}
-
-			if netname, ok := network.Labels["worker_net"]; ok {
-				log.Info("killAndRemove> Remove network %s", netname)
-				for id := range network.Containers {
-					log.Info("killAndRemove> Remove container %s", id)
-					if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
-						ID:     id,
-						Signal: docker.SIGKILL,
-					}); err != nil {
-						log.Debug("killAndRemove> Unable to kill container %s", err)
-						continue
-					}
-
-					if err := h.dockerClient.RemoveContainer(docker.RemoveContainerOptions{
-						ID:            id,
-						RemoveVolumes: true,
-						Force:         true,
-					}); err != nil {
-						log.Warning("killAndRemove> Unable to remove container %s", err)
-					}
-				}
-			} else {
-	*/
+func (h *HatcherySwarm) killAndRemoveContainer(ID string) {
 	log.Info("killAndRemove>Remove container %s", ID)
 	if err := h.dockerClient.KillContainer(docker.KillContainerOptions{
 		ID:     ID,
@@ -219,8 +188,31 @@ func (h *HatcherySwarm) killAndRemove(ID string) error {
 			log.Warning("killAndRemove> Unable to remove container %s", err)
 		}
 	}
+}
 
-	return nil
+func (h *HatcherySwarm) killAndRemove(ID string) {
+	container, err := h.dockerClient.InspectContainer(ID)
+	if err != nil {
+		log.Info("killAndRemove> cannot InspectContainer: %v", err)
+		h.killAndRemoveContainer(ID)
+		return
+	}
+
+	for _, cnetwork := range container.NetworkSettings.Networks {
+		network, err := h.dockerClient.NetworkInfo(cnetwork.NetworkID)
+		if err != nil {
+			log.Info("killAndRemove> cannot NetworkInfo: %v", err)
+			h.killAndRemoveContainer(ID)
+			return
+		}
+		// If we succeed to get the network, kill and remove all the container on the network
+		if netname, ok := network.Labels["worker_net"]; ok {
+			log.Info("killAndRemove> Remove network %s", netname)
+			for id := range network.Containers {
+				h.killAndRemoveContainer(id)
+			}
+		}
+	}
 }
 
 //SpawnWorker start a new docker container
@@ -300,9 +292,9 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 
 	//CDS env needed by the worker binary
 	env := []string{
-		"CDS_API" + "=" + h.Client().APIURL(),
+		"CDS_API" + "=" + h.Configuration().API.HTTP.URL,
 		"CDS_NAME" + "=" + name,
-		"CDS_TOKEN" + "=" + viper.GetString("token"),
+		"CDS_TOKEN" + "=" + h.Configuration().API.Token,
 		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
 		"CDS_HATCHERY_NAME" + "=" + h.hatch.Name,
@@ -310,21 +302,21 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 		"CDS_SINGLE_USE=1",
 	}
 
-	if viper.GetString("worker_graylog_host") != "" {
-		env = append(env, "CDS_GRAYLOG_HOST"+"="+viper.GetString("worker_graylog_host"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
+		env = append(env, "CDS_GRAYLOG_HOST"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.Host)
 	}
-	if viper.GetString("worker_graylog_port") != "" {
-		env = append(env, "CDS_GRAYLOG_PORT"+"="+viper.GetString("worker_graylog_port"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
+		env = append(env, fmt.Sprintf("CDS_GRAYLOG_PORT=%d", h.Configuration().Provision.WorkerLogsOptions.Graylog.Port))
 	}
-	if viper.GetString("worker_graylog_extra_key") != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+viper.GetString("worker_graylog_extra_key"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_KEY"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey)
 	}
-	if viper.GetString("worker_graylog_extra_value") != "" {
-		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+viper.GetString("worker_graylog_extra_value"))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
+		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue)
 	}
-	if viper.GetString("grpc_api") != "" && model.Communication == sdk.GRPC {
-		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", viper.GetString("grpc_api")))
-		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", viper.GetBool("grpc_insecure")))
+	if h.Configuration().API.GRPC.URL != "" && model.Communication == sdk.GRPC {
+		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
+		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
 	}
 
 	if jobID > 0 {
@@ -435,13 +427,19 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		}
 	}
 
-	// hatcherySwarm.ratioService: Percent reserved for spwaning worker with service requirement
+	// hatcherySwarm.ratioService: Percent reserved for spawning worker with service requirement
 	// if no link -> we need to check ratioService
-	if len(links) == 0 && len(cs) > 0 {
-		percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
-		if percentFree <= h.Config.RatioService {
-			log.Info("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
+	if len(links) == 0 {
+		if h.Config.RatioService >= 100 {
+			log.Debug("CanSpawn> ratioService 100 by conf - no spawn worker without CDS Service")
 			return false
+		}
+		if len(cs) > 0 {
+			percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
+			if percentFree <= h.Config.RatioService {
+				log.Debug("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
+				return false
+			}
 		}
 	}
 
@@ -641,9 +639,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 	//Delete the workers
 	for _, c := range oldContainers {
 		log.Info("killAwolWorker> Delete worker %s", c.Names[0])
-		if err := h.killAndRemove(c.ID); err != nil {
-			log.Warning("killAwolWorker> Cannot killAndRemove worker id: %s, err:%s", c.ID, err)
-		}
+		h.killAndRemove(c.ID)
 	}
 
 	var errC error
@@ -676,7 +672,13 @@ func (h *HatcherySwarm) killAwolWorker() {
 		return
 	}
 
-	for _, n := range nets {
+	for i := range nets {
+		n, err := h.dockerClient.NetworkInfo(nets[i].ID)
+		if err != nil {
+			log.Warning("killAwolWorker> Unable to get network info: %v", err)
+			continue
+		}
+
 		if n.Driver != "bridge" || n.Name == "docker0" || n.Name == "bridge" {
 			continue
 		}

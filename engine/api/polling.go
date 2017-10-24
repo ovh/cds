@@ -95,7 +95,7 @@ func (api *API) addPollerHandler() Handler {
 
 		app.RepositoryPollers = append(app.RepositoryPollers, h)
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "addPollerHandler> Cannot load workflow")
 		}
@@ -171,7 +171,7 @@ func (api *API) updatePollerHandler() Handler {
 			return sdk.WrapError(err, "updatePollerHandler> cannot load pollers")
 		}
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "updatePollerHandler> Cannot load workflow")
 		}
@@ -273,16 +273,14 @@ func (api *API) deletePollerHandler() Handler {
 
 		if err = tx.Commit(); err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot commit transaction")
-
 		}
 
 		a.RepositoryPollers, err = poller.LoadByApplication(api.mustDB(), a.ID)
 		if err != nil {
 			return sdk.WrapError(err, "deletePollerHandler> cannot load pollers")
-
 		}
 		var errW error
-		a.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", 0)
+		a.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "deletePollerHandler> Cannot load workflow")
 		}

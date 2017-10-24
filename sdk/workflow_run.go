@@ -24,6 +24,7 @@ type WorkflowRun struct {
 	Tags             []WorkflowRunTag            `json:"tags" db:"-"`
 	LastSubNumber    int64                       `json:"last_subnumber" db:"last_sub_num"`
 	LastExecution    time.Time                   `json:"last_execution" db:"last_execution"`
+	ToDelete         bool                        `json:"to_delete" db:"to_delete" cli:"-"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
@@ -32,6 +33,14 @@ type WorkflowNodeRunRelease struct {
 	ReleaseTitle   string   `json:"release_title"`
 	ReleaseContent string   `json:"release_content"`
 	Artifacts      []string `json:"artifacts"`
+}
+
+// WorkflowRunPostHandlerOption contains the body content for launch a workflow
+type WorkflowRunPostHandlerOption struct {
+	Hook       *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
+	Manual     *WorkflowNodeRunManual    `json:"manual,omitempty"`
+	Number     *int64                    `json:"number,omitempty"`
+	FromNodeID *int64                    `json:"from_node,omitempty"`
 }
 
 // Translate translates messages in WorkflowNodeRun
@@ -44,11 +53,14 @@ func (r *WorkflowRun) Translate(lang string) {
 
 // Tag push a new Tag in WorkflowRunTag
 func (r *WorkflowRun) Tag(tag, value string) {
+	if value == "" {
+		return
+	}
 	var found bool
 	for i := range r.Tags {
 		if r.Tags[i].Tag == tag {
 			found = true
-			if r.Tags[i].Value != value {
+			if !strings.Contains(r.Tags[i].Value, value) {
 				r.Tags[i].Value = strings.Join([]string{r.Tags[i].Value, value}, ",")
 			}
 		}
@@ -64,6 +76,7 @@ type WorkflowRunInfo struct {
 	Message SpawnMsg  `json:"message,omitempty" db:"-"`
 	// UserMessage contains msg translated for end user
 	UserMessage string `json:"user_message,omitempty" db:"-"`
+	IsError     bool   `json:"is_error" db:"-"`
 }
 
 //WorkflowRunTag is a tag on workflow run

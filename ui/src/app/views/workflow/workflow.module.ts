@@ -19,11 +19,12 @@ import {WorkflowRunTestTableComponent} from './run/node/test/table/test.table.co
 import {WorkflowRunSummaryComponent} from './run/summary/workflow.run.summary.component';
 import {WorkflowNodeRunHistoryComponent} from './run/node/history/history.component';
 import {WorkflowNodeRunSummaryComponent} from './run/node/summary/run.summary.component';
+import {WorkflowAdminComponent} from './show/admin/workflow.admin.component';
 import {SidebarService} from 'ng2-semantic-ui/dist';
-import {WorkflowCoreService} from './workflow.service';
 
 @NgModule({
     declarations: [
+        WorkflowAdminComponent,
         WorkflowComponent,
         WorkflowAddComponent,
         WorkflowBreadCrumbComponent,
@@ -42,9 +43,6 @@ import {WorkflowCoreService} from './workflow.service';
         WorkflowShowComponent,
         WorkflowStepLogComponent,
         WorkflowNodeRunSummaryComponent
-    ],
-    providers: [
-        WorkflowCoreService
     ],
     imports: [
         SharedModule,

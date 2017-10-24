@@ -276,6 +276,7 @@ func Test_cloneEnvironmentHandler(t *testing.T) {
 	vars := map[string]string{
 		"key": proj.Key,
 		"permEnvironmentName": env.Name,
+		"cloneName":           "Production2",
 	}
 
 	envPost := sdk.Environment{

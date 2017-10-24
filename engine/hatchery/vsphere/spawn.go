@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/docker/docker/pkg/namesgenerator"
-	"github.com/spf13/viper"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/types"
 
@@ -186,8 +185,8 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model *sd
 		"CDS_SINGLE_USE=1",
 		"CDS_FORCE_EXIT=1",
 		"CDS_FROM_WORKER_IMAGE=true",
-		"CDS_API=" + viper.GetString("api"),
-		"CDS_TOKEN=" + viper.GetString("token"),
+		"CDS_API=" + h.Configuration().API.HTTP.URL,
+		"CDS_TOKEN=" + h.Configuration().API.Token,
 		"CDS_NAME=" + name,
 		"CDS_MODEL=" + fmt.Sprintf("%d", model.ID),
 		"CDS_HATCHERY=" + fmt.Sprintf("%d", h.Hatchery().ID),
@@ -196,11 +195,11 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model *sd
 		"CDS_TTL=" + fmt.Sprintf("%d", h.workerTTL),
 	}
 
-	env = append(env, getGraylogGrpcEnv(model)...)
+	env = append(env, h.getGraylogGrpcEnv(model)...)
 
 	script := fmt.Sprintf(
 		`cd $HOME; rm -f worker; curl "%s/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1; chmod +x worker; PATH=$PATH ./worker`,
-		viper.GetString("api"),
+		h.Configuration().API.HTTP.URL,
 	)
 
 	if registerOnly {

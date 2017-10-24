@@ -5,7 +5,7 @@ import {Project} from '../../../../model/project.model';
 import {WorkflowItem, WorkflowStatusResponse} from '../../../../model/application.workflow.model';
 import {PipelineBuild, PipelineType} from '../../../../model/pipeline.model';
 import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.component';
-import {Branch} from '../../../../model/repositories.model';
+import {Branch, Remote} from '../../../../model/repositories.model';
 import {Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
 import {Observable} from 'rxjs/Observable';
@@ -37,8 +37,14 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     }
 
     // Filter values
+    remotes: Array<Remote>;
     branches: Array<Branch>;
     versions: Array<string>;
+    loading: {remote: boolean, branch: boolean, version: boolean} = {
+        remote: true,
+        branch: true,
+        version: true
+    };
 
     // Modal Component to link pipeline
     @ViewChild('linkPipelineComponent')
@@ -49,21 +55,60 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.applicationFilter.remote = '';
         this.changeWorkerEvent.emit(true);
     }
 
     ngOnInit(): void {
         this.generateParentInformation();
-        // Load branches
-        this._appWorkflow.getBranches(this.project.key, this.application.name).subscribe(branches => {
-            this.branches = branches;
-            this.branches.forEach(b => {
-                if (b.default && !this.applicationFilter.branch) {
-                    this.applicationFilter.branch = b.display_id;
-                }
-            });
+        this.fetchRepositoryInfos();
+    }
 
-            this.loadVersions(this.project.key, this.application.name).subscribe();
+    fetchRepositoryInfos() {
+        this.remotes = null;
+        this.branches = null;
+        if (this.application.repository_fullname) {
+            this.loading.remote = true;
+            this.loading.branch = true;
+            Observable.zip(
+                this._appWorkflow.getRemotes(this.project.key, this.application.name),
+                this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote),
+                (remotes, branches) => {
+                    this.remotes = remotes;
+                    this.branches = branches;
+                    if (Array.isArray(remotes) && remotes.length) {
+                        let remoteFound = remotes.find((r) => r.name === this.applicationFilter.remote);
+                        this.applicationFilter.remote = remoteFound ? remoteFound.name : remotes[0].name;
+                    }
+
+                    if (!this.applicationFilter.branch) {
+                      this.setDefaultBranchFilter();
+                    }
+
+                    this.loadVersions(this.project.key, this.application.name).subscribe();
+                }
+            ).finally(() => {
+                this.loading.remote = false;
+                this.loading.branch = false;
+            }).subscribe();
+        } else {
+            this.loading.branch = false;
+            this.loading.remote = false;
+
+            this.loadVersions(this.project.key, this.application.name).subscribe(() => {
+                this.applicationFilter.branch = 'master';
+                this.applicationFilter.remote = '';
+                this.remotes = [];
+                this.branches = [];
+            });
+        }
+    }
+
+    setDefaultBranchFilter() {
+        this.branches.forEach(b => {
+            if (b.default) {
+                this.applicationFilter.branch = b.display_id;
+            }
         });
     }
 
@@ -98,8 +143,10 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
         }
     }
 
-    switchApplication(): void {
+    switchApplication(application: Application): void {
+        this.application = application;
         this.generateParentInformation();
+        this.fetchRepositoryInfos();
     }
 
     /**
@@ -206,9 +253,32 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
      * Action when changing branch
      */
     changeBranch(): void {
+        if (!this.application.repository_fullname) {
+            return;
+        }
         // Load the versions of the new branch
         this.loadVersions(this.project.key, this.application.name)
             .subscribe(() => this.changeVersion());
+    }
+    /**
+     * Action when changing remote
+     */
+    changeRemote(): void {
+        if (!this.application.repository_fullname) {
+            return;
+        }
+        this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote)
+          .subscribe(branches => {
+              this.branches = branches;
+
+              if (Array.isArray(branches) && branches.length) {
+                let branchFound = branches.find((br) => br.display_id === this.applicationFilter.branch);
+                this.applicationFilter.branch = branchFound ? branchFound.display_id : branches[0].display_id;
+              }
+
+              this.loadVersions(this.project.key, this.application.name)
+                  .subscribe(() => this.changeVersion());
+          });
     }
 
     /**
@@ -225,9 +295,15 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
             this.applicationFilter.version = version;
         }
 
-        this._router.navigate(['/project/', this.project.key, 'application', this.application.name],
-            {queryParams: {tab: 'workflow', branch: this.applicationFilter.branch, version: this.applicationFilter.version}});
-        this.changeWorkerEvent.emit(false);
+        this._router.navigate(['/project/', this.project.key, 'application', this.application.name], {
+          queryParams: {
+            tab: 'workflow',
+            branch: this.applicationFilter.branch,
+            version: this.applicationFilter.version,
+            remote: this.applicationFilter.remote
+          }
+        });
+        this.changeWorkerEvent.emit(true);
         this.clearTree(this.application.workflows);
     }
 
@@ -235,7 +311,9 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
      * Load the list of version for the current application on the selected branch
      */
     loadVersions(key: string, appName: string): Observable<Array<string>> {
-        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch)
+        this.loading.version = true;
+        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch, this.applicationFilter.remote)
+            .finally(() => this.loading.version = false)
             .map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]);
     }
 

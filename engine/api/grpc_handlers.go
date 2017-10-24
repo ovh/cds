@@ -39,8 +39,7 @@ func (h *grpcHandlers) AddBuildLog(stream grpc.BuildLog_AddBuildLogServer) error
 
 		db := h.dbConnectionFactory.GetDBMap()
 		if err := pipeline.AddBuildLog(db, in); err != nil {
-			log.Warning("grpc.AddBuildLog> Unable to insert log : %s", err)
-			return err
+			return sdk.WrapError(err, "grpc.AddBuildLog> Unable to insert log ")
 		}
 	}
 }
@@ -61,8 +60,7 @@ func (h *grpcHandlers) SendLog(stream grpc.WorkflowQueue_SendLogServer) error {
 
 		db := h.dbConnectionFactory.GetDBMap()
 		if err := workflow.AddLog(db, nil, in); err != nil {
-			log.Warning("grpc.SendLog> Unable to insert log : %s", err)
-			return err
+			return sdk.WrapError(err, "grpc.SendLog> Unable to insert log ")
 		}
 	}
 }
@@ -87,7 +85,7 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	db := h.dbConnectionFactory.GetDBMap()
 
 	//Load workflow node job run
-	job, errj := workflow.LoadAndLockNodeJobRun(db, h.store, res.BuildID)
+	job, errj := workflow.LoadAndLockNodeJobRunNoWait(db, h.store, res.BuildID)
 	if errj != nil {
 		return new(empty.Empty), sdk.WrapError(errj, "postWorkflowJobResultHandler> Unable to load node run job")
 	}

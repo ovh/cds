@@ -26,6 +26,7 @@ func permissionFunc(api *API) map[string]PermCheckFunc {
 		"permPipelineKey":     api.checkPipelinePermissions,
 		"permApplicationName": api.checkApplicationPermissions,
 		"appID":               api.checkApplicationIDPermissions,
+		"permWorkflowName":    api.checkWorkflowPermissions,
 		"permGroupName":       api.checkGroupPermissions,
 		"permActionName":      api.checkActionPermissions,
 		"permEnvironmentName": api.checkEnvironmentPermissions,
@@ -100,28 +101,29 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 
 	case getWorker(ctx) != nil:
 		//Refresh the worker
-		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx).ID); err != nil {
+		workerCtx := getWorker(ctx)
+		if err := worker.RefreshWorker(api.mustDB(), workerCtx); err != nil {
 			return ctx, sdk.WrapError(err, "Router> Unable to refresh worker")
 		}
 
-		g, err := loadGroupPermissions(api.mustDB(), api.Cache, getWorker(ctx).GroupID)
+		g, err := loadGroupPermissions(api.mustDB(), api.Cache, workerCtx.GroupID)
 		if err != nil {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load group permissions: %s", err)
 		}
 		getUser(ctx).Groups = append(getUser(ctx).Groups, *g)
 
-		if getWorker(ctx).ModelID != 0 {
+		if workerCtx.ModelID != 0 {
 			//Load model
-			m, err := worker.LoadWorkerModelByID(api.mustDB(), getWorker(ctx).ModelID)
+			m, err := worker.LoadWorkerModelByID(api.mustDB(), workerCtx.ModelID)
 			if err != nil {
-				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s", err)
+				return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> cannot load worker: %s - name:%s modelID:%d", err, workerCtx.Name, workerCtx.ModelID)
 			}
 
 			//If worker model is owned by shared.infra, let's add SharedInfraGroup in user's group
 			if m.GroupID == group.SharedInfraGroup.ID {
 				getUser(ctx).Groups = append(getUser(ctx).Groups, *group.SharedInfraGroup)
 			} else {
-				log.Debug("Router> loading groups permission for model %d", getWorker(ctx).ModelID)
+				log.Debug("Router> loading groups permission for model %d", workerCtx.ModelID)
 				modelGroup, errLoad2 := loadGroupPermissions(api.mustDB(), api.Cache, m.GroupID)
 				if errLoad2 != nil {
 					return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Cannot load group: %s", errLoad2)
@@ -130,7 +132,6 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 				getUser(ctx).Groups = append(getUser(ctx).Groups, *modelGroup)
 			}
 		}
-
 	case getUser(ctx) != nil:
 		if err := loadUserPermissions(api.mustDB(), api.Cache, getUser(ctx)); err != nil {
 			return ctx, sdk.WrapError(sdk.ErrUnauthorized, "Router> Unable to load user %s permission: %s", getUser(ctx).ID, err)
@@ -154,6 +155,10 @@ func (api *API) authMiddleware(ctx context.Context, w http.ResponseWriter, req *
 		if !permissionOk {
 			return ctx, sdk.WrapError(sdk.ErrForbidden, "Router> Worker not authorized")
 		}
+		return ctx, nil
+	}
+
+	if rc.Options["allowServices"] == "true" && getService(ctx) != nil {
 		return ctx, nil
 	}
 
@@ -246,13 +251,18 @@ func (api *API) checkProjectPermissions(ctx context.Context, projectKey string, 
 	return false
 }
 
-func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName string, permission int, routeVar map[string]string) bool {
+func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName string, perm int, routeVar map[string]string) bool {
 	// Check if param key exist
 	if projectKey, ok := routeVar["key"]; ok {
-		for _, g := range getUser(ctx).Groups {
-			for _, p := range g.PipelineGroups {
-				if pipelineName == p.Pipeline.Name && p.Permission >= permission && projectKey == p.Pipeline.ProjectKey {
-					return true
+		switch perm {
+		case permission.PermissionRead:
+			return checkProjectReadPermission(ctx, projectKey)
+		default:
+			for _, g := range getUser(ctx).Groups {
+				for _, p := range g.PipelineGroups {
+					if pipelineName == p.Pipeline.Name && p.Permission >= perm && projectKey == p.Pipeline.ProjectKey {
+						return true
+					}
 				}
 			}
 		}
@@ -263,13 +273,16 @@ func (api *API) checkPipelinePermissions(ctx context.Context, pipelineName strin
 	return false
 }
 
-func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string, permission int, routeVar map[string]string) bool {
+func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string, perm int, routeVar map[string]string) bool {
 	// Check if param key exist
 	if projectKey, ok := routeVar["key"]; ok {
-		if getUser(ctx).Groups != nil {
+		switch perm {
+		case permission.PermissionRead:
+			return checkProjectReadPermission(ctx, projectKey)
+		default:
 			for _, g := range getUser(ctx).Groups {
 				for _, p := range g.EnvironmentGroups {
-					if envName == p.Environment.Name && p.Permission >= permission && projectKey == p.Environment.ProjectKey {
+					if envName == p.Environment.Name && p.Permission >= perm && projectKey == p.Environment.ProjectKey {
 						return true
 					}
 				}
@@ -282,17 +295,54 @@ func (api *API) checkEnvironmentPermissions(ctx context.Context, envName string,
 	return false
 }
 
-func (api *API) checkApplicationPermissions(ctx context.Context, applicationName string, permission int, routeVar map[string]string) bool {
-	// Check if param key exist
+func (api *API) checkWorkflowPermissions(ctx context.Context, workflowName string, perm int, routeVar map[string]string) bool {
 	if projectKey, ok := routeVar["key"]; ok {
-		if getUser(ctx).Groups != nil {
+		// If need read permission, just check project read permission
+		switch perm {
+		case permission.PermissionRead:
+			return checkProjectReadPermission(ctx, projectKey)
+		default:
 			for _, g := range getUser(ctx).Groups {
-				for _, a := range g.ApplicationGroups {
-					if applicationName == a.Application.Name && a.Permission >= permission && projectKey == a.Application.ProjectKey {
+				for _, w := range g.WorkflowGroups {
+					if workflowName == w.Workflow.Name && w.Permission >= perm && projectKey == w.Workflow.ProjectKey {
 						return true
 					}
 				}
 			}
+		}
+		log.Warning("Access denied. user %s on workflow %s", getUser(ctx).Username, workflowName)
+	} else {
+		log.Warning("Wrong route configuration. need key parameter")
+	}
+	return false
+}
+
+func checkProjectReadPermission(ctx context.Context, projectKey string) bool {
+	for _, g := range getUser(ctx).Groups {
+		for _, p := range g.ProjectGroups {
+			if projectKey == p.Project.Key {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func (api *API) checkApplicationPermissions(ctx context.Context, applicationName string, perm int, routeVar map[string]string) bool {
+	// Check if param key exist
+	if projectKey, ok := routeVar["key"]; ok {
+		switch perm {
+		case permission.PermissionRead:
+			return checkProjectReadPermission(ctx, projectKey)
+		default:
+			for _, g := range getUser(ctx).Groups {
+				for _, a := range g.ApplicationGroups {
+					if applicationName == a.Application.Name && a.Permission >= perm && projectKey == a.Application.ProjectKey {
+						return true
+					}
+				}
+			}
+
 		}
 		log.Warning("Access denied. user %s on application %s", getUser(ctx).Username, applicationName)
 	} else {
@@ -308,12 +358,10 @@ func (api *API) checkApplicationIDPermissions(ctx context.Context, appIDS string
 		return false
 	}
 
-	if getUser(ctx).Groups != nil {
-		for _, g := range getUser(ctx).Groups {
-			for _, a := range g.ApplicationGroups {
-				if appID == a.Application.ID && a.Permission >= permission {
-					return true
-				}
+	for _, g := range getUser(ctx).Groups {
+		for _, a := range g.ApplicationGroups {
+			if appID == a.Application.ID && a.Permission >= permission {
+				return true
 			}
 		}
 	}

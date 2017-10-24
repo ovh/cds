@@ -18,7 +18,7 @@
             </ng-container>
             <ng-container>
                 <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
-                <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig" (change)="updateValue($event)" #textareaCodeMirror></codemirror>
+                <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig" #textareaCodeMirror></codemirror>
                 <div class="extra">
                     <ng-container *ngIf="invalidJSON">
                         {{ 'workflow_context_invalid' | translate}}
@@ -31,7 +31,7 @@
         </div>
     </div>
     <div class="actions">
-        <button class="ui red button" (click)="modal.approve(false)">Cancel</button>
-        <button class="ui green button" (click)="run()" autofocus>OK</button>
+        <button class="ui red button" [disabled]="loading" (click)="modal.approve(false)">Cancel</button>
+        <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="run()" autofocus>OK</button>
     </div>
 </ng-template>

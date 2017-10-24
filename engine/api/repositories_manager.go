@@ -182,15 +182,13 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 		//Load the repositories manager from the DB
 		rm, err := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName, api.Cache)
 		if err != nil {
-			log.Warning("repositoriesManagerAuthorizeCallback> error %s\n", err)
-			return sdk.ErrNoReposManager
+			return sdk.WrapError(sdk.ErrNoReposManager, "repositoriesManagerAuthorizeCallback> error %s", err)
 
 		}
 
 		accessToken, accessTokenSecret, err := rm.Consumer.AuthorizeToken(state, code)
 		if err != nil {
-			log.Warning("repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
-			return sdk.ErrNoReposManagerClientAuth
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
 
 		}
 
@@ -559,7 +557,7 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "addHookOnRepositoriesManagerHandler> Cannot load workflow")
 		}
@@ -609,7 +607,7 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Unable to load workflow")
 		}

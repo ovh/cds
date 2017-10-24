@@ -16,8 +16,8 @@ import (
 func (api *API) getWorkflowTriggerConditionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		id, errID := requestVarInt(r, "nodeID")
 		if errID != nil {
@@ -34,18 +34,6 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
 		}
 
-		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name)
-		if errr != nil {
-			if errr != sdk.ErrWorkflowNotFound {
-				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
-			}
-		}
-
-		params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, getUser(ctx))
-		if errp != nil {
-			return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
-		}
-
 		data := struct {
 			Operators      map[string]string `json:"operators"`
 			ConditionNames []string          `json:"names"`
@@ -53,16 +41,30 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			Operators: sdk.WorkflowConditionsOperators,
 		}
 
-		var statusParamFound bool
-		for _, p := range params {
-			if p.Name == "cds.status" {
-				statusParamFound = true
+		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name)
+		if errr != nil {
+			if errr != sdk.ErrWorkflowNotFound {
+				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
 			}
-			data.ConditionNames = append(data.ConditionNames, p.Name)
 		}
 
-		if !statusParamFound {
-			data.ConditionNames = append(data.ConditionNames, "cds.status")
+		if wr != nil {
+			params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, getUser(ctx))
+			if errp != nil {
+				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
+			}
+
+			var statusParamFound bool
+			for _, p := range params {
+				if p.Name == "cds.status" {
+					statusParamFound = true
+				}
+				data.ConditionNames = append(data.ConditionNames, p.Name)
+			}
+
+			if !statusParamFound {
+				data.ConditionNames = append(data.ConditionNames, "cds.status")
+			}
 		}
 
 		data.ConditionNames = append(data.ConditionNames, "cds.dest.pipeline")
@@ -78,7 +80,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			data.ConditionNames = append(data.ConditionNames, "cds.dest.environment")
 		}
 
-		ancestorIds := refNode.Ancestors(wf)
+		ancestorIds := refNode.Ancestors(wf, true)
 		for _, aID := range ancestorIds {
 			ancestor := wf.GetNode(aID)
 			if ancestor == nil {
@@ -103,8 +105,8 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		id, errID := requestVarInt(r, "joinID")
 		if errID != nil {
@@ -169,7 +171,7 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 			if !found {
 				data.ConditionNames = append(data.ConditionNames, "workflow."+refNode.Name+".status")
 			}
-			ancestorIds := refNode.Ancestors(wf)
+			ancestorIds := refNode.Ancestors(wf, true)
 			for _, aID := range ancestorIds {
 				ancestor := wf.GetNode(aID)
 				if ancestor == nil {

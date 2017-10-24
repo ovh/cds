@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 
@@ -83,41 +82,8 @@ func (api *API) disableWorkerHandler() Handler {
 			return sdk.WrapError(sdk.ErrNotFound, "disabledWorkerHandler> Cannot load worker %s", id)
 		}
 
-		if wor.Status == sdk.StatusBuilding {
-			return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s\n", wor.Status)
-		}
-
-		if wor.Status == sdk.StatusChecking {
-			log.Warning("disableWorkerHandler> Next time, we will see (%s) %s at status waiting, we will kill it\n", wor.ID, wor.Name)
-			go func(w *sdk.Worker) {
-				for {
-					var attempts int
-					time.Sleep(500 * time.Millisecond)
-					db := api.DBConnectionFactory.GetDBMap()
-					if db != nil {
-						attempts++
-						w1, err := worker.LoadWorker(api.mustDB(), w.ID)
-						if err != nil {
-							log.Warning("disableWorkerHandler> Error getting worker %s", w.ID)
-							return
-						}
-						//Give up is worker is building
-						if w1.Status == sdk.StatusBuilding {
-							return
-						}
-						if w1.Status == sdk.StatusWaiting {
-							if err := worker.UpdateWorkerStatus(tx, id, sdk.StatusDisabled); err != nil {
-								log.Warning("disableWorkerHandler> Error disabling worker %s", w.ID)
-								return
-							}
-						}
-						if attempts > 100 {
-							log.Error("disableWorkerHandler> Unable to disabled worker %s %s", w.ID, w.Name)
-							return
-						}
-					}
-				}
-			}(wor)
+		if wor.Status == sdk.StatusBuilding || wor.Status == sdk.StatusChecking {
+			return sdk.WrapError(sdk.ErrForbidden, "Cannot disable a worker with status %s", wor.Status)
 		}
 
 		if wor.HatcheryID == 0 {
@@ -135,13 +101,17 @@ func (api *API) disableWorkerHandler() Handler {
 			return sdk.WrapError(err, "disableWorkerHandler> cannot commit tx")
 		}
 
+		//Remove the worker from the cache
+		key := cache.Key("worker", wor.ID)
+		api.Cache.Delete(key)
+
 		return nil
 	}
 }
 
 func (api *API) refreshWorkerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx).ID); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
+		if err := worker.RefreshWorker(api.mustDB(), getWorker(ctx)); err != nil && (err != sql.ErrNoRows || err != worker.ErrNoWorker) {
 			return sdk.WrapError(err, "refreshWorkerHandler> cannot refresh last beat of %s", getWorker(ctx).ID)
 		}
 		return nil

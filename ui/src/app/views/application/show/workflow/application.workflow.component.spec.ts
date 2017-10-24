@@ -67,9 +67,10 @@ describe('CDS: Application Workflow', () => {
         p.name = 'projectName';
 
         let a: Application = new Application();
+        a.repository_fullname = 'repoFullName';
         a.name = 'appName';
 
-        let appFilter: ApplicationFilter = { branch: 'foo', version: '1' };
+        let appFilter: ApplicationFilter = { branch: '', version: '1', remote: 'barremote' };
 
         fixture.componentInstance.project = p;
         fixture.componentInstance.application = a;
@@ -77,6 +78,9 @@ describe('CDS: Application Workflow', () => {
 
         // Create spy
         let workflowService: ApplicationWorkflowService = injector.get(ApplicationWorkflowService);
+        spyOn(workflowService, 'getRemotes').and.callFake(() => {
+            return Observable.of([{ 'name' : 'barremote', url: 'https://github.com/barremote/barremote.git' }]);
+        });
         spyOn(workflowService, 'getBranches').and.callFake(() => {
             return Observable.of([{ 'display_id' : 'branche1', default: true}, { 'display_id' : 'branche2'}, { 'display_id' : 'master'},
                 { 'display_id' : 'branche3' }]);
@@ -89,8 +93,12 @@ describe('CDS: Application Workflow', () => {
         fixture.componentInstance.ngOnInit();
 
         // Check
-        expect(fixture.componentInstance.applicationFilter.branch).toBe('foo');
+        expect(fixture.componentInstance.applicationFilter.branch).toBe('branche1');
         expect(JSON.stringify(fixture.componentInstance.versions)).toBe(JSON.stringify([' ', '1', '2', '3']));
+        expect(JSON.stringify(fixture.componentInstance.remotes)).toBe(JSON.stringify([{
+            'name' : 'barremote',
+            url: 'https://github.com/barremote/barremote.git'
+        }]));
         expect(JSON.stringify(fixture.componentInstance.branches)).toBe(JSON.stringify([
             {'display_id': 'branche1', 'default': true},
             {'display_id': 'branche2'},

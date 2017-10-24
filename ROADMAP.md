@@ -1,39 +1,24 @@
 # Roadmap
 
-1. [Workflow](#workflow)
-   1. [Application Workflow / Workflow As Code](#wasc)
-   2. [Workflow Template](#template)
-   3. [Workflow file format](#fileformat)
-   4. [Workflow Hooks](#hooks)
-2. [Static analysis report](#static)
-3. [Code coverage report](#coverage)
-4. [Security analysis report](#security)
-5. [Tags and releases](#tags)
-6. [Environment Providers](#env)
-7. [Application Providers](#apps)
-8. [Mesos Hatchery](#mesos)
-9. [Kubernetes support](#k8s)
+1. [Workflow file format](#fileformat)
+1. [Application Workflow / Workflow As Code](#wasc)
+1. [Workflow Template](#template)
+1. [Workflow Hooks](#hooks)
+1. [Code coverage report](#coverage)
+1. [Static analysis report](#static)
+1. [Security analysis report](#security)
+1. [Platforms & Providers](#plaforms)
+1. [Mesos Hatchery](#mesos)
+1. [Kubernetes support](#k8s)
 
-## CDS Workflow <a name="workflow"></a>
 
-Issues #538, #539, #540, #742.
+## CDS Workflow file format  <a name="fileformat"></a>
 
-A CDS Worflow is set of pipelines and allow pipelines reusability with multiples execution contexts. It orchestrates pipelines executions by triggering the right pipelines at the right time with the right input.
+Export / Import
 
-Workflows embeds following concepts:
+## CDS Workflow As Code <a name="wasc"></a>
 
-- **Pipeline**: It's the key component of CDS. A pipeline can have paremeters.
-- **Payload**: The payload is the input for running the pipeline.
-- **Context**: A context defines it the pipeline has to be run with or without an **application** and **environment**. It also defines a default **Payload** and default **pipeline parameters**.
-- **Hook**: A hook is the way to trigger a workflow. You can attach one or more hooks on each pipelines of the workflow.
-- **Root**: A workflow has one and only one root. You will often hooks on this very fist pipelines
-- **Trigger**: Triggers are links between two pipelines. You can define conditions on each triggers to define when the destination pipeline have to be ran.
-- **Join**: Joins allows to to wait for multiple pipelines execution before triggering pipelines through a **trigger**
-- **Run**: A Run is a workflow execution. It is identified by a **Number**. In a Run, every pipelines can be re-run, it introduce the **Subnumber**. So a workflow run with number 12, can have pipeline runs identified by 12.0, 12.1, 12.2 etc.
-
-### CDS Workflow As Code <a name="wasc"></a>
-
-#### Definition
+### Definition
 
 Beyond pipeline configuration CDS must support **Application Workfow** configuration file located in **Git repositories**. We talk here about application workflow because this kind of workflow will be dedicated to only one application.
 
@@ -45,7 +30,7 @@ Beyond pipeline configuration CDS must support **Application Workfow** configura
 - On each branch, the  **application workflow** is redefined for the branch
 - The webhook or the poller will delete the **application workflow** redefined for the branch, on branch deletion
 
-#### Use case #1
+### Use case #1
 
 As a developper, considering :
 
@@ -61,7 +46,7 @@ I create the **application workflow** with `$ cds push [--git-remote origin] <PR
 - create the workflow with embedded pipelines
 - create the webhook or the poller
 
-#### Use case #2
+### Use case #2
 
 As a developper, considering :
 
@@ -84,12 +69,12 @@ On my command line:
   - last execution of the workflow for this branch,
   - the last branch executed,
 
-#### Example
+### Example
 
 comming soon
 
 
-### Workflow template <a name="template"></a>
+## Workflow template <a name="template"></a>
 
 Template as binary file we be removed from CDS. We consider that the main use case of template is the bootstrap on an **Application Workflow**. So Workflow Template must be just generic configuration file.
 
@@ -106,7 +91,7 @@ When a template will be used from command line in a Git repository:
 - The current repostory is added in the CDS project as an application linked to the repository.
 - The workflow is imported in the project
 
-#### Use case #1
+### Use case #1
 
 As a developper, considering :
 
@@ -120,17 +105,7 @@ As a developper, considering :
   - write the file in the current directory.
 - `$ cds push [PROJECT_KEY]`
 
-### CDS Workflow file format  <a name="fileformat"></a>
-
-#### Export
-
-comming soon
-
-#### Import
-
-comming soon 
-
-### Workflow Hooks <a name="hooks"></a>
+## Workflow Hooks <a name="hooks"></a>
 
 Provides workflows hooks SDK to give to users ability to develop their own hooks to trigger their workflow on every events. For instances:
 
@@ -142,30 +117,30 @@ Provides workflows hooks SDK to give to users ability to develop their own hooks
 - HTTP/TCP/UDP Dial Error: For advanced health check a self healing workflow
 - ...
 
-## Static analysis report <a name="static"></a>
-
-As Units tests report, CDS will support static analysis/linter report. With or without sonarcube. It should also provides a way to measure improvements/regression of code quality.
-
 ## Code coverage report <a name="coverage"></a>
 
 As Units tests report, CDS will support code coverage report. It should also provides a way to measure improvements/regression of code coverage.
 
 ## Security analysis report <a name="security"></a>
 
-As Units tests report, CDS will support  security analysis report. It should support [owasp dependency checks](https://www.owasp.org/index.php/OWASP_Dependency_Check) for code dependencies vulnerability, [coreos clair](https://github.com/coreos/clair) for container images vulnerability.
+As Units tests report, CDS will support security analysis report per workflow. It should support [owasp dependency checks](https://www.owasp.org/index.php/OWASP_Dependency_Check) for code dependencies vulnerability, [coreos clair](https://github.com/coreos/clair) for container images vulnerability.
 
-## Tags and releases <a name="tags"></a>
+## Static analysis report <a name="static"></a>
 
-Push a tag on a repomanager will trigger a workflow on the tag. CDS will support git tag, release
-
-## Environment Provider <a name="envs"></a>
-
-comming soon 
+As Units tests report, CDS will support static analysis/linter report. With or without sonarcube. It should also provides a way to measure improvements/regression of code quality.
 
 
-## Application Provider <a name="apps"></a>
+## Platforms & Providers <a name="platforms"></a>
 
-comming soon 
+Platform Openstack, providers: 
+ - File Storage File: artifact
+ - Block Storage : persistent workspace on workspace 
+ - Deploy on Environment
+ - CDS Compute: let users to use their own platform to run CDS Workers
+
+Platform Marathon, providers:
+ - Deploy on Environment
+ - CDS Compute
 
 ## Mesos Hatchery <a name="mesos"></a>
 
@@ -173,7 +148,7 @@ For the moment, CDS provides a Mesos/Marathon hatchery wich to spawn worker on a
 
 ## Kubernetes(K8S) Support <a name="k8s"></a>
 
-Support Kubernetes as a CDS infra structure to run worker as Kubernetes pods, and also support Kuberneted as an environment provider.
+Support Kubernetes as a CDS infra structure to run worker as Kubernetes pods, and also support Kuberneted as a Platform.
 
 
 

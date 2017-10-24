@@ -37,14 +37,14 @@
                     <div class="row">
                         <div class="three wide column verticalPlayIcon">
                             <div *ngIf="application.permission > permissionEnum.READ">
-                                <a class="pointing" (click)="runPipeline()"
+                                <a [class.pointing]="ready" (click)="ready && runPipeline()"
                                   *ngIf="!loadingPipAction && workflowItem.pipeline.last_pipeline_build?.status !== pipelineStatusEnum.BUILDING">
-                                  <i class="video play outline icon run"></i>
+                                  <i class="video play outline icon run" [class.disabled]="!ready"></i>
 
                                 </a>
-                                <a class="pointing" (click)="stopPipeline()"
+                                <a [class.pointing]="ready" (click)="ready && stopPipeline()"
                                   *ngIf="!loadingPipAction && workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING">
-                                  <i class="circular black stop icon build"></i>
+                                  <i class="circular black stop icon build" [class.disabled]="!ready"></i>
                                 </a>
                                 <div *ngIf="loadingPipAction" class="ui text active loader"></div>
                             </div>
@@ -188,7 +188,14 @@
 </sm-modal>
 
 <!-- Application launch -->
-<app-pipeline-launch-modal #pipelineLaunchModal [project]="project" [applicationFilter]="applicationFilter" [workflowItem]="workflowItem" (pipelineRunEvent)="navigateToBuild($event)"></app-pipeline-launch-modal>
+<app-pipeline-launch-modal #pipelineLaunchModal
+  [project]="project"
+  [application]="application"
+  [remotes]="remotes"
+  [applicationFilter]="applicationFilter"
+  [workflowItem]="workflowItem"
+  (pipelineRunEvent)="navigateToBuild($event)">
+</app-pipeline-launch-modal>
 
 <!-- Detach pipeline modal -->
 <sm-modal title="{{ 'application_detach_pipeline' | translate}}" class="fluid" #detachPipelineModal>

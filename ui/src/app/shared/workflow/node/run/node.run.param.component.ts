@@ -28,6 +28,7 @@ export class WorkflowNodeRunParamComponent {
     @Input() nodeRun: WorkflowNodeRun;
     @Input() project: Project;
     @Input() workflow: Workflow;
+    @Input() num: number;
     @Input('nodeToRun')
     set nodeToRun (data: WorkflowNode) {
         if (data) {
@@ -48,6 +49,7 @@ export class WorkflowNodeRunParamComponent {
     payloadString: string;
     invalidJSON: boolean;
     isSync = false;
+    loading = false;
 
     pipelineSubscription: Subscription;
 
@@ -117,19 +119,32 @@ export class WorkflowNodeRunParamComponent {
     }
 
     run(): void {
+        if (this.payloadString && this.payloadString !== '') {
+            this.reindent();
+            if (this.invalidJSON) {
+                return;
+            }
+        }
         let request = new WorkflowRunRequest();
         request.manual = new WorkflowNodeRunManual();
-        request.manual.payload = JSON.parse(this.payloadString);
+        request.manual.payload = this.payloadString ? JSON.parse(this.payloadString) : null;
         request.manual.pipeline_parameter = this.nodeToRun.context.default_pipeline_parameters;
 
         if (this.nodeRun) {
             request.from_node = this.nodeRun.workflow_node_id;
             request.number = this.nodeRun.num;
+        } else if (this.nodeToRun && this.num) {
+            request.from_node = this.nodeToRun.id;
+            request.number = this.num;
         }
 
-        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).subscribe(wr => {
+        this.loading = true;
+        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).finally(() => {
+            this.loading = false;
+        }).subscribe(wr => {
             this.modal.approve(true);
-            this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num]);
+            this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
+            {queryParams: { subnum: wr.last_subnumber }});
         });
     }
 }

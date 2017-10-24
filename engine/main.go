@@ -21,9 +21,12 @@ import (
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
+	"github.com/ovh/cds/engine/hatchery/swarm"
 	"github.com/ovh/cds/engine/hatchery/vsphere"
 	"github.com/ovh/cds/engine/hooks"
+	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -105,7 +108,24 @@ Comming soon...`,
 		conf.Hatchery.VSphere.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
+		conf.Hooks.Name = hatchery.GenerateName("hooks", "")
 		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
+		conf.VCS.API.Token = conf.API.Auth.SharedInfraToken
+		conf.VCS.Servers = map[string]vcs.ServerConfiguration{}
+		conf.VCS.Servers["Github"] = vcs.ServerConfiguration{
+			URL: "https://github.com",
+			Github: &vcs.GithubServerConfiguration{
+				ClientID:     "xxxx",
+				ClientSecret: "xxxx",
+			},
+		}
+		conf.VCS.Servers["Gitlab"] = vcs.ServerConfiguration{
+			URL: "https://gitlab.com",
+			Gitlab: &vcs.GitlabServerConfiguration{
+				AppID:  "xxxx",
+				Secret: "xxxx",
+			},
+		}
 
 		if !configNewAsEnvFlag {
 			btes, err := toml.Marshal(*conf)
@@ -180,7 +200,7 @@ var configCheckCmd = &cobra.Command{
 		}
 
 		if conf.Hatchery.Swarm.API.HTTP.URL != "" {
-			if err := openstack.New().CheckConfiguration(conf.Hatchery.Swarm); err != nil {
+			if err := swarm.New().CheckConfiguration(conf.Hatchery.Swarm); err != nil {
 				fmt.Println(err)
 				hasError = true
 			}
@@ -209,9 +229,11 @@ Start CDS Engine Services:
 	 * Vsphere
  * Hooks:
  	This component operates CDS workflow hooks
+ * VCS:
+ 	This component operates CDS VCS connectivity
 
 Start all of this with a single command:
-	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks]
+	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]
 All the services are using the same configuration file format.
 You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.
 You can also use or override toml file with environment variable.
@@ -269,19 +291,19 @@ See $ engine config command for more details.
 				s = api.New()
 				cfg = conf.API
 			case "hatchery:docker":
-				s = local.New()
+				s = docker.New()
 				cfg = conf.Hatchery.Docker
 			case "hatchery:local":
 				s = local.New()
 				cfg = conf.Hatchery.Local
 			case "hatchery:marathon":
-				s = local.New()
+				s = marathon.New()
 				cfg = conf.Hatchery.Marathon
 			case "hatchery:openstack":
-				s = local.New()
+				s = openstack.New()
 				cfg = conf.Hatchery.Openstack
 			case "hatchery:swarm":
-				s = local.New()
+				s = swarm.New()
 				cfg = conf.Hatchery.Swarm
 			case "hatchery:vsphere":
 				s = vsphere.New()
@@ -289,6 +311,12 @@ See $ engine config command for more details.
 			case "hooks":
 				s = hooks.New()
 				cfg = conf.Hooks
+			case "vcs":
+				s = vcs.New()
+				cfg = conf.VCS
+			default:
+				fmt.Printf("Error: service '%s' unknown\n", a)
+				os.Exit(1)
 			}
 
 			go start(ctx, s, cfg)

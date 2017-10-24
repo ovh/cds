@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getStepBuildLogsHandler() Handler {
@@ -45,28 +44,24 @@ func (api *API) getStepBuildLogsHandler() Handler {
 			var errEnv error
 			env, errEnv = environment.LoadEnvironmentByName(api.mustDB(), projectKey, envName)
 			if errEnv != nil {
-				log.Warning("getStepBuildLogsHandler> Cannot load environment %s: %s\n", envName, errEnv)
-				return errEnv
+				return sdk.WrapError(errEnv, "getStepBuildLogsHandler> Cannot load environment %s", envName)
 			}
 		}
 
 		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
-			log.Warning("getStepBuildLogsHandler> No enought right on this environment %s: \n", envName)
-			return sdk.ErrForbidden
+			return sdk.WrapError(sdk.ErrForbidden, "getStepBuildLogsHandler> No enought right on this environment %s", envName)
 		}
 
 		// Check that pipeline exists
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
 		if err != nil {
-			log.Warning("getStepBuildLogsHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-			return err
+			return sdk.WrapError(err, "getStepBuildLogsHandler> Cannot load pipeline %s", pipelineName)
 		}
 
 		// Check that application exists
 		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
-			log.Warning("getStepBuildLogsHandler> Cannot load application %s: %s\n", appName, err)
-			return err
+			return sdk.WrapError(err, "getStepBuildLogsHandler> Cannot load application %s", appName)
 		}
 
 		// if buildNumber is 'last' fetch last build number
@@ -75,29 +70,25 @@ func (api *API) getStepBuildLogsHandler() Handler {
 			var errLastBuildN error
 			bn, errLastBuildN := pipeline.GetLastBuildNumberInTx(api.mustDB(), p.ID, a.ID, env.ID)
 			if errLastBuildN != nil {
-				log.Warning("getStepBuildLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, errLastBuildN)
-				return errLastBuildN
+				return sdk.WrapError(errLastBuildN, "getStepBuildLogsHandler> Cannot load last build number for %s", pipelineName)
 			}
 			buildNumber = bn
 		} else {
 			buildNumber, err = strconv.ParseInt(buildNumberS, 10, 64)
 			if err != nil {
-				log.Warning("getStepBuildLogsHandler> Cannot parse build number %s: %s\n", buildNumberS, err)
-				return err
+				return sdk.WrapError(err, "getStepBuildLogsHandler> Cannot parse build number %s", buildNumberS)
 			}
 		}
 
 		// load pipeline_build.id
 		pb, errPB := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(api.mustDB(), a.ID, p.ID, env.ID, buildNumber)
 		if errPB != nil {
-			log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", errPB)
-			return errPB
+			return sdk.WrapError(errPB, "getBuildLogsHandler> Cannot load pipeline build id")
 		}
 
 		result, errLog := pipeline.LoadPipelineStepBuildLogs(api.mustDB(), pb, pipelineActionID, stepOrder)
 		if errLog != nil {
-			log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", errLog)
-			return errLog
+			return sdk.WrapError(errLog, "getBuildLogshandler> Cannot load pipeline build logs")
 		}
 
 		return WriteJSON(w, r, result, http.StatusOK)
@@ -116,8 +107,7 @@ func (api *API) getBuildLogsHandler() Handler {
 		// Get offset
 		err := r.ParseForm()
 		if err != nil {
-			log.Warning("getBuildLogsHandler> cannot parse form: %s\n", err)
-			return err
+			return sdk.WrapError(err, "getBuildLogsHandler> cannot parse form")
 		}
 
 		var env *sdk.Environment
@@ -127,32 +117,27 @@ func (api *API) getBuildLogsHandler() Handler {
 		} else {
 			env, err = environment.LoadEnvironmentByName(api.mustDB(), projectKey, envName)
 			if err != nil {
-				log.Warning("getBuildLogsHandler> Cannot load environment %s: %s\n", envName, err)
-				return sdk.ErrUnknownEnv
+				return sdk.WrapError(sdk.ErrUnknownEnv, "getBuildLogsHandler> Cannot load environment %s", envName)
 
 			}
 
 		}
 
 		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
-			log.Warning("getBuildLogsHandler> No enought right on this environment %s: \n", envName)
-			return sdk.ErrForbidden
+			return sdk.WrapError(sdk.ErrForbidden, "getBuildLogsHandler> No enought right on this environment %s", envName)
 
 		}
 
 		// Check that pipeline exists
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
 		if err != nil {
-			log.Warning("getBuildLogsHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-			return sdk.ErrPipelineNotFound
-
+			return sdk.WrapError(err, "getBuildLogsHandler> Cannot load pipeline %s", pipelineName)
 		}
 
 		// Check that application exists
 		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
-			log.Warning("getBuildLogsHandler> Cannot load application %s: %s\n", appName, err)
-			return sdk.ErrApplicationNotFound
+			return sdk.WrapError(err, "getBuildLogsHandler> Cannot load application %s", appName)
 
 		}
 
@@ -162,15 +147,13 @@ func (api *API) getBuildLogsHandler() Handler {
 			var errLastBuildN error
 			bn, errLastBuildN := pipeline.GetLastBuildNumberInTx(api.mustDB(), p.ID, a.ID, env.ID)
 			if errLastBuildN != nil {
-				log.Warning("getBuildLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, errLastBuildN)
-				return errLastBuildN
+				return sdk.WrapError(errLastBuildN, "getBuildLogsHandler> Cannot load last build number for %s", pipelineName)
 			}
 			buildNumber = bn
 		} else {
 			buildNumber, err = strconv.ParseInt(buildNumberS, 10, 64)
 			if err != nil {
-				log.Warning("getBuildLogsHandler> Cannot parse build number %s: %s\n", buildNumberS, err)
-				return err
+				return sdk.WrapError(err, "getBuildLogsHandler> Cannot parse build number %s", buildNumberS)
 
 			}
 		}
@@ -179,15 +162,13 @@ func (api *API) getBuildLogsHandler() Handler {
 		var pipelinelogs []sdk.Log
 		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(api.mustDB(), a.ID, p.ID, env.ID, buildNumber)
 		if err != nil {
-			log.Warning("getBuildLogsHandler> Cannot load pipeline build id: %s\n", err)
-			return err
+			return sdk.WrapError(err, "getBuildLogsHandler> Cannot load pipeline build id")
 
 		}
 
 		pipelinelogs, err = pipeline.LoadPipelineBuildLogs(api.mustDB(), pb)
 		if err != nil {
-			log.Warning("getBuildLogshandler> Cannot load pipeline build logs: %s\n", err)
-			return err
+			return sdk.WrapError(err, "getBuildLogshandler> Cannot load pipeline build logs")
 
 		}
 
@@ -214,21 +195,18 @@ func (api *API) getPipelineBuildJobLogsHandler() Handler {
 
 		pipelineActionID, err := strconv.ParseInt(pipelineActionIDString, 10, 64)
 		if err != nil {
-			log.Warning("getPipelineBuildJobLogsHandler> actionID should be an integer : %s\n", err)
-			return sdk.ErrInvalidID
+			return sdk.WrapError(sdk.ErrInvalidID, "getPipelineBuildJobLogsHandler> actionID should be an integer")
 		}
 
 		// Check that pipeline exists
 		p, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
 		if err != nil {
-			log.Warning("getPipelineBuildJobLogsHandler> Cannot load pipeline %s: %s\n", pipelineName, err)
-			return err
+			return sdk.WrapError(err, "getPipelineBuildJobLogsHandler> Cannot load pipeline %s", pipelineName)
 		}
 
 		a, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
-			log.Warning("getPipelineBuildJobLogsHandler> Cannot load application %s: %s\n", appName, err)
-			return err
+			return sdk.WrapError(err, "getPipelineBuildJobLogsHandler> Cannot load application %s", appName)
 		}
 
 		var env *sdk.Environment
@@ -239,14 +217,12 @@ func (api *API) getPipelineBuildJobLogsHandler() Handler {
 			var errload error
 			env, errload = environment.LoadEnvironmentByName(api.mustDB(), projectKey, envName)
 			if errload != nil {
-				log.Warning("getPipelineBuildJobLogsHandler> Cannot load environment %s on application %s: %s\n", envName, appName, errload)
-				return errload
+				return sdk.WrapError(errload, "getPipelineBuildJobLogsHandler> Cannot load environment %s on application %s", envName, appName)
 			}
 		}
 
 		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
-			log.Warning("getPipelineBuildJobLogsHandler> No enought right on this environment %s: \n", envName)
-			return sdk.ErrForbidden
+			return sdk.WrapError(sdk.ErrForbidden, "getPipelineBuildJobLogsHandler> No enought right on this environment %s", envName)
 		}
 
 		// if buildNumber is 'last' fetch last build number
@@ -254,15 +230,13 @@ func (api *API) getPipelineBuildJobLogsHandler() Handler {
 		if buildNumberS == "last" {
 			bn, errLastBuild := pipeline.GetLastBuildNumberInTx(api.mustDB(), p.ID, a.ID, env.ID)
 			if errLastBuild != nil {
-				log.Warning("getPipelineBuildJobLogsHandler> Cannot load last build number for %s: %s\n", pipelineName, errLastBuild)
-				return errLastBuild
+				return sdk.WrapError(errLastBuild, "getPipelineBuildJobLogsHandler> Cannot load last build number for %s", pipelineName)
 			}
 			buildNumber = bn
 		} else {
 			buildNumber, err = strconv.ParseInt(buildNumberS, 10, 64)
 			if err != nil {
-				log.Warning("getPipelineBuildJobLogsHandler> Cannot parse build number %s: %s\n", buildNumberS, err)
-				return err
+				return sdk.WrapError(err, "getPipelineBuildJobLogsHandler> Cannot parse build number %s", buildNumberS)
 			}
 		}
 
@@ -270,13 +244,11 @@ func (api *API) getPipelineBuildJobLogsHandler() Handler {
 		var pipelinelogs sdk.BuildState
 		pb, err := pipeline.LoadPipelineBuildByApplicationPipelineEnvBuildNumber(api.mustDB(), a.ID, p.ID, env.ID, buildNumber)
 		if err != nil {
-			log.Warning("getPipelineBuildJobLogsHandler> Cannot load pipeline build id: %s\n", err)
-			return err
+			return sdk.WrapError(err, "getPipelineBuildJobLogsHandler> Cannot load pipeline build id")
 		}
 		pipelinelogs, err = pipeline.LoadPipelineBuildJobLogs(api.mustDB(), pb, pipelineActionID)
 		if err != nil {
-			log.Warning("getPipelineBuildJobLogsHandler> Cannot load pipeline build logs: %s\n", err)
-			return err
+			return sdk.WrapError(err, "getPipelineBuildJobLogsHandler> Cannot load pipeline build logs")
 		}
 
 		return WriteJSON(w, r, pipelinelogs, http.StatusOK)

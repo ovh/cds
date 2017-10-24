@@ -6,7 +6,7 @@ TARGET_DIR = ./dist
 TARGET_ENGINE = cds-engine
 TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
-TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm)
+TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 
 GO_BUILD = go build -v
 GO_LINT = ${GOPATH}/bin/gometalinter
@@ -65,6 +65,9 @@ build: $(TARGET_DIR)
 test-db-start:
 	$(TEST_DB_START)
 	@sleep 5
+	$(TEST_DB_INIT)
+
+test-db-init:
 	$(TEST_DB_INIT)
 
 test-config: ${HOME}/.cds/tests.cfg.json

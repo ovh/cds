@@ -55,15 +55,16 @@ type Configuration struct {
 		Key string `toml:"key"`
 	} `toml:"secrets"`
 	Database struct {
-		User     string `toml:"user" default:"cds"`
-		Password string `toml:"password" default:"cds"`
-		Name     string `toml:"name" default:"cds"`
-		Host     string `toml:"host" default:"localhost"`
-		Port     int    `toml:"port" default:"5432"`
-		SSLMode  string `toml:"sslmode" default:"disable"`
-		MaxConn  int    `toml:"maxconn" default:"20"`
-		Timeout  int    `toml:"timeout" default:"3000"`
-		Secret   string `toml:"secret"`
+		User           string `toml:"user" default:"cds"`
+		Password       string `toml:"password" default:"cds"`
+		Name           string `toml:"name" default:"cds"`
+		Host           string `toml:"host" default:"localhost"`
+		Port           int    `toml:"port" default:"5432"`
+		SSLMode        string `toml:"sslmode" default:"disable" comment:"DB SSL Mode: require (default), verify-full, or disable"`
+		MaxConn        int    `toml:"maxconn" default:"20" comment:"DB Max connection"`
+		ConnectTimeout int    `toml:"connectTimeout" default:"10" comment:"Maximum wait for connection, in seconds"`
+		Timeout        int    `toml:"timeout" default:"3000" comment:"Statement timeout value in milliseconds"`
+		Secret         string `toml:"secret"`
 	} `toml:"database" comment:"################################\n Postgresql Database settings \n###############################"`
 	Cache struct {
 		TTL   int `toml:"ttl" default:"60"`
@@ -382,6 +383,7 @@ func (a *API) Serve(ctx context.Context) error {
 		a.Config.Database.Host,
 		a.Config.Database.Port,
 		a.Config.Database.SSLMode,
+		a.Config.Database.ConnectTimeout,
 		a.Config.Database.Timeout,
 		a.Config.Database.MaxConn)
 	if errDB != nil {
@@ -516,6 +518,8 @@ func (a *API) Serve(ctx context.Context) error {
 	} else {
 		log.Warning("⚠ Cron Scheduler is disabled")
 	}
+
+	go workflow.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf(":%d", a.Config.HTTP.Port),

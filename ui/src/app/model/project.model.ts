@@ -18,6 +18,7 @@ export class Project {
     repositories_manager: Array<RepositoriesManager>;
     permission: number;
     last_modified: string;
+    workflow_migration: string;
 
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;

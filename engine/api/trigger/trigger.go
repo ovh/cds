@@ -110,8 +110,7 @@ func isTriggerLoopFree(tx gorp.SqlExecutor, t *sdk.PipelineTrigger, parents []pa
 	// Load all dest trigger
 	tr, err := LoadTriggersAsSource(tx, t.DestApplication.ID, t.DestPipeline.ID, t.DestEnvironment.ID)
 	if err != nil {
-		log.Warning("isTriggerLoopFree: cannot load trigger as source: %s\n", err)
-		return err
+		return sdk.WrapError(err, "isTriggerLoopFree: cannot load trigger as source")
 	}
 
 	// Add yourself to parent

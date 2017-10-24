@@ -29,8 +29,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	}
 
 	if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
-		log.Warning("Error during consumption: %s", err)
-		return err
+		return sdk.WrapError(err, "Error during consumption")
 	}
 
 	log.Debug("Process event:%+v", event)
@@ -56,7 +55,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 	}
 
 	url := fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s",
-		g.uiURL,
+		uiURL,
 		eventpb.ProjectKey,
 		eventpb.ApplicationName,
 		eventpb.PipelineName,
@@ -116,9 +115,7 @@ func (g *GithubClient) SetStatus(event sdk.Event) error {
 
 	if res.StatusCode != 201 {
 		err := fmt.Errorf("Unable to create status on github. Status code : %d - Body: %s", res.StatusCode, body)
-		log.Warning("SetStatus> %s", err)
-		log.Warning("SetStatus> Sent data %s", b)
-		return err
+		return sdk.WrapError(err, "SetStatus> Sent data %s", b)
 	}
 
 	s := &Status{}

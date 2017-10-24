@@ -23,6 +23,18 @@
 			"revisionTime": "2016-07-17T15:07:09Z"
 		},
 		{
+			"checksumSHA1": "3w1n33TKtV0aoqU6skNPiOiyX3g=",
+			"path": "github.com/Masterminds/semver",
+			"revision": "15d8430ab86497c5c0da827b748823945e1cf1e1",
+			"revisionTime": "2017-10-04T14:25:31Z"
+		},
+		{
+			"checksumSHA1": "B+j14FiZi1hdMphadHis8T+vsRY=",
+			"path": "github.com/Masterminds/sprig",
+			"revision": "efda631a76d70875162cdc25ffa0d0164bf69758",
+			"revisionTime": "2017-10-06T14:55:04Z"
+		},
+		{
 			"checksumSHA1": "L9njXCkN30+qHaLayiiA2Q9jDlY=",
 			"path": "github.com/Microsoft/go-winio",
 			"revision": "fff283ad5116362ca252298cfc9b95828956d85d",
@@ -39,6 +51,12 @@
 			"path": "github.com/Sirupsen/logrus",
 			"revision": "10f801ebc38b33738c9d17d50860f484a0988ff5",
 			"revisionTime": "2017-03-17T14:32:14Z"
+		},
+		{
+			"checksumSHA1": "X0xGt0e0IkZeviF+pFRlpHP+xkE=",
+			"path": "github.com/aokoli/goutils",
+			"revision": "3391d3790d23d03408670993e957e8f408993c34",
+			"revisionTime": "2017-05-31T11:00:25Z"
 		},
 		{
 			"checksumSHA1": "mEPx03tDisj6nvPDxzIeb1gt4xg=",
@@ -69,6 +87,12 @@
 			"path": "github.com/briandowns/spinner",
 			"revision": "cd65e8bd7da20cdcee450f7cbdd9cc04f78bc02f",
 			"revisionTime": "2016-11-21T17:29:28Z"
+		},
+		{
+			"checksumSHA1": "grvilwEz6bkGZQUsPE9eqXazN8g=",
+			"path": "github.com/buger/goterm",
+			"revision": "d443b9114f9c050367638a536310fbec36a0de11",
+			"revisionTime": "2017-09-18T17:19:49Z"
 		},
 		{
 			"checksumSHA1": "BJXHEdzHxRPmVnt6GFaPpwgns2c=",
@@ -409,6 +433,12 @@
 			"revisionTime": "2017-06-02T13:19:43Z"
 		},
 		{
+			"checksumSHA1": "os4jdoOUjr86qvOwri8Ut1rXDrg=",
+			"path": "github.com/go-sql-driver/mysql",
+			"revision": "fade21009797158e7b79e04c340118a9220c6f9e",
+			"revisionTime": "2017-10-17T18:16:16Z"
+		},
+		{
 			"checksumSHA1": "kBeNcaKk56FguvPSUCEaH6AxpRc=",
 			"path": "github.com/golang/protobuf/proto",
 			"revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
@@ -694,6 +724,18 @@
 			"revisionTime": "2016-03-03T20:01:16Z"
 		},
 		{
+			"checksumSHA1": "mWeNctRQE955ZxV4HAx7KCDtVQE=",
+			"path": "github.com/huandu/xstrings",
+			"revision": "d6590c0c31d16526217fa60fbd2067f7afcd78c5",
+			"revisionTime": "2017-09-08T06:10:42Z"
+		},
+		{
+			"checksumSHA1": "66lykxpWgSmQodnhkADqn6tnroQ=",
+			"path": "github.com/imdario/mergo",
+			"revision": "e3000cb3d28c72b837601cac94debd91032d19fe",
+			"revisionTime": "2017-06-20T10:47:01Z"
+		},
+		{
 			"checksumSHA1": "YjZiQ5N552dJ7GpJ2P4TTRu4PKI=",
 			"path": "github.com/inconshreveable/go-update",
 			"revision": "8152e7eb6ccf8679a64582a66b78519688d156ad",
@@ -925,70 +967,76 @@
 			"revisionTime": "2017-02-07T20:18:59Z"
 		},
 		{
-			"checksumSHA1": "jicW/kiRRpd+sm5PrSoabLGG+Tc=",
+			"checksumSHA1": "QhiHm4CbpNJsdhMFUXpPkAoahoo=",
 			"path": "github.com/ovh/venom",
-			"revision": "4b6c1761f06ee00dc91a86802876b2ab59d0b5f4",
-			"revisionTime": "2017-09-13T12:47:17Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "ZxaXX+psoog6mnNzexP84cAJYMI=",
 			"path": "github.com/ovh/venom/context/default",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "n4+TbU3Jhy2u+dPscLYQgk1p6zg=",
 			"path": "github.com/ovh/venom/context/webctx",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
-			"checksumSHA1": "mixSNt6GsyTJtAYb52sa8azA+eY=",
+			"checksumSHA1": "5z9yAKYeIsyM0hfKINmluuPjB4I=",
+			"path": "github.com/ovh/venom/executors/dbfixtures",
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
+		},
+		{
+			"checksumSHA1": "o5E5ud9XT8Qx7+9t4Puno8PNOBg=",
 			"path": "github.com/ovh/venom/executors/exec",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "l+P3lidAThSCLpuSE5DaZNjFiPQ=",
 			"path": "github.com/ovh/venom/executors/http",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "2EOaEXj+ti/6g3YchoDwNkwS1w4=",
 			"path": "github.com/ovh/venom/executors/imap",
-			"revision": "4b6c1761f06ee00dc91a86802876b2ab59d0b5f4",
-			"revisionTime": "2017-09-13T12:47:17Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "7YJ/vcpYxhPHrooaiY9l3pgFSQc=",
 			"path": "github.com/ovh/venom/executors/ovhapi",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "/wWDr1LFOdC90VxKQDH1Wyun4MA=",
 			"path": "github.com/ovh/venom/executors/readfile",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "IjW8/Bmdx1C23USRC1f5/vRHuLg=",
 			"path": "github.com/ovh/venom/executors/smtp",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "CYKP2nSv/5AVV9lp3eXnMt6OEyk=",
 			"path": "github.com/ovh/venom/executors/ssh",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "iBO+FhLXbOx5NzhqHIco07oCwDw=",
 			"path": "github.com/ovh/venom/executors/web",
-			"revision": "7b067ee0679cb9b343d37c0e539361ff7f46622f",
-			"revisionTime": "2017-08-23T13:57:12Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "JVGDxPn66bpe6xEiexs1r+y6jF0=",
@@ -1025,6 +1073,12 @@
 			"path": "github.com/pierrec/xxHash/xxHash32",
 			"revision": "5a004441f897722c627870a981d02b29924215fa",
 			"revisionTime": "2016-01-12T16:53:51Z"
+		},
+		{
+			"checksumSHA1": "VQ8m0ncYJSbzslI7nVjiAdGEOeQ=",
+			"path": "github.com/pkg/browser",
+			"revision": "c90ca0c84f15f81c982e32665bffd8d7aac8f097",
+			"revisionTime": "2017-05-05T12:59:00Z"
 		},
 		{
 			"checksumSHA1": "ynJSWoF6v+3zMnh9R0QmmG6iGV8=",
@@ -1425,6 +1479,18 @@
 			"revisionTime": "2016-10-19T17:38:27Z"
 		},
 		{
+			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",
+			"path": "golang.org/x/crypto/pbkdf2",
+			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"revisionTime": "2017-09-30T17:45:11Z"
+		},
+		{
+			"checksumSHA1": "dHh6VeHcbNg11miGjGEl8LbPe7w=",
+			"path": "golang.org/x/crypto/scrypt",
+			"revision": "9419663f5a44be8b34ca85f08abc5fe1be11f8a3",
+			"revisionTime": "2017-09-30T17:45:11Z"
+		},
+		{
 			"checksumSHA1": "LlElMHeTC34ng8eHzjvtUhAgrr8=",
 			"path": "golang.org/x/crypto/ssh",
 			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
@@ -1651,6 +1717,12 @@
 			"path": "gopkg.in/ldap.v2",
 			"revision": "0e7db8eb77695b5a952f0e5d78df9ab160050c73",
 			"revisionTime": "2016-04-15T03:57:59Z"
+		},
+		{
+			"checksumSHA1": "Neja/m29s2ypv3jvoPyrK8kgCTM=",
+			"path": "gopkg.in/testfixtures.v2",
+			"revision": "e34263135c9fc3e6710268b1ba3a9b73fb7104d2",
+			"revisionTime": "2017-09-04T21:51:56Z"
 		},
 		{
 			"checksumSHA1": "/1TzqyoYSSdEkFrZG20XoNGwD8o=",

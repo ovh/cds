@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, OnInit, ViewChild} from '@angular/core';
 import {Project} from '../../../model/project.model';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs/Subscription';
@@ -15,9 +15,12 @@ import {WorkflowGraphComponent} from '../graph/workflow.graph.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowRunRequest} from '../../../model/workflow.run.model';
-import {SuiModalService} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
-import {WorkflowCoreService} from '../workflow.service';
+import {WorkflowCoreService} from '../../../shared/workflow/workflow.service';
+import {PermissionValue} from '../../../model/permission.model';
+import {PermissionEvent} from '../../../shared/permission/permission.event.model';
+import {User} from '../../../model/user.model';
+import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 
 declare var _: any;
 
@@ -32,6 +35,7 @@ export class WorkflowShowComponent {
     project: Project;
     detailedWorkflow: Workflow;
     workflowSubscription: Subscription;
+    direction: string;
 
     @ViewChild('workflowGraph')
     workflowGraph: WorkflowGraphComponent;
@@ -43,19 +47,40 @@ export class WorkflowShowComponent {
     workflowJoinTriggerSrc: WorkflowJoinTriggerSrcComponent;
     @ViewChild('workflowNodeRunParam')
     runWithParamComponent: WorkflowNodeRunParamComponent;
+    @ViewChild('permWarning')
+    permWarningModal: WarningModalComponent;
 
     selectedNode: WorkflowNode;
     selectedTrigger: WorkflowNodeTrigger;
     selectedJoin: WorkflowNodeJoin;
     selectedJoinTrigger: WorkflowNodeJoinTrigger;
 
+    selectedTab = 'workflows';
+
+    permissionEnum = PermissionValue;
+    permFormLoading = false;
+
     loading = false;
+    // For usage
+    usageCount = 0;
+    currentUser: User;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService) {
+                private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService,
+                private _workflowCoreService: WorkflowCoreService) {
+        // TODO: DELETE THIS WHEN WORKFLOW IS PUBLIC
+        this.currentUser = new User();
+        this.currentUser.admin = true;
+
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
+        });
+
+        this.activatedRoute.queryParams.subscribe(params => {
+            if (params['tab']) {
+                this.selectedTab = params['tab'];
+            }
         });
 
         this.activatedRoute.params.subscribe(params => {
@@ -70,7 +95,20 @@ export class WorkflowShowComponent {
                         if (ws) {
                             let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
                             if (updatedWorkflow && !updatedWorkflow.externalChange) {
+                                if (this.detailedWorkflow && this.detailedWorkflow.last_modified === updatedWorkflow.last_modified) {
+                                    return;
+                                }
                                 this.detailedWorkflow = updatedWorkflow;
+
+                                this.direction = this._workflowStore.getDirection(this.project.key, this.detailedWorkflow.name);
+
+                                if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
+                                    return;
+                                }
+
+                                this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
+                                    return total + this.detailedWorkflow.usage[key].length;
+                                }, 0);
                             }
                         }
                     }, () => {
@@ -79,6 +117,16 @@ export class WorkflowShowComponent {
                 }
             }
         });
+
+        this._workflowCoreService.setCurrentWorkflowRun(null);
+    }
+
+    changeDirection() {
+        this.direction = this.direction === 'LR' ? 'TB' : 'LR';
+    }
+
+    showTab(tab: string): void {
+        this._router.navigateByUrl('/project/' + this.project.key + '/workflow/' + this.detailedWorkflow.name + '?tab=' + tab);
     }
 
     public openDeleteJoinSrcModal(data: { source, target }) {
@@ -130,6 +178,34 @@ export class WorkflowShowComponent {
         }
     }
 
+    groupManagement(event: PermissionEvent, skip?: boolean): void {
+        if (!skip && this.detailedWorkflow.externalChange) {
+            this.permWarningModal.show(event);
+        } else {
+            switch (event.type) {
+                case 'add':
+                    this.permFormLoading = true;
+                    this._workflowStore.addPermission(this.project.key, this.detailedWorkflow, event.gp).finally(() => {
+                        this.permFormLoading = false;
+                    }).subscribe(() => {
+                        this._toast.success('', this._translate.instant('permission_added'));
+
+                    });
+                    break;
+                case 'update':
+                    this._workflowStore.updatePermission(this.project.key, this.detailedWorkflow, event.gp).subscribe(() => {
+                        this._toast.success('', this._translate.instant('permission_updated'));
+                    });
+                    break;
+                case 'delete':
+                    this._workflowStore.deletePermission(this.project.key, this.detailedWorkflow, event.gp).subscribe(() => {
+                        this._toast.success('', this._translate.instant('permission_deleted'));
+                    });
+                    break;
+            }
+        }
+    }
+
     public addSourceToJoin(data: { source: WorkflowNode, target: WorkflowNodeJoin }): void {
         let clonedWorkflow: Workflow = cloneDeep(this.detailedWorkflow);
         let currentJoin = clonedWorkflow.joins.find(j => j.id === data.target.id);
@@ -173,6 +249,7 @@ export class WorkflowShowComponent {
         let trigToUpdate = currentNode.triggers.find(trig => trig.id === this.selectedTrigger.id);
         trigToUpdate.conditions = this.selectedTrigger.conditions;
         trigToUpdate.manual = this.selectedTrigger.manual;
+        trigToUpdate.continue_on_error = this.selectedTrigger.continue_on_error;
         this.updateWorkflow(clonedWorkflow, this.editTriggerComponent.modal);
     }
 
@@ -183,11 +260,15 @@ export class WorkflowShowComponent {
         let trigToUpdate = currentJoin.triggers.find(trig => trig.id === this.selectedJoinTrigger.id);
         trigToUpdate.conditions = this.selectedJoinTrigger.conditions;
         trigToUpdate.manual = this.selectedJoinTrigger.manual;
+        trigToUpdate.continue_on_error = this.selectedJoinTrigger.continue_on_error;
         this.updateWorkflow(clonedWorkflow, this.editJoinTriggerComponent.modal);
     }
 
     updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
-        this._workflowStore.updateWorkflow(this.project.key, w).first().subscribe(() => {
+        this.loading = true;
+        this._workflowStore.updateWorkflow(this.project.key, w).finally(() => {
+            this.loading = false;
+        }).first().subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_updated'));
             if (modal) {
                 modal.approve(true);

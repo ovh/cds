@@ -5,8 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -33,17 +38,60 @@ func (api *API) getWorkflowsHandler() Handler {
 func (api *API) getWorkflowHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		withUsage := FormBool(r, "withUsage")
 
-		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		tx, errTx := api.mustDB().Begin()
+		if errTx != nil {
+			return sdk.WrapError(errTx, "getWorkflowHandler> Cannot start transaction for workflow %s", name)
+		}
+		defer tx.Rollback()
+
+		w1, err := workflow.Load(tx, api.Cache, key, name, getUser(ctx))
 		if err != nil {
-			return err
+			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
+		}
+
+		if withUsage {
+			usage, errU := loadWorfklowUsage(tx, w1.ID)
+			if errU != nil {
+				return sdk.WrapError(errU, "getWorkflowHandler> Cannot load usage for workflow %s", name)
+			}
+			w1.Usage = &usage
 		}
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig("project", "workflow")
+
+		if errTxc := tx.Commit(); errTxc != nil {
+			return sdk.WrapError(errTxc, "getWorkflowHandler> Cannot commit transaction for workflow %s", name)
+		}
+
 		return WriteJSON(w, r, w1, http.StatusOK)
 	}
+}
+
+func loadWorfklowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error) {
+	usage := sdk.Usage{}
+	pips, errP := pipeline.LoadByWorkflowID(db, workflowID)
+	if errP != nil {
+		return usage, sdk.WrapError(errP, "loadWorfklowUsage> Cannot load pipelines linked to a workflow id %d", workflowID)
+	}
+	usage.Pipelines = pips
+
+	envs, errE := environment.LoadByWorkflowID(db, workflowID)
+	if errE != nil {
+		return usage, sdk.WrapError(errE, "loadWorfklowUsage> Cannot load environments linked to a workflow id %d", workflowID)
+	}
+	usage.Environments = envs
+
+	apps, errA := application.LoadByWorkflowID(db, workflowID)
+	if errA != nil {
+		return usage, sdk.WrapError(errA, "loadWorfklowUsage> Cannot load applications linked to a workflow id %d", workflowID)
+	}
+	usage.Applications = apps
+
+	return usage, nil
 }
 
 // postWorkflowHandler create a new workflow
@@ -52,7 +100,7 @@ func (api *API) postWorkflowHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
-		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 		if errP != nil {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
@@ -71,6 +119,15 @@ func (api *API) postWorkflowHandler() Handler {
 
 		if err := workflow.Insert(tx, api.Cache, &wf, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert workflow")
+		}
+
+		// Add group
+		for _, gp := range p.ProjectGroups {
+			if gp.Permission == permission.PermissionReadWriteExecute {
+				if err := workflow.AddGroup(tx, &wf, gp); err != nil {
+					return sdk.WrapError(err, "Cannot add group %s", gp.Group.Name)
+				}
+			}
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
@@ -113,6 +170,7 @@ func (api *API) postWorkflowHandler() Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
+
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")
 
@@ -124,8 +182,8 @@ func (api *API) postWorkflowHandler() Handler {
 func (api *API) putWorkflowHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
 		if errP != nil {
@@ -146,8 +204,6 @@ func (api *API) putWorkflowHandler() Handler {
 		wf.Root.ID = oldW.RootID
 		wf.ProjectID = p.ID
 		wf.ProjectKey = key
-		//This is forbidden to update the workflow name
-		wf.Name = name
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
@@ -165,12 +221,22 @@ func (api *API) putWorkflowHandler() Handler {
 
 		hooks := wf.GetHooks()
 		if len(hooks) > 0 {
+
 			//Push the hook to hooks µService
 			dao := services.NewRepository(api.mustDB, api.Cache)
 			//Load service "hooks"
 			srvs, err := dao.FindByType("hooks")
 			if err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> Unable to get services dao")
+			}
+
+			if wf.Name != name {
+				// update hook
+				for i := range hooks {
+					h := hooks[i]
+					h.Config["workflow"] = wf.Name
+					hooks[i] = h
+				}
 			}
 
 			//Perform the request on one off the hooks service
@@ -200,6 +266,12 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
 
+		usage, errU := loadWorfklowUsage(api.mustDB(), wf1.ID)
+		if errU != nil {
+			return sdk.WrapError(errU, "Cannot load usage")
+		}
+		wf1.Usage = &usage
+
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")
 
@@ -211,8 +283,8 @@ func (api *API) putWorkflowHandler() Handler {
 func (api *API) deleteWorkflowHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		key := vars["permProjectKey"]
-		name := vars["workflowName"]
+		key := vars["key"]
+		name := vars["permWorkflowName"]
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {

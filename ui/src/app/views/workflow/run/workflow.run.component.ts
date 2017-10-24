@@ -1,6 +1,7 @@
 import { WorkflowNode } from '../../../model/workflow.model';
 import {Component, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
+import {NotificationService} from '../../../service/notification/notification.service';
 import {Project} from '../../../model/project.model';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {WorkflowRun} from '../../../model/workflow.run.model';
@@ -12,7 +13,9 @@ import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
+import {WorkflowCoreService} from '../../../shared/workflow/workflow.service';
 import {cloneDeep} from 'lodash';
+import {TranslateService} from 'ng2-translate';
 
 @Component({
     selector: 'app-workflow-run',
@@ -28,6 +31,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     runWorkflowWorker: CDSWorker;
     runSubsription: Subscription;
     workflowRun: WorkflowRun;
+    tmpWorkflowRun: WorkflowRun;
     zone: NgZone;
     workflowName: string;
     version: string;
@@ -36,9 +40,12 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     nodeToRun: WorkflowNode;
 
     pipelineStatusEnum = PipelineStatus;
+    notificationSubscription: Subscription;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-      private _router: Router, private _workflowStore: WorkflowStore, private _workflowRunService: WorkflowRunService) {
+      private _router: Router, private _workflowStore: WorkflowStore, private _workflowRunService: WorkflowRunService,
+      private _workflowCoreService: WorkflowCoreService, private _notification: NotificationService,
+        private _translate: TranslateService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         // Update data if route change
@@ -49,36 +56,67 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
         this._activatedRoute.parent.params.subscribe(params => {
             this.workflowName = params['workflowName'];
         });
+        this._activatedRoute.queryParams.subscribe( p => {
+            if (this.workflowRun && p['subnum']) {
+                this.startWorker(this.workflowRun.num);
+            }
+        });
         this._activatedRoute.params.subscribe(params => {
             let number = params['number'];
             if (this.project.key && this.workflowName && number) {
-                // Start web worker
-                if (this.runWorkflowWorker) {
-                    this.runWorkflowWorker.stop();
-                }
-                this.runWorkflowWorker = new CDSWorker('./assets/worker/web/workflow2.js');
-                this.runWorkflowWorker.start({
-                    'user': this._authStore.getUser(),
-                    'session': this._authStore.getSessionToken(),
-                    'api': environment.apiURL,
-                    key: this.project.key,
-                    workflowName: this.workflowName,
-                    number: number
-                });
-                this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {
-                    if (wrString) {
-                        this.zone.run(() => {
-                            let wrUpdated = <WorkflowRun>JSON.parse(wrString);
-                            if (this.workflowRun && this.workflowRun.last_modified === wrUpdated.last_modified
-                              && this.workflowRun.id === wrUpdated.id) {
-                                return;
-                            }
-                            this.workflowRun = wrUpdated;
-                        });
+                this.startWorker(number);
+            }
+        });
+    }
+
+    startWorker(num: number): void {
+        // Start web worker
+        if (this.runWorkflowWorker) {
+            this.runWorkflowWorker.stop();
+        }
+        this.runWorkflowWorker = new CDSWorker('./assets/worker/web/workflow2.js');
+        this.runWorkflowWorker.start({
+            'user': this._authStore.getUser(),
+            'session': this._authStore.getSessionToken(),
+            'api': environment.apiURL,
+            key: this.project.key,
+            workflowName: this.workflowName,
+            number: num
+        });
+        this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {
+            if (wrString) {
+                this.zone.run(() => {
+                    this.workflowRun = <WorkflowRun>JSON.parse(wrString);
+                    this._workflowCoreService.setCurrentWorkflowRun(this.workflowRun);
+                    if (this.workflowRun.status === PipelineStatus.STOPPED ||
+                          this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
+                        this.runWorkflowWorker.stop();
+                        this.runSubsription.unsubscribe();
+                        if (this.tmpWorkflowRun != null && this.tmpWorkflowRun.status !== PipelineStatus.STOPPED &&
+                          this.tmpWorkflowRun.status !== PipelineStatus.FAIL && this.tmpWorkflowRun.status !== PipelineStatus.SUCCESS) {
+                          this.handleNotification();
+                        }
                     }
+
+                    this.tmpWorkflowRun = this.workflowRun;
                 });
             }
         });
+    }
+
+    handleNotification() {
+        switch (this.workflowRun.status) {
+        case PipelineStatus.SUCCESS:
+            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_success', {
+                workflowName: this.workflowName,
+            }), { icon: 'assets/images/checked.png' }).subscribe();
+            break;
+        case PipelineStatus.FAIL:
+            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_failing', {
+                workflowName: this.workflowName
+            }), { icon: 'assets/images/close.png' }).subscribe();
+            break;
+        }
     }
 
     relaunch() {

@@ -22,6 +22,10 @@ type Interface interface {
 	ApplicationKeysList(string, string) ([]sdk.ApplicationKey, error)
 	ApplicationKeyCreate(string, string, *sdk.ApplicationKey) error
 	ApplicationKeysDelete(string, string, string) error
+	ApplicationVariablesList(key string, appName string) ([]sdk.Variable, error)
+	ApplicationVariableCreate(projectKey string, appName string, variable *sdk.Variable) error
+	ApplicationVariableDelete(projectKey string, appName string, variable string) error
+	ApplicationVariableUpdate(projectKey string, appName string, variable *sdk.Variable) error
 	ConfigUser() (map[string]string, error)
 	EnvironmentCreate(string, *sdk.Environment) error
 	EnvironmentDelete(string, string) error
@@ -30,6 +34,10 @@ type Interface interface {
 	EnvironmentKeysList(string, string) ([]sdk.EnvironmentKey, error)
 	EnvironmentKeyCreate(string, string, *sdk.EnvironmentKey) error
 	EnvironmentKeysDelete(string, string, string) error
+	EnvironmentVariablesList(key string, envName string) ([]sdk.Variable, error)
+	EnvironmentVariableCreate(projectKey string, envName string, variable *sdk.Variable) error
+	EnvironmentVariableDelete(projectKey string, envName string, keyName string) error
+	EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error
 	GroupCreate(group *sdk.Group) error
 	GroupDelete(name string) error
 	GroupGenerateToken(groupName, expiration string) (*sdk.Token, error)
@@ -53,6 +61,10 @@ type Interface interface {
 	ProjectKeysList(string) ([]sdk.ProjectKey, error)
 	ProjectKeyCreate(string, *sdk.ProjectKey) error
 	ProjectKeysDelete(string, string) error
+	ProjectVariablesList(key string) ([]sdk.Variable, error)
+	ProjectVariableCreate(projectKey string, variable *sdk.Variable) error
+	ProjectVariableDelete(projectKey string, variable string) error
+	ProjectVariableUpdate(projectKey string, variable *sdk.Variable) error
 	Queue() ([]sdk.WorkflowNodeJobRun, []sdk.PipelineBuildJob, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
@@ -63,6 +75,9 @@ type Interface interface {
 	QueueArtifactUpload(id int64, tag, filePath string) error
 	Requirements() ([]sdk.Requirement, error)
 	ServiceRegister(sdk.Service) (string, error)
+	TemplateList() ([]sdk.Template, error)
+	TemplateGet(name string) (*sdk.Template, error)
+	TemplateApplicationCreate(projectKey, name string, template *sdk.Template) error
 	UserLogin(username, password string) (bool, string, error)
 	UserList() ([]sdk.User, error)
 	UserSignup(username, fullname, email, callback string) error
@@ -79,12 +94,14 @@ type Interface interface {
 	WorkerSetStatus(sdk.Status) error
 	WorkflowList(projectKey string) ([]sdk.Workflow, error)
 	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
-	WorkflowRun(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)
+	WorkflowRunGet(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.Artifact, error)
 	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
+	WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual, number, fromNodeID int64) (*sdk.WorkflowRun, error)
 	WorkflowNodeRun(projectKey string, name string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRunArtifacts(projectKey string, name string, number int64, nodeRunID int64) ([]sdk.Artifact, error)
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, artifactID int64, w io.Writer) error
+	WorkflowNodeRunJobStep(projectKey string, workflowName string, number int64, nodeRunID, job int64, step int) (*sdk.BuildState, error)
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
 }

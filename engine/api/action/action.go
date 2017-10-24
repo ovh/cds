@@ -38,8 +38,8 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 		return sdk.ErrActionLoop
 	}
 
-	query := `INSERT INTO action (name, description, type, enabled, public) VALUES($1, $2, $3, $4, $5) RETURNING id`
-	if err := tx.QueryRow(query, a.Name, a.Description, a.Type, a.Enabled, public).Scan(&a.ID); err != nil {
+	query := `INSERT INTO action (name, description, type, enabled, deprecated, public) VALUES($1, $2, $3, $4, $5, $6) RETURNING id`
+	if err := tx.QueryRow(query, a.Name, a.Description, a.Type, a.Enabled, a.Deprecated, public).Scan(&a.ID); err != nil {
 		return err
 	}
 
@@ -102,8 +102,7 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 
 	for i := range a.Parameters {
 		if err := InsertActionParameter(tx, a.ID, a.Parameters[i]); err != nil {
-			log.Warning("InsertAction> Cannot InsertActionParameter %s: %s\n", a.Parameters[i].Name, err)
-			return err
+			return sdk.WrapError(err, "InsertAction> Cannot InsertActionParameter %s", a.Parameters[i].Name)
 		}
 	}
 
@@ -113,7 +112,7 @@ func InsertAction(tx gorp.SqlExecutor, a *sdk.Action, public bool) error {
 // LoadPipelineActionByID retrieves and action by its id but check project and pipeline
 func LoadPipelineActionByID(db gorp.SqlExecutor, project, pip string, actionID int64) (*sdk.Action, error) {
 	query := `
-	SELECT action.id, action.name, action.description, action.type, action.last_modified, action.enabled
+	SELECT action.id, action.name, action.description, action.type, action.last_modified, action.enabled, action.deprecated
 	FROM action
 	JOIN pipeline_action ON pipeline_action.action_id = $1
 	JOIN pipeline_stage ON pipeline_stage.id = pipeline_action.pipeline_stage_id
@@ -129,7 +128,7 @@ func LoadPipelineActionByID(db gorp.SqlExecutor, project, pip string, actionID i
 
 // LoadPublicAction load an action from database
 func LoadPublicAction(db gorp.SqlExecutor, name string) (*sdk.Action, error) {
-	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE lower(action.name) = lower($1) AND public = true`
+	query := `SELECT id, name, description, type, last_modified, enabled, deprecated FROM action WHERE lower(action.name) = lower($1) AND public = true`
 	a, err := loadActions(db, query, name)
 	if err != nil {
 		return nil, err
@@ -139,7 +138,7 @@ func LoadPublicAction(db gorp.SqlExecutor, name string) (*sdk.Action, error) {
 
 // LoadActionByID retrieves in database the action with given id
 func LoadActionByID(db gorp.SqlExecutor, actionID int64) (*sdk.Action, error) {
-	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE action.id = $1`
+	query := `SELECT id, name, description, type, last_modified, enabled, deprecated FROM action WHERE action.id = $1`
 	a, err := loadActions(db, query, actionID)
 	if err != nil {
 		return nil, err
@@ -149,7 +148,7 @@ func LoadActionByID(db gorp.SqlExecutor, actionID int64) (*sdk.Action, error) {
 
 // LoadActionByPipelineActionID load an action from database
 func LoadActionByPipelineActionID(db gorp.SqlExecutor, pipelineActionID int64) (*sdk.Action, error) {
-	query := `SELECT action.id, action.name, action.description, action.type, action.last_modified, action.enabled
+	query := `SELECT action.id, action.name, action.description, action.type, action.last_modified, action.enabled, action.deprecated
 	          FROM action
 	          JOIN pipeline_action ON pipeline_action.action_id = action.id
 	          WHERE pipeline_action.id = $1`
@@ -162,7 +161,7 @@ func LoadActionByPipelineActionID(db gorp.SqlExecutor, pipelineActionID int64) (
 
 // LoadActions load all actions from database
 func LoadActions(db gorp.SqlExecutor) ([]sdk.Action, error) {
-	query := `SELECT id, name, description, type, last_modified, enabled FROM action WHERE public = true ORDER BY name`
+	query := `SELECT id, name, description, type, last_modified, enabled, deprecated FROM action WHERE public = true ORDER BY name`
 	return loadActions(db, query)
 }
 
@@ -180,7 +179,7 @@ func loadActions(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.
 	for rows.Next() {
 		a := sdk.Action{}
 		var lastModified time.Time
-		if err := rows.Scan(&a.ID, &a.Name, &a.Description, &a.Type, &lastModified, &a.Enabled); err != nil {
+		if err := rows.Scan(&a.ID, &a.Name, &a.Description, &a.Type, &lastModified, &a.Enabled, &a.Deprecated); err != nil {
 			if err == sql.ErrNoRows {
 				return nil, sdk.ErrNoAction
 			}
@@ -284,8 +283,7 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 	}
 	for i := range a.Parameters {
 		if err := InsertActionParameter(db, a.ID, a.Parameters[i]); err != nil {
-			log.Warning("UpdateAction> InsertActionParameter for %s failed: %s\n", a.Parameters[i].Name, err)
-			return err
+			return sdk.WrapError(err, "UpdateAction> InsertActionParameter for %s failed", a.Parameters[i].Name)
 		}
 	}
 
@@ -326,8 +324,8 @@ func UpdateActionDB(db gorp.SqlExecutor, a *sdk.Action, userID int64) error {
 		}
 	}
 
-	query := `UPDATE action SET name=$1,description=$2, type=$3, enabled=$4 WHERE id=$5`
-	_, errdb := db.Exec(query, a.Name, a.Description, string(a.Type), a.Enabled, a.ID)
+	query := `UPDATE action SET name=$1, description=$2, type=$3, enabled=$4, deprecated=$5 WHERE id=$6`
+	_, errdb := db.Exec(query, a.Name, a.Description, string(a.Type), a.Enabled, a.Deprecated, a.ID)
 	return errdb
 }
 

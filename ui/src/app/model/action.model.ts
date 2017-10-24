@@ -13,6 +13,7 @@ export class Action {
     always_executed: boolean;
     last_modified: boolean;
     enabled: boolean;
+    deprecated: boolean;
 
     // UI parameter
     hasChanged: boolean;

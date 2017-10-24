@@ -241,6 +241,7 @@ func (r *Router) GET(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
 	rc.Method = "GET"
+	rc.Options["allowServices"] = "false"
 	for _, c := range cfg {
 		c(rc)
 	}
@@ -252,6 +253,7 @@ func (r *Router) POST(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
+	rc.Options["allowServices"] = "false"
 	rc.Method = "POST"
 	for _, c := range cfg {
 		c(rc)
@@ -264,6 +266,7 @@ func (r *Router) POSTEXECUTE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerC
 	rc := NewHandlerConfig()
 	rc.Handler = h()
 	rc.Options["auth"] = "true"
+	rc.Options["allowServices"] = "false"
 	rc.Method = "POST"
 	rc.Options["isExecution"] = "true"
 	for _, c := range cfg {
@@ -276,6 +279,7 @@ func (r *Router) POSTEXECUTE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerC
 func (r *Router) PUT(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 	rc := NewHandlerConfig()
 	rc.Handler = h()
+	rc.Options["allowServices"] = "false"
 	rc.Options["auth"] = "true"
 	rc.Method = "PUT"
 	for _, c := range cfg {
@@ -288,6 +292,7 @@ func (r *Router) PUT(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 func (r *Router) DELETE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
 	rc := NewHandlerConfig()
 	rc.Handler = h()
+	rc.Options["allowServices"] = "false"
 	rc.Options["auth"] = "true"
 	rc.Method = "DELETE"
 	for _, c := range cfg {
@@ -332,6 +337,14 @@ func NeedService() HandlerConfigParam {
 func NeedWorker() HandlerConfigParam {
 	f := func(rc *HandlerConfig) {
 		rc.Options["needWorker"] = "true"
+	}
+	return f
+}
+
+// AllowServices allows CDS service to use this route
+func AllowServices(s bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["allowServices"] = fmt.Sprintf("%v", s)
 	}
 	return f
 }

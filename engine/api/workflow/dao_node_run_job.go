@@ -27,8 +27,8 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int6
 	query := `select distinct workflow_node_run_job.*
 	from workflow_node_run_job
 	join workflow_node_run on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
-	join workflow_node on workflow_node.id = workflow_node_run.workflow_node_id
-	join workflow on workflow.id = workflow_node.workflow_id
+	join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
+	join workflow on workflow.id = workflow_run.workflow_id
 	join project on project.id = workflow.project_id
 	join project_group on project_group.project_id = project.id
 	where (
@@ -101,8 +101,20 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 	return &job, nil
 }
 
-//LoadAndLockNodeJobRun load for update a NodeJobRun given its ID
-func LoadAndLockNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+//LoadAndLockNodeJobRunWait load for update a NodeJobRun given its ID
+func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
+	j := JobRun{}
+	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update`
+	if err := db.SelectOne(&j, query, id); err != nil {
+		return nil, err
+	}
+	getHatcheryInfo(store, &j)
+	job := sdk.WorkflowNodeJobRun(j)
+	return &job, nil
+}
+
+//LoadAndLockNodeJobRunNoWait load for update a NodeJobRun given its ID
+func LoadAndLockNodeJobRunNoWait(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1 for update nowait`
 	if err := db.SelectOne(&j, query, id); err != nil {

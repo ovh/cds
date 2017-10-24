@@ -7,7 +7,7 @@ import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {Workflow} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {RouterService} from '../../service/router/router.service';
-import {WorkflowCoreService} from './workflow.service';
+import {WorkflowCoreService} from '../../shared/workflow/workflow.service';
 
 @Component({
     selector: 'app-workflow',
@@ -28,12 +28,12 @@ export class WorkflowComponent {
     sidebar: SemanticSidebarComponent;
 
     constructor(private _activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-        private _routerService: RouterService, private _workflowCore: WorkflowCoreService) {
+                private _routerService: RouterService, private _workflowCore: WorkflowCoreService) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
 
-        this._workflowCore.get().subscribe(b => {
+        this._workflowCore.getSidebarStatus().subscribe(b => {
             this.sidebarOpen = b;
         });
 
@@ -43,27 +43,35 @@ export class WorkflowComponent {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
                 }
-                if (!this.workflow) {
-                    this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
-                        if (ws) {
-                            let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
-                            if (updatedWorkflow && !updatedWorkflow.externalChange) {
-                                this.workflow = updatedWorkflow;
-                            }
+
+                this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
+                    if (ws) {
+                        let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
+                        if (updatedWorkflow && !updatedWorkflow.externalChange) {
+                            this.workflow = updatedWorkflow;
                         }
-                    }, () => {
-                        this._router.navigate(['/project', this.project.key]);
-                    });
-                }
+                    }
+                }, () => {
+                    this._router.navigate(['/project', this.project.key]);
+                });
+
             }
 
         });
+
+        let snapshotparams = this._routerService.getRouteSnapshotParams({}, this._activatedRoute.snapshot);
+        if (snapshotparams) {
+            this.number = snapshotparams['number'];
+        }
+        let qp = this._routerService.getRouteSnapshotQueryParams({}, this._activatedRoute.snapshot);
+        if (qp) {
+            this.currentNodeName = qp['name'];
+        }
 
         this._router.events.subscribe(p => {
             if (p instanceof ResolveEnd) {
                 let params = this._routerService.getRouteSnapshotParams({}, p.state.root);
                 let queryParams = this._routerService.getRouteSnapshotQueryParams({}, p.state.root);
-
                 this.currentNodeName = queryParams['name'];
                 this.number = params['number'];
             }

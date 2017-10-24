@@ -6,6 +6,7 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {ProjectEnvironmentComponent} from './environment.component';
+import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
 import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../../service/project/project.service';
 import {ProjectModule} from '../../../../project.module';
@@ -42,6 +43,7 @@ describe('CDS: Environment Component', () => {
                 TranslateParser,
                 ToasterService,
                 VariableService,
+                AuthentificationStore
             ],
             imports : [
                 ProjectModule,

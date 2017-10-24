@@ -12,7 +12,6 @@ import {TranslateService} from 'ng2-translate';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {Subscription} from 'rxjs/Subscription';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
-import {WorkflowItem} from '../../../model/application.workflow.model';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {NotificationEvent} from './notifications/notification.event';
 import {ApplicationNotificationListComponent} from './notifications/list/notification.list.component';
@@ -60,20 +59,28 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
     // Filter
     appFilter: ApplicationFilter = {
+        remote: '',
         branch: '',
         version: ' '
     };
+
+    // queryparam for breadcrum
+    workflowName: string;
+    workflowNum: string;
+    workflowNodeRun: string;
+    workflowPipeline: string;
 
     constructor(private _applicationStore: ApplicationStore, private _route: ActivatedRoute,
                 private _router: Router, private _authStore: AuthentificationStore,
                 private _toast: ToastService, public _translate: TranslateService) {
         // Update data if route change
-        this._route.data.subscribe( datas => {
+        this._route.data.subscribe(datas => {
             this.project = datas['project'];
         });
 
         this._route.queryParams.subscribe(queryParams => {
            this.appFilter = {
+               remote: queryParams['remote'] || '',
                branch: queryParams['branch'] || 'master',
                version: queryParams['version'] || ' '
            };
@@ -82,15 +89,22 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                this.startWorker(this.project.key);
            }
         });
+
+        if (this._route.snapshot && this._route.queryParams) {
+            this.workflowName = this._route.snapshot.queryParams['workflow'];
+            this.workflowNum = this._route.snapshot.queryParams['run'];
+            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
+        }
+        this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
         this._route.params.subscribe(params => {
             let key = params['key'];
             let appName = params['appName'];
             if (key && appName) {
-                 if (this.applicationSubscription) {
+                if (this.applicationSubscription) {
                     this.applicationSubscription.unsubscribe();
                 }
                 if (this.application && this.application.name !== appName) {
-                    this.application = undefined;
+                    this.application = null;
                     this.stopWorker();
                 }
                 if (!this.application) {
@@ -109,7 +123,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
                                 // Switch workflow
                                 if (this.workflowComponentList && this.workflowComponentList.length > 0) {
-                                    this.workflowComponentList.first.switchApplication();
+                                    this.workflowComponentList.first.switchApplication(this.application);
                                 }
                             } else if (updatedApplication && updatedApplication.externalChange) {
                                 this._toast.info('', this._translate.instant('warning_application'));
@@ -124,7 +138,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-       this.stopWorker();
+        this.appFilter.remote = '';
+        this.stopWorker();
     }
 
     ngOnInit() {
@@ -134,12 +149,11 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 this.selectedTab = tab;
             }
         });
-
-
     }
 
     stopWorker(): void {
        if (this.worker) {
+           this.appFilter.remote = '';
            this.worker.stop();
        }
     }
@@ -158,6 +172,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 'key': key,
                 'appName': this.application.name,
                 'branch': this.appFilter.branch,
+                'remote': this.appFilter.remote,
                 'version': this.appFilter.version
             };
 

@@ -17,7 +17,7 @@ import (
 // Version of Venom
 // One Line for this, used by release.sh script
 // Keep "const Version on one line"
-const Version = "0.14.0"
+const Version = "0.15.0"
 
 // PrintFunc used by venom to print output
 var PrintFunc = fmt.Printf
@@ -177,7 +177,7 @@ func outputTapFormat(tests Tests) ([]byte, error) {
 	for _, ts := range tests.TestSuites {
 		for _, tc := range ts.TestCases {
 			name := ts.Name + " / " + tc.Name
-			if tc.Skipped > 0 {
+			if len(tc.Skipped) > 0 {
 				t.Skip(1, name)
 				continue
 			}

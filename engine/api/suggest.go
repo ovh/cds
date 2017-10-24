@@ -28,7 +28,7 @@ func (api *API) getVariablesHandler() Handler {
 		// Load variable project
 		projectVar, err := project.GetAllVariableNameInProjectByKey(api.mustDB(), projectKey)
 		if err != nil {
-			return sdk.WrapError(err, "getVariablesHandler> Cannot Load project variables: %s", err)
+			return sdk.WrapError(err, "getVariablesHandler> Cannot Load project variables")
 		}
 		for i := range projectVar {
 			projectVar[i] = fmt.Sprintf("{{.cds.proj.%s}}", projectVar[i])
@@ -38,7 +38,7 @@ func (api *API) getVariablesHandler() Handler {
 		// Load env variable
 		envVarNameArray, err := environment.GetAllVariableNameByProject(api.mustDB(), projectKey)
 		if err != nil {
-			return sdk.WrapError(err, "getVariablesHandler> Cannot Load env variables: %s", err)
+			return sdk.WrapError(err, "getVariablesHandler> Cannot Load env variables")
 		}
 		for i := range envVarNameArray {
 			envVarNameArray[i] = fmt.Sprintf("{{.cds.env.%s}}", envVarNameArray[i])
@@ -51,7 +51,7 @@ func (api *API) getVariablesHandler() Handler {
 			// Check permission on application
 			app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithVariables)
 			if err != nil {
-				return sdk.WrapError(err, "getPipelineTypeHandler> Cannot Load application: %s", err)
+				return sdk.WrapError(err, "getPipelineTypeHandler> Cannot Load application")
 			}
 
 			if !permission.AccessToApplication(app.ID, getUser(ctx), permission.PermissionRead) {
@@ -74,14 +74,14 @@ func (api *API) getVariablesHandler() Handler {
 		`
 			rows, err := api.mustDB().Query(query, projectKey)
 			if err != nil {
-				return sdk.WrapError(err, "getVariablesHandler> Cannot Load all applications variables: %s", err)
+				return sdk.WrapError(err, "getVariablesHandler> Cannot Load all applications variables")
 			}
 			defer rows.Close()
 			for rows.Next() {
 				var name string
 				err := rows.Scan(&name)
 				if err != nil {
-					return sdk.WrapError(err, "getVariablesHandler> Cannot scan results: %s", err)
+					return sdk.WrapError(err, "getVariablesHandler> Cannot scan results")
 				}
 				appVar = append(appVar, fmt.Sprintf("{{.cds.app.%s}}", name))
 
@@ -97,7 +97,7 @@ func (api *API) getVariablesHandler() Handler {
 			pipParams, err := pipeline.GetAllParametersInPipeline(api.mustDB(), pipIDN)
 
 			if err != nil {
-				return sdk.WrapError(err, "getVariablesHandler> Cannot get all parameters in pipeline: %s", err)
+				return sdk.WrapError(err, "getVariablesHandler> Cannot get all parameters in pipeline")
 			}
 
 			for _, param := range pipParams {
@@ -107,6 +107,7 @@ func (api *API) getVariablesHandler() Handler {
 
 		// add cds variable
 		cdsVar := []string{
+			"{{.cds.version}}",
 			"{{.cds.application}}",
 			"{{.cds.buildNumber}}",
 			"{{.cds.environment}}",

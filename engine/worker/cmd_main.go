@@ -95,7 +95,6 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)
 
-		w.alive = true
 		initViper(w)
 
 		if viper.GetString("log_level") == "debug" {
@@ -176,11 +175,34 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			}
 		}(ctx)
 
+		//Definition of the function which must be called to stop the worker
+		var endFunc = func() {
+			w.drainLogsAndCloseLogger(ctx)
+			registerTick.Stop()
+			w.unregister()
+			cancel()
+
+			if viper.GetBool("force_exit") {
+				return
+			}
+
+			if w.hatchery.id > 0 {
+				log.Info("Waiting 30min to be killed by hatchery, if not killed, worker will exit")
+				time.Sleep(30 * time.Minute)
+			}
+
+			if err := ctx.Err(); err != nil {
+				log.Error("Exiting worker: %v", err)
+			} else {
+				log.Info("Exiting worker")
+			}
+		}
+
 		go func(errs chan error) {
 			for {
 				select {
 				case err := <-errs:
-					log.Error("%v", err)
+					log.Error("An error has occured: %v", err)
 				}
 			}
 		}(errs)
@@ -188,44 +210,13 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		// main loop
 		for {
 			if ctx.Err() != nil {
-				w.drainLogsAndCloseLogger(ctx)
-				w.unregister()
-				log.Info("Exiting worker on error: %v", ctx.Err())
-				if viper.GetBool("force_exit") {
-					return
-				}
-				if w.hatchery.id > 0 {
-					log.Info("Waiting 30min to be killed by hatchery, if not killed, worker will exit")
-					time.Sleep(30 * time.Minute)
-				}
-				return
-			}
-
-			if !w.alive && viper.GetBool("single_use") {
-				registerTick.Stop()
-				defer cancel()
-				w.drainLogsAndCloseLogger(ctx)
-				if viper.GetBool("force_exit") {
-					return
-				}
-				if w.hatchery.id > 0 {
-					log.Info("Waiting 30min to be killed by hatchery, if not killed, worker will exit")
-					time.Sleep(30 * time.Minute)
-				}
-				log.Info("Exiting single-use worker")
+				endFunc()
 				return
 			}
 
 			select {
 			case <-ctx.Done():
-				if err := ctx.Err(); err != nil {
-					log.Error("Exiting worker: %v", err)
-				} else {
-					log.Info("Exiting worker")
-				}
-				w.drainLogsAndCloseLogger(ctx)
-				registerTick.Stop()
-				w.unregister()
+				endFunc()
 				return
 
 			case j := <-pbjobs:
@@ -264,11 +255,8 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine and stop the register goroutine
-				registerTick.Stop()
 				log.Debug("Job is done. Unregistering...")
-				if err := w.unregister(); err != nil {
-					log.Warning("takeJob> could not unregister: %s", err)
-				}
+				cancel()
 
 			case j := <-wjobs:
 				if j.ID == 0 {
@@ -284,8 +272,13 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				//Take the job
 				if requirementsOK {
 					log.Info("checkQueue> Taking job %d%s", j.ID, t)
-					if err := w.takeWorkflowJob(ctx, j); err != nil {
-						errs <- err
+					if canWorkOnAnotherJob, err := w.takeWorkflowJob(ctx, j); err != nil {
+						if !canWorkOnAnotherJob {
+							errs <- err
+						} else {
+							log.Debug("Unable to run this job, take info:%s, let's continue %d%s", err, j.ID, t)
+							continue
+						}
 					}
 				} else {
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
@@ -305,14 +298,10 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				// Unregister from engine
 				log.Debug("Job is done. Unregistering...")
-				if err := w.unregister(); err != nil {
-					log.Warning("takeJob> could not unregister: %s", err)
-				}
-
+				cancel()
 			case <-registerTick.C:
 				w.doRegister()
 			}
-
 		}
 	}
 }
@@ -370,7 +359,6 @@ func (w *currentWorker) doRegister() error {
 			return err
 		}
 		log.Debug("I am registered, with groupID:%d and model:%v", w.groupID, w.model)
-		w.alive = true
 	}
 	return nil
 }

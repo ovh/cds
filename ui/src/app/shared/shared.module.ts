@@ -1,3 +1,4 @@
+import { WorkflowCoreService } from './workflow/workflow.service';
 import {NgModule, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {VariableComponent} from './variable/list/variable.component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
@@ -64,6 +65,11 @@ import {SuiModule} from 'ng2-semantic-ui';
 import {WorkflowNodeRunParamComponent} from './workflow/node/run/node.run.param.component';
 import {WorkflowNodeHookFormComponent} from './workflow/node/hook/form/node.hook.component';
 import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
+import {UsageWorkflowsComponent} from './usage/workflows/usage.workflows.component';
+import {UsageApplicationsComponent} from './usage/applications/usage.applications.component';
+import {UsagePipelinesComponent} from './usage/pipelines/usage.pipelines.component';
+import {UsageEnvironmentsComponent} from './usage/environments/usage.environments.component';
+import {UsageComponent} from './usage/usage.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -117,13 +123,19 @@ import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
         WorkflowTriggerConditionFormComponent,
         WorkflowTriggerConditionListComponent,
         ZoneComponent,
-        ZoneContentComponent
+        ZoneContentComponent,
+        UsageWorkflowsComponent,
+        UsageApplicationsComponent,
+        UsagePipelinesComponent,
+        UsageEnvironmentsComponent,
+        UsageComponent
     ],
     providers: [
         DurationService,
         PermissionService,
         SharedService,
-        ToastService
+        ToastService,
+        WorkflowCoreService
     ],
     schemas: [
         CUSTOM_ELEMENTS_SCHEMA
@@ -181,7 +193,12 @@ import {WorkflowNodeHookComponent} from './workflow/node/hook/hook.component';
         WorkflowTriggerConditionFormComponent,
         WorkflowTriggerConditionListComponent,
         ZoneComponent,
-        ZoneContentComponent
+        ZoneContentComponent,
+        UsageWorkflowsComponent,
+        UsageApplicationsComponent,
+        UsagePipelinesComponent,
+        UsageEnvironmentsComponent,
+        UsageComponent
     ]
 })
 export class SharedModule {

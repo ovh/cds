@@ -50,7 +50,7 @@ export class WorkflowRunTestTableComponent extends Table {
             case 'skipped':
                 if (this.tests) {
                     this.tests.forEach(ts => {
-                        this.filteredTests.push(...ts.tests.filter(tc => tc.skipped > 0));
+                        this.filteredTests.push(...ts.tests.filter(tc => tc.skipped.length > 0));
                     });
                 }
                 break;

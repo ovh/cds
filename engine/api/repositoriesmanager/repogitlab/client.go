@@ -102,6 +102,11 @@ func (c *GitlabClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
 	return repo, nil
 }
 
+// PullRequests fetch all the pull request for a repository
+func (c *GitlabClient) PullRequests(string) ([]sdk.VCSPullRequest, error) {
+	return []sdk.VCSPullRequest{}, nil
+}
+
 //Branches retrieves the branches
 func (c *GitlabClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 

@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strconv"
@@ -11,10 +12,65 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+// UpdateLastModifiedDate Update workflow last modified date
+func UpdateLastModifiedDate(db gorp.SqlExecutor, w *sdk.Workflow) error {
+	query := `UPDATE workflow set last_modified = current_timestamp WHERE id = $1 RETURNING last_modified`
+	return db.QueryRow(query, w.ID).Scan(&w.LastModified)
+}
+
+// PostGet is a db hook
+func (w *Workflow) PostGet(db gorp.SqlExecutor) error {
+	var res = struct {
+		Metadata  sql.NullString `db:"metadata"`
+		PurgeTags sql.NullString `db:"purge_tags"`
+	}{}
+
+	if err := db.SelectOne(&res, "SELECT metadata, purge_tags FROM workflow WHERE id = $1", w.ID); err != nil {
+		return sdk.WrapError(err, "PostGet> Unable to load marshalled workflow")
+	}
+
+	metadata := sdk.Metadata{}
+	if err := gorpmapping.JSONNullString(res.Metadata, &metadata); err != nil {
+		return err
+	}
+	w.Metadata = metadata
+
+	purgeTags := []string{}
+	if err := gorpmapping.JSONNullString(res.PurgeTags, &purgeTags); err != nil {
+		return err
+	}
+	w.PurgeTags = purgeTags
+
+	return nil
+}
+
+// PostUpdate is a db hook
+func (w *Workflow) PostUpdate(db gorp.SqlExecutor) error {
+	b, err := json.Marshal(w.Metadata)
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec("update workflow set metadata = $1 where id = $2", b, w.ID); err != nil {
+		return err
+	}
+
+	pt, errPt := json.Marshal(w.PurgeTags)
+	if errPt != nil {
+		return errPt
+	}
+	if _, err := db.Exec("update workflow set purge_tags = $1 where id = $2", pt, w.ID); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 // LoadAll loads all workflows for a project. All users in a project can list all workflows in a project
 func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
@@ -22,7 +78,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 	dbRes := []Workflow{}
 
 	query := `
-		select workflow.* 
+		select workflow.*
 		from workflow
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
@@ -37,6 +93,9 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 
 	for _, w := range dbRes {
 		w.ProjectKey = projectKey
+		if err := w.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "LoadAll> Unable to execute post get")
+		}
 		res = append(res, sdk.Workflow(w))
 	}
 
@@ -46,7 +105,7 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 // Load loads a workflow for a given user (ie. checking permissions)
 func Load(db gorp.SqlExecutor, store cache.Store, projectKey, name string, u *sdk.User) (*sdk.Workflow, error) {
 	query := `
-		select workflow.* 
+		select workflow.*
 		from workflow
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
@@ -61,13 +120,78 @@ func Load(db gorp.SqlExecutor, store cache.Store, projectKey, name string, u *sd
 // LoadByID loads a workflow for a given user (ie. checking permissions)
 func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User) (*sdk.Workflow, error) {
 	query := `
-		select * 
+		select *
 		from workflow
 		where id = $1`
 	res, err := load(db, store, u, query, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow %d", id)
 	}
+	return res, nil
+}
+
+// LoadByPipelineName loads a workflow for a given project key and pipeline name (ie. checking permissions)
+func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) ([]sdk.Workflow, error) {
+	res := []sdk.Workflow{}
+	dbRes := []Workflow{}
+
+	query := `
+		select distinct workflow.*
+		from workflow
+		join project on project.id = workflow.project_id
+		join workflow_node on workflow_node.workflow_id = workflow.id
+		join pipeline on pipeline.id = workflow_node.pipeline_id
+		where project.projectkey = $1 and pipeline.name = $2
+		order by workflow.name asc`
+
+	if _, err := db.Select(&dbRes, query, projectKey, pipName); err != nil {
+		if err == sql.ErrNoRows {
+			return res, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByPipelineName> Unable to load workflows for project %s and pipeline %s", projectKey, pipName)
+	}
+
+	for _, w := range dbRes {
+		w.ProjectKey = projectKey
+		if err := w.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "LoadByPipelineName> Unable to execute post get")
+		}
+		res = append(res, sdk.Workflow(w))
+	}
+
+	return res, nil
+}
+
+// LoadByEnvName loads a workflow for a given project key and environment name (ie. checking permissions)
+func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sdk.Workflow, error) {
+	res := []sdk.Workflow{}
+	dbRes := []Workflow{}
+
+	query := `
+		select distinct workflow.*
+		from workflow
+		join project on project.id = workflow.project_id
+		join workflow_node on workflow_node.workflow_id = workflow.id
+		join workflow_node_context on workflow_node_context.workflow_node_id = workflow_node.id
+		join environment on workflow_node_context.environment_id = environment.id
+		where project.projectkey = $1 and environment.name = $2
+		order by workflow.name asc`
+
+	if _, err := db.Select(&dbRes, query, projectKey, envName); err != nil {
+		if err == sql.ErrNoRows {
+			return res, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByEnvName> Unable to load workflows for project %s and environment %s", projectKey, envName)
+	}
+
+	for _, w := range dbRes {
+		w.ProjectKey = projectKey
+		if err := w.PostGet(db); err != nil {
+			return nil, sdk.WrapError(err, "LoadByEnvName> Unable to execute post get")
+		}
+		res = append(res, sdk.Workflow(w))
+	}
+
 	return res, nil
 }
 
@@ -87,6 +211,16 @@ func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, query string, arg
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
 	}
 
+	res.Permission = permission.WorkflowPermission(res.ID, u)
+
+	// Load groups
+	gps, err := loadWorkflowGroups(db, res)
+	if err != nil {
+		return nil, sdk.WrapError(err, "Load> Unable to load workflow groups")
+	}
+	res.Groups = gps
+
+	// Load joins
 	joins, errJ := loadJoins(db, store, &res, u)
 	if errJ != nil {
 		return nil, sdk.WrapError(errJ, "Load> Unable to load workflow joins")
@@ -332,8 +466,8 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 	}
 
 	//Check workflow name
-	regexp := regexp.MustCompile(sdk.NamePattern)
-	if !regexp.MatchString(w.Name) {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(w.Name) {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid workflow name. It should match %s", sdk.NamePattern))
 	}
 

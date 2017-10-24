@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -20,11 +21,32 @@ func (api *API) getEnvironmentsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
+		withUsage := FormBool(r, "withUsage")
 
-		environments, errEnv := environment.LoadEnvironments(api.mustDB(), projectKey, true, getUser(ctx))
+		tx, errTx := api.mustDB().Begin()
+		if errTx != nil {
+			return sdk.WrapError(errTx, "getEnvironmentsHandler> Cannot start transaction from db")
+		}
+		defer tx.Rollback()
+
+		environments, errEnv := environment.LoadEnvironments(tx, projectKey, true, getUser(ctx))
 		if errEnv != nil {
-			log.Warning("getEnvironmentsHandler: Cannot load environments from db: %s\n", errEnv)
-			return errEnv
+			return sdk.WrapError(errEnv, "getEnvironmentsHandler> Cannot load environments from db")
+		}
+
+		if withUsage {
+			for iEnv := range environments {
+				environments[iEnv].Usage = &sdk.Usage{}
+				wf, errW := workflow.LoadByEnvName(tx, projectKey, environments[iEnv].Name)
+				if errW != nil {
+					return sdk.WrapError(errW, "getEnvironmentsHandler> Cannot load workflows linked to environment %s from db", environments[iEnv].Name)
+				}
+				environments[iEnv].Usage.Workflows = append(environments[iEnv].Usage.Workflows, wf...)
+			}
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "getEnvironmentsHandler> Cannot commit transaction from db")
 		}
 
 		return WriteJSON(w, r, environments, http.StatusOK)
@@ -36,16 +58,52 @@ func (api *API) getEnvironmentHandler() Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		environmentName := vars["permEnvironmentName"]
+		withWorkflows := FormBool(r, "withWorkflows")
 
-		environment, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
+		tx, errTx := api.mustDB().Begin()
+		if errTx != nil {
+			return sdk.WrapError(errTx, "getEnvironmentHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		environment, errEnv := environment.LoadEnvironmentByName(tx, projectKey, environmentName)
 		if errEnv != nil {
-			log.Warning("getEnvironmentHandler: Cannot load environment %s for project %s from db: %s\n", environmentName, projectKey, errEnv)
-			return errEnv
+			return sdk.WrapError(errEnv, "getEnvironmentHandler> Cannot load environment %s for project %s from db", environmentName, projectKey)
+		}
+
+		if withWorkflows {
+			environment.Usage = &sdk.Usage{}
+			wf, errW := workflow.LoadByEnvName(tx, projectKey, environmentName)
+			if errW != nil {
+				return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environments %s in project %s", environmentName, projectKey)
+			}
+			environment.Usage.Workflows = wf
 		}
 
 		environment.Permission = permission.EnvironmentPermission(environment.ID, getUser(ctx))
 
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "getEnvironmentHandler> Cannot commit transaction")
+		}
+
 		return WriteJSON(w, r, environment, http.StatusOK)
+	}
+}
+
+func (api *API) getEnvironmentUsageHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		environmentName := vars["permEnvironmentName"]
+		usage := sdk.Usage{}
+
+		wf, errW := workflow.LoadByEnvName(api.mustDB(), projectKey, environmentName)
+		if errW != nil {
+			return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environments %s in project %s", environmentName, projectKey)
+		}
+		usage.Workflows = wf
+
+		return WriteJSON(w, r, usage, http.StatusOK)
 	}
 }
 
@@ -58,8 +116,7 @@ func (api *API) updateEnvironmentsHandler() Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if err != nil {
-			log.Warning("updateEnvironmentsHandler: Cannot load %s: %s\n", key, err)
-			return err
+			return sdk.WrapError(err, "updateEnvironmentsHandler: Cannot load %s", key)
 		}
 
 		var envs []sdk.Environment
@@ -69,8 +126,7 @@ func (api *API) updateEnvironmentsHandler() Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			log.Warning("updateEnvironmentsHandler> Cannot start transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 		for i := range envs {
@@ -80,21 +136,18 @@ func (api *API) updateEnvironmentsHandler() Handler {
 			if env.ID != 0 {
 				err = environment.UpdateEnvironment(tx, env)
 				if err != nil {
-					log.Warning("updateEnvironmentsHandler> Cannot update environment: %s\n", err)
-					return err
+					return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot update environment")
 				}
 			} else {
 				err = environment.InsertEnvironment(tx, env)
 				if err != nil {
-					log.Warning("updateEnvironmentsHandler> Cannot insert environment: %s\n", err)
-					return err
+					return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot insert environment")
 				}
 				env.Permission = permission.PermissionReadWriteExecute
 			}
 
 			if len(env.EnvironmentGroups) == 0 {
-				log.Warning("updateEnvironmentsHandler> Cannot have an environment (%s) without group\n", env.Name)
-				return sdk.ErrGroupNeedWrite
+				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateEnvironmentsHandler> Cannot have an environment (%s) without group", env.Name)
 			}
 			found := false
 			for _, eg := range env.EnvironmentGroups {
@@ -103,13 +156,11 @@ func (api *API) updateEnvironmentsHandler() Handler {
 				}
 			}
 			if !found {
-				log.Warning("updateEnvironmentsHandler> Cannot have an environment (%s) without group with write permission\n", env.Name)
-				return sdk.ErrGroupNeedWrite
+				return sdk.WrapError(sdk.ErrGroupNeedWrite, "updateEnvironmentsHandler> Cannot have an environment (%s) without group with write permission", env.Name)
 			}
 
 			if err := group.DeleteAllGroupFromEnvironment(tx, env.ID); err != nil {
-				log.Warning("updateEnvironmentsHandler> Cannot delete groups from environment %s for update: %s\n", env.Name, err)
-				return err
+				return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot delete groups from environment %s for update", env.Name)
 			}
 			for groupIndex := range env.EnvironmentGroups {
 				groupEnv := &env.EnvironmentGroups[groupIndex]
@@ -120,8 +171,7 @@ func (api *API) updateEnvironmentsHandler() Handler {
 
 				err = group.InsertGroupInEnvironment(tx, env.ID, g.ID, groupEnv.Permission)
 				if err != nil {
-					log.Warning("updateEnvironmentsHandler> Cannot insert group %s on environments %s: %s\n", groupEnv.Group.Name, env.Name, err)
-					return err
+					return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot insert group %s on environments %s", groupEnv.Group.Name, env.Name)
 				}
 
 				// Update group ID
@@ -130,14 +180,12 @@ func (api *API) updateEnvironmentsHandler() Handler {
 
 			preload, err := environment.GetAllVariable(tx, key, env.Name, environment.WithClearPassword())
 			if err != nil {
-				log.Warning("updateEnvironmentsHandler> Cannot preload variable value: %s\n", err)
-				return err
+				return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot preload variable value")
 			}
 
 			err = environment.DeleteAllVariable(tx, env.ID)
 			if err != nil {
-				log.Warning("updateEnvironmentsHandler> Cannot delete variables on environments for update: %s\n", err)
-				return err
+				return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot delete variables on environments for update")
 			}
 
 			for varIndex := range env.Variable {
@@ -165,8 +213,7 @@ func (api *API) updateEnvironmentsHandler() Handler {
 					}
 					err = environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx))
 					if err != nil {
-						log.Warning("updateEnvironmentsHandler> Cannot insert variables on environments: %s\n", err)
-						return err
+						return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot insert variables on environments")
 					}
 
 					// put placeholder because env.Variable will be in the handler response
@@ -176,8 +223,7 @@ func (api *API) updateEnvironmentsHandler() Handler {
 					if varEnv.Value == "" {
 						err := environment.AddKeyPairToEnvironment(tx, env.ID, varEnv.Name, getUser(ctx))
 						if err != nil {
-							log.Warning("updateEnvironmentsHandler> cannot generate keypair: %s\n", err)
-							return err
+							return sdk.WrapError(err, "updateEnvironmentsHandler> cannot generate keypair")
 						}
 					} else if varEnv.Value == sdk.PasswordPlaceholder {
 						for _, p := range preload {
@@ -187,8 +233,7 @@ func (api *API) updateEnvironmentsHandler() Handler {
 						}
 						err = environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx))
 						if err != nil {
-							log.Warning("updateEnvironments: Cannot insert variable %s:  %s\n", varEnv.Name, err)
-							return err
+							return sdk.WrapError(err, "updateEnvironments> Cannot insert variable %s", varEnv.Name)
 						}
 					}
 					// put placeholder because env.Variable will be in the handler response
@@ -197,27 +242,24 @@ func (api *API) updateEnvironmentsHandler() Handler {
 				default:
 					err = environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx))
 					if err != nil {
-						log.Warning("updateEnvironmentsHandler> Cannot insert variables on environments: %s\n", err)
-						return err
+						return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot insert variables on environments")
 					}
 				}
 			}
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
-			log.Warning("updateEnvironmentsHandler> Cannot update last modified date: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot update last modified date")
 		}
 		proj.Environments = envs
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("updateEnvironmentsHandler> Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot commit transaction")
 		}
 
 		go func() {
 			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-				log.Warning("updateVariablesInApplicationHandler: Cannot check warnings: %s", err)
+				log.Warning("updateVariablesInApplicationHandler> Cannot check warnings: %s", err)
 			}
 		}()
 
@@ -233,8 +275,7 @@ func (api *API) addEnvironmentHandler() Handler {
 
 		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
-			log.Warning("addEnvironmentHandler: Cannot load %s: %s\n", key, errProj)
-			return errProj
+			return sdk.WrapError(errProj, "addEnvironmentHandler> Cannot load %s", key)
 		}
 
 		var env sdk.Environment
@@ -245,42 +286,35 @@ func (api *API) addEnvironmentHandler() Handler {
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			log.Warning("addEnvironmentHandler> Cannot start transaction: %s\n", errBegin)
-			return errBegin
+			return sdk.WrapError(errBegin, "addEnvironmentHandler> Cannot start transaction")
 		}
 
 		defer tx.Rollback()
 
 		if err := environment.InsertEnvironment(tx, &env); err != nil {
-			log.Warning("addEnvironmentHandler> Cannot insert environment: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addEnvironmentHandler> Cannot insert environment")
 		}
 		if err := group.LoadGroupByProject(tx, proj); err != nil {
-			log.Warning("addEnvironmentHandler> Cannot load group from project: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addEnvironmentHandler> Cannot load group from project")
 		}
 		for _, g := range proj.ProjectGroups {
 			if err := group.InsertGroupInEnvironment(tx, env.ID, g.Group.ID, g.Permission); err != nil {
-				log.Warning("addEnvironmentHandler> Cannot add group on environment: %s\n", err)
-				return err
+				return sdk.WrapError(err, "addEnvironmentHandler> Cannot add group on environment")
 			}
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
-			log.Warning("addEnvironmentHandler> Cannot update last modified date: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addEnvironmentHandler> Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("addEnvironmentHandler> Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "addEnvironmentHandler> Cannot commit transaction")
 		}
 
 		var errEnvs error
 		proj.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), proj.Key, true, getUser(ctx))
 		if errEnvs != nil {
-			log.Warning("addEnvironmentHandler> Cannot load all environments: %s\n", errEnvs)
-			return errEnvs
+			return sdk.WrapError(errEnvs, "addEnvironmentHandler> Cannot load all environments")
 		}
 
 		return WriteJSON(w, r, proj, http.StatusOK)
@@ -296,8 +330,7 @@ func (api *API) deleteEnvironmentHandler() Handler {
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
-			log.Warning("deleteEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
-			return errProj
+			return sdk.WrapError(errProj, "deleteEnvironmentHandler> Cannot load project %s", projectKey)
 		}
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
@@ -310,8 +343,7 @@ func (api *API) deleteEnvironmentHandler() Handler {
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			log.Warning("deleteEnvironmentHandler> Cannot begin transaction: %s\n", errBegin)
-			return errBegin
+			return sdk.WrapError(errBegin, "deleteEnvironmentHandler> Cannot begin transaction")
 		}
 		defer tx.Rollback()
 
@@ -320,21 +352,18 @@ func (api *API) deleteEnvironmentHandler() Handler {
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			log.Warning("deleteEnvironmentHandler> Cannot update last modified date: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteEnvironmentHandler> Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("deleteEnvironmentHandler> Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "deleteEnvironmentHandler> Cannot commit transaction")
 		}
 
 		log.Info("Environment %s deleted.\n", environmentName)
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
 		if errEnvs != nil {
-			log.Warning("deleteEnvironmentHandler> Cannot load environments: %s\n", errEnvs)
-			return errEnvs
+			return sdk.WrapError(errEnvs, "deleteEnvironmentHandler> Cannot load environments")
 		}
 		return WriteJSON(w, r, p, http.StatusOK)
 	}
@@ -349,14 +378,12 @@ func (api *API) updateEnvironmentHandler() Handler {
 
 		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
 		if errEnv != nil {
-			log.Warning("updateEnvironmentHandler> Cannot load environment %s: %s\n", environmentName, errEnv)
-			return errEnv
+			return sdk.WrapError(errEnv, "updateEnvironmentHandler> Cannot load environment %s", environmentName)
 		}
 
 		p, errProj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
 		if errProj != nil {
-			log.Warning("updateEnvironmentHandler> Cannot load project %s: %s\n", projectKey, errProj)
-			return errProj
+			return sdk.WrapError(errProj, "updateEnvironmentHandler> Cannot load project %s", projectKey)
 		}
 
 		var envPost sdk.Environment
@@ -368,27 +395,23 @@ func (api *API) updateEnvironmentHandler() Handler {
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			log.Warning("updateEnvironmentHandler> Cannot start transaction: %s\n", errBegin)
-			return errBegin
+			return sdk.WrapError(errBegin, "updateEnvironmentHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if err := environment.UpdateEnvironment(tx, env); err != nil {
-			log.Warning("updateEnvironmentHandler> Cannot update environment %s: %s\n", environmentName, err)
-			return err
+			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update environment %s", environmentName)
 		}
 
 		if len(envPost.Variable) > 0 {
 			preload, err := environment.GetAllVariable(tx, projectKey, env.Name, environment.WithClearPassword())
 			if err != nil {
-				log.Warning("updateEnvironmentHandler> Cannot preload variable value: %s\n", err)
-				return err
+				return sdk.WrapError(err, "updateEnvironmentHandler> Cannot preload variable value")
 			}
 
 			err = environment.DeleteAllVariable(tx, env.ID)
 			if err != nil {
-				log.Warning("updateEnvironmentHandler> Cannot delete variables on environments for update: %s\n", err)
-				return err
+				return sdk.WrapError(err, "updateEnvironmentHandler> Cannot delete variables on environments for update")
 			}
 
 			for varIndex := range envPost.Variable {
@@ -409,8 +432,7 @@ func (api *API) updateEnvironmentHandler() Handler {
 				}
 				err = environment.InsertVariable(tx, env.ID, varEnv, getUser(ctx))
 				if err != nil {
-					log.Warning("updateEnvironmentHandler> Cannot insert variables on environments: %s\n", err)
-					return err
+					return sdk.WrapError(err, "updateEnvironmentHandler> Cannot insert variables on environments")
 				}
 			}
 		}
@@ -420,20 +442,17 @@ func (api *API) updateEnvironmentHandler() Handler {
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			log.Warning("updateEnvironmentHandler> Cannot update last modified date: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("updateEnvironmentHandler> Cannot commit transaction: %s\n", err)
-			return err
+			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot commit transaction")
 		}
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
 		if errEnvs != nil {
-			log.Warning("updateEnvironmentHandler> Cannot load environments: %s\n", errEnvs)
-			return errEnvs
+			return sdk.WrapError(errEnvs, "updateEnvironmentHandler> Cannot load environments")
 		}
 
 		return WriteJSON(w, r, p, http.StatusOK)
@@ -481,33 +500,33 @@ func (api *API) cloneEnvironmentHandler() Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to start a transaction: %s", err)
+			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to start a transaction")
 		}
 
 		defer tx.Rollback()
 
 		//Insert environment
 		if err := environment.InsertEnvironment(tx, &envPost); err != nil {
-			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert environment %s: %s", envPost.Name, err)
+			return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert environment %s", envPost.Name)
 		}
 
 		//Insert variables
 		for _, v := range envPost.Variable {
 			if environment.InsertVariable(tx, envPost.ID, &v, getUser(ctx)); err != nil {
-				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert variable: %s", err)
+				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert variable")
 			}
 		}
 
 		//Insert environment
 		for _, e := range envPost.EnvironmentGroups {
 			if err := group.InsertGroupInEnvironment(tx, envPost.ID, e.Group.ID, e.Permission); err != nil {
-				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert group in environment: %s", err)
+				return sdk.WrapError(err, "cloneEnvironmentHandler> Unable to insert group in environment")
 			}
 		}
 
 		//Update the poroject
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			return sdk.WrapError(err, "cloneEnvironmentHandler> Cannot update last modified date: %s", err)
+			return sdk.WrapError(err, "cloneEnvironmentHandler> Cannot update last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {

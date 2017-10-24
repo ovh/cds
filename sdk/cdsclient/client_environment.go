@@ -9,7 +9,7 @@ import (
 
 func (c *client) EnvironmentCreate(key string, env *sdk.Environment) error {
 	code, err := c.PostJSON("/project/"+key+"/environment", env, nil)
-	if code != 201 {
+	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
 		}

@@ -1,10 +1,15 @@
 <div class="ui form">
     <div class="inline fields">
         <div class="eight wide field paramName">
-            <i class="move icon" *ngIf="edit"></i>{{step.name}}
+            <span>
+                <i class="move icon" *ngIf="edit"></i>
+                {{step.name}}
+            </span>
+            <span class="textOrange" *ngIf="action.deprecated">
+                <i class="warning orange sign icon"></i>{{'common_deprecated' | translate}}
+            </span>
         </div>
         <div class="eight wide inline field">
-            <!-- <div class="inline field"> -->
                 <div class="five wide field">
                     <div class="ui checkbox" *ngIf="edit">
                         <input type="checkbox" name="active" [checked]="step.enabled" (change)="step.enabled = updateStepBool(step.enabled)">
@@ -54,8 +59,8 @@
             </label>
         </div>
         <div class="fourteen wide column">
-            <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"
-                                 (valueUpdating)="action.hasChanged = true"></app-parameter-value>
+            <app-parameter-value [edit]="edit" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"
+                                 (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)"></app-parameter-value>
         </div>
     </div>
 </div>

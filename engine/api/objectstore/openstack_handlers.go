@@ -273,7 +273,8 @@ func getToken(user, password, url, project, region string) (*Token, string, erro
 				log.Debug("OpenStack> Looking for region %s service 'swift' (got %s)\n", region, e.Region)
 				if e.Region == region {
 					log.Debug("OpenStack> Got Swift in %s !\n", region)
-					endpoint = sc.Endpoints[0].PublicURL
+					endpoint = e.PublicURL
+
 				}
 			}
 		}

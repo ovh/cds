@@ -177,6 +177,14 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 		}
 	}
 
+	if len(e.PullRequestEvents) > 0 {
+		pbsPull, errPull := triggerPipelines(tx, store, projectKey, rm, p, e)
+		if errPull != nil {
+			return nil, sdk.WrapError(errPull, "Polling> Unable for pull request to trigger pipeline %s for repository %s", p.Pipeline.Name, p.Application.RepositoryFullname)
+		}
+		pbs = append(pbs, pbsPull...)
+	}
+
 	if err := UpdateExecution(tx, e); err != nil {
 		return nil, err
 	}
@@ -194,7 +202,7 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 
 	var pbs []sdk.PipelineBuild
 	for _, event := range e.PushEvents {
-		pb, err := triggerPipeline(tx, rm, poller, event, proj)
+		pb, err := triggerPipeline(tx, rm, poller, event, proj, false)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Polling.triggerPipelines> cannot trigger pipeline %d", poller.Pipeline.ID)
 		}
@@ -206,8 +214,22 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 		}
 	}
 
+	for _, event := range e.PullRequestEvents {
+		pb, err := triggerPipeline(tx, rm, poller, event.Head, proj, true)
+		if err != nil {
+			log.Error("Polling.triggerPipelines> cannot trigger pipeline %d: %s\n", poller.Pipeline.ID, err)
+			return nil, err
+		}
+
+		if pb != nil {
+			log.Debug("Polling.triggerPipelines> Triggered %s/%s/%s : %s", projectKey, poller.Application.RepositoryFullname, event.Head.Branch, event.Head.Commit.Hash)
+			e.PipelineBuildVersions[event.Head.Branch.ID+"/"+event.Head.Commit.Hash[:7]] = pb.Version
+			pbs = append(pbs, *pb)
+		}
+	}
+
 	for _, event := range e.CreateEvents {
-		pb, err := triggerPipeline(tx, rm, poller, sdk.VCSPushEvent(event), proj)
+		pb, err := triggerPipeline(tx, rm, poller, sdk.VCSPushEvent(event), proj, false)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Polling.triggerPipelines> cannot trigger pipeline %d", poller.Pipeline.ID)
 		}
@@ -232,7 +254,7 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 	return pbs, nil
 }
 
-func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e sdk.VCSPushEvent, proj *sdk.Project) (*sdk.PipelineBuild, error) {
+func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *sdk.RepositoryPoller, e sdk.VCSPushEvent, proj *sdk.Project, fork bool) (*sdk.PipelineBuild, error) {
 	// Create pipeline args
 	var params []sdk.Parameter
 
@@ -242,6 +264,12 @@ func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *s
 		return nil, errg
 	}
 	poller.Pipeline.Parameter = parameters
+
+	if fork {
+		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, e.CloneURL)
+		sdk.AddParameter(&params, "git.url", sdk.StringParameter, e.CloneURL)
+		sdk.AddParameter(&params, "git.repository", sdk.StringParameter, e.Repo)
+	}
 
 	applicationPipelineArgs, errga := application.GetAllPipelineParam(tx, poller.Application.ID, poller.Pipeline.ID)
 	if errga != nil {
@@ -253,8 +281,9 @@ func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *s
 		VCSChangesBranch: e.Branch.ID,
 		VCSChangesHash:   e.Commit.Hash,
 		VCSChangesAuthor: e.Commit.Author.DisplayName,
+		VCSRemoteURL:     e.CloneURL,
+		VCSRemote:        e.Repo,
 	}
-
 	// Get commit message to check if we have to skip the build
 	match, errm := regexp.Match(".*\\[ci skip\\].*|.*\\[cd skip\\].*", []byte(e.Commit.Message))
 	if errm != nil {
@@ -264,7 +293,6 @@ func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *s
 		log.Debug("polling> Skipping build of %s/%s for commit %s by %s", proj.Key, poller.Application.Name, trigger.VCSChangesHash, trigger.VCSChangesAuthor)
 		return nil, nil
 	}
-
 	//Check if build exists
 	if b, err := pipeline.BuildExists(tx, poller.Application.ID, poller.Pipeline.ID, sdk.DefaultEnv.ID, &trigger); err != nil || b {
 		if err != nil {
@@ -272,7 +300,6 @@ func triggerPipeline(tx gorp.SqlExecutor, rm *sdk.RepositoriesManager, poller *s
 		}
 		return nil, nil
 	}
-
 	//Insert the build
 	pb, err := pipeline.InsertPipelineBuild(tx, proj, &poller.Pipeline, &poller.Application, applicationPipelineArgs, params, &sdk.DefaultEnv, 0, trigger)
 	if err != nil {

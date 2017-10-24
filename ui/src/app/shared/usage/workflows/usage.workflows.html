@@ -1,0 +1,16 @@
+<h3><i class="share alternate icon"></i> {{'usage_workflow_list' | translate}}</h3>
+<div class="ui segment">
+    <div *ngIf="workflows && workflows.length > 0;then workflowsDisplay; else noworkflows"></div>
+    <ng-template #workflowsDisplay>
+        <div class="ui stackable four column grid">
+            <div class="center aligned column" *ngFor="let workflow of workflows">
+                <a [routerLink]="['/project/', project.key, 'workflow', workflow.name]">{{workflow.name}}</a>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template #noworkflows>
+        <div>
+            <span>{{ 'common_no_workflow' | translate }}</span>
+        </div>
+    </ng-template>
+</div>

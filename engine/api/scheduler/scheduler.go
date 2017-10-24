@@ -1,41 +1,17 @@
 package scheduler
 
 import (
-	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/gorhill/cronexpr"
-	"github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 var schedulerStatus = "Not Running"
-
-//Scheduler is the goroutine which compute date of next execution for pipeline scheduler
-func Scheduler(c context.Context, DBFunc func() *gorp.DbMap) {
-	tick := time.NewTicker(2 * time.Second).C
-	for {
-		select {
-		case <-c.Done():
-			if c.Err() != nil {
-				log.Error("Exiting scheduler.Scheduler: %v", c.Err())
-				return
-			}
-		case <-tick:
-			_, status, err := Run(DBFunc())
-
-			if err != nil {
-				log.Error("%s: %s", status, err)
-			}
-			schedulerStatus = status
-		}
-	}
-}
 
 //Run is the core function of Scheduler goroutine
 func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
@@ -53,30 +29,31 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 			return nil, "Run> Unable to start a transaction", errb
 		}
 
-		query := `
-			SELECT pipeline_scheduler.* 
-			FROM pipeline_scheduler 
-			JOIN (
-				SELECT 	pipeline_scheduler_id 
-				FROM  	pipeline_scheduler_execution 
-				WHERE 	pipeline_scheduler_id = $1
-				AND 	executed = 'true' 
-				ORDER BY  execution_planned_date DESC 
-				LIMIT 1
-				) execs ON pipeline_scheduler.id = execs.pipeline_scheduler_id 
-			WHERE pipeline_scheduler.id = $1
-			FOR UPDATE NOWAIT`
-
-		var gorpPS = &PipelineScheduler{}
-		if err := tx.SelectOne(gorpPS, query, ps[i].ID); err != nil {
-			if pqerr, ok := err.(*pq.Error); ok && pqerr.Code != "55P03" || err != sql.ErrNoRows {
-				log.Error("Run> Unable to lock to pipeline_scheduler %s", err)
-			}
+		s, errlock := loadAndLockPipelineScheduler(tx, ps[i].ID)
+		if errlock != nil {
+			log.Error("Run> Unable to load to pipeline scheduler %s", errlock)
+			_ = tx.Rollback()
+			continue
+		}
+		if s == nil {
 			_ = tx.Rollback()
 			continue
 		}
 
-		s := sdk.PipelineScheduler(*gorpPS)
+		//Reload the last execution
+		ex, errex := LoadLastExecution(tx, s.ID)
+		if errex != nil {
+			log.Error("Run> Unable to load to pipeline scheduler execution %s", errex)
+			_ = tx.Rollback()
+			continue
+		}
+
+		//If the last execution has not been executed, it means that the scheduler is already scheduled
+		if ex != nil && !ex.Executed {
+			_ = tx.Rollback()
+			continue
+		}
+
 		//Skip disabled scheduler
 		if s.Disabled {
 			_ = tx.Rollback()
@@ -84,14 +61,16 @@ func Run(db *gorp.DbMap) ([]sdk.PipelineSchedulerExecution, string, error) {
 		}
 
 		//Compute a new execution
-		e, errn := Next(tx, &s)
+		e, errn := Next(tx, s)
 		if errn != nil {
 			//Nothing to compute
+			log.Error("Run> Error while compute next execution: %s", errn)
 			_ = tx.Rollback()
 			continue
 		}
 		//Insert it
 		if err := InsertExecution(tx, e); err != nil {
+			log.Error("Run> Error while insert Execution: %s", err)
 			_ = tx.Rollback()
 			continue
 		}
@@ -136,7 +115,8 @@ func Next(db gorp.SqlExecutor, s *sdk.PipelineScheduler) (*sdk.PipelineScheduler
 	}
 	//Don't take last execution date as reference: time.Now() is enough
 	e := &sdk.PipelineSchedulerExecution{
-		ExecutionPlannedDate: cronExpr.Next(t),
+		// Next from now + 10 seconds, to potentially avoid desyncronisation time with many instances of API
+		ExecutionPlannedDate: cronExpr.Next(t.Add(10 * time.Second)),
 		PipelineSchedulerID:  s.ID,
 		Executed:             false,
 	}

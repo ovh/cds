@@ -229,8 +229,7 @@ func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 	if err != nil && err == sql.ErrNoRows {
 		err = createBuiltinArtifactUploadAction(db)
 		if err != nil {
-			log.Warning("CreateBuiltinArtifactActions> CreateBuiltinArtifactActions err:%s", err.Error())
-			return err
+			return sdk.WrapError(err, "CreateBuiltinArtifactActions> cannot create builtin artifact upload action")
 		}
 	} else {
 		log.Debug("CreateBuiltinArtifactActions> builtin action %s already exists", sdk.ArtifactUpload)
@@ -241,8 +240,7 @@ func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 	if err != nil && err == sql.ErrNoRows {
 		err = createBuiltinArtifactDownloadAction(db)
 		if err != nil {
-			log.Warning("CreateBuiltinArtifactActions> createBuiltinArtifactDownloadAction err:%s", err.Error())
-			return err
+			return sdk.WrapError(err, "CreateBuiltinArtifactActions> cannot create builtin artifact download action")
 		}
 	} else {
 		log.Debug("CreateBuiltinArtifactActions> builtin action %s already exists", sdk.ArtifactDownload)
@@ -277,8 +275,7 @@ func createBuiltinArtifactUploadAction(db *gorp.DbMap) error {
 
 	log.Info("createBuiltinArtifactUploadAction> create builtin action %s", upload.Name)
 	if err := InsertAction(tx, upload, true); err != nil {
-		log.Warning("CreateBuiltinArtifactActions> createBuiltinArtifactUploadAction err:%s", err.Error())
-		return err
+		return sdk.WrapError(err, "CreateBuiltinArtifactActions> createBuiltinArtifactUploadAction err")
 	}
 
 	return tx.Commit()
@@ -308,6 +305,11 @@ func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 		Type:        sdk.BooleanParameter,
 		Description: "Enable artifact download",
 		Value:       "true"})
+	dl.Parameter(sdk.Parameter{
+		Name:        "pattern",
+		Type:        sdk.StringParameter,
+		Description: "Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB)",
+		Value:       ""})
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -317,8 +319,7 @@ func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 
 	log.Info("createBuiltinArtifactDownloadAction> create builtin action %s", dl.Name)
 	if err := InsertAction(tx, dl, true); err != nil {
-		log.Warning("CreateBuiltinArtifactActions> createBuiltinArtifactDownloadAction err:%s", err.Error())
-		return err
+		return sdk.WrapError(err, "CreateBuiltinArtifactActions> createBuiltinArtifactDownloadAction err")
 	}
 
 	return tx.Commit()

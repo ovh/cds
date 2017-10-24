@@ -8,15 +8,21 @@ import (
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID           int64              `json:"id" db:"id" cli:"-"`
-	Name         string             `json:"name" db:"name" cli:"name,key"`
-	Description  string             `json:"description,omitempty" db:"description" cli:"description"`
-	LastModified time.Time          `json:"last_modified" db:"last_modified"`
-	ProjectID    int64              `json:"project_id,omitempty" db:"project_id" cli:"-"`
-	ProjectKey   string             `json:"project_key" db:"-" cli:"-"`
-	RootID       int64              `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
-	Root         *WorkflowNode      `json:"root" db:"-" cli:"-"`
-	Joins        []WorkflowNodeJoin `json:"joins,omitempty" db:"-" cli:"-"`
+	ID            int64              `json:"id" db:"id" cli:"-"`
+	Name          string             `json:"name" db:"name" cli:"name,key"`
+	Description   string             `json:"description,omitempty" db:"description" cli:"description"`
+	LastModified  time.Time          `json:"last_modified" db:"last_modified"`
+	ProjectID     int64              `json:"project_id,omitempty" db:"project_id" cli:"-"`
+	ProjectKey    string             `json:"project_key" db:"-" cli:"-"`
+	RootID        int64              `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
+	Root          *WorkflowNode      `json:"root" db:"-" cli:"-"`
+	Joins         []WorkflowNodeJoin `json:"joins,omitempty" db:"-" cli:"-"`
+	Groups        []GroupPermission  `json:"groups,omitempty" db:"-" cli:"-"`
+	Permission    int                `json:"permission,omitempty" db:"-" cli:"-"`
+	Metadata      Metadata           `json:"metadata" yaml:"metadata" db:"-"`
+	Usage         *Usage             `json:"usage,omitempty" db:"-" cli:"-"`
+	HistoryLength int64              `json:"history_length" db:"history_length" cli:"-"`
+	PurgeTags     []string           `json:"purge_tags,omitempty" db:"-" cli:"-"`
 }
 
 // FilterHooksConfig filter all hooks configuration and remove somme configuration key
@@ -211,12 +217,13 @@ type WorkflowNodeJoin struct {
 
 //WorkflowNodeJoinTrigger is a trigger for joins
 type WorkflowNodeJoinTrigger struct {
-	ID                 int64                      `json:"id" db:"id"`
-	WorkflowNodeJoinID int64                      `json:"join_id" db:"workflow_node_join_id"`
-	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
-	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
-	Conditions         []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
-	Manual             bool                       `json:"manual" db:"manual"`
+	ID                 int64                     `json:"id" db:"id"`
+	WorkflowNodeJoinID int64                     `json:"join_id" db:"workflow_node_join_id"`
+	WorkflowDestNodeID int64                     `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
+	WorkflowDestNode   WorkflowNode              `json:"workflow_dest_node" db:"-"`
+	Conditions         WorkflowTriggerConditions `json:"conditions,omitempty" db:"-"`
+	Manual             bool                      `json:"manual" db:"manual"`
+	ContinueOnError    bool                      `json:"continue_on_error" db:"continue_on_error"`
 }
 
 //WorkflowNode represents a node in w workflow tree
@@ -316,50 +323,79 @@ func (n *WorkflowNode) Nodes() []int64 {
 	return res
 }
 
-func ancestor(id int64, node *WorkflowNode) ([]int64, bool) {
+func ancestor(id int64, node *WorkflowNode, deep bool) (map[int64]bool, bool) {
+	res := map[int64]bool{}
 	if id == node.ID {
-		return nil, true
+		return res, true
 	}
 	for _, t := range node.Triggers {
-		if t.WorkflowDestNodeID == id {
-			return []int64{node.ID}, true
+		if t.WorkflowDestNode.ID == id {
+			res[node.ID] = true
+			return res, true
 		}
-		ids, ok := ancestor(id, &t.WorkflowDestNode)
+		ids, ok := ancestor(id, &t.WorkflowDestNode, deep)
 		if ok {
-			return append(ids, node.ID), true
+			if len(ids) == 1 || deep {
+				for k := range ids {
+					res[k] = true
+				}
+			}
+			if deep {
+				res[node.ID] = true
+			}
+			return res, true
 		}
 	}
-	return nil, false
+	return res, false
 }
 
-//Ancestors returns node is of all node ancestors
-func (n *WorkflowNode) Ancestors(w *Workflow) []int64 {
+// Ancestors returns  all node ancestors if deep equal true, and only his direct ancestors if deep equal false
+func (n *WorkflowNode) Ancestors(w *Workflow, deep bool) []int64 {
 	if n == nil {
 		return nil
 	}
-	res := []int64{}
-	res, ok := ancestor(n.ID, w.Root)
 
-	if ok {
-		return res
-	}
+	res, ok := ancestor(n.ID, w.Root, deep)
 
-	for _, j := range w.Joins {
-		for _, t := range j.Triggers {
-			res, ok := ancestor(n.ID, &t.WorkflowDestNode)
-			if ok {
-				for _, id := range j.SourceNodeIDs {
-					node := w.GetNode(id)
-					if node != nil {
-						ancerstorRes := node.Ancestors(w)
-						res = append(res, ancerstorRes...)
+	if !ok {
+	joinLoop:
+		for _, j := range w.Joins {
+			for _, t := range j.Triggers {
+				resAncestor, ok := ancestor(n.ID, &t.WorkflowDestNode, deep)
+				if ok {
+					if len(resAncestor) == 1 || deep {
+						for id := range resAncestor {
+							res[id] = true
+						}
 					}
+
+					if len(resAncestor) == 0 || deep {
+						for _, id := range j.SourceNodeIDs {
+							res[id] = true
+							if deep {
+								node := w.GetNode(id)
+								if node != nil {
+									ancerstorRes := node.Ancestors(w, deep)
+									for _, id := range ancerstorRes {
+										res[id] = true
+									}
+								}
+							}
+						}
+					}
+					break joinLoop
 				}
-				return res
 			}
 		}
 	}
-	return nil
+
+	keys := make([]int64, len(res))
+	i := 0
+	for k := range res {
+		keys[i] = k
+		i++
+	}
+	return keys
 }
 
 //TriggersID returns a slides of triggers IDs
@@ -404,12 +440,12 @@ func (n *WorkflowNode) InvolvedApplications() []int64 {
 //InvolvedPipelines returns all pipelines used in the workflow
 func (n *WorkflowNode) InvolvedPipelines() []int64 {
 	res := []int64{}
-	if n.Context != nil {
-		if n.PipelineID == 0 {
-			n.PipelineID = n.Pipeline.ID
-		}
-		res = []int64{n.PipelineID}
+
+	if n.PipelineID == 0 {
+		n.PipelineID = n.Pipeline.ID
 	}
+	res = []int64{n.PipelineID}
+
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.InvolvedPipelines()...)
 	}
@@ -450,6 +486,7 @@ type WorkflowNodeTrigger struct {
 	WorkflowDestNode   WorkflowNode              `json:"workflow_dest_node" db:"-"`
 	Conditions         WorkflowTriggerConditions `json:"conditions,omitempty" db:"-"`
 	Manual             bool                      `json:"manual" db:"manual"`
+	ContinueOnError    bool                      `json:"continue_on_error" db:"continue_on_error"`
 }
 
 //WorkflowTriggerConditions is either an array of WorkflowTriggerCondition or a lua script

@@ -32,6 +32,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     previousBuild: PipelineBuild;
     duration: string;
     branch: string;
+    remote: string;
     appVersionFilter: number;
 
     // Allow angular update from work started outside angular context
@@ -80,6 +81,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                 this.currentBuild = undefined;
                 this.histories = undefined;
             }
+            this.remote = q['remote'] || null;
         });
         // Current route param
         this._activatedRoute.params.subscribe(params => {
@@ -109,6 +111,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             appName: paramSnap['appName'],
             pipName: paramSnap['pipName'],
             envName: querySnap['envName'],
+            remote: querySnap['remote'],
             buildNumber: paramSnap['buildNumber']
         });
 
@@ -153,11 +156,19 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     }
 
     showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.project.key +
+        let url = '/project/' + this.project.key +
             '/application/' + this.application.name +
             '/pipeline/' + this.pipeline.name +
             '/build/' + this.currentBuildNumber +
-            '?envName=' + this.envName + '&tab=' + tab);
+            '?envName=' + this.envName + '&tab=' + tab;
+
+        if (this.remote) {
+            url += '&remote=' + this.remote;
+        }
+        if (this.branch) {
+            url += '&branch=' + this.branch;
+        }
+        this._router.navigateByUrl(url);
     }
 
     loadHistory(pb: PipelineBuild): void {
@@ -166,13 +177,13 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             env = pb.environment.name;
         }
         this._appPipService.buildHistory(this.project.key, pb.application.name, pb.pipeline.name,
-            env, 50, '', pb.trigger.vcs_branch).subscribe(pbs => {
+            env, 50, '', pb.trigger.vcs_branch, pb.trigger.vcs_remote).subscribe(pbs => {
             this.histories = pbs;
             this.nbHistory = this.histories.length;
         });
 
         this._appPipService.buildHistory(this.project.key, pb.application.name, pb.pipeline.name,
-            env, 1, PipelineStatus.SUCCESS, pb.trigger.vcs_branch).subscribe(pbs => {
+            env, 1, PipelineStatus.SUCCESS, pb.trigger.vcs_branch, pb.trigger.vcs_remote).subscribe(pbs => {
             if (pbs && pbs.length === 1) {
                 this.previousBuild = pbs[0];
             }

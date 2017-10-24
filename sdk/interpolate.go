@@ -6,39 +6,14 @@ import (
 	"html/template"
 	"regexp"
 	"strings"
+
+	"github.com/Masterminds/sprig"
 )
 
-// InterpolateFilterFunc is the type of a filter func
-type InterpolateFilterFunc func() (string, func(string) string)
-
-// InterpolateFilters provides some standers filters
-var InterpolateFilters = struct {
-	Title  InterpolateFilterFunc
-	Lower  InterpolateFilterFunc
-	Upper  InterpolateFilterFunc
-	Escape InterpolateFilterFunc
-}{
-	Title: func() (string, func(string) string) {
-		return "title", strings.Title
-	},
-	Lower: func() (string, func(string) string) {
-		return "lower", strings.ToLower
-	},
-	Upper: func() (string, func(string) string) {
-		return "upper", strings.ToUpper
-	},
-	Escape: func() (string, func(string) string) {
-		return "escape", func(s string) string {
-			s1 := strings.Replace(s, "_", "-", -1)
-			s1 = strings.Replace(s1, "/", "-", -1)
-			s1 = strings.Replace(s1, ".", "-", -1)
-			return s1
-		}
-	},
-}
+var interpolateRegex = regexp.MustCompile("{{(\\.[a-zA-Z0-9._|\\s]+)}}")
 
 // Interpolate returns interpolated input with vars
-func Interpolate(input string, vars map[string]string, filters ...InterpolateFilterFunc) (string, error) {
+func Interpolate(input string, vars map[string]string) (string, error) {
 	data := map[string]string{}
 
 	for k, v := range vars {
@@ -55,13 +30,24 @@ func Interpolate(input string, vars map[string]string, filters ...InterpolateFil
 		}
 	}
 
-	funcMap := template.FuncMap{}
-	for i := range filters {
-		s, fun := filters[i]()
-		funcMap[s] = fun
+	// in input, replace {{.cds.foo.bar}} per {{ default "{{.cds.foo.bar}}" .cds.foo.bar}}
+	// t.Execute will call "default" function, documented on http://masterminds.github.io/sprig/defaults.html
+	sm := interpolateRegex.FindAllStringSubmatch(input, -1)
+	if len(sm) > 0 {
+		alreadyReplaced := map[string]string{}
+		for i := 0; i < len(sm); i++ {
+			if len(sm[i]) > 0 {
+				// alreadyReplaced: check if var is already replaced.
+				// see test "two same unknown" on InterpolateTest
+				if _, ok := alreadyReplaced[sm[i][1]]; !ok {
+					input = strings.Replace(input, sm[i][1], " default \"{{"+sm[i][1]+"}}\" "+sm[i][1]+" ", -1)
+					alreadyReplaced[sm[i][1]] = sm[i][1]
+				}
+			}
+		}
 	}
 
-	t, err := template.New("input").Funcs(funcMap).Parse(input)
+	t, err := template.New("input").Funcs(sprig.FuncMap()).Parse(input)
 	if err != nil {
 		return "", fmt.Errorf("Invalid template format: %s", err.Error())
 	}

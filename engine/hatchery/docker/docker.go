@@ -6,10 +6,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
-
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -222,8 +221,8 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []
 		return "", fmt.Errorf("cannot handle %s worker model", wm.Type)
 	}
 
-	if len(h.workers) >= viper.GetInt("max-worker") {
-		return "", fmt.Errorf("Max capacity reached (%d)", viper.GetInt("max-worker"))
+	if len(h.workers) >= h.Configuration().Provision.MaxWorker {
+		return "", fmt.Errorf("Max capacity reached (%d)", h.Configuration().Provision.MaxWorker)
 	}
 
 	if jobID > 0 {
@@ -245,28 +244,28 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []
 	args = append(args, "run", "--rm", "-a", "STDOUT", "-a", "STDERR")
 	args = append(args, fmt.Sprintf("--name=%s", name))
 	args = append(args, "-e", "CDS_SINGLE_USE=1")
-	args = append(args, "-e", fmt.Sprintf("CDS_API=%s", h.Client().APIURL()))
+	args = append(args, "-e", fmt.Sprintf("CDS_API=%s", h.Configuration().API.HTTP.URL))
 	args = append(args, "-e", fmt.Sprintf("CDS_NAME=%s", name))
-	args = append(args, "-e", fmt.Sprintf("CDS_TOKEN=%s", viper.GetString("token")))
+	args = append(args, "-e", fmt.Sprintf("CDS_TOKEN=%s", h.Configuration().API.Token))
 	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", h.hatch.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY_NAME=%s", h.hatch.Name))
 
-	if viper.GetString("worker_graylog_host") != "" {
-		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_HOST=%s", viper.GetString("worker_graylog_host")))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {
+		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_HOST=%s", h.Configuration().Provision.WorkerLogsOptions.Graylog.Host))
 	}
-	if viper.GetString("worker_graylog_port") != "" {
-		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_PORT=%s", viper.GetString("worker_graylog_port")))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Port > 0 {
+		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_PORT=%s", strconv.Itoa(h.Configuration().Provision.WorkerLogsOptions.Graylog.Port)))
 	}
-	if viper.GetString("worker_graylog_extra_key") != "" {
-		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_KEY=%s", viper.GetString("worker_graylog_extra_key")))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey != "" {
+		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_KEY=%s", h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraKey))
 	}
-	if viper.GetString("worker_graylog_extra_value") != "" {
-		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_VALUE=%s", viper.GetString("worker_graylog_extra_value")))
+	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
+		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_VALUE=%s", h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue))
 	}
-	if viper.GetString("grpc_api") != "" && wm.Communication == sdk.GRPC {
-		args = append(args, "-e", fmt.Sprintf("CDS_GRPC_API=%s", viper.GetString("grpc_api")))
-		args = append(args, "-e", fmt.Sprintf("CDS_GRPC_INSECURE=%t", viper.GetBool("grpc_insecure")))
+	if h.Configuration().API.GRPC.URL != "" && wm.Communication == sdk.GRPC {
+		args = append(args, "-e", fmt.Sprintf("CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
+		args = append(args, "-e", fmt.Sprintf("CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
 	}
 
 	if jobID > 0 {

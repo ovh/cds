@@ -35,7 +35,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	query = `SELECT status FROM workflow_node_run_job WHERE id = $1 FOR UPDATE`
 	var currentStatus string
 	if err := db.QueryRow(query, job.ID).Scan(&currentStatus); err != nil {
-		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot lock node job run %d: %s", job.ID, err)
+		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot lock node job run %d", job.ID)
 	}
 
 	switch status {
@@ -62,7 +62,8 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 	//If the job has been set to building, set the stage to building
 	var stageUpdated bool
-	if job.Status == sdk.StatusBuilding.String() {
+	switch job.Status {
+	case sdk.StatusBuilding.String():
 		log.Debug("UpdateNodeJobRunStatus> job:%d", job.ID)
 		for i := range node.Stages {
 			s := &node.Stages[i]
@@ -81,11 +82,22 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 				break
 			}
 		}
+	case sdk.StatusStopped.String():
+		for i := range node.Stages {
+			s := &node.Stages[i]
+			s.Status = sdk.StatusStopped
+			for idxJ := range s.RunJobs {
+				runJob := &node.Stages[i].RunJobs[idxJ]
+				runJob.Status = sdk.StatusStopped.String()
+				runJob.Done = time.Now()
+			}
+		}
+		stageUpdated = true
 	}
 
 	if stageUpdated {
-		log.Debug("UpdateNodeJobRunStatus> stageUpdated, set status node from %s to %s", node.Status, sdk.StatusBuilding.String())
-		node.Status = sdk.StatusBuilding.String()
+		log.Debug("UpdateNodeJobRunStatus> stageUpdated, set status node from %s to %s", node.Status, job.Status)
+		node.Status = job.Status
 		if err := UpdateNodeRun(db, node); err != nil {
 			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to update workflow node run %d", node.ID)
 		}
@@ -111,7 +123,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
 func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
-	j, err := LoadAndLockNodeJobRun(db, store, id)
+	j, err := LoadAndLockNodeJobRunNoWait(db, store, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot load node job run")
 	}
@@ -139,7 +151,7 @@ func prepareSpawnInfos(j *sdk.WorkflowNodeJobRun, infos []sdk.SpawnInfo) error {
 
 // TakeNodeJobRun Take an a job run for update
 func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
-	job, err := LoadAndLockNodeJobRun(db, store, id)
+	job, err := LoadAndLockNodeJobRunNoWait(db, store, id)
 	if err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
 			err = sdk.ErrJobAlreadyBooked

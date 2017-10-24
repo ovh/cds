@@ -72,8 +72,14 @@ func Create(h Interface) {
 	tickerCountWorkersStarted := time.NewTicker(time.Duration(2 * time.Second))
 	tickerGetModels := time.NewTicker(time.Duration(3 * time.Second))
 
-	var maxWorkersReached bool
 	var models []sdk.Model
+
+	// Call WorkerModel Enabled first
+	var errwm error
+	models, errwm = h.Client().WorkerModelsEnabled()
+	if errwm != nil {
+		log.Error("error on h.Client().WorkerModelsEnabled() (init call): %v", errwm)
+	}
 
 	for {
 		select {
@@ -89,37 +95,41 @@ func Create(h Interface) {
 			workersStarted = int64(h.WorkersStarted())
 			if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
 				log.Info("max workers reached. current:%d max:%d", workersStarted, int64(h.Configuration().Provision.MaxWorker))
-				maxWorkersReached = true
-			} else {
-				maxWorkersReached = false
 			}
 			log.Debug("workers already started:%d", workersStarted)
 		case <-tickerGetModels.C:
 			var errwm error
 			models, errwm = h.Client().WorkerModelsEnabled()
 			if errwm != nil {
-				log.Error("error on h.Client().WorkerModelsEnabled():%e", errwm)
+				log.Error("error on h.Client().WorkerModelsEnabled(): %v", errwm)
 			}
 		case j := <-pbjobs:
-			if maxWorkersReached {
-				log.Debug("maxWorkerReached:%d", workersStarted)
+			if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
+				log.Debug("maxWorkersReached:%d", workersStarted)
 				continue
 			}
 			go func(job sdk.PipelineBuildJob) {
+				atomic.AddInt64(&workersStarted, 1)
 				if isRun := receiveJob(h, false, job.ExecGroups, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
-					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
+				} else {
+					atomic.AddInt64(&workersStarted, -1)
 				}
 			}(j)
 		case j := <-wjobs:
-			if maxWorkersReached {
-				log.Debug("maxWorkerReached:%d", workersStarted)
+			if workersStarted > int64(h.Configuration().Provision.MaxWorker) {
+				log.Debug("maxWorkersReached:%d", workersStarted)
 				continue
 			}
 			go func(job sdk.WorkflowNodeJobRun) {
+				// count + 1 here, and remove -1 if worker is not started
+				// this avoid to spawn to many workers compare
+				atomic.AddInt64(&workersStarted, 1)
 				if isRun := receiveJob(h, true, nil, job.ID, job.QueuedSeconds, job.BookedBy, job.Job.Action.Requirements, models, &nRoutines, spawnIDs, hostname); isRun {
 					atomic.AddInt64(&workersStarted, 1)
 					spawnIDs.SetDefault(string(job.ID), job.ID)
+				} else {
+					atomic.AddInt64(&workersStarted, -1)
 				}
 			}(j)
 		case err := <-errs:

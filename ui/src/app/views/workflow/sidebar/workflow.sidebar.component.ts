@@ -6,9 +6,9 @@ import {CDSWorker} from '../../../shared/worker/worker';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {environment} from '../../../../environments/environment';
 import {Subscription} from 'rxjs/Subscription';
-import {WorkflowRun} from '../../../model/workflow.run.model';
-import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {WorkflowRun, WorkflowRunTags} from '../../../model/workflow.run.model';
 import {cloneDeep} from 'lodash';
+import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 
 @Component({
     selector: 'app-workflow-sidebar',
@@ -16,12 +16,28 @@ import {cloneDeep} from 'lodash';
     styleUrls: ['./workflow.sidebar.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarComponent implements OnInit, OnDestroy {
+export class WorkflowSidebarComponent implements OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;
+
     // Workflow
-    @Input() workflow: Workflow;
+    _workflow: Workflow;
+    @Input('workflow')
+    set workflow(data: Workflow) {
+        if (data) {
+            let haveToStar = false;
+            if (!this._workflow || (this._workflow && data.name !== this._workflow.name)) {
+                haveToStar = true;
+            }
+            this._workflow = data;
+            this.initSelectableTags();
+            if (haveToStar) {
+                this.startWorker();
+            }
+        }
+    }
+    get workflow() { return this._workflow; }
     // Flag indicate if sidebar is open
     @Input() open: boolean;
 
@@ -39,6 +55,7 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
     // search part
     selectedTags: Array<string>;
     tagsSelectable: Array<string>;
+    tagToDisplay: Array<string>;
 
     ready = false;
 
@@ -46,8 +63,15 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
-    ngOnInit(): void {
+    startWorker(): void {
         // Start webworker
+        if (this.runWorkerSubscription) {
+            this.runWorkerSubscription.unsubscribe();
+        }
+        if (this.runWorker) {
+            this.runWorker.stop();
+        }
+
         this.runWorker = new CDSWorker('./assets/worker/web/workflow-run.js');
         this.runWorker.start({
             'user': this._authStore.getUser(),
@@ -60,43 +84,64 @@ export class WorkflowSidebarComponent implements OnInit, OnDestroy {
         // Listening to web worker responses
         this.runWorkerSubscription = this.runWorker.response().subscribe(msg => {
             this.zone.run(() => {
-                this.ready = true;
                 if (!msg) {
                     return;
                 }
                 this.workflowRuns = <Array<WorkflowRun>>JSON.parse(msg);
                 this.refreshRun();
+                this.ready = true;
             });
 
         });
+    }
 
+    initSelectableTags(): void {
+        this.tagToDisplay = new Array<string>();
+        if (this.workflow.metadata && this.workflow.metadata['default_tags']) {
+            this.tagToDisplay = this.workflow.metadata['default_tags'].split(',');
+        }
         this._workflowRunService.getTags(this.project.key, this.workflow.name).subscribe(tags => {
             this.tagsSelectable = new Array<string>();
             Object.keys(tags).forEach(k => {
                 if (tags.hasOwnProperty(k)) {
                     tags[k].forEach(v => {
-                        this.tagsSelectable.push(k + ':' + v);
+                        if (v !== '') {
+                            let newEntry = k + ':' + v;
+                            if (this.tagsSelectable.indexOf(newEntry) === -1) {
+                                this.tagsSelectable.push(newEntry);
+                            }
+                        }
                     });
                 }
             });
         });
+        this.refreshRun();
     }
 
     refreshRun(): void {
-        this.filteredWorkflowRuns = cloneDeep(this.workflowRuns);
-        if (!this.selectedTags) {
-            return;
-        }
-        this.selectedTags.forEach(t => {
-            let splitted = t.split(':');
-            let key = splitted.shift();
-            let value = splitted.join(':');
-            this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
-                return r.tags.find(tag => {
-                    return tag.tag === key && tag.value === value;
+        if (this.workflowRuns) {
+            this.filteredWorkflowRuns = cloneDeep(this.workflowRuns);
+            if (!this.selectedTags) {
+                return;
+            }
+            this.selectedTags.forEach(t => {
+                let splitted = t.split(':');
+                let key = splitted.shift();
+                let value = splitted.join(':');
+                this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
+                    return r.tags.find(tag => {
+                        return tag.tag === key && tag.value.indexOf(value) !== -1;
+                    });
                 });
             });
-        });
+        }
+    }
+
+    canDisplayTag(tg: WorkflowRunTags): boolean {
+        if (this.tagToDisplay) {
+            return this.tagToDisplay.indexOf(tg.tag) !== -1;
+        }
+        return false;
     }
 
     ngOnDestroy(): void {

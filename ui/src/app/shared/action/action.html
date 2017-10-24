@@ -21,6 +21,11 @@
                                (change)="editableAction.hasChanged = true" [disabled]="!edit">
                         <label>{{ 'common_enable' | translate }}</label>
                     </div>
+                    <div class="ui checkbox mt10" *ngIf="editableAction.type !== 'Joined'">
+                        <input type="checkbox" name="deprecated" [(ngModel)]="editableAction.deprecated"
+                               (change)="editableAction.hasChanged = true" [disabled]="!edit">
+                        <label>{{ 'common_deprecated' | translate }}</label>
+                    </div>
                 </div>
                 <div class="two wide right aligned field labelPadding">
                     <a class="pointing" (click)="requirementModal.show({inverted: false, closable: false})">
@@ -30,11 +35,13 @@
                         <modal-content>
                             <div class="ui form">
                                 <div class="field">
-                                    <app-requirements-list [requirements]="editableAction.requirements" [edit]="edit"
-                                                           (onChange)="editableAction.hasChanged = true"
-                                                           (event)="requirementEvent($event)"></app-requirements-list>
+                                    <app-requirements-list
+                                        [suggest]="suggest"
+                                        [requirements]="editableAction.requirements" [edit]="edit"
+                                       (onChange)="editableAction.hasChanged = true"
+                                       (event)="requirementEvent($event)"></app-requirements-list>
                                     <div class="requirementForm" *ngIf="edit">
-                                        <app-requirements-form (event)="requirementEvent($event)"></app-requirements-form>
+                                        <app-requirements-form [suggest]="suggest" (event)="requirementEvent($event)"></app-requirements-form>
                                     </div>
                                 </div>
                             </div>
@@ -63,10 +70,10 @@
     <div class="subtitle normalStep">
         <h3 class="inline">{{ 'action_step_title' | translate }}</h3>
     </div>
-    <div class="ui segment" *ngIf="steps.length > 0" [class.off]="!editableAction.enabled">
+    <div class="ui segment" *ngIf="steps.length > 0 && publicActions" [class.off]="!editableAction.enabled">
         <div class="dragula-container" [dragula]="'bag-nonfinal'" [dragulaModel]="steps" *ngIf="steps">
             <div *ngFor="let step of steps" class="step" [class.off]="!step.enabled">
-                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest"
+                <app-action-step [action]="editableAction" [step]="step" [edit]="edit" [suggest]="suggest" [publicActions]="publicActions"
                                  (removeEvent)="stepManagement($event)"></app-action-step>
                 <hr>
             </div>

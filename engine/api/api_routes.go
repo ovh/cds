@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"path"
+	"sync"
 )
 
 // InitRouter initializes the router and all the routes
@@ -14,6 +15,7 @@ func (api *API) InitRouter() {
 		make(map[string]*lastUpdateBrokerSubscribe),
 		make(chan *lastUpdateBrokerSubscribe),
 		make(chan string),
+		&sync.Mutex{},
 	}
 	api.lastUpdateBroker.Init(api.Router.Background, api.DBConnectionFactory.GetDBMap, api.Cache)
 
@@ -39,8 +41,10 @@ func (api *API) InitRouter() {
 
 	// Download file
 	r.ServeAbsoluteFile("/download/cli/x86_64", path.Join(api.Config.Directories.Download, "cds-linux-amd64"), "cds")
-	r.ServeAbsoluteFile("/download/worker/x86_64", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "worker")
+	r.ServeAbsoluteFile("/download/worker/x86_64", path.Join(api.Config.Directories.Download, "cds-worker-linux-amd64"), "worker")
 	r.ServeAbsoluteFile("/download/worker/windows_x86_64", path.Join(api.Config.Directories.Download, "cds-worker-windows-amd64"), "worker.exe")
+	r.ServeAbsoluteFile("/download/worker/i386", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "worker")
+	r.ServeAbsoluteFile("/download/worker/i686", path.Join(api.Config.Directories.Download, "cds-worker-linux-386"), "worker")
 
 	r.ServeAbsoluteFile("/download/cdsctl-windows-amd64", path.Join(api.Config.Directories.Download, "cdsctl-windows-amd64"), "cdsctl-windows-amd64")
 	r.ServeAbsoluteFile("/download/cdsctl-linux-amd64", path.Join(api.Config.Directories.Download, "cdsctl-linux-amd64"), "cdsctl-linux-amd64")
@@ -102,6 +106,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/keys", r.GET(api.getKeysInApplicationHandler), r.POST(api.addKeyInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/keys/{name}", r.DELETE(api.deleteKeyInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/branches", r.GET(api.getApplicationBranchHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/remotes", r.GET(api.getApplicationRemoteHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/version", r.GET(api.getApplicationBranchVersionHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/clone", r.POST(api.cloneApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/group", r.POST(api.addGroupInApplicationHandler), r.PUT(api.updateGroupsInApplicationHandler, DEPRECATED))
@@ -122,6 +127,10 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/audit/{auditID}", r.PUT(api.restoreAuditHandler, DEPRECATED))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}", r.GET(api.getVariableInApplicationHandler), r.POST(api.addVariableInApplicationHandler), r.PUT(api.updateVariableInApplicationHandler), r.DELETE(api.deleteVariableFromApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/variable/{name}/audit", r.GET(api.getVariableAuditInApplicationHandler))
+
+	// Application workflow migration
+	r.Handle("/project/{key}/application/{permApplicationName}/workflow/migrate", r.POST(api.migrationApplicationWorkflowHandler))
+	r.Handle("/project/{key}/application/{permApplicationName}/workflow/clean", r.POST(api.migrationApplicationWorkflowCleanHandler))
 
 	// Pipeline Build
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/history", r.GET(api.getPipelineHistoryHandler))
@@ -157,25 +166,29 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job/{jobID}", r.PUT(api.updateJobHandler), r.DELETE(api.deleteJobHandler))
 
 	// Workflows
+	r.Handle("/workflow/artifact/{hash}", r.GET(api.downloadworkflowArtifactDirectHandler, Auth(false)))
+
 	r.Handle("/project/{permProjectKey}/workflows", r.POST(api.postWorkflowHandler), r.GET(api.getWorkflowsHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}", r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}", r.GET(api.getWorkflowHandler), r.PUT(api.putWorkflowHandler), r.DELETE(api.deleteWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups", r.POST(api.postWorkflowGroupHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/groups/{groupName}", r.PUT(api.putWorkflowGroupHandler), r.DELETE(api.deleteWorkflowGroupHandler))
 	// Workflows run
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/stop", r.POST(api.stopWorkflowRunHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/resync", r.POST(api.resyncWorkflowRunPipelinesHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/artifacts", r.GET(api.getWorkflowRunArtifactsHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}", r.GET(api.getWorkflowNodeRunHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}/stop", r.POST(api.stopWorkflowNodeRunHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeID}/history", r.GET(api.getWorkflowNodeRunHistoryHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", r.GET(api.getWorkflowNodeRunJobStepHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}/artifacts", r.GET(api.getWorkflowNodeRunArtifactsHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/join/{joinID}/triggers/condition", r.GET(api.getWorkflowTriggerJoinConditionHandler))
-	r.Handle("/project/{permProjectKey}/workflows/{workflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true)))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/latest", r.GET(api.getLatestWorkflowRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/tags", r.GET(api.getWorkflowRunTagsHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}", r.GET(api.getWorkflowRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/stop", r.POST(api.stopWorkflowRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/resync", r.POST(api.resyncWorkflowRunPipelinesHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/artifacts", r.GET(api.getWorkflowRunArtifactsHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}", r.GET(api.getWorkflowNodeRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/stop", r.POST(api.stopWorkflowNodeRunHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeID}/history", r.GET(api.getWorkflowNodeRunHistoryHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/job/{runJobId}/step/{stepOrder}", r.GET(api.getWorkflowNodeRunJobStepHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/artifacts", r.GET(api.getWorkflowNodeRunArtifactsHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/artifact/{artifactId}", r.GET(api.getDownloadArtifactHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/node/{nodeID}/triggers/condition", r.GET(api.getWorkflowTriggerConditionHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/join/{joinID}/triggers/condition", r.GET(api.getWorkflowTriggerJoinConditionHandler))
+	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs/{number}/nodes/{nodeRunID}/release", r.POST(api.releaseApplicationWorkflowHandler))
 
 	// DEPRECATED
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/action/{jobID}", r.PUT(api.updatePipelineActionHandler, DEPRECATED), r.DELETE(api.deleteJobHandler))

@@ -14,6 +14,15 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// DeletePipelineBuildJobByApplicationID Delete all pipeline build job for the current application
+func DeletePipelineBuildJobByApplicationID(db gorp.SqlExecutor, applicationID int64) error {
+	query := `DELETE FROM pipeline_build_job WHERE pipeline_build_id IN (
+		SELECT id FROM pipeline_build WHERE application_id = $1
+	)`
+	_, err := db.Exec(query, applicationID)
+	return err
+}
+
 // DeletePipelineBuildJob Delete all pipeline build job for the current pipeline build
 func DeletePipelineBuildJob(db gorp.SqlExecutor, pipelineBuildID int64) error {
 	query := "DELETE FROM pipeline_build_job WHERE pipeline_build_id = $1"
@@ -325,8 +334,7 @@ func UpdatePipelineBuildJobStatus(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJ
 	query = `SELECT status FROM pipeline_build_job WHERE id = $1 FOR UPDATE`
 	var currentStatus string
 	if err := db.QueryRow(query, pbJob.ID).Scan(&currentStatus); err != nil {
-		log.Warning("UpdatePipelineBuildJobStatus> Cannot lock pipeline build job %d: %s", pbJob.ID, err)
-		return err
+		return sdk.WrapError(err, "UpdatePipelineBuildJobStatus> Cannot lock pipeline build job %d", pbJob.ID)
 	}
 
 	switch status {
@@ -351,14 +359,12 @@ func UpdatePipelineBuildJobStatus(db gorp.SqlExecutor, pbJob *sdk.PipelineBuildJ
 	}
 
 	if err := UpdatePipelineBuildJob(db, pbJob); err != nil {
-		log.Warning("UpdatePipelineBuildJobStatus> Cannot update pipeline build job %d: %s", pbJob.ID, err)
-		return err
+		return sdk.WrapError(err, "UpdatePipelineBuildJobStatus> Cannot update pipeline build job %d", pbJob.ID)
 	}
 
 	pb, errLoad := LoadPipelineBuildByID(db, pbJob.PipelineBuildID)
 	if errLoad != nil {
-		log.Warning("UpdatePipelineBuildJobStatus> Cannot load pipeline build %d: %s", pbJob.PipelineBuildID, errLoad)
-		return errLoad
+		return sdk.WrapError(errLoad, "UpdatePipelineBuildJobStatus> Cannot load pipeline build %d: %s", pbJob.PipelineBuildID, errLoad)
 	}
 
 	event.PublishActionBuild(pb, pbJob)

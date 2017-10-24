@@ -15,7 +15,7 @@
                     </div>
                     <div class="field">
                         <label>{{'pipeline_type' | translate}}</label>
-                        <sm-select [model]="newPipeline.type">
+                        <sm-select [(model)]="newPipeline.type">
                             <option *ngFor="let t of pipelineType" value="{{t}}">{{t}}</option>
                         </sm-select>
                     </div>

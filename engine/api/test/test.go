@@ -46,41 +46,20 @@ var DBConnectionFactory *database.DBConnectionFactory
 // SetupPG setup PG DB for test
 func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store) {
 	log.SetLogger(t)
-
-	//Try to load flags from config flags, else load from flags
-	var f string
-	u, _ := user.Current()
-	if u != nil {
-		f = path.Join(u.HomeDir, ".cds", "tests.cfg.json")
+	cfg := LoadTestingConf(t)
+	DBDriver = cfg["dbDriver"]
+	dbUser = cfg["dbUser"]
+	dbPassword = cfg["dbPassword"]
+	dbName = cfg["dbName"]
+	dbHost = cfg["dbHost"]
+	var err error
+	dbPort, err = strconv.ParseInt(cfg["dbPort"], 10, 64)
+	if err != nil {
+		t.Errorf("Error when unmarshal config %s", err)
 	}
-	if _, err := os.Stat(f); err == nil {
-		t.Logf("Tests configuration read from %s", f)
-		btes, err := ioutil.ReadFile(f)
-		if err != nil {
-			t.Fatalf("Error reading %s: %v", f, err)
-		}
-		if len(btes) != 0 {
-			cfg := map[string]string{}
-			if err := json.Unmarshal(btes, &cfg); err == nil {
-				DBDriver = cfg["dbDriver"]
-				dbUser = cfg["dbUser"]
-				dbPassword = cfg["dbPassword"]
-				dbName = cfg["dbName"]
-				dbHost = cfg["dbHost"]
-				dbPort, err = strconv.ParseInt(cfg["dbPort"], 10, 64)
-				if err != nil {
-					t.Errorf("Error when unmarshal config %s", err)
-				}
-				dbSSLMode = cfg["sslMode"]
-				RedisHost = cfg["redisHost"]
-				RedisPassword = cfg["redisPassword"]
-			} else {
-				t.Errorf("Error when unmarshal config %s", err)
-			}
-		}
-	} else {
-		t.Fatalf("Error reading %s: %v", f, err)
-	}
+	dbSSLMode = cfg["sslMode"]
+	RedisHost = cfg["redisHost"]
+	RedisPassword = cfg["redisPassword"]
 
 	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 
@@ -90,7 +69,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	}
 	if DBConnectionFactory == nil {
 		var err error
-		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 2000, 100)
+		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
 		if err != nil {
 			t.Fatalf("Cannot open database: %s", err)
 			return nil, nil
@@ -112,6 +91,32 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	pipeline.Store = store
 
 	return DBConnectionFactory.GetDBMap(), store
+}
+
+func LoadTestingConf(t *testing.T) map[string]string {
+	var f string
+	u, _ := user.Current()
+	if u != nil {
+		f = path.Join(u.HomeDir, ".cds", "tests.cfg.json")
+	}
+
+	if _, err := os.Stat(f); err == nil {
+		t.Logf("Tests configuration read from %s", f)
+		btes, err := ioutil.ReadFile(f)
+		if err != nil {
+			t.Fatalf("Error reading %s: %v", f, err)
+		}
+		if len(btes) != 0 {
+			cfg := map[string]string{}
+			if err := json.Unmarshal(btes, &cfg); err != nil {
+				t.Fatalf("Error reading %s: %v", f, err)
+			}
+			return cfg
+		}
+	} else {
+		t.Fatalf("Error reading %s: %v", f, err)
+	}
+	return nil
 }
 
 //GetTestName returns the name the the test

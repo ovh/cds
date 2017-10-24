@@ -27,6 +27,7 @@ import {HookEvent} from './hook/hook.event';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {WorkflowCoreService} from '../workflow.service';
 
 declare var _: any;
 
@@ -41,7 +42,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
-    @Input() workflowRunStatus: string;
 
     @Output() linkJoinEvent = new EventEmitter<WorkflowNode>();
 
@@ -61,13 +61,19 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     // Modal
     @ViewChild('nodeNameWarningModal')
     nodeNameWarningModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('nodeParentModal')
+    nodeParentModal: ModalTemplate<boolean, boolean, void>;
+    newParentNode: WorkflowNode;
+    modalParentNode: ActiveModal<boolean, boolean, void>;
 
+    workflowRun: WorkflowRun;
 
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
     editableNode: WorkflowNode;
+    workflowRunStatus: string;
+    workflowRunNum: number;
 
     pipelineSubscription: Subscription;
-    webworker: CDSWorker;
 
     zone: NgZone;
     currentNodeRun: WorkflowNodeRun;
@@ -82,24 +88,31 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     displayPencil = false;
     nameWarning: WorkflowPipelineNameImpact;
 
+    workflowCoreSub: Subscription;
+
     constructor(private elementRef: ElementRef, private _changeDetectorRef: ChangeDetectorRef,
         private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
         private _wrService: WorkflowRunService, private _pipelineStore: PipelineStore, private _router: Router,
-        private _modalService: SuiModalService) {
+        private _modalService: SuiModalService, private _workflowCoreService: WorkflowCoreService) {
 
     }
 
     ngOnInit(): void {
-
         this.zone = new NgZone({enableLongStackTrace: false});
-        if (this.webworker) {
-            this.webworker.response().subscribe(wrString => {
-                let wr = <WorkflowRun>JSON.parse(wrString);
+        this.workflowCoreSub = this._workflowCoreService.getCurrentWorkflowRun().subscribe(wr => {
+            if (wr) {
+                if (this.workflowRun && this.workflowRun.id !== wr.id) {
+                    this.currentNodeRun = null;
+                }
+                this.workflowRun = wr;
                 if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
                     this.currentNodeRun = wr.nodes[this.node.id][0];
                 }
-            });
-        } else {
+            } else {
+                this.workflowRun = null;
+            }
+        });
+        if (!this.workflowRun) {
             this.options = {
                 'fullTextSearch': true,
                 onHide: () => {
@@ -109,7 +122,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                 }
             };
         }
-
     }
 
     addHook(he: HookEvent): void {
@@ -139,6 +151,30 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         this.newTrigger = new WorkflowNodeTrigger();
         this.newTrigger.workflow_node_id = this.node.id;
         this.workflowTrigger.show();
+    }
+
+    openAddParentModal(): void {
+        this.newParentNode = new WorkflowNode();
+        let tmpl = new TemplateModalConfig<boolean, boolean, void>(this.nodeParentModal);
+        this.modalParentNode = this._modalService.open(tmpl);
+    }
+
+    addNewParentNode(): void {
+        let workflowToUpdate = cloneDeep(this.workflow);
+        let oldRoot = cloneDeep(this.workflow.root);
+        workflowToUpdate.root = this.newParentNode;
+        if (oldRoot.hooks) {
+            this.newParentNode.hooks = oldRoot.hooks;
+        }
+        delete oldRoot.hooks;
+        workflowToUpdate.root.triggers = new Array<WorkflowNodeTrigger>();
+        let t = new WorkflowNodeTrigger();
+        t.workflow_dest_node = oldRoot;
+        t.manual = false;
+        t.continue_on_error = false;
+        workflowToUpdate.root.triggers.push(t);
+
+        this.updateWorkflow(workflowToUpdate, this.modalParentNode);
     }
 
     openDeleteNodeModal(): void {
@@ -277,7 +313,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     goToNodeRun(): void {
-        if (!this.webworker || !this.currentNodeRun) {
+        if (!this.currentNodeRun) {
             return;
         }
         let pip = Workflow.getNodeByID(this.currentNodeRun.workflow_node_id, this.workflow).pipeline.name;

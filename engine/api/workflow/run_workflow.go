@@ -9,6 +9,15 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+const (
+	tagTriggeredBy = "triggered_by"
+	tagEnvironment = "environment"
+	tagGitHash     = "git.hash"
+	tagGitBranch   = "git.branch"
+	tagGitTag      = "git.tag"
+	tagGitAuthor   = "git.author"
+)
+
 //RunFromHook is the entry point to trigger a workflow from a hook
 func RunFromHook(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, e *sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error) {
 	hooks := w.GetHooks()
@@ -82,18 +91,21 @@ func RunFromHook(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.
 
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
 func ManualRunFromNode(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64) (*sdk.WorkflowRun, error) {
-	lastWorkflowRun, err := LoadRun(db, w.ProjectKey, w.Name, number)
-	if err != nil {
-		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to load last run")
+	lastWorkflowRun, errLoadRun := LoadRun(db, w.ProjectKey, w.Name, number)
+	lastWorkflowRun.Tag(tagTriggeredBy, e.User.Username)
+
+	if errLoadRun != nil {
+		return nil, sdk.WrapError(errLoadRun, "ManualRunFromNode> Unable to load last run")
 	}
 
 	if err := processWorkflowRun(db, store, p, lastWorkflowRun, nil, e, &nodeID); err != nil {
 		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to process workflow run")
 	}
 
-	lastWorkflowRun, err = LoadRunByIDAndProjectKey(db, w.ProjectKey, lastWorkflowRun.ID)
-	if err != nil {
-		return nil, err
+	var errLoadRunByID error
+	lastWorkflowRun, errLoadRunByID = LoadRunByIDAndProjectKey(db, w.ProjectKey, lastWorkflowRun.ID)
+	if errLoadRunByID != nil {
+		return nil, errLoadRunByID
 	}
 
 	return lastWorkflowRun, nil
@@ -115,10 +127,22 @@ func ManualRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Wo
 		ProjectID:    w.ProjectID,
 		Status:       string(sdk.StatusWaiting),
 	}
+	wr.Tag(tagTriggeredBy, e.User.Username)
 
 	if err := insertWorkflowRun(db, wr); err != nil {
 		return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
 	return wr, processWorkflowRun(db, store, p, wr, nil, e, nil)
+}
+
+// GetTag return a specific tag from a list of tags
+func GetTag(tags []sdk.WorkflowRunTag, tag string) sdk.WorkflowRunTag {
+	for _, currentTag := range tags {
+		if currentTag.Tag == tag {
+			return currentTag
+		}
+	}
+
+	return sdk.WorkflowRunTag{}
 }
