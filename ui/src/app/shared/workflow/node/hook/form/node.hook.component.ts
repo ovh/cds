@@ -1,5 +1,7 @@
 import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowTriggerCondition, WorkflowTriggerConditions} from '../../../../../model/workflow.model';
+import {
+    Workflow, WorkflowNode, WorkflowNodeHook, WorkflowTriggerCondition, WorkflowTriggerConditions
+} from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';

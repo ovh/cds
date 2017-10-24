@@ -1,5 +1,7 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeTrigger, WorkflowTriggerCondition, WorkflowTriggerConditions} from '../../../model/workflow.model';
+import {
+    Workflow, WorkflowNode, WorkflowNodeTrigger, WorkflowTriggerCondition, WorkflowTriggerConditions
+} from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';

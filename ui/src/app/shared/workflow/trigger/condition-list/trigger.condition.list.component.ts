@@ -30,7 +30,7 @@ export class WorkflowTriggerConditionListComponent extends Table {
     }
 
     removeCondition(cond: WorkflowTriggerCondition): void {
-        var newConditions = new WorkflowTriggerConditions();
+        let newConditions = new WorkflowTriggerConditions();
         newConditions.plain = this.conditions.plain.filter(c => c.variable !== cond.variable)
         this.conditionsChange.emit(newConditions);
     }
