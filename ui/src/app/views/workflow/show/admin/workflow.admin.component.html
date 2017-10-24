@@ -9,7 +9,7 @@
                                [(ngModel)]="workflow.name"
                                [disabled]="loading"
                                required
-                               #formProjectUpdateName="ngModel"
+                               #formWorkflowUpdateName="ngModel"
                                pattern="[a-zA-Z0-9]*">
                         <div *ngIf="formWorkflowUpdateName && !formWorkflowUpdateName.valid && !formWorkflowUpdateName.pristine"
                              class="ui error message">
@@ -21,7 +21,7 @@
                     </div>
                 </div>
             </form>
-            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowtUpdate(true)" #updateWarning></app-warning-modal>
+            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)" #updateWarning></app-warning-modal>
         </app-zone-content>
     </app-zone>
     <app-zone header="{{ 'workflow_sidebar_tag_zone' | translate }}">

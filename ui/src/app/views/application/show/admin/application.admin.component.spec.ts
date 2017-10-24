@@ -21,6 +21,8 @@ import {TranslateParser} from 'ng2-translate';
 import {RepositoriesManager} from '../../../../model/repositories.model';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
+import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 
 @Component({
     template: ''
@@ -48,7 +50,9 @@ describe('CDS: Application Admin Component', () => {
                 TranslateLoader,
                 TranslateService,
                 TranslateParser,
-                RepoManagerService
+                RepoManagerService,
+                ApplicationMigrateService,
+                AuthentificationStore
             ],
             imports: [
                 RouterTestingModule.withRoutes([
