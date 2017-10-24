@@ -961,70 +961,76 @@
 			"revisionTime": "2017-02-07T20:18:59Z"
 		},
 		{
-			"checksumSHA1": "Fut+0GvpmnyMB/owUmpKgyfqJEo=",
+			"checksumSHA1": "QhiHm4CbpNJsdhMFUXpPkAoahoo=",
 			"path": "github.com/ovh/venom",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "ZxaXX+psoog6mnNzexP84cAJYMI=",
 			"path": "github.com/ovh/venom/context/default",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "n4+TbU3Jhy2u+dPscLYQgk1p6zg=",
 			"path": "github.com/ovh/venom/context/webctx",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
+		},
+		{
+			"checksumSHA1": "5z9yAKYeIsyM0hfKINmluuPjB4I=",
+			"path": "github.com/ovh/venom/executors/dbfixtures",
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "o5E5ud9XT8Qx7+9t4Puno8PNOBg=",
 			"path": "github.com/ovh/venom/executors/exec",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "l+P3lidAThSCLpuSE5DaZNjFiPQ=",
 			"path": "github.com/ovh/venom/executors/http",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "2EOaEXj+ti/6g3YchoDwNkwS1w4=",
 			"path": "github.com/ovh/venom/executors/imap",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "7YJ/vcpYxhPHrooaiY9l3pgFSQc=",
 			"path": "github.com/ovh/venom/executors/ovhapi",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "/wWDr1LFOdC90VxKQDH1Wyun4MA=",
 			"path": "github.com/ovh/venom/executors/readfile",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "IjW8/Bmdx1C23USRC1f5/vRHuLg=",
 			"path": "github.com/ovh/venom/executors/smtp",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "CYKP2nSv/5AVV9lp3eXnMt6OEyk=",
 			"path": "github.com/ovh/venom/executors/ssh",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "iBO+FhLXbOx5NzhqHIco07oCwDw=",
 			"path": "github.com/ovh/venom/executors/web",
-			"revision": "9ff4a0bb637c968c622f37aff4a90d2d7779c592",
-			"revisionTime": "2017-10-13T11:58:48Z"
+			"revision": "b54fc5b9500144277db6780435dd8c02f3940394",
+			"revisionTime": "2017-10-20T14:23:07Z"
 		},
 		{
 			"checksumSHA1": "JVGDxPn66bpe6xEiexs1r+y6jF0=",
