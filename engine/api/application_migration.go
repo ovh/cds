@@ -89,7 +89,7 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeletePipelineBuildByApplicationID")
 			}
 
-			app.WorkflowMigration = migrate.STATUS_DONE
+			appToClean.WorkflowMigration = migrate.STATUS_DONE
 			appToClean.ProjectID = p.ID
 			if err := application.Update(tx, api.Cache, appToClean, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
