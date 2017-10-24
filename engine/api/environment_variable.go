@@ -91,9 +91,11 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 			return sdk.WrapError(err, "restoreEnvironmentAuditHandler: Cannot commit transaction")
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-			return sdk.WrapError(err, "restoreEnvironmentAuditHandler: Cannot check warnings")
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Error("restoreEnvironmentAuditHandler: Cannot check warnings: %s", err)
+			}
+		}()
 
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
@@ -281,9 +283,11 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot commit transaction")
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot check warnings")
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Error("updateVariableInEnvironmentHandler: Cannot check warnings: %s", err)
+			}
+		}()
 
 		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {
@@ -359,9 +363,11 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: cannot commit tx")
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-			return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot check warnings")
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
+				log.Error("addVariableInEnvironmentHandler: Cannot check warnings: %s", err)
+			}
+		}()
 
 		apps, errApps := application.LoadAll(api.mustDB(), api.Cache, p.Key, getUser(ctx), application.LoadOptions.WithVariables)
 		if errApps != nil {

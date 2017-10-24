@@ -22,7 +22,7 @@ func (ui *Termui) showMonitoring() {
 	ui.queue.ItemFgColor = termui.ColorWhite
 	ui.queue.ItemBgColor = termui.ColorBlack
 
-	heightBottom := 16
+	heightBottom := 18
 	heightQueue := ((termui.TermHeight() - heightBottom) / 2) - 3
 	if heightQueue <= 0 {
 		heightQueue = 4
@@ -242,6 +242,9 @@ func (ui *Termui) updateStatus() string {
 	for _, l := range status {
 		if strings.HasPrefix(l, "Version") ||
 			strings.HasPrefix(l, "Uptime") ||
+			strings.HasPrefix(l, "Time") ||
+			strings.HasPrefix(l, "Hostname") ||
+			strings.HasPrefix(l, "CDSName") ||
 			strings.HasPrefix(l, "Nb of Panics: 0") ||
 			strings.HasPrefix(l, "Internal Events Queue: 0") ||
 			strings.HasPrefix(l, "Secret Backend") ||

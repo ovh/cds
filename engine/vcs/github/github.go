@@ -21,13 +21,15 @@ type githubConsumer struct {
 	ClientID     string `json:"client-id"`
 	ClientSecret string `json:"-"`
 	Cache        cache.Store
+	uiURL        string
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret string, store cache.Store) sdk.VCSServer {
+func New(ClientID, ClientSecret string, uiURL string, store cache.Store) sdk.VCSServer {
 	return &githubConsumer{
 		ClientID:     ClientID,
 		ClientSecret: ClientSecret,
 		Cache:        store,
+		uiURL:        uiURL,
 	}
 }

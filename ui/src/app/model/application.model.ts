@@ -25,6 +25,7 @@ export class Application {
     hooks: Array<Hook>;
     workflows: Array<WorkflowItem>;
     schedulers: Array<Scheduler>;
+    workflow_migration: string;
 
     project_key: string; // project unique key
 
