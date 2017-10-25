@@ -75,7 +75,7 @@ func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
 	if _, err := services.DoJSONRequest(srv, "GET", path, nil, &res); err != nil {
-		return "", "", err
+		return "", "", sdk.WrapError(err, "repositoriesmanager.AuthorizeRedirect> ")
 	}
 
 	return res["token"], res["url"], nil
