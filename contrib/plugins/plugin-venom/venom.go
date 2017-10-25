@@ -14,6 +14,7 @@ import (
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/default"
 	"github.com/ovh/venom/context/webctx"
+	"github.com/ovh/venom/executors/dbfixtures"
 	"github.com/ovh/venom/executors/exec"
 	"github.com/ovh/venom/executors/http"
 	"github.com/ovh/venom/executors/imap"
@@ -96,6 +97,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	venom.RegisterExecutor(smtp.Name, smtp.New())
 	venom.RegisterExecutor(ssh.Name, ssh.New())
 	venom.RegisterExecutor(web.Name, web.New())
+	venom.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
 
 	venom.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
 	venom.RegisterTestCaseContext(webctx.Name, webctx.New())

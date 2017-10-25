@@ -433,6 +433,12 @@
 			"revisionTime": "2017-06-02T13:19:43Z"
 		},
 		{
+			"checksumSHA1": "os4jdoOUjr86qvOwri8Ut1rXDrg=",
+			"path": "github.com/go-sql-driver/mysql",
+			"revision": "fade21009797158e7b79e04c340118a9220c6f9e",
+			"revisionTime": "2017-10-17T18:16:16Z"
+		},
+		{
 			"checksumSHA1": "kBeNcaKk56FguvPSUCEaH6AxpRc=",
 			"path": "github.com/golang/protobuf/proto",
 			"revision": "8ee79997227bf9b34611aee7946ae64735e6fd93",
@@ -1407,6 +1413,12 @@
 			"revisionTime": "2017-09-20T14:40:45Z"
 		},
 		{
+			"checksumSHA1": "bEzR0dQnxmh1FxnJ+Ma7oAstf30=",
+			"path": "github.com/yuin/gopher-lua",
+			"revision": "8c2befcd3908152acadb961802fecd7636321747",
+			"revisionTime": "2017-09-01T02:39:28Z"
+		},
+		{
 			"checksumSHA1": "TT1rac6kpQp2vz24m5yDGUNQ/QQ=",
 			"path": "golang.org/x/crypto/cast5",
 			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
@@ -1705,6 +1717,12 @@
 			"path": "gopkg.in/ldap.v2",
 			"revision": "0e7db8eb77695b5a952f0e5d78df9ab160050c73",
 			"revisionTime": "2016-04-15T03:57:59Z"
+		},
+		{
+			"checksumSHA1": "Neja/m29s2ypv3jvoPyrK8kgCTM=",
+			"path": "gopkg.in/testfixtures.v2",
+			"revision": "e34263135c9fc3e6710268b1ba3a9b73fb7104d2",
+			"revisionTime": "2017-09-04T21:51:56Z"
 		},
 		{
 			"checksumSHA1": "/1TzqyoYSSdEkFrZG20XoNGwD8o=",

@@ -28,10 +28,6 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 		if errP != nil {
 			return sdk.WrapError(errP, "migrationApplicationWorkflowHandler")
 		}
-		app, errA := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.WithPipelines)
-		if errA != nil {
-			return sdk.WrapError(errA, "migrationApplicationWorkflowHandler")
-		}
 
 		cdTree, errT := workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", "", 0)
 		if errT != nil {
@@ -89,7 +85,7 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 				return sdk.WrapError(err, "migrationApplicationWorkflowHandler> DeletePipelineBuildByApplicationID")
 			}
 
-			app.WorkflowMigration = migrate.STATUS_DONE
+			appToClean.WorkflowMigration = migrate.STATUS_DONE
 			appToClean.ProjectID = p.ID
 			if err := application.Update(tx, api.Cache, appToClean, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "migrationApplicationWorkflowHandler")

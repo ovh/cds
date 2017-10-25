@@ -70,3 +70,8 @@ func InitializeDefaultGroupName(db *gorp.DbMap, defaultGroupName string) error {
 
 	return nil
 }
+
+// IsDefaultGroupID returns true if groupID is the defaultGroupID
+func IsDefaultGroupID(groupID int64) bool {
+	return groupID == defaultGroupID
+}

@@ -61,6 +61,10 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     // Modal
     @ViewChild('nodeNameWarningModal')
     nodeNameWarningModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('nodeParentModal')
+    nodeParentModal: ModalTemplate<boolean, boolean, void>;
+    newParentNode: WorkflowNode;
+    modalParentNode: ActiveModal<boolean, boolean, void>;
 
     workflowRun: WorkflowRun;
 
@@ -147,6 +151,30 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         this.newTrigger = new WorkflowNodeTrigger();
         this.newTrigger.workflow_node_id = this.node.id;
         this.workflowTrigger.show();
+    }
+
+    openAddParentModal(): void {
+        this.newParentNode = new WorkflowNode();
+        let tmpl = new TemplateModalConfig<boolean, boolean, void>(this.nodeParentModal);
+        this.modalParentNode = this._modalService.open(tmpl);
+    }
+
+    addNewParentNode(): void {
+        let workflowToUpdate = cloneDeep(this.workflow);
+        let oldRoot = cloneDeep(this.workflow.root);
+        workflowToUpdate.root = this.newParentNode;
+        if (oldRoot.hooks) {
+            this.newParentNode.hooks = oldRoot.hooks;
+        }
+        delete oldRoot.hooks;
+        workflowToUpdate.root.triggers = new Array<WorkflowNodeTrigger>();
+        let t = new WorkflowNodeTrigger();
+        t.workflow_dest_node = oldRoot;
+        t.manual = false;
+        t.continue_on_error = false;
+        workflowToUpdate.root.triggers.push(t);
+
+        this.updateWorkflow(workflowToUpdate, this.modalParentNode);
     }
 
     openDeleteNodeModal(): void {

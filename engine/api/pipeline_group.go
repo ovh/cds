@@ -44,6 +44,10 @@ func (api *API) updateGroupRoleOnPipelineHandler() Handler {
 			return sdk.WrapError(errLoadG, "updateGroupRoleOnPipelineHandler: Cannot find %s", groupPipeline.Group.Name)
 		}
 
+		if group.IsDefaultGroupID(g.ID) && groupPipeline.Permission > permission.PermissionRead {
+			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "updateGroupRoleOnPipelineHandler: only read permission is allowed to default group")
+		}
+
 		groupInPipeline, errCheck := group.CheckGroupInPipeline(api.mustDB(), p.ID, g.ID)
 		if errCheck != nil {
 			return sdk.WrapError(sdk.ErrGroupNotFound, "updateGroupRoleOnPipelineHandler: Cannot check if group %s is already in the pipeline %s: %s", g.Name, p.Name, errCheck)
@@ -181,6 +185,10 @@ func (api *API) addGroupInPipelineHandler() Handler {
 		g, err := group.LoadGroup(api.mustDB(), groupPermission.Group.Name)
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInPipeline: Cannot find %s", groupPermission.Group.Name)
+		}
+
+		if group.IsDefaultGroupID(g.ID) && groupPermission.Permission > permission.PermissionRead {
+			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "addGroupInPipeline: only read permission is allowed to default group")
 		}
 
 		groupInPipeline, err := group.CheckGroupInPipeline(api.mustDB(), p.ID, g.ID)

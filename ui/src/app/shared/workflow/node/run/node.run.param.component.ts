@@ -51,8 +51,6 @@ export class WorkflowNodeRunParamComponent {
     isSync = false;
     loading = false;
 
-    pipelineSubscription: Subscription;
-
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
                 private _pipStore: PipelineStore) {
         this.codeMirrorConfig = {
@@ -65,18 +63,13 @@ export class WorkflowNodeRunParamComponent {
     }
 
     getPipeline(): void {
-        if (!this.pipelineSubscription) {
-            this.pipelineSubscription = this._pipStore.getPipelines(this.project.key, this.nodeToRun.pipeline.name).subscribe(ps => {
-                let pipkey = this.project.key + '-' + this.nodeToRun.pipeline.name;
-                let pip = ps.get(pipkey);
-                if (pip) {
-                    if (pip.last_modified === this.nodeToRun.pipeline.last_modified) {
-                        this.isSync = true;
-                    }
-                }
+        if (this.project.pipelines) {
+            this.project.pipelines.forEach(p => {
+               if (p.id === this.nodeToRun.pipeline.id && p.last_modified === this.nodeToRun.pipeline.last_modified) {
+                   this.isSync = true;
+               }
             });
         }
-
     }
 
     show(): void {

@@ -593,6 +593,7 @@
   "workflow_node_join_add" : "Add a join",
   "workflow_node_join_link" : "Link to a join",
   "workflow_node_pipeline_synchronized" : "Pipeline up to date",
+  "workflow_node_parent" : "Add a parent node",
   "workflow_node_trigger_add" : "Add a trigger",
   "workflow_node_trigger_condition_list_title": "Trigger condition list",
   "workflow_node_trigger_condition_name" : "Variable name",
