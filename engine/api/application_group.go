@@ -36,6 +36,10 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 			return sdk.WrapError(errLoadGroup, "updateGroupRoleOnApplicationHandler: Cannot load group %s", groupName)
 		}
 
+		if group.IsDefaultGroupID(g.ID) && groupApplication.Permission > permission.PermissionRead {
+			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "updateGroupRoleOnApplicationHandler: only read permission is allowed to default group")
+		}
+
 		if groupApplication.Permission != permission.PermissionReadWriteExecute {
 			permissions, err := group.LoadAllApplicationGroupByRole(api.mustDB(), app.ID, permission.PermissionReadWriteExecute)
 			if err != nil {
@@ -166,6 +170,10 @@ func (api *API) addGroupInApplicationHandler() Handler {
 		g, err := group.LoadGroup(api.mustDB(), groupPermission.Group.Name)
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInApplicationHandler> Cannot find %s", groupPermission.Group.Name)
+		}
+
+		if group.IsDefaultGroupID(g.ID) && groupPermission.Permission > permission.PermissionRead {
+			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "addGroupInApplicationHandler: only read permission is allowed to default group")
 		}
 
 		tx, err := api.mustDB().Begin()

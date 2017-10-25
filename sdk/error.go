@@ -122,6 +122,7 @@ var (
 	ErrInvalidNodeNamePattern                = &Error{ID: 106, Status: http.StatusBadRequest}
 	ErrWorkflowNodeParentNotRun              = Error{ID: 107, Status: http.StatusForbidden}
 	ErrHookNotFound                          = Error{ID: 108, Status: http.StatusNotFound}
+	ErrDefaultGroupPermission                = Error{ID: 109, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -232,6 +233,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrMethodNotAllowed.ID:                      "Method not allowed",
 	ErrInvalidNodeNamePattern.ID:                "Node name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWorkflowNodeParentNotRun.ID:              "Cannot run a node if their parents have never been launched",
+	ErrDefaultGroupPermission.ID:                "Only read permission is allowed to default group",
 }
 
 var errorsFrench = map[int]string{
@@ -342,6 +344,7 @@ var errorsFrench = map[int]string{
 	ErrMethodNotAllowed.ID:                      "La méthode n'est pas autorisée",
 	ErrInvalidNodeNamePattern.ID:                "Le nom du noeud du workflow doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWorkflowNodeParentNotRun.ID:              "Il est interdit de lancer un noeuds si ses parents n'ont jamais été lancés",
+	ErrDefaultGroupPermission.ID:                "Le groupe par défaut ne peut être utilisé qu'en lecture seule",
 }
 
 var errorsLanguages = []map[int]string{
