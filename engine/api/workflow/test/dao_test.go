@@ -294,7 +294,7 @@ func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
 	for i, t1 := range n1.Triggers {
 		t2 := n2.Triggers[i]
 		test.Equal(t, len(t1.Conditions.PlainConditions), len(t2.Conditions.PlainConditions), "Number of conditions on triggers does not match")
-		test.EqualValuesWithoutOrder(t, t1.Conditions, t2.Conditions, "Conditions on triggers does not match")
+		test.EqualValuesWithoutOrder(t, t1.Conditions.PlainConditions, t2.Conditions.PlainConditions, "Conditions on triggers does not match")
 		assertEqualNode(t, &t1.WorkflowDestNode, &t2.WorkflowDestNode)
 	}
 }
