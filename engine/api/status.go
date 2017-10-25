@@ -18,7 +18,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getVersionHandler() Handler {
+func VersionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		s := sdk.Version{Version: sdk.VERSION}
 		return WriteJSON(w, r, s, http.StatusOK)
