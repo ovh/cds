@@ -124,7 +124,7 @@ bigloop:
 
 			// Add Condition on trigger
 			for _, c := range childPip.Trigger.Prerequisites {
-				t.Conditions = append(t.Conditions, sdk.WorkflowTriggerCondition{
+				t.Conditions.PlainConditions = append(t.Conditions.PlainConditions, sdk.WorkflowTriggerCondition{
 					Variable: c.Parameter,
 					Value:    c.ExpectedValue,
 					Operator: "eq",

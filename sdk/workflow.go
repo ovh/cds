@@ -217,13 +217,13 @@ type WorkflowNodeJoin struct {
 
 //WorkflowNodeJoinTrigger is a trigger for joins
 type WorkflowNodeJoinTrigger struct {
-	ID                 int64                      `json:"id" db:"id"`
-	WorkflowNodeJoinID int64                      `json:"join_id" db:"workflow_node_join_id"`
-	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
-	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
-	Conditions         []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
-	Manual             bool                       `json:"manual" db:"manual"`
-	ContinueOnError    bool                       `json:"continue_on_error" db:"continue_on_error"`
+	ID                 int64                     `json:"id" db:"id"`
+	WorkflowNodeJoinID int64                     `json:"join_id" db:"workflow_node_join_id"`
+	WorkflowDestNodeID int64                     `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
+	WorkflowDestNode   WorkflowNode              `json:"workflow_dest_node" db:"-"`
+	Conditions         WorkflowTriggerConditions `json:"conditions,omitempty" db:"-"`
+	Manual             bool                      `json:"manual" db:"manual"`
+	ContinueOnError    bool                      `json:"continue_on_error" db:"continue_on_error"`
 }
 
 //WorkflowNode represents a node in w workflow tree
@@ -480,13 +480,19 @@ func (n *WorkflowNode) InvolvedEnvironments() []int64 {
 
 //WorkflowNodeTrigger is a ling betweeb two pipelines in a workflow
 type WorkflowNodeTrigger struct {
-	ID                 int64                      `json:"id" db:"id"`
-	WorkflowNodeID     int64                      `json:"workflow_node_id" db:"workflow_node_id"`
-	WorkflowDestNodeID int64                      `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
-	WorkflowDestNode   WorkflowNode               `json:"workflow_dest_node" db:"-"`
-	Conditions         []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
-	Manual             bool                       `json:"manual" db:"manual"`
-	ContinueOnError    bool                       `json:"continue_on_error" db:"continue_on_error"`
+	ID                 int64                     `json:"id" db:"id"`
+	WorkflowNodeID     int64                     `json:"workflow_node_id" db:"workflow_node_id"`
+	WorkflowDestNodeID int64                     `json:"workflow_dest_node_id" db:"workflow_dest_node_id"`
+	WorkflowDestNode   WorkflowNode              `json:"workflow_dest_node" db:"-"`
+	Conditions         WorkflowTriggerConditions `json:"conditions,omitempty" db:"-"`
+	Manual             bool                      `json:"manual" db:"manual"`
+	ContinueOnError    bool                      `json:"continue_on_error" db:"continue_on_error"`
+}
+
+//WorkflowTriggerConditions is either an array of WorkflowTriggerCondition or a lua script
+type WorkflowTriggerConditions struct {
+	PlainConditions []WorkflowTriggerCondition `json:"plain"`
+	LuaScript       string                     `json:"lua_script"`
 }
 
 //WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
@@ -510,13 +516,13 @@ type WorkflowNodeContext struct {
 
 //WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
 type WorkflowNodeHook struct {
-	ID                  int64                      `json:"id" db:"id"`
-	UUID                string                     `json:"uuid" db:"uuid"`
-	WorkflowNodeID      int64                      `json:"workflow_node_id" db:"workflow_node_id"`
-	WorkflowHookModelID int64                      `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
-	WorkflowHookModel   WorkflowHookModel          `json:"model" db:"-"`
-	Conditions          []WorkflowTriggerCondition `json:"conditions,omitempty" db:"-"`
-	Config              WorkflowNodeHookConfig     `json:"config" db:"-"`
+	ID                  int64                     `json:"id" db:"id"`
+	UUID                string                    `json:"uuid" db:"uuid"`
+	WorkflowNodeID      int64                     `json:"workflow_node_id" db:"workflow_node_id"`
+	WorkflowHookModelID int64                     `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
+	WorkflowHookModel   WorkflowHookModel         `json:"model" db:"-"`
+	Conditions          WorkflowTriggerConditions `json:"conditions,omitempty" db:"-"`
+	Config              WorkflowNodeHookConfig    `json:"config" db:"-"`
 }
 
 var WorkflowHookModelBuiltin = "builtin"

@@ -1413,6 +1413,12 @@
 			"revisionTime": "2017-09-20T14:40:45Z"
 		},
 		{
+			"checksumSHA1": "bEzR0dQnxmh1FxnJ+Ma7oAstf30=",
+			"path": "github.com/yuin/gopher-lua",
+			"revision": "8c2befcd3908152acadb961802fecd7636321747",
+			"revisionTime": "2017-09-01T02:39:28Z"
+		},
+		{
 			"checksumSHA1": "TT1rac6kpQp2vz24m5yDGUNQ/QQ=",
 			"path": "golang.org/x/crypto/cast5",
 			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",

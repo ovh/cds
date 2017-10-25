@@ -8,15 +8,8 @@
     <div class="content">
         <div class="ui form" *ngIf="hooksModel">
             <h3>{{ 'workflow_node_hook_form_title' | translate }}</h3>
-            <sui-select class="selection"
-                        [(ngModel)]="selectedHookModel"
-                        (ngModelChange)="updateHook()"
-                        [options]="hooksModel"
-                        [isSearchable]="true"
-                        labelField="name"
-                        #select>
-                <sui-select-option *ngFor="let option of select.filteredOptions"
-                                   [value]="option">{{option.name}}
+            <sui-select class="selection" [(ngModel)]="selectedHookModel" (ngModelChange)="updateHook()" [options]="hooksModel" [isSearchable]="true" labelField="name" #select>
+                <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
                 </sui-select-option>
             </sui-select>
             <ng-container *ngIf="_hook.model">
@@ -31,10 +24,10 @@
             </ng-container>
             <ng-container *ngIf="_hook">
                 <h3>{{'workflow_node_hook_condition_list' | translate}}</h3>
-                <ng-container *ngIf="_hook.conditions && _hook.conditions.length > 0">
+                <ng-container *ngIf="_hook.conditions && _hook.conditions.plain && _hook.conditions.length > 0">
                     <app-workflow-trigger-condition-list [project]="project" [(conditions)]="_hook.conditions" [operators]="operators"></app-workflow-trigger-condition-list>
                 </ng-container>
-                <ng-container *ngIf="!_hook.conditions || _hook.conditions.length === 0">
+                <ng-container *ngIf="!_hook.conditions || !_hook.conditions.plain || _hook.conditions.plain.length === 0">
                     <div class="ui info message">{{'workflow_node_hook_condition_no' | translate}}</div>
                 </ng-container>
                 <h3>{{'workflow_node_hook_condition_form' | translate}}</h3>
