@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	log "github.com/Sirupsen/logrus"
 	loghook "github.com/ovh/logrus-ovh-hook"
@@ -11,12 +12,14 @@ import (
 
 // Conf contains log configuration
 type Conf struct {
-	Level             string
-	GraylogHost       string
-	GraylogPort       string
-	GraylogProtocol   string
-	GraylogExtraKey   string
-	GraylogExtraValue string
+	Level                  string
+	GraylogHost            string
+	GraylogPort            string
+	GraylogProtocol        string
+	GraylogExtraKey        string
+	GraylogExtraValue      string
+	GraylogFieldCDSName    string
+	GraylogFieldCDSVersion string
 }
 
 var (
@@ -60,6 +63,18 @@ func Initialize(conf *Conf) {
 				conf.GraylogExtraKey: conf.GraylogExtraValue,
 			}
 		}
+
+		if conf.GraylogFieldCDSName != "" {
+			extra["CDSName"] = conf.GraylogFieldCDSName
+		}
+
+		if conf.GraylogFieldCDSVersion != "" {
+			extra["CDSVersion"] = conf.GraylogFieldCDSVersion
+		}
+
+		// no need to check error here
+		hostname, _ := os.Hostname()
+		extra["CDSHostname"] = hostname
 
 		h, err := loghook.NewHook(graylogcfg, extra)
 
