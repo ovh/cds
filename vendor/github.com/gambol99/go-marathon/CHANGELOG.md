@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
+- [#273][PR273] Implement readiness checks.
 - [#267][PR267] Add DCOS path parameter for additional marathon instances.
 
 ## [0.7.1] - 2017-02-20
@@ -120,6 +121,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 [0.1.1]: https://github.com/gambol99/go-marathon/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/gambol99/go-marathon/compare/v0.0.1...v0.1.0
 
+[PR273]: https://github.com/gambol99/go-marathon/pull/273
 [PR267]: https://github.com/gambol99/go-marathon/pull/267
 [PR261]: https://github.com/gambol99/go-marathon/pull/261
 [PR259]: https://github.com/gambol99/go-marathon/pull/259
