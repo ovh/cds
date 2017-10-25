@@ -5,7 +5,6 @@ import {
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
 import { SemanticDimmerComponent } from 'ng-semantic/ng-semantic';
-
 import { Project } from '../../../model/project.model';
 import { Workflow, WorkflowNode, WorkflowNodeJoin } from '../../../model/workflow.model';
 import { WorkflowStore } from '../../../service/workflow/workflow.store';
@@ -14,7 +13,7 @@ import { CDSWorker } from '../../../shared/worker/worker';
 import { WorkflowJoinComponent } from '../../../shared/workflow/join/workflow.join.component';
 import { WorkflowNodeHookComponent } from '../../../shared/workflow/node/hook/hook.component';
 import { WorkflowNodeComponent } from '../../../shared/workflow/node/workflow.node.component';
-import { WorkflowCoreService } from '../../../shared/workflow/workflow.service';
+import { WorkflowCoreService } from '../../../service/workflow/workflow.core.service';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -389,7 +388,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         componentRef.instance.linkJoinEvent.subscribe(n => {
             this.nodeToLink = n;
             this.toggleLinkJoin(true);
-
         });
 
         return componentRef;
