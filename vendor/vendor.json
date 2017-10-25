@@ -1419,6 +1419,24 @@
 			"revisionTime": "2017-09-01T02:39:28Z"
 		},
 		{
+			"checksumSHA1": "yNGEI9BMDbGwabUnaHvV9ZZm/a0=",
+			"path": "github.com/yuin/gopher-lua/ast",
+			"revision": "eb1c7299435cc746b72514f37f74a5154dfe460f",
+			"revisionTime": "2017-09-15T03:51:07Z"
+		},
+		{
+			"checksumSHA1": "jL/Xn8U1QShceAAs7GezOfjLQ6o=",
+			"path": "github.com/yuin/gopher-lua/parse",
+			"revision": "eb1c7299435cc746b72514f37f74a5154dfe460f",
+			"revisionTime": "2017-09-15T03:51:07Z"
+		},
+		{
+			"checksumSHA1": "pOY+AESgLoqczVCXNCvmPtJyUXE=",
+			"path": "github.com/yuin/gopher-lua/pm",
+			"revision": "eb1c7299435cc746b72514f37f74a5154dfe460f",
+			"revisionTime": "2017-09-15T03:51:07Z"
+		},
+		{
 			"checksumSHA1": "TT1rac6kpQp2vz24m5yDGUNQ/QQ=",
 			"path": "golang.org/x/crypto/cast5",
 			"revision": "3ded668c5379f6951fb0de06174442072e5447d3",
