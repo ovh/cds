@@ -30,13 +30,15 @@ export class ProjectAdminComponent implements OnInit {
         if (this.project.permission !== 7) {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'applications' }});
         }
-        this.project.applications.forEach(app => {
-            if (app.workflow_migration === 'STARTED') {
-                this.migrationValue += 0.5;
-            } else if (app.workflow_migration === 'DONE') {
-                this.migrationValue++;
-            }
-        });
+        if (this.project.applications) {
+            this.project.applications.forEach(app => {
+                if (app.workflow_migration === 'STARTED') {
+                    this.migrationValue += 0.5;
+                } else if (app.workflow_migration === 'DONE') {
+                    this.migrationValue++;
+                }
+            });
+        }
         this.user = this._authStore.getUser();
     }
 

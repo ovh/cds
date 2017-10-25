@@ -5,26 +5,9 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/secret"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 )
-
-//LoadAll Load all RepositoriesManager from the database
-func LoadAll(db *gorp.DbMap, store cache.Store) ([]string, error) {
-	serviceDAO := services.NewRepository(func() *gorp.DbMap { return db }, store)
-	srvs, err := serviceDAO.FindByType("vcs")
-	if err != nil {
-		return nil, sdk.WrapError(err, "repositoriesmanager.LoadAll> Unable to load services")
-	}
-
-	vcsServers := []string{}
-	if _, err := services.DoJSONRequest(srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
-		return nil, err
-	}
-	return vcsServers, nil
-}
 
 //InsertForProject link a project with a repository manager
 func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.ProjectVCSServer) error {

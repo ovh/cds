@@ -12,8 +12,28 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
+
 	"github.com/ovh/cds/sdk"
 )
+
+//LoadAll Load all RepositoriesManager from the database
+func LoadAll(db *gorp.DbMap, store cache.Store) ([]string, error) {
+	serviceDAO := services.NewRepository(func() *gorp.DbMap { return db }, store)
+	srvs, err := serviceDAO.FindByType("vcs")
+	if err != nil {
+		return nil, sdk.WrapError(err, "repositoriesmanager.LoadAll> Unable to load services")
+	}
+
+	vcsServers := map[string]interface{}{}
+	if _, err := services.DoJSONRequest(srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
+		return nil, err
+	}
+	servers := []string{}
+	for k := range vcsServers {
+		servers = append(servers, k)
+	}
+	return servers, nil
+}
 
 type vcsConsumer struct {
 	name   string
@@ -42,7 +62,7 @@ func GetVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
 
 // NewVCSServer returns a sdk.VCSServer wrapping vcs uservices calls
 func NewVCSServer(dbFunc func() *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
-	return &vcsConsumer{name: name}, nil
+	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
 }
 
 func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {

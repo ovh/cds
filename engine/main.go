@@ -119,6 +119,13 @@ Comming soon...`,
 				ClientSecret: "xxxx",
 			},
 		}
+		conf.VCS.Servers["Bitbucket"] = vcs.ServerConfiguration{
+			URL: "https://mybitbucket.com",
+			Bitbucket: &vcs.BitbucketServerConfiguration{
+				ConsumerKey: "xxx",
+				PrivateKey:  "xxx",
+			},
+		}
 		conf.VCS.Servers["Gitlab"] = vcs.ServerConfiguration{
 			URL: "https://gitlab.com",
 			Gitlab: &vcs.GitlabServerConfiguration{
