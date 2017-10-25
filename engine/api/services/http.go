@@ -26,7 +26,7 @@ func DoJSONRequest(srvs []sdk.Service, method, path string, in interface{}, out 
 		attempt++
 		for i := range srvs {
 			srv := &srvs[i]
-			code, err := doJSONRequest(srv, "GET", "/vcs", in, out, mods...)
+			code, err := doJSONRequest(srv, method, path, in, out, mods...)
 			if err == nil {
 				return code, nil
 			}
@@ -48,19 +48,19 @@ func doJSONRequest(srv *sdk.Service, method, path string, in interface{}, out in
 	if in != nil {
 		b, err = json.Marshal(in)
 		if err != nil {
-			return 0, err
+			return 0, sdk.WrapError(err, "services.doJSONRequest> Unable to marshal input")
 		}
 	}
 
 	mods = append(mods, sdk.SetHeader("Content-Type", "application/json"))
 	res, code, err := DoRequest(srv, method, path, b, mods...)
 	if err != nil {
-		return code, err
+		return code, sdk.WrapError(err, "services.doJSONRequest> Unable to perform request")
 	}
 
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
-			return code, err
+			return code, sdk.WrapError(err, "services.doJSONRequest> Unable to marshal output")
 		}
 	}
 

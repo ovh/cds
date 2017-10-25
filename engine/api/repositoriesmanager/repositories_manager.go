@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
+	"github.com/ovh/cds/sdk/log"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -74,6 +75,7 @@ func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {
 
 	res := map[string]string{}
 	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
+	log.Info("Performing request on %s", path)
 	if _, err := services.DoJSONRequest(srv, "GET", path, nil, &res); err != nil {
 		return "", "", sdk.WrapError(err, "repositoriesmanager.AuthorizeRedirect> ")
 	}

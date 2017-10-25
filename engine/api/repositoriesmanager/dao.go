@@ -7,6 +7,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //InsertForProject link a project with a repository manager
@@ -23,6 +24,8 @@ func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 	if err != nil {
 		return err
 	}
+
+	log.Debug("repositoriesmanager.InsertForProject> %s %s", proj.Key, string(b1))
 
 	encryptedVCSServerStr, err := secret.Encrypt(b1)
 	if err != nil {
@@ -64,7 +67,7 @@ func DeleteForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 		return err
 	}
 
-	if _, err := db.Exec("update project set vcs_servers = $2 where projectkey = $1", proj.VCSServers, encryptedVCSServerStr); err != nil {
+	if _, err := db.Exec("update project set vcs_servers = $2 where projectkey = $1", proj.Key, encryptedVCSServerStr); err != nil {
 		return err
 	}
 

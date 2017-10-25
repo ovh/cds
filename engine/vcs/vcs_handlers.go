@@ -54,7 +54,7 @@ func (s *Service) postAuhorizeHandler() api.Handler {
 		}
 
 		body := map[string]string{}
-		if err := api.UnmarshalBody(r, body); err != nil {
+		if err := api.UnmarshalBody(r, &body); err != nil {
 			return err
 		}
 

@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type dbProject sdk.Project
@@ -25,12 +26,14 @@ func init() {
 
 // PostGet is a db hook
 func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
+	log.Debug("project.PostGet> %s", p.Key)
+
 	var fields = struct {
 		Metadata   sql.NullString `db:"metadata"`
-		VCSServers sql.NullString `db:"vcs_servers"`
+		VCSServers []byte         `db:"vcs_servers"`
 	}{}
 
-	if _, err := db.Select(&fields, "select metadata,vcs_servers from project where id = $1", p.ID); err != nil {
+	if err := db.QueryRow("select metadata,vcs_servers from project where id = $1", p.ID).Scan(&fields.Metadata, &fields.VCSServers); err != nil {
 		return err
 	}
 
@@ -38,8 +41,9 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 		return err
 	}
 
-	if fields.VCSServers.Valid {
-		clearVCSServer, err := secret.Decrypt([]byte(fields.VCSServers.String))
+	if len(fields.VCSServers) > 0 {
+		log.Debug("project.PostGet> Decrypting vcs server for %s", p.Key)
+		clearVCSServer, err := secret.Decrypt([]byte(fields.VCSServers))
 		if err != nil {
 			return err
 		}

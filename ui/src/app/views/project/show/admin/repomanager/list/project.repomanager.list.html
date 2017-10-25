@@ -3,20 +3,16 @@
         <thead>
         <tr>
             <th class="seven wide">{{ 'common_name' | translate }}</th>
-            <th class="seven wide">{{ 'common_url' | translate }}</th>
             <th class="two wide"></th>
         </tr>
         </thead>
         <tbody>
         <tr *ngFor="let r of getDataForCurrentPage()">
             <td>
-                {{r.name}}
-            </td>
-            <td>
-                {{r.url}}
+                {{r.repositories_manager}}
             </td>
             <td class="right aligned">
-                <app-delete-button (event)="clickDeleteButton(r.name)" [loading]="deleteLoading"></app-delete-button>
+                <app-delete-button (event)="clickDeleteButton(r.repositories_manager)" [loading]="deleteLoading"></app-delete-button>
             </td>
         </tr>
         </tbody>
