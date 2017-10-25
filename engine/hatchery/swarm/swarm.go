@@ -119,10 +119,6 @@ var containersCache = struct {
 }
 
 func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
-	t := time.Now()
-
-	defer log.Debug("getContainers() : %f s", time.Since(t).Seconds())
-
 	containersCache.mu.RLock()
 	nbServers := len(containersCache.list)
 	containersCache.mu.RUnlock()
@@ -138,7 +134,6 @@ func (h *HatcherySwarm) getContainers() ([]docker.APIContainers, error) {
 		containersCache.list = s
 		containersCache.mu.Unlock()
 
-		log.Debug("getContainers> %d containers on this host", len(s))
 		for _, v := range s {
 			log.Debug("getContainers> container ID:%s names:%+v image:%s created:%d state:%s, status:%s", v.ID, v.Names, v.Image, v.Created, v.State, v.Status)
 		}
@@ -271,6 +266,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 				labels := map[string]string{
 					"service_worker": name,
 					"service_name":   serviceName,
+					"hatchery":       h.Config.Name,
 				}
 				//Start the services
 				if err := h.createAndStartContainer(serviceName, img, network, r.Name, []string{}, env, labels, serviceMemory); err != nil {
@@ -328,6 +324,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 		"worker_model":        strconv.FormatInt(model.ID, 10),
 		"worker_name":         name,
 		"worker_requirements": strings.Join(services, ","),
+		"hatchery":            h.Config.Name,
 	}
 
 	//start the worker
@@ -530,28 +527,46 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	return true
 }
 
-// WorkersStarted returns the number of instances started but
-// not necessarily register on CDS yet
-func (h *HatcherySwarm) WorkersStarted() int {
+func (h *HatcherySwarm) getWorkersStarted() ([]docker.APIContainers, error) {
 	containers, errList := h.getContainers()
 	if errList != nil {
 		log.Error("WorkersStarted> Unable to list containers: %s", errList)
-		return 0
+		return nil, errList
 	}
+	res := []docker.APIContainers{}
+	//We only count worker
+	for _, c := range containers {
+		cont, err := h.getContainer(c.Names[0])
+		if err != nil {
+			log.Error("WorkersStarted> Unable to get worker %s: %v", c.Names[0], err)
+			continue
+		}
+		if _, ok := cont.Labels["worker_name"]; ok {
+			if hatch, ok := cont.Labels["hatchery"]; !ok || hatch == h.Config.Name {
+				res = append(res, *cont)
+			}
+		}
+	}
+	return res, nil
+}
 
-	return len(containers)
+// WorkersStarted returns the number of instances started but
+// not necessarily register on CDS yet
+func (h *HatcherySwarm) WorkersStarted() int {
+	workers, _ := h.getWorkersStarted()
+	return len(workers)
 }
 
 // WorkersStartedByModel returns the number of started workers
 func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
-	containers, errList := h.getContainers()
+	workers, errList := h.getWorkersStarted()
 	if errList != nil {
 		log.Error("WorkersStartedByModel> Unable to list containers: %s", errList)
 		return 0
 	}
 
 	list := []string{}
-	for _, c := range containers {
+	for _, c := range workers {
 		log.Debug("Container : %s %s [%s]", c.ID, c.Image, c.Status)
 		if c.Image == model.Image {
 			list = append(list, c.ID)
@@ -599,7 +614,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 		os.Exit(1)
 	}
 
-	containers, errList := h.getContainers()
+	containers, errList := h.getWorkersStarted()
 	if errList != nil {
 		log.Warning("killAwolWorker> Cannot list containers: %s", errList)
 		os.Exit(1)
@@ -608,10 +623,6 @@ func (h *HatcherySwarm) killAwolWorker() {
 	//Checking workers
 	oldContainers := []docker.APIContainers{}
 	for _, c := range containers {
-		//Ignore containers spawned by other things that this Hatchery
-		if c.Labels["worker_name"] == "" {
-			continue
-		}
 		//If there isn't any worker registered on the API. Kill the container
 		if len(apiworkers) == 0 {
 			oldContainers = append(oldContainers, c)
@@ -655,6 +666,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 		if c.Labels["service_worker"] == "" {
 			continue
 		}
+		//check if the service is linked to a worker which doesn't exist
 		if w, _ := h.getContainer(c.Labels["service_worker"]); w == nil {
 			oldContainers = append(oldContainers, c)
 			continue

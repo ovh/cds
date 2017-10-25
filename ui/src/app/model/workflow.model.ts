@@ -22,6 +22,8 @@ export class Workflow {
     permission: number;
     metadata: Map<string, string>;
     usage: Usage;
+    history_length: number;
+    purge_tags: Array<string>;
 
     // UI params
     externalChange: boolean;
@@ -115,8 +117,8 @@ export class Workflow {
             workflow.joins.forEach(j => {
                 if (j.triggers) {
                     j.triggers.forEach(t => {
-                        if (t.conditions) {
-                            t.conditions.forEach(c => {
+                        if (t.conditions && t.conditions.plain) {
+                            t.conditions.plain.forEach(c => {
                                 if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
                                     warnings.joinTriggers.push(t);
                                 }
@@ -152,7 +154,7 @@ export class WorkflowNodeJoinTrigger {
     join_id: number;
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
-    conditions: Array<WorkflowTriggerCondition>;
+    conditions: WorkflowTriggerConditions;
     manual: boolean;
     continue_on_error: boolean;
 
@@ -241,8 +243,8 @@ export class WorkflowNode {
         let varName = 'workflow.' + name;
         if (n.hooks) {
             n.hooks.forEach(h => {
-                if (h.conditions) {
-                    h.conditions.forEach(c => {
+                if (h.conditions && h.conditions.plain) {
+                    h.conditions.plain.forEach(c => {
                         if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
                             nodeWarn.hooks.push(h);
                         }
@@ -252,8 +254,8 @@ export class WorkflowNode {
         }
         if (n.triggers) {
             n.triggers.forEach(t => {
-                if (t.conditions) {
-                    t.conditions.forEach(c => {
+                if (t.conditions && t.conditions.plain) {
+                    t.conditions.plain.forEach(c => {
                         if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
                             nodeWarn.triggers.push(t);
                         }
@@ -294,7 +296,7 @@ export class WorkflowNodeHook {
     id: number;
     uuid: string;
     model: WorkflowHookModel;
-    conditions: Array<WorkflowTriggerCondition>;
+    conditions: WorkflowTriggerConditions;
     config: {};
 }
 
@@ -304,13 +306,19 @@ export class WorkflowNodeTrigger {
     workflow_node_id: number;
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
-    conditions: Array<WorkflowTriggerCondition>;
+    conditions: WorkflowTriggerConditions;
     manual: boolean;
     continue_on_error: boolean;
 
     constructor() {
         this.workflow_dest_node = new WorkflowNode();
     }
+}
+
+// WorkflowTriggerConditions is either a lua script to check conditions or a set of WorkflowTriggerCondition
+export class WorkflowTriggerConditions {
+    lua_script: string;
+    plain: Array<WorkflowTriggerCondition>;
 }
 
 // WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex

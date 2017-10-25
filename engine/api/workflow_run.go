@@ -456,6 +456,9 @@ func (api *API) postWorkflowRunHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
 		}
 
+		// Purge workflow run
+		go workflow.PurgeWorkflowRun(api.mustDB(), *wf)
+
 		wr.Translate(r.Header.Get("Accept-Language"))
 		return WriteJSON(w, r, wr, http.StatusAccepted)
 	}

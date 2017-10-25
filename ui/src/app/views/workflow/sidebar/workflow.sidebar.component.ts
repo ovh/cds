@@ -78,7 +78,8 @@ export class WorkflowSidebarComponent implements OnDestroy {
             'session': this._authStore.getSessionToken(),
             'api': environment.apiURL,
             key: this.project.key,
-            workflowName: this.workflow.name
+            workflowName: this.workflow.name,
+            limit: 50
         });
 
         // Listening to web worker responses

@@ -15,6 +15,8 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.SetHeaderFunc = api.DefaultHeaders
 	r.Middlewares = append(r.Middlewares, s.authMiddleware)
 
+	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
+
 	r.Handle("/vcs", r.GET(s.getAllVCSServersHandler))
 	r.Handle("/vcs/{name}/authorize", r.GET(s.getAuthorizeHandler), r.POST(s.postAuhorizeHandler))
 

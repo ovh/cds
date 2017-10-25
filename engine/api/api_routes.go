@@ -78,7 +78,7 @@ func (api *API) InitRouter() {
 	// Overall health
 	r.Handle("/mon/status", r.GET(api.statusHandler, Auth(false)))
 	r.Handle("/mon/smtp/ping", r.GET(api.smtpPingHandler, Auth(true)))
-	r.Handle("/mon/version", r.GET(api.getVersionHandler, Auth(false)))
+	r.Handle("/mon/version", r.GET(VersionHandler, Auth(false)))
 	r.Handle("/mon/stats", r.GET(api.getStatsHandler, Auth(false)))
 	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))

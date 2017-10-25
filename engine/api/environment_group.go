@@ -32,6 +32,10 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 			return sdk.WrapError(errG, "updateGroupRoleOnEnvironmentHandler> Cannot load group %s", groupName)
 		}
 
+		if group.IsDefaultGroupID(g.ID) && groupEnvironment.Permission > permission.PermissionRead {
+			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "updateGroupRoleOnEnvironmentHandler: only read permission is allowed to default group")
+		}
+
 		env, errE := environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 		if errE != nil {
 			return sdk.WrapError(errE, "updateGroupRoleOnEnvironmentHandler> Cannot load environment %s", envName)
@@ -114,6 +118,10 @@ func (api *API) addGroupsInEnvironmentHandler() Handler {
 				return sdk.WrapError(errL, "addGroupsInEnvironmentHandler: Cannot find group %s", gp.Group.Name)
 			}
 
+			if group.IsDefaultGroupID(g.ID) && gp.Permission > permission.PermissionRead {
+				return sdk.WrapError(sdk.ErrDefaultGroupPermission, "addGroupsInEnvironmentHandler: only read permission is allowed to default group")
+			}
+
 			alreadyAdded, errA := group.IsInEnvironment(tx, env.ID, g.ID)
 			if errA != nil {
 				return sdk.WrapError(errA, "addGroupsInEnvironmentHandler> Cannot check if group is in env")
@@ -179,6 +187,10 @@ func (api *API) addGroupInEnvironmentHandler() Handler {
 		g, err := group.LoadGroup(api.mustDB(), groupPermission.Group.Name)
 		if err != nil {
 			return sdk.WrapError(err, "addGroupInEnvironmentHandler: Cannot find %s", groupPermission.Group.Name)
+		}
+
+		if group.IsDefaultGroupID(g.ID) && groupPermission.Permission > permission.PermissionRead {
+			return sdk.WrapError(sdk.ErrDefaultGroupPermission, "addGroupInEnvironmentHandler: only read permission is allowed to default group")
 		}
 
 		alreadyAdded, err := group.IsInEnvironment(api.mustDB(), env.ID, g.ID)

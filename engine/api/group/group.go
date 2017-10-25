@@ -251,7 +251,6 @@ func CheckUserInGroup(db gorp.SqlExecutor, groupID, userID int64) (bool, error) 
 
 // DeleteUserFromGroup remove user from group
 func DeleteUserFromGroup(db gorp.SqlExecutor, groupID, userID int64) error {
-
 	// Check if there are admin left
 	var isAdm bool
 	err := db.QueryRow(`SELECT group_admin FROM "group_user" WHERE group_id = $1 AND user_id = $2`, groupID, userID).Scan(&isAdm)
@@ -389,8 +388,6 @@ func SetUserGroupAdmin(db gorp.SqlExecutor, groupID int64, userID int64) error {
 // RemoveUserGroupAdmin remove the privilege to perform operations on given group
 func RemoveUserGroupAdmin(db gorp.SqlExecutor, groupID int64, userID int64) error {
 	query := `UPDATE "group_user" SET group_admin = false WHERE group_id = $1 AND user_id = $2`
-	if _, err := db.Exec(query, groupID, userID); err != nil {
-		return err
-	}
-	return nil
+	_, err := db.Exec(query, groupID, userID)
+	return err
 }

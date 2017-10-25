@@ -160,6 +160,7 @@ func (api *API) postWorkflowHandler() Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
+
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")
 
@@ -244,6 +245,12 @@ func (api *API) putWorkflowHandler() Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
+
+		usage, errU := loadWorfklowUsage(api.mustDB(), wf1.ID)
+		if errU != nil {
+			return sdk.WrapError(errU, "Cannot load usage")
+		}
+		wf1.Usage = &usage
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")

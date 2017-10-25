@@ -27,7 +27,7 @@ import { WorkflowCoreService } from '../../../shared/workflow/workflow.service';
     ]
 })
 @AutoUnsubscribe()
-export class WorkflowGraphComponent implements AfterViewInit, OnInit {
+export class WorkflowGraphComponent implements AfterViewInit {
 
     workflow: Workflow;
     sidebarOpen: boolean;
@@ -59,7 +59,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     ready: boolean;
     _direction: string;
-    displayDirection = false;
 
     // workflow graph
     @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer;
@@ -90,13 +89,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                 window.dispatchEvent(new Event('resize'));
             }
         });
-    }
-
-    ngOnInit(): void {
-        if (!this.direction) {
-            this.displayDirection = true;
-            this.direction = this._workflowStore.getDirection(this.project.key, this.workflow.name);
-        }
     }
 
     @HostListener('window:resize', ['$event'])
@@ -237,7 +229,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             windowsWidth -= 250;
         }
 
-        this.nodeWidth = Math.floor(windowsWidth * .85 / nbofNodes);
+        this.nodeWidth = Math.floor(windowsWidth * .75 / nbofNodes);
         if (this.nodeWidth < 155) {
             this.nodeWidth = 155;
         }
@@ -377,6 +369,13 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                 }
                 this.createEdge('node-' + node.id, 'node-' + t.workflow_dest_node.id, options);
             });
+        }
+    }
+
+    @HostListener('document:keydown', ['$event'])
+    handleKeyboardEvent(event: KeyboardEvent) {
+        if (event.code === 'Escape' && this.linkWithJoin) {
+            this.toggleLinkJoin(false);
         }
     }
 
