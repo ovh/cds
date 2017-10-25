@@ -1,5 +1,5 @@
 /*
-Copyright 2016 Rohith All rights reserved.
+Copyright 2016 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,8 +51,8 @@ func (r *marathonClient) Queue() (*Queue, error) {
 // DeleteQueueDelay resets task launch delay of the specific application
 //		appID:		the ID of the application
 func (r *marathonClient) DeleteQueueDelay(appID string) error {
-	uri := fmt.Sprintf("%s/%s/delay", marathonAPIQueue, trimRootPath(appID))
-	err := r.apiDelete(uri, nil, nil)
+	path := fmt.Sprintf("%s/%s/delay", marathonAPIQueue, trimRootPath(appID))
+	err := r.apiDelete(path, nil, nil)
 	if err != nil {
 		return err
 	}
