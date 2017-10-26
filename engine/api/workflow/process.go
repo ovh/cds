@@ -412,7 +412,10 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		if errPP != nil {
 			return sdk.WrapError(errPP, "processWorkflowNodeRun> getParentParameters failed")
 		}
-		run.BuildParameters = append(run.BuildParameters, parentsParams...)
+		mapBuildParams := sdk.ParametersToMap(run.BuildParameters)
+		mapParentParams := sdk.ParametersToMap(parentsParams)
+
+		run.BuildParameters = sdk.ParametersFromMap(sdk.ParametersMapMerge(mapBuildParams, mapParentParams))
 	}
 	for _, p := range jobParams {
 		switch p.Name {
