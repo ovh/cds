@@ -7,6 +7,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -77,15 +78,22 @@ func loadTriggers(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node 
 			t.WorkflowDestNode = *dest
 		}
 
-		//Load conditions
 		sqlConditions, err := db.SelectNullStr("select conditions from workflow_node_trigger where id = $1", t.ID)
 		if err != nil {
 			return nil, sdk.WrapError(err, "LoadTriggers> Unable to load conditions for trigger %d", t.ID)
 		}
-		if sqlConditions.Valid {
-			if err := json.Unmarshal([]byte(sqlConditions.String), &t.Conditions); err != nil {
-				return nil, sdk.WrapError(err, "LoadTriggers> Unable to unmarshall conditions for trigger %d", t.ID)
+
+		//TODO this will have to be cleaned
+		oldConditions := []sdk.WorkflowTriggerCondition{}
+		newConditions := sdk.WorkflowTriggerConditions{}
+		//We try to unmarshall the conditions with the old and the new struct
+		if err := gorpmapping.JSONNullString(sqlConditions, &oldConditions); err != nil {
+			if err := gorpmapping.JSONNullString(sqlConditions, &newConditions); err != nil {
+				return nil, err
 			}
+			t.Conditions = newConditions
+		} else {
+			t.Conditions = sdk.WorkflowTriggerConditions{PlainConditions: oldConditions}
 		}
 
 		triggers = append(triggers, t)
