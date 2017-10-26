@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // HTTPClient will be set to a default httpclient if not set
