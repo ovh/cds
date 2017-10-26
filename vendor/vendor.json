@@ -289,10 +289,10 @@
 			"revisionTime": "2016-09-08T21:06:52Z"
 		},
 		{
-			"checksumSHA1": "O/eUfUoi7lWgZiipUP939AAdKk4=",
+			"checksumSHA1": "UWjHgYoKbTsUFpixiYMLenzX5+M=",
 			"path": "github.com/donovanhide/eventsource",
-			"revision": "fd1de70867126402be23c306e1ce32828455d85b",
-			"revisionTime": "2016-05-25T20:46:10Z"
+			"revision": "b8f31a59085e69dd2678cf51840db2ac625cb741",
+			"revisionTime": "2017-06-30T08:42:16Z"
 		},
 		{
 			"checksumSHA1": "y2Kh4iPlgCPXSGTCcFpzePYdzzg=",
@@ -361,10 +361,10 @@
 			"revisionTime": "2017-03-16T00:43:41Z"
 		},
 		{
-			"checksumSHA1": "189Oi0abcrqXWak89uQYR1Q66kY=",
+			"checksumSHA1": "76D9RQiU+FVJCexfv/idRaNd2UQ=",
 			"path": "github.com/gambol99/go-marathon",
-			"revision": "cf631873b8c2d4cd3a348a65129951bfc00d9b82",
-			"revisionTime": "2017-04-10T16:10:28Z"
+			"revision": "ec4a50170df729be7380d2797177dea832f41013",
+			"revisionTime": "2017-09-22T09:33:20Z"
 		},
 		{
 			"checksumSHA1": "RsNwOto8G8aXIiRrlFn4dtU9q/g=",

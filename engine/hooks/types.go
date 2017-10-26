@@ -24,6 +24,7 @@ type Configuration struct {
 		Port int `toml:"port" default:"8083" toml:"name"`
 	} `toml:"http" comment:"######################\n CDS Hooks HTTP Configuration \n######################"`
 	URL              string `default:"http://localhost:8083"`
+	URLPublic        string `toml:"urlPublic" comment:"Public url for external call (webhook)"`
 	RetryDelay       int64  `toml:"retryDelay" default:"1" comment:"Execution retry delay in seconds"`
 	RetryError       int64  `toml:"retryError" default:"3" comment:"Retry execution while this number of error is not reached"`
 	ExecutionHistory int    `toml:"executionHistory" default:"10" comment:"Number of execution to keep"`

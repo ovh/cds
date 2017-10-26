@@ -105,10 +105,7 @@ func insertLog(db gorp.SqlExecutor, logs *sdk.Log) error {
 		return errd
 	}
 
-	if err := db.QueryRow(query, logs.PipelineBuildJobID, logs.PipelineBuildID, s, m, d, logs.StepOrder, logs.Val).Scan(&logs.Id); err != nil {
-		return err
-	}
-	return nil
+	return db.QueryRow(query, logs.PipelineBuildJobID, logs.PipelineBuildID, s, m, d, logs.StepOrder, logs.Val).Scan(&logs.Id)
 }
 
 func updateLog(db gorp.SqlExecutor, logs *sdk.Log) error {

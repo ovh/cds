@@ -528,7 +528,13 @@ type WorkflowNodeHook struct {
 var WorkflowHookModelBuiltin = "builtin"
 
 //WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
-type WorkflowNodeHookConfig map[string]string
+type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
+
+// WorkflowNodeHookConfigValue represents the value of a node hook config
+type WorkflowNodeHookConfigValue struct {
+	Value        string `json:"value"`
+	Configurable bool   `json:"configurable"`
+}
 
 //WorkflowHookModel represents a hook which can be used in workflows.
 type WorkflowHookModel struct {
@@ -538,8 +544,7 @@ type WorkflowHookModel struct {
 	Author        string                 `json:"author" db:"author"`
 	Description   string                 `json:"description" db:"description"`
 	Identifier    string                 `json:"identifier" db:"identifier"`
-	Icon          string                 `json:"-" db:"icon"`
-	Image         string                 `json:"image" db:"image"`
+	Icon          string                 `json:"icon" db:"icon"`
 	Command       string                 `json:"command" db:"command"`
 	DefaultConfig WorkflowNodeHookConfig `json:"default_config" db:"-"`
 	Disabled      bool                   `json:"disabled" db:"disabled"`

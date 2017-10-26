@@ -27,7 +27,8 @@ func (s *Service) webhookHandler() api.Handler {
 		}
 
 		//Check method
-		if r.Method != webHook.Config["method"] {
+		confValue := webHook.Config["method"]
+		if r.Method != confValue.Value {
 			return sdk.WrapError(sdk.ErrMethodNotAllowed, "Hook> webhookHandler> Unsupported method %s : %v", r.Method, webHook.Config)
 		}
 
@@ -70,7 +71,7 @@ func (s *Service) postTaskHandler() api.Handler {
 		}
 
 		//Parse the hook as a task
-		t, err := s.hookToTask(*hook)
+		t, err := s.hookToTask(hook)
 		if err != nil {
 			return sdk.WrapError(err, "Hooks> postTaskHandler> Unable to parse hook")
 		}
@@ -189,12 +190,14 @@ func (s *Service) postTaskBulkHandler() api.Handler {
 			return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
 		}
 
-		for _, hook := range hooks {
+		for k, hook := range hooks {
 			//Parse the hook as a task
-			t, err := s.hookToTask(hook)
+			t, err := s.hookToTask(&hook)
 			if err != nil {
 				return sdk.WrapError(err, "Hooks> postTaskBulkHandler> Unable to parse hook")
 			}
+
+			hooks[k] = hook
 
 			//Save the task
 			s.Dao.SaveTask(t)
@@ -203,9 +206,8 @@ func (s *Service) postTaskBulkHandler() api.Handler {
 			if err := s.startTask(ctx, t); err != nil {
 				return sdk.WrapError(err, "Hooks> postTaskBulkHandler> Unable start task %+v", t)
 			}
-		}
 
-		w.WriteHeader(http.StatusOK)
-		return nil
+		}
+		return api.WriteJSON(w, r, hooks, http.StatusOK)
 	}
 }
