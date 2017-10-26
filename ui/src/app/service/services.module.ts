@@ -34,6 +34,7 @@ import {NotificationService} from './notification/notification.service';
 import {WorkflowService} from './workflow/workflow.service';
 import {WorkflowStore} from './workflow/workflow.store';
 import {WorkflowRunService} from './workflow/run/workflow.run.service';
+import {WorkflowCoreService} from './workflow/workflow.core.service';
 import {RouterService} from './router/router.service';
 import {WarningService} from './warning/warning.service';
 import {LastUpdateService} from './sse/lastupdate.sservice';
@@ -91,7 +92,7 @@ export class ServicesModule {
                 WarningService,
                 WarningStore,
                 WorkerModelService,
-                WorkflowService, WorkflowStore, WorkflowRunService,
+                WorkflowService, WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
                     provide: HTTP_INTERCEPTORS,
                     useClass: AuthentificationInterceptor,
@@ -148,5 +149,6 @@ export {
     WorkerModelService,
     WorkflowStore,
     WorkflowRunService,
+    WorkflowCoreService,
     Http
 }

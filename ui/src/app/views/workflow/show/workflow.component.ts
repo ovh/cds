@@ -16,7 +16,7 @@ import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.ser
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowRunRequest} from '../../../model/workflow.run.model';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
-import {WorkflowCoreService} from '../../../shared/workflow/workflow.service';
+import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {PermissionValue} from '../../../model/permission.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {User} from '../../../model/user.model';
