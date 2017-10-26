@@ -10,6 +10,7 @@ import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../
 import {Router} from '@angular/router';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {Subscription} from 'rxjs/Subscription';
+import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 
 @Component({
@@ -52,7 +53,7 @@ export class WorkflowNodeRunParamComponent {
     loading = false;
 
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
-                private _pipStore: PipelineStore) {
+                private _pipStore: PipelineStore, private _workflowCoreService: WorkflowCoreService) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -137,7 +138,8 @@ export class WorkflowNodeRunParamComponent {
         }).subscribe(wr => {
             this.modal.approve(true);
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
-            {queryParams: { subnum: wr.last_subnumber }});
+                {queryParams: { subnum: wr.last_subnumber }});
+            this._workflowCoreService.setCurrentWorkflowRun(wr);
         });
     }
 }

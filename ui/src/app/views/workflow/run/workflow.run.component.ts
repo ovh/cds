@@ -68,6 +68,14 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                 this.startWorker(number);
             }
         });
+
+        this._workflowCoreService.getCurrentWorkflowRun()
+          .subscribe((wr) => {
+              if (this.workflowRun && this.workflowRun.status !== PipelineStatus.BUILDING &&
+                  this.workflowRun.status !== PipelineStatus.WAITING && wr) {
+                  this.startWorker(wr.num);
+              }
+          });
     }
 
     startWorker(num: number): void {
