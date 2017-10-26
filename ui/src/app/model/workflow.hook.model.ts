@@ -1,3 +1,5 @@
+import {WorkflowNodeHookConfigValue} from './workflow.model';
+
 export class WorkflowHookModel {
     id: number;
     name: string;
@@ -7,6 +9,6 @@ export class WorkflowHookModel {
     identifier: string;
     image: string;
     command: string;
-    default_config: {};
+    default_config: Map<string, WorkflowNodeHookConfigValue>;
     disabled: boolean;
 }
