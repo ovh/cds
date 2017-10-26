@@ -8,6 +8,6 @@ UPDATE workflow_hook_model SET icon = 'git square' WHERE name= 'Git Repository P
 UPDATE workflow_hook_model SET icon = 'fa-clock-o' WHERE name= 'Scheduler';
 
 -- +migrate Down
-ALTER TABLE workflow_hook_model DROP workflow_hook_model COLUMN icon;
+ALTER TABLE workflow_hook_model DROP COLUMN icon;
 ALTER TABLE workflow_hook_model ADD COLUMN icon bytea;
 ALTER TABLE workflow_hook_model ADD COLUMN image string;
