@@ -297,7 +297,12 @@ export class WorkflowNodeHook {
     uuid: string;
     model: WorkflowHookModel;
     conditions: WorkflowTriggerConditions;
-    config: {};
+    config: Map<string, WorkflowNodeHookConfigValue>;
+}
+
+export class WorkflowNodeHookConfigValue {
+    value: string;
+    configurable: boolean;
 }
 
 // WorkflowNodeTrigger is a ling betweeb two pipelines in a workflow
