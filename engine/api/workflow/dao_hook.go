@@ -12,6 +12,18 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// UpdateHook Update a workflow node hook
+func UpdateHook(db gorp.SqlExecutor, h *sdk.WorkflowNodeHook) error {
+	dbhook := NodeHook(*h)
+	if _, err := db.Update(&dbhook); err != nil {
+		return sdk.WrapError(err, "updateHook> Cannot update hook")
+	}
+	if err := dbhook.PostInsert(db); err != nil {
+		return sdk.WrapError(err, "updateHook> Cannot post update hook")
+	}
+	return nil
+}
+
 // insertHook inserts a hook
 func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowNodeHook) error {
 	hook.WorkflowNodeID = node.ID

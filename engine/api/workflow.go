@@ -234,7 +234,9 @@ func (api *API) putWorkflowHandler() Handler {
 				// update hook
 				for i := range hooks {
 					h := hooks[i]
-					h.Config["workflow"] = wf.Name
+					configValue := h.Config["workflow"]
+					configValue.Value = wf.Name
+					h.Config["workflow"] = configValue
 					hooks[i] = h
 				}
 			}
@@ -245,12 +247,19 @@ func (api *API) putWorkflowHandler() Handler {
 			}
 			var errHooks error
 			for _, s := range srvs {
-				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
+				var hooksUpdated map[string]sdk.WorkflowNodeHook
+				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, &hooksUpdated)
 				errHooks = errBulk
 				if errBulk == nil {
+					for _, h := range hooksUpdated {
+						if err := workflow.UpdateHook(tx, &h); err != nil {
+							return sdk.WrapError(errHooks, "putWorkflowHandler> Cannot update hook")
+						}
+					}
 					log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
 					break
 				}
+
 			}
 			if errHooks != nil {
 				return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
