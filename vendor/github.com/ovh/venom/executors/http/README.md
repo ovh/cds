@@ -12,6 +12,7 @@ In your yaml file, you can use:
   - body optional
   - bodyFile optional
   - headers optional
+  - ignore_verify_ssl optional: set to true if you use a self-signed SSL on remote for example
 ```
 
 ```yaml
