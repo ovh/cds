@@ -53,6 +53,7 @@ type Interface interface {
 	PipelineDelete(projectKey, name string) error
 	PipelineExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
 	PipelineImport(projectKey string, content []byte, format string, force bool) ([]string, error)
+	PipelineGroupsImport(projectKey, pipelineName string, content []byte, format string, force bool) (sdk.Pipeline, error)
 	PipelineList(projectKey string) ([]sdk.Pipeline, error)
 	ProjectCreate(*sdk.Project) error
 	ProjectDelete(string) error

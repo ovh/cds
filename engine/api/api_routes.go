@@ -154,6 +154,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/import/pipeline", r.POST(api.importPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/application", r.GET(api.getApplicationUsingPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group", r.POST(api.addGroupInPipelineHandler), r.PUT(api.updateGroupsOnPipelineHandler, DEPRECATED))
+	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/import", r.POST(api.importGroupsInPipeline))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/{group}", r.PUT(api.updateGroupRoleOnPipelineHandler), r.DELETE(api.deleteGroupFromPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter", r.GET(api.getParametersInPipelineHandler), r.PUT(api.updateParametersInPipelineHandler, DEPRECATED))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/parameter/{name}", r.POST(api.addParameterInPipelineHandler), r.PUT(api.updateParameterInPipelineHandler), r.DELETE(api.deleteParameterFromPipelineHandler))
