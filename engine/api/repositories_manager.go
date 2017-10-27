@@ -60,11 +60,11 @@ func (api *API) repositoriesManagerAuthorizeHandler() Handler {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
 		}
 
-		if repositoriesmanager.GetVCSServer(proj, rmName) != nil {
+		if repositoriesmanager.GetProjectVCSServer(proj, rmName) != nil {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
 		}
 
-		vcsServer, errVcsServer := repositoriesmanager.NewVCSServer(api.mustDB, api.Cache, rmName)
+		vcsServer, errVcsServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
 		if errVcsServer != nil {
 			return sdk.WrapError(errVcsServer, "repositoriesManagerAuthorize> Cannot start transaction")
 		}
@@ -120,7 +120,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
 
-		vcsServer, errVCSServer := repositoriesmanager.NewVCSServer(api.mustDB, api.Cache, rmName)
+		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
 		if errVCSServer != nil {
 			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
@@ -195,7 +195,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
 
-		vcsServer, errVCSServer := repositoriesmanager.NewVCSServer(api.mustDB, api.Cache, rmName)
+		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
 		if errVCSServer != nil {
 			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot load project")
 		}
@@ -248,7 +248,7 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 		}
 
 		// Load the repositories manager from the DB
-		vcsServer := repositoriesmanager.GetVCSServer(p, rmName)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(p, rmName)
 		if vcsServer == nil {
 			return sdk.ErrRepoNotFound
 		}
@@ -290,7 +290,7 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 
 		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s", rmName)
 
-		vcsServer := repositoriesmanager.GetVCSServer(proj, rmName)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rmName)
 		if vcsServer == nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
@@ -334,7 +334,7 @@ func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
 
-		vcsServer := repositoriesmanager.GetVCSServer(proj, rmName)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rmName)
 		if vcsServer == nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
@@ -515,7 +515,7 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 		}
 
 		//Load the repositoriesManager for the project
-		rm := repositoriesmanager.GetVCSServer(proj, rmName)
+		rm := repositoriesmanager.GetProjectVCSServer(proj, rmName)
 		if rm == nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s", projectKey, rmName)
 		}
@@ -605,7 +605,7 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Unable to load workflow")
 		}
 
-		rm := repositoriesmanager.GetVCSServer(proj, app.RepositoriesManager)
+		rm := repositoriesmanager.GetProjectVCSServer(proj, app.RepositoriesManager)
 		if rm == nil {
 			return sdk.ErrNoReposManager
 		}
@@ -659,7 +659,7 @@ func (api *API) addApplicationFromRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidProject, "addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s", projectKey, errlp)
 		}
 
-		rm := repositoriesmanager.GetVCSServer(proj, rmName)
+		rm := repositoriesmanager.GetProjectVCSServer(proj, rmName)
 		if rm == nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "addApplicationFromRepositoriesManagerHandler> Unable to laod repo manager")
 		}

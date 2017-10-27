@@ -1381,7 +1381,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 		}
 
 		//Get the RepositoriesManager Client
-		vcsServer := repositoriesmanager.GetVCSServer(proj, app.RepositoriesManager)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.RepositoriesManager)
 		client, errclient := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 		if errclient != nil {
 			return sdk.WrapError(errclient, "getPipelineCommitsHandler> Cannot get client")

@@ -141,7 +141,7 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 	}
 
 	//get the client for the repositories manager
-	vcsServer := repositoriesmanager.GetVCSServer(proj, rm)
+	vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rm)
 	client, err := repositoriesmanager.AuthorizedClient(tx, store, vcsServer)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Polling> Unable to get client for %s %s", projectKey, rm)

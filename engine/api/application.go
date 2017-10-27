@@ -313,7 +313,7 @@ func (api *API) getApplicationBranchHandler() Handler {
 
 		var branches []sdk.VCSBranch
 		if app.RepositoryFullname != "" && app.RepositoriesManager != "" {
-			vcsServer := repositoriesmanager.GetVCSServer(proj, app.RepositoriesManager)
+			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.RepositoriesManager)
 			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 			if erra != nil {
 				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager, erra)
@@ -366,7 +366,7 @@ func (api *API) getApplicationRemoteHandler() Handler {
 		remotes := []sdk.VCSRemote{}
 		var prs []sdk.VCSPullRequest
 		if app.RepositoryFullname != "" && app.RepositoriesManager != "" {
-			vcsServer := repositoriesmanager.GetVCSServer(proj, app.RepositoriesManager)
+			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.RepositoriesManager)
 			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 			if erra != nil {
 				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationRemoteHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager, erra)

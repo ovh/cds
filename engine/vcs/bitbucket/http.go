@@ -13,7 +13,6 @@ import (
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -132,8 +131,6 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 		return err
 	}
 
-	log.Debug("VCS> Bitbucket> request: %s %s. body: %s", req.Method, req.URL.String(), string(values))
-
 	cacheKey := cache.Key("vcs", "bitbucket", "request", req.URL.String(), token.Token())
 	if v != nil && method == "GET" {
 		if c.consumer.cache.Get(cacheKey, v) {
@@ -153,8 +150,6 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 	if err != nil {
 		return err
 	}
-
-	log.Debug("VCS> Bitbucket> response: %s", string(body))
 
 	// Check for an http error status (ie not 200 StatusOK)
 	switch resp.StatusCode {

@@ -51,8 +51,8 @@ type vcsClient struct {
 	srvs   []sdk.Service
 }
 
-// GetVCSServer returns sdk.ProjectVCSServer for a project
-func GetVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
+// GetProjectVCSServer returns sdk.ProjectVCSServer for a project
+func GetProjectVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
 	for _, v := range p.VCSServers {
 		if v.Name == name {
 			return &v
@@ -62,8 +62,8 @@ func GetVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
 	return nil
 }
 
-// NewVCSServer returns a sdk.VCSServer wrapping vcs uservices calls
-func NewVCSServer(dbFunc func() *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
+// NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs uservices calls
+func NewVCSServerConsumer(dbFunc func() *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
 	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
 }
 
@@ -106,7 +106,7 @@ func (c *vcsConsumer) AuthorizeToken(token string, secret string) (string, strin
 }
 
 func (c *vcsConsumer) GetAuthorizedClient(token string, secret string) (sdk.VCSAuthorizedClient, error) {
-	s := GetVCSServer(c.proj, c.name)
+	s := GetProjectVCSServer(c.proj, c.name)
 	if s == nil {
 		return nil, sdk.ErrNoReposManagerClientAuth
 	}

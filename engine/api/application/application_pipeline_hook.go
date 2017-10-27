@@ -64,7 +64,7 @@ func TriggerPipeline(tx gorp.SqlExecutor, store cache.Store, h sdk.Hook, branch 
 
 	// Get commit message to check if we have to skip the build
 	if a.RepositoriesManager != "" {
-		vcsServer := repositoriesmanager.GetVCSServer(projectData, a.RepositoriesManager)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(projectData, a.RepositoriesManager)
 		client, _ := repositoriesmanager.AuthorizedClient(tx, store, vcsServer)
 		if client != nil {
 			commit, err := client.Commit(a.RepositoryFullname, hash)

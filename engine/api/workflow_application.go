@@ -77,7 +77,7 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
 		}
 
-		rm := repositoriesmanager.GetVCSServer(proj, workflowNode.Context.Application.RepositoriesManager)
+		rm := repositoriesmanager.GetProjectVCSServer(proj, workflowNode.Context.Application.RepositoriesManager)
 		if rm == nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
 		}

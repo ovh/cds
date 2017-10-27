@@ -59,7 +59,7 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 
 	//Set repositories manager
 	app.RepositoriesManager = repomanager
-	if app.RepositoriesManager != "il" && app.RepositoryFullname != "" && len(app.Pipelines) > 0 {
+	if app.RepositoriesManager != "" && app.RepositoryFullname != "" && len(app.Pipelines) > 0 {
 		if err := repositoriesmanager.InsertForApplication(db, app, proj.Key); err != nil {
 			return err
 		}

@@ -680,7 +680,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 		return nil, nil
 	}
 
-	vcsServer := repositoriesmanager.GetVCSServer(p, app.RepositoriesManager)
+	vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.RepositoriesManager)
 	if vcsServer == nil {
 		return nil, nil
 	}
@@ -763,7 +763,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline
 
 	//Initialize client for repository manager
 	if app.RepositoriesManager != "" && app.RepositoryFullname != "" {
-		vcsServer := repositoriesmanager.GetVCSServer(proj, app.RepositoriesManager)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.RepositoriesManager)
 		if vcsServer == nil {
 			return nil, nil
 		}

@@ -114,7 +114,7 @@ func PostMultipart(srvs []sdk.Service, path string, filename string, fileContent
 func DoRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.RequestModifier) ([]byte, int, error) {
 	if HTTPClient == nil {
 		HTTPClient = &http.Client{
-			Timeout: 2 * time.Second,
+			Timeout: 60 * time.Second,
 		}
 	}
 
@@ -146,7 +146,7 @@ func DoRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.R
 	//Do the request
 	resp, errDo := HTTPClient.Do(req)
 	if errDo != nil {
-		return nil, resp.StatusCode, sdk.WrapError(errDo, "services.DoRequest> Request failed")
+		return nil, 0, sdk.WrapError(errDo, "services.DoRequest> Request failed")
 	}
 	defer resp.Body.Close()
 

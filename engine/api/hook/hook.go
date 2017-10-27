@@ -248,7 +248,7 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) er
 
 // CreateHook in CDS db + repo manager webhook
 func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
-	server := repositoriesmanager.GetVCSServer(proj, rm)
+	server := repositoriesmanager.GetProjectVCSServer(proj, rm)
 	if server == nil {
 		return nil, fmt.Errorf("Unable to find repository manager")
 	}
