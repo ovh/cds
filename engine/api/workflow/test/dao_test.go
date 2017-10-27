@@ -994,9 +994,18 @@ func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 						},
 					},
 					Config: sdk.WorkflowNodeHookConfig{
-						"method":   "POST",
-						"username": "test",
-						"password": "password",
+						"method": sdk.WorkflowNodeHookConfigValue{
+							Value:        "POST",
+							Configurable: true,
+						},
+						"username": sdk.WorkflowNodeHookConfigValue{
+							Value:        "test",
+							Configurable: false,
+						},
+						"password": sdk.WorkflowNodeHookConfigValue{
+							Value:        "password",
+							Configurable: false,
+						},
 					},
 				},
 			},
