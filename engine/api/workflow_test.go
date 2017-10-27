@@ -307,14 +307,23 @@ func Test_postWorkflowWithHooksHandler(t *testing.T) {
 			Hooks: []sdk.WorkflowNodeHook{
 				{
 					Config: sdk.WorkflowNodeHookConfig{
-						"method": "GET",
+						"method": sdk.WorkflowNodeHookConfigValue{
+							Value:        "GET",
+							Configurable: true,
+						},
 					},
 					WorkflowHookModelID: workflow.WebHookModel.ID,
 				},
 				{
 					Config: sdk.WorkflowNodeHookConfig{
-						"cron":     "* * * * *",
-						"timezone": "",
+						"cron": sdk.WorkflowNodeHookConfigValue{
+							Value:        "* * * * *",
+							Configurable: true,
+						},
+						"timezone": sdk.WorkflowNodeHookConfigValue{
+							Value:        "",
+							Configurable: true,
+						},
 					},
 					WorkflowHookModelID: workflow.SchedulerModel.ID,
 				},
@@ -367,7 +376,10 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 			Hooks: []sdk.WorkflowNodeHook{
 				{
 					Config: sdk.WorkflowNodeHookConfig{
-						"method": "GET",
+						"method": sdk.WorkflowNodeHookConfigValue{
+							Value:        "GET",
+							Configurable: true,
+						},
 					},
 					WorkflowHookModelID: workflow.WebHookModel.ID,
 				},
