@@ -1,6 +1,7 @@
 package repositoriesmanager
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -146,15 +147,15 @@ func AuthorizedClient(db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectV
 
 func (c *vcsClient) doJSONRequest(method, path string, in interface{}, out interface{}) (int, error) {
 	return services.DoJSONRequest(c.srvs, method, path, in, out, func(req *http.Request) {
-		req.Header.Set("X-CDS-ACCESS-TOKEN", c.token)
-		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", c.token)
+		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
+		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
 	})
 }
 
 func (c *vcsClient) postMultipart(path string, fileContent []byte, out interface{}) (int, error) {
 	return services.PostMultipart(c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
-		req.Header.Set("X-CDS-ACCESS-TOKEN", c.token)
-		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", c.token)
+		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
+		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
 	})
 }
 
@@ -187,7 +188,7 @@ func (c *vcsClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 
 func (c *vcsClient) Branch(fullname string, branchName string) (*sdk.VCSBranch, error) {
 	branch := sdk.VCSBranch{}
-	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/%s", c.name, fullname, branchName)
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/?branch=%s", c.name, fullname, url.QueryEscape(branchName))
 	if _, err := c.doJSONRequest("GET", path, nil, &branch); err != nil {
 		return nil, err
 	}
@@ -196,7 +197,7 @@ func (c *vcsClient) Branch(fullname string, branchName string) (*sdk.VCSBranch, 
 
 func (c *vcsClient) Commits(fullname, branch, since, until string) ([]sdk.VCSCommit, error) {
 	commits := []sdk.VCSCommit{}
-	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/%s/commits?since=%s&until=?", c.name, fullname, url.QueryEscape(since), url.QueryEscape(until))
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/commits?branch=%s&since=%s&until=%s", c.name, fullname, url.QueryEscape(branch), url.QueryEscape(since), url.QueryEscape(until))
 	if _, err := c.doJSONRequest("GET", path, nil, &commits); err != nil {
 		return nil, err
 	}

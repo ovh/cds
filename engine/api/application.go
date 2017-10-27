@@ -205,8 +205,6 @@ func (api *API) getApplicationHandler() Handler {
 
 		loadOptions := []application.LoadOptionFunc{
 			application.LoadOptions.WithVariables,
-			application.LoadOptions.WithRepositoryManager,
-			application.LoadOptions.WithVariables,
 			application.LoadOptions.WithPipelines,
 		}
 		if withHooks {

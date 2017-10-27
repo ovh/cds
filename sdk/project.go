@@ -31,7 +31,7 @@ type Project struct {
 
 // ProjectVCSServer represents associations between a project and a vcs server
 type ProjectVCSServer struct {
-	Name string            `json:"repositories_manager" yaml:"-" db:"-" cli:"-"`
+	Name string            `json:"name" yaml:"-" db:"-" cli:"-"`
 	Data map[string]string `json:"data" yaml:"-" db:"-" cli:"-"`
 }
 

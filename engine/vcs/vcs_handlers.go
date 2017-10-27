@@ -12,6 +12,7 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func muxVar(r *http.Request, s string) string {
@@ -162,7 +163,7 @@ func (s *Service) getBranchHandler() api.Handler {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
-		branch := muxVar(r, "branch")
+		branch := r.URL.Query().Get("branch")
 
 		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
 		if !ok {
@@ -192,9 +193,11 @@ func (s *Service) getCommitsHandler() api.Handler {
 		name := muxVar(r, "name")
 		owner := muxVar(r, "owner")
 		repo := muxVar(r, "repo")
-		branch := muxVar(r, "branch")
+		branch := r.URL.Query().Get("branch")
 		since := r.URL.Query().Get("since")
 		until := r.URL.Query().Get("until")
+
+		log.Debug("getCommitsHandler>")
 
 		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
 		if !ok {

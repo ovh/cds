@@ -18,6 +18,10 @@ func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 			return sdk.ErrConflict
 		}
 	}
+	if err != nil {
+		return err
+	}
+
 	servers = append(servers, *vcsServer)
 
 	b1, err := json.Marshal(servers)
@@ -44,12 +48,6 @@ func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 //DeleteForProject unlink a project with a repository manager
 func DeleteForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.ProjectVCSServer) error {
 	servers, err := LoadAllForProject(db, proj.Key)
-	for _, server := range servers {
-		if server.Name == vcsServer.Name {
-			return sdk.ErrConflict
-		}
-	}
-
 	for i := range servers {
 		if servers[i].Name == vcsServer.Name {
 			servers = append(servers[:i], servers[i+1:]...)
@@ -77,19 +75,22 @@ func DeleteForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 
 //LoadAllForProject loads all repomanager link for a project
 func LoadAllForProject(db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVCSServer, error) {
-	vcsServerStr, err := db.SelectNullStr("select vcs_servers from project where projectkey = $1", projectKey)
-	if err != nil {
+	vcsServerStr := []byte{}
+	if err := db.QueryRow("select vcs_servers from project where projectkey = $1", projectKey).Scan(&vcsServerStr); err != nil {
 		return nil, err
 	}
 
-	if !vcsServerStr.Valid {
+	if len(vcsServerStr) == 0 {
 		return nil, sdk.ErrNotFound
 	}
 
-	clearVCSServer, err := secret.Decrypt([]byte(vcsServerStr.String))
+	clearVCSServer, err := secret.Decrypt(vcsServerStr)
+	if err != nil {
+		return nil, err
+	}
 	vcsServer := []sdk.ProjectVCSServer{}
 
-	if err := json.Unmarshal(clearVCSServer, vcsServer); err != nil {
+	if err := json.Unmarshal(clearVCSServer, &vcsServer); err != nil {
 		return nil, err
 	}
 
@@ -98,19 +99,22 @@ func LoadAllForProject(db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVCS
 
 //LoadForProject loads a repomanager link for a project
 func LoadForProject(db gorp.SqlExecutor, projectKey, rmName string) (*sdk.ProjectVCSServer, error) {
-	vcsServerStr, err := db.SelectNullStr("select vcs_servers from project where projectkey = $1", projectKey)
+	vcsServerStr := []byte{}
+	if err := db.QueryRow("select vcs_servers from project where projectkey = $1", projectKey).Scan(&vcsServerStr); err != nil {
+		return nil, err
+	}
+
+	if len(vcsServerStr) == 0 {
+		return nil, sdk.ErrNotFound
+	}
+
+	clearVCSServer, err := secret.Decrypt(vcsServerStr)
 	if err != nil {
 		return nil, err
 	}
 
-	if !vcsServerStr.Valid {
-		return nil, sdk.ErrNotFound
-	}
-
-	clearVCSServer, err := secret.Decrypt([]byte(vcsServerStr.String))
 	vcsServer := []sdk.ProjectVCSServer{}
-
-	if err := json.Unmarshal(clearVCSServer, vcsServer); err != nil {
+	if err := json.Unmarshal(clearVCSServer, &vcsServer); err != nil {
 		return nil, err
 	}
 
@@ -125,7 +129,7 @@ func LoadForProject(db gorp.SqlExecutor, projectKey, rmName string) (*sdk.Projec
 
 //InsertForApplication associates a repositories manager with an application
 func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application, projectKey string) error {
-	query := `UPDATE application SET repositories_manager_id =  $1, repo_fullname = $2 WHERE id = $3`
+	query := `UPDATE application SET vcs_server = $1, repo_fullname = $2 WHERE id = $3`
 	if _, err := db.Exec(query, app.RepositoriesManager, app.RepositoryFullname, app.ID); err != nil {
 		return err
 	}
@@ -135,7 +139,7 @@ func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application, projectKey 
 //DeleteForApplication removes association between  a repositories manager and an application
 //it deletes the corresponding line in repositories_manager_project
 func DeleteForApplication(db gorp.SqlExecutor, app *sdk.Application) error {
-	query := `UPDATE application SET repositories_manager_id = NULL, repo_fullname = '' WHERE id = $3`
+	query := `UPDATE application SET vcs_server = NULL, repo_fullname = '' WHERE id = $3`
 	if _, err := db.Exec(query, app.ID); err != nil {
 		return err
 	}

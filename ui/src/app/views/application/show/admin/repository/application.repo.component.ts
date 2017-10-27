@@ -35,8 +35,8 @@ export class ApplicationRepositoryComponent implements OnInit {
     }
 
     ngOnInit() {
-        if (this.project.repositories_manager && this.project.repositories_manager.length > 0) {
-            this.selectedRepoManager = this.project.repositories_manager[0].name;
+        if (this.project.vcs_servers && this.project.vcs_servers.length > 0) {
+            this.selectedRepoManager = this.project.vcs_servers[0].name;
         }
         this.updateListRepo(false);
     }
@@ -46,9 +46,9 @@ export class ApplicationRepositoryComponent implements OnInit {
             this.removeWarningModal.show();
         } else {
             this.loadingBtn = true;
-            this._appStore.removeRepository(this.project.key, this.application.name, this.application.repositories_manager.name)
+            this._appStore.removeRepository(this.project.key, this.application.name, this.application.vcs_server)
                 .subscribe( () => {
-                    delete this.application.repositories_manager;
+                    delete this.application.vcs_server;
                     delete this.application.repository_fullname;
                     this.loadingBtn = false;
                     this._toast.success('', this._translate.instant('application_repo_detach_ok'));

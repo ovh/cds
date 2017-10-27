@@ -9,10 +9,10 @@
         <tbody>
         <tr *ngFor="let r of getDataForCurrentPage()">
             <td>
-                {{r.repositories_manager}}
+                {{r.name}}
             </td>
             <td class="right aligned">
-                <app-delete-button (event)="clickDeleteButton(r.repositories_manager)" [loading]="deleteLoading"></app-delete-button>
+                <app-delete-button (event)="clickDeleteButton(r.name)" [loading]="deleteLoading"></app-delete-button>
             </td>
         </tr>
         </tbody>

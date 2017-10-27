@@ -46,7 +46,7 @@ func TriggerPipeline(tx gorp.SqlExecutor, store cache.Store, h sdk.Hook, branch 
 	p.Parameter = parameters
 
 	// get application
-	a, err := LoadByID(tx, store, h.ApplicationID, nil, LoadOptions.WithRepositoryManager, LoadOptions.WithVariablesWithClearPassword)
+	a, err := LoadByID(tx, store, h.ApplicationID, nil, LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		return nil, err
 	}

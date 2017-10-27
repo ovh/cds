@@ -29,7 +29,6 @@ var LoadOptions = struct {
 	WithGroups                     LoadOptionFunc
 	WithHooks                      LoadOptionFunc
 	WithNotifs                     LoadOptionFunc
-	WithRepositoryManager          LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 }{
 	Default:                        &loadDefaultDependencies,

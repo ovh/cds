@@ -237,14 +237,16 @@ func Test_getBranchHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"name":   "github",
-		"owner":  "ovh",
-		"repo":   "cds",
-		"branch": "master",
+		"name":  "github",
+		"owner": "ovh",
+		"repo":  "cds",
 	}
 	uri := s.Router.GetRoute("GET", s.getBranchHandler, vars)
 	test.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
+	q := req.URL.Query()
+	q.Set("branch", "vcs/old-code")
+	req.URL.RawQuery = q.Encode()
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
 	req.Header.Set(HeaderXAccessToken, token)
@@ -279,14 +281,17 @@ func Test_getCommitsHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"name":   "github",
-		"owner":  "ovh",
-		"repo":   "cds",
-		"branch": "master",
+		"name":  "github",
+		"owner": "fsamin",
+		"repo":  "go-dump",
 	}
 	uri := s.Router.GetRoute("GET", s.getCommitsHandler, vars)
 	test.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
+	q := req.URL.Query()
+	q.Set("since", "61dc819dc47bc6b556b2c4e1293f919d492f1f5a")
+	q.Set("branch", "fsamin/fix-2017-07-28-10-07-56")
+	req.URL.RawQuery = q.Encode()
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
 	req.Header.Set(HeaderXAccessToken, token)

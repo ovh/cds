@@ -315,7 +315,7 @@ func pipelineBuildEnd(DBFunc func() *gorp.DbMap, store cache.Store, tx gorp.SqlE
 		parameters = append(parameters, parentParams...)
 
 		// Start build
-		app, err := application.LoadByName(tx, store, t.DestProject.Key, t.DestApplication.Name, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
+		app, err := application.LoadByName(tx, store, t.DestProject.Key, t.DestApplication.Name, nil, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 		if err != nil {
 			return sdk.WrapError(err, "pipelineBuildEnd> Cannot load destination application")
 		}

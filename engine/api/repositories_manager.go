@@ -148,7 +148,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 		}
 
 		if err := repositoriesmanager.InsertForProject(tx, proj, vcsServerForProject); err != nil {
-			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with SaveDataForProject")
+			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with InsertForProject")
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, u, proj); err != nil {
@@ -277,6 +277,7 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 
 func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+
 		vars := mux.Vars(r)
 		projectKey := vars["permProjectKey"]
 		rmName := vars["name"]
@@ -287,10 +288,14 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
 
+		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s", rmName)
+
 		vcsServer := repositoriesmanager.GetVCSServer(proj, rmName)
 		if vcsServer == nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
 		}
+
+		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s; ok", vcsServer.Name)
 
 		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 		if err != nil {
@@ -303,7 +308,7 @@ func (api *API) getReposFromRepositoriesManagerHandler() Handler {
 		}
 
 		var repos []sdk.VCSRepo
-		if !api.Cache.Get(cacheKey, &repos) {
+		if !api.Cache.Get(cacheKey, &repos) || len(repos) == 0 {
 			log.Debug("getReposFromRepositoriesManagerHandler> loading from Stash")
 			repos, err = client.Repos()
 			api.Cache.SetWithTTL(cacheKey, repos, 0)
@@ -338,6 +343,8 @@ func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getRepoFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
 		}
+
+		log.Info("getRepoFromRepositoriesManagerHandler> Loading repository on %s", vcsServer.Name)
 
 		repo, err := client.RepoByFullname(repoName)
 		if err != nil {

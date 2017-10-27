@@ -98,7 +98,7 @@ func executerRun(db *gorp.DbMap, store cache.Store, e *sdk.RepositoryPollerExecu
 	}
 
 	//Update pipeline build commits
-	app, errapp := application.LoadByID(db, store, e.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
+	app, errapp := application.LoadByID(db, store, e.ApplicationID, nil)
 	if errapp != nil {
 		log.Warning("poller.ExecuterRun> Unable to load application : %s", errapp)
 		return

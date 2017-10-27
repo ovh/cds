@@ -212,7 +212,7 @@ export class ApplicationStore {
                 let appToUpdate = cache.get(appKey);
                 if (appToUpdate) {
                     appToUpdate.last_modified = app.last_modified;
-                    appToUpdate.repositories_manager = app.repositories_manager;
+                    appToUpdate.vcs_server = app.vcs_server;
                     appToUpdate.repository_fullname = app.repository_fullname;
                     this._application.next(cache.set(appKey, appToUpdate));
                 }
@@ -233,7 +233,7 @@ export class ApplicationStore {
                 if (cache.get(appKey)) {
                     let pToUpdate = cache.get(appKey);
                     pToUpdate.last_modified = app.last_modified;
-                    delete pToUpdate.repositories_manager;
+                    delete pToUpdate.vcs_server;
                     delete pToUpdate.repository_fullname;
                     this._application.next(cache.set(appKey, pToUpdate));
                 }
@@ -289,7 +289,7 @@ export class ApplicationStore {
      * @returns {Observable<Application>}
      */
     addHook(p: Project, a: Application, hook: Hook): Observable<Application> {
-        return this._applicationService.addHook(p.key, a.name, a.repositories_manager.name, a.repository_fullname, hook.pipeline.name)
+        return this._applicationService.addHook(p.key, a.name, a.vcs_server, a.repository_fullname, hook.pipeline.name)
             .map( app => {
                 return this.refreshApplicationWorkflowCache(p.key, a.name, app);
         });
