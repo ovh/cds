@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
@@ -52,4 +53,27 @@ func (c *client) ApplicationList(key string) ([]sdk.Application, error) {
 		return nil, err
 	}
 	return apps, nil
+}
+
+func (c *client) ApplicationGroupsImport(projectKey, appName string, content []byte, format string, force bool) (sdk.Application, error) {
+	var url string
+	var app sdk.Application
+	url = fmt.Sprintf("/project/%s/application/%s/group/import?format=%s", projectKey, appName, format)
+
+	if force {
+		url += "&forceUpdate=true"
+	}
+
+	btes, code, errReq := c.Request("POST", url, content)
+	if code != 200 {
+		if errReq == nil {
+			return app, fmt.Errorf("HTTP Code %d", code)
+		}
+	}
+
+	if err := json.Unmarshal(btes, &app); err != nil {
+		return app, errReq
+	}
+
+	return app, errReq
 }

@@ -13,29 +13,29 @@ import (
 )
 
 var (
-	pipelineGroupCmd = cli.Command{
+	applicationGroupCmd = cli.Command{
 		Name:  "group",
 		Short: "Manage CDS group linked to a pipeline",
 	}
 
-	pipelineGroup = cli.NewCommand(pipelineGroupCmd, nil,
+	applicationGroup = cli.NewCommand(applicationGroupCmd, nil,
 		[]*cobra.Command{
-			cli.NewCommand(pipelineGroupImportCmd, pipelineGroupImportRun, nil),
+			cli.NewCommand(applicationGroupImportCmd, applicationGroupImportRun, nil),
 		})
 )
 
-var pipelineGroupImportCmd = cli.Command{
+var applicationGroupImportCmd = cli.Command{
 	Name:  "import",
-	Short: "Import group linked to a CDS pipeline",
+	Short: "Import group linked to a CDS application",
 	Args: []cli.Arg{
 		{Name: "project-key"},
-		{Name: "pipeline-name"},
+		{Name: "application-name"},
 		{Name: "path"},
 	},
 	Flags: []cli.Flag{
 		{
 			Name:  "force",
-			Usage: "Use force flag to replace groups in your pipeline",
+			Usage: "Use force flag to replace groups in your application",
 			IsValid: func(s string) bool {
 				if s != "true" && s != "false" {
 					return false
@@ -48,7 +48,7 @@ var pipelineGroupImportCmd = cli.Command{
 	},
 }
 
-func pipelineGroupImportRun(v cli.Values) error {
+func applicationGroupImportRun(v cli.Values) error {
 	var btes []byte
 	var format = "yaml"
 
@@ -73,10 +73,10 @@ func pipelineGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.PipelineGroupsImport(v["project-key"], v["pipeline-name"], btes, format, v.GetBool("force")); err != nil {
+	if _, err := client.PipelineGroupsImport(v["project-key"], v["application-name"], btes, format, v.GetBool("force")); err != nil {
 		return err
 	}
-	fmt.Printf("Groups imported in pipeline %s with success\n", v["pipeline-name"])
+	fmt.Printf("Groups imported in application %s with success\n", v["application-name"])
 
 	return nil
 }

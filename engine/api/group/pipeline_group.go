@@ -84,8 +84,8 @@ func CheckGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64) (bool,
 	return false, nil
 }
 
-// GetGroupInPipelineByName checks if group has access to pipeline with the name
-func GetGroupInPipelineByName(db gorp.SqlExecutor, pipelineID int64, groupName string) (int64, error) {
+// LoadGroupInPipelineByName checks if group has access to pipeline with the name
+func LoadGroupInPipelineByName(db gorp.SqlExecutor, pipelineID int64, groupName string) (int64, error) {
 	query := `SELECT pipeline_group.group_id FROM pipeline_group
 	JOIN "group" AS grouptable ON grouptable.id = pipeline_group.group_id
 	WHERE pipeline_group.pipeline_id = $1 AND grouptable.name = $2`

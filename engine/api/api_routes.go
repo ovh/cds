@@ -110,6 +110,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/version", r.GET(api.getApplicationBranchVersionHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/clone", r.POST(api.cloneApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/group", r.POST(api.addGroupInApplicationHandler), r.PUT(api.updateGroupsInApplicationHandler, DEPRECATED))
+	r.Handle("/project/{key}/application/{permApplicationName}/group/import", r.POST(api.importGroupsInApplication))
 	r.Handle("/project/{key}/application/{permApplicationName}/group/{group}", r.PUT(api.updateGroupRoleOnApplicationHandler), r.DELETE(api.deleteGroupFromApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/history/branch", r.GET(api.getPipelineBuildBranchHistoryHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/history/env/deploy", r.GET(api.getApplicationDeployHistoryHandler))
