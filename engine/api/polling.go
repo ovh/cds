@@ -57,7 +57,7 @@ func (api *API) addPollerHandler() Handler {
 		h.Enabled = true
 
 		//Check it the application is attached to a repository
-		if app.RepositoriesManager == "" || app.RepositoryFullname == "" {
+		if app.VCSServer == "" || app.RepositoryFullname == "" {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addPollerHandler> No repository on application")
 		}
 

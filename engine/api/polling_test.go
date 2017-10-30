@@ -89,7 +89,7 @@ func TestAddPollerHandler(t *testing.T) {
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	app.RepositoriesManager = rm
+	app.VCSServer = rm
 	app.RepositoryFullname = "test/" + app.Name
 	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
@@ -158,7 +158,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	app.RepositoriesManager = rm
+	app.VCSServer = rm
 	app.RepositoryFullname = "test/" + app.Name
 	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
@@ -249,7 +249,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	app.RepositoriesManager = rm
+	app.VCSServer = rm
 	app.RepositoryFullname = "test/" + app.Name
 	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
@@ -342,7 +342,7 @@ func TestGetPollersHandler(t *testing.T) {
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	app.RepositoriesManager = rm
+	app.VCSServer = rm
 	app.RepositoryFullname = "test/" + app.Name
 	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
@@ -431,7 +431,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	app.RepositoriesManager = rm
+	app.VCSServer = rm
 	app.RepositoryFullname = "test/" + app.Name
 	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 

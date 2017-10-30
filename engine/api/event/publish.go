@@ -67,8 +67,8 @@ func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *
 
 	rmn := ""
 	rfn := ""
-	if pb.Application.RepositoriesManager != "" {
-		rmn = pb.Application.RepositoriesManager
+	if pb.Application.VCSServer != "" {
+		rmn = pb.Application.VCSServer
 		rfn = pb.Application.RepositoryFullname
 	}
 

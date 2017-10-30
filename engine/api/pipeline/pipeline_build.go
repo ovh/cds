@@ -676,11 +676,11 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 
 // UpdatePipelineBuildCommits gets and update commit for given pipeline build
 func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, pb *sdk.PipelineBuild) ([]sdk.VCSCommit, error) {
-	if app.RepositoriesManager == "" {
+	if app.VCSServer == "" {
 		return nil, nil
 	}
 
-	vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.RepositoriesManager)
+	vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
 	if vcsServer == nil {
 		return nil, nil
 	}
@@ -762,8 +762,8 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline
 	var client sdk.VCSAuthorizedClient
 
 	//Initialize client for repository manager
-	if app.RepositoriesManager != "" && app.RepositoryFullname != "" {
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.RepositoriesManager)
+	if app.VCSServer != "" && app.RepositoryFullname != "" {
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 		if vcsServer == nil {
 			return nil, nil
 		}
@@ -810,7 +810,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline
 	case client != nil && (!gitURLfound || !gitHTTPURLFound) && !parentBuildNumberFound: // For root pipeline
 		repo, errC := client.RepoByFullname(app.RepositoryFullname)
 		if errC != nil {
-			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.RepositoriesManager, app.RepositoryFullname)
+			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.VCSServer, app.RepositoryFullname)
 		}
 
 		sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)

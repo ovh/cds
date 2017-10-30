@@ -312,11 +312,11 @@ func (api *API) getApplicationBranchHandler() Handler {
 		}
 
 		var branches []sdk.VCSBranch
-		if app.RepositoryFullname != "" && app.RepositoriesManager != "" {
-			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.RepositoriesManager)
+		if app.RepositoryFullname != "" && app.VCSServer != "" {
+			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 			if erra != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager, erra)
+				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationBranchHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
 			}
 			if remote != "" && remote != app.RepositoryFullname {
 				brs, errB := client.Branches(remote)
@@ -365,11 +365,11 @@ func (api *API) getApplicationRemoteHandler() Handler {
 
 		remotes := []sdk.VCSRemote{}
 		var prs []sdk.VCSPullRequest
-		if app.RepositoryFullname != "" && app.RepositoriesManager != "" {
-			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.RepositoriesManager)
+		if app.RepositoryFullname != "" && app.VCSServer != "" {
+			vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 			client, erra := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 			if erra != nil {
-				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationRemoteHandler> Cannot get client got %s %s : %s", projectKey, app.RepositoriesManager, erra)
+				return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getApplicationRemoteHandler> Cannot get client got %s %s : %s", projectKey, app.VCSServer, erra)
 			}
 			var errb error
 			prs, errb = client.PullRequests(app.RepositoryFullname)

@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadOptionFunc is a type for all options in LoadOptions
@@ -153,7 +152,6 @@ func LoadByPipeline(db gorp.SqlExecutor, store cache.Store, pipelineID int64, u 
 }
 
 func load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Application, error) {
-	log.Debug("application.load> %s %v", query, args)
 	dbApp := dbApplication{}
 	if err := db.SelectOne(&dbApp, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -300,8 +298,6 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 }
 
 func loadapplications(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Application, error) {
-	log.Debug("application.loadapplications> %s %v", query, args)
-
 	var res []dbApplication
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {

@@ -1,4 +1,5 @@
 <div class="AppRepository" [hidden]="!project.vcs_servers || project.vcs_servers.length === 0">
+
     <form class="ui form" (ngSubmit)="linkRepository()" [hidden]="application.vcs_server">
         <div class="fields">
             <div class="three wide field">
@@ -39,7 +40,7 @@
         <form class="ui form" [hidden]="!application.vcs_server">
             <div class="fields">
                 <div class="eight wide field">
-                    <span>{{application.vcs_server?.name}}</span>
+                    <span>{{application.vcs_server}}</span>
                     <span>&#10145;</span>
                     <span>{{application.repository_fullname}}</span>
                 </div>

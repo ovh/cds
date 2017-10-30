@@ -383,7 +383,7 @@ func (api *API) attachRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrRepoNotFound, "attachRepositoriesManager> Cannot get repo %s: %s", fullname, err)
 		}
 
-		app.RepositoriesManager = rm.Name
+		app.VCSServer = rm.Name
 		app.RepositoryFullname = fullname
 
 		tx, errT := api.mustDB().Begin()
@@ -520,6 +520,8 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s", projectKey, rmName)
 		}
 
+		log.Debug("addHookOnRepositoriesManagerHandler> here %v", rm)
+
 		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "addHookOnRepositoriesManagerHandler> cannot start transaction")
@@ -605,14 +607,14 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Unable to load workflow")
 		}
 
-		rm := repositoriesmanager.GetProjectVCSServer(proj, app.RepositoriesManager)
+		rm := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 		if rm == nil {
 			return sdk.ErrNoReposManager
 		}
 
 		client, errauth := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
 		if errauth != nil {
-			return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, app.RepositoriesManager)
+			return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, app.VCSServer)
 		}
 
 		t := strings.Split(app.RepositoryFullname, "/")
@@ -621,6 +623,7 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 		}
 
 		s := api.Config.URL.API + hook.HookLink
+		log.Info("Will delete hook %s", h.UID)
 		link := fmt.Sprintf(s, h.UID, t[0], t[1])
 
 		vcsHook := sdk.VCSHook{
@@ -714,7 +717,7 @@ func (api *API) addApplicationFromRepositoriesManagerHandler() Handler {
 		}
 
 		//Attach the application to the repositories manager
-		app.RepositoriesManager = rm.Name
+		app.VCSServer = rm.Name
 		app.RepositoryFullname = repoFullname
 		if err := repositoriesmanager.InsertForApplication(api.mustDB(), &app, projectKey); err != nil {
 			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot attach application")

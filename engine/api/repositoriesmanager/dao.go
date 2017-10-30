@@ -1,9 +1,8 @@
 package repositoriesmanager
 
 import (
-	"encoding/json"
-
 	"github.com/go-gorp/gorp"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
@@ -24,7 +23,7 @@ func InsertForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 
 	servers = append(servers, *vcsServer)
 
-	b1, err := json.Marshal(servers)
+	b1, err := yaml.Marshal(servers)
 	if err != nil {
 		return err
 	}
@@ -55,7 +54,7 @@ func DeleteForProject(db gorp.SqlExecutor, proj *sdk.Project, vcsServer *sdk.Pro
 		}
 	}
 
-	b1, err := json.Marshal(servers)
+	b1, err := yaml.Marshal(servers)
 	if err != nil {
 		return err
 	}
@@ -90,7 +89,7 @@ func LoadAllForProject(db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVCS
 	}
 	vcsServer := []sdk.ProjectVCSServer{}
 
-	if err := json.Unmarshal(clearVCSServer, &vcsServer); err != nil {
+	if err := yaml.Unmarshal(clearVCSServer, &vcsServer); err != nil {
 		return nil, err
 	}
 
@@ -114,7 +113,7 @@ func LoadForProject(db gorp.SqlExecutor, projectKey, rmName string) (*sdk.Projec
 	}
 
 	vcsServer := []sdk.ProjectVCSServer{}
-	if err := json.Unmarshal(clearVCSServer, &vcsServer); err != nil {
+	if err := yaml.Unmarshal(clearVCSServer, &vcsServer); err != nil {
 		return nil, err
 	}
 
@@ -130,7 +129,7 @@ func LoadForProject(db gorp.SqlExecutor, projectKey, rmName string) (*sdk.Projec
 //InsertForApplication associates a repositories manager with an application
 func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application, projectKey string) error {
 	query := `UPDATE application SET vcs_server = $1, repo_fullname = $2 WHERE id = $3`
-	if _, err := db.Exec(query, app.RepositoriesManager, app.RepositoryFullname, app.ID); err != nil {
+	if _, err := db.Exec(query, app.VCSServer, app.RepositoryFullname, app.ID); err != nil {
 		return err
 	}
 	return nil
@@ -139,7 +138,7 @@ func InsertForApplication(db gorp.SqlExecutor, app *sdk.Application, projectKey 
 //DeleteForApplication removes association between  a repositories manager and an application
 //it deletes the corresponding line in repositories_manager_project
 func DeleteForApplication(db gorp.SqlExecutor, app *sdk.Application) error {
-	query := `UPDATE application SET vcs_server = NULL, repo_fullname = '' WHERE id = $3`
+	query := `UPDATE application SET vcs_server = '', repo_fullname = '' WHERE id = $1`
 	if _, err := db.Exec(query, app.ID); err != nil {
 		return err
 	}

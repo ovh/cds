@@ -92,9 +92,9 @@ func InsertHook(db gorp.SqlExecutor, h *sdk.Hook) error {
 // LoadHook loads a single hook
 func LoadHook(db gorp.SqlExecutor, id int64) (sdk.Hook, error) {
 	h := sdk.Hook{ID: id}
-	query := `SELECT application_id, pipeline_id, kind, host, project, repository, enabled FROM hook WHERE id = $1`
+	query := `SELECT uid, application_id, pipeline_id, kind, host, project, repository, enabled FROM hook WHERE id = $1`
 
-	err := db.QueryRow(query, id).Scan(&h.ApplicationID, &h.Pipeline.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.Enabled)
+	err := db.QueryRow(query, id).Scan(&h.UID, &h.ApplicationID, &h.Pipeline.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.Enabled)
 	if err != nil {
 		return h, err
 	}
@@ -289,6 +289,8 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 		Method: "POST",
 		URL:    h.Link,
 	}
+
+	log.Info("CreateHook> will create %+v", hook)
 
 	if err := client.CreateHook(repoFullName, hook); err != nil {
 		log.Warning("Cannot create hook on repository manager: %s", err)

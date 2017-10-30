@@ -13,9 +13,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/services"
-	"github.com/ovh/cds/sdk/log"
-
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //LoadAll Load all RepositoriesManager from the database
@@ -223,11 +222,16 @@ func (c *vcsClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) 
 }
 
 func (c *vcsClient) CreateHook(fullname string, hook sdk.VCSHook) error {
-	return nil
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/", c.name, fullname)
+	_, err := c.doJSONRequest("POST", path, &hook, nil)
+	return err
 }
 
-func (c *vcsClient) GetHook(fullname, url string) (sdk.VCSHook, error) {
-	return sdk.VCSHook{}, nil
+func (c *vcsClient) GetHook(fullname, u string) (sdk.VCSHook, error) {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/?url=%s", c.name, fullname, url.QueryEscape(u))
+	hook := &sdk.VCSHook{}
+	_, err := c.doJSONRequest("GET", path, nil, hook)
+	return *hook, err
 }
 
 func (c *vcsClient) UpdateHook(fullname, url string, hook sdk.VCSHook) error {
@@ -235,7 +239,9 @@ func (c *vcsClient) UpdateHook(fullname, url string, hook sdk.VCSHook) error {
 }
 
 func (c *vcsClient) DeleteHook(fullname string, hook sdk.VCSHook) error {
-	return nil
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/?url=%s", c.name, fullname, url.QueryEscape(hook.URL))
+	_, err := c.doJSONRequest("DELETE", path, nil, nil)
+	return err
 }
 
 func (c *vcsClient) GetEvents(fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {

@@ -133,7 +133,7 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 	e.Executed = true
 
 	projectKey := p.Application.ProjectKey
-	rm := p.Application.RepositoriesManager
+	rm := p.Application.VCSServer
 
 	proj, errProj := project.Load(tx, store, projectKey, nil)
 	if errProj != nil {

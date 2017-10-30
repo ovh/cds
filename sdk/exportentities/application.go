@@ -8,12 +8,12 @@ import (
 
 // Application represents exported sdk.Application
 type Application struct {
-	Name              string                         `json:"name" yaml:"name"`
-	RepositoryManager string                         `json:"repo_manager,omitempty" yaml:"repo_manager,omitempty"`
-	RepositoryName    string                         `json:"repo_name,omitempty" yaml:"repo_name,omitempty"`
-	Permissions       map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty"`
-	Variables         map[string]VariableValue       `json:"variables,omitempty" yaml:"variables,omitempty"`
-	Pipelines         map[string]ApplicationPipeline `json:"pipelines,omitempty" yaml:"pipelines,omitempty"`
+	Name           string                         `json:"name" yaml:"name"`
+	VCSServer      string                         `json:"vcs_server,omitempty" yaml:"vcs_server,omitempty"`
+	RepositoryName string                         `json:"repo,omitempty" yaml:"repo,omitempty"`
+	Permissions    map[string]int                 `json:"permissions,omitempty" yaml:"permissions,omitempty"`
+	Variables      map[string]VariableValue       `json:"variables,omitempty" yaml:"variables,omitempty"`
+	Pipelines      map[string]ApplicationPipeline `json:"pipelines,omitempty" yaml:"pipelines,omitempty"`
 }
 
 // ApplicationPipeline represents exported sdk.ApplicationPipeline
@@ -62,8 +62,8 @@ func NewApplication(app *sdk.Application) (a *Application) {
 	a = new(Application)
 	a.Name = app.Name
 
-	if app.RepositoriesManager != "" {
-		a.RepositoryManager = app.RepositoriesManager
+	if app.VCSServer != "" {
+		a.VCSServer = app.VCSServer
 		a.RepositoryName = app.RepositoryFullname
 	}
 

@@ -497,3 +497,103 @@ func (s *Service) postUploadReleaseFileHandler() api.Handler {
 		return nil
 	}
 }
+
+func (s *Service) getHookHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		hookURL, err := url.QueryUnescape(r.URL.Query().Get("url"))
+		if err != nil {
+			return err
+		}
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> getHookHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getHookHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getHookHandler> Unable to get authorized client")
+		}
+
+		hook, err := client.GetHook(fmt.Sprintf("%s/%s", owner, repo), hookURL)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> getHookHandler> Unable to get authorized client")
+		}
+
+		return api.WriteJSON(w, r, hook, http.StatusOK)
+	}
+}
+
+func (s *Service) postHookHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postHookHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postHookHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> postHookHandler> Unable to get authorized client")
+		}
+
+		body := sdk.VCSHook{}
+		if err := api.UnmarshalBody(r, &body); err != nil {
+			return sdk.WrapError(err, "VCS> postHookHandler> Unable to read body")
+		}
+
+		return client.CreateHook(fmt.Sprintf("%s/%s", owner, repo), body)
+	}
+}
+
+func (s *Service) deleteHookHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		owner := muxVar(r, "owner")
+		repo := muxVar(r, "repo")
+
+		hookURL, err := url.QueryUnescape(r.URL.Query().Get("url"))
+		if err != nil {
+			return err
+		}
+
+		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
+		if !ok {
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> deleteHookHandler> Unable to get access token headers")
+		}
+
+		consumer, err := s.getConsumer(name)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> deleteHookHandler> VCS server unavailable")
+		}
+
+		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> deleteHookHandler> Unable to get authorized client")
+		}
+
+		hook, err := client.GetHook(fmt.Sprintf("%s/%s", owner, repo), hookURL)
+		if err != nil {
+			return sdk.WrapError(err, "VCS> deleteHookHandler> Unable to get hook %s", hookURL)
+		}
+
+		return client.DeleteHook(fmt.Sprintf("%s/%s", owner, repo), hook)
+	}
+}

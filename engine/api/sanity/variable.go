@@ -88,7 +88,7 @@ func checkGitVariables(db gorp.SqlExecutor, store cache.Store, vars []string, p 
 			for _, app := range p.Applications {
 				ok, _ := application.IsAttached(db, p.ID, a.ID, pip.Name)
 				if ok {
-					if app.RepositoriesManager == "" || app.RepositoryFullname == "" {
+					if app.VCSServer == "" || app.RepositoryFullname == "" {
 						w := sdk.Warning{
 							ID: GitURLWithoutLinkedRepository,
 							MessageParam: map[string]string{

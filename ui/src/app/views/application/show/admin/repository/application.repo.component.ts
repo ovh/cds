@@ -35,6 +35,7 @@ export class ApplicationRepositoryComponent implements OnInit {
     }
 
     ngOnInit() {
+        console.log(this.application.vcs_server);
         if (this.project.vcs_servers && this.project.vcs_servers.length > 0) {
             this.selectedRepoManager = this.project.vcs_servers[0].name;
         }

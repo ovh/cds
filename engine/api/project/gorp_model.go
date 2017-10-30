@@ -6,11 +6,11 @@ import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 type dbProject sdk.Project
@@ -26,8 +26,6 @@ func init() {
 
 // PostGet is a db hook
 func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
-	log.Debug("project.PostGet> %s", p.Key)
-
 	var fields = struct {
 		Metadata   sql.NullString `db:"metadata"`
 		VCSServers []byte         `db:"vcs_servers"`
@@ -42,13 +40,12 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 	}
 
 	if len(fields.VCSServers) > 0 {
-		log.Debug("project.PostGet> Decrypting vcs server for %s", p.Key)
 		clearVCSServer, err := secret.Decrypt([]byte(fields.VCSServers))
 		if err != nil {
 			return err
 		}
 
-		if err := json.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
+		if err := yaml.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
 			return err
 		}
 	}
@@ -63,7 +60,7 @@ func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
 		return err
 	}
 
-	b1, err := json.Marshal(p.VCSServers)
+	b1, err := yaml.Marshal(p.VCSServers)
 	if err != nil {
 		return err
 	}

@@ -1360,7 +1360,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 		commits := []sdk.VCSCommit{}
 
 		//Check it the application is attached to a repository
-		if app.RepositoriesManager == "" {
+		if app.VCSServer == "" {
 			log.Warning("getPipelineCommitsHandler> Application %s/%s not attached to a repository manager", projectKey, appName)
 			return WriteJSON(w, r, commits, http.StatusOK)
 		}
@@ -1381,7 +1381,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 		}
 
 		//Get the RepositoriesManager Client
-		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.RepositoriesManager)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
 		client, errclient := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 		if errclient != nil {
 			return sdk.WrapError(errclient, "getPipelineCommitsHandler> Cannot get client")
@@ -1463,7 +1463,7 @@ func (api *API) getPipelineBuildCommitsHandler() Handler {
 		}
 
 		//Check it the application is attached to a repository
-		if app.RepositoriesManager == "" || app.RepositoryFullname == "" {
+		if app.VCSServer == "" || app.RepositoryFullname == "" {
 			return sdk.ErrNoReposManagerClientAuth
 		}
 

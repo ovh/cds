@@ -73,18 +73,18 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			return sdk.WrapError(sdk.ErrApplicationNotFound, "releaseApplicationWorkflowHandler")
 		}
 
-		if workflowNode.Context.Application.RepositoriesManager == "" {
+		if workflowNode.Context.Application.VCSServer == "" {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
 		}
 
-		rm := repositoriesmanager.GetProjectVCSServer(proj, workflowNode.Context.Application.RepositoriesManager)
+		rm := repositoriesmanager.GetProjectVCSServer(proj, workflowNode.Context.Application.VCSServer)
 		if rm == nil {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
 		}
 
 		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
 		if err != nil {
-			return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.RepositoriesManager)
+			return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.VCSServer)
 		}
 
 		release, errRelease := client.Release(workflowNode.Context.Application.RepositoryFullname, req.TagName, req.ReleaseTitle, req.ReleaseContent)

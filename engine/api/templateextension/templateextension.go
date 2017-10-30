@@ -152,7 +152,7 @@ func Apply(db gorp.SqlExecutor, store cache.Store, templ template.Interface, pro
 
 			// If repo from repository manager
 			if len(repoDatas) == 2 {
-				app.RepositoriesManager = repoDatas[0]
+				app.VCSServer = repoDatas[0]
 				app.RepositoryFullname = repoDatas[1]
 
 				var vcsServer *sdk.ProjectVCSServer
@@ -173,7 +173,7 @@ func Apply(db gorp.SqlExecutor, store cache.Store, templ template.Interface, pro
 					if v.Name == p.Name {
 						client, errClient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
 						if errClient != nil {
-							log.Warning("ApplyTemplate> Cannot get client got %s %s : %s", proj.Key, app.RepositoriesManager, errClient)
+							log.Warning("ApplyTemplate> Cannot get client got %s %s : %s", proj.Key, app.VCSServer, errClient)
 							return nil, errClient
 						}
 						appRepo, errRepo := client.RepoByFullname(app.RepositoryFullname)

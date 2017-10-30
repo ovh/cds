@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const bitbucketHookKey string = "de.aeffle.stash.plugin.stash-http-get-post-receive-hook%3Ahttp-get-post-receive-hook"
@@ -32,6 +33,7 @@ func (b *bitbucketClient) GetHook(repo, url string) (sdk.VCSHook, error) {
 	}
 
 	for i, h := range hcfg.Details {
+		log.Debug("vcs> bitbucket> GetHook> %+v", h)
 		if h.URL == url {
 			return sdk.VCSHook{
 				ContentType: h.PostContentType,

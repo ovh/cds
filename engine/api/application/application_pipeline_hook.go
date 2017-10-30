@@ -63,13 +63,13 @@ func TriggerPipeline(tx gorp.SqlExecutor, store cache.Store, h sdk.Hook, branch 
 	}
 
 	// Get commit message to check if we have to skip the build
-	if a.RepositoriesManager != "" {
-		vcsServer := repositoriesmanager.GetProjectVCSServer(projectData, a.RepositoriesManager)
+	if a.VCSServer != "" {
+		vcsServer := repositoriesmanager.GetProjectVCSServer(projectData, a.VCSServer)
 		client, _ := repositoriesmanager.AuthorizedClient(tx, store, vcsServer)
 		if client != nil {
 			commit, err := client.Commit(a.RepositoryFullname, hash)
 			if err != nil {
-				log.Warning("hook> can't get commit %s from %s on %s : %s", hash, a.RepositoryFullname, a.RepositoriesManager, err)
+				log.Warning("hook> can't get commit %s from %s on %s : %s", hash, a.RepositoryFullname, a.VCSServer, err)
 			}
 			match, err := regexp.Match(".*\\[ci skip\\].*|.*\\[cd skip\\].*", []byte(commit.Message))
 			if err != nil {

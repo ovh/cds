@@ -283,7 +283,6 @@ func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, u *sdk.User, pipel
 }
 
 func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
-	log.Debug("loadprojects> %s %v", query, args)
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
