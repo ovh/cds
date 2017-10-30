@@ -355,12 +355,12 @@ func (api *API) getApplicationRemoteHandler() Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load project %s from db", projectKey, projectKey)
+			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load project %s", projectKey)
 		}
 
 		app, errL := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
 		if errL != nil {
-			return sdk.WrapError(errL, "getApplicationRemoteHandler: Cannot load application %s for project %s from db", applicationName, projectKey)
+			return sdk.WrapError(errL, "getApplicationRemoteHandler: Cannot load application %s for project %s", applicationName, projectKey)
 		}
 
 		remotes := []sdk.VCSRemote{}
