@@ -20,6 +20,7 @@ var (
 			cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil),
 			cli.NewCommand(applicationDeleteCmd, applicationDeleteRun, nil),
 			applicationKey,
+			applicationGroup,
 		})
 )
 

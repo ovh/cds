@@ -19,6 +19,7 @@ type Interface interface {
 	ApplicationDelete(string, string) error
 	ApplicationGet(string, string, ...RequestModifier) (*sdk.Application, error)
 	ApplicationList(string) ([]sdk.Application, error)
+	ApplicationGroupsImport(projectKey, appName string, content []byte, format string, force bool) (sdk.Application, error)
 	ApplicationKeysList(string, string) ([]sdk.ApplicationKey, error)
 	ApplicationKeyCreate(string, string, *sdk.ApplicationKey) error
 	ApplicationKeysDelete(string, string, string) error

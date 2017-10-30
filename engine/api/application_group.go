@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -341,28 +342,24 @@ func (api *API) importGroupsInApplication() Handler {
 			}
 		} else { // add new group
 			for _, gr := range groupsToAdd {
-				groups, errLoad := group.LoadGroupsByApplication(tx, proj.ID, app.ID)
+				groupsInApp, errLoad := group.LoadGroupsByApplication(tx, app.ID)
 				if errLoad != nil {
-					return sdk.WrapError(errLoad, "importGroupsInApplication> Cannot check if group %s is already in the pipeline %s: %s", gr.Group.Name, pip.Name)
+					return sdk.WrapError(errLoad, "importGroupsInApplication> Cannot load groups in application %s", app.Name)
 				}
 
-				grID, errGr := group.GetIdByNameInList(groups, gr.Group.Name)
-				if errGr != nil {
-					return
-				}
-
-				if groupID != 0 {
-					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInApplication> Group %s already exist in pipeline %s", gr.Group.Name, pip.Name)
+				fmt.Println(groupsInApp)
+				_, errGr := group.GetIdByNameInList(groupsInApp, gr.Group.Name)
+				if errGr == nil {
+					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInApplication> Group %s in application %s", gr.Group.Name, app.Name)
 				}
 
 				grID, errG := group.GetIdByNameInList(proj.ProjectGroups, gr.Group.Name)
 				if errG != nil {
 					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInApplication> Cannot find group %s in this project %s : %s", gr.Group.Name, proj.Name, errG)
 				}
-				if errA := group.InsertGroupInPipeline(tx, pip.ID, grID, gr.Permission); errA != nil {
-					return sdk.WrapError(errA, "importGroupsInApplication> Cannot insert group %s in this pipeline %s", gr.Group.Name, pip.Name)
+				if errA := group.InsertGroupInApplication(tx, app.ID, grID, gr.Permission); errA != nil {
+					return sdk.WrapError(errA, "importGroupsInApplication> Cannot insert group %s in this application %s", gr.Group.Name, app.Name)
 				}
-
 			}
 		}
 
@@ -374,8 +371,8 @@ func (api *API) importGroupsInApplication() Handler {
 		for _, gr := range groupsToAdd {
 			permissions = append(permissions, sdk.GroupPermission{Group: sdk.Group{Name: gr.Group.Name}, Permission: gr.Permission})
 		}
-		pip.GroupPermission = permissions
+		app.ApplicationGroups = permissions
 
-		return WriteJSON(w, r, pip, http.StatusOK)
+		return WriteJSON(w, r, app, http.StatusOK)
 	}
 }

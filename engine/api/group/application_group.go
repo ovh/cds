@@ -29,14 +29,13 @@ func LoadAllApplicationGroupByRole(db gorp.SqlExecutor, applicationID int64, rol
 }
 
 // LoadGroupsByApplication retrieves all groups related to project
-func LoadGroupsByApplication(db gorp.SqlExecutor, projectID, appID int64) ([]sdk.GroupPermission, error) {
-	query := `SELECT "group".id,"group".name,project_group.role FROM "group"
-	 		  JOIN project_group ON project_group.group_id = "group".id
-				JOIN project ON project.id = project_group.project_id
-				JOIN application ON application.project_id = project.id
-	 		  WHERE project.id = $1 AND application.id = $2 ORDER BY "group".name ASC`
+func LoadGroupsByApplication(db gorp.SqlExecutor, appID int64) ([]sdk.GroupPermission, error) {
+	query := `SELECT "group".id,"group".name,application_group.role FROM "group"
+	 		  JOIN application_group ON application_group.group_id = "group".id
+				JOIN application ON application.id = application_group.application_id
+	 		  WHERE application.id = $1  ORDER BY "group".name ASC`
 
-	rows, err := db.Query(query, projectID, appID)
+	rows, err := db.Query(query, appID)
 	if err != nil {
 		return nil, err
 	}

@@ -73,7 +73,7 @@ func applicationGroupImportRun(v cli.Values) error {
 		}
 	}
 
-	if _, err := client.PipelineGroupsImport(v["project-key"], v["application-name"], btes, format, v.GetBool("force")); err != nil {
+	if _, err := client.ApplicationGroupsImport(v["project-key"], v["application-name"], btes, format, v.GetBool("force")); err != nil {
 		return err
 	}
 	fmt.Printf("Groups imported in application %s with success\n", v["application-name"])
