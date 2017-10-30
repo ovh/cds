@@ -1,6 +1,8 @@
 package group
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -85,12 +87,12 @@ func CheckGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64) (bool,
 // GetGroupInPipelineByName checks if group has access to pipeline with the name
 func GetGroupInPipelineByName(db gorp.SqlExecutor, pipelineID int64, groupName string) (int64, error) {
 	query := `SELECT pipeline_group.group_id FROM pipeline_group
-	JOIN group ON group.id = pipeline_group.group_id
-	WHERE pipeline_group.pipeline_id = $1 AND group.name = $2`
+	JOIN "group" AS grouptable ON grouptable.id = pipeline_group.group_id
+	WHERE pipeline_group.pipeline_id = $1 AND grouptable.name = $2`
 
 	var nb int64
 	err := db.QueryRow(query, pipelineID, groupName).Scan(&nb)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return 0, err
 	}
 
