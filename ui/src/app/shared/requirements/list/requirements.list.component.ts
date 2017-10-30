@@ -33,15 +33,20 @@ export class RequirementsListComponent extends Table {
     availableRequirements: Array<string>;
     workerModels: Array<string>;
     _suggest: string[] = [];
+    loading = true;
 
     constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
         super();
-        this._requirementStore.getAvailableRequirements().subscribe(r => {
-            this.availableRequirements = new Array<string>();
-            this.availableRequirements.push(...r.toArray());
-        });
+        this._requirementStore.getAvailableRequirements()
+            .subscribe(r => {
+                this.availableRequirements = new Array<string>();
+                this.availableRequirements.push(...r.toArray());
+            });
 
-        this._workerModelService.getWorkerModels().first().subscribe( wms => {
+        this._workerModelService.getWorkerModels()
+        .first()
+        .finally(() => this.loading = false)
+        .subscribe(wms => {
             this.workerModels = wms.map((wm) => wm.name).concat(this.workerModels);
         });
     }
