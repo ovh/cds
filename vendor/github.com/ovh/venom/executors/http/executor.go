@@ -33,14 +33,16 @@ type Headers map[string]string
 
 // Executor struct. Json and yaml descriptor are used for json output
 type Executor struct {
-	Method          string      `json:"method" yaml:"method"`
-	URL             string      `json:"url" yaml:"url"`
-	Path            string      `json:"path" yaml:"path"`
-	Body            string      `json:"body" yaml:"body"`
-	BodyFile        string      `json:"bodyfile" yaml:"bodyfile"`
-	MultipartForm   interface{} `json:"multipart_form" yaml:"multipart_form"`
-	Headers         Headers     `json:"headers" yaml:"headers"`
-	IgnoreVerifySSL bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
+	Method            string      `json:"method" yaml:"method"`
+	URL               string      `json:"url" yaml:"url"`
+	Path              string      `json:"path" yaml:"path"`
+	Body              string      `json:"body" yaml:"body"`
+	BodyFile          string      `json:"bodyfile" yaml:"bodyfile"`
+	MultipartForm     interface{} `json:"multipart_form" yaml:"multipart_form"`
+	Headers           Headers     `json:"headers" yaml:"headers"`
+	IgnoreVerifySSL   bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
+	BasicAuthUser     string      `json:"basic_auth_user" yaml:"basic_auth_user" mapstructure:"basic_auth_user"`
+	BasicAuthPassword string      `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -193,6 +195,11 @@ func (e Executor) getRequest() (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if len(e.BasicAuthUser) > 0 || len(e.BasicAuthPassword) > 0 {
+	    req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+	}
+
 	if writer != nil {
 		req.Header.Set("Content-Type", writer.FormDataContentType())
 	}
