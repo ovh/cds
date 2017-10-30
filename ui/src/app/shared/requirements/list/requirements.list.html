@@ -57,7 +57,7 @@
                             (ngModelChange)="change()"
                             [no-match-found-text]="false">
                     </div>
-                    <div *ngIf="r.type === 'model' && workerModels">
+                    <div *ngIf="!loading && r.type === 'model' && workerModels">
                         <sm-select class="search"
                             [options]="{'fullTextSearch': true}"
                             [(model)]="r.value"

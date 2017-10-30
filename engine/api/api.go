@@ -382,7 +382,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	if err := workflow.CreateBuiltinWorkflowHookModels(a.DBConnectionFactory.GetDBMap()); err != nil {
-		log.Error("Cannot setup builtin workflow hook models")
+		log.Error("Cannot setup builtin workflow hook models: %s", err)
 	}
 
 	//Init the cache

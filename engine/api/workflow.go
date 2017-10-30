@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
@@ -223,7 +224,9 @@ func (api *API) putWorkflowHandler() Handler {
 				// update hook
 				for i := range hooks {
 					h := hooks[i]
-					h.Config["workflow"] = wf.Name
+					configValue := h.Config["workflow"]
+					configValue.Value = wf.Name
+					h.Config["workflow"] = configValue
 					hooks[i] = h
 				}
 			}
@@ -232,8 +235,18 @@ func (api *API) putWorkflowHandler() Handler {
 			if len(srvs) < 1 {
 				return sdk.WrapError(fmt.Errorf("putWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
 			}
-			if _, err := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hooks, nil); err != nil {
-				return sdk.WrapError(err, "putWorkflowHandler> Unable to create hooks")
+
+			var hooksUpdated map[string]sdk.WorkflowNodeHook
+			code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hooks, &hooksUpdated)
+			if errHooks == nil {
+				for _, h := range hooksUpdated {
+					if err := workflow.UpdateHook(tx, &h); err != nil {
+						return sdk.WrapError(errHooks, "putWorkflowHandler> Cannot update hook")
+					}
+				}
+				log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
+			} else {
+				return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
 			}
 		}
 

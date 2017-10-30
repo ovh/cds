@@ -7,7 +7,7 @@ import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {Workflow} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {RouterService} from '../../service/router/router.service';
-import {WorkflowCoreService} from '../../shared/workflow/workflow.service';
+import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
 
 @Component({
     selector: 'app-workflow',

@@ -6,18 +6,20 @@
         </div>
     </div>
     <div class="content">
-        <div class="ui form" *ngIf="hooksModel">
+        <div class="ui form">
             <h3>{{ 'workflow_node_hook_form_title' | translate }}</h3>
-            <sui-select class="selection" [(ngModel)]="selectedHookModel" (ngModelChange)="updateHook()" [options]="hooksModel" [isSearchable]="true" labelField="name" #select>
-                <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
-                </sui-select-option>
-            </sui-select>
+            <ng-container *ngIf="hooksModel">
+                <sui-select class="selection" [(ngModel)]="selectedHookModel" (ngModelChange)="updateHook()" [options]="hooksModel" [isSearchable]="true" labelField="name" #select>
+                    <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
+                    </sui-select-option>
+                </sui-select>
+            </ng-container>
             <ng-container *ngIf="_hook.model">
                 <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
                 <ng-container *ngIf="_hook.config">
                     <div class="inline fields" *ngFor="let k of hook.config | keys">
                         <div class="four wide field"><label>{{k}}</label></div>
-                        <div class="twelve wide field"><input type="text" [(ngModel)]="_hook.config[k]"></div>
+                        <div class="twelve wide field"><input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable"></div>
                     </div>
                 </ng-container>
                 <div class="ui info message" *ngIf="!_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>

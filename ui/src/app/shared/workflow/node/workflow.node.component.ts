@@ -27,7 +27,7 @@ import {HookEvent} from './hook/hook.event';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {WorkflowCoreService} from '../workflow.service';
+import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 
 declare var _: any;
 

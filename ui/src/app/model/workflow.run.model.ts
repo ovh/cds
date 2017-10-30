@@ -12,7 +12,7 @@ export class WorkflowRunRequest {
     hook: WorkflowNodeRunHookEvent;
     manual: WorkflowNodeRunManual;
     number: number;
-    from_node: number;
+    from_nodes: Array<number>;
 }
 
 export class WorkflowRun {

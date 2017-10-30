@@ -25,7 +25,8 @@
             [options]="{'fullTextSearch': true}"
             (onChange)="change()"
             id="WorkflowApplicationSelect">
-            <option *ngFor="let a of project.applications" [value]="a.id">{{ a.name}}</option>
+            <option> </option>
+            <option *ngFor="let a of project.applications" [value]="a.id">{{ a.name }}</option>
         </sm-select>
     </div>
     <div class="five wide field">
@@ -37,7 +38,8 @@
             [options]="{'fullTextSearch': true}"
             (onChange)="change()"
             id="WorkflowEnvironmentSelect">
-            <option *ngFor="let e of project.environments" [value]="e.id">{{ e.name}}</option>
+            <option> </option>
+            <option *ngFor="let e of project.environments" [value]="e.id">{{ e.name }}</option>
         </sm-select>
     </div>
 </div>

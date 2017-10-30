@@ -65,7 +65,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
 
     runNew(): void {
         let request = new WorkflowRunRequest();
-        request.from_node = this.nodeRun.workflow_node_id;
+        request.from_nodes = [this.nodeRun.workflow_node_id];
         request.number = this.nodeRun.num;
         request.manual = this.nodeRun.manual;
         request.hook = this.nodeRun.hook_event;

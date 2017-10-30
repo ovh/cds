@@ -80,11 +80,13 @@ func (s *Service) synchronizeTasks() error {
 	}
 
 	for _, h := range hooks {
-		if h.Config["project"] == "" || h.Config["workflow"] == "" {
+		confProj := h.Config["project"]
+		confWorkflow := h.Config["workflow"]
+		if confProj.Value == "" || confWorkflow.Value == "" {
 			log.Error("Hook> Unable to synchronize task %+v: %v", h, err)
 			continue
 		}
-		t, err := s.hookToTask(h)
+		t, err := s.hookToTask(&h)
 		if err != nil {
 			log.Error("Hook> Unable to synchronize task %+v: %v", h, err)
 			continue
@@ -95,13 +97,17 @@ func (s *Service) synchronizeTasks() error {
 	return nil
 }
 
-func (s *Service) hookToTask(h sdk.WorkflowNodeHook) (*Task, error) {
+func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*Task, error) {
 	if h.WorkflowHookModel.Type != sdk.WorkflowHookModelBuiltin {
 		return nil, fmt.Errorf("Unsupported hook type: %s", h.WorkflowHookModel.Type)
 	}
 
 	switch h.WorkflowHookModel.Name {
 	case workflow.WebHookModel.Name:
+		h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+			Value:        fmt.Sprintf("%s/webhook/%s", s.Cfg.URLPublic, h.UUID),
+			Configurable: false,
+		}
 		return &Task{
 			UUID:   h.UUID,
 			Type:   TypeWebHook,
@@ -174,13 +180,15 @@ func (s *Service) prepareNextScheduledTaskExecution(t *Task) error {
 	}
 
 	//Load the location for the timezone
-	loc, err := time.LoadLocation(t.Config["timezone"])
+	confTimezone := t.Config["timezone"]
+	loc, err := time.LoadLocation(confTimezone.Value)
 	if err != nil {
 		return sdk.WrapError(err, "startTask> unable to parse timezone: %s", t.Config["timezone"])
 	}
 
 	//Parse the cron expr
-	cronExpr, err := cronexpr.Parse(t.Config["cron"])
+	confCron := t.Config["cron"]
+	cronExpr, err := cronexpr.Parse(confCron.Value)
 	if err != nil {
 		return sdk.WrapError(err, "startTask> unable to parse cron expression: %s", t.Config["cron"])
 	}
@@ -244,7 +252,9 @@ func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
 	}
 
 	// Call CDS API
-	run, err := s.cds.WorkflowRunFromHook(t.Config["project"], t.Config["workflow"], *h)
+	confProj := t.Config["project"]
+	confWorkflow := t.Config["workflow"]
+	run, err := s.cds.WorkflowRunFromHook(confProj.Value, confWorkflow.Value, *h)
 	if err != nil {
 		return sdk.WrapError(err, "Hooks> Unable to run workflow")
 	}
@@ -271,7 +281,7 @@ func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeR
 		switch k {
 		case "project", "workflow", "cron", "timezone":
 		default:
-			payloadValues[k] = v
+			payloadValues[k] = v.Value
 		}
 	}
 	h.Payload = payloadValues
@@ -295,7 +305,8 @@ func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHook
 	}
 
 	// For POST, PUT, and PATCH requests, it also parses the request body as a form
-	if t.Config["method"] == "POST" || t.Config["method"] == "PUT" || t.Config["method"] == "PATCH" {
+	confMethod := t.Config["method"]
+	if confMethod.Value == "POST" || confMethod.Value == "PUT" || confMethod.Value == "PATCH" {
 		//Depending on the content type, we should not read the body the same way
 		header := http.Header(t.WebHook.RequestHeader)
 		ct := header.Get("Content-Type")
@@ -348,7 +359,7 @@ func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHook
 		switch k {
 		case "project", "workflow", "method":
 		default:
-			payloadValues[k] = v
+			payloadValues[k] = v.Value
 		}
 	}
 	//try to find some specific values
