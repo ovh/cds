@@ -251,7 +251,16 @@ See $ engine config command for more details.
 		config()
 
 		//Initialize logs
-		log.Initialize(&log.Conf{Level: conf.Log.Level})
+		log.Initialize(&log.Conf{
+			Level:                  conf.Log.Level,
+			GraylogProtocol:        conf.Log.Graylog.Protocol,
+			GraylogHost:            conf.Log.Graylog.Host,
+			GraylogPort:            fmt.Sprintf("%d", conf.Log.Graylog.Port),
+			GraylogExtraKey:        conf.Log.Graylog.ExtraKey,
+			GraylogExtraValue:      conf.Log.Graylog.ExtraValue,
+			GraylogFieldCDSVersion: sdk.VERSION,
+			GraylogFieldCDSName:    conf.Log.Graylog.Name,
+		})
 
 		// gops debug
 		if conf.Debug.Enable {

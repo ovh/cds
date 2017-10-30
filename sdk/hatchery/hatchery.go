@@ -40,18 +40,13 @@ type CommonConfiguration struct {
 			Graylog struct {
 				Host       string `toml:"host"`
 				Port       int    `toml:"port"`
+				Protocol   string `toml:"protocol"`
 				ExtraKey   string `toml:"extraKey"`
 				ExtraValue string `toml:"extraValue"`
 			} `toml:"graylog"`
 		} `toml:"workerLogsOptions" comment:"Worker Log Configuration"`
 	} `toml:"provision"`
 	LogOptions struct {
-		Graylog struct {
-			Host       string `toml:"host"`
-			Port       int    `toml:"port"`
-			ExtraKey   string `toml:"extraKey"`
-			ExtraValue string `toml:"extraValue"`
-		} `toml:"graylog"`
 		SpawnOptions struct {
 			ThresholdCritical int `toml:"thresholdCritical" default:"480" comment:"log critical if spawn take more than this value (in seconds)"`
 			ThresholdWarning  int `toml:"thresholdWarning" default:"360" comment:"log warning if spawn take more than this value (in seconds)"`
