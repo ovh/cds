@@ -24,7 +24,6 @@ type Configuration struct {
 	Log struct {
 		Level   string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, critical"`
 		Graylog struct {
-			Name       string `toml:"name" default:"" comment:"Name of this engine instance, used by cdsname in graylog field"`
 			Host       string `toml:"host" comment:"Example: thot.ovh.com"`
 			Port       int    `toml:"port" comment:"Example: 12202"`
 			Protocol   string `toml:"protocol" default:"tcp" comment:"tcp or udp"`

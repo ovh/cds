@@ -39,8 +39,8 @@ import (
 
 // Configuration is the configuraton structure for CDS API
 type Configuration struct {
-	InstanceName string `toml:"instanceName" default:"cdsinstance" comment:"Name of this CDS Instance"`
-	URL          struct {
+	Name string `toml:"name" default:"cdsinstance" comment:"Name of this CDS Instance"`
+	URL  struct {
 		API string `toml:"api" default:"http://localhost:8081"`
 		UI  string `toml:"ui" default:"http://localhost:2015"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################"`
@@ -500,7 +500,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap)
 	go hatchery.Heartbeat(ctx, a.DBConnectionFactory.GetDBMap)
 	go auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
-	go metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.InstanceName)
+	go metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name)
 	go repositoriesmanager.ReceiveEvents(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go stats.StartRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	go action.RequirementsCacheLoader(ctx, 5*time.Second, a.DBConnectionFactory.GetDBMap, a.Cache)
