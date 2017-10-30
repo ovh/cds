@@ -8,7 +8,6 @@ import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {PipelineStatus} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
-import {Workflow} from '../../../../model/workflow.model';
 import {RouterService} from '../../../../service/router/router.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {DurationService} from '../../../../shared/duration/duration.service';
