@@ -225,6 +225,8 @@ var LoadOptions = struct {
 	WithApplicationVariables       LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 	WithWorkflows                  LoadOptionFunc
+	WithLock                       LoadOptionFunc
+	WithLockNoWait                 LoadOptionFunc
 }{
 	Default:                        &loadDefault,
 	WithPipelines:                  &loadPipelines,
@@ -238,6 +240,8 @@ var LoadOptions = struct {
 	WithApplicationVariables:       &loadApplicationVariables,
 	WithKeys:                       &loadKeys,
 	WithWorkflows:                  &loadWorkflows,
+	WithLock:                       &lockProject,
+	WithLockNoWait:                 &lockAndWaitProject,
 }
 
 // LoadProjectByNodeJobRunID return a project from node job run id
@@ -309,6 +313,17 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 
 func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	dbProj := &dbProject{}
+	for _, o := range opts {
+		if o == LoadOptions.WithLock {
+			query += " FOR UPDATE"
+			break
+		}
+		if o == LoadOptions.WithLockNoWait {
+			query += " FOR UPDATE NOWAIT"
+			break
+		}
+	}
+
 	if err := db.SelectOne(dbProj, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoProject

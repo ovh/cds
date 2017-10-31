@@ -88,6 +88,14 @@ var (
 		return nil
 	}
 
+	lockProject = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		return nil
+	}
+
+	lockAndWaitProject = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		return nil
+	}
+
 	loadAllVariables = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, args ...GetAllVariableFuncArg) error {
 		vars, err := GetAllVariableInProject(db, proj.ID, args...)
 		if err != nil && err != sql.ErrNoRows {

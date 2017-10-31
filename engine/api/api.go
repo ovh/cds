@@ -402,6 +402,11 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 
+	//temporary code
+	if err := bootstrap.VCSMigrate(a.DBConnectionFactory.GetDBMap(), a.Cache); err != nil {
+		log.Error("Cannot migrate vcs: %v", err)
+	}
+
 	//Init pipeline package
 	pipeline.Store = a.Cache
 
