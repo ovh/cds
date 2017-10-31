@@ -330,6 +330,8 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		Stages:         stages,
 	}
 
+	runPayload := map[string]string{}
+
 	run.SourceNodeRuns = sourceNodeRuns
 	if sourceNodeRuns != nil {
 		//Get all the nodeRun from the sources
@@ -345,7 +347,6 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 
 		//Merge the payloads from all the sources
-		m := map[string]string{}
 		for _, r := range runs {
 			e := dump.NewDefaultEncoder(new(bytes.Buffer))
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
@@ -361,30 +362,33 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 				})
 				log.Error("processWorkflowNodeRun> Unable to compute hook payload: %v", errm1)
 			}
-			m = sdk.ParametersMapMerge(m, m1)
+			runPayload = sdk.ParametersMapMerge(runPayload, m1)
 		}
-
-		run.Payload = m
+		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
 
 	run.HookEvent = h
 	if h != nil {
-		run.Payload = h.Payload
+		runPayload = sdk.ParametersMapMerge(runPayload, h.Payload)
+		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
 
 	run.Manual = m
 	if m != nil {
-		m1, errm1 := dump.ToMap(m.Payload, dump.WithDefaultLowerCaseFormatter())
+		e := dump.NewDefaultEncoder(new(bytes.Buffer))
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+		e.ExtraFields.DetailedMap = false
+		e.ExtraFields.DetailedStruct = false
+		e.ExtraFields.Len = false
+		e.ExtraFields.Type = false
+		m1, errm1 := e.ToStringMap(m.Payload)
 		if errm1 != nil {
-			AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{errm1},
-			})
 			return sdk.WrapError(errm1, "processWorkflowNodeRun> Unable to compute payload")
 		}
-		run.Payload = m1
+		runPayload = sdk.ParametersMapMerge(runPayload, m1)
+		run.Payload = runPayload
 		run.PipelineParameters = m.PipelineParameters
 		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
@@ -415,7 +419,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 	// Inherit parameter from parent job
 	if len(sourceNodeRuns) > 0 {
-		parentsParams, errPP := getParentParameters(db, run, sourceNodeRuns)
+		parentsParams, errPP := getParentParameters(db, run, sourceNodeRuns, runPayload)
 		if errPP != nil {
 			return sdk.WrapError(errPP, "processWorkflowNodeRun> getParentParameters failed")
 		}
