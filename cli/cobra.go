@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -174,7 +175,13 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				fmt.Println(string(b))
 			default:
 				w := tabwriter.NewWriter(os.Stdout, 10, 0, 1, ' ', 0)
-				m, err := dump.ToMap(i)
+				e := dump.NewDefaultEncoder(new(bytes.Buffer))
+				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+				e.ExtraFields.DetailedMap = false
+				e.ExtraFields.DetailedStruct = false
+				e.ExtraFields.Len = false
+				e.ExtraFields.Type = false
+				m, err := e.ToStringMap(i)
 				ExitOnError(err)
 				for k, v := range m {
 					fmt.Fprintln(w, k+"\t"+v)
