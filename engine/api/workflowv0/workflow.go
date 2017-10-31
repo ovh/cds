@@ -502,10 +502,12 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 					pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
 				}
 
-				if remote == "" || remote == parent.Application.RepositoryFullname {
-					opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(parent.Application.RepositoryFullname))
-				} else {
-					opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+				if parent.Application.Name == child.Application.Name {
+					if remote == "" || remote == parent.Application.RepositoryFullname {
+						opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(parent.Application.RepositoryFullname))
+					} else {
+						opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+					}
 				}
 
 				pbs, errPB = pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, child.Application.ID, child.Pipeline.ID, child.Environment.ID, 1, opts...)
