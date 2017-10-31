@@ -303,7 +303,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
         if (join.source_node_id) {
             join.source_node_id.forEach(nodeID => {
-                this.createEdge('node-' + nodeID, 'join-' + join.id, {});
+                let style = 'stroke: ' + this.getJoinSrcStyle(nodeID) + ';';
+                this.createEdge('node-' + nodeID, 'join-' + join.id, { style: style});
             });
         }
 
@@ -320,6 +321,17 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 this.createEdge('join-' + join.id, 'node-' + t.workflow_dest_node.id, options);
             });
         }
+    }
+
+    getJoinSrcStyle(nodeID: number): string {
+        if (this._workflowRun && this._workflowRun.nodes[nodeID] && this._workflowRun.nodes[nodeID].length > 0) {
+            switch (this._workflowRun.nodes[nodeID][0].status) {
+                case 'Success':
+                case 'Fail':
+                    return '#21BA45';
+            }
+        }
+        return 'black';
     }
 
     createHookNode(node: WorkflowNode): void {
@@ -413,7 +425,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 }
             }
         }
-        return '#bdc3c7';
+        return '#000000';
     }
 
     getTriggerColor(node: WorkflowNode, triggerID: number): string {
