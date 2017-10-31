@@ -278,43 +278,43 @@ See $ engine config command for more details.
 			signal.Stop(c)
 		}()
 
-		type ServiceConf struct {
+		type serviceConf struct {
 			arg     string
 			service Service
 			cfg     interface{}
 		}
-		services := []ServiceConf{}
+		services := []serviceConf{}
 
 		names := []string{}
 		for _, a := range args {
 			fmt.Printf("Starting service %s\n", a)
 			switch a {
 			case "api":
-				services = append(services, ServiceConf{arg: a, service: api.New(), cfg: conf.API})
+				services = append(services, serviceConf{arg: a, service: api.New(), cfg: conf.API})
 				names = append(names, conf.API.Name)
 			case "hatchery:docker":
-				services = append(services, ServiceConf{arg: a, service: docker.New(), cfg: conf.Hatchery.Docker})
+				services = append(services, serviceConf{arg: a, service: docker.New(), cfg: conf.Hatchery.Docker})
 				names = append(names, conf.Hatchery.Docker.Name)
 			case "hatchery:local":
-				services = append(services, ServiceConf{arg: a, service: local.New(), cfg: conf.Hatchery.Local})
+				services = append(services, serviceConf{arg: a, service: local.New(), cfg: conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)
 			case "hatchery:marathon":
-				services = append(services, ServiceConf{arg: a, service: marathon.New(), cfg: conf.Hatchery.Marathon})
+				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: conf.Hatchery.Marathon})
 				names = append(names, conf.Hatchery.Marathon.Name)
 			case "hatchery:openstack":
-				services = append(services, ServiceConf{arg: a, service: openstack.New(), cfg: conf.Hatchery.Openstack})
+				services = append(services, serviceConf{arg: a, service: openstack.New(), cfg: conf.Hatchery.Openstack})
 				names = append(names, conf.Hatchery.Openstack.Name)
 			case "hatchery:swarm":
-				services = append(services, ServiceConf{arg: a, service: swarm.New(), cfg: conf.Hatchery.Swarm})
+				services = append(services, serviceConf{arg: a, service: swarm.New(), cfg: conf.Hatchery.Swarm})
 				names = append(names, conf.Hatchery.Swarm.Name)
 			case "hatchery:vsphere":
-				services = append(services, ServiceConf{arg: a, service: vsphere.New(), cfg: conf.Hatchery.VSphere})
+				services = append(services, serviceConf{arg: a, service: vsphere.New(), cfg: conf.Hatchery.VSphere})
 				names = append(names, conf.Hatchery.VSphere.Name)
 			case "hooks":
-				services = append(services, ServiceConf{arg: a, service: hooks.New(), cfg: conf.Hooks})
+				services = append(services, serviceConf{arg: a, service: hooks.New(), cfg: conf.Hooks})
 				names = append(names, conf.Hooks.Name)
 			case "vcs":
-				services = append(services, ServiceConf{arg: a, service: vcs.New(), cfg: conf.VCS})
+				services = append(services, serviceConf{arg: a, service: vcs.New(), cfg: conf.VCS})
 				names = append(names, conf.VCS.Name)
 			default:
 				fmt.Printf("Error: service '%s' unknown\n", a)
