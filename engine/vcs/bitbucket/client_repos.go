@@ -56,7 +56,7 @@ func (b *bitbucketClient) Repos() ([]sdk.VCSRepo, error) {
 			Name:         r.Name,
 			Slug:         r.Slug,
 			Fullname:     fmt.Sprintf("%s/%s", r.Project.Key, r.Slug),
-			URL:          fmt.Sprintf("%s%s", b.apiURL, repoURL),
+			URL:          fmt.Sprintf("%s%s", b.consumer.URL, repoURL),
 			HTTPCloneURL: httpURL,
 			SSHCloneURL:  sshURL,
 		}

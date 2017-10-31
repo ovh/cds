@@ -11,6 +11,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/ovh/cds/sdk"
+
 	"github.com/facebookgo/httpcontrol"
 	"github.com/ovh/cds/engine/api/cache"
 )
@@ -141,7 +143,7 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 	// make the request using the default http client
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "VCS> Bitbucket> HTTP Error")
 	}
 
 	// Read the bytes from the body (make sure we defer close the body)

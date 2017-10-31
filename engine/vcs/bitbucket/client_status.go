@@ -11,7 +11,7 @@ import (
 )
 
 func (b *bitbucketClient) SetStatus(event sdk.Event) error {
-	log.Debug("process> receive: type:%s all: %+v", event.EventType, event)
+	log.Info("process> receive: type:%s all: %+v", event.EventType, event)
 	var eventpb sdk.EventPipelineBuild
 
 	if event.EventType != fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
@@ -37,7 +37,7 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 	)
 
 	url := fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s",
-		b.uiURL,
+		b.consumer.uiURL,
 		cdsProject,
 		cdsApplication,
 		cdsPipelineName,
@@ -56,7 +56,7 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 
 	values, err := json.Marshal(status)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "VCS> Bitbucket> Unable to marshall status")
 	}
 	return b.do("POST", "build-status", fmt.Sprintf("/commits/%s", eventpb.Hash), nil, values, nil)
 }

@@ -397,21 +397,21 @@ func (s *Service) postStatusHandler() api.Handler {
 
 		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
 		if !ok {
-			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postFilterEventsHandler> Unable to get access token headers")
+			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> postStatusHandler> Unable to get access token headers")
 		}
 
 		consumer, err := s.getConsumer(name)
 		if err != nil {
-			return sdk.WrapError(err, "VCS> postFilterEventsHandler> VCS server unavailable")
+			return sdk.WrapError(err, "VCS> postStatusHandler> VCS server unavailable")
 		}
 
 		client, err := consumer.GetAuthorizedClient(accessToken, accessTokenSecret)
 		if err != nil {
-			return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to get authorized client")
+			return sdk.WrapError(err, "VCS> postStatusHandler> Unable to get authorized client")
 		}
 
 		if err := client.SetStatus(evt); err != nil {
-			return sdk.WrapError(err, "VCS> postFilterEventsHandler> Unable to set status")
+			return sdk.WrapError(err, "VCS> postStatusHandler> Unable to set status")
 		}
 
 		return nil
