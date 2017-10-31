@@ -42,7 +42,7 @@ func (c *gitlabClient) Commits(repo, branch, since, until string) ([]sdk.VCSComm
 				DisplayName: c.AuthorName,
 				Email:       c.AuthorEmail,
 			},
-			Timestamp: c.CommittedDate.Unix(),
+			Timestamp: c.AuthoredDate.Unix(),
 			Message:   c.Message,
 		}
 
@@ -67,9 +67,8 @@ func (c *gitlabClient) Commit(repo, hash string) (sdk.VCSCommit, error) {
 		DisplayName: gc.AuthorName,
 		Email:       gc.AuthorEmail,
 	}
-	commit.Timestamp = gc.CommittedDate.Unix()
+	commit.Timestamp = gc.AuthoredDate.Unix()
 	commit.Message = gc.Message
 
 	return commit, nil
 }
-
