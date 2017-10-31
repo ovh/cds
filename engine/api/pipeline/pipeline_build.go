@@ -856,7 +856,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline
 	case parentBuildNumberFound && trigger.ParentPipelineBuild != nil && client != nil && mapPreviousParams["cds.application"] != app.Name: // For pipeline attached to an external application
 		repo, errC := client.RepoByFullname(app.RepositoryFullname)
 		if errC != nil {
-			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.RepositoriesManager.Name, app.RepositoryFullname)
+			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.VCSServer, app.RepositoryFullname)
 		}
 		pb.Trigger.VCSRemote = app.RepositoryFullname
 		pb.Trigger.VCSRemoteURL = repo.HTTPCloneURL
