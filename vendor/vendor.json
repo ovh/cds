@@ -985,6 +985,12 @@
 			"revisionTime": "2017-10-31T08:53:16Z"
 		},
 		{
+			"checksumSHA1": "PwOn+1rB4wL8zkq68UJr7vAtJY4=",
+			"path": "github.com/ovh/venom/executors",
+			"revision": "fd9645e98a57c453188d839a8e94798ed019ef4f",
+			"revisionTime": "2017-10-31T08:53:16Z"
+		},
+		{
 			"checksumSHA1": "UrD47YOKu1W32Dt2fY0jE1LDgoA=",
 			"path": "github.com/ovh/venom/executors/dbfixtures",
 			"revision": "fd9645e98a57c453188d839a8e94798ed019ef4f",
