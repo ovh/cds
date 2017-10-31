@@ -22,7 +22,14 @@ import (
 // Configuration contains CDS Configuration and toml description
 type Configuration struct {
 	Log struct {
-		Level string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, critical"`
+		Level   string `toml:"level" default:"warning" comment:"Log Level: debug, info, warning, notice, critical"`
+		Graylog struct {
+			Host       string `toml:"host" comment:"Example: thot.ovh.com"`
+			Port       int    `toml:"port" comment:"Example: 12202"`
+			Protocol   string `toml:"protocol" default:"tcp" comment:"tcp or udp"`
+			ExtraKey   string `toml:"extraKey" comment:"Example: X-OVH-TOKEN"`
+			ExtraValue string `toml:"extraValue" comment:"value for extraKey field"`
+		} `toml:"graylog"`
 	} `toml:"log" comment:"#####################\n CDS Logs Settings \n####################"`
 	Debug struct {
 		Enable         bool   `toml:"enable" default:"false" comment:"allow debugging with gops"`

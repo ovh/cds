@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/yesnault/go-imap/imap"
 
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
 )
 
 // Name for test imap
@@ -87,7 +87,7 @@ func (Executor) Run(ctx venom.TestCaseContext, l venom.Logger, step venom.TestSt
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
 	result.Executor.IMAPPassword = "****hidden****" // do not output password
 
-	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
+	return executors.Dump(result)
 }
 
 func (e *Executor) getMail(l venom.Logger) (*Mail, error) {

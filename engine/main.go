@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 
@@ -257,9 +258,6 @@ See $ engine config command for more details.
 		//Initialize config
 		config()
 
-		//Initialize logs
-		log.Initialize(&log.Conf{Level: conf.Log.Level})
-
 		// gops debug
 		if conf.Debug.Enable {
 			if conf.Debug.RemoteDebugURL != "" {
@@ -287,49 +285,67 @@ See $ engine config command for more details.
 			signal.Stop(c)
 		}()
 
+		type serviceConf struct {
+			arg     string
+			service Service
+			cfg     interface{}
+		}
+		services := []serviceConf{}
+
+		names := []string{}
 		for _, a := range args {
-			var s Service
-			var cfg interface{}
-
 			fmt.Printf("Starting service %s\n", a)
-
 			switch a {
 			case "api":
-				s = api.New()
-				cfg = conf.API
+				services = append(services, serviceConf{arg: a, service: api.New(), cfg: conf.API})
+				names = append(names, conf.API.Name)
 			case "hatchery:docker":
-				s = docker.New()
-				cfg = conf.Hatchery.Docker
+				services = append(services, serviceConf{arg: a, service: docker.New(), cfg: conf.Hatchery.Docker})
+				names = append(names, conf.Hatchery.Docker.Name)
 			case "hatchery:local":
-				s = local.New()
-				cfg = conf.Hatchery.Local
+				services = append(services, serviceConf{arg: a, service: local.New(), cfg: conf.Hatchery.Local})
+				names = append(names, conf.Hatchery.Local.Name)
 			case "hatchery:marathon":
-				s = marathon.New()
-				cfg = conf.Hatchery.Marathon
+				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: conf.Hatchery.Marathon})
+				names = append(names, conf.Hatchery.Marathon.Name)
 			case "hatchery:openstack":
-				s = openstack.New()
-				cfg = conf.Hatchery.Openstack
+				services = append(services, serviceConf{arg: a, service: openstack.New(), cfg: conf.Hatchery.Openstack})
+				names = append(names, conf.Hatchery.Openstack.Name)
 			case "hatchery:swarm":
-				s = swarm.New()
-				cfg = conf.Hatchery.Swarm
+				services = append(services, serviceConf{arg: a, service: swarm.New(), cfg: conf.Hatchery.Swarm})
+				names = append(names, conf.Hatchery.Swarm.Name)
 			case "hatchery:vsphere":
-				s = vsphere.New()
-				cfg = conf.Hatchery.VSphere
+				services = append(services, serviceConf{arg: a, service: vsphere.New(), cfg: conf.Hatchery.VSphere})
+				names = append(names, conf.Hatchery.VSphere.Name)
 			case "hooks":
-				s = hooks.New()
-				cfg = conf.Hooks
+				services = append(services, serviceConf{arg: a, service: hooks.New(), cfg: conf.Hooks})
+				names = append(names, conf.Hooks.Name)
 			case "vcs":
-				s = vcs.New()
-				cfg = conf.VCS
+				services = append(services, serviceConf{arg: a, service: vcs.New(), cfg: conf.VCS})
+				names = append(names, conf.VCS.Name)
 			default:
 				fmt.Printf("Error: service '%s' unknown\n", a)
 				os.Exit(1)
 			}
+		}
 
-			go start(ctx, s, cfg)
+		//Initialize logs
+		log.Initialize(&log.Conf{
+			Level:                  conf.Log.Level,
+			GraylogProtocol:        conf.Log.Graylog.Protocol,
+			GraylogHost:            conf.Log.Graylog.Host,
+			GraylogPort:            fmt.Sprintf("%d", conf.Log.Graylog.Port),
+			GraylogExtraKey:        conf.Log.Graylog.ExtraKey,
+			GraylogExtraValue:      conf.Log.Graylog.ExtraValue,
+			GraylogFieldCDSVersion: sdk.VERSION,
+			GraylogFieldCDSName:    strings.Join(names, "_"),
+		})
+
+		for _, s := range services {
+			go start(ctx, s.service, s.cfg)
 
 			//Stupid trick: when API is starting wait a bit before start the other
-			if a == "API" || a == "api" {
+			if s.arg == "API" || s.arg == "api" {
 				time.Sleep(2 * time.Second)
 			}
 		}

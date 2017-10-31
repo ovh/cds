@@ -10,7 +10,7 @@
     </tr>
     </thead>
     <tbody>
-    <tr *ngFor="let nr of getDataForCurrentPage()" [class.active]="currentBuild && currentBuild.id === nr.id">
+    <tr *ngFor="let nr of getDataForCurrentPage()" [class.active]="currentBuild && currentBuild.id === nr.id" class="pointing" (click)="goToSubNumber(nr)">
         <td class="center">
             <app-status-icon [status]="nr.status"></app-status-icon>
         </td>

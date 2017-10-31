@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
 	fixtures "gopkg.in/testfixtures.v2"
 
 	// SQL drivers.
@@ -81,7 +81,7 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 	}
 	r := Result{Executor: e}
 
-	return dump.ToMap(r)
+	return executors.Dump(r)
 }
 
 // GetDefaultAssertions return the default assertions of the executor.

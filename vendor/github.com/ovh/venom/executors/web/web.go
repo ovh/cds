@@ -5,12 +5,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/sclevine/agouti"
 
 	"github.com/ovh/venom"
 	"github.com/ovh/venom/context/webctx"
+	"github.com/ovh/venom/executors"
 )
 
 // Name of executor
@@ -130,7 +130,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	r.TimeSeconds = elapsed.Seconds()
 	r.TimeHuman = fmt.Sprintf("%s", elapsed)
 
-	return dump.ToMap(r, dump.WithDefaultLowerCaseFormatter())
+	return executors.Dump(r)
 }
 
 func find(page *agouti.Page, search string, r *Result) (*agouti.Selection, error) {

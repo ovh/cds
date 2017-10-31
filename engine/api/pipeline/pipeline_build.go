@@ -805,6 +805,10 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline
 	gitURL, gitURLfound := mapParams["git.url"]
 	gitHTTPURL, gitHTTPURLFound := mapParams["git.http_url"]
 	_, parentBuildNumberFound := mapParams["cds.parent.buildNumber"]
+	mapPreviousParams := map[string]string{}
+	if trigger.ParentPipelineBuild != nil {
+		mapPreviousParams = paramsToMap(trigger.ParentPipelineBuild.Parameters)
+	}
 
 	switch {
 	case client != nil && (!gitURLfound || !gitHTTPURLFound) && !parentBuildNumberFound: // For root pipeline
@@ -831,8 +835,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline
 			pb.Trigger.VCSRemote = getRemoteName(mapParams["git.project"], mapParams["git.repository"])
 		}
 
-	case parentBuildNumberFound && trigger.ParentPipelineBuild != nil: // For pipeline triggered after root
-		mapPreviousParams := paramsToMap(trigger.ParentPipelineBuild.Parameters)
+	case parentBuildNumberFound && trigger.ParentPipelineBuild != nil && mapPreviousParams["cds.application"] == app.Name: // For pipeline triggered after root
 		if _, ok := mapPreviousParams["git.url"]; ok && mapPreviousParams["git.url"] != "" {
 			sdk.AddParameter(&params, "git.url", sdk.StringParameter, mapPreviousParams["git.url"])
 		}
@@ -850,6 +853,16 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline
 			sdk.AddParameter(&params, "git.repository", sdk.StringParameter, trigger.ParentPipelineBuild.Trigger.VCSRemote)
 			pb.Trigger.VCSRemote = trigger.ParentPipelineBuild.Trigger.VCSRemote
 		}
+	case parentBuildNumberFound && trigger.ParentPipelineBuild != nil && client != nil && mapPreviousParams["cds.application"] != app.Name: // For pipeline attached to an external application
+		repo, errC := client.RepoByFullname(app.RepositoryFullname)
+		if errC != nil {
+			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.RepositoriesManager.Name, app.RepositoryFullname)
+		}
+		pb.Trigger.VCSRemote = app.RepositoryFullname
+		pb.Trigger.VCSRemoteURL = repo.HTTPCloneURL
+		sdk.AddParameter(&params, "git.repository", sdk.StringParameter, app.RepositoryFullname)
+		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, repo.HTTPCloneURL)
+		sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
 	}
 
 	if pb.Trigger.TriggeredBy != nil {

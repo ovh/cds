@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 
@@ -68,15 +69,17 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 
 	// compute payload
 	errm := &sdk.MultiError{}
-	payloadMap, errdump := dump.ToMap(payload, dump.WithLowerCaseFormatter())
+	e := dump.NewDefaultEncoder(new(bytes.Buffer))
+	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+	e.ExtraFields.DetailedMap = false
+	e.ExtraFields.DetailedStruct = false
+	e.ExtraFields.Len = false
+	e.ExtraFields.Type = false
+	vars, errdump := e.ToStringMap(payload)
+
 	if errdump != nil {
 		log.Error("GetNodeBuildParameters> do-dump error: %v", errdump)
 		errm.Append(errdump)
-	}
-	for k, v := range payloadMap {
-		if !strings.HasSuffix(k, "__") && k != "" {
-			vars[k] = v
-		}
 	}
 
 	log.Debug("GetNodeBuildParameters> compute payload :%#v", payload)
