@@ -85,6 +85,8 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		for i := range v {
 			nodeRun := &w.WorkflowNodeRuns[k][i]
 
+			haveToUpdate := false
+
 			log.Debug("last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 			// Only the last subversion
 			if lastCurrentSn == nodeRun.SubNumber {
@@ -140,6 +142,19 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					}
 
 					if !conditionsOK {
+						if nodeRun.TriggersRun == nil {
+							nodeRun.TriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
+						}
+						wntr, ok := nodeRun.TriggersRun[t.ID]
+						if !ok || wntr.Status != sdk.StatusFail.String() {
+							triggerRun := sdk.WorkflowNodeTriggerRun{
+								Status:             sdk.StatusFail.String(),
+								WorkflowDestNodeID: t.WorkflowDestNode.ID,
+							}
+							nodeRun.TriggersRun[t.ID] = triggerRun
+							haveToUpdate = true
+						}
+
 						continue
 					}
 
@@ -156,6 +171,19 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					}
 
 					if !abortTrigger {
+						if nodeRun.TriggersRun == nil {
+							nodeRun.TriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
+						}
+						triggerStatus := sdk.StatusSuccess.String()
+						if t.ContinueOnError && nodeRun.Status == sdk.StatusFail.String() {
+							triggerStatus = sdk.StatusWarning.String()
+						}
+						triggerRun := sdk.WorkflowNodeTriggerRun{
+							Status:             triggerStatus,
+							WorkflowDestNodeID: t.WorkflowDestNode.ID,
+						}
+						nodeRun.TriggersRun[t.ID] = triggerRun
+						haveToUpdate = true
 						//Keep the subnumber of the previous node in the graph
 						if err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil); err != nil {
 							log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, err)
@@ -167,6 +195,12 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 							nodesRunBuilding++
 						}
 					}
+				}
+			}
+
+			if haveToUpdate {
+				if err := UpdateNodeRun(db, nodeRun); err != nil {
+					return sdk.WrapError(err, "process> Cannot update node run")
 				}
 			}
 		}
@@ -268,6 +302,17 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				}
 				//If conditions are not met, skip this trigger
 				if !conditionsOK {
+					if w.JoinTriggersRun == nil {
+						w.JoinTriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
+					}
+					wntr, ok := w.JoinTriggersRun[t.ID]
+					if !ok || wntr.Status != sdk.StatusFail.String() {
+						triggerRun := sdk.WorkflowNodeTriggerRun{
+							Status:             sdk.StatusFail.String(),
+							WorkflowDestNodeID: t.WorkflowDestNode.ID,
+						}
+						w.JoinTriggersRun[t.ID] = triggerRun
+					}
 					continue
 				}
 
@@ -284,6 +329,19 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				}
 
 				if !abortTrigger {
+					if w.JoinTriggersRun == nil {
+						w.JoinTriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
+					}
+					triggerStatus := sdk.StatusSuccess.String()
+					if t.ContinueOnError && sourcesFail > 0 {
+						triggerStatus = sdk.StatusWarning.String()
+					}
+					triggerRun := sdk.WorkflowNodeTriggerRun{
+						Status:             triggerStatus,
+						WorkflowDestNodeID: t.WorkflowDestNode.ID,
+					}
+					w.JoinTriggersRun[t.ID] = triggerRun
+
 					//Keep the subnumber of the previous node in the graph
 					if err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil); err != nil {
 						AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
