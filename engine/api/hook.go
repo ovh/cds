@@ -46,6 +46,7 @@ func processGitlabHook(w http.ResponseWriter, r *http.Request, data []byte) (hoo
 		Ref         string `json:"ref"`
 		UserName    string `json:"user_name"`
 		CheckoutSha string `json:"checkout_sha"`
+		After       string `json:"after"`
 	}
 
 	var ge gitlabEvent
@@ -65,6 +66,11 @@ func processGitlabHook(w http.ResponseWriter, r *http.Request, data []byte) (hoo
 		Author:     ge.UserName,
 		Message:    ge.ObjectKind,
 		UID:        r.FormValue("uid"),
+	}
+
+	// Branch deleted
+	if ge.After == "0000000000000000000000000000000000000000" {
+		rh.Message = "DELETE"
 	}
 
 	return rh, nil

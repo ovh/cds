@@ -19,6 +19,7 @@ var (
 		[]*cobra.Command{
 			cli.NewListCommand(environmentListCmd, environmentListRun, nil),
 			environmentKey,
+			environmentVariable,
 		})
 )
 

@@ -22,7 +22,7 @@ func (c *client) EnvironmentVariablesList(key string, envName string) ([]sdk.Var
 }
 
 func (c *client) EnvironmentVariableCreate(projectKey string, envName string, variable *sdk.Variable) error {
-	code, err := c.PostJSON("/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable", variable, variable)
+	code, err := c.PostJSON("/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(variable.Name), variable, variable)
 	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
@@ -31,8 +31,8 @@ func (c *client) EnvironmentVariableCreate(projectKey string, envName string, va
 	return err
 }
 
-func (c *client) EnvironmentVariableDelete(projectKey string, envName string, keyName string) error {
-	_, code, err := c.Request("DELETE", "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(keyName), nil)
+func (c *client) EnvironmentVariableDelete(projectKey string, envName string, varName string) error {
+	_, code, err := c.Request("DELETE", "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(varName), nil)
 	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
@@ -42,11 +42,25 @@ func (c *client) EnvironmentVariableDelete(projectKey string, envName string, ke
 }
 
 func (c *client) EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error {
-	_, code, err := c.Request("PUT", "/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(variable.Name), nil)
+	code, err := c.PutJSON("/project/"+projectKey+"/environment/"+url.QueryEscape(envName)+"/variable/"+url.QueryEscape(variable.Name), variable, variable, nil)
 	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
 		}
 	}
 	return err
+}
+
+func (c *client) EnvironmentVariableGet(projectKey string, envName string, varName string) (*sdk.Variable, error) {
+	variable := &sdk.Variable{}
+	code, err := c.GetJSON("/project/"+projectKey+"/environment/"+envName+"/variable/"+url.QueryEscape(varName), variable, nil)
+	if code != 200 {
+		if err == nil {
+			return nil, fmt.Errorf("HTTP Code %d", code)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	return variable, nil
 }
