@@ -61,6 +61,56 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 	assert.Len(t, servers, 3)
 
 	log.Debug("Body: %s", rec.Body.String())
+
+	//Prepare request
+	vars = map[string]string{
+		"name": "github",
+	}
+	uri = s.Router.GetRoute("GET", s.getVCSServersHandler, vars)
+	test.NotEmpty(t, uri)
+	req = newRequest(t, s, "GET", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+
+	//Asserts
+	assert.Equal(t, 200, rec.Code)
+
+	var srv = ServerConfiguration{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &srv))
+
+	t.Logf("%s", rec.Body.String())
+
+	//Prepare request
+	vars = map[string]string{
+		"name": "github",
+	}
+	uri = s.Router.GetRoute("GET", s.getVCSServersHooksHandler, vars)
+	test.NotEmpty(t, uri)
+	req = newRequest(t, s, "GET", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+
+	//Asserts
+	assert.Equal(t, 200, rec.Code)
+
+	//Prepare request
+	vars = map[string]string{
+		"name": "github",
+	}
+	uri = s.Router.GetRoute("GET", s.getVCSServersPollingHandler, vars)
+	test.NotEmpty(t, uri)
+	req = newRequest(t, s, "GET", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+
+	//Asserts
+	assert.Equal(t, 200, rec.Code)
 }
 
 func Test_accessTokenAuth(t *testing.T) {

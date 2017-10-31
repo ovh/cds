@@ -18,6 +18,10 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/mon/version", r.GET(api.VersionHandler, api.Auth(false)))
 
 	r.Handle("/vcs", r.GET(s.getAllVCSServersHandler))
+	r.Handle("/vcs/{name}", r.GET(s.getVCSServersHandler))
+	r.Handle("/vcs/{name}/webhooks", r.GET(s.getVCSServersHooksHandler))
+	r.Handle("/vcs/{name}/polling", r.GET(s.getVCSServersPollingHandler))
+
 	r.Handle("/vcs/{name}/authorize", r.GET(s.getAuthorizeHandler), r.POST(s.postAuhorizeHandler))
 
 	r.Handle("/vcs/{name}/repos", r.GET(s.getReposHandler))

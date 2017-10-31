@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/vcs/github"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -23,6 +24,81 @@ func muxVar(r *http.Request, s string) string {
 func (s *Service) getAllVCSServersHandler() api.Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		return api.WriteJSON(w, r, s.Cfg.Servers, http.StatusOK)
+	}
+}
+
+func (s *Service) getVCSServersHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		cfg, ok := s.Cfg.Servers[name]
+		if !ok {
+			return sdk.ErrNotFound
+		}
+		return api.WriteJSON(w, r, cfg, http.StatusOK)
+	}
+}
+
+func (s *Service) getVCSServersHooksHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		cfg, ok := s.Cfg.Servers[name]
+		if !ok {
+			return sdk.ErrNotFound
+		}
+		res := struct {
+			WebhooksSupported         bool `json:"webhooks_supported"`
+			WebhooksDisabled          bool `json:"webhooks_disabled"`
+			WebhooksCreationSupported bool `json:"webhooks_creation_supported"`
+			WebhooksCreationDisabled  bool `json:"webhooks_creation_disabled"`
+		}{}
+
+		switch {
+		case cfg.Bitbucket != nil:
+			res.WebhooksSupported = true
+			res.WebhooksDisabled = cfg.Bitbucket.DisableWebHooks
+			res.WebhooksCreationSupported = true
+			res.WebhooksCreationDisabled = cfg.Bitbucket.DisableWebHooksCreation
+		case cfg.Github != nil:
+			res.WebhooksSupported = false
+			res.WebhooksDisabled = cfg.Github.DisableWebHooks
+			res.WebhooksCreationSupported = false
+			res.WebhooksCreationDisabled = cfg.Github.DisableWebHooksCreation
+		case cfg.Gitlab != nil:
+			res.WebhooksSupported = true
+			res.WebhooksDisabled = cfg.Gitlab.DisableWebHooks
+			res.WebhooksCreationSupported = true
+			res.WebhooksCreationDisabled = cfg.Github.DisableWebHooksCreation
+		}
+
+		return api.WriteJSON(w, r, res, http.StatusOK)
+	}
+}
+
+func (s *Service) getVCSServersPollingHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		name := muxVar(r, "name")
+		cfg, ok := s.Cfg.Servers[name]
+		if !ok {
+			return sdk.ErrNotFound
+		}
+		res := struct {
+			PollingSupported bool `json:"polling_supported"`
+			PollingDisabled  bool `json:"polling_disabled"`
+		}{}
+
+		switch {
+		case cfg.Bitbucket != nil:
+			res.PollingSupported = false
+			res.PollingDisabled = cfg.Bitbucket.DisablePolling
+		case cfg.Github != nil:
+			res.PollingSupported = true
+			res.PollingDisabled = cfg.Github.DisablePolling
+		case cfg.Gitlab != nil:
+			res.PollingSupported = false
+			res.PollingDisabled = cfg.Gitlab.DisablePolling
+		}
+
+		return api.WriteJSON(w, r, res, http.StatusOK)
 	}
 }
 
@@ -313,8 +389,8 @@ func (s *Service) getEventsHandler() api.Handler {
 		}
 
 		evts, delay, err := client.GetEvents(fmt.Sprintf("%s/%s", owner, repo), dateRef)
-		if err != nil {
-			return sdk.WrapError(err, "VCS> getEventsHandler> Unable to get pull requests on %s/%s", owner, repo)
+		if err != nil && err != github.ErrNoNewEvents {
+			return sdk.WrapError(err, "VCS> getEventsHandler> Unable to get events on %s/%s", owner, repo)
 		}
 		res := struct {
 			Events []interface{} `json:"events"`
