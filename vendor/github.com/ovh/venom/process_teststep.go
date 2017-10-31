@@ -33,7 +33,7 @@ func RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCa
 		}
 
 		// add result in templater
-		ts.Templater.Add(tc.Name, result)
+		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
 
 		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
 			isOK, errors, failures, systemout, systemerr = applyChecks(&result, step, h.GetDefaultAssertions(), l)
@@ -41,7 +41,7 @@ func RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCa
 			isOK, errors, failures, systemout, systemerr = applyChecks(&result, step, nil, l)
 		}
 		// add result again for extracts values
-		ts.Templater.Add(tc.Name, result)
+		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
 
 		log.Debugf("result step:%+v", result)
 
@@ -58,6 +58,14 @@ func RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCa
 	tc.Systemerr.Value += systemerr
 
 	return result
+}
+
+func stringifyExecutorResult(e ExecutorResult) map[string]string {
+	out := make(map[string]string)
+	for k, v := range e {
+		out[k] = fmt.Sprintf("%v", v)
+	}
+	return out
 }
 
 func runTestStepExecutor(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, step TestStep, templater *Templater, l Logger) (ExecutorResult, error) {

@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
@@ -346,7 +347,13 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		//Merge the payloads from all the sources
 		m := map[string]string{}
 		for _, r := range runs {
-			m1, errm1 := dump.ToMap(r.Payload, dump.WithDefaultLowerCaseFormatter())
+			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+			e.ExtraFields.DetailedMap = false
+			e.ExtraFields.DetailedStruct = false
+			e.ExtraFields.Len = false
+			e.ExtraFields.Type = false
+			m1, errm1 := e.ToStringMap(r.Payload)
 			if errm1 != nil {
 				AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 					ID:   sdk.MsgWorkflowError.ID,

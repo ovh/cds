@@ -1,6 +1,7 @@
 package hooks
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -341,7 +342,13 @@ func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHook
 			}
 
 			//Go Dump
-			m, err := dump.ToMap(bodyJSON, dump.WithDefaultLowerCaseFormatter())
+			e := dump.NewDefaultEncoder(new(bytes.Buffer))
+			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+			e.ExtraFields.DetailedMap = false
+			e.ExtraFields.DetailedStruct = false
+			e.ExtraFields.Len = false
+			e.ExtraFields.Type = false
+			m, err := e.ToStringMap(bodyJSON)
 			if err == nil {
 				return nil, sdk.WrapError(err, "Hooks> Unable to dump body %s", t.WebHook.RequestBody)
 			}
