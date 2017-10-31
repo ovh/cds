@@ -104,12 +104,20 @@ type sqlNodeRun struct {
 	Tests              sql.NullString `db:"tests"`
 	Commits            sql.NullString `db:"commits"`
 	Stages             sql.NullString `db:"stages"`
+	TriggersRun        sql.NullString `db:"triggers_run"`
 }
 
 //PostInsert is a db hook on WorkflowNodeRun in table workflow_node_run
 //it stores columns hook_event, manual, trigger_id, payload, pipeline_parameters, tests, commits
 func (r *NodeRun) PostInsert(db gorp.SqlExecutor) error {
 	var rr = sqlNodeRun{ID: r.ID}
+	if r.TriggersRun != nil {
+		s, err := gorpmapping.JSONToNullString(r.TriggersRun)
+		if err != nil {
+			return sdk.WrapError(err, "NodeRun.PostInsert> unable to get json from TriggerRun")
+		}
+		rr.TriggersRun = s
+	}
 	if r.Stages != nil {
 		s, err := gorpmapping.JSONToNullString(r.Stages)
 		if err != nil {
@@ -196,6 +204,9 @@ func (r *NodeRun) PostGet(db gorp.SqlExecutor) error {
 
 	if err := db.SelectOne(rr, query, r.ID); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Unable to load workflow_node_run id=%d", r.ID)
+	}
+	if err := gorpmapping.JSONNullString(rr.TriggersRun, &r.TriggersRun); err != nil {
+		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run trigger %d", r.ID)
 	}
 	if err := gorpmapping.JSONNullString(rr.Stages, &r.Stages); err != nil {
 		return sdk.WrapError(err, "NodeRun.PostGet> Error loading node run %d", r.ID)
