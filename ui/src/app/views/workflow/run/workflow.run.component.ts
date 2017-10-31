@@ -1,4 +1,4 @@
-import { WorkflowNode } from '../../../model/workflow.model';
+import {WorkflowNode} from '../../../model/workflow.model';
 import {Component, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {NotificationService} from '../../../service/notification/notification.service';
@@ -44,9 +44,9 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     workflowCoreSub: Subscription;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-      private _router: Router, private _workflowStore: WorkflowStore, private _workflowRunService: WorkflowRunService,
-      private _workflowCoreService: WorkflowCoreService, private _notification: NotificationService,
-        private _translate: TranslateService) {
+                private _router: Router, private _workflowStore: WorkflowStore, private _workflowRunService: WorkflowRunService,
+                private _workflowCoreService: WorkflowCoreService, private _notification: NotificationService,
+                private _translate: TranslateService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         // Update data if route change
@@ -57,7 +57,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
         this._activatedRoute.parent.params.subscribe(params => {
             this.workflowName = params['workflowName'];
         });
-        this._activatedRoute.queryParams.subscribe( p => {
+        this._activatedRoute.queryParams.subscribe(p => {
             if (this.workflowRun && p['subnum']) {
                 this.startWorker(this.workflowRun.num);
             }
@@ -69,13 +69,11 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
             }
         });
 
-        this._workflowCoreService.getCurrentWorkflowRun()
-          .subscribe((wr) => {
-              if (this.workflowRun && this.workflowRun.status !== PipelineStatus.BUILDING &&
-                  this.workflowRun.status !== PipelineStatus.WAITING && wr) {
-                  this.startWorker(wr.num);
-              }
-          });
+        this._workflowCoreService.getCurrentWorkflowRun().subscribe((wr) => {
+            if (this.workflowRun && wr && wr.id !== this.workflowRun.id) {
+                this.startWorker(wr.num);
+            }
+        });
     }
 
     startWorker(num: number): void {
@@ -98,13 +96,13 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
                     this.workflowRun = <WorkflowRun>JSON.parse(wrString);
                     this._workflowCoreService.setCurrentWorkflowRun(this.workflowRun);
                     if (this.workflowRun.status === PipelineStatus.STOPPED ||
-                          this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
+                        this.workflowRun.status === PipelineStatus.FAIL || this.workflowRun.status === PipelineStatus.SUCCESS) {
                         this.runWorkflowWorker.stop();
                         this.runSubsription.unsubscribe();
                         if (this.tmpWorkflowRun != null && this.tmpWorkflowRun.id === this.workflowRun.id &&
-                          this.tmpWorkflowRun.status !== PipelineStatus.STOPPED && this.tmpWorkflowRun.status !== PipelineStatus.FAIL &&
-                          this.tmpWorkflowRun.status !== PipelineStatus.SUCCESS) {
-                          this.handleNotification();
+                            this.tmpWorkflowRun.status !== PipelineStatus.STOPPED && this.tmpWorkflowRun.status !== PipelineStatus.FAIL &&
+                            this.tmpWorkflowRun.status !== PipelineStatus.SUCCESS) {
+                            this.handleNotification();
                         }
                     }
 
@@ -116,16 +114,16 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
 
     handleNotification() {
         switch (this.workflowRun.status) {
-        case PipelineStatus.SUCCESS:
-            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_success', {
-                workflowName: this.workflowName,
-            }), { icon: 'assets/images/checked.png' }).subscribe();
-            break;
-        case PipelineStatus.FAIL:
-            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_failing', {
-                workflowName: this.workflowName
-            }), { icon: 'assets/images/close.png' }).subscribe();
-            break;
+            case PipelineStatus.SUCCESS:
+                this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_success', {
+                    workflowName: this.workflowName,
+                }), {icon: 'assets/images/checked.png'}).subscribe();
+                break;
+            case PipelineStatus.FAIL:
+                this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_workflow_failing', {
+                    workflowName: this.workflowName
+                }), {icon: 'assets/images/close.png'}).subscribe();
+                break;
         }
     }
 
@@ -152,6 +150,6 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     }
 
     ngOnInit(): void {
-      this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);
+        this.direction = this._workflowStore.getDirection(this.project.key, this.workflowName);
     }
 }
