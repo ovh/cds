@@ -55,6 +55,10 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Invalid basedir directory")
 	}
 
+	if hconfig.Name == "" {
+		return fmt.Errorf("please enter a name in your local hatchery configuration")
+	}
+
 	if ok, err := api.DirectoryExists(hconfig.Basedir); !ok {
 		return fmt.Errorf("Basedir doesn't exist")
 	} else if err != nil {
@@ -258,8 +262,7 @@ func checkCapabilities(req []sdk.Requirement) ([]sdk.Requirement, error) {
 func (h *HatcheryLocal) Init() error {
 	h.workers = make(map[string]workerCmd)
 
-	genname := hatchery.GenerateName("local", h.Configuration().Name)
-
+	genname := h.Configuration().Name
 	h.client = cdsclient.NewHatchery(
 		h.Configuration().API.HTTP.URL,
 		h.Configuration().API.Token,

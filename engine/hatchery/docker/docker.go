@@ -104,7 +104,7 @@ func (h *HatcheryDocker) Init() error {
 	h.workers = make(map[string]*exec.Cmd)
 
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("docker", h.Configuration().Name),
+		Name:    h.Configuration().Name,
 		Version: sdk.VERSION,
 	}
 

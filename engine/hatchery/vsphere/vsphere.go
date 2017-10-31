@@ -66,6 +66,10 @@ func (h *HatcheryVSphere) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("vsphere-datacenter is mandatory")
 	}
 
+	if hconfig.Name == "" {
+		return fmt.Errorf("please enter a name in your vsphere hatchery configuration")
+	}
+
 	return nil
 }
 

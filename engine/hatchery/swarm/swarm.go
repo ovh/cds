@@ -62,6 +62,10 @@ func (h *HatcherySwarm) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("worker-memory must be > 1")
 	}
 
+	if hconfig.Name == "" {
+		return fmt.Errorf("please enter a name in your swarm hatchery configuration")
+	}
+
 	if os.Getenv("DOCKER_HOST") == "" {
 		return fmt.Errorf("Please export docker client env variables DOCKER_HOST, DOCKER_TLS_VERIFY, DOCKER_CERT_PATH")
 	}
@@ -78,7 +82,7 @@ func (h *HatcherySwarm) Serve(ctx context.Context) error {
 //Init connect the hatchery to the docker api
 func (h *HatcherySwarm) Init() error {
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("swarm", h.Configuration().Name),
+		Name:    h.Configuration().Name,
 		Version: sdk.VERSION,
 	}
 
