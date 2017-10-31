@@ -35,6 +35,13 @@ func DeleteGroupFromProject(db gorp.SqlExecutor, projectID, groupID int64) error
 	return err
 }
 
+// DeleteAllGroupFromProject Delete all groups from the given project ID
+func DeleteAllGroupFromProject(db gorp.SqlExecutor, projectID int64) error {
+	query := `DELETE FROM project_group WHERE project_id=$1 `
+	_, err := db.Exec(query, projectID)
+	return err
+}
+
 // UpdateGroupRoleInProject Update group role for the given project
 func UpdateGroupRoleInProject(db gorp.SqlExecutor, projectID, groupID int64, role int) error {
 	query := `UPDATE project_group SET role=$1 WHERE project_id=$2 AND group_id=$3`

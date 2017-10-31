@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 
@@ -347,7 +346,6 @@ func (api *API) importGroupsInApplication() Handler {
 					return sdk.WrapError(errLoad, "importGroupsInApplication> Cannot load groups in application %s", app.Name)
 				}
 
-				fmt.Println(groupsInApp)
 				_, errGr := group.GetIdByNameInList(groupsInApp, gr.Group.Name)
 				if errGr == nil {
 					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInApplication> Group %s in application %s", gr.Group.Name, app.Name)

@@ -2,9 +2,13 @@ package api
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/gorilla/mux"
+	"github.com/hashicorp/hcl"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
@@ -13,6 +17,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/exportentities"
 )
 
 func (api *API) deleteGroupFromProjectHandler() Handler {
@@ -308,5 +313,87 @@ func (api *API) addGroupInProjectHandler() Handler {
 		}
 
 		return WriteJSON(w, r, p.ProjectGroups, http.StatusOK)
+	}
+}
+
+func (api *API) importGroupsInProject() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		format := r.FormValue("format")
+		forceUpdate := FormBool(r, "forceUpdate")
+
+		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		if errProj != nil {
+			return sdk.WrapError(errProj, "importGroupsInProject> Cannot load %s", key)
+		}
+
+		groupsToAdd := []sdk.GroupPermission{}
+		// Get body
+		data, errRead := ioutil.ReadAll(r.Body)
+		if errRead != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInProject> Unable to read body")
+		}
+
+		f, errF := exportentities.GetFormat(format)
+		if errF != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInProject> Unable to get format")
+		}
+
+		var errorParse error
+		switch f {
+		case exportentities.FormatJSON, exportentities.FormatHCL:
+			errorParse = hcl.Unmarshal(data, &groupsToAdd)
+		case exportentities.FormatYAML:
+			errorParse = yaml.Unmarshal(data, &groupsToAdd)
+		}
+
+		if errorParse != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInProject> Cannot parsing")
+		}
+
+		tx, errBegin := api.mustDB().Begin()
+		if errBegin != nil {
+			return sdk.WrapError(errBegin, "importGroupsInProject> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		if forceUpdate {
+			if err := group.DeleteAllGroupFromProject(tx, proj.ID); err != nil {
+				return sdk.WrapError(err, "importGroupsInProject> Cannot delete all groups for this project %s", proj.Name)
+			}
+			proj.ProjectGroups = []sdk.GroupPermission{}
+		} else {
+			for _, gr := range groupsToAdd {
+				exist := false
+				for _, gro := range proj.ProjectGroups {
+					if gr.Group.Name == gro.Group.Name {
+						exist = true
+					}
+				}
+				if exist {
+					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInProject> Group %s in project %s", gr.Group.Name, proj.Name)
+				}
+			}
+		}
+
+		for _, gr := range groupsToAdd {
+			gro, errG := group.LoadGroup(tx, gr.Group.Name)
+			if errG != nil {
+				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInProject> Group %v doesn't exist", gr.Group.Name)
+			}
+			if err := group.InsertGroupInProject(tx, proj.ID, gro.ID, gr.Permission); err != nil {
+				return sdk.WrapError(err, "importGroupsInProject> Cannot add group %v in project %s", gr.Group.Name, proj.Name)
+			}
+			gr.Group = *gro
+			proj.ProjectGroups = append(proj.ProjectGroups, gr)
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "importGroupsInProject> Cannot commit transaction")
+		}
+
+		return WriteJSON(w, r, proj, http.StatusOK)
 	}
 }
