@@ -34,7 +34,7 @@
                     (keyup)="setName($event)"
                     [no-match-found-text]="false">
             </div>
-            <div *ngIf="newRequirement.type === 'model'">
+            <div *ngIf="!loading && newRequirement.type === 'model'">
                 <sm-select class="search"
                     [(model)]="newRequirement.value"
                     [options]="{'fullTextSearch': true}"

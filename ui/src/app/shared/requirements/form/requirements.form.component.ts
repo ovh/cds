@@ -31,6 +31,7 @@ export class RequirementsFormComponent {
     valueChanged = false;
     workerModels: Array<string>;
     _suggest: Array<string> = [];
+    loading = true;
 
     constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
         this._requirementStore.getAvailableRequirements().subscribe(r => {
@@ -38,7 +39,9 @@ export class RequirementsFormComponent {
             this.availableRequirements.push(...r.toArray());
         });
 
-        this._workerModelService.getWorkerModels().first().subscribe( wms => {
+        this._workerModelService.getWorkerModels().first()
+        .finally(() => this.loading = false)
+        .subscribe( wms => {
             this.workerModels = wms.map((wm) => wm.name).concat(this.workerModels);
         });
     }

@@ -21,6 +21,7 @@ var (
 			cli.NewGetCommand(projectShowCmd, projectShowRun, nil),
 			projectKey,
 			projectGroup,
+			projectVariable,
 		})
 )
 

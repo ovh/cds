@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
 )
 
 // Name for test smtp
@@ -68,7 +68,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
 	result.Executor.Password = "****hidden****" // do not output password
 
-	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
+	return executors.Dump(result)
 }
 
 func (e *Executor) sendEmail(l venom.Logger) error {

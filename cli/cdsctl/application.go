@@ -21,6 +21,7 @@ var (
 			cli.NewCommand(applicationDeleteCmd, applicationDeleteRun, nil),
 			applicationKey,
 			applicationGroup,
+			applicationVariable,
 		})
 )
 

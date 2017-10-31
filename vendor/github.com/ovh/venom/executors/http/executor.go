@@ -2,6 +2,7 @@ package http
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,10 +14,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
-
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
 )
 
 // Name of executor
@@ -32,13 +32,16 @@ type Headers map[string]string
 
 // Executor struct. Json and yaml descriptor are used for json output
 type Executor struct {
-	Method        string      `json:"method" yaml:"method"`
-	URL           string      `json:"url" yaml:"url"`
-	Path          string      `json:"path" yaml:"path"`
-	Body          string      `json:"body" yaml:"body"`
-	BodyFile      string      `json:"bodyfile" yaml:"bodyfile"`
-	MultipartForm interface{} `json:"multipart_form" yaml:"multipart_form"`
-	Headers       Headers     `json:"headers" yaml:"headers"`
+	Method            string      `json:"method" yaml:"method"`
+	URL               string      `json:"url" yaml:"url"`
+	Path              string      `json:"path" yaml:"path"`
+	Body              string      `json:"body" yaml:"body"`
+	BodyFile          string      `json:"bodyfile" yaml:"bodyfile"`
+	MultipartForm     interface{} `json:"multipart_form" yaml:"multipart_form"`
+	Headers           Headers     `json:"headers" yaml:"headers"`
+	IgnoreVerifySSL   bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
+	BasicAuthUser     string      `json:"basic_auth_user" yaml:"basic_auth_user" mapstructure:"basic_auth_user"`
+	BasicAuthPassword string      `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -82,8 +85,13 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		req.Header.Set(k, v)
 	}
 
+    tr := &http.Transport{
+        TLSClientConfig: &tls.Config{InsecureSkipVerify: t.IgnoreVerifySSL},
+    }
+    client := &http.Client{Transport: tr}
+
 	start := time.Now()
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -117,9 +125,9 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	for k, v := range resp.Header {
 		r.Headers[k] = v[0]
 	}
-
 	r.StatusCode = resp.StatusCode
-	return dump.ToMap(r, dump.WithDefaultLowerCaseFormatter())
+
+	return executors.Dump(r)
 }
 
 // getRequest returns the request correctly set for the current executor
@@ -186,6 +194,11 @@ func (e Executor) getRequest() (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if len(e.BasicAuthUser) > 0 || len(e.BasicAuthPassword) > 0 {
+	    req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+	}
+
 	if writer != nil {
 		req.Header.Set("Content-Type", writer.FormDataContentType())
 	}

@@ -124,6 +124,8 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		if !s.Cache.Get(taskKey, &t) {
 			continue
 		}
+		t.ProcessingTimestamp = time.Now().UnixNano()
+		s.Dao.SaveTaskExecution(&t)
 
 		task := s.Dao.FindTask(t.UUID)
 		if task == nil {

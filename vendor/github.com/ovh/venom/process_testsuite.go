@@ -13,7 +13,7 @@ func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 	l := log.WithField("v.testsuite", ts.Name)
 	start := time.Now()
 
-	d, err := dump.ToMap(ts.Vars)
+	d, err := dump.ToStringMap(ts.Vars)
 	if err != nil {
 		log.Errorf("err:%s", err)
 	}
