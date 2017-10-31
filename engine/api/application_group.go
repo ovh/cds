@@ -2,13 +2,13 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/gorilla/mux"
-	"github.com/hashicorp/hcl"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
@@ -246,7 +246,7 @@ func (api *API) deleteGroupFromApplicationHandler() Handler {
 	}
 }
 
-func (api *API) importGroupsInApplication() Handler {
+func (api *API) importGroupsInApplicationHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL
 		vars := mux.Vars(r)
@@ -279,8 +279,8 @@ func (api *API) importGroupsInApplication() Handler {
 
 		var errorParse error
 		switch f {
-		case exportentities.FormatJSON, exportentities.FormatHCL:
-			errorParse = hcl.Unmarshal(data, &groupsToAdd)
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, &groupsToAdd)
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, &groupsToAdd)
 		}
