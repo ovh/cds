@@ -25,7 +25,7 @@ func applyExtracts(executorResult *ExecutorResult, step TestStep, l Logger) (boo
 		if _, ok := e[key]; !ok {
 			return false, []Failure{{Value: RemoveNotPrintableChar(fmt.Sprintf("key %s in result is not found", key))}}, failures
 		}
-		errs, fails := checkExtracts(transformPattern(pattern), e[key], executorResult, l)
+		errs, fails := checkExtracts(transformPattern(pattern), fmt.Sprintf("%v", e[key]), executorResult, l)
 		if errs != nil {
 			errors = append(errors, *errs)
 			isOK = false

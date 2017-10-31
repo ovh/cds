@@ -7,12 +7,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/ovh/go-ovh/ovh"
 
 	"github.com/ovh/venom"
 	defaultctx "github.com/ovh/venom/context/default"
+	"github.com/ovh/venom/executors"
 )
 
 // Name of executor
@@ -138,7 +138,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		r.Body = string(bb)
 	}
 
-	return dump.ToMap(r, dump.WithDefaultLowerCaseFormatter())
+	return executors.Dump(r)
 }
 
 func (e Executor) getRequestBody() (res interface{}, err error) {

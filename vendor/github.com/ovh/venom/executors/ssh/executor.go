@@ -9,11 +9,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"golang.org/x/crypto/ssh"
 
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
 )
 
 // Name for test ssh
@@ -96,7 +96,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
 
-	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
+	return executors.Dump(result)
 }
 
 func connectToHost(u, pass, key, host string) (*ssh.Client, *ssh.Session, error) {

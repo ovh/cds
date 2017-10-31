@@ -18,7 +18,7 @@ const (
 type Aliases map[string]string
 
 // ExecutorResult represents an executor result on a test step
-type ExecutorResult map[string]string
+type ExecutorResult map[string]interface{}
 
 // StepAssertions contains step assertions
 type StepAssertions struct {

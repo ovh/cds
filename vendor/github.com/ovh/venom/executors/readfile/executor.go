@@ -11,11 +11,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mattn/go-zglob"
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
 )
 
 // Name for test readfile
@@ -73,7 +73,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	result.TimeSeconds = elapsed.Seconds()
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
 
-	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
+	return executors.Dump(result)
 }
 
 func (e *Executor) readfile(path string) (Result, error) {
