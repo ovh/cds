@@ -80,7 +80,7 @@ func LoadAllForProject(db gorp.SqlExecutor, projectKey string) ([]sdk.ProjectVCS
 	}
 
 	if len(vcsServerStr) == 0 {
-		return nil, sdk.ErrNotFound
+		return []sdk.ProjectVCSServer{}, nil
 	}
 
 	clearVCSServer, err := secret.Decrypt(vcsServerStr)

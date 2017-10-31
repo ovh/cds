@@ -95,8 +95,6 @@ func VCSMigrate(db *gorp.DbMap, cache cache.Store) error {
 			continue
 		}
 
-		log.Info("Migrating project %s", proj.Key)
-
 		data := map[string]string{}
 		if err := gorpmapping.JSONNullString(r.Data, &data); err != nil {
 			log.Error("VCSMigrate> unable to unmarshall data %s: %v", r.Key, err)
