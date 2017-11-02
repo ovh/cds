@@ -75,12 +75,14 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	e.ExtraFields.DetailedStruct = false
 	e.ExtraFields.Len = false
 	e.ExtraFields.Type = false
-	vars, errdump := e.ToStringMap(payload)
-
+	tmpVars, errdump := e.ToStringMap(payload)
 	if errdump != nil {
 		log.Error("GetNodeBuildParameters> do-dump error: %v", errdump)
 		errm.Append(errdump)
 	}
+
+	//Merge the dumped payload with vars
+	vars = sdk.ParametersMapMerge(vars, tmpVars)
 
 	log.Debug("GetNodeBuildParameters> compute payload :%#v", payload)
 
