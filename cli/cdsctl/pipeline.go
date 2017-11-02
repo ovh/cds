@@ -24,6 +24,7 @@ var (
 			cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil),
 			cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil),
 			cli.NewCommand(pipelineDeleteCmd, pipelineDeleteRun, nil),
+			pipelineGroup,
 		})
 )
 

@@ -28,6 +28,34 @@ func LoadAllApplicationGroupByRole(db gorp.SqlExecutor, applicationID int64, rol
 	return groupsPermission, nil
 }
 
+// LoadGroupsByApplication retrieves all groups related to project
+func LoadGroupsByApplication(db gorp.SqlExecutor, appID int64) ([]sdk.GroupPermission, error) {
+	query := `SELECT "group".id,"group".name,application_group.role FROM "group"
+	 		  JOIN application_group ON application_group.group_id = "group".id
+				JOIN application ON application.id = application_group.application_id
+	 		  WHERE application.id = $1  ORDER BY "group".name ASC`
+
+	rows, err := db.Query(query, appID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	groups := []sdk.GroupPermission{}
+	for rows.Next() {
+		var group sdk.Group
+		var perm int
+		if err := rows.Scan(&group.ID, &group.Name, &perm); err != nil {
+			return groups, err
+		}
+		groups = append(groups, sdk.GroupPermission{
+			Group:      group,
+			Permission: perm,
+		})
+	}
+	return groups, nil
+}
+
 // CheckGroupInApplication  Check if the group is already attached to the application
 func CheckGroupInApplication(db gorp.SqlExecutor, applicationID, groupID int64) (bool, error) {
 	query := `SELECT COUNT(group_id) FROM application_group WHERE application_id = $1 AND group_id = $2`

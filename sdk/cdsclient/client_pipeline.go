@@ -93,3 +93,27 @@ func (c *client) PipelineList(projectKey string) ([]sdk.Pipeline, error) {
 	}
 	return pipelines, nil
 }
+
+func (c *client) PipelineGroupsImport(projectKey, pipelineName string, content []byte, format string, force bool) (sdk.Pipeline, error) {
+	var url string
+	var pip sdk.Pipeline
+	url = fmt.Sprintf("/project/%s/pipeline/%s/group/import?format=%s", projectKey, pipelineName, format)
+
+	if force {
+		url += "&forceUpdate=true"
+	}
+
+	btes, code, errReq := c.Request("POST", url, content)
+	if code != 200 && errReq == nil {
+		return pip, fmt.Errorf("HTTP Code %d", code)
+	}
+	if errReq != nil {
+		return pip, errReq
+	}
+
+	if err := json.Unmarshal(btes, &pip); err != nil {
+		return pip, errReq
+	}
+
+	return pip, errReq
+}

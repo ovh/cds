@@ -19,6 +19,7 @@ type Interface interface {
 	ApplicationDelete(string, string) error
 	ApplicationGet(string, string, ...RequestModifier) (*sdk.Application, error)
 	ApplicationList(string) ([]sdk.Application, error)
+	ApplicationGroupsImport(projectKey, appName string, content []byte, format string, force bool) (sdk.Application, error)
 	ApplicationKeysList(string, string) ([]sdk.ApplicationKey, error)
 	ApplicationKeyCreate(string, string, *sdk.ApplicationKey) error
 	ApplicationKeysDelete(string, string, string) error
@@ -55,6 +56,7 @@ type Interface interface {
 	PipelineDelete(projectKey, name string) error
 	PipelineExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
 	PipelineImport(projectKey string, content []byte, format string, force bool) ([]string, error)
+	PipelineGroupsImport(projectKey, pipelineName string, content []byte, format string, force bool) (sdk.Pipeline, error)
 	PipelineList(projectKey string) ([]sdk.Pipeline, error)
 	ProjectCreate(*sdk.Project) error
 	ProjectDelete(string) error
@@ -68,6 +70,7 @@ type Interface interface {
 	ProjectVariableDelete(projectKey string, varName string) error
 	ProjectVariableGet(projectKey string, varName string) (*sdk.Variable, error)
 	ProjectVariableUpdate(projectKey string, variable *sdk.Variable) error
+	ProjectGroupsImport(projectKey string, content []byte, format string, force bool) (sdk.Project, error)
 	Queue() ([]sdk.WorkflowNodeJobRun, []sdk.PipelineBuildJob, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
