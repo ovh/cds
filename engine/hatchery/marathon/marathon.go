@@ -73,6 +73,10 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Marathon Password is mandatory")
 	}
 
+	if hconfig.Name == "" {
+		return fmt.Errorf("please enter a name in your marathon hatchery configuration")
+	}
+
 	h.marathonLabels = map[string]string{}
 	if hconfig.MarathonLabels != "" {
 		array := strings.Split(hconfig.MarathonLabels, ",")
@@ -400,7 +404,7 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 // Init only starts killing routine of worker not registered
 func (h *HatcheryMarathon) Init() error {
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("marathon", h.Configuration().Name),
+		Name:    h.Configuration().Name,
 		Version: sdk.VERSION,
 	}
 

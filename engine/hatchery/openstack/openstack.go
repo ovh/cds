@@ -85,6 +85,10 @@ func (h *HatcheryOpenstack) CheckConfiguration(cfg interface{}) error {
 		return fmt.Errorf("Openstack-region is mandatory")
 	}
 
+	if hconfig.Name == "" {
+		return fmt.Errorf("please enter a name in your openstack hatchery configuration")
+	}
+
 	if hconfig.IPRange != "" {
 		ips, err := IPinRanges(hconfig.IPRange)
 		if err != nil {
