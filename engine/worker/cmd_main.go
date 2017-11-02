@@ -248,7 +248,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				if !viper.GetBool("single_use") {
 					//Continue
-					log.Info("pbJob is done. single_use to false, keep worker alive")
+					log.Debug("PipelineBuildJob is done. single_use to false, keep worker alive")
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
@@ -256,7 +256,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine and stop the register goroutine
-				log.Info("pbJob is done. Unregistering...")
+				log.Info("PipelineBuildJob is done. Unregistering...")
 				cancel()
 			case j := <-wjobs:
 				if j.ID == 0 {
@@ -298,7 +298,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine
-				log.Info("wJob is done. Unregistering...")
+				log.Info("Job is done. Unregistering...")
 				cancel()
 			case <-registerTick.C:
 				w.doRegister()
