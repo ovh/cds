@@ -65,6 +65,7 @@ var applicationCreateCmd = cli.Command{
 		{Name: "project-key"},
 		{Name: "application-name"},
 	},
+	Aliases: []string{"add"},
 }
 
 func applicationCreateRun(v cli.Values) error {
@@ -74,11 +75,12 @@ func applicationCreateRun(v cli.Values) error {
 
 var applicationDeleteCmd = cli.Command{
 	Name:  "delete",
-	Short: "Delete CDS application",
+	Short: "Delete a CDS application",
 	Args: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "application-name"},
 	},
+	Aliases: []string{"del", "rm", "remove"},
 }
 
 func applicationDeleteRun(v cli.Values) error {

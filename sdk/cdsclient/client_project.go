@@ -4,10 +4,30 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) ProjectCreate(p *sdk.Project) error {
+func (c *client) ProjectCreate(p *sdk.Project, groupName string) error {
+	if groupName != "" {
+		gr := sdk.Group{}
+		code, err := c.GetJSON("/group/"+groupName, &gr)
+		if code != 200 {
+			if err == nil {
+				return fmt.Errorf("Error on group %s : HTTP Code %d", groupName, code)
+			}
+		}
+		if err != nil {
+			return err
+		}
+		p.ProjectGroups = []sdk.GroupPermission{
+			sdk.GroupPermission{
+				Group:      gr,
+				Permission: permission.PermissionReadWriteExecute,
+			},
+		}
+	}
+
 	code, err := c.PostJSON("/project", p, nil)
 	if code != 201 {
 		if err == nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
 )
 
@@ -21,6 +22,7 @@ var (
 	pipeline = cli.NewCommand(pipelineCmd, nil,
 		[]*cobra.Command{
 			cli.NewListCommand(pipelineListCmd, pipelineListRun, nil),
+			cli.NewCommand(pipelineCreateCmd, pipelineCreateRun, nil),
 			cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil),
 			cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil),
 			cli.NewCommand(pipelineDeleteCmd, pipelineDeleteRun, nil),
@@ -42,6 +44,35 @@ func pipelineListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(pipelines), nil
+}
+
+var pipelineCreateCmd = cli.Command{
+	Name:  "create",
+	Short: "Create a CDS pipeline",
+	Args: []cli.Arg{
+		{Name: "project-key"},
+		{Name: "pipeline-name"},
+	},
+	Flags: []cli.Flag{
+		{
+			Name:  "type",
+			Usage: `Pipeline type {build,deployment,testing} (default "build")`,
+			IsValid: func(s string) bool {
+				if s != "" && s != "build" && s != "deployment" && s != "testing" {
+					return false
+				}
+				return true
+			},
+			Default: "build",
+			Kind:    reflect.String,
+		},
+	},
+	Aliases: []string{"add"},
+}
+
+func pipelineCreateRun(v cli.Values) error {
+	pip := &sdk.Pipeline{Name: v["pipeline-name"], Type: v.GetString("type")}
+	return client.PipelineCreate(v["project-key"], pip)
 }
 
 var pipelineExportCmd = cli.Command{

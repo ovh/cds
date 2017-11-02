@@ -23,6 +23,16 @@ func (c *client) PipelineGet(projectKey, name string) (*sdk.Pipeline, error) {
 	return &pipeline, nil
 }
 
+func (c *client) PipelineCreate(projectKey string, pip *sdk.Pipeline) error {
+	code, err := c.PostJSON("/project/"+projectKey+"/pipeline", pip, nil)
+	if code != 200 {
+		if err == nil {
+			return fmt.Errorf("HTTP Code %d", code)
+		}
+	}
+	return err
+}
+
 func (c *client) PipelineDelete(projectKey, name string) error {
 	code, err := c.DeleteJSON("/project/"+projectKey+"/pipeline/"+url.QueryEscape(name), nil, nil)
 	if code != 200 {
