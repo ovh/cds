@@ -115,8 +115,8 @@ func DisconnectReposManager(key, name string) error {
 }
 
 //GetProjectReposManager returns connected repository manager for a specific project
-func GetProjectReposManager(k string) ([]string, error) {
-	var rms []string
+func GetProjectReposManager(k string) ([]ProjectVCSServer, error) {
+	var rms []ProjectVCSServer
 	uri := fmt.Sprintf("/project/%s/repositories_manager", k)
 	data, code, err := Request("GET", uri, nil)
 	if err != nil {
