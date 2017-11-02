@@ -257,9 +257,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				// Unregister from engine and stop the register goroutine
 				log.Info("pbJob is done. Unregistering...")
-				endFunc()
-				return
-
+				cancel()
 			case j := <-wjobs:
 				if j.ID == 0 {
 					continue
@@ -278,7 +276,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 						if !canWorkOnAnotherJob {
 							errs <- err
 						} else {
-							log.Debug("Unable to run this job, take info:%s, let's continue %d%s", err, j.ID, t)
+							log.Info("Unable to run this job, take info:%s, let's continue %d%s", err, j.ID, t)
 							continue
 						}
 					}
@@ -301,8 +299,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				// Unregister from engine
 				log.Info("wJob is done. Unregistering...")
-				endFunc()
-				return
+				cancel()
 			case <-registerTick.C:
 				w.doRegister()
 			}
