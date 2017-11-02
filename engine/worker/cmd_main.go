@@ -233,7 +233,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				//Take the job
 				if requirementsOK {
-					log.Info("checkQueue> Taking job %d%s", j.ID, t)
+					log.Info("checkQueue> Taking pbjob %d%s", j.ID, t)
 					canWorkOnAnotherJob := w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
 					if canWorkOnAnotherJob {
 						continue
@@ -248,6 +248,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				if !viper.GetBool("single_use") {
 					//Continue
+					log.Info("pbJob is done. single_use to false, keep worker alive")
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
@@ -255,8 +256,9 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine and stop the register goroutine
-				log.Debug("Job is done. Unregistering...")
-				cancel()
+				log.Info("pbJob is done. Unregistering...")
+				endFunc()
+				return
 
 			case j := <-wjobs:
 				if j.ID == 0 {
@@ -271,7 +273,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				//Take the job
 				if requirementsOK {
-					log.Info("checkQueue> Taking job %d%s", j.ID, t)
+					log.Info("checkQueue> Taking wjob %d%s", j.ID, t)
 					if canWorkOnAnotherJob, err := w.takeWorkflowJob(ctx, j); err != nil {
 						if !canWorkOnAnotherJob {
 							errs <- err
@@ -290,6 +292,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				if !viper.GetBool("single_use") {
 					//Continue
+					log.Info("wJob is done. single_use to false, keep worker alive")
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
@@ -297,8 +300,9 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine
-				log.Debug("Job is done. Unregistering...")
-				cancel()
+				log.Info("wJob is done. Unregistering...")
+				endFunc()
+				return
 			case <-registerTick.C:
 				w.doRegister()
 			}
