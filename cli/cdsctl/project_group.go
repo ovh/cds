@@ -15,7 +15,7 @@ import (
 var (
 	projectGroupCmd = cli.Command{
 		Name:  "group",
-		Short: "Manage CDS group linked to a pipeline",
+		Short: "Manage CDS group linked to a project",
 	}
 
 	projectGroup = cli.NewCommand(projectGroupCmd, nil,
@@ -26,7 +26,7 @@ var (
 
 var projectGroupImportCmd = cli.Command{
 	Name:  "import",
-	Short: "Import group linked to a CDS application",
+	Short: "Import group linked to a CDS project",
 	Args: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "path"},
@@ -34,7 +34,7 @@ var projectGroupImportCmd = cli.Command{
 	Flags: []cli.Flag{
 		{
 			Name:  "force",
-			Usage: "Use force flag to replace groups in your application",
+			Usage: "Use force flag to replace groups in your project",
 			IsValid: func(s string) bool {
 				if s != "true" && s != "false" {
 					return false

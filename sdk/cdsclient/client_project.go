@@ -71,10 +71,11 @@ func (c *client) ProjectGroupsImport(projectKey string, content []byte, format s
 	}
 
 	btes, code, errReq := c.Request("POST", url, content)
-	if code != 200 {
-		if errReq == nil {
-			return proj, fmt.Errorf("HTTP Code %d", code)
-		}
+	if code != 200 && errReq == nil {
+		return proj, fmt.Errorf("HTTP Code %d", code)
+	}
+	if errReq != nil {
+		return proj, errReq
 	}
 
 	if err := json.Unmarshal(btes, &proj); err != nil {

@@ -6,9 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/gorilla/mux"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"

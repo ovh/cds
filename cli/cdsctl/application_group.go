@@ -15,7 +15,7 @@ import (
 var (
 	applicationGroupCmd = cli.Command{
 		Name:  "group",
-		Short: "Manage CDS group linked to a pipeline",
+		Short: "Manage CDS group linked to an application",
 	}
 
 	applicationGroup = cli.NewCommand(applicationGroupCmd, nil,

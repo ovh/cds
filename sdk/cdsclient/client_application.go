@@ -65,10 +65,11 @@ func (c *client) ApplicationGroupsImport(projectKey, appName string, content []b
 	}
 
 	btes, code, errReq := c.Request("POST", url, content)
-	if code != 200 {
-		if errReq == nil {
-			return app, fmt.Errorf("HTTP Code %d", code)
-		}
+	if code != 200 && errReq == nil {
+		return app, fmt.Errorf("HTTP Code %d", code)
+	}
+	if errReq != nil {
+		return app, errReq
 	}
 
 	if err := json.Unmarshal(btes, &app); err != nil {

@@ -104,10 +104,11 @@ func (c *client) PipelineGroupsImport(projectKey, pipelineName string, content [
 	}
 
 	btes, code, errReq := c.Request("POST", url, content)
-	if code != 200 {
-		if errReq == nil {
-			return pip, fmt.Errorf("HTTP Code %d", code)
-		}
+	if code != 200 && errReq == nil {
+		return pip, fmt.Errorf("HTTP Code %d", code)
+	}
+	if errReq != nil {
+		return pip, errReq
 	}
 
 	if err := json.Unmarshal(btes, &pip); err != nil {
