@@ -148,11 +148,14 @@ func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, e
 }
 
 func checkServiceRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	if _, err := net.LookupIP(r.Name); err != nil {
-		log.Warning("Error checking requirement : %s\n", err)
+	// service are supported only for Model Docker
+	if w.model.Type != sdk.Docker {
 		return false, nil
 	}
-
+	if _, err := net.LookupIP(r.Name); err != nil {
+		log.Debug("Error checking requirement : %s", err)
+		return false, nil
+	}
 	return true, nil
 }
 

@@ -41,6 +41,7 @@ type Interface interface {
 	EnvironmentVariableDelete(projectKey string, envName string, varName string) error
 	EnvironmentVariableGet(projectKey string, envName string, varName string) (*sdk.Variable, error)
 	EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error
+	EnvironmentGroupsImport(projectKey, envName string, content []byte, format string, force bool) (sdk.Environment, error)
 	GroupCreate(group *sdk.Group) error
 	GroupDelete(name string) error
 	GroupGenerateToken(groupName, expiration string) (*sdk.Token, error)

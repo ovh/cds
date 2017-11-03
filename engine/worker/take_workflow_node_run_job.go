@@ -19,7 +19,7 @@ import (
 func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (bool, error) {
 	info, err := w.client.QueueTakeJob(job, w.bookedJobID == job.ID)
 	if err != nil {
-		return true, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job")
+		return true, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker can work on another job.")
 	}
 
 	w.nbActionsDone++

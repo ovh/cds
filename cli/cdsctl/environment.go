@@ -20,6 +20,7 @@ var (
 			cli.NewListCommand(environmentListCmd, environmentListRun, nil),
 			environmentKey,
 			environmentVariable,
+			environmentGroup,
 		})
 )
 

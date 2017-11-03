@@ -256,24 +256,24 @@ func (api *API) importGroupsInApplicationHandler() Handler {
 
 		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
 		if errProj != nil {
-			return sdk.WrapError(errProj, "importGroupsInApplication> Cannot load %s", key)
+			return sdk.WrapError(errProj, "importGroupsInApplicationHandler> Cannot load %s", key)
 		}
 
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.WithGroups)
 		if err != nil {
-			return sdk.WrapError(err, "importGroupsInApplication> Cannot load %s", key)
+			return sdk.WrapError(err, "importGroupsInApplicationHandler> Cannot load %s", key)
 		}
 
 		groupsToAdd := []sdk.GroupPermission{}
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInApplication> Unable to read body")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInApplicationHandler> Unable to read body")
 		}
 
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInApplication> Unable to get format")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInApplicationHandler> Unable to get format")
 		}
 
 		var errorParse error
@@ -285,7 +285,7 @@ func (api *API) importGroupsInApplicationHandler() Handler {
 		}
 
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInApplication> Cannot parsing")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInApplicationHandler> Cannot parsing")
 		}
 
 		groupsToAddInProj := []sdk.GroupPermission{}
@@ -297,7 +297,7 @@ func (api *API) importGroupsInApplicationHandler() Handler {
 				}
 			}
 			if !exist && !forceUpdate {
-				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInApplication> Group %v doesn't exist in this project", gr.Group.Name)
+				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInApplicationHandler> Group %v doesn't exist in this project", gr.Group.Name)
 			} else if !exist && forceUpdate {
 				groupsToAddInProj = append(groupsToAddInProj, sdk.GroupPermission{
 					Group:      gr.Group,
@@ -308,7 +308,7 @@ func (api *API) importGroupsInApplicationHandler() Handler {
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			return sdk.WrapError(errBegin, "importGroupsInApplication> Cannot start transaction")
+			return sdk.WrapError(errBegin, "importGroupsInApplicationHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
@@ -316,59 +316,51 @@ func (api *API) importGroupsInApplicationHandler() Handler {
 			for _, gr := range groupsToAddInProj {
 				gro, errG := group.LoadGroup(tx, gr.Group.Name)
 				if errG != nil {
-					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInApplication> Group %v doesn't exist", gr.Group.Name)
+					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInApplicationHandler> Group %v doesn't exist", gr.Group.Name)
 				}
 				if err := group.InsertGroupInProject(tx, proj.ID, gro.ID, gr.Permission); err != nil {
-					return sdk.WrapError(err, "importGroupsInApplication> Cannot add group %v in project %s", gr.Group.Name, proj.Name)
+					return sdk.WrapError(err, "importGroupsInApplicationHandler> Cannot add group %v in project %s", gr.Group.Name, proj.Name)
 				}
 				gr.Group = *gro
 				proj.ProjectGroups = append(proj.ProjectGroups, gr)
 			}
 
 			if err := group.DeleteAllGroupFromApplication(tx, app.ID); err != nil {
-				return sdk.WrapError(err, "importGroupsInApplication> Cannot delete all groups for this application %s", app.Name)
+				return sdk.WrapError(err, "importGroupsInApplicationHandler> Cannot delete all groups for this application %s", app.Name)
 			}
 
+			app.ApplicationGroups = []sdk.GroupPermission{}
 			for _, gr := range groupsToAdd {
 				gro, errG := group.LoadGroup(tx, gr.Group.Name)
 				if errG != nil {
-					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInApplication> Cannot load group %s : %s", gr.Group.Name, errG)
+					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInApplicationHandler> Cannot load group %s : %s", gr.Group.Name, errG)
 				}
 				if err := group.InsertGroupInApplication(tx, app.ID, gro.ID, gr.Permission); err != nil {
-					return sdk.WrapError(err, "importGroupsInApplication> Cannot insert group %s in this application %s", gr.Group.Name, app.Name)
+					return sdk.WrapError(err, "importGroupsInApplicationHandler> Cannot insert group %s in this application %s", gr.Group.Name, app.Name)
 				}
+				app.ApplicationGroups = append(app.ApplicationGroups, sdk.GroupPermission{Group: sdk.Group{Name: gr.Group.Name}, Permission: gr.Permission})
 			}
 		} else { // add new group
 			for _, gr := range groupsToAdd {
-				groupsInApp, errLoad := group.LoadGroupsByApplication(tx, app.ID)
-				if errLoad != nil {
-					return sdk.WrapError(errLoad, "importGroupsInApplication> Cannot load groups in application %s", app.Name)
-				}
-
-				_, errGr := group.GetIdByNameInList(groupsInApp, gr.Group.Name)
+				_, errGr := group.GetIdByNameInList(app.ApplicationGroups, gr.Group.Name)
 				if errGr == nil {
-					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInApplication> Group %s in application %s", gr.Group.Name, app.Name)
+					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInApplicationHandler> Group %s in application %s", gr.Group.Name, app.Name)
 				}
 
 				grID, errG := group.GetIdByNameInList(proj.ProjectGroups, gr.Group.Name)
 				if errG != nil {
-					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInApplication> Cannot find group %s in this project %s : %s", gr.Group.Name, proj.Name, errG)
+					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInApplicationHandler> Cannot find group %s in this project %s : %s", gr.Group.Name, proj.Name, errG)
 				}
 				if errA := group.InsertGroupInApplication(tx, app.ID, grID, gr.Permission); errA != nil {
-					return sdk.WrapError(errA, "importGroupsInApplication> Cannot insert group %s in this application %s", gr.Group.Name, app.Name)
+					return sdk.WrapError(errA, "importGroupsInApplicationHandler> Cannot insert group %s in this application %s", gr.Group.Name, app.Name)
 				}
+				app.ApplicationGroups = append(app.ApplicationGroups, sdk.GroupPermission{Group: sdk.Group{Name: gr.Group.Name}, Permission: gr.Permission})
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "importGroupsInApplication> Cannot commit transaction")
+			return sdk.WrapError(err, "importGroupsInApplicationHandler> Cannot commit transaction")
 		}
-
-		permissions := []sdk.GroupPermission{}
-		for _, gr := range groupsToAdd {
-			permissions = append(permissions, sdk.GroupPermission{Group: sdk.Group{Name: gr.Group.Name}, Permission: gr.Permission})
-		}
-		app.ApplicationGroups = permissions
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
