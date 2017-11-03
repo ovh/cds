@@ -104,16 +104,16 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 // PublishWorkflowNodeRun publish event on a workflow node run
 func PublishWorkflowNodeRun(nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, projectKey string) {
 	e := sdk.EventWorkflowNodeRun{
-		ID:              nr.ID,
-		Number:          nr.Number,
-		SubNumber:       nr.SubNumber,
-		Status:          nr.Status,
-		Start:           nr.Start.Unix(),
-		ProjectKey:      projectKey,
-		Manual:          nr.Manual,
-		HookEvent:       nr.HookEvent,
-		Payload:         nr.Payload,
-		SourceNodeRuns:  nr.SourceNodeRuns,
+		ID:             nr.ID,
+		Number:         nr.Number,
+		SubNumber:      nr.SubNumber,
+		Status:         nr.Status,
+		Start:          nr.Start.Unix(),
+		ProjectKey:     projectKey,
+		Manual:         nr.Manual,
+		HookEvent:      nr.HookEvent,
+		Payload:        nr.Payload,
+		SourceNodeRuns: nr.SourceNodeRuns,
 	}
 
 	node := wr.Workflow.GetNode(nr.WorkflowNodeID)

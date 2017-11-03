@@ -319,7 +319,7 @@ func NodeBuildParameters(proj *sdk.Project, wf *sdk.Workflow, wr *sdk.WorkflowRu
 }
 
 // StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
-func StopWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanEvent chan <- interface{}) error {
+func StopWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanEvent chan<- interface{}) error {
 	// Load node job run ID
 	ids, errIDS := LoadNodeJobRunIDByNodeRunID(db, nodeRun.ID)
 	if errIDS != nil {

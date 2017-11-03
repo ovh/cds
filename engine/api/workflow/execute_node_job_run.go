@@ -17,7 +17,7 @@ import (
 )
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
-func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<-interface{}) error {
+func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
 	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID)
@@ -149,7 +149,7 @@ func prepareSpawnInfos(j *sdk.WorkflowNodeJobRun, infos []sdk.SpawnInfo) error {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo, chanEvent chan<-interface{}) (*sdk.WorkflowNodeJobRun, error) {
+func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo, chanEvent chan<- interface{}) (*sdk.WorkflowNodeJobRun, error) {
 	job, err := LoadAndLockNodeJobRunNoWait(db, store, id)
 	if err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
