@@ -140,7 +140,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrPipelineNotFound.ID:                      "pipeline does not exist",
 	ErrPipelineNotAttached.ID:                   "pipeline is not attached to application",
 	ErrNoEnvironmentProvided.ID:                 "deployment and testing pipelines require an environnement",
-	ErrEnvironmentProvided.ID:                   "build pipeline are not compatible with environnment usage",
+	ErrEnvironmentProvided.ID:                   "build pipeline are not compatible with environment usage",
 	ErrUnknownEnv.ID:                            "unknown environment",
 	ErrEnvironmentExist.ID:                      "environment already exist",
 	ErrNoPipelineBuild.ID:                       "this pipeline build does not exist",
