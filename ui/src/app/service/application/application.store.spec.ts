@@ -134,9 +134,8 @@ describe('CDS: application Store', () => {
 
         let applicationC = new Application();
         applicationC.name = 'myApplicationUpdate1';
-        applicationC.last_modified = '456';
-        applicationC.repositories_manager = new RepositoriesManager();
-        applicationC.repositories_manager.name = 'repoman';
+        applicationC.last_modified = '456'; 
+        applicationC.vcs_server = 'repoman';
         applicationC.repository_fullname = 'myrepo';
 
         let applicationLast = new Application();
