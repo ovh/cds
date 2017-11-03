@@ -4,6 +4,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 )
 
 var (
@@ -18,6 +19,7 @@ var (
 	environment = cli.NewCommand(environmentCmd, nil,
 		[]*cobra.Command{
 			cli.NewListCommand(environmentListCmd, environmentListRun, nil),
+			cli.NewCommand(environmentCreateCmd, environmentCreateRun, nil),
 			environmentKey,
 			environmentVariable,
 			environmentGroup,
@@ -38,4 +40,19 @@ func environmentListRun(v cli.Values) (cli.ListResult, error) {
 		return nil, err
 	}
 	return cli.AsListResult(apps), nil
+}
+
+var environmentCreateCmd = cli.Command{
+	Name:  "create",
+	Short: "Create a CDS environment",
+	Args: []cli.Arg{
+		{Name: "project-key"},
+		{Name: "environment-name"},
+	},
+	Aliases: []string{"add"},
+}
+
+func environmentCreateRun(v cli.Values) error {
+	env := &sdk.Environment{Name: v["environment-name"]}
+	return client.EnvironmentCreate(v["project-key"], env)
 }

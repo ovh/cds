@@ -78,6 +78,7 @@ var projectCreateCmd = cli.Command{
 	OptionalArgs: []cli.Arg{
 		{Name: "group-name"},
 	},
+	Aliases: []string{"add"},
 }
 
 func projectCreateRun(v cli.Values) error {
