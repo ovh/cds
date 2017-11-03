@@ -4,16 +4,15 @@ import (
 	"database/sql"
 	"strings"
 
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -56,6 +55,7 @@ func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) er
 	return nil
 }
 
+// VCSMigrate migrate stuffs to other stuffs
 func VCSMigrate(db *gorp.DbMap, cache cache.Store) error {
 	log.Info("VCSMigrate> Begin")
 	defer log.Info("VCSMigrate> End")

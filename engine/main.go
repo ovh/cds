@@ -120,7 +120,7 @@ Comming soon...`,
 				ClientSecret: "xxxx",
 			},
 		}
-		conf.VCS.Servers["stash_ovh_net"] = vcs.ServerConfiguration{
+		conf.VCS.Servers["Bitbucket"] = vcs.ServerConfiguration{
 			URL: "https://mybitbucket.com",
 			Bitbucket: &vcs.BitbucketServerConfiguration{
 				ConsumerKey: "xxx",

@@ -520,8 +520,6 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s", projectKey, rmName)
 		}
 
-		log.Debug("addHookOnRepositoriesManagerHandler> here %v", rm)
-
 		tx, errb := api.mustDB().Begin()
 		if errb != nil {
 			return sdk.WrapError(errb, "addHookOnRepositoriesManagerHandler> cannot start transaction")

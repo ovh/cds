@@ -11,10 +11,10 @@ import (
 	"sort"
 	"time"
 
-	"github.com/ovh/cds/sdk"
-
 	"github.com/facebookgo/httpcontrol"
+
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/sdk"
 )
 
 var (
