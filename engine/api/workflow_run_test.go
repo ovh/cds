@@ -817,7 +817,7 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
 
 	// Remove execution right for group
-	test.NoError(t, group.UpdateGroupRoleInEnvironment(api.mustDB(), proj.Key, env.Name, proj.ProjectGroups[0].Group.Name, 4))
+	test.NoError(t, group.UpdateGroupRoleInEnvironment(api.mustDB(), env.ID, proj.ProjectGroups[0].Group.ID, 4))
 
 	u.Admin = false
 	test.NoError(t, user.UpdateUser(api.mustDB(), *u))

@@ -78,9 +78,5 @@ func actionAuditCleaner(db *gorp.DbMap) error {
 		}
 	}
 
-	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	return nil
+	return tx.Commit()
 }

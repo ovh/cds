@@ -63,6 +63,14 @@ func UpdateGroup(db gorp.SqlExecutor, w *sdk.Workflow, gp sdk.GroupPermission) e
 			g.Permission = gp.Permission
 		}
 	}
+
+	ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, w.ID)
+	if err != nil {
+		return sdk.WrapError(err, "UpdateGroup")
+	}
+	if !ok {
+		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "UpdateGroup")
+	}
 	return nil
 }
 
@@ -73,7 +81,24 @@ func DeleteGroup(db gorp.SqlExecutor, w *sdk.Workflow, groupID int64, index int)
 		return sdk.WrapError(err, "DeleteGroup")
 	}
 	w.Groups = append(w.Groups[:index], w.Groups[index+1:]...)
+
+	ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, w.ID)
+	if err != nil {
+		return sdk.WrapError(err, "DeleteGroup")
+	}
+	if !ok {
+		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "DeleteGroup")
+	}
 	return nil
+}
+
+func checkAtLeastOneGroupWithWriteRoleOnWorkflow(db gorp.SqlExecutor, wID int64) (bool, error) {
+	query := `select count(group_id) from workflow_group where workflow_id = $1 and role = $2`
+	nb, err := db.SelectInt(query, wID, 7)
+	if err != nil {
+		return false, sdk.WrapError(err, "CheckAtLeastOneGroupWithWriteRoleOnWorkflow")
+	}
+	return nb > 0, err
 }
 
 func loadWorkflowGroups(db gorp.SqlExecutor, w sdk.Workflow) ([]sdk.GroupPermission, error) {
@@ -103,4 +128,28 @@ func loadWorkflowGroups(db gorp.SqlExecutor, w sdk.Workflow) ([]sdk.GroupPermiss
 		})
 	}
 	return wgs, nil
+}
+
+func deleteWorkflowGroupByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
+	workflowIDs := []int64{}
+	if _, err := db.Select(workflowIDs, "SELECT workflow_id from workflow_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
+		return sdk.WrapError(err, "deleteWorkflowGroupByGroup")
+	}
+
+	query := `DELETE FROM workflow_group WHERE group_id=$1`
+	if _, err := db.Exec(query, group.ID); err != nil {
+		return sdk.WrapError(err, "deleteWorkflowGroupByGroup")
+	}
+
+	for _, id := range workflowIDs {
+		ok, err := checkAtLeastOneGroupWithWriteRoleOnWorkflow(db, id)
+		if err != nil {
+			return sdk.WrapError(err, "deleteWorkflowGroupByGroup")
+		}
+		if !ok {
+			return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "deleteWorkflowGroupByGroup")
+		}
+	}
+
+	return nil
 }

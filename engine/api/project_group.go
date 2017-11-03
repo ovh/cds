@@ -246,7 +246,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the application %s", g.Name, app.Name)
 				}
 				if inApp {
-					if err := group.UpdateGroupRoleInApplication(tx, p.Key, app.Name, g.Name, groupProject.Permission); err != nil {
+					if err := group.UpdateGroupRoleInApplication(tx, app.ID, g.ID, groupProject.Permission); err != nil {
 						return sdk.WrapError(err, "AddGroupInProject: Cannot update group %s on application %s", g.Name, app.Name)
 					}
 				} else if err := application.AddGroup(tx, api.Cache, p, &app, getUser(ctx), groupProject); err != nil {
@@ -290,7 +290,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the environment %s", g.Name, env.Name)
 				}
 				if inEnv {
-					if err := group.UpdateGroupRoleInEnvironment(tx, p.Key, env.Name, g.Name, groupProject.Permission); err != nil {
+					if err := group.UpdateGroupRoleInEnvironment(tx, env.ID, g.ID, groupProject.Permission); err != nil {
 						return sdk.WrapError(err, "AddGroupInProject: Cannot update group %s on environment %s", g.Name, env.Name)
 					}
 				} else if err := group.InsertGroupInEnvironment(tx, env.ID, g.ID, groupProject.Permission); err != nil {
