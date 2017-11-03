@@ -355,7 +355,7 @@ func (api *API) getApplicationRemoteHandler() Handler {
 
 		proj, err := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if err != nil {
-			return sdk.WrapError(err, "getApplicationBranchHandler> Cannot load project %s", projectKey)
+			return sdk.WrapError(err, "getApplicationRemoteHandler> Cannot load project %s", projectKey)
 		}
 
 		app, errL := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
