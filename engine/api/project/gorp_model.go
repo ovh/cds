@@ -45,8 +45,10 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 			return err
 		}
 
-		if err := yaml.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
-			return err
+		if len(clearVCSServer) > 0 {
+			if err := yaml.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
+				return sdk.WrapError(err, "Unable to load project %d", p.ID)
+			}
 		}
 	}
 
