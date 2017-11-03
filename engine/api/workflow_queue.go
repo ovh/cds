@@ -13,7 +13,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/ovh/venom"
 
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/worker"
@@ -89,7 +91,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 
 		//Take node job run
-		job, errTake := workflow.TakeNodeJobRun(tx, api.Cache, p, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos)
+		job, errTake := workflow.TakeNodeJobRun(tx, api.Cache, p, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos, nil)
 		if errTake != nil {
 			return sdk.WrapError(errTake, "postTakeWorkflowJobHandler> Cannot take job %d", id)
 		}
@@ -105,19 +107,17 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
 		}
 
-		noderun.Status = sdk.StatusBuilding.String()
-		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
-			return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
-		}
-
-		//Load workflow node run
-		nodeRun, err := workflow.LoadNodeRunByID(api.mustDB(), job.WorkflowNodeRunID)
-		if err != nil {
-			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load node run")
+		workflowNodeRunEvent := []sdk.WorkflowNodeRun{}
+		if noderun.Status == sdk.StatusWaiting.String() {
+			noderun.Status = sdk.StatusBuilding.String()
+			if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
+				return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
+			}
+			workflowNodeRunEvent = append(workflowNodeRunEvent, *noderun)
 		}
 
 		//Load workflow run
-		workflowRun, err := workflow.LoadRunByID(api.mustDB(), nodeRun.WorkflowRunID)
+		workflowRun, err := workflow.LoadRunByID(api.mustDB(), noderun.WorkflowRunID)
 		if err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load workflow run")
 		}
@@ -128,7 +128,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot load project variable")
 		}
 
-		secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, api.Cache, job, nodeRun, workflowRun, pv)
+		secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, api.Cache, job, noderun, workflowRun, pv)
 		if errSecret != nil {
 			return sdk.WrapError(errSecret, "postTakeWorkflowJobHandler> Cannot load secrets")
 		}
@@ -140,7 +140,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		pbji.SubNumber = noderun.SubNumber
 		pbji.Secrets = secrets
 
-		params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, api.Cache, job, nodeRun, workflowRun, p)
+		params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, api.Cache, job, noderun, workflowRun, p)
 		if errK != nil {
 			return sdk.WrapError(errK, "postTakeWorkflowJobHandler> Cannot load keys")
 		}
@@ -150,6 +150,8 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot commit transaction")
 		}
+
+		workflow.SendEvent(api.mustDB(), nil, workflowNodeRunEvent, []sdk.WorkflowNodeJobRun{*job}, p.Key)
 
 		return WriteJSON(w, r, pbji, http.StatusOK)
 	}
@@ -224,10 +226,9 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
 		}
 
-		//Load workflow node job run
-		job, errj := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
-		if errj != nil {
-			return sdk.WrapError(errj, "postWorkflowJobResultHandler> Unable to load node run job")
+		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		if errP != nil {
+			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project")
 		}
 
 		// Unmarshal into results
@@ -236,50 +237,74 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
-		if errP != nil {
-			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project")
-		}
+		chanEvent := make(chan interface{})
+		chanError := make(chan error)
 
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "postWorkflowJobResultHandler> Cannot begin tx")
-		}
-		defer tx.Rollback()
+		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx).ID, getWorker(ctx).Name, &res)
 
-		//Update worker status
-		if err := worker.UpdateWorkerStatus(tx, getWorker(ctx).ID, sdk.StatusWaiting); err != nil {
-			log.Warning("postWorkflowJobResultHandler> Cannot update worker status (%s): %s", getWorker(ctx).ID, err)
-		}
-
-		remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
-		if errt != nil {
-			return sdk.WrapError(errt, "postWorkflowJobResultHandler> Cannot parse remote time")
-		}
-
-		//Update spwan info
-		infos := []sdk.SpawnInfo{{
-			RemoteTime: remoteTime,
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{getWorker(ctx).Name, res.Duration}},
-		}}
-
-		//Add spawn infos
-		if _, err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, job.ID, infos); err != nil {
-			log.Error("addQueueResultHandler> Cannot save spawn info job %d: %s", job.ID, err)
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		if err != nil {
 			return err
 		}
-
-		// Update action status
-		log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", id, res.Status)
-		if err := workflow.UpdateNodeJobRunStatus(tx, api.Cache, p, job, sdk.Status(res.Status)); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", id)
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot commit tx")
-		}
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		return nil
+	}
+}
+
+func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, workerID, workerName string, res *sdk.Result) {
+	defer close(chEvent)
+	defer close(chError)
+
+	//Start the transaction
+	tx, errb := db.Begin()
+	if errb != nil {
+		chError <- sdk.WrapError(errb, "postWorkflowJobResultHandler> Cannot begin tx")
+		return
+	}
+	defer tx.Rollback()
+
+	//Load workflow node job run
+	job, errj := workflow.LoadAndLockNodeJobRunNoWait(tx, store, res.BuildID)
+	if errj != nil {
+		chError <- sdk.WrapError(errj, "postWorkflowJobResultHandler> Unable to load node run job")
+		return
+	}
+
+	//Update worker status
+	if err := worker.UpdateWorkerStatus(tx, workerID, sdk.StatusWaiting); err != nil {
+		log.Warning("postWorkflowJobResultHandler> Cannot update worker status (%s): %s", workerID, err)
+	}
+
+	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
+	if errt != nil {
+		chError <- sdk.WrapError(errt, "postWorkflowJobResultHandler> Cannot parse remote time")
+		return
+	}
+
+	//Update spwan info
+	infos := []sdk.SpawnInfo{{
+		RemoteTime: remoteTime,
+		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{workerName, res.Duration}},
+	}}
+
+	//Add spawn infos
+	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, store, p, job.ID, infos); err != nil {
+		chError <- sdk.WrapError(err, "addQueueResultHandler> Cannot save spawn info job %d", job.ID)
+		return
+	}
+
+	// Update action status
+	log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", workerID, res.Status)
+	if err := workflow.UpdateNodeJobRunStatus(tx, store, p, job, sdk.Status(res.Status), chEvent); err != nil {
+		chError <- sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", workerID)
+		return
+	}
+
+	//Commit the transaction
+	if err := tx.Commit(); err != nil {
+		chError <- sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot commit tx")
+		return
 	}
 }
 
@@ -352,7 +377,11 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run")
 		}
 
-		return tx.Commit()
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Cannot ")
+		}
+
+		return nil
 	}
 }
 

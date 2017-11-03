@@ -147,12 +147,7 @@ func UpdateNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, j 
 	if _, err := db.Update(&dbj); err != nil {
 		return err
 	}
-
-	nRun, errR := LoadNodeRunByID(db, j.WorkflowNodeRunID)
-	if errR != nil {
-		return errR
-	}
-	return execute(db, store, p, nRun)
+	return nil
 }
 
 func keyBookJob(id int64) string {
