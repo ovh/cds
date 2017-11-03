@@ -58,8 +58,12 @@ func main() {
 		cfg, err = loadConfig(configFile)
 		cli.ExitOnError(err, login.Help)
 
-		client, err = loadClient(cfg)
-		cli.ExitOnError(err)
+		if cfg.Host != "" && cfg.User != "" && cfg.Token != "" {
+			client = cdsclient.New(*cfg)
+		} else {
+			client, err = loadClient(cfg)
+			cli.ExitOnError(err)
+		}
 
 		//Manage warnings
 		/*		if !internal.NoWarnings && cmd != user.Cmd {
