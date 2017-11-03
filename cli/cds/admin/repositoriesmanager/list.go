@@ -32,6 +32,6 @@ func listReposManager(cmd *cobra.Command, args []string) {
 	}
 
 	for _, rm := range rms {
-		fmt.Printf("%s %s %s\n", rm.Type, rm.Name, rm.URL)
+		fmt.Println(rm)
 	}
 }
