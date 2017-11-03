@@ -84,7 +84,6 @@ func VCSMigrate(db *gorp.DbMap, cache cache.Store) error {
 		tx, err := db.Begin()
 		if err != nil {
 			log.Error("VCSMigrate> unable to start transaction %v", err)
-			_ = tx.Rollback()
 			continue
 		}
 
