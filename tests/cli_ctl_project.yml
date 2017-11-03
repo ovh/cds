@@ -7,15 +7,23 @@ testcases:
     - result.code ShouldEqual 0
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITCLIAPPPRJ
-  - script: {{.cds.build.cds}} group remove ITCLIAPP_GRP --force
-  - script: {{.cds.build.cds}} group remove ITCLIAPP_GRP_EDIT_TEST --force
-  - script: {{.cds.build.cds}} group remove ITCLIAPP_GRP_EDIT_TEST1 --force
-  - script: {{.cds.build.cds}} group remove ITCLIAPP_GRP_EDIT_TEST2 --force
-  - script: {{.cds.build.cds}} project add ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
-  - script: {{.cds.build.cds}} group add ITCLIAPP_GRP_EDIT_TEST
-  - script: {{.cds.build.cds}} group add ITCLIAPP_GRP_EDIT_TEST1
-  - script: {{.cds.build.cds}} group add ITCLIAPP_GRP_EDIT_TEST2
+  - script: {{.cds.build.cdsctl}} project remove --force ITCLIAPPPRJ
+  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP --force
+  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP_EDIT_TEST --force
+  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP_EDIT_TEST1 --force
+  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP_EDIT_TEST2 --force
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP
+  - script: {{.cds.build.cdsctl}} project create ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST1
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST2
+
+- name: project list
+  steps:
+  - script: {{.cds.build.cdsctl}} project list
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring ITCLIAPPPRJ
 
 - name: project group import without force
   steps:

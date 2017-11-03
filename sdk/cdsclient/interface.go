@@ -15,27 +15,27 @@ type Interface interface {
 	ActionGet(actionName string, mods ...RequestModifier) (*sdk.Action, error)
 	ActionList() ([]sdk.Action, error)
 	APIURL() string
-	ApplicationCreate(string, *sdk.Application) error
-	ApplicationDelete(string, string) error
-	ApplicationGet(string, string, ...RequestModifier) (*sdk.Application, error)
-	ApplicationList(string) ([]sdk.Application, error)
+	ApplicationCreate(projectKey string, app *sdk.Application) error
+	ApplicationDelete(projectKey string, appName string) error
+	ApplicationGet(projectKey string, appName string, opts ...RequestModifier) (*sdk.Application, error)
+	ApplicationList(projectKey string) ([]sdk.Application, error)
 	ApplicationGroupsImport(projectKey, appName string, content []byte, format string, force bool) (sdk.Application, error)
-	ApplicationKeysList(string, string) ([]sdk.ApplicationKey, error)
-	ApplicationKeyCreate(string, string, *sdk.ApplicationKey) error
-	ApplicationKeysDelete(string, string, string) error
-	ApplicationVariablesList(key string, appName string) ([]sdk.Variable, error)
+	ApplicationKeysList(projectKey string, appName string) ([]sdk.ApplicationKey, error)
+	ApplicationKeyCreate(projectKey string, appName string, keyApp *sdk.ApplicationKey) error
+	ApplicationKeysDelete(projectKey string, appName string, KeyAppName string) error
+	ApplicationVariablesList(projectKey string, appName string) ([]sdk.Variable, error)
 	ApplicationVariableCreate(projectKey string, appName string, variable *sdk.Variable) error
 	ApplicationVariableDelete(projectKey string, appName string, varName string) error
 	ApplicationVariableGet(projectKey string, appName string, varName string) (*sdk.Variable, error)
 	ApplicationVariableUpdate(projectKey string, appName string, variable *sdk.Variable) error
 	ConfigUser() (map[string]string, error)
-	EnvironmentCreate(string, *sdk.Environment) error
-	EnvironmentDelete(string, string) error
-	EnvironmentGet(string, string, ...RequestModifier) (*sdk.Environment, error)
-	EnvironmentList(string) ([]sdk.Environment, error)
-	EnvironmentKeysList(string, string) ([]sdk.EnvironmentKey, error)
-	EnvironmentKeyCreate(string, string, *sdk.EnvironmentKey) error
-	EnvironmentKeysDelete(string, string, string) error
+	EnvironmentCreate(projectKey string, env *sdk.Environment) error
+	EnvironmentDelete(projectKey string, envName string) error
+	EnvironmentGet(projectKey string, envName string, opts ...RequestModifier) (*sdk.Environment, error)
+	EnvironmentList(projectKey string) ([]sdk.Environment, error)
+	EnvironmentKeysList(projectKey string, envName string) ([]sdk.EnvironmentKey, error)
+	EnvironmentKeyCreate(projectKey string, envName string, keyEnv *sdk.EnvironmentKey) error
+	EnvironmentKeysDelete(projectKey string, envName string, keyEnvName string) error
 	EnvironmentVariablesList(key string, envName string) ([]sdk.Variable, error)
 	EnvironmentVariableCreate(projectKey string, envName string, variable *sdk.Variable) error
 	EnvironmentVariableDelete(projectKey string, envName string, varName string) error
@@ -55,17 +55,18 @@ type Interface interface {
 	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
 	MonStatus() ([]string, error)
 	PipelineDelete(projectKey, name string) error
+	PipelineCreate(projectKey string, pip *sdk.Pipeline) error
 	PipelineExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
 	PipelineImport(projectKey string, content []byte, format string, force bool) ([]string, error)
 	PipelineGroupsImport(projectKey, pipelineName string, content []byte, format string, force bool) (sdk.Pipeline, error)
 	PipelineList(projectKey string) ([]sdk.Pipeline, error)
-	ProjectCreate(*sdk.Project) error
-	ProjectDelete(string) error
-	ProjectGet(string, ...RequestModifier) (*sdk.Project, error)
+	ProjectCreate(proj *sdk.Project, groupName string) error
+	ProjectDelete(projectKey string) error
+	ProjectGet(projectKey string, opts ...RequestModifier) (*sdk.Project, error)
 	ProjectList() ([]sdk.Project, error)
-	ProjectKeysList(string) ([]sdk.ProjectKey, error)
-	ProjectKeyCreate(string, *sdk.ProjectKey) error
-	ProjectKeysDelete(string, string) error
+	ProjectKeysList(projectKey string) ([]sdk.ProjectKey, error)
+	ProjectKeyCreate(projectKey string, key *sdk.ProjectKey) error
+	ProjectKeysDelete(projectKey string, keyProjectName string) error
 	ProjectVariablesList(key string) ([]sdk.Variable, error)
 	ProjectVariableCreate(projectKey string, variable *sdk.Variable) error
 	ProjectVariableDelete(projectKey string, varName string) error
@@ -101,6 +102,7 @@ type Interface interface {
 	WorkerSetStatus(sdk.Status) error
 	WorkflowList(projectKey string) ([]sdk.Workflow, error)
 	WorkflowGet(projectKey, name string) (*sdk.Workflow, error)
+	WorkflowDelete(projectKey string, workflowName string) error
 	WorkflowRunGet(projectKey string, name string, number int64) (*sdk.WorkflowRun, error)
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.Artifact, error)
 	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
