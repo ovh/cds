@@ -162,7 +162,7 @@ describe('CDS: application Store', () => {
         let checkedAttached = false;
         applicationStore.getApplications(projectKey, 'myApplication').subscribe(apps => {
             expect(apps.get(projectKey + '-myApplication').repository_fullname).toBe('myrepo', 'Repo fullname must be set to "myrepo"');
-            expect(apps.get(projectKey + '-myApplication').repositories_manager.name)
+            expect(apps.get(projectKey + '-myApplication').vcs_server)
                 .toBe('repoman', 'Repo manager must be set to "repoman"');
             checkedAttached = true;
         }).unsubscribe();

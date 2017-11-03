@@ -284,7 +284,7 @@ describe('CDS: project Store', () => {
         projectStore.getProjects('key1').first().subscribe(projs => {
             validationRepoCheck = true;
             expect(projs.get('key1').last_modified).toBe('456');
-            expect(projs.get('key1').repositories_manager.length).toBe(1);
+            expect(projs.get('key1').vcs_servers.length).toBe(1);
         });
         expect(validationRepoCheck).toBeTruthy('Must check project update');
 
@@ -298,7 +298,7 @@ describe('CDS: project Store', () => {
         projectStore.getProjects('key1').first().subscribe(projs => {
             deleteRepoCheck = true;
             expect(projs.get('key1').last_modified).toBe('789');
-            expect(projs.get('key1').repositories_manager.length).toBe(0);
+            expect(projs.get('key1').vcs_servers.length).toBe(0);
         });
         expect(deleteRepoCheck).toBeTruthy('Must check project update');
 
