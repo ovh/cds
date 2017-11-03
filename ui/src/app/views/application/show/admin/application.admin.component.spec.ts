@@ -95,9 +95,9 @@ describe('CDS: Application Admin Component', () => {
         let p: Project = new Project();
         p.key = 'key1';
         p.name = 'proj1';
-        p.repositories_manager = new Array<RepositoriesManager>();
+        p.vcs_servers = new Array<RepositoriesManager>();
         let rm = new RepositoriesManager();
-        p.repositories_manager.push(rm);
+        p.vcs_servers.push(rm);
 
         let pip: Pipeline = new Pipeline();
         pip.name = 'myPipeline';

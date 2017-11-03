@@ -242,10 +242,10 @@ describe('CDS: project Store', () => {
 
         let projectValidation = createProject('key1', 'myProject');
         projectValidation.last_modified = '456';
-        projectValidation.repositories_manager = new Array<RepositoriesManager>();
+        projectValidation.vcs_servers = new Array<RepositoriesManager>();
         let rp = new RepositoriesManager();
         rp.name = 'repoName';
-        projectValidation.repositories_manager.push(rp);
+        projectValidation.vcs_servers.push(rp);
 
         let projectRepoDel = createProject('key1', 'myProject');
         projectRepoDel.last_modified = '789';

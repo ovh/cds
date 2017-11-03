@@ -76,7 +76,7 @@ describe('CDS: Project RepoManager List Component', () => {
         fixture.componentInstance.project = p;
 
         let reposMans = new Array<RepositoriesManager>();
-        let r: RepositoriesManager = { type: 'stash', id: 1, url: 'foo.bar', name : 'stash'};
+        let r: RepositoriesManager = { name : 'stash'};
         reposMans.push(r);
         fixture.componentInstance.reposmanagers = reposMans;
 
