@@ -48,6 +48,11 @@ func NewGetCommand(c Command, run RunGetFunc, subCommands []*cobra.Command, mod 
 	return newCommand(c, run, subCommands, mod...)
 }
 
+// NewDeleteCommand creates a new cobra command with a RunDeleteFunc and eventually subCommands
+func NewDeleteCommand(c Command, run RunDeleteFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
+	return newCommand(c, run, subCommands, mod...)
+}
+
 // NewListCommand creates a new cobra command with a RunListFunc and eventually subCommands
 func NewListCommand(c Command, run RunListFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
 	return newCommand(c, run, subCommands, mod...)
@@ -281,6 +286,26 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				table.Render()
 				return
 			}
+
+		case RunDeleteFunc:
+			if f == nil {
+				cmd.Help()
+				os.Exit(0)
+			}
+
+			force, _ := cmd.Flags().GetBool("force")
+
+			if !force && !AskForConfirmation("Are you sure to delete ?") {
+				fmt.Println("Deletion aborted")
+				os.Exit(0)
+			}
+
+			err := f(vals)
+			if err == nil {
+				fmt.Println("Delete with success")
+			}
+			ExitOnError(err)
+			os.Exit(0)
 
 		default:
 			panic(fmt.Errorf("Unknown function type: %T", f))

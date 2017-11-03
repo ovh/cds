@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -20,6 +23,7 @@ var (
 		[]*cobra.Command{
 			cli.NewListCommand(environmentListCmd, environmentListRun, nil),
 			cli.NewCommand(environmentCreateCmd, environmentCreateRun, nil),
+			cli.NewDeleteCommand(environmentDeleteCmd, environmentDeleteRun, nil),
 			environmentKey,
 			environmentVariable,
 			environmentGroup,
@@ -55,4 +59,23 @@ var environmentCreateCmd = cli.Command{
 func environmentCreateRun(v cli.Values) error {
 	env := &sdk.Environment{Name: v["environment-name"]}
 	return client.EnvironmentCreate(v["project-key"], env)
+}
+
+var environmentDeleteCmd = cli.Command{
+	Name:  "delete",
+	Short: "Delete a CDS environment",
+	Args: []cli.Arg{
+		{Name: "project-key"},
+		{Name: "environment-name"},
+	},
+}
+
+func environmentDeleteRun(v cli.Values) error {
+	err := client.EnvironmentDelete(v["project-key"], v["environment-name"])
+	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoEnvironment) {
+		fmt.Println(err.Error())
+		os.Exit(0)
+	}
+
+	return err
 }

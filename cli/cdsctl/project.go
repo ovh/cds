@@ -1,8 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
-	"reflect"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -22,7 +23,7 @@ var (
 			cli.NewListCommand(projectListCmd, projectListRun, nil),
 			cli.NewGetCommand(projectShowCmd, projectShowRun, nil),
 			cli.NewCommand(projectCreateCmd, projectCreateRun, nil),
-			cli.NewCommand(projectDeleteCmd, projectDeleteRun, nil),
+			cli.NewDeleteCommand(projectDeleteCmd, projectDeleteRun, nil),
 			projectKey,
 			projectGroup,
 			projectVariable,
@@ -92,20 +93,6 @@ var projectDeleteCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "project-key"},
 	},
-	Flags: []cli.Flag{
-		{
-			Name:  "force",
-			Usage: "Use force flag to delete all project dependencies with project",
-			IsValid: func(s string) bool {
-				if s != "true" && s != "false" {
-					return false
-				}
-				return true
-			},
-			Default: "false",
-			Kind:    reflect.Bool,
-		},
-	},
 	Aliases: []string{"rm", "remove", "del"},
 }
 
@@ -157,7 +144,11 @@ func projectDeleteRun(v cli.Values) error {
 		}
 	}
 
-	if err := client.ProjectDelete(projKey); err != nil && !sdk.ErrorIs(err, sdk.ErrNoProject) {
+	if err := client.ProjectDelete(projKey); err != nil {
+		if v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrNoProject) {
+			fmt.Println(err.Error())
+			os.Exit(0)
+		}
 		return err
 	}
 	return nil

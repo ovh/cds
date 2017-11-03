@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 
 	"github.com/spf13/cobra"
 
@@ -21,7 +20,7 @@ var (
 			cli.NewListCommand(groupListCmd, groupListRun, nil),
 			cli.NewGetCommand(groupShowCmd, groupShowRun, nil),
 			cli.NewCommand(groupCreateCmd, groupCreateRun, nil),
-			cli.NewCommand(groupDeleteCmd, groupDeleteRun, nil),
+			cli.NewDeleteCommand(groupDeleteCmd, groupDeleteRun, nil),
 			groupToken,
 			groupUser,
 		})
@@ -75,20 +74,6 @@ var groupDeleteCmd = cli.Command{
 	Short: "Delete a CDS group",
 	Args: []cli.Arg{
 		{Name: "group-name"},
-	},
-	Flags: []cli.Flag{
-		{
-			Name:  "force",
-			Usage: "Use force flag to delete group and exit 0 if group does not exist",
-			IsValid: func(s string) bool {
-				if s != "true" && s != "false" {
-					return false
-				}
-				return true
-			},
-			Default: "false",
-			Kind:    reflect.Bool,
-		},
 	},
 	Aliases: []string{"rm", "remove", "del"},
 }

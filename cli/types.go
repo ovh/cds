@@ -135,6 +135,15 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 				Kind:  reflect.Bool,
 			},
 		}
+	case RunDeleteFunc:
+		extraFlags = []Flag{
+			{
+				Name:    "force",
+				Default: "false",
+				Usage:   "Force delete without confirmation and exit 0 if resource does not exist",
+				Kind:    reflect.Bool,
+			},
+		}
 	}
 	c.Flags = append(c.Flags, extraFlags...)
 }
@@ -161,6 +170,9 @@ type RunFunc func(Values) error
 
 // RunGetFunc is a run function for a command. It returns an object value (not a pointer) and an error.
 type RunGetFunc func(Values) (interface{}, error)
+
+// RunDeleteFunc is a run function for a command. It returns an error.
+type RunDeleteFunc func(Values) error
 
 // RunListFunc is a run function for a command. It returns an objects list  and an error
 type RunListFunc func(Values) (ListResult, error)

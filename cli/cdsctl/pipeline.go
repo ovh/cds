@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"strings"
@@ -23,9 +24,9 @@ var (
 		[]*cobra.Command{
 			cli.NewListCommand(pipelineListCmd, pipelineListRun, nil),
 			cli.NewCommand(pipelineCreateCmd, pipelineCreateRun, nil),
+			cli.NewDeleteCommand(pipelineDeleteCmd, pipelineDeleteRun, nil),
 			cli.NewCommand(pipelineExportCmd, pipelineExportRun, nil),
 			cli.NewCommand(pipelineImportCmd, pipelineImportRun, nil),
-			cli.NewCommand(pipelineDeleteCmd, pipelineDeleteRun, nil),
 			pipelineGroup,
 		})
 )
@@ -179,7 +180,7 @@ func pipelineImportRun(v cli.Values) error {
 
 var pipelineDeleteCmd = cli.Command{
 	Name:  "delete",
-	Short: "Delete CDS pipeline",
+	Short: "Delete a CDS pipeline",
 	Args: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "pipeline-name"},
@@ -187,5 +188,11 @@ var pipelineDeleteCmd = cli.Command{
 }
 
 func pipelineDeleteRun(v cli.Values) error {
-	return client.PipelineDelete(v["project-key"], v["pipeline-name"])
+	err := client.PipelineDelete(v["project-key"], v["pipeline-name"])
+	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrPipelineNotFound) {
+		fmt.Println(err.Error())
+		os.Exit(0)
+	}
+
+	return err
 }
