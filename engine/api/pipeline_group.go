@@ -239,26 +239,32 @@ func (api *API) importGroupsInPipelineHandler() Handler {
 		format := r.FormValue("format")
 		forceUpdate := FormBool(r, "forceUpdate")
 
-		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		tx, errBegin := api.mustDB().Begin()
+		if errBegin != nil {
+			return sdk.WrapError(errBegin, "importGroupsInPipelineHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		proj, errProj := project.Load(tx, api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
 		if errProj != nil {
-			return sdk.WrapError(errProj, "importGroupsInPipeline> Cannot load %s", key)
+			return sdk.WrapError(errProj, "importGroupsInPipelineHandler> Cannot load %s", key)
 		}
 
-		pip, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
+		pip, err := pipeline.LoadPipeline(tx, key, pipelineName, true)
 		if err != nil {
-			return sdk.WrapError(err, "importGroupsInPipeline> Cannot load pipeline %s in project %s", pipelineName, key)
+			return sdk.WrapError(err, "importGroupsInPipelineHandler> Cannot load pipeline %s in project %s", pipelineName, key)
 		}
 
 		groupsToAdd := []sdk.GroupPermission{}
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInPipeline> Unable to read body")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInPipelineHandler> Unable to read body")
 		}
 
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInPipeline> Unable to get format")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInPipelineHandler> Unable to get format")
 		}
 
 		var errorParse error
@@ -270,7 +276,7 @@ func (api *API) importGroupsInPipelineHandler() Handler {
 		}
 
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInPipeline> Cannot parsing")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInPipelineHandler> Cannot parsing")
 		}
 
 		groupsToAddInProj := []sdk.GroupPermission{}
@@ -282,7 +288,7 @@ func (api *API) importGroupsInPipelineHandler() Handler {
 				}
 			}
 			if !exist && !forceUpdate {
-				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInPipeline> Group %v doesn't exist in this project", gr.Group.Name)
+				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInPipelineHandler> Group %v doesn't exist in this project", gr.Group.Name)
 			} else if !exist && forceUpdate {
 				groupsToAddInProj = append(groupsToAddInProj, sdk.GroupPermission{
 					Group:      gr.Group,
@@ -291,68 +297,54 @@ func (api *API) importGroupsInPipelineHandler() Handler {
 			}
 		}
 
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "importGroupsInPipeline> Cannot start transaction")
-		}
-		defer tx.Rollback()
-
 		if forceUpdate { // clean and update
 			for _, gr := range groupsToAddInProj {
 				gro, errG := group.LoadGroup(tx, gr.Group.Name)
 				if errG != nil {
-					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInPipeline> Group %v doesn't exist", gr.Group.Name)
+					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInPipelineHandler> Group %v doesn't exist", gr.Group.Name)
 				}
 				if err := group.InsertGroupInProject(tx, proj.ID, gro.ID, gr.Permission); err != nil {
-					return sdk.WrapError(err, "importGroupsInPipeline> Cannot add group %v in project %s", gr.Group.Name, proj.Name)
+					return sdk.WrapError(err, "importGroupsInPipelineHandler> Cannot add group %v in project %s", gr.Group.Name, proj.Name)
 				}
 				gr.Group = *gro
 				proj.ProjectGroups = append(proj.ProjectGroups, gr)
 			}
 
 			if err := group.DeleteAllGroupFromPipeline(tx, pip.ID); err != nil {
-				return sdk.WrapError(err, "importGroupsInPipeline> Cannot delete all groups for this pipeline %s", pip.Name)
+				return sdk.WrapError(err, "importGroupsInPipelineHandler> Cannot delete all groups for this pipeline %s", pip.Name)
 			}
-
+			pip.GroupPermission = []sdk.GroupPermission{}
 			for _, gr := range groupsToAdd {
 				gro, errG := group.LoadGroup(tx, gr.Group.Name)
 				if errG != nil {
-					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInPipeline> Cannot load group %s : %s", gr.Group.Name, errG)
+					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInPipelineHandler> Cannot load group %s : %s", gr.Group.Name, errG)
 				}
 				if err := group.InsertGroupInPipeline(tx, pip.ID, gro.ID, gr.Permission); err != nil {
-					return sdk.WrapError(err, "importGroupsInPipeline> Cannot insert group %s in this pipeline %s", gr.Group.Name, pip.Name)
+					return sdk.WrapError(err, "importGroupsInPipelineHandler> Cannot insert group %s in this pipeline %s", gr.Group.Name, pip.Name)
 				}
+				pip.GroupPermission = append(pip.GroupPermission, sdk.GroupPermission{Group: sdk.Group{Name: gr.Group.Name}, Permission: gr.Permission})
 			}
 		} else { // add new group
 			for _, gr := range groupsToAdd {
-				groupID, errCheck := group.LoadGroupInPipelineByName(tx, pip.ID, gr.Group.Name)
-				if errCheck != nil {
-					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInPipeline> Cannot check if group %s is already in the pipeline %s: %s", gr.Group.Name, pip.Name, errCheck)
-				}
-				if groupID != 0 {
-					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInPipeline> Group %s already exist in pipeline %s", gr.Group.Name, pip.Name)
+				_, errGr := group.GetIdByNameInList(pip.GroupPermission, gr.Group.Name)
+				if errGr == nil {
+					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInPipelineHandler> Group %s in pipeline %s", gr.Group.Name, pip.Name)
 				}
 
 				grID, errG := group.GetIdByNameInList(proj.ProjectGroups, gr.Group.Name)
 				if errG != nil {
-					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInPipeline> Cannot find group %s in this project %s : %s", gr.Group.Name, proj.Name, errG)
+					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInPipelineHandler> Cannot find group %s in this project %s : %s", gr.Group.Name, proj.Name, errG)
 				}
 				if errA := group.InsertGroupInPipeline(tx, pip.ID, grID, gr.Permission); errA != nil {
-					return sdk.WrapError(errA, "importGroupsInPipeline> Cannot insert group %s in this pipeline %s", gr.Group.Name, pip.Name)
+					return sdk.WrapError(errA, "importGroupsInPipelineHandler> Cannot insert group %s in this pipeline %s", gr.Group.Name, pip.Name)
 				}
-
+				pip.GroupPermission = append(pip.GroupPermission, sdk.GroupPermission{Group: sdk.Group{Name: gr.Group.Name}, Permission: gr.Permission})
 			}
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "importGroupsInPipeline> Cannot commit transaction")
+			return sdk.WrapError(err, "importGroupsInPipelineHandler> Cannot commit transaction")
 		}
-
-		permissions := []sdk.GroupPermission{}
-		for _, gr := range groupsToAdd {
-			permissions = append(permissions, sdk.GroupPermission{Group: sdk.Group{Name: gr.Group.Name}, Permission: gr.Permission})
-		}
-		pip.GroupPermission = permissions
 
 		return WriteJSON(w, r, pip, http.StatusOK)
 	}

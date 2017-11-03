@@ -325,19 +325,19 @@ func (api *API) importGroupsInProjectHandler() Handler {
 
 		proj, errProj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
 		if errProj != nil {
-			return sdk.WrapError(errProj, "importGroupsInProject> Cannot load %s", key)
+			return sdk.WrapError(errProj, "importGroupsInProjectHandler> Cannot load %s", key)
 		}
 
 		groupsToAdd := []sdk.GroupPermission{}
 		// Get body
 		data, errRead := ioutil.ReadAll(r.Body)
 		if errRead != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInProject> Unable to read body")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInProjectHandler> Unable to read body")
 		}
 
 		f, errF := exportentities.GetFormat(format)
 		if errF != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInProject> Unable to get format")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInProjectHandler> Unable to get format")
 		}
 
 		var errorParse error
@@ -349,18 +349,18 @@ func (api *API) importGroupsInProjectHandler() Handler {
 		}
 
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInProject> Cannot parsing")
+			return sdk.WrapError(sdk.ErrWrongRequest, "importGroupsInProjectHandler> Cannot parsing")
 		}
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			return sdk.WrapError(errBegin, "importGroupsInProject> Cannot start transaction")
+			return sdk.WrapError(errBegin, "importGroupsInProjectHandler> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
 		if forceUpdate {
 			if err := group.DeleteAllGroupFromProject(tx, proj.ID); err != nil {
-				return sdk.WrapError(err, "importGroupsInProject> Cannot delete all groups for this project %s", proj.Name)
+				return sdk.WrapError(err, "importGroupsInProjectHandler> Cannot delete all groups for this project %s", proj.Name)
 			}
 			proj.ProjectGroups = []sdk.GroupPermission{}
 		} else {
@@ -372,7 +372,7 @@ func (api *API) importGroupsInProjectHandler() Handler {
 					}
 				}
 				if exist {
-					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInProject> Group %s in project %s", gr.Group.Name, proj.Name)
+					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInProjectHandler> Group %s in project %s", gr.Group.Name, proj.Name)
 				}
 			}
 		}
@@ -380,17 +380,17 @@ func (api *API) importGroupsInProjectHandler() Handler {
 		for _, gr := range groupsToAdd {
 			gro, errG := group.LoadGroup(tx, gr.Group.Name)
 			if errG != nil {
-				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInProject> Group %v doesn't exist", gr.Group.Name)
+				return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInProjectHandler> Group %v doesn't exist", gr.Group.Name)
 			}
 			if err := group.InsertGroupInProject(tx, proj.ID, gro.ID, gr.Permission); err != nil {
-				return sdk.WrapError(err, "importGroupsInProject> Cannot add group %v in project %s", gr.Group.Name, proj.Name)
+				return sdk.WrapError(err, "importGroupsInProjectHandler> Cannot add group %v in project %s", gr.Group.Name, proj.Name)
 			}
 			gr.Group = *gro
 			proj.ProjectGroups = append(proj.ProjectGroups, gr)
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "importGroupsInProject> Cannot commit transaction")
+			return sdk.WrapError(err, "importGroupsInProjectHandler> Cannot commit transaction")
 		}
 
 		return WriteJSON(w, r, proj, http.StatusOK)
