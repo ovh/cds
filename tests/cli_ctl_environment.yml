@@ -1,4 +1,4 @@
-name: Pipeline Command TestSuite with CDS ctl
+name: Environement Command TestSuite with CDS ctl
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:
@@ -13,16 +13,15 @@ testcases:
   - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP_EDIT_TEST1 --force
   - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP_EDIT_TEST2 --force
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP
-  - script: {{.cds.build.cdsctl}} project create ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
-  - script: {{.cds.build.cdsctl}} application add ITCLIAPPPRJ apptest
-  - script: {{.cds.build.cdsctl}} pipeline add ITCLIAPPPRJ piptest
+  - script: {{.cds.build.cdsctl}} project add ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
+  - script: {{.cds.build.cdsctl}} environment add ITCLIAPPPRJ envtest
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST1
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST2
 
-- name: pipeline group import without force
+- name: environment group import without force
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ piptest ./tests/fixtures/group_to_add.yml
+  - script: {{.cds.build.cdsctl}} environment group import ITCLIAPPPRJ envtest ./tests/fixtures/group_to_add.yml
     assertions:
       - result.code ShouldEqual 50
       - result.systemout ShouldContainSubstring exist
@@ -34,33 +33,33 @@ testcases:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring success
 
-- name: pipeline group import without force
+- name: environement group import without force
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ piptest ./tests/fixtures/group_to_add.yml
+  - script: {{.cds.build.cdsctl}} environment group import ITCLIAPPPRJ envtest ./tests/fixtures/group_to_add.yml
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring success
-      - result.systemout ShouldContainSubstring piptest
+      - result.systemout ShouldContainSubstring envtest
 
-- name: pipeline group import without force and existing groups
+- name: application group import without force and existing groups
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ piptest ./tests/fixtures/group_to_add.yml
+  - script: {{.cds.build.cdsctl}} environment group import ITCLIAPPPRJ envtest ./tests/fixtures/group_to_add.yml
     assertions:
       - result.code ShouldEqual 50
       - result.systemout ShouldContainSubstring 'group already exists'
 
-- name: pipeline group import without force and unknown project
+- name: application group import without force and unknown project
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIFAPPPRJ piptest ./tests/fixtures/group_to_add.yml
+  - script: {{.cds.build.cdsctl}} environment group import ITCLIFAPPPRJ envtest ./tests/fixtures/group_to_add.yml
     assertions:
       - result.code ShouldEqual 50
       - result.systemout ShouldContainSubstring project
       - result.systemout ShouldContainSubstring 'not exist'
 
-- name: pipeline group import with force
+- name: application group import with force
   steps:
-  - script: {{.cds.build.cdsctl}} pipeline group import ITCLIAPPPRJ piptest ./tests/fixtures/group_to_add.yml --force
+  - script: {{.cds.build.cdsctl}} environment group import ITCLIAPPPRJ envtest ./tests/fixtures/group_to_add.yml --force
     assertions:
       - result.code ShouldEqual 0
       - result.systemout ShouldContainSubstring success
-      - result.systemout ShouldContainSubstring piptest
+      - result.systemout ShouldContainSubstring envtest

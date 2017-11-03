@@ -233,7 +233,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				//Take the job
 				if requirementsOK {
-					log.Info("checkQueue> Taking job %d%s", j.ID, t)
+					log.Info("checkQueue> Taking PipelineBuildJob %d%s", j.ID, t)
 					canWorkOnAnotherJob := w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
 					if canWorkOnAnotherJob {
 						continue
@@ -248,6 +248,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				if !viper.GetBool("single_use") {
 					//Continue
+					log.Debug("PipelineBuildJob is done. single_use to false, keep worker alive")
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
@@ -255,9 +256,8 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine and stop the register goroutine
-				log.Debug("Job is done. Unregistering...")
+				log.Info("PipelineBuildJob is done. Unregistering...")
 				cancel()
-
 			case j := <-wjobs:
 				if j.ID == 0 {
 					continue
@@ -271,12 +271,12 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				//Take the job
 				if requirementsOK {
-					log.Info("checkQueue> Taking job %d%s", j.ID, t)
+					log.Info("checkQueue> Taking Job %d%s", j.ID, t)
 					if canWorkOnAnotherJob, err := w.takeWorkflowJob(ctx, j); err != nil {
 						if !canWorkOnAnotherJob {
 							errs <- err
 						} else {
-							log.Debug("Unable to run this job, take info:%s, let's continue %d%s", err, j.ID, t)
+							log.Info("Unable to run this job, take info:%s, let's continue %d%s", err, j.ID, t)
 							continue
 						}
 					}
@@ -290,6 +290,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				if !viper.GetBool("single_use") {
 					//Continue
+					log.Debug("Job is done. single_use to false, keep worker alive")
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
@@ -297,7 +298,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine
-				log.Debug("Job is done. Unregistering...")
+				log.Info("Job is done. Unregistering...")
 				cancel()
 			case <-registerTick.C:
 				w.doRegister()

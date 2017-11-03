@@ -217,6 +217,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/audit/{auditID}", r.PUT(api.restoreEnvironmentAuditHandler, DEPRECATED))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/group", r.POST(api.addGroupInEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/groups", r.POST(api.addGroupsInEnvironmentHandler))
+	r.Handle("/project/{key}/environment/{permEnvironmentName}/group/import", r.POST(api.importGroupsInEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/group/{group}", r.PUT(api.updateGroupRoleOnEnvironmentHandler), r.DELETE(api.deleteGroupFromEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable", r.GET(api.getVariablesInEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}", r.GET(api.getVariableInEnvironmentHandler), r.POST(api.addVariableInEnvironmentHandler), r.PUT(api.updateVariableInEnvironmentHandler), r.DELETE(api.deleteVariableFromEnvironmentHandler))

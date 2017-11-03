@@ -135,8 +135,30 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 				Kind:  reflect.Bool,
 			},
 		}
+	case RunDeleteFunc:
+		extraFlags = []Flag{
+			{
+				Name:    "force",
+				Default: "false",
+				Usage:   "Force delete without confirmation and exit 0 if resource does not exist",
+				Kind:    reflect.Bool,
+			},
+		}
 	}
 	c.Flags = append(c.Flags, extraFlags...)
+}
+
+// CommandWithExtraAliases to add common extra alias
+func CommandWithExtraAliases(c *Command, run interface{}) {
+	var extraAliases []string
+
+	switch run.(type) {
+	case RunListFunc:
+		extraAliases = []string{"ls"}
+	case RunDeleteFunc:
+		extraAliases = []string{"rm", "remove", "del"}
+	}
+	c.Aliases = append(c.Aliases, extraAliases...)
 }
 
 // ErrWrongUsage is a common error
@@ -161,6 +183,9 @@ type RunFunc func(Values) error
 
 // RunGetFunc is a run function for a command. It returns an object value (not a pointer) and an error.
 type RunGetFunc func(Values) (interface{}, error)
+
+// RunDeleteFunc is a run function for a command. It returns an error.
+type RunDeleteFunc func(Values) error
 
 // RunListFunc is a run function for a command. It returns an objects list  and an error
 type RunListFunc func(Values) (ListResult, error)

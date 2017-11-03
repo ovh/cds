@@ -35,6 +35,16 @@ func (c *client) WorkflowRunGet(projectKey string, workflowName string, number i
 	return &run, nil
 }
 
+func (c *client) WorkflowDelete(projectKey string, workflowName string) error {
+	code, err := c.DeleteJSON(fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
+	if code != 200 {
+		if err == nil {
+			return fmt.Errorf("HTTP Code %d", code)
+		}
+	}
+	return err
+}
+
 func (c *client) WorkflowRunArtifacts(projectKey string, workflowName string, number int64) ([]sdk.Artifact, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/artifacts", projectKey, workflowName, number)
 	arts := []sdk.Artifact{}
