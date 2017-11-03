@@ -83,7 +83,6 @@ var applicationDeleteCmd = cli.Command{
 		{Name: "project-key"},
 		{Name: "application-name"},
 	},
-	Aliases: []string{"del", "rm", "remove"},
 }
 
 func applicationDeleteRun(v cli.Values) error {

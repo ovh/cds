@@ -93,7 +93,6 @@ var projectDeleteCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "project-key"},
 	},
-	Aliases: []string{"rm", "remove", "del"},
 }
 
 func projectDeleteRun(v cli.Values) error {

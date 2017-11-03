@@ -71,10 +71,9 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	for _, a := range c.OptionalArgs {
 		cmd.Use = cmd.Use + " [" + strings.ToUpper(a.Name) + "]"
 	}
-	cmd.Aliases = c.Aliases
 
 	if len(mods) == 0 {
-		mods = []CommandModifier{CommandWithExtraFlags}
+		mods = []CommandModifier{CommandWithExtraFlags, CommandWithExtraAliases}
 	}
 
 	if run != nil {
@@ -82,6 +81,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			mod(&c, run)
 		}
 	}
+	cmd.Aliases = c.Aliases
 
 	for _, f := range c.Flags {
 		switch f.Kind {

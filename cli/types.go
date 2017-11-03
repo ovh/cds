@@ -148,6 +148,19 @@ func CommandWithExtraFlags(c *Command, run interface{}) {
 	c.Flags = append(c.Flags, extraFlags...)
 }
 
+// CommandWithExtraAliases to add common extra alias
+func CommandWithExtraAliases(c *Command, run interface{}) {
+	var extraAliases []string
+
+	switch run.(type) {
+	case RunListFunc:
+		extraAliases = []string{"ls"}
+	case RunDeleteFunc:
+		extraAliases = []string{"rm", "remove", "del"}
+	}
+	c.Aliases = append(c.Aliases, extraAliases...)
+}
+
 // ErrWrongUsage is a common error
 var ErrWrongUsage = &Error{1, fmt.Errorf("Wrong usage")}
 

@@ -75,7 +75,6 @@ var groupDeleteCmd = cli.Command{
 	Args: []cli.Arg{
 		{Name: "group-name"},
 	},
-	Aliases: []string{"rm", "remove", "del"},
 }
 
 func groupDeleteRun(v cli.Values) error {
