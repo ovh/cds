@@ -69,6 +69,52 @@ func TestInterpolate(t *testing.T) {
 			},
 			want: `A:{{.cds.env.myenvpassword}} B:{{.cds.env.myenvpassword}}`,
 		},
+		{
+			name: "empty string",
+			args: args{
+				input: "a {{.cds.app.myKey}} and another key with empty value *{{.cds.app.myKeyAnother}}*",
+				vars:  map[string]string{"cds.app.myKey": "valueKey", "cds.app.myKeyAnother": ""},
+			},
+			want: "a valueKey and another key with empty value **",
+		},
+		{
+			name: "two keys with same first characters",
+			args: args{
+				input: "a {{.cds.app.myKey}} and another key value {{.cds.app.myKeyAnother}}",
+				vars:  map[string]string{"cds.app.myKey": "valueKey", "cds.app.myKeyAnother": "valueKeyAnother"},
+			},
+			want: "a valueKey and another key value valueKeyAnother",
+		},
+		{
+			name: "config",
+			args: args{
+				input: `
+{
+"env": {
+"KEYA":"{{.cds.env.vAppKey}}",
+"KEYB": "{{.cds.env.vAppKeyHatchery}}",
+"ADDR":"{{.cds.env.addr}}"
+},
+"labels": {
+"TOKEN": "{{.cds.env.token}}",
+"HOST": "cds-hatchery-marathon-{{.cds.env.name}}.{{.cds.env.vHost}}",
+}
+}`,
+				vars: map[string]string{"cds.env.name": "", "cds.env.token": "aValidTokenString", "cds.env.addr": "", "cds.env.vAppKey": "aValue"},
+			},
+			want: `
+{
+"env": {
+"KEYA":"aValue",
+"KEYB": "{{.cds.env.vAppKeyHatchery}}",
+"ADDR":""
+},
+"labels": {
+"TOKEN": "aValidTokenString",
+"HOST": "cds-hatchery-marathon-.{{.cds.env.vHost}}",
+}
+}`,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
