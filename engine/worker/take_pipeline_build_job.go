@@ -40,10 +40,11 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	path := fmt.Sprintf("/queue/%d/take", pipelineBuildJobID)
 	data, code, errr := sdk.Request("POST", path, bodyTake)
 	if errr != nil {
-		log.Info("takeJob> Cannot take job %d : %s", pipelineBuildJobID, errr)
+		log.Info("takeJob> Cannot take job %d : %s. This worker can work on another job", pipelineBuildJobID, errr)
 		return true
 	}
 	if code != http.StatusOK {
+		log.Info("takeJob> Cannot take pbjob, http code recieved from API:%d. This worker can work on another job", code)
 		return true
 	}
 

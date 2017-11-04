@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
@@ -18,8 +21,9 @@ var (
 			cli.NewListCommand(applicationListCmd, applicationListRun, nil),
 			cli.NewGetCommand(applicationShowCmd, applicationShowRun, nil),
 			cli.NewCommand(applicationCreateCmd, applicationCreateRun, nil),
-			cli.NewCommand(applicationDeleteCmd, applicationDeleteRun, nil),
+			cli.NewDeleteCommand(applicationDeleteCmd, applicationDeleteRun, nil),
 			applicationKey,
+			applicationGroup,
 			applicationVariable,
 		})
 )
@@ -64,6 +68,7 @@ var applicationCreateCmd = cli.Command{
 		{Name: "project-key"},
 		{Name: "application-name"},
 	},
+	Aliases: []string{"add"},
 }
 
 func applicationCreateRun(v cli.Values) error {
@@ -73,7 +78,7 @@ func applicationCreateRun(v cli.Values) error {
 
 var applicationDeleteCmd = cli.Command{
 	Name:  "delete",
-	Short: "Delete CDS application",
+	Short: "Delete a CDS application",
 	Args: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "application-name"},
@@ -81,5 +86,10 @@ var applicationDeleteCmd = cli.Command{
 }
 
 func applicationDeleteRun(v cli.Values) error {
-	return client.ApplicationDelete(v["project-key"], v["application-name"])
+	err := client.ApplicationDelete(v["project-key"], v["application-name"])
+	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrApplicationNotFound) {
+		fmt.Println(err.Error())
+		os.Exit(0)
+	}
+	return err
 }

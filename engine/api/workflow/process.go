@@ -85,6 +85,8 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		for i := range v {
 			nodeRun := &w.WorkflowNodeRuns[k][i]
 
+			haveToUpdate := false
+
 			log.Debug("last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 			// Only the last subversion
 			if lastCurrentSn == nodeRun.SubNumber {
@@ -140,6 +142,19 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					}
 
 					if !conditionsOK {
+						if nodeRun.TriggersRun == nil {
+							nodeRun.TriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
+						}
+						wntr, ok := nodeRun.TriggersRun[t.ID]
+						if !ok || wntr.Status != sdk.StatusFail.String() {
+							triggerRun := sdk.WorkflowNodeTriggerRun{
+								Status:             sdk.StatusFail.String(),
+								WorkflowDestNodeID: t.WorkflowDestNode.ID,
+							}
+							nodeRun.TriggersRun[t.ID] = triggerRun
+							haveToUpdate = true
+						}
+
 						continue
 					}
 
@@ -156,6 +171,19 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					}
 
 					if !abortTrigger {
+						if nodeRun.TriggersRun == nil {
+							nodeRun.TriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
+						}
+						triggerStatus := sdk.StatusSuccess.String()
+						if t.ContinueOnError && nodeRun.Status == sdk.StatusFail.String() {
+							triggerStatus = sdk.StatusWarning.String()
+						}
+						triggerRun := sdk.WorkflowNodeTriggerRun{
+							Status:             triggerStatus,
+							WorkflowDestNodeID: t.WorkflowDestNode.ID,
+						}
+						nodeRun.TriggersRun[t.ID] = triggerRun
+						haveToUpdate = true
 						//Keep the subnumber of the previous node in the graph
 						if err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil); err != nil {
 							log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, err)
@@ -167,6 +195,12 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 							nodesRunBuilding++
 						}
 					}
+				}
+			}
+
+			if haveToUpdate {
+				if err := UpdateNodeRun(db, nodeRun); err != nil {
+					return sdk.WrapError(err, "process> Cannot update node run")
 				}
 			}
 		}
@@ -268,6 +302,17 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				}
 				//If conditions are not met, skip this trigger
 				if !conditionsOK {
+					if w.JoinTriggersRun == nil {
+						w.JoinTriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
+					}
+					wntr, ok := w.JoinTriggersRun[t.ID]
+					if !ok || wntr.Status != sdk.StatusFail.String() {
+						triggerRun := sdk.WorkflowNodeTriggerRun{
+							Status:             sdk.StatusFail.String(),
+							WorkflowDestNodeID: t.WorkflowDestNode.ID,
+						}
+						w.JoinTriggersRun[t.ID] = triggerRun
+					}
 					continue
 				}
 
@@ -284,6 +329,19 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				}
 
 				if !abortTrigger {
+					if w.JoinTriggersRun == nil {
+						w.JoinTriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
+					}
+					triggerStatus := sdk.StatusSuccess.String()
+					if t.ContinueOnError && sourcesFail > 0 {
+						triggerStatus = sdk.StatusWarning.String()
+					}
+					triggerRun := sdk.WorkflowNodeTriggerRun{
+						Status:             triggerStatus,
+						WorkflowDestNodeID: t.WorkflowDestNode.ID,
+					}
+					w.JoinTriggersRun[t.ID] = triggerRun
+
 					//Keep the subnumber of the previous node in the graph
 					if err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil); err != nil {
 						AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
@@ -330,6 +388,8 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		Stages:         stages,
 	}
 
+	runPayload := map[string]string{}
+
 	run.SourceNodeRuns = sourceNodeRuns
 	if sourceNodeRuns != nil {
 		//Get all the nodeRun from the sources
@@ -345,7 +405,6 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 
 		//Merge the payloads from all the sources
-		m := map[string]string{}
 		for _, r := range runs {
 			e := dump.NewDefaultEncoder(new(bytes.Buffer))
 			e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
@@ -361,30 +420,33 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 				})
 				log.Error("processWorkflowNodeRun> Unable to compute hook payload: %v", errm1)
 			}
-			m = sdk.ParametersMapMerge(m, m1)
+			runPayload = sdk.ParametersMapMerge(runPayload, m1)
 		}
-
-		run.Payload = m
+		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
 
 	run.HookEvent = h
 	if h != nil {
-		run.Payload = h.Payload
+		runPayload = sdk.ParametersMapMerge(runPayload, h.Payload)
+		run.Payload = runPayload
 		run.PipelineParameters = n.Context.DefaultPipelineParameters
 	}
 
 	run.Manual = m
 	if m != nil {
-		m1, errm1 := dump.ToMap(m.Payload, dump.WithDefaultLowerCaseFormatter())
+		e := dump.NewDefaultEncoder(new(bytes.Buffer))
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+		e.ExtraFields.DetailedMap = false
+		e.ExtraFields.DetailedStruct = false
+		e.ExtraFields.Len = false
+		e.ExtraFields.Type = false
+		m1, errm1 := e.ToStringMap(m.Payload)
 		if errm1 != nil {
-			AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{errm1},
-			})
 			return sdk.WrapError(errm1, "processWorkflowNodeRun> Unable to compute payload")
 		}
-		run.Payload = m1
+		runPayload = sdk.ParametersMapMerge(runPayload, m1)
+		run.Payload = runPayload
 		run.PipelineParameters = m.PipelineParameters
 		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
 			Name:  "cds.triggered_by.email",
@@ -415,7 +477,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 	// Inherit parameter from parent job
 	if len(sourceNodeRuns) > 0 {
-		parentsParams, errPP := getParentParameters(db, run, sourceNodeRuns)
+		parentsParams, errPP := getParentParameters(db, run, sourceNodeRuns, runPayload)
 		if errPP != nil {
 			return sdk.WrapError(errPP, "processWorkflowNodeRun> getParentParameters failed")
 		}

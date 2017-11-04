@@ -370,7 +370,7 @@ func checkProjectVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, p
 			}
 		}
 		if !found {
-			log.Warning("Variable %s was not found in project %s !\n", m, p.Key)
+			log.Warning("Variable %s was not found in project %s !", m, p.Key)
 			w := sdk.Warning{
 				ID: ProjectVariableDoesNotExist,
 				MessageParam: map[string]string{

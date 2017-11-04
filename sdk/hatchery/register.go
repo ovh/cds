@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/sdk"
@@ -161,25 +160,6 @@ func Register(h Interface) error {
 		log.Warning("-=-=-=-=- Please update your hatchery binary -=-=-=-=-")
 	}
 	return nil
-}
-
-// GenerateName generate a hatchery's name
-func GenerateName(add, name string) string {
-	if name == "" {
-		var errHostname error
-		name, errHostname = os.Hostname()
-		if errHostname != nil {
-			log.Warning("Cannot retrieve hostname: %s", errHostname)
-			name = "cds-hatchery"
-		}
-		name += "-" + namesgenerator.GetRandomName(0)
-	}
-
-	if add != "" {
-		name += "-" + add
-	}
-
-	return name
 }
 
 func hearbeat(m Interface, token string, maxFailures int) {

@@ -18,7 +18,7 @@ import (
 // Init create new client for vsphere
 func (h *HatcheryVSphere) Init() error {
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("vsphere", h.Configuration().Name),
+		Name:    h.Configuration().Name,
 		Version: sdk.VERSION,
 	}
 

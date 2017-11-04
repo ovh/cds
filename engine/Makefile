@@ -93,6 +93,7 @@ ifneq ($(VERSION), snapshot)
 	@$(GO_GOVERALLS) -coverprofile=$(TARGET_DIR)/cover.out -service=cds -repotoken ${CDS_PROJ_COVERALLS_TOKEN}
 endif
 
+#  <testsuite name="github.com/ovh/cds/engine/api" tests="133" errors="0" failures="2" skip="0">
 test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 	@for TST in `find . -name "tests.log"`; do \
 		if [ -s $$TST ]; then \
@@ -118,6 +119,31 @@ test-xunit-report: $(GO_GO2XUNIT) $(TARGET_DIR)
 		 	mv $$XML $(TARGET_DIR)/`basename `pwd``.xml; \
 		else \
 			mv $$XML $(TARGET_DIR)/`echo $$XML | sed 's|./||' | sed 's|/|_|g' | sed 's|_tests.log||'`; \
+		fi; \
+	done; \
+	for XML in `find . -name "*.xml"`; do \
+		if [ -s $$XML ]; then \
+			echo "`xmllint --xpath "/testsuite/@name" $$XML | sed 's/name=//' | sed 's/"//g'`" \
+			"`xmllint --xpath "/testsuite/@tests" $$XML | sed 's/tests=//' | sed 's/"//g'` Tests :" \
+			"`xmllint --xpath "/testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'` Errors "\
+			"`xmllint --xpath "/testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'` Failures" \
+			"`xmllint --xpath "/testsuite/@skip" dist/api.xml | sed 's/skip=//' | sed 's/"//g'` Skipped" \
+			>> $(TARGET_DIR)/report; \
+		fi; \
+	done; \
+	if [ -e $(TARGET_DIR)/report ]; then \
+		cat $(TARGET_DIR)/report; \
+	fi; \
+	for XML in `find . -name "*.xml"`; do \
+		if [ -s $$XML ]; then \
+			if [ "`xmllint --xpath "/testsuite/@errors" $$XML | sed 's/errors=//' | sed 's/"//g'`" -gt "0" ]; then  \
+				echo "Tests failed";  \
+				exit 1;  \
+			fi; \
+			if [ "`xmllint --xpath "/testsuite/@failures" $$XML | sed 's/failures=//' | sed 's/"//g'`" -gt "0" ]; then  \
+				echo "Tests failed";  \
+				exit 1;  \
+			fi; \
 		fi; \
 	done; \
 	if [ -e $(TARGET_DIR)/fail ]; then \

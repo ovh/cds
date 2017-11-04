@@ -59,12 +59,17 @@ func (r *Run) PostInsert(db gorp.SqlExecutor) error {
 		return sdk.WrapError(errw, "Run.PostInsert> Unable to marshal workflow")
 	}
 
+	jtr, erri := json.Marshal(r.JoinTriggersRun)
+	if erri != nil {
+		return sdk.WrapError(erri, "Run.PostInsert> Unable to marshal JoinTriggersRun")
+	}
+
 	i, erri := json.Marshal(r.Infos)
 	if erri != nil {
 		return sdk.WrapError(erri, "Run.PostInsert> Unable to marshal infos")
 	}
 
-	if _, err := db.Exec("update workflow_run set workflow = $3, infos = $2 where id = $1", r.ID, i, w); err != nil {
+	if _, err := db.Exec("update workflow_run set workflow = $3, infos = $2, join_triggers_run = $4 where id = $1", r.ID, i, w, jtr); err != nil {
 		return sdk.WrapError(err, "Run.PostInsert> Unable to store marshalled infos")
 	}
 
@@ -86,9 +91,10 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	var res = struct {
 		W sql.NullString `db:"workflow"`
 		I sql.NullString `db:"infos"`
+		J sql.NullString `db:"join_triggers_run"`
 	}{}
 
-	if err := db.SelectOne(&res, "select workflow, infos from workflow_run where id = $1", r.ID); err != nil {
+	if err := db.SelectOne(&res, "select workflow, infos, join_triggers_run from workflow_run where id = $1", r.ID); err != nil {
 		return sdk.WrapError(err, "Run.PostGet> Unable to load marshalled workflow")
 	}
 
@@ -103,6 +109,12 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal infos")
 	}
 	r.Infos = i
+
+	j := map[int64]sdk.WorkflowNodeTriggerRun{}
+	if err := gorpmapping.JSONNullString(res.J, &j); err != nil {
+		return sdk.WrapError(err, "Run.PostGet> Unable to unmarshal join_triggers_run")
+	}
+	r.JoinTriggersRun = j
 
 	return nil
 }

@@ -20,7 +20,7 @@ import (
 // then list available images
 func (h *HatcheryOpenstack) Init() error {
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("openstack", h.Configuration().Name),
+		Name:    h.Configuration().Name,
 		Version: sdk.VERSION,
 	}
 

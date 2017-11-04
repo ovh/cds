@@ -75,12 +75,14 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	e.ExtraFields.DetailedStruct = false
 	e.ExtraFields.Len = false
 	e.ExtraFields.Type = false
-	vars, errdump := e.ToStringMap(payload)
-
+	tmpVars, errdump := e.ToStringMap(payload)
 	if errdump != nil {
 		log.Error("GetNodeBuildParameters> do-dump error: %v", errdump)
 		errm.Append(errdump)
 	}
+
+	//Merge the dumped payload with vars
+	vars = sdk.ParametersMapMerge(vars, tmpVars)
 
 	log.Debug("GetNodeBuildParameters> compute payload :%#v", payload)
 
@@ -102,7 +104,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 	return params, errm
 }
 
-func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunIds []int64) ([]sdk.Parameter, error) {
+func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunIds []int64, payload map[string]string) ([]sdk.Parameter, error) {
 	//Load workflow run
 	w, err := LoadRunByID(db, run.WorkflowRunID)
 	if err != nil {
@@ -124,7 +126,15 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 		for i := range parentNodeRun.BuildParameters {
 			p := &parentNodeRun.BuildParameters[i]
 
-			if p.Name == "" || p.Name == "cds.semver" || p.Name == "cds.release.version" || strings.HasPrefix(p.Name, "cds.proj") || strings.HasPrefix(p.Name, "workflow.") {
+			if p.Name == "" || p.Name == "cds.semver" || p.Name == "cds.release.version" ||
+				strings.HasPrefix(p.Name, "cds.proj") || strings.HasPrefix(p.Name, "workflow.") ||
+				strings.HasPrefix(p.Name, "cds.version") || strings.HasPrefix(p.Name, "cds.run.number") ||
+				strings.HasPrefix(p.Name, "cds.workflow") {
+				continue
+			}
+
+			// Do not duplicate variable from payload
+			if _, ok := payload[p.Name]; ok {
 				continue
 			}
 

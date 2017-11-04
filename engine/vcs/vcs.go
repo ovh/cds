@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/vcs/gitlab"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -51,6 +50,9 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 	if sConfig.URL == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
 	}
+	if sConfig.Name == "" {
+		return fmt.Errorf("please enter a name in your vcs configuration")
+	}
 
 	return nil
 }
@@ -71,10 +73,6 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 
 // Serve will start the http api server
 func (s *Service) Serve(c context.Context) error {
-	if s.Cfg.Name == "" {
-		s.Cfg.Name = hatchery.GenerateName("vcs", "")
-	}
-
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
