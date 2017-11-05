@@ -346,7 +346,7 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	return int64(i), nil
 }
 
-// PurgeWorkflowRun mark all worfklow run to delete
+// PurgeWorkflowRun mark all workflow run to delete
 func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 	ids := []struct {
 		Ids string `json:"ids" db:"ids"`
