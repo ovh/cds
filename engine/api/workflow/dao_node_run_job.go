@@ -141,8 +141,8 @@ func DeleteNodeJobRuns(db gorp.SqlExecutor, nodeID int64) error {
 	return err
 }
 
-//UpdateNodeJobRun updates a workflow_node_run_job
-func UpdateNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, j *sdk.WorkflowNodeJobRun, callWorkflowExecute bool) error {
+//UpdateNodeJobRunAndExecute updates a workflow_node_run_job then run workflow.execute
+func UpdateNodeJobRunAndExecute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, j *sdk.WorkflowNodeJobRun) error {
 	dbj := JobRun(*j)
 	if _, err := db.Update(&dbj); err != nil {
 		return err
@@ -152,10 +152,17 @@ func UpdateNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, j 
 	if errR != nil {
 		return errR
 	}
-	if callWorkflowExecute {
-		return execute(db, store, p, nRun)
+	return execute(db, store, p, nRun)
+}
+
+//UpdateNodeJobRun updates a workflow_node_run_job
+func UpdateNodeJobRun(db gorp.SqlExecutor, j *sdk.WorkflowNodeJobRun) error {
+	dbj := JobRun(*j)
+	if _, err := db.Update(&dbj); err != nil {
+		return err
 	}
-	return nil
+	_, err := LoadNodeRunByID(db, j.WorkflowNodeRunID)
+	return err
 }
 
 func keyBookJob(id int64) string {
