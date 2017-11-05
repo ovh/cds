@@ -321,9 +321,9 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID 
 
 	if jobID > 0 {
 		if isWorkflowJob {
-			env = append(env, "CDS_BOOKED_WORKFLOW_JOB_ID"+"="+strconv.FormatInt(jobID, 10))
+			env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", jobID))
 		} else {
-			env = append(env, "CDS_BOOKED_PB_JOB_ID"+"="+strconv.FormatInt(jobID, 10))
+			env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", jobID))
 		}
 	}
 

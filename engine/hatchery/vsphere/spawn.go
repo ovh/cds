@@ -195,9 +195,9 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jo
 	}
 
 	if isWorkflowJob {
-		env = append(env, "CDS_BOOKED_WORKFLOW_JOB_ID="+fmt.Sprintf("%d", jobID))
+		env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", jobID))
 	} else {
-		env = append(env, "CDS_BOOKED_PB_JOB_ID="+fmt.Sprintf("%d", jobID))
+		env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", jobID))
 	}
 
 	env = append(env, h.getGraylogGrpcEnv(model)...)
