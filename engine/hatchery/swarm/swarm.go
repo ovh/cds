@@ -215,7 +215,7 @@ func (h *HatcherySwarm) killAndRemove(ID string) {
 }
 
 //SpawnWorker start a new docker container
-func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	if registerOnly {
@@ -320,7 +320,11 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 	}
 
 	if jobID > 0 {
-		env = append(env, "CDS_BOOKED_JOB_ID"+"="+strconv.FormatInt(jobID, 10))
+		if isWorkflowJob {
+			env = append(env, "CDS_BOOKED_WORKFLOW_JOB_ID"+"="+strconv.FormatInt(jobID, 10))
+		} else {
+			env = append(env, "CDS_BOOKED_PB_JOB_ID"+"="+strconv.FormatInt(jobID, 10))
+		}
 	}
 
 	//labels are used to make container cleanup easier

@@ -54,7 +54,6 @@ type CommonConfiguration struct {
 	} `toml:"logOptions" comment:"Hatchery Log Configuration"`
 }
 
-// Interface describe an interface for each hatchery mode (mesos, local)
 // Interface describe an interface for each hatchery mode
 // Init create new clients for different api
 // SpawnWorker creates a new vm instance
@@ -68,7 +67,7 @@ type CommonConfiguration struct {
 // ID returns hatchery id
 type Interface interface {
 	Init() error
-	SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error)
+	SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error)
 	CanSpawn(model *sdk.Model, jobID int64, requirements []sdk.Requirement) bool
 	WorkersStartedByModel(model *sdk.Model) int
 	WorkersStarted() int
@@ -162,7 +161,7 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []s
 				log.Debug("routine> %d - cannot book job %d %s: %s", timestamp, jobID, model.Name, err)
 				break // go to next job
 			}
-			log.Debug("routine> %d - send book job %d %s by hatchery %d", timestamp, jobID, model.Name, h.Hatchery().ID)
+			log.Debug("routine> %d - send book job %d %s by hatchery %d isWorkflowJob:%t", timestamp, jobID, model.Name, h.Hatchery().ID, isWorkflowJob)
 
 			start := time.Now()
 			infos := []sdk.SpawnInfo{
@@ -171,7 +170,7 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []s
 					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
 				},
 			}
-			workerName, errSpawn := h.SpawnWorker(&model, jobID, requirements, false, "spawn for job")
+			workerName, errSpawn := h.SpawnWorker(&model, isWorkflowJob, jobID, requirements, false, "spawn for job")
 			if errSpawn != nil {
 				log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, jobID, errSpawn)
 				infos = append(infos, sdk.SpawnInfo{
@@ -219,7 +218,7 @@ func provisioning(h Interface, provisionDisabled bool, models []sdk.Model) {
 			existing := h.WorkersStartedByModel(&models[k])
 			for i := existing; i < int(models[k].Provision); i++ {
 				go func(m sdk.Model) {
-					if name, errSpawn := h.SpawnWorker(&m, 0, nil, false, "spawn for provision"); errSpawn != nil {
+					if name, errSpawn := h.SpawnWorker(&m, false, 0, nil, false, "spawn for provision"); errSpawn != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
 						if err := h.Client().WorkerModelSpawnError(m.ID, fmt.Sprintf("routine> cannot spawn worker %s for provisioning: %s", m.Name, errSpawn)); err != nil {
 							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)

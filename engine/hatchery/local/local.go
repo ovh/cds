@@ -133,7 +133,7 @@ func (h *HatcheryLocal) killWorker(worker sdk.Worker) error {
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, isWorkflowJob bool, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	var err error
 
 	if len(h.workers) >= h.Config.Provision.MaxWorker {
@@ -181,7 +181,11 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, jobID int64, requirements []s
 	args = append(args, "--force-exit")
 
 	if jobID > 0 {
-		args = append(args, fmt.Sprintf("--booked-job-id=%d", jobID))
+		if isWorkflowJob {
+			args = append(args, fmt.Sprintf("--booked-workflow-job-id=%d", jobID))
+		} else {
+			args = append(args, fmt.Sprintf("--booked-pb-job-id=%d", jobID))
+		}
 	}
 
 	if registerOnly {

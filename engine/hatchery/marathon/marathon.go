@@ -187,7 +187,7 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	if jobID > 0 {
 		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", model.Name, model.Image, jobID, logInfo)
 	} else {
@@ -241,8 +241,13 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
 	if jobID > 0 {
-		logJob = fmt.Sprintf("for job %d,", jobID)
-		env["CDS_BOOKED_JOB_ID"] = fmt.Sprintf("%d", jobID)
+		if isWorkflowJob {
+			logJob = fmt.Sprintf("for workflow job %d,", jobID)
+			env["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", jobID)
+		} else {
+			logJob = fmt.Sprintf("for pipeline build job %d,", jobID)
+			env["CDS_BOOKED_PB_JOB_ID"] = fmt.Sprintf("%d", jobID)
+		}
 
 		for _, r := range requirements {
 			if r.Type == sdk.MemoryRequirement {

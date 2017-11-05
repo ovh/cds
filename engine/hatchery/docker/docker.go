@@ -216,7 +216,7 @@ func (h *HatcheryDocker) WorkersStartedByModel(model *sdk.Model) int {
 }
 
 // SpawnWorker starts a new worker in a docker container locally
-func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, isWorkflowJob bool, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	if wm.Type != sdk.Docker {
 		return "", fmt.Errorf("cannot handle %s worker model", wm.Type)
 	}
@@ -269,7 +269,11 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, jobID int64, requirements []
 	}
 
 	if jobID > 0 {
-		args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_JOB_ID=%d", jobID))
+		if isWorkflowJob {
+			args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", jobID))
+		} else {
+			args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", jobID))
+		}
 	}
 
 	if h.Config.DockerAddHost != "" {

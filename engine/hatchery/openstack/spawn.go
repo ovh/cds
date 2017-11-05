@@ -18,7 +18,7 @@ import (
 
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
-func (h *HatcheryOpenstack) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryOpenstack) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
 	//generate a pretty cool name
 	name := model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
 	if registerOnly {
@@ -98,7 +98,8 @@ export CDS_NAME={{.Name}}
 export CDS_MODEL={{.Model}}
 export CDS_HATCHERY={{.Hatchery}}
 export CDS_HATCHERY_NAME={{.HatcheryName}}
-export CDS_BOOKED_JOB_ID={{.JobID}}
+export CDS_BOOKED_PB_JOB_ID={{.PipelineBuildJobID}}
+export CDS_BOOKED_WORKFLOW_JOB_ID={{.WorkflowJobID}}
 export CDS_TTL={{.TTL}}
 {{.Graylog}}
 {{.Grpc}}
@@ -134,16 +135,17 @@ export CDS_TTL={{.TTL}}
 		return "", errt
 	}
 	udataParam := struct {
-		API          string
-		Name         string
-		Key          string
-		Model        int64
-		Hatchery     int64
-		HatcheryName string
-		JobID        int64
-		TTL          int
-		Graylog      string
-		Grpc         string
+		API                string
+		Name               string
+		Key                string
+		Model              int64
+		Hatchery           int64
+		HatcheryName       string
+		PipelineBuildJobID int64
+		WorkflowJobID      int64
+		TTL                int
+		Graylog            string
+		Grpc               string
 	}{
 		API:          h.Configuration().API.HTTP.URL,
 		Name:         name,
@@ -151,11 +153,17 @@ export CDS_TTL={{.TTL}}
 		Model:        model.ID,
 		Hatchery:     h.hatch.ID,
 		HatcheryName: h.hatch.Name,
-		JobID:        jobID,
 		TTL:          h.Config.WorkerTTL,
 		Graylog:      graylog,
 		Grpc:         grpc,
 	}
+
+	if isWorkflowJob {
+		udataParam.WorkflowJobID = jobID
+	} else {
+		udataParam.PipelineBuildJobID = jobID
+	}
+
 	var buffer bytes.Buffer
 	if err := tmpl.Execute(&buffer, udataParam); err != nil {
 		return "", err
