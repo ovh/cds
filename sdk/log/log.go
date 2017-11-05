@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 
 	log "github.com/Sirupsen/logrus"
 	loghook "github.com/ovh/logrus-ovh-hook"
@@ -23,7 +24,8 @@ type Conf struct {
 }
 
 var (
-	logger Logger
+	logger        Logger
+	regexpNewLine = regexp.MustCompile("\\n")
 )
 
 // Logger defines the logs levels used
@@ -89,45 +91,50 @@ func Initialize(conf *Conf) {
 
 // Debug prints debug log
 func Debug(format string, values ...interface{}) {
+	input := regexpNewLine.ReplaceAllString(fmt.Sprintf(format, values...), " ")
 	if logger != nil {
-		logger.Logf("[DEBUG]    "+format, values...)
+		logger.Logf("[DEBUG]    " + input)
 	} else {
-		log.Debugf(format, values...)
+		log.Debugf(input)
 	}
 }
 
 // Info prints information log
 func Info(format string, values ...interface{}) {
+	input := regexpNewLine.ReplaceAllString(fmt.Sprintf(format, values...), " ")
 	if logger != nil {
-		logger.Logf("[INFO]    "+format, values...)
+		logger.Logf("[INFO]    " + input)
 	} else {
-		log.Infof(format, values...)
+		log.Infof(input)
 	}
 }
 
 // Warning prints warnings for user
 func Warning(format string, values ...interface{}) {
+	input := regexpNewLine.ReplaceAllString(fmt.Sprintf(format, values...), " ")
 	if logger != nil {
-		logger.Logf("[WARN]    "+format, values...)
+		logger.Logf("[WARN]    " + input)
 	} else {
-		log.Warnf(format, values...)
+		log.Warnf(input)
 	}
 }
 
 // Error prints error informations
 func Error(format string, values ...interface{}) {
+	input := regexpNewLine.ReplaceAllString(fmt.Sprintf(format, values...), " ")
 	if logger != nil {
-		logger.Logf("[ERROR]    "+format, values...)
+		logger.Logf("[ERROR]    " + input)
 	} else {
-		log.Errorf(format, values...)
+		log.Errorf(input)
 	}
 }
 
 // Fatalf prints fatal informations, then os.Exit(1)
 func Fatalf(format string, values ...interface{}) {
+	input := regexpNewLine.ReplaceAllString(fmt.Sprintf(format, values...), " ")
 	if logger != nil {
-		logger.Logf("[FATAL]    "+format, values...)
+		logger.Logf("[FATAL]    " + input)
 	} else {
-		log.Fatalf(format, values...)
+		log.Fatalf(input)
 	}
 }
