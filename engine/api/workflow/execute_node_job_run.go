@@ -112,7 +112,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowRun %d", wf.ID)
 	}
 
-	if err := UpdateNodeJobRun(db, store, p, job); err != nil {
+	if err := UpdateNodeJobRun(db, store, p, job, true); err != nil {
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 
@@ -131,7 +131,7 @@ func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot prepare spawn infos")
 	}
 
-	if err := UpdateNodeJobRun(db, store, p, j); err != nil {
+	if err := UpdateNodeJobRun(db, store, p, j, false); err != nil {
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot update node job run")
 	}
 	return j, nil
