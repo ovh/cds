@@ -215,14 +215,14 @@ func (h *HatcherySwarm) killAndRemove(ID string) {
 }
 
 //SpawnWorker start a new docker container
-func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	//name is the name of the worker and the name of the container
-	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
-	if registerOnly {
+	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	if spawnArgs.RegisterOnly {
 		name = "register-" + name
 	}
 
-	log.Info("SpawnWorker> Spawning worker %s - %s", name, logInfo)
+	log.Info("SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
 
 	//Create a network
 	network := name + "-net"
@@ -233,8 +233,8 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID 
 
 	services := []string{}
 
-	if jobID > 0 {
-		for _, r := range requirements {
+	if spawnArgs.JobID > 0 {
+		for _, r := range spawnArgs.Requirements {
 			if r.Type == sdk.MemoryRequirement {
 				var err error
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
@@ -283,7 +283,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID 
 	}
 
 	var registerCmd string
-	if registerOnly {
+	if spawnArgs.RegisterOnly {
 		registerCmd = " register"
 	}
 
@@ -295,7 +295,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID 
 		"CDS_API" + "=" + h.Configuration().API.HTTP.URL,
 		"CDS_NAME" + "=" + name,
 		"CDS_TOKEN" + "=" + h.Configuration().API.Token,
-		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
+		"CDS_MODEL" + "=" + strconv.FormatInt(spawnArgs.Model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
 		"CDS_HATCHERY_NAME" + "=" + h.hatch.Name,
 		"CDS_TTL" + "=" + strconv.Itoa(h.Config.WorkerTTL),
@@ -314,30 +314,30 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID 
 	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
 		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue)
 	}
-	if h.Configuration().API.GRPC.URL != "" && model.Communication == sdk.GRPC {
+	if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
 		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
 	}
 
-	if jobID > 0 {
-		if isWorkflowJob {
-			env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", jobID))
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", spawnArgs.JobID))
 		} else {
-			env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", jobID))
+			env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", spawnArgs.JobID))
 		}
 	}
 
 	//labels are used to make container cleanup easier
 	labels := map[string]string{
-		"worker_model":        strconv.FormatInt(model.ID, 10),
+		"worker_model":        strconv.FormatInt(spawnArgs.Model.ID, 10),
 		"worker_name":         name,
 		"worker_requirements": strings.Join(services, ","),
 		"hatchery":            h.Config.Name,
 	}
 
 	//start the worker
-	if err := h.createAndStartContainer(name, model.Image, network, "worker", cmd, env, labels, memory); err != nil {
-		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, model.Image, err)
+	if err := h.createAndStartContainer(name, spawnArgs.Model.Image, network, "worker", cmd, env, labels, memory); err != nil {
+		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.Image, err)
 	}
 
 	return name, nil

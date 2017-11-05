@@ -13,22 +13,23 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // SpawnWorker creates a new cloud instances
 // requirements are not supported
-func (h *HatcheryOpenstack) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	//generate a pretty cool name
-	name := model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
-	if registerOnly {
+	name := spawnArgs.Model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
+	if spawnArgs.RegisterOnly {
 		name = "register-" + name
 	}
 
-	if jobID > 0 {
-		log.Info("spawnWorker> spawning worker %s model:%s for job %d - %s", name, model.Name, jobID, logInfo)
+	if spawnArgs.JobID > 0 {
+		log.Info("spawnWorker> spawning worker %s model:%s for job %d - %s", name, spawnArgs.Model.Name, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s model:%s - %s", name, model.Name, logInfo)
+		log.Info("spawnWorker> spawning worker %s model:%s - %s", name, spawnArgs.Model.Name, spawnArgs.LogInfo)
 	}
 
 	var omd sdk.OpenstackModelData
@@ -42,7 +43,7 @@ func (h *HatcheryOpenstack) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jo
 		return "", nil
 	}
 
-	if err := json.Unmarshal([]byte(model.Image), &omd); err != nil {
+	if err := json.Unmarshal([]byte(spawnArgs.Model.Image), &omd); err != nil {
 		return "", err
 	}
 
@@ -79,7 +80,7 @@ func (h *HatcheryOpenstack) SpawnWorker(model *sdk.Model, isWorkflowJob bool, jo
 	}
 
 	grpc := ""
-	if h.Configuration().API.GRPC.URL != "" && model.Communication == sdk.GRPC {
+	if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		grpc += fmt.Sprintf("export CDS_GRPC_API=%s ", h.Configuration().API.GRPC.URL)
 		grpc += fmt.Sprintf("export CDS_GRPC_INSECURE=%t ", h.Configuration().API.GRPC.Insecure)
 	}
@@ -105,25 +106,25 @@ export CDS_TTL={{.TTL}}
 {{.Grpc}}
 ./worker`
 
-	if registerOnly {
+	if spawnArgs.RegisterOnly {
 		udataEnd += " register"
 	}
 	udataEnd += " ; sudo shutdown -h now;"
 
 	var withExistingImage bool
-	if !model.NeedRegistration && !registerOnly {
+	if !spawnArgs.Model.NeedRegistration && !spawnArgs.RegisterOnly {
 		start := time.Now()
 		imgs := h.getImages()
 		log.Debug("spawnWorker> call images.List on openstack took %fs, nbImages:%d", time.Since(start).Seconds(), len(imgs))
 		for _, img := range imgs {
 			workerModelName, _ := img.Metadata["worker_model_name"]
-			if workerModelName == model.Name {
+			if workerModelName == spawnArgs.Model.Name {
 				withExistingImage = true
 				var jobInfo string
-				if jobID != 0 {
-					jobInfo = fmt.Sprintf(" job:%d", jobID)
+				if spawnArgs.JobID != 0 {
+					jobInfo = fmt.Sprintf(" job:%d", spawnArgs.JobID)
 				}
-				log.Info("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, model.Name, img.ID, jobInfo, logInfo)
+				log.Info("spawnWorker> existing image found for worker:%s model:%s img:%s %s %s", name, spawnArgs.Model.Name, img.ID, jobInfo, spawnArgs.LogInfo)
 				imageID = img.ID
 				break
 			}
@@ -150,7 +151,7 @@ export CDS_TTL={{.TTL}}
 		API:          h.Configuration().API.HTTP.URL,
 		Name:         name,
 		Key:          h.Configuration().API.Token,
-		Model:        model.ID,
+		Model:        spawnArgs.Model.ID,
 		Hatchery:     h.hatch.ID,
 		HatcheryName: h.hatch.Name,
 		TTL:          h.Config.WorkerTTL,
@@ -158,10 +159,10 @@ export CDS_TTL={{.TTL}}
 		Grpc:         grpc,
 	}
 
-	if isWorkflowJob {
-		udataParam.WorkflowJobID = jobID
+	if spawnArgs.IsWorkflowJob {
+		udataParam.WorkflowJobID = spawnArgs.JobID
 	} else {
-		udataParam.PipelineBuildJobID = jobID
+		udataParam.PipelineBuildJobID = spawnArgs.JobID
 	}
 
 	var buffer bytes.Buffer
@@ -193,11 +194,11 @@ export CDS_FROM_WORKER_IMAGE="false";
 	meta := map[string]string{
 		"worker":                     name,
 		"hatchery_name":              h.Hatchery().Name,
-		"register_only":              fmt.Sprintf("%t", registerOnly),
+		"register_only":              fmt.Sprintf("%t", spawnArgs.RegisterOnly),
 		"flavor":                     omd.Flavor,
 		"model":                      omd.Image,
-		"worker_model_name":          model.Name,
-		"worker_model_last_modified": fmt.Sprintf("%d", model.UserLastModified.Unix()),
+		"worker_model_name":          spawnArgs.Model.Name,
+		"worker_model_last_modified": fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
 	}
 
 	// Ip len(ipsInfos.ips) > 0, specify one of those

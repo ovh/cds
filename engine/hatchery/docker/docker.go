@@ -216,27 +216,27 @@ func (h *HatcheryDocker) WorkersStartedByModel(model *sdk.Model) int {
 }
 
 // SpawnWorker starts a new worker in a docker container locally
-func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, isWorkflowJob bool, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
-	if wm.Type != sdk.Docker {
-		return "", fmt.Errorf("cannot handle %s worker model", wm.Type)
+func (h *HatcheryDocker) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
+	if spawnArgs.Model.Type != sdk.Docker {
+		return "", fmt.Errorf("cannot handle %s worker model", spawnArgs.Model.Type)
 	}
 
 	if len(h.workers) >= h.Configuration().Provision.MaxWorker {
 		return "", fmt.Errorf("Max capacity reached (%d)", h.Configuration().Provision.MaxWorker)
 	}
 
-	if jobID > 0 {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wm.Name, wm.Image, jobID, logInfo)
+	if spawnArgs.JobID > 0 {
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s (%s) - %s", wm.Name, wm.Image, logInfo)
+		log.Info("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.LogInfo)
 	}
 
 	name, errs := randSeq(16)
 	if errs != nil {
 		return "", fmt.Errorf("cannot create worker name: %s", errs)
 	}
-	name = wm.Name + "-" + name
-	if registerOnly {
+	name = spawnArgs.Model.Name + "-" + name
+	if spawnArgs.RegisterOnly {
 		name = "register-" + name
 	}
 
@@ -247,7 +247,7 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, isWorkflowJob bool, jobID in
 	args = append(args, "-e", fmt.Sprintf("CDS_API=%s", h.Configuration().API.HTTP.URL))
 	args = append(args, "-e", fmt.Sprintf("CDS_NAME=%s", name))
 	args = append(args, "-e", fmt.Sprintf("CDS_TOKEN=%s", h.Configuration().API.Token))
-	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", wm.ID))
+	args = append(args, "-e", fmt.Sprintf("CDS_MODEL=%d", spawnArgs.Model.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY=%d", h.hatch.ID))
 	args = append(args, "-e", fmt.Sprintf("CDS_HATCHERY_NAME=%s", h.hatch.Name))
 
@@ -263,26 +263,26 @@ func (h *HatcheryDocker) SpawnWorker(wm *sdk.Model, isWorkflowJob bool, jobID in
 	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
 		args = append(args, "-e", fmt.Sprintf("CDS_GRAYLOG_EXTRA_VALUE=%s", h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue))
 	}
-	if h.Configuration().API.GRPC.URL != "" && wm.Communication == sdk.GRPC {
+	if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		args = append(args, "-e", fmt.Sprintf("CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
 		args = append(args, "-e", fmt.Sprintf("CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
 	}
 
-	if jobID > 0 {
-		if isWorkflowJob {
-			args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", jobID))
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", spawnArgs.JobID))
 		} else {
-			args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", jobID))
+			args = append(args, "-e", fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", spawnArgs.JobID))
 		}
 	}
 
 	if h.Config.DockerAddHost != "" {
 		args = append(args, fmt.Sprintf("--add-host=%s", h.Config.DockerAddHost))
 	}
-	args = append(args, wm.Image)
+	args = append(args, spawnArgs.Model.Image)
 	args = append(args, "sh", "-c", fmt.Sprintf("rm -f worker && echo 'Download worker' && curl %s/download/worker/`uname -m` -o worker && echo 'chmod worker' && chmod +x worker && echo 'starting worker' && ./worker", h.Client().APIURL()))
 
-	if registerOnly {
+	if spawnArgs.RegisterOnly {
 		args = append(args, "register")
 	}
 	cmd := exec.Command("docker", args...)

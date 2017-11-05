@@ -133,7 +133,7 @@ func (h *HatcheryLocal) killWorker(worker sdk.Worker) error {
 }
 
 // SpawnWorker starts a new worker process
-func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, isWorkflowJob bool, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryLocal) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	var err error
 
 	if len(h.workers) >= h.Config.Provision.MaxWorker {
@@ -141,14 +141,14 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, isWorkflowJob bool, jobID int
 	}
 
 	wName := fmt.Sprintf("%s-%s", h.hatch.Name, namesgenerator.GetRandomName(0))
-	if registerOnly {
+	if spawnArgs.RegisterOnly {
 		wName = "register-" + wName
 	}
 
-	if jobID > 0 {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wName, wm.Image, jobID, logInfo)
+	if spawnArgs.JobID > 0 {
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", wName, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s (%s) - %s", wName, wm.Image, logInfo)
+		log.Info("spawnWorker> spawning worker %s (%s) - %s", wName, spawnArgs.Model.Image, spawnArgs.LogInfo)
 	}
 
 	var args []string
@@ -172,7 +172,7 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, isWorkflowJob bool, jobID int
 	if h.Config.Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
 		args = append(args, fmt.Sprintf("--graylog-extra-value=%s", h.Config.Provision.WorkerLogsOptions.Graylog.ExtraValue))
 	}
-	if h.Config.API.GRPC.URL != "" && wm.Communication == sdk.GRPC {
+	if h.Config.API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		args = append(args, fmt.Sprintf("--grpc-api=%s", h.Config.API.GRPC.URL))
 		args = append(args, fmt.Sprintf("--grpc-insecure=%t", h.Config.API.GRPC.Insecure))
 	}
@@ -180,15 +180,15 @@ func (h *HatcheryLocal) SpawnWorker(wm *sdk.Model, isWorkflowJob bool, jobID int
 	args = append(args, "--single-use")
 	args = append(args, "--force-exit")
 
-	if jobID > 0 {
-		if isWorkflowJob {
-			args = append(args, fmt.Sprintf("--booked-workflow-job-id=%d", jobID))
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			args = append(args, fmt.Sprintf("--booked-workflow-job-id=%d", spawnArgs.JobID))
 		} else {
-			args = append(args, fmt.Sprintf("--booked-pb-job-id=%d", jobID))
+			args = append(args, fmt.Sprintf("--booked-pb-job-id=%d", spawnArgs.JobID))
 		}
 	}
 
-	if registerOnly {
+	if spawnArgs.RegisterOnly {
 		args = append(args, "register")
 	}
 
