@@ -469,7 +469,7 @@ func (e Error) Error() string {
 
 // ErrorIs returns true if error is same as and sdk.Error Message
 // this func checks msg in all languages
-func ErrorIs(err error, t *Error) bool {
+func ErrorIs(err error, t Error) bool {
 	if err == nil {
 		return false
 	}
