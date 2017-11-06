@@ -131,7 +131,7 @@ func (api *API) importPipelineHandler() Handler {
 		log.Debug("importPipelineHandler >>> %v", msgListString)
 
 		if globalError != nil {
-			myError, ok := globalError.(*sdk.Error)
+			myError, ok := globalError.(sdk.Error)
 			if ok {
 				return WriteJSON(w, r, msgListString, myError.Status)
 			}
