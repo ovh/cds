@@ -353,9 +353,9 @@ var errorsLanguages = []map[int]string{
 }
 
 // NewError just set an error with a root cause
-func NewError(target Error, root error) *Error {
+func NewError(target Error, root error) Error {
 	target.Root = root
-	return &target
+	return target
 }
 
 // WrapError constructs a stack of errors, adding context to the preceding error.
