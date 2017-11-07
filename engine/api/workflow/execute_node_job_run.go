@@ -116,7 +116,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 	// Push update on node run job
 	if chanEvent != nil {
-		chanEvent <- job
+		chanEvent <- *job
 	}
 
 	return execute(db, store, p, node, chanEvent)

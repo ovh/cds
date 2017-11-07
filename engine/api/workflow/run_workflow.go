@@ -87,7 +87,7 @@ func RunFromHook(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.
 	}
 
 	if chanEvent != nil {
-		chanEvent <- run
+		chanEvent <- *run
 	}
 	return run, nil
 }
@@ -137,7 +137,7 @@ func ManualRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Wo
 	}
 
 	if chanEvent != nil {
-		chanEvent <- wr
+		chanEvent <- *wr
 	}
 
 	return wr, processWorkflowRun(db, store, p, wr, nil, e, nil, chanEvent)

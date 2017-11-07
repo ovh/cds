@@ -14,9 +14,17 @@ func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}) ([]
 
 	for {
 		select {
-		case e := <-cError:
-			return nil, nil, nil, e
-		case w := <-cEvent:
+		case e, has := <-cError:
+			if !has {
+				return wrs, wnrs, wnjrs, nil
+			}
+			if e != nil {
+				return nil, nil, nil, e
+			}
+		case w, has := <-cEvent:
+			if !has {
+				return wrs, wnrs, wnjrs, nil
+			}
 			switch x := w.(type) {
 			case sdk.WorkflowNodeJobRun:
 				wnjrs = append(wnjrs, x)

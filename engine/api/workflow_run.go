@@ -222,8 +222,8 @@ func (api *API) stopWorkflowRunHandler() Handler {
 			return sdk.WrapError(errP, "stopWorkflowRunHandler> Unable to load project")
 		}
 
-		chanEvent := make(chan interface{})
-		chanError := make(chan error)
+		chanEvent := make(chan interface{}, 1)
+		chanError := make(chan error, 1)
 
 		go stopWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, proj, run, getUser(ctx))
 
@@ -325,8 +325,8 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
 		}
 
-		chanEvent := make(chan interface{})
-		chanError := make(chan error)
+		chanEvent := make(chan interface{}, 1)
+		chanError := make(chan error, 1)
 
 		go stopWorkflowNodeRun(chanEvent, chanError, api.mustDB(), api.Cache, p, nodeRun, name, getUser(ctx))
 
@@ -422,8 +422,8 @@ func (api *API) postWorkflowRunHandler() Handler {
 			}
 		}
 
-		chanEvent := make(chan interface{})
-		chanError := make(chan error)
+		chanEvent := make(chan interface{}, 1)
+		chanError := make(chan error, 1)
 
 		go startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx))
 

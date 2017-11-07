@@ -237,8 +237,8 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
 
-		chanEvent := make(chan interface{})
-		chanError := make(chan error)
+		chanEvent := make(chan interface{}, 1)
+		chanError := make(chan error, 1)
 
 		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx).ID, getWorker(ctx).Name, &res)
 

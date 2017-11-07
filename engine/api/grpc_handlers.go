@@ -91,8 +91,8 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 		return new(empty.Empty), sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project")
 	}
 
-	chanEvent := make(chan interface{})
-	chanError := make(chan error)
+	chanEvent := make(chan interface{}, 1)
+	chanError := make(chan error, 1)
 
 	go postJobResult(chanEvent, chanError, db, h.store, p, workerID, workerName, res)
 
