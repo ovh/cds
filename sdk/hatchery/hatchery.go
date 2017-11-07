@@ -56,7 +56,7 @@ type CommonConfiguration struct {
 
 // SpawnArguments contains arguments to func SpawnWorker
 type SpawnArguments struct {
-	Model         *sdk.Model
+	Model         sdk.Model
 	IsWorkflowJob bool
 	JobID         int64
 	Requirements  []sdk.Requirement
@@ -180,7 +180,7 @@ func routine(h Interface, isWorkflowJob bool, models []sdk.Model, execGroups []s
 					Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoHatcheryStarts.ID, Args: []interface{}{fmt.Sprintf("%s", h.Hatchery().Name), fmt.Sprintf("%d", h.Hatchery().ID), model.Name}},
 				},
 			}
-			workerName, errSpawn := h.SpawnWorker(SpawnArguments{Model: &model, IsWorkflowJob: isWorkflowJob, JobID: jobID, Requirements: requirements, LogInfo: "spawn for job"})
+			workerName, errSpawn := h.SpawnWorker(SpawnArguments{Model: model, IsWorkflowJob: isWorkflowJob, JobID: jobID, Requirements: requirements, LogInfo: "spawn for job"})
 			if errSpawn != nil {
 				log.Warning("routine> %d - cannot spawn worker %s for job %d: %s", timestamp, model.Name, jobID, errSpawn)
 				infos = append(infos, sdk.SpawnInfo{
@@ -228,7 +228,7 @@ func provisioning(h Interface, provisionDisabled bool, models []sdk.Model) {
 			existing := h.WorkersStartedByModel(&models[k])
 			for i := existing; i < int(models[k].Provision); i++ {
 				go func(m sdk.Model) {
-					if name, errSpawn := h.SpawnWorker(SpawnArguments{Model: &m, IsWorkflowJob: false, JobID: 0, Requirements: nil, LogInfo: "spawn for provision"}); errSpawn != nil {
+					if name, errSpawn := h.SpawnWorker(SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, LogInfo: "spawn for provision"}); errSpawn != nil {
 						log.Warning("provisioning> cannot spawn worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)
 						if err := h.Client().WorkerModelSpawnError(m.ID, fmt.Sprintf("routine> cannot spawn worker %s for provisioning: %s", m.Name, errSpawn)); err != nil {
 							log.Error("provisioning> cannot client.WorkerModelSpawnError for worker %s with model %s for provisioning: %s", name, m.Name, errSpawn)

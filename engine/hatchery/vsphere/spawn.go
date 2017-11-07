@@ -86,7 +86,7 @@ func (h *HatcheryVSphere) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string
 }
 
 // createVMModel create a model for a specific worker model
-func (h *HatcheryVSphere) createVMModel(model *sdk.Model) (*object.VirtualMachine, error) {
+func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine, error) {
 	log.Info("Create vm model %s", model.Name)
 	ctx := context.Background()
 	imgCfg := imageConfiguration{}
@@ -170,7 +170,7 @@ func (h *HatcheryVSphere) createVMModel(model *sdk.Model) (*object.VirtualMachin
 }
 
 // launchScriptWorker launch a script on the worker
-func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jobID int64, model *sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
+func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jobID int64, model sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
 	ctx := context.Background()
 	// Retrieve the new VM
 	vm := object.NewVirtualMachine(h.vclient.Client, vmInfo)
