@@ -46,9 +46,11 @@ func (api *API) attachPipelineToApplicationHandler() Handler {
 			return sdk.WrapError(err, "addPipelineInApplicationHandler> Cannot attach pipeline %s to application %s", pipelineName, appName)
 		}
 
-		if err := sanity.CheckPipeline(api.mustDB(), api.Cache, proj, pipeline); err != nil {
-			return sdk.WrapError(err, "addPipelineInApplicationHandler> Cannot check pipeline sanity")
-		}
+		go func() {
+			if err := sanity.CheckPipeline(api.mustDB(), api.Cache, proj, pipeline); err != nil {
+				log.Error("addPipelineInApplicationHandler> Cannot check pipeline sanity: %s", err)
+			}
+		}()
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}

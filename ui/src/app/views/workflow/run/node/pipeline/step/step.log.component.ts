@@ -30,19 +30,34 @@ export class WorkflowStepLogComponent implements OnInit {
     // Dynamic
     @Input('stepStatus')
     set stepStatus (data: string) {
-        if (data && !this.currentStatus) {
+        if (data && !this.currentStatus && this.showLog) {
             this.initWorker();
         }
         this.currentStatus = data;
     }
     logs: Log;
     currentStatus: string;
-    showLog = false;
+    set showLog(data: boolean) {
+        this._showLog = data;
+
+        if (data) {
+            this.initWorker();
+        } else {
+            if (this.worker) {
+                this.worker.stop();
+            }
+        }
+    }
+    get showLog() {
+      return this._showLog;
+    }
 
     worker: CDSWorker;
     workerSubscription: Subscription;
+    loading = true;
 
     zone: NgZone;
+    _showLog = false;
 
     constructor(private _authStore: AuthentificationStore) { }
 
@@ -51,6 +66,9 @@ export class WorkflowStepLogComponent implements OnInit {
     }
 
     initWorker(): void {
+        if (!this.logs) {
+            this.loading = true;
+        }
         if (!this.worker) {
             this.worker = new CDSWorker('./assets/worker/web/workflow-log.js');
             this.worker.start({
@@ -65,7 +83,7 @@ export class WorkflowStepLogComponent implements OnInit {
                 stepOrder: this.stepOrder
             });
 
-            this.workerSubscription = this.worker.response().subscribe( msg => {
+            this.workerSubscription = this.worker.response().subscribe(msg => {
                 if (msg) {
                     let build: BuildResult = JSON.parse(msg);
                     this.zone.run(() => {
@@ -73,13 +91,16 @@ export class WorkflowStepLogComponent implements OnInit {
                             this.logs = build.step_logs;
                         }
                     });
+                    if (this.loading) {
+                        this.loading = false;
+                    }
                 }
             });
         }
     }
 
     toggleLogs() {
-        this.showLog = ! this.showLog;
+        this.showLog = !this.showLog;
     }
 
     getLogs() {

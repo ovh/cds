@@ -12,6 +12,7 @@ import (
 	"github.com/vmware/govmomi/vim25/types"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -32,25 +33,25 @@ type imageConfiguration struct {
 }
 
 // SpawnWorker creates a new vm instance
-func (h *HatcheryVSphere) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcheryVSphere) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	var vm *object.VirtualMachine
 	var errV error
 	ctx := context.Background()
-	name := "worker-" + model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
-	if registerOnly {
+	name := "worker-" + spawnArgs.Model.Name + "-" + strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1)
+	if spawnArgs.RegisterOnly {
 		name = "register-" + name
 	}
 
-	_, errM := h.getModelByName(model.Name)
+	_, errM := h.getModelByName(spawnArgs.Model.Name)
 
-	if errM != nil || model.NeedRegistration {
+	if errM != nil || spawnArgs.Model.NeedRegistration {
 		// Generate worker model vm
-		vm, errV = h.createVMModel(model)
+		vm, errV = h.createVMModel(spawnArgs.Model)
 	}
 
 	if vm == nil || errV != nil {
-		model.NeedRegistration = errV != nil // if we haven't registered
-		if vm, errV = h.finder.VirtualMachine(ctx, model.Name); errV != nil {
+		spawnArgs.Model.NeedRegistration = errV != nil // if we haven't registered
+		if vm, errV = h.finder.VirtualMachine(ctx, spawnArgs.Model.Name); errV != nil {
 			return "", sdk.WrapError(errV, "SpawnWorker> Cannot find virtual machine with this model")
 		}
 	}
@@ -58,9 +59,9 @@ func (h *HatcheryVSphere) SpawnWorker(model *sdk.Model, jobID int64, requirement
 	annot := annotation{
 		HatcheryName:            h.Hatchery().Name,
 		WorkerName:              name,
-		RegisterOnly:            registerOnly,
-		WorkerModelLastModified: fmt.Sprintf("%d", model.UserLastModified.Unix()),
-		WorkerModelName:         model.Name,
+		RegisterOnly:            spawnArgs.RegisterOnly,
+		WorkerModelLastModified: fmt.Sprintf("%d", spawnArgs.Model.UserLastModified.Unix()),
+		WorkerModelName:         spawnArgs.Model.Name,
 		Created:                 time.Now(),
 	}
 
@@ -81,11 +82,11 @@ func (h *HatcheryVSphere) SpawnWorker(model *sdk.Model, jobID int64, requirement
 		return "", sdk.WrapError(errW, "SpawnWorker> state in error")
 	}
 
-	return "", h.launchScriptWorker(name, jobID, model, registerOnly, info.Result.(types.ManagedObjectReference))
+	return "", h.launchScriptWorker(name, spawnArgs.IsWorkflowJob, spawnArgs.JobID, spawnArgs.Model, spawnArgs.RegisterOnly, info.Result.(types.ManagedObjectReference))
 }
 
 // createVMModel create a model for a specific worker model
-func (h *HatcheryVSphere) createVMModel(model *sdk.Model) (*object.VirtualMachine, error) {
+func (h *HatcheryVSphere) createVMModel(model sdk.Model) (*object.VirtualMachine, error) {
 	log.Info("Create vm model %s", model.Name)
 	ctx := context.Background()
 	imgCfg := imageConfiguration{}
@@ -169,7 +170,7 @@ func (h *HatcheryVSphere) createVMModel(model *sdk.Model) (*object.VirtualMachin
 }
 
 // launchScriptWorker launch a script on the worker
-func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model *sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
+func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jobID int64, model sdk.Model, registerOnly bool, vmInfo types.ManagedObjectReference) error {
 	ctx := context.Background()
 	// Retrieve the new VM
 	vm := object.NewVirtualMachine(h.vclient.Client, vmInfo)
@@ -191,8 +192,13 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, jobID int64, model *sd
 		"CDS_MODEL=" + fmt.Sprintf("%d", model.ID),
 		"CDS_HATCHERY=" + fmt.Sprintf("%d", h.Hatchery().ID),
 		"CDS_HATCHERY_NAME=" + h.Hatchery().Name,
-		"CDS_BOOKED_JOB_ID=" + fmt.Sprintf("%d", jobID),
 		"CDS_TTL=" + fmt.Sprintf("%d", h.workerTTL),
+	}
+
+	if isWorkflowJob {
+		env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", jobID))
+	} else {
+		env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", jobID))
 	}
 
 	env = append(env, h.getGraylogGrpcEnv(model)...)
