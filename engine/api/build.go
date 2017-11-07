@@ -376,7 +376,7 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 			return sdk.WrapError(errTake, "takePipelineBuildJobHandler> Cannot take job %d", id)
 		}
 
-		if err := worker.SetToBuilding(tx, getWorker(ctx).ID, pbJob.ID); err != nil {
+		if err := worker.SetToBuilding(tx, getWorker(ctx).ID, pbJob.ID, sdk.JobTypePipeline); err != nil {
 			return sdk.WrapError(err, "takePipelineBuildJobHandler> Cannot update worker status")
 		}
 

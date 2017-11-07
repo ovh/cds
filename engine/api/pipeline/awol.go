@@ -36,9 +36,9 @@ func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap) {
 				}
 
 				for _, data := range pbJobDatas {
-					err = killAWOLPipelineBuildJob(db, data)
+					err = killOrRestartAWOLPipelineBuildJob(db, data)
 					if err != nil {
-						log.Warning("AWOLPipelineKiller> Cannot kill action build %d: %s\n", data.pipelineBuildJobID, err)
+						log.Warning("AWOLPipelineKiller> Cannot kill or restart action build %d: %s\n", data.pipelineBuildJobID, err)
 					}
 				}
 			}
@@ -46,12 +46,12 @@ func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap) {
 	}
 }
 
-func killAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) error {
-	log.Warning("killAWOLPipelineBuildJob> Killing pipeline_job_build %d\n", pbJobData.pipelineBuildJobID)
+func killOrRestartAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) error {
+	log.Warning("killOrRestartAWOLPipelineBuildJob> Killing pipeline_job_build %d\n", pbJobData.pipelineBuildJobID)
 
 	tx, errb := db.Begin()
 	if errb != nil {
-		return sdk.WrapError(errb, "killAWOLPipelineBuildJob> cannot begin transaction")
+		return sdk.WrapError(errb, "killOrRestartAWOLPipelineBuildJob> cannot begin transaction")
 	}
 	defer tx.Rollback()
 
@@ -59,15 +59,41 @@ func killAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) er
 	if errJob != nil {
 		return errJob
 	}
-	pbJob.Job.Reason = "Killed (Reason: Timeout)\n"
 
-	if err := UpdatePipelineBuildJobStatus(tx, pbJob, sdk.StatusFail); err != nil {
-		return err
+	// replace in queue 3 times before failed
+	if pbJob.Retry < 3 {
+		pbJob.Status = sdk.StatusWaiting.String()
+		pbJob.Retry++
+		if err := UpdatePipelineBuildJob(tx, pbJob); err != nil {
+			return err
+		}
+
+		for _, step := range pbJob.Job.StepStatus {
+			if step.Status == sdk.StatusNeverBuilt.String() || step.Status == sdk.StatusSkipped.String() || step.Status == sdk.StatusDisabled.String() {
+				continue
+			}
+
+			l, errL := LoadStepLogs(tx, pbJob.ID, int64(step.StepOrder))
+			if errL != nil {
+				return sdk.WrapError(errL, "killOrRestartAWOLPipelineBuildJob> error while load step logs")
+			}
+
+			l.Val += "\n\n------------- Worker timeout: job replaced in queue -------------\n\n"
+			if err := UpdateLog(tx, l); err != nil {
+				return sdk.WrapError(errL, "killOrRestartAWOLPipelineBuildJob> error while update step log")
+			}
+		}
+	} else {
+		pbJob.Job.Reason = "Killed (Reason: Timeout)\n"
+
+		if err := UpdatePipelineBuildJobStatus(tx, pbJob, sdk.StatusFail); err != nil {
+			return err
+		}
 	}
 
 	query := `UPDATE worker SET status = $1, action_build_id = NULL WHERE action_build_id = $2`
 	if _, err := tx.Exec(query, string(sdk.StatusDisabled), pbJobData.pipelineBuildJobID); err != nil {
-		return sdk.WrapError(err, "killAWOLPipelineBuildJob> error while execute query. pbJobData.pipelineBuildJobID:%d", pbJobData.pipelineBuildJobID)
+		return sdk.WrapError(err, "killOrRestartAWOLPipelineBuildJob> error while execute query. pbJobData.pipelineBuildJobID:%d", pbJobData.pipelineBuildJobID)
 	}
 
 	return tx.Commit()

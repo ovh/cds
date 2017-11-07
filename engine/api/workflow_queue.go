@@ -97,7 +97,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 
 		//Change worker status
-		if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID); err != nil {
+		if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot update worker status")
 		}
 

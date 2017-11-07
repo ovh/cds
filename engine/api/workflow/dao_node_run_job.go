@@ -215,3 +215,12 @@ func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 
 	return nil
 }
+
+func PutJobInQueue(db gorp.SqlExecutor, jobID int64) error {
+	query := "UPDATE workflow_node_run_job SET status = $1, last_modified = $2 WHERE id = $3"
+	now := time.Now()
+	if _, err := db.Exec(query, sdk.StatusWaiting.String(), now, jobID); err != nil {
+		return sdk.WrapError(err, "PutJobInQueue> Unable to set workflow_node_run_job id %d with status %s", jobID, sdk.StatusWaiting.String())
+	}
+	return nil
+}

@@ -91,9 +91,9 @@ func InsertWorker(db gorp.SqlExecutor, w *sdk.Worker, groupID int64) error {
 func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	w := &sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
+	query := `SELECT id, action_build_id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
 
-	err := db.QueryRow(query, id).Scan(&w.ID, &w.Name, &w.LastBeat, &w.GroupID, &w.ModelID, &statusS, &w.HatcheryID, &w.HatcheryName, &w.GroupID)
+	err := db.QueryRow(query, id).Scan(&w.ID, &w.ActionBuildID, &w.Name, &w.LastBeat, &w.GroupID, &w.ModelID, &statusS, &w.HatcheryID, &w.HatcheryName, &w.GroupID)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE action_build_id = $1 ORDER BY name ASC`
+	query := `SELECT id, action_build_id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE action_build_id = $1 ORDER BY name ASC`
 
 	rows, err := db.Query(query, pipJobID)
 	if err != nil {
@@ -116,7 +116,7 @@ func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Work
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
+		err = rows.Scan(&worker.ID, &worker.ActionBuildID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +131,7 @@ func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Work
 func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE 1 = 1 ORDER BY name ASC`
+	query := `SELECT id, action_build_id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE 1 = 1 ORDER BY name ASC`
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -141,7 +141,7 @@ func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
+		err = rows.Scan(&worker.ID, &worker.ActionBuildID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +156,7 @@ func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error) {
 	var w []sdk.Worker
 	var statusS string
-	query := `	SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name
+	query := `	SELECT id, action_build_id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name
 				FROM worker
 				WHERE 1 = 1
 				AND now() - last_beat > $1 * INTERVAL '1' SECOND
@@ -171,7 +171,7 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error)
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
+		err = rows.Scan(&worker.ID, &worker.ActionBuildID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			log.Warning("LoadDeadWorkers> Error scanning workers")
 			return nil, err
@@ -386,10 +386,10 @@ func SetStatus(db gorp.SqlExecutor, workerID string, status sdk.Status) error {
 }
 
 // SetToBuilding sets action_build_id and status to building on given worker
-func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64) error {
-	query := `UPDATE worker SET status = $1, action_build_id = $2 WHERE id = $3`
+func SetToBuilding(db gorp.SqlExecutor, workerID string, actionBuildID int64, jobType string) error {
+	query := `UPDATE worker SET status = $1, action_build_id = $2, job_type = $3 WHERE id = $4`
 
-	res, errE := db.Exec(query, sdk.StatusBuilding.String(), actionBuildID, workerID)
+	res, errE := db.Exec(query, sdk.StatusBuilding.String(), actionBuildID, jobType, workerID)
 	if errE != nil {
 		return errE
 	}

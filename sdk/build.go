@@ -13,6 +13,7 @@ type PipelineBuildJob struct {
 	Warnings        []PipelineBuildWarning `json:"warnings"  db:"-"`
 	Queued          time.Time              `json:"queued,omitempty" db:"queued"`
 	QueuedSeconds   int64                  `json:"queued_seconds,omitempty" db:"-"`
+	Retry           int                    `json:"retry,omitempty" db:"retry"`
 	Start           time.Time              `json:"start,omitempty" db:"start"`
 	Done            time.Time              `json:"done,omitempty" db:"done"`
 	Model           string                 `json:"model,omitempty" db:"model"`
