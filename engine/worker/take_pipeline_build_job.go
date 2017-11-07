@@ -48,6 +48,12 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 		return true
 	}
 
+	t := ""
+	if isBooked {
+		t = ", this was my booked job"
+	}
+	log.Info("takePipelineBuildJob> Job %d taken%s", pipelineBuildJobID, t)
+
 	pbji := worker.PipelineBuildJobInfo{}
 	if err := json.Unmarshal([]byte(data), &pbji); err != nil {
 		log.Info("takeJob> Cannot unmarshal action: %s", err)

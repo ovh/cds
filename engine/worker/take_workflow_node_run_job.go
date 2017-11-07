@@ -21,6 +21,11 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 	if err != nil {
 		return true, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker can work on another job.")
 	}
+	t := ""
+	if w.bookedJobID == job.ID {
+		t = ", this was my booked job"
+	}
+	log.Info("takeWorkflowJob> Job %d taken%s", job.ID, t)
 
 	w.nbActionsDone++
 	// Set build variables
