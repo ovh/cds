@@ -242,8 +242,8 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				//Take the job
 				if requirementsOK {
-					log.Info("checkQueue> Taking PipelineBuildJob %d%s", j.ID, t)
-					canWorkOnAnotherJob := w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedPBJobID)
+					log.Debug("checkQueue> Try take the PipelineBuildJob %d%s", j.ID, t)
+          canWorkOnAnotherJob := w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedPBJobID)
 					if canWorkOnAnotherJob {
 						continue
 					}
@@ -280,12 +280,12 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				//Take the job
 				if requirementsOK {
-					log.Info("checkQueue> Taking Job %d%s", j.ID, t)
+					log.Debug("checkQueue> Try take the job %d%s", j.ID, t)
 					if canWorkOnAnotherJob, err := w.takeWorkflowJob(ctx, j); err != nil {
+						log.Info("Unable to run this job  %d%s. Take info:%s, continue:%t", j.ID, t, err, canWorkOnAnotherJob)
 						if !canWorkOnAnotherJob {
 							errs <- err
 						} else {
-							log.Info("Unable to run this job, take info:%s, let's continue %d%s", err, j.ID, t)
 							continue
 						}
 					}
