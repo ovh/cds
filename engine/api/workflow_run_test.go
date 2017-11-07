@@ -783,6 +783,12 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
+	gr := &sdk.Group{
+		Name: sdk.RandomString(10),
+	}
+	test.NoError(t, group.InsertGroup(db, gr))
+	test.NoError(t, group.InsertGroupInProject(api.mustDB(), proj.ID, gr.ID, 7))
+
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -798,6 +804,9 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	test.NoError(t, environment.InsertEnvironment(api.mustDB(), env))
+
+	group.InsertGroupInEnvironment(db, env.ID, proj.ProjectGroups[0].Group.ID, 4)
+	group.InsertGroupInEnvironment(db, env.ID, gr.ID, 4)
 
 	proj2, errp := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
 	test.NoError(t, errp)
@@ -815,9 +824,6 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-
-	// Remove execution right for group
-	test.NoError(t, group.UpdateGroupRoleInEnvironment(api.mustDB(), env.ID, proj.ProjectGroups[0].Group.ID, 4))
 
 	u.Admin = false
 	test.NoError(t, user.UpdateUser(api.mustDB(), *u))

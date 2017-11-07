@@ -282,7 +282,6 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
-
 	return updateLastModified(db, store, w, u)
 }
 
