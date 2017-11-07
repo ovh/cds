@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/gorilla/mux"
 	"github.com/ovh/venom"
 
-	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/objectstore"

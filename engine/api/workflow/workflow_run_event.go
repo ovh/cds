@@ -2,11 +2,13 @@ package workflow
 
 import (
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
+// GetWorkflowRunEventData read channel to get elements to push
 func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}) ([]sdk.WorkflowRun, []sdk.WorkflowNodeRun, []sdk.WorkflowNodeJobRun, error) {
 	wrs := []sdk.WorkflowRun{}
 	wnrs := []sdk.WorkflowNodeRun{}
