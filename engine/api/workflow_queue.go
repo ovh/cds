@@ -347,7 +347,7 @@ func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.UpdateNodeJobRun(tx, api.Cache, p, nodeJobRun); err != nil {
+		if err := workflow.UpdateNodeJobRunAndExecute(tx, api.Cache, p, nodeJobRun); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run")
 		}
 
@@ -487,7 +487,7 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 			sdk.AddParameter(&job.Parameters, v.Name, sdk.StringParameter, v.Value)
 		}
 
-		if err := workflow.UpdateNodeJobRun(tx, api.Cache, p, job); err != nil {
+		if err := workflow.UpdateNodeJobRunAndExecute(tx, api.Cache, p, job); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run")
 		}
 
