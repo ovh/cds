@@ -78,11 +78,10 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 
 	//Wait until the logchannel is empty
 	w.drainLogsAndCloseLogger(ctx)
-
+	res.BuildID = job.ID
 	// Try to send result through grpc
 	if w.grpc.conn != nil {
 		client := grpc.NewWorkflowQueueClient(w.grpc.conn)
-		res.BuildID = job.ID
 		_, err := client.SendResult(ctx, &res)
 		if err == nil {
 			return false, nil

@@ -86,7 +86,9 @@ func RunFromHook(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.
 		return nil, sdk.WrapError(err, "RunFromHook> Unable to reload workflow run")
 	}
 
-	chanEvent <- run
+	if chanEvent != nil {
+		chanEvent <- run
+	}
 	return run, nil
 }
 
@@ -134,7 +136,10 @@ func ManualRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Wo
 		return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
 	}
 
-	chanEvent <- wr
+	if chanEvent != nil {
+		chanEvent <- wr
+	}
+
 	return wr, processWorkflowRun(db, store, p, wr, nil, e, nil, chanEvent)
 }
 

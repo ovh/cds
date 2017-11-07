@@ -363,7 +363,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		return sdk.WrapError(err, "processWorkflowRun>")
 	}
 
-	if oldStatus != w.Status {
+	if oldStatus != w.Status && chanEvent != nil {
 		chanEvent <- w
 	}
 
@@ -560,7 +560,9 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	if err := insertWorkflowNodeRun(db, run); err != nil {
 		return sdk.WrapError(err, "processWorkflowNodeRun> unable to insert run")
 	}
-	chanEvent <- run
+	if chanEvent != nil {
+		chanEvent <- run
+	}
 
 	//Update workflow run
 	if w.WorkflowNodeRuns == nil {

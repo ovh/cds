@@ -115,7 +115,9 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
 	// Push update on node run job
-	chanEvent <- job
+	if chanEvent != nil {
+		chanEvent <- job
+	}
 
 	return execute(db, store, p, node, chanEvent)
 }
