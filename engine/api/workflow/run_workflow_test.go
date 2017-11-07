@@ -1,4 +1,4 @@
-package test
+package workflow_test
 
 import (
 	"sort"

@@ -128,6 +128,16 @@ func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, e
 	return srv, nil
 }
 
+// ContextValues retuns auth values of a context
+func ContextValues(ctx context.Context) map[interface{}]interface{} {
+	return map[interface{}]interface{}{
+		ContextHatchery: ctx.Value(ContextHatchery),
+		ContextService:  ctx.Value(ContextService),
+		ContextWorker:   ctx.Value(ContextWorker),
+		ContextUser:     ctx.Value(ContextUser),
+	}
+}
+
 // CheckWorkerAuth checks worker authentication
 func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header) (context.Context, error) {
 	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))

@@ -151,7 +151,7 @@ func prepareSpawnInfos(j *sdk.WorkflowNodeJobRun, infos []sdk.SpawnInfo) error {
 
 // TakeNodeJobRun Take an a job run for update
 func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
-	job, err := LoadAndLockNodeJobRunNoWait(db, store, id)
+	job, err := LoadAndLockNodeJobRunWait(db, store, id)
 	if err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
 			err = sdk.ErrJobAlreadyBooked
