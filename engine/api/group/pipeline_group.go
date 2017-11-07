@@ -131,7 +131,7 @@ func LoadGroupInPipelineByName(db gorp.SqlExecutor, pipelineID int64, groupName 
 
 func deleteGroupPipelineByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	pipelineIDs := []int64{}
-	if _, err := db.Select(pipelineIDs, "SELECT pipeline_id from pipeline_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
+	if _, err := db.Select(&pipelineIDs, "SELECT pipeline_id from pipeline_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
 		return sdk.WrapError(err, "deleteGroupPipelineByGroup")
 	}
 

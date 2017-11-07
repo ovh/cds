@@ -132,7 +132,7 @@ func DeleteGroupFromEnvironment(db gorp.SqlExecutor, envID, groupID int64) error
 
 func deleteGroupEnvironmentByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	envIDs := []int64{}
-	if _, err := db.Select(envIDs, "SELECT environment_id from environment_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
+	if _, err := db.Select(&envIDs, "SELECT environment_id from environment_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
 		return sdk.WrapError(err, "deleteGroupEnvironmentByGroup")
 	}
 

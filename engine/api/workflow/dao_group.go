@@ -132,7 +132,7 @@ func loadWorkflowGroups(db gorp.SqlExecutor, w sdk.Workflow) ([]sdk.GroupPermiss
 
 func deleteWorkflowGroupByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	workflowIDs := []int64{}
-	if _, err := db.Select(workflowIDs, "SELECT workflow_id from workflow_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
+	if _, err := db.Select(&workflowIDs, "SELECT workflow_id from workflow_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
 		return sdk.WrapError(err, "deleteWorkflowGroupByGroup")
 	}
 

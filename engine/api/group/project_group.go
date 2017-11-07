@@ -99,7 +99,7 @@ func DeleteGroupProjectByProject(db gorp.SqlExecutor, projectID int64) error {
 
 func deleteGroupProjectByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	projectIDs := []int64{}
-	if _, err := db.Select(projectIDs, "SELECT project_id from project_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
+	if _, err := db.Select(&projectIDs, "SELECT project_id from project_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
 		return sdk.WrapError(err, "deleteGroupProjectByGroup")
 	}
 
