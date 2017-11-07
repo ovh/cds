@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"runtime"
@@ -247,7 +248,7 @@ type asynchronousRequest struct {
 	contextValues map[interface{}]interface{}
 	vars          map[string]string
 	request       http.Request
-	body          bytes.Buffer
+	body          io.Reader
 }
 
 func (r *asynchronousRequest) do(ctx context.Context, h AsynchronousHandler) error {
@@ -255,7 +256,12 @@ func (r *asynchronousRequest) do(ctx context.Context, h AsynchronousHandler) err
 		ctx = context.WithValue(ctx, k, v)
 	}
 	req := &r.request
-	req.Body = ioutil.NopCloser(&r.body)
+
+	var buf bytes.Buffer
+	tee := io.TeeReader(r.body, &buf)
+	r.body = &buf
+	req.Body = ioutil.NopCloser(tee)
+	//Recreate a new buffer from the bytes stores in memory
 	for k, v := range r.vars {
 		muxcontext.Set(req, k, v)
 	}
@@ -297,7 +303,7 @@ func (r *Router) Asynchronous(handler AsynchronousHandlerFunc, retry int) Handle
 				vars:          mux.Vars(r),
 			}
 			if btes, err := ioutil.ReadAll(r.Body); err == nil {
-				async.body = *bytes.NewBuffer(btes)
+				async.body = bytes.NewBuffer(btes)
 			}
 			log.Debug("Router> Asynchronous call of %s", r.URL.String())
 			chanRequest <- async
