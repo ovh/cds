@@ -146,12 +146,6 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(err, "importPipelineHandler> Cannot commit transaction")
 		}
 
-		var errlp error
-		proj.Pipelines, errlp = pipeline.LoadPipelines(api.mustDB(), proj.ID, true, getUser(ctx))
-		if errlp != nil {
-			return sdk.WrapError(errlp, "importPipelineHandler> Unable to reload pipelines for project %s", proj.Key)
-		}
-
 		go func() {
 			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
 				log.Error("importPipelineHandler> Cannot check warnings: %s", err)
