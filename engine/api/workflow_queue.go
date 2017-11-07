@@ -264,7 +264,7 @@ func (api *API) postWorkflowJobResultHandler() AsynchronousHandler {
 
 		//Add spawn infos
 		if _, err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, job.ID, infos); err != nil {
-			log.Error("addQueueResultHandler> Cannot save spawn info job %d: %s", job.ID, err)
+			log.Error("postWorkflowJobResultHandler> Cannot save spawn info job %d: %s", job.ID, err)
 			return err
 		}
 
@@ -469,7 +469,7 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 		}
 		defer tx.Rollback()
 
-		job, errj := workflow.LoadAndLockNodeJobRunNoWait(tx, api.Cache, id)
+		job, errj := workflow.LoadAndLockNodeJobRunWait(tx, api.Cache, id)
 		if errj != nil {
 			return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job")
 		}
