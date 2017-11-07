@@ -147,12 +147,14 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 		return plugin.Fail
 	}
 	defer os.RemoveAll(conf)
+	plugin.SendLog(a, "Templating Configuration File: OK\n")
 
 	//Validate json file and load application
 	appConfig, err := parseApplicationConfigFile(a, conf)
 	if err != nil {
 		return plugin.Fail
 	}
+	plugin.SendLog(a, "Parsing Configuration File: OK\n")
 
 	//Allways put cds.version labels
 	if appConfig.Labels == nil {

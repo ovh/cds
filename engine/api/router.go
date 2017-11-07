@@ -1,14 +1,17 @@
 package api
 
 import (
+	"bytes"
 	"compress/gzip"
 	"context"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"runtime"
 	"time"
 
+	muxcontext "github.com/gorilla/context"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 
@@ -21,27 +24,34 @@ const nbPanicsBeforeFail = 50
 
 // Router is a wrapper around mux.Router
 type Router struct {
-	Background       context.Context
-	AuthDriver       auth.Driver
-	Mux              *mux.Router
-	SetHeaderFunc    func() map[string]string
-	Prefix           string
-	URL              string
-	Middlewares      []Middleware
-	mapRouterConfigs map[string]*RouterConfig
-	panicked         bool
-	nbPanic          int
-	lastPanic        *time.Time
+	Background             context.Context
+	AuthDriver             auth.Driver
+	Mux                    *mux.Router
+	SetHeaderFunc          func() map[string]string
+	Prefix                 string
+	URL                    string
+	Middlewares            []Middleware
+	mapRouterConfigs       map[string]*RouterConfig
+	mapAsynchronousHandler map[string]HandlerFunc
+	panicked               bool
+	nbPanic                int
+	lastPanic              *time.Time
 }
 
 // Handler defines the HTTP handler used in CDS engine
 type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
 
+// AsynchronousHandler defines the HTTP asynchronous handler used in CDS engine
+type AsynchronousHandler func(ctx context.Context, r *http.Request) error
+
 // Middleware defines the HTTP Middleware used in CDS engine
 type Middleware func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error)
 
-// HandlerFunc defines the way to a handler
+// HandlerFunc defines the way to instanciate a handler
 type HandlerFunc func() Handler
+
+// AsynchronousHandlerFunc defines the way to instanciate a handler
+type AsynchronousHandlerFunc func() AsynchronousHandler
 
 // RouterConfigParam is the type of anonymous function returned by POST, GET and PUT functions
 type RouterConfigParam func(rc *RouterConfig)
@@ -68,12 +78,13 @@ func NewHandlerConfig() *HandlerConfig {
 
 func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
 	return &Router{
-		AuthDriver:       a,
-		Mux:              m,
-		Prefix:           p,
-		URL:              "",
-		mapRouterConfigs: map[string]*RouterConfig{},
-		Background:       context.Background(),
+		AuthDriver:             a,
+		Mux:                    m,
+		Prefix:                 p,
+		URL:                    "",
+		mapRouterConfigs:       map[string]*RouterConfig{},
+		mapAsynchronousHandler: map[string]HandlerFunc{},
+		Background:             context.Background(),
 	}
 }
 
@@ -228,6 +239,72 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 	}
 
 	r.Mux.HandleFunc(uri, r.compress(r.recoverWrap(f)))
+}
+
+type asynchronousRequest struct {
+	nbErrors      int
+	err           error
+	contextValues map[interface{}]interface{}
+	vars          map[string]string
+	request       http.Request
+	body          bytes.Buffer
+}
+
+func (r *asynchronousRequest) do(ctx context.Context, h AsynchronousHandler) error {
+	for k, v := range r.contextValues {
+		ctx = context.WithValue(ctx, k, v)
+	}
+	req := &r.request
+	req.Body = ioutil.NopCloser(&r.body)
+	for k, v := range r.vars {
+		muxcontext.Set(req, k, v)
+	}
+	r.err = h(ctx, req)
+	if r.err != nil {
+		r.nbErrors++
+	}
+	return r.err
+}
+
+func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequest, handlerFunc AsynchronousHandlerFunc, retry int) {
+	handler := handlerFunc()
+	for {
+		select {
+		case req := <-chanRequest:
+			if err := req.do(ctx, handler); err != nil {
+				if req.nbErrors > retry {
+					log.Error("Asynchronous Request on Error : %v", err)
+				} else {
+					chanRequest <- req
+				}
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// Asynchronous handles an AsynchronousHandlerFunc
+func (r *Router) Asynchronous(handler AsynchronousHandlerFunc, retry int) HandlerFunc {
+	chanRequest := make(chan asynchronousRequest, runtime.GOMAXPROCS(0))
+	go processAsyncRequests(r.Background, chanRequest, handler, retry)
+
+	return func() Handler {
+		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			async := asynchronousRequest{
+				contextValues: auth.ContextValues(ctx),
+				request:       *r,
+				vars:          mux.Vars(r),
+			}
+			if btes, err := ioutil.ReadAll(r.Body); err == nil {
+				async.body = *bytes.NewBuffer(btes)
+			}
+			log.Debug("Router> Asynchronous call of %s", r.URL.String())
+			chanRequest <- async
+			w.WriteHeader(http.StatusAccepted)
+			return nil
+		}
+	}
 }
 
 // DEPRECATED marks the handler as deprecated

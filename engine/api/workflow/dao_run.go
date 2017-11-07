@@ -252,7 +252,7 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrWorkflowNotFound
 		}
-		return nil, sdk.WrapError(err, "loadRun> Unable to load workflow run", query, args)
+		return nil, sdk.WrapError(err, "loadRun> Unable to load workflow run. query:%s args:%v", query, args)
 	}
 	wr := sdk.WorkflowRun(*runDB)
 
@@ -346,7 +346,7 @@ func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	return int64(i), nil
 }
 
-// PurgeWorkflowRun mark all worfklow run to delete
+// PurgeWorkflowRun mark all workflow run to delete
 func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 	ids := []struct {
 		Ids string `json:"ids" db:"ids"`

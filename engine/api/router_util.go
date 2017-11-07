@@ -51,7 +51,7 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 
 // GetRoute returns the routes given a handler
 func (r *Router) GetRoute(method string, handler HandlerFunc, vars map[string]string) string {
-	sf1 := reflect.ValueOf(handler())
+	p1 := reflect.ValueOf(handler()).Pointer()
 	var url string
 	for uri, routerConfig := range r.mapRouterConfigs {
 		rc := routerConfig.config[method]
@@ -61,7 +61,7 @@ func (r *Router) GetRoute(method string, handler HandlerFunc, vars map[string]st
 
 		if strings.HasPrefix(uri, r.Prefix) {
 			sf2 := reflect.ValueOf(rc.Handler)
-			if sf1.Pointer() == sf2.Pointer() {
+			if p1 == sf2.Pointer() {
 				url = uri
 				break
 			}

@@ -131,7 +131,7 @@ func (api *API) importPipelineHandler() Handler {
 		log.Debug("importPipelineHandler >>> %v", msgListString)
 
 		if globalError != nil {
-			myError, ok := globalError.(*sdk.Error)
+			myError, ok := globalError.(sdk.Error)
 			if ok {
 				return WriteJSON(w, r, msgListString, myError.Status)
 			}
@@ -144,12 +144,6 @@ func (api *API) importPipelineHandler() Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Cannot commit transaction")
-		}
-
-		var errlp error
-		proj.Pipelines, errlp = pipeline.LoadPipelines(api.mustDB(), proj.ID, true, getUser(ctx))
-		if errlp != nil {
-			return sdk.WrapError(errlp, "importPipelineHandler> Unable to reload pipelines for project %s", proj.Key)
 		}
 
 		go func() {

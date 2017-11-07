@@ -185,8 +185,8 @@ func (api *API) getWorkflowJobHandler() Handler {
 	}
 }
 
-func (api *API) postSpawnInfosWorkflowJobHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
+	return func(ctx context.Context, r *http.Request) error {
 		id, errc := requestVarInt(r, "id")
 		if errc != nil {
 			return sdk.WrapError(errc, "postSpawnInfosWorkflowJobHandler> invalid id")
@@ -214,13 +214,12 @@ func (api *API) postSpawnInfosWorkflowJobHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot commit tx")
 		}
-
-		return WriteJSON(w, r, nil, http.StatusOK)
+		return nil
 	}
 }
 
-func (api *API) postWorkflowJobResultHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (api *API) postWorkflowJobResultHandler() AsynchronousHandler {
+	return func(ctx context.Context, r *http.Request) error {
 		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
 			return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
@@ -308,8 +307,8 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 	}
 }
 
-func (api *API) postWorkflowJobLogsHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (api *API) postWorkflowJobLogsHandler() AsynchronousHandler {
+	return func(ctx context.Context, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
@@ -333,8 +332,8 @@ func (api *API) postWorkflowJobLogsHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobStepStatusHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
+	return func(ctx context.Context, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
@@ -406,8 +405,8 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobTestsResultsHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (api *API) postWorkflowJobTestsResultsHandler() AsynchronousHandler {
+	return func(ctx context.Context, r *http.Request) error {
 		// Unmarshal into results
 		var new venom.Tests
 		if err := UnmarshalBody(r, &new); err != nil {
@@ -475,8 +474,8 @@ func (api *API) postWorkflowJobTestsResultsHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobVariableHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
+	return func(ctx context.Context, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Invalid id")
@@ -551,8 +550,8 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobArtifactHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+func (api *API) postWorkflowJobArtifactHandler() AsynchronousHandler {
+	return func(ctx context.Context, r *http.Request) error {
 		// Load and lock Existing workflow Run Job
 		id, errI := requestVarInt(r, "permID")
 		if errI != nil {

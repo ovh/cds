@@ -15,7 +15,8 @@ type currentWorker struct {
 	id            string
 	model         sdk.Model
 	groupID       int64
-	bookedJobID   int64
+	bookedPBJobID int64
+	bookedWJobID  int64
 	nbActionsDone int
 	basedir       string
 	logger        struct {
