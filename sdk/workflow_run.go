@@ -148,6 +148,7 @@ type WorkflowNodeJobRun struct {
 	Job               ExecutedJob `json:"job" db:"-"`
 	Parameters        []Parameter `json:"parameters,omitempty" db:"-"`
 	Status            string      `json:"status"  db:"status"`
+	Retry             int         `json:"retry"  db:"retry"`
 	Queued            time.Time   `json:"queued,omitempty" db:"queued"`
 	QueuedSeconds     int64       `json:"queued_seconds,omitempty" db:"-"`
 	Start             time.Time   `json:"start,omitempty" db:"start"`

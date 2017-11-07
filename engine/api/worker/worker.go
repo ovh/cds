@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/token"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -44,27 +45,45 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 	}
 	defer tx.Rollback()
 
-	query := `SELECT name, status, action_build_id FROM worker WHERE id = $1 FOR UPDATE`
+	query := `SELECT name, status, action_build_id, job_type FROM worker WHERE id = $1 FOR UPDATE`
 	var st, name string
-	var pbJobID sql.NullInt64
-	if err := tx.QueryRow(query, id).Scan(&name, &st, &pbJobID); err != nil {
-		log.Debug("DeleteWorker[%s]> Cannot lock worker: %s", id, err)
+	var jobID sql.NullInt64
+	var jobType sql.NullString
+	if err := tx.QueryRow(query, id).Scan(&name, &st, &jobID, &jobType); err != nil {
+		log.Debug("DeleteWorker[%d]> Cannot lock worker: %s", id, err)
 		return nil
 	}
 
 	if st == sdk.StatusBuilding.String() {
 		// Worker is awol while building !
 		// We need to restart this action
-		if pbJobID.Valid == false {
+		if jobID.Valid == false {
 			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but action_build_id is NULL!", name)
 		}
 
-		log.Info("Worker %s crashed while building %d !", name, pbJobID.Int64)
-		if err := pipeline.RestartPipelineBuildJob(tx, pbJobID.Int64); err != nil {
-			log.Error("DeleteWorker[%s]> Cannot restart pipeline build job: %s", id, err)
-		} else {
-			log.Info("DeleteWorker[%s]> PipelineBuildJob %d restarted after crash", id, pbJobID.Int64)
+		if !jobType.Valid {
+			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but job_type is NULL!", name)
 		}
+
+		switch jobType.String {
+		case sdk.JobTypePipeline:
+			if err := pipeline.RestartPipelineBuildJob(tx, jobID.Int64); err != nil {
+				log.Error("DeleteWorker[%d]> Cannot restart pipeline build job: %s", id, err)
+			} else {
+				log.Info("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash", id, jobID.Int64)
+			}
+		case sdk.JobTypeWorkflowNode:
+			wNodeJob, errL := workflow.LoadNodeJobRunWithoutStore(tx, jobID.Int64)
+			if errL == nil && wNodeJob.Retry < 3 {
+				if err := workflow.ReplaceJobInQueue(db, jobID.Int64, wNodeJob.Retry+1); err != nil {
+					log.Warning("DeleteWorker[%d]> Cannot restart workflow node run : %s", id, err)
+				} else {
+					log.Info("DeleteWorker[%d]> WorkflowNodeRun %d restarted after crash", id, jobID.Int64)
+				}
+			}
+		}
+
+		log.Info("Worker %s crashed while building %d !", name, jobID.Int64)
 	}
 
 	// Well then, let's remove this loser
@@ -91,13 +110,23 @@ func InsertWorker(db gorp.SqlExecutor, w *sdk.Worker, groupID int64) error {
 func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	w := &sdk.Worker{}
 	var statusS string
-	query := `SELECT id, action_build_id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
+	var pbJobID sql.NullInt64
+	var jobType sql.NullString
+	query := `SELECT id, action_build_id, job_type, name, last_beat, group_id, model, status, hatchery_id, hatchery_name, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
 
-	err := db.QueryRow(query, id).Scan(&w.ID, &w.ActionBuildID, &w.Name, &w.LastBeat, &w.GroupID, &w.ModelID, &statusS, &w.HatcheryID, &w.HatcheryName, &w.GroupID)
+	err := db.QueryRow(query, id).Scan(&w.ID, &pbJobID, &jobType, &w.Name, &w.LastBeat, &w.GroupID, &w.ModelID, &statusS, &w.HatcheryID, &w.HatcheryName, &w.GroupID)
 	if err != nil {
 		return nil, err
 	}
 	w.Status = sdk.StatusFromString(statusS)
+
+	if jobType.Valid {
+		w.JobType = jobType.String
+	}
+
+	if pbJobID.Valid {
+		w.ActionBuildID = pbJobID.Int64
+	}
 
 	return w, nil
 }
@@ -106,7 +135,7 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, action_build_id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE action_build_id = $1 ORDER BY name ASC`
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE action_build_id = $1 ORDER BY name ASC`
 
 	rows, err := db.Query(query, pipJobID)
 	if err != nil {
@@ -116,7 +145,7 @@ func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Work
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.ActionBuildID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			return nil, err
 		}
@@ -131,7 +160,7 @@ func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Work
 func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 	w := []sdk.Worker{}
 	var statusS string
-	query := `SELECT id, action_build_id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE 1 = 1 ORDER BY name ASC`
+	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE 1 = 1 ORDER BY name ASC`
 
 	rows, err := db.Query(query)
 	if err != nil {
@@ -141,7 +170,7 @@ func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.ActionBuildID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
+		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			return nil, err
 		}
@@ -156,7 +185,7 @@ func LoadWorkers(db gorp.SqlExecutor) ([]sdk.Worker, error) {
 func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error) {
 	var w []sdk.Worker
 	var statusS string
-	query := `	SELECT id, action_build_id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name
+	query := `SELECT id, action_build_id, job_type, name, last_beat, group_id, model, status, hatchery_id, hatchery_name
 				FROM worker
 				WHERE 1 = 1
 				AND now() - last_beat > $1 * INTERVAL '1' SECOND
@@ -171,10 +200,18 @@ func LoadDeadWorkers(db gorp.SqlExecutor, timeout float64) ([]sdk.Worker, error)
 
 	for rows.Next() {
 		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.ActionBuildID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
+		var pbJobID sql.NullInt64
+		var jobType sql.NullString
+		err = rows.Scan(&worker.ID, &pbJobID, &jobType, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
 		if err != nil {
 			log.Warning("LoadDeadWorkers> Error scanning workers")
 			return nil, err
+		}
+		if jobType.Valid {
+			worker.JobType = jobType.String
+		}
+		if pbJobID.Valid {
+			worker.ActionBuildID = pbJobID.Int64
 		}
 		worker.Status = sdk.StatusFromString(statusS)
 		w = append(w, worker)

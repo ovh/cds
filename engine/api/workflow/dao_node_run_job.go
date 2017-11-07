@@ -101,6 +101,17 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 	return &job, nil
 }
 
+//LoadNodeJobRunWithoutStore load a NodeJobRun given its ID without a given store
+func LoadNodeJobRunWithoutStore(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeJobRun, error) {
+	j := JobRun{}
+	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1`
+	if err := db.SelectOne(&j, query, id); err != nil {
+		return nil, err
+	}
+	job := sdk.WorkflowNodeJobRun(j)
+	return &job, nil
+}
+
 //LoadAndLockNodeJobRunWait load for update a NodeJobRun given its ID
 func LoadAndLockNodeJobRunWait(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.WorkflowNodeJobRun, error) {
 	j := JobRun{}
@@ -216,10 +227,9 @@ func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 	return nil
 }
 
-func PutJobInQueue(db gorp.SqlExecutor, jobID int64) error {
-	query := "UPDATE workflow_node_run_job SET status = $1, last_modified = $2 WHERE id = $3"
-	now := time.Now()
-	if _, err := db.Exec(query, sdk.StatusWaiting.String(), now, jobID); err != nil {
+func ReplaceJobInQueue(db gorp.SqlExecutor, jobID int64, retry int) error {
+	query := "UPDATE workflow_node_run_job SET status = $1, retry = $2 WHERE id = $3"
+	if _, err := db.Exec(query, sdk.StatusWaiting.String(), retry, jobID); err != nil {
 		return sdk.WrapError(err, "PutJobInQueue> Unable to set workflow_node_run_job id %d with status %s", jobID, sdk.StatusWaiting.String())
 	}
 	return nil
