@@ -47,21 +47,21 @@ type EventWorkflowNodeRun struct {
 	ApplicationName string                    `json:"application_name,omitempty"`
 	EnvironmentName string                    `json:"environment_name,omitempty"`
 	Payload         interface{}               `json:"payload,omitempty"`
-	HookEvent       *WorkflowNodeRunHookEvent `json:"hook_event" db:"-"`
-	Manual          *WorkflowNodeRunManual    `json:"manual" db:"-"`
-	SourceNodeRuns  []int64                   `json:"manual" db:"-"`
-	WorkflowRunID   int64                     `json:"workflow_run_id" db:"-"`
+	HookEvent       *WorkflowNodeRunHookEvent `json:"hook_event"`
+	Manual          *WorkflowNodeRunManual    `json:"manual"`
+	SourceNodeRuns  []int64                   `json:"manual"`
+	WorkflowRunID   int64                     `json:"workflow_run_id"`
 }
 
 // EventWorkflowRun contains event data for a workflow run
 type EventWorkflowRun struct {
-	ID           int64    `json:"id" db:"id"`
-	Number       int64    `json:"num" db:"num"`
+	ID           int64    `json:"id"`
+	Number       int64    `json:"num"`
 	ProjectKey   string   `json:"project_key,omitempty"`
 	WorkflowName string   `json:"workflow_name,omitempty"`
-	Status       string   `json:"status" db:"status"`
-	Workflow     Workflow `json:"workflow" db:"-"`
-	Start        int64    `json:"start" db:"start"`
+	Status       string   `json:"status"`
+	Workflow     Workflow `json:"workflow"`
+	Start        int64    `json:"start"`
 }
 
 // EventPipelineBuild contains event data for a pipeline build

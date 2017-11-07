@@ -104,11 +104,6 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		if err := UpdateNodeRun(db, node); err != nil {
 			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to update workflow node run %d", node.ID)
 		}
-	} else {
-		log.Debug("UpdateNodeJobRunStatus> call execute node")
-		if errE := execute(db, store, p, node, chanEvent); errE != nil {
-			return sdk.WrapError(errE, "workflow.UpdateNodeJobRunStatus> Cannot execute sync node")
-		}
 	}
 
 	if err := UpdateNodeJobRun(db, store, p, job); err != nil {
@@ -119,6 +114,9 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		chanEvent <- *job
 	}
 
+	if status == sdk.StatusBuilding {
+		return nil
+	}
 	return execute(db, store, p, node, chanEvent)
 }
 

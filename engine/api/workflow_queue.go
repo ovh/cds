@@ -377,7 +377,7 @@ func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Cannot ")
+			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Cannot commit transaction")
 		}
 
 		return nil
