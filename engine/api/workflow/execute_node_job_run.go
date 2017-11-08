@@ -348,3 +348,27 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 	}
 	return nil
 }
+
+// RestartWorkflowNodeJob restart all workflow node job and update logs to indicate restart
+func RestartWorkflowNodeJob(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
+	for _, step := range wNodeJob.Job.StepStatus {
+		if step.Status == sdk.StatusNeverBuilt.String() || step.Status == sdk.StatusSkipped.String() || step.Status == sdk.StatusDisabled.String() {
+			continue
+		}
+		l, errL := LoadStepLogs(db, wNodeJob.ID, int64(step.StepOrder))
+		if errL != nil {
+			return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while load step logs")
+		}
+		wNodeJob.Job.Reason = "Killed (Reason: Timeout)\n"
+
+		l.Val += "\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n"
+		if err := updateLog(db, l); err != nil {
+			return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while update step log")
+		}
+	}
+	if err := replaceWorkflowJobRunInQueue(db, wNodeJob); err != nil {
+		return sdk.WrapError(err, "RestartWorkflowNodeJob> Cannot replace workflow job in queue")
+	}
+
+	return nil
+}

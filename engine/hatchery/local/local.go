@@ -33,7 +33,7 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
-	h.Config.Name = namesgenerator.GetRandomName(0)
+
 	return nil
 }
 
@@ -54,6 +54,10 @@ func (h *HatcheryLocal) CheckConfiguration(cfg interface{}) error {
 
 	if hconfig.Basedir == "" {
 		return fmt.Errorf("Invalid basedir directory")
+	}
+
+	if hconfig.Name == "" {
+		return fmt.Errorf("please enter a name in your local hatchery configuration")
 	}
 
 	if ok, err := api.DirectoryExists(hconfig.Basedir); !ok {

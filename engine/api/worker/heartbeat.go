@@ -30,7 +30,6 @@ func CheckHeartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
 					continue
 				}
 				for i := range w {
-					// Replace jobs in queue
 					log.Debug("WorkerHeartbeat> Delete worker %s[%s] LastBeat:%d hatchery:%d status:%s", w[i].Name, w[i].ID, w[i].LastBeat, w[i].HatcheryID, w[i].Status)
 					if err = DeleteWorker(db, w[i].ID); err != nil {
 						log.Warning("WorkerHeartbeat> Cannot delete worker %s: %s", w[i].ID, err)

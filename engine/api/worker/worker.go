@@ -75,7 +75,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 		case sdk.JobTypeWorkflowNode:
 			wNodeJob, errL := workflow.LoadNodeJobRunWithoutStore(tx, jobID.Int64)
 			if errL == nil && wNodeJob.Retry < 3 {
-				if err := workflow.ReplaceJobInQueue(db, jobID.Int64, wNodeJob.Retry+1); err != nil {
+				if err := workflow.RestartWorkflowNodeJob(db, *wNodeJob); err != nil {
 					log.Warning("DeleteWorker[%d]> Cannot restart workflow node run : %s", id, err)
 				} else {
 					log.Info("DeleteWorker[%d]> WorkflowNodeRun %d restarted after crash", id, jobID.Int64)

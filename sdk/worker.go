@@ -13,7 +13,7 @@ type Worker struct {
 	LastBeat      time.Time `json:"-" cli:"lastbeat"`
 	GroupID       int64     `json:"group_id" cli:"-"`
 	ModelID       int64     `json:"model_id" cli:"-"`
-	ActionBuildID int64     `json:"action_build_id" db:"action_build_id" cli:"-"`
+	ActionBuildID int64     `json:"action_build_id" cli:"-"`
 	Model         *Model    `json:"model" cli:"-"`
 	HatcheryID    int64     `json:"hatchery_id" cli:"-"`
 	HatcheryName  string    `json:"hatchery_name" cli:"-"`

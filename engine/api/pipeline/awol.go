@@ -36,9 +36,9 @@ func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap) {
 				}
 
 				for _, data := range pbJobDatas {
-					err = killOrRestartAWOLPipelineBuildJob(db, data)
+					err = killAWOLPipelineBuildJob(db, data)
 					if err != nil {
-						log.Warning("AWOLPipelineKiller> Cannot kill or restart action build %d: %s\n", data.pipelineBuildJobID, err)
+						log.Warning("AWOLPipelineKiller> Cannot kill action build %d: %s\n", data.pipelineBuildJobID, err)
 					}
 				}
 			}
@@ -46,12 +46,12 @@ func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap) {
 	}
 }
 
-func killOrRestartAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) error {
-	log.Warning("killOrRestartAWOLPipelineBuildJob> Killing pipeline_job_build %d\n", pbJobData.pipelineBuildJobID)
+func killAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) error {
+	log.Warning("killAWOLPipelineBuildJob> Killing pipeline_job_build %d\n", pbJobData.pipelineBuildJobID)
 
 	tx, errb := db.Begin()
 	if errb != nil {
-		return sdk.WrapError(errb, "killOrRestartAWOLPipelineBuildJob> cannot begin transaction")
+		return sdk.WrapError(errb, "killAWOLPipelineBuildJob> cannot begin transaction")
 	}
 	defer tx.Rollback()
 
@@ -68,7 +68,7 @@ func killOrRestartAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBui
 
 	query := `UPDATE worker SET status = $1, action_build_id = NULL WHERE action_build_id = $2`
 	if _, err := tx.Exec(query, string(sdk.StatusDisabled), pbJobData.pipelineBuildJobID); err != nil {
-		return sdk.WrapError(err, "killOrRestartAWOLPipelineBuildJob> error while execute query. pbJobData.pipelineBuildJobID:%d", pbJobData.pipelineBuildJobID)
+		return sdk.WrapError(err, "killAWOLPipelineBuildJob> error while execute query. pbJobData.pipelineBuildJobID:%d", pbJobData.pipelineBuildJobID)
 	}
 
 	return tx.Commit()
