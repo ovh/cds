@@ -26,7 +26,7 @@ func (api *API) registerHatcheryHandler() Handler {
 		}
 		hatch.GroupID = tk.GroupID
 
-		oldH, errL := hatchery.LoadHatcheryByName(api.mustDB(), hatch.Name)
+		oldH, errL := hatchery.LoadHatcheryByNameAndToken(api.mustDB(), hatch.Name, tk.Token)
 		if errL != nil && errL != sdk.ErrNoHatchery {
 			return sdk.WrapError(err, "registerHatcheryHandler> Cannot load hatchery %s", hatch.Name)
 		}

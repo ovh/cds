@@ -2,7 +2,9 @@ package hatchery
 
 import (
 	"crypto/rand"
+	"crypto/sha512"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"math"
 	"strings"
@@ -147,6 +149,33 @@ func LoadHatcheryByName(db gorp.SqlExecutor, name string) (*sdk.Hatchery, error)
 	var h sdk.Hatchery
 	var wmID sql.NullInt64
 	err := db.QueryRow(query, name).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNoHatchery
+		}
+		return nil, err
+	}
+
+	if wmID.Valid {
+		h.Model.ID = wmID.Int64
+	}
+
+	return &h, nil
+}
+
+// LoadHatcheryByNameAndToken fetch hatchery info from database given name and hashed token
+func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.Hatchery, error) {
+	query := `SELECT hatchery.id, hatchery.uid, hatchery.name, hatchery.last_beat, hatchery.group_id, hatchery_model.worker_model_id
+			FROM hatchery
+			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
+			LEFT JOIN token ON hatchery.group_id = token.group_id
+			WHERE hatchery.name = $1 AND token.token = $2`
+
+	var h sdk.Hatchery
+	var wmID sql.NullInt64
+	hasher := sha512.New()
+	hashed := base64.StdEncoding.EncodeToString(hasher.Sum([]byte(token)))
+	err := db.QueryRow(query, name, hashed).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoHatchery
