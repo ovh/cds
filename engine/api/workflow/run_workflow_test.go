@@ -95,10 +95,10 @@ func TestManualRun1(t *testing.T) {
 		Payload: map[string]string{
 			"git.branch": "master",
 		},
-	})
+	}, nil)
 	test.NoError(t, err)
 
-	wr1, err := workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u})
+	wr1, err := workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	m1, _ := dump.ToMap(wr1)
@@ -151,7 +151,7 @@ func TestManualRun1(t *testing.T) {
 	}
 
 	//TestprocessWorkflowRun
-	wr2, err := workflow.ManualRunFromNode(db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	wr2, err := workflow.ManualRunFromNode(db, cache, proj, w1, 2, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
 	test.NoError(t, err)
 	assert.NotNil(t, wr2)
 
@@ -254,14 +254,14 @@ func TestManualRun2(t *testing.T) {
 
 	_, err = workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	})
+	}, nil)
 	test.NoError(t, err)
 
-	_, err = workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u})
+	_, err = workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
 	test.NoError(t, err)
 
 	//TestprocessWorkflowRun
-	_, err = workflow.ManualRunFromNode(db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID)
+	_, err = workflow.ManualRunFromNode(db, cache, proj, w1, 1, &sdk.WorkflowNodeRunManual{User: *u}, w1.RootID, nil)
 	test.NoError(t, err)
 
 	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
@@ -348,7 +348,7 @@ func TestManualRun3(t *testing.T) {
 
 	workflow.ManualRun(db, cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	})
+	}, nil)
 	test.NoError(t, err)
 
 	jobs, err := workflow.LoadNodeJobRunQueue(db, cache, []int64{proj.ProjectGroups[0].Group.ID}, nil)
@@ -394,7 +394,7 @@ func TestManualRun3(t *testing.T) {
 					ID: sdk.MsgSpawnInfoJobTaken.ID,
 				},
 			},
-		})
+		}, nil)
 
 		//Load workflow node run
 		nodeRun, err := workflow.LoadNodeRunByID(db, j.WorkflowNodeRunID)
@@ -432,7 +432,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//TestUpdateNodeJobRunStatus
-		assert.NoError(t, workflow.UpdateNodeJobRunStatus(db, cache, proj, j, sdk.StatusSuccess))
+		assert.NoError(t, workflow.UpdateNodeJobRunStatus(db, cache, proj, j, sdk.StatusSuccess, nil))
 		if t.Failed() {
 			tx.Rollback()
 			t.FailNow()
