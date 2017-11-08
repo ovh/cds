@@ -157,7 +157,7 @@ func Register(h Interface) error {
 	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
 
 	if !uptodate {
-		log.Warning("-=-=-=-=- Please update your hatchery binary -=-=-=-=-")
+		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version: -=-=-=-=-", sdk.VERSION)
 	}
 	return nil
 }

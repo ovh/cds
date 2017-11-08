@@ -17,16 +17,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 	defer func() {
 		log.Debug("workflow.execute> End [#%d.%d] runID=%d (%s) - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, n.Status, time.Since(t0).Seconds())
 		if errExecute != nil {
-			log.Error("workflow.execute> Unable to execute run %d: %v", n.WorkflowRunID, errExecute)
-			run, errw := loadAndLockRunByID(db, n.WorkflowRunID)
-			if errw != nil {
-				log.Error("workflow.execute> Unable to add infos on run %d: %v", n.WorkflowRunID, errw)
-				return
-			}
-			AddWorkflowRunInfo(run, true, sdk.SpawnMsg{
-				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{errExecute},
-			})
+			log.Error("workflow.execute.defer> Unable to execute run %d: %v", n.WorkflowRunID, errExecute)
 		}
 	}()
 

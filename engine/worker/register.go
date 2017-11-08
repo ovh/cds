@@ -43,7 +43,7 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 	log.Info("%s Registered on %s", form.Name, w.apiEndpoint)
 
 	if !uptodate {
-		log.Warning("-=-=-=-=- Please update your worker binary -=-=-=-=-")
+		log.Warning("-=-=-=-=- Please update your worker binary - Worker Version %s -=-=-=-=-", sdk.VERSION)
 	}
 
 	return nil
