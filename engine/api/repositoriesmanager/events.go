@@ -54,21 +54,7 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store) error
 	var c sdk.RepositoriesManagerClient
 	var errC error
 
-	switch event.Payload.(type) {
-	case sdk.EventWorkflowNodeRun:
-		var eventWNR sdk.EventWorkflowNodeRun
-		if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
-			log.Error("Error during consumption: %s", err)
-			return err
-		}
-		if eventWNR.RepositoryManagerName == "" {
-			return nil
-		}
-		c, errC = AuthorizedClient(db, eventWNR.ProjectKey, eventWNR.RepositoryManagerName, store)
-		if errC != nil {
-			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventWNR.ProjectKey, eventWNR.RepositoryManagerName, errC)
-		}
-	case sdk.EventPipelineBuild:
+	if event.EventType == fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
 		var eventpb sdk.EventPipelineBuild
 		if err := mapstructure.Decode(event.Payload, &eventpb); err != nil {
 			log.Error("Error during consumption: %s", err)
@@ -81,7 +67,20 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store) error
 		if errC != nil {
 			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, errC)
 		}
-	default:
+	} else if event.EventType != fmt.Sprintf("%T", sdk.EventWorkflowNodeRun{}) {
+		var eventWNR sdk.EventWorkflowNodeRun
+		if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
+			log.Error("Error during consumption: %s", err)
+			return err
+		}
+		if eventWNR.RepositoryManagerName == "" {
+			return nil
+		}
+		c, errC = AuthorizedClient(db, eventWNR.ProjectKey, eventWNR.RepositoryManagerName, store)
+		if errC != nil {
+			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventWNR.ProjectKey, eventWNR.RepositoryManagerName, errC)
+		}
+	} else {
 		return nil
 	}
 
