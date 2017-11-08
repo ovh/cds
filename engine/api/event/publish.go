@@ -123,6 +123,9 @@ func PublishWorkflowNodeRun(nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, projectK
 	if node.Context != nil {
 		if node.Context.Application != nil {
 			e.ApplicationName = node.Context.Application.Name
+			if node.Context.Application.RepositoriesManager != nil {
+				e.RepositoryManagerName = node.Context.Application.RepositoriesManager.Name
+			}
 		}
 		if node.Context.Environment != nil {
 			e.EnvironmentName = node.Context.Environment.Name
