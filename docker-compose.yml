@@ -82,7 +82,7 @@ services:
       CDS_HATCHERY_SWARM_MAXCONTAINERS: 4
     links:
        - cds-api
-    volumes:
+    #volumes:
        # Uncomment this to bind the docker socket
        # - /var/run/docker.sock:/var/run/docker.sock
 
