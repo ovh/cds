@@ -191,6 +191,26 @@ func LoadHatcheries(db gorp.SqlExecutor) ([]sdk.Hatchery, error) {
 	return hatcheries, nil
 }
 
+// Update update hatchery
+func Update(db gorp.SqlExecutor, hatch sdk.Hatchery) error {
+	query := `UPDATE hatchery SET name = $1, group_id = $2, last_beat = NOW(), uid = $3  WHERE id = $4`
+	res, err := db.Exec(query, hatch.Name, hatch.GroupID, hatch.UID, hatch.ID)
+	if err != nil {
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if n == 0 {
+		return sdk.ErrNotFound
+	}
+
+	return nil
+}
+
 // RefreshHatchery Update hatchery last_beat
 func RefreshHatchery(db gorp.SqlExecutor, hatchID string) error {
 	query := `UPDATE hatchery SET last_beat = NOW() WHERE id = $1`
