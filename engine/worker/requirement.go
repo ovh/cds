@@ -94,10 +94,10 @@ func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 
 	_plugin, err := pluginClient.Instance()
 	if err != nil {
-		log.Warning("[WARNING] Error Checkin %s requirement : %s", r.Name, err)
+		log.Warning("checkPluginRequirement> Error Checking %s requirement : %s", r.Name, err)
 		return false, err
 	}
-	log.Warning("[NOTICE] Plugin %s successfully started", _plugin.Name())
+	log.Debug("checkPluginRequirement> Plugin %s successfully started", _plugin.Name())
 
 	return true, nil
 }
