@@ -32,7 +32,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 
 	var query string
-	query = `SELECT status FROM workflow_node_run_job WHERE id = $1 FOR UPDATE`
+	query = `SELECT status FROM workflow_node_run_job WHERE id = $1`
 	var currentStatus string
 	if err := db.QueryRow(query, job.ID).Scan(&currentStatus); err != nil {
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot lock node job run %d", job.ID)

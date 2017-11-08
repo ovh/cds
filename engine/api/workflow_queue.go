@@ -223,8 +223,15 @@ func (api *API) postWorkflowJobResultHandler() AsynchronousHandler {
 			return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
 		}
 
+		//Start a transaction
+		tx, errb := api.mustDB().Begin()
+		if errb != nil {
+			return sdk.WrapError(errb, "postWorkflowJobResultHandler> Cannot begin tx")
+		}
+		defer tx.Rollback()
+
 		//Load workflow node job run
-		job, errj := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
+		job, errj := workflow.LoadAndLockNodeJobRunWait(tx, api.Cache, id)
 		if errj != nil {
 			return sdk.WrapError(errj, "postWorkflowJobResultHandler> Unable to load node run job")
 		}
@@ -235,16 +242,10 @@ func (api *API) postWorkflowJobResultHandler() AsynchronousHandler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		p, errP := project.LoadProjectByNodeJobRunID(tx, api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
 		if errP != nil {
 			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project")
 		}
-
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return sdk.WrapError(errb, "postWorkflowJobResultHandler> Cannot begin tx")
-		}
-		defer tx.Rollback()
 
 		//Update worker status
 		if err := worker.UpdateWorkerStatus(tx, getWorker(ctx).ID, sdk.StatusWaiting); err != nil {
