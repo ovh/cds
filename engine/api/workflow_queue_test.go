@@ -443,6 +443,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	assert.Equal(t, 2, nodeRun.Tests.Total)
 	t.Logf("%+v", nodeRun.Tests)
 }
+
 func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := test_runWorkflow(t, api, router, db)
@@ -484,9 +485,9 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, v)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
-
+	assert.Equal(t, 202, rec.Code)
 }
+
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
 	ctx := test_runWorkflow(t, api, router, db)
