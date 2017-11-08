@@ -218,8 +218,8 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobResultHandler() AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobResultHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
 			return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
@@ -550,8 +550,8 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobArtifactHandler() AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobArtifactHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Load and lock Existing workflow Run Job
 		id, errI := requestVarInt(r, "permID")
 		if errI != nil {
