@@ -73,7 +73,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 				log.Info("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash", id, jobID.Int64)
 			}
 		case sdk.JobTypeWorkflowNode:
-			wNodeJob, errL := workflow.LoadNodeJobRunWithoutStore(tx, jobID.Int64)
+			wNodeJob, errL := workflow.LoadNodeJobRun(tx, nil, jobID.Int64)
 			if errL == nil && wNodeJob.Retry < 3 {
 				if err := workflow.RestartWorkflowNodeJob(db, *wNodeJob); err != nil {
 					log.Warning("DeleteWorker[%d]> Cannot restart workflow node run : %s", id, err)
@@ -114,8 +114,7 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 	var jobType sql.NullString
 	query := `SELECT id, action_build_id, job_type, name, last_beat, group_id, model, status, hatchery_id, hatchery_name, group_id FROM worker WHERE worker.id = $1 FOR UPDATE`
 
-	err := db.QueryRow(query, id).Scan(&w.ID, &pbJobID, &jobType, &w.Name, &w.LastBeat, &w.GroupID, &w.ModelID, &statusS, &w.HatcheryID, &w.HatcheryName, &w.GroupID)
-	if err != nil {
+	if err := db.QueryRow(query, id).Scan(&w.ID, &pbJobID, &jobType, &w.Name, &w.LastBeat, &w.GroupID, &w.ModelID, &statusS, &w.HatcheryID, &w.HatcheryName, &w.GroupID); err != nil {
 		return nil, err
 	}
 	w.Status = sdk.StatusFromString(statusS)

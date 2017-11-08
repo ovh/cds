@@ -96,17 +96,8 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 	if err := db.SelectOne(&j, query, id); err != nil {
 		return nil, err
 	}
-	getHatcheryInfo(store, &j)
-	job := sdk.WorkflowNodeJobRun(j)
-	return &job, nil
-}
-
-//LoadNodeJobRunWithoutStore load a NodeJobRun given its ID without a given store
-func LoadNodeJobRunWithoutStore(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeJobRun, error) {
-	j := JobRun{}
-	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1`
-	if err := db.SelectOne(&j, query, id); err != nil {
-		return nil, err
+	if store != nil {
+		getHatcheryInfo(store, &j)
 	}
 	job := sdk.WorkflowNodeJobRun(j)
 	return &job, nil
