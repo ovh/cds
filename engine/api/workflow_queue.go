@@ -247,11 +247,6 @@ func (api *API) postWorkflowJobResultHandler() AsynchronousHandler {
 			return sdk.WrapError(errP, "postWorkflowJobResultHandler> Cannot load project")
 		}
 
-		//Update worker status
-		if err := worker.UpdateWorkerStatus(tx, getWorker(ctx).ID, sdk.StatusWaiting); err != nil {
-			log.Warning("postWorkflowJobResultHandler> Cannot update worker status (%s): %s", getWorker(ctx).ID, err)
-		}
-
 		remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
 		if errt != nil {
 			return sdk.WrapError(errt, "postWorkflowJobResultHandler> Cannot parse remote time")
