@@ -477,6 +477,12 @@ func (api *API) postWorkflowJobTestsResultsHandler() AsynchronousHandler {
 	}
 }
 
+func (api *API) postWorkflowJobTagsHandler() AsynchronousHandler {
+	return func(ctx context.Context, r *http.Request) error {
+		return nil
+	}
+}
+
 func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
