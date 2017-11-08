@@ -117,6 +117,7 @@ type sqlContext struct {
 	EnvID                     sql.NullInt64  `db:"environment_id"`
 	DefaultPayload            sql.NullString `db:"default_payload"`
 	DefaultPipelineParameters sql.NullString `db:"default_pipeline_parameters"`
+	Conditions                sql.NullString `db:"conditions"`
 }
 
 func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
@@ -155,6 +156,12 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 		}
 		sqlContext.DefaultPipelineParameters = sql.NullString{String: string(b), Valid: true}
 	}
+
+	cond, errC := json.Marshal(c.Conditions)
+	if errC != nil {
+		return sdk.WrapError(errC, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) conditions", c.ID)
+	}
+	sqlContext.Conditions = sql.NullString{String: string(cond), Valid: true}
 
 	if _, err := db.Update(&sqlContext); err != nil {
 		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow node context(%d)", c.ID)
@@ -232,7 +239,7 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
-		"select application_id, environment_id, default_payload, default_pipeline_parameters from workflow_node_context where id = $1", ctx.ID); err != nil {
+		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions from workflow_node_context where id = $1", ctx.ID); err != nil {
 		return nil, err
 	}
 	if sqlContext.AppID.Valid {
@@ -272,6 +279,12 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 			return nil, sdk.WrapError(err, "loadNodeContext> Unable to load env %d", ctx.EnvironmentID)
 		}
 		ctx.Environment = env
+	}
+
+	if sqlContext.Conditions.Valid {
+		if err := json.Unmarshal([]byte(sqlContext.Conditions.String), &ctx.Conditions); err != nil {
+			return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
+		}
 	}
 	return &ctx, nil
 }

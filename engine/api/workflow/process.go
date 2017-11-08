@@ -103,14 +103,6 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				for j := range node.Triggers {
 					t := &node.Triggers[j]
 
-					if t.Manual {
-						continue
-					}
-
-					if !t.ContinueOnError && nodeRun.Status == sdk.StatusFail.String() {
-						continue
-					}
-
 					//Check conditions
 					var params = nodeRun.BuildParameters
 					//Define specific destination parameters
@@ -124,12 +116,12 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 					var conditionsOK bool
 					var errc error
-					if t.Conditions.LuaScript == "" {
-						conditionsOK, errc = sdk.WorkflowCheckConditions(t.Conditions.PlainConditions, params)
+					if t.WorkflowDestNode.Context.Conditions.LuaScript == "" {
+						conditionsOK, errc = sdk.WorkflowCheckConditions(t.WorkflowDestNode.Context.Conditions.PlainConditions, params)
 					} else {
 						luacheck := luascript.NewCheck()
 						luacheck.SetVariables(sdk.ParametersToMap(params))
-						errc = luacheck.Perform(t.Conditions.LuaScript)
+						errc = luacheck.Perform(t.WorkflowDestNode.Context.Conditions.LuaScript)
 						conditionsOK = luacheck.Result
 					}
 
@@ -175,9 +167,6 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 							nodeRun.TriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
 						}
 						triggerStatus := sdk.StatusSuccess.String()
-						if t.ContinueOnError && nodeRun.Status == sdk.StatusFail.String() {
-							triggerStatus = sdk.StatusWarning.String()
-						}
 						triggerRun := sdk.WorkflowNodeTriggerRun{
 							Status:             triggerStatus,
 							WorkflowDestNodeID: t.WorkflowDestNode.ID,
@@ -264,13 +253,6 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 			//Checks the triggers
 			for x := range j.Triggers {
 				t := &j.Triggers[x]
-				if t.Manual {
-					continue
-				}
-
-				if !t.ContinueOnError && sourcesFail > 0 {
-					continue
-				}
 
 				//Check conditions
 				params := sdk.ParametersFromMap(sourcesParams)
@@ -285,12 +267,12 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 				var errc error
 				var conditionsOK bool
-				if t.Conditions.LuaScript == "" {
-					conditionsOK, errc = sdk.WorkflowCheckConditions(t.Conditions.PlainConditions, params)
+				if t.WorkflowDestNode.Context.Conditions.LuaScript == "" {
+					conditionsOK, errc = sdk.WorkflowCheckConditions(t.WorkflowDestNode.Context.Conditions.PlainConditions, params)
 				} else {
 					luacheck := luascript.NewCheck()
 					luacheck.SetVariables(sdk.ParametersToMap(params))
-					errc = luacheck.Perform(t.Conditions.LuaScript)
+					errc = luacheck.Perform(t.WorkflowDestNode.Context.Conditions.LuaScript)
 					conditionsOK = luacheck.Result
 				}
 
@@ -333,9 +315,6 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 						w.JoinTriggersRun = make(map[int64]sdk.WorkflowNodeTriggerRun)
 					}
 					triggerStatus := sdk.StatusSuccess.String()
-					if t.ContinueOnError && sourcesFail > 0 {
-						triggerStatus = sdk.StatusWarning.String()
-					}
 					triggerRun := sdk.WorkflowNodeTriggerRun{
 						Status:             triggerStatus,
 						WorkflowDestNodeID: t.WorkflowDestNode.ID,
@@ -528,12 +507,12 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 		var conditionsOK bool
 		var errc error
-		if hook.Conditions.LuaScript == "" {
-			conditionsOK, errc = sdk.WorkflowCheckConditions(hook.Conditions.PlainConditions, params)
+		if dest.Context.Conditions.LuaScript == "" {
+			conditionsOK, errc = sdk.WorkflowCheckConditions(dest.Context.Conditions.PlainConditions, params)
 		} else {
 			luacheck := luascript.NewCheck()
 			luacheck.SetVariables(sdk.ParametersToMap(params))
-			errc = luacheck.Perform(hook.Conditions.LuaScript)
+			errc = luacheck.Perform(dest.Context.Conditions.LuaScript)
 			conditionsOK = luacheck.Result
 		}
 

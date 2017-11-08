@@ -76,17 +76,12 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 
 //PostInsert is a db hook
 func (r *NodeHook) PostInsert(db gorp.SqlExecutor) error {
-	sConditions, err := gorpmapping.JSONToNullString(r.Conditions)
-	if err != nil {
-		return err
-	}
-
 	sConfig, errgo := gorpmapping.JSONToNullString(r.Config)
 	if errgo != nil {
 		return errgo
 	}
 
-	if _, err := db.Exec("update workflow_node_hook set conditions = $2, config = $3 where id = $1", r.ID, sConditions, sConfig); err != nil {
+	if _, err := db.Exec("update workflow_node_hook set config = $2 where id = $1", r.ID, sConfig); err != nil {
 		return err
 	}
 	return nil
@@ -95,27 +90,13 @@ func (r *NodeHook) PostInsert(db gorp.SqlExecutor) error {
 //PostGet is a db hook
 func (r *NodeHook) PostGet(db gorp.SqlExecutor) error {
 	var res = struct {
-		Conditions sql.NullString `db:"conditions"`
-		Config     sql.NullString `db:"config"`
+		Config sql.NullString `db:"config"`
 	}{}
-	if err := db.SelectOne(&res, "select conditions, config from workflow_node_hook where id = $1", r.ID); err != nil {
+	if err := db.SelectOne(&res, "select config from workflow_node_hook where id = $1", r.ID); err != nil {
 		return err
 	}
 
 	conf := sdk.WorkflowNodeHookConfig{}
-
-	//TODO this will have to be cleaned
-	oldConditions := []sdk.WorkflowTriggerCondition{}
-	newConditions := sdk.WorkflowTriggerConditions{}
-	//We try to unmarshall the conditions with the old and the new struct
-	if err := gorpmapping.JSONNullString(res.Conditions, &oldConditions); err != nil {
-		if err := gorpmapping.JSONNullString(res.Conditions, &newConditions); err != nil {
-			return err
-		}
-		r.Conditions = newConditions
-	} else {
-		r.Conditions = sdk.WorkflowTriggerConditions{PlainConditions: oldConditions}
-	}
 
 	if err := gorpmapping.JSONNullString(res.Config, &conf); err != nil {
 		return err

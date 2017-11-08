@@ -2,12 +2,10 @@ package workflow
 
 import (
 	"database/sql"
-	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -40,15 +38,6 @@ func insertTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode,
 		return sdk.WrapError(err, "insertTrigger> Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 
-	//Manage conditions
-	b, err := json.Marshal(trigger.Conditions)
-	if err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to marshal trigger conditions")
-	}
-	if _, err := db.Exec("UPDATE workflow_node_trigger SET conditions = $1 where id = $2", b, trigger.ID); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateTrigger> Unable to set trigger conditions in database")
-	}
-
 	return nil
 }
 
@@ -76,24 +65,6 @@ func loadTriggers(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node 
 				return nil, sdk.WrapError(err, "LoadTriggers> Unable to load destination node %d", t.WorkflowDestNodeID)
 			}
 			t.WorkflowDestNode = *dest
-		}
-
-		sqlConditions, err := db.SelectNullStr("select conditions from workflow_node_trigger where id = $1", t.ID)
-		if err != nil {
-			return nil, sdk.WrapError(err, "LoadTriggers> Unable to load conditions for trigger %d", t.ID)
-		}
-
-		//TODO this will have to be cleaned
-		oldConditions := []sdk.WorkflowTriggerCondition{}
-		newConditions := sdk.WorkflowTriggerConditions{}
-		//We try to unmarshall the conditions with the old and the new struct
-		if err := gorpmapping.JSONNullString(sqlConditions, &oldConditions); err != nil {
-			if err := gorpmapping.JSONNullString(sqlConditions, &newConditions); err != nil {
-				return nil, err
-			}
-			t.Conditions = newConditions
-		} else {
-			t.Conditions = sdk.WorkflowTriggerConditions{PlainConditions: oldConditions}
 		}
 
 		triggers = append(triggers, t)

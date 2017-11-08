@@ -216,47 +216,53 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 			Pipeline: pip1,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
-					Conditions: sdk.WorkflowTriggerConditions{
-						PlainConditions: []sdk.WorkflowTriggerCondition{
-							sdk.WorkflowTriggerCondition{
-								Operator: "=",
-								Value:    "master",
-								Variable: ".git.branch",
-							},
-						},
-					},
 					WorkflowDestNode: sdk.WorkflowNode{
 						Pipeline: pip2,
-						Triggers: []sdk.WorkflowNodeTrigger{
-							sdk.WorkflowNodeTrigger{
-								Conditions: sdk.WorkflowTriggerConditions{
-									PlainConditions: []sdk.WorkflowTriggerCondition{
-										sdk.WorkflowTriggerCondition{
-											Operator: "=",
-											Value:    "master",
-											Variable: ".git.branch",
-										},
+						Context: &sdk.WorkflowNodeContext{
+							Conditions: sdk.WorkflowNodeConditions{
+								PlainConditions: []sdk.WorkflowNodeCondition{
+									sdk.WorkflowNodeCondition{
+										Operator: "=",
+										Value:    "master",
+										Variable: ".git.branch",
 									},
 								},
+							},
+						},
+						Triggers: []sdk.WorkflowNodeTrigger{
+							sdk.WorkflowNodeTrigger{
 								WorkflowDestNode: sdk.WorkflowNode{
 									Pipeline: pip3,
+									Context: &sdk.WorkflowNodeContext{
+										Conditions: sdk.WorkflowNodeConditions{
+											PlainConditions: []sdk.WorkflowNodeCondition{
+												sdk.WorkflowNodeCondition{
+													Operator: "=",
+													Value:    "master",
+													Variable: ".git.branch",
+												},
+											},
+										},
+									},
 								},
 							},
 						},
 					},
 				},
 				sdk.WorkflowNodeTrigger{
-					Conditions: sdk.WorkflowTriggerConditions{
-						PlainConditions: []sdk.WorkflowTriggerCondition{
-							sdk.WorkflowTriggerCondition{
-								Operator: "=",
-								Value:    "master",
-								Variable: ".git.branch",
-							},
-						},
-					},
 					WorkflowDestNode: sdk.WorkflowNode{
 						Pipeline: pip4,
+						Context: &sdk.WorkflowNodeContext{
+							Conditions: sdk.WorkflowNodeConditions{
+								PlainConditions: []sdk.WorkflowNodeCondition{
+									sdk.WorkflowNodeCondition{
+										Operator: "=",
+										Value:    "master",
+										Variable: ".git.branch",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -293,8 +299,8 @@ func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
 	assert.Equal(t, n1.Pipeline.ProjectKey, n2.Pipeline.ProjectKey)
 	for i, t1 := range n1.Triggers {
 		t2 := n2.Triggers[i]
-		test.Equal(t, len(t1.Conditions.PlainConditions), len(t2.Conditions.PlainConditions), "Number of conditions on triggers does not match")
-		test.EqualValuesWithoutOrder(t, t1.Conditions.PlainConditions, t2.Conditions.PlainConditions, "Conditions on triggers does not match")
+		test.Equal(t, len(t1.WorkflowDestNode.Context.Conditions.PlainConditions), len(t2.WorkflowDestNode.Context.Conditions.PlainConditions), "Number of conditions on node does not match")
+		test.EqualValuesWithoutOrder(t, t1.WorkflowDestNode.Context.Conditions.PlainConditions, t2.WorkflowDestNode.Context.Conditions.PlainConditions, "Conditions on triggers does not match")
 		assertEqualNode(t, &t1.WorkflowDestNode, &t2.WorkflowDestNode)
 	}
 }
@@ -494,45 +500,51 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 			Pipeline: pip1,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
-					Conditions: sdk.WorkflowTriggerConditions{
-						PlainConditions: []sdk.WorkflowTriggerCondition{
-							sdk.WorkflowTriggerCondition{
-								Operator: "=",
-								Value:    "master",
-								Variable: ".git.branch",
-							},
-						},
-					},
 					WorkflowDestNode: sdk.WorkflowNode{
 						Pipeline: pip2,
-						Triggers: []sdk.WorkflowNodeTrigger{
-							sdk.WorkflowNodeTrigger{
-								Conditions: sdk.WorkflowTriggerConditions{
-									PlainConditions: []sdk.WorkflowTriggerCondition{
-										sdk.WorkflowTriggerCondition{
-											Operator: "=",
-											Value:    "master",
-											Variable: ".git.branch",
-										},
+						Context: &sdk.WorkflowNodeContext{
+							Conditions: sdk.WorkflowNodeConditions{
+								PlainConditions: []sdk.WorkflowNodeCondition{
+									sdk.WorkflowNodeCondition{
+										Operator: "=",
+										Value:    "master",
+										Variable: ".git.branch",
 									},
 								},
+							},
+						},
+						Triggers: []sdk.WorkflowNodeTrigger{
+							sdk.WorkflowNodeTrigger{
 								WorkflowDestNode: sdk.WorkflowNode{
 									Ref:      "pip3",
 									Pipeline: pip3,
-									Triggers: []sdk.WorkflowNodeTrigger{
-										sdk.WorkflowNodeTrigger{
-											Conditions: sdk.WorkflowTriggerConditions{
-												PlainConditions: []sdk.WorkflowTriggerCondition{
-													sdk.WorkflowTriggerCondition{
-														Operator: "=",
-														Value:    "master",
-														Variable: ".git.branch",
-													},
+									Context: &sdk.WorkflowNodeContext{
+										Conditions: sdk.WorkflowNodeConditions{
+											PlainConditions: []sdk.WorkflowNodeCondition{
+												sdk.WorkflowNodeCondition{
+													Operator: "=",
+													Value:    "master",
+													Variable: ".git.branch",
 												},
 											},
+										},
+									},
+									Triggers: []sdk.WorkflowNodeTrigger{
+										sdk.WorkflowNodeTrigger{
 											WorkflowDestNode: sdk.WorkflowNode{
 												Ref:      "pip4",
 												Pipeline: pip4,
+												Context: &sdk.WorkflowNodeContext{
+													Conditions: sdk.WorkflowNodeConditions{
+														PlainConditions: []sdk.WorkflowNodeCondition{
+															sdk.WorkflowNodeCondition{
+																Operator: "=",
+																Value:    "master",
+																Variable: ".git.branch",
+															},
+														},
+													},
+												},
 											},
 										},
 									},
@@ -550,17 +562,19 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 				},
 				Triggers: []sdk.WorkflowNodeJoinTrigger{
 					sdk.WorkflowNodeJoinTrigger{
-						Conditions: sdk.WorkflowTriggerConditions{
-							PlainConditions: []sdk.WorkflowTriggerCondition{
-								sdk.WorkflowTriggerCondition{
-									Operator: "=",
-									Value:    "master",
-									Variable: ".git.branch",
-								},
-							},
-						},
 						WorkflowDestNode: sdk.WorkflowNode{
 							Pipeline: pip5,
+							Context: &sdk.WorkflowNodeContext{
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										sdk.WorkflowNodeCondition{
+											Operator: "=",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -607,7 +621,7 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 	}
 	assertEqualNode(t, w.Root, w1.Root)
 
-	assert.EqualValues(t, w.Joins[0].Triggers[0].Conditions, w1.Joins[0].Triggers[0].Conditions)
+	assert.EqualValues(t, w.Joins[0].Triggers[0].WorkflowDestNode.Context.Conditions, w1.Joins[0].Triggers[0].WorkflowDestNode.Context.Conditions)
 	assert.Equal(t, w.Joins[0].Triggers[0].WorkflowDestNode.Pipeline.ID, w1.Joins[0].Triggers[0].WorkflowDestNode.Pipeline.ID)
 
 	assert.Equal(t, pip1.Name, w.Root.Pipeline.Name)
@@ -701,45 +715,51 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 			Pipeline: pip1,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
-					Conditions: sdk.WorkflowTriggerConditions{
-						PlainConditions: []sdk.WorkflowTriggerCondition{
-							sdk.WorkflowTriggerCondition{
-								Operator: "=",
-								Value:    "master",
-								Variable: ".git.branch",
-							},
-						},
-					},
 					WorkflowDestNode: sdk.WorkflowNode{
 						Pipeline: pip2,
-						Triggers: []sdk.WorkflowNodeTrigger{
-							sdk.WorkflowNodeTrigger{
-								Conditions: sdk.WorkflowTriggerConditions{
-									PlainConditions: []sdk.WorkflowTriggerCondition{
-										sdk.WorkflowTriggerCondition{
-											Operator: "=",
-											Value:    "master",
-											Variable: ".git.branch",
-										},
+						Context: &sdk.WorkflowNodeContext{
+							Conditions: sdk.WorkflowNodeConditions{
+								PlainConditions: []sdk.WorkflowNodeCondition{
+									sdk.WorkflowNodeCondition{
+										Operator: "=",
+										Value:    "master",
+										Variable: ".git.branch",
 									},
 								},
+							},
+						},
+						Triggers: []sdk.WorkflowNodeTrigger{
+							sdk.WorkflowNodeTrigger{
 								WorkflowDestNode: sdk.WorkflowNode{
 									Ref:      "pip3",
 									Pipeline: pip3,
-									Triggers: []sdk.WorkflowNodeTrigger{
-										sdk.WorkflowNodeTrigger{
-											Conditions: sdk.WorkflowTriggerConditions{
-												PlainConditions: []sdk.WorkflowTriggerCondition{
-													sdk.WorkflowTriggerCondition{
-														Operator: "=",
-														Value:    "master",
-														Variable: ".git.branch",
-													},
+									Context: &sdk.WorkflowNodeContext{
+										Conditions: sdk.WorkflowNodeConditions{
+											PlainConditions: []sdk.WorkflowNodeCondition{
+												sdk.WorkflowNodeCondition{
+													Operator: "=",
+													Value:    "master",
+													Variable: ".git.branch",
 												},
 											},
+										},
+									},
+									Triggers: []sdk.WorkflowNodeTrigger{
+										sdk.WorkflowNodeTrigger{
 											WorkflowDestNode: sdk.WorkflowNode{
 												Ref:      "pip4",
 												Pipeline: pip4,
+												Context: &sdk.WorkflowNodeContext{
+													Conditions: sdk.WorkflowNodeConditions{
+														PlainConditions: []sdk.WorkflowNodeCondition{
+															sdk.WorkflowNodeCondition{
+																Operator: "=",
+																Value:    "master",
+																Variable: ".git.branch",
+															},
+														},
+													},
+												},
 											},
 										},
 									},
@@ -757,33 +777,37 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 				},
 				Triggers: []sdk.WorkflowNodeJoinTrigger{
 					sdk.WorkflowNodeJoinTrigger{
-						Conditions: sdk.WorkflowTriggerConditions{
-							PlainConditions: []sdk.WorkflowTriggerCondition{
-								sdk.WorkflowTriggerCondition{
-									Operator: "=",
-									Value:    "master",
-									Variable: ".git.branch",
-								},
-							},
-						},
 						WorkflowDestNode: sdk.WorkflowNode{
 							Pipeline: pip5,
 							Ref:      "pip5",
-						},
-					},
-					sdk.WorkflowNodeJoinTrigger{
-						Conditions: sdk.WorkflowTriggerConditions{
-							PlainConditions: []sdk.WorkflowTriggerCondition{
-								sdk.WorkflowTriggerCondition{
-									Operator: "=",
-									Value:    "master",
-									Variable: ".git.branch",
+							Context: &sdk.WorkflowNodeContext{
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										sdk.WorkflowNodeCondition{
+											Operator: "=",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
+									},
 								},
 							},
 						},
+					},
+					sdk.WorkflowNodeJoinTrigger{
 						WorkflowDestNode: sdk.WorkflowNode{
 							Pipeline: pip6,
 							Ref:      "pip6",
+							Context: &sdk.WorkflowNodeContext{
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										sdk.WorkflowNodeCondition{
+											Operator: "=",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -794,17 +818,19 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 				},
 				Triggers: []sdk.WorkflowNodeJoinTrigger{
 					sdk.WorkflowNodeJoinTrigger{
-						Conditions: sdk.WorkflowTriggerConditions{
-							PlainConditions: []sdk.WorkflowTriggerCondition{
-								sdk.WorkflowTriggerCondition{
-									Operator: "=",
-									Value:    "master",
-									Variable: ".git.branch",
-								},
-							},
-						},
 						WorkflowDestNode: sdk.WorkflowNode{
 							Pipeline: pip7,
+							Context: &sdk.WorkflowNodeContext{
+								Conditions: sdk.WorkflowNodeConditions{
+									PlainConditions: []sdk.WorkflowNodeCondition{
+										sdk.WorkflowNodeCondition{
+											Operator: "=",
+											Value:    "master",
+											Variable: ".git.branch",
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -979,19 +1005,21 @@ func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
 			Pipeline: pip,
+			Context: &sdk.WorkflowNodeContext{
+				Conditions: sdk.WorkflowNodeConditions{
+					PlainConditions: []sdk.WorkflowNodeCondition{
+						sdk.WorkflowNodeCondition{
+							Operator: "=",
+							Value:    "master",
+							Variable: ".git.branch",
+						},
+					},
+				},
+			},
 			Hooks: []sdk.WorkflowNodeHook{
 				{
 					WorkflowHookModel: sdk.WorkflowHookModel{
 						Name: workflow.WebHookModel.Name,
-					},
-					Conditions: sdk.WorkflowTriggerConditions{
-						PlainConditions: []sdk.WorkflowTriggerCondition{
-							sdk.WorkflowTriggerCondition{
-								Operator: "=",
-								Value:    "master",
-								Variable: ".git.branch",
-							},
-						},
 					},
 					Config: sdk.WorkflowNodeHookConfig{
 						"method": sdk.WorkflowNodeHookConfigValue{

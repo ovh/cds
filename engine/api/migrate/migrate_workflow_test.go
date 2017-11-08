@@ -101,12 +101,11 @@ func Test_MigrateToWorkflow(t *testing.T) {
 	assert.Equal(t, 1, len(wf.Root.Triggers))
 	assert.Equal(t, pip2.ID, wf.Root.Triggers[0].WorkflowDestNode.Pipeline.ID)
 	assert.Equal(t, env1.ID, wf.Root.Triggers[0].WorkflowDestNode.Context.Environment.ID)
-	assert.Equal(t, "master", wf.Root.Triggers[0].Conditions.PlainConditions[0].Value)
-	assert.Equal(t, "git.branch", wf.Root.Triggers[0].Conditions.PlainConditions[0].Variable)
+	assert.Equal(t, "master", wf.Root.Triggers[0].WorkflowDestNode.Context.Conditions.PlainConditions[0].Value)
+	assert.Equal(t, "git.branch", wf.Root.Triggers[0].WorkflowDestNode.Context.Conditions.PlainConditions[0].Variable)
 	assert.Equal(t, 1, len(wf.Root.Triggers[0].WorkflowDestNode.Context.DefaultPipelineParameters))
 	assert.Equal(t, "valueTriggered", wf.Root.Triggers[0].WorkflowDestNode.Context.DefaultPipelineParameters[0].Value)
 	assert.Equal(t, "param1", wf.Root.Triggers[0].WorkflowDestNode.Context.DefaultPipelineParameters[0].Name)
-	assert.Equal(t, true, wf.Root.Triggers[0].Manual)
-	assert.Equal(t, false, wf.Root.Triggers[0].ContinueOnError)
+	assert.Equal(t, 3, len(wf.Root.Triggers[0].WorkflowDestNode.Context.Conditions.PlainConditions))
 
 }
