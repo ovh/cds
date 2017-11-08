@@ -26,7 +26,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 
 	var query string
-	query = `SELECT status FROM workflow_node_run_job WHERE id = $1 FOR UPDATE`
+	query = `SELECT status FROM workflow_node_run_job WHERE id = $1`
 	var currentStatus string
 	if err := db.QueryRow(query, job.ID).Scan(&currentStatus); err != nil {
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot lock node job run %d", job.ID)
@@ -122,7 +122,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
 func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
-	j, err := LoadAndLockNodeJobRunNoWait(db, store, id)
+	j, err := LoadAndLockNodeJobRunWait(db, store, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot load node job run")
 	}

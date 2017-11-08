@@ -264,7 +264,7 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 	defer tx.Rollback()
 
 	//Load workflow node job run
-	job, errj := workflow.LoadAndLockNodeJobRunNoWait(tx, store, res.BuildID)
+	job, errj := workflow.LoadAndLockNodeJobRunWait(tx, store, res.BuildID)
 	if errj != nil {
 		chError <- sdk.WrapError(errj, "postWorkflowJobResultHandler> Unable to load node run job")
 		return
@@ -498,7 +498,7 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 		}
 		defer tx.Rollback()
 
-		job, errj := workflow.LoadAndLockNodeJobRunNoWait(tx, api.Cache, id)
+		job, errj := workflow.LoadAndLockNodeJobRunWait(tx, api.Cache, id)
 		if errj != nil {
 			return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job")
 		}
