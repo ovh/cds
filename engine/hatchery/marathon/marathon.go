@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
+	"github.com/moby/moby/pkg/namesgenerator"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"

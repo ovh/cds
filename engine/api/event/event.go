@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/docker/docker/pkg/namesgenerator"
+	"github.com/moby/moby/pkg/namesgenerator"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/docker/docker/pkg/namesgenerator"
+	"github.com/moby/moby/pkg/namesgenerator"
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/sdk"
