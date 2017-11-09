@@ -68,12 +68,6 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	log.Debug("grpc.SendResult> begin")
 	defer log.Debug("grpc.SendResult> end")
 
-	//Get workerID from context
-	workerID, ok := c.Value(keyWorkerID).(string)
-	if !ok {
-		return new(empty.Empty), sdk.ErrForbidden
-	}
-
 	//Get workerName from context
 	workerName, ok := c.Value(keyWorkerName).(string)
 	if !ok {
@@ -94,7 +88,7 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	chanEvent := make(chan interface{}, 1)
 	chanError := make(chan error, 1)
 
-	go postJobResult(chanEvent, chanError, db, h.store, p, workerID, workerName, res)
+	go postJobResult(chanEvent, chanError, db, h.store, p, workerName, res)
 
 	workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 	if err != nil {
