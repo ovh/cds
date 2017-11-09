@@ -30,21 +30,35 @@ export class StepLogComponent implements OnInit, OnDestroy {
     // Dynamic
     @Input('stepStatus')
     set stepStatus (data: string) {
-        if (data && !this.currentStatus) {
+        if (data && !this.currentStatus && this.showLog) {
             this.initWorker();
         }
         this.currentStatus = data;
     }
     logs: Log;
     currentStatus: string;
-    showLog = false;
+    set showLog(data: boolean) {
+        this._showLog = data;
+
+        if (data) {
+            this.initWorker();
+        } else {
+            if (this.worker) {
+                this.worker.stop();
+            }
+        }
+    }
+    get showLog() {
+      return this._showLog;
+    }
 
     worker: CDSWorker;
     workerSubscription: Subscription;
 
     zone: NgZone;
-
+    _showLog = false;
     pipelineBuildStatusEnum = PipelineStatus;
+    loading = true;
 
     constructor(private _authStore: AuthentificationStore) { }
 
@@ -53,6 +67,9 @@ export class StepLogComponent implements OnInit, OnDestroy {
     }
 
     initWorker(): void {
+        if (!this.logs) {
+            this.loading = true;
+        }
         if (!this.worker) {
             this.worker = new CDSWorker('./assets/worker/web/log.js');
             this.worker.start({
@@ -76,8 +93,10 @@ export class StepLogComponent implements OnInit, OnDestroy {
                             this.logs = build.step_logs;
                         }
                     });
+                    if (this.loading) {
+                        this.loading = false;
+                    }
                 }
-
             });
         }
     }
@@ -89,7 +108,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
     }
 
     toggleLogs() {
-        this.showLog = ! this.showLog;
+        this.showLog = !this.showLog;
     }
 
     getLogs() {

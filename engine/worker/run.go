@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -262,7 +261,7 @@ func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status st
 	if errReq != nil {
 		return errReq
 	}
-	if code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Wrong http code %d", code)
 	}
 	return nil

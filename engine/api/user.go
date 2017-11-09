@@ -329,8 +329,8 @@ func (api *API) confirmUserHandler() Handler {
 		var errs error
 		if !logFromCLI {
 			sessionKey, errs = auth.NewSession(api.Router.AuthDriver, u)
-			if err != nil {
-				log.Error("Auth> Error while creating new session: %s\n", err)
+			if errs != nil {
+				log.Error("Auth> Error while creating new session: %s\n", errs)
 			}
 		} else {
 			//CLI login, generate user key as persistent session

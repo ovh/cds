@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -120,7 +119,7 @@ func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*worke
 
 	if code, err := c.PostJSON(path, &in, &info); err != nil {
 		return nil, err
-	} else if code != http.StatusOK {
+	} else if code >= 400 {
 		return nil, nil
 	}
 
@@ -134,7 +133,7 @@ func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
 
 	if code, err := c.GetJSON(path, &job); err != nil {
 		return nil, err
-	} else if code != http.StatusOK {
+	} else if code >= 400 {
 		return nil, fmt.Errorf("HTTP Error: %d", code)
 	}
 	return &job, nil
@@ -149,7 +148,7 @@ func (c *client) QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.Sp
 	}
 	if code, err := c.PostJSON(path, &in, nil); err != nil {
 		return err
-	} else if code != http.StatusOK {
+	} else if code >= 400 {
 		return fmt.Errorf("HTTP Error: %d", code)
 	}
 	return nil
@@ -164,7 +163,7 @@ func (c *client) QueueJobBook(isWorkflowJob bool, id int64) error {
 	}
 	if code, err := c.PostJSON(path, nil, nil); err != nil {
 		return err
-	} else if code != http.StatusOK {
+	} else if code >= 400 {
 		return fmt.Errorf("HTTP Error: %d", code)
 	}
 	return nil
@@ -175,7 +174,7 @@ func (c *client) QueueSendResult(id int64, res sdk.Result) error {
 
 	if code, err := c.PostJSON(path, res, nil); err != nil {
 		return err
-	} else if code != http.StatusOK {
+	} else if code >= 400 {
 		return fmt.Errorf("HTTP Error: %d", code)
 	}
 	return nil

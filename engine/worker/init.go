@@ -80,7 +80,8 @@ func initViper(w *currentWorker) {
 	if w.basedir == "" {
 		w.basedir = os.TempDir()
 	}
-	w.bookedJobID = viper.GetInt64("booked_job_id")
+	w.bookedPBJobID = viper.GetInt64("booked_pb_job_id")
+	w.bookedWJobID = viper.GetInt64("booked_workflow_job_id")
 
 	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name)
 }

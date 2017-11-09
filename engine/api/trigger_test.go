@@ -87,6 +87,7 @@ func TestAddTriggerHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//9. Do the request
@@ -177,6 +178,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("PUT", uri, body)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//9. Do the request
@@ -211,6 +213,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	err := pipeline.InsertPipeline(api.mustDB(), proj, pip1, u)
+	test.NoError(t, err)
 
 	//4. Create Pipeline 2
 	pipelineKey2 := sdk.RandomString(10)
@@ -221,6 +224,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	err = pipeline.InsertPipeline(api.mustDB(), proj, pip2, u)
+	test.NoError(t, err)
 
 	//5. Create Application
 	applicationName := sdk.RandomString(10)
@@ -263,6 +267,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("DELETE", uri, nil)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//9. Do the request

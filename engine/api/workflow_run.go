@@ -8,9 +8,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -220,32 +222,54 @@ func (api *API) stopWorkflowRunHandler() Handler {
 			return sdk.WrapError(errP, "stopWorkflowRunHandler> Unable to load project")
 		}
 
-		stopInfos := sdk.SpawnInfo{
-			APITime:    time.Now(),
-			RemoteTime: time.Now(),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getUser(ctx).Username}},
-		}
+		chanEvent := make(chan interface{}, 1)
+		chanError := make(chan error, 1)
 
-		for _, wn := range run.WorkflowNodeRuns {
-			for _, wnr := range wn {
-				if wnr.SubNumber != run.LastSubNumber || (wnr.Status == sdk.StatusSuccess.String() ||
-					wnr.Status == sdk.StatusFail.String() || wnr.Status == sdk.StatusSkipped.String()) {
-					log.Debug("stopWorkflowRunHandler> cannot stop this workflow node run with current status %s", wnr.Status)
-					continue
-				}
+		go stopWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, proj, run, getUser(ctx))
 
-				if errS := workflow.StopWorkflowNodeRun(api.mustDB(), api.Cache, proj, wnr, stopInfos); errS != nil {
-					return sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
-				}
-				wnr.Status = sdk.StatusStopped.String()
-			}
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		if err != nil {
+			return err
 		}
-
-		if errU := workflow.UpdateWorkflowRunStatus(api.mustDB(), run.ID, sdk.StatusStopped.String()); errU != nil {
-			return sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run status %d", run.ID)
-		}
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, proj.Key)
 
 		return WriteJSON(w, r, run, http.StatusOK)
+	}
+}
+
+func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, run *sdk.WorkflowRun, u *sdk.User) {
+	defer close(chEvent)
+	defer close(chError)
+
+	tx, errTx := db.Begin()
+	if errTx != nil {
+		chError <- sdk.WrapError(errTx, "stopWorkflowRunHandler> Unable to create transaction")
+	}
+	defer tx.Rollback()
+
+	stopInfos := sdk.SpawnInfo{
+		APITime:    time.Now(),
+		RemoteTime: time.Now(),
+		Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{u.Username}},
+	}
+
+	for _, wn := range run.WorkflowNodeRuns {
+		for _, wnr := range wn {
+			if wnr.SubNumber != run.LastSubNumber || (wnr.Status == sdk.StatusSuccess.String() ||
+				wnr.Status == sdk.StatusFail.String() || wnr.Status == sdk.StatusSkipped.String()) {
+				log.Debug("stopWorkflowRunHandler> cannot stop this workflow node run with current status %s", wnr.Status)
+				continue
+			}
+
+			if errS := workflow.StopWorkflowNodeRun(tx, store, p, wnr, stopInfos, chEvent); errS != nil {
+				chError <- sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
+			}
+			wnr.Status = sdk.StatusStopped.String()
+		}
+	}
+
+	if errU := workflow.UpdateWorkflowRunStatus(tx, run.ID, sdk.StatusStopped.String()); errU != nil {
+		chError <- sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run status %d", run.ID)
 	}
 }
 
@@ -301,35 +325,48 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
 		}
 
-		tx, errTx := api.mustDB().Begin()
-		if errTx != nil {
-			return sdk.WrapError(errTx, "stopWorkflowNodeRunHandler> Unable to create transaction")
-		}
-		defer tx.Rollback()
+		chanEvent := make(chan interface{}, 1)
+		chanError := make(chan error, 1)
 
-		stopInfos := sdk.SpawnInfo{
-			APITime:    time.Now(),
-			RemoteTime: time.Now(),
-			Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{getUser(ctx).Username}},
-		}
-		if errS := workflow.StopWorkflowNodeRun(api.mustDB(), api.Cache, p, *nodeRun, stopInfos); errS != nil {
-			return sdk.WrapError(errS, "stopWorkflowNodeRunHandler> Unable to stop workflow node run")
-		}
+		go stopWorkflowNodeRun(chanEvent, chanError, api.mustDB(), api.Cache, p, nodeRun, name, getUser(ctx))
 
-		wr, errLw := workflow.LoadRun(tx, key, name, number)
-		if errLw != nil {
-			return sdk.WrapError(errLw, "stopWorkflowNodeRunHandler> Unable to load workflow run %s", name)
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		if err != nil {
+			return err
 		}
-
-		if errR := workflow.ResyncWorkflowRunStatus(tx, wr); errR != nil {
-			return sdk.WrapError(errR, "stopWorkflowNodeRunHandler> Unable to resync workflow run status")
-		}
-
-		if errC := tx.Commit(); errC != nil {
-			return sdk.WrapError(errC, "stopWorkflowNodeRunHandler> Unable to commit")
-		}
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		return nil
+	}
+}
+
+func stopWorkflowNodeRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, nodeRun *sdk.WorkflowNodeRun, workflowName string, u *sdk.User) {
+	tx, errTx := db.Begin()
+	if errTx != nil {
+		chError <- sdk.WrapError(errTx, "stopWorkflowNodeRunHandler> Unable to create transaction")
+	}
+	defer tx.Rollback()
+
+	stopInfos := sdk.SpawnInfo{
+		APITime:    time.Now(),
+		RemoteTime: time.Now(),
+		Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{u.Username}},
+	}
+	if errS := workflow.StopWorkflowNodeRun(tx, store, p, *nodeRun, stopInfos, chEvent); errS != nil {
+		chError <- sdk.WrapError(errS, "stopWorkflowNodeRunHandler> Unable to stop workflow node run")
+	}
+
+	wr, errLw := workflow.LoadRun(tx, p.Key, workflowName, nodeRun.Number)
+	if errLw != nil {
+		chError <- sdk.WrapError(errLw, "stopWorkflowNodeRunHandler> Unable to load workflow run %s", workflowName)
+	}
+
+	if errR := workflow.ResyncWorkflowRunStatus(tx, wr, chEvent); errR != nil {
+		chError <- sdk.WrapError(errR, "stopWorkflowNodeRunHandler> Unable to resync workflow run status")
+	}
+
+	if errC := tx.Commit(); errC != nil {
+		chError <- sdk.WrapError(errC, "stopWorkflowNodeRunHandler> Unable to commit")
 	}
 }
 
@@ -366,18 +403,12 @@ func (api *API) postWorkflowRunHandler() Handler {
 			return sdk.WrapError(errP, "postWorkflowRunHandler> Cannot load project")
 		}
 
-		tx, errb := api.mustDB().Begin()
-		if errb != nil {
-			return errb
-		}
-		defer tx.Rollback()
-
 		opts := &sdk.WorkflowRunPostHandlerOption{}
 		if err := UnmarshalBody(r, opts); err != nil {
 			return err
 		}
 
-		wf, errl := workflow.Load(tx, api.Cache, key, name, getUser(ctx))
+		wf, errl := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if errl != nil {
 			return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow")
 		}
@@ -385,89 +416,114 @@ func (api *API) postWorkflowRunHandler() Handler {
 		var lastRun *sdk.WorkflowRun
 		if opts.Number != nil {
 			var errlr error
-			lastRun, errlr = workflow.LoadRun(tx, key, name, *opts.Number)
+			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number)
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
 			}
 		}
 
-		var wr *sdk.WorkflowRun
+		chanEvent := make(chan interface{}, 1)
+		chanError := make(chan error, 1)
 
-		//Run from hook
-		if opts.Hook != nil {
-			var errfh error
-			wr, errfh = workflow.RunFromHook(tx, api.Cache, p, wf, opts.Hook)
-			if errfh != nil {
-				return sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
-			}
-		} else {
-			//Default manual run
-			if opts.Manual == nil {
-				opts.Manual = &sdk.WorkflowNodeRunManual{}
-			}
-			opts.Manual.User = *getUser(ctx)
+		go startWorkflowRun(chanEvent, chanError, api.mustDB(), api.Cache, p, wf, lastRun, opts, getUser(ctx))
 
-			fromNodes := []*sdk.WorkflowNode{}
-			if len(opts.FromNodeIDs) > 0 {
-				for _, fromNodeID := range opts.FromNodeIDs {
-					fromNode := lastRun.Workflow.GetNode(fromNodeID)
-					if fromNode == nil {
-						return sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node %d", fromNodeID)
-					}
-					fromNodes = append(fromNodes, fromNode)
-				}
-			} else {
-				fromNodes = append(fromNodes, wf.Root)
-			}
-
-			for _, fromNode := range fromNodes {
-				// Check Env Permission
-				if fromNode.Context.Environment != nil {
-					if !permission.AccessToEnvironment(fromNode.Context.Environment.ID, getUser(ctx), permission.PermissionReadExecute) {
-						return sdk.WrapError(sdk.ErrNoEnvExecution, "postWorkflowRunHandler> Not enough right to run on environment %s", fromNode.Context.Environment.Name)
-					}
-				}
-
-				//If payload is not set, keep the default payload
-				if opts.Manual.Payload == interface{}(nil) {
-					opts.Manual.Payload = fromNode.Context.DefaultPayload
-				}
-
-				//If PipelineParameters are not set, keep the default PipelineParameters
-				if len(opts.Manual.PipelineParameters) == 0 {
-					opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
-				}
-				log.Debug("Manual run: %#v", opts.Manual)
-
-				//Manual run
-				if lastRun != nil {
-					var errmr error
-					wr, errmr = workflow.ManualRunFromNode(tx, api.Cache, p, wf, lastRun.Number, opts.Manual, fromNode.ID)
-					if errmr != nil {
-						return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow from node")
-					}
-				}
-			}
-
-			if lastRun == nil {
-				var errmr error
-				wr, errmr = workflow.ManualRun(tx, api.Cache, p, wf, opts.Manual)
-				if errmr != nil {
-					return sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
-				}
-			}
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
+		if err != nil {
+			return err
 		}
-
-		//Commit and return success
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
-		}
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		// Purge workflow run
 		go workflow.PurgeWorkflowRun(api.mustDB(), *wf)
 
-		wr.Translate(r.Header.Get("Accept-Language"))
+		var wr *sdk.WorkflowRun
+		if len(workflowRuns) > 0 {
+			wr = &workflowRuns[0]
+			wr.Translate(r.Header.Get("Accept-Language"))
+		}
 		return WriteJSON(w, r, wr, http.StatusAccepted)
+	}
+}
+
+func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) {
+	defer close(chEvent)
+	defer close(chError)
+
+	tx, errb := db.Begin()
+	if errb != nil {
+		chError <- sdk.WrapError(errb, "startWorkflowRun> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	//Run from hook
+	if opts.Hook != nil {
+		var errfh error
+		_, errfh = workflow.RunFromHook(tx, store, p, wf, opts.Hook, chEvent)
+		if errfh != nil {
+			chError <- sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
+		}
+	} else {
+		//Default manual run
+		if opts.Manual == nil {
+			opts.Manual = &sdk.WorkflowNodeRunManual{}
+		}
+		opts.Manual.User = *u
+		opts.Manual.User.Groups = nil
+
+		fromNodes := []*sdk.WorkflowNode{}
+		if len(opts.FromNodeIDs) > 0 {
+			for _, fromNodeID := range opts.FromNodeIDs {
+				fromNode := lastRun.Workflow.GetNode(fromNodeID)
+				if fromNode == nil {
+					chError <- sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "postWorkflowRunHandler> Payload: Unable to get node %d", fromNodeID)
+				}
+				fromNodes = append(fromNodes, fromNode)
+			}
+		} else {
+			fromNodes = append(fromNodes, wf.Root)
+		}
+
+		for _, fromNode := range fromNodes {
+			// Check Env Permission
+			if fromNode.Context.Environment != nil {
+				if !permission.AccessToEnvironment(fromNode.Context.Environment.ID, u, permission.PermissionReadExecute) {
+					chError <- sdk.WrapError(sdk.ErrNoEnvExecution, "postWorkflowRunHandler> Not enough right to run on environment %s", fromNode.Context.Environment.Name)
+				}
+			}
+
+			//If payload is not set, keep the default payload
+			if opts.Manual.Payload == interface{}(nil) {
+				opts.Manual.Payload = fromNode.Context.DefaultPayload
+			}
+
+			//If PipelineParameters are not set, keep the default PipelineParameters
+			if len(opts.Manual.PipelineParameters) == 0 {
+				opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
+			}
+			log.Debug("Manual run: %#v", opts.Manual)
+
+			//Manual run
+			if lastRun != nil {
+				var errmr error
+				_, errmr = workflow.ManualRunFromNode(tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID, chEvent)
+				if errmr != nil {
+					chError <- sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow from node")
+				}
+			}
+		}
+
+		if lastRun == nil {
+			var errmr error
+			_, errmr = workflow.ManualRun(tx, store, p, wf, opts.Manual, chEvent)
+			if errmr != nil {
+				chError <- sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
+			}
+		}
+	}
+
+	//Commit and return success
+	if err := tx.Commit(); err != nil {
+		chError <- sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
 	}
 }
 

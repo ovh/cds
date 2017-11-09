@@ -7,7 +7,7 @@ import (
 )
 
 // getGraylogGrpcEnv fetch the graylog and grpc configuration from viper and return environement variable in a slice
-func (h *HatcheryVSphere) getGraylogGrpcEnv(model *sdk.Model) []string {
+func (h *HatcheryVSphere) getGraylogGrpcEnv(model sdk.Model) []string {
 	env := []string{}
 
 	if h.Configuration().Provision.WorkerLogsOptions.Graylog.Host != "" {

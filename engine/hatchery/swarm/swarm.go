@@ -215,14 +215,14 @@ func (h *HatcherySwarm) killAndRemove(ID string) {
 }
 
 //SpawnWorker start a new docker container
-func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
+func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	//name is the name of the worker and the name of the container
-	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
-	if registerOnly {
+	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	if spawnArgs.RegisterOnly {
 		name = "register-" + name
 	}
 
-	log.Info("SpawnWorker> Spawning worker %s - %s", name, logInfo)
+	log.Info("SpawnWorker> Spawning worker %s - %s", name, spawnArgs.LogInfo)
 
 	//Create a network
 	network := name + "-net"
@@ -233,8 +233,8 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 
 	services := []string{}
 
-	if jobID > 0 {
-		for _, r := range requirements {
+	if spawnArgs.JobID > 0 {
+		for _, r := range spawnArgs.Requirements {
 			if r.Type == sdk.MemoryRequirement {
 				var err error
 				memory, err = strconv.ParseInt(r.Value, 10, 64)
@@ -283,7 +283,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 	}
 
 	var registerCmd string
-	if registerOnly {
+	if spawnArgs.RegisterOnly {
 		registerCmd = " register"
 	}
 
@@ -295,7 +295,7 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 		"CDS_API" + "=" + h.Configuration().API.HTTP.URL,
 		"CDS_NAME" + "=" + name,
 		"CDS_TOKEN" + "=" + h.Configuration().API.Token,
-		"CDS_MODEL" + "=" + strconv.FormatInt(model.ID, 10),
+		"CDS_MODEL" + "=" + strconv.FormatInt(spawnArgs.Model.ID, 10),
 		"CDS_HATCHERY" + "=" + strconv.FormatInt(h.hatch.ID, 10),
 		"CDS_HATCHERY_NAME" + "=" + h.hatch.Name,
 		"CDS_TTL" + "=" + strconv.Itoa(h.Config.WorkerTTL),
@@ -314,26 +314,30 @@ func (h *HatcherySwarm) SpawnWorker(model *sdk.Model, jobID int64, requirements 
 	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
 		env = append(env, "CDS_GRAYLOG_EXTRA_VALUE"+"="+h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue)
 	}
-	if h.Configuration().API.GRPC.URL != "" && model.Communication == sdk.GRPC {
+	if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		env = append(env, fmt.Sprintf("CDS_GRPC_API=%s", h.Configuration().API.GRPC.URL))
 		env = append(env, fmt.Sprintf("CDS_GRPC_INSECURE=%t", h.Configuration().API.GRPC.Insecure))
 	}
 
-	if jobID > 0 {
-		env = append(env, "CDS_BOOKED_JOB_ID"+"="+strconv.FormatInt(jobID, 10))
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			env = append(env, fmt.Sprintf("CDS_BOOKED_WORKFLOW_JOB_ID=%d", spawnArgs.JobID))
+		} else {
+			env = append(env, fmt.Sprintf("CDS_BOOKED_PB_JOB_ID=%d", spawnArgs.JobID))
+		}
 	}
 
 	//labels are used to make container cleanup easier
 	labels := map[string]string{
-		"worker_model":        strconv.FormatInt(model.ID, 10),
+		"worker_model":        strconv.FormatInt(spawnArgs.Model.ID, 10),
 		"worker_name":         name,
 		"worker_requirements": strings.Join(services, ","),
 		"hatchery":            h.Config.Name,
 	}
 
 	//start the worker
-	if err := h.createAndStartContainer(name, model.Image, network, "worker", cmd, env, labels, memory); err != nil {
-		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, model.Image, err)
+	if err := h.createAndStartContainer(name, spawnArgs.Model.Image, network, "worker", cmd, env, labels, memory); err != nil {
+		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.Image, err)
 	}
 
 	return name, nil
@@ -414,6 +418,13 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		return false
 	}
 
+	//List all workers
+	ws, errWList := h.getWorkersStarted(cs)
+	if errWList != nil {
+		log.Error("CanSpawn> Unable to list workers: %s", errWList)
+		return false
+	}
+
 	if len(cs) > h.Config.MaxContainers {
 		log.Warning("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.Config.MaxContainers)
 		return false
@@ -436,7 +447,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 			return false
 		}
 		if len(cs) > 0 {
-			percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
+			percentFree := 100 - (100 * len(ws) / h.Config.MaxContainers)
 			if percentFree <= h.Config.RatioService {
 				log.Debug("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
 				return false
@@ -531,12 +542,16 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	return true
 }
 
-func (h *HatcherySwarm) getWorkersStarted() ([]docker.APIContainers, error) {
-	containers, errList := h.getContainers()
-	if errList != nil {
-		log.Error("WorkersStarted> Unable to list containers: %s", errList)
-		return nil, errList
+func (h *HatcherySwarm) getWorkersStarted(containers []docker.APIContainers) ([]docker.APIContainers, error) {
+	if containers == nil {
+		var errList error
+		containers, errList = h.getContainers()
+		if errList != nil {
+			log.Error("WorkersStarted> Unable to list containers: %s", errList)
+			return nil, errList
+		}
 	}
+
 	res := []docker.APIContainers{}
 	//We only count worker
 	for _, c := range containers {
@@ -557,13 +572,13 @@ func (h *HatcherySwarm) getWorkersStarted() ([]docker.APIContainers, error) {
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcherySwarm) WorkersStarted() int {
-	workers, _ := h.getWorkersStarted()
+	workers, _ := h.getWorkersStarted(nil)
 	return len(workers)
 }
 
 // WorkersStartedByModel returns the number of started workers
 func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
-	workers, errList := h.getWorkersStarted()
+	workers, errList := h.getWorkersStarted(nil)
 	if errList != nil {
 		log.Error("WorkersStartedByModel> Unable to list containers: %s", errList)
 		return 0
@@ -618,7 +633,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 		os.Exit(1)
 	}
 
-	containers, errList := h.getWorkersStarted()
+	containers, errList := h.getWorkersStarted(nil)
 	if errList != nil {
 		log.Warning("killAwolWorker> Cannot list containers: %s", errList)
 		os.Exit(1)

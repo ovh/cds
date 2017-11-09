@@ -190,7 +190,7 @@ describe('App: CDS', () => {
 
         // Check application result
         let checkApp = false;
-        applicationStore.getApplications('key').subscribe(apps => {
+        applicationStore.getApplications('key', null).subscribe(apps => {
             checkApp = true;
             expect(apps.size).toBe(2, 'Must have 2 applications in cache');
             expect(apps.get('key1-app1')).toBeTruthy('app1 must be here');

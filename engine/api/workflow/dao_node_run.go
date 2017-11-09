@@ -40,7 +40,7 @@ func LoadAndLockNodeRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowNodeRun
 	var rr = NodeRun{}
 	query := `select workflow_node_run.*
 	from workflow_node_run
-	where workflow_node_run.id = $1 for update nowait`
+	where workflow_node_run.id = $1 for update`
 	if err := db.SelectOne(&rr, query, id); err != nil {
 		return nil, sdk.WrapError(err, "workflow.LoadAndLockNodeRunByID> Unable to load workflow_node_run node=%d", id)
 	}

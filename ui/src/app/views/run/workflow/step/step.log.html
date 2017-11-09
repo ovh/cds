@@ -10,8 +10,9 @@
             <i class="warning sign icon orange stepWarn" *ngIf="currentStatus === pipelineBuildStatusEnum.FAIL && step.optional"></i>{{ 'action_optional' | translate }}
         </div>
     </div>
-    <div class="logs" *ngIf="logs" [hidden]="!showLog">
-        <pre [innerHTML]="getLogs()">
+    <div class="logs" *ngIf="showLog">
+        <pre [innerHTML]="getLogs()" *ngIf="!loading">
         </pre>
+        <div class="ui active centered inline loader" *ngIf="loading"></div>
     </div>
 </div>

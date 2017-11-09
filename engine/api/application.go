@@ -247,15 +247,13 @@ func (api *API) getApplicationHandler() Handler {
 
 		if withWorkflow {
 			var errWorflow error
-			app.Workflows, errWorflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), "", "", 0)
+			app.Workflows, errWorflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, remote, 0)
 			if errWorflow != nil {
 				return sdk.WrapError(errWorflow, "getApplicationHandler> Cannot load CD Tree for applications %s", app.Name)
 			}
 		}
 
 		if applicationStatus {
-			var pipelineBuilds []sdk.PipelineBuild
-
 			version := 0
 			if versionString != "" {
 				var errStatus error
@@ -265,21 +263,13 @@ func (api *API) getApplicationHandler() Handler {
 				}
 			}
 
-			if version == 0 {
-				var errBuilds error
-				pipelineBuilds, errBuilds = pipeline.GetAllLastBuildByApplication(api.mustDB(), app.ID, remote, branchName, 0)
-				if errBuilds != nil {
-					return sdk.WrapError(errBuilds, "getApplicationHandler> Cannot load app status")
-				}
-			} else {
-				if branchName == "" {
-					return sdk.WrapError(sdk.ErrBranchNameNotProvided, "getApplicationHandler: branchName must be provided with version param")
-				}
-				var errPipBuilds error
-				pipelineBuilds, errPipBuilds = pipeline.GetAllLastBuildByApplication(api.mustDB(), app.ID, remote, branchName, version)
-				if errPipBuilds != nil {
-					return sdk.WrapError(errPipBuilds, "getApplicationHandler> Cannot load app status by version")
-				}
+			if version != 0 && branchName == "" {
+				return sdk.WrapError(sdk.ErrBranchNameNotProvided, "getApplicationHandler: branchName must be provided with version param")
+			}
+
+			pipelineBuilds, errPipBuilds := pipeline.GetAllLastBuildByApplication(api.mustDB(), app.ID, remote, branchName, version)
+			if errPipBuilds != nil {
+				return sdk.WrapError(errPipBuilds, "getApplicationHandler> Cannot load app status by version")
 			}
 			al := r.Header.Get("Accept-Language")
 			for _, p := range pipelineBuilds {
