@@ -8,7 +8,7 @@ identifier = "tutorials-worker-model-docker"
 
 +++
 
-A worker model of type `docker` can be spawned by a Hatchery Docker or Docker Swarm.
+A worker model of type `docker` can be spawned by a Hatchery Docker Swarm.
 
 ## Register a worker Model from an existing Docker Image
 
