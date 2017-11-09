@@ -61,14 +61,6 @@ func InsertGroupInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64,
 		return sdk.WrapError(err, "InsertGroupInEnvironment")
 	}
 
-	ok, err := checkAtLeastOneGroupWithWriteRoleOnEnvironment(db, environmentID)
-	if err != nil {
-		return sdk.WrapError(err, "InsertGroupInEnvironment")
-	}
-	if !ok {
-		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "InsertGroupInEnvironment")
-	}
-
 	return nil
 }
 

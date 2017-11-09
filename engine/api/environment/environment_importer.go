@@ -154,14 +154,18 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 	}
 
 	for i := range into.EnvironmentGroups {
+		log.Debug("ImportInto>Delete ?> Checking >> %s", into.EnvironmentGroups[i].Group.Name)
+
 		var found bool
 		for j := range env.EnvironmentGroups {
+			log.Debug("ImportInto>Delete ?> \t with >> %s", env.EnvironmentGroups[j].Group.Name)
 			if into.EnvironmentGroups[i].Group.Name == env.EnvironmentGroups[j].Group.Name {
 				found = true
 			}
 		}
 		if !found {
-			deleteGroupInEnv(into.EnvironmentGroups[i].Group.Name, env.EnvironmentGroups[i].Group.ID)
+			log.Debug("ImportInto>Delete ?> \t with >> %s", into.EnvironmentGroups[i].Group.Name)
+			deleteGroupInEnv(into.EnvironmentGroups[i].Group.Name, into.EnvironmentGroups[i].Group.ID)
 		}
 	}
 

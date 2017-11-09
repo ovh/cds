@@ -1,4 +1,4 @@
-package test
+package environment_test
 
 import (
 	"testing"
@@ -271,7 +271,7 @@ func TestImportInto_WithOldAndNewGroup(t *testing.T) {
 	for _, g := range []sdk.Group{g0, g1, g2, g3} {
 		oldg, _ := group.LoadGroup(db, g.Name)
 		if oldg != nil {
-			group.DeleteGroupAndDependencies(db, oldg)
+			test.NoError(t, group.DeleteGroupAndDependencies(db, oldg))
 		}
 	}
 
@@ -286,10 +286,10 @@ func TestImportInto_WithOldAndNewGroup(t *testing.T) {
 	test.NoError(t, group.InsertGroup(db, &g1))
 	test.NoError(t, group.InsertGroup(db, &g2))
 	test.NoError(t, group.InsertGroup(db, &g3))
-	//At this point groups g0, g1, g2 have addes to the environment
-	test.NoError(t, group.InsertGroupInEnvironment(db, env.ID, g0.ID, 1))
-	test.NoError(t, group.InsertGroupInEnvironment(db, env.ID, g1.ID, 2))
-	test.NoError(t, group.InsertGroupInEnvironment(db, env.ID, g2.ID, 3))
+	//At this point groups g0, g1, g2 have added to the environment
+	test.NoError(t, group.InsertGroupInEnvironment(db, env.ID, g0.ID, 4))
+	test.NoError(t, group.InsertGroupInEnvironment(db, env.ID, g1.ID, 4))
+	test.NoError(t, group.InsertGroupInEnvironment(db, env.ID, g2.ID, 4))
 
 	var err error
 	env.Variable, err = environment.GetAllVariableByID(db, env.ID)
