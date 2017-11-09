@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/fsamin/go-dump"
 	"gopkg.in/cheggaaa/pb.v1"
 )

@@ -99,7 +99,7 @@ func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
 	if errc != nil {
 		return nil, fmt.Errorf("Error while connecting:%s", errc.Error())
 	}
-	defer c.Close(false)
+	defer c.Logout(5 * time.Second)
 
 	var box string
 
@@ -217,6 +217,7 @@ func fetch(c *imap.Client, box string, nb uint32, l venom.Logger) ([]imap.Respon
 		l.Errorf("Error with select %s", err.Error())
 		return []imap.Response{}, err
 	}
+	defer c.Close(false)
 
 	seqset, _ := imap.NewSeqSet("1:*")
 

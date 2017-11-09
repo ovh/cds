@@ -1,7 +1,7 @@
 package venom
 
 import (
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/cheggaaa/pb.v1"
 )
 
