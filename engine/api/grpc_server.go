@@ -93,13 +93,10 @@ func (h *grpcHandlers) authorize(ctx context.Context) (*sdk.Worker, error) {
 				return nil, sdk.ErrForbidden
 			}
 
-			group, errG := loadGroupPermissions(h.dbConnectionFactory.GetDBMap(), h.store, w.GroupID)
-			if errG != nil {
+			if _, err := loadGroupPermissions(h.dbConnectionFactory.GetDBMap(), h.store, w.GroupID); err != nil {
 				log.Error("grpc.authorize> Unable to get worker group permission: %s", err)
 				return nil, sdk.ErrServiceUnavailable
 			}
-			ctx = context.WithValue(ctx, keyWorkerGroup, group)
-
 			return w, nil
 		}
 		return nil, sdk.ErrForbidden

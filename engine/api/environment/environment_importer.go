@@ -87,9 +87,9 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentVariableCreated, v.Name, into.Name)
 	}
 
-	var updateGroupInEnv = func(groupName string, role int) {
-		log.Debug("ImportInto> Updating group %s", groupName)
-		if err := group.UpdateGroupRoleInEnvironment(db, proj.Key, into.Name, groupName, role); err != nil {
+	var updateGroupInEnv = func(groupName string, groupID int64, role int) {
+		log.Debug("ImportInto> Updating group %s", groupID)
+		if err := group.UpdateGroupRoleInEnvironment(db, into.ID, groupID, role); err != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentGroupCannotBeUpdated, groupName, into.Name, err)
 			return
 		}
@@ -111,8 +111,8 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 		msgChan <- sdk.NewMessage(sdk.MsgEnvironmentGroupCreated, groupName, into.Name)
 	}
 
-	var deleteGroupInEnv = func(groupName string) {
-		if err := group.DeleteGroupFromEnvironment(db, proj.Key, into.Name, groupName); err != nil {
+	var deleteGroupInEnv = func(groupName string, groupID int64) {
+		if err := group.DeleteGroupFromEnvironment(db, into.ID, groupID); err != nil {
 			msgChan <- sdk.NewMessage(sdk.MsgEnvironmentGroupCannotBeDeleted, groupName, into.Name, err)
 			return
 		}
@@ -144,7 +144,7 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 			if env.EnvironmentGroups[i].Group.Name == into.EnvironmentGroups[j].Group.Name {
 				env.EnvironmentGroups[i].Group.ID = into.EnvironmentGroups[j].Group.ID
 				found = true
-				updateGroupInEnv(env.EnvironmentGroups[i].Group.Name, env.EnvironmentGroups[i].Permission)
+				updateGroupInEnv(env.EnvironmentGroups[i].Group.Name, env.EnvironmentGroups[i].Group.ID, env.EnvironmentGroups[i].Permission)
 				break
 			}
 		}
@@ -154,14 +154,18 @@ func ImportInto(db gorp.SqlExecutor, proj *sdk.Project, env *sdk.Environment, in
 	}
 
 	for i := range into.EnvironmentGroups {
+		log.Debug("ImportInto>Delete ?> Checking >> %s", into.EnvironmentGroups[i].Group.Name)
+
 		var found bool
 		for j := range env.EnvironmentGroups {
+			log.Debug("ImportInto>Delete ?> \t with >> %s", env.EnvironmentGroups[j].Group.Name)
 			if into.EnvironmentGroups[i].Group.Name == env.EnvironmentGroups[j].Group.Name {
 				found = true
 			}
 		}
 		if !found {
-			deleteGroupInEnv(into.EnvironmentGroups[i].Group.Name)
+			log.Debug("ImportInto>Delete ?> \t with >> %s", into.EnvironmentGroups[i].Group.Name)
+			deleteGroupInEnv(into.EnvironmentGroups[i].Group.Name, into.EnvironmentGroups[i].Group.ID)
 		}
 	}
 

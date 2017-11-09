@@ -68,7 +68,7 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := group.UpdateGroupRoleInEnvironment(tx, key, envName, groupName, groupEnvironment.Permission); err != nil {
+		if err := group.UpdateGroupRoleInEnvironment(tx, env.ID, g.ID, groupEnvironment.Permission); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler: Cannot update permission for group %s in environment %s", groupName, envName)
 		}
 
@@ -232,13 +232,18 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 			return sdk.WrapError(errE, "deleteGroupFromEnvironmentHandler: Cannot load environment")
 		}
 
+		g, errG := group.LoadGroup(api.mustDB(), envName)
+		if errG != nil {
+			return sdk.WrapError(errG, "deleteGroupFromEnvironmentHandler: Cannot load group")
+		}
+
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteGroupFromEnvironmentHandler: Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		if err := group.DeleteGroupFromEnvironment(tx, proj.Key, envName, groupName); err != nil {
+		if err := group.DeleteGroupFromEnvironment(tx, env.ID, g.ID); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot delete group %s from pipeline %s", groupName, envName)
 		}
 

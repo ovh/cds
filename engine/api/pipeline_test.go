@@ -184,6 +184,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		Name: sdk.RandomString(10),
 	}
 	err = application.Insert(api.mustDB(), api.Cache, proj, app2, nil)
+	test.NoError(t, err)
 
 	//12. Attach pipeline to application
 	_, err = application.AttachPipeline(api.mustDB(), app2.ID, pip2.ID)

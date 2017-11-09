@@ -9,7 +9,6 @@ import (
 	"github.com/fatih/structs"
 
 	"github.com/ovh/cds/engine/api"
-	"github.com/ovh/cds/engine/hatchery/docker"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
@@ -37,7 +36,6 @@ type Configuration struct {
 	} `toml:"debug" comment:"#####################\n Debug with gops \n####################"`
 	API      api.Configuration `toml:"api" comment:"#####################\n API Configuration \n####################"`
 	Hatchery struct {
-		Docker    docker.HatcheryConfiguration    `toml:"docker" comment:"Hatchery Docker."`
 		Local     local.HatcheryConfiguration     `toml:"local" comment:"Hatchery Local."`
 		Marathon  marathon.HatcheryConfiguration  `toml:"marathon" comment:"Hatchery Marathon."`
 		Openstack openstack.HatcheryConfiguration `toml:"openstack" comment:"Hatchery OpenStack. Doc: https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/"`

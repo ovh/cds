@@ -472,6 +472,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			opts.Manual = &sdk.WorkflowNodeRunManual{}
 		}
 		opts.Manual.User = *u
+		opts.Manual.User.Groups = nil
 
 		fromNodes := []*sdk.WorkflowNode{}
 		if len(opts.FromNodeIDs) > 0 {

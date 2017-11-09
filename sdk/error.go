@@ -123,6 +123,7 @@ var (
 	ErrWorkflowNodeParentNotRun              = Error{ID: 107, Status: http.StatusForbidden}
 	ErrHookNotFound                          = Error{ID: 108, Status: http.StatusNotFound}
 	ErrDefaultGroupPermission                = Error{ID: 109, Status: http.StatusBadRequest}
+	ErrLastGroupWithWriteRole                = Error{ID: 110, Status: http.StatusForbidden}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -234,6 +235,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidNodeNamePattern.ID:                "Node name must respect the following pattern: '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWorkflowNodeParentNotRun.ID:              "Cannot run a node if their parents have never been launched",
 	ErrDefaultGroupPermission.ID:                "Only read permission is allowed to default group",
+	ErrLastGroupWithWriteRole.ID:                "The last group must have the write permission",
 }
 
 var errorsFrench = map[int]string{
@@ -345,6 +347,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidNodeNamePattern.ID:                "Le nom du noeud du workflow doit respecter le pattern suivant; '^[a-zA-Z0-9.-_-]{1,}$'",
 	ErrWorkflowNodeParentNotRun.ID:              "Il est interdit de lancer un noeuds si ses parents n'ont jamais été lancés",
 	ErrDefaultGroupPermission.ID:                "Le groupe par défaut ne peut être utilisé qu'en lecture seule",
+	ErrLastGroupWithWriteRole.ID:                "Le dernier groupe doit avoir les droits d'écriture",
 }
 
 var errorsLanguages = []map[int]string{

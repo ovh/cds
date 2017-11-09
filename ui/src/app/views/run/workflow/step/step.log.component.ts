@@ -3,6 +3,7 @@ import {Action} from '../../../../model/action.model';
 import {CDSWorker} from '../../../../shared/worker/worker';
 import {Subscription} from 'rxjs/Rx';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {DurationService} from '../../../../shared/duration/duration.service';
 import {environment} from '../../../../../environments/environment';
 import {Project} from '../../../../model/project.model';
 import {Application} from '../../../../model/application.model';
@@ -39,7 +40,6 @@ export class StepLogComponent implements OnInit, OnDestroy {
     currentStatus: string;
     set showLog(data: boolean) {
         this._showLog = data;
-
         if (data) {
             this.initWorker();
         } else {
@@ -59,11 +59,19 @@ export class StepLogComponent implements OnInit, OnDestroy {
     _showLog = false;
     pipelineBuildStatusEnum = PipelineStatus;
     loading = true;
+    startExec: Date;
+    doneExec: Date;
+    duration: string;
+    intervalListener: any;
 
-    constructor(private _authStore: AuthentificationStore) { }
+    constructor(private _authStore: AuthentificationStore, private _durationService: DurationService) { }
 
     ngOnInit(): void {
         this.zone = new NgZone({enableLongStackTrace: false});
+        if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
+            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
+          this.showLog = true;
+        }
     }
 
     initWorker(): void {
@@ -85,7 +93,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
                 stepOrder: this.stepOrder
             });
 
-            this.worker.response().subscribe( msg => {
+            this.workerSubscription = this.worker.response().subscribe( msg => {
                 if (msg) {
                     let build: BuildResult = JSON.parse(msg);
                     this.zone.run(() => {
@@ -94,6 +102,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
                         }
                     });
                     if (this.loading) {
+                        this.computeDuration();
                         this.loading = false;
                     }
                 }
@@ -105,6 +114,21 @@ export class StepLogComponent implements OnInit, OnDestroy {
         if (this.workerSubscription) {
             this.workerSubscription.unsubscribe();
         }
+        clearInterval(this.intervalListener);
+    }
+
+    computeDuration() {
+        this.startExec = new Date(this.logs.start.seconds * 1000);
+        this.doneExec = this.logs.done && this.logs.done.seconds ? new Date(this.logs.done.seconds * 1000) : null;
+        if (!this.duration) {
+            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec || new Date()) + ')';
+        }
+        this.intervalListener = setInterval(() => {
+            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec || new Date()) + ')';
+            if (this.currentStatus !== PipelineStatus.BUILDING && this.currentStatus !== PipelineStatus.WAITING) {
+                clearInterval(this.intervalListener);
+            }
+        }, 5000);
     }
 
     toggleLogs() {

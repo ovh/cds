@@ -113,13 +113,13 @@ func Test_workerWaitingHandler(t *testing.T) {
 	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Load all workers and hatcheries
-	workers, err := worker.LoadWorkers(api.mustDB())
-	if err != nil {
-		t.Fatal(err)
+	workers, errlw := worker.LoadWorkers(api.mustDB())
+	if errlw != nil {
+		t.Fatal(errlw)
 	}
-	hs, err := hatchery.LoadHatcheries(api.mustDB())
-	if err != nil {
-		t.Fatalf("Unable to load hatcheries : %s", err)
+	hs, errlh := hatchery.LoadHatcheries(api.mustDB())
+	if errlh != nil {
+		t.Fatalf("Unable to load hatcheries : %s", errlh)
 	}
 	//2. Delete all workers and hatcheries
 	for _, w := range workers {

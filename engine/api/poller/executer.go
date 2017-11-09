@@ -135,6 +135,9 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 	projectKey := p.Application.ProjectKey
 	rm := p.Application.RepositoriesManager
 
+	if rm == nil {
+		return nil, nil
+	}
 	log.Debug("Polling> Get %s client for project %s", rm.Name, projectKey)
 
 	//get the client for the repositories manager

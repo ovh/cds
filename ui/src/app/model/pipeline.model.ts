@@ -171,8 +171,8 @@ export interface Log {
     step_order: number;
     val: string;
     start: LogDate;
-    last_modified: number;
-    done: number;
+    last_modified: LogDate;
+    done: LogDate;
 }
 
 export class LogDate {

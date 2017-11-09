@@ -15,7 +15,6 @@ An hatchery is started with permissions to build all pipelines accessible from a
 There are 6 modes for hatcheries:
 
  * Local (Start local workers on a single host)
- * Local Docker (Start worker model instances on a single host)
  * Marathon (Start worker model instances on a mesos cluster with marathon framework)
  * Swarm (Start worker on a docker swarm cluster)
  * Openstack (Start virtual machines on an openstack cluster)
@@ -24,10 +23,6 @@ There are 6 modes for hatcheries:
 ### Local mode
 
 Hatchery starts workers directly as local process.
-
-### Docker mode
-
-Hatchery starts workers inside docker containers on the same host.
 
 ### Marathon mode
 
@@ -43,7 +38,7 @@ Hatchery starts workers on VSphere datacenter using VMWare VSphere.
 
 ### Swarm mode
 
-The hatchery connects to a swarm cluster and starts workers inside containers.
+The hatchery connects to a Docker Swarm cluster and starts workers inside containers.
 
 ## Admin hatchery
 

@@ -218,8 +218,8 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobResultHandler() AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobResultHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errc := requestVarInt(r, "permID")
 		if errc != nil {
 			return sdk.WrapError(errc, "postWorkflowJobResultHandler> invalid id")
@@ -258,7 +258,7 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 	//Start the transaction
 	tx, errb := db.Begin()
 	if errb != nil {
-		chError <- sdk.WrapError(errb, "postWorkflowJobResultHandler> Cannot begin tx")
+		chError <- sdk.WrapError(errb, "postJobResult> Cannot begin tx")
 		return
 	}
 	defer tx.Rollback()
@@ -266,18 +266,18 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 	//Load workflow node job run
 	job, errj := workflow.LoadAndLockNodeJobRunWait(tx, store, res.BuildID)
 	if errj != nil {
-		chError <- sdk.WrapError(errj, "postWorkflowJobResultHandler> Unable to load node run job")
+		chError <- sdk.WrapError(errj, "postJobResult> Unable to load node run job %d", res.BuildID)
 		return
 	}
 
 	//Update worker status
 	if err := worker.UpdateWorkerStatus(tx, workerID, sdk.StatusWaiting); err != nil {
-		log.Warning("postWorkflowJobResultHandler> Cannot update worker status (%s): %s", workerID, err)
+		log.Warning("postJobResult> Cannot update worker status (%s): %s", workerID, err)
 	}
 
 	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
 	if errt != nil {
-		chError <- sdk.WrapError(errt, "postWorkflowJobResultHandler> Cannot parse remote time")
+		chError <- sdk.WrapError(errt, "postJobResult> Cannot parse remote time")
 		return
 	}
 
@@ -289,20 +289,20 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 
 	//Add spawn infos
 	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, store, p, job.ID, infos); err != nil {
-		chError <- sdk.WrapError(err, "addQueueResultHandler> Cannot save spawn info job %d", job.ID)
+		chError <- sdk.WrapError(err, "postJobResult> Cannot save spawn info job %d", job.ID)
 		return
 	}
 
 	// Update action status
-	log.Debug("postWorkflowJobResultHandler> Updating %d to %s in queue", workerID, res.Status)
+	log.Debug("postJobResult> Updating %d to %s in queue", workerID, res.Status)
 	if err := workflow.UpdateNodeJobRunStatus(tx, store, p, job, sdk.Status(res.Status), chEvent); err != nil {
-		chError <- sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot update %d status", workerID)
+		chError <- sdk.WrapError(err, "postJobResult> Cannot update %d status", workerID)
 		return
 	}
 
 	//Commit the transaction
 	if err := tx.Commit(); err != nil {
-		chError <- sdk.WrapError(err, "postWorkflowJobResultHandler> Cannot commit tx")
+		chError <- sdk.WrapError(err, "postJobResult> Cannot commit tx")
 		return
 	}
 }
@@ -550,8 +550,8 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobArtifactHandler() AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobArtifactHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Load and lock Existing workflow Run Job
 		id, errI := requestVarInt(r, "permID")
 		if errI != nil {
