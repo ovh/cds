@@ -243,6 +243,7 @@ func TestImportInto_Group(t *testing.T) {
 	assert.True(t, g2found, "Group g2 not found")
 	assert.False(t, g3found, "Group g3 found")
 
+	project.Delete(db, cache, proj.Key)
 }
 
 func TestImportInto_WithOldAndNewGroup(t *testing.T) {
@@ -264,6 +265,12 @@ func TestImportInto_WithOldAndNewGroup(t *testing.T) {
 		group.DeleteAllGroupFromEnvironment(db, oldEnv.ID)
 		environment.DeleteEnvironment(db, oldEnv.ID)
 	}
+	oldEnv, _ = environment.LoadEnvironmentByName(db, proj.Key, "testenv2")
+	if oldEnv != nil {
+		group.DeleteAllGroupFromEnvironment(db, oldEnv.ID)
+		environment.DeleteEnvironment(db, oldEnv.ID)
+	}
+
 	g0 := sdk.Group{Name: "g0"}
 	g1 := sdk.Group{Name: "g1"}
 	g2 := sdk.Group{Name: "g2"}
@@ -359,5 +366,5 @@ func TestImportInto_WithOldAndNewGroup(t *testing.T) {
 	assert.True(t, g1found, "Group g1 not found")
 	assert.False(t, g2found, "Group g2 found")
 	assert.True(t, g3found, "Group g3 not found")
-
+	project.Delete(db, cache, proj.Key)
 }
