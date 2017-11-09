@@ -78,7 +78,6 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 		defer tx.Rollback()
 
-
 		//Prepare spawn infos
 		infos := []sdk.SpawnInfo{{
 			RemoteTime: takeForm.Time,
