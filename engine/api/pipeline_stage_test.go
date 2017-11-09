@@ -276,6 +276,7 @@ func TestInsertAndLoadPipelineWith1StageWithoutPrerequisiteAnd1StageWith2Prerequ
 
 	//Insert Action
 	script, err := action.LoadPublicAction(api.mustDB(), "Script")
+	test.NoError(t, err)
 	t.Logf("Insert Action %s(%d) on Stage %s(%d) for Pipeline %s(%d) of Project %s", script.Name, script.ID, stage.Name, stage.ID, pip.Name, pip.ID, proj.Name)
 	job := &sdk.Job{
 		Action: sdk.Action{

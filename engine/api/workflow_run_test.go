@@ -556,6 +556,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name)
+	test.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
@@ -925,6 +926,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name)
+	test.NoError(t, err)
 
 	// Update step status
 	jobRun := &lastrun.WorkflowNodeRuns[w1.RootID][0].Stages[0].RunJobs[0]
