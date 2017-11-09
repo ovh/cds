@@ -1,6 +1,6 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {
-    Workflow, WorkflowNode, WorkflowNodeHook, WorkflowTriggerCondition, WorkflowTriggerConditions
+    Workflow, WorkflowNode, WorkflowNodeHook
 } from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
@@ -77,20 +77,6 @@ export class WorkflowNodeHookFormComponent {
 
     addHook(): void {
         this.hookEvent.emit(new HookEvent('add', this.hook));
-    }
-
-    addConditions(condition: WorkflowTriggerCondition): void {
-        if (!this.hook.conditions) {
-            this.hook.conditions = new WorkflowTriggerConditions();
-        }
-        if (!this.hook.conditions.plain) {
-            this.hook.conditions.plain = new Array<WorkflowTriggerCondition>();
-        }
-
-        let index = this.hook.conditions.plain.findIndex(c => c.variable === condition.variable);
-        if (index === -1) {
-            this.hook.conditions.plain.push(condition);
-        }
     }
 
     deleteHook(): void {

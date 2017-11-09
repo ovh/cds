@@ -3,30 +3,10 @@
     <div class="header" *ngIf="trigger.workflow_dest_node && trigger.workflow_dest_node.id">{{ 'workflow_node_trigger_title_edit' | translate: {pip: triggerSrcNode?.pipeline?.name} }}</div>
     <div class="content">
         <div class="ui form" *ngIf="project && trigger">
-            <div class="ui grid">
-                <div class="row">
-                    <div class="five wide column field">
-                        <sui-checkbox [(ngModel)]="trigger.manual">
-                            {{'workflow_node_trigger_manual' | translate }}
-                        </sui-checkbox>
-                    </div>
-                    <div class="five wide column field">
-                        <sui-checkbox [(ngModel)]="trigger.continue_on_error">
-                            {{'workflow_node_trigger_continue_on_error' | translate }}
-                        </sui-checkbox>
-                    </div>
-                </div>
-            </div>
-
             <ng-container *ngIf="!trigger.workflow_dest_node|| !trigger.workflow_dest_node.id">
                 <h3>{{ 'workflow_node_form_title' | translate }}</h3>
                 <app-workflow-node-form [project]="project" [node]="trigger.workflow_dest_node" (nodeChange)="destNodeChange($event)"></app-workflow-node-form>
             </ng-container>
-
-            <h3>{{ 'workflow_node_trigger_condition_list_title' | translate }}</h3>
-            <app-workflow-trigger-condition-list [project]="project" [(conditions)]="trigger.conditions" [operators]="operators"></app-workflow-trigger-condition-list>
-            <h3>{{ 'workflow_node_trigger_condition_form_title' | translate }}</h3>
-            <app-workflow-trigger-condition-form [names]="conditionNames" [operators]="operators" (addEvent)="addCondition($event)"></app-workflow-trigger-condition-form>
         </div>
     </div>
     <div class="actions">
