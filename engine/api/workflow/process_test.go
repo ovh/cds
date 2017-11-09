@@ -10,21 +10,21 @@ import (
 func TestUpdateNodesRunStatus(t *testing.T) {
 	var success, building, fail, stop int
 
-	updateNodesRunStatus(sdk.StatusSuccess.String(), &success, &building, &fail, &stop)
+	computeNodesRunStatus(sdk.StatusSuccess.String(), &success, &building, &fail, &stop)
 
 	assert.Equal(t, 1, success)
 	assert.Equal(t, 0, building)
 	assert.Equal(t, 0, fail)
 	assert.Equal(t, 0, stop)
 
-	updateNodesRunStatus(sdk.StatusBuilding.String(), &success, &building, &fail, &stop)
+	computeNodesRunStatus(sdk.StatusBuilding.String(), &success, &building, &fail, &stop)
 
 	assert.Equal(t, 1, success)
 	assert.Equal(t, 1, building)
 	assert.Equal(t, 0, fail)
 	assert.Equal(t, 0, stop)
 
-	updateNodesRunStatus(sdk.StatusWaiting.String(), &success, &building, &fail, &stop)
+	computeNodesRunStatus(sdk.StatusWaiting.String(), &success, &building, &fail, &stop)
 
 	assert.Equal(t, 1, success)
 	assert.Equal(t, 2, building)

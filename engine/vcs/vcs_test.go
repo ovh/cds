@@ -32,6 +32,7 @@ func newTestService(t *testing.T) (*Service, error) {
 		RedisHost = cfg["redisHost"]
 		RedisPassword = cfg["redisPassword"]
 	}
+	log.SetLogger(t)
 
 	//Prepare the configuration
 	cfg := Configuration{}

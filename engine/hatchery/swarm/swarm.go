@@ -418,6 +418,13 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 		return false
 	}
 
+	//List all workers
+	ws, errWList := h.getWorkersStarted(cs)
+	if errWList != nil {
+		log.Error("CanSpawn> Unable to list workers: %s", errWList)
+		return false
+	}
+
 	if len(cs) > h.Config.MaxContainers {
 		log.Warning("CanSpawn> max containers reached. current:%d max:%d", len(cs), h.Config.MaxContainers)
 		return false
@@ -440,7 +447,7 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 			return false
 		}
 		if len(cs) > 0 {
-			percentFree := 100 - (100 * len(cs) / h.Config.MaxContainers)
+			percentFree := 100 - (100 * len(ws) / h.Config.MaxContainers)
 			if percentFree <= h.Config.RatioService {
 				log.Debug("CanSpawn> ratio reached. percentFree:%d ratioService:%d", percentFree, h.Config.RatioService)
 				return false
@@ -535,12 +542,16 @@ func (h *HatcherySwarm) CanSpawn(model *sdk.Model, jobID int64, requirements []s
 	return true
 }
 
-func (h *HatcherySwarm) getWorkersStarted() ([]docker.APIContainers, error) {
-	containers, errList := h.getContainers()
-	if errList != nil {
-		log.Error("WorkersStarted> Unable to list containers: %s", errList)
-		return nil, errList
+func (h *HatcherySwarm) getWorkersStarted(containers []docker.APIContainers) ([]docker.APIContainers, error) {
+	if containers == nil {
+		var errList error
+		containers, errList = h.getContainers()
+		if errList != nil {
+			log.Error("WorkersStarted> Unable to list containers: %s", errList)
+			return nil, errList
+		}
 	}
+
 	res := []docker.APIContainers{}
 	//We only count worker
 	for _, c := range containers {
@@ -561,13 +572,13 @@ func (h *HatcherySwarm) getWorkersStarted() ([]docker.APIContainers, error) {
 // WorkersStarted returns the number of instances started but
 // not necessarily register on CDS yet
 func (h *HatcherySwarm) WorkersStarted() int {
-	workers, _ := h.getWorkersStarted()
+	workers, _ := h.getWorkersStarted(nil)
 	return len(workers)
 }
 
 // WorkersStartedByModel returns the number of started workers
 func (h *HatcherySwarm) WorkersStartedByModel(model *sdk.Model) int {
-	workers, errList := h.getWorkersStarted()
+	workers, errList := h.getWorkersStarted(nil)
 	if errList != nil {
 		log.Error("WorkersStartedByModel> Unable to list containers: %s", errList)
 		return 0
@@ -622,7 +633,7 @@ func (h *HatcherySwarm) killAwolWorker() {
 		os.Exit(1)
 	}
 
-	containers, errList := h.getWorkersStarted()
+	containers, errList := h.getWorkersStarted(nil)
 	if errList != nil {
 		log.Warning("killAwolWorker> Cannot list containers: %s", errList)
 		os.Exit(1)

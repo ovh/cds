@@ -38,9 +38,9 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//Loading all models
-	models, err := worker.LoadWorkerModels(api.mustDB())
-	if err != nil {
-		t.Fatalf("Error getting models : %s", err)
+	models, errlw := worker.LoadWorkerModels(api.mustDB())
+	if errlw != nil {
+		t.Fatalf("Error getting models : %s", errlw)
 	}
 
 	//Delete all of them
