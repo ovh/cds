@@ -3,7 +3,7 @@ package venom
 import (
 	"sort"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/cheggaaa/pb.v1"
 )
 

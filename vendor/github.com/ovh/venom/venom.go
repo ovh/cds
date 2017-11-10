@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/mndrix/tap-go"
 	"gopkg.in/yaml.v2"
 )

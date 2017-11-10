@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/cheggaaa/pb.v1"
 	"gopkg.in/yaml.v2"
 )

@@ -123,11 +123,11 @@ func DeleteGroupFromApplication(db gorp.SqlExecutor, key, appName, groupName str
 
 func deleteGroupApplicationByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	appIDs := []int64{}
-	if _, err := db.Select(&appIDs, "SELECT application_id from applicaton_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
+	if _, err := db.Select(&appIDs, "SELECT application_id from application_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
 		return sdk.WrapError(err, "deleteGroupPipelineByGroup")
 	}
 
-	query := `DELETE FROM applicaton_group WHERE group_id=$1`
+	query := `DELETE FROM application_group WHERE group_id=$1`
 	if _, err := db.Exec(query, group.ID); err != nil {
 		return sdk.WrapError(err, "deleteGroupApplicationByGroup")
 	}

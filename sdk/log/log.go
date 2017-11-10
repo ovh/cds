@@ -7,8 +7,8 @@ import (
 	"os"
 	"regexp"
 
-	log "github.com/Sirupsen/logrus"
 	loghook "github.com/ovh/logrus-ovh-hook"
+	log "github.com/sirupsen/logrus"
 )
 
 // Conf contains log configuration

@@ -18,7 +18,6 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/hatchery/docker"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
@@ -103,7 +102,6 @@ Comming soon...`,
 		conf.API.Auth.SharedInfraToken = sdk.RandomString(128)
 		conf.API.Secrets.Key = sdk.RandomString(32)
 		conf.Hatchery.Local.API.Token = conf.API.Auth.SharedInfraToken
-		conf.Hatchery.Docker.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Openstack.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.VSphere.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
@@ -184,13 +182,6 @@ var configCheckCmd = &cobra.Command{
 			}
 		}
 
-		if conf.Hatchery.Docker.API.HTTP.URL != "" {
-			if err := docker.New().CheckConfiguration(conf.Hatchery.Docker); err != nil {
-				fmt.Println(err)
-				hasError = true
-			}
-		}
-
 		if conf.Hatchery.Marathon.API.HTTP.URL != "" {
 			if err := marathon.New().CheckConfiguration(conf.Hatchery.Marathon); err != nil {
 				fmt.Println(err)
@@ -228,7 +219,6 @@ Start CDS Engine Services:
  * Hatcheries:
 	They are the components responsible for spawning workers. Supported platforms/orchestrators are:
 	 * Local machine
-	 * Local Docker
 	 * Openstack
 	 * Docker Swarm
 	 * Openstack
@@ -239,7 +229,7 @@ Start CDS Engine Services:
  	This component operates CDS VCS connectivity
 
 Start all of this with a single command:
-	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]
+	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]
 All the services are using the same configuration file format.
 You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.
 You can also use or override toml file with environment variable.
@@ -297,9 +287,6 @@ See $ engine config command for more details.
 			case "api":
 				services = append(services, serviceConf{arg: a, service: api.New(), cfg: conf.API})
 				names = append(names, conf.API.Name)
-			case "hatchery:docker":
-				services = append(services, serviceConf{arg: a, service: docker.New(), cfg: conf.Hatchery.Docker})
-				names = append(names, conf.Hatchery.Docker.Name)
 			case "hatchery:local":
 				services = append(services, serviceConf{arg: a, service: local.New(), cfg: conf.Hatchery.Local})
 				names = append(names, conf.Hatchery.Local.Name)

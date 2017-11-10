@@ -238,8 +238,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
-
-		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx).ID, getWorker(ctx).Name, &res)
+		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx).Name, &res)
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
@@ -251,7 +250,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 	}
 }
 
-func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, workerID, workerName string, res *sdk.Result) {
+func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, workerName string, res *sdk.Result) {
 	defer close(chEvent)
 	defer close(chError)
 
@@ -268,11 +267,6 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 	if errj != nil {
 		chError <- sdk.WrapError(errj, "postJobResult> Unable to load node run job %d", res.BuildID)
 		return
-	}
-
-	//Update worker status
-	if err := worker.UpdateWorkerStatus(tx, workerID, sdk.StatusWaiting); err != nil {
-		log.Warning("postJobResult> Cannot update worker status (%s): %s", workerID, err)
 	}
 
 	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
@@ -294,9 +288,9 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 	}
 
 	// Update action status
-	log.Debug("postJobResult> Updating %d to %s in queue", workerID, res.Status)
+	log.Debug("postJobResult> Updating %d to %s in queue", job.ID, res.Status)
 	if err := workflow.UpdateNodeJobRunStatus(tx, store, p, job, sdk.Status(res.Status), chEvent); err != nil {
-		chError <- sdk.WrapError(err, "postJobResult> Cannot update %d status", workerID)
+		chError <- sdk.WrapError(err, "postJobResult> Cannot update %d status", job.ID)
 		return
 	}
 

@@ -359,7 +359,7 @@
   "pipeline_run_test_failed_title" : " test en erreur",
   "pipeline_run_test_skipped_title_s" : " tests ignorés",
   "pipeline_run_test_skipped_title" : " test ignoré",
-  "pipeline_run_test_testcase_name" : "Nom du testcase",
+  "pipeline_run_test_testcase_name" : "Testsuite / Testcase",
 
   "pipeline_stage_edit" : "Édition du stage",
   "pipeline_stage_moved" : "Stage déplacé",

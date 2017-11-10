@@ -18,6 +18,10 @@ export class AuthentificationStore {
      */
     constructor() {
         // Init store at startup
+        if (!localStorage.getItem(this.localStorageUserKey)) {
+            return;
+        }
+
         let user: User = JSON.parse(localStorage.getItem(this.localStorageUserKey));
         if (user) {
             this._connectedUser.next(user);
@@ -73,8 +77,8 @@ export class AuthentificationStore {
      */
     removeUser(): void {
         this._connectedUser.next(null);
-        localStorage.removeItem(this.localStorageUserKey);
-        localStorage.removeItem(this.localStorageSessionKey);
+        localStorage.setItem(this.localStorageUserKey, '');
+        localStorage.setItem(this.localStorageSessionKey, '');
     }
 
     /**
