@@ -133,7 +133,9 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 
 		}
 
-		log.Debug("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s", projectKey, token, secret)
+		if token == "" || secret == "" {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> token or secret is empty", err)
+		}
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
