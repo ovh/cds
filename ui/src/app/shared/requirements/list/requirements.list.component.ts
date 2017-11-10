@@ -17,12 +17,11 @@ export class RequirementsListComponent extends Table {
     @Input() edit: boolean;
     @Input('suggest')
     set suggest(data: string[]) {
-        if (Array.isArray(this.workerModels) && data) {
-            this.workerModels = this.workerModels.concat(data);
-        } else if (data) {
-            this.workerModels = data;
+        if (data) {
+            this._suggest = data;
+        } else {
+            this._suggest = [];
         }
-        this._suggest = data || [];
     }
     get suggest() {
         return this._suggest;

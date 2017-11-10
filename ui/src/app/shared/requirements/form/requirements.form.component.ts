@@ -4,6 +4,7 @@ import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {WorkerModel} from '../../../model/worker-model.model';
+import {TranslateService} from 'ng2-translate';
 
 @Component({
     selector: 'app-requirements-form',
@@ -14,12 +15,11 @@ export class RequirementsFormComponent {
 
     @Input('suggest')
     set suggest(data: Array<string>) {
-        if (Array.isArray(this.workerModels) && data) {
-            this.workerModels = this.workerModels.concat(data);
-        } else if (data) {
-            this.workerModels = data;
+        if (data) {
+            this._suggest = data;
+        } else {
+            this._suggest = [];
         }
-        this._suggest = data || [];
     }
     get suggest() {
         return this._suggest;
@@ -28,40 +28,55 @@ export class RequirementsFormComponent {
 
     newRequirement: Requirement = new Requirement('binary');
     availableRequirements: Array<string>;
-    valueChanged = false;
-    workerModels: Array<string>;
+    workerModels: Array<WorkerModel>;
     _suggest: Array<string> = [];
     loading = true;
 
-    constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
+    constructor(private _requirementStore: RequirementStore,
+        private _workerModelService: WorkerModelService,
+        private _translate: TranslateService) {
         this._requirementStore.getAvailableRequirements().subscribe(r => {
             this.availableRequirements = new Array<string>();
-            this.availableRequirements.push(...r.toArray());
+            // user does not need to add plugin prequisite manually, so we remove it from list
+            this.availableRequirements.push(...r.filter(req => req !== 'plugin').toArray());
         });
 
         this._workerModelService.getWorkerModels().first()
         .finally(() => this.loading = false)
         .subscribe( wms => {
-            this.workerModels = wms.map((wm) => wm.name).concat(this.workerModels);
+            this.workerModels = wms;
         });
     }
 
-    addRequirement(): void {
-        this.event.emit(new RequirementEvent('add', this.newRequirement));
-        this.newRequirement = new Requirement('binary');
-        this.valueChanged = false;
-    }
-
-    setValue(event: any): void  {
-        if (!this.valueChanged || this.newRequirement.value === '') {
-            this.newRequirement.value = event.target.value;
+    onSubmitAddRequirement(form): void {
+        if (form.valid === true && this.newRequirement.name !== '' && this.newRequirement.value !== '') {
+            this.event.emit(new RequirementEvent('add', this.newRequirement));
+            this.newRequirement = new Requirement('binary');
         }
     }
 
-    setName(event: any): void {
-        this.valueChanged = true;
-        if (this.newRequirement.name === '') {
-            this.newRequirement.name = event.target.value;
+    selectType(): void {
+        this.newRequirement.value = '';
+        this.newRequirement.opts = '';
+        this.newRequirement.name = '';
+    }
+
+    setName(): void {
+        switch (this.newRequirement.type) {
+            case 'service':
+                // if type service, user have to choose a hostname
+                return ;
+            case 'memory':
+                // memory: memory_4096
+                this.newRequirement.name = 'memory_'.concat(this.newRequirement.value);
+                return;
+            default:
+                // else, name is the value of the requirement
+                this.newRequirement.name = this.newRequirement.value;
         }
+    }
+
+    getHelp() {
+        return this._translate.instant('requirement_help_' + this.newRequirement.type);
     }
 }

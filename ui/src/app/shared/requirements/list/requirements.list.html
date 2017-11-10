@@ -65,6 +65,13 @@
                             <option *ngFor="let wm of workerModels" value="{{wm}}">{{wm}}</option>
                         </sm-select>
                     </div>
+                    <div *ngIf="!loading && (r.type === 'model' || r.type === 'service')">
+                        <textarea
+                            [(ngModel)]="r.opts"
+                            (ngModelChange)="change()"
+                            rows="3"
+                            placeholder="{{'requirement_placeholder_opts_' + r.type | translate}}"></textarea>
+                    </div>
                 </div>
                 <ng-template #rValue>
                     <span>{{r.value}}</span>

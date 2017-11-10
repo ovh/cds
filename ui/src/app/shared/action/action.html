@@ -38,8 +38,8 @@
                                     <app-requirements-list
                                         [suggest]="suggest"
                                         [requirements]="editableAction.requirements" [edit]="edit"
-                                       (onChange)="editableAction.hasChanged = true"
-                                       (event)="requirementEvent($event)"></app-requirements-list>
+                                        (onChange)="editableAction.hasChanged = true"
+                                        (event)="requirementEvent($event)"></app-requirements-list>
                                     <div class="requirementForm" *ngIf="edit">
                                         <app-requirements-form [suggest]="suggest" (event)="requirementEvent($event)"></app-requirements-form>
                                     </div>
@@ -47,7 +47,7 @@
                             </div>
                         </modal-content>
                         <modal-actions>
-                            <button class="ui grey button" (click)="requirementModal.hide()">{{ 'common_close' | translate }}</button>
+                            <button class="ui grey button" (click)="requirementModal.hide();parseRequirements();">{{ 'common_close' | translate }}</button>
                         </modal-actions>
                     </sm-modal>
                 </div>
