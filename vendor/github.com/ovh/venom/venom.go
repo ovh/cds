@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/mndrix/tap-go"
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
@@ -130,7 +130,7 @@ func OutputResult(format string, resume, resumeFailures bool, outputDir string, 
 	var err error
 	switch format {
 	case "json":
-		data, err = json.Marshal(tests)
+		data, err = json.MarshalIndent(tests, "", "  ")
 		if err != nil {
 			log.Fatalf("Error: cannot format output json (%s)", err)
 		}
@@ -145,11 +145,11 @@ func OutputResult(format string, resume, resumeFailures bool, outputDir string, 
 			log.Fatalf("Error: cannot format output yaml (%s)", err)
 		}
 	default:
-		dataxml, errm := xml.Marshal(tests)
+		dataxml, errm := xml.MarshalIndent(tests, "", "  ")
 		if errm != nil {
 			log.Fatalf("Error: cannot format xml output: %s", errm)
 		}
-		data = append([]byte("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"), dataxml...)
+		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>\n`), dataxml...)
 	}
 
 	if detailsLevel == "high" {
