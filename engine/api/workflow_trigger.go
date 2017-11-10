@@ -67,7 +67,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			}
 		}
 
-		data.ConditionNames = append(data.ConditionNames, "cds.dest.pipeline")
+		data.ConditionNames = append(data.ConditionNames, "cds.dest.pipeline", "cds.manual")
 
 		refNode := wf.GetNode(id)
 		if refNode == nil {
@@ -188,6 +188,7 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 				}
 			}
 		}
+		data.ConditionNames = append(data.ConditionNames, "cds.manual")
 		sort.Strings(data.ConditionNames)
 
 		return WriteJSON(w, r, data, http.StatusOK)
