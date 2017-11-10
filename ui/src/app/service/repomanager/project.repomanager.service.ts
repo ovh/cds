@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Rx';
-import {RepositoriesManager, Repository} from '../../model/repositories.model';
+import {Repository} from '../../model/repositories.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
 /**
@@ -17,8 +17,8 @@ export class RepoManagerService {
      * Get all available repositories manager
      * @returns {Observable<RepositoriesManager[]>}
      */
-    getAll(): Observable<RepositoriesManager[]> {
-        return this._http.get('/repositories_manager');
+    getAll(): Observable<string[]> {
+        return this._http.get<string[]>('/repositories_manager');
     }
 
     /**
@@ -30,6 +30,6 @@ export class RepoManagerService {
     getRepositories(key: string, repoManName: string, sync: boolean): Observable<Repository[]> {
         let params = new HttpParams();
         params = params.append('synchronize', sync.toString());
-        return this._http.get('/project/' + key + '/repositories_manager/' + repoManName + '/repos', {params: params});
+        return this._http.get<Repository[]>('/project/' + key + '/repositories_manager/' + repoManName + '/repos', {params: params});
     }
 }

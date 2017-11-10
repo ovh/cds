@@ -11,8 +11,6 @@ import (
 // bitbucketClient is a github.com wrapper for CDS vcs. interface
 type bitbucketClient struct {
 	consumer          bitbucketConsumer
-	apiURL            string
-	uiURL             string
 	accessToken       string
 	accessTokenSecret string
 }
@@ -27,14 +25,18 @@ type bitbucketConsumer struct {
 	authorizationURL string
 	accessTokenURL   string
 	callbackURL      string
+	apiURL           string
+	uiURL            string
 }
 
 //New creates a new bitbucketConsumer
-func New(consumerKey string, privateKey []byte, URL string, store cache.Store) sdk.VCSServer {
+func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL string, store cache.Store) sdk.VCSServer {
 	return &bitbucketConsumer{
 		ConsumerKey:      consumerKey,
 		PrivateKey:       privateKey,
 		URL:              URL,
+		apiURL:           apiURL,
+		uiURL:            uiURL,
 		cache:            store,
 		requestTokenURL:  URL + "/plugins/servlet/oauth/request-token",
 		authorizationURL: URL + "/plugins/servlet/oauth/authorize",

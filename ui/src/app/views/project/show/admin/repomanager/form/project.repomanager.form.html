@@ -2,7 +2,7 @@
     <div class="fields">
         <div class="seven wide field">
             <sm-select [(model)]="selectedRepoId" [disabled]="connectLoading">
-                <option *ngFor="let r of reposManagerList; let i = index;" [value]="i">{{r.name}}</option>
+                <option *ngFor="let r of reposManagerList; let i = index;" [value]="i">{{r}}</option>
             </sm-select>
         </div>
         <div class="nine wide right aligned field">

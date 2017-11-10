@@ -101,7 +101,7 @@ func executerProcess(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlEx
 	}
 
 	//Load application
-	app, err := application.LoadByID(db, store, s.ApplicationID, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithVariablesWithClearPassword)
+	app, err := application.LoadByID(db, store, s.ApplicationID, nil, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		return nil, err
 	}

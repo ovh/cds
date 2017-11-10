@@ -1,8 +1,8 @@
 package gitlab
 
 import (
-	"bytes"
 	"fmt"
+	"io"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -14,6 +14,6 @@ func (c *gitlabClient) Release(repo string, tagName string, title string, releas
 }
 
 // UploadReleaseFile upload a release file project
-func (c *gitlabClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, buf *bytes.Buffer) error {
+func (c *gitlabClient) UploadReleaseFile(repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error {
 	return fmt.Errorf("not implemented")
 }

@@ -3,7 +3,6 @@
         <thead>
         <tr>
             <th class="seven wide">{{ 'common_name' | translate }}</th>
-            <th class="seven wide">{{ 'common_url' | translate }}</th>
             <th class="two wide"></th>
         </tr>
         </thead>
@@ -11,9 +10,6 @@
         <tr *ngFor="let r of getDataForCurrentPage()">
             <td>
                 {{r.name}}
-            </td>
-            <td>
-                {{r.url}}
             </td>
             <td class="right aligned">
                 <app-delete-button (event)="clickDeleteButton(r.name)" [loading]="deleteLoading"></app-delete-button>

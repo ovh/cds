@@ -271,7 +271,6 @@ func (api *API) InitRouter() {
 
 	// RepositoriesManager
 	r.Handle("/repositories_manager", r.GET(api.getRepositoriesManagerHandler))
-	r.Handle("/repositories_manager/add", r.POST(api.addRepositoriesManagerHandler, NeedAdmin(true)))
 	r.Handle("/repositories_manager/oauth2/callback", r.GET(api.repositoriesManagerOAuthCallbackHandler, Auth(false)))
 	// RepositoriesManager for projects
 	r.Handle("/project/{permProjectKey}/repositories_manager", r.GET(api.getRepositoriesManagerForProjectHandler))

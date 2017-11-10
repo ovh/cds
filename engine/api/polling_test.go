@@ -22,24 +22,24 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor, store cache.Store) (*sdk.Project, *sdk.RepositoriesManager) {
+func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor, store cache.Store) *sdk.Project {
 	query := `
-		select 	project.ID, repositories_manager_project.id_repositories_manager
-		from 	project, repositories_manager_project
-		where 	project.id = repositories_manager_project.id_project
+		select 	project.ID
+		from 	project
+		where 	vcs_servers is not null
 		limit 	1
 		`
 	var projectID, rmID int64
 	err := db.QueryRow(query).Scan(&projectID, &rmID)
 	if err != nil {
 		t.Skip("Cant find any project linked to a repository. Skipping this tests.")
-		return nil, nil
+		return nil
 	}
 
 	projs, err := project.LoadAll(db, store, nil)
 	if err != nil {
 		t.Error(err.Error())
-		return nil, nil
+		return nil
 	}
 	var proj *sdk.Project
 	for _, p := range projs {
@@ -49,13 +49,7 @@ func testfindLinkedProject(t *testing.T, db gorp.SqlExecutor, store cache.Store)
 		}
 	}
 
-	rm, err := repositoriesmanager.LoadByID(db, rmID, store)
-	if err != nil {
-		t.Error(err)
-		return nil, nil
-	}
-
-	return proj, rm
+	return proj
 }
 
 func TestAddPollerHandler(t *testing.T) {
@@ -65,7 +59,7 @@ func TestAddPollerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db, api.Cache)
+	proj := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -89,7 +83,7 @@ func TestAddPollerHandler(t *testing.T) {
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	app.RepositoriesManager = rm
+	app.VCSServer = proj.VCSServers[0].Name
 	app.RepositoryFullname = "test/" + app.Name
 	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
@@ -134,7 +128,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db, api.Cache)
+	proj := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -158,7 +152,7 @@ func TestUpdatePollerHandler(t *testing.T) {
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	app.RepositoriesManager = rm
+	app.VCSServer = proj.VCSServers[0].Name
 	app.RepositoryFullname = "test/" + app.Name
 	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
@@ -225,7 +219,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db, api.Cache)
+	proj := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -249,7 +243,7 @@ func TestGetApplicationPollersHandler(t *testing.T) {
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	app.RepositoriesManager = rm
+	app.VCSServer = proj.VCSServers[0].Name
 	app.RepositoryFullname = "test/" + app.Name
 	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
@@ -318,7 +312,7 @@ func TestGetPollersHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db, api.Cache)
+	proj := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -342,7 +336,7 @@ func TestGetPollersHandler(t *testing.T) {
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	app.RepositoriesManager = rm
+	app.VCSServer = proj.VCSServers[0].Name
 	app.RepositoryFullname = "test/" + app.Name
 	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 	//6. Prepare a poller
@@ -407,7 +401,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj, rm := testfindLinkedProject(t, db, api.Cache)
+	proj := testfindLinkedProject(t, db, api.Cache)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
@@ -431,7 +425,7 @@ func TestDeletePollerHandler(t *testing.T) {
 	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	app.RepositoriesManager = rm
+	app.VCSServer = proj.VCSServers[0].Name
 	app.RepositoryFullname = "test/" + app.Name
 	repositoriesmanager.InsertForApplication(api.mustDB(), app, proj.Key)
 

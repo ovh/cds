@@ -148,16 +148,7 @@ func (api *API) postWorkflowHandler() Handler {
 			if len(srvs) < 1 {
 				return sdk.WrapError(fmt.Errorf("postWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
 			}
-			var errHooks error
-			for _, s := range srvs {
-				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
-				errHooks = errBulk
-				if errBulk == nil {
-					log.Debug("postWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
-					break
-				}
-			}
-			if errHooks != nil {
+			if _, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hooks, nil); errHooks != nil {
 				return sdk.WrapError(errHooks, "postWorkflowHandler> Unable to create hooks")
 			}
 		}
@@ -221,7 +212,6 @@ func (api *API) putWorkflowHandler() Handler {
 
 		hooks := wf.GetHooks()
 		if len(hooks) > 0 {
-
 			//Push the hook to hooks µService
 			dao := services.NewRepository(api.mustDB, api.Cache)
 			//Load service "hooks"
@@ -245,23 +235,17 @@ func (api *API) putWorkflowHandler() Handler {
 			if len(srvs) < 1 {
 				return sdk.WrapError(fmt.Errorf("putWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
 			}
-			var errHooks error
-			for _, s := range srvs {
-				var hooksUpdated map[string]sdk.WorkflowNodeHook
-				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, &hooksUpdated)
-				errHooks = errBulk
-				if errBulk == nil {
-					for _, h := range hooksUpdated {
-						if err := workflow.UpdateHook(tx, &h); err != nil {
-							return sdk.WrapError(errHooks, "putWorkflowHandler> Cannot update hook")
-						}
-					}
-					log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
-					break
-				}
 
-			}
-			if errHooks != nil {
+			var hooksUpdated map[string]sdk.WorkflowNodeHook
+			code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hooks, &hooksUpdated)
+			if errHooks == nil {
+				for _, h := range hooksUpdated {
+					if err := workflow.UpdateHook(tx, &h); err != nil {
+						return sdk.WrapError(errHooks, "putWorkflowHandler> Cannot update hook")
+					}
+				}
+				log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
+			} else {
 				return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
 			}
 		}

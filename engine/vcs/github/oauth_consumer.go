@@ -93,27 +93,7 @@ func (g *githubConsumer) AuthorizeToken(state, code string) (string, string, err
 	}
 
 	//Github return scope as "scope":"repo,gist"
-	//Check all scopes : see docs
-	//	The scope attribute lists scopes attached to the token that were granted by the user. Normally, these scopes will be identical to what you requested
-	//  When requesting multiple scopes, the token will be saved with a normalized list of scopes, discarding those that are implicitly included by another requested scope
-	ghScope := strings.Split(ghResponse["scope"], ",")
-	var allFound = true
-	for _, s := range requestedScope {
-		var found bool
-		for i := range ghScope {
-			if ghScope[i] == s {
-				found = true
-				break
-			}
-		}
-		if !found {
-			allFound = false
-			break
-		}
-	}
-	if !allFound {
-		return "", "", fmt.Errorf("Scopes doesn't match with request : %s %s", strings.Join(requestedScope, " "), string(res))
-	}
+	//Should we check scopes ?	ghScope := strings.Split(ghResponse["scope"], ",")
 
 	return ghResponse["access_token"], state, nil
 }

@@ -258,7 +258,7 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 
 	//Load the application in the context
 	if ctx.ApplicationID != 0 {
-		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithVariables)
+		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables)
 		if err != nil {
 			return nil, sdk.WrapError(err, "loadNodeContext> Unable to load application %d", ctx.ApplicationID)
 		}

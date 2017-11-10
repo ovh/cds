@@ -8,9 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+var ErrNoNewEvents = fmt.Errorf("No new events")
 
 //GetEvents calls Github et returns GithubEvents as []interface{}
 func (g *githubClient) GetEvents(fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
@@ -32,7 +36,7 @@ func (g *githubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 	}
 
 	if status == http.StatusNotModified {
-		return nil, interval, fmt.Errorf("No new events")
+		return nil, interval, ErrNoNewEvents
 	}
 
 	nextEvents := []Event{}
@@ -41,6 +45,7 @@ func (g *githubClient) GetEvents(fullname string, dateRef time.Time) ([]interfac
 		return nil, interval, fmt.Errorf("Unable to parse github events %s: %s", string(body), err)
 	}
 
+	log.Debug("githubClient.GetEvents> Found %d events...")
 	//Check here only events after the reference date and only of type PushEvent or CreateEvent
 	for _, e := range nextEvents {
 		var skipEvent bool
@@ -98,7 +103,11 @@ func (g *githubClient) PushEvents(fullname string, iEvents []interface{}) ([]sdk
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
-		e := i.(Event)
+
+		e := Event{}
+		if err := mapstructure.Decode(i, &e); err != nil {
+			return nil, err
+		}
 		if e.Type == "PushEvent" {
 			events = append(events, e)
 		}
@@ -150,7 +159,10 @@ func (g *githubClient) CreateEvents(fullname string, iEvents []interface{}) ([]s
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
-		e := i.(Event)
+		e := Event{}
+		if err := mapstructure.Decode(i, &e); err != nil {
+			return nil, err
+		}
 		if e.Type == "CreateEvent" {
 			events = append(events, e)
 		}
@@ -188,7 +200,10 @@ func (g *githubClient) DeleteEvents(fullname string, iEvents []interface{}) ([]s
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
-		e := i.(Event)
+		e := Event{}
+		if err := mapstructure.Decode(i, &e); err != nil {
+			return nil, err
+		}
 		if e.Type == "DeleteEvent" {
 			events = append(events, e)
 		}
@@ -213,7 +228,10 @@ func (g *githubClient) PullRequestEvents(fullname string, iEvents []interface{})
 	events := Events{}
 	//Cast all the events
 	for _, i := range iEvents {
-		e := i.(Event)
+		e := Event{}
+		if err := mapstructure.Decode(i, &e); err != nil {
+			return nil, err
+		}
 		if e.Type == "PullRequestEvent" {
 			events = append(events, e)
 		}

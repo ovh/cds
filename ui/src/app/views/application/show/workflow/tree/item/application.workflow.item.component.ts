@@ -307,7 +307,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     }
 
     createHook(): void {
-        if (!this.application.repositories_manager) {
+        if (!this.application.vcs_server) {
             this._toast.error('', this._translate.instant('hook_repo_man_needed'));
             return;
         }
@@ -321,7 +321,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     }
 
     createPoller(): void {
-        if (!this.application.repositories_manager) {
+        if (!this.application.vcs_server) {
             this._toast.error('', this._translate.instant('hook_repo_man_needed'));
             return;
         }

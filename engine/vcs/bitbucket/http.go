@@ -12,8 +12,9 @@ import (
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
+
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk"
 )
 
 var (
@@ -53,10 +54,10 @@ func requestString(method string, uri string, params map[string]string) string {
 }
 
 var (
-	// Returned if the specified resource does not exist.
+	// ErrNotFound is returned if the specified resource does not exist.
 	ErrNotFound = errors.New("Not Found")
 
-	// Returned if the caller attempts to make a call or modify a resource
+	// ErrForbidden is returned if the caller attempts to make a call or modify a resource
 	// for which the caller is not authorized.
 	//
 	// The request was a valid request, the caller's authentication credentials
@@ -64,16 +65,16 @@ var (
 	// access the resource.
 	ErrForbidden = errors.New("Forbidden")
 
-	// Returned if the call requires authentication and either the credentials
+	// ErrNotAuthorized is returned if the call requires authentication and either the credentials
 	// provided failed or no credentials were provided.
 	ErrNotAuthorized = errors.New("Unauthorized")
 
-	// Returned if the caller submits a badly formed request. For example,
+	// ErrBadRequest is returned if the caller submits a badly formed request. For example,
 	// the caller can receive this return if you forget a required parameter.
 	ErrBadRequest = errors.New("Bad Request")
 )
 
-func (c *bitbucketClient) GetFullApiURL(api string) string {
+func (c *bitbucketClient) getFullAPIURL(api string) string {
 	var url string
 	switch api {
 	case "keys":
@@ -98,7 +99,7 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 	}
 
 	// create the URI
-	apiURL := c.GetFullApiURL(api)
+	apiURL := c.getFullAPIURL(api)
 	uri, err := url.Parse(apiURL + path)
 	if err != nil {
 		return err
@@ -132,8 +133,6 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 		return err
 	}
 
-	log.Debug("VCS> Bitbucket> request: %s %s. body: %s", req.Method, req.URL.String(), string(values))
-
 	cacheKey := cache.Key("vcs", "bitbucket", "request", req.URL.String(), token.Token())
 	if v != nil && method == "GET" {
 		if c.consumer.cache.Get(cacheKey, v) {
@@ -144,7 +143,7 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 	// make the request using the default http client
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "VCS> Bitbucket> HTTP Error")
 	}
 
 	// Read the bytes from the body (make sure we defer close the body)
@@ -153,8 +152,6 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 	if err != nil {
 		return err
 	}
-
-	log.Debug("VCS> Bitbucket> response: %s", string(body))
 
 	// Check for an http error status (ie not 200 StatusOK)
 	switch resp.StatusCode {

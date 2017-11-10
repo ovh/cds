@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
@@ -20,9 +19,6 @@ var (
 			return sdk.WrapError(err, "application.loadDefaultDependencies", app.Name)
 		}
 		if err := loadTriggers(db, store, app, u); err != nil && err != sql.ErrNoRows {
-			return sdk.WrapError(err, "application.loadDefaultDependencies", app.Name)
-		}
-		if err := loadRepositoryManager(db, store, app, u); err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadDefaultDependencies", app.Name)
 		}
 		return nil
@@ -84,26 +80,6 @@ var (
 					return sdk.WrapError(err, "application.loadTriggers> Unable to load trigger for application %d, pipeline %s(%d)", app.ID, appPip.Pipeline.Name, appPip.Pipeline.ID)
 				}
 				trig.DestApplication = *a
-			}
-		}
-		return nil
-	}
-
-	loadRepositoryManager = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
-		if app.RepositoryFullname != "" {
-			id, err := db.SelectNullInt("select repositories_manager_id from application where id = $1", app.ID)
-			if err != nil {
-				if err == sql.ErrNoRows {
-					return nil
-				}
-				return sdk.WrapError(err, "application.loadPipelines> Unable to load repositories manager for application %d", app.ID)
-			}
-			if id.Valid {
-				rm, err := repositoriesmanager.LoadByID(db, id.Int64, store)
-				if err != nil {
-					return sdk.WrapError(err, "application.loadPipelines> Unable to load repositories manager (%d) for application %d", id.Int64, app.ID)
-				}
-				app.RepositoriesManager = rm
 			}
 		}
 		return nil

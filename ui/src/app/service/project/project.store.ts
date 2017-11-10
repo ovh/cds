@@ -197,7 +197,7 @@ export class ProjectStore {
             let projectToUpdate = cache.get(key);
             if (projectToUpdate) {
                 projectToUpdate.last_modified = res.last_modified;
-                projectToUpdate.repositories_manager = res.repositories_manager;
+                projectToUpdate.vcs_servers = res.vcs_servers;
                 this._projectCache.next(cache.set(key, projectToUpdate));
             }
             return res;
@@ -216,10 +216,10 @@ export class ProjectStore {
             let pToUpdate = cache.get(key);
             if (pToUpdate) {
                 pToUpdate.last_modified = res.last_modified;
-                if (pToUpdate.repositories_manager) {
-                    let indexRepo: number = pToUpdate.repositories_manager.findIndex(r => r.name === repoName);
+                if (pToUpdate.vcs_servers) {
+                    let indexRepo: number = pToUpdate.vcs_servers.findIndex(r => r.name === repoName);
                     if (indexRepo >= 0) {
-                        pToUpdate.repositories_manager.splice(indexRepo, 1);
+                        pToUpdate.vcs_servers.splice(indexRepo, 1);
                         this._projectCache.next(cache.set(key, pToUpdate));
                     }
                 }

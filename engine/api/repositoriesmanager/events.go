@@ -48,10 +48,10 @@ func retryEvent(e *sdk.Event, err error, store cache.Store) {
 	store.Enqueue("events_repositoriesmanager", e)
 }
 
-func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store) error {
+func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 	log.Debug("repositoriesmanager>processEvent> receive: type:%s all: %+v", event.EventType, event)
 
-	var c sdk.RepositoriesManagerClient
+	var c sdk.VCSAuthorizedClient
 	var errC error
 
 	if event.EventType == fmt.Sprintf("%T", sdk.EventPipelineBuild{}) {
@@ -63,10 +63,16 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store) error
 		if eventpb.RepositoryManagerName == "" {
 			return nil
 		}
-		c, errC = AuthorizedClient(db, eventpb.ProjectKey, eventpb.RepositoryManagerName, store)
+		vcsServer, err := LoadForProject(db, eventpb.ProjectKey, eventpb.RepositoryManagerName)
+		if err != nil {
+			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, err)
+		}
+
+		c, errC = AuthorizedClient(db, store, vcsServer)
 		if errC != nil {
 			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, errC)
 		}
+
 	} else if event.EventType != fmt.Sprintf("%T", sdk.EventWorkflowNodeRun{}) {
 		var eventWNR sdk.EventWorkflowNodeRun
 		if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
@@ -76,13 +82,20 @@ func processEvent(db gorp.SqlExecutor, event sdk.Event, store cache.Store) error
 		if eventWNR.RepositoryManagerName == "" {
 			return nil
 		}
-		c, errC = AuthorizedClient(db, eventWNR.ProjectKey, eventWNR.RepositoryManagerName, store)
+		vcsServer, err := LoadForProject(db, eventWNR.ProjectKey, eventWNR.RepositoryManagerName)
+		if err != nil {
+			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventWNR.ProjectKey, eventWNR.RepositoryManagerName, err)
+		}
+
+		c, errC = AuthorizedClient(db, store, vcsServer)
 		if errC != nil {
 			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventWNR.ProjectKey, eventWNR.RepositoryManagerName, errC)
 		}
 	} else {
 		return nil
 	}
+
+	log.Debug("repositoriesmanager>processEvent> event:%+v", event)
 
 	if err := c.SetStatus(event); err != nil {
 		retryEvent(&event, err, store)

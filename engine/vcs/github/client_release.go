@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"strings"
 
@@ -54,15 +55,18 @@ func (g *githubClient) Release(fullname string, tagName string, title string, re
 }
 
 // UploadReleaseFile Attach a file into the release
-func (g *githubClient) UploadReleaseFile(repo string, release *sdk.VCSRelease, runArtifact sdk.WorkflowNodeRunArtifact, buf *bytes.Buffer) error {
-	var url = strings.Split(release.UploadURL, "{")[0] + "?name=" + runArtifact.Name
-	res, err := g.post(url, "application/octet-stream", buf, true)
+func (g *githubClient) UploadReleaseFile(repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error {
+	var url = strings.Split(uploadURL, "{")[0] + "?name=" + artifactName
+	res, err := g.post(url, "application/octet-stream", r, true)
 	if err != nil {
 		return err
 	}
+	defer r.Close()
 	defer res.Body.Close()
+
 	if res.StatusCode != 201 {
 		return sdk.WrapError(fmt.Errorf("github.Release >Unable to upload file on release. Url : %s - Status code : %d", url, res.StatusCode), "")
 	}
+
 	return nil
 }

@@ -157,6 +157,7 @@ func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+// DefaultHeaders is a set of default header for the router
 func DefaultHeaders() map[string]string {
 	return map[string]string{
 		"Access-Control-Allow-Origin":   "*",
