@@ -57,8 +57,6 @@ func (api *API) getWorkflowHandler() Handler {
 
 		w1.Permission = permission.WorkflowPermission(w1.ID, getUser(ctx))
 
-		log.Warning(">>>>>%d", w1.Permission)
-
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig("project", "workflow")
 
