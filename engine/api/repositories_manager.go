@@ -105,7 +105,9 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 
 		data := map[string]string{}
 
-		api.Cache.Get(cache.Key("reposmanager", "oauth", state), &data)
+		if !api.Cache.Get(cache.Key("reposmanager", "oauth", state), &data) {
+			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
+		}
 		projectKey := data["project_key"]
 		rmName := data["repositories_manager"]
 		username := data["username"]
