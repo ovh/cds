@@ -40,7 +40,7 @@ export class WorkflowRunTestTableComponent extends Table {
                 if (this.tests) {
                     this.tests.forEach(ts => {
                         if (ts.errors > 0 || ts.failures > 0) {
-                            this.filteredTests.push(...ts.tests.filter(tc => {
+                            this.filteredTests.push(...ts.tests.map(tc => {tc.name = ts.name + ' / ' + tc.name; return tc}).filter(tc => {
                                 return (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0);
                             }));
                         }
@@ -50,14 +50,16 @@ export class WorkflowRunTestTableComponent extends Table {
             case 'skipped':
                 if (this.tests) {
                     this.tests.forEach(ts => {
-                        this.filteredTests.push(...ts.tests.filter(tc => tc.skipped.length > 0));
+                        this.filteredTests.push(...ts.tests.map(tc => {tc.name = ts.name + ' / ' + tc.name; return tc}).filter(tc => {
+                            return (tc.skipped && tc.skipped.length > 0);
+                        }));
                     });
                 }
                 break;
             default:
                 if (this.tests) {
                     this.tests.forEach(ts => {
-                        this.filteredTests.push(...ts.tests);
+                        this.filteredTests.push(...ts.tests.map(tc => {tc.name = ts.name + ' / ' + tc.name; return tc}));
                     });
                 }
         }
