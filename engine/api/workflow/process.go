@@ -387,6 +387,10 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			Name:  "cds.triggered_by.username",
 			Type:  sdk.StringParameter,
 			Value: m.User.Username,
+		}, sdk.Parameter{
+			Name:  "cds.manual",
+			Type:  sdk.StringParameter,
+			Value: "true",
 		})
 	}
 
