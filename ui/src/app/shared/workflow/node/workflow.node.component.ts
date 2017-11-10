@@ -3,7 +3,8 @@ import {
     EventEmitter, Input, NgZone, OnInit, Output, ViewChild, ChangeDetectorRef
 } from '@angular/core';
 import {
-    Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeTrigger,
+    Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowNodeContext, WorkflowNodeHook, WorkflowNodeJoin,
+    WorkflowNodeTrigger,
     WorkflowPipelineNameImpact
 } from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';

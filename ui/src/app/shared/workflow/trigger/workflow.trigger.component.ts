@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {
-    Workflow, WorkflowNode, WorkflowNodeTrigger
+    Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowNodeContext, WorkflowNodeTrigger
 } from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
@@ -42,6 +42,19 @@ export class WorkflowTriggerComponent {
     }
 
     saveTrigger(): void {
+        if (!this.trigger.workflow_dest_node.id) {
+            if (!this.trigger.workflow_dest_node.context) {
+                this.trigger.workflow_dest_node.context = new WorkflowNodeContext();
+            }
+            this.trigger.workflow_dest_node.context.conditions = new WorkflowNodeConditions();
+            this.trigger.workflow_dest_node.context.conditions.plain = new Array<WorkflowNodeCondition>();
+            let c = new  WorkflowNodeCondition();
+            c.variable = 'cds.status';
+            c.value = 'Success';
+            c.operator = 'eq';
+            this.trigger.workflow_dest_node.context.conditions.plain.push(c);
+
+        }
         this.triggerChange.emit(this.trigger);
     }
 }
