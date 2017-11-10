@@ -212,7 +212,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 	//Do the request
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 403, rec.Code)
 
 	var wFromAPI sdk.Workflow
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &wFromAPI))

@@ -23,13 +23,21 @@ export class ApplicationService {
      * @param key Project unique key
      * @param appName Application Name
      */
-    getApplication(key: string, appName: string): Observable<Application> {
+    getApplication(key: string, appName: string, filter?: {branch: string, remote: string}): Observable<Application> {
         let params = new HttpParams();
         params = params.append('withPollers', 'true');
         params = params.append('withHooks', 'true');
         params = params.append('withWorkflow', 'true');
         params = params.append('withNotifs', 'true');
         params = params.append('withRepoMan', 'true');
+        if (filter) {
+            if (filter.branch) {
+                params = params.append('branchName', filter.branch);
+            }
+            if (filter.remote) {
+                params = params.append('remote', filter.remote);
+            }
+        }
         return this._http.get('/project/' + key + '/application/' + appName, {params: params});
     }
 

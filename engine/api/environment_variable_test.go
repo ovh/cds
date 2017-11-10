@@ -56,6 +56,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//4. Do the request
@@ -125,6 +126,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("PUT", uri, body)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//5. Do the request
@@ -188,6 +190,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("DELETE", uri, nil)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//5. Do the request

@@ -43,4 +43,3 @@ func (c *gitlabClient) Branch(fullname, branchName string) (*sdk.VCSBranch, erro
 
 	return br, nil
 }
-

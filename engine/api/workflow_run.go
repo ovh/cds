@@ -271,6 +271,10 @@ func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.
 	if errU := workflow.UpdateWorkflowRunStatus(tx, run.ID, sdk.StatusStopped.String()); errU != nil {
 		chError <- sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run status %d", run.ID)
 	}
+
+	if err := tx.Commit(); err != nil {
+		chError <- sdk.WrapError(err, "stopWorkflowRunHandler> Cannot commit transaction")
+	}
 }
 
 func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
@@ -468,6 +472,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			opts.Manual = &sdk.WorkflowNodeRunManual{}
 		}
 		opts.Manual.User = *u
+		opts.Manual.User.Groups = nil
 
 		fromNodes := []*sdk.WorkflowNode{}
 		if len(opts.FromNodeIDs) > 0 {

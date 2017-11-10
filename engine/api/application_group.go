@@ -61,7 +61,7 @@ func (api *API) updateGroupRoleOnApplicationHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := group.UpdateGroupRoleInApplication(tx, key, appName, groupName, groupApplication.Permission); err != nil {
+		if err := group.UpdateGroupRoleInApplication(tx, app.ID, g.ID, groupApplication.Permission); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnApplicationHandler: Cannot update permission for group %s in application %s", groupName, appName)
 		}
 

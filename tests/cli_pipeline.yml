@@ -74,7 +74,7 @@ testcases:
 
 - name: cleanup
   steps:
+  - script: {{.cds.build.cds}} project remove --force ITCLIPIPPRJ
   - script: {{.cds.build.cds}} group remove ITCLIPIP_GRP_EDIT_TEST
   - script: {{.cds.build.cds}} group remove ITCLIPIP_GRP
-  - script: {{.cds.build.cds}} project remove --force ITCLIPIPPRJ
   - script: {{.cds.build.cds}} action remove IT_CLI_pipeline_Test_Echo
