@@ -412,7 +412,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     }
 
     getTriggerColor(node: WorkflowNode, triggerID: number): string {
-        if (this._workflowRun && node) {
+        if (this._workflowRun && this._workflowRun.nodes && node) {
             if (this._workflowRun.nodes[node.id]) {
                 let lastRun = <WorkflowNodeRun>this._workflowRun.nodes[node.id][0];
                 if (lastRun.triggers_run && lastRun.triggers_run[triggerID]) {
