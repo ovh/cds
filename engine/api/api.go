@@ -327,8 +327,10 @@ func (a *API) Serve(ctx context.Context) error {
 	//Initialize artifacts storage
 	var objectstoreKind objectstore.Kind
 	switch a.Config.Artifact.Mode {
-	case "openstack", "swift":
+	case "openstack":
 		objectstoreKind = objectstore.Openstack
+	case "swift":
+		objectstoreKind = objectstore.Swift
 	case "filesystem", "local":
 		objectstoreKind = objectstore.Filesystem
 	default:
