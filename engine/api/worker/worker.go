@@ -68,17 +68,17 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 		switch jobType.String {
 		case sdk.JobTypePipeline:
 			if err := pipeline.RestartPipelineBuildJob(tx, jobID.Int64); err != nil {
-				log.Error("DeleteWorker[%d]> Cannot restart pipeline build job: %s", id, err)
+				log.Error("DeleteWorker[%s]> Cannot restart pipeline build job: %s", name, err)
 			} else {
-				log.Info("DeleteWorker[%d]> PipelineBuildJob %d restarted after crash", id, jobID.Int64)
+				log.Info("DeleteWorker[%s]> PipelineBuildJob %d restarted after crash", name, jobID.Int64)
 			}
 		case sdk.JobTypeWorkflowNode:
 			wNodeJob, errL := workflow.LoadNodeJobRun(tx, nil, jobID.Int64)
 			if errL == nil && wNodeJob.Retry < 3 {
 				if err := workflow.RestartWorkflowNodeJob(db, *wNodeJob); err != nil {
-					log.Warning("DeleteWorker[%d]> Cannot restart workflow node run : %s", id, err)
+					log.Warning("DeleteWorker[%s]> Cannot restart workflow node run : %s", name, err)
 				} else {
-					log.Info("DeleteWorker[%d]> WorkflowNodeRun %d restarted after crash", id, jobID.Int64)
+					log.Info("DeleteWorker[%s]> WorkflowNodeRun %d restarted after crash", name, jobID.Int64)
 				}
 			}
 		}
