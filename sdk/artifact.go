@@ -172,21 +172,6 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	tag = url.QueryEscape(tag)
 	tag = strings.Replace(tag, "/", "-", -1)
 
-	var err error
-	for i := 0; i < 5; i++ {
-		err = uploadArtifact(project, pipeline, application, tag, filePath, buildNumber, env)
-		if err == nil {
-			return nil
-		}
-		time.Sleep(1 * time.Second)
-	}
-
-	return fmt.Errorf("x5: %s", err)
-}
-
-func uploadArtifact(project string, pipeline string, application string, tag string, filePath string, buildNumber int, env string) error {
-	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s", project, application, pipeline, buildNumber, tag)
-
 	fileForMD5, errop := os.Open(filePath)
 	if errop != nil {
 		return errop
@@ -215,7 +200,8 @@ func uploadArtifact(project string, pipeline string, application string, tag str
 	defer fileReopen.Close()
 	_, name := filepath.Split(filePath)
 
-	body := &bytes.Buffer{}
+	body := new(bytes.Buffer)
+
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
 	if errc != nil {
@@ -231,13 +217,33 @@ func uploadArtifact(project string, pipeline string, application string, tag str
 	writer.WriteField("perm", strconv.FormatUint(uint64(stat.Mode().Perm()), 10))
 	writer.WriteField("md5sum", md5sumStr)
 
-	if errclose := writer.Close(); errclose != nil {
-		return errclose
+	if err := writer.Close(); err != nil {
+		return err
 	}
 
+	var bodyReader io.Reader
+	bodyReader = body
+
+	var err error
+	for i := 0; i < 5; i++ {
+		var buf = new(bytes.Buffer)
+		tee := io.TeeReader(bodyReader, buf)
+		err = uploadArtifact(project, pipeline, application, tag, tee, name, writer.FormDataContentType(), buildNumber, env)
+		if err == nil {
+			return nil
+		}
+		time.Sleep(1 * time.Second)
+		bodyReader = buf
+	}
+
+	return fmt.Errorf("x5: %s", err)
+}
+
+func uploadArtifact(project string, pipeline string, application string, tag string, body io.Reader, name string, contentType string, buildNumber int, env string) error {
+	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s", project, application, pipeline, buildNumber, tag)
 	_, code, err := UploadMultiPart("POST", uri, body,
 		SetHeader(ArtifactFileName, name),
-		SetHeader("Content-Type", writer.FormDataContentType()))
+		SetHeader("Content-Type", contentType))
 	if err != nil {
 		return err
 	}

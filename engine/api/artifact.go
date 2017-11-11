@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
@@ -31,9 +33,9 @@ func (api *API) uploadArtifactHandler() Handler {
 
 		//parse the multipart form in the request
 		if err := r.ParseMultipartForm(100000); err != nil {
-			log.Warning("uploadArtifactHandler: Error parsing multipart form: %s", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return sdk.WrapError(err, "uploadArtifactHandler>  Error parsing multipart form")
 		}
+
 		//get a ref to the parsed multipart form
 		m := r.MultipartForm
 		envName := m.Value["env"][0]
@@ -143,14 +145,21 @@ func (api *API) downloadArtifactHandler() Handler {
 			return sdk.WrapError(err, "downloadArtifactHandler> Cannot load artifact")
 		}
 
-		log.Debug("downloadArtifactHandler: Serving %+v", art)
+		f, err := objectstore.FetchArtifact(art)
+		if err != nil {
+			return sdk.WrapError(err, "downloadArtifactHandler> Cannot fetch artifact")
+		}
+
+		if _, err := io.Copy(w, f); err != nil {
+			return sdk.WrapError(err, "downloadArtifactHandler> Cannot stream artifact")
+		}
+
+		if err := f.Close(); err != nil {
+			return sdk.WrapError(err, "downloadArtifactHandler> Cannot close artifact")
+		}
 
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
-
-		if err := artifact.StreamFile(w, art); err != nil {
-			return sdk.WrapError(err, "downloadArtifactHandler> Cannot stream artifact")
-		}
 		return nil
 	}
 }
@@ -264,13 +273,23 @@ func (api *API) downloadArtifactDirectHandler() Handler {
 			return sdk.WrapError(err, "downloadArtifactDirectHandler> Could not load artifact with hash %s", hash)
 		}
 
+		log.Debug("downloadArtifactDirectHandler: Serving %+v", art)
+		f, err := objectstore.FetchArtifact(art)
+		if err != nil {
+			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot fetch artifact")
+		}
+
+		if _, err := io.Copy(w, f); err != nil {
+			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot stream artifact")
+		}
+
+		if err := f.Close(); err != nil {
+			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot close artifact")
+		}
+
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		log.Debug("downloadArtifactDirectHandler: Serving %+v", art)
-		if err := artifact.StreamFile(w, art); err != nil {
-			return sdk.WrapError(err, "downloadArtifactDirectHandler: Cannot stream artifact")
-		}
 		return nil
 	}
 }

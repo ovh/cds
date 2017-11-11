@@ -2,7 +2,6 @@ package artifact
 
 import (
 	"database/sql"
-	"fmt"
 	"io"
 	"strings"
 
@@ -271,17 +270,4 @@ func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artif
 	}
 
 	return tx.Commit()
-}
-
-// StreamFile Stream artifact
-func StreamFile(w io.Writer, o objectstore.Object) error {
-	f, err := objectstore.FetchArtifact(o)
-	if err != nil {
-		return fmt.Errorf("cannot fetch artifact: %s", err)
-	}
-
-	if err := objectstore.StreamFile(w, f); err != nil {
-		return err
-	}
-	return f.Close()
 }
