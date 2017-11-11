@@ -361,9 +361,11 @@ func RestartWorkflowNodeJob(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun
 		}
 		wNodeJob.Job.Reason = "Killed (Reason: Timeout)\n"
 
-		l.Val += "\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n"
-		if err := updateLog(db, l); err != nil {
-			return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while update step log")
+		if l != nil { // log could be nil here
+			l.Val += "\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n"
+			if err := updateLog(db, l); err != nil {
+				return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while update step log")
+			}
 		}
 	}
 	if err := replaceWorkflowJobRunInQueue(db, wNodeJob); err != nil {
