@@ -1,5 +1,6 @@
 *.swp
 .idea
+.vscode
 .DS_Store
 cli/cds/cds
 engine/engine
