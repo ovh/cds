@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, OnDestroy, NgZone} from '@angular/core';
+import {Component, Input, OnInit, OnDestroy, NgZone, ElementRef, ViewChild} from '@angular/core';
 import {Action} from '../../../../model/action.model';
 import {CDSWorker} from '../../../../shared/worker/worker';
 import {Subscription} from 'rxjs/Rx';
@@ -27,7 +27,6 @@ export class StepLogComponent implements OnInit, OnDestroy {
     @Input() pipeline: Pipeline;
     @Input() pipelineBuild: PipelineBuild;
     @Input() previousBuild: PipelineBuild;
-
     // Dynamic
     @Input('stepStatus')
     set stepStatus (data: string) {
@@ -63,6 +62,8 @@ export class StepLogComponent implements OnInit, OnDestroy {
     doneExec: Date;
     duration: string;
     intervalListener: any;
+
+    @ViewChild('logsContent') logsElt: ElementRef;
 
     constructor(private _authStore: AuthentificationStore, private _durationService: DurationService) { }
 
@@ -100,14 +101,21 @@ export class StepLogComponent implements OnInit, OnDestroy {
                         if (build.step_logs) {
                             this.logs = build.step_logs;
                         }
+                        if (this.loading) {
+                            this.computeDuration();
+                            this.loading = false;
+                        }
                     });
-                    if (this.loading) {
-                        this.computeDuration();
-                        this.loading = false;
-                    }
+
                 }
             });
         }
+    }
+
+    copyRawLog() {
+      this.logsElt.nativeElement.value = this.getLogs();
+      this.logsElt.nativeElement.select();
+      document.execCommand('copy');
     }
 
     ngOnDestroy(): void {

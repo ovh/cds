@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, OnDestroy, NgZone} from '@angular/core';
+import {Component, Input, OnInit, OnDestroy, NgZone, ViewChild, ElementRef} from '@angular/core';
 import {Subscription} from 'rxjs/Rx';
 import {Action} from '../../../../../../model/action.model';
 import {Project} from '../../../../../../model/project.model';
@@ -64,6 +64,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     zone: NgZone;
     _showLog = false;
     pipelineBuildStatusEnum = PipelineStatus;
+    @ViewChild('logsContent') logsElt: ElementRef;
 
     constructor(private _authStore: AuthentificationStore, private _durationService: DurationService) { }
 
@@ -77,6 +78,12 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         clearInterval(this.intervalListener);
+    }
+
+    copyRawLog() {
+      this.logsElt.nativeElement.value = this.getLogs();
+      this.logsElt.nativeElement.select();
+      document.execCommand('copy');
     }
 
     initWorker(): void {
@@ -104,11 +111,11 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                         if (build.step_logs) {
                             this.logs = build.step_logs;
                         }
+                        if (this.loading) {
+                            this.computeDuration();
+                            this.loading = false;
+                        }
                     });
-                    if (this.loading) {
-                        this.computeDuration();
-                        this.loading = false;
-                    }
                 }
             });
         }

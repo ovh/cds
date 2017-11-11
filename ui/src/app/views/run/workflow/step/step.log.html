@@ -11,8 +11,14 @@
         </div>
     </div>
     <div class="logs" *ngIf="showLog">
+        <div class="right floated">
+          <button class="ui icon button copyButton" (click)="copyRawLog(getLogs())">
+            <i class="copy icon"></i>
+          </button>
+        </div>
         <pre [innerHTML]="getLogs()" *ngIf="!loading">
         </pre>
+        <textarea class="fakeInput" name="fakeInput" #logsContent></textarea>
         <div class="ui active centered inline loader" *ngIf="loading"></div>
     </div>
 </div>
