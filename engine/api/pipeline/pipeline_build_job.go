@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
@@ -91,6 +92,9 @@ func GetPipelineBuildJobForUpdate(db gorp.SqlExecutor, id int64) (*sdk.PipelineB
 		FROM pipeline_build_job
 		WHERE id = $1 FOR UPDATE NOWAIT
 	`, id); err != nil {
+		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == "55P03" {
+			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "GetPipelineBuildJobForUpdate> Unable to get pipeline_build_job for update (ErrAlreadyTaken)")
+		}
 		return nil, sdk.WrapError(err, "GetPipelineBuildJobForUpdate> Unable to get pipeline_build_job for update")
 	}
 	pbJob := sdk.PipelineBuildJob(pbJobGorp)
@@ -216,7 +220,7 @@ func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, work
 	pbJob.Status = sdk.StatusBuilding.String()
 
 	if err := prepareSpawnInfos(pbJob, infos); err != nil {
-		return nil, sdk.WrapError(err, "TakePipelineBuildJob> Cannot prepare swpan infos")
+		return nil, sdk.WrapError(err, "TakePipelineBuildJob> Cannot prepare spawn infos")
 	}
 
 	if err := UpdatePipelineBuildJob(db, pbJob); err != nil {
