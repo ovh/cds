@@ -2,6 +2,7 @@ import {Component, Input, OnInit, OnDestroy, NgZone, ViewChild, ElementRef} from
 import {Subscription} from 'rxjs/Rx';
 import {Action} from '../../../../../../model/action.model';
 import {Project} from '../../../../../../model/project.model';
+import {Job} from '../../../../../../model/job.model';
 import {BuildResult, Log, PipelineStatus} from '../../../../../../model/pipeline.model';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../../model/workflow.run.model';
 import {CDSWorker} from '../../../../../../shared/worker/worker';
@@ -23,6 +24,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     // Static
     @Input() step: Action;
     @Input() stepOrder: number;
+    @Input() job: Job;
     @Input() project: Project;
     @Input() workflowName: string;
     @Input() nodeRun: WorkflowNodeRun;
@@ -69,9 +71,13 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     constructor(private _authStore: AuthentificationStore, private _durationService: DurationService) { }
 
     ngOnInit(): void {
+        let nodeRunDone = this.nodeRun.status !== this.pipelineBuildStatusEnum.BUILDING &&
+          this.nodeRun.status !== this.pipelineBuildStatusEnum.WAITING;
+        let isLastStep = this.stepOrder === this.job.action.actions.length - 1;
+
         this.zone = new NgZone({enableLongStackTrace: false});
         if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
-            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
+            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) || (nodeRunDone && isLastStep)) {
           this.showLog = true;
         }
     }

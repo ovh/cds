@@ -7,6 +7,7 @@ import {DurationService} from '../../../../shared/duration/duration.service';
 import {environment} from '../../../../../environments/environment';
 import {Project} from '../../../../model/project.model';
 import {Application} from '../../../../model/application.model';
+import {Job} from '../../../../model/job.model';
 import {Pipeline, PipelineBuild, Log, BuildResult, PipelineStatus} from '../../../../model/pipeline.model';
 
 declare var ansi_up: any;
@@ -22,6 +23,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
     @Input() step: Action;
     @Input() stepOrder: number;
     @Input() jobID: number;
+    @Input() job: Job;
     @Input() project: Project;
     @Input() application: Application;
     @Input() pipeline: Pipeline;
@@ -68,9 +70,13 @@ export class StepLogComponent implements OnInit, OnDestroy {
     constructor(private _authStore: AuthentificationStore, private _durationService: DurationService) { }
 
     ngOnInit(): void {
+        let pipelineBuildDone = this.pipelineBuild.status !== this.pipelineBuildStatusEnum.BUILDING &&
+          this.pipelineBuild.status !== this.pipelineBuildStatusEnum.WAITING;
+        let isLastStep = this.stepOrder === this.job.action.actions.length - 1;
+
         this.zone = new NgZone({enableLongStackTrace: false});
         if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
-            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
+            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) || (pipelineBuildDone && isLastStep)) {
           this.showLog = true;
         }
     }
