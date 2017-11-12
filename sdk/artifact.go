@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -29,11 +30,20 @@ type Artifact struct {
 	Name        string `json:"name" cli:"name"`
 	Tag         string `json:"tag"`
 
-	DownloadHash string `json:"download_hash" cli:"download_hash"`
-	Size         int64  `json:"size,omitempty" cli:"size"`
-	Perm         uint32 `json:"perm,omitempty"`
-	MD5sum       string `json:"md5sum,omitempty" cli:"md5sum"`
-	ObjectPath   string `json:"object_path,omitempty"`
+	DownloadHash     string `json:"download_hash" cli:"download_hash"`
+	Size             int64  `json:"size,omitempty" cli:"size"`
+	Perm             uint32 `json:"perm,omitempty"`
+	MD5sum           string `json:"md5sum,omitempty" cli:"md5sum"`
+	ObjectPath       string `json:"object_path,omitempty"`
+	TempURL          string `json:"temp_url,omitempty"`
+	TempURLSecretKey string `json:"temp_url_secret_key,omitempty"`
+}
+
+// ArtifactsStore represents
+type ArtifactsStore struct {
+	Name                  string `json:"name"`
+	Private               bool   `json:"private"`
+	TemporaryURLSupported bool   `json:"temporary_url_supported"`
 }
 
 //GetName returns the name the artifact
@@ -200,8 +210,17 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	defer fileReopen.Close()
 	_, name := filepath.Split(filePath)
 
-	body := new(bytes.Buffer)
+	bodyRes, _, _ := Request("GET", "/artifact/store", nil)
+	if len(bodyRes) > 0 {
+		store := new(ArtifactsStore)
+		_ = json.Unmarshal(bodyRes, store)
 
+		if store.TemporaryURLSupported {
+			return uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileReopen, stat, md5sumStr)
+		}
+	}
+
+	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
 	if errc != nil {
@@ -237,6 +256,67 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	}
 
 	return fmt.Errorf("x5: %s", err)
+}
+
+func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, file io.Reader, stat os.FileInfo, md5sum string) error {
+
+	art := Artifact{
+		Name:   filename,
+		MD5sum: md5sum,
+		Size:   stat.Size(),
+		Perm:   uint32(stat.Mode().Perm()),
+	}
+
+	b, err := json.Marshal(art)
+	if err != nil {
+		return err
+	}
+
+	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s/url", project, application, pipeline, buildNumber, tag)
+	body, _, err := Request("POST", path, b)
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(body, &art); err != nil {
+		return err
+	}
+
+	fmt.Println("Temprary URL: ", art.TempURL)
+
+	//Post the file to the temporary URL
+	req, errRequest := http.NewRequest("PUT", art.TempURL, file)
+	if errRequest != nil {
+		return errRequest
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	defer resp.Body.Close()
+
+	body, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("Unable to upload artifact: (HTTP %d) %s", resp.StatusCode, string(body))
+	}
+
+	//Call the API back to store the artifact in DB
+	b, err = json.Marshal(art)
+	if err != nil {
+		return err
+	}
+	path = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s/url/callback", project, application, pipeline, buildNumber, tag)
+	if _, _, err := Request("POST", path, b); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func uploadArtifact(project string, pipeline string, application string, tag string, body io.Reader, name string, contentType string, buildNumber int, env string) error {

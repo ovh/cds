@@ -9,6 +9,7 @@ import (
 )
 
 var storage Driver
+var instance sdk.ArtifactsStore
 
 //Status is for status handler
 func Status() string {
@@ -17,6 +18,16 @@ func Status() string {
 	}
 
 	return storage.Status()
+}
+
+// Instance returns the objectstore singleton
+func Instance() sdk.ArtifactsStore {
+	return instance
+}
+
+// Storage returns the Driver singleton
+func Storage() Driver {
+	return storage
 }
 
 //StoreArtifact an artifact with default objectstore driver
@@ -159,6 +170,11 @@ type ConfigOptionsFilesystem struct {
 func New(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
 	case Openstack:
+		instance = sdk.ArtifactsStore{
+			Name:                  "Openstack",
+			Private:               false,
+			TemporaryURLSupported: false,
+		}
 		return NewOpenstackStore(c, cfg.Options.Openstack.Address,
 			cfg.Options.Openstack.Username,
 			cfg.Options.Openstack.Password,
@@ -166,6 +182,11 @@ func New(c context.Context, cfg Config) (Driver, error) {
 			cfg.Options.Openstack.Region,
 			cfg.Options.Openstack.ContainerPrefix)
 	case Swift:
+		instance = sdk.ArtifactsStore{
+			Name:                  "Swift",
+			Private:               false,
+			TemporaryURLSupported: true,
+		}
 		return NewSwiftStore(cfg.Options.Openstack.Address,
 			cfg.Options.Openstack.Username,
 			cfg.Options.Openstack.Password,
@@ -173,6 +194,11 @@ func New(c context.Context, cfg Config) (Driver, error) {
 			cfg.Options.Openstack.Tenant,
 			cfg.Options.Openstack.ContainerPrefix)
 	case Filesystem:
+		instance = sdk.ArtifactsStore{
+			Name:                  "Local FS",
+			Private:               false,
+			TemporaryURLSupported: false,
+		}
 		return NewFilesystemStore(cfg.Options.Filesystem.Basedir)
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")

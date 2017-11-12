@@ -88,10 +88,10 @@ func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
 	log.Debug("OpenstacSwiftStorekStore> Fetching /%s/%s\n", container, object)
 
 	go func() {
-		log.Debug("SwiftStore> downloading object %s%s", container, object)
+		log.Debug("SwiftStore> downloading object %s/%s", container, object)
 
 		if _, err := s.ObjectGet(container, object, pipeWriter, false, nil); err != nil {
-			log.Error("SwiftStore> Unable to get object %s/%s", container, object)
+			log.Error("SwiftStore> Unable to get object %s/%s: %s", container, object, err)
 		}
 
 		log.Debug("SwiftStore> object %s%s downloaded", container, object)
@@ -120,16 +120,46 @@ func (s *SwiftStore) StoreURL(o Object) (string, string, error) {
 		return "", "", sdk.WrapError(err, "SwiftStore> Unable to create container %s", container)
 	}
 
-	key, _ := sessionstore.NewSessionKey()
+	key, err := s.containerKey(container)
+	if err != nil {
+		return "", "", sdk.WrapError(err, "SwiftStore> Unable to get container key %s", container)
+	}
+
 	url := s.ObjectTempUrl(container, object, string(key), "PUT", time.Now().Add(15*time.Minute))
 	return url, string(key), nil
+}
+
+func (s *SwiftStore) containerKey(container string) (string, error) {
+	_, headers, err := s.Container(container)
+	if err != nil {
+		return "", sdk.WrapError(err, "SwiftStore> Unable to get container %s", container)
+	}
+	log.Debug("SwiftStore> Get container %s metadata %+v", container, headers)
+
+	key := headers["X-Container-Meta-Temp-URL-Key"]
+	if key == "" {
+		skey, _ := sessionstore.NewSessionKey()
+		key = string(skey)
+
+		log.Debug("SwiftStore> Update container %s metadata", container)
+		if err := s.ContainerUpdate(container, swift.Headers{"X-Container-Meta-Temp-URL-Key": key}); err != nil {
+			return "", sdk.WrapError(err, "SwiftStore> Unable to update container metadata %s", container)
+		}
+	}
+
+	return key, nil
 }
 
 func (s *SwiftStore) FetchURL(o Object) (string, string, error) {
 	container := s.containerprefix + o.GetPath()
 	object := o.GetName()
 	escape(container, object)
-	key, _ := sessionstore.NewSessionKey()
+
+	key, err := s.containerKey(container)
+	if err != nil {
+		return "", "", sdk.WrapError(err, "SwiftStore> Unable to get container key %s", container)
+	}
+
 	url := s.ObjectTempUrl(container, object, string(key), "GET", time.Now().Add(15*time.Minute))
 	return url, string(key), nil
 }
