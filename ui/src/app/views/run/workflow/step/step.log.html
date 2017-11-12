@@ -3,7 +3,7 @@
         <div class="status" [class.icon]="currentStatus !== pipelineBuildStatusEnum.BUILDING">
             <app-status-icon [status]="currentStatus"></app-status-icon>
         </div>
-        <div class="title">
+        <div class="title" [title]="startExec ? ('step_title_duration' | translate:{start: startExec, end: doneExec}) : ''">
             {{step.name}} {{duration}}
         </div>
         <div class="right floated flags" *ngIf="step.optional">
@@ -12,7 +12,7 @@
     </div>
     <div class="logs" *ngIf="showLog">
         <div class="right floated">
-          <button class="ui icon button copyButton" (click)="copyRawLog(getLogs())">
+          <button class="ui icon button copyButton" [title]="'common_copy_clipboard' | translate" (click)="copyRawLog(getLogs())">
             <i class="copy icon"></i>
           </button>
         </div>
