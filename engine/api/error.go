@@ -15,7 +15,7 @@ func WriteError(w http.ResponseWriter, r *http.Request, err error) {
 
 	// ErrAlreadyTaken is not useful to log in warning
 	if errProcessed.ID == sdk.ErrAlreadyTaken.ID {
-		log.Debug("%-7s | %-4d | %s \t %s", r.Method, errProcessed.Status, r.RequestURI, err)
+		log.Info("%-7s | %-4d | %s \t %s", r.Method, errProcessed.Status, r.RequestURI, err)
 	} else {
 		log.Warning("%-7s | %-4d | %s \t %s", r.Method, errProcessed.Status, r.RequestURI, err)
 	}
