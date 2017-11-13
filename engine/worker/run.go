@@ -277,11 +277,7 @@ func setupBuildDirectory(wd string) error {
 		return err
 	}
 
-	if err := os.Setenv("HOME", wd); err != nil {
-		return err
-	}
-
-	return nil
+	return os.Setenv("HOME", wd)
 }
 
 // remove the buildDirectory created by setupBuildDirectory
