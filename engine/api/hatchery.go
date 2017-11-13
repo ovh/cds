@@ -22,20 +22,29 @@ func (api *API) registerHatcheryHandler() Handler {
 		// Load token
 		tk, err := token.LoadToken(api.mustDB(), hatch.UID)
 		if err != nil {
-			return sdk.WrapError(sdk.ErrUnauthorized, "registerHatchery> Invalid token")
+			return sdk.WrapError(sdk.ErrUnauthorized, "registerHatcheryHandler> Invalid token")
 		}
 		hatch.GroupID = tk.GroupID
 
-		if err = hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {
-			if err != sdk.ErrModelNameExist {
-				return sdk.WrapError(err, "registerHatchery> Cannot insert new hatchery")
+		oldH, errL := hatchery.LoadHatcheryByNameAndToken(api.mustDB(), hatch.Name, tk.Token)
+		if errL != nil && errL != sdk.ErrNoHatchery {
+			return sdk.WrapError(err, "registerHatcheryHandler> Cannot load hatchery %s", hatch.Name)
+		}
+
+		if oldH != nil {
+			hatch.ID = oldH.ID
+			if err := hatchery.Update(api.mustDB(), hatch); err != nil {
+				return sdk.WrapError(err, "registerHatcheryHandler> Cannot insert new hatchery")
 			}
-			return sdk.WrapError(err, "registerHatchery> Error")
+		} else {
+			if err := hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {
+				return sdk.WrapError(err, "registerHatcheryHandler> Cannot insert new hatchery")
+			}
 		}
 
 		hatch.Uptodate = hatch.Version == sdk.VERSION
 
-		log.Debug("registerHatchery> Welcome %d", hatch.ID)
+		log.Debug("registerHatcheryHandler> Welcome %d", hatch.ID)
 		return WriteJSON(w, r, hatch, http.StatusOK)
 	}
 }
