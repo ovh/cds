@@ -72,6 +72,5 @@ func writeError(w http.ResponseWriter, r *http.Request, err error) {
 	al := r.Header.Get("Accept-Language")
 	msg, code := sdk.ProcessError(err, al)
 	sdkErr := sdk.Error{Message: msg}
-	log.Info("Write error: %s\n", sdkErr)
 	writeJSON(w, sdkErr, code)
 }
