@@ -44,6 +44,16 @@ $squareSize: 32px;
   clear: both;
   padding: 10px $squareSize 10px $squareSize;
 
+  .fakeInput {
+    display: block;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    opacity: 0;
+  }
+
   pre {
     font-size: 0.8em;
     line-height: 1.1em;

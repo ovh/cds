@@ -189,6 +189,7 @@
   "common_no_environment" : "There is no environment linked",
   "common_usage" : "Usage",
   "common_orientation" : "Orientation",
+  "common_copy_clipboard" : "Copy to clipboad",
 
   "usage_application_list" : "Applications linked",
   "usage_workflow_list" : "Workflows linked",
@@ -452,6 +453,7 @@
   "step_final_no" : "There is no final step.",
   "step_nonfinal_no" : "There is no step.",
   "step_updated" : "Step updated",
+  "step_title_duration" : "Start: {{start}}, End: {{end}}",
 
   "trigger_added" : "Trigger added",
   "trigger_add_prerequisite_title" : "Add a run condition",

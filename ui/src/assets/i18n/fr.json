@@ -189,6 +189,7 @@
   "common_no_environment" : "Il n'y a aucun environnement lié",
   "common_usage" : "Usage",
   "common_orientation" : "Orientation",
+  "common_copy_clipboard" : "Copier dans le presse papier",
 
   "usage_application_list" : "Applications liées",
   "usage_workflow_list" : "Workflows liés",
@@ -452,6 +453,7 @@
   "step_final_no" : "Il n'y a aucune étape finale.",
   "step_nonfinal_no" : "Il n'y a aucune étape.",
   "step_updated" : "Etape mise à jour",
+  "step_title_duration" : "Début: {{start}}, Fin: {{end}}",
 
   "trigger_added" : "Trigger ajouté",
   "trigger_add_prerequisite_title" : "Ajouter une condition de lancement",
