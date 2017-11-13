@@ -61,13 +61,6 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(errP, "postTakeWorkflowJobHandler> Cannot load project")
 		}
 
-		// Start a tx
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "postTakeWorkflowJobHandler> Cannot start transaction")
-		}
-		defer tx.Rollback()
-
 		//Load worker model
 		workerModel := getWorker(ctx).Name
 		if getWorker(ctx).ModelID != 0 {
@@ -77,6 +70,13 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			}
 			workerModel = wm.Name
 		}
+
+		// Start a tx
+		tx, errBegin := api.mustDB().Begin()
+		if errBegin != nil {
+			return sdk.WrapError(errBegin, "postTakeWorkflowJobHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
 
 		//Prepare spawn infos
 		infos := []sdk.SpawnInfo{{

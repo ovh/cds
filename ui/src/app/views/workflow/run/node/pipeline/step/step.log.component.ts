@@ -1,8 +1,8 @@
-import {Component, Input, OnInit, OnDestroy, NgZone} from '@angular/core';
+import {Component, Input, OnInit, OnDestroy, NgZone, ViewChild, ElementRef} from '@angular/core';
 import {Subscription} from 'rxjs/Rx';
 import {Action} from '../../../../../../model/action.model';
 import {Project} from '../../../../../../model/project.model';
-import {StepStatus} from '../../../../../../model/job.model';
+import {Job, StepStatus} from '../../../../../../model/job.model';
 import {BuildResult, Log, PipelineStatus} from '../../../../../../model/pipeline.model';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../../model/workflow.run.model';
 import {CDSWorker} from '../../../../../../shared/worker/worker';
@@ -24,6 +24,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     // Static
     @Input() step: Action;
     @Input() stepOrder: number;
+    @Input() job: Job;
     @Input() project: Project;
     @Input() workflowName: string;
     @Input() nodeRun: WorkflowNodeRun;
@@ -72,13 +73,18 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     _showLog = false;
     _stepStatus: StepStatus;
     pipelineBuildStatusEnum = PipelineStatus;
+    @ViewChild('logsContent') logsElt: ElementRef;
 
     constructor(private _authStore: AuthentificationStore, private _durationService: DurationService) { }
 
     ngOnInit(): void {
+        let nodeRunDone = this.nodeRun.status !== this.pipelineBuildStatusEnum.BUILDING &&
+          this.nodeRun.status !== this.pipelineBuildStatusEnum.WAITING;
+        let isLastStep = this.stepOrder === this.job.action.actions.length - 1;
+
         this.zone = new NgZone({enableLongStackTrace: false});
         if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
-            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
+            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) || (nodeRunDone && isLastStep)) {
           this.showLog = true;
         }
         if (this.stepStatus) {
@@ -90,6 +96,12 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     ngOnDestroy() {
         clearInterval(this.intervalListener);
+    }
+
+    copyRawLog() {
+      this.logsElt.nativeElement.value = this.getLogs();
+      this.logsElt.nativeElement.select();
+      document.execCommand('copy');
     }
 
     initWorker(): void {
@@ -117,11 +129,11 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                         if (build.step_logs) {
                             this.logs = build.step_logs;
                         }
+                        if (this.loading) {
+                            this.computeDuration();
+                            this.loading = false;
+                        }
                     });
-                    if (this.loading) {
-                        this.computeDuration();
-                        this.loading = false;
-                    }
                 }
             });
         }

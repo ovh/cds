@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
@@ -117,6 +118,7 @@ type sqlContext struct {
 	EnvID                     sql.NullInt64  `db:"environment_id"`
 	DefaultPayload            sql.NullString `db:"default_payload"`
 	DefaultPipelineParameters sql.NullString `db:"default_pipeline_parameters"`
+	Conditions                sql.NullString `db:"conditions"`
 }
 
 func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
@@ -154,6 +156,12 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 			return sdk.WrapError(errM, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) default pipeline parameters", c.ID)
 		}
 		sqlContext.DefaultPipelineParameters = sql.NullString{String: string(b), Valid: true}
+	}
+
+	var errC error
+	sqlContext.Conditions, errC = gorpmapping.JSONToNullString(c.Conditions)
+	if errC != nil {
+		return sdk.WrapError(errC, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) conditions", c.ID)
 	}
 
 	if _, err := db.Update(&sqlContext); err != nil {
@@ -232,7 +240,7 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
-		"select application_id, environment_id, default_payload, default_pipeline_parameters from workflow_node_context where id = $1", ctx.ID); err != nil {
+		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions from workflow_node_context where id = $1", ctx.ID); err != nil {
 		return nil, err
 	}
 	if sqlContext.AppID.Valid {
@@ -273,6 +281,11 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 		}
 		ctx.Environment = env
 	}
+
+	if err := gorpmapping.JSONNullString(sqlContext.Conditions, &ctx.Conditions); err != nil {
+		return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
+	}
+
 	return &ctx, nil
 }
 

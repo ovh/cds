@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, OnDestroy, NgZone} from '@angular/core';
+import {Component, Input, OnInit, OnDestroy, NgZone, ElementRef, ViewChild} from '@angular/core';
 import {Action} from '../../../../model/action.model';
 import {CDSWorker} from '../../../../shared/worker/worker';
 import {Subscription} from 'rxjs/Rx';
@@ -7,6 +7,7 @@ import {DurationService} from '../../../../shared/duration/duration.service';
 import {environment} from '../../../../../environments/environment';
 import {Project} from '../../../../model/project.model';
 import {Application} from '../../../../model/application.model';
+import {Job} from '../../../../model/job.model';
 import {Pipeline, PipelineBuild, Log, BuildResult, PipelineStatus} from '../../../../model/pipeline.model';
 
 declare var ansi_up: any;
@@ -22,12 +23,12 @@ export class StepLogComponent implements OnInit, OnDestroy {
     @Input() step: Action;
     @Input() stepOrder: number;
     @Input() jobID: number;
+    @Input() job: Job;
     @Input() project: Project;
     @Input() application: Application;
     @Input() pipeline: Pipeline;
     @Input() pipelineBuild: PipelineBuild;
     @Input() previousBuild: PipelineBuild;
-
     // Dynamic
     @Input('stepStatus')
     set stepStatus (data: string) {
@@ -64,12 +65,18 @@ export class StepLogComponent implements OnInit, OnDestroy {
     duration: string;
     intervalListener: any;
 
+    @ViewChild('logsContent') logsElt: ElementRef;
+
     constructor(private _authStore: AuthentificationStore, private _durationService: DurationService) { }
 
     ngOnInit(): void {
+        let pipelineBuildDone = this.pipelineBuild.status !== this.pipelineBuildStatusEnum.BUILDING &&
+          this.pipelineBuild.status !== this.pipelineBuildStatusEnum.WAITING;
+        let isLastStep = this.stepOrder === this.job.action.actions.length - 1;
+
         this.zone = new NgZone({enableLongStackTrace: false});
         if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
-            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional)) {
+            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) || (pipelineBuildDone && isLastStep)) {
           this.showLog = true;
         }
     }
@@ -100,14 +107,21 @@ export class StepLogComponent implements OnInit, OnDestroy {
                         if (build.step_logs) {
                             this.logs = build.step_logs;
                         }
+                        if (this.loading) {
+                            this.computeDuration();
+                            this.loading = false;
+                        }
                     });
-                    if (this.loading) {
-                        this.computeDuration();
-                        this.loading = false;
-                    }
+
                 }
             });
         }
+    }
+
+    copyRawLog() {
+      this.logsElt.nativeElement.value = this.getLogs();
+      this.logsElt.nativeElement.select();
+      document.execCommand('copy');
     }
 
     ngOnDestroy(): void {

@@ -333,3 +333,45 @@ func (c *vcsClient) UploadReleaseFile(fullname string, releaseName, uploadURL st
 	}
 	return nil
 }
+
+// WebhooksInfos is a set of info about webhooks
+type WebhooksInfos struct {
+	WebhooksSupported         bool `json:"webhooks_supported"`
+	WebhooksDisabled          bool `json:"webhooks_disabled"`
+	WebhooksCreationSupported bool `json:"webhooks_creation_supported"`
+	WebhooksCreationDisabled  bool `json:"webhooks_creation_disabled"`
+}
+
+// GetWebhooksInfos returns webhooks_supported, webhooks_disabled, webhooks_creation_supported, webhooks_creation_disabled for a vcs server
+func GetWebhooksInfos(c sdk.VCSAuthorizedClient) (WebhooksInfos, error) {
+	client, ok := c.(*vcsClient)
+	if !ok {
+		return WebhooksInfos{}, fmt.Errorf("Polling infos cast error")
+	}
+	res := WebhooksInfos{}
+	path := fmt.Sprintf("/vcs/%s/webhooks", client.name)
+	if _, err := client.doJSONRequest("GET", path, nil, &res); err != nil {
+		return WebhooksInfos{}, err
+	}
+	return res, nil
+}
+
+// PollingInfos is a set of info about polling functions
+type PollingInfos struct {
+	PollingSupported bool `json:"polling_supported"`
+	PollingDisabled  bool `json:"polling_disabled"`
+}
+
+// GetPollingInfos returns polling_supported and polling_disabled for a vcs server
+func GetPollingInfos(c sdk.VCSAuthorizedClient) (PollingInfos, error) {
+	client, ok := c.(*vcsClient)
+	if !ok {
+		return PollingInfos{}, fmt.Errorf("Polling infos cast error")
+	}
+	res := PollingInfos{}
+	path := fmt.Sprintf("/vcs/%s/polling", client.name)
+	if _, err := client.doJSONRequest("GET", path, nil, &res); err != nil {
+		return PollingInfos{}, err
+	}
+	return res, nil
+}

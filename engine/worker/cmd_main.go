@@ -243,7 +243,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				//Take the job
 				if requirementsOK {
 					log.Debug("checkQueue> Try take the PipelineBuildJob %d%s", j.ID, t)
-          canWorkOnAnotherJob := w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedPBJobID)
+					canWorkOnAnotherJob := w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedPBJobID)
 					if canWorkOnAnotherJob {
 						continue
 					}

@@ -40,7 +40,7 @@ func ExecuterRun(DBFunc func() *gorp.DbMap, store cache.Store) ([]sdk.PipelineSc
 
 		s, errlock := loadAndLockPipelineScheduler(tx, exs[i].PipelineSchedulerID)
 		if errlock != nil {
-			log.Error("Run> Unable to load to pipeline scheduler %d %s", exs[i].PipelineSchedulerID, errlock)
+			log.Error("ExecuterRun> Unable to load to pipeline scheduler %d %s", exs[i].PipelineSchedulerID, errlock)
 			_ = tx.Rollback()
 			continue
 		}

@@ -147,6 +147,14 @@ func executerProcess(tx gorp.SqlExecutor, store cache.Store, p *sdk.RepositoryPo
 		return nil, sdk.WrapError(err, "Polling> Unable to get client for %s %s", projectKey, rm)
 	}
 
+	//Check if the polling if disabled
+	if info, err := repositoriesmanager.GetPollingInfos(client); err != nil {
+		return nil, err
+	} else if info.PollingDisabled || !info.PollingSupported {
+		log.Info("Polling> %s polling is disabled", vcsServer.Name)
+		return nil, nil
+	}
+
 	var events []interface{}
 	events, pollingDelay, err = client.GetEvents(p.Application.RepositoryFullname, p.DateCreation)
 	if err != nil && err.Error() != "No new events" {

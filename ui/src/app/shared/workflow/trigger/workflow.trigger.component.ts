@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
 import {
-    Workflow, WorkflowNode, WorkflowNodeTrigger, WorkflowTriggerCondition, WorkflowTriggerConditions
+    Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowNodeContext, WorkflowNodeTrigger
 } from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
@@ -25,19 +25,12 @@ export class WorkflowTriggerComponent {
     @Input() trigger: WorkflowNodeTrigger;
     @Input() loading: boolean;
 
-    operators: {};
-    conditionNames: Array<string>;
-
-    constructor(private _workflowStore: WorkflowStore, private _modalService: SuiModalService) {
+    constructor(private _modalService: SuiModalService) {
     }
 
     show(): void {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.triggerModal);
         this.modal = this._modalService.open(config);
-        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.triggerSrcNode.id).first().subscribe(wtc => {
-            this.operators = wtc.operators;
-            this.conditionNames = wtc.names;
-        });
     }
 
     hide(): void {
@@ -49,19 +42,19 @@ export class WorkflowTriggerComponent {
     }
 
     saveTrigger(): void {
-        this.triggerChange.emit(this.trigger);
-    }
+        if (!this.trigger.workflow_dest_node.id) {
+            if (!this.trigger.workflow_dest_node.context) {
+                this.trigger.workflow_dest_node.context = new WorkflowNodeContext();
+            }
+            this.trigger.workflow_dest_node.context.conditions = new WorkflowNodeConditions();
+            this.trigger.workflow_dest_node.context.conditions.plain = new Array<WorkflowNodeCondition>();
+            let c = new  WorkflowNodeCondition();
+            c.variable = 'cds.status';
+            c.value = 'Success';
+            c.operator = 'eq';
+            this.trigger.workflow_dest_node.context.conditions.plain.push(c);
 
-    addCondition(condition: WorkflowTriggerCondition): void {
-        if (!this.trigger.conditions) {
-            this.trigger.conditions = new WorkflowTriggerConditions();
         }
-        if (!this.trigger.conditions.plain) {
-            this.trigger.conditions.plain = new Array<WorkflowTriggerCondition>();
-        }
-        let index = this.trigger.conditions.plain.findIndex(c => c.variable === condition.variable);
-        if (index === -1) {
-            this.trigger.conditions.plain.push(condition);
-        }
+        this.triggerChange.emit(this.trigger);
     }
 }

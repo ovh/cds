@@ -367,16 +367,16 @@ func WrapError(err error, format string, args ...interface{}) error {
 }
 
 // ProcessError tries to recognize given error and return error message in a language matching Accepted-Language
-func ProcessError(target error, al string) (string, int) {
+func ProcessError(target error, al string) (string, Error) {
 	// will recursively retrieve the topmost error which does not implement causer, which is assumed to be the original cause
 	target = errors.Cause(target)
 	cdsErr, ok := target.(Error)
 	if !ok {
-		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError.Status
+		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError
 	}
 	acceptedLanguages, _, err := language.ParseAcceptLanguage(al)
 	if err != nil {
-		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError.Status
+		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError
 	}
 
 	tag, _, _ := matcher.Match(acceptedLanguages...)
@@ -394,7 +394,7 @@ func ProcessError(target error, al string) (string, int) {
 	}
 
 	if !ok {
-		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError.Status
+		return errorsAmericanEnglish[ErrUnknownError.ID], ErrUnknownError
 	}
 	if cdsErr.Root != nil {
 		cdsErrRoot, ok := cdsErr.Root.(*Error)
@@ -407,7 +407,7 @@ func ProcessError(target error, al string) (string, int) {
 
 		msg = fmt.Sprintf("%s (caused by: %s)", msg, rootMsg)
 	}
-	return msg, cdsErr.Status
+	return msg, cdsErr
 }
 
 // Exit func display an error message on stderr and exit 1

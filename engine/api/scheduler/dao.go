@@ -46,10 +46,12 @@ func loadAndLockPipelineScheduler(db gorp.SqlExecutor, id int64) (*sdk.PipelineS
 
 	var gorpPS = &PipelineScheduler{}
 	if err := db.SelectOne(gorpPS, query, id); err != nil {
-		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code != "55P03" {
-			log.Error("Run> Unable to lock to pipeline_scheduler %s", err)
+		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == "55P03" {
+			// 55P03 already lock, no error
+			log.Debug("loadAndLockPipelineScheduler> Unable to lock to pipeline_scheduler pqerr:%+v", pqerr)
 			return nil, nil
 		}
+		log.Error("loadAndLockPipelineScheduler> Unable to lock to pipeline_scheduler err:%+v", err)
 		return nil, err
 	}
 	ps := sdk.PipelineScheduler(*gorpPS)

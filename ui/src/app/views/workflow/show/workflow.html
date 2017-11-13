@@ -73,8 +73,6 @@
                                                         [direction]="direction"
                                                         (addSrcToJoinEvent)="addSourceToJoin($event)"
                                                         (deleteJoinSrcEvent)="openDeleteJoinSrcModal($event)"
-                                                        (editTriggerJoinEvent)="openEditJoinTriggerModal($event)"
-                                                        (editTriggerEvent)="openEditTriggerModal($event)"
                                                         #workflowGraph></app-workflow-graph>
                                 </div>
                             </ng-container>
@@ -107,16 +105,6 @@
                 </div>
             </div>
         </div>
-        <ng-container>
-            <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="detailedWorkflow" [triggerSrcNode]="selectedNode"
-                                  [(trigger)]="selectedTrigger"
-                                 (triggerChange)="updateTrigger()" #editTriggerComponent></app-workflow-trigger>
-        </ng-container>
-        <ng-container>
-            <app-workflow-trigger-join [project]="project" [workflow]="detailedWorkflow" [join]="selectedJoin"
-                                       [(trigger)]="selectedJoinTrigger" [loading]="loading"
-                                       (triggerChange)="updateJoinTrigger()" #editJoinTriggerComponent></app-workflow-trigger-join>
-        </ng-container>
         <ng-container>
             <app-workflow-trigger-join-src [join]="selectedJoin" [loading]="loading" (event)="deleteJoinSrc($event)"
                                            #workflowJoinTriggerSrc></app-workflow-trigger-join-src>

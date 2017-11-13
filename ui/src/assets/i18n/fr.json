@@ -189,6 +189,7 @@
   "common_no_environment" : "Il n'y a aucun environnement lié",
   "common_usage" : "Usage",
   "common_orientation" : "Orientation",
+  "common_copy_clipboard" : "Copier dans le presse papier",
 
   "usage_application_list" : "Applications liées",
   "usage_workflow_list" : "Workflows liés",
@@ -413,7 +414,6 @@
   "project_updated" : "Projet mis à jour",
   "project_variable_list_title" : "Liste des variables du projet: ",
   "project_variable_form_title" : "Ajouter une nouvelle variable: ",
-  "project_pipelines_list" : "Liste des pipelines du projet: ",
   "project_workflows_list" : "Liste des workflows du projet: ",
 
   "repo_name" : "Nom du dépôt",
@@ -453,6 +453,7 @@
   "step_final_no" : "Il n'y a aucune étape finale.",
   "step_nonfinal_no" : "Il n'y a aucune étape.",
   "step_updated" : "Etape mise à jour",
+  "step_title_duration" : "Début: {{start}}, Fin: {{end}}",
 
   "trigger_added" : "Trigger ajouté",
   "trigger_add_prerequisite_title" : "Ajouter une condition de lancement",
@@ -579,6 +580,9 @@
   "workflow_node_context_payload" : "Payload par défaut",
   "workflow_run_node_job_queued" : "Attente depuis {{time}}",
 
+  "workflow_node_condition_edit" : "Editer les conditions de lancement",
+  "workflow_node_condition_list" : "Liste des conditions de lancement",
+  "workflow_node_condition_form" : "Ajouter une condition de lancement",
   "workflow_node_delete_alert" : "ATTENTION, cela va supprimer le pipeline et tout ce qu'il déclenche",
   "workflow_node_delete_btn" : "Supprimer le pipeline",
   "workflow_node_delete_title" : "Suppression de '{{node}}'",

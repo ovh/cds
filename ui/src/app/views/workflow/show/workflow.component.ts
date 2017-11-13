@@ -39,10 +39,6 @@ export class WorkflowShowComponent {
 
     @ViewChild('workflowGraph')
     workflowGraph: WorkflowGraphComponent;
-    @ViewChild('editTriggerComponent')
-    editTriggerComponent: WorkflowTriggerComponent;
-    @ViewChild('editJoinTriggerComponent')
-    editJoinTriggerComponent: WorkflowTriggerJoinComponent;
     @ViewChild('workflowJoinTriggerSrc')
     workflowJoinTriggerSrc: WorkflowJoinTriggerSrcComponent;
     @ViewChild('workflowNodeRunParam')
@@ -141,43 +137,6 @@ export class WorkflowShowComponent {
         }
     }
 
-    public openEditTriggerModal(data: { source, target }) {
-        let pID = Number(data.source.replace('node-', ''));
-        let cID = Number(data.target.replace('node-', ''));
-        let node = Workflow.getNodeByID(pID, this.detailedWorkflow);
-        if (node && node.triggers) {
-            for (let i = 0; i < node.triggers.length; i++) {
-                if (node.triggers[i].workflow_dest_node_id === cID) {
-                    this.selectedNode = cloneDeep(node);
-                    this.selectedTrigger = cloneDeep(node.triggers[i]);
-                    break;
-                }
-            }
-        }
-        if (this.editTriggerComponent) {
-            setTimeout(() => {
-                this.editTriggerComponent.show();
-            }, 1);
-
-        }
-    }
-
-    public openEditJoinTriggerModal(data: { source, target }) {
-        let pID = Number(data.source.replace('join-', ''));
-        let cID = Number(data.target.replace('node-', ''));
-        let join = this.detailedWorkflow.joins.find(j => j.id === pID);
-        if (join && join.triggers) {
-            this.selectedJoin = join;
-            this.selectedJoinTrigger = cloneDeep(join.triggers.find(t => t.workflow_dest_node_id === cID));
-        }
-        if (this.editJoinTriggerComponent) {
-            setTimeout(() => {
-                this.editJoinTriggerComponent.show();
-            }, 1);
-
-        }
-    }
-
     groupManagement(event: PermissionEvent, skip?: boolean): void {
         if (!skip && this.detailedWorkflow.externalChange) {
             this.permWarningModal.show(event);
@@ -231,37 +190,6 @@ export class WorkflowShowComponent {
         }
 
         this.updateWorkflow(clonedWorkflow, this.workflowJoinTriggerSrc.modal);
-    }
-
-    updateTrigger(): void {
-        let clonedWorkflow: Workflow = cloneDeep(this.detailedWorkflow);
-        let currentNode: WorkflowNode;
-        if (clonedWorkflow.root.id === this.selectedNode.id) {
-            currentNode = clonedWorkflow.root;
-        } else if (clonedWorkflow.root.triggers) {
-            currentNode = Workflow.getNodeByID(this.selectedNode.id, clonedWorkflow);
-        }
-
-        if (!currentNode) {
-            return;
-        }
-
-        let trigToUpdate = currentNode.triggers.find(trig => trig.id === this.selectedTrigger.id);
-        trigToUpdate.conditions = this.selectedTrigger.conditions;
-        trigToUpdate.manual = this.selectedTrigger.manual;
-        trigToUpdate.continue_on_error = this.selectedTrigger.continue_on_error;
-        this.updateWorkflow(clonedWorkflow, this.editTriggerComponent.modal);
-    }
-
-    updateJoinTrigger(): void {
-        let clonedWorkflow: Workflow = cloneDeep(this.detailedWorkflow);
-        let currentJoin = clonedWorkflow.joins.find(j => j.id === this.selectedJoin.id);
-
-        let trigToUpdate = currentJoin.triggers.find(trig => trig.id === this.selectedJoinTrigger.id);
-        trigToUpdate.conditions = this.selectedJoinTrigger.conditions;
-        trigToUpdate.manual = this.selectedJoinTrigger.manual;
-        trigToUpdate.continue_on_error = this.selectedJoinTrigger.continue_on_error;
-        this.updateWorkflow(clonedWorkflow, this.editJoinTriggerComponent.modal);
     }
 
     updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {

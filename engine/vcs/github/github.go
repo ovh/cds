@@ -7,29 +7,33 @@ import (
 
 // githubClient is a github.com wrapper for CDS vcs. interface
 type githubClient struct {
-	ClientID         string
-	OAuthToken       string
-	DisableSetStatus bool
-	DisableStatusURL bool
-	Cache            cache.Store
-	apiURL           string
-	uiURL            string
+	ClientID            string
+	OAuthToken          string
+	DisableStatus       bool
+	DisableStatusDetail bool
+	Cache               cache.Store
+	apiURL              string
+	uiURL               string
 }
 
 //GithubConsumer implements vcs.Server and it's used to instanciate a githubClient
 type githubConsumer struct {
-	ClientID     string `json:"client-id"`
-	ClientSecret string `json:"-"`
-	Cache        cache.Store
-	uiURL        string
+	ClientID            string `json:"client-id"`
+	ClientSecret        string `json:"-"`
+	Cache               cache.Store
+	uiURL               string
+	disableStatus       bool
+	disableStatusDetail bool
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret string, uiURL string, store cache.Store) sdk.VCSServer {
+func New(ClientID, ClientSecret string, uiURL string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
 	return &githubConsumer{
-		ClientID:     ClientID,
-		ClientSecret: ClientSecret,
-		Cache:        store,
-		uiURL:        uiURL,
+		ClientID:            ClientID,
+		ClientSecret:        ClientSecret,
+		Cache:               store,
+		uiURL:               uiURL,
+		disableStatus:       disableStatus,
+		disableStatusDetail: disableStatusDetail,
 	}
 }
