@@ -2,7 +2,6 @@ package environment
 
 import (
 	"fmt"
-	"sort"
 
 	"gopkg.in/yaml.v2"
 
@@ -86,8 +85,14 @@ func addEnvironmentVariable(cmd *cobra.Command, args []string) {
 			sdk.Exit("Error: cannot show existing variables for environment %s (%s)\n", envName, err)
 		}
 
-		iFound := sort.Search(len(variables), func(i int) bool { return variables[i].Name == varName })
-		if iFound == len(variables) {
+		varExist := false
+		for _, v := range variables {
+			if v.Name == varName {
+				varExist = true
+				break
+			}
+		}
+		if !varExist {
 			err = sdk.AddEnvironmentVariable(projectKey, envName, varName, varValue, varType)
 		} else {
 			err = sdk.UpdateEnvironmentVariable(projectKey, envName, varName, varName, varValue, varType)
