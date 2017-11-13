@@ -64,7 +64,7 @@ func (g *githubClient) SetStatus(event sdk.Event) error {
 	)
 
 	//CDS can avoid sending github targer url in status, if it's disable
-	if g.DisableStatusURL {
+	if g.DisableStatusDetail {
 		url = ""
 	}
 

@@ -106,10 +106,12 @@ func (g *githubConsumer) GetAuthorizedClient(accessToken, accessTokenSecret stri
 	c, ok := instancesAuthorizedClient[accessToken]
 	if !ok {
 		c = &githubClient{
-			ClientID:   g.ClientID,
-			OAuthToken: accessToken,
-			Cache:      g.Cache,
-			uiURL:      g.uiURL,
+			ClientID:            g.ClientID,
+			OAuthToken:          accessToken,
+			Cache:               g.Cache,
+			uiURL:               g.uiURL,
+			DisableStatus:       g.disableStatus,
+			DisableStatusDetail: g.disableStatusDetail,
 		}
 		instancesAuthorizedClient[accessToken] = c
 	}
