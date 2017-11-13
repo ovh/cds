@@ -68,7 +68,7 @@ export class RequirementsFormComponent {
                 return ;
             case 'memory':
                 // memory: memory_4096
-                this.newRequirement.name = 'memory_'.concat(this.newRequirement.value);
+                this.newRequirement.name = 'memory_' + this.newRequirement.value;
                 return;
             default:
                 // else, name is the value of the requirement

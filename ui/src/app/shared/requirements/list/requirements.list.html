@@ -58,12 +58,26 @@
                             [no-match-found-text]="false">
                     </div>
                     <div *ngIf="!loading && r.type === 'model' && workerModels">
+                        <label>{{'requirement_placeholder_value_' + r.type | translate}}</label>
                         <sm-select class="search"
                             [options]="{'fullTextSearch': true}"
                             [(model)]="r.value"
                             (modelChange)="change()">
                             <option *ngFor="let wm of workerModels" value="{{wm}}">{{wm}}</option>
                         </sm-select>
+
+                        <label>{{'requirement_manual_value' | translate}}</label>
+                        <input
+                            name="requirementvalue"
+                            auto-complete
+                            autocomplete="off"
+                            type="text"
+                            [source]="suggest"
+                            [min-chars]="3"
+                            [(ngModel)]="r.value"
+                            (ngModelChange)="change()"
+                            [no-match-found-text]="false">
+
                     </div>
                     <div *ngIf="!loading && (r.type === 'model' || r.type === 'service')">
                         <textarea
