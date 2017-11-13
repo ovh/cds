@@ -3,7 +3,8 @@ import {
     EventEmitter, Input, NgZone, OnInit, Output, ViewChild, ChangeDetectorRef
 } from '@angular/core';
 import {
-    Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeTrigger,
+    Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowNodeContext, WorkflowNodeHook, WorkflowNodeJoin,
+    WorkflowNodeTrigger,
     WorkflowPipelineNameImpact
 } from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
@@ -28,6 +29,7 @@ import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
+import {WorkflowNodeConditionsComponent} from './conditions/node.conditions.component';
 
 declare var _: any;
 
@@ -53,6 +55,8 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     workflowDeleteNode: WorkflowDeleteNodeComponent;
     @ViewChild('workflowContext')
     workflowContext: WorkflowNodeContextComponent;
+    @ViewChild('workflowConditions')
+    workflowConditions: WorkflowNodeConditionsComponent;
     @ViewChild('worklflowAddHook')
     worklflowAddHook: WorkflowNodeHookFormComponent;
     @ViewChild('workflowRunNode')
@@ -170,8 +174,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         workflowToUpdate.root.triggers = new Array<WorkflowNodeTrigger>();
         let t = new WorkflowNodeTrigger();
         t.workflow_dest_node = oldRoot;
-        t.manual = false;
-        t.continue_on_error = false;
         workflowToUpdate.root.triggers.push(t);
 
         this.updateWorkflow(workflowToUpdate, this.modalParentNode);
@@ -194,6 +196,9 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                 }
             });
     }
+    openEditRunConditions(): void {
+        this.workflowConditions.show();
+    }
 
     saveTrigger(): void {
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
@@ -213,6 +218,16 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         }
         currentNode.triggers.push(cloneDeep(this.newTrigger));
         this.updateWorkflow(clonedWorkflow, this.workflowTrigger.modal);
+    }
+
+    updateNodeConditions(n: WorkflowNode): void {
+        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
+        let node = Workflow.getNodeByID(n.id, clonedWorkflow);
+        if (!node) {
+            return;
+        }
+        node.context.conditions = cloneDeep(n.context.conditions);
+        this.updateWorkflow(clonedWorkflow, this.workflowConditions.modal);
     }
 
     updateNode(n: WorkflowNode): void {

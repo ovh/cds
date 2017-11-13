@@ -71,6 +71,7 @@
                 <sm-item (click)="createJoin()">{{ 'workflow_node_join_add' | translate }}</sm-item>
                 <sm-item (click)="linkJoin()">{{ 'workflow_node_join_link' | translate }}</sm-item>
                 <sm-item (click)="openEditContextModal()">{{ 'workflow_node_context_edit' | translate }}</sm-item>
+                <sm-item (click)="openEditRunConditions()">{{ 'workflow_node_condition_edit' | translate }}</sm-item>
                 <sm-item (click)="openDeleteNodeModal()">{{ 'workflow_node_delete_btn' | translate }}</sm-item>
             </sm-dropdown>
         </ng-container>
@@ -97,6 +98,9 @@
 </ng-container>
 <ng-container *ngIf="project && node && !workflowRun">
     <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
+</ng-container>
+<ng-container *ngIf="project && node && !workflowRun">
+    <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (conditionsEvent)="updateNodeConditions($event)" #workflowConditions></app-workflow-node-conditions>
 </ng-container>
 <ng-container *ngIf="project && node && !workflowRun">
     <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-form>

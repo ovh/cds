@@ -42,30 +42,23 @@ func (api *API) getWorkflowHandler() Handler {
 		name := vars["permWorkflowName"]
 		withUsage := FormBool(r, "withUsage")
 
-		tx, errTx := api.mustDB().Begin()
-		if errTx != nil {
-			return sdk.WrapError(errTx, "getWorkflowHandler> Cannot start transaction for workflow %s", name)
-		}
-		defer tx.Rollback()
-
-		w1, err := workflow.Load(tx, api.Cache, key, name, getUser(ctx))
+		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
 		}
 
 		if withUsage {
-			usage, errU := loadWorkflowUsage(tx, w1.ID)
+			usage, errU := loadWorkflowUsage(api.mustDB(), w1.ID)
 			if errU != nil {
 				return sdk.WrapError(errU, "getWorkflowHandler> Cannot load usage for workflow %s", name)
 			}
 			w1.Usage = &usage
 		}
+
+		w1.Permission = permission.WorkflowPermission(w1.ID, getUser(ctx))
+
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig("project", "workflow")
-
-		if errTxc := tx.Commit(); errTxc != nil {
-			return sdk.WrapError(errTxc, "getWorkflowHandler> Cannot commit transaction for workflow %s", name)
-		}
 
 		return WriteJSON(w, r, w1, http.StatusOK)
 	}

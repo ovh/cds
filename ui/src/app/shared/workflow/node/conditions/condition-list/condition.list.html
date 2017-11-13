@@ -5,7 +5,7 @@
             <th class="four wide">{{ 'workflow_node_trigger_condition_name' | translate }}</th>
             <th class="three wide">{{ 'workflow_node_trigger_condition_operator' | translate }}</th>
             <th class="five wide">{{ 'workflow_node_trigger_condition_value' | translate }}</th>
-            <th class="three wide" *ngIf="project.permission === 7"></th>
+            <th class="three wide" *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE"></th>
         </tr>
         </thead>
         <tbody>
@@ -14,7 +14,7 @@
                 <div class="ui input field">{{c.variable}}</div>
             </td>
             <td>
-                <div *ngIf="c && operators && project.permission === 7; then operatorWrite;else operatorRead"></div>
+                <div *ngIf="c && operators && workflow.permission === permission.READ_WRITE_EXECUTE; then operatorWrite;else operatorRead"></div>
                 <ng-template #operatorWrite>
                     <sm-select [(model)]="c.operator">
                         <option *ngFor="let k of operators | keys" [value]="k">{{operators[k]}}</option>
@@ -25,7 +25,7 @@
                 </ng-template>
             </td>
             <td>
-                <div *ngIf="project.permission === 7; then valueWrite;else valueRead"></div>
+                <div *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE; then valueWrite;else valueRead"></div>
                 <ng-template #valueWrite>
                     <div class="ui input">
                         <input type="text" [(ngModel)]="c.value">
@@ -35,7 +35,7 @@
                     <div class="ui input">{{c.value}}</div>
                 </ng-template>
             </td>
-            <td class="center" *ngIf="project.permission === 7">
+            <td class="center" *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE">
                     <app-delete-button (event)="removeCondition(c)"></app-delete-button>
             </td>
         </tr>

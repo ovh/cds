@@ -23,10 +23,10 @@ type Stage struct {
 }
 
 // Conditions returns stage prerequisites as a set of WorkflowTriggerCondition regex
-func (s *Stage) Conditions() []WorkflowTriggerCondition {
-	res := []WorkflowTriggerCondition{}
+func (s *Stage) Conditions() []WorkflowNodeCondition {
+	res := []WorkflowNodeCondition{}
 	for _, p := range s.Prerequisites {
-		res = append(res, WorkflowTriggerCondition{
+		res = append(res, WorkflowNodeCondition{
 			Value:    p.ExpectedValue,
 			Variable: p.Parameter,
 			Operator: WorkflowConditionsOperatorRegex,

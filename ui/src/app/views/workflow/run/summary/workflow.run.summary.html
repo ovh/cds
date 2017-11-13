@@ -7,7 +7,7 @@
                     [class.building]="workflowRun.status === pipelineStatusEnum.BUILDING || workflowRun.status === pipelineStatusEnum.WAITING"
                     [class.success]="workflowRun.status === pipelineStatusEnum.SUCCESS"
                     [class.fail]="workflowRun.status === pipelineStatusEnum.FAIL || workflowRun.status === pipelineStatusEnum.STOPPED"
-                    [class.inactive]="workflowRun.status === pipelineStatusEnum.DISABLED || workflowRun.status === pipelineStatusEnum.SKIPPED">
+                    [class.inactive]="workflowRun.status === pipelineStatusEnum.DISABLED || workflowRun.status === pipelineStatusEnum.SKIPPED || workflowRun.status === pipelineStatusEnum.NEVER_BUILT">
                     <div class="content">
                         <div class="ui grid">
                             <div class="row">

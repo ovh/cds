@@ -116,7 +116,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 		if chanEvent != nil {
 			chanEvent <- *n
 		}
-		if err := processWorkflowRun(db, store, p, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
+		if _, err := processWorkflowRun(db, store, p, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
 			return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 		}
 

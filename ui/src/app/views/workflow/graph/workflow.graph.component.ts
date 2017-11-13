@@ -78,8 +78,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         return this._direction
     }
 
-    @Output() editTriggerEvent = new EventEmitter<{ source, target }>();
-    @Output() editTriggerJoinEvent = new EventEmitter<{ source, target }>();
     @Output() deleteJoinSrcEvent = new EventEmitter<{ source, target }>();
     @Output() addSrcToJoinEvent = new EventEmitter<{ source, target }>();
 
@@ -218,14 +216,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
             if (this.linkWithJoin) {
                 return;
             }
-            // Trigger between node and node
-            if (d.v.indexOf('node-') === 0 && d.w.indexOf('node-') === 0) {
-                this.editTriggerEvent.emit({source: d.v, target: d.w});
-            }
-            // Join Trigger
-            if (d.v.indexOf('join-') === 0) {
-                this.editTriggerJoinEvent.emit({source: d.v, target: d.w});
-            }
 
             // Node Join Src
             if (d.v.indexOf('node-') === 0 && d.w.indexOf('join-') === 0) {
@@ -315,9 +305,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
                     id: 'trigger-' + t.id,
                     style: 'stroke: ' + this.getJoinTriggerColor(t.id) + ';'
                 };
-                if (t.manual) {
-                    options['style'] = 'stroke-dasharray: 5, 5';
-                }
                 this.createEdge('join-' + join.id, 'node-' + t.workflow_dest_node.id, options);
             });
         }
@@ -404,10 +391,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
                     id: 'trigger-' + t.id,
                     style: 'stroke: ' + this.getTriggerColor(node, t.id) + ';'
                 };
-                if (t.manual) {
-                    options['style'] += 'stroke-dasharray: 5, 5';
-                }
-
                 this.createEdge('node-' + node.id, 'node-' + t.workflow_dest_node.id, options);
             });
         }
@@ -429,7 +412,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     }
 
     getTriggerColor(node: WorkflowNode, triggerID: number): string {
-        if (this._workflowRun && node) {
+        if (this._workflowRun && this._workflowRun.nodes && node) {
             if (this._workflowRun.nodes[node.id]) {
                 let lastRun = <WorkflowNodeRun>this._workflowRun.nodes[node.id][0];
                 if (lastRun.triggers_run && lastRun.triggers_run[triggerID]) {
@@ -443,7 +426,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 }
             }
         }
-        return '#bdc3c7';
+        return '#000000';
     }
 
     @HostListener('document:keydown', ['$event'])

@@ -117,19 +117,7 @@ bigloop:
 	if len(oldPipeline.SubPipelines) > 0 {
 		for _, childPip := range oldPipeline.SubPipelines {
 			// Create new trigger
-			t := sdk.WorkflowNodeTrigger{
-				Manual:          childPip.Trigger.Manual,
-				ContinueOnError: false,
-			}
-
-			// Add Condition on trigger
-			for _, c := range childPip.Trigger.Prerequisites {
-				t.Conditions.PlainConditions = append(t.Conditions.PlainConditions, sdk.WorkflowTriggerCondition{
-					Variable: c.Parameter,
-					Value:    c.ExpectedValue,
-					Operator: "eq",
-				})
-			}
+			t := sdk.WorkflowNodeTrigger{}
 
 			// Migrate child pipeline
 			n, err := migratePipeline(db, store, p, childPip, appID, u)
@@ -142,6 +130,27 @@ bigloop:
 			n.Context.DefaultPipelineParameters = childPip.Trigger.Parameters
 
 			t.WorkflowDestNode = *n
+
+			// Add Condition on trigger
+			for _, c := range childPip.Trigger.Prerequisites {
+				t.WorkflowDestNode.Context.Conditions.PlainConditions = append(t.WorkflowDestNode.Context.Conditions.PlainConditions, sdk.WorkflowNodeCondition{
+					Variable: c.Parameter,
+					Value:    c.ExpectedValue,
+					Operator: "eq",
+				})
+			}
+			t.WorkflowDestNode.Context.Conditions.PlainConditions = append(t.WorkflowDestNode.Context.Conditions.PlainConditions, sdk.WorkflowNodeCondition{
+				Variable: "cds.status",
+				Value:    "Success",
+				Operator: "eq",
+			})
+			if childPip.Trigger.Manual {
+				t.WorkflowDestNode.Context.Conditions.PlainConditions = append(t.WorkflowDestNode.Context.Conditions.PlainConditions, sdk.WorkflowNodeCondition{
+					Variable: "cds.manual",
+					Value:    "true",
+					Operator: "eq",
+				})
+			}
 
 			// is sub App
 			if childPip.Application.ID != 0 && childPip.Application.ID != appID {

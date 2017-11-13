@@ -31,7 +31,7 @@ var (
 )
 
 //WorkflowCheckConditions checks conditions given a list of parameters
-func WorkflowCheckConditions(conditions []WorkflowTriggerCondition, params []Parameter) (bool, error) {
+func WorkflowCheckConditions(conditions []WorkflowNodeCondition, params []Parameter) (bool, error) {
 	mapParams := ParametersToMap(params)
 	for k, v := range mapParams {
 		var err error

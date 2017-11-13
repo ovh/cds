@@ -49,8 +49,6 @@ import {WorkflowNodeComponent} from './workflow/node/workflow.node.component';
 import {WorkflowTriggerComponent} from './workflow/trigger/workflow.trigger.component';
 import {WorkflowNodeFormComponent} from './workflow/node/form/workflow.node.form.component';
 import {WorkflowDeleteNodeComponent} from './workflow/node/delete/workflow.node.delete.component';
-import {WorkflowTriggerConditionFormComponent} from './workflow/trigger/condition-form/trigger.condition.component';
-import {WorkflowTriggerConditionListComponent} from './workflow/trigger/condition-list/trigger.condition.list.component';
 import {WorkflowNodeContextComponent} from './workflow/node/context/workflow.node.context.component';
 import {WorkflowJoinComponent} from './workflow/join/workflow.join.component';
 import {WorkflowDeleteJoinComponent} from './workflow/join/delete/workflow.join.delete.component';
@@ -69,6 +67,9 @@ import {UsageApplicationsComponent} from './usage/applications/usage.application
 import {UsagePipelinesComponent} from './usage/pipelines/usage.pipelines.component';
 import {UsageEnvironmentsComponent} from './usage/environments/usage.environments.component';
 import {UsageComponent} from './usage/usage.component';
+import {WorkflowNodeConditionFormComponent} from './workflow/node/conditions/condition-form/condition.component';
+import {WorkflowNodeConditionListComponent} from './workflow/node/conditions/condition-list/condition.list.component';
+import {WorkflowNodeConditionsComponent} from './workflow/node/conditions/node.conditions.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -115,12 +116,13 @@ import {UsageComponent} from './usage/usage.component';
         WorkflowJoinTriggerSrcComponent,
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
+        WorkflowNodeConditionsComponent,
         WorkflowNodeHookFormComponent,
         WorkflowNodeHookComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
-        WorkflowTriggerConditionFormComponent,
-        WorkflowTriggerConditionListComponent,
+        WorkflowNodeConditionFormComponent,
+        WorkflowNodeConditionListComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,
@@ -184,12 +186,11 @@ import {UsageComponent} from './usage/usage.component';
         WorkflowJoinTriggerSrcComponent,
         WorkflowNodeContextComponent,
         WorkflowNodeFormComponent,
+        WorkflowNodeConditionsComponent,
         WorkflowNodeRunParamComponent,
         WorkflowNodeHookComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
-        WorkflowTriggerConditionFormComponent,
-        WorkflowTriggerConditionListComponent,
         ZoneComponent,
         ZoneContentComponent,
         UsageWorkflowsComponent,

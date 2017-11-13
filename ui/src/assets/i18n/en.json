@@ -578,6 +578,9 @@
   "workflow_node_context_payload" : "Default payload",
   "workflow_run_node_job_queued" : "Queued {{time}} ago",
 
+  "workflow_node_condition_edit" : "Edit run conditions",
+  "workflow_node_condition_list" : "Run conditions list",
+  "workflow_node_condition_form" : "Add a run condition",
   "workflow_node_delete_alert" : "BE CAREFUL, this will remove the pipeline and all his children",
   "workflow_node_delete_btn" : "Remove the pipeline",
   "workflow_node_delete_title" : "Remove '{{node}}'",

@@ -48,7 +48,6 @@ export class Workflow {
 
         if (oldH) {
             oldH.config = h.config;
-            oldH.conditions = h.conditions;
         }
     };
 
@@ -117,13 +116,6 @@ export class Workflow {
             workflow.joins.forEach(j => {
                 if (j.triggers) {
                     j.triggers.forEach(t => {
-                        if (t.conditions && t.conditions.plain) {
-                            t.conditions.plain.forEach(c => {
-                                if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
-                                    warnings.joinTriggers.push(t);
-                                }
-                            });
-                        }
                         WorkflowNode.getNodeNameImpact(t.workflow_dest_node, name, warnings);
                     });
                 }
@@ -154,9 +146,6 @@ export class WorkflowNodeJoinTrigger {
     join_id: number;
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
-    conditions: WorkflowTriggerConditions;
-    manual: boolean;
-    continue_on_error: boolean;
 
     constructor() {
         this.workflow_dest_node = new WorkflowNode();
@@ -241,26 +230,15 @@ export class WorkflowNode {
 
     static getNodeNameImpact(n: WorkflowNode, name: string, nodeWarn: WorkflowPipelineNameImpact): void {
         let varName = 'workflow.' + name;
-        if (n.hooks) {
-            n.hooks.forEach(h => {
-                if (h.conditions && h.conditions.plain) {
-                    h.conditions.plain.forEach(c => {
-                        if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
-                            nodeWarn.hooks.push(h);
-                        }
-                    });
+        if (n.context.conditions && n.context.conditions.plain) {
+            n.context.conditions.plain.forEach(c => {
+                if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
+                    nodeWarn.nodes.push(n);
                 }
             });
         }
         if (n.triggers) {
             n.triggers.forEach(t => {
-                if (t.conditions && t.conditions.plain) {
-                    t.conditions.plain.forEach(c => {
-                        if (c.value.indexOf(varName) !== -1 || c.variable.indexOf(varName) !== -1) {
-                            nodeWarn.triggers.push(t);
-                        }
-                    });
-                }
                 WorkflowNode.getNodeNameImpact(t.workflow_dest_node, name, nodeWarn);
             });
         }
@@ -274,9 +252,7 @@ export class WorkflowNode {
 }
 
 export class WorkflowPipelineNameImpact {
-    triggers = new Array<WorkflowNodeTrigger>();
-    joinTriggers = new Array<WorkflowNodeJoinTrigger>();
-    hooks = new Array<WorkflowNodeHook>();
+    nodes = new Array<WorkflowNode>();
 }
 
 // WorkflowNodeContext represents a context attached on a node
@@ -289,6 +265,7 @@ export class WorkflowNodeContext {
     environment_id: number;
     default_payload: {};
     default_pipeline_parameters: Array<Parameter>;
+    conditions: WorkflowNodeConditions;
 }
 
 // WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
@@ -296,7 +273,6 @@ export class WorkflowNodeHook {
     id: number;
     uuid: string;
     model: WorkflowHookModel;
-    conditions: WorkflowTriggerConditions;
     config: Map<string, WorkflowNodeHookConfigValue>;
 }
 
@@ -311,23 +287,19 @@ export class WorkflowNodeTrigger {
     workflow_node_id: number;
     workflow_dest_node_id: number;
     workflow_dest_node: WorkflowNode;
-    conditions: WorkflowTriggerConditions;
-    manual: boolean;
-    continue_on_error: boolean;
-
     constructor() {
         this.workflow_dest_node = new WorkflowNode();
     }
 }
 
 // WorkflowTriggerConditions is either a lua script to check conditions or a set of WorkflowTriggerCondition
-export class WorkflowTriggerConditions {
+export class WorkflowNodeConditions {
     lua_script: string;
-    plain: Array<WorkflowTriggerCondition>;
+    plain: Array<WorkflowNodeCondition>;
 }
 
 // WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
-export class WorkflowTriggerCondition {
+export class WorkflowNodeCondition {
     variable: string;
     operator: string;
     value: string;
