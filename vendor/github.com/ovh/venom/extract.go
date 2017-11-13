@@ -80,7 +80,7 @@ func checkExtracts(pattern, instring string, executorResult *ExecutorResult, l L
 
 func RemoveNotPrintableChar(in string) string {
 	m := func(r rune) rune {
-		if unicode.IsPrint(r) {
+		if unicode.IsPrint(r) || unicode.IsSpace(r) || unicode.IsPunct(r) {
 			return r
 		}
 		return ' '
