@@ -254,7 +254,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     deleteNode(b: string): void {
-        console.log(b);
         let clonedWorkflow: Workflow = cloneDeep(this.workflow);
         if (b === 'all') {
             // Delete Node with Child

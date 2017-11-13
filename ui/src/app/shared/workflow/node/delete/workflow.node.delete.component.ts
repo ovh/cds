@@ -30,7 +30,6 @@ export class WorkflowDeleteNodeComponent {
     }
 
     deleteNode(): void {
-        console.log(this.deleteAll);
         this.deleteEvent.emit(this.deleteAll);
     }
 }
