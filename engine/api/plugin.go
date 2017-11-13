@@ -257,6 +257,7 @@ func (api *API) downloadPluginHandler() Handler {
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", name))
 
 		if _, err := io.Copy(w, f); err != nil {
+			_ = f.Close()
 			return sdk.WrapError(err, "downloadPluginHandler> Cannot stream artifact")
 		}
 
