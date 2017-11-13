@@ -232,9 +232,13 @@ export class WorkflowNode {
             return parentNode;
         }
         if (trigger.workflow_dest_node.triggers) {
-            trigger.workflow_dest_node.triggers.forEach((t, tIdx) => {
-                return WorkflowNode.removeNodeWithoutChild(t.workflow_dest_node, t, id, tIdx);
-            });
+            for (let i = 0; i < trigger.workflow_dest_node.triggers.length; i++) {
+                let t = trigger.workflow_dest_node.triggers[i];
+                let p = WorkflowNode.removeNodeWithoutChild(t.workflow_dest_node, t, id, i);
+                if (p) {
+                    return p;
+                }
+            }
         }
         return null;
     }
