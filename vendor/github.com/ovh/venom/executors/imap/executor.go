@@ -125,6 +125,7 @@ func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error while feching messages:%s", err.Error())
 	}
+	defer c.Close(false)
 
 	for _, msg := range messages {
 		m, erre := extract(msg, l)
@@ -236,7 +237,6 @@ func fetch(c *imap.Client, box string, nb uint32, l venom.Logger) ([]imap.Respon
 		l.Errorf("Error with select %s", err.Error())
 		return []imap.Response{}, err
 	}
-	defer c.Close(false)
 
 	seqset, _ := imap.NewSeqSet("1:*")
 
