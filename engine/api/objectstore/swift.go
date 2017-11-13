@@ -5,9 +5,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/ovh/cds/engine/api/sessionstore"
-
 	"github.com/ncw/swift"
+
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
