@@ -5,13 +5,11 @@ import (
 	"fmt"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
-
-// SharedInfraGroupName is the name of the builtin group used to share infrastructure between projects
-const SharedInfraGroupName = "shared.infra"
 
 // SharedInfraGroup is the group used to share infrastructure between projects
 var SharedInfraGroup *sdk.Group
@@ -38,7 +36,7 @@ func CreateDefaultGroup(db *gorp.DbMap, groupName string) error {
 func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
 	query := `SELECT id FROM "group" where name = $1`
 	var id int64
-	if err := db.QueryRow(query, SharedInfraGroupName).Scan(&id); err != nil {
+	if err := db.QueryRow(query, sdk.SharedInfraGroupName).Scan(&id); err != nil {
 		return err
 	}
 
@@ -53,7 +51,7 @@ func AddAdminInGlobalGroup(db gorp.SqlExecutor, userID int64) error {
 func InitializeDefaultGroupName(db *gorp.DbMap, defaultGroupName string) error {
 	//Load the famous sharedInfraGroup
 	var errlsg error
-	SharedInfraGroup, errlsg = LoadGroup(db, SharedInfraGroupName)
+	SharedInfraGroup, errlsg = LoadGroup(db, sdk.SharedInfraGroupName)
 	if errlsg != nil {
 		return sdk.WrapError(errlsg, "group.InitializeDefaultGroupName> Cannot load shared infra group")
 	}
@@ -77,13 +75,13 @@ func IsDefaultGroupID(groupID int64) bool {
 	return groupID == defaultGroupID
 }
 
-// GetIdByNameInList find id related to the group name in a given group list
-func GetIdByNameInList(groups []sdk.GroupPermission, groupName string) (int64, error) {
+// GetIDByNameInList find id related to the group name in a given group list
+func GetIDByNameInList(groups []sdk.GroupPermission, groupName string) (int64, error) {
 	for _, gr := range groups {
 		if gr.Group.Name == groupName {
 			return gr.Group.ID, nil
 		}
 	}
 
-	return 0, fmt.Errorf("GetIdByNameInList> this group %s doesn't exist in this list", groupName)
+	return 0, fmt.Errorf("GetIDByNameInList> this group %s doesn't exist in this list", groupName)
 }

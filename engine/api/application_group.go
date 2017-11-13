@@ -342,12 +342,11 @@ func (api *API) importGroupsInApplicationHandler() Handler {
 			}
 		} else { // add new group
 			for _, gr := range groupsToAdd {
-				_, errGr := group.GetIdByNameInList(app.ApplicationGroups, gr.Group.Name)
-				if errGr == nil {
+				if _, errGr := group.GetIDByNameInList(app.ApplicationGroups, gr.Group.Name); errGr == nil {
 					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInApplicationHandler> Group %s in application %s", gr.Group.Name, app.Name)
 				}
 
-				grID, errG := group.GetIdByNameInList(proj.ProjectGroups, gr.Group.Name)
+				grID, errG := group.GetIDByNameInList(proj.ProjectGroups, gr.Group.Name)
 				if errG != nil {
 					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInApplicationHandler> Cannot find group %s in this project %s : %s", gr.Group.Name, proj.Name, errG)
 				}

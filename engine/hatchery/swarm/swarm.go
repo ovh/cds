@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -273,7 +274,15 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					"hatchery":       h.Config.Name,
 				}
 				//Start the services
-				if err := h.createAndStartContainer(serviceName, img, network, r.Name, []string{}, env, labels, serviceMemory); err != nil {
+				if err := h.createAndStartContainer(containerArgs{
+					name:         serviceName,
+					image:        img,
+					network:      network,
+					networkAlias: r.Name,
+					cmd:          []string{},
+					env:          env,
+					labels:       labels,
+					memory:       serviceMemory}); err != nil {
 					log.Warning("SpawnWorker>Unable to start required container: %s", err)
 					return "", err
 				}
@@ -335,8 +344,23 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		"hatchery":            h.Config.Name,
 	}
 
+	dockerOpts, errDockerOpts := computeDockerOpts(h.hatch.IsSharedInfra, spawnArgs.Requirements)
+	if errDockerOpts != nil {
+		return name, errDockerOpts
+	}
+
 	//start the worker
-	if err := h.createAndStartContainer(name, spawnArgs.Model.Image, network, "worker", cmd, env, labels, memory); err != nil {
+	if err := h.createAndStartContainer(containerArgs{
+		name:         name,
+		image:        spawnArgs.Model.Image,
+		network:      network,
+		networkAlias: "worker",
+		cmd:          cmd,
+		env:          env,
+		labels:       labels,
+		memory:       memory,
+		dockerOpts:   dockerOpts,
+	}); err != nil {
 		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.Image, err)
 	}
 
@@ -362,30 +386,43 @@ func (h *HatcherySwarm) createNetwork(name string) error {
 	return err
 }
 
+type containerArgs struct {
+	name, image, network, networkAlias string
+	cmd, env                           []string
+	labels                             map[string]string
+	memory                             int64
+	dockerOpts                         *dockerOpts
+}
+
 //shortcut to create+start(=run) a container
-func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAlias string, cmd, env []string, labels map[string]string, memory int64) error {
+func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 	//Memory is set to 1GB by default
-	if memory <= 4 {
-		memory = 1024
+	if cArgs.memory <= 4 {
+		cArgs.memory = 1024
 	} else {
 		//Moaaaaar memory
-		memory = memory * 110 / 100
+		cArgs.memory = cArgs.memory * 110 / 100
 	}
-	log.Info("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", name, image, network, networkAlias, memory)
+	log.Info("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
+
 	opts := docker.CreateContainerOptions{
-		Name: name,
+		Name: cArgs.name,
 		Config: &docker.Config{
-			Image:      image,
-			Cmd:        cmd,
-			Env:        env,
-			Labels:     labels,
-			Memory:     memory * 1024 * 1024, //from MB to B
+			Image:      cArgs.image,
+			Cmd:        cArgs.cmd,
+			Env:        cArgs.env,
+			Labels:     cArgs.labels,
+			Memory:     cArgs.memory * 1024 * 1024, //from MB to B
 			MemorySwap: -1,
+		},
+		HostConfig: &docker.HostConfig{
+			PortBindings: cArgs.dockerOpts.ports,
+			Privileged:   cArgs.dockerOpts.priviledge,
 		},
 		NetworkingConfig: &docker.NetworkingConfig{
 			EndpointsConfig: map[string]*docker.EndpointConfig{
-				network: &docker.EndpointConfig{
-					Aliases: []string{networkAlias, name},
+				cArgs.network: &docker.EndpointConfig{
+					Aliases: []string{cArgs.networkAlias, cArgs.name},
 				},
 			},
 		},
@@ -402,6 +439,65 @@ func (h *HatcherySwarm) createAndStartContainer(name, image, network, networkAli
 		return err
 	}
 	return nil
+}
+
+var regexPort = regexp.MustCompile("^--port=(.*):(.*)$")
+
+type dockerOpts struct {
+	ports      map[docker.Port][]docker.PortBinding
+	priviledge bool
+}
+
+func computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
+	dockerOpts := &dockerOpts{}
+
+	for _, r := range requirements {
+		if r.Type == sdk.ModelRequirement {
+			// args are separated by a space
+			// example: golang:1.9.1 --port=8080:8080/tcp
+			for idx, opt := range strings.Split(r.Value, " ") {
+				if idx == 0 {
+					continue // it's image name
+				}
+				if isSharedInfra {
+					return nil, fmt.Errorf("You could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option.", opt)
+				}
+				if strings.HasPrefix(opt, "--port=") {
+					if err := dockerOpts.computeDockerOptsPorts(opt); err != nil {
+						return nil, err
+					}
+				} else if opt == "--priviledge" {
+					dockerOpts.priviledge = true
+				} else {
+					return nil, fmt.Errorf("Options not supported: %s", opt)
+				}
+			}
+		}
+	}
+
+	return dockerOpts, nil
+}
+
+func (d *dockerOpts) computeDockerOptsPorts(arg string) error {
+	if regexPort.MatchString(arg) {
+		s := regexPort.FindStringSubmatch(arg)
+		//s = --port=8081:8182/tcp // hostPort:containerPort
+		//s[0] = --port=8081:8182/tcp
+		//s[1] = 8081 // hostPort
+		//s[2] = 8182/tcp  // containerPort
+		containerPort := s[2]
+		if d.ports == nil {
+			d.ports = map[docker.Port][]docker.PortBinding{}
+		}
+		if _, ok := d.ports[docker.Port(containerPort)]; !ok {
+			d.ports[docker.Port(containerPort)] = []docker.PortBinding{}
+		}
+		//  "8182/tcp": {{HostIP: "0.0.0.0", HostPort: "8081"}}
+		d.ports[docker.Port(containerPort)] = append(d.ports[docker.Port(containerPort)],
+			docker.PortBinding{HostIP: "0.0.0.0", HostPort: s[1]})
+		return nil // no error
+	}
+	return fmt.Errorf("Wrong format of ports arguments. Example: --port=8081:8182/tcp")
 }
 
 // ModelType returns type of hatchery

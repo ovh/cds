@@ -22,8 +22,8 @@ import (
 func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
 	dbGorp := DBFunc()
 
-	if err := group.CreateDefaultGroup(dbGorp, group.SharedInfraGroupName); err != nil {
-		return sdk.WrapError(err, "InitiliazeDB> Cannot setup default %s group", group.SharedInfraGroupName)
+	if err := group.CreateDefaultGroup(dbGorp, sdk.SharedInfraGroupName); err != nil {
+		return sdk.WrapError(err, "InitiliazeDB> Cannot setup default %s group", sdk.SharedInfraGroupName)
 	}
 
 	if strings.TrimSpace(defaultValues.DefaultGroupName) != "" {

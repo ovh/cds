@@ -153,6 +153,7 @@ func Register(h Interface) error {
 	h.Hatchery().GroupID = newHatchery.GroupID
 	h.Hatchery().Model = newHatchery.Model
 	h.Hatchery().Name = newHatchery.Name
+	h.Hatchery().IsSharedInfra = newHatchery.IsSharedInfra
 
 	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
 
