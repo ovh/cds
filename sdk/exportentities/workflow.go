@@ -5,15 +5,15 @@ import "github.com/ovh/cds/sdk"
 type Workflow map[string]WorkflowEntry
 
 type WorkflowEntry struct {
-	DependsOn       []string                       `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
-	Conditions      []sdk.WorkflowTriggerCondition `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	Pipeline        *Pipeline                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	PipelineName    string                         `json:"pipeline_name,omitempty" yaml:"pipeline_name,omitempty"`
-	Application     *Application                   `json:"application,omitempty" yaml:"application,omitempty"`
-	ApplicationName string                         `json:"application_name,omitempty" yaml:"application_name,omitempty"`
-	Environment     *Environment                   `json:"environment,omitempty" yaml:"environment,omitempty"`
-	EnvironmentName string                         `json:"environment_name,omitempty" yaml:"environment_name,omitempty"`
-	Hooks           map[string]HookEntry           `json:"hooks,omitempty" yaml:"hooks,omitempty"`
+	DependsOn       []string                     `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
+	Conditions      []sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	Pipeline        *Pipeline                    `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
+	PipelineName    string                       `json:"pipeline_name,omitempty" yaml:"pipeline_name,omitempty"`
+	Application     *Application                 `json:"application,omitempty" yaml:"application,omitempty"`
+	ApplicationName string                       `json:"application_name,omitempty" yaml:"application_name,omitempty"`
+	Environment     *Environment                 `json:"environment,omitempty" yaml:"environment,omitempty"`
+	EnvironmentName string                       `json:"environment_name,omitempty" yaml:"environment_name,omitempty"`
+	Hooks           map[string]HookEntry         `json:"hooks,omitempty" yaml:"hooks,omitempty"`
 }
 
 type HookEntry map[string]string
