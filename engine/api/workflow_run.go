@@ -547,6 +547,7 @@ func (api *API) downloadworkflowArtifactDirectHandler() Handler {
 		}
 
 		if _, err := io.Copy(w, f); err != nil {
+			_ = f.Close()
 			return sdk.WrapError(err, "downloadPluginHandler> Cannot stream artifact")
 		}
 
@@ -607,10 +608,12 @@ func (api *API) getDownloadArtifactHandler() Handler {
 
 		f, err := objectstore.FetchArtifact(art)
 		if err != nil {
+			_ = f.Close()
 			return sdk.WrapError(err, "getDownloadArtifactHandler> Cannot fetch artifact")
 		}
 
 		if _, err := io.Copy(w, f); err != nil {
+			_ = f.Close()
 			return sdk.WrapError(err, "getDownloadArtifactHandler> Cannot stream artifact")
 		}
 

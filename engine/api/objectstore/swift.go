@@ -65,6 +65,8 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 
 	log.Debug("SwiftStore> copy object %s/%s", container, object)
 	if _, err := io.Copy(file, data); err != nil {
+		_ = file.Close()
+		_ = data.Close()
 		return "", sdk.WrapError(err, "SwiftStore> Unable to copy object buffer %s", object)
 	}
 
@@ -79,6 +81,7 @@ func (s *SwiftStore) Store(o Object, data io.ReadCloser) (string, error) {
 	return container + "/" + object, nil
 }
 
+// Fetch an object from swift
 func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
 	container := s.containerprefix + o.GetPath()
 	object := o.GetName()
@@ -100,6 +103,7 @@ func (s *SwiftStore) Fetch(o Object) (io.ReadCloser, error) {
 	return pipeReader, nil
 }
 
+// Delete an object from swift
 func (s *SwiftStore) Delete(o Object) error {
 	container := s.containerprefix + o.GetPath()
 	object := o.GetName()
@@ -111,6 +115,7 @@ func (s *SwiftStore) Delete(o Object) error {
 	return nil
 }
 
+// StoreURL returns a temporary url and a secret key to store an object
 func (s *SwiftStore) StoreURL(o Object) (string, string, error) {
 	container := s.containerprefix + o.GetPath()
 	object := o.GetName()
@@ -150,6 +155,7 @@ func (s *SwiftStore) containerKey(container string) (string, error) {
 	return key, nil
 }
 
+// FetchURL returns a temporary url and a secret key to fetch an object
 func (s *SwiftStore) FetchURL(o Object) (string, string, error) {
 	container := s.containerprefix + o.GetPath()
 	object := o.GetName()

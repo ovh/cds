@@ -152,6 +152,7 @@ func (api *API) downloadArtifactHandler() Handler {
 		}
 
 		if _, err := io.Copy(w, f); err != nil {
+			_ = f.Close()
 			return sdk.WrapError(err, "downloadArtifactHandler> Cannot stream artifact")
 		}
 
@@ -287,6 +288,7 @@ func (api *API) downloadArtifactDirectHandler() Handler {
 		}
 
 		if _, err := io.Copy(w, f); err != nil {
+			_ = f.Close()
 			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot stream artifact")
 		}
 
