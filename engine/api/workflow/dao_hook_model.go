@@ -16,9 +16,12 @@ var (
 		Type:       sdk.WorkflowHookModelBuiltin,
 		Identifier: "github.com/ovh/cds/hook/builtin/webhook",
 		Name:       "WebHook",
-		Icon:       "",
+		Icon:       "fa-anchor",
 		DefaultConfig: sdk.WorkflowNodeHookConfig{
-			"method": "POST",
+			"method": {
+				Value:        "POST",
+				Configurable: true,
+			},
 		},
 	}
 
@@ -27,7 +30,7 @@ var (
 		Type:       sdk.WorkflowHookModelBuiltin,
 		Identifier: "github.com/ovh/cds/hook/builtin/poller",
 		Name:       "Git Repository Poller",
-		Icon:       "",
+		Icon:       "git square",
 	}
 
 	SchedulerModel = &sdk.WorkflowHookModel{
@@ -35,10 +38,16 @@ var (
 		Type:       sdk.WorkflowHookModelBuiltin,
 		Identifier: "github.com/ovh/cds/hook/builtin/scheduler",
 		Name:       "Scheduler",
-		Icon:       "",
+		Icon:       "fa-clock-o",
 		DefaultConfig: sdk.WorkflowNodeHookConfig{
-			"cron":     "0 * * * *",
-			"timezone": "UTC",
+			"cron": {
+				Value:        "0 * * * *",
+				Configurable: true,
+			},
+			"timezone": {
+				Value:        "UTC",
+				Configurable: true,
+			},
 		},
 	}
 
@@ -125,7 +134,7 @@ func checkBuiltinWorkflowHookModelExist(db gorp.SqlExecutor, h *sdk.WorkflowHook
 // LoadHookModels returns all hook models available
 func LoadHookModels(db gorp.SqlExecutor) ([]sdk.WorkflowHookModel, error) {
 	dbModels := []NodeHookModel{}
-	if _, err := db.Select(&dbModels, "select id, name, type, image, command, author, description, identifier, icon from workflow_hook_model"); err != nil {
+	if _, err := db.Select(&dbModels, "select id, name, type, command, author, description, identifier, icon from workflow_hook_model"); err != nil {
 		return nil, sdk.WrapError(err, "LoadHookModels> Unable to load WorkflowHookModel")
 	}
 	models := []sdk.WorkflowHookModel{}
@@ -142,7 +151,7 @@ func LoadHookModels(db gorp.SqlExecutor) ([]sdk.WorkflowHookModel, error) {
 // LoadHookModelByID returns a hook model by it's id, if not found, it returns an error
 func LoadHookModelByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowHookModel, error) {
 	m := NodeHookModel{}
-	query := "select id, name, type, image, command, default_config, author, description, identifier, icon from workflow_hook_model where id = $1"
+	query := "select id, name, type, command, default_config, author, description, identifier, icon from workflow_hook_model where id = $1"
 	if err := db.SelectOne(&m, query, id); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.WrapError(sdk.ErrNotFound, "LoadHookModelByID> Unable to load WorkflowHookModel")
@@ -156,7 +165,7 @@ func LoadHookModelByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowHookModel, e
 // LoadHookModelByName returns a hook model by it's name, if not found, it returns an error
 func LoadHookModelByName(db gorp.SqlExecutor, name string) (*sdk.WorkflowHookModel, error) {
 	m := NodeHookModel{}
-	query := "select id, name, type, image, command, default_config, author, description, identifier, icon from workflow_hook_model where name = $1"
+	query := "select id, name, type, command, default_config, author, description, identifier, icon from workflow_hook_model where name = $1"
 	if err := db.SelectOne(&m, query, name); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.WrapError(sdk.ErrNotFound, "LoadHookModelByName> Unable to load WorkflowHookModel")

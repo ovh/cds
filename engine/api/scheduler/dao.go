@@ -46,10 +46,12 @@ func loadAndLockPipelineScheduler(db gorp.SqlExecutor, id int64) (*sdk.PipelineS
 
 	var gorpPS = &PipelineScheduler{}
 	if err := db.SelectOne(gorpPS, query, id); err != nil {
-		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code != "55P03" {
-			log.Error("Run> Unable to lock to pipeline_scheduler %s", err)
+		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == "55P03" {
+			// 55P03 already lock, no error
+			log.Debug("loadAndLockPipelineScheduler> Unable to lock to pipeline_scheduler pqerr:%+v", pqerr)
 			return nil, nil
 		}
+		log.Error("loadAndLockPipelineScheduler> Unable to lock to pipeline_scheduler err:%+v", err)
 		return nil, err
 	}
 	ps := sdk.PipelineScheduler(*gorpPS)
@@ -98,6 +100,19 @@ func Delete(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 	return nil
 }
 
+// DeleteByApplicationID Delete all scheduler for the given application
+func DeleteByApplicationID(db gorp.SqlExecutor, appID int64) error {
+	if err := DeleteExecutionByApplicationID(db, appID); err != nil {
+		return sdk.WrapError(err, "DeleteByApplicationID")
+	}
+
+	query := "DELETE FROM pipeline_scheduler WHERE application_id = $1"
+	if _, err := db.Exec(query, appID); err != nil {
+		return sdk.WrapError(err, "DeleteByApplicationID")
+	}
+	return nil
+}
+
 //Load loads a PipelineScheduler by id
 func Load(db gorp.SqlExecutor, id int64) (*sdk.PipelineScheduler, error) {
 	ds := PipelineScheduler{}
@@ -128,6 +143,15 @@ func UpdateExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) err
 		return sdk.ErrNotFound
 	}
 	*s = sdk.PipelineSchedulerExecution(ds)
+	return nil
+}
+
+//DeleteExecutionByApplicationID deletes executions for the given application
+func DeleteExecutionByApplicationID(db gorp.SqlExecutor, appID int64) error {
+	query := "DELETE FROM pipeline_scheduler_execution WHERE pipeline_scheduler_id IN (SELECT id FROM pipeline_scheduler WHERE application_id = $1)"
+	if _, err := db.Exec(query, appID); err != nil {
+		return sdk.WrapError(err, "DeleteExecutionByApplicationID")
+	}
 	return nil
 }
 

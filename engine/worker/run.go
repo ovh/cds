@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -144,12 +143,7 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 		return w.runBuiltin(ctx, a, buildID, params, stepOrder)
 	case sdk.PluginAction:
 		//Define a loggin function
-		sendLog := func(s string) {
-			if !strings.HasSuffix(s, "\n") {
-				s += "\n"
-			}
-			w.sendLog(buildID, s, stepOrder, false)
-		}
+		sendLog := getLogger(w, buildID, stepOrder)
 		//Run the plugin
 		return w.runPlugin(ctx, a, buildID, params, stepOrder, sendLog)
 	}
@@ -267,7 +261,7 @@ func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status st
 	if errReq != nil {
 		return errReq
 	}
-	if code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Wrong http code %d", code)
 	}
 	return nil
@@ -283,11 +277,7 @@ func setupBuildDirectory(wd string) error {
 		return err
 	}
 
-	if err := os.Setenv("HOME", wd); err != nil {
-		return err
-	}
-
-	return nil
+	return os.Setenv("HOME", wd)
 }
 
 // remove the buildDirectory created by setupBuildDirectory

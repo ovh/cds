@@ -70,8 +70,16 @@ func (tmpl *Templater) ApplyOnContext(ctx map[string]interface{}) (map[string]in
 }
 
 func (tmpl *Templater) apply(in []byte) []byte {
+	// Apply template values on values themselves first.
+	tmpValues := make(map[string]string)
+	for k1, v1 := range tmpl.Values {
+		for k2, v2 := range tmpl.Values {
+			v1 = strings.Replace(v1, "{{."+k2+"}}", v2, -1)
+		}
+		tmpValues[k1] = v1
+	}
 	out := string(in)
-	for k, v := range tmpl.Values {
+	for k, v := range tmpValues {
 		out = strings.Replace(out, "{{."+k+"}}", v, -1)
 	}
 	return []byte(out)

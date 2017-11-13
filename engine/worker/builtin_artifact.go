@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -141,6 +142,11 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			pipeline := sdk.ParameterValue(a.Parameters, "pipeline")
 			path := sdk.ParameterValue(a.Parameters, "path")
 			tag := sdk.ParameterValue(a.Parameters, "tag")
+			pattern := sdk.ParameterValue(a.Parameters, "pattern")
+
+			if pattern != "" {
+				sendLog("pattern variable can be only used with CDS Workflow - ignored.")
+			}
 
 			if !enabled {
 				sendLog("Artifact Download is disabled.")
@@ -183,6 +189,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 		workflow := sdk.ParameterValue(*params, "cds.workflow")
 		number := sdk.ParameterValue(*params, "cds.run.number")
 		enabled := sdk.ParameterValue(*params, "enabled") != "false"
+		pattern := sdk.ParameterValue(a.Parameters, "pattern")
 
 		destPath := sdk.ParameterValue(a.Parameters, "path")
 		tag := sdk.ParameterValue(a.Parameters, "tag")
@@ -214,7 +221,12 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		regexp := regexp.MustCompile(pattern)
 		for _, a := range artifacts {
+			if pattern != "" && !regexp.MatchString(a.Name) {
+				sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
+				continue
+			}
 			destFile := path.Join(destPath, a.Name)
 			f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
 			if err != nil {

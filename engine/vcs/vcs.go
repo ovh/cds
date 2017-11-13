@@ -12,9 +12,9 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/vcs/bitbucket"
 	"github.com/ovh/cds/engine/vcs/github"
+	"github.com/ovh/cds/engine/vcs/gitlab"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -50,6 +50,9 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 	if sConfig.URL == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
 	}
+	if sConfig.Name == "" {
+		return fmt.Errorf("please enter a name in your vcs configuration")
+	}
 
 	return nil
 }
@@ -57,20 +60,19 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 	serverCfg := s.Cfg.Servers[name]
 	if serverCfg.Github != nil {
-		return github.New(serverCfg.Github.ClientID, serverCfg.Github.ClientSecret, s.Cache), nil
+		return github.New(serverCfg.Github.ClientID, serverCfg.Github.ClientSecret, s.Cfg.UI.HTTP.URL, s.Cache, serverCfg.Github.Status.Disable, !serverCfg.Github.Status.ShowDetail), nil
 	}
 	if serverCfg.Bitbucket != nil {
-		return bitbucket.New(serverCfg.Bitbucket.ConsumerKey, []byte(serverCfg.Bitbucket.PrivateKey), serverCfg.URL, s.Cache), nil
+		return bitbucket.New(serverCfg.Bitbucket.ConsumerKey, []byte(serverCfg.Bitbucket.PrivateKey), serverCfg.URL, s.Cfg.API.HTTP.URL, s.Cfg.UI.HTTP.URL, s.Cache), nil
+	}
+	if serverCfg.Gitlab != nil {
+		return gitlab.New(serverCfg.Gitlab.AppID, serverCfg.Gitlab.Secret, serverCfg.URL, s.Cfg.API.HTTP.URL+"/repositories_manager/oauth2/callback", s.Cfg.UI.HTTP.URL, s.Cache), nil
 	}
 	return nil, sdk.ErrNotFound
 }
 
 // Serve will start the http api server
 func (s *Service) Serve(c context.Context) error {
-	if s.Cfg.Name == "" {
-		s.Cfg.Name = hatchery.GenerateName("vcs", "")
-	}
-
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 

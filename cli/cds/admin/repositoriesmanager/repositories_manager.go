@@ -10,7 +10,6 @@ func Cmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(listReposManagerCmd())
-	cmd.AddCommand(addReposManagerCmd())
 
 	return cmd
 }

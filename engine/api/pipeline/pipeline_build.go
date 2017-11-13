@@ -12,7 +12,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
@@ -47,6 +46,8 @@ type PipelineBuildDbResult struct {
 	VCSChangesBranch      sql.NullString `db:"vcs_branch"`
 	VCSChangesHash        sql.NullString `db:"vcs_hash"`
 	VCSChangesAuthor      sql.NullString `db:"vcs_author"`
+	VCSServer             sql.NullString `db:"vcs_server"`
+	VCSRepositoryFullname sql.NullString `db:"repo_fullname"`
 	ParentPipelineBuildID sql.NullInt64  `db:"parent_pipeline_build"`
 	Username              sql.NullString `db:"username"`
 	ScheduledTrigger      bool           `db:"scheduled_trigger"`
@@ -65,6 +66,7 @@ const (
 			pb.vcs_changes_branch as vcs_branch, pb.vcs_changes_hash as vcs_hash, pb.vcs_changes_author as vcs_author,
 			pb.vcs_remote as vcs_remote, pb.vcs_remote_url as vcs_remote_url,
 			pb.parent_pipeline_build_id as parent_pipeline_build,
+			application.vcs_server as vcs_server, application.repo_fullname as repo_fullname, 
 			"user".username as username,
 			pb.scheduled_trigger as scheduled_trigger
 		FROM pipeline_build pb
@@ -463,6 +465,14 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 		},
 	}
 
+	if pbResult.VCSRepositoryFullname.Valid {
+		pb.Application.RepositoryFullname = pbResult.VCSRepositoryFullname.String
+	}
+
+	if pbResult.VCSServer.Valid {
+		pb.Application.VCSServer = pbResult.VCSServer.String
+	}
+
 	if pbResult.Done.Valid {
 		pb.Done = pbResult.Done.Time
 	}
@@ -535,20 +545,6 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 		}
 	}
 
-	k := cache.Key("application", pb.Application.ProjectKey, "*")
-	Store.DeleteAll(k)
-
-	// Load repositorie manager if necessary
-	if pb.Application.RepositoriesManager == nil || pb.Application.RepositoryFullname == "" {
-		//We don't need to pass apiURL and uiURL because they are not usefull for sending events
-		rfn, rm, errl := repositoriesmanager.LoadFromApplicationByID(db, pb.Application.ID, Store)
-		if errl != nil {
-			log.Error("UpdatePipelineBuildStatus> error while loading repoManager for appID %d err:%s", pb.Application.ID, errl)
-		}
-		pb.Application.RepositoryFullname = rfn
-		pb.Application.RepositoriesManager = rm
-	}
-
 	if pb.Status != newStatus {
 		pb.Status = newStatus
 		event.PublishPipelineBuild(db, pb, previous)
@@ -556,6 +552,24 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 
 	pb.Status = newStatus
 	return nil
+}
+
+func DeletePipelineBuildByApplicationID(db gorp.SqlExecutor, appID int64) error {
+	if err := DeleteBuildLogsByApplicationID(db, appID); err != nil {
+		return err
+	}
+	if err := DeletePipelineBuildJobByApplicationID(db, appID); err != nil {
+		return err
+	}
+
+	query := `
+		DELETE FROM pipeline_build
+		WHERE application_id = $1
+	`
+
+	_, errDelete := db.Exec(query, appID)
+	return errDelete
+
 }
 
 // DeletePipelineBuildByID  Delete pipeline build by his ID
@@ -669,13 +683,18 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 
 // UpdatePipelineBuildCommits gets and update commit for given pipeline build
 func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, pb *sdk.PipelineBuild) ([]sdk.VCSCommit, error) {
-	if app.RepositoriesManager == nil {
+	if app.VCSServer == "" {
+		return nil, nil
+	}
+
+	vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
+	if vcsServer == nil {
 		return nil, nil
 	}
 
 	res := []sdk.VCSCommit{}
 	//Get the RepositoriesManager Client
-	client, errclient := repositoriesmanager.AuthorizedClient(db, p.Key, app.RepositoriesManager.Name, Store)
+	client, errclient := repositoriesmanager.AuthorizedClient(db, Store, vcsServer)
 	if errclient != nil {
 		return nil, sdk.WrapError(errclient, "UpdatePipelineBuildCommits> Cannot get client")
 	}
@@ -744,19 +763,23 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 }
 
 // InsertPipelineBuild insert build informations in database so Scheduler can pick it up
-func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipeline, app *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (*sdk.PipelineBuild, error) {
+func InsertPipelineBuild(tx gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline, app *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (*sdk.PipelineBuild, error) {
 	var buildNumber int64
 	var pb sdk.PipelineBuild
-	var client sdk.RepositoriesManagerClient
+	var client sdk.VCSAuthorizedClient
 
 	//Initialize client for repository manager
-	if app.RepositoriesManager != nil && app.RepositoryFullname != "" {
+	if app.VCSServer != "" && app.RepositoryFullname != "" {
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+		if vcsServer == nil {
+			return nil, nil
+		}
+
 		//We don't need to pass apiURL and uiURL because they are not usefull for commit
-		client, _ = repositoriesmanager.AuthorizedClient(tx, project.Key, app.RepositoriesManager.Name, Store)
+		client, _ = repositoriesmanager.AuthorizedClient(tx, Store, vcsServer)
 	}
 
 	// Load last finished build
-
 	buildNumber, err := GetLastBuildNumber(tx, p.ID, app.ID, env.ID)
 	if err != nil && err != sql.ErrNoRows {
 		return nil, sdk.WrapError(err, "InsertPipelineBuild> Cannot get last build number")
@@ -789,12 +812,16 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	gitURL, gitURLfound := mapParams["git.url"]
 	gitHTTPURL, gitHTTPURLFound := mapParams["git.http_url"]
 	_, parentBuildNumberFound := mapParams["cds.parent.buildNumber"]
+	mapPreviousParams := map[string]string{}
+	if trigger.ParentPipelineBuild != nil {
+		mapPreviousParams = paramsToMap(trigger.ParentPipelineBuild.Parameters)
+	}
 
 	switch {
 	case client != nil && (!gitURLfound || !gitHTTPURLFound) && !parentBuildNumberFound: // For root pipeline
 		repo, errC := client.RepoByFullname(app.RepositoryFullname)
 		if errC != nil {
-			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.RepositoriesManager.Name, app.RepositoryFullname)
+			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.VCSServer, app.RepositoryFullname)
 		}
 
 		sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
@@ -815,8 +842,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 			pb.Trigger.VCSRemote = getRemoteName(mapParams["git.project"], mapParams["git.repository"])
 		}
 
-	case parentBuildNumberFound && trigger.ParentPipelineBuild != nil: // For pipeline triggered after root
-		mapPreviousParams := paramsToMap(trigger.ParentPipelineBuild.Parameters)
+	case parentBuildNumberFound && trigger.ParentPipelineBuild != nil && mapPreviousParams["cds.application"] == app.Name: // For pipeline triggered after root
 		if _, ok := mapPreviousParams["git.url"]; ok && mapPreviousParams["git.url"] != "" {
 			sdk.AddParameter(&params, "git.url", sdk.StringParameter, mapPreviousParams["git.url"])
 		}
@@ -834,6 +860,16 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 			sdk.AddParameter(&params, "git.repository", sdk.StringParameter, trigger.ParentPipelineBuild.Trigger.VCSRemote)
 			pb.Trigger.VCSRemote = trigger.ParentPipelineBuild.Trigger.VCSRemote
 		}
+	case parentBuildNumberFound && trigger.ParentPipelineBuild != nil && client != nil && mapPreviousParams["cds.application"] != app.Name: // For pipeline attached to an external application
+		repo, errC := client.RepoByFullname(app.RepositoryFullname)
+		if errC != nil {
+			return nil, sdk.WrapError(errC, "InsertPipelineBuild> Unable to get repository %s from %s", app.VCSServer, app.RepositoryFullname)
+		}
+		pb.Trigger.VCSRemote = app.RepositoryFullname
+		pb.Trigger.VCSRemoteURL = repo.HTTPCloneURL
+		sdk.AddParameter(&params, "git.repository", sdk.StringParameter, app.RepositoryFullname)
+		sdk.AddParameter(&params, "git.http_url", sdk.StringParameter, repo.HTTPCloneURL)
+		sdk.AddParameter(&params, "git.url", sdk.StringParameter, repo.SSHCloneURL)
 	}
 
 	if pb.Trigger.TriggeredBy != nil {
@@ -964,7 +1000,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, project *sdk.Project, p *sdk.Pipel
 	pb.Environment = *env
 
 	// Update stats
-	stats.PipelineEvent(tx, p.Type, project.ID, app.ID)
+	stats.PipelineEvent(tx, p.Type, proj.ID, app.ID)
 
 	//Send notification
 	//Load previous pipeline (some app, pip, env and branch)
@@ -1656,7 +1692,7 @@ func paramsToMap(params []sdk.Parameter) map[string]string {
 }
 
 func getRemoteName(project, repo string) string {
-	if project != "" {
+	if project != "" && !strings.Contains(repo, project+"/") {
 		return project + "/" + repo
 	}
 	return repo

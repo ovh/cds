@@ -12,9 +12,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/facebookgo/httpcontrol"
 	"github.com/gambol99/go-marathon"
+	"github.com/moby/moby/pkg/namesgenerator"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
@@ -71,6 +71,10 @@ func (h *HatcheryMarathon) CheckConfiguration(cfg interface{}) error {
 
 	if hconfig.MarathonPassword == "" {
 		return fmt.Errorf("Marathon Password is mandatory")
+	}
+
+	if hconfig.Name == "" {
+		return fmt.Errorf("please enter a name in your marathon hatchery configuration")
 	}
 
 	h.marathonLabels = map[string]string{}
@@ -183,11 +187,11 @@ func (h *HatcheryMarathon) CanSpawn(model *sdk.Model, jobID int64, requirements 
 
 // SpawnWorker creates an application on mesos via marathon
 // requirements services are not supported
-func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requirements []sdk.Requirement, registerOnly bool, logInfo string) (string, error) {
-	if jobID > 0 {
-		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", model.Name, model.Image, jobID, logInfo)
+func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
+	if spawnArgs.JobID > 0 {
+		log.Info("spawnWorker> spawning worker %s (%s) for job %d - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.JobID, spawnArgs.LogInfo)
 	} else {
-		log.Info("spawnWorker> spawning worker %s (%s) - %s", model.Name, model.Image, logInfo)
+		log.Info("spawnWorker> spawning worker %s (%s) - %s", spawnArgs.Model.Name, spawnArgs.Model.Image, spawnArgs.LogInfo)
 	}
 
 	var logJob string
@@ -196,21 +200,21 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 	memory := h.Config.DefaultMemory
 
 	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
-	if registerOnly {
+	if spawnArgs.RegisterOnly {
 		cmd += " register"
 	}
 	instance := 1
-	workerName := fmt.Sprintf("%s-%s", strings.ToLower(model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
-	if registerOnly {
+	workerName := fmt.Sprintf("%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
+	if spawnArgs.RegisterOnly {
 		workerName = "register-" + workerName
 	}
-	forcePull := strings.HasSuffix(model.Image, ":latest")
+	forcePull := strings.HasSuffix(spawnArgs.Model.Image, ":latest")
 
 	env := map[string]string{
 		"CDS_API":           h.Client().APIURL(),
 		"CDS_TOKEN":         h.Configuration().API.Token,
 		"CDS_NAME":          workerName,
-		"CDS_MODEL":         fmt.Sprintf("%d", model.ID),
+		"CDS_MODEL":         fmt.Sprintf("%d", spawnArgs.Model.ID),
 		"CDS_HATCHERY":      fmt.Sprintf("%d", h.hatch.ID),
 		"CDS_HATCHERY_NAME": fmt.Sprintf("%s", h.hatch.Name),
 		"CDS_SINGLE_USE":    "1",
@@ -229,18 +233,23 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 	if h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue != "" {
 		env["CDS_GRAYLOG_EXTRA_VALUE"] = h.Configuration().Provision.WorkerLogsOptions.Graylog.ExtraValue
 	}
-	if h.Configuration().API.GRPC.URL != "" && model.Communication == sdk.GRPC {
+	if h.Configuration().API.GRPC.URL != "" && spawnArgs.Model.Communication == sdk.GRPC {
 		env["CDS_GRPC_API"] = h.Configuration().API.GRPC.URL
 		env["CDS_GRPC_INSECURE"] = strconv.FormatBool(h.Configuration().API.GRPC.Insecure)
 	}
 
 	//Check if there is a memory requirement
 	//if there is a service requirement: exit
-	if jobID > 0 {
-		logJob = fmt.Sprintf("for job %d,", jobID)
-		env["CDS_BOOKED_JOB_ID"] = fmt.Sprintf("%d", jobID)
+	if spawnArgs.JobID > 0 {
+		if spawnArgs.IsWorkflowJob {
+			logJob = fmt.Sprintf("for workflow job %d,", spawnArgs.JobID)
+			env["CDS_BOOKED_WORKFLOW_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
+		} else {
+			logJob = fmt.Sprintf("for pipeline build job %d,", spawnArgs.JobID)
+			env["CDS_BOOKED_PB_JOB_ID"] = fmt.Sprintf("%d", spawnArgs.JobID)
+		}
 
-		for _, r := range requirements {
+		for _, r := range spawnArgs.Requirements {
 			if r.Type == sdk.MemoryRequirement {
 				var err error
 				memory, err = strconv.Atoi(r.Value)
@@ -260,7 +269,7 @@ func (h *HatcheryMarathon) SpawnWorker(model *sdk.Model, jobID int64, requiremen
 		Container: &marathon.Container{
 			Docker: &marathon.Docker{
 				ForcePullImage: &forcePull,
-				Image:          model.Image,
+				Image:          spawnArgs.Model.Image,
 				Network:        "BRIDGE",
 			},
 			Type: "DOCKER",
@@ -400,7 +409,7 @@ func (h *HatcheryMarathon) WorkersStartedByModel(model *sdk.Model) int {
 // Init only starts killing routine of worker not registered
 func (h *HatcheryMarathon) Init() error {
 	h.hatch = &sdk.Hatchery{
-		Name:    hatchery.GenerateName("marathon", h.Configuration().Name),
+		Name:    h.Configuration().Name,
 		Version: sdk.VERSION,
 	}
 

@@ -6,39 +6,23 @@
         </div>
     </div>
     <div class="content">
-        <div class="ui form" *ngIf="hooksModel">
+        <div class="ui form">
             <h3>{{ 'workflow_node_hook_form_title' | translate }}</h3>
-            <sui-select class="selection"
-                        [(ngModel)]="selectedHookModel"
-                        (ngModelChange)="updateHook()"
-                        [options]="hooksModel"
-                        [isSearchable]="true"
-                        labelField="name"
-                        #select>
-                <sui-select-option *ngFor="let option of select.filteredOptions"
-                                   [value]="option">{{option.name}}
-                </sui-select-option>
-            </sui-select>
+            <ng-container *ngIf="hooksModel">
+                <sui-select class="selection" [(ngModel)]="selectedHookModel" (ngModelChange)="updateHook()" [options]="hooksModel" [isSearchable]="true" labelField="name" #select>
+                    <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
+                    </sui-select-option>
+                </sui-select>
+            </ng-container>
             <ng-container *ngIf="_hook.model">
                 <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
                 <ng-container *ngIf="_hook.config">
                     <div class="inline fields" *ngFor="let k of hook.config | keys">
-                        <label>{{k}}</label>
-                        <input type="text" [(ngModel)]="_hook.config[k]">
+                        <div class="four wide field"><label>{{k}}</label></div>
+                        <div class="twelve wide field"><input type="text" [(ngModel)]="_hook.config[k].value" [readonly]="!_hook.config[k].configurable"></div>
                     </div>
                 </ng-container>
                 <div class="ui info message" *ngIf="!_hook.config">{{ 'workflow_node_hook_no_configuration' | translate }}</div>
-            </ng-container>
-            <ng-container *ngIf="_hook">
-                <h3>{{'workflow_node_hook_condition_list' | translate}}</h3>
-                <ng-container *ngIf="_hook.conditions && _hook.conditions.length > 0">
-                    <app-workflow-trigger-condition-list [project]="project" [(conditions)]="_hook.conditions" [operators]="operators"></app-workflow-trigger-condition-list>
-                </ng-container>
-                <ng-container *ngIf="!_hook.conditions || _hook.conditions.length === 0">
-                    <div class="ui info message">{{'workflow_node_hook_condition_no' | translate}}</div>
-                </ng-container>
-                <h3>{{'workflow_node_hook_condition_form' | translate}}</h3>
-                <app-workflow-trigger-condition-form [operators]="operators" [names]="conditionNames" (addEvent)="addConditions($event)"></app-workflow-trigger-condition-form>
             </ng-container>
         </div>
     </div>

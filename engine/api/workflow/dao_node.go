@@ -10,6 +10,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
@@ -84,8 +85,15 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 	for i := range n.Hooks {
 		h := &n.Hooks[i]
 		//Configure the hook
-		h.Config["project"] = w.ProjectKey
-		h.Config["workflow"] = w.Name
+		h.Config["project"] = sdk.WorkflowNodeHookConfigValue{
+			Value:        w.ProjectKey,
+			Configurable: false,
+		}
+
+		h.Config["workflow"] = sdk.WorkflowNodeHookConfigValue{
+			Value:        w.Name,
+			Configurable: false,
+		}
 		//Insert the hook
 		if err := insertHook(db, n, h); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node hook")
@@ -110,6 +118,7 @@ type sqlContext struct {
 	EnvID                     sql.NullInt64  `db:"environment_id"`
 	DefaultPayload            sql.NullString `db:"default_payload"`
 	DefaultPipelineParameters sql.NullString `db:"default_pipeline_parameters"`
+	Conditions                sql.NullString `db:"conditions"`
 }
 
 func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
@@ -141,12 +150,18 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	}
 
 	// Set PipelineParameters in context
-	if c.DefaultPayload != nil {
+	if c.DefaultPipelineParameters != nil {
 		b, errM := json.Marshal(c.DefaultPipelineParameters)
 		if errM != nil {
 			return sdk.WrapError(errM, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) default pipeline parameters", c.ID)
 		}
 		sqlContext.DefaultPipelineParameters = sql.NullString{String: string(b), Valid: true}
+	}
+
+	var errC error
+	sqlContext.Conditions, errC = gorpmapping.JSONToNullString(c.Conditions)
+	if errC != nil {
+		return sdk.WrapError(errC, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) conditions", c.ID)
 	}
 
 	if _, err := db.Update(&sqlContext); err != nil {
@@ -225,7 +240,7 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
-		"select application_id, environment_id, default_payload, default_pipeline_parameters from workflow_node_context where id = $1", ctx.ID); err != nil {
+		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions from workflow_node_context where id = $1", ctx.ID); err != nil {
 		return nil, err
 	}
 	if sqlContext.AppID.Valid {
@@ -251,7 +266,7 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 
 	//Load the application in the context
 	if ctx.ApplicationID != 0 {
-		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithVariables)
+		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables)
 		if err != nil {
 			return nil, sdk.WrapError(err, "loadNodeContext> Unable to load application %d", ctx.ApplicationID)
 		}
@@ -266,6 +281,11 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 		}
 		ctx.Environment = env
 	}
+
+	if err := gorpmapping.JSONNullString(sqlContext.Conditions, &ctx.Conditions); err != nil {
+		return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
+	}
+
 	return &ctx, nil
 }
 

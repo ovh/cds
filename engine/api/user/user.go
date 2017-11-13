@@ -203,18 +203,19 @@ func CountUser(db gorp.SqlExecutor) (int64, error) {
 
 // UpdateUser update given user
 func UpdateUser(db gorp.SqlExecutor, u sdk.User) error {
+	u.Groups = nil
 	su, err := json.Marshal(u)
 	if err != nil {
 		return err
 	}
 	query := `UPDATE "user" SET username=$1, admin=$2, data=$3 WHERE id=$4`
-	u.Groups = nil
 	_, err = db.Exec(query, u.Username, u.Admin, su, u.ID)
 	return err
 }
 
 // UpdateUserAndAuth update given user
 func UpdateUserAndAuth(db gorp.SqlExecutor, u sdk.User) error {
+	u.Groups = nil
 	su, err := json.Marshal(u)
 	if err != nil {
 		return err
@@ -224,7 +225,6 @@ func UpdateUserAndAuth(db gorp.SqlExecutor, u sdk.User) error {
 		return err
 	}
 	query := `UPDATE "user" SET username=$1, admin=$2, data=$3, auth=$4 WHERE id=$5`
-	u.Groups = nil
 	_, err = db.Exec(query, u.Username, u.Admin, su, sa, u.ID)
 	return err
 }

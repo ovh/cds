@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/sessionstore"
@@ -15,6 +16,7 @@ import (
 )
 
 func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbMap, *Router) {
+	bootstrapFunc = append(bootstrapFunc, bootstrap.InitiliazeDB)
 	db, cache := test.SetupPG(t, bootstrapFunc...)
 	router := newRouter(auth.TestLocalAuth(t, db, sessionstore.Options{RedisHost: test.RedisHost, RedisPassword: test.RedisPassword, TTL: 30}), mux.NewRouter(), "/"+test.GetTestName(t))
 	api := &API{

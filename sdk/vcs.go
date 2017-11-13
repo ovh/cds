@@ -1,7 +1,7 @@
 package sdk
 
 import (
-	"bytes"
+	"io"
 	"time"
 )
 
@@ -45,5 +45,5 @@ type VCSAuthorizedClient interface {
 
 	// Release
 	Release(repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
-	UploadReleaseFile(repo string, release *VCSRelease, runArtifact WorkflowNodeRunArtifact, file *bytes.Buffer) error
+	UploadReleaseFile(repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error
 }

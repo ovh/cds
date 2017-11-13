@@ -20,7 +20,7 @@ export class ApplicationPollerFormComponent implements OnInit {
 
 
     ngOnInit() {
-        if (!this.application.repositories_manager) {
+        if (!this.application.vcs_server) {
             this._appStore.getApplications(this.project.key, this.application.name).first().subscribe( apps => {
                 let appKey = this.project.key + '-' + this.application.name;
                 if (apps.get(appKey)) {

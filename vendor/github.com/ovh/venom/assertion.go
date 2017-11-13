@@ -1,8 +1,12 @@
 package venom
 
 import (
+	"bytes"
 	"fmt"
+	"reflect"
+	"strconv"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -69,11 +73,11 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 	}
 
 	if _, ok := executorResult["result.systemerr"]; ok {
-		systemerr = executorResult["result.systemerr"]
+		systemerr = fmt.Sprintf("%v", executorResult["result.systemerr"])
 	}
 
 	if _, ok := executorResult["result.systemout"]; ok {
-		systemout = executorResult["result.systemout"]
+		systemout = fmt.Sprintf("%v", executorResult["result.systemout"])
 	}
 
 	return isOK, errors, failures, systemout, systemerr
@@ -101,15 +105,37 @@ func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure,
 	}
 	args := make([]interface{}, len(assert[2:]))
 	for i, v := range assert[2:] { // convert []string to []interface for assertions.func()...
-		args[i] = v
+		args[i], _ = stringToType(v, actual)
 	}
 
 	out := f(actual, args...)
 
 	if out != "" {
 		prefix := "assertion: " + assertion
-		sdump, _ := dump.Sdump(executorResult)
-		return nil, &Failure{Value: RemoveNotPrintableChar(prefix + "\n" + out + "\n" + sdump)}
+
+		sdump := &bytes.Buffer{}
+		dumpEncoder := dump.NewDefaultEncoder(sdump)
+		dumpEncoder.ExtraFields.DetailedMap = false
+		dumpEncoder.ExtraFields.DetailedStruct = false
+		dumpEncoder.ExtraFields.Len = false
+		dumpEncoder.ExtraFields.Type = false
+		dumpEncoder.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+
+		//Try to pretty print only the result
+		var smartPrinted bool
+		for k, v := range executorResult {
+			if k == "result" && reflect.TypeOf(v).Kind() != reflect.String {
+				dumpEncoder.Fdump(v)
+				smartPrinted = true
+				break
+			}
+		}
+		//If not succeed print all the stuff
+		if !smartPrinted {
+			dumpEncoder.Fdump(executorResult)
+		}
+
+		return nil, &Failure{Value: RemoveNotPrintableChar(prefix + "\n" + out + "\n" + sdump.String())}
 	}
 	return nil, nil
 }
@@ -209,4 +235,45 @@ func ShouldContainSubstring(actual interface{}, expected ...interface{}) string 
 		arg += fmt.Sprintf("%v ", e)
 	}
 	return assertions.ShouldContainSubstring(actual, strings.TrimSpace(arg))
+}
+
+func stringToType(val string, valType interface{}) (interface{}, error) {
+	switch valType.(type) {
+	case bool:
+		return strconv.ParseBool(val)
+	case string:
+		return val, nil
+	case int:
+		return strconv.Atoi(val)
+	case int8:
+		return strconv.ParseInt(val, 10, 8)
+	case int16:
+		return strconv.ParseInt(val, 10, 16)
+	case int32:
+		return strconv.ParseInt(val, 10, 32)
+	case int64:
+		return strconv.ParseInt(val, 10, 64)
+	case uint:
+		newVal, err := strconv.Atoi(val)
+		return uint(newVal), err
+	case uint8:
+		return strconv.ParseUint(val, 10, 8)
+	case uint16:
+		return strconv.ParseUint(val, 10, 16)
+	case uint32:
+		return strconv.ParseUint(val, 10, 32)
+	case uint64:
+		strconv.ParseUint(val, 10, 64)
+	case float32:
+		iVal, err := strconv.ParseFloat(val, 32)
+		return float32(iVal), err
+	case float64:
+		iVal, err := strconv.ParseFloat(val, 64)
+		return float64(iVal), err
+	case time.Time:
+		return time.Parse(time.RFC3339, val)
+	case time.Duration:
+		return time.ParseDuration(val)
+	}
+	return val, nil
 }

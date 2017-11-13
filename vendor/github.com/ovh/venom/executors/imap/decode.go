@@ -12,7 +12,7 @@ import (
 	"mime/quotedprintable"
 	"net/mail"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/yesnault/go-imap/imap"
 
 	"github.com/ovh/venom"

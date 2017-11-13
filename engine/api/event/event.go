@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/docker/docker/pkg/namesgenerator"
+	"github.com/moby/moby/pkg/namesgenerator"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -69,6 +69,16 @@ func DequeueEvent(c context.Context) {
 			}
 		}
 	}
+}
+
+// GetHostname returns Hostname of this cds instance
+func GetHostname() string {
+	return hostname
+}
+
+// GetCDSName returns cdsname of this cds instance
+func GetCDSName() string {
+	return cdsname
 }
 
 // Close closes event system

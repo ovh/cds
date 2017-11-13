@@ -19,6 +19,7 @@ import {ProjectModule} from '../../project.module';
 import {SharedModule} from '../../../../shared/shared.module';
 import {Project} from '../../../../model/project.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 
 describe('CDS: Project Admin Component', () => {
 
@@ -40,6 +41,7 @@ describe('CDS: Project Admin Component', () => {
                 ToasterService,
                 TranslateService,
                 TranslateParser,
+                AuthentificationStore,
                 { provide: ToastService, useClass: MockToast}
             ],
             imports : [

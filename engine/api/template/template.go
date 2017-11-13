@@ -72,7 +72,7 @@ func ApplyTemplate(db *gorp.DbMap, store cache.Store, proj *sdk.Project, opts sd
 		}
 	}(&msgList)
 
-	if err := application.Import(tx, store, proj, app, app.RepositoriesManager, user, msgChan); err != nil {
+	if err := application.Import(tx, store, proj, app, app.VCSServer, user, msgChan); err != nil {
 		log.Warning("ApplyTemplate> error applying template : %s", err)
 		close(msgChan)
 		return msgList, err

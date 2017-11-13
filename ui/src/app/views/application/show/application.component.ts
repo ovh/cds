@@ -12,7 +12,6 @@ import {TranslateService} from 'ng2-translate';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {Subscription} from 'rxjs/Subscription';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
-import {WorkflowItem} from '../../../model/application.workflow.model';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {NotificationEvent} from './notifications/notification.event';
 import {ApplicationNotificationListComponent} from './notifications/list/notification.list.component';
@@ -109,7 +108,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                     this.stopWorker();
                 }
                 if (!this.application) {
-                    this.applicationSubscription = this._applicationStore.getApplications(key, appName).subscribe(apps => {
+                    this.applicationSubscription = this._applicationStore.getApplications(key, appName, this.appFilter).subscribe(apps => {
                         if (apps) {
                             let updatedApplication = apps.get(key + '-' + appName);
                             if (updatedApplication && !updatedApplication.externalChange) {

@@ -1,20 +1,29 @@
 import {
-    AfterViewInit, ChangeDetectorRef, Component, ComponentFactoryResolver, ComponentRef,
-    EventEmitter, HostListener, Input, OnInit, Output, ViewChild, ViewContainerRef
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    ComponentFactoryResolver,
+    ComponentRef,
+    EventEmitter,
+    HostListener,
+    Input,
+    Output,
+    ViewChild,
+    ViewContainerRef
 } from '@angular/core';
 import * as d3 from 'd3';
 import * as dagreD3 from 'dagre-d3';
-import { SemanticDimmerComponent } from 'ng-semantic/ng-semantic';
-
-import { Project } from '../../../model/project.model';
-import { Workflow, WorkflowNode, WorkflowNodeJoin } from '../../../model/workflow.model';
-import { WorkflowStore } from '../../../service/workflow/workflow.store';
-import { AutoUnsubscribe } from '../../../shared/decorator/autoUnsubscribe';
-import { CDSWorker } from '../../../shared/worker/worker';
-import { WorkflowJoinComponent } from '../../../shared/workflow/join/workflow.join.component';
-import { WorkflowNodeHookComponent } from '../../../shared/workflow/node/hook/hook.component';
-import { WorkflowNodeComponent } from '../../../shared/workflow/node/workflow.node.component';
-import { WorkflowCoreService } from '../../../shared/workflow/workflow.service';
+import {SemanticDimmerComponent} from 'ng-semantic/ng-semantic';
+import {Project} from '../../../model/project.model';
+import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../../model/workflow.model';
+import {WorkflowStore} from '../../../service/workflow/workflow.store';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {CDSWorker} from '../../../shared/worker/worker';
+import {WorkflowJoinComponent} from '../../../shared/workflow/join/workflow.join.component';
+import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook.component';
+import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
+import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
+import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -27,9 +36,10 @@ import { WorkflowCoreService } from '../../../shared/workflow/workflow.service';
     ]
 })
 @AutoUnsubscribe()
-export class WorkflowGraphComponent implements AfterViewInit, OnInit {
+export class WorkflowGraphComponent implements AfterViewInit {
 
     workflow: Workflow;
+    _workflowRun: WorkflowRun;
     sidebarOpen: boolean;
 
     @Input('workflowData')
@@ -41,8 +51,21 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.changeDisplay();
     }
 
+    @Input('workflowRun')
+    set workflowRun(data: WorkflowRun) {
+        if (data) {
+            // check if nodes have to be updated
+            this._workflowRun = data;
+            this.workflow = data.workflow;
+            this.nodeHeight = 78;
+            this.calculateDynamicWidth();
+            this.changeDisplay();
+        }
+    }
+
     @Input() project: Project;
     @Input() webworker: CDSWorker;
+
     @Input('direction')
     set direction(data: string) {
         this._direction = data;
@@ -50,19 +73,19 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         this.calculateDynamicWidth();
         this.changeDisplay();
     }
-    get direction() { return this._direction }
 
-    @Output() editTriggerEvent = new EventEmitter<{ source, target }>();
-    @Output() editTriggerJoinEvent = new EventEmitter<{ source, target }>();
+    get direction() {
+        return this._direction
+    }
+
     @Output() deleteJoinSrcEvent = new EventEmitter<{ source, target }>();
     @Output() addSrcToJoinEvent = new EventEmitter<{ source, target }>();
 
     ready: boolean;
     _direction: string;
-    displayDirection = false;
 
     // workflow graph
-    @ViewChild('svgGraph', { read: ViewContainerRef }) svgContainer;
+    @ViewChild('svgGraph', {read: ViewContainerRef}) svgContainer;
     g: dagreD3.graphlib.Graph;
     render = new dagreD3.render();
     svgWidth: number = window.innerWidth;
@@ -82,7 +105,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
     nodeHeight: number;
 
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private _cd: ChangeDetectorRef,
-        private _workflowStore: WorkflowStore, private _workflowCore: WorkflowCoreService) {
+                private _workflowStore: WorkflowStore, private _workflowCore: WorkflowCoreService) {
         this._workflowCore.getSidebarStatus().subscribe(b => {
             this.sidebarOpen = b;
             if (this.ready) {
@@ -90,13 +113,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
                 window.dispatchEvent(new Event('resize'));
             }
         });
-    }
-
-    ngOnInit(): void {
-        if (!this.direction) {
-            this.displayDirection = true;
-            this.direction = this._workflowStore.getDirection(this.project.key, this.workflow.name);
-        }
     }
 
     @HostListener('window:resize', ['$event'])
@@ -146,7 +162,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
     initWorkflow() {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
-        this.g = new dagreD3.graphlib.Graph().setGraph(<any>{ align: 'UL', rankdir: this.direction });
+        this.g = new dagreD3.graphlib.Graph().setGraph(<any>{align: 'UL', rankdir: this.direction});
 
         // Create all nodes
         if (this.workflow.root) {
@@ -200,18 +216,10 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             if (this.linkWithJoin) {
                 return;
             }
-            // Trigger between node and node
-            if (d.v.indexOf('node-') === 0 && d.w.indexOf('node-') === 0) {
-                this.editTriggerEvent.emit({ source: d.v, target: d.w });
-            }
-            // Join Trigger
-            if (d.v.indexOf('join-') === 0) {
-                this.editTriggerJoinEvent.emit({ source: d.v, target: d.w });
-            }
 
             // Node Join Src
             if (d.v.indexOf('node-') === 0 && d.w.indexOf('join-') === 0) {
-                this.deleteJoinSrcEvent.emit({ source: d.v, target: d.w });
+                this.deleteJoinSrcEvent.emit({source: d.v, target: d.w});
             }
         });
     }
@@ -237,7 +245,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             windowsWidth -= 250;
         }
 
-        this.nodeWidth = Math.floor(windowsWidth * .85 / nbofNodes);
+        this.nodeWidth = Math.floor(windowsWidth * .75 / nbofNodes);
         if (this.nodeWidth < 155) {
             this.nodeWidth = 155;
         }
@@ -264,7 +272,7 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
             componentRef.instance.selectEvent.subscribe(j => {
                 if (this.linkWithJoin && this.nodeToLink) {
-                    this.addSrcToJoinEvent.emit({ source: this.nodeToLink, target: j });
+                    this.addSrcToJoinEvent.emit({source: this.nodeToLink, target: j});
                 }
             });
             this.joinsComponent.set(join.id, componentRef);
@@ -285,7 +293,8 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
 
         if (join.source_node_id) {
             join.source_node_id.forEach(nodeID => {
-                this.createEdge('node-' + nodeID, 'join-' + join.id, {});
+                let style = 'stroke: ' + this.getJoinSrcStyle(nodeID) + ';';
+                this.createEdge('node-' + nodeID, 'join-' + join.id, { style: style});
             });
         }
 
@@ -293,14 +302,23 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             join.triggers.forEach(t => {
                 this.createNode(t.workflow_dest_node);
                 let options = {
-                    id: 'trigger-' + t.id
+                    id: 'trigger-' + t.id,
+                    style: 'stroke: ' + this.getJoinTriggerColor(t.id) + ';'
                 };
-                if (t.manual) {
-                    options['style'] = 'stroke-dasharray: 5, 5';
-                }
                 this.createEdge('join-' + join.id, 'node-' + t.workflow_dest_node.id, options);
             });
         }
+    }
+
+    getJoinSrcStyle(nodeID: number): string {
+        if (this._workflowRun && this._workflowRun.nodes[nodeID] && this._workflowRun.nodes[nodeID].length > 0) {
+            switch (this._workflowRun.nodes[nodeID][0].status) {
+                case 'Success':
+                case 'Fail':
+                    return '#21BA45';
+            }
+        }
+        return 'black';
     }
 
     createHookNode(node: WorkflowNode): void {
@@ -370,13 +388,51 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
             node.triggers.forEach(t => {
                 this.createNode(t.workflow_dest_node);
                 let options = {
-                    id: 'trigger-' + t.id
+                    id: 'trigger-' + t.id,
+                    style: 'stroke: ' + this.getTriggerColor(node, t.id) + ';'
                 };
-                if (t.manual) {
-                    options['style'] = 'stroke-dasharray: 5, 5';
-                }
                 this.createEdge('node-' + node.id, 'node-' + t.workflow_dest_node.id, options);
             });
+        }
+    }
+
+    getJoinTriggerColor(triggerID: number): string {
+        if (this._workflowRun && this._workflowRun.join_triggers_run) {
+            if (this._workflowRun.join_triggers_run[triggerID]) {
+                switch (this._workflowRun.join_triggers_run[triggerID].status) {
+                    case 'Success':
+                    case 'Warning':
+                        return '#21BA45';
+                    case 'Fail':
+                        return '#FF4F60';
+                }
+            }
+        }
+        return '#000000';
+    }
+
+    getTriggerColor(node: WorkflowNode, triggerID: number): string {
+        if (this._workflowRun && this._workflowRun.nodes && node) {
+            if (this._workflowRun.nodes[node.id]) {
+                let lastRun = <WorkflowNodeRun>this._workflowRun.nodes[node.id][0];
+                if (lastRun.triggers_run && lastRun.triggers_run[triggerID]) {
+                    switch (lastRun.triggers_run[triggerID].status) {
+                        case 'Success':
+                        case 'Warning':
+                            return '#21BA45';
+                        case 'Fail':
+                            return '#FF4F60';
+                    }
+                }
+            }
+        }
+        return '#000000';
+    }
+
+    @HostListener('document:keydown', ['$event'])
+    handleKeyboardEvent(event: KeyboardEvent) {
+        if (event.code === 'Escape' && this.linkWithJoin) {
+            this.toggleLinkJoin(false);
         }
     }
 
@@ -390,7 +446,6 @@ export class WorkflowGraphComponent implements AfterViewInit, OnInit {
         componentRef.instance.linkJoinEvent.subscribe(n => {
             this.nodeToLink = n;
             this.toggleLinkJoin(true);
-
         });
 
         return componentRef;

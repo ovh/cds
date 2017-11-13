@@ -26,6 +26,11 @@ type Configuration struct {
 		Port int `toml:"port" default:"8084" toml:"name"`
 	} `toml:"http" comment:"######################\n CDS VCS HTTP Configuration \n######################"`
 	URL string `default:"http://localhost:8084"`
+	UI  struct {
+		HTTP struct {
+			URL string `toml:"url" default:"http://localhost:2015"`
+		} `toml:"http"`
+	}
 	API struct {
 		HTTP struct {
 			URL      string `toml:"url" default:"http://localhost:8081"`
@@ -59,8 +64,8 @@ type ServerConfiguration struct {
 
 // GithubServerConfiguration represents the github configuration
 type GithubServerConfiguration struct {
-	ClientID     string `toml:"client_id" json:"-" comment:"Github OAuth Application Client ID"`
-	ClientSecret string `toml:"client_secret" json:"-"  comment:"Github OAuth Application Client Secret"`
+	ClientID     string `toml:"clientId" json:"-" comment:"Github OAuth Application Client ID"`
+	ClientSecret string `toml:"clientSecret" json:"-"  comment:"Github OAuth Application Client Secret"`
 	Status       struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
@@ -84,6 +89,7 @@ var errGithubConfigurationError = fmt.Errorf("Github configuration Error")
 
 // GitlabServerConfiguration represents the gitlab configuration
 type GitlabServerConfiguration struct {
+	AppID  string `toml:"appId" json:"-"`
 	Secret string `toml:"secret" json:"-"`
 	Status struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`

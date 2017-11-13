@@ -307,14 +307,23 @@ func Test_postWorkflowWithHooksHandler(t *testing.T) {
 			Hooks: []sdk.WorkflowNodeHook{
 				{
 					Config: sdk.WorkflowNodeHookConfig{
-						"method": "GET",
+						"method": sdk.WorkflowNodeHookConfigValue{
+							Value:        "GET",
+							Configurable: true,
+						},
 					},
 					WorkflowHookModelID: workflow.WebHookModel.ID,
 				},
 				{
 					Config: sdk.WorkflowNodeHookConfig{
-						"cron":     "* * * * *",
-						"timezone": "",
+						"cron": sdk.WorkflowNodeHookConfigValue{
+							Value:        "* * * * *",
+							Configurable: true,
+						},
+						"timezone": sdk.WorkflowNodeHookConfigValue{
+							Value:        "",
+							Configurable: true,
+						},
 					},
 					WorkflowHookModelID: workflow.SchedulerModel.ID,
 				},
@@ -330,8 +339,7 @@ func Test_postWorkflowWithHooksHandler(t *testing.T) {
 	assert.Equal(t, 201, w.Code)
 	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
 
-	t.Log("%s", dump.MustSdump(wf))
-
+	t.Logf("%s", dump.MustSdump(wf))
 }
 
 func Test_deleteWorkflowHandler(t *testing.T) {
@@ -367,7 +375,10 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 			Hooks: []sdk.WorkflowNodeHook{
 				{
 					Config: sdk.WorkflowNodeHookConfig{
-						"method": "GET",
+						"method": sdk.WorkflowNodeHookConfigValue{
+							Value:        "GET",
+							Configurable: true,
+						},
 					},
 					WorkflowHookModelID: workflow.WebHookModel.ID,
 				},

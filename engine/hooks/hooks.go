@@ -43,8 +43,11 @@ func (s *Service) CheckConfiguration(config interface{}) error {
 		return fmt.Errorf("Invalid configuration")
 	}
 
-	if sConfig.URL == "" || sConfig.Name == "" {
+	if sConfig.URL == "" {
 		return fmt.Errorf("your CDS configuration seems to be empty. Please use environment variables, file or Consul to set your configuration")
+	}
+	if sConfig.Name == "" {
+		return fmt.Errorf("please enter a name in your hooks configuration")
 	}
 
 	return nil

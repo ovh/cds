@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Deprecated
@@ -45,9 +46,11 @@ func (api *API) attachPipelineToApplicationHandler() Handler {
 			return sdk.WrapError(err, "addPipelineInApplicationHandler> Cannot attach pipeline %s to application %s", pipelineName, appName)
 		}
 
-		if err := sanity.CheckPipeline(api.mustDB(), api.Cache, proj, pipeline); err != nil {
-			return sdk.WrapError(err, "addPipelineInApplicationHandler> Cannot check pipeline sanity")
-		}
+		go func() {
+			if err := sanity.CheckPipeline(api.mustDB(), api.Cache, proj, pipeline); err != nil {
+				log.Error("addPipelineInApplicationHandler> Cannot check pipeline sanity: %s", err)
+			}
+		}()
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
@@ -105,15 +108,17 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 			return sdk.WrapError(err, "attachPipelinesToApplicationHandler: Cannot commit transaction")
 		}
 
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, project); err != nil {
-			return sdk.WrapError(err, "attachPipelinesToApplicationHandler: Cannot check project sanity")
-		}
-
 		var errW error
 		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, project.Key, app.Name, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "attachPipelinesToApplicationHandler: Cannot load application workflow")
 		}
+
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, project); err != nil {
+				log.Error("attachPipelinesToApplicationHandler: Cannot check project sanity: %s", err)
+			}
+		}()
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}

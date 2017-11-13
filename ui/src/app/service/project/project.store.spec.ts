@@ -242,10 +242,10 @@ describe('CDS: project Store', () => {
 
         let projectValidation = createProject('key1', 'myProject');
         projectValidation.last_modified = '456';
-        projectValidation.repositories_manager = new Array<RepositoriesManager>();
+        projectValidation.vcs_servers = new Array<RepositoriesManager>();
         let rp = new RepositoriesManager();
         rp.name = 'repoName';
-        projectValidation.repositories_manager.push(rp);
+        projectValidation.vcs_servers.push(rp);
 
         let projectRepoDel = createProject('key1', 'myProject');
         projectRepoDel.last_modified = '789';
@@ -284,7 +284,7 @@ describe('CDS: project Store', () => {
         projectStore.getProjects('key1').first().subscribe(projs => {
             validationRepoCheck = true;
             expect(projs.get('key1').last_modified).toBe('456');
-            expect(projs.get('key1').repositories_manager.length).toBe(1);
+            expect(projs.get('key1').vcs_servers.length).toBe(1);
         });
         expect(validationRepoCheck).toBeTruthy('Must check project update');
 
@@ -298,7 +298,7 @@ describe('CDS: project Store', () => {
         projectStore.getProjects('key1').first().subscribe(projs => {
             deleteRepoCheck = true;
             expect(projs.get('key1').last_modified).toBe('789');
-            expect(projs.get('key1').repositories_manager.length).toBe(0);
+            expect(projs.get('key1').vcs_servers.length).toBe(0);
         });
         expect(deleteRepoCheck).toBeTruthy('Must check project update');
 

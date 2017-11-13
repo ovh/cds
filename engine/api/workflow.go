@@ -42,52 +42,45 @@ func (api *API) getWorkflowHandler() Handler {
 		name := vars["permWorkflowName"]
 		withUsage := FormBool(r, "withUsage")
 
-		tx, errTx := api.mustDB().Begin()
-		if errTx != nil {
-			return sdk.WrapError(errTx, "getWorkflowHandler> Cannot start transaction for workflow %s", name)
-		}
-		defer tx.Rollback()
-
-		w1, err := workflow.Load(tx, api.Cache, key, name, getUser(ctx))
+		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
 		}
 
 		if withUsage {
-			usage, errU := loadWorfklowUsage(tx, w1.ID)
+			usage, errU := loadWorkflowUsage(api.mustDB(), w1.ID)
 			if errU != nil {
 				return sdk.WrapError(errU, "getWorkflowHandler> Cannot load usage for workflow %s", name)
 			}
 			w1.Usage = &usage
 		}
+
+		w1.Permission = permission.WorkflowPermission(w1.ID, getUser(ctx))
+
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		w1.FilterHooksConfig("project", "workflow")
-
-		if errTxc := tx.Commit(); errTxc != nil {
-			return sdk.WrapError(errTxc, "getWorkflowHandler> Cannot commit transaction for workflow %s", name)
-		}
 
 		return WriteJSON(w, r, w1, http.StatusOK)
 	}
 }
 
-func loadWorfklowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error) {
+func loadWorkflowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error) {
 	usage := sdk.Usage{}
 	pips, errP := pipeline.LoadByWorkflowID(db, workflowID)
 	if errP != nil {
-		return usage, sdk.WrapError(errP, "loadWorfklowUsage> Cannot load pipelines linked to a workflow id %d", workflowID)
+		return usage, sdk.WrapError(errP, "loadWorkflowUsage> Cannot load pipelines linked to a workflow id %d", workflowID)
 	}
 	usage.Pipelines = pips
 
 	envs, errE := environment.LoadByWorkflowID(db, workflowID)
 	if errE != nil {
-		return usage, sdk.WrapError(errE, "loadWorfklowUsage> Cannot load environments linked to a workflow id %d", workflowID)
+		return usage, sdk.WrapError(errE, "loadWorkflowUsage> Cannot load environments linked to a workflow id %d", workflowID)
 	}
 	usage.Environments = envs
 
 	apps, errA := application.LoadByWorkflowID(db, workflowID)
 	if errA != nil {
-		return usage, sdk.WrapError(errA, "loadWorfklowUsage> Cannot load applications linked to a workflow id %d", workflowID)
+		return usage, sdk.WrapError(errA, "loadWorkflowUsage> Cannot load applications linked to a workflow id %d", workflowID)
 	}
 	usage.Applications = apps
 
@@ -148,16 +141,7 @@ func (api *API) postWorkflowHandler() Handler {
 			if len(srvs) < 1 {
 				return sdk.WrapError(fmt.Errorf("postWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
 			}
-			var errHooks error
-			for _, s := range srvs {
-				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
-				errHooks = errBulk
-				if errBulk == nil {
-					log.Debug("postWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
-					break
-				}
-			}
-			if errHooks != nil {
+			if _, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hooks, nil); errHooks != nil {
 				return sdk.WrapError(errHooks, "postWorkflowHandler> Unable to create hooks")
 			}
 		}
@@ -170,6 +154,7 @@ func (api *API) postWorkflowHandler() Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
+
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")
 
@@ -220,7 +205,6 @@ func (api *API) putWorkflowHandler() Handler {
 
 		hooks := wf.GetHooks()
 		if len(hooks) > 0 {
-
 			//Push the hook to hooks µService
 			dao := services.NewRepository(api.mustDB, api.Cache)
 			//Load service "hooks"
@@ -233,7 +217,9 @@ func (api *API) putWorkflowHandler() Handler {
 				// update hook
 				for i := range hooks {
 					h := hooks[i]
-					h.Config["workflow"] = wf.Name
+					configValue := h.Config["workflow"]
+					configValue.Value = wf.Name
+					h.Config["workflow"] = configValue
 					hooks[i] = h
 				}
 			}
@@ -242,16 +228,17 @@ func (api *API) putWorkflowHandler() Handler {
 			if len(srvs) < 1 {
 				return sdk.WrapError(fmt.Errorf("putWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
 			}
-			var errHooks error
-			for _, s := range srvs {
-				code, errBulk := services.DoJSONRequest(&s, http.MethodPost, "/task/bulk", hooks, nil)
-				errHooks = errBulk
-				if errBulk == nil {
-					log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
-					break
+
+			var hooksUpdated map[string]sdk.WorkflowNodeHook
+			code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hooks, &hooksUpdated)
+			if errHooks == nil {
+				for _, h := range hooksUpdated {
+					if err := workflow.UpdateHook(tx, &h); err != nil {
+						return sdk.WrapError(errHooks, "putWorkflowHandler> Cannot update hook")
+					}
 				}
-			}
-			if errHooks != nil {
+				log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
+			} else {
 				return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
 			}
 		}
@@ -264,6 +251,12 @@ func (api *API) putWorkflowHandler() Handler {
 		if errl != nil {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
+
+		usage, errU := loadWorkflowUsage(api.mustDB(), wf1.ID)
+		if errU != nil {
+			return sdk.WrapError(errU, "Cannot load usage")
+		}
+		wf1.Usage = &usage
 
 		//We filter project and workflow configurtaion key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")

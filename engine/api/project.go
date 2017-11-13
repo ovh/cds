@@ -68,7 +68,7 @@ func (api *API) updateProjectHandler() Handler {
 			return sdk.WrapError(errUp, "updateProject> Cannot update project %s", key)
 		}
 
-		return WriteJSON(w, r, p, http.StatusOK)
+		return WriteJSON(w, r, proj, http.StatusOK)
 	}
 }
 
@@ -85,7 +85,6 @@ func (api *API) getProjectHandler() Handler {
 		withEnvironments := FormBool(r, "withEnvironments")
 		withGroups := FormBool(r, "withGroups")
 		withPermission := FormBool(r, "withPermission")
-		withRepositoriesManagers := FormBool(r, "withRepositoriesManagers")
 		withKeys := FormBool(r, "withKeys")
 		withWorkflows := FormBool(r, "withWorkflows")
 
@@ -110,9 +109,6 @@ func (api *API) getProjectHandler() Handler {
 		}
 		if withPermission {
 			opts = append(opts, project.LoadOptions.WithPermission)
-		}
-		if withRepositoriesManagers {
-			opts = append(opts, project.LoadOptions.WithRepositoriesManagers)
 		}
 		if withKeys {
 			opts = append(opts, project.LoadOptions.WithKeys)

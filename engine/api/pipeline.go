@@ -48,7 +48,7 @@ func (api *API) rollbackPipelineHandler() Handler {
 		}
 
 		// Load application
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 		if err != nil {
 			if err != sdk.ErrApplicationNotFound {
 				log.Warning("rollbackPipelineHandler> Cannot load application %s: %s\n", appName, err)
@@ -147,7 +147,7 @@ func (api *API) runPipelineWithLastParentHandler() Handler {
 		pipelineName := vars["permPipelineKey"]
 		appName := vars["permApplicationName"]
 
-		app, errl := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
+		app, errl := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 		if errl != nil {
 			if errl != sdk.ErrApplicationNotFound {
 				log.Warning("runPipelineWithLastParentHandler> Cannot load application %s: %s\n", appName, errl)
@@ -258,7 +258,7 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 		return sdk.WrapError(errproj, "runPipelineHandler> Unable to load project %s", projectKey)
 	}
 
-	app, errln := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithRepositoryManager, application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
+	app, errln := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
 	if errln != nil {
 		if errln != sdk.ErrApplicationNotFound {
 			log.Warning("runPipelineHandler> Cannot load application %s: %s\n", appName, errln)
@@ -1323,6 +1323,12 @@ func (api *API) getPipelineCommitsHandler() Handler {
 		envName := r.Form.Get("envName")
 		hash := r.Form.Get("hash")
 
+		// Load project
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if errproj != nil {
+			return sdk.WrapError(errproj, "getPipelineCommitsHandler> Cannot load project")
+		}
+
 		// Load pipeline
 		pip, errpip := pipeline.LoadPipeline(api.mustDB(), projectKey, pipName, false)
 		if errpip != nil {
@@ -1346,7 +1352,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 		}
 
 		//Load the application
-		app, errapp := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithRepositoryManager)
+		app, errapp := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if errapp != nil {
 			return sdk.WrapError(errapp, "getPipelineCommitsHandler> Unable to load application %s", appName)
 		}
@@ -1354,7 +1360,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 		commits := []sdk.VCSCommit{}
 
 		//Check it the application is attached to a repository
-		if app.RepositoriesManager == nil {
+		if app.VCSServer == "" {
 			log.Warning("getPipelineCommitsHandler> Application %s/%s not attached to a repository manager", projectKey, appName)
 			return WriteJSON(w, r, commits, http.StatusOK)
 		}
@@ -1369,19 +1375,14 @@ func (api *API) getPipelineCommitsHandler() Handler {
 			return WriteJSON(w, r, commits, http.StatusOK)
 		}
 
-		b, e := repositoriesmanager.CheckApplicationIsAttached(api.mustDB(), app.RepositoriesManager.Name, projectKey, appName)
-		if e != nil {
-			log.Warning("getPipelineCommitsHandler> Cannot check app (%s,%s,%s): %s", app.RepositoriesManager.Name, projectKey, appName, e)
-			return e
-		}
-
-		if !b && app.RepositoryFullname == "" {
+		if app.RepositoryFullname == "" {
 			log.Debug("getPipelineCommitsHandler> No repository on the application %s", appName)
 			return WriteJSON(w, r, commits, http.StatusOK)
 		}
 
 		//Get the RepositoriesManager Client
-		client, errclient := repositoriesmanager.AuthorizedClient(api.mustDB(), projectKey, app.RepositoriesManager.Name, api.Cache)
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+		client, errclient := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
 		if errclient != nil {
 			return sdk.WrapError(errclient, "getPipelineCommitsHandler> Cannot get client")
 		}
@@ -1450,7 +1451,7 @@ func (api *API) getPipelineBuildCommitsHandler() Handler {
 		}
 
 		//Load the application
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithRepositoryManager)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
 		if err != nil {
 			return sdk.ErrApplicationNotFound
 		}
@@ -1462,17 +1463,7 @@ func (api *API) getPipelineBuildCommitsHandler() Handler {
 		}
 
 		//Check it the application is attached to a repository
-		if app.RepositoriesManager == nil {
-			return sdk.ErrNoReposManagerClientAuth
-		}
-
-		b, e := repositoriesmanager.CheckApplicationIsAttached(api.mustDB(), app.RepositoriesManager.Name, projectKey, appName)
-		if e != nil {
-			log.Warning("getPipelineBuildCommitsHandler> Cannot check app (%s,%s,%s): %s", app.RepositoriesManager.Name, projectKey, appName, e)
-			return e
-		}
-
-		if !b && app.RepositoryFullname == "" {
+		if app.VCSServer == "" || app.RepositoryFullname == "" {
 			return sdk.ErrNoReposManagerClientAuth
 		}
 

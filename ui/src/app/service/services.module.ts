@@ -34,6 +34,7 @@ import {NotificationService} from './notification/notification.service';
 import {WorkflowService} from './workflow/workflow.service';
 import {WorkflowStore} from './workflow/workflow.store';
 import {WorkflowRunService} from './workflow/run/workflow.run.service';
+import {WorkflowCoreService} from './workflow/workflow.core.service';
 import {RouterService} from './router/router.service';
 import {WarningService} from './warning/warning.service';
 import {LastUpdateService} from './sse/lastupdate.sservice';
@@ -43,6 +44,7 @@ import {LogoutInterceptor} from './logout.interceptor.service';
 import {HookService} from './hook/hook.service';
 import {PipelineAuditService} from './pipeline/pipeline.audit.service';
 import {EnvironmentService} from './environment/environment.service';
+import {ApplicationMigrateService} from './application/application.migration.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -60,6 +62,7 @@ export class ServicesModule {
                 ApplicationWorkflowService,
                 ApplicationPipelineService,
                 ApplicationTemplateService,
+                ApplicationMigrateService,
                 ApplicationStore,
                 AuthentificationStore,
                 CanActivateAuthRoute,
@@ -89,7 +92,7 @@ export class ServicesModule {
                 WarningService,
                 WarningStore,
                 WorkerModelService,
-                WorkflowService, WorkflowStore, WorkflowRunService,
+                WorkflowService, WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
                     provide: HTTP_INTERCEPTORS,
                     useClass: AuthentificationInterceptor,
@@ -120,6 +123,7 @@ export {
     ApplicationPipelineService,
     ApplicationWorkflowService,
     ApplicationTemplateService,
+    ApplicationMigrateService,
     AuthentificationStore,
     CanActivateAuthRoute,
     CanActivateAuthAdminRoute,
@@ -145,5 +149,6 @@ export {
     WorkerModelService,
     WorkflowStore,
     WorkflowRunService,
+    WorkflowCoreService,
     Http
 }

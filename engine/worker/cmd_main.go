@@ -62,6 +62,12 @@ func cmdMain(w *currentWorker) *cobra.Command {
 	flags.Int("ttl", 30, "Worker time to live (minutes)")
 	viper.BindPFlag("ttl", flags.Lookup("ttl"))
 
+	flags.Int64("booked-pb-job-id", 0, "Booked Pipeline Build job id")
+	viper.BindPFlag("booked_pb_job_id", flags.Lookup("booked-pb-job-id"))
+
+	flags.Int64("booked-workflow-job-id", 0, "Booked Workflow job id")
+	viper.BindPFlag("booked_workflow_job_id", flags.Lookup("booked-workflow-job-id"))
+
 	flags.Int64("booked-job-id", 0, "Booked job id")
 	viper.BindPFlag("booked_job_id", flags.Lookup("booked-job-id"))
 
@@ -162,8 +168,11 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		errs := make(chan error, 1)
 
 		//Before start the loop, take the bookJobID
-		if w.bookedJobID != 0 {
-			w.processBookedJob(pbjobs)
+		if w.bookedPBJobID != 0 {
+			w.processBookedPBJob(pbjobs)
+		}
+		if w.bookedWJobID != 0 {
+			w.processBookedWJob(wjobs)
 		}
 		if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 			log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
@@ -227,14 +236,14 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				requirementsOK, _ := checkRequirements(w, &j.Job.Action, j.ExecGroups, j.ID)
 
 				t := ""
-				if j.ID == w.bookedJobID {
+				if j.ID == w.bookedPBJobID {
 					t = ", this was my booked job"
 				}
 
 				//Take the job
 				if requirementsOK {
-					log.Info("checkQueue> Taking job %d%s", j.ID, t)
-					canWorkOnAnotherJob := w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedJobID)
+					log.Debug("checkQueue> Try take the PipelineBuildJob %d%s", j.ID, t)
+					canWorkOnAnotherJob := w.takePipelineBuildJob(ctx, j.ID, j.ID == w.bookedPBJobID)
 					if canWorkOnAnotherJob {
 						continue
 					}
@@ -248,6 +257,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				if !viper.GetBool("single_use") {
 					//Continue
+					log.Debug("PipelineBuildJob is done. single_use to false, keep worker alive")
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
@@ -255,9 +265,8 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine and stop the register goroutine
-				log.Debug("Job is done. Unregistering...")
+				log.Info("PipelineBuildJob is done. Unregistering...")
 				cancel()
-
 			case j := <-wjobs:
 				if j.ID == 0 {
 					continue
@@ -265,18 +274,18 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				requirementsOK, _ := checkRequirements(w, &j.Job.Action, nil, j.ID)
 				t := ""
-				if j.ID == w.bookedJobID {
+				if j.ID == w.bookedWJobID {
 					t = ", this was my booked job"
 				}
 
 				//Take the job
 				if requirementsOK {
-					log.Info("checkQueue> Taking job %d%s", j.ID, t)
+					log.Debug("checkQueue> Try take the job %d%s", j.ID, t)
 					if canWorkOnAnotherJob, err := w.takeWorkflowJob(ctx, j); err != nil {
+						log.Info("Unable to run this job  %d%s. Take info:%s, continue:%t", j.ID, t, err, canWorkOnAnotherJob)
 						if !canWorkOnAnotherJob {
 							errs <- err
 						} else {
-							log.Debug("Unable to run this job, take info:%s, let's continue %d%s", err, j.ID, t)
 							continue
 						}
 					}
@@ -290,6 +299,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 				if !viper.GetBool("single_use") {
 					//Continue
+					log.Debug("Job is done. single_use to false, keep worker alive")
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
@@ -297,7 +307,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 				}
 
 				// Unregister from engine
-				log.Debug("Job is done. Unregistering...")
+				log.Info("Job is done. Unregistering...")
 				cancel()
 			case <-registerTick.C:
 				w.doRegister()
@@ -306,21 +316,21 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	}
 }
 
-func (w *currentWorker) processBookedJob(pbjobs chan<- sdk.PipelineBuildJob) {
-	log.Debug("Try to take the job %d", w.bookedJobID)
-	b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedJobID), nil)
+func (w *currentWorker) processBookedPBJob(pbjobs chan<- sdk.PipelineBuildJob) {
+	log.Debug("Try to take the pipeline build job %d", w.bookedPBJobID)
+	b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedPBJobID), nil)
 	if err != nil {
-		log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
+		log.Error("Unable to load pipeline build job %d: %v", w.bookedPBJobID, err)
 		return
 	}
 
 	j := &sdk.PipelineBuildJob{}
 	if err := json.Unmarshal(b, j); err != nil {
-		log.Error("Unable to load pipeline build job %d: %v", w.bookedJobID, err)
+		log.Error("Unable to load pipeline build job %d: %v", w.bookedPBJobID, err)
 		return
 	}
 
-	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action, j.ExecGroups, w.bookedJobID)
+	requirementsOK, errRequirements := checkRequirements(w, &j.Job.Action, j.ExecGroups, w.bookedPBJobID)
 	if !requirementsOK {
 		var details string
 		for _, r := range errRequirements {
@@ -340,13 +350,44 @@ func (w *currentWorker) processBookedJob(pbjobs chan<- sdk.PipelineBuildJob) {
 	pbjobs <- *j
 }
 
+func (w *currentWorker) processBookedWJob(wjobs chan<- sdk.WorkflowNodeJobRun) {
+	log.Debug("Try to take the workflow node job %d", w.bookedWJobID)
+	wjob, err := w.client.QueueJobInfo(w.bookedWJobID)
+	if err != nil {
+		log.Error("Unable to load workflow node job %d: %v", w.bookedWJobID, err)
+		return
+	}
+
+	requirementsOK, errRequirements := checkRequirements(w, &wjob.Job.Action, nil, wjob.ID)
+	if !requirementsOK {
+		var details string
+		for _, r := range errRequirements {
+			details += fmt.Sprintf(" %s(%s)", r.Value, r.Type)
+		}
+		infos := []sdk.SpawnInfo{{
+			RemoteTime: time.Now(),
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJobError.ID, Args: []interface{}{w.status.Name, details}},
+		}}
+		if err := w.client.QueueJobSendSpawnInfo(true, wjob.ID, infos); err != nil {
+			log.Warning("Cannot record QueueJobSendSpawnInfo for job (err spawn): %d %s", wjob.ID, err)
+		}
+		return
+	}
+
+	// requirementsOK is ok
+	wjobs <- *wjob
+}
+
 func (w *currentWorker) doRegister() error {
 	if w.id == "" {
 		var info string
-		if w.bookedJobID > 0 {
-			info = fmt.Sprintf(", I was born to work on job %d", w.bookedJobID)
+		if w.bookedPBJobID > 0 {
+			info = fmt.Sprintf(", I was born to work on pipeline build job %d", w.bookedPBJobID)
 		}
-		log.Info("Registering on CDS engine%s", info)
+		if w.bookedWJobID > 0 {
+			info = fmt.Sprintf(", I was born to work on workflow node job %d", w.bookedWJobID)
+		}
+		log.Info("Registering on CDS engine%s Version:%s", info, sdk.VERSION)
 		form := worker.RegistrationForm{
 			Name:         w.status.Name,
 			Token:        w.token,

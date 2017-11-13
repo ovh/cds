@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const bitbucketHookKey string = "de.aeffle.stash.plugin.stash-http-get-post-receive-hook%3Ahttp-get-post-receive-hook"
@@ -25,13 +26,14 @@ func (b *bitbucketClient) getHooksConfig(repo string) (HooksConfig, error) {
 	return oldHookConfig, nil
 }
 
-func (g *bitbucketClient) GetHook(repo, url string) (sdk.VCSHook, error) {
-	hcfg, err := g.getHooksConfig(repo)
+func (b *bitbucketClient) GetHook(repo, url string) (sdk.VCSHook, error) {
+	hcfg, err := b.getHooksConfig(repo)
 	if err != nil {
 		return sdk.VCSHook{}, err
 	}
 
 	for i, h := range hcfg.Details {
+		log.Debug("vcs> bitbucket> GetHook> %+v", h)
 		if h.URL == url {
 			return sdk.VCSHook{
 				ContentType: h.PostContentType,
@@ -50,13 +52,13 @@ func (g *bitbucketClient) GetHook(repo, url string) (sdk.VCSHook, error) {
 	return sdk.VCSHook{}, sdk.ErrHookNotFound
 }
 
-func (g *bitbucketClient) CreateHook(repo string, hook sdk.VCSHook) error {
+func (b *bitbucketClient) CreateHook(repo string, hook sdk.VCSHook) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return err
 	}
 
-	hcfg, err := g.getHooksConfig(repo)
+	hcfg, err := b.getHooksConfig(repo)
 	if err != nil {
 		return err
 	}
@@ -75,14 +77,14 @@ func (g *bitbucketClient) CreateHook(repo string, hook sdk.VCSHook) error {
 	}
 
 	updatePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/settings", project, slug, bitbucketHookKey)
-	if err := g.do("PUT", "core", updatePath, nil, values, &hook); err != nil {
+	if err := b.do("PUT", "core", updatePath, nil, values, &hook); err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> CreateHook> Unable to update hook config")
 	}
 
 	//If it's the first hook, let's enable the plugin
 	if len(hcfg.Details) == 1 {
 		enablePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/enabled", project, slug, bitbucketHookKey)
-		if err := g.do("PUT", "core", enablePath, nil, values, &hook); err != nil {
+		if err := b.do("PUT", "core", enablePath, nil, values, &hook); err != nil {
 			return sdk.WrapError(err, "vcs> bitbucket> CreateHook> Unable to get enable hook")
 		}
 	}
@@ -90,13 +92,13 @@ func (g *bitbucketClient) CreateHook(repo string, hook sdk.VCSHook) error {
 	return nil
 }
 
-func (g *bitbucketClient) UpdateHook(repo, url string, hook sdk.VCSHook) error {
+func (b *bitbucketClient) UpdateHook(repo, url string, hook sdk.VCSHook) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> UpdateHook>")
 	}
 
-	hcfg, err := g.getHooksConfig(repo)
+	hcfg, err := b.getHooksConfig(repo)
 	if err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> UpdateHook>")
 	}
@@ -117,20 +119,20 @@ func (g *bitbucketClient) UpdateHook(repo, url string, hook sdk.VCSHook) error {
 	}
 
 	updatePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/settings", project, slug, bitbucketHookKey)
-	if err := g.do("PUT", "core", updatePath, nil, values, &hook); err != nil {
+	if err := b.do("PUT", "core", updatePath, nil, values, &hook); err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> CreateHook> Unable to update hook config")
 	}
 
 	return nil
 }
 
-func (g *bitbucketClient) DeleteHook(repo string, hook sdk.VCSHook) error {
+func (b *bitbucketClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 	project, slug, err := getRepo(repo)
 	if err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> DeleteHook>")
 	}
 
-	hcfg, err := g.getHooksConfig(repo)
+	hcfg, err := b.getHooksConfig(repo)
 	if err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> DeleteHook>")
 	}
@@ -148,7 +150,7 @@ func (g *bitbucketClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 	}
 
 	updatePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/settings", project, slug, bitbucketHookKey)
-	if err := g.do("PUT", "core", updatePath, nil, values, &hook); err != nil {
+	if err := b.do("PUT", "core", updatePath, nil, values, &hook); err != nil {
 		return sdk.WrapError(err, "vcs> bitbucket> DeleteHook> Unable to update hook config")
 	}
 

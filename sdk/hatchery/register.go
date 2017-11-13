@@ -9,7 +9,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/docker/docker/pkg/namesgenerator"
 	"github.com/patrickmn/go-cache"
 
 	"github.com/ovh/cds/sdk"
@@ -158,28 +157,9 @@ func Register(h Interface) error {
 	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
 
 	if !uptodate {
-		log.Warning("-=-=-=-=- Please update your hatchery binary -=-=-=-=-")
+		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version:%s -=-=-=-=-", sdk.VERSION)
 	}
 	return nil
-}
-
-// GenerateName generate a hatchery's name
-func GenerateName(add, name string) string {
-	if name == "" {
-		var errHostname error
-		name, errHostname = os.Hostname()
-		if errHostname != nil {
-			log.Warning("Cannot retrieve hostname: %s", errHostname)
-			name = "cds-hatchery"
-		}
-		name += "-" + namesgenerator.GetRandomName(0)
-	}
-
-	if add != "" {
-		name += "-" + add
-	}
-
-	return name
 }
 
 func hearbeat(m Interface, token string, maxFailures int) {
@@ -242,7 +222,7 @@ func workerRegister(h Interface, models []sdk.Model) error {
 
 		if h.NeedRegistration(&m) {
 			log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
-			if _, errSpawn := h.SpawnWorker(&m, 0, nil, true, "spawn for register"); errSpawn != nil {
+			if _, errSpawn := h.SpawnWorker(SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
 				log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, errSpawn)
 				if err := h.Client().WorkerModelSpawnError(m.ID, fmt.Sprintf("workerRegister> cannot spawn worker for register: %s", errSpawn)); err != nil {
 					log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, errSpawn)

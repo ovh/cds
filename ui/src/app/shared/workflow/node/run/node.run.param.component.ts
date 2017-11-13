@@ -10,6 +10,7 @@ import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../
 import {Router} from '@angular/router';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {Subscription} from 'rxjs/Subscription';
+import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 
 @Component({
@@ -51,10 +52,8 @@ export class WorkflowNodeRunParamComponent {
     isSync = false;
     loading = false;
 
-    pipelineSubscription: Subscription;
-
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
-                private _pipStore: PipelineStore) {
+                private _pipStore: PipelineStore, private _workflowCoreService: WorkflowCoreService) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -65,18 +64,13 @@ export class WorkflowNodeRunParamComponent {
     }
 
     getPipeline(): void {
-        if (!this.pipelineSubscription) {
-            this.pipelineSubscription = this._pipStore.getPipelines(this.project.key, this.nodeToRun.pipeline.name).subscribe(ps => {
-                let pipkey = this.project.key + '-' + this.nodeToRun.pipeline.name;
-                let pip = ps.get(pipkey);
-                if (pip) {
-                    if (pip.last_modified === this.nodeToRun.pipeline.last_modified) {
-                        this.isSync = true;
-                    }
-                }
+        if (this.project.pipelines) {
+            this.project.pipelines.forEach(p => {
+               if (p.id === this.nodeToRun.pipeline.id && p.last_modified === this.nodeToRun.pipeline.last_modified) {
+                   this.isSync = true;
+               }
             });
         }
-
     }
 
     show(): void {
@@ -131,10 +125,10 @@ export class WorkflowNodeRunParamComponent {
         request.manual.pipeline_parameter = this.nodeToRun.context.default_pipeline_parameters;
 
         if (this.nodeRun) {
-            request.from_node = this.nodeRun.workflow_node_id;
+            request.from_nodes = [this.nodeRun.workflow_node_id];
             request.number = this.nodeRun.num;
         } else if (this.nodeToRun && this.num) {
-            request.from_node = this.nodeToRun.id;
+            request.from_nodes = [this.nodeToRun.id];
             request.number = this.num;
         }
 
@@ -144,7 +138,8 @@ export class WorkflowNodeRunParamComponent {
         }).subscribe(wr => {
             this.modal.approve(true);
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
-            {queryParams: { subnum: wr.last_subnumber }});
+                {queryParams: { subnum: wr.last_subnumber }});
+            this._workflowCoreService.setCurrentWorkflowRun(wr);
         });
     }
 }

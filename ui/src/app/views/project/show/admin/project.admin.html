@@ -1,4 +1,10 @@
 <div id="projectAdmin">
+    <app-zone header="{{ 'project_workflow_migration_title' | translate }}" *ngIf="user.admin || project.workflow_migration !== 'NOT_BEGUN'">
+        <app-zone-content class="bottom">
+            <sui-progress class="indicating" [value]="migrationValue" [showProgress]="true" [maximum]="project.applications?.length" [precision]="1">
+            </sui-progress>
+        </app-zone-content>
+    </app-zone>
     <app-zone header="{{ 'project_rename_title' | translate }}">
         <app-zone-content class="bottom">
             <form class="ui form" (ngSubmit)="onSubmitProjectUpdate()" #projectUpdateFrom="ngForm">
@@ -27,8 +33,8 @@
     <app-zone header="{{ 'project_repoman_title' | translate }}">
         <app-zone-content class="bottom">
             <app-project-repomanager-form [project]="project"></app-project-repomanager-form>
-            <app-project-repomanager-list *ngIf="project.repositories_manager && project.repositories_manager.length > 0"
-                                          [project]="project" [reposmanagers]="project.repositories_manager"></app-project-repomanager-list>
+            <app-project-repomanager-list *ngIf="project.vcs_servers && project.vcs_servers.length > 0"
+                                          [project]="project" [reposmanagers]="project.vcs_servers"></app-project-repomanager-list>
         </app-zone-content>
     </app-zone>
     <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">

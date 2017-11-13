@@ -69,7 +69,7 @@ describe('CDS: Project RepoManager Form Component', () => {
         projectMock.name = 'prj1';
         projectMock.key = 'key1';
         projectMock.last_modified = '0';
-        projectMock.repositories_manager = [];
+        projectMock.vcs_servers = [];
 
         // Create Project RepoManager Form Component
         let fixture = TestBed.createComponent(ProjectRepoManagerFormComponent);

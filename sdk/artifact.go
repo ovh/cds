@@ -243,7 +243,7 @@ func uploadArtifact(project string, pipeline string, application string, tag str
 	}
 
 	if code >= 300 {
-		return fmt.Errorf("HTTP Error %d\n", code)
+		return fmt.Errorf("HTTP Error %d", code)
 	}
 
 	return nil

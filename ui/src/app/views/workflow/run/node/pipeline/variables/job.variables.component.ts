@@ -39,6 +39,16 @@ export class WorkflowRunJobVariableComponent {
                 }
             });
         }
+
+        this.varProject = this.sort(this.varProject);
+        this.varApplication = this.sort(this.varApplication);
+        this.varPipeline = this.sort(this.varPipeline);
+        this.varEnvironment = this.sort(this.varEnvironment);
+        this.varParent = this.sort(this.varParent);
+        this.varBuild = this.sort(this.varBuild);
+        this.varGit = this.sort(this.varGit);
+        this.varWorkflow = this.sort(this.varWorkflow);
+        this.varCDS = this.sort(this.varCDS);
     }
 
     varGit: Array<Parameter>;
@@ -71,5 +81,17 @@ export class WorkflowRunJobVariableComponent {
         if (this.jobVariablesModal) {
             this.jobVariablesModal.show(data);
         }
+    }
+
+    sort(params: Array<Parameter>): Array<Parameter> {
+        return params.sort((p1, p2) => {
+            if (p1.name > p2.name) {
+                return 1;
+            }
+            if (p1.name < p2.name) {
+                return -1;
+            }
+            return 0;
+        });
     }
 }

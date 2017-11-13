@@ -65,7 +65,7 @@ export class AppService {
     }
 
     updateApplicationCache(lastUpdate: LastModification): void {
-        this._appStore.getApplications(lastUpdate.key).first().subscribe(apps => {
+        this._appStore.getApplications(lastUpdate.key, null).first().subscribe(apps => {
             if (!apps) {
                 return;
             }

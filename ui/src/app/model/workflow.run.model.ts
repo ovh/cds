@@ -12,7 +12,7 @@ export class WorkflowRunRequest {
     hook: WorkflowNodeRunHookEvent;
     manual: WorkflowNodeRunManual;
     number: number;
-    from_node: number;
+    from_nodes: Array<number>;
 }
 
 export class WorkflowRun {
@@ -28,6 +28,7 @@ export class WorkflowRun {
     last_execution: string;
     nodes: { [key: string]: Array<WorkflowNodeRun>; };
     tags: Array<WorkflowRunTags>;
+    join_triggers_run: Map<number, TriggerRun>;
 }
 
 export class WorkflowRunTags {
@@ -56,8 +57,13 @@ export class WorkflowNodeRun {
     artifacts: Array<WorkflowNodeRunArtifact>;
     tests: Tests;
     commits: Array<Commit>;
+    triggers_run: Map<number, TriggerRun>
 }
 
+export class TriggerRun {
+    workflow_dest_node_id: number;
+    status: string;
+}
 // WorkflowNodeRunArtifact represents tests list
 export class WorkflowNodeRunArtifact {
     workflow_id: number;

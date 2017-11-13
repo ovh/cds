@@ -18,7 +18,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) getVersionHandler() Handler {
+func VersionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		s := sdk.Version{Version: sdk.VERSION}
 		return WriteJSON(w, r, s, http.StatusOK)
@@ -36,6 +36,16 @@ func (api *API) statusHandler() Handler {
 		// Uptime
 		output = append(output, fmt.Sprintf("Uptime: %s", time.Since(api.StartupTime)))
 		log.Debug("Status> Uptime: %s", time.Since(api.StartupTime))
+
+		output = append(output, fmt.Sprintf("Hostname: %s", event.GetHostname()))
+		log.Debug("Status> Hostname: %s", event.GetHostname())
+
+		output = append(output, fmt.Sprintf("CDSName: %s", event.GetCDSName()))
+		log.Debug("Status> CDSName: %s", event.GetCDSName())
+
+		t := time.Now()
+		output = append(output, fmt.Sprintf("Time: %dh%dm%ds", t.Hour(), t.Minute(), t.Second()))
+		log.Debug("Status> Time:  %dh%dm%ds", t.Hour(), t.Minute(), t.Second())
 
 		//Nb Panics
 		output = append(output, fmt.Sprintf("Nb of Panics: %d", api.Router.nbPanic))

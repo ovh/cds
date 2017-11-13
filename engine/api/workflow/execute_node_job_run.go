@@ -11,14 +11,13 @@ import (
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
-	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
-func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status) error {
+func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
 	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID)
@@ -26,13 +25,8 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		sdk.WrapError(errLoad, "workflow.UpdateNodeJobRunStatus> Unable to load node run id %d", job.WorkflowNodeRunID)
 	}
 
-	wf, errLoadWf := LoadRunByID(db, node.WorkflowRunID)
-	if errLoadWf != nil {
-		return sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", node.WorkflowRunID)
-	}
-
 	var query string
-	query = `SELECT status FROM workflow_node_run_job WHERE id = $1 FOR UPDATE`
+	query = `SELECT status FROM workflow_node_run_job WHERE id = $1`
 	var currentStatus string
 	if err := db.QueryRow(query, job.ID).Scan(&currentStatus); err != nil {
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot lock node job run %d", job.ID)
@@ -55,7 +49,16 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 		job.Done = time.Now()
 		job.Status = status.String()
+
+		wf, errLoadWf := LoadRunByID(db, node.WorkflowRunID)
+		if errLoadWf != nil {
+			return sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", node.WorkflowRunID)
+		}
+
 		wf.LastExecution = time.Now()
+		if err := updateWorkflowRun(db, wf); err != nil {
+			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowRun %d", wf.ID)
+		}
 	default:
 		return fmt.Errorf("workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d to status %v", job.ID, status.String())
 	}
@@ -101,29 +104,25 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		if err := UpdateNodeRun(db, node); err != nil {
 			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to update workflow node run %d", node.ID)
 		}
-	} else {
-		log.Debug("UpdateNodeJobRunStatus> call execute node")
-		if errE := execute(db, store, p, node); errE != nil {
-			return sdk.WrapError(errE, "workflow.UpdateNodeJobRunStatus> Cannot execute sync node")
-		}
-	}
-
-	if err := updateWorkflowRun(db, wf); err != nil {
-		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowRun %d", wf.ID)
 	}
 
 	if err := UpdateNodeJobRun(db, store, p, job); err != nil {
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
 	}
+	// Push update on node run job
+	if chanEvent != nil {
+		chanEvent <- *job
+	}
 
-	event.PublishJobRun(node, job)
-
-	return nil
+	if status == sdk.StatusBuilding {
+		return nil
+	}
+	return execute(db, store, p, node, chanEvent)
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
 func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
-	j, err := LoadAndLockNodeJobRun(db, store, id)
+	j, err := LoadAndLockNodeJobRunWait(db, store, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot load node job run")
 	}
@@ -150,8 +149,8 @@ func prepareSpawnInfos(j *sdk.WorkflowNodeJobRun, infos []sdk.SpawnInfo) error {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
-	job, err := LoadAndLockNodeJobRun(db, store, id)
+func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo, chanEvent chan<- interface{}) (*sdk.WorkflowNodeJobRun, error) {
+	job, err := LoadAndLockNodeJobRunWait(db, store, id)
 	if err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
 			err = sdk.ErrJobAlreadyBooked
@@ -176,7 +175,7 @@ func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id i
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot prepare spawn infos")
 	}
 
-	if err := UpdateNodeJobRunStatus(db, store, p, job, sdk.StatusBuilding); err != nil {
+	if err := UpdateNodeJobRunStatus(db, store, p, job, sdk.StatusBuilding, chanEvent); err != nil {
 		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
 		return nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run")
 	}
@@ -347,5 +346,31 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 			return sdk.WrapError(err, "AddLog> Cannot update log")
 		}
 	}
+	return nil
+}
+
+// RestartWorkflowNodeJob restart all workflow node job and update logs to indicate restart
+func RestartWorkflowNodeJob(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
+	for _, step := range wNodeJob.Job.StepStatus {
+		if step.Status == sdk.StatusNeverBuilt.String() || step.Status == sdk.StatusSkipped.String() || step.Status == sdk.StatusDisabled.String() {
+			continue
+		}
+		l, errL := LoadStepLogs(db, wNodeJob.ID, int64(step.StepOrder))
+		if errL != nil {
+			return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while load step logs")
+		}
+		wNodeJob.Job.Reason = "Killed (Reason: Timeout)\n"
+
+		if l != nil { // log could be nil here
+			l.Val += "\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n"
+			if err := updateLog(db, l); err != nil {
+				return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while update step log")
+			}
+		}
+	}
+	if err := replaceWorkflowJobRunInQueue(db, wNodeJob); err != nil {
+		return sdk.WrapError(err, "RestartWorkflowNodeJob> Cannot replace workflow job in queue")
+	}
+
 	return nil
 }

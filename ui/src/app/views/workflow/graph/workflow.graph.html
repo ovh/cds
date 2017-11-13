@@ -1,13 +1,3 @@
-<div class="ui grid" *ngIf="displayDirection">
-    <div class="three wide column">
-        <sm-select [(model)]="direction">
-            <option value="TB">{{ 'workflow_orientation_vertical' | translate }}</option>
-            <option value="LR">{{ 'workflow_orientation_horizontal' | translate }}</option>
-        </sm-select>
-    </div>
-</div>
-
-
 <div [class.LR]="direction === 'LR'" [class.TB]="direction === 'TB'">
     <svg [attr.width]="svgWidth" [attr.height]="svgHeight" #svgGraph>
         <g></g>

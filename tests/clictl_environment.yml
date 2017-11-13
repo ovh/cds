@@ -1,0 +1,65 @@
+name: Environement Command TestSuite with CDS ctl
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/group_to_add.yml ]'
+  assertions:
+    - result.code ShouldEqual 0
+- name: prepare test
+  steps:
+  - script: {{.cds.build.cdsctl}} project remove --force ITCLIAPPPRJ
+  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP --force
+  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP_EDIT_TEST --force
+  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP_EDIT_TEST1 --force
+  - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP_EDIT_TEST2 --force
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP
+  - script: {{.cds.build.cdsctl}} project add ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
+  - script: {{.cds.build.cdsctl}} environment add ITCLIAPPPRJ envtest
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST1
+  - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST2
+
+- name: environment group import without force
+  steps:
+  - script: {{.cds.build.cdsctl}} environment group import ITCLIAPPPRJ envtest ./tests/fixtures/group_to_add.yml
+    assertions:
+      - result.code ShouldEqual 50
+      - result.systemout ShouldContainSubstring exist
+
+- name: project group import with force
+  steps:
+  - script: {{.cds.build.cdsctl}} project group import ITCLIAPPPRJ ./tests/fixtures/group_to_add.yml --force
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring success
+
+- name: environement group import without force
+  steps:
+  - script: {{.cds.build.cdsctl}} environment group import ITCLIAPPPRJ envtest ./tests/fixtures/group_to_add.yml
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring success
+      - result.systemout ShouldContainSubstring envtest
+
+- name: application group import without force and existing groups
+  steps:
+  - script: {{.cds.build.cdsctl}} environment group import ITCLIAPPPRJ envtest ./tests/fixtures/group_to_add.yml
+    assertions:
+      - result.code ShouldEqual 50
+      - result.systemout ShouldContainSubstring 'group already exists'
+
+- name: application group import without force and unknown project
+  steps:
+  - script: {{.cds.build.cdsctl}} environment group import ITCLIFAPPPRJ envtest ./tests/fixtures/group_to_add.yml
+    assertions:
+      - result.code ShouldEqual 50
+      - result.systemout ShouldContainSubstring project
+      - result.systemout ShouldContainSubstring 'not exist'
+
+- name: application group import with force
+  steps:
+  - script: {{.cds.build.cdsctl}} environment group import ITCLIAPPPRJ envtest ./tests/fixtures/group_to_add.yml --force
+    assertions:
+      - result.code ShouldEqual 0
+      - result.systemout ShouldContainSubstring success
+      - result.systemout ShouldContainSubstring envtest

@@ -100,7 +100,6 @@ func (api *API) importPipelineHandler() Handler {
 
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
-			log.Warning("importPipelineHandler: Cannot start transaction: %s\n", errBegin)
 			return sdk.WrapError(errBegin, "importPipelineHandler: Cannot start transaction")
 		}
 
@@ -132,7 +131,7 @@ func (api *API) importPipelineHandler() Handler {
 		log.Debug("importPipelineHandler >>> %v", msgListString)
 
 		if globalError != nil {
-			myError, ok := globalError.(*sdk.Error)
+			myError, ok := globalError.(sdk.Error)
 			if ok {
 				return WriteJSON(w, r, msgListString, myError.Status)
 			}
@@ -147,15 +146,11 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(err, "importPipelineHandler> Cannot commit transaction")
 		}
 
-		var errlp error
-		proj.Pipelines, errlp = pipeline.LoadPipelines(api.mustDB(), proj.ID, true, getUser(ctx))
-		if errlp != nil {
-			return sdk.WrapError(errlp, "importPipelineHandler> Unable to reload pipelines for project %s", proj.Key)
-		}
-
-		if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-			return sdk.WrapError(err, "importPipelineHandler> Cannot check warnings")
-		}
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
+				log.Error("importPipelineHandler> Cannot check warnings: %s", err)
+			}
+		}()
 
 		return WriteJSON(w, r, msgListString, http.StatusOK)
 	}

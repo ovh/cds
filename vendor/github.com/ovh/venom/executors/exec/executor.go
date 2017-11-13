@@ -16,6 +16,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
 )
 
 // Name for test exec
@@ -171,7 +172,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		result.Err = err.Error()
 		result.Code = "127"
 		l.Debugf(err.Error())
-		return dump.ToMap(t, dump.WithDefaultLowerCaseFormatter())
+		return dump.ToMap(t, nil, dump.WithDefaultLowerCaseFormatter())
 	}
 
 	_ = <-outchan
@@ -193,5 +194,5 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	result.Systemout = venom.RemoveNotPrintableChar(strings.TrimRight(result.Systemout, "\n"))
 	result.Systemerr = venom.RemoveNotPrintableChar(strings.TrimRight(result.Systemerr, "\n"))
 
-	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
+	return executors.Dump(result)
 }

@@ -1,5 +1,7 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowTriggerCondition} from '../../../../../model/workflow.model';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {
+    Workflow, WorkflowNode, WorkflowNodeHook
+} from '../../../../../model/workflow.model';
 import {HookService} from '../../../../../service/hook/hook.service';
 import {WorkflowHookModel} from '../../../../../model/workflow.hook.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
@@ -75,17 +77,6 @@ export class WorkflowNodeHookFormComponent {
 
     addHook(): void {
         this.hookEvent.emit(new HookEvent('add', this.hook));
-    }
-
-    addConditions(condition: WorkflowTriggerCondition): void {
-        if (!this.hook.conditions) {
-            this.hook.conditions = new Array<WorkflowTriggerCondition>();
-        }
-
-        let index = this.hook.conditions.findIndex(c => c.variable === condition.variable);
-        if (index === -1) {
-            this.hook.conditions.push(condition);
-        }
     }
 
     deleteHook(): void {

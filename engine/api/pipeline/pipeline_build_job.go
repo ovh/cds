@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
@@ -13,6 +14,15 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+// DeletePipelineBuildJobByApplicationID Delete all pipeline build job for the current application
+func DeletePipelineBuildJobByApplicationID(db gorp.SqlExecutor, applicationID int64) error {
+	query := `DELETE FROM pipeline_build_job WHERE pipeline_build_id IN (
+		SELECT id FROM pipeline_build WHERE application_id = $1
+	)`
+	_, err := db.Exec(query, applicationID)
+	return err
+}
 
 // DeletePipelineBuildJob Delete all pipeline build job for the current pipeline build
 func DeletePipelineBuildJob(db gorp.SqlExecutor, pipelineBuildID int64) error {
@@ -82,6 +92,9 @@ func GetPipelineBuildJobForUpdate(db gorp.SqlExecutor, id int64) (*sdk.PipelineB
 		FROM pipeline_build_job
 		WHERE id = $1 FOR UPDATE NOWAIT
 	`, id); err != nil {
+		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == "55P03" {
+			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "GetPipelineBuildJobForUpdate> Unable to get pipeline_build_job for update (ErrAlreadyTaken)")
+		}
 		return nil, sdk.WrapError(err, "GetPipelineBuildJobForUpdate> Unable to get pipeline_build_job for update")
 	}
 	pbJob := sdk.PipelineBuildJob(pbJobGorp)
@@ -207,7 +220,7 @@ func TakePipelineBuildJob(db gorp.SqlExecutor, pbJobID int64, model string, work
 	pbJob.Status = sdk.StatusBuilding.String()
 
 	if err := prepareSpawnInfos(pbJob, infos); err != nil {
-		return nil, sdk.WrapError(err, "TakePipelineBuildJob> Cannot prepare swpan infos")
+		return nil, sdk.WrapError(err, "TakePipelineBuildJob> Cannot prepare spawn infos")
 	}
 
 	if err := UpdatePipelineBuildJob(db, pbJob); err != nil {

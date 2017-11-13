@@ -118,6 +118,10 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid project key. It should match %s", sdk.NamePattern))
 	}
 
+	if proj.WorkflowMigration == "" {
+		proj.WorkflowMigration = "NOT_BEGUN"
+	}
+
 	proj.LastModified = time.Now()
 	dbProj := dbProject(*proj)
 	if err := db.Insert(&dbProj); err != nil {
@@ -217,18 +221,18 @@ var LoadOptions = struct {
 	WithEnvironments               LoadOptionFunc
 	WithGroups                     LoadOptionFunc
 	WithPermission                 LoadOptionFunc
-	WithRepositoriesManagers       LoadOptionFunc
 	WithApplicationPipelines       LoadOptionFunc
 	WithApplicationVariables       LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 	WithWorkflows                  LoadOptionFunc
+	WithLock                       LoadOptionFunc
+	WithLockNoWait                 LoadOptionFunc
 }{
 	Default:                        &loadDefault,
 	WithPipelines:                  &loadPipelines,
 	WithEnvironments:               &loadEnvironments,
 	WithGroups:                     &loadGroups,
 	WithPermission:                 &loadPermission,
-	WithRepositoriesManagers:       &loadRepositoriesManagers,
 	WithApplications:               &loadApplications,
 	WithVariables:                  &loadVariables,
 	WithVariablesWithClearPassword: &loadVariablesWithClearPassword,
@@ -236,6 +240,8 @@ var LoadOptions = struct {
 	WithApplicationVariables:       &loadApplicationVariables,
 	WithKeys:                       &loadKeys,
 	WithWorkflows:                  &loadWorkflows,
+	WithLock:                       &lockProject,
+	WithLockNoWait:                 &lockAndWaitProject,
 }
 
 // LoadProjectByNodeJobRunID return a project from node job run id
@@ -281,7 +287,6 @@ func LoadByPipelineID(db gorp.SqlExecutor, store cache.Store, u *sdk.User, pipel
 }
 
 func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Project, error) {
-	log.Debug("loadprojects> %s %v", query, args)
 	var res []dbProject
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -308,6 +313,17 @@ func loadprojects(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []Lo
 
 func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Project, error) {
 	dbProj := &dbProject{}
+	for _, o := range opts {
+		if o == LoadOptions.WithLock {
+			query += " FOR UPDATE"
+			break
+		}
+		if o == LoadOptions.WithLockNoWait {
+			query += " FOR UPDATE NOWAIT"
+			break
+		}
+	}
+
 	if err := db.SelectOne(dbProj, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoProject

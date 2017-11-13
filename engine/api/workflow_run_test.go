@@ -96,12 +96,12 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 
 	wr, errMR := workflow.ManualRun(db, api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	})
+	}, nil)
 	if errMR != nil {
 		test.NoError(t, errMR)
 	}
 
-	_, errMR2 := workflow.ManualRunFromNode(db, api.Cache, proj, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.RootID)
+	_, errMR2 := workflow.ManualRunFromNode(db, api.Cache, proj, &wr.Workflow, wr.Number, &sdk.WorkflowNodeRunManual{User: *u}, wr.Workflow.RootID, nil)
 	if errMR2 != nil {
 		test.NoError(t, errMR2)
 	}
@@ -205,7 +205,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
-		})
+		}, nil)
 		test.NoError(t, err)
 	}
 
@@ -336,7 +336,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 				"git.branch": "master",
 				"git.hash":   fmt.Sprintf("%d", i),
 			},
-		})
+		}, nil)
 		test.NoError(t, err)
 	}
 
@@ -452,7 +452,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 			User: *u,
-		})
+		}, nil)
 		test.NoError(t, err)
 	}
 
@@ -552,10 +552,11 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 
 	_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	})
+	}, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name)
+	test.NoError(t, err)
 
 	//Prepare request
 	vars := map[string]string{
@@ -783,6 +784,12 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
 
+	gr := &sdk.Group{
+		Name: sdk.RandomString(10),
+	}
+	test.NoError(t, group.InsertGroup(db, gr))
+	test.NoError(t, group.InsertGroupInProject(api.mustDB(), proj.ID, gr.ID, 7))
+
 	//First pipeline
 	pip := sdk.Pipeline{
 		ProjectID:  proj.ID,
@@ -798,6 +805,9 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	test.NoError(t, environment.InsertEnvironment(api.mustDB(), env))
+
+	group.InsertGroupInEnvironment(db, env.ID, proj.ProjectGroups[0].Group.ID, 4)
+	group.InsertGroupInEnvironment(db, env.ID, gr.ID, 4)
 
 	proj2, errp := project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments)
 	test.NoError(t, errp)
@@ -815,9 +825,6 @@ func Test_postWorkflowRunHandler_Forbidden(t *testing.T) {
 	}
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-
-	// Remove execution right for group
-	test.NoError(t, group.UpdateGroupRoleInEnvironment(api.mustDB(), proj.Key, env.Name, proj.ProjectGroups[0].Group.Name, 4))
 
 	u.Admin = false
 	test.NoError(t, user.UpdateUser(api.mustDB(), *u))
@@ -915,10 +922,11 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 
 	_, err = workflow.ManualRun(api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
 		User: *u,
-	})
+	}, nil)
 	test.NoError(t, err)
 
 	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name)
+	test.NoError(t, err)
 
 	// Update step status
 	jobRun := &lastrun.WorkflowNodeRuns[w1.RootID][0].Stages[0].RunJobs[0]

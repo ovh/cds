@@ -11,19 +11,21 @@ import (
 
 //WorkflowRun is an execution instance of a run
 type WorkflowRun struct {
-	ID               int64                       `json:"id" db:"id"`
-	Number           int64                       `json:"num" db:"num"`
-	ProjectID        int64                       `json:"project_id,omitempty" db:"project_id"`
-	WorkflowID       int64                       `json:"workflow_id" db:"workflow_id"`
-	Status           string                      `json:"status" db:"status"`
-	Workflow         Workflow                    `json:"workflow" db:"-"`
-	Start            time.Time                   `json:"start" db:"start"`
-	LastModified     time.Time                   `json:"last_modified" db:"last_modified"`
-	WorkflowNodeRuns map[int64][]WorkflowNodeRun `json:"nodes" db:"-"`
-	Infos            []WorkflowRunInfo           `json:"infos" db:"-"`
-	Tags             []WorkflowRunTag            `json:"tags" db:"-"`
-	LastSubNumber    int64                       `json:"last_subnumber" db:"last_sub_num"`
-	LastExecution    time.Time                   `json:"last_execution" db:"last_execution"`
+	ID               int64                            `json:"id" db:"id"`
+	Number           int64                            `json:"num" db:"num"`
+	ProjectID        int64                            `json:"project_id,omitempty" db:"project_id"`
+	WorkflowID       int64                            `json:"workflow_id" db:"workflow_id"`
+	Status           string                           `json:"status" db:"status"`
+	Workflow         Workflow                         `json:"workflow" db:"-"`
+	Start            time.Time                        `json:"start" db:"start"`
+	LastModified     time.Time                        `json:"last_modified" db:"last_modified"`
+	WorkflowNodeRuns map[int64][]WorkflowNodeRun      `json:"nodes" db:"-"`
+	Infos            []WorkflowRunInfo                `json:"infos" db:"-"`
+	Tags             []WorkflowRunTag                 `json:"tags" db:"-"`
+	LastSubNumber    int64                            `json:"last_subnumber" db:"last_sub_num"`
+	LastExecution    time.Time                        `json:"last_execution" db:"last_execution"`
+	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
+	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
 }
 
 // WorkflowNodeRunRelease represents the request struct use by release builtin action for workflow
@@ -36,10 +38,10 @@ type WorkflowNodeRunRelease struct {
 
 // WorkflowRunPostHandlerOption contains the body content for launch a workflow
 type WorkflowRunPostHandlerOption struct {
-	Hook       *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
-	Manual     *WorkflowNodeRunManual    `json:"manual,omitempty"`
-	Number     *int64                    `json:"number,omitempty"`
-	FromNodeID *int64                    `json:"from_node,omitempty"`
+	Hook        *WorkflowNodeRunHookEvent `json:"hook,omitempty"`
+	Manual      *WorkflowNodeRunManual    `json:"manual,omitempty"`
+	Number      *int64                    `json:"number,omitempty"`
+	FromNodeIDs []int64                   `json:"from_nodes,omitempty"`
 }
 
 // Translate translates messages in WorkflowNodeRun
@@ -87,25 +89,32 @@ type WorkflowRunTag struct {
 
 //WorkflowNodeRun is as execution instance of a node
 type WorkflowNodeRun struct {
-	WorkflowRunID      int64                     `json:"workflow_run_id" db:"workflow_run_id"`
-	ID                 int64                     `json:"id" db:"id"`
-	WorkflowNodeID     int64                     `json:"workflow_node_id" db:"workflow_node_id"`
-	Number             int64                     `json:"num" db:"num"`
-	SubNumber          int64                     `json:"subnumber" db:"sub_num"`
-	Status             string                    `json:"status" db:"status"`
-	Stages             []Stage                   `json:"stages" db:"-"`
-	Start              time.Time                 `json:"start" db:"start"`
-	LastModified       time.Time                 `json:"last_modified" db:"last_modified"`
-	Done               time.Time                 `json:"done" db:"done"`
-	HookEvent          *WorkflowNodeRunHookEvent `json:"hook_event" db:"-"`
-	Manual             *WorkflowNodeRunManual    `json:"manual" db:"-"`
-	SourceNodeRuns     []int64                   `json:"source_node_runs" db:"-"`
-	Payload            interface{}               `json:"payload" db:"-"`
-	PipelineParameters []Parameter               `json:"pipeline_parameters" db:"-"`
-	BuildParameters    []Parameter               `json:"build_parameters" db:"-"`
-	Artifacts          []WorkflowNodeRunArtifact `json:"artifacts,omitempty" db:"-"`
-	Tests              *venom.Tests              `json:"tests,omitempty" db:"-"`
-	Commits            []VCSCommit               `json:"commits,omitempty" db:"-"`
+	WorkflowRunID      int64                            `json:"workflow_run_id" db:"workflow_run_id"`
+	ID                 int64                            `json:"id" db:"id"`
+	WorkflowNodeID     int64                            `json:"workflow_node_id" db:"workflow_node_id"`
+	Number             int64                            `json:"num" db:"num"`
+	SubNumber          int64                            `json:"subnumber" db:"sub_num"`
+	Status             string                           `json:"status" db:"status"`
+	Stages             []Stage                          `json:"stages" db:"-"`
+	Start              time.Time                        `json:"start" db:"start"`
+	LastModified       time.Time                        `json:"last_modified" db:"last_modified"`
+	Done               time.Time                        `json:"done" db:"done"`
+	HookEvent          *WorkflowNodeRunHookEvent        `json:"hook_event" db:"-"`
+	Manual             *WorkflowNodeRunManual           `json:"manual" db:"-"`
+	SourceNodeRuns     []int64                          `json:"source_node_runs" db:"-"`
+	Payload            interface{}                      `json:"payload" db:"-"`
+	PipelineParameters []Parameter                      `json:"pipeline_parameters" db:"-"`
+	BuildParameters    []Parameter                      `json:"build_parameters" db:"-"`
+	Artifacts          []WorkflowNodeRunArtifact        `json:"artifacts,omitempty" db:"-"`
+	Tests              *venom.Tests                     `json:"tests,omitempty" db:"-"`
+	Commits            []VCSCommit                      `json:"commits,omitempty" db:"-"`
+	TriggersRun        map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty" db:"-"`
+}
+
+// WorkflowNodeTriggerRun Represent the state of a trigger
+type WorkflowNodeTriggerRun struct {
+	WorkflowDestNodeID int64  `json:"workflow_dest_node_id" db:"-"`
+	Status             string `json:"status" db:"-"`
 }
 
 // Translate translates messages in WorkflowNodeRun
@@ -139,6 +148,7 @@ type WorkflowNodeJobRun struct {
 	Job               ExecutedJob `json:"job" db:"-"`
 	Parameters        []Parameter `json:"parameters,omitempty" db:"-"`
 	Status            string      `json:"status"  db:"status"`
+	Retry             int         `json:"retry"  db:"retry"`
 	Queued            time.Time   `json:"queued,omitempty" db:"queued"`
 	QueuedSeconds     int64       `json:"queued_seconds,omitempty" db:"-"`
 	Start             time.Time   `json:"start,omitempty" db:"start"`

@@ -28,18 +28,20 @@
                     </div>
                 </div>
                 <div class="two wide right aligned field labelPadding">
-                    <a class="pointing" (click)="requirementModal.show({inverted: false, closable: false})">
+                    <a class="pointing" (click)="requirementModal.show({inverted: false, closable: false, autofocus: false})">
                         {{ editableAction.requirements.length + ' '}}{{'common_requirements' | translate }}
                     </a>
                     <sm-modal class="large" title="{{ 'common_requirements' | translate }}" #requirementModal>
                         <modal-content>
                             <div class="ui form">
                                 <div class="field">
-                                    <app-requirements-list [requirements]="editableAction.requirements" [edit]="edit"
-                                                           (onChange)="editableAction.hasChanged = true"
-                                                           (event)="requirementEvent($event)"></app-requirements-list>
+                                    <app-requirements-list
+                                        [suggest]="suggest"
+                                        [requirements]="editableAction.requirements" [edit]="edit"
+                                       (onChange)="editableAction.hasChanged = true"
+                                       (event)="requirementEvent($event)"></app-requirements-list>
                                     <div class="requirementForm" *ngIf="edit">
-                                        <app-requirements-form (event)="requirementEvent($event)"></app-requirements-form>
+                                        <app-requirements-form [suggest]="suggest" (event)="requirementEvent($event)"></app-requirements-form>
                                     </div>
                                 </div>
                             </div>

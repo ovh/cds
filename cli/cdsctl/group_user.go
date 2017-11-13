@@ -15,7 +15,7 @@ var (
 	groupUser = cli.NewCommand(groupUserCmd, nil,
 		[]*cobra.Command{
 			cli.NewCommand(groupUserAdd, groupUserAddRun, nil),
-			cli.NewCommand(groupUserRemove, groupUserRemoveRun, nil),
+			cli.NewDeleteCommand(groupUserRemove, groupUserRemoveRun, nil),
 			cli.NewCommand(groupUserSetAdmin, groupUserSetAdminRun, nil),
 			cli.NewCommand(groupUserAdminRemove, groupUserAdminRemoveRun, nil),
 		})
@@ -35,8 +35,8 @@ func groupUserAddRun(v cli.Values) error {
 }
 
 var groupUserRemove = cli.Command{
-	Name:  "remove",
-	Short: "Remove a user from a group",
+	Name:  "delete",
+	Short: "Delete an user from a group",
 	Args: []cli.Arg{
 		{Name: "groupname"},
 		{Name: "username"},

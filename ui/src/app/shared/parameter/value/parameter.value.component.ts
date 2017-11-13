@@ -38,14 +38,8 @@ export class ParameterValueComponent implements OnInit {
     @Input('project')
     set project(data: Project) {
         this.repositoriesManager = new Array<RepositoriesManager>();
-        this.repositoriesManager.push({
-            type: 'GIT',
-            url: 'Git',
-            id: 0,
-            name: 'Git Url'
-        });
-        if (data && data.repositories_manager) {
-            this.repositoriesManager.push(...cloneDeep(data.repositories_manager));
+        if (data && data.vcs_servers) {
+            this.repositoriesManager.push(...cloneDeep(data.vcs_servers));
         }
         this.selectedRepoManager = this.repositoriesManager[0];
         if (data) {
@@ -151,9 +145,7 @@ export class ParameterValueComponent implements OnInit {
 
     updateRepoManager(name: string): void {
         this.selectedRepoManager = this.repositoriesManager.find(r => r.name === name);
-        if (this.selectedRepoManager.url !== 'Git') {
-            this.updateListRepo();
-        }
+        this.updateListRepo();
     }
 
     valueRepoChanged(name): void {

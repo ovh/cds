@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // LoadOptionFunc is a type for all options in LoadOptions
@@ -29,7 +28,6 @@ var LoadOptions = struct {
 	WithGroups                     LoadOptionFunc
 	WithHooks                      LoadOptionFunc
 	WithNotifs                     LoadOptionFunc
-	WithRepositoryManager          LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 }{
 	Default:                        &loadDefaultDependencies,
@@ -40,7 +38,6 @@ var LoadOptions = struct {
 	WithGroups:                     &loadGroups,
 	WithHooks:                      &loadHooks,
 	WithNotifs:                     &loadNotifs,
-	WithRepositoryManager:          &loadRepositoryManager,
 	WithKeys:                       &loadKeys,
 }
 
@@ -155,7 +152,6 @@ func LoadByPipeline(db gorp.SqlExecutor, store cache.Store, pipelineID int64, u 
 }
 
 func load(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) (*sdk.Application, error) {
-	log.Debug("application.load> %s %v", query, args)
 	dbApp := dbApplication{}
 	if err := db.SelectOne(&dbApp, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -196,6 +192,11 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 	regexp := regexp.MustCompile(sdk.NamePattern)
 	if !regexp.MatchString(app.Name) {
 		return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Insert: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
+	}
+
+	// TODO Remove after application migration to workflow
+	if app.WorkflowMigration == "" {
+		app.WorkflowMigration = "NOT_BEGUN"
 	}
 
 	app.ProjectID = proj.ID
@@ -297,8 +298,6 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 }
 
 func loadapplications(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Application, error) {
-	log.Debug("application.loadapplications> %s %v", query, args)
-
 	var res []dbApplication
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {

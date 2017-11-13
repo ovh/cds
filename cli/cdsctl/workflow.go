@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -25,6 +26,7 @@ var (
 		[]*cobra.Command{
 			cli.NewListCommand(workflowListCmd, workflowListRun, nil),
 			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil),
+			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil),
 			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil),
 			workflowArtifact,
 		})
@@ -61,6 +63,24 @@ func workflowShowRun(v cli.Values) (interface{}, error) {
 		return nil, err
 	}
 	return *w, nil
+}
+
+var workflowDeleteCmd = cli.Command{
+	Name:  "delete",
+	Short: "Delete a CDS workflow",
+	Args: []cli.Arg{
+		{Name: "project-key"},
+		{Name: "workflow-name"},
+	},
+}
+
+func workflowDeleteRun(v cli.Values) error {
+	err := client.WorkflowDelete(v["project-key"], v["workflow-name"])
+	if err != nil && v.GetBool("force") && sdk.ErrorIs(err, sdk.ErrWorkflowNotFound) {
+		fmt.Println(err.Error())
+		os.Exit(0)
+	}
+	return err
 }
 
 var workflowRunManualCmd = cli.Command{

@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 
@@ -17,7 +18,6 @@ import (
 
 	"github.com/ovh/cds/engine/api"
 	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/hatchery/docker"
 	"github.com/ovh/cds/engine/hatchery/local"
 	"github.com/ovh/cds/engine/hatchery/marathon"
 	"github.com/ovh/cds/engine/hatchery/openstack"
@@ -26,7 +26,6 @@ import (
 	"github.com/ovh/cds/engine/hooks"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/hatchery"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -103,12 +102,10 @@ Comming soon...`,
 		conf.API.Auth.SharedInfraToken = sdk.RandomString(128)
 		conf.API.Secrets.Key = sdk.RandomString(32)
 		conf.Hatchery.Local.API.Token = conf.API.Auth.SharedInfraToken
-		conf.Hatchery.Docker.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Openstack.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.VSphere.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Swarm.API.Token = conf.API.Auth.SharedInfraToken
 		conf.Hatchery.Marathon.API.Token = conf.API.Auth.SharedInfraToken
-		conf.Hooks.Name = hatchery.GenerateName("hooks", "")
 		conf.Hooks.API.Token = conf.API.Auth.SharedInfraToken
 		conf.VCS.API.Token = conf.API.Auth.SharedInfraToken
 		conf.VCS.Servers = map[string]vcs.ServerConfiguration{}
@@ -117,6 +114,20 @@ Comming soon...`,
 			Github: &vcs.GithubServerConfiguration{
 				ClientID:     "xxxx",
 				ClientSecret: "xxxx",
+			},
+		}
+		conf.VCS.Servers["Bitbucket"] = vcs.ServerConfiguration{
+			URL: "https://mybitbucket.com",
+			Bitbucket: &vcs.BitbucketServerConfiguration{
+				ConsumerKey: "xxx",
+				PrivateKey:  "xxx",
+			},
+		}
+		conf.VCS.Servers["Gitlab"] = vcs.ServerConfiguration{
+			URL: "https://gitlab.com",
+			Gitlab: &vcs.GitlabServerConfiguration{
+				AppID:  "xxxx",
+				Secret: "xxxx",
 			},
 		}
 
@@ -171,13 +182,6 @@ var configCheckCmd = &cobra.Command{
 			}
 		}
 
-		if conf.Hatchery.Docker.API.HTTP.URL != "" {
-			if err := docker.New().CheckConfiguration(conf.Hatchery.Docker); err != nil {
-				fmt.Println(err)
-				hasError = true
-			}
-		}
-
 		if conf.Hatchery.Marathon.API.HTTP.URL != "" {
 			if err := marathon.New().CheckConfiguration(conf.Hatchery.Marathon); err != nil {
 				fmt.Println(err)
@@ -215,7 +219,6 @@ Start CDS Engine Services:
  * Hatcheries:
 	They are the components responsible for spawning workers. Supported platforms/orchestrators are:
 	 * Local machine
-	 * Local Docker
 	 * Openstack
 	 * Docker Swarm
 	 * Openstack
@@ -226,7 +229,7 @@ Start CDS Engine Services:
  	This component operates CDS VCS connectivity
 
 Start all of this with a single command:
-	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]
+	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]
 All the services are using the same configuration file format.
 You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.
 You can also use or override toml file with environment variable.
@@ -242,9 +245,6 @@ See $ engine config command for more details.
 
 		//Initialize config
 		config()
-
-		//Initialize logs
-		log.Initialize(&log.Conf{Level: conf.Log.Level})
 
 		// gops debug
 		if conf.Debug.Enable {
@@ -273,49 +273,64 @@ See $ engine config command for more details.
 			signal.Stop(c)
 		}()
 
+		type serviceConf struct {
+			arg     string
+			service Service
+			cfg     interface{}
+		}
+		services := []serviceConf{}
+
+		names := []string{}
 		for _, a := range args {
-			var s Service
-			var cfg interface{}
-
 			fmt.Printf("Starting service %s\n", a)
-
 			switch a {
 			case "api":
-				s = api.New()
-				cfg = conf.API
-			case "hatchery:docker":
-				s = docker.New()
-				cfg = conf.Hatchery.Docker
+				services = append(services, serviceConf{arg: a, service: api.New(), cfg: conf.API})
+				names = append(names, conf.API.Name)
 			case "hatchery:local":
-				s = local.New()
-				cfg = conf.Hatchery.Local
+				services = append(services, serviceConf{arg: a, service: local.New(), cfg: conf.Hatchery.Local})
+				names = append(names, conf.Hatchery.Local.Name)
 			case "hatchery:marathon":
-				s = marathon.New()
-				cfg = conf.Hatchery.Marathon
+				services = append(services, serviceConf{arg: a, service: marathon.New(), cfg: conf.Hatchery.Marathon})
+				names = append(names, conf.Hatchery.Marathon.Name)
 			case "hatchery:openstack":
-				s = openstack.New()
-				cfg = conf.Hatchery.Openstack
+				services = append(services, serviceConf{arg: a, service: openstack.New(), cfg: conf.Hatchery.Openstack})
+				names = append(names, conf.Hatchery.Openstack.Name)
 			case "hatchery:swarm":
-				s = swarm.New()
-				cfg = conf.Hatchery.Swarm
+				services = append(services, serviceConf{arg: a, service: swarm.New(), cfg: conf.Hatchery.Swarm})
+				names = append(names, conf.Hatchery.Swarm.Name)
 			case "hatchery:vsphere":
-				s = vsphere.New()
-				cfg = conf.Hatchery.VSphere
+				services = append(services, serviceConf{arg: a, service: vsphere.New(), cfg: conf.Hatchery.VSphere})
+				names = append(names, conf.Hatchery.VSphere.Name)
 			case "hooks":
-				s = hooks.New()
-				cfg = conf.Hooks
+				services = append(services, serviceConf{arg: a, service: hooks.New(), cfg: conf.Hooks})
+				names = append(names, conf.Hooks.Name)
 			case "vcs":
-				s = vcs.New()
-				cfg = conf.VCS
+				services = append(services, serviceConf{arg: a, service: vcs.New(), cfg: conf.VCS})
+				names = append(names, conf.VCS.Name)
 			default:
 				fmt.Printf("Error: service '%s' unknown\n", a)
 				os.Exit(1)
 			}
+		}
 
-			go start(ctx, s, cfg)
+		//Initialize logs
+		log.Initialize(&log.Conf{
+			Level:                  conf.Log.Level,
+			GraylogProtocol:        conf.Log.Graylog.Protocol,
+			GraylogHost:            conf.Log.Graylog.Host,
+			GraylogPort:            fmt.Sprintf("%d", conf.Log.Graylog.Port),
+			GraylogExtraKey:        conf.Log.Graylog.ExtraKey,
+			GraylogExtraValue:      conf.Log.Graylog.ExtraValue,
+			GraylogFieldCDSVersion: sdk.VERSION,
+			GraylogFieldCDSName:    strings.Join(names, "_"),
+		})
+
+		for _, s := range services {
+			go start(ctx, s.service, s.cfg)
 
 			//Stupid trick: when API is starting wait a bit before start the other
-			if a == "API" || a == "api" {
+			if s.arg == "API" || s.arg == "api" {
 				time.Sleep(2 * time.Second)
 			}
 		}

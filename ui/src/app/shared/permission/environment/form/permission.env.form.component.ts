@@ -44,10 +44,12 @@ export class PermissionEnvironmentFormComponent {
             }
             // Filter groups that are not already in the environment
             let newGroups: Array<Group> = this.selectedGroups.map(ids => {
-               let isHere = env.groups.find(gp => gp.group.id === Number(ids));
-               if (isHere) {
-                   return;
-               }
+                if (env.groups) {
+                    let isHere = env.groups.find(gp => gp.group.id === Number(ids));
+                    if (isHere) {
+                        return;
+                    }
+                }
                return this.groups.find(g => g.id === Number(ids));
             });
 

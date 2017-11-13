@@ -91,10 +91,9 @@ describe('CDS: Application Repo Component', () => {
         p.key = 'key1';
         p.name = 'proj1';
 
-        let repoMan: RepositoriesManager = {id: 1, name: 'RepoManager', type: 'typeR', url: 'foo.bar',
-            hooks_supported: false, polling_supported: false};
-        p.repositories_manager = new Array<RepositoriesManager>();
-        p.repositories_manager.push(repoMan);
+        let repoMan: RepositoriesManager = {name: 'RepoManager'};
+        p.vcs_servers = new Array<RepositoriesManager>();
+        p.vcs_servers.push(repoMan);
 
         fixture.componentInstance.application = app;
         fixture.componentInstance.project = p;
@@ -119,7 +118,7 @@ describe('CDS: Application Repo Component', () => {
 
         expect(toast.success).toHaveBeenCalledTimes(1);
 
-        fixture.componentInstance.application.repositories_manager = repoMan;
+        fixture.componentInstance.application.vcs_server = repoMan.name;
         fixture.componentInstance.application.repository_fullname = 'frepo3';
 
         tick(100);

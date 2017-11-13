@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 
@@ -17,24 +18,38 @@ func initViper(w *currentWorker) {
 	viper.SetEnvPrefix("cds")
 	viper.AutomaticEnv()
 
-	log.Initialize(&log.Conf{
-		Level:             viper.GetString("log_level"),
-		GraylogProtocol:   viper.GetString("graylog_protocol"),
-		GraylogHost:       viper.GetString("graylog_host"),
-		GraylogPort:       viper.GetString("graylog_port"),
-		GraylogExtraKey:   viper.GetString("graylog_extra_key"),
-		GraylogExtraValue: viper.GetString("graylog_extra_value"),
-	})
-
 	var errN error
-	w.status.Name, errN = os.Hostname()
+	var hostname string
+	hostname, errN = os.Hostname()
 	if errN != nil {
-		log.Error("Cannot retrieve hostname: %s", errN)
-		os.Exit(1)
+		// no log, no need to exit here
+		// we recheck os.Hostname cmd below, when log are initialized
+		fmt.Printf("Cannot retrieve hostname: %s\n", errN)
 	}
+
+	w.status.Name = hostname
 	givenName := viper.GetString("name")
 	if givenName != "" {
 		w.status.Name = givenName
+	}
+
+	log.Initialize(&log.Conf{
+		Level:                  viper.GetString("log_level"),
+		GraylogProtocol:        viper.GetString("graylog_protocol"),
+		GraylogHost:            viper.GetString("graylog_host"),
+		GraylogPort:            viper.GetString("graylog_port"),
+		GraylogExtraKey:        viper.GetString("graylog_extra_key"),
+		GraylogExtraValue:      viper.GetString("graylog_extra_value"),
+		GraylogFieldCDSVersion: sdk.VERSION,
+		GraylogFieldCDSName:    w.status.Name,
+	})
+
+	// recheck hostname and send log if error
+	if hostname == "" {
+		if _, err := os.Hostname(); err != nil {
+			log.Error("Cannot retrieve hostname: %s", err)
+			os.Exit(1)
+		}
 	}
 
 	hatchS := viper.GetString("hatchery")
@@ -65,7 +80,8 @@ func initViper(w *currentWorker) {
 	if w.basedir == "" {
 		w.basedir = os.TempDir()
 	}
-	w.bookedJobID = viper.GetInt64("booked_job_id")
+	w.bookedPBJobID = viper.GetInt64("booked_pb_job_id")
+	w.bookedWJobID = viper.GetInt64("booked_workflow_job_id")
 
 	w.client = cdsclient.NewWorker(w.apiEndpoint, w.status.Name)
 }

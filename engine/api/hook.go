@@ -46,6 +46,7 @@ func processGitlabHook(w http.ResponseWriter, r *http.Request, data []byte) (hoo
 		Ref         string `json:"ref"`
 		UserName    string `json:"user_name"`
 		CheckoutSha string `json:"checkout_sha"`
+		After       string `json:"after"`
 	}
 
 	var ge gitlabEvent
@@ -65,6 +66,11 @@ func processGitlabHook(w http.ResponseWriter, r *http.Request, data []byte) (hoo
 		Author:     ge.UserName,
 		Message:    ge.ObjectKind,
 		UID:        r.FormValue("uid"),
+	}
+
+	// Branch deleted
+	if ge.After == "0000000000000000000000000000000000000000" {
+		rh.Message = "DELETE"
 	}
 
 	return rh, nil
@@ -304,10 +310,7 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 	// If branch is DELETE'd, remove all builds related to this branch
 	if h.Message == "DELETE" {
 		log.Warning("processHook> Removing builds in %s/%s on branch %s\n", h.ProjectKey, h.Repository, h.Branch)
-		if err := hook.DeleteBranchBuilds(db, hooks, h.Branch); err != nil {
-			return err
-		}
-		return nil
+		return hook.DeleteBranchBuilds(db, hooks, h.Branch)
 	}
 
 	log.Debug("Executing %d hooks for %s/%s on branch %s\n", len(hooks), h.ProjectKey, h.Repository, h.Branch)
@@ -366,7 +369,7 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 		}
 
 		go func(h *sdk.Hook) {
-			app, errapp := application.LoadByID(DBFunc(), store, h.ApplicationID, nil, application.LoadOptions.WithRepositoryManager)
+			app, errapp := application.LoadByID(DBFunc(), store, h.ApplicationID, nil)
 			if errapp != nil {
 				log.Warning("processHook> Unable to load application %s", errapp)
 			}

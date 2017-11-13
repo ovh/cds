@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -47,6 +48,11 @@ func NewGetCommand(c Command, run RunGetFunc, subCommands []*cobra.Command, mod 
 	return newCommand(c, run, subCommands, mod...)
 }
 
+// NewDeleteCommand creates a new cobra command with a RunDeleteFunc and eventually subCommands
+func NewDeleteCommand(c Command, run RunDeleteFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
+	return newCommand(c, run, subCommands, mod...)
+}
+
 // NewListCommand creates a new cobra command with a RunListFunc and eventually subCommands
 func NewListCommand(c Command, run RunListFunc, subCommands []*cobra.Command, mod ...CommandModifier) *cobra.Command {
 	return newCommand(c, run, subCommands, mod...)
@@ -65,10 +71,9 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	for _, a := range c.OptionalArgs {
 		cmd.Use = cmd.Use + " [" + strings.ToUpper(a.Name) + "]"
 	}
-	cmd.Aliases = c.Aliases
 
 	if len(mods) == 0 {
-		mods = []CommandModifier{CommandWithExtraFlags}
+		mods = []CommandModifier{CommandWithExtraFlags, CommandWithExtraAliases}
 	}
 
 	if run != nil {
@@ -76,6 +81,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			mod(&c, run)
 		}
 	}
+	cmd.Aliases = c.Aliases
 
 	for _, f := range c.Flags {
 		switch f.Kind {
@@ -174,7 +180,13 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				fmt.Println(string(b))
 			default:
 				w := tabwriter.NewWriter(os.Stdout, 10, 0, 1, ' ', 0)
-				m, err := dump.ToMap(i)
+				e := dump.NewDefaultEncoder(new(bytes.Buffer))
+				e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+				e.ExtraFields.DetailedMap = false
+				e.ExtraFields.DetailedStruct = false
+				e.ExtraFields.Len = false
+				e.ExtraFields.Type = false
+				m, err := e.ToStringMap(i)
 				ExitOnError(err)
 				for k, v := range m {
 					fmt.Fprintln(w, k+"\t"+v)
@@ -274,6 +286,26 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 				table.Render()
 				return
 			}
+
+		case RunDeleteFunc:
+			if f == nil {
+				cmd.Help()
+				os.Exit(0)
+			}
+
+			force, _ := cmd.Flags().GetBool("force")
+
+			if !force && !AskForConfirmation("Are you sure to delete ?") {
+				fmt.Println("Deletion aborted")
+				os.Exit(0)
+			}
+
+			err := f(vals)
+			if err == nil {
+				fmt.Println("Delete with success")
+			}
+			ExitOnError(err)
+			os.Exit(0)
 
 		default:
 			panic(fmt.Errorf("Unknown function type: %T", f))

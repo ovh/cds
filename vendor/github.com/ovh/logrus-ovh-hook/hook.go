@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/eapache/go-resiliency/retrier"
+	"github.com/sirupsen/logrus"
 )
 
 type Priority int

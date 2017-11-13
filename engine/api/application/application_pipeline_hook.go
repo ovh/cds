@@ -46,7 +46,7 @@ func TriggerPipeline(tx gorp.SqlExecutor, store cache.Store, h sdk.Hook, branch 
 	p.Parameter = parameters
 
 	// get application
-	a, err := LoadByID(tx, store, h.ApplicationID, nil, LoadOptions.WithRepositoryManager, LoadOptions.WithVariablesWithClearPassword)
+	a, err := LoadByID(tx, store, h.ApplicationID, nil, LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -63,26 +63,22 @@ func TriggerPipeline(tx gorp.SqlExecutor, store cache.Store, h sdk.Hook, branch 
 	}
 
 	// Get commit message to check if we have to skip the build
-	if a.RepositoriesManager != nil {
-		if b, _ := repositoriesmanager.CheckApplicationIsAttached(tx, a.RepositoriesManager.Name, projectData.Key, a.Name); b && a.RepositoryFullname != "" {
-			//Get the RepositoriesManager Client (the last args are useless to get commit)
-			client, _ := repositoriesmanager.AuthorizedClient(tx, projectData.Key, a.RepositoriesManager.Name, store)
-			if client != nil {
-				commit, err := client.Commit(a.RepositoryFullname, hash)
-				if err != nil {
-					log.Warning("hook> can't get commit %s from %s on %s : %s", hash, a.RepositoryFullname, a.RepositoriesManager.Name, err)
-				}
-				match, err := regexp.Match(".*\\[ci skip\\].*|.*\\[cd skip\\].*", []byte(commit.Message))
-				if err != nil {
-					log.Warning("hook> Cannot check %s/%s for commit %s by %s : %s (%s)", projectData.Key, a.Name, hash, author, commit.Message, err)
-				}
-				if match {
-					log.Info("hook> Skipping build of %s/%s for commit %s by %s", projectData.Key, a.Name, hash, author)
-					return nil, nil
-				}
+	if a.VCSServer != "" {
+		vcsServer := repositoriesmanager.GetProjectVCSServer(projectData, a.VCSServer)
+		client, _ := repositoriesmanager.AuthorizedClient(tx, store, vcsServer)
+		if client != nil {
+			commit, err := client.Commit(a.RepositoryFullname, hash)
+			if err != nil {
+				log.Warning("hook> can't get commit %s from %s on %s : %s", hash, a.RepositoryFullname, a.VCSServer, err)
 			}
-		} else {
-			log.Debug("Application is not attached (%s %s %s)", a.RepositoriesManager.Name, projectData.Key, a.Name)
+			match, err := regexp.Match(".*\\[ci skip\\].*|.*\\[cd skip\\].*", []byte(commit.Message))
+			if err != nil {
+				log.Warning("hook> Cannot check %s/%s for commit %s by %s : %s (%s)", projectData.Key, a.Name, hash, author, commit.Message, err)
+			}
+			if match {
+				log.Info("hook> Skipping build of %s/%s for commit %s by %s", projectData.Key, a.Name, hash, author)
+				return nil, nil
+			}
 		}
 	}
 

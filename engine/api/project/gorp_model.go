@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/secret"
@@ -25,18 +26,32 @@ func init() {
 
 // PostGet is a db hook
 func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
-	metadataStr, err := db.SelectNullStr("select metadata from project where id = $1", p.ID)
-	if err != nil {
+	var fields = struct {
+		Metadata   sql.NullString `db:"metadata"`
+		VCSServers []byte         `db:"vcs_servers"`
+	}{}
+
+	if err := db.QueryRow("select metadata,vcs_servers from project where id = $1", p.ID).Scan(&fields.Metadata, &fields.VCSServers); err != nil {
 		return err
 	}
 
-	if metadataStr.Valid {
-		metadata := sdk.Metadata{}
-		if err := json.Unmarshal([]byte(metadataStr.String), &metadata); err != nil {
+	if err := gorpmapping.JSONNullString(fields.Metadata, &p.Metadata); err != nil {
+		return err
+	}
+
+	if len(fields.VCSServers) > 0 {
+		clearVCSServer, err := secret.Decrypt([]byte(fields.VCSServers))
+		if err != nil {
 			return err
 		}
-		p.Metadata = metadata
+
+		if len(clearVCSServer) > 0 {
+			if err := yaml.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
+				return sdk.WrapError(err, "Unable to load project %d", p.ID)
+			}
+		}
 	}
+
 	return nil
 }
 
@@ -46,7 +61,18 @@ func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.Exec("update project set metadata = $2 where id = $1", p.ID, b); err != nil {
+
+	b1, err := yaml.Marshal(p.VCSServers)
+	if err != nil {
+		return err
+	}
+
+	encryptedVCSServerStr, err := secret.Encrypt(b1)
+	if err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, b, encryptedVCSServerStr); err != nil {
 		return err
 	}
 	return nil

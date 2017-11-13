@@ -50,12 +50,12 @@ export class ApplicationStore {
      * @param appName
      * @returns {Observable<Application>}
      */
-    getApplicationResolver(key: string, appName: string): Observable<Application> {
+    getApplicationResolver(key: string, appName: string, filter?: {branch: string, remote: string}): Observable<Application> {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
 
         if (store.size === 0 || !store.get(appKey)) {
-            return this._applicationService.getApplication(key, appName).map( res => {
+            return this._applicationService.getApplication(key, appName, filter).map( res => {
                 this._application.next(store.set(appKey, res));
                 return res;
             });
@@ -99,19 +99,19 @@ export class ApplicationStore {
      * Get an Application
      * @returns {Observable<Application>}
      */
-    getApplications(key: string, appName?: string): Observable<Map<string, Application>> {
+    getApplications(key: string, appName: string, filter?: {branch: string, remote: string}): Observable<Map<string, Application>> {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
         if (appName && !store.get(appKey)) {
-            this.resync(key, appName);
+            this.resync(key, appName, filter);
         }
         return new Observable<Map<string, Application>>(fn => this._application.subscribe(fn));
     }
 
-    resync(key: string, appName: string) {
+    resync(key: string, appName: string, filter?: {branch: string, remote: string}) {
         let store = this._application.getValue();
         let appKey = key + '-' + appName;
-        this._applicationService.getApplication(key, appName).subscribe(res => {
+        this._applicationService.getApplication(key, appName, filter).subscribe(res => {
             this._application.next(store.set(appKey, res));
         }, err => {
             this._application.error(err);
@@ -212,7 +212,7 @@ export class ApplicationStore {
                 let appToUpdate = cache.get(appKey);
                 if (appToUpdate) {
                     appToUpdate.last_modified = app.last_modified;
-                    appToUpdate.repositories_manager = app.repositories_manager;
+                    appToUpdate.vcs_server = app.vcs_server;
                     appToUpdate.repository_fullname = app.repository_fullname;
                     this._application.next(cache.set(appKey, appToUpdate));
                 }
@@ -233,7 +233,7 @@ export class ApplicationStore {
                 if (cache.get(appKey)) {
                     let pToUpdate = cache.get(appKey);
                     pToUpdate.last_modified = app.last_modified;
-                    delete pToUpdate.repositories_manager;
+                    delete pToUpdate.vcs_server;
                     delete pToUpdate.repository_fullname;
                     this._application.next(cache.set(appKey, pToUpdate));
                 }
@@ -289,7 +289,7 @@ export class ApplicationStore {
      * @returns {Observable<Application>}
      */
     addHook(p: Project, a: Application, hook: Hook): Observable<Application> {
-        return this._applicationService.addHook(p.key, a.name, a.repositories_manager.name, a.repository_fullname, hook.pipeline.name)
+        return this._applicationService.addHook(p.key, a.name, a.vcs_server, a.repository_fullname, hook.pipeline.name)
             .map( app => {
                 return this.refreshApplicationWorkflowCache(p.key, a.name, app);
         });

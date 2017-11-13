@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/fsamin/go-dump"
 	"gopkg.in/cheggaaa/pb.v1"
 )
@@ -13,7 +13,7 @@ func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 	l := log.WithField("v.testsuite", ts.Name)
 	start := time.Now()
 
-	d, err := dump.ToMap(ts.Vars)
+	d, err := dump.ToStringMap(ts.Vars)
 	if err != nil {
 		log.Errorf("err:%s", err)
 	}
@@ -47,7 +47,7 @@ func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 
 func runTestCases(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel string, l Logger) {
 	for i, tc := range ts.TestCases {
-		if tc.Skipped == 0 {
+		if len(tc.Skipped) == 0 {
 			runTestCase(ts, &tc, bars, l, detailsLevel)
 			ts.TestCases[i] = tc
 		}
@@ -58,8 +58,8 @@ func runTestCases(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 		if len(tc.Errors) > 0 {
 			ts.Errors += len(tc.Errors)
 		}
-		if tc.Skipped > 0 {
-			ts.Skipped += tc.Skipped
+		if len(tc.Skipped) > 0 {
+			ts.Skipped += len(tc.Skipped)
 		}
 	}
 }

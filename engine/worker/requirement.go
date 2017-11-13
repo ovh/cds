@@ -94,10 +94,10 @@ func checkPluginRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 
 	_plugin, err := pluginClient.Instance()
 	if err != nil {
-		log.Warning("[WARNING] Error Checkin %s requirement : %s", r.Name, err)
+		log.Warning("checkPluginRequirement> Error Checking %s requirement : %s", r.Name, err)
 		return false, err
 	}
-	log.Warning("[NOTICE] Plugin %s successfully started", _plugin.Name())
+	log.Debug("checkPluginRequirement> Plugin %s successfully started", _plugin.Name())
 
 	return true, nil
 }
@@ -148,11 +148,14 @@ func checkNetworkAccessRequirement(w *currentWorker, r sdk.Requirement) (bool, e
 }
 
 func checkServiceRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	if _, err := net.LookupIP(r.Name); err != nil {
-		log.Warning("Error checking requirement : %s\n", err)
+	// service are supported only for Model Docker
+	if w.model.Type != sdk.Docker {
 		return false, nil
 	}
-
+	if _, err := net.LookupIP(r.Name); err != nil {
+		log.Debug("Error checking requirement : %s", err)
+		return false, nil
+	}
 	return true, nil
 }
 

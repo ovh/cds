@@ -13,6 +13,7 @@ import (
 
 // Repository is the data persistence layer
 type Repository struct {
+	querier   gorp.SqlExecutor
 	db        func() *gorp.DbMap
 	store     cache.Store
 	currentTX *gorp.Transaction
@@ -23,12 +24,20 @@ func NewRepository(dbFunc func() *gorp.DbMap, store cache.Store) *Repository {
 	return &Repository{db: dbFunc, store: store}
 }
 
+// Querier returns a fresh repository
+func Querier(db gorp.SqlExecutor, store cache.Store) *Repository {
+	return &Repository{querier: db}
+}
+
 // Tx return the current gorp.SqlExecutor
 func (r *Repository) Tx() gorp.SqlExecutor {
 	if r.currentTX != nil {
 		return r.currentTX
 	}
-	return r.db()
+	if r.db != nil {
+		return r.db()
+	}
+	return r.querier
 }
 
 // Begin a transaction

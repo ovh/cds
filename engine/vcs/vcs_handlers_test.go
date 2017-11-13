@@ -61,6 +61,56 @@ func Test_getAllVCSServersHandler(t *testing.T) {
 	assert.Len(t, servers, 3)
 
 	log.Debug("Body: %s", rec.Body.String())
+
+	//Prepare request
+	vars = map[string]string{
+		"name": "github",
+	}
+	uri = s.Router.GetRoute("GET", s.getVCSServersHandler, vars)
+	test.NotEmpty(t, uri)
+	req = newRequest(t, s, "GET", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+
+	//Asserts
+	assert.Equal(t, 200, rec.Code)
+
+	var srv = ServerConfiguration{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &srv))
+
+	t.Logf("%s", rec.Body.String())
+
+	//Prepare request
+	vars = map[string]string{
+		"name": "github",
+	}
+	uri = s.Router.GetRoute("GET", s.getVCSServersHooksHandler, vars)
+	test.NotEmpty(t, uri)
+	req = newRequest(t, s, "GET", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+
+	//Asserts
+	assert.Equal(t, 200, rec.Code)
+
+	//Prepare request
+	vars = map[string]string{
+		"name": "github",
+	}
+	uri = s.Router.GetRoute("GET", s.getVCSServersPollingHandler, vars)
+	test.NotEmpty(t, uri)
+	req = newRequest(t, s, "GET", uri, nil)
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	s.Router.Mux.ServeHTTP(rec, req)
+
+	//Asserts
+	assert.Equal(t, 200, rec.Code)
 }
 
 func Test_accessTokenAuth(t *testing.T) {
@@ -237,14 +287,16 @@ func Test_getBranchHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"name":   "github",
-		"owner":  "ovh",
-		"repo":   "cds",
-		"branch": "master",
+		"name":  "github",
+		"owner": "ovh",
+		"repo":  "cds",
 	}
 	uri := s.Router.GetRoute("GET", s.getBranchHandler, vars)
 	test.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
+	q := req.URL.Query()
+	q.Set("branch", "vcs/old-code")
+	req.URL.RawQuery = q.Encode()
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
 	req.Header.Set(HeaderXAccessToken, token)
@@ -279,14 +331,17 @@ func Test_getCommitsHandler(t *testing.T) {
 
 	//Prepare request
 	vars := map[string]string{
-		"name":   "github",
-		"owner":  "ovh",
-		"repo":   "cds",
-		"branch": "master",
+		"name":  "github",
+		"owner": "fsamin",
+		"repo":  "go-dump",
 	}
 	uri := s.Router.GetRoute("GET", s.getCommitsHandler, vars)
 	test.NotEmpty(t, uri)
 	req := newRequest(t, s, "GET", uri, nil)
+	q := req.URL.Query()
+	q.Set("since", "61dc819dc47bc6b556b2c4e1293f919d492f1f5a")
+	q.Set("branch", "fsamin/fix-2017-07-28-10-07-56")
+	req.URL.RawQuery = q.Encode()
 
 	token := base64.StdEncoding.EncodeToString([]byte(cfg["githubAccessToken"]))
 	req.Header.Set(HeaderXAccessToken, token)

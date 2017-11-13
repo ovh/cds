@@ -2,6 +2,7 @@ package group
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/permission"
@@ -69,4 +70,20 @@ func InitializeDefaultGroupName(db *gorp.DbMap, defaultGroupName string) error {
 	}
 
 	return nil
+}
+
+// IsDefaultGroupID returns true if groupID is the defaultGroupID
+func IsDefaultGroupID(groupID int64) bool {
+	return groupID == defaultGroupID
+}
+
+// GetIdByNameInList find id related to the group name in a given group list
+func GetIdByNameInList(groups []sdk.GroupPermission, groupName string) (int64, error) {
+	for _, gr := range groups {
+		if gr.Group.Name == groupName {
+			return gr.Group.ID, nil
+		}
+	}
+
+	return 0, fmt.Errorf("GetIdByNameInList> this group %s doesn't exist in this list", groupName)
 }

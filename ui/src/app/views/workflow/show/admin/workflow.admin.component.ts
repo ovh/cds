@@ -66,7 +66,7 @@ export class WorkflowAdminComponent implements OnInit {
         });
     }
 
-    saveTags(): void {
+    updateWorkflow(): void {
         this.loading = true;
         this._workflowStore.updateWorkflow(this.project.key, this._tagWorkflow).finally(() => {
             this.loading = false;
@@ -88,6 +88,7 @@ export class WorkflowAdminComponent implements OnInit {
                 this.loading = false;
             }).subscribe(() => {
                 this._toast.success('', this._translate.instant('workflow_updated'));
+                this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name], { queryParams: {tab: 'advanced'}});
             });
         }
     };

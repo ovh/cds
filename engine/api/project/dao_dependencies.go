@@ -11,7 +11,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
@@ -89,6 +88,14 @@ var (
 		return nil
 	}
 
+	lockProject = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		return nil
+	}
+
+	lockAndWaitProject = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		return nil
+	}
+
 	loadAllVariables = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, args ...GetAllVariableFuncArg) error {
 		vars, err := GetAllVariableInProject(db, proj.ID, args...)
 		if err != nil && err != sql.ErrNoRows {
@@ -140,15 +147,6 @@ var (
 
 	loadPermission = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		proj.Permission = permission.ProjectPermission(proj.Key, u)
-		return nil
-	}
-
-	loadRepositoriesManagers = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
-		var errRepos error
-		proj.ReposManager, errRepos = repositoriesmanager.LoadAllForProject(db, proj.Key, store)
-		if errRepos != nil && errRepos != sql.ErrNoRows && errRepos != sdk.ErrNoReposManager {
-			return sdk.WrapError(errRepos, "application.loadRepositoriesManagers")
-		}
 		return nil
 	}
 )

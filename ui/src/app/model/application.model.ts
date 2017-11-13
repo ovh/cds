@@ -19,12 +19,13 @@ export class Application {
     permission: number;
     notifications: Array<Notification>;
     last_modified: string;
-    repositories_manager: RepositoriesManager;
+    vcs_server: string;
     repository_fullname: string;
     pollers: Array<RepositoryPoller>;
     hooks: Array<Hook>;
     workflows: Array<WorkflowItem>;
     schedulers: Array<Scheduler>;
+    workflow_migration: string;
 
     project_key: string; // project unique key
 

@@ -63,11 +63,16 @@ func tmplCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		resp, errDo := client.Do(req)
 		if errDo != nil {
-			sdk.Exit("cannot post worker tmpl (Do): %s\n", errDo)
+			sdk.Exit("tmpl call failed: %v", errDo)
 		}
 
 		if resp.StatusCode >= 300 {
-			sdk.Exit("tmpl failed: %d\n", resp.StatusCode)
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				sdk.Exit("tmpl failed: unable to read body %v\n", err)
+			}
+			cdsError := sdk.DecodeError(body)
+			sdk.Exit("tmpl failed: %v\n", cdsError)
 		}
 	}
 }
@@ -76,39 +81,37 @@ func (wk *currentWorker) tmplHandler(w http.ResponseWriter, r *http.Request) {
 	// Get body
 	data, errRead := ioutil.ReadAll(r.Body)
 	if errRead != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		newError := sdk.NewError(sdk.ErrWrongRequest, errRead)
+		writeError(w, r, newError)
 		return
 	}
 
 	var a tmplPath
 	if err := json.Unmarshal(data, &a); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		newError := sdk.NewError(sdk.ErrWrongRequest, err)
+		writeError(w, r, newError)
 		return
 	}
 
 	btes, err := ioutil.ReadFile(a.Path)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		newError := sdk.NewError(sdk.ErrWrongRequest, err)
+		writeError(w, r, newError)
 		return
 	}
 
-	vars := map[string]string{}
-	for _, v := range wk.currentJob.params {
-		vars[v.Name] = v.Value
-	}
+	vars := sdk.ParametersToMap(wk.currentJob.params)
 
 	res, err := sdk.Interpolate(string(btes), vars)
 	if err != nil {
 		log.Error("Unable to interpolate: %v", err)
-		s, _ := sdk.ProcessError(err, "")
-		w.Write([]byte(s))
-		w.WriteHeader(http.StatusBadRequest)
+		newError := sdk.NewError(sdk.ErrWrongRequest, err)
+		writeError(w, r, newError)
 		return
 	}
 
 	if err := ioutil.WriteFile(a.Destination, []byte(res), os.FileMode(0644)); err != nil {
-		log.Error("Unable to write file: %v", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		writeError(w, r, err)
 		return
 	}
 }

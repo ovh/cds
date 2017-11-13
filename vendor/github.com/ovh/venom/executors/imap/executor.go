@@ -7,11 +7,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fsamin/go-dump"
 	"github.com/mitchellh/mapstructure"
 	"github.com/yesnault/go-imap/imap"
 
 	"github.com/ovh/venom"
+	"github.com/ovh/venom/executors"
 )
 
 // Name for test imap
@@ -27,15 +27,16 @@ func New() venom.Executor {
 
 // Executor represents a Test Exec
 type Executor struct {
-	IMAPHost      string `json:"imaphost,omitempty" yaml:"imaphost,omitempty"`
-	IMAPPort      string `json:"imapport,omitempty" yaml:"imapport,omitempty"`
-	IMAPUser      string `json:"imapuser,omitempty" yaml:"imapuser,omitempty"`
-	IMAPPassword  string `json:"imappassword,omitempty" yaml:"imappassword,omitempty"`
-	MBox          string `json:"mbox,omitempty" yaml:"mbox,omitempty"`
-	MBoxOnSuccess string `json:"mboxonsuccess,omitempty" yaml:"mboxonsuccess,omitempty"`
-	SearchFrom    string `json:"searchfrom,omitempty" yaml:"searchfrom,omitempty"`
-	SearchSubject string `json:"searchsubject,omitempty" yaml:"searchsubject,omitempty"`
-	SearchBody    string `json:"searchbody,omitempty" yaml:"searchbody,omitempty"`
+	IMAPHost        string `json:"imaphost,omitempty" yaml:"imaphost,omitempty"`
+	IMAPPort        string `json:"imapport,omitempty" yaml:"imapport,omitempty"`
+	IMAPUser        string `json:"imapuser,omitempty" yaml:"imapuser,omitempty"`
+	IMAPPassword    string `json:"imappassword,omitempty" yaml:"imappassword,omitempty"`
+	MBox            string `json:"mbox,omitempty" yaml:"mbox,omitempty"`
+	MBoxOnSuccess   string `json:"mboxonsuccess,omitempty" yaml:"mboxonsuccess,omitempty"`
+	DeleteOnSuccess bool   `json:"deleteonsuccess,omitempty" yaml:"deleteonsuccess,omitempty"`
+	SearchFrom      string `json:"searchfrom,omitempty" yaml:"searchfrom,omitempty"`
+	SearchSubject   string `json:"searchsubject,omitempty" yaml:"searchsubject,omitempty"`
+	SearchBody      string `json:"searchbody,omitempty" yaml:"searchbody,omitempty"`
 }
 
 // Mail contains an analyzed mail
@@ -87,7 +88,7 @@ func (Executor) Run(ctx venom.TestCaseContext, l venom.Logger, step venom.TestSt
 	result.TimeHuman = fmt.Sprintf("%s", elapsed)
 	result.Executor.IMAPPassword = "****hidden****" // do not output password
 
-	return dump.ToMap(result, dump.WithDefaultLowerCaseFormatter())
+	return executors.Dump(result)
 }
 
 func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
@@ -99,7 +100,7 @@ func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
 	if errc != nil {
 		return nil, fmt.Errorf("Error while connecting:%s", errc.Error())
 	}
-	defer c.Close(false)
+	defer c.Logout(5 * time.Second)
 
 	var box string
 
@@ -124,6 +125,7 @@ func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error while feching messages:%s", err.Error())
 	}
+	defer c.Close(false)
 
 	for _, msg := range messages {
 		m, erre := extract(msg, l)
@@ -137,7 +139,12 @@ func (e *Executor) getMail(l venom.Logger) (*Mail, error) {
 		}
 
 		if found {
-			if e.MBoxOnSuccess != "" {
+			if e.DeleteOnSuccess {
+				l.Debugf("Delete message %s", m.UID)
+				if err := m.delete(c); err != nil {
+					return nil, err
+				}
+			} else if e.MBoxOnSuccess != "" {
 				l.Debugf("Move to %s", e.MBoxOnSuccess)
 				if err := m.move(c, e.MBoxOnSuccess); err != nil {
 					return nil, err
@@ -182,6 +189,19 @@ func (m *Mail) move(c *imap.Client, mbox string) error {
 	return nil
 }
 
+func (m *Mail) delete(c *imap.Client) error {
+	seq, _ := imap.NewSeqSet("")
+	seq.AddNum(m.UID)
+
+	if _, err := c.UIDStore(seq, "+FLAGS.SILENT", imap.NewFlagSet(`\Deleted`)); err != nil {
+		return fmt.Errorf("Error while deleting msg, err: %s", err.Error())
+	}
+	if _, err := c.Expunge(nil); err != nil {
+		return fmt.Errorf("Error while expunging messages: err: %s", err.Error())
+	}
+	return nil
+}
+
 func connect(host, port, imapUsername, imapPassword string) (*imap.Client, error) {
 	if !strings.Contains(host, ":") {
 		if port == "" {
@@ -213,7 +233,7 @@ func connect(host, port, imapUsername, imapPassword string) (*imap.Client, error
 
 func fetch(c *imap.Client, box string, nb uint32, l venom.Logger) ([]imap.Response, error) {
 	l.Debugf("call Select")
-	if _, err := c.Select(box, true); err != nil {
+	if _, err := c.Select(box, false); err != nil {
 		l.Errorf("Error with select %s", err.Error())
 		return []imap.Response{}, err
 	}

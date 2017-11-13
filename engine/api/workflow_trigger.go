@@ -34,18 +34,6 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
 		}
 
-		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name)
-		if errr != nil {
-			if errr != sdk.ErrWorkflowNotFound {
-				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
-			}
-		}
-
-		params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, getUser(ctx))
-		if errp != nil {
-			return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
-		}
-
 		data := struct {
 			Operators      map[string]string `json:"operators"`
 			ConditionNames []string          `json:"names"`
@@ -53,19 +41,33 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			Operators: sdk.WorkflowConditionsOperators,
 		}
 
-		var statusParamFound bool
-		for _, p := range params {
-			if p.Name == "cds.status" {
-				statusParamFound = true
+		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name)
+		if errr != nil {
+			if errr != sdk.ErrWorkflowNotFound {
+				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
 			}
-			data.ConditionNames = append(data.ConditionNames, p.Name)
 		}
 
-		if !statusParamFound {
-			data.ConditionNames = append(data.ConditionNames, "cds.status")
+		if wr != nil {
+			params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, getUser(ctx))
+			if errp != nil {
+				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
+			}
+
+			var statusParamFound bool
+			for _, p := range params {
+				if p.Name == "cds.status" {
+					statusParamFound = true
+				}
+				data.ConditionNames = append(data.ConditionNames, p.Name)
+			}
+
+			if !statusParamFound {
+				data.ConditionNames = append(data.ConditionNames, "cds.status")
+			}
 		}
 
-		data.ConditionNames = append(data.ConditionNames, "cds.dest.pipeline")
+		data.ConditionNames = append(data.ConditionNames, "cds.dest.pipeline", "cds.manual")
 
 		refNode := wf.GetNode(id)
 		if refNode == nil {
@@ -186,6 +188,7 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 				}
 			}
 		}
+		data.ConditionNames = append(data.ConditionNames, "cds.manual")
 		sort.Strings(data.ConditionNames)
 
 		return WriteJSON(w, r, data, http.StatusOK)

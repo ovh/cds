@@ -1,5 +1,5 @@
 <div id="AppComponent">
-    <div id="navbar" [class.connected]="isConnected">
+    <div id="navbar" *ngIf="isConnected" [class.connected]="isConnected">
         <app-navbar></app-navbar>
     </div>
     <div id="banner" class="pointing" (click)="refresh()" *ngIf="showUIUpdatedBanner">

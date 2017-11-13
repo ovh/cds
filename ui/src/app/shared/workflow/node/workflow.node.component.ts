@@ -3,7 +3,8 @@ import {
     EventEmitter, Input, NgZone, OnInit, Output, ViewChild, ChangeDetectorRef
 } from '@angular/core';
 import {
-    Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeJoin, WorkflowNodeTrigger,
+    Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowNodeContext, WorkflowNodeHook, WorkflowNodeJoin,
+    WorkflowNodeTrigger,
     WorkflowPipelineNameImpact
 } from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
@@ -27,7 +28,8 @@ import {HookEvent} from './hook/hook.event';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {WorkflowCoreService} from '../workflow.service';
+import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
+import {WorkflowNodeConditionsComponent} from './conditions/node.conditions.component';
 
 declare var _: any;
 
@@ -53,6 +55,8 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     workflowDeleteNode: WorkflowDeleteNodeComponent;
     @ViewChild('workflowContext')
     workflowContext: WorkflowNodeContextComponent;
+    @ViewChild('workflowConditions')
+    workflowConditions: WorkflowNodeConditionsComponent;
     @ViewChild('worklflowAddHook')
     worklflowAddHook: WorkflowNodeHookFormComponent;
     @ViewChild('workflowRunNode')
@@ -61,6 +65,10 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     // Modal
     @ViewChild('nodeNameWarningModal')
     nodeNameWarningModal: ModalTemplate<boolean, boolean, void>;
+    @ViewChild('nodeParentModal')
+    nodeParentModal: ModalTemplate<boolean, boolean, void>;
+    newParentNode: WorkflowNode;
+    modalParentNode: ActiveModal<boolean, boolean, void>;
 
     workflowRun: WorkflowRun;
 
@@ -149,6 +157,28 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         this.workflowTrigger.show();
     }
 
+    openAddParentModal(): void {
+        this.newParentNode = new WorkflowNode();
+        let tmpl = new TemplateModalConfig<boolean, boolean, void>(this.nodeParentModal);
+        this.modalParentNode = this._modalService.open(tmpl);
+    }
+
+    addNewParentNode(): void {
+        let workflowToUpdate = cloneDeep(this.workflow);
+        let oldRoot = cloneDeep(this.workflow.root);
+        workflowToUpdate.root = this.newParentNode;
+        if (oldRoot.hooks) {
+            this.newParentNode.hooks = oldRoot.hooks;
+        }
+        delete oldRoot.hooks;
+        workflowToUpdate.root.triggers = new Array<WorkflowNodeTrigger>();
+        let t = new WorkflowNodeTrigger();
+        t.workflow_dest_node = oldRoot;
+        workflowToUpdate.root.triggers.push(t);
+
+        this.updateWorkflow(workflowToUpdate, this.modalParentNode);
+    }
+
     openDeleteNodeModal(): void {
         if (this.workflowDeleteNode) {
             this.workflowDeleteNode.show();
@@ -165,6 +195,9 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                     }, 100);
                 }
             });
+    }
+    openEditRunConditions(): void {
+        this.workflowConditions.show();
     }
 
     saveTrigger(): void {
@@ -185,6 +218,16 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         }
         currentNode.triggers.push(cloneDeep(this.newTrigger));
         this.updateWorkflow(clonedWorkflow, this.workflowTrigger.modal);
+    }
+
+    updateNodeConditions(n: WorkflowNode): void {
+        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
+        let node = Workflow.getNodeByID(n.id, clonedWorkflow);
+        if (!node) {
+            return;
+        }
+        node.context.conditions = cloneDeep(n.context.conditions);
+        this.updateWorkflow(clonedWorkflow, this.workflowConditions.modal);
     }
 
     updateNode(n: WorkflowNode): void {

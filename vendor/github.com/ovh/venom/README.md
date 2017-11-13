@@ -167,6 +167,7 @@ venom run  --details=low --format=xml --output-dir="."
 * **smtp**: https://github.com/ovh/venom/tree/master/executors/smtp
 * **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
 * **web**: https://github.com/ovh/venom/tree/master/executors/web
+* **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 
 
 ## Assertion

@@ -18,10 +18,17 @@
     color: #344860;
     transition-timing-function: ease-in-out;
   }
-  
+
+  .playIconPosition {
+    top: 10px;
+    left: 9px;
+    font-size: 1.5em;
+    position: absolute;
+    cursor: pointer;
+  }
+
   @keyframes color_change {
     from { opacity: 1; }
     to { opacity: 0.2; }
   }
 }
-

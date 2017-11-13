@@ -2,7 +2,9 @@ package hatchery
 
 import (
 	"crypto/rand"
+	"crypto/sha512"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"math"
 	"strings"
@@ -161,6 +163,33 @@ func LoadHatcheryByName(db gorp.SqlExecutor, name string) (*sdk.Hatchery, error)
 	return &h, nil
 }
 
+// LoadHatcheryByNameAndToken fetch hatchery info from database given name and hashed token
+func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.Hatchery, error) {
+	query := `SELECT hatchery.id, hatchery.uid, hatchery.name, hatchery.last_beat, hatchery.group_id, hatchery_model.worker_model_id
+			FROM hatchery
+			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
+			LEFT JOIN token ON hatchery.group_id = token.group_id
+			WHERE hatchery.name = $1 AND token.token = $2`
+
+	var h sdk.Hatchery
+	var wmID sql.NullInt64
+	hasher := sha512.New()
+	hashed := base64.StdEncoding.EncodeToString(hasher.Sum([]byte(token)))
+	err := db.QueryRow(query, name, hashed).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNoHatchery
+		}
+		return nil, err
+	}
+
+	if wmID.Valid {
+		h.Model.ID = wmID.Int64
+	}
+
+	return &h, nil
+}
+
 // LoadHatcheries retrieves in database all registered hatcheries
 func LoadHatcheries(db gorp.SqlExecutor) ([]sdk.Hatchery, error) {
 	var hatcheries []sdk.Hatchery
@@ -189,6 +218,26 @@ func LoadHatcheries(db gorp.SqlExecutor) ([]sdk.Hatchery, error) {
 	}
 
 	return hatcheries, nil
+}
+
+// Update update hatchery
+func Update(db gorp.SqlExecutor, hatch sdk.Hatchery) error {
+	query := `UPDATE hatchery SET name = $1, group_id = $2, last_beat = NOW(), uid = $3  WHERE id = $4`
+	res, err := db.Exec(query, hatch.Name, hatch.GroupID, hatch.UID, hatch.ID)
+	if err != nil {
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if n == 0 {
+		return sdk.ErrNotFound
+	}
+
+	return nil
 }
 
 // RefreshHatchery Update hatchery last_beat

@@ -224,7 +224,7 @@ func SetUserGroupAdmin(groupName string, userName string) error {
 	}
 
 	if code >= 300 {
-		return fmt.Errorf("HTTP %d\n", code)
+		return fmt.Errorf("HTTP %d", code)
 	}
 
 	return nil
@@ -240,7 +240,7 @@ func UnsetUserGroupAdmin(groupName string, userName string) error {
 	}
 
 	if code >= 300 {
-		return fmt.Errorf("HTTP %d\n", code)
+		return fmt.Errorf("HTTP %d", code)
 	}
 
 	return nil

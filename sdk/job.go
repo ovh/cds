@@ -1,5 +1,10 @@
 package sdk
 
+const (
+	JobTypePipeline     = "pipeline_build_job"
+	JobTypeWorkflowNode = "workflow_node_run_job"
+)
+
 // Job is the element of a stage
 type Job struct {
 	PipelineActionID int64                  `json:"pipeline_action_id"`

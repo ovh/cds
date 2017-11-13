@@ -29,7 +29,7 @@ func Initialize(c context.Context, store cache.Store, nbExecToKeep int, DBFunc f
 			}
 		case <-tickCleaner.C:
 			if _, err := CleanerRun(DBFunc(), nbExecToKeep); err != nil {
-				log.Warning("cleander.Cleaner> Error : %s", err)
+				log.Warning("scheduler.Cleaner> Error : %s", err)
 			}
 		case <-tickExecuter.C:
 			_, err := ExecuterRun(DBFunc, store)

@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 
@@ -9,7 +10,7 @@ import (
 
 func (c *client) EnvironmentCreate(key string, env *sdk.Environment) error {
 	code, err := c.PostJSON("/project/"+key+"/environment", env, nil)
-	if code != 201 {
+	if code != 200 {
 		if err == nil {
 			return fmt.Errorf("HTTP Code %d", code)
 		}
@@ -59,4 +60,28 @@ func (c *client) EnvironmentList(key string) ([]sdk.Environment, error) {
 		return nil, err
 	}
 	return envs, nil
+}
+
+func (c *client) EnvironmentGroupsImport(projectKey, envName string, content []byte, format string, force bool) (sdk.Environment, error) {
+	var url string
+	var env sdk.Environment
+	url = fmt.Sprintf("/project/%s/environment/%s/group/import?format=%s", projectKey, envName, format)
+
+	if force {
+		url += "&forceUpdate=true"
+	}
+
+	btes, code, errReq := c.Request("POST", url, content)
+	if code != 200 && errReq == nil {
+		return env, fmt.Errorf("HTTP Code %d", code)
+	}
+	if errReq != nil {
+		return env, errReq
+	}
+
+	if err := json.Unmarshal(btes, &env); err != nil {
+		return env, errReq
+	}
+
+	return env, errReq
 }

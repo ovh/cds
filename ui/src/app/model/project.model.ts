@@ -15,10 +15,10 @@ export class Project {
     groups: Array<GroupPermission>;
     variables: Array<Variable>;
     environments: Array<Environment>;
-    repositories_manager: Array<RepositoriesManager>;
     permission: number;
     last_modified: string;
-
+    workflow_migration: string;
+    vcs_servers: Array<RepositoriesManager>;
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
 }

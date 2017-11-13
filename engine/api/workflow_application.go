@@ -3,6 +3,8 @@ package api
 import (
 	"bytes"
 	"context"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"sort"
@@ -10,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
@@ -33,6 +36,11 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 		var req sdk.WorkflowNodeRunRelease
 		if errU := UnmarshalBody(r, &req); errU != nil {
 			return errU
+		}
+
+		proj, errprod := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errprod != nil {
+			return sdk.WrapError(errprod, "releaseApplicationWorkflowHandler")
 		}
 
 		wNodeRun, errWNR := workflow.LoadNodeRun(api.mustDB(), key, name, number, nodeRunID)
@@ -65,13 +73,18 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			return sdk.WrapError(sdk.ErrApplicationNotFound, "releaseApplicationWorkflowHandler")
 		}
 
-		if workflowNode.Context.Application.RepositoriesManager == nil {
+		if workflowNode.Context.Application.VCSServer == "" {
 			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
 		}
 
-		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), key, workflowNode.Context.Application.RepositoriesManager.Name, api.Cache)
+		rm := repositoriesmanager.GetProjectVCSServer(proj, workflowNode.Context.Application.VCSServer)
+		if rm == nil {
+			return sdk.WrapError(sdk.ErrNoReposManager, "releaseApplicationWorkflowHandler")
+		}
+
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
 		if err != nil {
-			return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.RepositoriesManager.Name)
+			return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot get client got %s %s", key, workflowNode.Context.Application.VCSServer)
 		}
 
 		release, errRelease := client.Release(workflowNode.Context.Application.RepositoryFullname, req.TagName, req.ReleaseTitle, req.ReleaseContent)
@@ -99,7 +112,7 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			if err := artifact.StreamFile(b, &a); err != nil {
 				return sdk.WrapError(err, "Cannot get artifact")
 			}
-			if err := client.UploadReleaseFile(workflowNode.Context.Application.RepositoryFullname, release, a, b); err != nil {
+			if err := client.UploadReleaseFile(workflowNode.Context.Application.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, ioutil.NopCloser(b)); err != nil {
 				return sdk.WrapError(err, "releaseApplicationWorkflowHandler")
 			}
 		}

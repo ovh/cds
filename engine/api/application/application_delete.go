@@ -35,7 +35,7 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	query = `SELECT id FROM pipeline_build WHERE application_id = $1`
 	rows, err := db.Query(query, applicationID)
 	if err != nil {
-		return fmt.Errorf("DeleteApplication> Cannot select application pipeline build> %s\n", err)
+		return fmt.Errorf("DeleteApplication> Cannot select application pipeline build> %s", err)
 	}
 	var id int64
 	for rows.Next() {

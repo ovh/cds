@@ -305,6 +305,11 @@ func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 		Type:        sdk.BooleanParameter,
 		Description: "Enable artifact download",
 		Value:       "true"})
+	dl.Parameter(sdk.Parameter{
+		Name:        "pattern",
+		Type:        sdk.StringParameter,
+		Description: "Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB)",
+		Value:       ""})
 
 	tx, err := db.Begin()
 	if err != nil {

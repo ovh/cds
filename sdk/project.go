@@ -11,21 +11,28 @@ import (
 
 // Project represent a team with group of users and pipelines
 type Project struct {
-	ID            int64                 `json:"-" yaml:"-" db:"id" cli:"-"`
-	Key           string                `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
-	Name          string                `json:"name" yaml:"name" db:"name" cli:"name"`
-	Workflows     []Workflow            `json:"workflows" yaml:"workflows" db:"-" cli:"-"`
-	Pipelines     []Pipeline            `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
-	Applications  []Application         `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
-	ProjectGroups []GroupPermission     `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
-	Variable      []Variable            `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
-	Environments  []Environment         `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
-	Permission    int                   `json:"permission"  yaml:"-" db:"-"  cli:"-"`
-	Created       time.Time             `json:"created"  yaml:"created" db:"created" `
-	LastModified  time.Time             `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
-	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-" db:"-" cli:"-"`
-	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
-	Keys          []ProjectKey          `json:"keys" yaml:"keys" db:"-" cli:"-"`
+	ID                int64              `json:"-" yaml:"-" db:"id" cli:"-"`
+	Key               string             `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
+	Name              string             `json:"name" yaml:"name" db:"name" cli:"name"`
+	Workflows         []Workflow         `json:"workflows" yaml:"workflows" db:"-" cli:"-"`
+	Pipelines         []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
+	Applications      []Application      `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
+	ProjectGroups     []GroupPermission  `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
+	Variable          []Variable         `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Environments      []Environment      `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
+	Permission        int                `json:"permission"  yaml:"-" db:"-"  cli:"-"`
+	Created           time.Time          `json:"created"  yaml:"created" db:"created" `
+	LastModified      time.Time          `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
+	Metadata          Metadata           `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
+	WorkflowMigration string             `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
+	Keys              []ProjectKey       `json:"keys" yaml:"keys" db:"-" cli:"-"`
+	VCSServers        []ProjectVCSServer `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
+}
+
+// ProjectVCSServer represents associations between a project and a vcs server
+type ProjectVCSServer struct {
+	Name string            `json:"name" yaml:"name" db:"-" cli:"-"`
+	Data map[string]string `json:"-" yaml:"data" db:"-" cli:"-"`
 }
 
 // ProjectVariableAudit represents an audit on a project variable

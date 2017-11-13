@@ -9,7 +9,7 @@
                 <app-parameter-list [project]="project" [parameters]="editableNode.context.default_pipeline_parameters" mode="launcher"
                                     [suggest]="[]"></app-parameter-list>
             </ng-container>
-            <ng-container>
+            <ng-container *ngIf="(node.hooks && node.hooks.length > 0) || (node.id === workflow.root.id)">
                 <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
                 <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig" (change)="updateValue($event)" #textareaCodeMirror></codemirror>
                 <div class="extra">

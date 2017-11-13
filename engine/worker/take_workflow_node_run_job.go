@@ -17,10 +17,15 @@ import (
 // If Take is not possible (as Job already booked for example)
 // it will return true (-> can work on another job), false, otherwise
 func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNodeJobRun) (bool, error) {
-	info, err := w.client.QueueTakeJob(job, w.bookedJobID == job.ID)
+	info, err := w.client.QueueTakeJob(job, w.bookedWJobID == job.ID)
 	if err != nil {
-		return true, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job")
+		return true, sdk.WrapError(err, "takeWorkflowJob> Unable to take workflow node run job. This worker can work on another job.")
 	}
+	t := ""
+	if w.bookedWJobID == job.ID {
+		t = ", this was my booked job"
+	}
+	log.Info("takeWorkflowJob> Job %d taken%s", job.ID, t)
 
 	w.nbActionsDone++
 	// Set build variables
@@ -78,11 +83,10 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 
 	//Wait until the logchannel is empty
 	w.drainLogsAndCloseLogger(ctx)
-
+	res.BuildID = job.ID
 	// Try to send result through grpc
 	if w.grpc.conn != nil {
 		client := grpc.NewWorkflowQueueClient(w.grpc.conn)
-		res.BuildID = job.ID
 		_, err := client.SendResult(ctx, &res)
 		if err == nil {
 			return false, nil

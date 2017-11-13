@@ -3,6 +3,7 @@ import {Table} from '../../../../../shared/table/table';
 import {Project} from '../../../../../model/project.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
 import {Parameter} from '../../../../../model/parameter.model';
+import {Router} from '@angular/router';
 
 @Component({
     selector: 'app-workflow-node-run-history',
@@ -15,15 +16,24 @@ export class WorkflowNodeRunHistoryComponent extends Table {
     @Input() run: WorkflowRun;
     @Input() history: Array<WorkflowNodeRun>;
     @Input() currentBuild: WorkflowNodeRun;
+    @Input() workflowName: string;
 
     loading: boolean;
 
-    constructor() {
+    constructor(private _router: Router) {
         super();
     }
 
     getData(): any[] {
         return this.history;
+    }
+
+    goToSubNumber(nodeRun: WorkflowNodeRun): void {
+        let pipParam = nodeRun.build_parameters.find(p => {
+            return p.name === 'cds.pipeline';
+        });
+        this._router.navigate(['/project', this.project.key, 'workflow', this.workflowName, 'run', nodeRun.num, 'node',
+            nodeRun.id], {queryParams: {sub: nodeRun.subnumber, name: pipParam.value}});
     }
 
     getTriggerSource(nr: WorkflowNodeRun): string {
