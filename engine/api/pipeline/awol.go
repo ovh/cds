@@ -59,6 +59,7 @@ func killAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) er
 	if errJob != nil {
 		return errJob
 	}
+
 	pbJob.Job.Reason = "Killed (Reason: Timeout)\n"
 
 	if err := UpdatePipelineBuildJobStatus(tx, pbJob, sdk.StatusFail); err != nil {

@@ -8,16 +8,18 @@ import (
 
 // Worker represents instances of CDS workers living to serve.
 type Worker struct {
-	ID           string    `json:"id" cli:"-"`
-	Name         string    `json:"name" cli:"name"`
-	LastBeat     time.Time `json:"-" cli:"lastbeat"`
-	GroupID      int64     `json:"group_id" cli:"-"`
-	ModelID      int64     `json:"model_id" cli:"-"`
-	Model        *Model    `json:"model" cli:"-"`
-	HatcheryID   int64     `json:"hatchery_id" cli:"-"`
-	HatcheryName string    `json:"hatchery_name" cli:"-"`
-	Status       Status    `json:"status" cli:"status"` // Waiting, Building, Disabled, Unknown
-	Uptodate     bool      `json:"up_to_date" cli:"-"`
+	ID            string    `json:"id" cli:"-"`
+	Name          string    `json:"name" cli:"name"`
+	LastBeat      time.Time `json:"-" cli:"lastbeat"`
+	GroupID       int64     `json:"group_id" cli:"-"`
+	ModelID       int64     `json:"model_id" cli:"-"`
+	ActionBuildID int64     `json:"action_build_id" cli:"-"`
+	Model         *Model    `json:"model" cli:"-"`
+	HatcheryID    int64     `json:"hatchery_id" cli:"-"`
+	HatcheryName  string    `json:"hatchery_name" cli:"-"`
+	JobType       string    `json:"job_type" cli:"-"`    // sdk.JobType...
+	Status        Status    `json:"status" cli:"status"` // Waiting, Building, Disabled, Unknown
+	Uptodate      bool      `json:"up_to_date" cli:"-"`
 }
 
 // Existing worker type

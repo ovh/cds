@@ -29,7 +29,6 @@ func CheckHeartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
 					log.Warning("WorkerHeartbeat> Cannot load dead workers: %s", err)
 					continue
 				}
-
 				for i := range w {
 					log.Debug("WorkerHeartbeat> Delete worker %s[%s] LastBeat:%d hatchery:%d status:%s", w[i].Name, w[i].ID, w[i].LastBeat, w[i].HatcheryID, w[i].Status)
 					if err = DeleteWorker(db, w[i].ID); err != nil {

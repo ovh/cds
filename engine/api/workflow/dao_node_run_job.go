@@ -96,7 +96,9 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 	if err := db.SelectOne(&j, query, id); err != nil {
 		return nil, err
 	}
-	getHatcheryInfo(store, &j)
+	if store != nil {
+		getHatcheryInfo(store, &j)
+	}
 	job := sdk.WorkflowNodeJobRun(j)
 	return &job, nil
 }
@@ -213,5 +215,14 @@ func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 
 	j.QueuedSeconds = time.Now().Unix() - j.Queued.Unix()
 
+	return nil
+}
+
+// replaceWorkflowJobRunInQueue restart workflow node job
+func replaceWorkflowJobRunInQueue(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
+	query := "UPDATE workflow_node_run_job SET status = $1, retry = $2 WHERE id = $3"
+	if _, err := db.Exec(query, sdk.StatusWaiting.String(), wNodeJob.Retry+1, wNodeJob.ID); err != nil {
+		return sdk.WrapError(err, "replaceWorkflowJobRunInQueue> Unable to set workflow_node_run_job id %d with status %s", wNodeJob.ID, sdk.StatusWaiting.String())
+	}
 	return nil
 }

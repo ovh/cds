@@ -33,6 +33,7 @@ func (h *HatcheryLocal) ApplyConfiguration(cfg interface{}) error {
 	if !ok {
 		return fmt.Errorf("Invalid configuration")
 	}
+
 	return nil
 }
 
