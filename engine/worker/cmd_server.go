@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"net"
 	"net/http"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -57,4 +59,18 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	}()
 
 	return int(port), nil
+}
+
+func writeJSON(w http.ResponseWriter, data interface{}, status int) {
+	b, _ := json.Marshal(data)
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(status)
+	w.Write(b)
+}
+
+func writeError(w http.ResponseWriter, r *http.Request, err error) {
+	al := r.Header.Get("Accept-Language")
+	msg, code := sdk.ProcessError(err, al)
+	sdkErr := sdk.Error{Message: msg}
+	writeJSON(w, sdkErr, code)
 }
