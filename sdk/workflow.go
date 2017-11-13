@@ -524,6 +524,17 @@ var WorkflowHookModelBuiltin = "builtin"
 //WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
 type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
 
+//Values returns configurable values of a hook config
+func (c WorkflowNodeHookConfig) Values() map[string]string {
+	res := map[string]string{}
+	for k, v := range c {
+		if v.Configurable {
+			res[k] = v.Value
+		}
+	}
+	return res
+}
+
 // WorkflowNodeHookConfigValue represents the value of a node hook config
 type WorkflowNodeHookConfigValue struct {
 	Value        string `json:"value"`

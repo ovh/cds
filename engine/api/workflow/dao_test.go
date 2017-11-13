@@ -33,7 +33,7 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 	assert.Equal(t, 0, len(ws))
 }
 
-func TestInsertSimpleWorkflow(t *testing.T) {
+func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)
 
@@ -75,6 +75,13 @@ func TestInsertSimpleWorkflow(t *testing.T) {
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
+
+	exp, err := exportentities.NewWorkflow(*w1, exportentities.WorkflowVersion1)
+	test.NoError(t, err)
+	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
+	test.NoError(t, err)
+
+	fmt.Println(string(btes))
 
 }
 
@@ -291,7 +298,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 
 	assertEqualNode(t, w.Root, w1.Root)
 
-	exp, err := exportentities.NewWorkflow(w, false)
+	exp, err := exportentities.NewWorkflow(w, exportentities.WorkflowVersion1)
 	test.NoError(t, err)
 	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
 	test.NoError(t, err)
@@ -452,7 +459,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	test.NoError(t, workflow.Delete(db, w2, u))
 }
 
-func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
+func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
@@ -646,6 +653,13 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 		w1.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.ID,
 	}, w1.Joins[0].SourceNodeIDs)
 	assert.Equal(t, pip5.Name, w.Joins[0].Triggers[0].WorkflowDestNode.Pipeline.Name)
+
+	exp, err := exportentities.NewWorkflow(*w1, exportentities.WorkflowVersion1)
+	test.NoError(t, err)
+	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
+	test.NoError(t, err)
+
+	fmt.Println(string(btes))
 
 }
 
@@ -993,7 +1007,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	test.NoError(t, workflow.Delete(db, w2, u))
 }
 
-func TestInsertSimpleWorkflowWithHook(t *testing.T) {
+func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	u, _ := assets.InsertAdminUser(db)
@@ -1075,6 +1089,13 @@ func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 
 	assert.Len(t, w.Root.Hooks, 1)
 	t.Log(w.Root.Hooks)
+
+	exp, err := exportentities.NewWorkflow(*w1, exportentities.WorkflowVersion1)
+	test.NoError(t, err)
+	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
+	test.NoError(t, err)
+
+	fmt.Println(string(btes))
 
 	test.NoError(t, workflow.Delete(db, &w, u))
 }
