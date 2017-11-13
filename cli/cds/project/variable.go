@@ -2,7 +2,6 @@ package project
 
 import (
 	"fmt"
-	"sort"
 
 	"gopkg.in/yaml.v2"
 
@@ -85,8 +84,14 @@ func addVarInProject(cmd *cobra.Command, args []string) {
 			sdk.Exit("Error: cannot show existing variables for project %s (%s)\n", projectKey, err)
 		}
 
-		iFound := sort.Search(len(variables), func(i int) bool { return variables[i].Name == varName })
-		if iFound == len(variables) {
+		varExist := false
+		for _, v := range variables {
+			if v.Name == varName {
+				varExist = true
+				break
+			}
+		}
+		if !varExist {
 			err = sdk.AddVariableInProject(projectKey, varName, varValue, varType)
 		} else {
 			err = sdk.UpdateVariableInProject(projectKey, varName, varName, varValue, varType)

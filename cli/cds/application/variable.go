@@ -2,7 +2,6 @@ package application
 
 import (
 	"fmt"
-	"sort"
 
 	"gopkg.in/yaml.v2"
 
@@ -86,8 +85,15 @@ func addApplicationVariable(cmd *cobra.Command, args []string) {
 			sdk.Exit("Error: cannot get existing variables for application %s (%s)\n", appName, err)
 		}
 
-		iFound := sort.Search(len(variables), func(i int) bool { return variables[i].Name == varName })
-		if iFound == len(variables) {
+		varExist := false
+		for _, v := range variables {
+			if v.Name == varName {
+				varExist = true
+				break
+			}
+		}
+
+		if !varExist {
 			err = sdk.AddApplicationVariable(projectKey, appName, varName, varValue, varType)
 		} else {
 			err = sdk.UpdateApplicationVariable(projectKey, appName, varName, varName, varValue, varType)
