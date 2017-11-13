@@ -1,6 +1,8 @@
 *.swp
 .idea
+.vscode
 .DS_Store
+dump.rdb
 cli/cds/cds
 engine/engine
 engine/dist
