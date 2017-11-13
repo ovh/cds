@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// NoError logs Fatal if there is an error
 func NoError(t *testing.T, err error, msg ...interface{}) {
 	assert.NoError(t, err)
 	if err != nil {
@@ -16,6 +17,7 @@ func NoError(t *testing.T, err error, msg ...interface{}) {
 	}
 }
 
+// NotNil logs Fatal if there nil value
 func NotNil(t *testing.T, i interface{}, msg ...interface{}) {
 	assert.NotNil(t, i)
 	if i == nil {
@@ -23,6 +25,7 @@ func NotNil(t *testing.T, i interface{}, msg ...interface{}) {
 	}
 }
 
+// NotEmpty logs Fatal if it's empty
 func NotEmpty(t *testing.T, i interface{}, msg ...interface{}) {
 	if !assert.NotEmpty(t, i) {
 		t.Fatal(msg...)

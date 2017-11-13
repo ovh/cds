@@ -29,7 +29,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type test_runWorkflowCtx struct {
+type testRunWorkflowCtx struct {
 	user        *sdk.User
 	password    string
 	project     *sdk.Project
@@ -41,7 +41,7 @@ type test_runWorkflowCtx struct {
 	hatchery    *sdk.Hatchery
 }
 
-func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) test_runWorkflowCtx {
+func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) testRunWorkflowCtx {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -115,7 +115,7 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 		t.FailNow()
 	}
 
-	return test_runWorkflowCtx{
+	return testRunWorkflowCtx{
 		user:     u,
 		password: pass,
 		project:  proj,
@@ -124,7 +124,7 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 	}
 }
 
-func test_getWorkflowJob(t *testing.T, api *API, router *Router, ctx *test_runWorkflowCtx) {
+func testGetWorkflowJob(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
 
@@ -144,7 +144,7 @@ func test_getWorkflowJob(t *testing.T, api *API, router *Router, ctx *test_runWo
 	ctx.job = &jobs[0]
 }
 
-func test_registerWorker(t *testing.T, api *API, router *Router, ctx *test_runWorkflowCtx) {
+func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
 	var err error
 	//Generate token
 	ctx.workerToken, err = token.GenerateToken()
@@ -160,7 +160,7 @@ func test_registerWorker(t *testing.T, api *API, router *Router, ctx *test_runWo
 	test.NoError(t, err)
 }
 
-func test_registerHatchery(t *testing.T, api *API, router *Router, ctx *test_runWorkflowCtx) {
+func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
 	//Generate token
 	tk, err := token.GenerateToken()
 	test.NoError(t, err)
@@ -178,16 +178,16 @@ func test_registerHatchery(t *testing.T, api *API, router *Router, ctx *test_run
 	test.NoError(t, err)
 }
 
-func Test_getWorkflowJobQueueHandler(t *testing.T) {
+func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 }
 
 func Test_postWorkflowJobRequirementsErrorHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
+	ctx := testRunWorkflow(t, api, router, db)
 
 	uri := router.GetRoute("POST", api.postWorkflowJobRequirementsErrorHandler, nil)
 	test.NotEmpty(t, uri)
@@ -199,7 +199,7 @@ func Test_postWorkflowJobRequirementsErrorHandler(t *testing.T) {
 	assert.Equal(t, 403, rec.Code)
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 
 	//This call must work
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, "This is a requirement log error")
@@ -210,8 +210,8 @@ func Test_postWorkflowJobRequirementsErrorHandler(t *testing.T) {
 }
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	takeForm := worker.TakeForm{
@@ -227,7 +227,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
@@ -251,8 +251,8 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 }
 func Test_postBookWorkflowJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -263,7 +263,7 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 	}
 
 	//Register the hatchery
-	test_registerHatchery(t, api, router, &ctx)
+	testRegisterHatchery(t, api, router, &ctx)
 
 	//TakeBook
 	uri := router.GetRoute("POST", api.postBookWorkflowJobHandler, vars)
@@ -278,8 +278,8 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -290,7 +290,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 
 	//Take
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
@@ -345,14 +345,14 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 	//Register the hatchery
-	test_registerHatchery(t, api, router, &ctx)
+	testRegisterHatchery(t, api, router, &ctx)
 
 	//Send spawninfo
 	info := []sdk.SpawnInfo{}
@@ -446,8 +446,8 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -458,7 +458,7 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 
 	//Take
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
@@ -490,8 +490,8 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	// Init store
@@ -515,7 +515,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 
 	//Take
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
@@ -606,7 +606,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 	assert.Equal(t, "Hi, I am foo", string(body))
 }
-func Test_getWorkflowJobArtifactsHandler(t *testing.T) {
+func TestGetWorkflowJobArtifactsHandler(t *testing.T) {
 	//api, db, router := newTestAPI(t)
 	//ctx := runWorkflow(t, db, "Test_postWorkflowJobRequirementsErrorHandler")
 }
