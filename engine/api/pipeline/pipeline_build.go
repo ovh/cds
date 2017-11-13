@@ -12,7 +12,6 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
@@ -47,6 +46,8 @@ type PipelineBuildDbResult struct {
 	VCSChangesBranch      sql.NullString `db:"vcs_branch"`
 	VCSChangesHash        sql.NullString `db:"vcs_hash"`
 	VCSChangesAuthor      sql.NullString `db:"vcs_author"`
+	VCSServer             sql.NullString `db:"vcs_server"`
+	VCSRepositoryFullname sql.NullString `db:"repo_fullname"`
 	ParentPipelineBuildID sql.NullInt64  `db:"parent_pipeline_build"`
 	Username              sql.NullString `db:"username"`
 	ScheduledTrigger      bool           `db:"scheduled_trigger"`
@@ -65,6 +66,7 @@ const (
 			pb.vcs_changes_branch as vcs_branch, pb.vcs_changes_hash as vcs_hash, pb.vcs_changes_author as vcs_author,
 			pb.vcs_remote as vcs_remote, pb.vcs_remote_url as vcs_remote_url,
 			pb.parent_pipeline_build_id as parent_pipeline_build,
+			application.vcs_server as vcs_server, application.repo_fullname as repo_fullname, 
 			"user".username as username,
 			pb.scheduled_trigger as scheduled_trigger
 		FROM pipeline_build pb
@@ -463,6 +465,14 @@ func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, erro
 		},
 	}
 
+	if pbResult.VCSRepositoryFullname.Valid {
+		pb.Application.RepositoryFullname = pbResult.VCSRepositoryFullname.String
+	}
+
+	if pbResult.VCSServer.Valid {
+		pb.Application.VCSServer = pbResult.VCSServer.String
+	}
+
 	if pbResult.Done.Valid {
 		pb.Done = pbResult.Done.Time
 	}
@@ -534,9 +544,6 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 			}
 		}
 	}
-
-	k := cache.Key("application", pb.Application.ProjectKey, "*")
-	Store.DeleteAll(k)
 
 	if pb.Status != newStatus {
 		pb.Status = newStatus

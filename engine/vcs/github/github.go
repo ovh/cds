@@ -9,7 +9,7 @@ import (
 type githubClient struct {
 	ClientID         string
 	OAuthToken       string
-	DisableSetStatus bool
+	DisableStatus    bool
 	DisableStatusURL bool
 	Cache            cache.Store
 	apiURL           string
@@ -18,18 +18,22 @@ type githubClient struct {
 
 //GithubConsumer implements vcs.Server and it's used to instanciate a githubClient
 type githubConsumer struct {
-	ClientID     string `json:"client-id"`
-	ClientSecret string `json:"-"`
-	Cache        cache.Store
-	uiURL        string
+	ClientID            string `json:"client-id"`
+	ClientSecret        string `json:"-"`
+	Cache               cache.Store
+	uiURL               string
+	disableStatus       bool
+	disableStatusDetail bool
 }
 
 //New creates a new GithubConsumer
-func New(ClientID, ClientSecret string, uiURL string, store cache.Store) sdk.VCSServer {
+func New(ClientID, ClientSecret string, uiURL string, store cache.Store, disableStatus, disableStatusDetail bool) sdk.VCSServer {
 	return &githubConsumer{
-		ClientID:     ClientID,
-		ClientSecret: ClientSecret,
-		Cache:        store,
-		uiURL:        uiURL,
+		ClientID:            ClientID,
+		ClientSecret:        ClientSecret,
+		Cache:               store,
+		uiURL:               uiURL,
+		disableStatus:       disableStatus,
+		disableStatusDetail: disableStatusDetail,
 	}
 }

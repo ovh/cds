@@ -257,6 +257,13 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 		return nil, sdk.WrapError(err, "CreateHook> Cannot get client, got  %s %s", proj.Key, rm)
 	}
 
+	//Check if the webhooks if disabled
+	if info, err := repositoriesmanager.GetWebhooksInfos(client); err != nil {
+		return nil, err
+	} else if !info.WebhooksSupported || info.WebhooksDisabled || info.WebhooksCreationDisabled || !info.WebhooksCreationSupported {
+		return nil, sdk.WrapError(sdk.NewError(sdk.ErrForbidden, fmt.Errorf("Webhooks are not supported on %s", server.Name)), "CreateHook>")
+	}
+
 	t := strings.Split(repoFullName, "/")
 	if len(t) != 2 {
 		return nil, sdk.WrapError(fmt.Errorf("CreateHook> Wrong repo fullname %s", repoFullName), "")

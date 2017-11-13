@@ -22,7 +22,7 @@ func (g *githubClient) SetStatus(event sdk.Event) error {
 		return nil
 	}
 
-	if g.DisableSetStatus {
+	if g.DisableStatus {
 		log.Warning("⚠ Github statuses are disabled")
 		return nil
 	}
