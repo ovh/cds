@@ -146,10 +146,6 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
 	n.Status = newStatus
-	//If the node is over, push the status in the build parameter, so it would be availabe in children build parameters
-	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
-		sdk.AddParameter(&n.BuildParameters, "cds.status", sdk.StringParameter, n.Status)
-	}
 
 	// Save the node run in database
 	if err := UpdateNodeRun(db, n); err != nil {
