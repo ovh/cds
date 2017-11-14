@@ -377,11 +377,6 @@ func (api *API) addVariableInApplicationHandler() Handler {
 		appName := vars["permApplicationName"]
 		varName := vars["name"]
 
-		p, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
-		if err != nil {
-			return sdk.WrapError(err, "addVariableInApplicationHandler> Cannot load %s", key)
-		}
-
 		var newVar sdk.Variable
 		if err := UnmarshalBody(r, &newVar); err != nil {
 			return err
@@ -391,7 +386,7 @@ func (api *API) addVariableInApplicationHandler() Handler {
 			return sdk.ErrWrongRequest
 		}
 
-		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.Default)
+		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "addVariableInApplicationHandler> Cannot load application %s ", appName)
 		}
@@ -424,6 +419,16 @@ func (api *API) addVariableInApplicationHandler() Handler {
 		}
 
 		go func() {
+			p, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithEnvironments)
+			if errp != nil {
+				log.Warning("addVariableInApplicationHandler> Cannot load %s: %v", key, errp)
+			}
+
+			app, erra := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.Default)
+			if erra != nil {
+				log.Warning("addVariableInApplicationHandler> Cannot load application %s: %v", appName, erra)
+			}
+
 			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
 				log.Warning("addVariableInApplicationHandler> Cannot check warnings: %s", err)
 			}
