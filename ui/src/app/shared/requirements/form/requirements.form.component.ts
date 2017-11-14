@@ -64,7 +64,8 @@ export class RequirementsFormComponent {
         });
     }
 
-    onSubmitAddRequirement(): void {
+    onSubmitAddRequirement(form): void {
+        this.computeFormValid(form);
         if (this.isFormValid) {
             this.event.emit(new RequirementEvent('add', this.newRequirement));
             this.newRequirement = new Requirement('binary');

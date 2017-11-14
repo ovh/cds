@@ -1,4 +1,4 @@
-<form class="ui form" (ngSubmit)="onSubmitAddRequirement(this)" #formAddRequirement="ngForm">
+<form class="ui form" #formAddRequirement="ngForm">
     <div class="fields">
             <div class="five wide field">
                 <div class="field">
@@ -87,7 +87,7 @@
                 </div>
             </div>
             <div class="three wide center field">
-                <button class="ui blue icon button" [disabled]="!isFormValid" (click)="onSubmitAddRequirement()"><i class="plus icon"></i></button>
+                <button class="ui blue icon button" [disabled]="!isFormValid" (click)="onSubmitAddRequirement(formAddRequirement)"><i class="plus icon"></i></button>
             </div>
     </div>
     <p>
