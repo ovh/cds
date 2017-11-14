@@ -15,6 +15,7 @@ type Interface interface {
 	ActionGet(actionName string, mods ...RequestModifier) (*sdk.Action, error)
 	ActionList() ([]sdk.Action, error)
 	APIURL() string
+	ApplicationAttachToReposistoriesManager(projectKey, appName, reposManager, repoFullname string) error
 	ApplicationCreate(projectKey string, app *sdk.Application) error
 	ApplicationDelete(projectKey string, appName string) error
 	ApplicationGet(projectKey string, appName string, opts ...RequestModifier) (*sdk.Application, error)
