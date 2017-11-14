@@ -2,7 +2,6 @@
     <div class="fields">
             <div class="five wide field">
                 <div class="field">
-                    <label>{{ 'requirement_name' | translate }}</label>
                     <input
                         name="name"
                         [disabled]="newRequirement.type !== 'service'"
@@ -23,7 +22,6 @@
             </div>
             <div class="three wide field">
                 <div class="field">
-                    <label>{{ 'requirement_type' | translate }}</label>
                     <sm-select class="search"
                         *ngIf="availableRequirements.length > 0"
                         (onChange)="selectType()"
@@ -37,7 +35,6 @@
             <div class="five wide field">
                 <div *ngIf="newRequirement.type !== 'model'">
                     <div class="field">
-                        <label>{{ 'requirement_value' | translate }}</label>
                         <input
                             name="value"
                             auto-complete
@@ -51,38 +48,34 @@
                             [no-match-found-text]="false">
                     </div>
                 </div>
-                <div *ngIf="!loading && (newRequirement.type === 'model' || newRequirement.type === 'service')">
-                    <div class="field" *ngIf="newRequirement.type === 'model'">
-                        <label>{{'requirement_placeholder_value_' + newRequirement.type | translate}}</label>
-                        <sm-select
-                            class="search"
-                            [(model)]="newRequirement.value"
-                            [options]="{'fullTextSearch': true}"
-                            (onChange)="setName();"
-                            placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}">
-                            <option *ngFor="let m of workerModels" [value]="m.name">{{m.name}} ({{m.type}})</option>
-                        </sm-select>
-                    </div>
-
-                    <div class="field" *ngIf="newRequirement.type === 'model'">
-                        <label>{{'requirement_manual_value' | translate}}</label>
-                        <input
-                            name="value"
-                            auto-complete
-                            autocomplete="off"
-                            type="text"
-                            [source]="suggest"
-                            [min-chars]="3"
-                            [(ngModel)]="newRequirement.value"
-                            (keyup)="setName()"
-                            placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
-                            [no-match-found-text]="false">
-                    </div>
-                    <p *ngIf="newRequirement.type === 'model' && newRequirement.value !== ''">
+                <div *ngIf="!loading && newRequirement.type === 'model' && workerModels">
+                    <input
+                        name="value-workermodel"
+                        auto-complete
+                        autocomplete="off"
+                        type="text"
+                        [source]="suggestWithWorkerModel"
+                        [min-chars]="0"
+                        [(ngModel)]="newRequirement.value"
+                        (keyup)="setName()"
+                        (blur)="setName()"
+                        placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
+                        [no-match-found-text]="false">
+                    <p *ngIf="canDisplayLinkWorkerModel">
                         <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]">
                             {{ 'requirement_settings_worker_model' | translate }} {{ newRequirement.value }}
                         </a>
                     </p>
+                    <label for="opts">
+                        {{ 'requirement_options' | translate }}
+                    </label>
+                    <textarea
+                        name="opts"
+                        [(ngModel)]="newRequirement.opts"
+                        rows="3"
+                        placeholder="{{'requirement_placeholder_opts_' + newRequirement.type | translate}}"></textarea>
+                </div>
+                <div *ngIf="!loading && newRequirement.type === 'service'">
                     <label for="opts">
                         {{ 'requirement_options' | translate }}
                     </label>

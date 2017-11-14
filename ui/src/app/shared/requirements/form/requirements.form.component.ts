@@ -21,16 +21,24 @@ export class RequirementsFormComponent {
             this._suggest = [];
         }
     }
+
     get suggest() {
         return this._suggest;
     }
+
+    get suggestWithWorkerModel() {
+        return this._suggestWithWorkerModel;
+    }
+
     @Output() event = new EventEmitter<RequirementEvent>();
 
     newRequirement: Requirement = new Requirement('binary');
     availableRequirements: Array<string>;
     workerModels: Array<WorkerModel>;
     _suggest: Array<string> = [];
+    _suggestWithWorkerModel: Array<string> = [];
     loading = true;
+    canDisplayLinkWorkerModel = false;
 
     constructor(private _requirementStore: RequirementStore,
         private _workerModelService: WorkerModelService,
@@ -45,6 +53,13 @@ export class RequirementsFormComponent {
         .finally(() => this.loading = false)
         .subscribe( wms => {
             this.workerModels = wms;
+            if (Array.isArray(this.workerModels)) {
+                this._suggestWithWorkerModel = [];
+                this.workerModels.forEach(wm => {
+                    this._suggestWithWorkerModel.push(wm.name);
+                })
+                this._suggestWithWorkerModel = this._suggestWithWorkerModel.concat(this._suggest);
+            }
         });
     }
 
@@ -70,6 +85,10 @@ export class RequirementsFormComponent {
                 // memory: memory_4096
                 this.newRequirement.name = 'memory_' + this.newRequirement.value;
                 return;
+            case 'model':
+                this.computeDisplayLinkWorkerModel();
+                this.newRequirement.name = this.newRequirement.value;
+                return;
             default:
                 // else, name is the value of the requirement
                 this.newRequirement.name = this.newRequirement.value;
@@ -78,5 +97,21 @@ export class RequirementsFormComponent {
 
     getHelp() {
         return this._translate.instant('requirement_help_' + this.newRequirement.type);
+    }
+
+    computeDisplayLinkWorkerModel(): boolean {
+        let ret = false;
+        if (this.newRequirement.value === '') {
+            return false;
+        }
+        if (Array.isArray(this.workerModels)) {
+            this.workerModels.forEach(wm => {
+                if (wm.name === this.newRequirement.value) {
+                    ret = true;
+                    return;
+                }
+            })
+        }
+        this.canDisplayLinkWorkerModel = ret;
     }
 }

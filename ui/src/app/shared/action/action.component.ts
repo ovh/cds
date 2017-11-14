@@ -34,18 +34,7 @@ export class ActionComponent implements OnDestroy {
         if (!this.editableAction.requirements) {
             this.editableAction.requirements = new Array<Requirement>();
         } else {
-            this.editableAction.requirements.map(req => {
-                if (req.type === 'model' || req.type === 'service') {
-                    let spaceIdx = req.value.indexOf(' ');
-                    if (spaceIdx > 1) {
-                        let newValue = req.value.substring(0, spaceIdx);
-                        let newOpts = req.value.substring(spaceIdx + 1, req.value.length);
-                        req.value = newValue;
-                        req.opts = newOpts.replace(/\s/g, '\n');
-                    }
-                }
-                return req;
-            })
+            this.prepareEditRequirements();
         }
         this.steps = new Array<Action>();
         if (this.editableAction.actions) {
@@ -98,10 +87,6 @@ export class ActionComponent implements OnDestroy {
                 }
                 let indexAdd = this.editableAction.requirements.findIndex(req => r.requirement.value === req.value);
                 if (indexAdd === -1) {
-                    // for type model or service, concat opts field with value
-                    if (r.requirement.type === 'model' || r.requirement.type === 'service') {
-                        r.requirement.value += ' ' + r.requirement.opts.replace(/\n/g, ' ');
-                    }
                     this.editableAction.requirements.push(r.requirement);
                 }
                 break;
@@ -112,6 +97,21 @@ export class ActionComponent implements OnDestroy {
                 }
                 break;
         }
+    }
+
+    prepareEditRequirements(): void {
+        this.editableAction.requirements.map(req => {
+            if (req.type === 'model' || req.type === 'service') {
+                let spaceIdx = req.value.indexOf(' ');
+                if (spaceIdx > 1) {
+                    let newValue = req.value.substring(0, spaceIdx);
+                    let newOpts = req.value.substring(spaceIdx + 1, req.value.length);
+                    req.value = newValue;
+                    req.opts = newOpts.replace(/\s/g, '\n');
+                }
+            }
+            return req;
+        })
     }
 
     parseRequirements(): void {
