@@ -215,7 +215,9 @@ func (h *HatcherySwarm) killAndRemove(ID string) {
 	}
 }
 
-//SpawnWorker start a new docker container
+// SpawnWorker start a new docker container
+// User can add option on prerequisite, as --port and --privileged
+// but only hatchery NOT 'shared.infra' can launch containers with options
 func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, error) {
 	//name is the name of the worker and the name of the container
 	name := fmt.Sprintf("swarmy-%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
@@ -273,8 +275,9 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					"service_name":   serviceName,
 					"hatchery":       h.Config.Name,
 				}
+
 				//Start the services
-				if err := h.createAndStartContainer(containerArgs{
+				args := containerArgs{
 					name:         serviceName,
 					image:        img,
 					network:      network,
@@ -282,7 +285,9 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					cmd:          []string{},
 					env:          env,
 					labels:       labels,
-					memory:       serviceMemory}); err != nil {
+					memory:       serviceMemory}
+
+				if err := h.createAndStartContainer(args); err != nil {
 					log.Warning("SpawnWorker>Unable to start required container: %s", err)
 					return "", err
 				}
@@ -349,8 +354,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		return name, errDockerOpts
 	}
 
-	//start the worker
-	if err := h.createAndStartContainer(containerArgs{
+	args := containerArgs{
 		name:         name,
 		image:        spawnArgs.Model.Image,
 		network:      network,
@@ -360,7 +364,10 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 		labels:       labels,
 		memory:       memory,
 		dockerOpts:   dockerOpts,
-	}); err != nil {
+	}
+
+	//start the worker
+	if err := h.createAndStartContainer(args); err != nil {
 		log.Warning("SpawnWorker> Unable to start container named %s with image %s err:%s", name, spawnArgs.Model.Image, err)
 	}
 
@@ -417,7 +424,7 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 		},
 		HostConfig: &docker.HostConfig{
 			PortBindings: cArgs.dockerOpts.ports,
-			Privileged:   cArgs.dockerOpts.priviledge,
+			Privileged:   cArgs.dockerOpts.privileged,
 		},
 		NetworkingConfig: &docker.NetworkingConfig{
 			EndpointsConfig: map[string]*docker.EndpointConfig{
@@ -445,7 +452,7 @@ var regexPort = regexp.MustCompile("^--port=(.*):(.*)$")
 
 type dockerOpts struct {
 	ports      map[docker.Port][]docker.PortBinding
-	priviledge bool
+	privileged bool
 }
 
 func computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
@@ -466,8 +473,8 @@ func computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*doc
 					if err := dockerOpts.computeDockerOptsPorts(opt); err != nil {
 						return nil, err
 					}
-				} else if opt == "--priviledge" {
-					dockerOpts.priviledge = true
+				} else if opt == "--privileged" {
+					dockerOpts.privileged = true
 				} else {
 					return nil, fmt.Errorf("Options not supported: %s", opt)
 				}
@@ -486,6 +493,10 @@ func (d *dockerOpts) computeDockerOptsPorts(arg string) error {
 		//s[1] = 8081 // hostPort
 		//s[2] = 8182/tcp  // containerPort
 		containerPort := s[2]
+		if !strings.Contains(containerPort, "/") {
+			// tcp is the default
+			containerPort += "/tcp"
+		}
 		if d.ports == nil {
 			d.ports = map[docker.Port][]docker.PortBinding{}
 		}
