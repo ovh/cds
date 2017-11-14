@@ -48,8 +48,10 @@ type ExecutedJob struct {
 
 // StepStatus Represent a step and his status
 type StepStatus struct {
-	StepOrder int    `json:"step_order" db:"-"`
-	Status    string `json:"status" db:"-"`
+	StepOrder int       `json:"step_order" db:"-"`
+	Status    string    `json:"status" db:"-"`
+	Start     time.Time `json:"start" db:"-"`
+	Done      time.Time `json:"done" db:"-"`
 }
 
 // BuildState define struct returned when looking for build state informations
@@ -113,4 +115,14 @@ func (p *PipelineBuildJob) Translate(lang string) {
 		p.SpawnInfos[ki].UserMessage = m.String(lang)
 	}
 
+}
+
+// StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)
+func StatusIsTerminated(status string) bool {
+	switch status {
+	case StatusBuilding.String(), StatusWaiting.String():
+		return false
+	default:
+		return true
+	}
 }

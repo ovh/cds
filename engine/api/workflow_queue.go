@@ -348,10 +348,19 @@ func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
 			jobStep := &nodeJobRun.Job.StepStatus[i]
 			if step.StepOrder == jobStep.StepOrder {
 				jobStep.Status = step.Status
+
+				if jobStep.Start.IsZero() {
+					jobStep.Start = time.Now()
+				}
+				if sdk.StatusIsTerminated(step.Status) {
+					jobStep.Done = time.Now()
+				}
 				found = true
+				break
 			}
 		}
 		if !found {
+			step.Start = time.Now()
 			nodeJobRun.Job.StepStatus = append(nodeJobRun.Job.StepStatus, step)
 		}
 
