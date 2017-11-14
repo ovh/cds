@@ -43,7 +43,7 @@
                             [source]="suggest"
                             [min-chars]="3"
                             [(ngModel)]="newRequirement.value"
-                            (keyup)="setName()"
+                            (keyup)="setName(formAddRequirement)"
                             placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
                             [no-match-found-text]="false">
                     </div>
@@ -57,8 +57,8 @@
                         [source]="suggestWithWorkerModel"
                         [min-chars]="0"
                         [(ngModel)]="newRequirement.value"
-                        (keyup)="setName()"
-                        (blur)="setName()"
+                        (keyup)="setName(formAddRequirement)"
+                        (blur)="setName(formAddRequirement)"
                         placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
                         [no-match-found-text]="false">
                     <p *ngIf="canDisplayLinkWorkerModel">
@@ -87,7 +87,7 @@
                 </div>
             </div>
             <div class="three wide center field">
-                <button class="ui blue icon button" (click)="onSubmitAddRequirement(formAddRequirement)" [disabled]="!formAddRequirement.valid"><i class="plus icon"></i></button>
+                <button class="ui blue icon button" [disabled]="!isFormValid" (click)="onSubmitAddRequirement()"><i class="plus icon"></i></button>
             </div>
     </div>
     <p>

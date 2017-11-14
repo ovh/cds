@@ -39,6 +39,7 @@ export class RequirementsFormComponent {
     _suggestWithWorkerModel: Array<string> = [];
     loading = true;
     canDisplayLinkWorkerModel = false;
+    isFormValid = false;
 
     constructor(private _requirementStore: RequirementStore,
         private _workerModelService: WorkerModelService,
@@ -63,11 +64,15 @@ export class RequirementsFormComponent {
         });
     }
 
-    onSubmitAddRequirement(form): void {
-        if (form.valid === true && this.newRequirement.name !== '' && this.newRequirement.value !== '') {
+    onSubmitAddRequirement(): void {
+        if (this.isFormValid) {
             this.event.emit(new RequirementEvent('add', this.newRequirement));
             this.newRequirement = new Requirement('binary');
         }
+    }
+
+    computeFormValid(form): void {
+        this.isFormValid = (form.valid === true && this.newRequirement.name !== '' && this.newRequirement.value !== '');
     }
 
     selectType(): void {
@@ -76,7 +81,7 @@ export class RequirementsFormComponent {
         this.newRequirement.name = '';
     }
 
-    setName(): void {
+    setName(form): void {
         switch (this.newRequirement.type) {
             case 'service':
                 // if type service, user have to choose a hostname
@@ -93,6 +98,7 @@ export class RequirementsFormComponent {
                 // else, name is the value of the requirement
                 this.newRequirement.name = this.newRequirement.value;
         }
+        this.computeFormValid(form);
     }
 
     getHelp() {
