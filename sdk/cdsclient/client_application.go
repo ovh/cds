@@ -65,11 +65,11 @@ func (c *client) ApplicationGroupsImport(projectKey, appName string, content []b
 	}
 
 	btes, code, errReq := c.Request("POST", uri, content)
-	if code != 200 && errReq == nil {
-		return app, fmt.Errorf("HTTP Code %d", code)
-	}
 	if errReq != nil {
 		return app, errReq
+	}
+	if code != 200 && errReq == nil {
+		return app, fmt.Errorf("HTTP Code %d", code)
 	}
 
 	if err := json.Unmarshal(btes, &app); err != nil {
@@ -83,11 +83,12 @@ func (c *client) ApplicationGroupsImport(projectKey, appName string, content []b
 func (c *client) ApplicationAttachToReposistoriesManager(projectKey, appName, reposManager, repoFullname string) error {
 	uri := fmt.Sprintf("/project/%s/repositories_manager/%s/application/%s/attach?fullname=%s", projectKey, reposManager, appName, url.QueryEscape(repoFullname))
 	_, code, errReq := c.Request("POST", uri, nil)
-	if code != 200 && errReq == nil {
-		return fmt.Errorf("HTTP Code %d", code)
-	}
 	if errReq != nil {
 		return errReq
 	}
+	if code != 200 && errReq == nil {
+		return fmt.Errorf("HTTP Code %d", code)
+	}
+
 	return nil
 }
