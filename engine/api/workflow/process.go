@@ -317,6 +317,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 	runPayload := map[string]string{}
 
+	parentStatus := sdk.StatusSuccess.String()
 	run.SourceNodeRuns = sourceNodeRuns
 	if sourceNodeRuns != nil {
 		//Get all the nodeRun from the sources
@@ -326,6 +327,9 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 				for _, run := range v {
 					if id == run.ID {
 						runs = append(runs, run)
+						if run.Status == sdk.StatusFail.String() {
+							parentStatus = sdk.StatusFail.String()
+						}
 					}
 				}
 			}
@@ -393,6 +397,18 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			Value: "true",
 		})
 	}
+
+	cdsStatusParam := sdk.Parameter{
+		Name:  "cds.status",
+		Type:  sdk.StringParameter,
+		Value: parentStatus,
+	}
+	run.BuildParameters = sdk.ParametersFromMap(
+		sdk.ParametersMapMerge(
+			sdk.ParametersToMap(run.BuildParameters),
+			sdk.ParametersToMap([]sdk.Parameter{cdsStatusParam}),
+		),
+	)
 
 	// Process parameters for the jobs
 	jobParams, errParam := getNodeRunBuildParameters(db, p, run)
