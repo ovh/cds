@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -56,15 +57,14 @@ func (c *client) ApplicationList(key string) ([]sdk.Application, error) {
 }
 
 func (c *client) ApplicationGroupsImport(projectKey, appName string, content []byte, format string, force bool) (sdk.Application, error) {
-	var url string
 	var app sdk.Application
-	url = fmt.Sprintf("/project/%s/application/%s/group/import?format=%s", projectKey, appName, format)
+	uri := fmt.Sprintf("/project/%s/application/%s/group/import?format=%s", projectKey, appName, format)
 
 	if force {
-		url += "&forceUpdate=true"
+		uri += "&forceUpdate=true"
 	}
 
-	btes, code, errReq := c.Request("POST", url, content)
+	btes, code, errReq := c.Request("POST", uri, content)
 	if code != 200 && errReq == nil {
 		return app, fmt.Errorf("HTTP Code %d", code)
 	}
@@ -77,4 +77,14 @@ func (c *client) ApplicationGroupsImport(projectKey, appName string, content []b
 	}
 
 	return app, errReq
+}
+
+//ApplicationAttachToReposistoriesManager attachs the application to the repo identified by its fullname in the reposManager
+func (c *client) ApplicationAttachToReposistoriesManager(projectKey, appName, reposManager, repoFullname string) error {
+	uri := fmt.Sprintf("/project/%s/repositories_manager/%s/application/%s/attach?fullname=%s", projectKey, reposManager, appName, url.QueryEscape(repoFullname))
+	_, code, errReq := c.Request("POST", uri, nil)
+	if code != 200 && errReq == nil {
+		return fmt.Errorf("HTTP Code %d", code)
+	}
+	return nil
 }
