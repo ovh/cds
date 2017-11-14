@@ -2,7 +2,6 @@ package artifact
 
 import (
 	"database/sql"
-	"fmt"
 	"io"
 	"strings"
 
@@ -223,7 +222,7 @@ func DeleteArtifact(db gorp.SqlExecutor, id int64) error {
 	return nil
 }
 
-func insertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, environmentID int64, art sdk.Artifact) error {
+func InsertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, environmentID int64, art sdk.Artifact) error {
 	query := `DELETE FROM "artifact" WHERE name = $1 AND tag = $2 AND pipeline_id = $3 AND application_id = $4 AND environment_id = $5`
 	_, err := db.Exec(query, art.Name, art.Tag, pipelineID, applicationID, environmentID)
 	if err != nil {
@@ -266,22 +265,9 @@ func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artif
 	}
 	log.Debug("objectpath=%s\n", objectPath)
 	art.ObjectPath = objectPath
-	if err := insertArtifact(tx, p.ID, a.ID, e.ID, art); err != nil {
+	if err := InsertArtifact(tx, p.ID, a.ID, e.ID, art); err != nil {
 		return sdk.WrapError(err, "SaveFile> Cannot insert artifact in DB")
 	}
 
 	return tx.Commit()
-}
-
-// StreamFile Stream artifact
-func StreamFile(w io.Writer, o objectstore.Object) error {
-	f, err := objectstore.FetchArtifact(o)
-	if err != nil {
-		return fmt.Errorf("cannot fetch artifact: %s", err)
-	}
-
-	if err := objectstore.StreamFile(w, f); err != nil {
-		return err
-	}
-	return f.Close()
 }

@@ -322,6 +322,7 @@ func (c *vcsClient) Release(fullname, tagName, releaseTitle, releaseDescription 
 
 func (c *vcsClient) UploadReleaseFile(fullname string, releaseName, uploadURL string, artifactName string, r io.ReadCloser) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/releases/%s/artifacts/%s", c.name, fullname, releaseName, artifactName)
+	defer r.Close()
 
 	fileContent, err := ioutil.ReadAll(r)
 	if err != nil {

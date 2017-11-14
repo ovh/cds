@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type dbProject sdk.Project
@@ -47,7 +48,7 @@ func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
 
 		if len(clearVCSServer) > 0 {
 			if err := yaml.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
-				return sdk.WrapError(err, "Unable to load project %d", p.ID)
+				log.Error("Unable to load project %d: %v", p.ID, err)
 			}
 		}
 	}

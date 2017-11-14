@@ -302,7 +302,7 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 }
 
 // UploadMultiPart upload multipart
-func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...RequestModifier) ([]byte, int, error) {
+func UploadMultiPart(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, int, error) {
 
 	if verbose {
 		log.Printf("Starting UploadMultiPart %s %s", method, path)
@@ -352,8 +352,8 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 	}
 
 	if verbose {
-		if len(body.Bytes()) > 0 {
-			log.Printf("Response Body: %s\n", body.String())
+		if len(respBody) > 0 {
+			log.Printf("Response Body: %s\n", respBody)
 		}
 	}
 
