@@ -379,6 +379,26 @@ func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run")
 		}
 
+		if !found {
+			nodeRun, errNR := workflow.LoadAndLockNodeRunByID(tx, nodeJobRun.WorkflowNodeRunID)
+			if errNR != nil {
+				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot load node run")
+			}
+			for i := range nodeRun.Stages {
+				s := &nodeRun.Stages[i]
+				for j := range s.RunJobs {
+					runJobs := &s.RunJobs[j]
+					if runJobs.ID == nodeJobRun.ID {
+						runJobs.SpawnInfos = nodeJobRun.SpawnInfos
+						runJobs.Job.StepStatus = nodeJobRun.Job.StepStatus
+					}
+				}
+			}
+			if errU := workflow.UpdateNodeRun(tx, nodeRun); errU != nil {
+				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot update node run")
+			}
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Cannot commit transaction")
 		}

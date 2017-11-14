@@ -88,7 +88,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		if errNR != nil {
 			return sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot Load and lock node run %d", node.ID)
 		}
-		return syncTakeJobInNodeRun(db, store, p, nodeRun, job, stageIndex, chanEvent)
+		return syncTakeJobInNodeRun(db, nodeRun, job, stageIndex, chanEvent)
 	}
 	return execute(db, store, p, node, chanEvent)
 }
