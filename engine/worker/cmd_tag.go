@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -16,8 +17,8 @@ import (
 
 func cmdTag(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
-		Use:   "tmpl",
-		Short: "worker tmpl <key>=<value> <key>=<value>",
+		Use:   "tag",
+		Short: "worker tag <key>=<value> <key>=<value>",
 		Run:   tagCmd(w),
 	}
 	return c
@@ -48,10 +49,10 @@ func tagCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			formValues.Set(t[0], t[1])
 		}
 
-		req, errRequest := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/tags", port), strings.NewReader(formValues.Encode()))
+		req, errRequest := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/tag", port), strings.NewReader(formValues.Encode()))
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		if errRequest != nil {
-			sdk.Exit("cannot post worker tmpl (Request): %s\n", errRequest)
+			sdk.Exit("cannot post worker tag (Request): %s\n", errRequest)
 		}
 
 		client := http.DefaultClient
@@ -59,11 +60,17 @@ func tagCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		resp, errDo := client.Do(req)
 		if errDo != nil {
-			sdk.Exit("cannot post worker tag (Do): %v\n", errDo)
+			sdk.Exit("command failed: %v\n", errDo)
 		}
 
 		if resp.StatusCode >= 300 {
-			sdk.Exit("tmpl failed: %d\n", resp.StatusCode)
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				sdk.Exit("tag failed: unable to read body %v\n", err)
+			}
+			defer resp.Body.Close()
+			cdsError := sdk.DecodeError(body)
+			sdk.Exit("tag failed: %v\n", cdsError)
 		}
 	}
 }
@@ -79,10 +86,7 @@ func (wk *currentWorker) tagHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := wk.client.QueueJobTag(wk.currentJob.wJob.ID, tags); err != nil {
-		w.WriteHeader(500)
-		w.Write([]byte(err.Error()))
+		writeError(w, r, err)
 		return
 	}
-
-	w.WriteHeader(http.StatusOK)
 }

@@ -119,15 +119,12 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	return nil
 }
 
-func updateTags(db gorp.SqlExecutor, r *Run) error {
-	if _, err := db.Exec("delete from workflow_run_tag where workflow_run_id = $1", r.ID); err != nil {
-		return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
-	}
-
+// InsertWorkflowRunTags  inserts new tags in database
+func InsertWorkflowRunTags(db gorp.SqlExecutor, runID int64, runTags []sdk.WorkflowRunTag) error {
 	tags := []interface{}{}
-	for i := range r.Tags {
-		r.Tags[i].WorkflowRunID = r.ID
-		t := RunTag(r.Tags[i])
+	for i := range runTags {
+		runTags[i].WorkflowRunID = runID
+		t := RunTag(runTags[i])
 		tags = append(tags, &t)
 	}
 
@@ -136,8 +133,21 @@ func updateTags(db gorp.SqlExecutor, r *Run) error {
 			return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
 		}
 	}
-
 	return nil
+}
+
+// UpdateWorkflowRunTags updates new tags in database
+func UpdateWorkflowRunTags(db gorp.SqlExecutor, r *sdk.WorkflowRun) error {
+	run := Run(*r)
+	return updateTags(db, &run)
+}
+
+func updateTags(db gorp.SqlExecutor, r *Run) error {
+	if _, err := db.Exec("delete from workflow_run_tag where workflow_run_id = $1", r.ID); err != nil {
+		return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
+	}
+
+	return InsertWorkflowRunTags(db, r.ID, r.Tags)
 }
 
 // LoadLastRun returns the last run for a workflow
@@ -179,6 +189,16 @@ func LoadRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.*
 	from workflow_run
 	where workflow_run.id = $1`
+	return loadRun(db, query, id)
+}
+
+// LoadAndLockRunByJobID loads a run by a job id
+func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
+	query := `select workflow_run.*
+	from workflow_run
+	join workflow_node_run on workflow_run.id = workflow_node_run.workflow_run_id
+	join workflow_node_run_job on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
+	where workflow_node_run_job.id = $1 for update`
 	return loadRun(db, query, id)
 }
 
