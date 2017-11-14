@@ -240,3 +240,13 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
 
 	return fmt.Errorf("x%d: %v", c.config.Retry, err)
 }
+
+func (c *client) QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error {
+	path := fmt.Sprintf("/queue/workflows/%d/tag", jobID)
+	if code, err := c.PostJSON(path, tags, nil); err != nil {
+		return err
+	} else if code >= 400 {
+		return fmt.Errorf("HTTP Error: %d", code)
+	}
+	return nil
+}

@@ -477,6 +477,45 @@ func (api *API) postWorkflowJobTestsResultsHandler() AsynchronousHandler {
 	}
 }
 
+func (api *API) postWorkflowJobTagsHandler() AsynchronousHandler {
+	return func(ctx context.Context, r *http.Request) error {
+		id, errr := requestVarInt(r, "permID")
+		if errr != nil {
+			return sdk.WrapError(errr, "postWorkflowJobTagsHandler> Invalid id")
+		}
+
+		var tags = []sdk.WorkflowRunTag{}
+		if err := UnmarshalBody(r, &tags); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to unmarshal body")
+		}
+
+		tx, errb := api.mustDB().Begin()
+		if errb != nil {
+			return sdk.WrapError(errb, "postWorkflowJobTagsHandler> Unable to start transaction")
+		}
+		defer tx.Rollback()
+
+		workflowRun, errl := workflow.LoadAndLockRunByJobID(tx, id)
+		if errl != nil {
+			return sdk.WrapError(errl, "postWorkflowJobTagsHandler> Unable to load node run id %d", id)
+		}
+
+		for _, t := range tags {
+			workflowRun.Tag(t.Tag, t.Value)
+		}
+
+		if err := workflow.UpdateWorkflowRunTags(tx, workflowRun); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to insert tags")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to commit transaction")
+		}
+
+		return nil
+	}
+}
+
 func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")

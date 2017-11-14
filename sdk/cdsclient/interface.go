@@ -82,6 +82,7 @@ type Interface interface {
 	QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error
 	QueueSendResult(int64, sdk.Result) error
 	QueueArtifactUpload(id int64, tag, filePath string) error
+	QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error
 	Requirements() ([]sdk.Requirement, error)
 	ServiceRegister(sdk.Service) (string, error)
 	TemplateList() ([]sdk.Template, error)
