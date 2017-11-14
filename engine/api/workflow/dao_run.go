@@ -361,10 +361,12 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 		qDelete := `
 			UPDATE workflow_run SET to_delete = true
 			WHERE workflow_run.id IN (
-				SELECT workflow_run.id FROM workflow_run ORDER BY workflow_run.id DESC OFFSET $1 ROWS
+				SELECT workflow_run.id FROM workflow_run
+				WHERE workflow_run.workflow_id = $1
+				ORDER BY workflow_run.id DESC OFFSET $2 ROWS
 			)
 		`
-		if _, err := db.Exec(qDelete, wf.HistoryLength); err != nil {
+		if _, err := db.Exec(qDelete, wf.ID, wf.HistoryLength); err != nil {
 			log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 			return err
 		}
