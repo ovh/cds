@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// VersionHandler returns version of current uservice
 func VersionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		s := sdk.Version{Version: sdk.VERSION}

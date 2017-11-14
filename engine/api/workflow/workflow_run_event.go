@@ -37,7 +37,6 @@ func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}) ([]
 			}
 		}
 	}
-	return wrs, wnrs, wnjrs, nil
 }
 
 // SendEvent Send event on workflow run
