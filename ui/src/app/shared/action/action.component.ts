@@ -100,7 +100,7 @@ export class ActionComponent implements OnDestroy {
     }
 
     prepareEditRequirements(): void {
-        this.editableAction.requirements.map(req => {
+        this.editableAction.requirements.forEach(req => {
             if (req.type === 'model' || req.type === 'service') {
                 let spaceIdx = req.value.indexOf(' ');
                 if (spaceIdx > 1) {
@@ -111,7 +111,7 @@ export class ActionComponent implements OnDestroy {
                 }
             }
             return req;
-        })
+        });
     }
 
     parseRequirements(): void {
