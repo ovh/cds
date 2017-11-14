@@ -194,13 +194,17 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 			w.currentJob.currentStep = stepOrder
 		}
 		childName := fmt.Sprintf("%s/%s-%d", stepName, child.Name, i+1)
-		if !child.Enabled {
+		if !child.Enabled || w.manualExit {
 			// Update step status and continue
 			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, sdk.StatusDisabled.String()); err != nil {
 				log.Warning("Cannot update step (%d) status (%s) for build %d: %s", w.currentJob.currentStep, sdk.StatusDisabled.String(), buildID, err)
 			}
 
-			w.sendLog(buildID, fmt.Sprintf("End of Step %s [Disabled]\n", childName), w.currentJob.currentStep, true)
+			if w.manualExit {
+				w.sendLog(buildID, fmt.Sprintf("End of Step %s [Disabled - user worker exit]\n", childName), w.currentJob.currentStep, true)
+			} else {
+				w.sendLog(buildID, fmt.Sprintf("End of Step %s [Disabled]\n", childName), w.currentJob.currentStep, true)
+			}
 			nbDisabledChildren++
 			continue
 		}

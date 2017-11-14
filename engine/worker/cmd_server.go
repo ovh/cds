@@ -38,6 +38,7 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	r.HandleFunc("/upload", w.uploadHandler)
 	r.HandleFunc("/tmpl", w.tmplHandler)
 	r.HandleFunc("/tag", w.tagHandler)
+	r.HandleFunc("/exit", w.exitHandler)
 
 	srv := &http.Server{
 		Handler:      r,

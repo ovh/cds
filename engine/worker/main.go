@@ -19,6 +19,7 @@ type currentWorker struct {
 	bookedWJobID  int64
 	nbActionsDone int
 	basedir       string
+	manualExit    bool
 	logger        struct {
 		logChan chan sdk.Log
 		llist   *list.List
@@ -57,6 +58,7 @@ func main() {
 	cmd.AddCommand(cmdUpload(w))
 	cmd.AddCommand(cmdTmpl(w))
 	cmd.AddCommand(cmdTag(w))
+	cmd.AddCommand(cmdExit(w))
 	cmd.AddCommand(cmdVersion)
 	cmd.AddCommand(cmdRegister(w))
 	cmd.Execute()
