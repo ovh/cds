@@ -14,9 +14,11 @@ export class WorkflowDeleteNodeComponent {
     deleteModalTemplate: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
 
-    @Output() deleteEvent = new EventEmitter<boolean>();
+    @Output() deleteEvent = new EventEmitter<string>();
     @Input() node: WorkflowNode;
     @Input() loading: boolean;
+
+    deleteAll = 'only';
 
     constructor(private _modalService: SuiModalService) {
 
@@ -28,6 +30,6 @@ export class WorkflowDeleteNodeComponent {
     }
 
     deleteNode(): void {
-        this.deleteEvent.emit(true);
+        this.deleteEvent.emit(this.deleteAll);
     }
 }

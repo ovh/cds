@@ -53,7 +53,6 @@ export class WorkflowTriggerComponent {
             c.value = 'Success';
             c.operator = 'eq';
             this.trigger.workflow_dest_node.context.conditions.plain.push(c);
-
         }
         this.triggerChange.emit(this.trigger);
     }
