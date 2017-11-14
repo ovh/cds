@@ -86,5 +86,8 @@ func (c *client) ApplicationAttachToReposistoriesManager(projectKey, appName, re
 	if code != 200 && errReq == nil {
 		return fmt.Errorf("HTTP Code %d", code)
 	}
+	if errReq != nil {
+		return errReq
+	}
 	return nil
 }
