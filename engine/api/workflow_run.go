@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"sort"
 	"strconv"
@@ -11,8 +12,8 @@ import (
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -544,9 +545,18 @@ func (api *API) downloadworkflowArtifactDirectHandler() Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		log.Debug("downloadworkflowArtifactDirectHandler: Serving %+v", art)
-		if err := artifact.StreamFile(w, art); err != nil {
-			return sdk.WrapError(err, "downloadworkflowArtifactDirectHandler: Cannot stream artifact")
+		f, err := objectstore.FetchArtifact(art)
+		if err != nil {
+			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot fetch artifact")
+		}
+
+		if _, err := io.Copy(w, f); err != nil {
+			_ = f.Close()
+			return sdk.WrapError(err, "downloadPluginHandler> Cannot stream artifact")
+		}
+
+		if err := f.Close(); err != nil {
+			return sdk.WrapError(err, "downloadPluginHandler> Cannot close artifact")
 		}
 		return nil
 	}
@@ -600,8 +610,19 @@ func (api *API) getDownloadArtifactHandler() Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		if err := artifact.StreamFile(w, art); err != nil {
-			return sdk.WrapError(err, "Cannot stream artifact %s", art.Name)
+		f, err := objectstore.FetchArtifact(art)
+		if err != nil {
+			_ = f.Close()
+			return sdk.WrapError(err, "getDownloadArtifactHandler> Cannot fetch artifact")
+		}
+
+		if _, err := io.Copy(w, f); err != nil {
+			_ = f.Close()
+			return sdk.WrapError(err, "getDownloadArtifactHandler> Cannot stream artifact")
+		}
+
+		if err := f.Close(); err != nil {
+			return sdk.WrapError(err, "getDownloadArtifactHandler> Cannot close artifact")
 		}
 		return nil
 	}

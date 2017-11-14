@@ -47,7 +47,7 @@
         </div>
         <div class="row">
             <div class="column">
-                <div class="log" *ngIf="selectedRunJob">
+                <div class="log" *ngIf="selectedRunJob && mapStepStatus">
                     <ul>
                         <li>
                             <app-workflow-rin-job-spawn-info [spawnInfos]="selectedRunJob.spawninfos" [variables]="selectedRunJob.parameters"></app-workflow-rin-job-spawn-info>

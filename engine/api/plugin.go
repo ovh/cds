@@ -256,8 +256,13 @@ func (api *API) downloadPluginHandler() Handler {
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", name))
 
-		if err := objectstore.StreamFile(w, f); err != nil {
-			return sdk.WrapError(err, "downloadPluginHandler> Error while streaming plugin %s", name)
+		if _, err := io.Copy(w, f); err != nil {
+			_ = f.Close()
+			return sdk.WrapError(err, "downloadPluginHandler> Cannot stream artifact")
+		}
+
+		if err := f.Close(); err != nil {
+			return sdk.WrapError(err, "downloadPluginHandler> Cannot close artifact")
 		}
 
 		return nil

@@ -2,8 +2,9 @@ import {Component, Input} from '@angular/core';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
-import {Job} from '../../../../../model/job.model';
+import {Job, StepStatus} from '../../../../../model/job.model';
 import {DurationService} from '../../../../../shared/duration/duration.service';
+
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -26,7 +27,7 @@ export class WorkflowRunNodePipelineComponent {
     pipelineStatusEnum = PipelineStatus;
     selectedRunJob: WorkflowNodeJobRun;
     mapJobStatus: Map<number, string> = new Map<number, string>();
-    mapStepStatus: Map<string, string> = new Map<string, string>();
+    mapStepStatus: Map<string, StepStatus> = new Map<string, StepStatus>();
 
     previousStatus: string;
 
@@ -63,7 +64,7 @@ export class WorkflowRunNodePipelineComponent {
                         // Update map step status
                         if (rj.job.step_status) {
                             rj.job.step_status.forEach(ss => {
-                                this.mapStepStatus[rj.job.pipeline_action_id + '-' + ss.step_order] = ss.status;
+                                this.mapStepStatus[rj.job.pipeline_action_id + '-' + ss.step_order] = ss;
                             });
                         }
 
@@ -105,7 +106,7 @@ export class WorkflowRunNodePipelineComponent {
 
                        if (rj.job.step_status) {
                            rj.job.step_status.forEach(ss => {
-                               this.mapStepStatus.set(rj.job.pipeline_action_id + '-' + ss.step_order, ss.status);
+                               this.mapStepStatus.set(rj.job.pipeline_action_id + '-' + ss.step_order, ss);
                            });
                        }
                    });

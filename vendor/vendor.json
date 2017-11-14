@@ -952,6 +952,12 @@
 			"revisionTime": "2017-04-28T05:41:52Z"
 		},
 		{
+			"checksumSHA1": "ClTd8kZFg6XnGO/UK6ZDekUCsWI=",
+			"path": "github.com/ncw/swift",
+			"revision": "c95c6e5c2d1a3d37fc44c8c6dc9e231c7500667d",
+			"revisionTime": "2017-10-19T11:44:56Z"
+		},
+		{
 			"checksumSHA1": "pqTEAm1W2tlmdHJ6b/J0no+cfso=",
 			"path": "github.com/nsf/termbox-go",
 			"revision": "b6acae516ace002cb8105a89024544a1480655a5",

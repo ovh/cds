@@ -2,7 +2,7 @@ import {Component, Input, OnInit, OnDestroy, NgZone, ViewChild, ElementRef} from
 import {Subscription} from 'rxjs/Rx';
 import {Action} from '../../../../../../model/action.model';
 import {Project} from '../../../../../../model/project.model';
-import {Job} from '../../../../../../model/job.model';
+import {Job, StepStatus} from '../../../../../../model/job.model';
 import {BuildResult, Log, PipelineStatus} from '../../../../../../model/pipeline.model';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../../model/workflow.run.model';
 import {CDSWorker} from '../../../../../../shared/worker/worker';
@@ -32,11 +32,17 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     // Dynamic
     @Input('stepStatus')
-    set stepStatus (data: string) {
-        if (data && !this.currentStatus && this.showLog) {
+    set stepStatus (data: StepStatus) {
+        if (data && data.status && !this.currentStatus && this.showLog) {
             this.initWorker();
         }
-        this.currentStatus = data;
+        if (data) {
+            this.currentStatus = data.status;
+        }
+        this._stepStatus = data;
+    }
+    get stepStatus() {
+        return this._stepStatus;
     }
     logs: Log;
     currentStatus: string;
@@ -65,6 +71,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     zone: NgZone;
     _showLog = false;
+    _stepStatus: StepStatus;
     pipelineBuildStatusEnum = PipelineStatus;
     @ViewChild('logsContent') logsElt: ElementRef;
 
@@ -79,6 +86,11 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
             (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) || (nodeRunDone && isLastStep)) {
           this.showLog = true;
+        }
+        if (this.stepStatus) {
+            this.startExec = new Date(this.stepStatus.start);
+            this.doneExec = this.stepStatus.done ? new Date(this.stepStatus.done) : new Date();
+            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec || new Date()) + ')';
         }
     }
 
