@@ -22,7 +22,7 @@ func syncTakeJobInNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project
 	}()
 
 	//If status is not waiting neither build: nothing to do
-	if !sdk.StatusIsTerminated(n.Status) {
+	if sdk.StatusIsTerminated(n.Status) {
 		return nil
 	}
 
@@ -75,7 +75,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 	}()
 
 	//If status is not waiting neither build: nothing to do
-	if !sdk.StatusIsTerminated(n.Status) {
+	if sdk.StatusIsTerminated(n.Status) {
 		return nil
 	}
 
