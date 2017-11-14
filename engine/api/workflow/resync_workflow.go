@@ -5,26 +5,16 @@ import (
 
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/engine/api/cache"
 )
 
-// ResyncPipeline resync all pipelines with DB for the given workflow run
-func ResyncPipeline(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
-	// Resync from root node
-	if err := resyncNode(db, wr.Workflow.Root); err != nil {
-		return sdk.WrapError(err, "resyncPipeline")
+// Resync a workflow in the given workflow run
+func Resync(db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, u *sdk.User) error {
+	wf, errW := LoadByID(db, store, wr.Workflow.ID, u)
+	if errW != nil {
+		return sdk.WrapError(errW, "Resync> Cannot load workflow")
 	}
-
-	// Resync from join
-	for i := range wr.Workflow.Joins {
-		wj := &wr.Workflow.Joins[i]
-		for j := range wj.Triggers {
-			t := &wj.Triggers[j]
-			if err := resyncNode(db, &t.WorkflowDestNode); err != nil {
-				return sdk.WrapError(err, "resyncPipeline> Cannot resync node %s", t.WorkflowDestNode.Name)
-			}
-		}
-	}
-
+	wr.Workflow = *wf
 	return updateWorkflowRun(db, wr)
 }
 

@@ -155,7 +155,7 @@ func (api *API) getLatestWorkflowRunHandler() Handler {
 	}
 }
 
-func (api *API) resyncWorkflowRunPipelinesHandler() Handler {
+func (api *API) resyncWorkflowRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		key := vars["key"]
@@ -174,7 +174,7 @@ func (api *API) resyncWorkflowRunPipelinesHandler() Handler {
 			return sdk.WrapError(errT, "resyncWorkflowRunPipelinesHandler> Cannot start transaction")
 		}
 
-		if err := workflow.ResyncPipeline(tx, run); err != nil {
+		if err := workflow.Resync(tx, api.Cache, run, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "resyncWorkflowRunPipelinesHandler> Cannot resync pipelines")
 		}
 
