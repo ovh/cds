@@ -67,11 +67,6 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 			return err
 		}
 
-		project, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
-		if err != nil {
-			return sdk.WrapError(err, "attachPipelinesToApplicationHandler: Cannot load project: %s", key)
-		}
-
 		app, err := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx), application.LoadOptions.Default)
 		if err != nil {
 			return sdk.WrapError(err, "attachPipelinesToApplicationHandler: Cannot load application %s", appName)
@@ -109,12 +104,18 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 		}
 
 		var errW error
-		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, project.Key, app.Name, getUser(ctx), "", "", 0)
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, app.Name, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "attachPipelinesToApplicationHandler: Cannot load application workflow")
 		}
 
 		go func() {
+			project, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
+			if err != nil {
+				log.Error("attachPipelinesToApplicationHandler: Cannot load project: %s, err:%s", key, err)
+				return
+			}
+
 			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, project); err != nil {
 				log.Error("attachPipelinesToApplicationHandler: Cannot check project sanity: %s", err)
 			}
