@@ -11,6 +11,59 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func syncTakeJobInNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int, chanEvent chan<- interface{}) (errExecute error) {
+	t0 := time.Now()
+	log.Debug("workflow.syncTakeJobInNodeRun> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
+	defer func() {
+		log.Debug("workflow.syncTakeJobInNodeRun> End [#%d.%d] runID=%d (%s) - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, n.Status, time.Since(t0).Seconds())
+		if errExecute != nil {
+			log.Error("workflow.syncTakeJobInNodeRun.defer> Unable to execute run %d: %v", n.WorkflowRunID, errExecute)
+		}
+	}()
+
+	//If status is not waiting neither build: nothing to do
+	if sdk.StatusIsTerminated(n.Status) {
+		return nil
+	}
+
+	//Browse stages
+	stage := &n.Stages[stageIndex]
+	if stage.Status == sdk.StatusWaiting {
+		stage.Status = sdk.StatusBuilding
+	}
+	isStopped := true
+	for i := range stage.RunJobs {
+		rj := &stage.RunJobs[i]
+		if rj.ID == j.ID {
+			rj.Status = j.Status
+			rj.Start = j.Start
+			rj.Done = j.Done
+			rj.Model = j.Model
+			rj.Job = j.Job
+		}
+		if rj.Status != sdk.StatusStopped.String() {
+			isStopped = false
+		}
+	}
+	if isStopped {
+		stage.Status = sdk.StatusStopped
+	}
+
+	if n.Status == sdk.StatusWaiting.String() {
+		n.Status = sdk.StatusBuilding.String()
+		if chanEvent != nil {
+			chanEvent <- n
+		}
+
+	}
+
+	// Save the node run in database
+	if err := UpdateNodeRun(db, n); err != nil {
+		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.execute> Unable to execute node")
+	}
+	return nil
+}
+
 func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun, chanEvent chan<- interface{}) (errExecute error) {
 	t0 := time.Now()
 	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
@@ -22,7 +75,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 	}()
 
 	//If status is not waiting neither build: nothing to do
-	if n.Status != sdk.StatusWaiting.String() && n.Status != sdk.StatusBuilding.String() {
+	if sdk.StatusIsTerminated(n.Status) {
 		return nil
 	}
 

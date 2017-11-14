@@ -64,45 +64,13 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 
 	//If the job has been set to building, set the stage to building
-	var stageUpdated bool
-	switch job.Status {
-	case sdk.StatusBuilding.String():
-		log.Debug("UpdateNodeJobRunStatus> job:%d", job.ID)
-		for i := range node.Stages {
-			s := &node.Stages[i]
-			var found bool
-			//Find the right stage
-			for _, j := range s.Jobs {
-				if j.Action.ID == job.Job.Job.Action.ID {
-					found = true
-					break
-				}
+	var stageIndex int
+	for i := range node.Stages {
+		s := &node.Stages[i]
+		for _, j := range s.Jobs {
+			if j.Action.ID == job.Job.Job.Action.ID {
+				stageIndex = i
 			}
-			if found && s.Status == sdk.StatusWaiting {
-				log.Debug("UpdateNodeJobRunStatus> stage:%s status from %s to %s", s.Name, s.Status, sdk.StatusBuilding)
-				s.Status = sdk.StatusBuilding
-				stageUpdated = true
-				break
-			}
-		}
-	case sdk.StatusStopped.String():
-		for i := range node.Stages {
-			s := &node.Stages[i]
-			s.Status = sdk.StatusStopped
-			for idxJ := range s.RunJobs {
-				runJob := &node.Stages[i].RunJobs[idxJ]
-				runJob.Status = sdk.StatusStopped.String()
-				runJob.Done = time.Now()
-			}
-		}
-		stageUpdated = true
-	}
-
-	if stageUpdated {
-		log.Debug("UpdateNodeJobRunStatus> stageUpdated, set status node from %s to %s", node.Status, job.Status)
-		node.Status = job.Status
-		if err := UpdateNodeRun(db, node); err != nil {
-			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Unable to update workflow node run %d", node.ID)
 		}
 	}
 
@@ -115,7 +83,12 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 
 	if status == sdk.StatusBuilding {
-		return nil
+		// Sync job status in noderun
+		nodeRun, errNR := LoadNodeRunByID(db, node.ID)
+		if errNR != nil {
+			return sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot Load and lock node run %d", node.ID)
+		}
+		return syncTakeJobInNodeRun(db, store, p, nodeRun, job, stageIndex, chanEvent)
 	}
 	return execute(db, store, p, node, chanEvent)
 }

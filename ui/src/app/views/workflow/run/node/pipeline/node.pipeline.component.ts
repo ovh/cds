@@ -3,8 +3,8 @@ import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {Job, StepStatus} from '../../../../../model/job.model';
+import {DurationService} from '../../../../../shared/duration/duration.service';
 
-declare var Duration: any;
 
 @Component({
     selector: 'app-node-run-pipeline',
@@ -31,7 +31,7 @@ export class WorkflowRunNodePipelineComponent {
 
     previousStatus: string;
 
-    constructor() { }
+    constructor(private _durationService: DurationService) { }
 
     selectedJob(j: Job): void {
         this.nodeRun.stages.forEach(s => {
@@ -90,8 +90,18 @@ export class WorkflowRunNodePipelineComponent {
 
                if (s.run_jobs) {
                    s.run_jobs.forEach(rj => {
-                       if (rj.queued_seconds) {
-                           this.jobTime.set(rj.job.pipeline_action_id, new Duration(rj.queued_seconds + 's'));
+                       switch (rj.status) {
+                           case this.pipelineStatusEnum.WAITING:
+                               this.jobTime.set(rj.job.pipeline_action_id, this._durationService.duration(new Date(rj.queued), new Date()));
+                               break;
+                           case this.pipelineStatusEnum.BUILDING:
+                               this.jobTime.set(rj.job.pipeline_action_id, this._durationService.duration(new Date(rj.start), new Date()));
+                               break;
+                           case this.pipelineStatusEnum.SUCCESS:
+                           case this.pipelineStatusEnum.FAIL:
+                               this.jobTime.set(rj.job.pipeline_action_id,
+                                   this._durationService.duration( new Date(rj.start), new Date(rj.done) ));
+                               break;
                        }
 
                        if (rj.job.step_status) {
@@ -103,7 +113,7 @@ export class WorkflowRunNodePipelineComponent {
                }
             });
         }
-    }
+     }
 
     getTriggeredNodeRun() {
 

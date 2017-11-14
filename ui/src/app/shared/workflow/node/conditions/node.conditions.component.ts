@@ -44,10 +44,6 @@ export class WorkflowNodeConditionsComponent implements OnInit {
     constructor(private _workflowStore: WorkflowStore, private _suiService: SuiModalService) { }
 
     ngOnInit(): void {
-        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).first().subscribe(wtc => {
-            this.operators = wtc.operators;
-            this.conditionNames = wtc.names;
-        });
     }
 
     addCondition(condition: WorkflowNodeCondition): void {
@@ -64,6 +60,10 @@ export class WorkflowNodeConditionsComponent implements OnInit {
     }
 
     show(): void {
+        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).first().subscribe(wtc => {
+            this.operators = wtc.operators;
+            this.conditionNames = wtc.names;
+        });
         if (this.nodeConditionModal) {
             this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeConditionModal);
             this.modal = this._suiService.open(this.modalConfig);
