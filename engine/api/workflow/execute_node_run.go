@@ -75,7 +75,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 	}()
 
 	//If status is not waiting neither build: nothing to do
-	if n.Status != sdk.StatusWaiting.String() && n.Status != sdk.StatusBuilding.String() {
+	if !sdk.StatusIsTerminated(n.Status) {
 		return nil
 	}
 
