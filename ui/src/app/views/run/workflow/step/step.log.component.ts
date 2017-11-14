@@ -36,6 +36,9 @@ export class StepLogComponent implements OnInit, OnDestroy {
             this.initWorker();
         }
         this.currentStatus = data;
+        if (data === PipelineStatus.BUILDING) {
+            this.showLog = true;
+        }
     }
     logs: Log;
     currentStatus: string;
@@ -132,17 +135,23 @@ export class StepLogComponent implements OnInit, OnDestroy {
     }
 
     computeDuration() {
-        this.startExec = new Date(this.logs.start.seconds * 1000);
-        this.doneExec = this.logs.done && this.logs.done.seconds ? new Date(this.logs.done.seconds * 1000) : null;
+        if (!this.logs) {
+            return;
+        }
+        this.startExec = this.logs.start && this.logs.start.seconds > 0 ? new Date(this.logs.start.seconds * 1000) : new Date();
+        this.doneExec = this.logs.done && this.logs.done.seconds > 0 ? new Date(this.logs.done.seconds * 1000) : new Date();
         if (!this.duration) {
-            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec || new Date()) + ')';
+            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
         }
         this.intervalListener = setInterval(() => {
-            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec || new Date()) + ')';
+            this.startExec = this.logs.start && this.logs.start.seconds > 0 ? new Date(this.logs.start.seconds * 1000) : new Date();
+            this.doneExec = this.logs.done && this.logs.done.seconds > 0 ? new Date(this.logs.done.seconds * 1000) : new Date();
+
+            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
             if (this.currentStatus !== PipelineStatus.BUILDING && this.currentStatus !== PipelineStatus.WAITING) {
                 clearInterval(this.intervalListener);
             }
-        }, 5000);
+        }, 2000);
     }
 
     toggleLogs() {

@@ -16,7 +16,7 @@
                             <ul>
                                 <li *ngFor="let j of stage.jobs">
                                     <div class="job ui segment pointing"
-                                         [class.active]="selectedPipJob && selectedPipJob.job.pipeline_action_id === j.pipeline_action_id"
+                                         [class.active]="selectedPipJob && selectedPipJob.job.pipeline_action_id === j.pipeline_action_id && !mapJobStatus[j.pipeline_action_id] || mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.WAITING"
                                          [class.success]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.SUCCESS"
                                          [class.inactive]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.DISABLED || mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.SKIPPED"
                                          [class.fail]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.FAIL || mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.STOPPED"
@@ -44,7 +44,7 @@
         </div>
         <div class="row">
             <div class="column">
-                <div class="log" *ngIf="selectedPipJob">
+                <div class="log animated fadeIn" *ngIf="selectedPipJob">
                     <ul>
                         <li>
                             <app-spawn-info [spawnInfos]="selectedPipJob.spawninfos" [variables]="selectedPipJob.parameters"></app-spawn-info>

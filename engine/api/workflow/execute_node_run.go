@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func syncTakeJobInNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int, chanEvent chan<- interface{}) (errExecute error) {
+func syncTakeJobInNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int, chanEvent chan<- interface{}) (errExecute error) {
 	t0 := time.Now()
 	log.Debug("workflow.syncTakeJobInNodeRun> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
 	defer func() {
