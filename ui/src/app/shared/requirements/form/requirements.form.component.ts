@@ -55,11 +55,7 @@ export class RequirementsFormComponent {
         .subscribe( wms => {
             this.workerModels = wms;
             if (Array.isArray(this.workerModels)) {
-                this._suggestWithWorkerModel = [];
-                this.workerModels.forEach(wm => {
-                    this._suggestWithWorkerModel.push(wm.name);
-                })
-                this._suggestWithWorkerModel = this._suggestWithWorkerModel.concat(this._suggest);
+                this._suggestWithWorkerModel = this.workerModels.map(wm => wm.name).concat(this._suggest);
             }
         });
     }
@@ -86,15 +82,15 @@ export class RequirementsFormComponent {
         switch (this.newRequirement.type) {
             case 'service':
                 // if type service, user have to choose a hostname
-                return ;
+                break;
             case 'memory':
                 // memory: memory_4096
                 this.newRequirement.name = 'memory_' + this.newRequirement.value;
-                return;
+                break
             case 'model':
-                this.computeDisplayLinkWorkerModel();
+                this.canDisplayLinkWorkerModel = this.computeDisplayLinkWorkerModel();
                 this.newRequirement.name = this.newRequirement.value;
-                return;
+                break
             default:
                 // else, name is the value of the requirement
                 this.newRequirement.name = this.newRequirement.value;
@@ -107,18 +103,16 @@ export class RequirementsFormComponent {
     }
 
     computeDisplayLinkWorkerModel(): boolean {
-        let ret = false;
         if (this.newRequirement.value === '') {
             return false;
         }
         if (Array.isArray(this.workerModels)) {
-            this.workerModels.forEach(wm => {
+            for (let wm of this.workerModels) {
                 if (wm.name === this.newRequirement.value) {
-                    ret = true;
-                    return;
+                    return true;
                 }
-            })
+            }
         }
-        this.canDisplayLinkWorkerModel = ret;
+        return false;
     }
 }

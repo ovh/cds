@@ -110,7 +110,6 @@ export class ActionComponent implements OnDestroy {
                     req.opts = newOpts.replace(/\s/g, '\n');
                 }
             }
-            return req;
         });
     }
 
@@ -130,7 +129,6 @@ export class ActionComponent implements OnDestroy {
                 req.value = newValue + ' ' + newOpts;
                 req.opts = '';
             }
-            return req;
         })
     }
 

@@ -66,8 +66,7 @@
                             [source]="suggestWithWorkerModel"
                             [min-chars]="0"
                             [(ngModel)]="r.value"
-                            (keyup)="setName()"
-                            (blur)="setName()"
+                            (ngModelChange)="change()"
                             [no-match-found-text]="false">
                     </div>
                     <div *ngIf="!loading && (r.type === 'model' || r.type === 'service')">
