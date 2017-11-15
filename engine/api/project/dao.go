@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -128,6 +129,25 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return err
 	}
 	*proj = sdk.Project(dbProj)
+
+	keyID, publicKey, privateKey, err := keys.GeneratePGPKeyPair("builtin")
+	if err != nil {
+		return sdk.WrapError(err, "project.Insert> Unable to generate PGPKeyPair")
+	}
+
+	pk := sdk.ProjectKey{}
+	pk.Key.KeyID = keyID
+	pk.Key.Name = "builtin"
+	pk.Key.Private = privateKey
+	pk.Key.Public = publicKey
+	pk.Type = sdk.KeyTypePgp
+	pk.ProjectID = proj.ID
+	pk.Builtin = true
+
+	if err := InsertKey(db, &pk); err != nil {
+		return sdk.WrapError(err, "project.Insert> Unable to insert PGPKeyPair")
+	}
+
 	return UpdateLastModified(db, store, u, proj)
 }
 
