@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Resolve, ActivatedRouteSnapshot, RouterStateSnapshot} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Pipeline} from '../../model/pipeline.model';
 import {PipelineStore} from './pipeline.store';
 

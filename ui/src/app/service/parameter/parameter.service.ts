@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {HttpClient} from '@angular/common/http';
 
 /**
@@ -26,7 +26,7 @@ export class ParameterService {
      * @returns {Observable<string[]>}
      */
     getTypesFromAPI(): Observable<string[]> {
-        return this._http.get('/parameter/type').map( pts => {
+        return this._http.get<string[]>('/parameter/type').map( pts => {
             this.parametersType = <string[]>pts;
             return pts;
         });

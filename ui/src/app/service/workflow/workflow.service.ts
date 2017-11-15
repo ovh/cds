@@ -19,7 +19,7 @@ export class WorkflowService {
         let params = new HttpParams();
         params = params.append('withUsage', 'true');
 
-        return this._http.get('/project/' + key + '/workflows/' + workflowName, {params});
+        return this._http.get<Workflow>('/project/' + key + '/workflows/' + workflowName, {params});
     }
 
     /**
@@ -28,7 +28,7 @@ export class WorkflowService {
      * @param workflow Workflow to create
      */
     addWorkflow(key: string, workflow: Workflow): Observable<Workflow> {
-        return this._http.post('/project/' + key + '/workflows', workflow);
+        return this._http.post<Workflow>('/project/' + key + '/workflows', workflow);
     }
 
     /**
@@ -37,7 +37,7 @@ export class WorkflowService {
      * @param workflow Workflow to update
      */
     updateWorkflow(key: string, name: string, workflow: Workflow): Observable<Workflow> {
-        return this._http.put('/project/' + key + '/workflows/' + name, workflow);
+        return this._http.put<Workflow>('/project/' + key + '/workflows/' + name, workflow);
     }
 
     /**
@@ -51,8 +51,8 @@ export class WorkflowService {
     }
 
     getTriggerCondition(key: string, workflowName: string, nodeID: number): Observable<WorkflowTriggerConditionCache> {
-        return this._http.get('/project/' + key + '/workflows/' + workflowName + '/node/' + nodeID + '/triggers/condition')
-            ;
+        return this._http.get<WorkflowTriggerConditionCache>(
+            '/project/' + key + '/workflows/' + workflowName + '/node/' + nodeID + '/triggers/condition');
     }
 
     getTriggerJoinCondition(key: string, workflowName: string, joinID: number): any {
@@ -68,7 +68,7 @@ export class WorkflowService {
      * @returns {Observable<Workflow>}
      */
     addPermission(key: string, workflowName: string, gp: GroupPermission): Observable<Workflow> {
-        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/groups', gp);
+        return this._http.post<Workflow>('/project/' + key + '/workflows/' + workflowName + '/groups', gp);
     }
 
     /**
@@ -79,7 +79,7 @@ export class WorkflowService {
      * @returns {Observable<Workflow>}
      */
     updatePermission(key: string, workflowName: string, gp: GroupPermission): Observable<Workflow> {
-        return this._http.put('/project/' + key + '/workflows/' + workflowName + '/groups/' + gp.group.name, gp);
+        return this._http.put<Workflow>('/project/' + key + '/workflows/' + workflowName + '/groups/' + gp.group.name, gp);
     }
 
     /**
@@ -90,6 +90,6 @@ export class WorkflowService {
      * @returns {Observable<Workflow>}
      */
     deletePermission(key: string, workflowName: string, gp: GroupPermission): Observable<Workflow> {
-        return this._http.delete('/project/' + key + '/workflows/' + workflowName + '/groups/' + gp.group.name);
+        return this._http.delete<Workflow>('/project/' + key + '/workflows/' + workflowName + '/groups/' + gp.group.name);
     }
 }

@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {User} from '../../model/user.model';
 import {Groups} from '../../model/group.model';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {AuthentificationStore} from '../auth/authentification.store';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 
@@ -77,7 +77,7 @@ export class UserService {
      * @returns {Observable<Response>}
      */
     verify(username: string, token: string): Observable<Response> {
-        return this._http.get('/user/' + username + '/confirm/' + token);
+        return this._http.get<Response>('/user/' + username + '/confirm/' + token);
     }
 
     /**
@@ -85,7 +85,7 @@ export class UserService {
      * @returns {Observable<User[]>}
      */
     getUsers(): Observable<User[]> {
-        return this._http.get('/user');
+        return this._http.get<User[]>('/user');
     }
 
     /**
@@ -93,7 +93,7 @@ export class UserService {
      * @returns {Observable<User[]>}
      */
     getGroups(username: string): Observable<Groups> {
-        return this._http.get('/user/' + username + '/groups');
+        return this._http.get<Groups>('/user/' + username + '/groups');
     }
 
     /**
@@ -102,7 +102,7 @@ export class UserService {
      * @returns {Observable<User>}
      */
     getUser(username: string): Observable<User> {
-        return this._http.get('/user/' + username);
+        return this._http.get<User>('/user/' + username);
     }
 
     /**
@@ -112,7 +112,7 @@ export class UserService {
      * @returns {Observable<User>}
      */
     updateUser(username: string, user: User): Observable<User> {
-        return this._http.put('/user/' + username, user);
+        return this._http.put<User>('/user/' + username, user);
     }
 
     /**
@@ -121,6 +121,6 @@ export class UserService {
      * @returns {Observable<Response>}
      */
     deleteUser(username: string): Observable<Response> {
-        return this._http.delete('/user/' + username);
+        return this._http.delete<Response>('/user/' + username);
     }
 }

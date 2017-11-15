@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Application} from '../../model/application.model';
 import {Variable} from '../../model/variable.model';
 import {RepositoryPoller} from '../../model/polling.model';
@@ -38,7 +38,7 @@ export class ApplicationService {
                 params = params.append('remote', filter.remote);
             }
         }
-        return this._http.get('/project/' + key + '/application/' + appName, {params: params});
+        return this._http.get<Application>('/project/' + key + '/application/' + appName, {params: params});
     }
 
     /**
@@ -50,7 +50,7 @@ export class ApplicationService {
     renameApplication(key: string, appOldName: string, appNewName: string): Observable<Application> {
         let appRenamed = new Application();
         appRenamed.name = appNewName;
-        return this._http.put('/project/' + key + '/application/' + appOldName, appRenamed);
+        return this._http.put<Application>('/project/' + key + '/application/' + appOldName, appRenamed);
     }
 
     /**
@@ -61,7 +61,7 @@ export class ApplicationService {
      * @returns {Observable<Application>}
      */
     cloneApplication(key: string, appName: string, application: Application): Observable<Application> {
-        return this._http.post('/project/' + key + '/application/' + appName + '/clone', application);
+        return this._http.post<Application>('/project/' + key + '/application/' + appName + '/clone', application);
     }
 
     /***
@@ -69,7 +69,7 @@ export class ApplicationService {
      * @param key Project unique key
      */
     applyTemplate(key: string, request: ApplyTemplateRequest): Observable<Project> {
-        return this._http.post('/project/' + key + '/template', request);
+        return this._http.post<Project>('/project/' + key + '/template', request);
     }
 
     /**
@@ -93,7 +93,7 @@ export class ApplicationService {
      */
     removeRepository(key: string, appName: string, repoManName: string): Observable<Application> {
         let url = '/project/' + key + '/repositories_manager/' + repoManName + '/application/' + appName + '/detach';
-        return this._http.post(url, null);
+        return this._http.post<Application>(url, null);
     }
 
     /**
@@ -110,7 +110,7 @@ export class ApplicationService {
         headers.append('Content-Type', 'application/x-www-form-urlencoded');
         let params = new HttpParams();
         params = params.append('fullname', repoFullName);
-        return this._http.post(url, params.toString(), {headers: headers, params: params});
+        return this._http.post<Application>(url, params.toString(), {headers: headers, params: params});
     }
 
     /**
@@ -123,7 +123,7 @@ export class ApplicationService {
      */
     addPoller(key: string, appName: string, pipName: string, poller: RepositoryPoller): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/polling';
-        return this._http.post(url, poller);
+        return this._http.post<Application>(url, poller);
     }
 
     /**
@@ -135,7 +135,7 @@ export class ApplicationService {
      */
     updatePoller(key: string, appName: string, pipName: string, poller: RepositoryPoller): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/polling';
-        return this._http.put(url, poller);
+        return this._http.put<Application>(url, poller);
     }
 
     /**
@@ -147,7 +147,7 @@ export class ApplicationService {
      */
     deletePoller(key: string, appName: string, pipName: string): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/polling';
-        return this._http.delete(url);
+        return this._http.delete<Application>(url);
     }
 
     /**
@@ -165,7 +165,7 @@ export class ApplicationService {
             'repository_fullname': repoFullName,
             'pipeline_name': pipName
         };
-        return this._http.post(url, request);
+        return this._http.post<Application>(url, request);
     }
 
     /**
@@ -177,7 +177,7 @@ export class ApplicationService {
      */
     updateHook(key: string, appName: string, pipName: string, hook: Hook): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/hook/' + hook.id;
-        return this._http.put(url, hook);
+        return this._http.put<Application>(url, hook);
     }
 
     /**
@@ -190,7 +190,7 @@ export class ApplicationService {
      */
     deleteHook(key: string, appName: string, hookId: number): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/repositories_manager/hook/' + hookId;
-        return this._http.delete(url);
+        return this._http.delete<Application>(url);
     }
 
     /**
@@ -202,7 +202,7 @@ export class ApplicationService {
      */
     addVariable(key: string, appName: string, v: Variable): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/variable/' + v.name;
-        return this._http.post(url, v);
+        return this._http.post<Application>(url, v);
     }
 
     /**
@@ -214,7 +214,7 @@ export class ApplicationService {
      */
     updateVariable(key: string, appName: string, v: Variable): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/variable/' + v.name;
-        return this._http.put(url, v);
+        return this._http.put<Application>(url, v);
     }
 
     /**
@@ -226,7 +226,7 @@ export class ApplicationService {
      */
     removeVariable(key: string, appName: string, v: Variable): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/variable/' + v.name;
-        return this._http.delete(url);
+        return this._http.delete<Application>(url);
     }
 
     /**
@@ -237,7 +237,7 @@ export class ApplicationService {
      * @returns {Observable<Application>}
      */
     addPermission(key: string, appName: string, gp: GroupPermission): Observable<Application> {
-        return this._http.post('/project/' + key + '/application/' + appName + '/group', gp);
+        return this._http.post<Application>('/project/' + key + '/application/' + appName + '/group', gp);
     }
 
     /**
@@ -248,7 +248,7 @@ export class ApplicationService {
      * @returns {Observable<Application>}
      */
     updatePermission(key: string, appName: string, gp: GroupPermission): Observable<Application> {
-        return this._http.put('/project/' + key + '/application/' + appName + '/group/' + gp.group.name, gp);
+        return this._http.put<Application>('/project/' + key + '/application/' + appName + '/group/' + gp.group.name, gp);
     }
 
     /**
@@ -259,7 +259,7 @@ export class ApplicationService {
      * @returns {Observable<Application>}
      */
     removePermission(key: string, appName: string, gp: GroupPermission): Observable<Application> {
-        return this._http.delete('/project/' + key + '/application/' + appName + '/group/' + gp.group.name);
+        return this._http.delete<Application>('/project/' + key + '/application/' + appName + '/group/' + gp.group.name);
     }
 
     /**
@@ -272,7 +272,7 @@ export class ApplicationService {
      */
     addTrigger(key: string, appName: string, pipName: string, t: Trigger): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/trigger';
-        return this._http.post(url, t);
+        return this._http.post<Application>(url, t);
     }
 
     /**
@@ -285,7 +285,7 @@ export class ApplicationService {
      */
     updateTrigger(key: string, appName: string, pipName: string, t: Trigger): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/trigger/' + t.id;
-        return this._http.put(url, t);
+        return this._http.put<Application>(url, t);
     }
 
     /**
@@ -298,7 +298,7 @@ export class ApplicationService {
      */
     removeTrigger(key: string, appName: string, pipName: string, t: Trigger): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/trigger/' + t.id;
-        return this._http.delete(url);
+        return this._http.delete<Application>(url);
     }
 
     /**
@@ -308,7 +308,7 @@ export class ApplicationService {
      * @param notifications List of notification
      */
     addNotifications(key: string, appName: string, notifications: Array<Notification>): Observable<Application> {
-        return this._http.post('/project/' + key + '/application/' + appName + '/notifications', notifications);
+        return this._http.post<Application>('/project/' + key + '/application/' + appName + '/notifications', notifications);
     }
 
     /**
@@ -321,7 +321,7 @@ export class ApplicationService {
      */
     updateNotification(key: string, appName: string, pipName: string, notification: Notification): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/notification';
-        return this._http.put(url, notification);
+        return this._http.put<Application>(url, notification);
     }
 
     /**
@@ -335,7 +335,7 @@ export class ApplicationService {
         let params = new HttpParams();
         params = params.append('envName', envName);
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/notification';
-        return this._http.delete(url, {params: params});
+        return this._http.delete<Application>(url, {params: params});
     }
 
     /**
@@ -345,7 +345,7 @@ export class ApplicationService {
      * @param pipelines Array of pipeline name to attach
      */
     attachPipelines(key: string, appName: string, pipelines: Array<string>): Observable<Application> {
-        return this._http.post('/project/' + key + '/application/' + appName + '/pipeline/attach', pipelines);
+        return this._http.post<Application>('/project/' + key + '/application/' + appName + '/pipeline/attach', pipelines);
     }
 
     /**
@@ -355,7 +355,7 @@ export class ApplicationService {
      * @param pipName Pipeline name to detach
      */
     detachPipelines(key: string, appName: string, pipName: string): Observable<Application> {
-        return this._http.delete('/project/' + key + '/application/' + appName + '/pipeline/' + pipName);
+        return this._http.delete<Application>('/project/' + key + '/application/' + appName + '/pipeline/' + pipName);
     }
 
 
@@ -372,7 +372,7 @@ export class ApplicationService {
           params = params.append('envName', scheduler.environment_name);
         }
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/scheduler';
-        return this._http.post(url, scheduler, {params: params});
+        return this._http.post<Application>(url, scheduler, {params: params});
     }
 
     /**
@@ -384,7 +384,7 @@ export class ApplicationService {
      */
     updateScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/scheduler';
-        return this._http.put(url, scheduler);
+        return this._http.put<Application>(url, scheduler);
 
     }
 
@@ -397,7 +397,7 @@ export class ApplicationService {
      */
     deleteScheduler(key: string, appName: string, pipName: string, scheduler: Scheduler): Observable<Application> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/scheduler/' + scheduler.id;
-        return this._http.delete(url);
+        return this._http.delete<Application>(url);
 
     }
 }

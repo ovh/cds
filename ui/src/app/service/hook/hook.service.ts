@@ -13,7 +13,7 @@ export class HookService {
 
     getHookModel(): Observable<Array<WorkflowHookModel>> {
         if (!this.models) {
-            return this._http.get('/workflow/hook/model').map(ms => {
+            return this._http.get<Array<WorkflowHookModel>>('/workflow/hook/model').map(ms => {
                 this.models = <Array<WorkflowHookModel>>ms;
                 return ms;
             });

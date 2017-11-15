@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {HttpClient} from '@angular/common/http';
 
 
@@ -18,6 +18,6 @@ export class RequirementService {
      * @returns {Observable<string[]>}
      */
     getRequirementsTypes(): Observable<string[]> {
-        return this._http.get('/worker/model/capability/type');
+        return this._http.get<string[]>('/worker/model/capability/type');
     }
 }

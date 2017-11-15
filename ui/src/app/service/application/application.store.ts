@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Map, List} from 'immutable';
-import {BehaviorSubject, Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 import {Application} from '../../model/application.model';
 import {ApplicationService} from './application.service';
 import {RepositoryPoller} from '../../model/polling.model';

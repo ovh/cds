@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {VariableAudit} from '../../model/variable.model';
 import {HttpClient} from '@angular/common/http';
 /**
@@ -13,7 +13,7 @@ export class ApplicationAuditService {
     }
 
     getVariableAudit(key: string, appName: string, varName: string): Observable<Array<VariableAudit>> {
-        return this._http.get('/project/' + key + '/application/' + appName + '/variable/' + varName + '/audit');
+        return this._http.get<Array<VariableAudit>>('/project/' + key + '/application/' + appName + '/variable/' + varName + '/audit');
     }
 }
 
