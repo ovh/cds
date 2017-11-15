@@ -1,5 +1,6 @@
 +++
 title = "Stage"
+weight = 3
 
 [menu.main]
 parent = "concepts"

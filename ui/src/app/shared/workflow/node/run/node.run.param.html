@@ -3,6 +3,7 @@
         {{'workflow_run_with_parameters' | translate}}
         <div class="extra" *ngIf="canResync && nodeRun && !isSync">
             <button type="button" class="ui small green button" (click)="resync()">{{ 'workflow_resync_pipeline' | translate }}</button>
+            <a href="https://ovh.github.io/cds/introduction/introduction.concepts.workflow" target="_blank"><i class="pointing help circle outline icon"></i></a>
         </div>
         <div class="extra" *ngIf="canResync && isSync">
             <p>{{'workflow_node_pipeline_synchronized' | translate }}</p>
