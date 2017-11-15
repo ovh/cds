@@ -51,6 +51,9 @@ export class WorkflowStepLogComponent implements OnInit {
     logs: Log;
     currentStatus: string;
     set showLog(data: boolean) {
+        if (PipelineStatus.neverRun(this.currentStatus)) {
+            return;
+        }
         this._showLog = data;
 
         if (data) {
@@ -87,7 +90,8 @@ export class WorkflowStepLogComponent implements OnInit {
 
         this.zone = new NgZone({enableLongStackTrace: false});
         if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
-            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) || (nodeRunDone && isLastStep)) {
+            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) ||
+            (nodeRunDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
           this.showLog = true;
         }
     }
@@ -133,7 +137,7 @@ export class WorkflowStepLogComponent implements OnInit {
     }
 
     computeDuration() {
-        if (!this.stepStatus) {
+        if (!this.stepStatus || PipelineStatus.neverRun(this.currentStatus)) {
             return;
         }
         this.startExec = this.stepStatus.start ? new Date(this.stepStatus.start) : new Date();

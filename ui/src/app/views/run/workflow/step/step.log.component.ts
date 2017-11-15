@@ -43,6 +43,9 @@ export class StepLogComponent implements OnInit, OnDestroy {
     logs: Log;
     currentStatus: string;
     set showLog(data: boolean) {
+        if (PipelineStatus.neverRun(this.currentStatus)) {
+            return;
+        }
         this._showLog = data;
         if (data) {
             this.initWorker();
@@ -79,7 +82,8 @@ export class StepLogComponent implements OnInit, OnDestroy {
 
         this.zone = new NgZone({enableLongStackTrace: false});
         if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
-            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) || (pipelineBuildDone && isLastStep)) {
+            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) ||
+                (pipelineBuildDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
           this.showLog = true;
         }
     }
@@ -135,7 +139,7 @@ export class StepLogComponent implements OnInit, OnDestroy {
     }
 
     computeDuration() {
-        if (!this.logs) {
+        if (!this.logs || PipelineStatus.neverRun(this.currentStatus)) {
             return;
         }
         this.startExec = this.logs.start && this.logs.start.seconds > 0 ? new Date(this.logs.start.seconds * 1000) : new Date();
