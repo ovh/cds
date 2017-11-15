@@ -16,7 +16,7 @@
                             <ul>
                                 <li *ngFor="let j of stage.jobs">
                                     <div class="job ui segment pointing"
-                                         [class.active]="selectedRunJob && selectedRunJob.job.pipeline_action_id === j.pipeline_action_id && !mapJobStatus.get(j.pipeline_action_id) || mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.WAITING"
+                                         [class.active]="selectedRunJob && selectedRunJob.job.pipeline_action_id === j.pipeline_action_id"
                                          [class.success]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.SUCCESS"
                                          [class.inactive]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.DISABLED || mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.SKIPPED"
                                          [class.fail]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.FAIL"
