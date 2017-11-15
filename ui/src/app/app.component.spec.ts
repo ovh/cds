@@ -255,11 +255,11 @@ class MockProjectService extends ProjectService {
                     return Observable.of(proj);
                 }
             case 'key2':
-                let proj = new Project();
-                proj.key = 'key2';
-                proj.name = 'project2';
-                proj.last_modified = '2017-05-11T10:20:22.874779+02:00';
-                return Observable.of(proj);
+                let proj2 = new Project();
+                proj2.key = 'key2';
+                proj2.name = 'project2';
+                proj2.last_modified = '2017-05-11T10:20:22.874779+02:00';
+                return Observable.of(proj2);
         }
 
     }
@@ -268,7 +268,7 @@ class MockProjectService extends ProjectService {
 class MockApplicationService extends ApplicationService {
     callAPP2 = 0;
 
-    getApplication(key: string, appName: string) {
+    getApplication(key: string, appName: string, filter?: {branch: string, remote: string}) {
         if (key === 'key1') {
             if (appName === 'app1') {
                 let app = new Application();
@@ -287,7 +287,7 @@ class MockApplicationService extends ApplicationService {
                     let app = new Application();
                     app.name = 'app2';
                     app.last_modified = '2017-06-11T10:20:22.874779+02:00';
-                    return Observable.of({ name: 'app2', last_modified: '2017-06-11T10:20:22.874779+02:00'});
+                    return Observable.of(app);
                 }
 
             }
