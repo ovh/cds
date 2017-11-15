@@ -8,7 +8,7 @@ import {XHRBackend} from '@angular/http';
 import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
 import {TranslateParser} from 'ng2-translate';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 
 import {ProjectAdminComponent} from './project.admin.component';
 import {ProjectStore} from '../../../../service/project/project.store';

@@ -15,7 +15,7 @@ import {SharedModule} from '../../../../../shared/shared.module';
 import {Application} from '../../../../../model/application.model';
 import {Project} from '../../../../../model/project.model';
 import {RepositoriesManager} from '../../../../../model/repositories.model';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {ApplicationModule} from '../../../application.module';
 import {TranslateParser} from 'ng2-translate';
 import {ProjectModule} from '../../../../project/project.module';

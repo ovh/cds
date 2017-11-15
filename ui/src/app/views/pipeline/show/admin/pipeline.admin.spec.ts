@@ -4,7 +4,7 @@ import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {ActivatedRoute, Router} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Injector} from '@angular/core';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {PipelineService} from '../../../../service/pipeline/pipeline.service';

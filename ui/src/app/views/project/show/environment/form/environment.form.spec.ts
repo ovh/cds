@@ -12,7 +12,7 @@ import {ToastService} from '../../../../../shared/toast/ToastService';
 import {ProjectModule} from '../../../project.module';
 import {ProjectEnvironmentFormComponent} from './environment.form.component';
 import {Project} from '../../../../../model/project.model';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {SharedModule} from '../../../../../shared/shared.module';
 import {Environment} from '../../../../../model/environment.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';

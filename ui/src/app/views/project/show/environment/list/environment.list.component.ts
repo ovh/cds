@@ -3,7 +3,7 @@ import {Project} from '../../../../../model/project.model';
 import {Environment} from '../../../../../model/environment.model';
 import {EnvironmentService} from '../../../../../service/environment/environment.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Subscription} from 'rxjs/Rx';
+import {Subscription} from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-environment-list',

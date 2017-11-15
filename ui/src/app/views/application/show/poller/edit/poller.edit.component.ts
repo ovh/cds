@@ -3,7 +3,7 @@ import {Project} from '../../../../../model/project.model';
 import {Application} from '../../../../../model/application.model';
 import {RepositoryPoller} from '../../../../../model/polling.model';
 import {ApplicationStore} from '../../../../../service/application/application.store';
-import {Subscription} from 'rxjs/Rx';
+import {Subscription} from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-application-poller-form',

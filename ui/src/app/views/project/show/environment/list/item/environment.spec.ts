@@ -16,7 +16,7 @@ import {Environment} from '../../../../../../model/environment.model';
 import {ToasterService} from 'angular2-toaster';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {VariableService} from '../../../../../../service/variable/variable.service';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {VariableEvent} from '../../../../../../shared/variable/variable.event.model';
 import {Variable} from '../../../../../../model/variable.model';
 import {ProjectAuditService} from '../../../../../../service/project/project.audit.service';

@@ -12,7 +12,7 @@ import {User} from '../../../model/user.model';
 import {Router, ActivatedRoute} from '@angular/router';
 import {AccountModule} from '../account.module';
 
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
 

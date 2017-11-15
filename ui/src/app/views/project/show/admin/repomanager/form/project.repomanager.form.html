@@ -19,7 +19,7 @@
             {{ 'repoman_modal_verif_text' | translate}}
             <a href="{{addRepoResponse?.url}}" target="_blank">{{ 'common_click_here' | translate}}</a>
         </div>
-        <div class="ui input" *ngIf="selectedRepoId != null && reposManagerList[selectedRepoId].type !==  'GITHUB'">
+        <div class="ui input" *ngIf="selectedRepoId != null">
             <input type="text" name="verifiercode" placeholder="{{ 'repoman_modal_verif_code_placeholder' | translate }}" [(ngModel)]="validationToken">
             <button name="validationbtn" class="ui green button" [class.loading]="verificationLoading" (click)="sendVerificationCode()">{{ 'btn_validate' | translate }}</button>
         </div>
