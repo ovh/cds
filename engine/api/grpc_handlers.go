@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"io"
 
 	"github.com/golang/protobuf/ptypes/empty"
@@ -12,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
+	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -74,8 +74,13 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 		return new(empty.Empty), sdk.ErrForbidden
 	}
 
+	workerID, ok := c.Value(keyWorkerID).(string)
+	if !ok {
+		return new(empty.Empty), sdk.ErrForbidden
+	}
+
 	workerUser := &sdk.User{
-		Username: fmt.Sprintf("%s", c.Value(keyWorkerName)),
+		Username: workerName,
 	}
 
 	db := h.dbConnectionFactory.GetDBMap()
@@ -88,7 +93,11 @@ func (h *grpcHandlers) SendResult(c context.Context, res *sdk.Result) (*empty.Em
 	chanEvent := make(chan interface{}, 1)
 	chanError := make(chan error, 1)
 
-	go postJobResult(chanEvent, chanError, db, h.store, p, workerName, res)
+	wr, errW := worker.LoadWorker(db, workerID)
+	if errW != nil {
+		return new(empty.Empty), sdk.WrapError(errW, "postWorkflowJobResultHandler> Cannot load worker info")
+	}
+	go postJobResult(chanEvent, chanError, db, h.store, p, wr, res)
 
 	workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 	if err != nil {
