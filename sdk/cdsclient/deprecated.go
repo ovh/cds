@@ -2,6 +2,7 @@ package cdsclient
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -24,11 +25,10 @@ func (c *client) ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error {
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/trigger", t.SrcProject.Key, t.SrcApplication.Name, t.SrcPipeline.Name)
 
 	if t.SrcEnvironment.Name != "" {
-		uri = fmt.Sprintf("%s?env=%s", uri, t.SrcEnvironment.Name)
+		uri = fmt.Sprintf("%s?env=%s", uri, url.QueryEscape(t.SrcEnvironment.Name))
 	}
 
-	app := &sdk.Application{}
-	code, err := c.PostJSON(uri, t, app)
+	code, err := c.PostJSON(uri, t, nil)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (c *client) ApplicationPipelineTriggersGet(projectKey string, appName strin
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/trigger/source", projectKey, appName, pipelineName)
 
 	if envName != "" {
-		uri = fmt.Sprintf("%s?env=%s", uri, envName)
+		uri = fmt.Sprintf("%s?env=%s", uri, url.QueryEscape(envName))
 	}
 
 	var triggers []sdk.PipelineTrigger
