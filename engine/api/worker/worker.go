@@ -224,8 +224,8 @@ func RefreshWorker(db gorp.SqlExecutor, w *sdk.Worker) error {
 	if w == nil {
 		return sdk.WrapError(sdk.ErrUnknownError, "RefreshWorker> Invalid worker")
 	}
-	query := `UPDATE worker SET last_beat = $1 WHERE id = $2`
-	res, err := db.Exec(query, time.Now(), w.ID)
+	query := `UPDATE worker SET last_beat = now() WHERE id = $1`
+	res, err := db.Exec(query, w.ID)
 	if err != nil {
 		return sdk.WrapError(err, "RefreshWorker> Unable to update worker: %s", w.ID)
 	}

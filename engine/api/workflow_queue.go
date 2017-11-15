@@ -384,15 +384,9 @@ func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
 			if errNR != nil {
 				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot load node run")
 			}
-			for i := range nodeRun.Stages {
-				s := &nodeRun.Stages[i]
-				for j := range s.RunJobs {
-					runJobs := &s.RunJobs[j]
-					if runJobs.ID == nodeJobRun.ID {
-						runJobs.SpawnInfos = nodeJobRun.SpawnInfos
-						runJobs.Job.StepStatus = nodeJobRun.Job.StepStatus
-					}
-				}
+			sync := workflow.SyncNodeRunRunJob(nodeRun, *nodeJobRun)
+			if !sync {
+				log.Warning("postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun")
 			}
 			if errU := workflow.UpdateNodeRun(tx, nodeRun); errU != nil {
 				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot update node run")

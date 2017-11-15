@@ -385,3 +385,22 @@ func StopWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 
 	return nil
 }
+
+// SyncNodeRunRunJob sync step status and spawnInfos in a specific run job
+func SyncNodeRunRunJob(nodeRun *sdk.WorkflowNodeRun, nodeJobRun sdk.WorkflowNodeJobRun) bool {
+	found := false
+	for i := range nodeRun.Stages {
+		s := &nodeRun.Stages[i]
+		for j := range s.RunJobs {
+			runJob := &s.RunJobs[j]
+			if runJob.ID == nodeJobRun.ID {
+				runJob.SpawnInfos = nodeJobRun.SpawnInfos
+				runJob.Job.StepStatus = nodeJobRun.Job.StepStatus
+				found = true
+				break
+			}
+		}
+	}
+
+	return found
+}
