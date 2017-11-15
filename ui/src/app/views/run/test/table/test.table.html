@@ -8,16 +8,16 @@
         <tbody>
         <ng-container *ngFor="let tc of getDataForCurrentPage()">
             <tr>
-                <td>
-                    <i class="unhide icon pointing" (click)="tc.displayed = true" *ngIf="!tc.displayed && filter !== 'all'"></i>
-                    <i class="hide icon pointing" (click)="tc.displayed = false" *ngIf="tc.displayed  && filter !== 'all'"></i>
+                <td (click)="tc.displayed = !tc.displayed">
+                    <i class="unhide icon pointing" *ngIf="!tc.displayed && filter !== 'all'"></i>
+                    <i class="hide icon pointing" *ngIf="tc.displayed  && filter !== 'all'"></i>
                     <i class="green check icon" *ngIf="filter === 'all' && !tc.errors && !tc.failures"></i>
                     <i class="red remove circle icon" *ngIf="filter === 'all' && ( (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0))"></i>
                     <i class="grey ban icon" *ngIf="filter === 'all' && tc.skipped"></i>
-                    {{tc.name}}
+                    {{tc.fullname}}
                 </td>
             </tr>
-            <tr *ngIf="tc.displayed" class="log">
+            <tr *ngIf="tc.displayed && (tc.errors || tc.failures)" class="log">
                 <td>
                     <div *ngIf="tc.errors && tc.errors.length > 0">
                         <pre [innerHTML]="getLogs(e)"  *ngFor="let e of tc.errors"></pre>

@@ -238,6 +238,7 @@ export class TestSuite {
 
 export class TestCase {
     classname: string;
+    fullname: string;
     name: string;
     time: string;
     errors: Array<Failure>;
