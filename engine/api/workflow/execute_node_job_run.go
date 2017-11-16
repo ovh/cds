@@ -356,7 +356,7 @@ func RestartWorkflowNodeJob(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun
 	}
 
 	if errU := UpdateNodeRun(db, nodeRun); errU != nil {
-		return sdk.WrapError(errNR, "RestartWorkflowNodeJob> Cannot update node run")
+		return sdk.WrapError(errU, "RestartWorkflowNodeJob> Cannot update node run")
 	}
 
 	if err := replaceWorkflowJobRunInQueue(db, wNodeJob); err != nil {
