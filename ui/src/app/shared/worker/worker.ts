@@ -43,7 +43,7 @@ export class CDSWorker {
     stop() {
         if (this.webWorker) {
             this.webWorker.terminate();
-            delete this.webWorker;
+            this.webWorker = null;
         }
     }
 }

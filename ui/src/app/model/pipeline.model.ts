@@ -28,6 +28,14 @@ export class PipelineStatus {
 
       return false;
     }
+
+    static isActive(status: string) {
+      if (status === this.WAITING || status === this.BUILDING) {
+        return true;
+      }
+
+      return false;
+    }
 }
 
 export class PipelineAudit {

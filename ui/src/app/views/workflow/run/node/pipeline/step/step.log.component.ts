@@ -38,7 +38,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         }
         if (data) {
             this.currentStatus = data.status;
-            if (data.status === PipelineStatus.BUILDING) {
+            if (!this._force  && PipelineStatus.isActive(data.status)) {
                 this.showLog = true;
             }
         }
@@ -57,10 +57,8 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         } else {
             if (this.worker) {
                 this.worker.stop();
+                this.worker = null;
             }
-        }
-        if (data && neverRun) {
-            return;
         }
         this._showLog = data;
     }
@@ -77,6 +75,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     zone: NgZone;
     _showLog = false;
+    _force = false;
     _stepStatus: StepStatus;
     pipelineBuildStatusEnum = PipelineStatus;
     @ViewChild('logsContent') logsElt: ElementRef;
@@ -89,7 +88,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         let isLastStep = this.stepOrder === this.job.action.actions.length - 1;
 
         this.zone = new NgZone({enableLongStackTrace: false});
-        if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
+        if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING || this.currentStatus === this.pipelineBuildStatusEnum.WAITING ||
             (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) ||
             (nodeRunDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
           this.showLog = true;
@@ -99,6 +98,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         if (this.worker) {
             this.worker.stop();
+            this.worker = null;
         }
     }
 
@@ -112,6 +112,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (!this.logs) {
             this.loading = true;
         }
+
         if (!this.worker) {
             this.worker = new CDSWorker('./assets/worker/web/workflow-log.js');
             this.worker.start({
@@ -161,6 +162,10 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     toggleLogs() {
+        this._force = true;
+        if (!this.showLog && PipelineStatus.neverRun(this.currentStatus)) {
+            return;
+        }
         this.showLog = !this.showLog;
     }
 

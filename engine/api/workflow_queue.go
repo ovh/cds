@@ -238,7 +238,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
-		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx).Name, &res)
+		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx), &res)
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
@@ -250,7 +250,7 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 	}
 }
 
-func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, workerName string, res *sdk.Result) {
+func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.Worker, res *sdk.Result) {
 	defer close(chEvent)
 	defer close(chError)
 
@@ -278,7 +278,7 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 	//Update spwan info
 	infos := []sdk.SpawnInfo{{
 		RemoteTime: remoteTime,
-		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{workerName, res.Duration}},
+		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}},
 	}}
 
 	//Add spawn infos
@@ -291,6 +291,12 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 	log.Debug("postJobResult> Updating %d to %s in queue", job.ID, res.Status)
 	if err := workflow.UpdateNodeJobRunStatus(tx, store, p, job, sdk.Status(res.Status), chEvent); err != nil {
 		chError <- sdk.WrapError(err, "postJobResult> Cannot update %d status", job.ID)
+		return
+	}
+
+	//Update worker status
+	if err := worker.UpdateWorkerStatus(tx, wr.ID, sdk.StatusWaiting); err != nil {
+		chError <- sdk.WrapError(err, "postJobResult> Cannot update worker %d status", wr.ID)
 		return
 	}
 
@@ -384,15 +390,9 @@ func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
 			if errNR != nil {
 				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot load node run")
 			}
-			for i := range nodeRun.Stages {
-				s := &nodeRun.Stages[i]
-				for j := range s.RunJobs {
-					runJobs := &s.RunJobs[j]
-					if runJobs.ID == nodeJobRun.ID {
-						runJobs.SpawnInfos = nodeJobRun.SpawnInfos
-						runJobs.Job.StepStatus = nodeJobRun.Job.StepStatus
-					}
-				}
+			sync := workflow.SyncNodeRunRunJob(nodeRun, *nodeJobRun)
+			if !sync {
+				log.Warning("postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun")
 			}
 			if errU := workflow.UpdateNodeRun(tx, nodeRun); errU != nil {
 				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot update node run")

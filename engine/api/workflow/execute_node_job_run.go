@@ -324,7 +324,8 @@ func AddLog(db gorp.SqlExecutor, job *sdk.WorkflowNodeJobRun, logs *sdk.Log) err
 
 // RestartWorkflowNodeJob restart all workflow node job and update logs to indicate restart
 func RestartWorkflowNodeJob(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun) error {
-	for _, step := range wNodeJob.Job.StepStatus {
+	for iS := range wNodeJob.Job.StepStatus {
+		step := &wNodeJob.Job.StepStatus[iS]
 		if step.Status == sdk.StatusNeverBuilt.String() || step.Status == sdk.StatusSkipped.String() || step.Status == sdk.StatusDisabled.String() {
 			continue
 		}
@@ -333,14 +334,31 @@ func RestartWorkflowNodeJob(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun
 			return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while load step logs")
 		}
 		wNodeJob.Job.Reason = "Killed (Reason: Timeout)\n"
-
+		step.Status = sdk.StatusWaiting.String()
+		step.Done = time.Time{}
 		if l != nil { // log could be nil here
+			l.Done = nil
 			l.Val += "\n\n\n-=-=-=-=-=- Worker timeout: job replaced in queue -=-=-=-=-=-\n\n\n"
 			if err := updateLog(db, l); err != nil {
 				return sdk.WrapError(errL, "RestartWorkflowNodeJob> error while update step log")
 			}
 		}
 	}
+
+	nodeRun, errNR := LoadAndLockNodeRunByID(db, wNodeJob.WorkflowNodeRunID)
+	if errNR != nil {
+		return sdk.WrapError(errNR, "RestartWorkflowNodeJob> Cannot load node run")
+	}
+
+	//Synchronise struct but not in db
+	if sync := SyncNodeRunRunJob(nodeRun, wNodeJob); !sync {
+		log.Warning("RestartWorkflowNodeJob> sync doesn't find a nodeJobRun")
+	}
+
+	if errU := UpdateNodeRun(db, nodeRun); errU != nil {
+		return sdk.WrapError(errU, "RestartWorkflowNodeJob> Cannot update node run")
+	}
+
 	if err := replaceWorkflowJobRunInQueue(db, wNodeJob); err != nil {
 		return sdk.WrapError(err, "RestartWorkflowNodeJob> Cannot replace workflow job in queue")
 	}
