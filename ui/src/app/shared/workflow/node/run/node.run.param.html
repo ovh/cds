@@ -1,11 +1,8 @@
 <ng-template let-context let-modal="modal" #runWithParamModal>
     <div class="header">
         {{'workflow_run_with_parameters' | translate}}
-        <div class="extra" *ngIf="canResync && nodeRun && !isSync">
-            <button type="button" class="ui small green button" (click)="resync()">{{ 'workflow_resync_pipeline' | translate }}</button>
-        </div>
-        <div class="extra" *ngIf="canResync && isSync">
-            <p>{{'workflow_node_pipeline_synchronized' | translate }}</p>
+        <div class="extra" *ngIf="num">
+            <button type="button" class="ui small green button" [class.loading]="loading" [disabled]="loading" (click)="resync()">{{ 'workflow_resync' | translate }}</button>
         </div>
     </div>
     <div class="content">
