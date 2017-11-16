@@ -43,7 +43,7 @@ func LoadAllKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 		keys[i] = sdk.ProjectKey(p)
 		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
 		if err != nil {
-			log.Error("LoadAllKeys> Unable to decrypt private key %s/%s", proj.Key, keys[i].Name)
+			log.Error("LoadAllKeys> Unable to decrypt private key %s/%s: %v", proj.Key, keys[i].Name, err)
 		}
 		keys[i].Private = string(decrypted)
 	}

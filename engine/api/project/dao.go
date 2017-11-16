@@ -105,12 +105,11 @@ func Delete(db gorp.SqlExecutor, store cache.Store, key string) error {
 		return err
 	}
 
-	if err := DeleteByID(db, proj.ID); err != nil {
-		return err
-	}
-
-	return nil
+	return DeleteByID(db, proj.ID)
 }
+
+// BuiltinGPGKey is a const
+const BuiltinGPGKey = "builtin"
 
 // Insert a new project in database
 func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
@@ -130,14 +129,14 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 	}
 	*proj = sdk.Project(dbProj)
 
-	keyID, publicKey, privateKey, err := keys.GeneratePGPKeyPair("builtin")
+	keyID, publicKey, privateKey, err := keys.GeneratePGPKeyPair(BuiltinGPGKey)
 	if err != nil {
-		return sdk.WrapError(err, "project.Insert> Unable to generate PGPKeyPair")
+		return sdk.WrapError(err, "project.Insert> Unable to generate PGPKeyPair: %v", err)
 	}
 
 	pk := sdk.ProjectKey{}
 	pk.Key.KeyID = keyID
-	pk.Key.Name = "builtin"
+	pk.Key.Name = BuiltinGPGKey
 	pk.Key.Private = privateKey
 	pk.Key.Public = publicKey
 	pk.Type = sdk.KeyTypePgp
