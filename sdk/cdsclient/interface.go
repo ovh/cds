@@ -122,4 +122,5 @@ type InterfaceDeprecated interface {
 	ApplicationPipelinesAttach(projectKey string, appName string, pipelineNames ...string) error
 	ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error
 	ApplicationPipelineTriggersGet(projectKey string, appName string, pipelineName string, envName string) ([]sdk.PipelineTrigger, error)
+	AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullname, pipelineName string) error
 }
