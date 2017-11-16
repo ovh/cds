@@ -112,10 +112,9 @@ export class WorkflowNodeRunParamComponent {
         this.loading = true;
         this._workflowRunService.resync(this.project.key, this.workflow, this.nodeRun.num).finally(() => {
             this.loading = false;
-            this._toast.success('', this._translate.instant('workflow_run_resync_done'));
-
         }).subscribe(wr => {
             this.nodeToRun = Workflow.getNodeByID(this._nodeToRun.id, wr.workflow);
+            this._toast.success('', this._translate.instant('workflow_run_resync_done'));
         });
     }
 
