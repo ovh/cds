@@ -36,7 +36,7 @@ func tagCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			sdk.Exit("cannot parse '%s' as a port number", portS)
 		}
 
-		if len(args) != 2 {
+		if len(args) == 0 {
 			sdk.Exit("Wrong usage: Example : worker tag <key>=<value>")
 		}
 
