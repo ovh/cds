@@ -43,8 +43,11 @@ export class TestTableComponent extends Table {
                 for (let ts of this.tests) {
                     if (ts.errors > 0 || ts.failures > 0) {
                         let testCases = ts.tests
-                        .filter(tc => {return (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0)})
-                        .map(tc => {tc.fullname = ts.name + ' / ' + tc.name; return tc});
+                        .filter(tc => (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0))
+                        .map(tc => {
+                            tc.fullname = ts.name + ' / ' + tc.name;
+                            return tc;
+                        });
                         this.filteredTests.push(...testCases);
                     }
                 };
@@ -53,15 +56,22 @@ export class TestTableComponent extends Table {
                 for (let ts of this.tests) {
                     if (ts.skipped > 0) {
                         let testCases = ts.tests
-                        .filter(tc => {return (tc.skipped && tc.skipped.length > 0)})
-                        .map(tc => {tc.fullname = ts.name + ' / ' + tc.name; return tc});
+                        .filter(tc => (tc.skipped && tc.skipped.length > 0))
+                        .map(tc => {
+                            tc.fullname = ts.name + ' / ' + tc.name;
+                            return tc;
+                        });
                         this.filteredTests.push(...testCases);
                     }
                 };
                 break;
             default:
                 for (let ts of this.tests) {
-                    this.filteredTests.push(...ts.tests.map(tc => {tc.fullname = ts.name + ' / ' + tc.name; return tc}));
+                    let testCases = ts.tests.map(tc => {
+                        tc.fullname = ts.name + ' / ' + tc.name;
+                        return tc;
+                    });
+                    this.filteredTests.push(...testCases);
                 }
         }
     }
