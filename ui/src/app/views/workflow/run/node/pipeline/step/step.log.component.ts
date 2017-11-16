@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, NgZone, ViewChild, ElementRef} from '@angular/core';
+import {Component, Input, OnInit, OnDestroy, NgZone, ViewChild, ElementRef} from '@angular/core';
 import {Subscription} from 'rxjs/Rx';
 import {Action} from '../../../../../../model/action.model';
 import {Project} from '../../../../../../model/project.model';
@@ -19,7 +19,7 @@ declare var ansi_up: any;
     styleUrls: ['step.log.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowStepLogComponent implements OnInit {
+export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     // Static
     @Input() step: Action;
@@ -51,18 +51,18 @@ export class WorkflowStepLogComponent implements OnInit {
     logs: Log;
     currentStatus: string;
     set showLog(data: boolean) {
-        if (PipelineStatus.neverRun(this.currentStatus)) {
-            return;
-        }
-        this._showLog = data;
-
-        if (data) {
+        let neverRun = PipelineStatus.neverRun(this.currentStatus);
+        if (data && !neverRun) {
             this.initWorker();
         } else {
             if (this.worker) {
                 this.worker.stop();
             }
         }
+        if (data && neverRun) {
+            return;
+        }
+        this._showLog = data;
     }
     get showLog() {
       return this._showLog;
@@ -93,6 +93,12 @@ export class WorkflowStepLogComponent implements OnInit {
             (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) ||
             (nodeRunDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
           this.showLog = true;
+        }
+    }
+
+    ngOnDestroy(): void {
+        if (this.worker) {
+            this.worker.stop();
         }
     }
 
@@ -138,6 +144,9 @@ export class WorkflowStepLogComponent implements OnInit {
 
     computeDuration() {
         if (!this.stepStatus || PipelineStatus.neverRun(this.currentStatus)) {
+            return;
+        }
+        if (this.stepStatus.start && this.stepStatus.start.indexOf('0001-01-01') !== -1) {
             return;
         }
         this.startExec = this.stepStatus.start ? new Date(this.stepStatus.start) : new Date();
