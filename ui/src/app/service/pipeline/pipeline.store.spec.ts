@@ -13,6 +13,7 @@ import {Group, GroupPermission} from '../../model/group.model';
 import {Parameter} from '../../model/parameter.model';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
+import {first} from 'rxjs/operators';
 
 describe('CDS: pipeline Store', () => {
 
@@ -55,7 +56,7 @@ describe('CDS: pipeline Store', () => {
 
         // check get pipeline (get from cache)
         let checkedSinglePipeline = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').first().subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').name).toBe('myPipeline', 'Wrong pipeline name. Must be myPipeline');
             checkedSinglePipeline = true;
@@ -64,7 +65,7 @@ describe('CDS: pipeline Store', () => {
 
         // check get pipeline not in cache
         let checkednotCachedPipeline = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline2').first().subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline2').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline2')).toBeFalsy();
             checkednotCachedPipeline = true;
         });
@@ -75,7 +76,7 @@ describe('CDS: pipeline Store', () => {
 
         // Now in cache
         let checkedInCachedPipeline = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline2').first().subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline2').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline2')).toBeTruthy();
             checkedInCachedPipeline = true;
         });
@@ -89,7 +90,7 @@ describe('CDS: pipeline Store', () => {
         })).flush(null);
 
         let checkedDeletedPipeline = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline2').first().subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline2').pipe(first()).subscribe(pips => {
             checkedDeletedPipeline = true;
         });
         http.expectOne(((req: HttpRequest<any>) => {
@@ -187,7 +188,7 @@ describe('CDS: pipeline Store', () => {
 
         // check get pipeline (get from cache)
         let checkStageAdd = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').first().subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').stages.length).toBe(1, 'Must have 1 stage');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].name).toBe('stage1', 'Wrong stage');
@@ -204,7 +205,7 @@ describe('CDS: pipeline Store', () => {
         })).flush(pipUpStage);
 
         let checkStageUpdate = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').first().subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').stages.length).toBe(1, 'Must have 1 stage');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].name).toBe('stage1Updated', 'Wrong stage');
@@ -299,7 +300,7 @@ describe('CDS: pipeline Store', () => {
 
 
         let checkJobAdd = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').first().subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').stages.length).toBe(1, 'Must have 1 stage');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].jobs.length).toBe(1, 'Must have 1 action');
@@ -317,7 +318,7 @@ describe('CDS: pipeline Store', () => {
         })).flush(pipUpJob);
 
         let checkJobUpdate = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').first().subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').stages.length).toBe(1, 'Must have 1 stage');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].jobs.length).toBe(1, 'Must have 1 action');
@@ -334,7 +335,7 @@ describe('CDS: pipeline Store', () => {
         })).flush(pipDelJob);
 
         let checkJobDelete = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').first().subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').stages.length).toBe(1, 'Must have10 stage');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].jobs.length).toBe(0);
@@ -403,7 +404,7 @@ describe('CDS: pipeline Store', () => {
 
         // check get pipeline
         let checkedAddPermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').first().subscribe(apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(123, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(1, 'A group must have been added');
             expect(apps.get(proj.key + '-myPipeline').groups[0].permission).toBe(7, 'Permission must be 7');
@@ -419,7 +420,7 @@ describe('CDS: pipeline Store', () => {
 
         // check get pipeline
         let checkedUpdatePermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').first().subscribe(apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(456, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(1, 'Pip must have 1 group');
             expect(apps.get(proj.key + '-myPipeline').groups[0].permission).toBe(4, 'Group permission must be 4');
@@ -435,7 +436,7 @@ describe('CDS: pipeline Store', () => {
 
         // check get pipeline
         let checkedDeletePermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').first().subscribe(apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(789, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(0, 'Ouo must have 0 group');
             checkedDeletePermission = true;
@@ -500,7 +501,7 @@ describe('CDS: pipeline Store', () => {
 
         // check get pipeline
         let checkedAddParam = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').first().subscribe(apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(123, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(1, 'A parameter must have been added');
             expect(apps.get(proj.key + '-myPipeline').parameters[0].name).toBe('foo', 'Name must be foo');
@@ -517,7 +518,7 @@ describe('CDS: pipeline Store', () => {
 
         // check get pipeline
         let checkedUpdateParam = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').first().subscribe(apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(456, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(1, 'Pip must have 1 group');
             expect(apps.get(proj.key + '-myPipeline').parameters[0].name).toBe('fooUpdated', 'Name must be fooUpdated');
@@ -534,7 +535,7 @@ describe('CDS: pipeline Store', () => {
 
         // check get pipeline
         let checkedDeleteParam = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').first().subscribe(apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(789, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(0, 'Pip must have 0 parameter');
             checkedDeleteParam = true;

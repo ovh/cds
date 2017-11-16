@@ -1,8 +1,9 @@
-import {Component, Output, EventEmitter, Input} from '@angular/core';
-import {GroupPermission, Group} from '../../../model/group.model';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {Group, GroupPermission} from '../../../model/group.model';
 import {PermissionService} from '../permission.service';
 import {GroupService} from '../../../service/group/group.service';
 import {PermissionEvent} from '../permission.event.model';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-permission-form',
@@ -37,7 +38,7 @@ export class PermissionFormComponent {
     }
 
     loadGroups() {
-        this._groupService.getGroups().first().subscribe( groups => {
+        this._groupService.getGroups().pipe(first()).subscribe(groups => {
             this.groupList = groups;
             this.ready = true;
         });

@@ -24,6 +24,7 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {Pipeline} from './model/pipeline.model';
 import {Application} from './model/application.model';
 import {Project} from './model/project.model';
+import {first} from 'rxjs/operators';
 
 describe('App: CDS', () => {
 
@@ -101,15 +102,15 @@ describe('App: CDS', () => {
         // Create cache
         projectStore.getProjects('key1').subscribe(() => {}).unsubscribe();
 
-        projectStore.getProjects('key2').first().subscribe(() => {}).unsubscribe();
+        projectStore.getProjects('key2').pipe(first()).subscribe(() => {}).unsubscribe();
 
-        applicationStore.getApplications('key1', 'app1').first().subscribe(() => {}).unsubscribe();
-        applicationStore.getApplications('key1', 'app2').first().subscribe(() => {}).unsubscribe();
-        applicationStore.getApplications('key2', 'app3').first().subscribe(() => {}).unsubscribe();
+        applicationStore.getApplications('key1', 'app1').pipe(first()).subscribe(() => {}).unsubscribe();
+        applicationStore.getApplications('key1', 'app2').pipe(first()).subscribe(() => {}).unsubscribe();
+        applicationStore.getApplications('key2', 'app3').pipe(first()).subscribe(() => {}).unsubscribe();
 
-        pipelineStore.getPipelines('key1', 'pip1').first().subscribe(() => {}).unsubscribe();
-        pipelineStore.getPipelines('key1', 'pip2').first().subscribe(() => {}).unsubscribe();
-        pipelineStore.getPipelines('key2', 'pip3').first().subscribe(() => {}).unsubscribe();
+        pipelineStore.getPipelines('key1', 'pip1').pipe(first()).subscribe(() => {}).unsubscribe();
+        pipelineStore.getPipelines('key1', 'pip2').pipe(first()).subscribe(() => {}).unsubscribe();
+        pipelineStore.getPipelines('key2', 'pip3').pipe(first()).subscribe(() => {}).unsubscribe();
 
 
         let prj1Update = new LastModification();

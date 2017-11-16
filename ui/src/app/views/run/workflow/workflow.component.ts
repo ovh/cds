@@ -10,6 +10,7 @@ import {DurationService} from '../../../shared/duration/duration.service';
 import {NotificationService} from '../../../service/notification/notification.service';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
+import {first} from 'rxjs/operators';
 
 
 @Component({
@@ -203,7 +204,7 @@ export class PipelineRunWorkflowComponent {
             this.currentBuild.application.name,
             this.currentBuild.pipeline.name,
             this.currentBuild.build_number)
-            .first().subscribe( builds => {
+            .pipe(first()).subscribe( builds => {
             this.nextBuilds = builds;
         });
     }

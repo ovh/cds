@@ -6,6 +6,7 @@ import {ActionService} from '../../../../service/action/action.service';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-action-edit',
@@ -34,7 +35,7 @@ export class ActionEditComponent implements OnInit {
             this._actionService.getAction(params['name']).subscribe( u => {
                 this.action = u;
                 if (this.isAdmin) {
-                  this._actionService.getPiplinesUsingAction(params['name']).first().subscribe( p => {
+                  this._actionService.getPiplinesUsingAction(params['name']).pipe(first()).subscribe( p => {
                       this.pipelinesUsingAction = p;
                   });
                 }

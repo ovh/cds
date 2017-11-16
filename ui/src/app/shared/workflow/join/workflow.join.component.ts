@@ -15,6 +15,7 @@ import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {Subscription} from 'rxjs/Subscription';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-join',
@@ -157,7 +158,7 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
         request.number = this.currentWorkflowRun.num;
 
         this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request)
-            .finally(() => this.loading = false)
+            .pipe(finalize(() => this.loading = false))
             .subscribe((wr) => {
                 this._workflowCoreService.setCurrentWorkflowRun(wr);
                 this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],

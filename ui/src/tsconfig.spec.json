@@ -22,6 +22,14 @@
     "test.ts"
   ],
   "include": [
-    "**/*.spec.ts"
+    "**/*.spec.ts",
+    "../node_modules/ng2-codemirror-typescript/**/*.ts",
+    "../node_modules/ngx-auto-scroll/**/*.ts",
+    "../node_modules/ng-semantic/**/*.ts"
+  ],
+  "exclude": [
+    "../node_modules/ng-semantic/demo/**/*.ts",
+    "../node_modules/angular2-prettyjson/node_modules/**/*.ts",
+    "../node_modules/angular2-prettyjson/**/*.ts"
   ]
 }

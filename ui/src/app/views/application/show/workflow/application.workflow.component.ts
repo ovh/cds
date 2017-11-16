@@ -9,6 +9,7 @@ import {Branch, Remote} from '../../../../model/repositories.model';
 import {Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
 import {Observable} from 'rxjs/Observable';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-workflow',
@@ -87,10 +88,10 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
 
                     this.loadVersions(this.project.key, this.application.name).subscribe();
                 }
-            ).finally(() => {
+            ).pipe(finalize(() => {
                 this.loading.remote = false;
                 this.loading.branch = false;
-            }).subscribe();
+            })).subscribe();
         } else {
             this.loading.branch = false;
             this.loading.remote = false;
@@ -312,9 +313,12 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
      */
     loadVersions(key: string, appName: string): Observable<Array<string>> {
         this.loading.version = true;
-        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch, this.applicationFilter.remote)
-            .finally(() => this.loading.version = false)
+        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch, this.applicationFilter.remote).pipe(
+            finalize(() => {
+                this.loading.version = false;
+            }))
             .map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]);
+
     }
 
     clearTree(items: Array<WorkflowItem>): void {

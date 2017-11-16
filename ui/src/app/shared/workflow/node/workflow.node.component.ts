@@ -40,6 +40,7 @@ import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.ser
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowNodeConditionsComponent} from './conditions/node.conditions.component';
+import {first} from 'rxjs/operators';
 
 declare var _: any;
 
@@ -365,8 +366,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         $event.stopPropagation();
         this.loadingStop = true;
         this._wrService.stopNodeRun(this.project.key, this.workflow.name, this.currentNodeRun.num, this.currentNodeRun.id)
-            .finally(() => this.loadingStop = false)
-            .first()
+            .pipe(first())
             .subscribe(() => {
                 this.currentNodeRun.status = this.pipelineStatus.STOPPED;
                 this._changeDetectorRef.detach();

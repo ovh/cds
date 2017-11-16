@@ -8,6 +8,7 @@ import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-run-summary',
@@ -57,7 +58,7 @@ export class WorkflowRunSummaryComponent implements OnInit {
     stopWorkflow() {
         this.loadingAction = true;
         this._workflowRunService.stopWorkflowRun(this.project.key, this.workflowName, this.workflowRun.num)
-            .finally(() => this.loadingAction = false)
+            .pipe(finalize(() => this.loadingAction = false))
             .subscribe(() => this._toast.success('', this._translate.instant('workflow_stopped')));
     }
 }

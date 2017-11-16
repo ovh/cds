@@ -6,6 +6,7 @@ import {RepositoriesManager, Repository} from '../../../model/repositories.model
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 import {cloneDeep} from 'lodash';
 import {Parameter} from '../../../model/parameter.model';
+import {first} from 'rxjs/operators';
 
 declare var CodeMirror: any;
 
@@ -160,7 +161,7 @@ export class ParameterValueComponent implements OnInit {
         if (this.selectedRepoManager) {
             this.loadingRepos = true;
             delete this.selectedRepo;
-            this._repoManagerService.getRepositories(this.projectKey, this.selectedRepoManager.name, false).first()
+            this._repoManagerService.getRepositories(this.projectKey, this.selectedRepoManager.name, false).pipe(first())
                 .subscribe( repos => {
                     this.selectedRepo = repos[0].fullname;
                     this.repositories = repos;

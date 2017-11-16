@@ -8,6 +8,7 @@ import {Project} from '../../../../model/project.model';
 import {HookEvent} from './hook.event';
 import {cloneDeep} from 'lodash';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -51,9 +52,9 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
             Workflow.updateHook(workflowToUpdate, h.hook);
 
         }
-        this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate).finally(() => {
+        this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate).pipe(finalize(() => {
             this.loading = false;
-        }).subscribe(() => {
+        })).subscribe(() => {
             this.editHook.modal.approve(true);
             this._toast.success('', this._translate.instant('workflow_updated'));
         });

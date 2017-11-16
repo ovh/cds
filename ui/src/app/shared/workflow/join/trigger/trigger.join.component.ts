@@ -6,6 +6,7 @@ import {Project} from '../../../../model/project.model';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-trigger-join',
@@ -34,7 +35,7 @@ export class WorkflowTriggerJoinComponent {
     show(): void {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.modalTemplate);
         this.modal = this._modalService.open(config);
-        this._workflowStore.getTriggerJoinCondition(this.project.key, this.workflow.name, this.join.id).first().subscribe( wtc => {
+        this._workflowStore.getTriggerJoinCondition(this.project.key, this.workflow.name, this.join.id).pipe(first()).subscribe( wtc => {
             this.operators = wtc.operators;
             this.conditionNames = wtc.names;
         });

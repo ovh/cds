@@ -5,6 +5,7 @@ import {Project} from '../../../model/project.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../shared/toast/ToastService';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-add',
@@ -34,7 +35,7 @@ export class WorkflowAddComponent {
 
     createWorkflow(): void {
         this.loading = true;
-        this._workflowStore.addWorkflow(this.project.key, this.workflow).first().subscribe(() => {
+        this._workflowStore.addWorkflow(this.project.key, this.workflow).pipe(first()).subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_added'));
             this.loading = false;
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name]);

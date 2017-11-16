@@ -4,6 +4,7 @@ import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {WorkerModel} from '../../../model/worker-model.model';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-requirements-form',
@@ -40,7 +41,7 @@ export class RequirementsFormComponent {
         });
 
         this._workerModelService.getWorkerModels().first()
-        .finally(() => this.loading = false)
+        .pipe(finalize(() => this.loading = false))
         .subscribe( wms => {
             this.workerModels = wms.map((wm) => wm.name).concat(this.workerModels);
         });

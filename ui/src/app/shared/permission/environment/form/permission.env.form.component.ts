@@ -4,6 +4,7 @@ import {GroupService} from '../../../../service/group/group.service';
 import {Group, GroupPermission} from '../../../../model/group.model';
 import {PermissionService} from '../../permission.service';
 import {EnvironmentPermissionEvent} from '../../permission.event.model';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-permission-env-form',
@@ -24,7 +25,7 @@ export class PermissionEnvironmentFormComponent {
     selectedPerm: string;
 
     constructor(private _groupService: GroupService, private _permissionService: PermissionService) {
-        this._groupService.getGroups().first().subscribe(gs => {
+        this._groupService.getGroups().pipe(first()).subscribe(gs => {
             this.groups = gs;
         });
         this.perms = this._permissionService.getPermissions();

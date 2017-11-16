@@ -11,6 +11,7 @@ import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {VariableService} from '../../../service/variable/variable.service';
 import {cloneDeep} from 'lodash';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-add',
@@ -51,7 +52,7 @@ export class ApplicationAddComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this._varService.getContextVariable(this.project.key).first().subscribe( s => {
+        this._varService.getContextVariable(this.project.key).pipe(first()).subscribe( s => {
             this.suggestion = s;
         });
     }
@@ -91,7 +92,7 @@ export class ApplicationAddComponent implements OnInit {
     }
 
     updateSelectedApplicationToClone(name: string): void {
-        this._appStore.getApplicationResolver(this.project.key, name).first().subscribe(app => {
+        this._appStore.getApplicationResolver(this.project.key, name).pipe(first()).subscribe(app => {
             this.selectedApplication = app;
             this.variables = cloneDeep(app.variables);
             if (this.variables) {

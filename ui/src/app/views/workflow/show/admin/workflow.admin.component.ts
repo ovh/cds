@@ -9,6 +9,7 @@ import { WarningModalComponent } from '../../../../shared/modal/warning/warning.
 import { ToastService } from '../../../../shared/toast/ToastService';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {cloneDeep} from 'lodash';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-admin',
@@ -68,9 +69,9 @@ export class WorkflowAdminComponent implements OnInit {
 
     updateWorkflow(): void {
         this.loading = true;
-        this._workflowStore.updateWorkflow(this.project.key, this._tagWorkflow).finally(() => {
+        this._workflowStore.updateWorkflow(this.project.key, this._tagWorkflow).pipe(finalize(() => {
             this.loading = false;
-        }).subscribe(() => {
+        })).subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_updated'));
         });
     }
@@ -84,9 +85,9 @@ export class WorkflowAdminComponent implements OnInit {
             this.warningUpdateModal.show();
         } else {
             this.loading = true;
-            this._workflowStore.renameWorkflow(this.project.key, this.oldName, this.workflow).finally(() => {
+            this._workflowStore.renameWorkflow(this.project.key, this.oldName, this.workflow).pipe(finalize(() => {
                 this.loading = false;
-            }).subscribe(() => {
+            })).subscribe(() => {
                 this._toast.success('', this._translate.instant('workflow_updated'));
                 this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name], { queryParams: {tab: 'advanced'}});
             });
@@ -94,9 +95,9 @@ export class WorkflowAdminComponent implements OnInit {
     };
 
     deleteWorkflow(): void {
-        this._workflowStore.deleteWorkflow(this.project.key, this.workflow).finally(() => {
+        this._workflowStore.deleteWorkflow(this.project.key, this.workflow).pipe(finalize(() => {
             this.loading = false;
-        }).subscribe(() => {
+        })).subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_deleted'));
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows' } });
         });

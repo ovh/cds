@@ -12,6 +12,7 @@ import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {Subscription} from 'rxjs/Subscription';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-run-param',
@@ -133,9 +134,9 @@ export class WorkflowNodeRunParamComponent {
         }
 
         this.loading = true;
-        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).finally(() => {
+        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).pipe(finalize(() => {
             this.loading = false;
-        }).subscribe(wr => {
+        })).subscribe(wr => {
             this.modal.approve(true);
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
                 {queryParams: { subnum: wr.last_subnumber }});
