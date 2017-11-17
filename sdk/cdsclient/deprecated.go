@@ -59,3 +59,21 @@ func (c *client) ApplicationPipelineTriggersGet(projectKey string, appName strin
 
 	return triggers, nil
 }
+
+func (c *client) AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullname, pipelineName string) error {
+	uri := fmt.Sprintf("/project/%s/application/%s/repositories_manager/%s/hook", projectKey, appName, reposManager)
+	data := map[string]string{
+		"repository_fullname": repoFullname,
+		"pipeline_name":       pipelineName,
+	}
+
+	app := &sdk.Application{}
+	code, err := c.PostJSON(uri, data, app)
+	if err != nil {
+		return err
+	}
+	if code >= 300 {
+		return fmt.Errorf("HTTP %d", code)
+	}
+	return nil
+}
