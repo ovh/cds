@@ -50,8 +50,8 @@
             </div>
         </div>
     </div>
-    <div *ngIf="selectedJob">
-        <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [edit]="pipeline.permission === permissionValue.READ_WRITE_EXECUTE"
+    <div *ngIf="selectedJob && pipeline">
+        <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [pipeline]="pipeline" [edit]="pipeline.permission === permissionValue.READ_WRITE_EXECUTE"
                     (actionEvent)="jobEvent($event)"></app-action>
     </div>
 </div>
