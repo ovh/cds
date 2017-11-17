@@ -166,20 +166,20 @@ func (api *API) resyncWorkflowRunHandler() Handler {
 		}
 		run, err := workflow.LoadRun(api.mustDB(), key, name, number)
 		if err != nil {
-			return sdk.WrapError(err, "resyncWorkflowRunPipelinesHandler> Unable to load last workflow run [%s/%d]", name, number)
+			return sdk.WrapError(err, "resyncWorkflowRunHandler> Unable to load last workflow run [%s/%d]", name, number)
 		}
 
 		tx, errT := api.mustDB().Begin()
 		if errT != nil {
-			return sdk.WrapError(errT, "resyncWorkflowRunPipelinesHandler> Cannot start transaction")
+			return sdk.WrapError(errT, "resyncWorkflowRunHandler> Cannot start transaction")
 		}
 
 		if err := workflow.Resync(tx, api.Cache, run, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "resyncWorkflowRunPipelinesHandler> Cannot resync pipelines")
+			return sdk.WrapError(err, "resyncWorkflowRunHandler> Cannot resync pipelines")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "resyncWorkflowRunPipelinesHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "resyncWorkflowRunHandler> Cannot commit transaction")
 		}
 		return WriteJSON(w, r, run, http.StatusOK)
 	}
