@@ -33,6 +33,8 @@ export class ActionComponent implements OnDestroy {
 
         if (!this.editableAction.requirements) {
             this.editableAction.requirements = new Array<Requirement>();
+        } else {
+            this.prepareEditRequirements();
         }
         this.steps = new Array<Action>();
         if (this.editableAction.actions) {
@@ -95,6 +97,39 @@ export class ActionComponent implements OnDestroy {
                 }
                 break;
         }
+    }
+
+    prepareEditRequirements(): void {
+        this.editableAction.requirements.forEach(req => {
+            if (req.type === 'model' || req.type === 'service') {
+                let spaceIdx = req.value.indexOf(' ');
+                if (spaceIdx > 1) {
+                    let newValue = req.value.substring(0, spaceIdx);
+                    let newOpts = req.value.substring(spaceIdx + 1, req.value.length);
+                    req.value = newValue;
+                    req.opts = newOpts.replace(/\s/g, '\n');
+                }
+            }
+        });
+    }
+
+    parseRequirements(): void {
+        // for each type 'model' and 'service', concat value with opts
+        // and replace \n with space
+        this.editableAction.requirements.forEach(req => {
+            if (req.type === 'model' || req.type === 'service' && req.opts) {
+                let spaceIdx = req.value.indexOf(' ');
+                let newValue = req.value;
+                // if there is a space in name and opts not empty
+                // override name with opts only
+                if (spaceIdx > 1 && req.opts !== '') {
+                    newValue = req.value.substring(0, spaceIdx);
+                }
+                let newOpts = req.opts.replace(/\n/g, ' ');
+                req.value = newValue + ' ' + newOpts;
+                req.opts = '';
+            }
+        })
     }
 
     /**

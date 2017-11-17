@@ -16,24 +16,31 @@ export class RequirementsListComponent extends Table {
 
     @Input() requirements: Requirement[];
     @Input() edit: boolean;
+
     @Input('suggest')
     set suggest(data: string[]) {
-        if (Array.isArray(this.workerModels) && data) {
-            this.workerModels = this.workerModels.concat(data);
-        } else if (data) {
-            this.workerModels = data;
+        if (data) {
+            this._suggest = data;
+        } else {
+            this._suggest = [];
         }
-        this._suggest = data || [];
     }
+
     get suggest() {
         return this._suggest;
     }
+
+    get suggestWithWorkerModel() {
+        return this._suggestWithWorkerModel;
+    }
+
     @Output() event = new EventEmitter<RequirementEvent>();
     @Output() onChange = new EventEmitter<Requirement[]>();
 
     availableRequirements: Array<string>;
-    workerModels: Array<string>;
+    workerModels: Array<WorkerModel>;
     _suggest: string[] = [];
+    _suggestWithWorkerModel: Array<string> = [];
     loading = true;
 
     constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
@@ -47,7 +54,14 @@ export class RequirementsListComponent extends Table {
         this._workerModelService.getWorkerModels()
         .pipe(finalize(() => this.loading = false), first())
         .subscribe(wms => {
-            this.workerModels = wms.map((wm) => wm.name).concat(this.workerModels);
+            this.workerModels = wms;
+            if (Array.isArray(this.workerModels)) {
+                this._suggestWithWorkerModel = [];
+                this.workerModels.forEach(wm => {
+                    this._suggestWithWorkerModel.push(wm.name);
+                })
+                this._suggestWithWorkerModel = this._suggestWithWorkerModel.concat(this._suggest);
+            }
         });
     }
 

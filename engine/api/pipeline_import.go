@@ -32,7 +32,7 @@ func (api *API) importPipelineHandler() Handler {
 		}
 
 		if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
-			return sdk.WrapError(errp, "importPipelineHandler> Unable to load project permissions %s", key)
+			return sdk.WrapError(err, "importPipelineHandler> Unable to load project permissions %s", key)
 		}
 
 		// Get body

@@ -43,17 +43,18 @@ export class StepLogComponent implements OnInit, OnDestroy {
     logs: Log;
     currentStatus: string;
     set showLog(data: boolean) {
-        if (PipelineStatus.neverRun(this.currentStatus)) {
-            return;
-        }
-        this._showLog = data;
-        if (data) {
+        let neverRun = PipelineStatus.neverRun(this.currentStatus);
+        if (data && !neverRun) {
             this.initWorker();
         } else {
             if (this.worker) {
                 this.worker.stop();
             }
         }
+        if (data && neverRun) {
+            return;
+        }
+        this._showLog = data;
     }
     get showLog() {
       return this._showLog;
@@ -134,6 +135,9 @@ export class StepLogComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         if (this.workerSubscription) {
             this.workerSubscription.unsubscribe();
+        }
+        if (this.worker) {
+            this.worker.stop();
         }
         clearInterval(this.intervalListener);
     }

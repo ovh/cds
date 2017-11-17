@@ -32,6 +32,7 @@ export class WorkflowNodeConditionsComponent implements OnInit {
 
     @Input() workflow: Workflow;
     @Input() project: Project;
+    @Input() loading: boolean;
     permission = PermissionValue;
 
     operators: {};
