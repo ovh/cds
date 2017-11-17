@@ -629,6 +629,10 @@ func GetLastBuildNumber(db gorp.SqlExecutor, pipID, appID, envID int64) (int64, 
 // InsertBuildVariable adds a variable exported in user scripts and forwarded by building worker
 func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error {
 
+	if strings.Contains(v.Value, "{{.") {
+		return sdk.ErrWrongRequest
+	}
+
 	// Load args from pipeline build and lock it
 	query := `SELECT args FROM pipeline_build WHERE id = $1 FOR UPDATE`
 	var argsJSON string
@@ -642,12 +646,24 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 		return err
 	}
 
-	// Add build variable
-	params = append(params, sdk.Parameter{
-		Name:  v.Name,
-		Type:  sdk.StringParameter,
-		Value: v.Value,
-	})
+	// check if build variable already exist
+	found := false
+	for i := range params {
+		p := &params[i]
+		// overwrite if variable already exist
+		if p.Name == v.Name {
+			p.Value = v.Value
+			found = true
+			break
+		}
+	}
+	if !found {
+		params = append(params, sdk.Parameter{
+			Name:  v.Name,
+			Type:  sdk.StringParameter,
+			Value: v.Value,
+		})
+	}
 
 	// Update pb in database
 	data, errj := json.Marshal(params)
