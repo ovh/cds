@@ -24,11 +24,11 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 	defer func() {
 		log.Debug("processWorkflowRun> End [#%d]%s - %.3fs", w.Number, w.Workflow.Name, time.Since(t0).Seconds())
 	}()
-	defer func() {
-		if chanEvent != nil {
-			chanEvent <- *w
+	defer func(wr *sdk.WorkflowRun, chEvent chan<- interface{}) {
+		if chEvent != nil {
+			chEvent <- *wr
 		}
-	}()
+	}(w, chanEvent)
 
 	maxsn := MaxSubNumber(w.WorkflowNodeRuns)
 	log.Info("processWorkflowRun> %s/%s %d.%d", p.Name, w.Workflow.Name, w.Number, maxsn)
