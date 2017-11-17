@@ -1,5 +1,7 @@
 import {User} from './user.model';
 
+export const adminGroupName = 'shared.infra';
+
 export class Group {
     id: number;
     name: string;

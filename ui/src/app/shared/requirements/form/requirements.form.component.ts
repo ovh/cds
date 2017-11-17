@@ -1,6 +1,8 @@
-import {Component, Input, Output, EventEmitter, ViewChild} from '@angular/core';
+import {Component, Input, Output, OnInit, EventEmitter, ViewChild} from '@angular/core';
 import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {Requirement} from '../../../model/requirement.model';
+import {GroupPermission, adminGroupName} from '../../../model/group.model';
+import {PermissionValue} from '../../../model/permission.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {WorkerModel} from '../../../model/worker-model.model';
@@ -12,7 +14,7 @@ import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
     templateUrl: './requirements.form.html',
     styleUrls: ['./requirements.form.scss']
 })
-export class RequirementsFormComponent {
+export class RequirementsFormComponent implements OnInit {
 
     @Input('suggest')
     set suggest(data: Array<string>) {
@@ -32,6 +34,7 @@ export class RequirementsFormComponent {
     }
 
     @Input() modal: SemanticModalComponent;
+    @Input() groupsPermission: Array<GroupPermission>;
 
     @Output() event = new EventEmitter<RequirementEvent>();
 
@@ -53,15 +56,6 @@ export class RequirementsFormComponent {
             // user does not need to add plugin prequisite manually, so we remove it from list
             this.availableRequirements.push(...r.filter(req => req !== 'plugin').toArray());
         });
-
-        this._workerModelService.getWorkerModels().first()
-        .finally(() => this.loading = false)
-        .subscribe( wms => {
-            this.workerModels = wms;
-            if (Array.isArray(this.workerModels)) {
-                this._suggestWithWorkerModel = this.workerModels.map(wm => wm.name).concat(this._suggest);
-            }
-        });
     }
 
     onSubmitAddRequirement(form): void {
@@ -70,6 +64,30 @@ export class RequirementsFormComponent {
             this.event.emit(new RequirementEvent('add', this.newRequirement));
             this.newRequirement = new Requirement('binary');
         }
+    }
+
+    ngOnInit() {
+        this._workerModelService.getWorkerModels().first()
+            .finally(() => this.loading = false)
+            .subscribe( wms => {
+                this.workerModels = wms;
+                if (Array.isArray(this.workerModels)) {
+                    let filteredWm = this.workerModels;
+
+                    if (this.groupsPermission) {
+                        filteredWm = this.workerModels.filter((wm) => {
+                            let groupPerm = this.groupsPermission.find((grp) => {
+                                return grp.group.name === wm.group.name && grp.permission >= PermissionValue.READ_EXECUTE;
+                            });
+
+                            return groupPerm != null || wm.group.name === adminGroupName;
+                        })
+                    }
+
+                    this._suggestWithWorkerModel = filteredWm.map(wm => wm.name).concat(this._suggest);
+                }
+            });
+
     }
 
     computeFormValid(form): void {
