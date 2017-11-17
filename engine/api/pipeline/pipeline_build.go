@@ -66,7 +66,7 @@ const (
 			pb.vcs_changes_branch as vcs_branch, pb.vcs_changes_hash as vcs_hash, pb.vcs_changes_author as vcs_author,
 			pb.vcs_remote as vcs_remote, pb.vcs_remote_url as vcs_remote_url,
 			pb.parent_pipeline_build_id as parent_pipeline_build,
-			application.vcs_server as vcs_server, application.repo_fullname as repo_fullname, 
+			application.vcs_server as vcs_server, application.repo_fullname as repo_fullname,
 			"user".username as username,
 			pb.scheduled_trigger as scheduled_trigger
 		FROM pipeline_build pb
@@ -530,7 +530,7 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	branch, remote := GetVCSInfosInParams(pb.Parameters)
 	//Get the history
 	var previous *sdk.PipelineBuild
-	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 0,
+	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2,
 		LoadPipelineBuildOpts.WithBranchName(branch),
 		LoadPipelineBuildOpts.WithRemoteName(remote))
 	if err != nil {
