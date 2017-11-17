@@ -654,6 +654,7 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 		if p.Name == v.Name {
 			p.Value = v.Value
 			found = true
+			break
 		}
 	}
 	if !found {
