@@ -5,6 +5,7 @@ import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {WorkerModel} from '../../../model/worker-model.model';
 import {TranslateService} from 'ng2-translate';
+import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 
 @Component({
     selector: 'app-requirements-form',
@@ -30,6 +31,8 @@ export class RequirementsFormComponent {
         return this._suggestWithWorkerModel;
     }
 
+    @Input() modal: SemanticModalComponent;
+
     @Output() event = new EventEmitter<RequirementEvent>();
 
     newRequirement: Requirement = new Requirement('binary');
@@ -38,8 +41,9 @@ export class RequirementsFormComponent {
     _suggest: Array<string> = [];
     _suggestWithWorkerModel: Array<string> = [];
     loading = true;
-    canDisplayLinkWorkerModel = false;
+    workerModelLinked: WorkerModel;
     isFormValid = false;
+    modelTypeClass: string;
 
     constructor(private _requirementStore: RequirementStore,
         private _workerModelService: WorkerModelService,
@@ -88,7 +92,7 @@ export class RequirementsFormComponent {
                 this.newRequirement.name = 'memory_' + this.newRequirement.value;
                 break
             case 'model':
-                this.canDisplayLinkWorkerModel = this.computeDisplayLinkWorkerModel();
+                this.workerModelLinked = this.computeDisplayLinkWorkerModel();
                 this.newRequirement.name = this.newRequirement.value;
                 break
             default:
@@ -98,21 +102,21 @@ export class RequirementsFormComponent {
         this.computeFormValid(form);
     }
 
+    closeModal() {
+        if (this.modal) {
+          this.modal.hide();
+        }
+    }
+
     getHelp() {
         return this._translate.instant('requirement_help_' + this.newRequirement.type);
     }
 
-    computeDisplayLinkWorkerModel(): boolean {
-        if (this.newRequirement.value === '') {
-            return false;
+    computeDisplayLinkWorkerModel(): WorkerModel {
+        if (this.newRequirement.value === '' || !Array.isArray(this.workerModels)) {
+            return null;
         }
-        if (Array.isArray(this.workerModels)) {
-            for (let wm of this.workerModels) {
-                if (wm.name === this.newRequirement.value) {
-                    return true;
-                }
-            }
-        }
-        return false;
+
+        return this.workerModels.find((wm) => wm.name === this.newRequirement.value);
     }
 }
