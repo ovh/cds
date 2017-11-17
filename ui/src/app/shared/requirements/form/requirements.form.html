@@ -1,4 +1,4 @@
-<form class="ui form" #formAddRequirement="ngForm">
+<form class="ui form requirementForm" #formAddRequirement="ngForm">
     <div class="fields">
             <div class="five wide field">
                 <div class="field">
@@ -61,8 +61,8 @@
                         (blur)="setName(formAddRequirement)"
                         placeholder="{{'requirement_placeholder_value_' + newRequirement.type | translate}}"
                         [no-match-found-text]="false">
-                    <p *ngIf="canDisplayLinkWorkerModel">
-                        <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]">
+                    <p *ngIf="workerModelLinked != null">
+                        <a class="ui" [routerLink]="['/settings', 'worker-model', newRequirement.value]" (click)="closeModal()">
                             {{ 'requirement_settings_worker_model' | translate }} {{ newRequirement.value }}
                         </a>
                     </p>
@@ -86,7 +86,20 @@
                         placeholder="{{'requirement_placeholder_opts_' + newRequirement.type | translate}}"></textarea>
                 </div>
             </div>
-            <div class="three wide center field">
+            <div class="one wide center mtop8" *ngIf="workerModelLinked != null">
+                <div *ngIf="workerModelLinked.group.name === 'shared.infra'"
+                    [smDirTooltip]="'worker_model_official' | translate" smDirPosition="top center">
+                    <i class="check circle outline icon large green">
+                    </i>
+                </div>
+                <div *ngIf="workerModelLinked.group.name !== 'shared.infra'"
+                    [smDirTooltip]="'worker_model_unofficial' | translate" smDirPosition="top center">
+                    <i class="remove circle outline icon large red">
+                    </i>
+                </div>
+
+            </div>
+            <div class="two wide center field">
                 <button class="ui blue icon button" [disabled]="!isFormValid" (click)="onSubmitAddRequirement(formAddRequirement)"><i class="plus icon"></i></button>
             </div>
     </div>
