@@ -412,15 +412,23 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 	}
 	log.Info("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
 
+	var exposedPorts map[docker.Port]struct{}
+	if len(cArgs.dockerOpts.ports) > 0 {
+		for port := range cArgs.dockerOpts.ports {
+			exposedPorts = map[docker.Port]struct{}{port: {}}
+		}
+	}
+
 	opts := docker.CreateContainerOptions{
 		Name: cArgs.name,
 		Config: &docker.Config{
-			Image:      cArgs.image,
-			Cmd:        cArgs.cmd,
-			Env:        cArgs.env,
-			Labels:     cArgs.labels,
-			Memory:     cArgs.memory * 1024 * 1024, //from MB to B
-			MemorySwap: -1,
+			Image:        cArgs.image,
+			Cmd:          cArgs.cmd,
+			Env:          cArgs.env,
+			Labels:       cArgs.labels,
+			Memory:       cArgs.memory * 1024 * 1024, //from MB to B
+			MemorySwap:   -1,
+			ExposedPorts: exposedPorts,
 		},
 		HostConfig: &docker.HostConfig{
 			PortBindings: cArgs.dockerOpts.ports,
