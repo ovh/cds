@@ -7,9 +7,10 @@ import (
 
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
-// Insert a new environment key in database
+// InsertKey a new environment key in database
 func InsertKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
 	dbEnvironmentKey := dbEnvironmentKey(*key)
 
@@ -17,7 +18,7 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
 	if errE != nil {
 		return sdk.WrapError(errE, "InsertKey> Cannot encrypt private key")
 	}
-	key.Private = string(s)
+	dbEnvironmentKey.Private = string(s)
 
 	if err := db.Insert(&dbEnvironmentKey); err != nil {
 		return sdk.WrapError(err, "InsertKey> Cannot insert project key")
@@ -40,6 +41,11 @@ func LoadAllKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 	for i := range res {
 		p := res[i]
 		keys[i] = sdk.EnvironmentKey(p)
+		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
+		if err != nil {
+			log.Error("LoadAllKeys> Unable to decrypt private key %s/%s: %v", env.Name, keys[i].Name, err)
+		}
+		keys[i].Private = string(decrypted)
 	}
 	env.Keys = keys
 	return nil

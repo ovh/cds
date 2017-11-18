@@ -12,6 +12,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -104,12 +105,11 @@ func Delete(db gorp.SqlExecutor, store cache.Store, key string) error {
 		return err
 	}
 
-	if err := DeleteByID(db, proj.ID); err != nil {
-		return err
-	}
-
-	return nil
+	return DeleteByID(db, proj.ID)
 }
+
+// BuiltinGPGKey is a const
+const BuiltinGPGKey = "builtin"
 
 // Insert a new project in database
 func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
@@ -128,6 +128,25 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return err
 	}
 	*proj = sdk.Project(dbProj)
+
+	keyID, publicKey, privateKey, err := keys.GeneratePGPKeyPair(BuiltinGPGKey)
+	if err != nil {
+		return sdk.WrapError(err, "project.Insert> Unable to generate PGPKeyPair: %v", err)
+	}
+
+	pk := sdk.ProjectKey{}
+	pk.Key.KeyID = keyID
+	pk.Key.Name = BuiltinGPGKey
+	pk.Key.Private = privateKey
+	pk.Key.Public = publicKey
+	pk.Type = sdk.KeyTypePgp
+	pk.ProjectID = proj.ID
+	pk.Builtin = true
+
+	if err := InsertKey(db, &pk); err != nil {
+		return sdk.WrapError(err, "project.Insert> Unable to insert PGPKeyPair")
+	}
+
 	return UpdateLastModified(db, store, u, proj)
 }
 
