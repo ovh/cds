@@ -13,6 +13,14 @@ func TestIsAllowedDomain(t *testing.T) {
 		want bool
 	}{
 		{
+			name: "all",
+			args: args{
+				allowedDomains: "",
+				email:          "user@a-domain.com",
+			},
+			want: true,
+		},
+		{
 			name: "valid domain",
 			args: args{
 				allowedDomains: "a-domain.com",
