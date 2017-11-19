@@ -2,6 +2,7 @@ import {Component, OnInit, ViewChild, QueryList, ViewChildren, OnDestroy} from '
 import {ActivatedRoute, Router} from '@angular/router';
 import {Application, ApplicationFilter} from '../../../model/application.model';
 import {ApplicationStore} from '../../../service/application/application.store';
+import {ProjectStore} from '../../../service/project/project.store';
 import {Project} from '../../../model/project.model';
 import {environment} from '../../../../environments/environment';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
@@ -72,7 +73,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
     constructor(private _applicationStore: ApplicationStore, private _route: ActivatedRoute,
                 private _router: Router, private _authStore: AuthentificationStore,
-                private _toast: ToastService, public _translate: TranslateService) {
+                private _toast: ToastService, public _translate: TranslateService,
+                private _projectStore: ProjectStore) {
         // Update data if route change
         this._route.data.subscribe(datas => {
             this.project = datas['project'];

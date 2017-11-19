@@ -1,4 +1,4 @@
-<div class="ui grid">
+<div class="ui grid" *ngIf="!loading">
     <div class="eight wide column">
         <h3>{{ 'project_pipelines_list' | translate }}</h3>
     </div>
@@ -6,7 +6,7 @@
         <a class="ui blue button" [routerLink]="['./pipeline']">{{ 'pipeline_create' | translate }}</a>
     </div>
 </div>
-<div class="ui segment">
+<div class="ui segment" *ngIf="!loading">
     <div *ngIf="project.pipelines && project.pipelines.length > 0;then pipelines; else nopipelines"></div>
     <ng-template #pipelines>
         <div class="ui stackable four column grid">
@@ -19,3 +19,4 @@
         <span>{{ 'project_no_pipeline' | translate }}</span>
     </ng-template>
 </div>
+<div *ngIf="loading" class="ui text active loader">Loading pipelines...</div>

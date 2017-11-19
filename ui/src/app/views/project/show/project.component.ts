@@ -1,7 +1,7 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {ProjectStore} from '../../../service/project/project.store';
+import {ProjectStore, LoadOpts} from '../../../service/project/project.store';
 import {Project} from '../../../model/project.model';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../shared/toast/ToastService';
@@ -19,7 +19,6 @@ import {User} from '../../../model/user.model';
     styleUrls: ['./project.scss']
 })
 export class ProjectShowComponent implements OnInit, OnDestroy {
-    varFormLoading = false;
     permFormLoading = false;
     permEnvFormLoading = false
     currentUser: User;
@@ -29,8 +28,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
 
     selectedTab = 'applications';
 
-    @ViewChild('varWarning')
-    varWarningModal: WarningModalComponent;
     @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;
     @ViewChild('permEnvWarning')
@@ -88,7 +85,16 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         if (this.projectSubscriber) {
             this.projectSubscriber.unsubscribe();
         }
-        this.projectSubscriber = this._projectStore.getProjects(key).subscribe( projects => {
+        let opts = [
+          // new LoadOpts('withVariables', 'variables', this._projectStore.getProjectVariablesResolver),
+          new LoadOpts('withApplications', 'applications', null),
+          // new LoadOpts('withPipelines', 'pipelines', this._projectStore.getProjectPipelinesResolver),
+          new LoadOpts('withApplicationPipelines', 'applications.pipelines', null),
+          new LoadOpts('withGroups', 'groups', null),
+          new LoadOpts('withPermission', 'permissions', null),
+          new LoadOpts('withWorkflows', 'workflows', null)
+        ];
+        this.projectSubscriber = this._projectStore.getProjects(key, opts).subscribe( projects => {
             if (projects) {
                 let updatedProject = projects.get(key);
                 if (updatedProject && !updatedProject.externalChange) {
@@ -106,35 +112,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
 
     showTab(tab: string): void {
         this._router.navigateByUrl('/project/' + this.project.key + '?tab=' + tab);
-    }
-
-    variableEvent(event: VariableEvent, skip?: boolean): void {
-        if (!skip && this.project.externalChange) {
-            this.varWarningModal.show(event);
-        } else {
-            event.variable.value = String(event.variable.value);
-            switch (event.type) {
-                case 'add':
-                    this.varFormLoading = true;
-                    this._projectStore.addProjectVariable(this.project.key, event.variable).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_added'));
-                        this.varFormLoading = false;
-                    }, () => {
-                        this.varFormLoading = false;
-                    });
-                    break;
-                case 'update':
-                    this._projectStore.updateProjectVariable(this.project.key, event.variable).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_updated'));
-                    });
-                    break;
-                case 'delete':
-                    this._projectStore.deleteProjectVariable(this.project.key, event.variable).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_deleted'));
-                    });
-                    break;
-            }
-        }
     }
 
     addEnvPermEvent(event: EnvironmentPermissionEvent, skip?: boolean): void {
