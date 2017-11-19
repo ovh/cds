@@ -419,6 +419,13 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 		}
 	}
 
+	var mounts []docker.Mount
+	if len(cArgs.dockerOpts.mounts) > 0 {
+		for _, v := range cArgs.dockerOpts.mounts {
+			mounts = append(mounts, docker.Mount{Source: v.Source, Destination: v.Target})
+		}
+	}
+
 	opts := docker.CreateContainerOptions{
 		Name: cArgs.name,
 		Config: &docker.Config{
@@ -429,10 +436,12 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 			Memory:       cArgs.memory * 1024 * 1024, //from MB to B
 			MemorySwap:   -1,
 			ExposedPorts: exposedPorts,
+			Mounts:       mounts,
 		},
 		HostConfig: &docker.HostConfig{
 			PortBindings: cArgs.dockerOpts.ports,
 			Privileged:   cArgs.dockerOpts.privileged,
+			Mounts:       cArgs.dockerOpts.mounts,
 		},
 		NetworkingConfig: &docker.NetworkingConfig{
 			EndpointsConfig: map[string]*docker.EndpointConfig{
@@ -461,36 +470,115 @@ var regexPort = regexp.MustCompile("^--port=(.*):(.*)$")
 type dockerOpts struct {
 	ports      map[docker.Port][]docker.PortBinding
 	privileged bool
+	mounts     []docker.HostMount
 }
 
 func computeDockerOpts(isSharedInfra bool, requirements []sdk.Requirement) (*dockerOpts, error) {
 	dockerOpts := &dockerOpts{}
 
 	for _, r := range requirements {
-		if r.Type == sdk.ModelRequirement {
-			// args are separated by a space
-			// example: golang:1.9.1 --port=8080:8080/tcp
-			for idx, opt := range strings.Split(r.Value, " ") {
-				if idx == 0 {
-					continue // it's image name
-				}
-				if isSharedInfra {
-					return nil, fmt.Errorf("You could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option.", opt)
-				}
-				if strings.HasPrefix(opt, "--port=") {
-					if err := dockerOpts.computeDockerOptsPorts(opt); err != nil {
-						return nil, err
-					}
-				} else if opt == "--privileged" {
-					dockerOpts.privileged = true
-				} else {
-					return nil, fmt.Errorf("Options not supported: %s", opt)
-				}
+		switch r.Type {
+		case sdk.ModelRequirement:
+			if err := dockerOpts.computeDockerOptsOnModelRequirement(isSharedInfra, r); err != nil {
+				return nil, err
+			}
+		case sdk.VolumeRequirement:
+			if err := dockerOpts.computeDockerOptsOnVolumeRequirement(isSharedInfra, r); err != nil {
+				return nil, err
 			}
 		}
 	}
 
 	return dockerOpts, nil
+}
+
+func (d *dockerOpts) computeDockerOptsOnModelRequirement(isSharedInfra bool, req sdk.Requirement) error {
+	// args are separated by a space
+	// example: golang:1.9.1 --port=8080:8080/tcp
+	for idx, opt := range strings.Split(req.Value, " ") {
+		if idx == 0 {
+			continue // it's image name
+		}
+		if isSharedInfra {
+			return fmt.Errorf("You could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option.", opt)
+		}
+		if strings.HasPrefix(opt, "--port=") {
+			if err := d.computeDockerOptsPorts(opt); err != nil {
+				return err
+			}
+		} else if opt == "--privileged" {
+			d.privileged = true
+		} else {
+			return fmt.Errorf("Options not supported: %s", opt)
+		}
+	}
+	return nil
+}
+
+func (d *dockerOpts) computeDockerOptsOnVolumeRequirement(isSharedInfra bool, req sdk.Requirement) error {
+	// args are separated by a space
+	// example: type=bind,source=/hostDir/sourceDir,destination=/dirInJob
+	for idx, opt := range strings.Split(req.Value, " ") {
+		if isSharedInfra {
+			return fmt.Errorf("You could not use this docker options '%s' with a 'shared.infra' hatchery. Please use you own hatchery or remove this option.", opt)
+		}
+
+		if idx == 0 {
+			// it's --mount flag
+			if err := d.computeDockerOptsOnVolumeMountRequirement(opt); err != nil {
+				return err
+			}
+		}
+
+	}
+	return nil
+}
+
+// computeDockerOptsOnVolumeMountRequirement compute Mount struct from value of requirement
+func (d *dockerOpts) computeDockerOptsOnVolumeMountRequirement(opt string) error {
+	// check that value begin with type= and contains source= / destination=
+	if !strings.HasPrefix(opt, "type=") || !strings.Contains(opt, "source=") || !strings.Contains(opt, "destination=") {
+		return fmt.Errorf("Invalid mount option. Example:type=bind,source=/hostDir/sourceDir,destination=/dirInJob current:%s", opt)
+	}
+
+	var mtype, source, destination, bindPropagation string
+	var readonly bool
+
+	// iterate over arg separated by ','
+	// type=bind,source=/hostDir/sourceDir,destination=/dirInJob ->
+	// [type=bind] [source=/hostDir/sourceDir] [destination=/dirInJob]
+	for _, o := range strings.Split(opt, ",") {
+		if strings.HasPrefix(o, "type=") {
+			mtype = strings.Split(o, "=")[1]
+		} else if strings.HasPrefix(o, "source=") {
+			source = strings.Split(o, "=")[1]
+		} else if strings.HasPrefix(o, "destination=") {
+			destination = strings.Split(o, "=")[1]
+		} else if strings.HasPrefix(o, "bind-propagation=") {
+			bindPropagation = strings.Split(o, "=")[1]
+		} else if o == "readonly" {
+			readonly = true
+		}
+	}
+	if mtype == "" || source == "" || destination == "" {
+		return fmt.Errorf("Invalid mount option - one arg is empty. Example:type=bind,source=/hostDir/sourceDir,destination=/dirInJob current:%s", opt)
+	}
+
+	mount := docker.HostMount{
+		Target:   destination,
+		Source:   source,
+		Type:     mtype,
+		ReadOnly: readonly,
+	}
+	// rprivate is the default value
+	// see https://docs.docker.com/engine/admin/volumes/bind-mounts/#choosing-the--v-or-mount-flag
+	if bindPropagation != "" {
+		mount.BindOptions = &docker.BindOptions{Propagation: bindPropagation}
+	}
+
+	d.mounts = append(d.mounts, mount)
+
+	return nil
 }
 
 func (d *dockerOpts) computeDockerOptsPorts(arg string) error {
