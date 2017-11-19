@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -51,6 +52,21 @@ func IsValidEmail(email string) bool {
 	// check email
 	regexp := regexp.MustCompile(sdk.UserEmailPattern)
 	return regexp.MatchString(email)
+}
+
+// IsAllowedDomain return true is email is allowed, false otherwise
+func IsAllowedDomain(allowedDomains string, email string) bool {
+	if allowedDomains != "" {
+		allowedDomains := strings.Split(allowedDomains, ",")
+		for _, domain := range allowedDomains {
+			if strings.HasSuffix(email, "@"+domain) && strings.Count(email, "@") == 1 {
+				return true
+			}
+		}
+		return false
+	}
+	// no restriction, domain is ok
+	return true
 }
 
 // LoadUserWithoutAuthByID load user information without secret

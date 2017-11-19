@@ -78,6 +78,7 @@ type Configuration struct {
 		Keys     string `toml:"keys" default:"/tmp/cds/keys"`
 	} `toml:"directories"`
 	Auth struct {
+		AllowedDomains   string `toml:"allowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true"`
 		DefaultGroup     string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup"`
 		SharedInfraToken string `toml:"sharedInfraToken" default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory."`
 		LDAP             struct {
