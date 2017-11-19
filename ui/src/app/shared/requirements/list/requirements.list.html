@@ -69,7 +69,7 @@
                             (ngModelChange)="change()"
                             [no-match-found-text]="false">
                     </div>
-                    <div *ngIf="!loading && (r.type === 'model' || r.type === 'service' || r.type === 'volume')">
+                    <div *ngIf="!loading && (r.type === 'model' || r.type === 'service')">
                         <textarea
                             [(ngModel)]="r.opts"
                             (ngModelChange)="change()"

@@ -457,7 +457,6 @@
   "requirement_placeholder_value_service" : "postgres:9.5.3",
   "requirement_placeholder_opts_service" : "POSTGRES_USER=myuser\nPOSTGRES_PASSWORD=mypassword",
   "requirement_placeholder_value_volume" : "type=bind,source=/hostDir/sourceDir,destination=/dirInJob",
-  "requirement_placeholder_opts_volume" : "(optional) --volume-driver vieux/sshfs",
 
   "scheduler_added" : "Scheduler created",
   "scheduler_deleted" : "Scheduler deleted",
