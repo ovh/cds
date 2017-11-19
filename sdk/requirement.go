@@ -16,7 +16,7 @@ const (
 	//MemoryRequirement set memory limit on a container
 	MemoryRequirement = "memory"
 	// VolumeRequirement set Volume limit on a container
-	VolumeRequirement = "Volume"
+	VolumeRequirement = "volume"
 )
 
 var (
