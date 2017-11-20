@@ -78,7 +78,6 @@ type Configuration struct {
 		Keys     string `toml:"keys" default:"/tmp/cds/keys"`
 	} `toml:"directories"`
 	Auth struct {
-		AllowedDomains   string `toml:"allowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true"`
 		DefaultGroup     string `toml:"defaultGroup" default:"" comment:"The default group is the group in which every new user will be granted at signup"`
 		SharedInfraToken string `toml:"sharedInfraToken" default:"" comment:"Token for shared.infra group. This value will be used when shared.infra will be created\nat first CDS launch. This token can be used by CDS CLI, Hatchery, etc...\nThis is mandatory."`
 		LDAP             struct {
@@ -90,6 +89,9 @@ type Configuration struct {
 			DN       string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com"`
 			Fullname string `toml:"fullname" default:"{{.givenName}} {{.sn}}"`
 		} `toml:"ldap"`
+		Local struct {
+			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true"`
+		} `toml:"local"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true"`

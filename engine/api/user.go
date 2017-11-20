@@ -175,8 +175,8 @@ func (api *API) addUserHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidEmail, "AddUser: Email address %s is not valid", createUserRequest.User.Email)
 		}
 
-		if !user.IsAllowedDomain(api.Config.Auth.AllowedDomains, createUserRequest.User.Email) {
-			return sdk.WrapError(sdk.ErrInvalidEmailDomain, "AddUser: Email address %s does not have a valid domain. Allowed domains:%v", createUserRequest.User.Email, api.Config.Auth.AllowedDomains)
+		if !user.IsAllowedDomain(api.Config.Auth.Local.SignupAllowedDomains, createUserRequest.User.Email) {
+			return sdk.WrapError(sdk.ErrInvalidEmailDomain, "AddUser: Email address %s does not have a valid domain. Allowed domains:%v", createUserRequest.User.Email, api.Config.Auth.Local.SignupAllowedDomains)
 		}
 
 		u := createUserRequest.User
