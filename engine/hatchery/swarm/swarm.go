@@ -285,7 +285,8 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 					cmd:          []string{},
 					env:          env,
 					labels:       labels,
-					memory:       serviceMemory}
+					memory:       serviceMemory,
+				}
 
 				if err := h.createAndStartContainer(args); err != nil {
 					log.Warning("SpawnWorker>Unable to start required container: %s", err)
@@ -376,7 +377,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 
 //create the docker bridge
 func (h *HatcherySwarm) createNetwork(name string) error {
-	log.Debug("createAndStartContainer> Create network %s", name)
+	log.Debug("createNetwork> Create network %s", name)
 	_, err := h.dockerClient.CreateNetwork(docker.CreateNetworkOptions{
 		Name:           name,
 		Driver:         "bridge",
@@ -413,16 +414,18 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 	log.Info("createAndStartContainer> Create container %s from %s on network %s as %s (memory=%dMB)", cArgs.name, cArgs.image, cArgs.network, cArgs.networkAlias, cArgs.memory)
 
 	var exposedPorts map[docker.Port]struct{}
-	if len(cArgs.dockerOpts.ports) > 0 {
-		for port := range cArgs.dockerOpts.ports {
-			exposedPorts = map[docker.Port]struct{}{port: {}}
-		}
-	}
-
 	var mounts []docker.Mount
-	if len(cArgs.dockerOpts.mounts) > 0 {
-		for _, v := range cArgs.dockerOpts.mounts {
-			mounts = append(mounts, docker.Mount{Source: v.Source, Destination: v.Target})
+	if cArgs.dockerOpts != nil {
+		if len(cArgs.dockerOpts.ports) > 0 {
+			for port := range cArgs.dockerOpts.ports {
+				exposedPorts = map[docker.Port]struct{}{port: {}}
+			}
+		}
+
+		if len(cArgs.dockerOpts.mounts) > 0 {
+			for _, v := range cArgs.dockerOpts.mounts {
+				mounts = append(mounts, docker.Mount{Source: v.Source, Destination: v.Target})
+			}
 		}
 	}
 
@@ -438,11 +441,6 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 			ExposedPorts: exposedPorts,
 			Mounts:       mounts,
 		},
-		HostConfig: &docker.HostConfig{
-			PortBindings: cArgs.dockerOpts.ports,
-			Privileged:   cArgs.dockerOpts.privileged,
-			Mounts:       cArgs.dockerOpts.mounts,
-		},
 		NetworkingConfig: &docker.NetworkingConfig{
 			EndpointsConfig: map[string]*docker.EndpointConfig{
 				cArgs.network: &docker.EndpointConfig{
@@ -450,6 +448,14 @@ func (h *HatcherySwarm) createAndStartContainer(cArgs containerArgs) error {
 				},
 			},
 		},
+	}
+
+	if cArgs.dockerOpts != nil {
+		opts.HostConfig = &docker.HostConfig{
+			PortBindings: cArgs.dockerOpts.ports,
+			Privileged:   cArgs.dockerOpts.privileged,
+			Mounts:       cArgs.dockerOpts.mounts,
+		}
 	}
 
 	c, err := h.dockerClient.CreateContainer(opts)
