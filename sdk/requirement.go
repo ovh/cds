@@ -29,6 +29,7 @@ var (
 		PluginRequirement,
 		ServiceRequirement,
 		MemoryRequirement,
+		VolumeRequirement,
 	}
 )
 

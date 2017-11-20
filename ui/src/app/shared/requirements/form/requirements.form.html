@@ -9,7 +9,7 @@
                         autocomplete="off"
                         type="text"
                         required
-                        pattern="[a-zA-Z0-9\-\.]*"
+                        pattern="[a-zA-Z0-9\-\._]*"
                         placeholder="{{'requirement_placeholder_name_' + newRequirement.type | translate}}"
                         [source]="suggest"
                         [min-chars]="3"
@@ -75,7 +75,7 @@
                         rows="3"
                         placeholder="{{'requirement_placeholder_opts_' + newRequirement.type | translate}}"></textarea>
                 </div>
-                <div *ngIf="!loading && newRequirement.type === 'service'">
+                <div *ngIf="!loading && (newRequirement.type === 'service')">
                     <label for="opts">
                         {{ 'requirement_options' | translate }}
                     </label>

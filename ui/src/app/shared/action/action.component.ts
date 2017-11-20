@@ -117,7 +117,7 @@ export class ActionComponent implements OnDestroy {
         // for each type 'model' and 'service', concat value with opts
         // and replace \n with space
         this.editableAction.requirements.forEach(req => {
-            if (req.type === 'model' || req.type === 'service' && req.opts) {
+            if ((req.type === 'model' || req.type === 'service') && req.opts) {
                 let spaceIdx = req.value.indexOf(' ');
                 let newValue = req.value;
                 // if there is a space in name and opts not empty

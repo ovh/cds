@@ -433,6 +433,7 @@
   "requirement_help_network" : "Model type 'network': <ul><li>CDS will choose a worker which can reach this IP.</li></ul>",
   "requirement_help_hostname" : "Model type 'hostname': <ul><li>This Job will be take by a worker hosted on this host</li></ul>",
   "requirement_help_service" : "Model type 'service': <ul><li><a href=\"https://ovh.github.io/cds/building-pipelines/building-pipelines.requirements/\">Note on Service Requirement</a></li><li><a href=\"https://ovh.github.io/cds/tutorials/tutorials.service-link-requirement-nginx/\">Tutorial - Service Link Requirement Nginx Tutorial</a></li><li><a href=\"https://ovh.github.io/cds/tutorials/tutorials.service-link-requirement-pg/\">Service Link Requirement PostgreSQL</a></li><li>You can force memory on service, example: 'CDS_SERVICE_MEMORY=4096'</li></ul>",
+  "requirement_help_volume" : "Model type 'volume': <ul><li>CDS will mount a volume inside you job</li><li>Available only with Worker Model Type 'Docker'</li><li>You have to launch a Hatchery Swarm yourself for this feature</li><li>Format :--mount syntax, see <a href='https://docs.docker.com/engine/admin/volumes/bind-mounts/'>Docker Documentation</a></li><li>Example: type=bind,source=/hostDir/sourceDir,target=/dirInJob</li></ul>",
   "requirement_name_error" : "Requirement name is mandatory and must respect the alphanumeric pattern ([a-zA-Z0-9]*)",
   "requirement_settings_worker_model": "See settings of Worker Model",
   "requirement_manual_value": "Or enter manually the value:",
@@ -445,6 +446,7 @@
   "requirement_placeholder_name_network" : "",
   "requirement_placeholder_name_hostname" : "",
   "requirement_placeholder_name_service" : "hostnameOfService",
+  "requirement_placeholder_name_volume" : "",
 
   "requirement_placeholder_value_binary" : "bash",
   "requirement_placeholder_value_model" : "Choose a worker model",
@@ -454,6 +456,7 @@
   "requirement_placeholder_value_hostname" : "yourhostname",
   "requirement_placeholder_value_service" : "postgres:9.5.3",
   "requirement_placeholder_opts_service" : "POSTGRES_USER=myuser\nPOSTGRES_PASSWORD=mypassword",
+  "requirement_placeholder_value_volume" : "type=bind,source=/hostDir/sourceDir,destination=/dirInJob",
 
   "scheduler_added" : "Scheduler created",
   "scheduler_deleted" : "Scheduler deleted",
