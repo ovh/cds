@@ -360,12 +360,11 @@ func (api *API) importGroupsInEnvironmentHandler() Handler {
 			}
 		} else { // add new group
 			for _, gr := range groupsToAdd {
-				_, errGr := group.GetIdByNameInList(env.EnvironmentGroups, gr.Group.Name)
-				if errGr == nil {
+				if _, errGr := group.GetIDByNameInList(env.EnvironmentGroups, gr.Group.Name); errGr == nil {
 					return sdk.WrapError(sdk.ErrGroupExists, "importGroupsInEnvironmentHandler> Group %s in environment %s", gr.Group.Name, env.Name)
 				}
 
-				grID, errG := group.GetIdByNameInList(proj.ProjectGroups, gr.Group.Name)
+				grID, errG := group.GetIDByNameInList(proj.ProjectGroups, gr.Group.Name)
 				if errG != nil {
 					return sdk.WrapError(sdk.ErrGroupNotFound, "importGroupsInEnvironmentHandler> Cannot find group %s in this project %s : %s", gr.Group.Name, proj.Name, errG)
 				}
