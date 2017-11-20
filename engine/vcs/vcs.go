@@ -76,7 +76,7 @@ func (s *Service) Serve(c context.Context) error {
 	ctx, cancel := context.WithCancel(c)
 	defer cancel()
 
-	log.Info("VCS> Starting service %s...", s.Cfg.Name)
+	log.Info("VCS> Starting service %s %s...", s.Cfg.Name, sdk.VERSION)
 
 	//Instanciate a cds client
 	s.cds = cdsclient.NewService(s.Cfg.API.HTTP.URL)
@@ -106,7 +106,7 @@ func (s *Service) Serve(c context.Context) error {
 	//Init the http server
 	s.initRouter(ctx)
 	server := &http.Server{
-		Addr:           fmt.Sprintf(":%d", s.Cfg.HTTP.Port),
+		Addr:           fmt.Sprintf("%s:%d", s.Cfg.HTTP.Addr, s.Cfg.HTTP.Port),
 		Handler:        s.Router.Mux,
 		ReadTimeout:    10 * time.Minute,
 		WriteTimeout:   10 * time.Minute,
