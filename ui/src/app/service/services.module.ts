@@ -45,6 +45,7 @@ import {HookService} from './hook/hook.service';
 import {PipelineAuditService} from './pipeline/pipeline.audit.service';
 import {EnvironmentService} from './environment/environment.service';
 import {ApplicationMigrateService} from './application/application.migration.service';
+import {NavbarService} from './navbar/navbar.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -73,6 +74,7 @@ export class ServicesModule {
                 HookService,
                 LanguageStore,
                 LastUpdateService,
+                NavbarService,
                 NotificationService,
                 ParameterService,
                 PipelineResolver,
