@@ -408,6 +408,9 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := bootstrap.VCSMigrate(a.DBConnectionFactory.GetDBMap(), a.Cache); err != nil {
 		log.Error("Cannot migrate vcs: %v", err)
 	}
+	if err := bootstrap.ProjectBuiltinGPGKey(a.DBConnectionFactory.GetDBMap(), a.Cache); err != nil {
+		log.Error("Cannot migrate project gpg key: %v", err)
+	}
 
 	//Init pipeline package
 	pipeline.Store = a.Cache

@@ -116,3 +116,11 @@ type Interface interface {
 	WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error
 	WorkflowAllHooksList() ([]sdk.WorkflowNodeHook, error)
 }
+
+// InterfaceDeprecated is the interface for using deprecated routes with cdsclient package
+type InterfaceDeprecated interface {
+	ApplicationPipelinesAttach(projectKey string, appName string, pipelineNames ...string) error
+	ApplicationPipelineTriggerAdd(t *sdk.PipelineTrigger) error
+	ApplicationPipelineTriggersGet(projectKey string, appName string, pipelineName string, envName string) ([]sdk.PipelineTrigger, error)
+	AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullname, pipelineName string) error
+}

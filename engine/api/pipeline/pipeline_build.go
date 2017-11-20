@@ -66,7 +66,7 @@ const (
 			pb.vcs_changes_branch as vcs_branch, pb.vcs_changes_hash as vcs_hash, pb.vcs_changes_author as vcs_author,
 			pb.vcs_remote as vcs_remote, pb.vcs_remote_url as vcs_remote_url,
 			pb.parent_pipeline_build_id as parent_pipeline_build,
-			application.vcs_server as vcs_server, application.repo_fullname as repo_fullname, 
+			application.vcs_server as vcs_server, application.repo_fullname as repo_fullname,
 			"user".username as username,
 			pb.scheduled_trigger as scheduled_trigger
 		FROM pipeline_build pb
@@ -530,7 +530,7 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	branch, remote := GetVCSInfosInParams(pb.Parameters)
 	//Get the history
 	var previous *sdk.PipelineBuild
-	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 0,
+	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2,
 		LoadPipelineBuildOpts.WithBranchName(branch),
 		LoadPipelineBuildOpts.WithRemoteName(remote))
 	if err != nil {
@@ -629,6 +629,10 @@ func GetLastBuildNumber(db gorp.SqlExecutor, pipID, appID, envID int64) (int64, 
 // InsertBuildVariable adds a variable exported in user scripts and forwarded by building worker
 func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error {
 
+	if strings.Contains(v.Value, "{{.") {
+		return sdk.ErrWrongRequest
+	}
+
 	// Load args from pipeline build and lock it
 	query := `SELECT args FROM pipeline_build WHERE id = $1 FOR UPDATE`
 	var argsJSON string
@@ -642,12 +646,24 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 		return err
 	}
 
-	// Add build variable
-	params = append(params, sdk.Parameter{
-		Name:  v.Name,
-		Type:  sdk.StringParameter,
-		Value: v.Value,
-	})
+	// check if build variable already exist
+	found := false
+	for i := range params {
+		p := &params[i]
+		// overwrite if variable already exist
+		if p.Name == v.Name {
+			p.Value = v.Value
+			found = true
+			break
+		}
+	}
+	if !found {
+		params = append(params, sdk.Parameter{
+			Name:  v.Name,
+			Type:  sdk.StringParameter,
+			Value: v.Value,
+		})
+	}
 
 	// Update pb in database
 	data, errj := json.Marshal(params)
