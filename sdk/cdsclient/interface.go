@@ -55,6 +55,7 @@ type Interface interface {
 	HatcheryRefresh(int64) error
 	HatcheryRegister(sdk.Hatchery) (*sdk.Hatchery, bool, error)
 	MonStatus() ([]string, error)
+	MonDBTimes() (*sdk.MonDBTimes, error)
 	PipelineDelete(projectKey, name string) error
 	PipelineCreate(projectKey string, pip *sdk.Pipeline) error
 	PipelineExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)

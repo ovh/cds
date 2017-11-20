@@ -21,8 +21,6 @@ export class ProjectResolver implements Resolve<Project> {
           new LoadOpts('withWorkflows', 'workflows', null)
         ];
 
-        console.log('iciiiii', opts);
-
         return this.projectStore.getProjectResolver(params['key'], opts);
     }
 

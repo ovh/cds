@@ -6,6 +6,9 @@ import (
 	"net/http"
 )
 
+// SharedInfraGroupName is the name of the builtin group used to share infrastructure between projects
+const SharedInfraGroupName = "shared.infra"
+
 // Group represent a group of user.
 type Group struct {
 	ID                int64              `json:"id" yaml:"-"`

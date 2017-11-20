@@ -30,14 +30,6 @@ export class ProjectService {
           opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
         }
 
-        // params = params.append('withVariables', 'true');
-        // params = params.append('withApplications', 'true');
-        // params = params.append('withApplicationPipelines', 'true');
-        // // params = params.append('withPipelines', 'true');
-        // params = params.append('withGroups', 'true');
-        // params = params.append('withPermission', 'true');
-        // params = params.append('withRepositoriesManagers', 'true');
-        // params = params.append('withWorkflows', 'true');
         return this._http.get('/project/' + key, {params: params});
     }
 
