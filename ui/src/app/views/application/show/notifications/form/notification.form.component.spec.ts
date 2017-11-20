@@ -9,6 +9,9 @@ import {ApplicationStore} from '../../../../../service/application/application.s
 import {ApplicationService} from '../../../../../service/application/application.service';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../service/project/project.service';
+import {PipelineService} from '../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../service/variable/variable.service';
 import {AuthentificationStore} from '../../../../../service/auth/authentification.store';
 import {SharedModule} from '../../../../../shared/shared.module';
 import {ApplicationNotificationFormModalComponent} from './notification.form.component';
@@ -38,6 +41,9 @@ describe('CDS: Application notifications', () => {
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService,
                 TranslateService,
                 TranslateLoader,
                 TranslateParser

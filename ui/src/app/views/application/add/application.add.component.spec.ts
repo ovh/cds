@@ -4,10 +4,13 @@ import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {Router, ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
+import {EnvironmentService} from '../../../service/environment/environment.service';
 import {ApplicationStore} from '../../../service/application/application.store';
 import {ApplicationService} from '../../../service/application/application.service';
+import {PipelineService} from '../../../service/pipeline/pipeline.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../../shared/shared.module';
+import {ServicesModule} from '../../../service/services.module';
 import {Observable} from 'rxjs/Rx';
 import {Injector} from '@angular/core';
 import {ToastService} from '../../../shared/toast/ToastService';
@@ -46,6 +49,8 @@ describe('CDS: Application Add Component', () => {
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
+                EnvironmentService,
+                PipelineService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: Router, useClass: MockRouter},
                 { provide: ToastService, useClass: MockToast},
@@ -59,6 +64,7 @@ describe('CDS: Application Add Component', () => {
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                ServicesModule,
                 HttpClientTestingModule
             ]
         });

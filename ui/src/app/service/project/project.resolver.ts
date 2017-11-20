@@ -28,3 +28,22 @@ export class ProjectResolver implements Resolve<Project> {
 
     constructor(private projectStore: ProjectStore, private routerService: RouterService) {}
 }
+
+@Injectable()
+export class ProjectForApplicationResolver implements Resolve<Project> {
+
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+        let params = this.routerService.getRouteSnapshotParams({}, state.root);
+        let opts = [
+          new LoadOpts('withPipelines', 'pipelines', this.projectStore.getProjectPipelinesResolver),
+          new LoadOpts('withEnvironments', 'environments', this.projectStore.getProjectEnvironmentsResolver),
+          new LoadOpts('withApplicationPipelines', 'applications.pipelines', null),
+          new LoadOpts('withGroups', 'groups', null),
+          new LoadOpts('withPermission', 'permissions', null),
+        ];
+
+        return this.projectStore.getProjectResolver(params['key'], opts);
+    }
+
+    constructor(private projectStore: ProjectStore, private routerService: RouterService) {}
+}

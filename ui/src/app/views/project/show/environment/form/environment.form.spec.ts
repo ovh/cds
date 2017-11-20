@@ -8,8 +8,12 @@ import {XHRBackend} from '@angular/http';
 import {Injector} from '@angular/core';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../service/project/project.service';
+import {VariableService} from '../../../../../service/variable/variable.service';
+import {PipelineService} from '../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../service/environment/environment.service';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {ProjectModule} from '../../../project.module';
+import {ServicesModule} from '../../../../../service/services.module';
 import {ProjectEnvironmentFormComponent} from './environment.form.component';
 import {Project} from '../../../../../model/project.model';
 import {Observable} from 'rxjs/Rx';
@@ -32,11 +36,15 @@ describe('CDS: Environment From Component', () => {
                 TranslateService,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                VariableService,
+                PipelineService,
+                EnvironmentService
             ],
             imports : [
                 ProjectModule,
                 SharedModule,
+                ServicesModule,
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]
@@ -80,4 +88,3 @@ class MockToast {
 
     }
 }
-

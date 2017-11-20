@@ -10,6 +10,9 @@ import {NavbarComponent} from './navbar.component';
 import {SharedModule} from '../../shared/shared.module';
 import {ProjectStore} from '../../service/project/project.store';
 import {ProjectService} from '../../service/project/project.service';
+import {EnvironmentService} from '../../service/environment/environment.service';
+import {PipelineService} from '../../service/pipeline/pipeline.service';
+import {VariableService} from '../../service/variable/variable.service';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {ApplicationStore} from '../../service/application/application.store';
 import {ApplicationService} from '../../service/application/application.service';
@@ -38,6 +41,9 @@ describe('CDS: Navbar Component', () => {
                 TranslateLoader,
                 ProjectStore,
                 ProjectService,
+                EnvironmentService,
+                PipelineService,
+                VariableService,
                 RouterService,
                 WarningStore,
                 WarningService,

@@ -9,6 +9,9 @@ import {TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {ApplicationRepositoryComponent} from './application.repo.component';
 import {ApplicationService} from '../../../../../service/application/application.service';
+import {PipelineService} from '../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../service/variable/variable.service';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {RepoManagerService} from '../../../../../service/repomanager/project.repomanager.service';
 import {SharedModule} from '../../../../../shared/shared.module';
@@ -42,6 +45,9 @@ describe('CDS: Application Repo Component', () => {
             providers: [
                 { provide: ApplicationStore, useClass: MockStore },
                 ApplicationService,
+                PipelineService,
+                EnvironmentService,
+                VariableService,
                 { provide: ToastService, useClass: MockToast },
                 TranslateLoader,
                 TranslateService,

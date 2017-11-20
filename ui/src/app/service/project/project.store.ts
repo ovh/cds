@@ -61,19 +61,12 @@ export class ProjectStore {
 
         if (Array.isArray(opts)) {
           let funcs = opts.filter((opt) => !store.get(key)[opt.fieldName] && opt.funcOpts != null);
-          console.log(funcs);
           if (!funcs.length) {
             return Observable.of(store.get(key));
           }
 
+          // TODO: iterate on funcs array and execute handler linked to fetch missing data
           return this.resync(key, opts);
-          // return Observable.forkJoin(funcs.map((func) => func.funcOpts))
-          //   .map((projs) => {
-          //     console.log('projrs', projs);
-          //     return projs[projs.length - 1];
-          //     // return Observable.of(projs[projs.length - 1]);
-          //   });
-          // return Observable.merge(funcs.map((func) => func.funcOpts)).last();
         }
         return Observable.of(store.get(key));
     }

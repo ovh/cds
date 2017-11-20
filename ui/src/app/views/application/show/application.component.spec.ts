@@ -9,11 +9,15 @@ import {ApplicationStore} from '../../../service/application/application.store';
 import {ApplicationService} from '../../../service/application/application.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../../shared/shared.module';
+import {ServicesModule} from '../../../service/services.module';
 import {Observable} from 'rxjs/Rx';
 import {Injector} from '@angular/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectStore} from '../../../service/project/project.store';
 import {ProjectService} from '../../../service/project/project.service';
+import {EnvironmentService} from '../../../service/environment/environment.service';
+import {PipelineService} from '../../../service/pipeline/pipeline.service';
+import {VariableService} from '../../../service/variable/variable.service';
 import {ApplicationModule} from '../application.module';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
@@ -49,6 +53,9 @@ describe('CDS: Application', () => {
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                VariableService,
+                EnvironmentService,
                 ApplicationWorkflowService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: Router, useClass: MockRouter},
@@ -59,6 +66,7 @@ describe('CDS: Application', () => {
             ],
             imports : [
                 ApplicationModule,
+                ServicesModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
                 HttpClientTestingModule
