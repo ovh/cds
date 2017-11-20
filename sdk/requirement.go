@@ -15,7 +15,7 @@ const (
 	ServiceRequirement = "service"
 	//MemoryRequirement set memory limit on a container
 	MemoryRequirement = "memory"
-	//VolumeRequirement allows user to mount a volume
+	// VolumeRequirement set Volume limit on a container
 	VolumeRequirement = "volume"
 )
 
