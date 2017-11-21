@@ -24,6 +24,7 @@ import {WarningService} from '../../service/warning/warning.service';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
 import {User} from '../../model/user.model';
+import { NavbarService } from 'app/service/navbar/navbar.service';
 
 describe('CDS: Navbar Component', () => {
 
@@ -51,7 +52,8 @@ describe('CDS: Navbar Component', () => {
                 ApplicationStore,
                 ApplicationService,
                 TranslateParser,
-                LanguageStore
+                LanguageStore,
+                NavbarService
             ],
             imports: [
                 SharedModule,
@@ -91,7 +93,7 @@ describe('CDS: Navbar Component', () => {
         authStore.addUser(new User(), false);
         fixture.componentInstance.ngOnInit();
         http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === '/project';
+            return req.url === '/ui/navbar';
         })).flush(projects);
 
         http.verify();

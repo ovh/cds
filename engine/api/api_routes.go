@@ -10,7 +10,8 @@ import (
 func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = DefaultHeaders
-	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.deletePermissionMiddleware)
+	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware)
+	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware)
 	api.lastUpdateBroker = &lastUpdateBroker{
 		make(map[string]*lastUpdateBrokerSubscribe),
 		make(chan *lastUpdateBrokerSubscribe),
@@ -86,6 +87,9 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
 	r.Handle("/mon/lastupdates", r.GET(api.getUserLastUpdatesHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
+
+	// Specific web ui routes
+	r.Handle("/ui/navbar", r.GET(api.getUINavbarHandler))
 
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler), r.POST(api.addProjectHandler))

@@ -23,7 +23,8 @@ type Service struct {
 type Configuration struct {
 	Name string `toml:"name" comment:"Name of this CDS VCS Service"`
 	HTTP struct {
-		Port int `toml:"port" default:"8084" toml:"name"`
+		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
+		Port int    `toml:"port" default:"8084" toml:"name"`
 	} `toml:"http" comment:"######################\n CDS VCS HTTP Configuration \n######################"`
 	URL string `default:"http://localhost:8084"`
 	UI  struct {

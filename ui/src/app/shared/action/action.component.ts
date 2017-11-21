@@ -106,7 +106,7 @@ export class ActionComponent implements OnDestroy {
                 if (spaceIdx > 1) {
                     let newValue = req.value.substring(0, spaceIdx);
                     let newOpts = req.value.substring(spaceIdx + 1, req.value.length);
-                    req.value = newValue;
+                    req.value = newValue.trim();
                     req.opts = newOpts.replace(/\s/g, '\n');
                 }
             }
@@ -126,7 +126,7 @@ export class ActionComponent implements OnDestroy {
                     newValue = req.value.substring(0, spaceIdx);
                 }
                 let newOpts = req.opts.replace(/\n/g, ' ');
-                req.value = newValue + ' ' + newOpts;
+                req.value = (newValue + ' ' + newOpts).trim();
                 req.opts = '';
             }
         })

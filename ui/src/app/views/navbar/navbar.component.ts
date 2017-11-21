@@ -1,7 +1,7 @@
 import {AfterViewInit, Component, OnDestroy, OnInit} from '@angular/core';
 import {ProjectStore} from '../../service/project/project.store';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
-import {Project} from '../../model/project.model';
+import {NavbarService} from '../../service/navbar/navbar.service';
 import {ApplicationStore} from '../../service/application/application.store';
 import {Application} from '../../model/application.model';
 import {User} from '../../model/user.model';
@@ -15,6 +15,7 @@ import {RouterService} from '../../service/router/router.service';
 import {WarningStore} from '../../service/warning/warning.store';
 import {WarningUI} from '../../model/warning.model';
 import {WarningService} from '../../service/warning/warning.service';
+import {NavbarData, NavbarProjectData} from 'app/model/navbar.model';
 
 @Component({
     selector: 'app-navbar',
@@ -28,11 +29,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     public ready = false;
 
     // List of projects in the nav bar
-    navProjects: List<Project>;
+    navProjects: NavbarData;
     navRecentApp: List<Application>;
     searchItems: Array<string>;
 
-    listApplications: Array<Application>;
+    listApplications: List<Application>;
 
     currentCountry: string;
     langSubscrition: Subscription;
@@ -46,7 +47,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     public currentUser: User;
 
-    constructor(private _projectStore: ProjectStore,
+    constructor(private _navbarService: NavbarService,
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
                 private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
@@ -87,15 +88,15 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         // Listen list of nav project
         this._authStore.getUserlst().subscribe(user => {
             if (user) {
-                this.getProjects();
+                this.getData();
             }
         });
 
         // Listen change on recent app viewed
-        this._appStore.getRecentApplications().subscribe(app => {
-            if (app) {
-                this.navRecentApp = app;
-                this.listApplications = this.navRecentApp.toArray();
+        this._appStore.getRecentApplications().subscribe(apps => {
+            if (apps) {
+                this.navRecentApp = apps;
+                this.listApplications = apps;
             }
         });
     }
@@ -103,16 +104,16 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     /**
      * Listen change on project list.
      */
-    getProjects(): void {
-        this._projectStore.getProjectsList().subscribe(projects => {
-            if (projects.size > 0) {
-                this.navProjects = projects;
+    getData(): void {
+        this._navbarService.getData().subscribe(data => {
+            if (data.projects && data.projects.length > 0) {
+                this.navProjects = data;
                 this.searchItems = new Array<string>();
 
-                this.navProjects.toArray().forEach(p => {
-                    if (p.applications && p.applications.length > 0) {
-                        p.applications.forEach(a => {
-                            this.searchItems.push(p.name + '/' + a.name);
+                this.navProjects.projects.forEach(p => {
+                    if (p.application_names && p.application_names.length > 0) {
+                        p.application_names.forEach(a => {
+                            this.searchItems.push(p.name + '/' + a);
                         })
                     }
                 });
@@ -122,16 +123,16 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     navigateToResult(result: string) {
         let splittedSelection = result.split('/', 2);
-        let project = this.navProjects.toArray().find(p => p.name === splittedSelection[0] );
+        let project = this.navProjects.projects.find(p => p.name === splittedSelection[0] );
         if (splittedSelection.length === 1) {
            this.navigateToProject(project.key);
         } else if (splittedSelection.length === 2) {
-            this.navigateToApplication(project.key, project.applications.find(a => a.name === splittedSelection[1]).name);
+            this.navigateToApplication(project.key, project.application_names.find(a => a === splittedSelection[1]));
         }
     }
 
     selectAllProjects(): void {
-        this.listApplications = this.navRecentApp.toArray();
+        this.listApplications = this.navRecentApp;
     }
 
     /**
@@ -144,10 +145,16 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        let selectedProject = this.navProjects.filter(p => {
+        let selectedProject = this.navProjects.projects.filter(p => {
             return p.key === key;
-        }).toArray()[0];
-        this.listApplications = selectedProject.applications;
+        })[0];
+        let apps = selectedProject.application_names.map((a) => {
+            let app = new Application();
+            app.name = a;
+            app.project_key = selectedProject.key;
+            return app
+        });
+        this.listApplications = List(apps);
         this._router.navigate(['/project/' + key]);
     }
 
