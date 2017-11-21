@@ -86,18 +86,18 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
             this.projectSubscriber.unsubscribe();
         }
         let opts = [
-          new LoadOpts('withApplicationNames', 'application_names', null),
-          new LoadOpts('withPipelineNames', 'pipeline_names', null),
-          new LoadOpts('withApplicationPipelines', 'applications.pipelines', null),
-          new LoadOpts('withGroups', 'groups', null),
-          new LoadOpts('withPermission', 'permissions', null),
-          new LoadOpts('withWorkflows', 'workflows', null)
+          new LoadOpts('withApplicationNames', 'application_names'),
+          new LoadOpts('withPipelineNames', 'pipeline_names'),
+          new LoadOpts('withWorkflowNames', 'workflow_names'),
+          new LoadOpts('withApplicationPipelines', 'applications.pipelines'),
+          new LoadOpts('withGroups', 'groups'),
+          new LoadOpts('withPermission', 'permissions')
         ];
 
         if (this.selectedTab === 'variables') {
-            opts.push(new LoadOpts('withVariables', 'variables', null));
+            opts.push(new LoadOpts('withVariables', 'variables'));
         } else if (this.selectedTab === 'environments') {
-            opts.push(new LoadOpts('withEnvironments', 'environments', null));
+            opts.push(new LoadOpts('withEnvironments', 'environments'));
         }
 
 

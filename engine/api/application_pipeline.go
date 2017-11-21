@@ -241,12 +241,6 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "removePipelineFromApplicationHandler> Cannot update application last modified date")
 		}
 
-		var errW error
-		a.Workflows, errW = workflowv0.LoadCDTree(tx, api.Cache, key, a.Name, getUser(ctx), "", "", 0)
-		if errW != nil {
-			return sdk.WrapError(errW, "removePipelineFromApplicationHandler> Cannot load workflow")
-		}
-
 		// Remove pipeline from struct
 		var indexPipeline int
 		for i, appPip := range a.Pipelines {
@@ -263,6 +257,12 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "removePipelineFromApplicationHandler> Cannot commit tx")
+		}
+
+		var errW error
+		a.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, a.Name, getUser(ctx), "", "", 0)
+		if errW != nil {
+			return sdk.WrapError(errW, "removePipelineFromApplicationHandler> Cannot load workflow")
 		}
 
 		a.Pipelines = append(a.Pipelines[:indexPipeline], a.Pipelines[indexPipeline+1:]...)

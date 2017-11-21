@@ -302,7 +302,7 @@ func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.U
 	}
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WrapError(sdk.ErrApplicationNotFound, "application.loadpipelinenames")
+			return []string{}, nil
 		}
 		return nil, sdk.WrapError(err, "application.loadpipelinenames")
 	}

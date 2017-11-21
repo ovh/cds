@@ -7,6 +7,7 @@ import {NotificationService} from './service/notification/notification.service';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {TranslateService} from 'ng2-translate';
 import {PipelineStore} from './service/pipeline/pipeline.store';
+import {WorkflowStore} from './service/workflow/workflow.store';
 import {RouterService} from './service/router/router.service';
 
 @Injectable()
@@ -14,13 +15,14 @@ export class AppService {
 
     constructor(private _projStore: ProjectStore, private _routeActivated: ActivatedRoute,
                 private _appStore: ApplicationStore, private _notif: NotificationService, private _authStore: AuthentificationStore,
-                private _translate: TranslateService, private _pipStore: PipelineStore, private _routerService: RouterService) {
+                private _translate: TranslateService, private _pipStore: PipelineStore,
+                private _wfStore: WorkflowStore, private _routerService: RouterService) {
     }
 
     updateCache(lastUpdate: LastModification) {
         let opts = [
-            new LoadOpts('withGroups', 'groups', null),
-            new LoadOpts('withPermission', 'permissions', null)
+            new LoadOpts('withGroups', 'groups'),
+            new LoadOpts('withPermission', 'permissions')
         ];
         if (!lastUpdate) {
             return;
@@ -30,8 +32,8 @@ export class AppService {
             case 'project':
                 opts = [
                     ...opts,
-                    new LoadOpts('withApplicationPipelines', 'applications.pipelines', null),
-                    new LoadOpts('withWorkflows', 'workflows', null)
+                    new LoadOpts('withApplicationPipelines', 'applications.pipelines'),
+                    new LoadOpts('withWorkflows', 'workflows')
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
@@ -41,35 +43,43 @@ export class AppService {
             case 'pipeline':
                 this.updatePipelineCache(lastUpdate);
                 break;
+            case 'workflow':
+                this.updatePipelineCache(lastUpdate);
+                break;
             case 'project.environment':
                 opts = [
                     ...opts,
-                    new LoadOpts('withEnvironments', 'environments', null)
+                    new LoadOpts('withEnvironments', 'environments')
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
             case 'project.variable':
                 opts = [
                     ...opts,
-                    new LoadOpts('withVariables', 'variables', null)
+                    new LoadOpts('withVariables', 'variables')
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
             case 'project.application':
                 opts = [
                     ...opts,
-                    new LoadOpts('withApplicationNames', 'application_names', null)
+                    new LoadOpts('withApplicationNames', 'application_names')
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
             case 'project.pipeline':
                 opts = [
                     ...opts,
-                    new LoadOpts('withPipelineNames', 'pipeline_names', null)
+                    new LoadOpts('withPipelineNames', 'pipeline_names')
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
             case 'project.workflow':
+                opts = [
+                    ...opts,
+                    new LoadOpts('withWorkflowNames', 'workflow_names')
+                ];
+                this.updateProjectCache(lastUpdate, opts);
                 break;
         }
     }
@@ -174,6 +184,45 @@ export class AppService {
                     }
                 } else {
                     this._pipStore.removeFromStore(pipKey);
+                }
+            }
+        });
+    }
+
+    updateWorkflowCache(lastUpdate: LastModification): void {
+        this._wfStore.getWorkflows(lastUpdate.name).first().subscribe(wfs => {
+            if (!wfs) {
+                return;
+            }
+
+            let wfKey = lastUpdate.key + '-' + lastUpdate.name;
+            if (!wfs.get(wfKey)) {
+                return;
+            }
+
+            if (wfs.get(wfKey).last_modified < lastUpdate.last_modified) {
+                let params = this._routerService.getRouteParams({}, this._routeActivated);
+
+                // delete linked applications from cache
+                this._wfStore.getWorkflowResolver(lastUpdate.key, lastUpdate.name)
+                    .subscribe((pip) => {
+                        if (pip && pip.usage && Array.isArray(pip.usage.applications)) {
+                            pip.usage.applications.forEach((app) => this._appStore.removeFromStore(lastUpdate.key + '-' + app.name));
+                        }
+                    });
+
+                // update pipeline
+                if (params['key'] && params['key'] === lastUpdate.key && params['pipName'] === lastUpdate.name) {
+                    if (lastUpdate.username !== this._authStore.getUser().username) {
+                        this._wfStore.externalModification(wfKey);
+                        this._notif.create(this._translate.instant('pipeline_modification', {username: lastUpdate.username}));
+                    }
+
+                    if (params['buildNumber'] || lastUpdate.username === this._authStore.getUser().username) {
+                        this._wfStore.resync(lastUpdate.key, lastUpdate.name);
+                    }
+                } else {
+                    this._wfStore.removeFromStore(wfKey);
                 }
             }
         });

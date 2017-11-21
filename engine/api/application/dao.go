@@ -298,7 +298,7 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 }
 
 // LoadAllNames returns all application names
-func LoadAllNames(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User) ([]string, error) {
+func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]string, error) {
 	var query string
 	var args []interface{}
 
@@ -306,30 +306,28 @@ func LoadAllNames(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.Use
 		query = `
 		SELECT application.name
 		FROM application
-		JOIN project ON project.id = application.project_id
-		WHERE project.projectkey = $1
+		WHERE application.project_id= $1
 		ORDER BY application.name ASC`
-		args = []interface{}{key}
+		args = []interface{}{projID}
 	} else {
 		query = `
 			SELECT distinct application.name
 			FROM application
-			JOIN project ON project.id = application.project_id
 			WHERE application.id IN (
 				SELECT application_group.application_id
 				FROM application_group
 				JOIN group_user ON application_group.group_id = group_user.group_id
 				WHERE group_user.user_id = $2
 			)
-			AND project.projectkey = $1
+			AND application.project_id = $1
 			ORDER by application.name ASC`
-		args = []interface{}{key, u.ID}
+		args = []interface{}{projID, u.ID}
 	}
 
-	var res []string
+	res := []string{}
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, sdk.WrapError(sdk.ErrApplicationNotFound, "application.loadapplicationnames")
+			return res, nil
 		}
 		return nil, sdk.WrapError(err, "application.loadapplicationnames")
 	}

@@ -17,7 +17,7 @@ export class Workflow {
     root: WorkflowNode;
     root_id: number;
     joins: Array<WorkflowNodeJoin>;
-    last_modified: Date;
+    last_modified: number;
     groups: Array<GroupPermission>;
     permission: number;
     metadata: Map<string, string>;

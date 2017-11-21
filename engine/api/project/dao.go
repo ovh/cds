@@ -194,20 +194,6 @@ func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, pro
 	return nil
 }
 
-func SendLastModifiedEvent(store cache.Store, user *sdk.User, key, updateType string) error {
-	updates := sdk.LastModification{
-		Key:          key,
-		LastModified: time.Now().Unix(),
-		Username:     user.Username,
-		Type:         updateType,
-	}
-	b, errP := json.Marshal(updates)
-	if errP == nil {
-		store.Publish("lastUpdates", string(b))
-	}
-	return errP
-}
-
 // DeleteByID removes given project from database (project and project_group table)
 // DeleteByID also removes all pipelines inside project (pipeline and pipeline_group table).
 func DeleteByID(db gorp.SqlExecutor, id int64) error {
@@ -252,6 +238,7 @@ var LoadOptions = struct {
 	WithApplicationVariables       LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 	WithWorkflows                  LoadOptionFunc
+	WithWorkflowNames              LoadOptionFunc
 	WithLock                       LoadOptionFunc
 	WithLockNoWait                 LoadOptionFunc
 }{
@@ -269,6 +256,7 @@ var LoadOptions = struct {
 	WithApplicationVariables:       &loadApplicationVariables,
 	WithKeys:                       &loadKeys,
 	WithWorkflows:                  &loadWorkflows,
+	WithWorkflowNames:              &loadWorkflowNames,
 	WithLock:                       &lockProject,
 	WithLockNoWait:                 &lockAndWaitProject,
 }

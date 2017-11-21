@@ -679,7 +679,6 @@ export class ProjectStore {
 export class LoadOpts {
   constructor(
     public queryParam: string,
-    public fieldName: string,
-    public funcOpts: any
+    public fieldName: string
   ) { }
 }

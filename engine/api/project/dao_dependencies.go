@@ -40,7 +40,7 @@ var (
 		var err error
 		var apps []string
 
-		if apps, err = application.LoadAllNames(db, store, proj.Key, u); err != nil {
+		if apps, err = application.LoadAllNames(db, proj.ID, u); err != nil {
 			return sdk.WrapError(err, "application.loadApplications")
 		}
 		proj.ApplicationNames = apps
@@ -97,6 +97,18 @@ var (
 			return sdk.WrapError(errW, " workflow.LoadAll")
 		}
 		proj.Workflows = workflows
+		return nil
+	}
+
+	loadWorkflowNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		var err error
+		var wfs []string
+
+		if wfs, err = workflow.LoadAllNames(db, proj.ID, u); err != nil {
+			return sdk.WrapError(err, "workflow.loadworkflownames")
+		}
+		proj.WorkflowNames = wfs
+
 		return nil
 	}
 

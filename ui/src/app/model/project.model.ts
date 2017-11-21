@@ -10,6 +10,7 @@ export class Project {
     key: string;
     name: string;
     workflows: Array<Workflow>;
+    workflow_names: Array<string>;
     pipelines: Array<Pipeline>;
     pipeline_names: Array<string>;
     applications: Array<Application>;

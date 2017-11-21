@@ -146,6 +146,10 @@ func (api *API) postWorkflowHandler() Handler {
 			}
 		}
 
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
+			return sdk.WrapError(err, "postWorkflowHandler> Cannot update project workflows last modified")
+		}
+
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
@@ -199,8 +203,14 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
-			return sdk.WrapError(err, "putWorkflowHandler> Cannot update project last modified date")
+		if err := workflow.UpdateLastModifiedDate(tx, api.Cache, getUser(ctx), p.Key, &wf); err != nil {
+			return sdk.WrapError(err, "putWorkflowHandler> Cannot update last modified date for workflow")
+		}
+
+		if oldW.Name != wf.Name {
+			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
+				return sdk.WrapError(err, "putWorkflowHandler> Cannot update project last modified date")
+			}
 		}
 
 		hooks := wf.GetHooks()

@@ -11,14 +11,14 @@ export class ProjectResolver implements Resolve<Project> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
         let opts = [
-          new LoadOpts('withVariables', 'variables', this.projectStore.getProjectVariablesResolver),
-          new LoadOpts('withPipelines', 'pipelines', this.projectStore.getProjectPipelinesResolver),
-          new LoadOpts('withEnvironments', 'environments', this.projectStore.getProjectEnvironmentsResolver),
-          new LoadOpts('withApplications', 'applications', null),
-          new LoadOpts('withApplicationPipelines', 'applications.pipelines', null),
-          new LoadOpts('withGroups', 'groups', null),
-          new LoadOpts('withPermission', 'permissions', null),
-          new LoadOpts('withWorkflows', 'workflows', null)
+          new LoadOpts('withVariables', 'variables'),
+          new LoadOpts('withPipelines', 'pipelines'),
+          new LoadOpts('withEnvironments', 'environments'),
+          new LoadOpts('withApplications', 'applications'),
+          new LoadOpts('withApplicationPipelines', 'applications.pipelines'),
+          new LoadOpts('withGroups', 'groups'),
+          new LoadOpts('withPermission', 'permissions'),
+          new LoadOpts('withWorkflows', 'workflows')
         ];
 
         return this.projectStore.getProjectResolver(params['key'], opts);
@@ -33,11 +33,11 @@ export class ProjectForApplicationResolver implements Resolve<Project> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
         let opts = [
-          new LoadOpts('withPipelines', 'pipelines', this.projectStore.getProjectPipelinesResolver),
-          new LoadOpts('withEnvironments', 'environments', this.projectStore.getProjectEnvironmentsResolver),
-          new LoadOpts('withApplicationPipelines', 'applications.pipelines', null),
-          new LoadOpts('withGroups', 'groups', null),
-          new LoadOpts('withPermission', 'permissions', null),
+          new LoadOpts('withPipelines', 'pipelines'),
+          new LoadOpts('withEnvironments', 'environments'),
+          new LoadOpts('withApplicationPipelines', 'applications.pipelines'),
+          new LoadOpts('withGroups', 'groups'),
+          new LoadOpts('withPermission', 'permissions'),
         ];
 
         return this.projectStore.getProjectResolver(params['key'], opts);

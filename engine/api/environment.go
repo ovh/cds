@@ -248,7 +248,6 @@ func (api *API) updateEnvironmentsHandler() Handler {
 			}
 		}
 
-		fmt.Println("iciiii", sdk.ProjectEnvironmentLastModificationType)
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot update last modified date")
 		}

@@ -14,7 +14,8 @@ type Project struct {
 	ID                int64              `json:"-" yaml:"-" db:"id" cli:"-"`
 	Key               string             `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
 	Name              string             `json:"name" yaml:"name" db:"name" cli:"name"`
-	Workflows         []Workflow         `json:"workflows" yaml:"workflows" db:"-" cli:"-"`
+	Workflows         []Workflow         `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
+	WorkflowNames     []string           `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
 	Pipelines         []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
 	PipelineNames     []string           `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
 	Applications      []Application      `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
@@ -62,14 +63,24 @@ type LastModification struct {
 }
 
 const (
-	ApplicationLastModificationType        = "application"
-	PipelineLastModificationType           = "pipeline"
-	ProjectLastModificationType            = "project"
-	ProjectPipelineLastModificationType    = "project.pipeline"
+	// ApplicationLastModificationType represent key for last update event about application
+	ApplicationLastModificationType = "application"
+	// PipelineLastModificationType represent key for last update event about pipeline
+	PipelineLastModificationType = "pipeline"
+	// WorkflowLastModificationType represent key for last update event about workflow
+	WorkflowLastModificationType = "workflow"
+	// ProjectLastModificationType represent key for last update event about project
+	ProjectLastModificationType = "project"
+	// ProjectPipelineLastModificationType represent key for last update event about project.pipeline (rename, delete or add a pipeline)
+	ProjectPipelineLastModificationType = "project.pipeline"
+	// ProjectApplicationLastModificationType represent key for last update event about project.application (rename, delete or add an application)
 	ProjectApplicationLastModificationType = "project.application"
+	// ProjectEnvironmentLastModificationType represent key for last update event about project.environment (rename, delete or add an environment)
 	ProjectEnvironmentLastModificationType = "project.environment"
-	ProjectWorkflowLastModificationType    = "project.workflow"
-	ProjectVariableLastModificationType    = "project.variable"
+	// ProjectWorkflowLastModificationType represent key for last update event about project.workflow (rename, delete or add a workflow)
+	ProjectWorkflowLastModificationType = "project.workflow"
+	// ProjectVariableLastModificationType represent key for last update event about project.variable (rename, delete or add a variable)
+	ProjectVariableLastModificationType = "project.variable"
 )
 
 //ProjectLastUpdates update times of project, application and pipelines
