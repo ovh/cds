@@ -148,14 +148,13 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         let selectedProject = this.navProjects.projects.filter(p => {
             return p.key === key;
         })[0];
-        let apps = List<Application>();
-        selectedProject.applicationNames.forEach((a) => {
+        let apps = selectedProject.applicationNames.map((a) => {
             let app = new Application();
             app.name = a;
             app.project_key = selectedProject.key;
-            apps.push();
+            return app
         });
-        this.listApplications = apps;
+        this.listApplications = List(apps);
         this._router.navigate(['/project/' + key]);
     }
 
