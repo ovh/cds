@@ -96,7 +96,6 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 					cancel()
 					return
 				}
-
 			}
 		}
 	}(pipelineBuildJobID, tick)
@@ -126,6 +125,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 	var isThereAnyHopeLeft = 10
 	for code >= 300 {
 		var errre error
+		log.Info("takeJob> Sending build result...")
 		_, code, errre = sdk.Request("POST", path, body)
 		if code == http.StatusNotFound {
 			log.Info("takeJob> Cannot send build result: PipelineBuildJob does not exists anymore")

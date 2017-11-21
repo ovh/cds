@@ -118,8 +118,8 @@ func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 }
 
 func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
-	log.Debug("runJob> start run %d stepOrder:%d %p", buildID, stepOrder, ctx)
-	defer func() { log.Debug("runJob> end run %d stepOrder:%d %p (%s)", buildID, stepOrder, ctx, ctx.Err()) }()
+	log.Info("runJob> start run %d stepOrder:%d %p", buildID, stepOrder, ctx)
+	defer func() { log.Info("runJob> end run %d stepOrder:%d %p (%s)", buildID, stepOrder, ctx, ctx.Err()) }()
 	// Replace variable placeholder that may have been added by last step
 	w.replaceVariablesPlaceholder(a, *params)
 	// Set the params
@@ -167,9 +167,9 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 }
 
 func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
-	log.Debug("runSteps> start run %d stepOrder:%d len(steps):%d context=%p", buildID, stepOrder, len(steps), ctx)
+	log.Info("runSteps> start run %d stepOrder:%d len(steps):%d context=%p", buildID, stepOrder, len(steps), ctx)
 	defer func() {
-		log.Debug("runSteps> end run %d stepOrder:%d len(steps):%d context=%p (%s)", buildID, stepOrder, len(steps), ctx, ctx.Err())
+		log.Info("runSteps> end run %d stepOrder:%d len(steps):%d context=%p (%s)", buildID, stepOrder, len(steps), ctx, ctx.Err())
 	}()
 	var criticalStepFailed bool
 	var nbDisabledChildren int

@@ -51,14 +51,14 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 				}
 				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/workflows/%d/infos", jobID), nil)
 				if err != nil {
-					log.Error("Unable to load pipeline build job %d", jobID)
+					log.Error("Unable to load workflow job (Request) %d", jobID)
 					cancel()
 					return
 				}
 
 				j := &sdk.WorkflowNodeJobRun{}
 				if err := json.Unmarshal(b, j); err != nil {
-					log.Error("Unable to load job run %d: %v", jobID, err)
+					log.Error("Unable to load workflow job (Unmarshal) %d: %v", jobID, err)
 					cancel()
 					return
 				}
@@ -94,5 +94,17 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 		log.Error("Unable to send result through grpc: %v", err)
 	}
 
-	return false, w.client.QueueSendResult(job.ID, res)
+	var lasterr error
+	for try := 1; try <= 10; try++ {
+		log.Info("takeWorkflowJob> Sending build result...")
+		lasterr = w.client.QueueSendResult(job.ID, res)
+		if lasterr == nil {
+			log.Info("takeWorkflowJob> Send build result OK")
+			return false, nil
+		}
+		log.Warning("takeWorkflowJob> Cannot send build result: HTTP %d - try: %d - new try in 5s", lasterr, try)
+		time.Sleep(5 * time.Second)
+	}
+	log.Error("takeWorkflowJob> Could not send built result 10 times, giving up")
+	return false, lasterr
 }
