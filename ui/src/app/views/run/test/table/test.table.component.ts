@@ -35,34 +35,43 @@ export class TestTableComponent extends Table {
 
     updateFilteredTests(): void {
         this.filteredTests = new Array<TestCase>();
+        if (!this.tests) {
+            return;
+        }
         switch (this.filter) {
             case 'error':
-                if (this.tests) {
-                    this.tests.forEach(ts => {
-                        if (ts.errors > 0 || ts.failures > 0) {
-                            this.filteredTests.push(...ts.tests.map(tc => {tc.name = ts.name + ' / ' + tc.name; return tc}).filter(tc => {
-                                return (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0);
-                            }));
-                        }
-                    });
-                }
+                for (let ts of this.tests) {
+                    if (ts.errors > 0 || ts.failures > 0) {
+                        let testCases = ts.tests
+                        .filter(tc => (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0))
+                        .map(tc => {
+                            tc.fullname = ts.name + ' / ' + tc.name;
+                            return tc;
+                        });
+                        this.filteredTests.push(...testCases);
+                    }
+                };
                 break;
             case 'skipped':
-            if (this.tests) {
-                this.tests.forEach(ts => {
+                for (let ts of this.tests) {
                     if (ts.skipped > 0) {
-                        this.filteredTests.push(...ts.tests.map(tc => {tc.name = ts.name + ' / ' + tc.name; return tc}).filter(tc => {
-                            return (tc.skipped && tc.skipped.length > 0);
-                        }));
+                        let testCases = ts.tests
+                        .filter(tc => (tc.skipped && tc.skipped.length > 0))
+                        .map(tc => {
+                            tc.fullname = ts.name + ' / ' + tc.name;
+                            return tc;
+                        });
+                        this.filteredTests.push(...testCases);
                     }
-                });
-            }
+                };
                 break;
             default:
-                if (this.tests) {
-                    this.tests.forEach(ts => {
-                        this.filteredTests.push(...ts.tests.map(tc => {tc.name = ts.name + ' / ' + tc.name; return tc}));
+                for (let ts of this.tests) {
+                    let testCases = ts.tests.map(tc => {
+                        tc.fullname = ts.name + ' / ' + tc.name;
+                        return tc;
                     });
+                    this.filteredTests.push(...testCases);
                 }
         }
     }

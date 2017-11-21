@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/shirou/gopsutil/mem"
@@ -25,6 +26,7 @@ var requirementCheckFuncs = map[string]func(w *currentWorker, r sdk.Requirement)
 	sdk.PluginRequirement:        checkPluginRequirement,
 	sdk.ServiceRequirement:       checkServiceRequirement,
 	sdk.MemoryRequirement:        checkMemoryRequirement,
+	sdk.VolumeRequirement:        checkVolumeRequirement,
 }
 
 func checkRequirements(w *currentWorker, a *sdk.Action, execGroups []sdk.Group, bookedJobID int64) (bool, []sdk.Requirement) {
@@ -125,7 +127,8 @@ func checkBinaryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 }
 
 func checkModelRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
-	wm, err := sdk.GetWorkerModel(r.Value)
+	t := strings.Split(r.Value, " ")
+	wm, err := sdk.GetWorkerModel(t[0])
 	if err != nil {
 		return false, nil
 	}
@@ -173,4 +176,26 @@ func checkMemoryRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
 	//Assuming memory is in megabytes
 	//If we have more than 90% of neededMemory, lets do it
 	return int64(totalMemory) >= (neededMemory*1024*1024)*90/100, nil
+}
+
+func checkVolumeRequirement(w *currentWorker, r sdk.Requirement) (bool, error) {
+	// available only on worker booked
+	if w.bookedPBJobID == 0 || w.bookedWJobID == 0 {
+		return false, nil
+	}
+
+	// volume are supported only for Model Docker
+	if w.model.Type != sdk.Docker {
+		return false, nil
+	}
+
+	for _, v := range strings.Split(r.Value, ",") {
+		if strings.HasPrefix(v, "destination=") {
+			theMountedDir := strings.Split(v, "=")[1]
+			if stat, err := os.Stat(theMountedDir); err != nil || !stat.IsDir() {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -277,8 +278,10 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 	// Common check
 	for _, r := range requirements {
 		// If requirement is a Model requirement, it's easy. It's either can or can't run
-		if r.Type == sdk.ModelRequirement && r.Value != model.Name {
-			log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) != model.Name(%s)", timestamp, jobID, r.Value, model.Name)
+		// r.Value could be: theModelName --port=8888:9999, so we take strings.Split(r.Value, " ")[0] to compare
+		// only modelName
+		if r.Type == sdk.ModelRequirement && strings.Split(r.Value, " ")[0] != model.Name {
+			log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) != model.Name(%s)", timestamp, jobID, strings.Split(r.Value, " ")[0], model.Name)
 			return false
 		}
 
@@ -298,12 +301,6 @@ func canRunJob(h Interface, timestamp int64, execGroups []sdk.Group, jobID int64
 		if r.Type == sdk.NetworkAccessRequirement || r.Type == sdk.PluginRequirement || r.Type == sdk.ServiceRequirement || r.Type == sdk.MemoryRequirement {
 			log.Debug("canRunJob> %d - job %d - job with service requirement or memory requirement: only for model docker. current model:%s", timestamp, jobID, model.Type)
 			continue
-		}
-
-		// here, if there a model requirements, we don't need to check binaries
-		if r.Type == sdk.ModelRequirement && r.Value != model.Name {
-			log.Debug("canRunJob> %d - job %d - model requirement r.Value(%s) != model.Name(%s)", timestamp, jobID, r.Value, model.Name)
-			return false
 		}
 
 		if !containsModelRequirement && !containsHostnameRequirement {

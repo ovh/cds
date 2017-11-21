@@ -7,9 +7,10 @@ import (
 
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
-// Insert a new application key in database
+// InsertKey a new application key in database
 func InsertKey(db gorp.SqlExecutor, key *sdk.ApplicationKey) error {
 	dbAppKey := dbApplicationKey(*key)
 
@@ -17,7 +18,7 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.ApplicationKey) error {
 	if errE != nil {
 		return sdk.WrapError(errE, "InsertKey> Cannot encrypt private key")
 	}
-	key.Private = string(s)
+	dbAppKey.Private = string(s)
 
 	if err := db.Insert(&dbAppKey); err != nil {
 		return sdk.WrapError(err, "InsertKey> Cannot insert application key")
@@ -40,6 +41,11 @@ func LoadAllKeys(db gorp.SqlExecutor, app *sdk.Application) error {
 	for i := range res {
 		p := res[i]
 		keys[i] = sdk.ApplicationKey(p)
+		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
+		if err != nil {
+			log.Error("LoadAllKeys> Unable to decrypt private key %s/%s: %v", app.Name, keys[i].Name, err)
+		}
+		keys[i].Private = string(decrypted)
 	}
 	app.Keys = keys
 	return nil
