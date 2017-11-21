@@ -28,6 +28,8 @@ export class AppService {
             return;
         }
 
+        // TODO: to delete, useful to debug on preprod
+        console.log(lastUpdate);
         switch (lastUpdate.type) {
             case 'project':
                 opts = [
