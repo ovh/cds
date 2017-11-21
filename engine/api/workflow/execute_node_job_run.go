@@ -95,16 +95,16 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
 func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
-	j, err := LoadAndLockNodeJobRunWait(db, store, id)
+	j, err := LoadAndLockNodeJobRunNoWait(db, store, id)
 	if err != nil {
-		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot load node job run")
+		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot load node job run %d", id)
 	}
 	if err := prepareSpawnInfos(j, infos); err != nil {
-		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot prepare spawn infos")
+		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot prepare spawn infos for job run %d", id)
 	}
 
 	if err := UpdateNodeJobRun(db, store, p, j); err != nil {
-		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot update node job run")
+		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot update node job run %d", id)
 	}
 	return j, nil
 }
