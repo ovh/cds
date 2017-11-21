@@ -86,7 +86,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		// Sync job status in noderun
 		nodeRun, errNR := LoadNodeRunByID(db, node.ID)
 		if errNR != nil {
-			return sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot Load and lock node run %d", node.ID)
+			return sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot LoadNodeRunByID node run %d", node.ID)
 		}
 		return syncTakeJobInNodeRun(db, nodeRun, job, stageIndex, chanEvent)
 	}
@@ -123,20 +123,29 @@ func prepareSpawnInfos(j *sdk.WorkflowNodeJobRun, infos []sdk.SpawnInfo) error {
 
 // TakeNodeJobRun Take an a job run for update
 func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo, chanEvent chan<- interface{}) (*sdk.WorkflowNodeJobRun, error) {
-	job, err := LoadAndLockNodeJobRunWait(db, store, id)
+	// first load without FOR UPDATE WAIT to quick check status
+	job, err := LoadNodeJobRun(db, store, id)
 	if err != nil {
 		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
 			err = sdk.ErrJobAlreadyBooked
 		}
-		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot load node job run")
+		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot load node job run %d", id)
 	}
-	if job.Status != sdk.StatusWaiting.String() {
-		k := keyBookJob(id)
-		h := sdk.Hatchery{}
-		if store.Get(k, &h) {
-			return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakeNodeJobRun> job %d is not waiting status and was booked by hatchery %d. Current status:%s", id, h.ID, job.Status)
+
+	if err := checkStatusWaiting(store, id, job); err != nil {
+		return nil, err
+	}
+
+	// reload and recheck status
+	job, err = LoadAndLockNodeJobRunWait(db, store, id)
+	if err != nil {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "55P03" {
+			err = sdk.ErrJobAlreadyBooked
 		}
-		return nil, sdk.WrapError(sdk.ErrAlreadyTaken, "TakeNodeJobRun> job %d is not waiting status. Current status:%s", id, job.Status)
+		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot load node job run (WAIT) %d", id)
+	}
+	if err := checkStatusWaiting(store, id, job); err != nil {
+		return nil, err
 	}
 
 	job.Model = workerModel
@@ -145,15 +154,27 @@ func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id i
 	job.Start = time.Now()
 
 	if err := prepareSpawnInfos(job, infos); err != nil {
-		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot prepare spawn infos")
+		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot prepare spawn infos for job %d", id)
 	}
 
 	if err := UpdateNodeJobRunStatus(db, store, p, job, sdk.StatusBuilding, chanEvent); err != nil {
 		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
-		return nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run")
+		return nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run %d", id)
 	}
 
 	return job, nil
+}
+
+func checkStatusWaiting(store cache.Store, id int64, job *sdk.WorkflowNodeJobRun) error {
+	if job.Status != sdk.StatusWaiting.String() {
+		k := keyBookJob(id)
+		h := sdk.Hatchery{}
+		if store.Get(k, &h) {
+			return sdk.WrapError(sdk.ErrAlreadyTaken, "TakeNodeJobRun> job %d is not waiting status and was booked by hatchery %d. Current status:%s", id, h.ID, job.Status)
+		}
+		return sdk.WrapError(sdk.ErrAlreadyTaken, "TakeNodeJobRun> job %d is not waiting status. Current status:%s", id, job.Status)
+	}
+	return nil
 }
 
 // LoadNodeJobRunKeys loads all keys for a job run
