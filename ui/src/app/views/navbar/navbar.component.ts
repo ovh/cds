@@ -111,8 +111,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 this.searchItems = new Array<string>();
 
                 this.navProjects.projects.forEach(p => {
-                    if (p.applicationNames && p.applicationNames.length > 0) {
-                        p.applicationNames.forEach(a => {
+                    if (p.application_names && p.application_names.length > 0) {
+                        p.application_names.forEach(a => {
                             this.searchItems.push(p.name + '/' + a);
                         })
                     }
@@ -127,7 +127,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         if (splittedSelection.length === 1) {
            this.navigateToProject(project.key);
         } else if (splittedSelection.length === 2) {
-            this.navigateToApplication(project.key, project.applicationNames.find(a => a === splittedSelection[1]));
+            this.navigateToApplication(project.key, project.application_names.find(a => a === splittedSelection[1]));
         }
     }
 
@@ -148,7 +148,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
         let selectedProject = this.navProjects.projects.filter(p => {
             return p.key === key;
         })[0];
-        let apps = selectedProject.applicationNames.map((a) => {
+        let apps = selectedProject.application_names.map((a) => {
             let app = new Application();
             app.name = a;
             app.project_key = selectedProject.key;
