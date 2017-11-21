@@ -5,5 +5,5 @@ export class NavbarData {
 export class NavbarProjectData {
     key: string;
     name: string;
-    applicationNames: Array<string>;
+    application_names: Array<string>;
 }
