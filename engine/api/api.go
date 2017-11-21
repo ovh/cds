@@ -90,6 +90,9 @@ type Configuration struct {
 			DN       string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com"`
 			Fullname string `toml:"fullname" default:"{{.givenName}} {{.sn}}"`
 		} `toml:"ldap"`
+		Local struct {
+			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true"`
+		} `toml:"local"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true"`
