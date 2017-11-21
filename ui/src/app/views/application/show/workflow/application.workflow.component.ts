@@ -10,6 +10,7 @@ import {Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
 import {Observable} from 'rxjs/Observable';
 import {finalize} from 'rxjs/operators';
+import 'rxjs/add/observable/zip';
 
 @Component({
     selector: 'app-application-workflow',
@@ -88,10 +89,12 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
 
                     this.loadVersions(this.project.key, this.application.name).subscribe();
                 }
-            ).pipe(finalize(() => {
-                this.loading.remote = false;
-                this.loading.branch = false;
-            })).subscribe();
+            ).pipe(
+                finalize(() => {
+                    this.loading.remote = false;
+                    this.loading.branch = false;
+                })
+            ).subscribe();
         } else {
             this.loading.branch = false;
             this.loading.remote = false;

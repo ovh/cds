@@ -3,8 +3,6 @@
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
 import {SharedModule} from '../../shared.module';
 import {PrerequisitesFormComponent} from './prerequisites.form.component';
 import {Prerequisite} from '../../../model/prerequisite.model';
@@ -18,7 +16,6 @@ describe('CDS: prerequisite From Component', () => {
             ],
             providers: [
                 TranslateService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser
             ],

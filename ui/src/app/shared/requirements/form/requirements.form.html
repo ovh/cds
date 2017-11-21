@@ -48,7 +48,7 @@
                             [no-match-found-text]="false">
                     </div>
                 </div>
-                <div *ngIf="!loading && newRequirement.type === 'model' && workerModels">
+                <div *ngIf="!loading && newRequirement.type === 'model' && workerModels != null">
                     <input
                         name="value-workermodel"
                         auto-complete

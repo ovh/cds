@@ -69,11 +69,10 @@ import {UsageComponent} from './usage/usage.component';
 import {WorkflowNodeConditionFormComponent} from './workflow/node/conditions/condition-form/condition.component';
 import {WorkflowNodeConditionListComponent} from './workflow/node/conditions/condition-list/condition.list.component';
 import {WorkflowNodeConditionsComponent} from './workflow/node/conditions/node.conditions.component';
-import {PrettyJsonModule} from 'angular2-prettyjson'
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
-        CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule, RouterModule, PrettyJsonModule, SuiModule ],
+        CodemirrorModule, ReactiveFormsModule, MarkdownModule, NguiAutoCompleteModule, RouterModule, SuiModule ],
     declarations: [
         ActionComponent,
         ActionStepComponent,
@@ -168,7 +167,6 @@ import {PrettyJsonModule} from 'angular2-prettyjson'
         PermissionEnvironmentFormComponent,
         PrerequisiteComponent,
         PrerequisitesFormComponent,
-        PrettyJsonModule,
         PrerequisiteComponent,
         PrerequisitesFormComponent,
         PipelineLaunchModalComponent,

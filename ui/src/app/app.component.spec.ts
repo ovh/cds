@@ -4,7 +4,6 @@ import {TestBed, async, getTestBed, fakeAsync} from '@angular/core/testing';
 import {AppModule} from './app.module';
 import {AppComponent} from './app.component';
 
-import {MockBackend} from '@angular/http/testing';
 import {Injector} from '@angular/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {User} from './model/user.model';
@@ -29,7 +28,6 @@ import {first} from 'rxjs/operators';
 describe('App: CDS', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
     let authStore: AuthentificationStore;
     let projectStore: ProjectStore;
     let applicationStore: ApplicationStore;
@@ -41,7 +39,6 @@ describe('App: CDS', () => {
             providers: [
                 AuthentificationStore,
                 { provide: APP_BASE_HREF, useValue: '/' },
-                MockBackend,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: ProjectService, useClass: MockProjectService },
                 { provide: ApplicationService, useClass: MockApplicationService},
@@ -56,7 +53,6 @@ describe('App: CDS', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(MockBackend);
         authStore = injector.get(AuthentificationStore);
         projectStore = injector.get(ProjectStore);
         applicationStore = injector.get(ApplicationStore);
@@ -65,7 +61,6 @@ describe('App: CDS', () => {
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
         authStore = undefined;
         projectStore = undefined;
         applicationStore = undefined;
