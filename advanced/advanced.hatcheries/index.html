@@ -442,7 +442,6 @@
 <li>
 <ul>
 <li><a href="#local-mode">Local mode</a></li>
-<li><a href="#docker-mode">Docker mode</a></li>
 <li><a href="#marathon-mode">Marathon mode</a></li>
 <li><a href="#openstack-mode">Openstack mode</a></li>
 <li><a href="#vsphere-mode">VSphere mode</a></li>
@@ -473,7 +472,6 @@
 
 <ul>
 <li>Local (Start local workers on a single host)</li>
-<li>Local Docker (Start worker model instances on a single host)</li>
 <li>Marathon (Start worker model instances on a mesos cluster with marathon framework)</li>
 <li>Swarm (Start worker on a docker swarm cluster)</li>
 <li>Openstack (Start virtual machines on an openstack cluster)</li>
@@ -483,10 +481,6 @@
 <h3 id="local-mode">Local mode</h3>
 
 <p>Hatchery starts workers directly as local process.</p>
-
-<h3 id="docker-mode">Docker mode</h3>
-
-<p>Hatchery starts workers inside docker containers on the same host.</p>
 
 <h3 id="marathon-mode">Marathon mode</h3>
 
@@ -502,7 +496,7 @@
 
 <h3 id="swarm-mode">Swarm mode</h3>
 
-<p>The hatchery connects to a swarm cluster and starts workers inside containers.</p>
+<p>The hatchery connects to a Docker Swarm cluster and starts workers inside containers.</p>
 
 <h2 id="admin-hatchery">Admin hatchery</h2>
 

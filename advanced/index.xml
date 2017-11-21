@@ -67,7 +67,7 @@ With CDS CLI run :</description>
       <description>Hatchery is a service dedicated to spawn and kill worker in accordance with build queue needs.
 An hatchery is started with permissions to build all pipelines accessible from a given group, using token.
 There are 6 modes for hatcheries:
- Local (Start local workers on a single host) Local Docker (Start worker model instances on a single host) Marathon (Start worker model instances on a mesos cluster with marathon framework) Swarm (Start worker on a docker swarm cluster) Openstack (Start virtual machines on an openstack cluster) VSphere (Start virtual machines on an VSphere cluster)  Local mode Hatchery starts workers directly as local process.</description>
+ Local (Start local workers on a single host) Marathon (Start worker model instances on a mesos cluster with marathon framework) Swarm (Start worker on a docker swarm cluster) Openstack (Start virtual machines on an openstack cluster) VSphere (Start virtual machines on an VSphere cluster)  Local mode Hatchery starts workers directly as local process.</description>
     </item>
     
     <item>

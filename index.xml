@@ -76,8 +76,7 @@ In CDS there is several types of pipeline : build, testing and deployment. In Pi
       <guid>https://ovh.github.io/cds/installation/installation.requirements/</guid>
       <description>CDS API is the core component of CDS. To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
 There is are two ways to set up CDS:
- as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4. But for serious usage your may need :
- A Redis server or sentinels based cluster used as a cache and session store A LDAP Server for authentication A SMTP Server for mails A Kafka Broker to manage CDS events A Openstack Swift Tenant to store builds artifacts A Vault server for CDS configuration A Consul to manage CDS Configuration  See Configuration template for more details</description>
+ as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4 and Redis &amp;gt;= 3.2. But for serious usage your may need :</description>
     </item>
     
     <item>
@@ -189,7 +188,7 @@ $ cds project add TEST &amp;quot;My test project&amp;quot; test-team OK  Create 
       <description>Hatchery is a service dedicated to spawn and kill worker in accordance with build queue needs.
 An hatchery is started with permissions to build all pipelines accessible from a given group, using token.
 There are 6 modes for hatcheries:
- Local (Start local workers on a single host) Local Docker (Start worker model instances on a single host) Marathon (Start worker model instances on a mesos cluster with marathon framework) Swarm (Start worker on a docker swarm cluster) Openstack (Start virtual machines on an openstack cluster) VSphere (Start virtual machines on an VSphere cluster)  Local mode Hatchery starts workers directly as local process.</description>
+ Local (Start local workers on a single host) Marathon (Start worker model instances on a mesos cluster with marathon framework) Swarm (Start worker on a docker swarm cluster) Openstack (Start virtual machines on an openstack cluster) VSphere (Start virtual machines on an VSphere cluster)  Local mode Hatchery starts workers directly as local process.</description>
     </item>
     
     <item>
@@ -223,7 +222,7 @@ plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ss
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-simple/</guid>
-      <description>A worker model of type docker can be spawned by a Hatchery Docker or Docker Swarm.
+      <description>A worker model of type docker can be spawned by a Hatchery Docker Swarm.
 Register a worker Model from an existing Docker Image Docker Image golang:1.8.1 have a &amp;ldquo;curl&amp;rdquo; in $PATH, so it can be used as it is.
  In the UI, click on the wheel on the hand right top corner and select *workers&amp;rdquo; (or go the the route #/worker) At the bottom of the page, fill the form  Name of your worker Golang-1.</description>
     </item>
@@ -323,7 +322,7 @@ A Job will be executed by a worker. CDS will choose and provision a worker for d
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-customized/</guid>
-      <description>A worker model of type docker can be spawned by a Hatchery Docker or Docker Swarm
+      <description>A worker model of type docker can be spawned by a Hatchery Docker Swarm
 Setup Docker Worker Model with your own image In this example, we will build a Docker model able to build an AngularJs application with webfonts. To create webfonts, a grunt task (optionnally) requires fontforge and ttfautohint.
 The following tools must be included in the model:
  NodeJs and npm bower grunt-cli gulp-cli fontforge ttfautohint  We will use the official nodejs image from Docker.</description>

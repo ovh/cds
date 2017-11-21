@@ -29,8 +29,7 @@ How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME
       <guid>https://ovh.github.io/cds/installation/installation.requirements/</guid>
       <description>CDS API is the core component of CDS. To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
 There is are two ways to set up CDS:
- as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4. But for serious usage your may need :
- A Redis server or sentinels based cluster used as a cache and session store A LDAP Server for authentication A SMTP Server for mails A Kafka Broker to manage CDS events A Openstack Swift Tenant to store builds artifacts A Vault server for CDS configuration A Consul to manage CDS Configuration  See Configuration template for more details</description>
+ as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4 and Redis &amp;gt;= 3.2. But for serious usage your may need :</description>
     </item>
     
     <item>
