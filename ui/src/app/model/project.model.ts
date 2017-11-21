@@ -11,7 +11,9 @@ export class Project {
     name: string;
     workflows: Array<Workflow>;
     pipelines: Array<Pipeline>;
+    pipeline_names: Array<string>;
     applications: Array<Application>;
+    application_names: Array<string>;
     groups: Array<GroupPermission>;
     variables: Array<Variable>;
     environments: Array<Environment>;

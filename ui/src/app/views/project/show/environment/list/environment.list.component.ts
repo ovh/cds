@@ -89,6 +89,9 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     selectNewEnv(envName): void {
         if (this.project.environments && this.project.environments.length > 0) {
             this.selectedEnv = this.project.environments.find(e => e.name === envName);
+            if (!this.selectedEnv) {
+                this.selectedEnv = this.project.environments[0];
+            }
             this._router.navigate(['/project/', this.project.key], {queryParams: { tab: 'environments', envName: this.selectedEnv.name}});
         }
     }

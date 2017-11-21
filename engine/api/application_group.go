@@ -137,10 +137,6 @@ func (api *API) updateGroupsInApplicationHandler() Handler {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
-			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot update last modified date")
-		}
-
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateGroupsInApplicationHandler: Cannot commit transaction")
 		}

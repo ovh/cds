@@ -33,7 +33,9 @@ export class ProjectVariablesComponent implements OnInit {
     ngOnInit() {
       this._projectStore.getProjectVariablesResolver(this.project.key)
         .finally(() => this.loading = false)
-        .subscribe((proj) => this.project = proj);
+        .subscribe((proj) => {
+          this.project = proj;
+        });
     }
 
     variableEvent(event: VariableEvent, skip?: boolean): void {

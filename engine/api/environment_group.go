@@ -76,7 +76,7 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler: Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
 			return sdk.WrapError(err, "updateGroupRoleOnEnvironmentHandler: Cannot update project last modified date")
 		}
 
@@ -154,7 +154,7 @@ func (api *API) addGroupsInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addGroupsInEnvironmentHandler: Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(errP, "addGroupsInEnvironmentHandler: Cannot update project %s", p.Key)
 		}
 
@@ -247,7 +247,7 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot delete group %s from pipeline %s", groupName, envName)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "deleteGroupFromEnvironmentHandler: Cannot update project last modified date")
 		}
 

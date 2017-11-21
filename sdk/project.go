@@ -16,7 +16,9 @@ type Project struct {
 	Name              string             `json:"name" yaml:"name" db:"name" cli:"name"`
 	Workflows         []Workflow         `json:"workflows" yaml:"workflows" db:"-" cli:"-"`
 	Pipelines         []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
+	PipelineNames     []string           `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
 	Applications      []Application      `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
+	ApplicationNames  []string           `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
 	ProjectGroups     []GroupPermission  `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
 	Variable          []Variable         `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
 	Environments      []Environment      `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
@@ -60,9 +62,14 @@ type LastModification struct {
 }
 
 const (
-	ApplicationLastModificationType = "application"
-	PipelineLastModificationType    = "pipeline"
-	ProjectLastModificationType     = "project"
+	ApplicationLastModificationType        = "application"
+	PipelineLastModificationType           = "pipeline"
+	ProjectLastModificationType            = "project"
+	ProjectPipelineLastModificationType    = "project.pipeline"
+	ProjectApplicationLastModificationType = "project.application"
+	ProjectEnvironmentLastModificationType = "project.environment"
+	ProjectWorkflowLastModificationType    = "project.workflow"
+	ProjectVariableLastModificationType    = "project.variable"
 )
 
 //ProjectLastUpdates update times of project, application and pipelines

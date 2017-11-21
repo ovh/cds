@@ -2,7 +2,7 @@
     <div class="three wide column">
         <div class="ui vertical steps">
             <div class="step" *ngFor="let e of project.environments; let i = index"
-                 [class.active]="selectedEnv.name === e.name">
+                 [class.active]="selectedEnv?.name === e.name">
                 <div class="content">
                     <a class="title pointing" (click)="selectNewEnv(e.name)">{{e.name}}</a>
                 </div>

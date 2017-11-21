@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {LastModification} from './model/lastupdate.model';
-import {ProjectStore} from './service/project/project.store';
+import {ProjectStore, LoadOpts} from './service/project/project.store';
 import {ActivatedRoute} from '@angular/router';
 import {ApplicationStore} from './service/application/application.store';
 import {NotificationService} from './service/notification/notification.service';
@@ -18,20 +18,63 @@ export class AppService {
     }
 
     updateCache(lastUpdate: LastModification) {
+        let opts = [
+            new LoadOpts('withGroups', 'groups', null),
+            new LoadOpts('withPermission', 'permissions', null)
+        ];
         if (!lastUpdate) {
             return;
         }
 
-        if (lastUpdate.type === 'project') {
-            this.updateProjectCache(lastUpdate);
-        } else if (lastUpdate.type === 'application') {
-            this.updateApplicationCache(lastUpdate);
-        } else if (lastUpdate.type === 'pipeline') {
-            this.updatePipelineCache(lastUpdate);
+        switch (lastUpdate.type) {
+            case 'project':
+                opts = [
+                    ...opts,
+                    new LoadOpts('withApplicationPipelines', 'applications.pipelines', null),
+                    new LoadOpts('withWorkflows', 'workflows', null)
+                ];
+                this.updateProjectCache(lastUpdate, opts);
+                break;
+            case 'application':
+                this.updateApplicationCache(lastUpdate);
+                break;
+            case 'pipeline':
+                this.updatePipelineCache(lastUpdate);
+                break;
+            case 'project.environment':
+                opts = [
+                    ...opts,
+                    new LoadOpts('withEnvironments', 'environments', null)
+                ];
+                this.updateProjectCache(lastUpdate, opts);
+                break;
+            case 'project.variable':
+                opts = [
+                    ...opts,
+                    new LoadOpts('withVariables', 'variables', null)
+                ];
+                this.updateProjectCache(lastUpdate, opts);
+                break;
+            case 'project.application':
+                opts = [
+                    ...opts,
+                    new LoadOpts('withApplicationNames', 'application_names', null)
+                ];
+                this.updateProjectCache(lastUpdate, opts);
+                break;
+            case 'project.pipeline':
+                opts = [
+                    ...opts,
+                    new LoadOpts('withPipelineNames', 'pipeline_names', null)
+                ];
+                this.updateProjectCache(lastUpdate, opts);
+                break;
+            case 'project.workflow':
+                break;
         }
     }
 
-    updateProjectCache(lastUpdate: LastModification): void {
+    updateProjectCache(lastUpdate: LastModification, opts: LoadOpts[]): void {
         // Get all projects
         this._projStore.getProjects().first().subscribe(projects => {
 
@@ -54,7 +97,7 @@ export class AppService {
 
                     // If working on sub resources - resync project
                     if (params['pipName'] || params['appName'] || lastUpdate.username === this._authStore.getUser().username) {
-                        this._projStore.resync(lastUpdate.key).first().subscribe(() => {});
+                        this._projStore.resync(lastUpdate.key, opts).first().subscribe(() => {});
                     }
                 } else {
                     // remove from cache

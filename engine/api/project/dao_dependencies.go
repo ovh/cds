@@ -36,6 +36,18 @@ var (
 		return nil
 	}
 
+	loadApplicationNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		var err error
+		var apps []string
+
+		if apps, err = application.LoadAllNames(db, store, proj.Key, u); err != nil {
+			return sdk.WrapError(err, "application.loadApplications")
+		}
+		proj.ApplicationNames = apps
+
+		return nil
+	}
+
 	loadApplicationPipelines = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		if proj.Applications == nil {
 			if err := loadApplications(db, store, proj, u); err != nil {
@@ -120,6 +132,18 @@ var (
 			return sdk.WrapError(errPip, "application.loadPipelines")
 		}
 		proj.Pipelines = append(proj.Pipelines, pipelines...)
+		return nil
+	}
+
+	loadPipelineNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
+		var err error
+		var pips []string
+
+		if pips, err = pipeline.LoadAllNames(db, store, proj.ID, u); err != nil {
+			return sdk.WrapError(err, "pipeline.loadpipelinenames")
+		}
+		proj.PipelineNames = pips
+
 		return nil
 	}
 

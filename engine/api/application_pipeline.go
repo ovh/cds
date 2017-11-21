@@ -78,21 +78,25 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 		}
 
 		for _, pipName := range pipelines {
-			pipeline, err := pipeline.LoadPipeline(tx, key, pipName, true)
+			pip, err := pipeline.LoadPipeline(tx, key, pipName, true)
 			if err != nil {
 				return sdk.WrapError(err, "attachPipelinesToApplicationHandler: Cannot load pipeline %s", pipName)
 			}
 
-			id, errA := application.AttachPipeline(tx, app.ID, pipeline.ID)
+			id, errA := application.AttachPipeline(tx, app.ID, pip.ID)
 			if errA != nil {
 				return sdk.WrapError(errA, "attachPipelinesToApplicationHandler: Cannot attach pipeline %s to application %s", pipName, appName)
 			}
 
 			app.Pipelines = append(app.Pipelines, sdk.ApplicationPipeline{
-				Pipeline: *pipeline,
+				Pipeline: *pip,
 				ID:       id,
 			})
 
+			projTmp := &sdk.Project{Key: key}
+			if err := pipeline.UpdatePipelineLastModified(tx, projTmp, pip, getUser(ctx)); err != nil {
+				return sdk.WrapError(err, "attachPipelinesToApplicationHandler> Cannot update pipeline last modified date")
+			}
 		}
 
 		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
@@ -237,12 +241,8 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 			return sdk.WrapError(err, "removePipelineFromApplicationHandler> Cannot update application last modified date")
 		}
 
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "removePipelineFromApplicationHandler> Cannot commit tx")
-		}
-
 		var errW error
-		a.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, a.Name, getUser(ctx), "", "", 0)
+		a.Workflows, errW = workflowv0.LoadCDTree(tx, api.Cache, key, a.Name, getUser(ctx), "", "", 0)
 		if errW != nil {
 			return sdk.WrapError(errW, "removePipelineFromApplicationHandler> Cannot load workflow")
 		}
@@ -255,6 +255,16 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 				break
 			}
 		}
+
+		projTmp := &sdk.Project{Key: key}
+		if err := pipeline.UpdatePipelineLastModified(tx, projTmp, &a.Pipelines[indexPipeline].Pipeline, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "removePipelineFromApplicationHandler> Cannot update pipeline last modified date")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "removePipelineFromApplicationHandler> Cannot commit tx")
+		}
+
 		a.Pipelines = append(a.Pipelines[:indexPipeline], a.Pipelines[indexPipeline+1:]...)
 
 		return WriteJSON(w, r, a, http.StatusOK)

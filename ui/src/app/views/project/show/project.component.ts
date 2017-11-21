@@ -56,23 +56,23 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this._route.params.subscribe(params => {
-            const key = params['key'];
-            if (key) {
-                if (this.project && this.project.key !== key) {
-                    this.project = undefined;
-                }
-                if (!this.project) {
-                    this.refreshDatas(key);
-                }
-
-            }
-        });
-        this._route.queryParams.subscribe(params => {
+        this._route.queryParams.subscribe((params) => {
             if (params['tab']) {
                 this.selectedTab = params['tab'];
             }
+            this._route.params.subscribe(routeParams => {
+                const key = routeParams['key'];
+                if (key) {
+                    if (this.project && this.project.key !== key) {
+                        this.project = undefined;
+                    }
+                    if (!this.project) {
+                        this.refreshDatas(key);
+                    }
+                }
+            });
         });
+
         if (this._route.snapshot && this._route.snapshot.queryParams) {
             this.workflowName = this._route.snapshot.queryParams['workflow'];
             this.workflowNum = this._route.snapshot.queryParams['run'];
@@ -86,20 +86,26 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
             this.projectSubscriber.unsubscribe();
         }
         let opts = [
-          // new LoadOpts('withVariables', 'variables', this._projectStore.getProjectVariablesResolver),
-          new LoadOpts('withApplications', 'applications', null),
-          // new LoadOpts('withPipelines', 'pipelines', this._projectStore.getProjectPipelinesResolver),
+          new LoadOpts('withApplicationNames', 'application_names', null),
+          new LoadOpts('withPipelineNames', 'pipeline_names', null),
           new LoadOpts('withApplicationPipelines', 'applications.pipelines', null),
           new LoadOpts('withGroups', 'groups', null),
           new LoadOpts('withPermission', 'permissions', null),
           new LoadOpts('withWorkflows', 'workflows', null)
         ];
-        this.projectSubscriber = this._projectStore.getProjects(key, opts).subscribe( projects => {
-            if (projects) {
-                let updatedProject = projects.get(key);
-                if (updatedProject && !updatedProject.externalChange) {
-                    this.project = updatedProject;
-                } else if (updatedProject && updatedProject.externalChange) {
+
+        if (this.selectedTab === 'variables') {
+            opts.push(new LoadOpts('withVariables', 'variables', null));
+        } else if (this.selectedTab === 'environments') {
+            opts.push(new LoadOpts('withEnvironments', 'environments', null));
+        }
+
+
+        this.projectSubscriber = this._projectStore.getProjectResolver(key, opts).subscribe(proj => {
+            if (proj) {
+                if (!proj.externalChange) {
+                    this.project = proj;
+                } else if (proj && proj.externalChange) {
                     if (this.project.externalChange) {
                         this._toast.info('', this._translate.instant('warning_project'));
                     }

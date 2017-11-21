@@ -59,14 +59,14 @@ export class ProjectStore {
             return this.resync(key, opts);
         }
 
-        if (Array.isArray(opts)) {
-          let funcs = opts.filter((opt) => !store.get(key)[opt.fieldName] && opt.funcOpts != null);
-          if (!funcs.length) {
-            return Observable.of(store.get(key));
-          }
+        if (Array.isArray(opts) && store.get(key)) {
+            let funcs = opts.filter((opt) => !store.get(key)[opt.fieldName]);
+            if (!funcs.length) {
+                return Observable.of(store.get(key));
+            }
 
-          // TODO: iterate on funcs array and execute handler linked to fetch missing data
-          return this.resync(key, opts);
+            // TODO: iterate on funcs array and execute handler linked to fetch missing data
+            return this.resync(key, funcs);
         }
         return Observable.of(store.get(key));
     }
@@ -79,8 +79,15 @@ export class ProjectStore {
     resync(key: string, opts?: LoadOpts[]): Observable<Project> {
         return this._projectService.getProject(key, opts).map( res => {
             let store = this._projectCache.getValue();
-            this._projectCache.next(store.set(key, res));
-            return res;
+            let proj = store.get(key);
+            if (proj) {
+                proj = Object.assign({}, proj, res);
+            } else {
+                proj = res;
+            }
+
+            this._projectCache.next(store.set(key, proj));
+            return proj;
         });
     }
 

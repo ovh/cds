@@ -248,7 +248,8 @@ func (api *API) updateEnvironmentsHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
+		fmt.Println("iciiii", sdk.ProjectEnvironmentLastModificationType)
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot update last modified date")
 		}
 		proj.Environments = envs
@@ -303,7 +304,7 @@ func (api *API) addEnvironmentHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "addEnvironmentHandler> Cannot update last modified date")
 		}
 
@@ -351,7 +352,7 @@ func (api *API) deleteEnvironmentHandler() Handler {
 			return err
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "deleteEnvironmentHandler> Cannot update last modified date")
 		}
 
@@ -441,7 +442,7 @@ func (api *API) updateEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "updateEnvironmentHandler> Cannot update last modified date")
 		}
 
@@ -525,7 +526,7 @@ func (api *API) cloneEnvironmentHandler() Handler {
 		}
 
 		//Update the poroject
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "cloneEnvironmentHandler> Cannot update last modified date")
 		}
 

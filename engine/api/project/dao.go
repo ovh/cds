@@ -147,7 +147,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return sdk.WrapError(err, "project.Insert> Unable to insert PGPKeyPair")
 	}
 
-	return UpdateLastModified(db, store, u, proj)
+	return UpdateLastModified(db, store, u, proj, sdk.ProjectLastModificationType)
 }
 
 // Update a new project in database
@@ -167,20 +167,12 @@ func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return sdk.ErrNoProject
 	}
 	*proj = sdk.Project(dbProj)
-	return UpdateLastModified(db, store, u, proj)
+	return UpdateLastModified(db, store, u, proj, sdk.ProjectLastModificationType)
 }
 
 // UpdateLastModified updates last_modified date on a project given its key
-func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, proj *sdk.Project) error {
+func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, proj *sdk.Project, updateType string) error {
 	t := time.Now()
-
-	if u != nil {
-		store.SetWithTTL(cache.Key("lastModified", proj.Key), sdk.LastModification{
-			Name:         proj.Key,
-			Username:     u.Username,
-			LastModified: t.Unix(),
-		}, 0)
-	}
 
 	_, err := db.Exec("update project set last_modified = $2 where projectkey = $1", proj.Key, t)
 	proj.LastModified = t
@@ -191,7 +183,7 @@ func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, pro
 			Name:         proj.Name,
 			LastModified: t.Unix(),
 			Username:     u.Username,
-			Type:         sdk.ProjectLastModificationType,
+			Type:         updateType,
 		}
 		b, errP := json.Marshal(updates)
 		if errP == nil {
@@ -200,6 +192,20 @@ func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, pro
 		return err
 	}
 	return nil
+}
+
+func SendLastModifiedEvent(store cache.Store, user *sdk.User, key, updateType string) error {
+	updates := sdk.LastModification{
+		Key:          key,
+		LastModified: time.Now().Unix(),
+		Username:     user.Username,
+		Type:         updateType,
+	}
+	b, errP := json.Marshal(updates)
+	if errP == nil {
+		store.Publish("lastUpdates", string(b))
+	}
+	return errP
 }
 
 // DeleteByID removes given project from database (project and project_group table)
@@ -234,9 +240,11 @@ type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project, *sdk.User
 var LoadOptions = struct {
 	Default                        LoadOptionFunc
 	WithApplications               LoadOptionFunc
+	WithApplicationNames           LoadOptionFunc
 	WithVariables                  LoadOptionFunc
 	WithVariablesWithClearPassword LoadOptionFunc
 	WithPipelines                  LoadOptionFunc
+	WithPipelineNames              LoadOptionFunc
 	WithEnvironments               LoadOptionFunc
 	WithGroups                     LoadOptionFunc
 	WithPermission                 LoadOptionFunc
@@ -249,10 +257,12 @@ var LoadOptions = struct {
 }{
 	Default:                        &loadDefault,
 	WithPipelines:                  &loadPipelines,
+	WithPipelineNames:              &loadPipelineNames,
 	WithEnvironments:               &loadEnvironments,
 	WithGroups:                     &loadGroups,
 	WithPermission:                 &loadPermission,
 	WithApplications:               &loadApplications,
+	WithApplicationNames:           &loadApplicationNames,
 	WithVariables:                  &loadVariables,
 	WithVariablesWithClearPassword: &loadVariablesWithClearPassword,
 	WithApplicationPipelines:       &loadApplicationPipelines,
