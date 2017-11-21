@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-gorp/gorp"
-	
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
@@ -39,7 +39,6 @@ func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data N
 		from project
 		left outer join application on project.id = application.project_id
 		left outer join workflow on project.id = workflow.project_id
-		and project.id = workflow.project_id
 		group by project.projectkey, project.name
 		order by project.name`
 	} else {
