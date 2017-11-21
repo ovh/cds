@@ -51,26 +51,14 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 				}
 				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/workflows/%d/infos", jobID), nil)
 				if err != nil {
-<<<<<<< HEAD
-					log.Error("Unable to load workflow job (Request) %d", jobID)
-					cancel()
-					return
-=======
 					log.Error("takeWorkflowJob> Unable to load workflow job %d", jobID)
 					continue // do not kill the worker here, could be a timeout
->>>>>>> feat (worker): give chance to worker
 				}
 
 				j := &sdk.WorkflowNodeJobRun{}
 				if err := json.Unmarshal(b, j); err != nil {
-<<<<<<< HEAD
-					log.Error("Unable to load workflow job (Unmarshal) %d: %v", jobID, err)
-					cancel()
-					return
-=======
 					log.Error("takeWorkflowJob> Unable to load workflow job %d: %v", jobID, err)
 					continue // do not kill the worker here, could be a timeout
->>>>>>> feat (worker): give chance to worker
 				}
 				if j.Status != sdk.StatusBuilding.String() {
 					log.Info("takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context", j.Status, err)
