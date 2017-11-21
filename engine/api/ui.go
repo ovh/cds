@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/ovh/cds/sdk"
-
 	"github.com/ovh/cds/engine/api/ui"
 )
 
