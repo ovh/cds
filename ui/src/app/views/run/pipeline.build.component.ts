@@ -3,7 +3,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 import {Application} from '../../model/application.model';
 import {Project} from '../../model/project.model';
 import {Pipeline, PipelineBuild, PipelineStatus} from '../../model/pipeline.model';
-import {Subscription} from 'rxjs/Rx';
+import {Subscription} from 'rxjs/Subscription';
 import {environment} from '../../../environments/environment';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {CDSWorker} from '../../shared/worker/worker';

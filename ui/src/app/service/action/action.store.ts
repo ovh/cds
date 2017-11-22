@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {OrderedMap} from 'immutable';
-import {BehaviorSubject, Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 import {Action} from '../../model/action.model';
 import {ActionService} from './action.service';
 

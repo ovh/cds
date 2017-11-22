@@ -12,7 +12,7 @@ import {Parameter} from '../../../../../../model/parameter.model';
 import {Injector} from '@angular/core';
 import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';
 import {Router, NavigationExtras} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {PipelineBuild, Pipeline, PipelineRunRequest, PipelineBuildTrigger} from '../../../../../../model/pipeline.model';
 import {Project} from '../../../../../../model/project.model';
 import {Application} from '../../../../../../model/application.model';

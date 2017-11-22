@@ -20,7 +20,7 @@ import {Pipeline} from '../../../../../model/pipeline.model';
 import {Trigger} from '../../../../../model/trigger.model';
 import {ApplicationModule} from '../../../application.module';
 import {Map} from 'immutable';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Parameter} from '../../../../../model/parameter.model';
 import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
 import {Prerequisite} from '../../../../../model/prerequisite.model';

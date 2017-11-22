@@ -2,7 +2,7 @@
 import {TestBed, fakeAsync,  inject} from '@angular/core/testing';
 import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {ProjectService} from '../../../service/project/project.service';
 import {ProjectStore} from '../../../service/project/project.store';

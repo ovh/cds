@@ -61,15 +61,14 @@
       }
     }
   ],
-  "e2e": {
-    "protractor": {
-      "config": "./protractor.conf.js"
-    }
-  },
   "lint": [
     {
       "files": "src/**/*.ts",
-      "project": "src/tsconfig.app.json"
+      "project": "src/tsconfig.app.json",
+      "exclude": [
+        "src/**/*.spec.ts",
+        "src/test.ts"
+      ]
     },
     {
       "files": "src/**/*.spec.ts",

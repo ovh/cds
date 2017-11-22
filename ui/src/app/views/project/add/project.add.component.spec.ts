@@ -13,7 +13,7 @@ import {ProjectService} from '../../../service/project/project.service';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectModule} from '../project.module';
 import {SharedModule} from '../../../shared/shared.module';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {ProjectAddComponent} from './project.add.component';
 import {GroupService} from '../../../service/group/group.service';
 import {GroupPermission, Group} from '../../../model/group.model';

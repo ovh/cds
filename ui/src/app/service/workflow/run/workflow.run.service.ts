@@ -16,7 +16,7 @@ export class WorkflowRunService {
      * @param workflow Workflow to create
      */
     runWorkflow(key: string, workflowName: string, request: WorkflowRunRequest): Observable<WorkflowRun> {
-        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs', request);
+        return this._http.post<WorkflowRun>('/project/' + key + '/workflows/' + workflowName + '/runs', request);
     }
 
     /**
@@ -28,7 +28,8 @@ export class WorkflowRunService {
      * @returns {Observable<Array<WorkflowNodeRun>>}
      */
     nodeRunHistory(key: string, workflowName: string, number: number, nodeID: number): Observable<Array<WorkflowNodeRun>> {
-        return this._http.get('/project/' + key + '/workflows/' + workflowName + '/runs/' + number + '/nodes/' + nodeID + '/history');
+        return this._http.get<Array<WorkflowNodeRun>>(
+            '/project/' + key + '/workflows/' + workflowName + '/runs/' + number + '/nodes/' + nodeID + '/history');
     }
 
     /**
@@ -39,7 +40,7 @@ export class WorkflowRunService {
      * @returns {Observable<WorkflowRun>}
      */
     getWorkflowRun(key: string, workflowName: string, number: number): Observable<WorkflowRun> {
-        return this._http.get('/project/' + key + '/workflows/' + workflowName + '/runs/' + number);
+        return this._http.get<WorkflowRun>('/project/' + key + '/workflows/' + workflowName + '/runs/' + number);
     }
 
     /**
@@ -50,7 +51,7 @@ export class WorkflowRunService {
      * @returns {Observable<boolean>}
      */
     stopWorkflowRun(key: string, workflowName: string, num: number): Observable<boolean> {
-        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/stop', null);
+        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/stop', null).map(() => true);
     }
 
     /**
@@ -62,7 +63,8 @@ export class WorkflowRunService {
      * @returns {Observable<boolean>}
      */
     stopNodeRun(key: string, workflowName: string, num: number, id: number): Observable<boolean> {
-        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/nodes/' + id + '/stop', null);
+        return this._http.post('/project/' + key + '/workflows/' + workflowName + '/runs/' + num + '/nodes/' + id + '/stop', null)
+            .map (() => true);
     }
 
     /**
@@ -72,7 +74,7 @@ export class WorkflowRunService {
      * @returns {Observable<{}>}
      */
     getTags(key: string, workflowName: string): Observable<Map<string, Array<string>>> {
-        return this._http.get('/project/' + key + '/workflows/' + workflowName + '/runs/tags');
+        return this._http.get<Map<string, Array<string>>>('/project/' + key + '/workflows/' + workflowName + '/runs/tags');
     }
 
     /**
@@ -82,6 +84,7 @@ export class WorkflowRunService {
      * @param {number} workflow_run_id Workflow run id to resync
      */
     resync(key: string, workflow: Workflow, workflow_run_id: number): Observable<WorkflowRun> {
-        return this._http.post('/project/' + key + '/workflows/' + workflow.name + '/runs/' + workflow_run_id + '/resync', null);
+        return this._http.post<WorkflowRun>(
+            '/project/' + key + '/workflows/' + workflow.name + '/runs/' + workflow_run_id + '/resync', null);
     }
 }

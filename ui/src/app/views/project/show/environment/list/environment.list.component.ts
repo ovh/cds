@@ -3,7 +3,8 @@ import {Project} from '../../../../../model/project.model';
 import {Environment} from '../../../../../model/environment.model';
 import {EnvironmentService} from '../../../../../service/environment/environment.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Subscription} from 'rxjs/Rx';
+import {Subscription} from 'rxjs/Subscription';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-environment-list',
@@ -52,7 +53,7 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     loadUsage() {
         this.loading = true;
         this.envSub = this._environmentService.get(this.project.key)
-            .finally(() => this.loading = false)
+            .pipe(finalize(() => this.loading = false))
             .subscribe((envs) => {
                 if (Array.isArray(this.project.environments)) {
                     this.project.environments = this.project.environments.map((env) => {

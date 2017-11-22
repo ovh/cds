@@ -12,6 +12,6 @@ export class PipelineAuditService {
     }
 
     getAudit(project: Project, pipeline: Pipeline): Observable<Array<PipelineAudit>> {
-        return this._http.get('/project/' + project.key + '/pipeline/' + pipeline.name + '/audits');
+        return this._http.get<Array<PipelineAudit>>('/project/' + project.key + '/pipeline/' + pipeline.name + '/audits');
     }
 }

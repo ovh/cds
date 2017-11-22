@@ -4,6 +4,7 @@ import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {WorkerModel} from '../../../model/worker-model.model';
+import {finalize, first} from 'rxjs/operators';
 import {TranslateService} from 'ng2-translate';
 
 @Component({
@@ -50,8 +51,10 @@ export class RequirementsFormComponent {
             this.availableRequirements.push(...r.filter(req => req !== 'plugin').toArray());
         });
 
-        this._workerModelService.getWorkerModels().first()
-        .finally(() => this.loading = false)
+        this._workerModelService.getWorkerModels()
+        .pipe(
+            first(),
+            finalize(() => this.loading = false))
         .subscribe( wms => {
             this.workerModels = wms;
             if (Array.isArray(this.workerModels)) {

@@ -8,6 +8,7 @@ import {AuthentificationStore} from './service/auth/authentification.store';
 import {TranslateService} from 'ng2-translate';
 import {PipelineStore} from './service/pipeline/pipeline.store';
 import {RouterService} from './service/router/router.service';
+import {first} from 'rxjs/operators';
 
 @Injectable()
 export class AppService {
@@ -33,7 +34,7 @@ export class AppService {
 
     updateProjectCache(lastUpdate: LastModification): void {
         // Get all projects
-        this._projStore.getProjects().first().subscribe(projects => {
+        this._projStore.getProjects().pipe(first()).subscribe(projects => {
 
             // Project not in cache
             if (!projects.get(lastUpdate.key)) {
@@ -54,7 +55,7 @@ export class AppService {
 
                     // If working on sub resources - resync project
                     if (params['pipName'] || params['appName'] || lastUpdate.username === this._authStore.getUser().username) {
-                        this._projStore.resync(lastUpdate.key).first().subscribe(() => {});
+                        this._projStore.resync(lastUpdate.key).pipe(first()).subscribe(() => {});
                     }
                 } else {
                     // remove from cache
@@ -65,7 +66,7 @@ export class AppService {
     }
 
     updateApplicationCache(lastUpdate: LastModification): void {
-        this._appStore.getApplications(lastUpdate.key, null).first().subscribe(apps => {
+        this._appStore.getApplications(lastUpdate.key, null).pipe(first()).subscribe(apps => {
             if (!apps) {
                 return;
             }
@@ -98,7 +99,7 @@ export class AppService {
     }
 
     updatePipelineCache(lastUpdate: LastModification): void {
-        this._pipStore.getPipelines(lastUpdate.name).first().subscribe(pips => {
+        this._pipStore.getPipelines(lastUpdate.name).pipe(first()).subscribe(pips => {
             if (!pips) {
                 return;
             }
