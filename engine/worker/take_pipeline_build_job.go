@@ -78,21 +78,22 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 				}
 				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
 				if err != nil {
-					log.Error("Unable to load pipeline build job %d", jobID)
-					log.Error("Cancelling context")
-					cancel()
-					return
+					if code == http.StatusNotFound {
+						log.Error("takePipelineBuildJob> Unable to load pipeline build job - Not Found (Request) %d", jobID)
+						cancel()
+						return
+					}
+					log.Error("takePipelineBuildJob> Unable to load pipeline build job (Request) %d", jobID)
+					continue // do not kill the worker here, could be a timeout
 				}
 
 				j := &sdk.PipelineBuildJob{}
 				if err := json.Unmarshal(b, j); err != nil {
-					log.Error("Unable to load pipeline build job %d: %v", jobID, err)
-					log.Error("Cancelling context")
-					cancel()
-					return
+					log.Error("takePipelineBuildJob> Unable to load pipeline build job (Unmarshal) %d: %v", jobID, err)
+					continue // do not kill the worker here, could be a timeout
 				}
 				if j.Status != sdk.StatusBuilding.String() {
-					log.Error("Cancelling context")
+					log.Info("takePipelineBuildJob> The job is not more in Building Status. Current Status: %s - Cancelling context", j.Status, err)
 					cancel()
 					return
 				}
@@ -145,7 +146,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 		time.Sleep(5 * time.Second)
 		isThereAnyHopeLeft--
 		if isThereAnyHopeLeft < 0 {
-			log.Info("takeJob> Could not send built result 10 times, giving up")
+			log.Info("takeJob> Could not send built result 10 times, giving up. job: %d", pipelineBuildJobID)
 			break
 		}
 	}

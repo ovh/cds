@@ -125,6 +125,7 @@ var (
 	ErrDefaultGroupPermission                = Error{ID: 109, Status: http.StatusBadRequest}
 	ErrLastGroupWithWriteRole                = Error{ID: 110, Status: http.StatusForbidden}
 	ErrInvalidEmailDomain                    = Error{ID: 111, Status: http.StatusForbidden}
+	ErrWorkflowNodeRunJobNotFound            = Error{ID: 112, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -238,6 +239,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrDefaultGroupPermission.ID:                "Only read permission is allowed to default group",
 	ErrLastGroupWithWriteRole.ID:                "The last group must have the write permission",
 	ErrInvalidEmailDomain.ID:                    "Invalid domain",
+	ErrWorkflowNodeRunJobNotFound.ID:            "Job not found",
 }
 
 var errorsFrench = map[int]string{
@@ -351,6 +353,7 @@ var errorsFrench = map[int]string{
 	ErrDefaultGroupPermission.ID:                "Le groupe par défaut ne peut être utilisé qu'en lecture seule",
 	ErrLastGroupWithWriteRole.ID:                "Le dernier groupe doit avoir les droits d'écriture",
 	ErrInvalidEmailDomain.ID:                    "Domaine invalide",
+	ErrWorkflowNodeRunJobNotFound.ID:            "Job non trouvé",
 }
 
 var errorsLanguages = []map[int]string{
