@@ -76,7 +76,7 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 				if !ok {
 					return
 				}
-				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
+				b, code, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", jobID), nil)
 				if err != nil {
 					if code == http.StatusNotFound {
 						log.Error("takePipelineBuildJob> Unable to load pipeline build job - Not Found (Request) %d", jobID)
