@@ -248,6 +248,8 @@ func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status st
 	step := sdk.StepStatus{
 		StepOrder: stepOrder,
 		Status:    status,
+		Start:     time.Now(),
+		Done:      time.Now(),
 	}
 	body, errM := json.Marshal(step)
 	if errM != nil {
