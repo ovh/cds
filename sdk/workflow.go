@@ -92,6 +92,23 @@ func (w *Workflow) Nodes() []int64 {
 	return res
 }
 
+//GetNodeByName returns the node given its name
+func (w *Workflow) GetNodeByName(name string) *WorkflowNode {
+	n := w.Root.GetNodeByName(name)
+	if n != nil {
+		return n
+	}
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			n = t.WorkflowDestNode.GetNodeByName(name)
+			if n != nil {
+				return n
+			}
+		}
+	}
+	return nil
+}
+
 //GetNode returns the node given its id
 func (w *Workflow) GetNode(id int64) *WorkflowNode {
 	n := w.Root.GetNode(id)
@@ -292,6 +309,23 @@ func (n *WorkflowNode) EqualsTo(n1 *WorkflowNode) bool {
 		return false
 	}
 	return true
+}
+
+//GetNodeByName returns the node given its name
+func (n *WorkflowNode) GetNodeByName(name string) *WorkflowNode {
+	if n == nil {
+		return nil
+	}
+	if n.Name == name {
+		return n
+	}
+	for _, t := range n.Triggers {
+		n = t.WorkflowDestNode.GetNodeByName(name)
+		if n != nil {
+			return n
+		}
+	}
+	return nil
 }
 
 //GetNode returns the node given its id
