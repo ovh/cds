@@ -46,8 +46,13 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 	//Check other session
 	sessionToken := req.Header.Get(sdk.SessionTokenHeader)
 	if sessionToken == "" {
+		//Accept session in request query parameter
+		sessionToken = req.FormValue("session")
+	}
+	if sessionToken == "" {
 		return ctx, fmt.Errorf("no session header")
 	}
+
 	exists, err := c.store.Exists(sessionstore.SessionKey(sessionToken))
 	if err != nil {
 		return ctx, err
@@ -61,6 +66,7 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 		return ctx, fmt.Errorf("authorization failed for %s: %s", username, err)
 	}
 	ctx = context.WithValue(ctx, ContextUser, u)
+	ctx = context.WithValue(ctx, ContextUserSession, sessionToken)
 
 	if !exists {
 		return ctx, fmt.Errorf("invalid session")
