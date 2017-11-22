@@ -80,6 +80,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
         // Start web worker
         if (this.runWorkflowWorker) {
             this.runWorkflowWorker.stop();
+            this.runWorkflowWorker = null;
         }
         this.runWorkflowWorker = new CDSWorker('./assets/worker/web/workflow2.js');
         this.runWorkflowWorker.start({
@@ -146,6 +147,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     ngOnDestroy(): void {
         if (this.runWorkflowWorker) {
             this.runWorkflowWorker.stop();
+            this.runWorkflowWorker = null;
         }
     }
 
