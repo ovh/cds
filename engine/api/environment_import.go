@@ -2,11 +2,11 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/hashicorp/hcl"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/environment"
@@ -45,8 +45,8 @@ func (api *API) importNewEnvironmentHandler() Handler {
 
 		var errorParse error
 		switch f {
-		case exportentities.FormatJSON, exportentities.FormatHCL:
-			errorParse = hcl.Unmarshal(data, payload)
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, payload)
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, payload)
 		}
@@ -162,8 +162,8 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 
 		var errorParse error
 		switch f {
-		case exportentities.FormatJSON, exportentities.FormatHCL:
-			errorParse = hcl.Unmarshal(data, payload)
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, payload)
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, payload)
 		}
