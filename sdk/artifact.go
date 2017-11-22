@@ -255,7 +255,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		bodyReader = buf
 	}
 
-	return fmt.Errorf("x5: %s", err)
+	return fmt.Errorf("x10: %s", err)
 }
 
 func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, file io.Reader, stat os.FileInfo, md5sum string) error {
