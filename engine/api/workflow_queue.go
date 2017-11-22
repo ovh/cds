@@ -395,7 +395,7 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 				log.Warning("postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun. JobID on handler: %d", id)
 			}
 			if errU := workflow.UpdateNodeRun(tx, nodeRun); errU != nil {
-				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot update node run. JobID on handler: %d", id)
+				return sdk.WrapError(errU, "postWorkflowJobStepStatusHandler> Cannot update node run. JobID on handler: %d", id)
 			}
 		}
 
