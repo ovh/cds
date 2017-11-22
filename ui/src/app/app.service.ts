@@ -46,7 +46,7 @@ export class AppService {
                 this.updatePipelineCache(lastUpdate);
                 break;
             case 'workflow':
-                this.updatePipelineCache(lastUpdate);
+                this.updateWorkflowCache(lastUpdate);
                 break;
             case 'project.environment':
                 opts = [
@@ -202,7 +202,7 @@ export class AppService {
                 return;
             }
 
-            if (wfs.get(wfKey).last_modified < lastUpdate.last_modified) {
+            if (new Date(wfs.get(wfKey).last_modified).getTime() < lastUpdate.last_modified * 1000) {
                 let params = this._routerService.getRouteParams({}, this._routeActivated);
 
                 // delete linked applications from cache

@@ -203,7 +203,7 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")
 		}
 
-		if err := workflow.UpdateLastModifiedDate(tx, api.Cache, getUser(ctx), p.Key, &wf); err != nil {
+		if err := workflow.UpdateLastModifiedDate(tx, api.Cache, getUser(ctx), p.Key, oldW); err != nil {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot update last modified date for workflow")
 		}
 

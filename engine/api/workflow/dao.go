@@ -21,7 +21,7 @@ import (
 
 // UpdateLastModifiedDate Update workflow last modified date
 func UpdateLastModifiedDate(db gorp.SqlExecutor, store cache.Store, u *sdk.User, projKey string, w *sdk.Workflow) error {
-	t := time.Now().Unix()
+	t := time.Now()
 	_, err := db.Exec(`UPDATE workflow set last_modified = current_timestamp WHERE id = $1 RETURNING last_modified`, w.ID)
 	w.LastModified = t
 
@@ -29,7 +29,7 @@ func UpdateLastModifiedDate(db gorp.SqlExecutor, store cache.Store, u *sdk.User,
 		updates := sdk.LastModification{
 			Key:          projKey,
 			Name:         w.Name,
-			LastModified: t,
+			LastModified: t.Unix(),
 			Username:     u.Username,
 			Type:         sdk.WorkflowLastModificationType,
 		}
@@ -292,7 +292,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return err
 	}
 
-	w.LastModified = time.Now().Unix()
+	w.LastModified = time.Now()
 	if err := db.QueryRow("INSERT INTO workflow (name, description, project_id) VALUES ($1, $2, $3) RETURNING id", w.Name, w.Description, w.ProjectID).Scan(&w.ID); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow %s/%s", w.ProjectKey, w.Name)
 	}
@@ -439,7 +439,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		}
 	}
 
-	w.LastModified = time.Now().Unix()
+	w.LastModified = time.Now()
 	dbw := Workflow(*w)
 	if _, err := db.Update(&dbw); err != nil {
 		return sdk.WrapError(err, "Update> Unable to update workflow")
