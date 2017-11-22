@@ -18,6 +18,7 @@ import {WorkflowItem} from '../../model/application.workflow.model';
 import {Trigger} from '../../model/trigger.model';
 import {ProjectStore} from '../project/project.store';
 import {ApplyTemplateRequest} from '../../model/template.model';
+import {first} from 'rxjs/operators';
 
 describe('CDS: application Store', () => {
 
@@ -516,7 +517,7 @@ describe('CDS: application Store', () => {
 
         // check get application
         let checkedAddTrigger = false;
-        applicationStore.getApplications(proj.key, 'myApplication').first().subscribe(apps => {
+        applicationStore.getApplications(proj.key, 'myApplication').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myApplication').last_modified).toBe('123', 'App lastModified date must have been updated');
             expect(apps.get(proj.key + '-myApplication').workflows.length).toBe(1, 'Must have 1 workflow');
             expect(apps.get(proj.key + '-myApplication').workflows[0].subPipelines.length).toBe(1, 'Root item must have 1 child');
@@ -535,7 +536,7 @@ describe('CDS: application Store', () => {
 
         // check get application
         let checkedUpdateTrigger = false;
-        applicationStore.getApplications(proj.key, 'myApplication').first().subscribe(apps => {
+        applicationStore.getApplications(proj.key, 'myApplication').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myApplication').last_modified).toBe('456', 'App lastModified date must have been updated');
             expect(apps.get(proj.key + '-myApplication').workflows.length).toBe(1, 'Must have 1 workflow');
             expect(apps.get(proj.key + '-myApplication').workflows[0].subPipelines.length).toBe(1, 'Root item must have 1 child');
@@ -553,7 +554,7 @@ describe('CDS: application Store', () => {
 
         // check get application
         let checkedDeleteTrigger = false;
-        applicationStore.getApplications(proj.key, 'myApplication').first().subscribe(apps => {
+        applicationStore.getApplications(proj.key, 'myApplication').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myApplication').last_modified).toBe('789', 'App lastModified date must have been updated');
             expect(apps.get(proj.key + '-myApplication').workflows.length).toBe(0, 'Must have 0 workflow');
             checkedDeleteTrigger = true;

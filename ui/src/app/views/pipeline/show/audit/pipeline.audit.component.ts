@@ -10,6 +10,7 @@ import {cloneDeep, omit} from 'lodash';
 import {Stage} from '../../../../model/stage.model';
 import {Job} from '../../../../model/job.model';
 import {Action} from '../../../../model/action.model';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-pipeline-audit',
@@ -49,7 +50,7 @@ export class PipelineAuditComponent extends Table implements OnInit {
     }
 
     ngOnInit(): void {
-        this._auditService.getAudit(this.project, this.pipeline).first().subscribe(as => {
+        this._auditService.getAudit(this.project, this.pipeline).pipe(first()).subscribe(as => {
             this.audits = as;
         });
     }

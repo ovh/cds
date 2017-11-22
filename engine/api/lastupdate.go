@@ -169,6 +169,9 @@ func (b *lastUpdateBroker) ServeHTTP() Handler {
 		w.Header().Set("Connection", "keep-alive")
 		w.Header().Set("X-Accel-Buffering", "no")
 
+		fmt.Fprint(w, "data: ACK\n\n")
+		f.Flush()
+
 	leave:
 		for {
 			select {

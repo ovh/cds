@@ -1,6 +1,7 @@
 package workflow
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -94,6 +95,9 @@ func LoadNodeJobRun(db gorp.SqlExecutor, store cache.Store, id int64) (*sdk.Work
 	j := JobRun{}
 	query := `select workflow_node_run_job.* from workflow_node_run_job where id = $1`
 	if err := db.SelectOne(&j, query, id); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrWorkflowNodeRunJobNotFound
+		}
 		return nil, err
 	}
 	if store != nil {

@@ -9,6 +9,7 @@ import {Router} from '@angular/router';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {GroupService} from '../../../service/group/group.service';
 import {Variable} from '../../../model/variable.model';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-project-add',
@@ -108,7 +109,7 @@ export class ProjectAddComponent {
     }
 
     loadGroups(selected: string) {
-        this._groupService.getGroups().first().subscribe(groups => {
+        this._groupService.getGroups().pipe(first()).subscribe(groups => {
             this.groupList = groups;
             this.loading = false;
             if (selected == null) {

@@ -9,6 +9,7 @@ import {TranslateService} from 'ng2-translate';
 import {PipelineStore} from './service/pipeline/pipeline.store';
 import {WorkflowStore} from './service/workflow/workflow.store';
 import {RouterService} from './service/router/router.service';
+import {first} from 'rxjs/operators';
 
 @Injectable()
 export class AppService {
@@ -88,16 +89,15 @@ export class AppService {
 
     updateProjectCache(lastUpdate: LastModification, opts: LoadOpts[]): void {
         // Get all projects
-        this._projStore.getProjects().first().subscribe(projects => {
-
+        this._projStore.getProjects().pipe(first()).subscribe(projects => {
             // Project not in cache
             if (!projects.get(lastUpdate.key)) {
                 return;
             }
 
             // Project
-            if ((new Date(projects.get(lastUpdate.key).last_modified)).getTime() < lastUpdate.last_modified * 1000) {
-                // Get current route params
+            if ((new Date(projects.get(lastUpdate.key).last_modified)).getTime() < (lastUpdate.last_modified + 1) * 1000) {
+                // Get current route params)
                 let params = this._routerService.getRouteParams({}, this._routeActivated);
 
                 // If working on project on sub resources
@@ -109,7 +109,7 @@ export class AppService {
 
                     // If working on sub resources - resync project
                     if (params['pipName'] || params['appName'] || lastUpdate.username === this._authStore.getUser().username) {
-                        this._projStore.resync(lastUpdate.key, opts).first().subscribe(() => {});
+                        this._projStore.resync(lastUpdate.key, opts).pipe(first()).subscribe(() => {});
                     }
                 } else {
                     // remove from cache
@@ -120,7 +120,7 @@ export class AppService {
     }
 
     updateApplicationCache(lastUpdate: LastModification): void {
-        this._appStore.getApplications(lastUpdate.key, null).first().subscribe(apps => {
+        this._appStore.getApplications(lastUpdate.key, null).pipe(first()).subscribe(apps => {
             if (!apps) {
                 return;
             }
@@ -130,7 +130,7 @@ export class AppService {
                 return;
             }
 
-            if ((new Date(apps.get(appKey).last_modified)).getTime() < lastUpdate.last_modified * 1000) {
+            if ((new Date(apps.get(appKey).last_modified)).getTime() < (lastUpdate.last_modified + 1) * 1000) {
 
                 let params = this._routerService.getRouteParams({}, this._routeActivated);
 
@@ -153,7 +153,7 @@ export class AppService {
     }
 
     updatePipelineCache(lastUpdate: LastModification): void {
-        this._pipStore.getPipelines(lastUpdate.name).first().subscribe(pips => {
+        this._pipStore.getPipelines(lastUpdate.name).pipe(first()).subscribe(pips => {
             if (!pips) {
                 return;
             }
@@ -192,7 +192,7 @@ export class AppService {
     }
 
     updateWorkflowCache(lastUpdate: LastModification): void {
-        this._wfStore.getWorkflows(lastUpdate.name).first().subscribe(wfs => {
+        this._wfStore.getWorkflows(lastUpdate.name).pipe(first()).subscribe(wfs => {
             if (!wfs) {
                 return;
             }

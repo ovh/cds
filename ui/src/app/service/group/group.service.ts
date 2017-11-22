@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Group} from '../../model/group.model';
 import {HttpClient} from '@angular/common/http';
 
@@ -19,7 +19,7 @@ export class GroupService {
      * @returns {Observable<Group>}
      */
     getGroupByName(name: string): Observable<Group> {
-        return this._http.get('/group/' + name);
+        return this._http.get<Group>('/group/' + name);
     }
 
     /**
@@ -27,7 +27,7 @@ export class GroupService {
      * @returns {Observable<Group[]>}
      */
     getGroups(): Observable<Group[]> {
-        return this._http.get('/group');
+        return this._http.get<Group[]>('/group');
     }
 
     /**

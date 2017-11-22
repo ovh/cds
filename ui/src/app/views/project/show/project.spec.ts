@@ -20,7 +20,7 @@ import {SharedModule} from '../../../shared/shared.module';
 import {ServicesModule} from '../../../service/services.module';
 import {ProjectShowComponent} from './project.component';
 import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Project} from '../../../model/project.model';
 import {Map} from 'immutable';
 import {Variable} from '../../../model/variable.model';

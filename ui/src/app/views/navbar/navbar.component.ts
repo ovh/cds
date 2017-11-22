@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, OnDestroy, OnInit} from '@angular/core';
+import {AfterViewInit, Component, OnInit} from '@angular/core';
 import {ProjectStore} from '../../service/project/project.store';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {NavbarService} from '../../service/navbar/navbar.service';
@@ -15,6 +15,7 @@ import {RouterService} from '../../service/router/router.service';
 import {WarningStore} from '../../service/warning/warning.store';
 import {WarningUI} from '../../model/warning.model';
 import {WarningService} from '../../service/warning/warning.service';
+import {filter} from 'rxjs/operators';
 import {NavbarData, NavbarProjectData} from 'app/model/navbar.model';
 
 @Component({
@@ -66,12 +67,13 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
         });
 
-        this._router.events
-            .filter(e => e instanceof NavigationEnd)
-            .forEach(() => {
-                this.currentRoute = this._routerService.getRouteParams({}, this._router.routerState.root);
-                this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
-            });
+        console.log(this._router.events);
+        this._router.events.pipe(
+            filter(e => e instanceof NavigationEnd),
+        ).forEach(() => {
+            this.currentRoute = this._routerService.getRouteParams({}, this._router.routerState.root);
+            this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
+        });
     }
 
     changeCountry() {
@@ -123,9 +125,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
 
     navigateToResult(result: string) {
         let splittedSelection = result.split('/', 2);
-        let project = this.navProjects.projects.find(p => p.name === splittedSelection[0] );
+        let project = this.navProjects.projects.find(p => p.name === splittedSelection[0]);
         if (splittedSelection.length === 1) {
-           this.navigateToProject(project.key);
+            this.navigateToProject(project.key);
         } else if (splittedSelection.length === 2) {
             this.navigateToApplication(project.key, project.application_names.find(a => a === splittedSelection[1]));
         }

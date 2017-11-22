@@ -10,7 +10,7 @@ import {ApplicationService} from '../../../service/application/application.servi
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../../shared/shared.module';
 import {ServicesModule} from '../../../service/services.module';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Injector} from '@angular/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectStore} from '../../../service/project/project.store';

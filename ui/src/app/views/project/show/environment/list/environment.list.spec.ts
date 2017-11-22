@@ -19,7 +19,7 @@ import {ToastService} from '../../../../../shared/toast/ToastService';
 import {EnvironmentService} from '../../../../../service/environment/environment.service';
 import {VariableService} from '../../../../../service/variable/variable.service';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Environment List Component', () => {

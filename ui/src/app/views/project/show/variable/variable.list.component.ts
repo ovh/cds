@@ -6,6 +6,7 @@ import {ProjectStore} from '../../../../service/project/project.store';
 import {VariableEvent} from '../../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-project-variables',
@@ -32,7 +33,7 @@ export class ProjectVariablesComponent implements OnInit {
 
     ngOnInit() {
       this._projectStore.getProjectVariablesResolver(this.project.key)
-        .finally(() => this.loading = false)
+        .pipe(finalize(() => this.loading = false))
         .subscribe((proj) => {
           this.project = proj;
         });

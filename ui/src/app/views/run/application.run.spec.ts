@@ -10,7 +10,7 @@ import {ApplicationPipelineBuildComponent} from './pipeline.build.component';
 import {ApplicationRunModule} from './application.run.module';
 import {SharedModule} from '../../shared/shared.module';
 import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Project} from '../../model/project.model';
 import {Application} from '../../model/application.model';
 import {Pipeline} from '../../model/pipeline.model';

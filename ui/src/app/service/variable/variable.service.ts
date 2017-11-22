@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {Variable} from '../../model/variable.model';
 
@@ -16,7 +16,7 @@ export class VariableService {
     }
 
     get(key: string): Observable<Variable[]> {
-      return this._http.get(`/project/${key}/variable`);
+      return this._http.get<Variable[]>(`/project/${key}/variable`);
     }
 
     /**
@@ -32,7 +32,7 @@ export class VariableService {
      * @returns {Observable<string[]>}
      */
     getTypesFromAPI(): Observable<string[]> {
-        return this._http.get('/variable/type').map(vts => {
+        return this._http.get<string[]>('/variable/type').map(vts => {
             this.variablesType = <string[]>vts;
             return vts;
         });
@@ -49,6 +49,6 @@ export class VariableService {
             params = params.append('pipId', pipelineId.toString());
         }
 
-        return this._http.get('/suggest/variable/' + key, {params: params});
+        return this._http.get<Array<string>>('/suggest/variable/' + key, {params: params});
     }
 }

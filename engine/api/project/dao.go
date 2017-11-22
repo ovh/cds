@@ -172,16 +172,19 @@ func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 
 // UpdateLastModified updates last_modified date on a project given its key
 func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, proj *sdk.Project, updateType string) error {
-	t := time.Now()
+	var lastModified time.Time
+	query := "update project set last_modified = current_timestamp where projectkey = $1 RETURNING last_modified"
 
-	_, err := db.Exec("update project set last_modified = $2 where projectkey = $1", proj.Key, t)
-	proj.LastModified = t
+	err := db.QueryRow(query, proj.Key).Scan(&lastModified)
+	if err == nil {
+		proj.LastModified = lastModified
+	}
 
 	if u != nil {
 		updates := sdk.LastModification{
 			Key:          proj.Key,
 			Name:         proj.Name,
-			LastModified: t.Unix(),
+			LastModified: lastModified.Unix(),
 			Username:     u.Username,
 			Type:         updateType,
 		}

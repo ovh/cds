@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
-import {BehaviorSubject, Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 import {Project} from '../../model/project.model';
 import {ProjectService} from './project.service';
 import {EnvironmentService} from '../environment/environment.service';
