@@ -266,10 +266,10 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 3), NeedHatchery()))
 	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{permID}/log", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 5), NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/test", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobTestsResultsHandler, 5), NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/test", r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{permID}/tag", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobTagsHandler, 5), NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobVariableHandler, 5), NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobStepStatusHandler, 5), NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{permID}/artifact/{tag}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker()))
 
 	r.Handle("/variable/type", r.GET(api.getVariableTypeHandler))

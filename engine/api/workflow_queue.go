@@ -332,8 +332,8 @@ func (api *API) postWorkflowJobLogsHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobStepStatusHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
@@ -378,20 +378,20 @@ func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
 		defer tx.Rollback()
 
 		if err := workflow.UpdateNodeJobRun(tx, api.Cache, p, nodeJobRun); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run")
+			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run. JobID on handler: %d", id)
 		}
 
 		if !found {
-			nodeRun, errNR := workflow.LoadAndLockNodeRunByID(tx, nodeJobRun.WorkflowNodeRunID)
+			nodeRun, errNR := workflow.LoadAndLockNodeRunByID(tx, nodeJobRun.WorkflowNodeRunID, false)
 			if errNR != nil {
 				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot load node run")
 			}
 			sync := workflow.SyncNodeRunRunJob(nodeRun, *nodeJobRun)
 			if !sync {
-				log.Warning("postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun")
+				log.Warning("postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun. JobID on handler: %d", id)
 			}
 			if errU := workflow.UpdateNodeRun(tx, nodeRun); errU != nil {
-				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot update node run")
+				return sdk.WrapError(errU, "postWorkflowJobStepStatusHandler> Cannot update node run. JobID on handler: %d", id)
 			}
 		}
 
@@ -424,8 +424,8 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobTestsResultsHandler() AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobTestsResultsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal into results
 		var new venom.Tests
 		if err := UnmarshalBody(r, &new); err != nil {
@@ -449,7 +449,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() AsynchronousHandler {
 		}
 		defer tx.Rollback()
 
-		wnjr, err := workflow.LoadAndLockNodeRunByID(tx, nodeRunJob.WorkflowNodeRunID)
+		wnjr, err := workflow.LoadAndLockNodeRunByID(tx, nodeRunJob.WorkflowNodeRunID, false)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot load node job")
 		}
@@ -532,8 +532,8 @@ func (api *API) postWorkflowJobTagsHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobVariableHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Invalid id")
