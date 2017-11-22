@@ -261,14 +261,17 @@ func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status st
 		path = fmt.Sprintf("/build/%d/step", pbJobID)
 	}
 
-	_, code, errReq := sdk.Request("POST", path, body)
-	if errReq != nil {
-		return errReq
+	for try := 1; try <= 10; try++ {
+		log.Info("updateStepStatus> Sending step status...")
+		_, code, lasterr := sdk.Request("POST", path, body)
+		if lasterr == nil && code < 300 {
+			log.Info("updateStepStatus> Send step status OK")
+			return nil
+		}
+		log.Warning("updateStepStatus> Cannot send step result: HTTP %d err: %s - try: %d - new try in 5s", code, lasterr, try)
+		time.Sleep(5 * time.Second)
 	}
-	if code >= 400 {
-		return fmt.Errorf("Wrong http code %d", code)
-	}
-	return nil
+	return fmt.Errorf("takeWorkflowJob> Could not send built result 10 times, giving up. job: %d", pbJobID)
 }
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN

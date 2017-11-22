@@ -345,7 +345,7 @@ func RestartWorkflowNodeJob(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun
 		}
 	}
 
-	nodeRun, errNR := LoadAndLockNodeRunByID(db, wNodeJob.WorkflowNodeRunID)
+	nodeRun, errNR := LoadAndLockNodeRunByID(db, wNodeJob.WorkflowNodeRunID, true)
 	if errNR != nil {
 		return sdk.WrapError(errNR, "RestartWorkflowNodeJob> Cannot load node run")
 	}
