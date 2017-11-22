@@ -21,20 +21,15 @@ export class AppService {
     }
 
     updateCache(lastUpdate: LastModification) {
-        let opts = [
-            new LoadOpts('withGroups', 'groups'),
-            new LoadOpts('withPermission', 'permissions')
-        ];
+        let opts = [];
         if (!lastUpdate) {
             return;
         }
 
         // TODO: to delete, useful to debug on preprod
-        console.log(lastUpdate);
         switch (lastUpdate.type) {
             case 'project':
                 opts = [
-                    ...opts,
                     new LoadOpts('withApplicationPipelines', 'applications.pipelines'),
                     new LoadOpts('withWorkflows', 'workflows')
                 ];
@@ -51,35 +46,30 @@ export class AppService {
                 break;
             case 'project.environment':
                 opts = [
-                    ...opts,
                     new LoadOpts('withEnvironments', 'environments')
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
             case 'project.variable':
                 opts = [
-                    ...opts,
                     new LoadOpts('withVariables', 'variables')
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
             case 'project.application':
                 opts = [
-                    ...opts,
                     new LoadOpts('withApplicationNames', 'application_names')
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
             case 'project.pipeline':
                 opts = [
-                    ...opts,
                     new LoadOpts('withPipelineNames', 'pipeline_names')
                 ];
                 this.updateProjectCache(lastUpdate, opts);
                 break;
             case 'project.workflow':
                 opts = [
-                    ...opts,
                     new LoadOpts('withWorkflowNames', 'workflow_names')
                 ];
                 this.updateProjectCache(lastUpdate, opts);

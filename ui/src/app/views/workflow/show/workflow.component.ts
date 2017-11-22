@@ -105,7 +105,7 @@ export class WorkflowShowComponent {
                             }, 0);
                         }
                     }
-                }, () => {
+                }, (err) => {
                     this._router.navigate(['/project', this.project.key]);
                 });
             }

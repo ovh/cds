@@ -54,17 +54,27 @@ export class ProjectStore {
      * @param key
      * @returns {Observable<Project>}
      */
-    getProjectResolver(key: string, opts?: LoadOpts[]): Observable<Project> {
+    getProjectResolver(key: string, opts: LoadOpts[]): Observable<Project> {
         let store = this._projectCache.getValue();
         if (store.size === 0 || !store.get(key)) {
+            opts = opts.concat([
+                new LoadOpts('withGroups', 'groups'),
+                new LoadOpts('withPermission', 'permission')
+            ]);
             return this.resync(key, opts);
         }
 
         if (Array.isArray(opts) && store.get(key)) {
-            let funcs = opts.filter((opt) => !store.get(key)[opt.fieldName]);
+            let funcs = opts.filter((opt) => store.get(key)[opt.fieldName] == null);
+
             if (!funcs.length) {
                 return Observable.of(store.get(key));
             }
+
+            funcs = funcs.concat([
+                new LoadOpts('withGroups', 'groups'),
+                new LoadOpts('withPermission', 'permission')
+            ]);
 
             // TODO: iterate on funcs array and execute handler linked to fetch missing data
             return this.resync(key, funcs);
