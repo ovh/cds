@@ -271,7 +271,7 @@ func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status st
 		log.Warning("updateStepStatus> Cannot send step result: HTTP %d err: %s - try: %d - new try in 5s", code, lasterr, try)
 		time.Sleep(5 * time.Second)
 	}
-	return fmt.Errorf("takeWorkflowJob> Could not send built result 10 times, giving up. job: %d", pbJobID)
+	return fmt.Errorf("updateStepStatus> Could not send built result 10 times, giving up. job: %d", pbJobID)
 }
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
