@@ -33,7 +33,6 @@ func NewApplication(app *sdk.Application, withPermissions bool, keys []Encrypted
 
 	a.Variables = make(map[string]VariableValue, len(app.Variable))
 	for _, v := range app.Variable {
-		fmt.Println(v)
 		a.Variables[v.Name] = VariableValue{
 			Type:  string(v.Type),
 			Value: v.Value,
