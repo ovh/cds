@@ -128,10 +128,9 @@ func prepareSpawnInfos(j *sdk.WorkflowNodeJobRun, infos []sdk.SpawnInfo) error {
 // TakeNodeJobRun Take an a job run for update
 func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo, chanEvent chan<- interface{}) (*sdk.WorkflowNodeJobRun, error) {
 	// first load without FOR UPDATE WAIT to quick check status
-	query := `SELECT status FROM workflow_node_run_job WHERE id = $1`
-	var currentStatus string
-	if err := db.QueryRow(query, jobID).Scan(&currentStatus); err != nil {
-		return nil, sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot select status from workflow_node_run_job node job run %d", jobID)
+	currentStatus, errS := db.SelectStr(`SELECT status FROM workflow_node_run_job WHERE id = $1`, jobID)
+	if errS != nil {
+		return nil, sdk.WrapError(errS, "workflow.UpdateNodeJobRunStatus> Cannot select status from workflow_node_run_job node job run %d", jobID)
 	}
 
 	if err := checkStatusWaiting(store, jobID, currentStatus); err != nil {
