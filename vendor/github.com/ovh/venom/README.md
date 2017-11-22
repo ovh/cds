@@ -280,13 +280,6 @@ func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (v
 		return nil, err
 	}
 
-	// Get testcase context if needed
-	varContext := ctx.Value(venom.ContextKey).(map[string]interface{})
-	if varContext == nil {
-        return nil, fmt.Errorf("Executor web need a context")
-    }
-    bar := varContext['foo']
-
 	// to something with t.Command here...
 	//...
 

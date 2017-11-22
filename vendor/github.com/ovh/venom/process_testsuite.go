@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/fsamin/go-dump"
-	"gopkg.in/cheggaaa/pb.v1"
+	log "github.com/sirupsen/logrus"
 )
 
-func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel string) {
+func (v *Venom) runTestSuite(ts *TestSuite) {
 	l := log.WithField("v.testsuite", ts.Name)
 	start := time.Now()
 
@@ -24,7 +23,7 @@ func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 		totalSteps += len(tc.TestSteps)
 	}
 
-	runTestCases(ts, bars, detailsLevel, l)
+	v.runTestCases(ts, l)
 
 	elapsed := time.Since(start)
 
@@ -34,22 +33,22 @@ func runTestSuite(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 	} else {
 		o = fmt.Sprintf("✅ %s", rightPad(ts.Package, " ", 47))
 	}
-	if detailsLevel == DetailsLow {
+	if v.OutputDetails == DetailsLow {
 		o += fmt.Sprintf("%s", elapsed)
 	}
-	if detailsLevel != DetailsLow {
-		bars[ts.Package].Prefix(o)
-		bars[ts.Package].Finish()
+	if v.OutputDetails != DetailsLow {
+		v.outputProgressBar[ts.Package].Prefix(o)
+		v.outputProgressBar[ts.Package].Finish()
 	} else {
-		PrintFunc("%s\n", o)
+		v.PrintFunc("%s\n", o)
 	}
 }
 
-func runTestCases(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel string, l Logger) {
-	for i, tc := range ts.TestCases {
+func (v *Venom) runTestCases(ts *TestSuite, l Logger) {
+	for i := range ts.TestCases {
+		tc := &ts.TestCases[i]
 		if len(tc.Skipped) == 0 {
-			runTestCase(ts, &tc, bars, l, detailsLevel)
-			ts.TestCases[i] = tc
+			v.runTestCase(ts, tc, l)
 		}
 
 		if len(tc.Failures) > 0 {
@@ -62,4 +61,56 @@ func runTestCases(ts *TestSuite, bars map[string]*pb.ProgressBar, detailsLevel s
 			ts.Skipped += len(tc.Skipped)
 		}
 	}
+}
+
+//Parse the suite to find unreplaced and extracted variables
+func (v *Venom) parseTestSuite(ts *TestSuite) ([]string, []string, error) {
+	d, err := dump.ToStringMap(ts.Vars)
+	if err != nil {
+		log.Errorf("err:%s", err)
+	}
+	ts.Templater.Add("", d)
+
+	return v.parseTestCases(ts)
+}
+
+//Parse the testscases to find unreplaced and extracted variables
+func (v *Venom) parseTestCases(ts *TestSuite) ([]string, []string, error) {
+	vars := []string{}
+	extractsVars := []string{}
+	for i := range ts.TestCases {
+		tc := &ts.TestCases[i]
+		if len(tc.Skipped) == 0 {
+			tvars, tExtractedVars, err := v.parseTestCase(ts, tc)
+			if err != nil {
+				return nil, nil, err
+			}
+			for _, k := range tvars {
+				var found bool
+				for i := 0; i < len(vars); i++ {
+					if vars[i] == k {
+						found = true
+						break
+					}
+				}
+				if !found {
+					vars = append(vars, k)
+				}
+			}
+			for _, k := range tExtractedVars {
+				var found bool
+				for i := 0; i < len(extractsVars); i++ {
+					if extractsVars[i] == k {
+						found = true
+						break
+					}
+				}
+				if !found {
+					extractsVars = append(extractsVars, k)
+				}
+			}
+		}
+	}
+
+	return vars, extractsVars, nil
 }
