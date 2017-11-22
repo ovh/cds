@@ -562,7 +562,7 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 
 		job, errj := workflow.LoadAndLockNodeJobRunWait(tx, api.Cache, id)
 		if errj != nil {
-			return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job")
+			return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job %d", id)
 		}
 
 		found := false
@@ -579,12 +579,12 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 		}
 
 		if err := workflow.UpdateNodeJobRun(tx, api.Cache, p, job); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run")
+			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run %d", id)
 		}
 
 		node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID)
 		if errn != nil {
-			return sdk.WrapError(errn, "postWorkflowJobVariableHandler> Unable to load node")
+			return sdk.WrapError(errn, "postWorkflowJobVariableHandler> Unable to load node %d", job.WorkflowNodeRunID)
 		}
 
 		found = false
@@ -601,7 +601,7 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 		}
 
 		if err := workflow.UpdateNodeRun(tx, node); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node run")
+			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node run %d", node.ID)
 		}
 
 		if err := tx.Commit(); err != nil {
