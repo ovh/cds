@@ -375,10 +375,10 @@
 			"revisionTime": "2016-10-13T01:22:19Z"
 		},
 		{
-			"checksumSHA1": "DG6hthmfdziVR23DRCqZkaYTDKc=",
+			"checksumSHA1": "a1dIQDxAfenbjm7zSZ17WaYQTJg=",
 			"path": "github.com/fsouza/go-dockerclient",
-			"revision": "87c7e50e0bcf800ed863c3c3b0fbcc67e3029140",
-			"revisionTime": "2017-03-16T00:43:41Z"
+			"revision": "7fcad055fea9a4651d56a3974caee0910785ea2f",
+			"revisionTime": "2017-11-16T21:02:35Z"
 		},
 		{
 			"checksumSHA1": "76D9RQiU+FVJCexfv/idRaNd2UQ=",
@@ -1027,10 +1027,10 @@
 			"revisionTime": "2017-02-07T20:18:59Z"
 		},
 		{
-			"checksumSHA1": "nF0egSSTXRar77Vd4/fBOGljozw=",
+			"checksumSHA1": "Lxc4iUG/5oUGn5T0kZdgt6xng68=",
 			"path": "github.com/ovh/venom",
-			"revision": "a1f5982ad747d51d75e19400075e39e68c62a28f",
-			"revisionTime": "2017-11-10T08:30:09Z"
+			"revision": "bb925ed86a8af931e721bae35b9bdd3f750605bd",
+			"revisionTime": "2017-11-23T08:38:57Z"
 		},
 		{
 			"checksumSHA1": "ZxaXX+psoog6mnNzexP84cAJYMI=",

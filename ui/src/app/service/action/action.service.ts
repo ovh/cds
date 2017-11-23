@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Action, PipelineUsingAction} from '../../model/action.model';
 import {HttpClient} from '@angular/common/http';
 
@@ -17,7 +17,7 @@ export class ActionService {
      * @returns {Observable<string[]>}
      */
     getActions(): Observable<Action[]> {
-        return this._http.get('/action');
+        return this._http.get<Action[]>('/action');
     }
 
     /**
@@ -26,7 +26,7 @@ export class ActionService {
      * @returns {Observable<Action>}
      */
     getAction(name: string): Observable<Action> {
-        return this._http.get('/action/' + name);
+        return this._http.get<Action>('/action/' + name);
     }
 
     /**
@@ -35,7 +35,7 @@ export class ActionService {
      * @returns {Observable<PipelineUsingAction>}
      */
     getPiplinesUsingAction(name: string): Observable<PipelineUsingAction[]> {
-        return this._http.get('/action/' + name + '/using');
+        return this._http.get<PipelineUsingAction[]>('/action/' + name + '/using');
     }
 
     /**
@@ -44,7 +44,7 @@ export class ActionService {
      * @returns {Observable<Action>}
      */
     createAction(action: Action): Observable<Action> {
-        return this._http.post('/action/' + action.name, action);
+        return this._http.post<Action>('/action/' + action.name, action);
     }
 
     /**
@@ -53,7 +53,7 @@ export class ActionService {
      * @returns {Observable<Action>}
      */
     updateAction(name: string, action: Action): Observable<Action> {
-        return this._http.put('/action/' + name, action);
+        return this._http.put<Action>('/action/' + name, action);
     }
 
     /**
@@ -62,6 +62,6 @@ export class ActionService {
      * @returns {Observable<Response>}
      */
     deleteAction(name: string): Observable<Response> {
-        return this._http.delete('/action/' + name);
+        return this._http.delete<Response>('/action/' + name);
     }
 }

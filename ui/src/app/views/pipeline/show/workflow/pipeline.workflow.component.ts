@@ -12,6 +12,7 @@ import {Job} from '../../../../model/job.model';
 import {ActionEvent} from '../../../../shared/action/action.event.model';
 import {DragulaService} from 'ng2-dragula';
 import {PermissionValue} from '../../../../model/permission.model';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-pipeline-workflow',
@@ -103,7 +104,7 @@ export class PipelineWorkflowComponent implements OnInit, OnDestroy {
             this.selectedStage = cloneDeep(this.pipeline.stages[0]);
         }
 
-        this._varService.getContextVariable(this.project.key, this.pipeline.id).first().subscribe(s => this.suggest = s);
+        this._varService.getContextVariable(this.project.key, this.pipeline.id).pipe(first()).subscribe(s => this.suggest = s);
 
     }
 

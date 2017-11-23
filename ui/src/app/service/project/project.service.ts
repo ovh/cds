@@ -1,10 +1,11 @@
 import {Injectable} from '@angular/core';
 import {Project} from '../../model/project.model';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
 import {Notification} from '../../model/notification.model';
+import {LoadOpts} from './project.store';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
 /**
@@ -14,7 +15,6 @@ import {HttpClient, HttpParams} from '@angular/common/http';
 @Injectable()
 export class ProjectService {
 
-
     constructor(private _http: HttpClient) {
     }
 
@@ -23,18 +23,14 @@ export class ProjectService {
      * @param key Unique key of the project
      * @returns {Observable<Project>}
      */
-    getProject(key: string): Observable<Project> {
+    getProject(key: string, opts?: LoadOpts[]): Observable<Project> {
         let params = new HttpParams();
-        params = params.append('withVariables', 'true');
-        params = params.append('withApplications', 'true');
-        params = params.append('withApplicationPipelines', 'true');
-        params = params.append('withPipelines', 'true');
-        params = params.append('withEnvironments', 'true');
-        params = params.append('withGroups', 'true');
-        params = params.append('withPermission', 'true');
-        params = params.append('withRepositoriesManagers', 'true');
-        params = params.append('withWorkflows', 'true');
-        return this._http.get('/project/' + key, {params: params});
+
+        if (Array.isArray(opts)) {
+          opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
+        }
+
+        return this._http.get<Project>('/project/' + key, {params: params});
     }
 
     /**
@@ -44,7 +40,7 @@ export class ProjectService {
     getProjects(): Observable<Project[]> {
         let params = new HttpParams();
         params = params.append('application', 'true');
-        return this._http.get('/project', {params: params});
+        return this._http.get<Project[]>('/project', {params: params});
     }
 
     /**
@@ -53,7 +49,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     addProject(project: Project): Observable<Project> {
-        return this._http.post('/project', project);
+        return this._http.post<Project>('/project', project);
     }
 
     /**
@@ -62,7 +58,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     updateProject(project: Project): Observable<Project> {
-        return this._http.put('/project/' + project.key, project);
+        return this._http.put<Project>('/project/' + project.key, project);
     }
 
     /**
@@ -83,7 +79,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     addVariable(key: string, v: Variable): Observable<Project> {
-        return this._http.post('/project/' + key + '/variable/' + v.name, v);
+        return this._http.post<Project>('/project/' + key + '/variable/' + v.name, v);
     }
 
     /**
@@ -93,7 +89,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     updateVariable(key: string, v: Variable): Observable<Variable> {
-        return this._http.put('/project/' + key + '/variable/' + v.name, v);
+        return this._http.put<Variable>('/project/' + key + '/variable/' + v.name, v);
     }
 
     /**
@@ -113,7 +109,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     addPermission(key: string, gp: GroupPermission): Observable<Array<GroupPermission>> {
-        return this._http.post('/project/' + key + '/group', gp);
+        return this._http.post<Array<GroupPermission>>('/project/' + key + '/group', gp);
     }
 
     /**
@@ -123,7 +119,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     updatePermission(key: string, gp: GroupPermission): Observable<GroupPermission> {
-        return this._http.put('/project/' + key + '/group/' + gp.group.name, gp);
+        return this._http.put<GroupPermission>('/project/' + key + '/group/' + gp.group.name, gp);
     }
 
     /**
@@ -153,7 +149,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     disconnectRepoManager(key: string, repoName: string): Observable<Project> {
-        return this._http.delete('/project/' + key + '/repositories_manager/' + repoName);
+        return this._http.delete<Project>('/project/' + key + '/repositories_manager/' + repoName);
     }
 
     /**
@@ -170,7 +166,7 @@ export class ProjectService {
             'verifier': verifier
         };
         let url = '/project/' + key + '/repositories_manager/' + repoName + '/authorize/callback';
-        return this._http.post(url, request);
+        return this._http.post<Project>(url, request);
     }
 
     /**
@@ -183,7 +179,7 @@ export class ProjectService {
         let params = new HttpParams();
         params = params.append('withWorkflows', 'true');
 
-        return this._http.get('/project/' + key + '/environment/' + envName, {params});
+        return this._http.get<Environment>('/project/' + key + '/environment/' + envName, {params});
     }
 
     /**
@@ -193,7 +189,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     addEnvironment(key: string, environment: Environment): Observable<Project> {
-        return this._http.post('/project/' + key + '/environment', environment);
+        return this._http.post<Project>('/project/' + key + '/environment', environment);
     }
 
     /**
@@ -203,7 +199,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     renameEnvironment(key: string, oldName: string, environment: Environment): Observable<Project> {
-        return this._http.put('/project/' + key + '/environment/' + oldName, environment);
+        return this._http.put<Project>('/project/' + key + '/environment/' + oldName, environment);
     }
 
     /**
@@ -214,7 +210,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     cloneEnvironment(key: string, environment: Environment, cloneName: string): Observable<Project> {
-        return this._http.post(`/project/${key}/environment/${environment.name}/clone/${cloneName}`, {});
+        return this._http.post<Project>(`/project/${key}/environment/${environment.name}/clone/${cloneName}`, {});
     }
 
     /**
@@ -224,7 +220,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     removeEnvironment(key: string, environment: Environment): Observable<Project> {
-        return this._http.delete('/project/' + key + '/environment/' + environment.name);
+        return this._http.delete<Project>('/project/' + key + '/environment/' + environment.name);
     }
 
     /**
@@ -235,7 +231,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     addEnvironmentVariable(key: string, envName: string, v: Variable): Observable<Project> {
-        return this._http.post('/project/' + key + '/environment/' + envName + '/variable/' + v.name, v);
+        return this._http.post<Project>('/project/' + key + '/environment/' + envName + '/variable/' + v.name, v);
     }
 
     /**
@@ -246,7 +242,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     updateEnvironmentVariable(key: string, envName: string, v: Variable): Observable<Project> {
-        return this._http.put('/project/' + key + '/environment/' + envName + '/variable/' + v.name, v);
+        return this._http.put<Project>('/project/' + key + '/environment/' + envName + '/variable/' + v.name, v);
     }
 
     /**
@@ -257,7 +253,7 @@ export class ProjectService {
      * @returns {Observable<Project>}
      */
     removeEnvironmentVariable(key: string, envName: string, v: Variable): Observable<Project> {
-        return this._http.delete('/project/' + key + '/environment/' + envName + '/variable/' + v.name);
+        return this._http.delete<Project>('/project/' + key + '/environment/' + envName + '/variable/' + v.name);
     }
 
     /**
@@ -268,7 +264,7 @@ export class ProjectService {
      * @returns {Observable<Environment>}
      */
     addEnvironmentPermission(key: string, envName: string, gps: Array<GroupPermission>): Observable<Environment> {
-        return this._http.post('/project/' + key + '/environment/' + envName + '/groups', gps);
+        return this._http.post<Environment>('/project/' + key + '/environment/' + envName + '/groups', gps);
     }
 
     /**
@@ -279,7 +275,7 @@ export class ProjectService {
      * @returns {Observable<Environment>}
      */
     updateEnvironmentPermission(key: string, envName: string, gp: GroupPermission): Observable<Environment> {
-        return this._http.put('/project/' + key + '/environment/' + envName + '/group/' + gp.group.name, gp);
+        return this._http.put<Environment>('/project/' + key + '/environment/' + envName + '/group/' + gp.group.name, gp);
     }
 
     /**
@@ -298,6 +294,6 @@ export class ProjectService {
      * @param key Project unique key
      */
     getAllNotifications(key: string): Observable<Array<Notification>> {
-        return this._http.get('/project/' + key + '/notifications');
+        return this._http.get<Array<Notification>>('/project/' + key + '/notifications');
     }
 }

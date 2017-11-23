@@ -3,9 +3,6 @@
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
-import {Injector} from '@angular/core';
 import {SharedModule} from '../../shared.module';
 import {PrerequisiteComponent} from './prerequisites.component';
 import {Prerequisite} from '../../../model/prerequisite.model';
@@ -13,16 +10,12 @@ import {PrerequisiteEvent} from '../prerequisite.event.model';
 
 describe('CDS: Prerequisite List Component', () => {
 
-    let injector: Injector;
-    let backend: MockBackend;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
             ],
             providers: [
                 TranslateService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser
             ],
@@ -32,12 +25,6 @@ describe('CDS: Prerequisite List Component', () => {
             ]
         });
     });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
-    });
-
 
     it('should load component + update value', fakeAsync( () => {
 

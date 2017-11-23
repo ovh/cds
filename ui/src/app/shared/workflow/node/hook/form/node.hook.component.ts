@@ -10,6 +10,7 @@ import {cloneDeep} from 'lodash';
 import {Project} from '../../../../../model/project.model';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {HookEvent} from '../hook.event';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-hook-form',
@@ -61,13 +62,13 @@ export class WorkflowNodeHookFormComponent {
     }
 
     show(): void {
-        this._hookService.getHookModel().first().subscribe(hms => {
+        this._hookService.getHookModel().pipe(first()).subscribe(hms => {
             this.hooksModel = hms;
             if (this._hook && this._hook.model) {
                 this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
             }
         });
-        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).first().subscribe( wtc => {
+        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).pipe(first()).subscribe( wtc => {
             this.operators = wtc.operators;
             this.conditionNames = wtc.names;
         });

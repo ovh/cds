@@ -4,7 +4,7 @@
     <sui-search placeholder="{{'navbar_search' | translate}}" [options]="searchItems" [maxResults]="15" (resultSelected)="navigateToResult($event)"></sui-search>
 
     <sm-dropdown icon="browser" *ngIf="currentUser" class="search">
-        <ng-container *ngFor="let prj of navProjects">
+        <ng-container *ngFor="let prj of navProjects?.projects">
             <a sm-item href="#" [routerLink]="['project', prj.key]">{{ prj.name }}</a>
         </ng-container>
     </sm-dropdown>

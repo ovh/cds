@@ -15,6 +15,8 @@ const (
 	ServiceRequirement = "service"
 	//MemoryRequirement set memory limit on a container
 	MemoryRequirement = "memory"
+	// VolumeRequirement set Volume limit on a container
+	VolumeRequirement = "volume"
 )
 
 var (
@@ -27,6 +29,7 @@ var (
 		PluginRequirement,
 		ServiceRequirement,
 		MemoryRequirement,
+		VolumeRequirement,
 	}
 )
 

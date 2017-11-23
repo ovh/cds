@@ -1,7 +1,7 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {ProjectStore} from '../../../service/project/project.store';
+import {ProjectStore, LoadOpts} from '../../../service/project/project.store';
 import {Project} from '../../../model/project.model';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../shared/toast/ToastService';
@@ -19,7 +19,6 @@ import {User} from '../../../model/user.model';
     styleUrls: ['./project.scss']
 })
 export class ProjectShowComponent implements OnInit, OnDestroy {
-    varFormLoading = false;
     permFormLoading = false;
     permEnvFormLoading = false
     currentUser: User;
@@ -29,8 +28,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
 
     selectedTab = 'applications';
 
-    @ViewChild('varWarning')
-    varWarningModal: WarningModalComponent;
     @ViewChild('permWarning')
     permWarningModal: WarningModalComponent;
     @ViewChild('permEnvWarning')
@@ -59,23 +56,23 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this._route.params.subscribe(params => {
-            const key = params['key'];
-            if (key) {
-                if (this.project && this.project.key !== key) {
-                    this.project = undefined;
-                }
-                if (!this.project) {
-                    this.refreshDatas(key);
-                }
-
-            }
-        });
-        this._route.queryParams.subscribe(params => {
+        this._route.queryParams.subscribe((params) => {
             if (params['tab']) {
                 this.selectedTab = params['tab'];
             }
+            this._route.params.subscribe(routeParams => {
+                const key = routeParams['key'];
+                if (key) {
+                    if (this.project && this.project.key !== key) {
+                        this.project = undefined;
+                    }
+                    if (!this.project) {
+                        this.refreshDatas(key);
+                    }
+                }
+            });
         });
+
         if (this._route.snapshot && this._route.snapshot.queryParams) {
             this.workflowName = this._route.snapshot.queryParams['workflow'];
             this.workflowNum = this._route.snapshot.queryParams['run'];
@@ -88,12 +85,25 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         if (this.projectSubscriber) {
             this.projectSubscriber.unsubscribe();
         }
-        this.projectSubscriber = this._projectStore.getProjects(key).subscribe( projects => {
-            if (projects) {
-                let updatedProject = projects.get(key);
-                if (updatedProject && !updatedProject.externalChange) {
-                    this.project = updatedProject;
-                } else if (updatedProject && updatedProject.externalChange) {
+        let opts = [
+          new LoadOpts('withApplicationNames', 'application_names'),
+          new LoadOpts('withPipelineNames', 'pipeline_names'),
+          new LoadOpts('withWorkflowNames', 'workflow_names'),
+          new LoadOpts('withApplicationPipelines', 'applications'),
+        ];
+
+        if (this.selectedTab === 'variables') {
+            opts.push(new LoadOpts('withVariables', 'variables'));
+        } else if (this.selectedTab === 'environments') {
+            opts.push(new LoadOpts('withEnvironments', 'environments'));
+        }
+
+
+        this.projectSubscriber = this._projectStore.getProjectResolver(key, opts).subscribe(proj => {
+            if (proj) {
+                if (!proj.externalChange) {
+                    this.project = proj;
+                } else if (proj && proj.externalChange) {
                     if (this.project.externalChange) {
                         this._toast.info('', this._translate.instant('warning_project'));
                     }
@@ -106,35 +116,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
 
     showTab(tab: string): void {
         this._router.navigateByUrl('/project/' + this.project.key + '?tab=' + tab);
-    }
-
-    variableEvent(event: VariableEvent, skip?: boolean): void {
-        if (!skip && this.project.externalChange) {
-            this.varWarningModal.show(event);
-        } else {
-            event.variable.value = String(event.variable.value);
-            switch (event.type) {
-                case 'add':
-                    this.varFormLoading = true;
-                    this._projectStore.addProjectVariable(this.project.key, event.variable).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_added'));
-                        this.varFormLoading = false;
-                    }, () => {
-                        this.varFormLoading = false;
-                    });
-                    break;
-                case 'update':
-                    this._projectStore.updateProjectVariable(this.project.key, event.variable).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_updated'));
-                    });
-                    break;
-                case 'delete':
-                    this._projectStore.deleteProjectVariable(this.project.key, event.variable).subscribe(() => {
-                        this._toast.success('', this._translate.instant('variable_deleted'));
-                    });
-                    break;
-            }
-        }
     }
 
     addEnvPermEvent(event: EnvironmentPermissionEvent, skip?: boolean): void {

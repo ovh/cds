@@ -107,7 +107,7 @@ export class ActionComponent implements OnDestroy {
                 if (spaceIdx > 1) {
                     let newValue = req.value.substring(0, spaceIdx);
                     let newOpts = req.value.substring(spaceIdx + 1, req.value.length);
-                    req.value = newValue;
+                    req.value = newValue.trim();
                     req.opts = newOpts.replace(/\s/g, '\n');
                 }
             }
@@ -118,7 +118,7 @@ export class ActionComponent implements OnDestroy {
         // for each type 'model' and 'service', concat value with opts
         // and replace \n with space
         this.editableAction.requirements.forEach(req => {
-            if (req.type === 'model' || req.type === 'service' && req.opts) {
+            if ((req.type === 'model' || req.type === 'service') && req.opts) {
                 let spaceIdx = req.value.indexOf(' ');
                 let newValue = req.value;
                 // if there is a space in name and opts not empty
@@ -127,7 +127,7 @@ export class ActionComponent implements OnDestroy {
                     newValue = req.value.substring(0, spaceIdx);
                 }
                 let newOpts = req.opts.replace(/\n/g, ' ');
-                req.value = newValue + ' ' + newOpts;
+                req.value = (newValue + ' ' + newOpts).trim();
                 req.opts = '';
             }
         })
@@ -187,6 +187,7 @@ export class ActionComponent implements OnDestroy {
      */
     sendActionEvent(type: string): void {
         // Rebuild step
+        this.parseRequirements();
         this.editableAction.actions = new Array<Action>();
         if (this.steps) {
             this.steps.forEach(s => {

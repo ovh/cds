@@ -24,6 +24,11 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 	defer func() {
 		log.Debug("processWorkflowRun> End [#%d]%s - %.3fs", w.Number, w.Workflow.Name, time.Since(t0).Seconds())
 	}()
+	defer func(oldStatus string, wr *sdk.WorkflowRun, chEvent chan<- interface{}) {
+		if oldStatus != wr.Status && chEvent != nil {
+			chEvent <- *wr
+		}
+	}(w.Status, w, chanEvent)
 
 	maxsn := MaxSubNumber(w.WorkflowNodeRuns)
 	log.Info("processWorkflowRun> %s/%s %d.%d", p.Name, w.Workflow.Name, w.Number, maxsn)
@@ -58,6 +63,8 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		if errP != nil {
 			return false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
+		w.Status = sdk.StatusWaiting.String()
+
 		return conditionOK, nil
 	}
 
@@ -279,14 +286,9 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		}
 	}
 
-	oldStatus := w.Status
 	w.Status = getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped)
 	if err := updateWorkflowRun(db, w); err != nil {
 		return false, sdk.WrapError(err, "processWorkflowRun>")
-	}
-
-	if oldStatus != w.Status && chanEvent != nil {
-		chanEvent <- *w
 	}
 
 	return true, nil

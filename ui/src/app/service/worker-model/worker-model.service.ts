@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {WorkerModel} from '../../model/worker-model.model';
 import {HttpClient} from '@angular/common/http';
 
@@ -17,7 +17,7 @@ export class WorkerModelService {
      * @returns {Observable<WorkerModel>}
      */
     createWorkerModel(workerModel: WorkerModel): Observable<WorkerModel> {
-        return this._http.post('/worker/model', workerModel);
+        return this._http.post<WorkerModel>('/worker/model', workerModel);
     }
 
     /**
@@ -35,7 +35,7 @@ export class WorkerModelService {
      * @returns {Observable<WorkerModel>}
      */
     updateWorkerModel(workerModel: WorkerModel): Observable<WorkerModel> {
-        return this._http.put('/worker/model/' + workerModel.id, workerModel);
+        return this._http.put<WorkerModel>('/worker/model/' + workerModel.id, workerModel);
     }
 
     /**
@@ -43,7 +43,7 @@ export class WorkerModelService {
      * @returns {Observable<WorkerModel>}
      */
     getWorkerModelByName(workerModelName: string): Observable<WorkerModel> {
-        return this._http.get('/worker/model?name=' + workerModelName);
+        return this._http.get<WorkerModel>('/worker/model?name=' + workerModelName);
     }
 
     /**
@@ -51,7 +51,7 @@ export class WorkerModelService {
      * @returns {Observable<WorkerModel[]>}
      */
     getWorkerModels(): Observable<Array<WorkerModel>> {
-        return this._http.get('/worker/model');
+        return this._http.get<Array<WorkerModel>>('/worker/model');
     }
 
     /**
@@ -59,7 +59,7 @@ export class WorkerModelService {
      * @returns {Observable<string[]>}
      */
     getWorkerModelTypes(): Observable<Array<string>> {
-        return this._http.get('/worker/model/type');
+        return this._http.get<Array<string>>('/worker/model/type');
     }
 
     /**
@@ -67,6 +67,6 @@ export class WorkerModelService {
      * @returns {Observable<string[]>}
      */
     getWorkerModelCommunications(): Observable<Array<string>> {
-        return this._http.get('/worker/model/communication');
+        return this._http.get<Array<string>>('/worker/model/communication');
     }
 }

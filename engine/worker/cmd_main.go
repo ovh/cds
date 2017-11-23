@@ -120,6 +120,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGKILL)
 		defer func() {
+			log.Info("Run signal.Stop. My hostname is %s", hostname)
 			signal.Stop(c)
 			cancel()
 		}()
@@ -186,12 +187,14 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		//Definition of the function which must be called to stop the worker
 		var endFunc = func() {
+			log.Info("Enter endFunc")
 			w.drainLogsAndCloseLogger(ctx)
 			registerTick.Stop()
 			w.unregister()
 			cancel()
 
 			if viper.GetBool("force_exit") {
+				log.Info("Exiting worker with force_exit true")
 				return
 			}
 
@@ -251,7 +254,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
-					log.Debug("Unable to run this job, let's continue %d%s", j.ID, t)
+					log.Debug("Unable to run this pipeline build job, requirements not OK, let's continue %d%s", j.ID, t)
 					continue
 				}
 
@@ -293,7 +296,7 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 					if err := w.client.WorkerSetStatus(sdk.StatusWaiting); err != nil {
 						log.Error("WorkerSetStatus> error on WorkerSetStatus(sdk.StatusWaiting): %s", err)
 					}
-					log.Debug("Unable to run this job, let's continue %d%s", j.ID, t)
+					log.Debug("Unable to run this workflow job, requirements not ok, let's continue %d%s", j.ID, t)
 					continue
 				}
 
@@ -320,13 +323,13 @@ func (w *currentWorker) processBookedPBJob(pbjobs chan<- sdk.PipelineBuildJob) {
 	log.Debug("Try to take the pipeline build job %d", w.bookedPBJobID)
 	b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/%d/infos", w.bookedPBJobID), nil)
 	if err != nil {
-		log.Error("Unable to load pipeline build job %d: %v", w.bookedPBJobID, err)
+		log.Error("Unable to load pipeline build job %d: %v on Request", w.bookedPBJobID, err)
 		return
 	}
 
 	j := &sdk.PipelineBuildJob{}
 	if err := json.Unmarshal(b, j); err != nil {
-		log.Error("Unable to load pipeline build job %d: %v", w.bookedPBJobID, err)
+		log.Error("Unable to load pipeline build job %d: %v on Unmarshal", w.bookedPBJobID, err)
 		return
 	}
 

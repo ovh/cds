@@ -1,9 +1,10 @@
 package main
 
 import (
-	"os"
+	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk/log"
@@ -28,13 +29,22 @@ func cmdRegisterRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			HatcheryName: w.hatchery.name,
 			ModelID:      w.model.ID,
 		}
+
 		if err := w.register(form); err != nil {
-			log.Error("Unable to register worker: %s", err)
-			os.Exit(1)
+			log.Error("Unable to register worker %s: %v", w.status.Name, err)
 		}
 		if err := w.unregister(); err != nil {
-			log.Error("Unable to unregister worker: %s", err)
-			os.Exit(1)
+			log.Error("Unable to unregister worker %s: %v", w.status.Name, err)
+		}
+
+		if viper.GetBool("force_exit") {
+			log.Info("Exiting worker with force_exit true")
+			return
+		}
+
+		if w.hatchery.id > 0 {
+			log.Info("Waiting 30min to be killed by hatchery, if not killed, worker will exit")
+			time.Sleep(30 * time.Minute)
 		}
 	}
 }

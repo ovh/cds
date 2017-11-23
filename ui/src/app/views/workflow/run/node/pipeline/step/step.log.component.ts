@@ -1,5 +1,5 @@
-import {Component, Input, OnInit, OnDestroy, NgZone, ViewChild, ElementRef} from '@angular/core';
-import {Subscription} from 'rxjs/Rx';
+import {Component, Input, OnInit, NgZone, ViewChild, ElementRef, OnDestroy} from '@angular/core';
+import {Subscription} from 'rxjs/Subscription';
 import {Action} from '../../../../../../model/action.model';
 import {Project} from '../../../../../../model/project.model';
 import {Job, StepStatus} from '../../../../../../model/job.model';

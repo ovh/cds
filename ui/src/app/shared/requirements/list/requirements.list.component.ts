@@ -5,6 +5,7 @@ import {RequirementEvent} from '../requirement.event.model';
 import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {WorkerModel} from '../../../model/worker-model.model';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-requirements-list',
@@ -50,8 +51,8 @@ export class RequirementsListComponent extends Table {
                 this.availableRequirements.push(...r.toArray());
             });
 
-        this._workerModelService.getWorkerModels().first()
-        .finally(() => this.loading = false)
+        this._workerModelService.getWorkerModels()
+        .pipe(finalize(() => this.loading = false), first())
         .subscribe(wms => {
             this.workerModels = wms;
             if (Array.isArray(this.workerModels)) {

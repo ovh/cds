@@ -4,7 +4,6 @@ import {TestBed, async, getTestBed, fakeAsync} from '@angular/core/testing';
 import {AppModule} from './app.module';
 import {AppComponent} from './app.component';
 
-import {MockBackend} from '@angular/http/testing';
 import {Injector} from '@angular/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {User} from './model/user.model';
@@ -24,11 +23,11 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {Pipeline} from './model/pipeline.model';
 import {Application} from './model/application.model';
 import {Project} from './model/project.model';
+import {first} from 'rxjs/operators';
 
 describe('App: CDS', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
     let authStore: AuthentificationStore;
     let projectStore: ProjectStore;
     let applicationStore: ApplicationStore;
@@ -40,7 +39,6 @@ describe('App: CDS', () => {
             providers: [
                 AuthentificationStore,
                 { provide: APP_BASE_HREF, useValue: '/' },
-                MockBackend,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: ProjectService, useClass: MockProjectService },
                 { provide: ApplicationService, useClass: MockApplicationService},
@@ -55,7 +53,6 @@ describe('App: CDS', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(MockBackend);
         authStore = injector.get(AuthentificationStore);
         projectStore = injector.get(ProjectStore);
         applicationStore = injector.get(ApplicationStore);
@@ -64,7 +61,6 @@ describe('App: CDS', () => {
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
         authStore = undefined;
         projectStore = undefined;
         applicationStore = undefined;
@@ -101,15 +97,15 @@ describe('App: CDS', () => {
         // Create cache
         projectStore.getProjects('key1').subscribe(() => {}).unsubscribe();
 
-        projectStore.getProjects('key2').first().subscribe(() => {}).unsubscribe();
+        projectStore.getProjects('key2').pipe(first()).subscribe(() => {}).unsubscribe();
 
-        applicationStore.getApplications('key1', 'app1').first().subscribe(() => {}).unsubscribe();
-        applicationStore.getApplications('key1', 'app2').first().subscribe(() => {}).unsubscribe();
-        applicationStore.getApplications('key2', 'app3').first().subscribe(() => {}).unsubscribe();
+        applicationStore.getApplications('key1', 'app1').pipe(first()).subscribe(() => {}).unsubscribe();
+        applicationStore.getApplications('key1', 'app2').pipe(first()).subscribe(() => {}).unsubscribe();
+        applicationStore.getApplications('key2', 'app3').pipe(first()).subscribe(() => {}).unsubscribe();
 
-        pipelineStore.getPipelines('key1', 'pip1').first().subscribe(() => {}).unsubscribe();
-        pipelineStore.getPipelines('key1', 'pip2').first().subscribe(() => {}).unsubscribe();
-        pipelineStore.getPipelines('key2', 'pip3').first().subscribe(() => {}).unsubscribe();
+        pipelineStore.getPipelines('key1', 'pip1').pipe(first()).subscribe(() => {}).unsubscribe();
+        pipelineStore.getPipelines('key1', 'pip2').pipe(first()).subscribe(() => {}).unsubscribe();
+        pipelineStore.getPipelines('key2', 'pip3').pipe(first()).subscribe(() => {}).unsubscribe();
 
 
         let prj1Update = new LastModification();
@@ -255,11 +251,11 @@ class MockProjectService extends ProjectService {
                     return Observable.of(proj);
                 }
             case 'key2':
-                let proj = new Project();
-                proj.key = 'key2';
-                proj.name = 'project2';
-                proj.last_modified = '2017-05-11T10:20:22.874779+02:00';
-                return Observable.of(proj);
+                let proj2 = new Project();
+                proj2.key = 'key2';
+                proj2.name = 'project2';
+                proj2.last_modified = '2017-05-11T10:20:22.874779+02:00';
+                return Observable.of(proj2);
         }
 
     }
@@ -268,7 +264,7 @@ class MockProjectService extends ProjectService {
 class MockApplicationService extends ApplicationService {
     callAPP2 = 0;
 
-    getApplication(key: string, appName: string) {
+    getApplication(key: string, appName: string, filter?: {branch: string, remote: string}) {
         if (key === 'key1') {
             if (appName === 'app1') {
                 let app = new Application();
@@ -287,7 +283,7 @@ class MockApplicationService extends ApplicationService {
                     let app = new Application();
                     app.name = 'app2';
                     app.last_modified = '2017-06-11T10:20:22.874779+02:00';
-                    return Observable.of({ name: 'app2', last_modified: '2017-06-11T10:20:22.874779+02:00'});
+                    return Observable.of(app);
                 }
 
             }

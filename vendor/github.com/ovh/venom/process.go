@@ -2,16 +2,15 @@ package venom
 
 import (
 	"errors"
-	"io"
+	"fmt"
 	"strings"
-	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
 
 // Process runs tests suite and return a Tests result
-func Process(path []string, variables map[string]string, exclude []string, parallel int, logLevel string, detailsLevel string, writer io.Writer) (*Tests, error) {
-	switch logLevel {
+func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
+	switch v.LogLevel {
 	case "debug":
 		log.SetLevel(log.DebugLevel)
 	case "info":
@@ -22,53 +21,103 @@ func Process(path []string, variables map[string]string, exclude []string, paral
 		log.SetLevel(log.WarnLevel)
 	}
 
-	log.SetOutput(writer)
-	switch detailsLevel {
+	log.SetOutput(v.LogOutput)
+	switch v.OutputDetails {
 	case DetailsLow, DetailsMedium, DetailsHigh:
-		log.Infof("Detail Level: %s", detailsLevel)
+		log.Infof("Detail Level: %s", v.OutputDetails)
 	default:
 		return nil, errors.New("Invalid details. Must be low, medium or high")
 	}
 
-	chanEnd := make(chan TestSuite, 1)
-	parallels := make(chan TestSuite, parallel)
-	wg := sync.WaitGroup{}
-	testsResult := &Tests{}
-
 	filesPath := getFilesPath(path, exclude)
-	wg.Add(len(filesPath))
-	chanToRun := make(chan TestSuite, len(filesPath)+1)
 
-	go computeStats(testsResult, chanEnd, &wg)
-
-	bars, err := readFiles(variables, detailsLevel, filesPath, chanToRun, writer)
-	if err != nil {
+	if err := v.readFiles(filesPath); err != nil {
 		return nil, err
 	}
 
-	pool := initBars(detailsLevel, bars)
+	//First parse the testsuites to check if all testsuites are fine (context init + variable usages)
+	if err := v.parse(); err != nil {
+		return nil, err
+	}
 
-	go func() {
-		for ts := range chanToRun {
-			parallels <- ts
-			go func(ts TestSuite) {
-				runTestSuite(&ts, bars, detailsLevel)
-				chanEnd <- ts
-				<-parallels
-			}(ts)
-		}
-	}()
+	//Then process
+	if v.OutputDetails != DetailsLow {
+		pool := v.initBars()
+		defer endBars(v.OutputDetails, pool)
+	}
 
-	wg.Wait()
+	for i := range v.testsuites {
+		ts := &v.testsuites[i]
+		v.runTestSuite(ts)
+	}
 
-	endBars(detailsLevel, pool)
+	testsResult := &Tests{}
+	v.computeStats(testsResult)
 
 	return testsResult, nil
 }
 
-func computeStats(testsResult *Tests, chanEnd <-chan TestSuite, wg *sync.WaitGroup) {
-	for t := range chanEnd {
-		testsResult.TestSuites = append(testsResult.TestSuites, t)
+func (v *Venom) parse() error {
+	missingVars := []string{}
+	extractedVars := []string{}
+	for i := range v.testsuites {
+		ts := &v.testsuites[i]
+		log.Info("Parsing testsuite %s", ts.Package)
+
+		tvars, textractedVars, err := v.parseTestSuite(ts)
+		if err != nil {
+			return err
+		}
+		for _, k := range tvars {
+			var found bool
+			for i := 0; i < len(missingVars); i++ {
+				if missingVars[i] == k {
+					found = true
+					break
+				}
+			}
+			if !found {
+				missingVars = append(missingVars, k)
+			}
+		}
+		for _, k := range textractedVars {
+			var found bool
+			for i := 0; i < len(extractedVars); i++ {
+				if extractedVars[i] == k {
+					found = true
+					break
+				}
+			}
+			if !found {
+				extractedVars = append(extractedVars, k)
+			}
+		}
+	}
+
+	reallyMissingVars := []string{}
+	for _, k := range missingVars {
+		var varExtracted bool
+		for _, e := range extractedVars {
+			if strings.HasPrefix(k, e) {
+				varExtracted = true
+			}
+		}
+		if !varExtracted {
+			reallyMissingVars = append(reallyMissingVars, k)
+		}
+	}
+
+	if len(reallyMissingVars) > 0 {
+		return fmt.Errorf("Missing variables %v", reallyMissingVars)
+	}
+
+	return nil
+}
+
+func (v *Venom) computeStats(testsResult *Tests) {
+	for i := range v.testsuites {
+		t := &v.testsuites[i]
+		testsResult.TestSuites = append(testsResult.TestSuites, *t)
 		if t.Failures > 0 {
 			testsResult.TotalKO += t.Failures
 		} else {
@@ -79,7 +128,6 @@ func computeStats(testsResult *Tests, chanEnd <-chan TestSuite, wg *sync.WaitGro
 		}
 
 		testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
-		wg.Done()
 	}
 }
 

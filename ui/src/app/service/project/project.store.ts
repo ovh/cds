@@ -1,8 +1,12 @@
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
-import {BehaviorSubject, Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 import {Project} from '../../model/project.model';
 import {ProjectService} from './project.service';
+import {EnvironmentService} from '../environment/environment.service';
+import {PipelineService} from '../pipeline/pipeline.service';
+import {VariableService} from '../variable/variable.service';
 import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
@@ -16,7 +20,12 @@ export class ProjectStore {
     // List of all project + dependencies:  List of variables, List of Env, List of App, List of Pipeline.
     private _projectCache: BehaviorSubject<Map<string, Project>> = new BehaviorSubject(Map<string, Project>());
 
-    constructor(private _projectService: ProjectService) {
+    constructor(
+        private _projectService: ProjectService,
+        private _environmentService: EnvironmentService,
+        private _pipelineService: PipelineService,
+        private _variableService: VariableService
+      ) {
 
     }
 
@@ -45,10 +54,65 @@ export class ProjectStore {
      * @param key
      * @returns {Observable<Project>}
      */
-    getProjectResolver(key: string): Observable<Project> {
+    getProjectResolver(key: string, opts: LoadOpts[]): Observable<Project> {
         let store = this._projectCache.getValue();
         if (store.size === 0 || !store.get(key)) {
-            return this.resync(key);
+            opts = opts.concat([
+                new LoadOpts('withGroups', 'groups'),
+                new LoadOpts('withPermission', 'permission')
+            ]);
+            return this.resync(key, opts);
+        }
+
+        if (Array.isArray(opts) && store.get(key)) {
+            let funcs = opts.filter((opt) => store.get(key)[opt.fieldName] == null);
+
+            if (!funcs.length) {
+                return Observable.of(store.get(key));
+            }
+
+            funcs = funcs.concat([
+                new LoadOpts('withGroups', 'groups'),
+                new LoadOpts('withPermission', 'permission')
+            ]);
+
+            // TODO: iterate on funcs array and execute handler linked to fetch missing data
+            return this.resync(key, funcs);
+        }
+        return Observable.of(store.get(key));
+    }
+
+    /**
+     * Get project from API and store result
+     * @param key
+     * @returns {Observable<R>}
+     */
+    resync(key: string, opts?: LoadOpts[]): Observable<Project> {
+        return this._projectService.getProject(key, opts).map( res => {
+            let store = this._projectCache.getValue();
+            let proj = store.get(key);
+            if (proj) {
+                proj = Object.assign({}, proj, res);
+            } else {
+                proj = res;
+            }
+
+            this._projectCache.next(store.set(key, proj));
+            return proj;
+        });
+    }
+
+    /**
+     * Use by router to preload project
+     * @param key
+     * @returns {Observable<Project>}
+     */
+    getProjectEnvironmentsResolver(key: string): Observable<Project> {
+        let store = this._projectCache.getValue();
+        let missingEnv = store.size === 0 || !store.get(key) || !store.get(key).environments || !store.get(key).environments.length;
+
+        if (missingEnv) {
+            return this.resyncEnvironments(key);
         } else {
             return Observable.of(store.get(key));
         }
@@ -59,12 +123,79 @@ export class ProjectStore {
      * @param key
      * @returns {Observable<R>}
      */
-    resync(key: string): Observable<Project> {
-        return this._projectService.getProject(key).map( res => {
-            let store = this._projectCache.getValue();
-            this._projectCache.next(store.set(key, res));
-            return res;
-        });
+    resyncEnvironments(key: string): Observable<Project> {
+        return this._environmentService.get(key)
+          .map((res) => {
+              let store = this._projectCache.getValue();
+              let proj = store.get(key);
+              proj.environments = res;
+              this._projectCache.next(store.set(key, proj));
+              return proj;
+          });
+    }
+
+    /**
+     * Use by router to preload project
+     * @param key
+     * @returns {Observable<Project>}
+     */
+    getProjectPipelinesResolver(key: string): Observable<Project> {
+        let store = this._projectCache.getValue();
+        let missingEnv = store.size === 0 || !store.get(key) || !store.get(key).pipelines || !store.get(key).pipelines.length;
+
+        if (missingEnv) {
+            return this.resyncPipelines(key);
+        } else {
+            return Observable.of(store.get(key));
+        }
+    }
+
+    /**
+     * Get project from API and store result
+     * @param key
+     * @returns {Observable<R>}
+     */
+    resyncPipelines(key: string): Observable<Project> {
+        return this._pipelineService.getPipelines(key)
+          .map((res) => {
+              let store = this._projectCache.getValue();
+              let proj = store.get(key);
+              proj.pipelines = res;
+              this._projectCache.next(store.set(key, proj));
+              return proj;
+          });
+    }
+
+    /**
+     * Use by router to preload project
+     * @param key
+     * @returns {Observable<Project>}
+     */
+    getProjectVariablesResolver(key: string): Observable<Project> {
+        let store = this._projectCache.getValue();
+        let missingEnv = store.size === 0 || !store.get(key) || !store.get(key).variables || !store.get(key).variables.length;
+
+        if (missingEnv) {
+            return this.resyncVariables(key);
+        } else {
+            return Observable.of(store.get(key));
+        }
+    }
+
+    /**
+     * Get project from API and store result
+     * @param key
+     * @returns {Observable<R>}
+     */
+    resyncVariables(key: string): Observable<Project> {
+        return this._variableService.get(key)
+          .map((res) => {
+              let store = this._projectCache.getValue();
+              let proj = store.get(key);
+              proj.variables = res;
+              this._projectCache.next(store.set(key, proj));
+              return proj;
+          });
     }
 
     /**
@@ -72,12 +203,12 @@ export class ProjectStore {
      * @param key Project unique key you want to fetch
      * @returns {Project}
      */
-    getProjects(key?: string): Observable<Map<string, Project>> {
+    getProjects(key?: string, opts?: LoadOpts[]): Observable<Map<string, Project>> {
         // If Store contain the project, get IT
         let projects = this._projectCache.getValue();
         if (key && !projects.get(key)) {
             // Else get it from API
-            this._projectService.getProject(key).subscribe(res => {
+            this._projectService.getProject(key, opts).subscribe(res => {
                 this._projectCache.next(projects.set(key, res));
             }, err => {
                 this._projectCache.error(err);
@@ -554,4 +685,11 @@ export class ProjectStore {
     }
 
 
+}
+
+export class LoadOpts {
+  constructor(
+    public queryParam: string,
+    public fieldName: string
+  ) { }
 }

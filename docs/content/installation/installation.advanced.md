@@ -47,9 +47,11 @@ Start CDS Engine Services:
 	 * Vsphere
  * Hooks:
  	This component operates CDS workflow hooks
+ * VCS:
+    This component operates CDS VCS connectivity
 
 Start all of this with a single command:
-	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks]
+	$ engine start [api] [hatchery:local] [hatchery:docker] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks]  [vcs]
 All the services are using the same configuration file format.
 You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.
 You can also use or override toml file with environment variable.
@@ -77,6 +79,8 @@ Starting service api
 ...
 Starting service hooks
 ...
+Starting service vcs
+...
 Starting service hatchery:local
 ...
 ```
@@ -88,6 +92,8 @@ For serious deployment, we strongly suggest to run each service as a dedicated p
 $ engine start api --config config.toml
 
 $ engine start hooks --config config.toml
+
+$ engine start vcs --config config.toml
 
 $ engine start hatchery:local --config config.toml
 $ engine start hatchery:docker --config config.toml
@@ -107,6 +113,7 @@ $ cp config.api.toml config.hatchery.swarm-1.toml
 $ cp config.api.toml config.hatchery.swarm-2.toml
 $ cp config.api.toml config.hatchery.swarm-3.toml
 $ cp config.api.toml config.hooks.toml
+$ cp config.api.toml config.vcs.toml
 
 $ vi config.hatchery.local.toml # Edit the file an keep only the [logs] and [hatchery]/[hatchery.local] sections
 $ vi config.hatchery.docker.toml # Edit the file an keep only the [logs] and [hatchery]/[hatchery.docker] sections
@@ -114,6 +121,8 @@ $ vi config.hatchery.swarm-1.toml # Edit the file an keep only the [logs] and [h
 $ vi config.hatchery.swarm-2.toml # Edit the file an keep only the [logs] and [hatchery]/[hatchery.swarm] sections
 $ vi config.hatchery.swarm-3.toml # Edit the file an keep only the [logs] and [hatchery]/[hatchery.swarm] sections
 $ vi config.hooks.toml # Edit the file an keep only the [logs] and [hooks] sections
+$ vi config.vcs.toml # Edit the file an keep only the [logs] and [vcs] sections
+
 ...
 ```
 

@@ -23,7 +23,7 @@ import {ActionService} from './action/action.service';
 import {ActionStore} from './action/action.store';
 import {PipelineResolver} from './pipeline/pipeline.resolver';
 import {ApplicationResolver, ApplicationQueryParamResolver} from './application/application.resolver';
-import {ProjectResolver} from './project/project.resolver';
+import {ProjectResolver, ProjectForApplicationResolver} from './project/project.resolver';
 import {ApplicationTemplateService} from './application/application.template.service';
 import {ProjectAuditService} from './project/project.audit.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
@@ -45,6 +45,7 @@ import {HookService} from './hook/hook.service';
 import {PipelineAuditService} from './pipeline/pipeline.audit.service';
 import {EnvironmentService} from './environment/environment.service';
 import {ApplicationMigrateService} from './application/application.migration.service';
+import {NavbarService} from './navbar/navbar.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -73,6 +74,7 @@ export class ServicesModule {
                 HookService,
                 LanguageStore,
                 LastUpdateService,
+                NavbarService,
                 NotificationService,
                 ParameterService,
                 PipelineResolver,
@@ -80,6 +82,7 @@ export class ServicesModule {
                 PipelineAuditService,
                 PipelineStore,
                 ProjectResolver,
+                ProjectForApplicationResolver,
                 ProjectService,
                 ProjectAuditService,
                 ProjectStore,
@@ -137,6 +140,7 @@ export {
     PipelineStore,
     PipelineAuditService,
     ProjectResolver,
+    ProjectForApplicationResolver,
     ProjectStore,
     ProjectAuditService,
     RepoManagerService,

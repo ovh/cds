@@ -522,6 +522,7 @@ func (api *API) updatePipelineHandler() Handler {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot create audit")
 		}
 
+		oldName := pipelineDB.Name
 		pipelineDB.Name = p.Name
 		pipelineDB.Type = p.Type
 
@@ -533,8 +534,10 @@ func (api *API) updatePipelineHandler() Handler {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot update pipeline last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
-			return sdk.WrapError(err, "updatePipelineHandler> cannot update project last modified date")
+		if oldName != pipelineDB.Name {
+			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
+				return sdk.WrapError(err, "updatePipelineHandler> cannot update project last modified date")
+			}
 		}
 
 		// Update applications
@@ -641,7 +644,7 @@ func (api *API) addPipelineHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 		if err := tx.Commit(); err != nil {
@@ -881,7 +884,7 @@ func (api *API) deletePipelineHandler() Handler {
 			return sdk.WrapError(err, "deletePipeline> Cannot delete pipeline %s", pipelineName)
 		}
 
-		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
 			return sdk.WrapError(err, "deletePipeline> Cannot update project last modified date")
 		}
 

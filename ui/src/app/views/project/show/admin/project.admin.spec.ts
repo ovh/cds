@@ -8,15 +8,19 @@ import {XHRBackend} from '@angular/http';
 import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
 import {TranslateParser} from 'ng2-translate';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 
 import {ProjectAdminComponent} from './project.admin.component';
 import {ProjectStore} from '../../../../service/project/project.store';
 import {RepoManagerService} from '../../../../service/repomanager/project.repomanager.service';
 import {ProjectService} from '../../../../service/project/project.service';
+import {PipelineService} from '../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../service/environment/environment.service';
+import {VariableService} from '../../../../service/variable/variable.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {ProjectModule} from '../../project.module';
 import {SharedModule} from '../../../../shared/shared.module';
+import {ServicesModule} from '../../../../service/services.module';
 import {Project} from '../../../../model/project.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
@@ -38,6 +42,9 @@ describe('CDS: Project Admin Component', () => {
                 RepoManagerService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService,
                 ToasterService,
                 TranslateService,
                 TranslateParser,
@@ -47,6 +54,7 @@ describe('CDS: Project Admin Component', () => {
             imports : [
                 ProjectModule,
                 SharedModule,
+                ServicesModule,
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ],
@@ -97,4 +105,3 @@ class MockToast {
 
     }
 }
-

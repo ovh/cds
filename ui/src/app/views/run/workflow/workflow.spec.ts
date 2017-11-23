@@ -4,7 +4,7 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {Injector} from '@angular/core';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {SharedModule} from '../../../shared/shared.module';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {PipelineRunWorkflowComponent} from './workflow.component';
 import {PipelineBuild, PipelineBuildJob} from '../../../model/pipeline.model';

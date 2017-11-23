@@ -158,6 +158,7 @@
   "common_history" : "Historique",
   "common_loading" : "Chargement...",
   "common_loading_project" : "Chargement du projet...",
+  "common_loading_workflow" : "Chargement du workflow...",
   "common_name" : "Nom",
   "common_no" : "Non",
   "common_notifications": "Notifications",
@@ -433,6 +434,7 @@
   "requirement_help_network" : "Model type 'network': <ul><li>CDS choisira un worker qui pourra atteindre cette IP</li></ul>",
   "requirement_help_hostname" : "Model type 'hostname': <ul><li>Ce job sera lancé par un worker possédant ce Hostname</li></ul>",
   "requirement_help_service" : "Model type 'service': <ul><li><a href=\"https://ovh.github.io/cds/building-pipelines/building-pipelines.requirements/\">Note sur le Service Requirement</a></li><li><a href=\"https://ovh.github.io/cds/tutorials/tutorials.service-link-requirement-nginx/\">Tutorial - Service Link Requirement Nginx Tutorial</a></li><li><a href=\"https://ovh.github.io/cds/tutorials/tutorials.service-link-requirement-pg/\">Service Link Requirement PostgreSQL</a></li><li>Vous pouvez forcer la memoire sur un service, exemple: 'CDS_SERVICE_MEMORY=4096'</li></ul>",
+  "requirement_help_volume" : "Model type 'volume': <ul><li>CDS montera un volume dans votre job</li><li>Disponible uniquement pour les worker models type 'Docker'</li><li> Vous devez lancer une hatchery swarm vous-même pour cette fonctionnalité</li><li>Format : syntaxe --mount, voir <a href='https://docs.docker.com/engine/admin/volumes/bind-mounts/'>Documentation Docker</a></li><li>Exemple: type=bind,source=/hostDir/sourceDir,target=/dirInJob</li></ul>",
   "requirement_name_error" : "Le nom du requirement est obligatoire et doit être au format alphanumérique ([a-zA-Z0-9]*)",
   "requirement_settings_worker_model": "Voir les paramètres du Worker Model",
   "requirement_manual_value": "Ou entrez manuellement la valeur :",
@@ -445,6 +447,7 @@
   "requirement_placeholder_name_network" : "",
   "requirement_placeholder_name_hostname" : "",
   "requirement_placeholder_name_service" : "HostnameDuService",
+  "requirement_placeholder_name_volume" : "",
 
   "requirement_placeholder_value_binary" : "bash",
   "requirement_placeholder_value_model" : "Choisissez un modèle de worker",
@@ -454,6 +457,7 @@
   "requirement_placeholder_value_hostname" : "votreHostname",
   "requirement_placeholder_value_service" : "postgres:9.5.3",
   "requirement_placeholder_opts_service" : "POSTGRES_USER=myuser\nPOSTGRES_PASSWORD=mypassword",
+  "requirement_placeholder_value_volume" : "type=bind,source=/hostDir/sourceDir,destination=/dirInJob",
 
   "scheduler_added" : "Scheduler créé",
   "scheduler_deleted" : "Scheduler supprimé",

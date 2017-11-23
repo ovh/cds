@@ -11,12 +11,16 @@ import {TranslateParser} from 'ng2-translate';
 import {ProjectStore} from '../../../service/project/project.store';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 import {ProjectService} from '../../../service/project/project.service';
+import {PipelineService} from '../../../service/pipeline/pipeline.service';
+import {VariableService} from '../../../service/variable/variable.service';
+import {EnvironmentService} from '../../../service/environment/environment.service';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectModule} from '../project.module';
 import {SharedModule} from '../../../shared/shared.module';
+import {ServicesModule} from '../../../service/services.module';
 import {ProjectShowComponent} from './project.component';
 import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Project} from '../../../model/project.model';
 import {Map} from 'immutable';
 import {Variable} from '../../../model/variable.model';
@@ -43,6 +47,9 @@ describe('CDS: Project Show Component', () => {
                 RepoManagerService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                VariableService,
+                EnvironmentService,
                 ToasterService,
                 TranslateService,
                 TranslateParser,
@@ -52,6 +59,7 @@ describe('CDS: Project Show Component', () => {
             imports: [
                 ProjectModule,
                 SharedModule,
+                ServicesModule,
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ],
@@ -70,54 +78,6 @@ describe('CDS: Project Show Component', () => {
         backend = undefined;
         authStore = undefined;
     });
-
-
-    it('it should add/update/delete variable', fakeAsync(() => {
-        let projectStore: ProjectStore = injector.get(ProjectStore);
-
-        let p: Project = new Project();
-        p.key = 'key1';
-        spyOn(projectStore, 'getProjects').and.callFake(() => {
-            let mapProject: Map<string, Project> = Map<string, Project>();
-            return Observable.of(mapProject.set('key1', p));
-        });
-
-        // Create Project RepoManager Form Component
-        let fixture = TestBed.createComponent(ProjectShowComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        fixture.componentInstance.ngOnInit();
-
-        let v: Variable = new Variable();
-        v.name = 'foo';
-        v.value = 'bar';
-        v.type = 'string';
-        let event: VariableEvent = new VariableEvent('add', v);
-
-        // Add variable
-        spyOn(projectStore, 'addProjectVariable').and.callFake(() => {
-            return Observable.of(p);
-        });
-        fixture.componentInstance.variableEvent(event);
-        expect(projectStore.addProjectVariable).toHaveBeenCalledWith('key1', v);
-
-        // Update variable
-        event.type = 'update';
-        spyOn(projectStore, 'updateProjectVariable').and.callFake(() => {
-            return Observable.of(p);
-        });
-        fixture.componentInstance.variableEvent(event);
-        expect(projectStore.updateProjectVariable).toHaveBeenCalledWith('key1', v);
-
-        // Delete variable
-        event.type = 'delete';
-        spyOn(projectStore, 'deleteProjectVariable').and.callFake(() => {
-            return Observable.of(p);
-        });
-        fixture.componentInstance.variableEvent(event);
-        expect(projectStore.deleteProjectVariable).toHaveBeenCalledWith('key1', v);
-    }));
 
     it('it should add/update/delete group', fakeAsync(() => {
         let projectStore: ProjectStore = injector.get(ProjectStore);

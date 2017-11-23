@@ -17,7 +17,7 @@ export class Workflow {
     root: WorkflowNode;
     root_id: number;
     joins: Array<WorkflowNodeJoin>;
-    last_modified: Date;
+    last_modified: string;
     groups: Array<GroupPermission>;
     permission: number;
     metadata: Map<string, string>;
@@ -64,9 +64,11 @@ export class Workflow {
             }
         } else {
             let parentNode: WorkflowNode;
-            workflow.root.triggers.forEach((t, idxT) => {
-                parentNode = WorkflowNode.removeNodeWithoutChild(workflow.root, t, node.id, idxT);
-            });
+            if (workflow.root.triggers) {
+                workflow.root.triggers.forEach((t, idxT) => {
+                    parentNode = WorkflowNode.removeNodeWithoutChild(workflow.root, t, node.id, idxT);
+                });
+            }
             if (workflow.joins) {
                 workflow.joins.forEach(j => {
                     j.source_node_id.forEach((srcId, index) => {
@@ -77,6 +79,19 @@ export class Workflow {
                             }
                         }
                     });
+                    j.source_node_ref.forEach((srcRef, index) => {
+                        if (srcRef === node.id.toString()) {
+                            j.source_node_ref.splice(index, 1);
+                            if (parentNode && j.source_node_ref.indexOf(parentNode.id.toString()) === -1) {
+                                j.source_node_ref.push(parentNode.id.toString());
+                            }
+                        }
+                    });
+                    if (j.triggers) {
+                        j.triggers.forEach((t, idxT) => {
+                            parentNode = WorkflowNode.removeNodeWithoutChildFromJoinTrigger(j, t, node.id, idxT)
+                        });
+                    }
                 });
             }
         }
@@ -237,6 +252,31 @@ export class WorkflowNode {
                 let p = WorkflowNode.removeNodeWithoutChild(t.workflow_dest_node, t, id, i);
                 if (p) {
                     return p;
+                }
+            }
+        }
+        return null;
+    }
+
+    static removeNodeWithoutChildFromJoinTrigger(parentNode: WorkflowNodeJoin, trigger: WorkflowNodeJoinTrigger,
+                                                 id: number, triggerInd: number) {
+        if (trigger.workflow_dest_node.id === id) {
+            if (trigger.workflow_dest_node.triggers) {
+                trigger.workflow_dest_node.triggers.forEach(t => {
+                    let newT = new WorkflowNodeJoinTrigger();
+                    newT.workflow_dest_node = t.workflow_dest_node;
+                    parentNode.triggers.push(newT);
+                });
+            }
+            parentNode.triggers.splice(triggerInd, 1);
+            return;
+        }
+        if (trigger.workflow_dest_node.triggers) {
+            for (let i = 0; i < trigger.workflow_dest_node.triggers.length; i++) {
+                let t = trigger.workflow_dest_node.triggers[i];
+                let p = WorkflowNode.removeNodeWithoutChild(t.workflow_dest_node, t, id, i);
+                if (p) {
+                    return;
                 }
             }
         }

@@ -23,6 +23,7 @@ import {PipelineLaunchModalComponent} from '../../../../../../shared/pipeline/la
 import {PermissionValue} from '../../../../../../model/permission.model';
 import {cloneDeep} from 'lodash';
 import {Remote} from '../../../../../../model/repositories.model';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-workflow-item',
@@ -63,7 +64,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     // scheduler
     @ViewChild('createSchedulerModal')
     createSchedulerModal: SemanticModalComponent;
-    newScheduler: Scheduler;
+    newScheduler = new Scheduler();
 
     // Detach pipeline
     @ViewChild('detachPipelineModal')
@@ -153,11 +154,10 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
             this.workflowItem.application.name,
             this.workflowItem.pipeline.name,
             runRequest
-        ).finally(() => setTimeout(() => this.loadingPipAction = false, 1000))
+        ).pipe(finalize(() => setTimeout(() => this.loadingPipAction = false, 1000)))
         .subscribe(pipelineBuild => {
             this.navigateToBuild(pipelineBuild);
         });
-
     }
 
     stopPipeline(): void {
@@ -172,7 +172,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
             this.workflowItem.pipeline.name,
             this.workflowItem.pipeline.last_pipeline_build.build_number,
             this.workflowItem.environment.name
-        ).finally(() => this.loadingPipAction = false)
+        ).pipe(finalize(() => this.loadingPipAction = false))
         .subscribe(() => {
             this.workflowItem.pipeline.last_pipeline_build.status = this.pipelineStatusEnum.STOPPED;
             this._changeDetectorRef.detach();
@@ -282,7 +282,6 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     }
 
     openCreateSchedulerModal(): void {
-        this.newScheduler = new Scheduler();
         if (this.createSchedulerModal) {
             setTimeout(() => {
                 this.createSchedulerModal.show({autofocus: false, closable: false, observeChanges: true});

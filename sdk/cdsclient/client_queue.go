@@ -235,7 +235,7 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
 		if err == nil && code < 300 {
 			return nil
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 	}
 
 	return fmt.Errorf("x%d: %v", c.config.Retry, err)

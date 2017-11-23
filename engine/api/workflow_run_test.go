@@ -575,7 +575,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 }
 
-func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
+func Test_resyncWorkflowRunHandler(t *testing.T) {
 	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 	u, pass := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
@@ -668,7 +668,7 @@ func Test_resyncWorkflowRunPipelinesHandler(t *testing.T) {
 		"permWorkflowName": w1.Name,
 		"number":           fmt.Sprintf("%d", wr.Number),
 	}
-	uri = router.GetRoute("POST", api.resyncWorkflowRunPipelinesHandler, vars)
+	uri = router.GetRoute("POST", api.resyncWorkflowRunHandler, vars)
 	test.NotEmpty(t, uri)
 	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
 

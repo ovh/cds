@@ -43,9 +43,9 @@ func getLogger(w *currentWorker, buildID int64, stepOrder int) LoggerFunc {
 }
 
 func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int) sdk.Result {
-	log.Debug("runBuiltin> Begin %p", ctx)
+	log.Info("runBuiltin> Begin %p", ctx)
 	defer func() {
-		log.Debug("runBuiltin> End %p (%s)", ctx, ctx.Err())
+		log.Info("runBuiltin> End %p (%s)", ctx, ctx.Err())
 	}()
 	defer w.drainLogsAndCloseLogger(ctx)
 
@@ -65,6 +65,11 @@ func (w *currentWorker) runBuiltin(ctx context.Context, a *sdk.Action, buildID i
 }
 
 func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, sendLog LoggerFunc) sdk.Result {
+	log.Info("runPlugin> Begin %p", ctx)
+	defer func() {
+		log.Info("runPlugin> End %p (%s)", ctx, ctx.Err())
+	}()
+
 	chanRes := make(chan sdk.Result, 1)
 
 	go func(buildID int64, params []sdk.Parameter) {
@@ -112,6 +117,8 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			sendLog(result.Reason)
 			chanRes <- result
 		}
+
+		sendLog(fmt.Sprintf("Starting plugin: %s version %s\n", _plugin.Name(), _plugin.Version()))
 
 		//Manage all parameters
 		pluginSecrets := plugin.Secrets{

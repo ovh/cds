@@ -244,18 +244,18 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	bodyReader = body
 
 	var err error
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 10; i++ {
 		var buf = new(bytes.Buffer)
 		tee := io.TeeReader(bodyReader, buf)
 		err = uploadArtifact(project, pipeline, application, tag, tee, name, writer.FormDataContentType(), buildNumber, env)
 		if err == nil {
 			return nil
 		}
-		time.Sleep(1 * time.Second)
+		time.Sleep(3 * time.Second)
 		bodyReader = buf
 	}
 
-	return fmt.Errorf("x5: %s", err)
+	return fmt.Errorf("x10: %s", err)
 }
 
 func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, file io.Reader, stat os.FileInfo, md5sum string) error {

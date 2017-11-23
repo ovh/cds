@@ -3,13 +3,16 @@
 </div>
 <aside class="sidebar" [class.expanded]="sidebarOpen">
     <div class="sidebar-toggle">
-        <ng-container *ngIf="project && workflow">
+        <ng-container *ngIf="project != null && workflow != null">
             <app-workflow-sidebar [project]="project" [workflow]="workflow" [open]="sidebarOpen"></app-workflow-sidebar>
         </ng-container>
 
     </div>
 </aside>
-<section class="content-wrap" [class.expanded]="!sidebarOpen">
+<section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!loading && workflow != null">
     <button class="ui small icon blue open button" (click)="toggleSidebar()"><i class="content icon"></i></button>
     <router-outlet></router-outlet>
+</section>
+<section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="loading">
+    <div class="ui active text loader">{{ 'common_loading_workflow' | translate }}</div>
 </section>

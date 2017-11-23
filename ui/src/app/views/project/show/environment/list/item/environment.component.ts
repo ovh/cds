@@ -10,6 +10,7 @@ import {EnvironmentService} from '../../../../../../service/environment/environm
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {cloneDeep} from 'lodash';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-environment',
@@ -55,7 +56,7 @@ export class ProjectEnvironmentComponent {
     renameEnvironment(): void {
         this.loading = true;
         this._projectStore.renameProjectEnvironment(this.project.key, this.oldEnvName, this.editableEnvironment)
-            .finally(() => this.loading = false)
+            .pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('environment_renamed'));
             });
@@ -65,18 +66,18 @@ export class ProjectEnvironmentComponent {
         this.cloneLoading = true;
 
         this._projectStore.cloneProjectEnvironment(this.project.key, this.editableEnvironment, this.cloneName)
-            .finally(() => {
+            .pipe(finalize(() => {
                 this.cloneLoading = false;
                 this.cloneName = '';
                 cloneModal.hide();
-            })
+            }))
             .subscribe(() => this._toast.success('', this._translate.instant('environment_cloned')));
     }
 
     deleteEnvironment(): void {
         this.loading = true;
         this._projectStore.deleteProjectEnvironment(this.project.key, this.editableEnvironment)
-            .finally(() => this.loading = false)
+            .pipe(finalize(() => this.loading = false))
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('environment_deleted'));
                 this.deletedEnv.emit(this.editableEnvironment.name);
@@ -90,21 +91,21 @@ export class ProjectEnvironmentComponent {
             case 'add':
                 this.addVarLoading = true;
                 this._projectStore.addEnvironmentVariable(this.project.key, this.editableEnvironment.name, event.variable)
-                    .finally(() => this.addVarLoading = false)
+                    .pipe(finalize(() => this.addVarLoading = false))
                     .subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_added'));
                     });
                 break;
             case 'update':
                 this._projectStore.updateEnvironmentVariable(this.project.key, this.editableEnvironment.name, event.variable)
-                    .finally(() => event.variable.updating = false)
+                    .pipe(finalize(() => event.variable.updating = false))
                     .subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_updated'));
                     });
                 break;
             case 'delete':
                 this._projectStore.removeEnvironmentVariable(this.project.key, this.editableEnvironment.name, event.variable)
-                    .finally(() => event.variable.updating = false)
+                    .pipe(finalize(() => event.variable.updating = false))
                     .subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_deleted'));
                     });

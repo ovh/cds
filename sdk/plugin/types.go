@@ -16,6 +16,7 @@ func init() {
 //CDSAction is the standard CDSAction Plugin interface
 type CDSAction interface {
 	Init(IOptions) string
+	Version() string
 	Name() string
 	Description() string
 	Author() string

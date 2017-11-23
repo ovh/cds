@@ -11,6 +11,7 @@ import {Project} from '../../../../model/project.model';
 import {RouterService} from '../../../../service/router/router.service';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {DurationService} from '../../../../shared/duration/duration.service';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-run-node',
@@ -62,7 +63,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
 
             if (this.project && this.project.key && this.workflowName && number && nodeRunId) {
                 // Get workflow Run
-                this._workflowRunService.getWorkflowRun(this.project.key, this.workflowName, number).first().subscribe(wr => {
+                this._workflowRunService.getWorkflowRun(this.project.key, this.workflowName, number).pipe(first()).subscribe(wr => {
                     this.workflowRun = wr;
                 });
 
@@ -88,7 +89,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                             historyChecked = true;
                             this._workflowRunService.nodeRunHistory(
                                 this.project.key, this.workflowName,
-                                number, this.nodeRun.workflow_node_id).first().subscribe( nrs => {
+                                number, this.nodeRun.workflow_node_id).pipe(first()).subscribe( nrs => {
                                 this.nodeRunsHistory = nrs;
                             })
                         }

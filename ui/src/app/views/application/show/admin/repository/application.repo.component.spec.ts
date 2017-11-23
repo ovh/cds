@@ -9,13 +9,16 @@ import {TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {ApplicationRepositoryComponent} from './application.repo.component';
 import {ApplicationService} from '../../../../../service/application/application.service';
+import {PipelineService} from '../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../service/variable/variable.service';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {RepoManagerService} from '../../../../../service/repomanager/project.repomanager.service';
 import {SharedModule} from '../../../../../shared/shared.module';
 import {Application} from '../../../../../model/application.model';
 import {Project} from '../../../../../model/project.model';
 import {RepositoriesManager} from '../../../../../model/repositories.model';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {ApplicationModule} from '../../../application.module';
 import {TranslateParser} from 'ng2-translate';
 import {ProjectModule} from '../../../../project/project.module';
@@ -42,6 +45,9 @@ describe('CDS: Application Repo Component', () => {
             providers: [
                 { provide: ApplicationStore, useClass: MockStore },
                 ApplicationService,
+                PipelineService,
+                EnvironmentService,
+                VariableService,
                 { provide: ToastService, useClass: MockToast },
                 TranslateLoader,
                 TranslateService,

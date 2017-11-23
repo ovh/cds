@@ -25,11 +25,17 @@ export class ParameterFormComponent {
         this.newParameter = new Parameter();
         this.parameterTypes = this._paramService.getTypesFromCache();
         if (!this.parameterTypes) {
-            this._paramService.getTypesFromAPI().subscribe(types => this.parameterTypes = types);
+            this._paramService.getTypesFromAPI().subscribe(types => {
+                this.parameterTypes = types;
+                this.newParameter.type = types[0];
+            });
+        } else {
+            this.newParameter.type = this.parameterTypes[0];
         }
     }
 
     create(): void {
+        let previousType = this.newParameter.type;
         let event: ParameterEvent = new ParameterEvent('add', this.newParameter);
         if (!this.newParameter.value) {
             switch (this.newParameter.type) {
@@ -45,6 +51,7 @@ export class ParameterFormComponent {
         }
         this.createParameterEvent.emit(event);
         this.newParameter = new Parameter();
+        this.newParameter.type = previousType;
     }
 
 }

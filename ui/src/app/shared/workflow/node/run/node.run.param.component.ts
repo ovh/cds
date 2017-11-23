@@ -10,6 +10,7 @@ import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../
 import {Router} from '@angular/router';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import {finalize} from 'rxjs/operators';
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../toast/ToastService';
 
@@ -110,9 +111,10 @@ export class WorkflowNodeRunParamComponent {
 
     resync(): void {
         this.loading = true;
-        this._workflowRunService.resync(this.project.key, this.workflow, this.nodeRun.num).finally(() => {
+        this._workflowRunService.resync(this.project.key, this.workflow, this.nodeRun.num)
+        .pipe(finalize(() => {
             this.loading = false;
-        }).subscribe(wr => {
+        })).subscribe(wr => {
             this.nodeToRun = Workflow.getNodeByID(this._nodeToRun.id, wr.workflow);
             this._toast.success('', this._translate.instant('workflow_run_resync_done'));
         });
@@ -139,9 +141,9 @@ export class WorkflowNodeRunParamComponent {
         }
 
         this.loading = true;
-        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).finally(() => {
+        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).pipe(finalize(() => {
             this.loading = false;
-        }).subscribe(wr => {
+        })).subscribe(wr => {
             this.modal.approve(true);
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
                 {queryParams: {subnum: wr.last_subnumber}});

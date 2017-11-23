@@ -21,7 +21,6 @@ var (
 func main() {
 	login := cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
 	signup := cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
-	health := cli.NewGetCommand(healthCmd, healthRun, nil, cli.CommandWithoutExtraFlags)
 	version := cli.NewCommand(versionCmd, versionRun, nil, cli.CommandWithoutExtraFlags)
 	monitoring := cli.NewGetCommand(monitoringCmd, monitoringRun, nil, cli.CommandWithoutExtraFlags)
 
@@ -34,6 +33,7 @@ func main() {
 			environment,
 			pipeline,
 			group,
+			health,
 			project,
 			worker,
 			workflow,
