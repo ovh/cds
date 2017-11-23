@@ -57,7 +57,8 @@ func DeleteProjectKey(db gorp.SqlExecutor, projectID int64, keyName string) erro
 	return sdk.WrapError(err, "DeleteProjectKey> Cannot delete key %s", keyName)
 }
 
-func loadBuildinKey(db gorp.SqlExecutor, projectID int64) (k sdk.ProjectKey, err error) {
+func loadBuildinKey(db gorp.SqlExecutor, projectID int64) (sdk.ProjectKey, error) {
+	var k sdk.ProjectKey
 	var res dbProjectKey
 	if err := db.SelectOne(&res, "SELECT * FROM project_key WHERE project_id = $1 and builtin = true and name = 'builtin'", projectID); err != nil {
 		if err == sql.ErrNoRows {
