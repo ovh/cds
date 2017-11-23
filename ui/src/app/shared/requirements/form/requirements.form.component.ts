@@ -127,12 +127,12 @@ export class RequirementsFormComponent implements OnInit {
         this.computeFormValid(form);
     }
 
-<<<<<<< HEAD
     closeModal() {
         if (this.modal) {
           this.modal.hide();
         }
-=======
+    }
+
     getVolumeName(): string {
         let parts = this.newRequirement.value.split(',');
         for (let p of parts) {
@@ -147,7 +147,6 @@ export class RequirementsFormComponent implements OnInit {
             }
         }
         return '';
->>>>>>> 9c062d42e473511476e00e98882d1829c1d49896
     }
 
     getHelp() {
