@@ -7,7 +7,7 @@ export function AutoUnsubscribe( blackList = [] ) {
             for ( let prop in this ) {
                 if (prop) {
                     const property = this[ prop ];
-                    if ( blackList.indexOf(prop) !== -1 ) {
+                    if ( blackList.indexOf(prop) === -1 ) {
                         if ( property && ( typeof property.unsubscribe === 'function' ) ) {
                             property.unsubscribe();
                         }
