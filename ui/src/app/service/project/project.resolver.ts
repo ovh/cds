@@ -20,6 +20,23 @@ export class ProjectResolver implements Resolve<Project> {
 }
 
 @Injectable()
+export class ProjectForWorkflowResolver implements Resolve<Project> {
+
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+        let params = this.routerService.getRouteSnapshotParams({}, state.root);
+        let opts = [
+            new LoadOpts('withPipelines', 'pipelines'),
+            new LoadOpts('withApplications', 'applications'),
+            new LoadOpts('withEnvironments', 'environments'),
+        ];
+
+        return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());
+    }
+
+    constructor(private projectStore: ProjectStore, private routerService: RouterService) {}
+}
+
+@Injectable()
 export class ProjectForApplicationResolver implements Resolve<Project> {
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {

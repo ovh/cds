@@ -36,14 +36,19 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
 
     ngOnInit(): void {
         this.routerSubscription = this._routerActivatedRoute.queryParams
-          .pipe(first())
-          .do((q) => {
+          .pipe(
+            first(),
+            finalize(() => this.loading = false)
+          )
+          .map((q) => {
             if (q['envName']) {
                 this.envInRoute = q['envName'];
             }
+            return q;
           })
-          .flatMap((q) => this._projectStore.getProjectEnvironmentsResolver(this.project.key))
-          .pipe(finalize(() => this.loading = false))
+          .pipe(
+              flatMap((q) => this._projectStore.getProjectEnvironmentsResolver(this.project.key))
+          )
           .subscribe((proj) => {
             this.project = proj;
             if (this.project.environments && this.project.environments.length > 0) {
