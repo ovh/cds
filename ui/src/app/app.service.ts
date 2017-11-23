@@ -26,7 +26,6 @@ export class AppService {
             return;
         }
 
-        // TODO: to delete, useful to debug on preprod
         switch (lastUpdate.type) {
             case 'project':
                 opts = [
@@ -79,7 +78,7 @@ export class AppService {
 
     updateProjectCache(lastUpdate: LastModification, opts: LoadOpts[]): void {
         // Get all projects
-        this._projStore.getProjects().pipe(first()).subscribe(projects => {
+        this._projStore.getProjects('', opts).pipe(first()).subscribe(projects => {
             // Project not in cache
             if (!projects.get(lastUpdate.key)) {
                 return;
