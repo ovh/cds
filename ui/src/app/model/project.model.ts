@@ -10,8 +10,11 @@ export class Project {
     key: string;
     name: string;
     workflows: Array<Workflow>;
+    workflow_names: Array<string>;
     pipelines: Array<Pipeline>;
+    pipeline_names: Array<string>;
     applications: Array<Application>;
+    application_names: Array<string>;
     groups: Array<GroupPermission>;
     variables: Array<Variable>;
     environments: Array<Environment>;

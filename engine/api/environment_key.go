@@ -59,7 +59,7 @@ func (api *API) deleteKeyInEnvironmentHandler() Handler {
 				if err := environment.DeleteEnvironmentKey(tx, env.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot delete key %s", k.Name)
 				}
-				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 					return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot update application last modified date")
 				}
 			}
@@ -132,7 +132,7 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot insert application key")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot update project last modified date")
 		}
 

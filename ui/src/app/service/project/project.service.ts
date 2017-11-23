@@ -5,6 +5,7 @@ import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
 import {Notification} from '../../model/notification.model';
+import {LoadOpts} from './project.store';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
 /**
@@ -14,7 +15,6 @@ import {HttpClient, HttpParams} from '@angular/common/http';
 @Injectable()
 export class ProjectService {
 
-
     constructor(private _http: HttpClient) {
     }
 
@@ -23,16 +23,13 @@ export class ProjectService {
      * @param key Unique key of the project
      * @returns {Observable<Project>}
      */
-    getProject(key: string): Observable<Project> {
+    getProject(key: string, opts?: LoadOpts[]): Observable<Project> {
         let params = new HttpParams();
-        params = params.append('withVariables', 'true');
-        params = params.append('withApplications', 'true');
-        params = params.append('withApplicationPipelines', 'true');
-        params = params.append('withPipelines', 'true');
-        params = params.append('withEnvironments', 'true');
-        params = params.append('withGroups', 'true');
-        params = params.append('withPermission', 'true');
-        params = params.append('withWorkflows', 'true');
+
+        if (Array.isArray(opts)) {
+          opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
+        }
+
         return this._http.get<Project>('/project/' + key, {params: params});
     }
 

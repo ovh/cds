@@ -67,7 +67,6 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
         });
 
-        console.log(this._router.events);
         this._router.events.pipe(
             filter(e => e instanceof NavigationEnd),
         ).forEach(() => {

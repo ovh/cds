@@ -10,6 +10,9 @@ import {TranslateParser} from 'ng2-translate';
 import {ProjectStore} from '../../../service/project/project.store';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 import {ProjectService} from '../../../service/project/project.service';
+import {PipelineService} from '../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../service/environment/environment.service';
+import {VariableService} from '../../../service/variable/variable.service';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectModule} from '../project.module';
 import {SharedModule} from '../../../shared/shared.module';
@@ -37,6 +40,9 @@ describe('CDS: Project Show Component', () => {
                 RepoManagerService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService,
                 ToasterService,
                 TranslateService,
                 TranslateParser,

@@ -85,31 +85,29 @@ export class WorkflowShowComponent {
                     this.workflowSubscription.unsubscribe();
                 }
 
-                if (!this.detailedWorkflow) {
-                    this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
-                        if (ws) {
-                            let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
-                            if (updatedWorkflow && !updatedWorkflow.externalChange) {
-                                if (this.detailedWorkflow && this.detailedWorkflow.last_modified === updatedWorkflow.last_modified) {
-                                    return;
-                                }
-                                this.detailedWorkflow = updatedWorkflow;
-
-                                this.direction = this._workflowStore.getDirection(this.project.key, this.detailedWorkflow.name);
-
-                                if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
-                                    return;
-                                }
-
-                                this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
-                                    return total + this.detailedWorkflow.usage[key].length;
-                                }, 0);
+                this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
+                    if (ws) {
+                        let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
+                        if (updatedWorkflow && !updatedWorkflow.externalChange) {
+                            if (this.detailedWorkflow && this.detailedWorkflow.last_modified === updatedWorkflow.last_modified) {
+                                return;
                             }
+                            this.detailedWorkflow = updatedWorkflow;
+
+                            this.direction = this._workflowStore.getDirection(this.project.key, this.detailedWorkflow.name);
+
+                            if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
+                                return;
+                            }
+
+                            this.usageCount = Object.keys(this.detailedWorkflow.usage).reduce((total, key) => {
+                                return total + this.detailedWorkflow.usage[key].length;
+                            }, 0);
                         }
-                    }, () => {
-                        this._router.navigate(['/project', this.project.key]);
-                    });
-                }
+                    }
+                }, (err) => {
+                    this._router.navigate(['/project', this.project.key]);
+                });
             }
         });
 

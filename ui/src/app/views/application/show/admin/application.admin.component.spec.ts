@@ -14,9 +14,13 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {Project} from '../../../../model/project.model';
 import {RepoManagerService} from '../../../../service/repomanager/project.repomanager.service';
 import {ApplicationModule} from '../../application.module';
+import {ServicesModule} from '../../../../service/services.module';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {ProjectStore} from '../../../../service/project/project.store';
 import {ProjectService} from '../../../../service/project/project.service';
+import {PipelineService} from '../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../service/environment/environment.service';
+import {VariableService} from '../../../../service/variable/variable.service';
 import {TranslateParser} from 'ng2-translate';
 import {RepositoriesManager} from '../../../../model/repositories.model';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
@@ -46,6 +50,9 @@ describe('CDS: Application Admin Component', () => {
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService,
                 {provide: ToastService, useClass: MockToast},
                 TranslateLoader,
                 TranslateService,
@@ -60,6 +67,7 @@ describe('CDS: Application Admin Component', () => {
                     {path: 'project/:key/application/:appName', component: DummyComponent}
                 ]),
                 ApplicationModule,
+                ServicesModule,
                 SharedModule,
                 HttpClientTestingModule
             ]

@@ -32,8 +32,6 @@ describe('CDS: Stage From component', () => {
     });
 
     it('should add and delete prerequisite', fakeAsync(() => {
-
-
         // Create component
         let fixture = TestBed.createComponent(PipelineStageFormComponent);
         let component = fixture.debugElement.componentInstance;

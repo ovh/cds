@@ -13,6 +13,9 @@ import {ApplicationStore} from '../../../../../service/application/application.s
 import {ApplicationService} from '../../../../../service/application/application.service';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../service/project/project.service';
+import {PipelineService} from '../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../service/variable/variable.service';
 import {ApplicationTriggerComponent} from './trigger.component';
 import {Project} from '../../../../../model/project.model';
 import {Application, ApplicationPipeline} from '../../../../../model/application.model';
@@ -43,7 +46,10 @@ describe('CDS: Application Workflow', () => {
                 TranslateLoader,
                 TranslateParser,
                 ApplicationStore, ApplicationService,
-                ProjectStore, ProjectService
+                ProjectStore, ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService
             ],
             imports : [
                 ApplicationModule,

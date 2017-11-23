@@ -78,7 +78,7 @@ func ApplyTemplate(db *gorp.DbMap, store cache.Store, proj *sdk.Project, opts sd
 		return msgList, err
 	}
 
-	if errProj := project.UpdateLastModified(tx, store, user, proj); errProj != nil {
+	if errProj := project.UpdateLastModified(tx, store, user, proj, sdk.ProjectApplicationLastModificationType); errProj != nil {
 		log.Warning("ApplyTemplate> cannot update project last modified date : %s", errProj)
 		close(msgChan)
 		return msgList, errProj

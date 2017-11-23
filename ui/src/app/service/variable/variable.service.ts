@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {HttpClient, HttpParams} from '@angular/common/http';
+import {Variable} from '../../model/variable.model';
 
 /**
  * Service to access Variable commons.
@@ -12,6 +13,10 @@ export class VariableService {
     private variablesType: string[];
 
     constructor(private _http: HttpClient) {
+    }
+
+    get(key: string): Observable<Variable[]> {
+      return this._http.get<Variable[]>(`/project/${key}/variable`);
     }
 
     /**

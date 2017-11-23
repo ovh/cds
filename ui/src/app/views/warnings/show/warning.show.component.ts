@@ -43,7 +43,7 @@ export class WarningShowComponent {
     }
 
     loadProject(key: string): void {
-        this._projectStore.getProjectResolver(key).pipe(first()).subscribe(p => {
+        this._projectStore.getProjectResolver(key, []).pipe(first()).subscribe(p => {
             this.project = p;
         });
     }

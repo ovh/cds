@@ -8,6 +8,7 @@ import {Workflow} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {RouterService} from '../../service/router/router.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow',
@@ -19,6 +20,7 @@ export class WorkflowComponent {
 
     project: Project;
     workflow: Workflow;
+    loading = true;
     number: number;
     workflowSubscription: Subscription;
     sidebarOpen: boolean;
@@ -44,16 +46,19 @@ export class WorkflowComponent {
                     this.workflowSubscription.unsubscribe();
                 }
 
-                this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
-                    if (ws) {
-                        let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
-                        if (updatedWorkflow && !updatedWorkflow.externalChange) {
-                            this.workflow = updatedWorkflow;
+                this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName)
+                    .subscribe(ws => {
+                        if (ws) {
+                            let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
+                            if (updatedWorkflow && !updatedWorkflow.externalChange) {
+                                this.workflow = updatedWorkflow;
+                            }
                         }
-                    }
-                }, () => {
-                    this._router.navigate(['/project', this.project.key]);
-                });
+                        this.loading = false;
+                    }, () => {
+                        this.loading = false;
+                        this._router.navigate(['/project', this.project.key]);
+                    });
 
             }
 

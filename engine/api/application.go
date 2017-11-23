@@ -475,7 +475,7 @@ func (api *API) deleteApplicationHandler() Handler {
 			return sdk.WrapError(err, "deleteApplicationHandler> Cannot delete application")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectApplicationLastModificationType); err != nil {
 			return sdk.WrapError(err, "deleteApplicationHandler> Cannot update project last modified date")
 		}
 
@@ -526,7 +526,7 @@ func (api *API) cloneApplicationHandler() Handler {
 			return sdk.WrapError(err, "cloneApplicationHandler> Cannot insert new application %s", newApp.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectApplicationLastModificationType); err != nil {
 			return sdk.WrapError(err, "cloneApplicationHandler: Cannot update last modified date")
 		}
 
@@ -673,6 +673,16 @@ func (api *API) updateApplicationHandler() Handler {
 		defer tx.Rollback()
 		if err := application.Update(tx, api.Cache, app, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateApplicationHandler> Cannot delete application %s", applicationName)
+		}
+
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "updateApplicationHandler> Cannot update last modified for application %s", applicationName)
+		}
+
+		if app.Name != applicationName {
+			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectApplicationLastModificationType); err != nil {
+				return sdk.WrapError(err, "updateApplicationHandler> Cannot update last modified for project key %s", p.Key)
+			}
 		}
 
 		if err := tx.Commit(); err != nil {

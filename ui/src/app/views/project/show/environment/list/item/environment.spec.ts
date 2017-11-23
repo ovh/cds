@@ -9,8 +9,11 @@ import {ProjectEnvironmentComponent} from './environment.component';
 import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
 import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../../service/project/project.service';
+import {EnvironmentService} from '../../../../../../service/environment/environment.service';
+import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
 import {ProjectModule} from '../../../../project.module';
 import {SharedModule} from '../../../../../../shared/shared.module';
+import {ServicesModule} from '../../../../../../service/services.module';
 import {Project} from '../../../../../../model/project.model';
 import {Environment} from '../../../../../../model/environment.model';
 import {ToasterService} from 'angular2-toaster';
@@ -43,11 +46,14 @@ describe('CDS: Environment Component', () => {
                 TranslateParser,
                 ToasterService,
                 VariableService,
+                EnvironmentService,
+                PipelineService,
                 AuthentificationStore
             ],
             imports : [
                 ProjectModule,
                 SharedModule,
+                ServicesModule,
                 RouterTestingModule.withRoutes([]),
                 HttpClientTestingModule
             ]

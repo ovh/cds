@@ -147,7 +147,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return sdk.WrapError(err, "project.Insert> Unable to insert PGPKeyPair")
 	}
 
-	return UpdateLastModified(db, store, u, proj)
+	return UpdateLastModified(db, store, u, proj, sdk.ProjectLastModificationType)
 }
 
 // Update a new project in database
@@ -167,31 +167,26 @@ func Update(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 		return sdk.ErrNoProject
 	}
 	*proj = sdk.Project(dbProj)
-	return UpdateLastModified(db, store, u, proj)
+	return UpdateLastModified(db, store, u, proj, sdk.ProjectLastModificationType)
 }
 
 // UpdateLastModified updates last_modified date on a project given its key
-func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, proj *sdk.Project) error {
-	t := time.Now()
+func UpdateLastModified(db gorp.SqlExecutor, store cache.Store, u *sdk.User, proj *sdk.Project, updateType string) error {
+	var lastModified time.Time
+	query := "update project set last_modified = current_timestamp where projectkey = $1 RETURNING last_modified"
 
-	if u != nil {
-		store.SetWithTTL(cache.Key("lastModified", proj.Key), sdk.LastModification{
-			Name:         proj.Key,
-			Username:     u.Username,
-			LastModified: t.Unix(),
-		}, 0)
+	err := db.QueryRow(query, proj.Key).Scan(&lastModified)
+	if err == nil {
+		proj.LastModified = lastModified
 	}
-
-	_, err := db.Exec("update project set last_modified = $2 where projectkey = $1", proj.Key, t)
-	proj.LastModified = t
 
 	if u != nil {
 		updates := sdk.LastModification{
 			Key:          proj.Key,
 			Name:         proj.Name,
-			LastModified: t.Unix(),
+			LastModified: lastModified.Unix(),
 			Username:     u.Username,
-			Type:         sdk.ProjectLastModificationType,
+			Type:         updateType,
 		}
 		b, errP := json.Marshal(updates)
 		if errP == nil {
@@ -234,9 +229,11 @@ type LoadOptionFunc *func(gorp.SqlExecutor, cache.Store, *sdk.Project, *sdk.User
 var LoadOptions = struct {
 	Default                        LoadOptionFunc
 	WithApplications               LoadOptionFunc
+	WithApplicationNames           LoadOptionFunc
 	WithVariables                  LoadOptionFunc
 	WithVariablesWithClearPassword LoadOptionFunc
 	WithPipelines                  LoadOptionFunc
+	WithPipelineNames              LoadOptionFunc
 	WithEnvironments               LoadOptionFunc
 	WithGroups                     LoadOptionFunc
 	WithPermission                 LoadOptionFunc
@@ -244,21 +241,25 @@ var LoadOptions = struct {
 	WithApplicationVariables       LoadOptionFunc
 	WithKeys                       LoadOptionFunc
 	WithWorkflows                  LoadOptionFunc
+	WithWorkflowNames              LoadOptionFunc
 	WithLock                       LoadOptionFunc
 	WithLockNoWait                 LoadOptionFunc
 }{
 	Default:                        &loadDefault,
 	WithPipelines:                  &loadPipelines,
+	WithPipelineNames:              &loadPipelineNames,
 	WithEnvironments:               &loadEnvironments,
 	WithGroups:                     &loadGroups,
 	WithPermission:                 &loadPermission,
 	WithApplications:               &loadApplications,
+	WithApplicationNames:           &loadApplicationNames,
 	WithVariables:                  &loadVariables,
 	WithVariablesWithClearPassword: &loadVariablesWithClearPassword,
 	WithApplicationPipelines:       &loadApplicationPipelines,
 	WithApplicationVariables:       &loadApplicationVariables,
 	WithKeys:                       &loadKeys,
 	WithWorkflows:                  &loadWorkflows,
+	WithWorkflowNames:              &loadWorkflowNames,
 	WithLock:                       &lockProject,
 	WithLockNoWait:                 &lockAndWaitProject,
 }

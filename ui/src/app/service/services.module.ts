@@ -23,7 +23,7 @@ import {ActionService} from './action/action.service';
 import {ActionStore} from './action/action.store';
 import {PipelineResolver} from './pipeline/pipeline.resolver';
 import {ApplicationResolver, ApplicationQueryParamResolver} from './application/application.resolver';
-import {ProjectResolver} from './project/project.resolver';
+import {ProjectResolver, ProjectForApplicationResolver} from './project/project.resolver';
 import {ApplicationTemplateService} from './application/application.template.service';
 import {ProjectAuditService} from './project/project.audit.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
@@ -82,6 +82,7 @@ export class ServicesModule {
                 PipelineAuditService,
                 PipelineStore,
                 ProjectResolver,
+                ProjectForApplicationResolver,
                 ProjectService,
                 ProjectAuditService,
                 ProjectStore,
@@ -139,6 +140,7 @@ export {
     PipelineStore,
     PipelineAuditService,
     ProjectResolver,
+    ProjectForApplicationResolver,
     ProjectStore,
     ProjectAuditService,
     RepoManagerService,
