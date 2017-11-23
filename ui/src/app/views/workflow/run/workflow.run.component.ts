@@ -36,6 +36,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     workflowName: string;
     version: string;
     direction: string;
+    currentNumber: number;
 
     nodeToRun: WorkflowNode;
 
@@ -64,14 +65,19 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
         });
         this._activatedRoute.params.subscribe(params => {
             let number = params['number'];
-            if (this.project.key && this.workflowName && number) {
+            if (this.project.key && this.workflowName && number && number !== this.currentNumber) {
+                this.currentNumber = number;
                 this.startWorker(number);
             }
         });
 
-        this._workflowCoreService.getCurrentWorkflowRun().subscribe((wr) => {
+        this.workflowCoreSub = this._workflowCoreService.getCurrentWorkflowRun().subscribe((wr) => {
             if (this.workflowRun && wr && wr.id !== this.workflowRun.id) {
-                this.startWorker(wr.num);
+                if (wr.num !== this.currentNumber) {
+                    this.currentNumber = wr.num;
+                    this.workflowRun = wr;
+                    this.startWorker(wr.num);
+                }
             }
         });
     }

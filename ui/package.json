@@ -69,6 +69,7 @@
     "@types/lodash": "^4.14.64",
     "@types/node": "~6.0.60",
     "codelyzer": "~3.0.0",
+    "copy-webpack-plugin": "^4.2.3",
     "husky": "^0.14.3",
     "jasmine-core": "2.6.2",
     "jasmine-spec-reporter": "~4.1.0",
