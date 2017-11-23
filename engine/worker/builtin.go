@@ -118,6 +118,8 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			chanRes <- result
 		}
 
+		sendLog(fmt.Sprintf("Starting plugin: %s version %s\n", _plugin.Name(), _plugin.Version()))
+
 		//Manage all parameters
 		pluginSecrets := plugin.Secrets{
 			Data: map[string]string{},
