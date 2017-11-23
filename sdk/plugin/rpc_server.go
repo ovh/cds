@@ -42,3 +42,9 @@ func (c *CDSActionRPCServer) Init(args interface{}, resp *string) error {
 	*resp = c.Impl.Init(id)
 	return nil
 }
+
+//Version of the rpc plugin
+func (c *CDSActionRPCServer) Version(args interface{}, resp *string) error {
+	*resp = c.Impl.Version()
+	return nil
+}
