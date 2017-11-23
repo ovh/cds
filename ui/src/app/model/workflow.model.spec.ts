@@ -305,5 +305,92 @@ describe('CDS: Workflow Model', () => {
 
         expect(ok).toBeFalsy();
     }));
+
+
+    /**
+     *     W --> J --> X ----> n2
+     *     |            |
+     *     v            v
+     *     root         n3
+     */
+    it('should delete the node after join', fakeAsync(() => {
+        let workflow = new Workflow();
+        workflow.joins = new Array<WorkflowNodeJoin>();
+
+        // Add root node
+        let nRoot = new WorkflowNode();
+        nRoot.id = 10;
+        workflow.root = nRoot;
+        workflow.joins = new Array<WorkflowNodeJoin>();
+
+        let j1 = new WorkflowNodeJoin();
+        j1.source_node_id = new Array<number>();
+        j1.source_node_id.push(10);
+        j1.triggers = new Array<WorkflowNodeJoinTrigger>();
+
+        let jt1 = new WorkflowNodeJoinTrigger();
+        let childjt1 = new WorkflowNode();
+        childjt1.id = 1;
+        childjt1.triggers = new Array<WorkflowNodeTrigger>();
+        jt1.workflow_dest_node = childjt1;
+        j1.triggers.push(jt1);
+        workflow.joins.push(j1);
+
+        // 2 triggers
+        let triggern2 = new WorkflowNodeTrigger();
+        triggern2.workflow_dest_node = new WorkflowNode();
+        triggern2.workflow_dest_node.id = 2;
+
+        let triggern3 = new WorkflowNodeTrigger();
+        triggern3.workflow_dest_node = new WorkflowNode();
+        triggern3.workflow_dest_node.id = 3;
+
+        childjt1.triggers.push(triggern2, triggern3);
+
+
+        let ok = Workflow.removeNodeWithoutChild(workflow, childjt1);
+
+        expect(ok).toBeTruthy();
+        expect(workflow.joins[0].triggers.length).toBe(2)
+    }));
+
+    /**
+     *     R --> n1
+     *     |     |
+     *     v     v
+     *     X--->J
+     */
+    it('should delete the node after join', fakeAsync(() => {
+        let workflow = new Workflow();
+        workflow.joins = new Array<WorkflowNodeJoin>();
+
+        // Add root node
+        let nRoot = new WorkflowNode();
+        nRoot.id = 1;
+        nRoot.triggers = new Array<WorkflowNodeTrigger>();
+        workflow.root = nRoot;
+        workflow.joins = new Array<WorkflowNodeJoin>();
+
+        let triggern1 = new WorkflowNodeTrigger();
+        triggern1.workflow_dest_node = new WorkflowNode();
+        triggern1.workflow_dest_node.id = 2;
+
+        let triggernX = new WorkflowNodeTrigger();
+        triggernX.workflow_dest_node = new WorkflowNode();
+        triggernX.workflow_dest_node.id = 3;
+
+        nRoot.triggers.push(triggern1, triggernX);
+
+        let j1 = new WorkflowNodeJoin();
+        j1.source_node_id = new Array<number>();
+        j1.source_node_id.push(2, 3);
+        workflow.joins.push(j1);
+
+        let ok = Workflow.removeNodeWithoutChild(workflow, triggernX.workflow_dest_node);
+
+        expect(ok).toBeTruthy();
+        expect(workflow.joins[0].source_node_id.length).toBe(2);
+        expect(workflow.joins[0].source_node_id[0] + workflow.joins[0].source_node_id[1]).toBe(3)
+    }));
 })
 ;
