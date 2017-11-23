@@ -37,14 +37,14 @@
                 <a href="#"
                    [routerLink]="['/project', project.key, 'application', pb.application.name, 'pipeline', pb.pipeline.name, 'build', pb.build_number]"
                    [queryParams]="{ envName: pb.environment.name, branch: pb.trigger.vcs_branch, version: pb.version}">
-                    {{pb.start | amCalendar:{'sameElse': 'MM/DD/YYYY at h:mm A'} }}
+                    {{pb.start | date:'short' }}
                 </a>
             </td>
             <td>
                 <a href="#"
                    [routerLink]="['/project', project.key, 'application', pb.application.name, 'pipeline', pb.pipeline.name, 'build', pb.build_number]"
                    [queryParams]="{ envName: pb.environment.name, branch: pb.trigger.vcs_branch, version: pb.version}">
-                    {{pb.done | amCalendar:{'sameElse': 'MM/DD/YYYY at h:mm A'} }}
+                    {{pb.done | date:'short' }}
                 </a>
             </td>
             <td class="center">

@@ -7,7 +7,7 @@
             {{ 'poller_workflow_label' | translate }}
             {{poller.name + ' - ' }}
             <span *ngIf="poller.next_execution">
-                {{poller.next_execution.execution_planned_date | amCalendar:{sameElse: 'MM/DD/YYYY at h:mm A'} }}
+                {{poller.next_execution.execution_planned_date | date:'short' }}
                 <span *ngIf="poller.timezone && poller.timezone !== 'UTC'">
                     {{ ' ' + poller.timezone}}
                 </span>

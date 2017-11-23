@@ -14,7 +14,7 @@
             </div>
             <div class="five wide column">
                 <span class="title">{{ 'common_pipeline_start_title' | translate }}</span>
-                <span class="content">{{currentBuild.start | amCalendar:{'sameElse': 'MM/DD/YYYY at h:mm A'} }}</span>
+                <span class="content">{{currentBuild.start | date:'short' }}</span>
             </div>
             <div class="five wide column" *ngIf="currentBuild.status !== pipelineStatusEnum.BUILDING">
                 <span class="title">{{ 'common_duration_title' | translate }}</span>

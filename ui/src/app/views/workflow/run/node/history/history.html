@@ -21,10 +21,10 @@
             {{getTriggerSource(nr)}}
         </td>
         <td>
-            {{nr.start | amCalendar:{sameElse: 'MM/DD/YYYY at h:mm A'}}}
+            {{nr.start | date:'short'}}
         </td>
         <td>
-            {{nr.done | amCalendar:{sameElse: 'MM/DD/YYYY at h:mm A'}}}
+            {{nr.done | date:'short'}}
         </td>
     </tr>
     </tbody>
