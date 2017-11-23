@@ -43,6 +43,12 @@ type Result struct {
 	TimeHuman   string   `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
 }
 
+// ZeroValueResult return an empty implemtation of this executor result
+func (Executor) ZeroValueResult() venom.ExecutorResult {
+	r, _ := executors.Dump(Result{})
+	return r
+}
+
 // GetDefaultAssertions return default assertions for type exec
 func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 	return &venom.StepAssertions{Assertions: []string{"result.err ShouldNotExist"}}
