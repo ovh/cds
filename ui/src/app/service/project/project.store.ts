@@ -204,6 +204,17 @@ export class ProjectStore {
      * @returns {Project}
      */
     getProjects(key?: string, opts?: LoadOpts[]): Observable<Map<string, Project>> {
+        if (Array.isArray(opts.length) && opts.length) {
+            opts = opts.concat([
+                new LoadOpts('withGroups', 'groups'),
+                new LoadOpts('withPermission', 'permission')
+            ]);
+        } else {
+            opts = [
+                new LoadOpts('withGroups', 'groups'),
+                new LoadOpts('withPermission', 'permission')
+            ];
+        }
         // If Store contain the project, get IT
         let projects = this._projectCache.getValue();
         if (key && !projects.get(key)) {

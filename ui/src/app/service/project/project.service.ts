@@ -23,7 +23,7 @@ export class ProjectService {
      * @param key Unique key of the project
      * @returns {Observable<Project>}
      */
-    getProject(key: string, opts?: LoadOpts[]): Observable<Project> {
+    getProject(key: string, opts: LoadOpts[]): Observable<Project> {
         let params = new HttpParams();
 
         if (Array.isArray(opts)) {
