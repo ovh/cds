@@ -186,6 +186,7 @@ export class ActionComponent implements OnDestroy {
      */
     sendActionEvent(type: string): void {
         // Rebuild step
+        this.parseRequirements();
         this.editableAction.actions = new Array<Action>();
         if (this.steps) {
             this.steps.forEach(s => {
