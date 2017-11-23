@@ -64,7 +64,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     // scheduler
     @ViewChild('createSchedulerModal')
     createSchedulerModal: SemanticModalComponent;
-    newScheduler: Scheduler;
+    newScheduler = new Scheduler();
 
     // Detach pipeline
     @ViewChild('detachPipelineModal')
@@ -158,7 +158,6 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         .subscribe(pipelineBuild => {
             this.navigateToBuild(pipelineBuild);
         });
-
     }
 
     stopPipeline(): void {
@@ -283,7 +282,6 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     }
 
     openCreateSchedulerModal(): void {
-        this.newScheduler = new Scheduler();
         if (this.createSchedulerModal) {
             setTimeout(() => {
                 this.createSchedulerModal.show({autofocus: false, closable: false, observeChanges: true});
