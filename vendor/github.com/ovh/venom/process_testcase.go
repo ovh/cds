@@ -92,6 +92,15 @@ func (v *Venom) parseTestCase(ts *TestSuite, tc *TestCase) ([]string, []string, 
 						break
 					}
 				}
+
+				for i := 0; i < len(extractedVars); i++ {
+					s := varRegEx.FindString(v)
+					prefix := "{{." + extractedVars[i]
+					if strings.HasPrefix(s, prefix) {
+						found = true
+						break
+					}
+				}
 				if !found {
 					s := varRegEx.FindString(v)
 					s = strings.Replace(s, "{{.", "", -1)
