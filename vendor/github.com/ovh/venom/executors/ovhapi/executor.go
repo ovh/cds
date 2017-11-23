@@ -46,6 +46,12 @@ type Result struct {
 	Err         string      `json:"err,omitempty" yaml:"err,omitempty"`
 }
 
+// ZeroValueResult return an empty implemtation of this executor result
+func (Executor) ZeroValueResult() venom.ExecutorResult {
+	r, _ := executors.Dump(Result{})
+	return r
+}
+
 // GetDefaultAssertions return default assertions for this executor
 // Optional
 func (Executor) GetDefaultAssertions() venom.StepAssertions {

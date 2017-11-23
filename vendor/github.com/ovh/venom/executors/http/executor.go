@@ -56,6 +56,12 @@ type Result struct {
 	Err         string      `json:"err,omitempty" yaml:"err,omitempty"`
 }
 
+// ZeroValueResult return an empty implemtation of this executor result
+func (Executor) ZeroValueResult() venom.ExecutorResult {
+	r, _ := executors.Dump(Result{})
+	return r
+}
+
 // GetDefaultAssertions return default assertions for this executor
 // Optional
 func (Executor) GetDefaultAssertions() venom.StepAssertions {
@@ -64,6 +70,11 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 
 // Run execute TestStep
 func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+	t0 := time.Now()
+	l.Debugf("http.Run> Begin")
+	defer func() {
+		l.Debugf("http.Run> End (%.3f seconds)", time.Since(t0).Seconds())
+	}()
 
 	// transform step to Executor Instance
 	var t Executor
@@ -85,13 +96,15 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		req.Header.Set(k, v)
 	}
 
-    tr := &http.Transport{
-        TLSClientConfig: &tls.Config{InsecureSkipVerify: t.IgnoreVerifySSL},
-    }
-    client := &http.Client{Transport: tr}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: t.IgnoreVerifySSL},
+	}
+	client := &http.Client{Transport: tr}
 
 	start := time.Now()
+	l.Debugf("http.Run.doRequest> Begin")
 	resp, err := client.Do(req)
+	l.Debugf("http.Run.doRequest> End (%.3f seconds)", time.Since(t0).Seconds())
 	if err != nil {
 		return nil, err
 	}
@@ -196,7 +209,7 @@ func (e Executor) getRequest() (*http.Request, error) {
 	}
 
 	if len(e.BasicAuthUser) > 0 || len(e.BasicAuthPassword) > 0 {
-	    req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
 
 	if writer != nil {

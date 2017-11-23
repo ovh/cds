@@ -57,6 +57,12 @@ type Result struct {
 	TimeHuman   string   `json:"timeHuman,omitempty" yaml:"timeHuman,omitempty"`
 }
 
+// ZeroValueResult return an empty implemtation of this executor result
+func (Executor) ZeroValueResult() venom.ExecutorResult {
+	r, _ := executors.Dump(Result{})
+	return r
+}
+
 // GetDefaultAssertions return default assertions for type exec
 func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 	return &venom.StepAssertions{Assertions: []string{"result.err ShouldNotExist"}}
@@ -184,7 +190,7 @@ func (m *Mail) move(c *imap.Client, mbox string) error {
 	seq.AddNum(m.UID)
 
 	if _, err := c.UIDMove(seq, mbox); err != nil {
-		return fmt.Errorf("Error while move msg to %s, err:%s", mbox, err.Error())
+		return fmt.Errorf("Error while move msg to %s: %v", mbox, err.Error())
 	}
 	return nil
 }
