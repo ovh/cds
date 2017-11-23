@@ -96,10 +96,9 @@ func (v *Venom) parse() error {
 
 	reallyMissingVars := []string{}
 	for _, k := range missingVars {
-		log.Debugf("Checking variable %s", k)
 		var varExtracted bool
 		for _, e := range extractedVars {
-			if k == e {
+			if strings.HasPrefix(k, e) {
 				varExtracted = true
 			}
 		}
