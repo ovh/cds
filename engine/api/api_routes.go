@@ -10,7 +10,8 @@ import (
 func (api *API) InitRouter() {
 	api.Router.URL = api.Config.URL.API
 	api.Router.SetHeaderFunc = DefaultHeaders
-	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware, api.deletePermissionMiddleware)
+	api.Router.Middlewares = append(api.Router.Middlewares, api.authMiddleware)
+	api.Router.PostMiddlewares = append(api.Router.PostMiddlewares, api.deletePermissionMiddleware)
 	api.lastUpdateBroker = &lastUpdateBroker{
 		make(map[string]*lastUpdateBrokerSubscribe),
 		make(chan *lastUpdateBrokerSubscribe),
@@ -80,11 +81,15 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/smtp/ping", r.GET(api.smtpPingHandler, Auth(true)))
 	r.Handle("/mon/version", r.GET(VersionHandler, Auth(false)))
 	r.Handle("/mon/stats", r.GET(api.getStatsHandler, Auth(false)))
+	r.Handle("/mon/db/times", r.GET(api.getMonDBTimesDBHandler, NeedAdmin(true)))
 	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
 	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
 	r.Handle("/mon/lastupdates", r.GET(api.getUserLastUpdatesHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
+
+	// Specific web ui routes
+	r.Handle("/ui/navbar", r.GET(api.getUINavbarHandler))
 
 	// Project
 	r.Handle("/project", r.GET(api.getProjectsHandler), r.POST(api.addProjectHandler))
@@ -261,10 +266,10 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{id}/spawn/infos", r.POST(r.Asynchronous(api.postSpawnInfosWorkflowJobHandler, 3), NeedHatchery()))
 	r.Handle("/queue/workflows/{permID}/result", r.POSTEXECUTE(api.postWorkflowJobResultHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{permID}/log", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobLogsHandler, 5), NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/test", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobTestsResultsHandler, 5), NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/test", r.POSTEXECUTE(api.postWorkflowJobTestsResultsHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{permID}/tag", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobTagsHandler, 5), NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobVariableHandler, 5), NeedWorker()))
-	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(r.Asynchronous(api.postWorkflowJobStepStatusHandler, 5), NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{permID}/artifact/{tag}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker()))
 
 	r.Handle("/variable/type", r.GET(api.getVariableTypeHandler))

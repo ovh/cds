@@ -5,6 +5,7 @@ import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 import {PermissionValue} from '../../../../model/permission.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-conditions',
@@ -61,7 +62,7 @@ export class WorkflowNodeConditionsComponent implements OnInit {
     }
 
     show(): void {
-        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).first().subscribe(wtc => {
+        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).pipe(first()).subscribe(wtc => {
             this.operators = wtc.operators;
             this.conditionNames = wtc.names;
         });

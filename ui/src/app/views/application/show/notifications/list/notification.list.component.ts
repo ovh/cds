@@ -5,7 +5,7 @@ import {Application} from '../../../../../model/application.model';
 import {Notification} from '../../../../../model/notification.model';
 import {NotificationEvent} from '../notification.event';
 import {ApplicationNotificationFormModalComponent} from '../form/notification.form.component';
-import {Subscription} from 'rxjs/Rx';
+import {Subscription} from 'rxjs/Subscription';
 import {cloneDeep} from 'lodash';
 
 @Component({

@@ -20,9 +20,27 @@ import (
 )
 
 // UpdateLastModifiedDate Update workflow last modified date
-func UpdateLastModifiedDate(db gorp.SqlExecutor, w *sdk.Workflow) error {
-	query := `UPDATE workflow set last_modified = current_timestamp WHERE id = $1 RETURNING last_modified`
-	return db.QueryRow(query, w.ID).Scan(&w.LastModified)
+func UpdateLastModifiedDate(db gorp.SqlExecutor, store cache.Store, u *sdk.User, projKey string, w *sdk.Workflow) error {
+	t := time.Now()
+	_, err := db.Exec(`UPDATE workflow set last_modified = current_timestamp WHERE id = $1 RETURNING last_modified`, w.ID)
+	w.LastModified = t
+
+	if u != nil {
+		updates := sdk.LastModification{
+			Key:          projKey,
+			Name:         w.Name,
+			LastModified: t.Unix(),
+			Username:     u.Username,
+			Type:         sdk.WorkflowLastModificationType,
+		}
+		b, errP := json.Marshal(updates)
+		if errP == nil {
+			store.Publish("lastUpdates", string(b))
+		}
+		return err
+	}
+
+	return nil
 }
 
 // PostGet is a db hook
@@ -97,6 +115,25 @@ func LoadAll(db gorp.SqlExecutor, projectKey string) ([]sdk.Workflow, error) {
 			return nil, sdk.WrapError(err, "LoadAll> Unable to execute post get")
 		}
 		res = append(res, sdk.Workflow(w))
+	}
+
+	return res, nil
+}
+
+// LoadAllNames loads all workflow names for a project.
+func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]string, error) {
+	query := `
+		SELECT workflow.name
+		FROM workflow
+		WHERE workflow.project_id = $1
+		ORDER BY workflow.name ASC`
+
+	res := []string{}
+	if _, err := db.Select(&res, query, projID); err != nil {
+		if err == sql.ErrNoRows {
+			return res, nil
+		}
+		return nil, sdk.WrapError(err, "LoadAllNames> Unable to load workflows with project %s", projID)
 	}
 
 	return res, nil

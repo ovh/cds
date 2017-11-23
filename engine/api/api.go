@@ -45,8 +45,9 @@ type Configuration struct {
 		UI  string `toml:"ui" default:"http://localhost:2015"`
 	} `toml:"url" comment:"#####################\n CDS URLs Settings \n####################"`
 	HTTP struct {
-		Port       int `toml:"port" default:"8081"`
-		SessionTTL int `toml:"sessionTTL" default:"60"`
+		Addr       string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
+		Port       int    `toml:"port" default:"8081"`
+		SessionTTL int    `toml:"sessionTTL" default:"60"`
 	} `toml:"http"`
 	GRPC struct {
 		Port int `toml:"port" default:"8082"`
@@ -89,6 +90,9 @@ type Configuration struct {
 			DN       string `toml:"dn" default:"uid=%s,ou=people,dc=myorganization,dc=com"`
 			Fullname string `toml:"fullname" default:"{{.givenName}} {{.sn}}"`
 		} `toml:"ldap"`
+		Local struct {
+			SignupAllowedDomains string `toml:"signupAllowedDomains" default:"" comment:"Allow signup from selected domains only - comma separated. Example: your-domain.com,another-domain.com" commented:"true"`
+		} `toml:"local"`
 	} `toml:"auth" comment:"##############################\n CDS Authentication Settings#\n#############################"`
 	SMTP struct {
 		Disable  bool   `toml:"disable" default:"true"`
@@ -308,7 +312,7 @@ func (a *API) mustDB() *gorp.DbMap {
 
 // Serve will start the http api server
 func (a *API) Serve(ctx context.Context) error {
-	log.Info("Starting CDS API Server...")
+	log.Info("Starting CDS API Server %s...", sdk.VERSION)
 
 	a.StartupTime = time.Now()
 
@@ -408,6 +412,9 @@ func (a *API) Serve(ctx context.Context) error {
 	if err := bootstrap.VCSMigrate(a.DBConnectionFactory.GetDBMap(), a.Cache); err != nil {
 		log.Error("Cannot migrate vcs: %v", err)
 	}
+	if err := bootstrap.ProjectBuiltinGPGKey(a.DBConnectionFactory.GetDBMap(), a.Cache); err != nil {
+		log.Error("Cannot migrate project gpg key: %v", err)
+	}
 
 	//Init pipeline package
 	pipeline.Store = a.Cache
@@ -489,7 +496,7 @@ func (a *API) Serve(ctx context.Context) error {
 	go workflow.Initialize(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
 
 	s := &http.Server{
-		Addr:           fmt.Sprintf(":%d", a.Config.HTTP.Port),
+		Addr:           fmt.Sprintf("%s:%d", a.Config.HTTP.Addr, a.Config.HTTP.Port),
 		Handler:        a.Router.Mux,
 		ReadTimeout:    10 * time.Minute,
 		WriteTimeout:   10 * time.Minute,
@@ -516,7 +523,7 @@ func (a *API) Serve(ctx context.Context) error {
 		}
 	}()
 
-	log.Info("Starting HTTP Server on port %d", a.Config.HTTP.Port)
+	log.Info("Starting CDS API HTTP Server on port %d", a.Config.HTTP.Port)
 	if err := s.ListenAndServe(); err != nil {
 		log.Fatalf("Cannot start cds-server: %s", err)
 	}

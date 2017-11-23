@@ -58,11 +58,11 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 		// Worker is awol while building !
 		// We need to restart this action
 		if jobID.Valid == false {
-			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but action_build_id is NULL!", name)
+			return fmt.Errorf("DeleteWorker> Worker %s crashed while building but action_build_id is NULL!", name)
 		}
 
 		if !jobType.Valid {
-			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but job_type is NULL!", name)
+			return fmt.Errorf("DeleteWorker> Worker %s crashed while building but job_type is NULL!", name)
 		}
 
 		switch jobType.String {
@@ -83,7 +83,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 			}
 		}
 
-		log.Info("Worker %s crashed while building %d !", name, jobID.Int64)
+		log.Info("DeleteWorker> Worker %s crashed while building %d !", name, jobID.Int64)
 	}
 
 	// Well then, let's remove this loser

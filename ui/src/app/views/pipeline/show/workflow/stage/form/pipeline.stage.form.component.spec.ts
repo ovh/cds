@@ -2,7 +2,7 @@
 import {TestBed, fakeAsync} from '@angular/core/testing';
 import {ActivatedRoute} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 
 import {PipelineStageFormComponent} from './pipeline.stage.form.component';
 import {TranslateLoader, TranslateParser, TranslateService} from 'ng2-translate';
@@ -32,8 +32,6 @@ describe('CDS: Stage From component', () => {
     });
 
     it('should add and delete prerequisite', fakeAsync(() => {
-
-
         // Create component
         let fixture = TestBed.createComponent(PipelineStageFormComponent);
         let component = fixture.debugElement.componentInstance;

@@ -1,8 +1,7 @@
 import {Injectable} from '@angular/core';
 import {PipelineBuild, PipelineRunRequest} from '../../../model/pipeline.model';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Commit} from '../../../model/repositories.model';
-import {Application} from '../../../model/application.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
 @Injectable()
@@ -31,7 +30,7 @@ export class ApplicationPipelineService {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '/restart';
         let params = new HttpParams();
         params = params.append('envName', envName);
-        return this._http.post(url, null, {params: params});
+        return this._http.post<PipelineBuild>(url, null, {params: params});
     }
 
     /**
@@ -44,7 +43,7 @@ export class ApplicationPipelineService {
      */
     run(key: string, appName: string, pipName: string, runRequest: PipelineRunRequest): Observable<PipelineBuild> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/run';
-        return this._http.post(url, runRequest);
+        return this._http.post<PipelineBuild>(url, runRequest);
     }
 
     /**
@@ -57,7 +56,7 @@ export class ApplicationPipelineService {
      */
     rollback(key: string, appName: string, pipName: string, runRequest: PipelineRunRequest): Observable<PipelineBuild> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/rollback';
-        return this._http.post(url, runRequest);
+        return this._http.post<PipelineBuild>(url, runRequest);
     }
 
     /**
@@ -87,9 +86,9 @@ export class ApplicationPipelineService {
           if (param.value != null) {
             params = params.append(param.key, param.value);
           }
-        })
+        });
 
-        return this._http.get(url, {params: params});
+        return this._http.get<Array<PipelineBuild>>(url, {params: params});
     }
 
     /**
@@ -106,17 +105,7 @@ export class ApplicationPipelineService {
         let params = new HttpParams();
         params = params.append('envName', envName);
         params = params.append('hash', hash);
-        return this._http.get(url, {params: params});
-    }
-
-    /**
-     * Get list of application using the given pipeline
-     * @param key Project unique key
-     * @param pipName Pipeline Name
-     * @returns {Observable<Array<Application>>}
-     */
-    getApplicationFromPipeline(key: string, pipName: string): Observable<Array<Application>> {
-        return this._http.get('/project/' + key + '/pipeline/' + pipName + '/application');
+        return this._http.get<Array<Commit>>(url, {params: params});
     }
 
     /**
@@ -129,7 +118,7 @@ export class ApplicationPipelineService {
      */
     getTriggeredPipeline(key: string, appName: string, pipName: string, buildNumber: number): Observable<Array<PipelineBuild>> {
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/build/' + buildNumber + '/triggered';
-        return this._http.get(url);
+        return this._http.get<Array<PipelineBuild>>(url);
     }
 
     /**

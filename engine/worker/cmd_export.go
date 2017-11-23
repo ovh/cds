@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -136,13 +137,17 @@ func (wk *currentWorker) addVariableInPipelineBuild(v sdk.Variable, params *[]sd
 		uri = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/variable?envName=%s", proj, app, pip, bnS, url.QueryEscape(env))
 	}
 
-	_, code, err := sdk.Request("POST", uri, data)
-	if err == nil && code > 300 {
-		err = fmt.Errorf("HTTP %d", code)
+	var lasterr error
+	var code int
+	for try := 1; try <= 10; try++ {
+		log.Info("addBuildVarHandler> Sending export variable...")
+		_, code, lasterr = sdk.Request("POST", uri, data)
+		if lasterr == nil && code < 300 {
+			log.Info("addBuildVarHandler> Send step export variable OK")
+			return http.StatusOK, nil
+		}
+		log.Warning("addBuildVarHandler> Cannot send export variable result: HTTP %d err: %s - try: %d - new try in 5s", code, lasterr, try)
+		time.Sleep(5 * time.Second)
 	}
-	if err != nil {
-		log.Error("addBuildVarHandler> Cannot export variable. %s: %s", uri, err)
-		return http.StatusServiceUnavailable, fmt.Errorf("addBuildVarHandler> Cannot export variable: %s", err)
-	}
-	return http.StatusOK, nil
+	return http.StatusServiceUnavailable, fmt.Errorf("addBuildVarHandler> Cannot export variable: %s code: %d", lasterr, code)
 }

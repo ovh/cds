@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/token"
@@ -22,8 +23,8 @@ import (
 func InitiliazeDB(defaultValues sdk.DefaultValues, DBFunc func() *gorp.DbMap) error {
 	dbGorp := DBFunc()
 
-	if err := group.CreateDefaultGroup(dbGorp, group.SharedInfraGroupName); err != nil {
-		return sdk.WrapError(err, "InitiliazeDB> Cannot setup default %s group", group.SharedInfraGroupName)
+	if err := group.CreateDefaultGroup(dbGorp, sdk.SharedInfraGroupName); err != nil {
+		return sdk.WrapError(err, "InitiliazeDB> Cannot setup default %s group", sdk.SharedInfraGroupName)
 	}
 
 	if strings.TrimSpace(defaultValues.DefaultGroupName) != "" {
@@ -137,6 +138,67 @@ func VCSMigrate(db *gorp.DbMap, cache cache.Store) error {
 			_ = tx.Rollback()
 			continue
 		}
+	}
+
+	return nil
+}
+
+// ProjectBuiltinGPGKey create a builtin gpg key for all projects
+func ProjectBuiltinGPGKey(db *gorp.DbMap, cache cache.Store) error {
+	log.Info("ProjectBuiltinGPGKey> Begin")
+	defer log.Info("ProjectBuiltinGPGKey> End")
+
+	query := `select projectkey, id
+	from project
+	where id not in (
+		select project_id from project_key where builtin = true
+	)`
+
+	rows := []struct {
+		Key string `db:"projectkey"`
+		ID  int64  `db:"id"`
+	}{}
+
+	if _, err := db.Select(&rows, query); err != nil {
+		return err
+	}
+
+	for _, r := range rows {
+		log.Info("ProjectBuiltinGPGKey> Migrating %s", r.Key)
+		tx, err := db.Begin()
+		if err != nil {
+			log.Error("ProjectBuiltinGPGKey> unable to start transaction %v", err)
+			continue
+		}
+
+		keyID, publicKey, privateKey, err := keys.GeneratePGPKeyPair("builtin")
+		if err != nil {
+			tx.Rollback()
+			log.Error("ProjectBuiltinGPGKey> Unable to generate PGPKeyPair: %v", err)
+			continue
+		}
+
+		pk := sdk.ProjectKey{}
+		pk.Key.KeyID = keyID
+		pk.Key.Name = "builtin"
+		pk.Key.Private = privateKey
+		pk.Key.Public = publicKey
+		pk.Type = sdk.KeyTypePgp
+		pk.ProjectID = r.ID
+		pk.Builtin = true
+
+		if err := project.InsertKey(tx, &pk); err != nil {
+			tx.Rollback()
+			log.Error("ProjectBuiltinGPGKey> Unable to insert PGPKeyPair: %v", err)
+			continue
+		}
+
+		if err := tx.Commit(); err != nil {
+			tx.Rollback()
+			log.Error("ProjectBuiltinGPGKey> Unable to commit tx: %v", err)
+			continue
+		}
+
 	}
 
 	return nil

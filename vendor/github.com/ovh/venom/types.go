@@ -1,9 +1,6 @@
 package venom
 
-import (
-	"encoding/json"
-	"encoding/xml"
-)
+import "encoding/xml"
 
 const (
 	// DetailsLow prints only summary results
@@ -75,17 +72,12 @@ type executorWithDefaultAssertions interface {
 	GetDefaultAssertions() *StepAssertions
 }
 
-// Tests contains all informations about tests in a pipeline build
-type Tests struct {
-	XMLName      xml.Name    `xml:"testsuites" json:"-" yaml:"-"`
-	Total        int         `xml:"-" json:"total"`
-	TotalOK      int         `xml:"-" json:"ok"`
-	TotalKO      int         `xml:"-" json:"ko"`
-	TotalSkipped int         `xml:"-" json:"skipped"`
-	TestSuites   []TestSuite `xml:"testsuite" json:"test_suites"`
+type executorWithZeroValueResult interface {
+	ZeroValueResult() ExecutorResult
 }
 
-type TestsClone struct {
+// Tests contains all informations about tests in a pipeline build
+type Tests struct {
 	XMLName      xml.Name    `xml:"testsuites" json:"-" yaml:"-"`
 	Total        int         `xml:"-" json:"total"`
 	TotalOK      int         `xml:"-" json:"ok"`
@@ -137,120 +129,6 @@ type TestCase struct {
 	Time       string                 `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
 	TestSteps  []TestStep             `xml:"-" json:"steps" yaml:"steps"`
 	Context    map[string]interface{} `xml:"-" json:"-" yaml:"context,omitempty"`
-}
-
-// testsBefore contains all informations about tests in a pipeline build
-type testsBefore struct {
-	XMLName      xml.Name          `xml:"testsuites" json:"-" yaml:"-"`
-	Total        int               `xml:"-" json:"total"`
-	TotalOK      int               `xml:"-" json:"ok"`
-	TotalKO      int               `xml:"-" json:"ko"`
-	TotalSkipped int               `xml:"-" json:"skipped"`
-	TestSuites   []testSuiteBefore `xml:"testsuite" json:"test_suites"`
-}
-
-// testSuiteBefore is a single JUnit test suite which may contain many
-// testcases.
-type testSuiteBefore struct {
-	XMLName    xml.Name               `xml:"testsuite" json:"-" yaml:"-"`
-	Disabled   int                    `xml:"disabled,attr,omitempty" json:"disabled" yaml:"-"`
-	Errors     int                    `xml:"errors,attr,omitempty" json:"errors" yaml:"-"`
-	Failures   int                    `xml:"failures,attr,omitempty" json:"failures" yaml:"-"`
-	Hostname   string                 `xml:"hostname,attr,omitempty" json:"hostname" yaml:"-"`
-	ID         string                 `xml:"id,attr,omitempty" json:"id" yaml:"-"`
-	Name       string                 `xml:"name,attr" json:"name" yaml:"name"`
-	Package    string                 `xml:"package,attr,omitempty" json:"package" yaml:"-"`
-	Properties []Property             `xml:"-" json:"properties" yaml:"-"`
-	Skipped    int                    `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
-	Total      int                    `xml:"tests,attr" json:"total" yaml:"total,omitempty"`
-	TestCases  []testCaseBefore       `xml:"testcase" json:"tests" yaml:"testcases"`
-	Time       string                 `xml:"time,attr,omitempty" json:"time" yaml:"-"`
-	Timestamp  string                 `xml:"timestamp,attr,omitempty" json:"timestamp" yaml:"-"`
-	Vars       map[string]interface{} `xml:"-" json:"-" yaml:"vars"`
-	Templater  *Templater             `xml:"-" json:"-" yaml:"-"`
-}
-
-// testCaseBefore is a single test case with its result.
-type testCaseBefore struct {
-	XMLName    xml.Name               `xml:"testcase" json:"-" yaml:"-"`
-	Assertions string                 `xml:"assertions,attr,omitempty" json:"assertions" yaml:"-"`
-	Classname  string                 `xml:"classname,attr,omitempty" json:"classname" yaml:"-"`
-	Errors     []Failure              `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`
-	Failures   []Failure              `xml:"failure,omitempty" json:"failures" yaml:"failures,omitempty"`
-	Name       string                 `xml:"name,attr" json:"name" yaml:"name"`
-	Skipped    int                    `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
-	Status     string                 `xml:"status,attr,omitempty" json:"status" yaml:"status,omitempty"`
-	Systemout  InnerResult            `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
-	Systemerr  InnerResult            `xml:"system-err,omitempty" json:"systemerr" yaml:"systemerr,omitempty"`
-	Time       string                 `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
-	TestSteps  []TestStep             `xml:"-" json:"steps" yaml:"steps"`
-	Context    map[string]interface{} `xml:"-" json:"-" yaml:"context,omitempty"`
-}
-
-func (t *Tests) UnmarshalJSON(b []byte) error {
-	clone := TestsClone{}
-	if err := json.Unmarshal(b, &clone); err == nil {
-		t.XMLName = clone.XMLName
-		t.Total = clone.Total
-		t.TotalOK = clone.TotalOK
-		t.TotalKO = clone.TotalKO
-		t.TotalSkipped = clone.TotalSkipped
-		t.TestSuites = clone.TestSuites
-		return nil
-	}
-
-	before := &testsBefore{}
-	if err := json.Unmarshal(b, before); err != nil {
-		return err
-	}
-
-	t.XMLName = before.XMLName
-	t.Total = before.Total
-	t.TotalOK = before.TotalOK
-	t.TotalKO = before.TotalKO
-	t.TotalSkipped = before.TotalSkipped
-
-	for i := range before.TestSuites {
-		tsb := before.TestSuites[i]
-		ts := TestSuite{}
-
-		ts.XMLName = tsb.XMLName
-		ts.Disabled = tsb.Disabled
-		ts.Errors = tsb.Errors
-		ts.Failures = tsb.Failures
-		ts.Hostname = tsb.Hostname
-		ts.ID = tsb.ID
-		ts.Name = tsb.Name
-		ts.Package = tsb.Package
-		ts.Properties = tsb.Properties
-		ts.Skipped = tsb.Skipped
-		ts.Total = tsb.Total
-		ts.Time = tsb.Time
-		ts.Timestamp = tsb.Timestamp
-		for j := range tsb.TestCases {
-			tcb := tsb.TestCases[j]
-			tc := TestCase{}
-
-			tc.XMLName = tcb.XMLName
-			tc.Assertions = tcb.Assertions
-			tc.Classname = tcb.Classname
-			tc.Errors = tcb.Errors
-			tc.Failures = tcb.Failures
-			tc.Name = tcb.Name
-			for nbs := 0; nbs < tcb.Skipped; nbs++ {
-				tc.Skipped = append(tc.Skipped, Skipped{})
-			}
-			tc.Status = tcb.Status
-			tc.Systemout = tcb.Systemout
-			tc.Systemerr = tcb.Systemerr
-			tc.Time = tcb.Time
-			tc.TestSteps = tcb.TestSteps
-
-			ts.TestCases = append(ts.TestCases, tc)
-		}
-		t.TestSuites = append(t.TestSuites, ts)
-	}
-	return nil
 }
 
 // TestStep represents a testStep

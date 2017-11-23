@@ -2,7 +2,6 @@ package venom
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -52,23 +51,22 @@ func getFilesPath(path []string, exclude []string) []string {
 		}
 	}
 
-	log.Debugf("files to run: %v", filesPath)
-
 	sort.Strings(filesPath)
 	return filesPath
 }
 
-func readFiles(variables map[string]string, detailsLevel string, filesPath []string, chanToRun chan<- TestSuite, writer io.Writer) (map[string]*pb.ProgressBar, error) {
-	bars := make(map[string]*pb.ProgressBar)
+func (v *Venom) readFiles(filesPath []string) error {
+	v.outputProgressBar = make(map[string]*pb.ProgressBar)
 
 	for _, f := range filesPath {
+		log.Debugf("Reading %s", f)
 		dat, errr := ioutil.ReadFile(f)
 		if errr != nil {
-			return nil, fmt.Errorf("Error while reading file %s err:%s", f, errr)
+			return fmt.Errorf("Error while reading file %s err:%s", f, errr)
 		}
 
 		ts := TestSuite{}
-		ts.Templater = newTemplater(variables)
+		ts.Templater = newTemplater(v.variables)
 		ts.Package = f
 
 		// Apply templater unitl there is no more modifications
@@ -83,7 +81,7 @@ func readFiles(variables map[string]string, detailsLevel string, filesPath []str
 		}
 
 		if err := yaml.Unmarshal(out, &ts); err != nil {
-			return nil, fmt.Errorf("Error while unmarshal file %s err:%s data:%s variables:%s", f, err, out, variables)
+			return fmt.Errorf("Error while unmarshal file %s err:%v", f, err)
 		}
 		ts.Name += " [" + f + "]"
 
@@ -98,8 +96,8 @@ func readFiles(variables map[string]string, detailsLevel string, filesPath []str
 
 		b := pb.New(nSteps).Prefix(rightPad("⚙ "+ts.Package, " ", 47))
 		b.ShowCounters = false
-		b.Output = writer
-		if detailsLevel == DetailsLow {
+		b.Output = v.LogOutput
+		if v.OutputDetails == DetailsLow {
 			b.ShowBar = false
 			b.ShowFinalTime = false
 			b.ShowPercent = false
@@ -107,11 +105,10 @@ func readFiles(variables map[string]string, detailsLevel string, filesPath []str
 			b.ShowTimeLeft = false
 		}
 
-		if detailsLevel != DetailsLow {
-			bars[ts.Package] = b
+		if v.OutputDetails != DetailsLow {
+			v.outputProgressBar[ts.Package] = b
 		}
-
-		chanToRun <- ts
+		v.testsuites = append(v.testsuites, ts)
 	}
-	return bars, nil
+	return nil
 }

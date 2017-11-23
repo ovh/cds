@@ -201,7 +201,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import")
 		}
 
-		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot update project last modified date")
 		}
 

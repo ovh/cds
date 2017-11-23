@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -49,20 +50,24 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 				if !ok {
 					return
 				}
-				b, _, err := sdk.Request("GET", fmt.Sprintf("/queue/workflows/%d/infos", jobID), nil)
+				b, code, err := sdk.Request("GET", fmt.Sprintf("/queue/workflows/%d/infos", jobID), nil)
 				if err != nil {
-					log.Error("Unable to load pipeline build job %d", jobID)
-					cancel()
-					return
+					if code == http.StatusNotFound {
+						log.Info("takeWorkflowJob> Unable to load workflow job - Not Found (Request) %d: %v", jobID, err)
+						cancel()
+						return
+					}
+					log.Error("takeWorkflowJob> Unable to load workflow job (Request) %d: %v", jobID, err)
+					continue // do not kill the worker here, could be a timeout
 				}
 
 				j := &sdk.WorkflowNodeJobRun{}
 				if err := json.Unmarshal(b, j); err != nil {
-					log.Error("Unable to load job run %d: %v", jobID, err)
-					cancel()
-					return
+					log.Error("takeWorkflowJob> Unable to load workflow job (Unmarshal) %d: %v", jobID, err)
+					continue // do not kill the worker here
 				}
 				if j.Status != sdk.StatusBuilding.String() {
+					log.Info("takeWorkflowJob> The job is not more in Building Status. Current Status: %s - Cancelling context", j.Status, err)
 					cancel()
 					return
 				}
@@ -94,5 +99,17 @@ func (w *currentWorker) takeWorkflowJob(ctx context.Context, job sdk.WorkflowNod
 		log.Error("Unable to send result through grpc: %v", err)
 	}
 
-	return false, w.client.QueueSendResult(job.ID, res)
+	var lasterr error
+	for try := 1; try <= 10; try++ {
+		log.Info("takeWorkflowJob> Sending build result...")
+		lasterr = w.client.QueueSendResult(job.ID, res)
+		if lasterr == nil {
+			log.Info("takeWorkflowJob> Send build result OK")
+			return false, nil
+		}
+		log.Warning("takeWorkflowJob> Cannot send build result: HTTP %d - try: %d - new try in 5s", lasterr, try)
+		time.Sleep(5 * time.Second)
+	}
+	log.Error("takeWorkflowJob> Could not send built result 10 times, giving up. job: %d", job.ID)
+	return false, lasterr
 }

@@ -118,8 +118,8 @@ func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 }
 
 func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
-	log.Debug("runJob> start run %d stepOrder:%d %p", buildID, stepOrder, ctx)
-	defer func() { log.Debug("runJob> end run %d stepOrder:%d %p (%s)", buildID, stepOrder, ctx, ctx.Err()) }()
+	log.Info("runJob> start run %d stepOrder:%d %p", buildID, stepOrder, ctx)
+	defer func() { log.Info("runJob> end run %d stepOrder:%d %p (%s)", buildID, stepOrder, ctx, ctx.Err()) }()
 	// Replace variable placeholder that may have been added by last step
 	w.replaceVariablesPlaceholder(a, *params)
 	// Set the params
@@ -167,9 +167,9 @@ func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64
 }
 
 func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string, stepBaseCount int) (sdk.Result, int) {
-	log.Debug("runSteps> start run %d stepOrder:%d len(steps):%d context=%p", buildID, stepOrder, len(steps), ctx)
+	log.Info("runSteps> start run %d stepOrder:%d len(steps):%d context=%p", buildID, stepOrder, len(steps), ctx)
 	defer func() {
-		log.Debug("runSteps> end run %d stepOrder:%d len(steps):%d context=%p (%s)", buildID, stepOrder, len(steps), ctx, ctx.Err())
+		log.Info("runSteps> end run %d stepOrder:%d len(steps):%d context=%p (%s)", buildID, stepOrder, len(steps), ctx, ctx.Err())
 	}()
 	var criticalStepFailed bool
 	var nbDisabledChildren int
@@ -248,6 +248,8 @@ func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status st
 	step := sdk.StepStatus{
 		StepOrder: stepOrder,
 		Status:    status,
+		Start:     time.Now(),
+		Done:      time.Now(),
 	}
 	body, errM := json.Marshal(step)
 	if errM != nil {
@@ -261,14 +263,17 @@ func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status st
 		path = fmt.Sprintf("/build/%d/step", pbJobID)
 	}
 
-	_, code, errReq := sdk.Request("POST", path, body)
-	if errReq != nil {
-		return errReq
+	for try := 1; try <= 10; try++ {
+		log.Info("updateStepStatus> Sending step status...")
+		_, code, lasterr := sdk.Request("POST", path, body)
+		if lasterr == nil && code < 300 {
+			log.Info("updateStepStatus> Send step status OK")
+			return nil
+		}
+		log.Warning("updateStepStatus> Cannot send step result: HTTP %d err: %s - try: %d - new try in 5s", code, lasterr, try)
+		time.Sleep(5 * time.Second)
 	}
-	if code >= 400 {
-		return fmt.Errorf("Wrong http code %d", code)
-	}
-	return nil
+	return fmt.Errorf("updateStepStatus> Could not send built result 10 times, giving up. job: %d", pbJobID)
 }
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN

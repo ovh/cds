@@ -4,6 +4,7 @@ import {Requirement} from '../../../model/requirement.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {WorkerModel} from '../../../model/worker-model.model';
+import {finalize, first} from 'rxjs/operators';
 import {TranslateService} from 'ng2-translate';
 
 @Component({
@@ -50,8 +51,10 @@ export class RequirementsFormComponent {
             this.availableRequirements.push(...r.filter(req => req !== 'plugin').toArray());
         });
 
-        this._workerModelService.getWorkerModels().first()
-        .finally(() => this.loading = false)
+        this._workerModelService.getWorkerModels()
+        .pipe(
+            first(),
+            finalize(() => this.loading = false))
         .subscribe( wms => {
             this.workerModels = wms;
             if (Array.isArray(this.workerModels)) {
@@ -91,11 +94,30 @@ export class RequirementsFormComponent {
                 this.canDisplayLinkWorkerModel = this.computeDisplayLinkWorkerModel();
                 this.newRequirement.name = this.newRequirement.value;
                 break
+            case 'volume':
+                this.newRequirement.name = this.getVolumeName();
+                break;
             default:
                 // else, name is the value of the requirement
                 this.newRequirement.name = this.newRequirement.value;
         }
         this.computeFormValid(form);
+    }
+
+    getVolumeName(): string {
+        let parts = this.newRequirement.value.split(',');
+        for (let p of parts) {
+            // example: type=bind,source=/hostDir/sourceDir,destination=/dirInJob
+            // we want /dirInJob for volume name
+            if (p.startsWith('destination=')) {
+                let value = p.split('=');
+                if (value.length === 2) {
+                    // keep only a-zA-Z - and / in name, '_' for others characters
+                    return value[1].replace(/([^a-zA-Z\-/])/gi, '_');
+                }
+            }
+        }
+        return '';
     }
 
     getHelp() {

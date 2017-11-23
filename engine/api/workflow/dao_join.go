@@ -66,6 +66,11 @@ func loadJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 		if err != nil {
 			return nil, sdk.WrapError(err, "loadJoin> Unable to load join trigger %d", t)
 		}
+		//If the trigger has not been found, skip it
+		if jt == nil {
+			log.Warning("workflow.loadJoin> Trigger id=%d not found bu referenced by join_id %d", t, id)
+			continue
+		}
 		j.Triggers = append(j.Triggers, *jt)
 	}
 

@@ -3,6 +3,7 @@ import {TestBed, fakeAsync, tick, getTestBed} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {ApplicationModule} from '../../../../application.module';
 import {SharedModule} from '../../../../../../shared/shared.module';
+import {ServicesModule} from '../../../../../../service/services.module';
 import {RouterTestingModule} from '@angular/router/testing';
 import {ApplicationWorkflowItemComponent} from './application.workflow.item.component';
 import {WorkflowItem} from '../../../../../../model/application.workflow.model';
@@ -12,13 +13,15 @@ import {Parameter} from '../../../../../../model/parameter.model';
 import {Injector} from '@angular/core';
 import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';
 import {Router, NavigationExtras} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {PipelineBuild, Pipeline, PipelineRunRequest, PipelineBuildTrigger} from '../../../../../../model/pipeline.model';
 import {Project} from '../../../../../../model/project.model';
 import {Application} from '../../../../../../model/application.model';
 import {TranslateParser, TranslateService, TranslateLoader} from 'ng2-translate';
 import {PipelineStore} from '../../../../../../service/pipeline/pipeline.store';
 import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../../service/variable/variable.service';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Map} from 'immutable';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
@@ -44,11 +47,13 @@ describe('CDS: Application Workflow Item', () => {
                 PipelineStore, PipelineService,
                 ApplicationStore, ApplicationService,
                 ProjectStore, ProjectService, NotificationService,
+                EnvironmentService, VariableService,
                 {provide: ToastService, useClass: MockToast}
             ],
             imports: [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
+                ServicesModule,
                 SharedModule,
                 HttpClientTestingModule
             ]

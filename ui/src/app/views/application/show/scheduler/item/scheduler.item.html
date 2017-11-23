@@ -27,7 +27,7 @@
         env: (scheduler.environment_name !== 'NoEnv')?' / ' + scheduler.environment_name:''
     } }}" #editSchedulerModal>
     <modal-content>
-        <app-application-scheduler-form [project]="project" [application]="application" [scheduler]="editableScheduler"></app-application-scheduler-form>
+        <app-application-scheduler-form [project]="project" [application]="application" [pipeline]="pipeline" [scheduler]="editableScheduler"></app-application-scheduler-form>
     </modal-content>
     <modal-actions>
         <button class="ui grey button" (click)="close()">{{ 'btn_cancel' | translate }}</button>

@@ -91,6 +91,9 @@ export class AppComponent  implements OnInit {
 
     startLastUpdateSSE(): void {
         this._last.getLastUpdate().subscribe(msg => {
+            if (msg === 'ACK') {
+                return;
+            }
             let lastUpdateEvent: LastModification = JSON.parse(msg);
             this._appService.updateCache(lastUpdateEvent);
         });

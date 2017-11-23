@@ -15,6 +15,7 @@ import {ToastService} from '../../../shared/toast/ToastService';
 import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
 import {Application} from '../../../model/application.model';
 import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-pipeline-show',
@@ -142,7 +143,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
                 case 'add':
                     this.paramFormLoading = true;
                     this._pipStore.addParameter(this.project.key, this.pipeline.name, event.parameter)
-                        .finally(() => this.paramFormLoading = false)
+                        .pipe(finalize(() => this.paramFormLoading = false))
                         .subscribe(() => this._toast.success('', this._translate.instant('parameter_added')));
                     break;
                 case 'update':

@@ -8,6 +8,9 @@ import {ProjectRepoManagerFormComponent} from './project.repomanager.form.compon
 import {RepoManagerService} from '../../../../../../service/repomanager/project.repomanager.service';
 import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../../service/project/project.service';
+import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../../service/variable/variable.service';
 import {SharedModule} from '../../../../../../shared/shared.module';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
 import {Project} from '../../../../../../model/project.model';
@@ -31,6 +34,9 @@ describe('CDS: Project RepoManager Form Component', () => {
                 RepoManagerService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService,
                 ToasterService,
                 TranslateService,
                 TranslateParser

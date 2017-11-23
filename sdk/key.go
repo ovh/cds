@@ -18,6 +18,7 @@ type Key struct {
 type ProjectKey struct {
 	Key
 	ProjectID int64 `json:"project_id" db:"project_id" cli:"-"`
+	Builtin   bool  `json:"-" db:"builtin" cli:"-"`
 }
 
 // ApplicationKey represent a key attach to an application

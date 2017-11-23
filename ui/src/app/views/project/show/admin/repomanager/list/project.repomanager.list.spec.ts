@@ -9,6 +9,9 @@ import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {RepoManagerService} from '../../../../../../service/repomanager/project.repomanager.service';
 import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../../service/project/project.service';
+import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../../service/variable/variable.service';
 import {SharedModule} from '../../../../../../shared/shared.module';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
 import {Project} from '../../../../../../model/project.model';
@@ -16,7 +19,7 @@ import {TranslateParser} from 'ng2-translate';
 import {ProjectModule} from '../../../../project.module';
 import {ProjectRepoManagerComponent} from './project.repomanager.list.component';
 import {RepositoriesManager} from '../../../../../../model/repositories.model';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 
@@ -37,6 +40,9 @@ describe('CDS: Project RepoManager List Component', () => {
                 RepoManagerService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService,
                 ToasterService,
                 TranslateService,
                 TranslateParser,
@@ -102,4 +108,3 @@ class MockToast {
 
     }
 }
-

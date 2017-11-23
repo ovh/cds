@@ -8,11 +8,14 @@ import {ApplicationStore} from '../../../service/application/application.store';
 import {ApplicationService} from '../../../service/application/application.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../../shared/shared.module';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Injector} from '@angular/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectStore} from '../../../service/project/project.store';
 import {ProjectService} from '../../../service/project/project.service';
+import {PipelineService} from '../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../service/environment/environment.service';
+import {VariableService} from '../../../service/variable/variable.service';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {Project} from '../../../model/project.model';
@@ -23,7 +26,6 @@ import {Application} from '../../../model/application.model';
 import {Variable} from '../../../model/variable.model';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {PipelineModule} from '../pipeline.module';
-import {PipelineService} from '../../../service/pipeline/pipeline.service';
 import {PipelineAddComponent} from './pipeline.add.component';
 import {Pipeline} from '../../../model/pipeline.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
@@ -53,7 +55,9 @@ describe('CDS: Pipeline Add Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 PipelineStore,
-                PipelineService
+                PipelineService,
+                EnvironmentService,
+                VariableService
             ],
             imports : [
                 PipelineModule,

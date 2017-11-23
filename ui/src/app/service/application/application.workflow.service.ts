@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Branch, Remote} from '../../model/repositories.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
@@ -18,7 +18,7 @@ export class ApplicationWorkflowService {
     getBranches(key: string, appName: string, remote: string = ''): Observable<Array<Branch>> {
         let params = new HttpParams();
         params = params.append('remote', remote);
-        return this._http.get('/project/' + key + '/application/' + appName + '/branches', {params});
+        return this._http.get<Array<Branch>>('/project/' + key + '/application/' + appName + '/branches', {params});
     }
 
     /**
@@ -28,7 +28,7 @@ export class ApplicationWorkflowService {
      * @returns {Observable<Array<Branch>>}
      */
     getRemotes(key: string, appName: string): Observable<Array<Remote>> {
-        return this._http.get('/project/' + key + '/application/' + appName + '/remotes');
+        return this._http.get<Array<Remote>>('/project/' + key + '/application/' + appName + '/remotes');
     }
 
     /**
@@ -42,6 +42,6 @@ export class ApplicationWorkflowService {
         let params = new HttpParams();
         params = params.append('remote', remote);
         params = params.append('branch', branchName);
-        return this._http.get('/project/' + key + '/application/' + appName + '/version', {params});
+        return this._http.get<Array<number>>('/project/' + key + '/application/' + appName + '/version', {params});
     }
 }

@@ -2,8 +2,10 @@ import {Component, DoCheck, Input, OnDestroy, OnInit} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {Environment} from '../../../../../model/environment.model';
 import {EnvironmentService} from '../../../../../service/environment/environment.service';
+import {ProjectStore} from '../../../../../service/project/project.store';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Subscription} from 'rxjs/Rx';
+import {Subscription} from 'rxjs/Subscription';
+import {finalize, flatMap, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-environment-list',
@@ -22,48 +24,37 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     envSub: Subscription;
 
     constructor(private _routerActivatedRoute: ActivatedRoute, private _router: Router,
-      private _environmentService: EnvironmentService) {
-        this.routerSubscription = this._routerActivatedRoute.queryParams.subscribe(q => {
-           if (q['envName']) {
-               this.envInRoute = q['envName'];
-           }
-        });
+      private _environmentService: EnvironmentService, private _projectStore: ProjectStore) {
+        this.loading = true;
     }
 
     ngOnDestroy(): void {
         if (this.routerSubscription) {
             this.routerSubscription.unsubscribe();
-            this.envSub.unsubscribe();
         }
     }
 
     ngOnInit(): void {
-        if (this.project.environments && this.project.environments.length > 0) {
-            if (this.envInRoute) {
-                this.selectNewEnv(this.envInRoute);
-            } else {
-                this.selectNewEnv(this.project.environments[0].name);
+        this.routerSubscription = this._routerActivatedRoute.queryParams
+          .pipe(first())
+          .do((q) => {
+            if (q['envName']) {
+                this.envInRoute = q['envName'];
             }
-        }
-        this.oldLastModifiedDate = new Date(this.project.last_modified).getTime();
-        this.loadUsage();
-    }
-
-    loadUsage() {
-        this.loading = true;
-        this.envSub = this._environmentService.get(this.project.key)
-            .finally(() => this.loading = false)
-            .subscribe((envs) => {
-                if (Array.isArray(this.project.environments)) {
-                    this.project.environments = this.project.environments.map((env) => {
-                        let envFound = envs.find((e) => e.id === env.id);
-                        if (envFound) {
-                            env.usage = envFound.usage;
-                        }
-                        return env;
-                    });
+          })
+          .flatMap((q) => this._projectStore.getProjectEnvironmentsResolver(this.project.key))
+          .pipe(finalize(() => this.loading = false))
+          .subscribe((proj) => {
+            this.project = proj;
+            if (this.project.environments && this.project.environments.length > 0) {
+                if (this.envInRoute) {
+                    this.selectNewEnv(this.envInRoute);
+                } else {
+                    this.selectNewEnv(this.project.environments[0].name);
                 }
-            });
+            }
+            this.oldLastModifiedDate = new Date(this.project.last_modified).getTime();
+          });
     }
 
     /**
@@ -99,6 +90,9 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     selectNewEnv(envName): void {
         if (this.project.environments && this.project.environments.length > 0) {
             this.selectedEnv = this.project.environments.find(e => e.name === envName);
+            if (!this.selectedEnv) {
+                this.selectedEnv = this.project.environments[0];
+            }
             this._router.navigate(['/project/', this.project.key], {queryParams: { tab: 'environments', envName: this.selectedEnv.name}});
         }
     }
