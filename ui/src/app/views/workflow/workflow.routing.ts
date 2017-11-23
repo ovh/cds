@@ -1,7 +1,7 @@
 import {ModuleWithProviders} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
 import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
-import {ProjectResolver} from '../../service/project/project.resolver';
+import {ProjectResolver, ProjectForWorkflowResolver} from '../../service/project/project.resolver';
 import {WorkflowAddComponent} from './add/workflow.add.component';
 import {WorkflowShowComponent} from './show/workflow.component';
 import {WorkflowRunComponent} from './run/workflow.run.component';
@@ -15,7 +15,8 @@ const workflowRoutes: Routes = [
         canActivate: [CanActivateAuthRoute],
         canActivateChild: [CanActivateAuthRoute],
         resolve: {
-            project: ProjectResolver
+            // TODO: improve resolver
+            project: ProjectForWorkflowResolver
         }
     },
     {
@@ -24,14 +25,16 @@ const workflowRoutes: Routes = [
         canActivate: [CanActivateAuthRoute],
         canActivateChild: [CanActivateAuthRoute],
         resolve: {
-            project: ProjectResolver
+            // TODO: improve resolver
+            project: ProjectForWorkflowResolver
         },
         children: [
 
             {
                 path: '', component: WorkflowShowComponent,
                 resolve: {
-                    project: ProjectResolver
+                    // TODO: improve resolver
+                    project: ProjectForWorkflowResolver
                 }
             },
             {
@@ -43,7 +46,8 @@ const workflowRoutes: Routes = [
             {
                 path: 'run/:number/node/:nodeId', component: WorkflowNodeRunComponent,
                 resolve: {
-                    project: ProjectResolver
+                    // TODO: improve resolver
+                    project: ProjectForWorkflowResolver
                 }
             }
         ]
