@@ -199,6 +199,13 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		if err := os.MkdirAll(destPath, os.FileMode(0744)); err != nil {
+			res.Status = sdk.StatusFail.String()
+			res.Reason = fmt.Sprintf("Unable to create %s: %v", destPath, err)
+			sendLog(res.Reason)
+			return res
+		}
+
 		if tag != "" {
 			sendLog("tag variable can not be used with CDS Workflow - ignored.")
 		}

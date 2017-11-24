@@ -103,6 +103,11 @@ func download(project, app, pip string, a Artifact, destdir string) error {
 			lasterr = fmt.Errorf("HTTP %d", code)
 			continue
 		}
+
+		if err := os.MkdirAll(destdir, os.FileMode(0744)); err != nil {
+			return err
+		}
+
 		destPath := path.Join(destdir, a.Name)
 
 		mode := os.FileMode(0644)
