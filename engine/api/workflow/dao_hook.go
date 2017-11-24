@@ -186,7 +186,5 @@ func DiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[string]sdk.
 			hookToDelete[kHold] = oldHooks[kHold]
 		}
 	}
-	log.Warning("To update: %+v", hookToUpdate)
-	log.Warning("To delete: %v", hookToDelete)
 	return
 }
