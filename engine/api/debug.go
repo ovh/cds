@@ -30,18 +30,39 @@ func (api *API) getProfileIndexHandler() Handler {
 			<title>CDS Debug</title>
 			</head>
 			<body>
-			CDS debug pprof<br>
-			<br>
-			profiles:<br>
-			<table>
+			<h1>CDS debug pprof</h1>
+			<h2>Profiles</h2>
 			{{range .}}
-			<tr><td align=right>{{.Count}}<td><a href="debug/{{.Name}}?debug=1&session=%s">{{.Name}}</a>
+				<form action="debug/{{.Name}}" method="POST">
+					<input type="text" value="{{.Count}}" size="3" disabled></input>				
+					<input type="text" value="{{.Name}}" size="30" disabled></input>
+					<input type="hidden" name="session" value="%s"></input>
+					<input type="hidden" name="debug" value="1"></input>
+					<input type="submit" value="Go"></input>
+				</form>
 			{{end}}
-			</table>
+
 			<br>
-			<a href="debug/goroutine?debug=2&session=%s">Full goroutine stack dump</a><br>
-			<a href="debug/trace?session=%s&seconds=5">Trace profile for 5 seconds</a><br>
-			<a href="debug/cpu?session=%s&seconds=5">CPU profile for 5 seconds</a><br>
+			<form action="debug/goroutine" method="POST">
+				Full goroutine stack dump
+				<input type="hidden" name="session" value="%s"></input>
+				<input type="hidden" name="debug" value="2"></input>
+				<input type="submit" value="Go"></input>
+			</form>
+			<br>
+			<form action="debug/trace" method="POST">
+				Trace
+				<input type="hidden" name="session" value="%s"></input>
+				<input type="text" name="seconds" value="5" size="3"></input> Seconds
+				<input type="submit" value="Go"></input>
+			</form>
+			<br>
+			<form action="debug/cpu" method="POST">
+				CPU Profile
+				<input type="hidden" name="session" value="%s"></input>
+				<input type="text" name="seconds" value="5" size="3"></input> Seconds
+				<input type="submit" value="Go"></input>
+			</form>
 			</body>
 			</html>
 			`, session, session, session, session)
