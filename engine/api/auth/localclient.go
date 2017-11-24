@@ -46,7 +46,7 @@ func (c *LocalClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req 
 	//Check other session
 	sessionToken := req.Header.Get(sdk.SessionTokenHeader)
 	if sessionToken == "" {
-		//Accept session in request query parameter
+		//Accept session in request
 		sessionToken = req.FormValue("session")
 	}
 	if sessionToken == "" {
