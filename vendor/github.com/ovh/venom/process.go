@@ -29,7 +29,10 @@ func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
 		return nil, errors.New("Invalid details. Must be low, medium or high")
 	}
 
-	filesPath := getFilesPath(path, exclude)
+	filesPath, err := getFilesPath(path, exclude)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := v.readFiles(filesPath); err != nil {
 		return nil, err

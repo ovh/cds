@@ -13,7 +13,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func getFilesPath(path []string, exclude []string) []string {
+func getFilesPath(path []string, exclude []string) ([]string, error) {
 	var filesPath []string
 	var fpathsExcluded []string
 
@@ -28,14 +28,21 @@ func getFilesPath(path []string, exclude []string) []string {
 	}
 
 	for _, p := range path {
-		fileInfo, _ := os.Stat(p)
-		if fileInfo != nil && fileInfo.IsDir() {
-			p = filepath.Dir(p) + "/*.yml"
-			log.Debugf("path computed:%s", path)
+		p = strings.TrimSpace(p)
+
+		fileInfo, err := os.Stat(p)
+		if err != nil {
+			return nil, err
 		}
+
+		if fileInfo != nil && fileInfo.IsDir() {
+			p = p + string(os.PathSeparator) + "*.yml"
+		}
+
 		fpaths, errg := filepath.Glob(p)
 		if errg != nil {
-			log.Fatalf("Error reading files on path:%s :%s", path, errg)
+			log.Errorf("Error reading files on path:%s :%s", path, errg)
+			return nil, err
 		}
 		for _, fp := range fpaths {
 			toExclude := false
@@ -45,14 +52,14 @@ func getFilesPath(path []string, exclude []string) []string {
 					break
 				}
 			}
-			if !toExclude && (strings.HasSuffix(fp, ".yml") || strings.HasSuffix(fp, ".yaml")) {
+			if !toExclude && strings.HasSuffix(fp, ".yml") {
 				filesPath = append(filesPath, fp)
 			}
 		}
 	}
 
 	sort.Strings(filesPath)
-	return filesPath
+	return filesPath, nil
 }
 
 func (v *Venom) readFiles(filesPath []string) error {
