@@ -306,13 +306,13 @@ func withRemoteName(remote string) ExecOptionFunc {
 		if remote == "" {
 			return " AND pb.vcs_remote IS NULL", "", nbArg
 		}
-		return fmt.Sprintf(" AND pb.vcs_remote = $%d", nbArg), remote, nbArg + 1
+		return fmt.Sprintf(" AND lower(pb.vcs_remote) = lower($%d)", nbArg), remote, nbArg + 1
 	}
 }
 
 func withEmptyRemote(remote string) ExecOptionFunc {
 	return func(nbArg int) (string, string, int) {
-		return fmt.Sprintf(" AND (pb.vcs_remote = $%d OR pb.vcs_remote IS NULL OR pb.vcs_remote = '')", nbArg), remote, nbArg + 1
+		return fmt.Sprintf(" AND (lower(pb.vcs_remote) = lower($%d) OR pb.vcs_remote IS NULL OR pb.vcs_remote = '')", nbArg), remote, nbArg + 1
 	}
 }
 
