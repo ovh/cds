@@ -2,8 +2,8 @@ import {Injectable} from '@angular/core';
 import {Resolve, ActivatedRouteSnapshot, RouterStateSnapshot} from '@angular/router';
 import {Observable} from 'rxjs/Observable';
 import {first} from 'rxjs/operators';
-import {Project} from '../../model/project.model';
-import {ProjectStore, LoadOpts} from './project.store';
+import {Project, LoadOpts} from '../../model/project.model';
+import {ProjectStore} from './project.store';
 import {RouterService} from '../router/router.service';
 
 @Injectable()
@@ -37,6 +37,22 @@ export class ProjectForWorkflowResolver implements Resolve<Project> {
 }
 
 @Injectable()
+export class ProjectForPipelineCreateResolver implements Resolve<Project> {
+
+    resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
+        let params = this.routerService.getRouteSnapshotParams({}, state.root);
+        let opts = [
+          new LoadOpts('withPipelineNames', 'pipeline_names'),
+          new LoadOpts('withApplications', 'applications'),
+        ];
+
+        return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());
+    }
+
+    constructor(private projectStore: ProjectStore, private routerService: RouterService) {}
+}
+
+@Injectable()
 export class ProjectForApplicationResolver implements Resolve<Project> {
 
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
@@ -45,8 +61,6 @@ export class ProjectForApplicationResolver implements Resolve<Project> {
           new LoadOpts('withPipelines', 'pipelines'),
           new LoadOpts('withEnvironments', 'environments'),
           new LoadOpts('withApplicationPipelines', 'applications'),
-          new LoadOpts('withGroups', 'groups'),
-          new LoadOpts('withPermission', 'permission'),
         ];
 
         return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());

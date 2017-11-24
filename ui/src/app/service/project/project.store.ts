@@ -2,7 +2,7 @@ import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
 import {Observable} from 'rxjs/Observable';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject'
-import {Project} from '../../model/project.model';
+import {Project, LoadOpts} from '../../model/project.model';
 import {ProjectService} from './project.service';
 import {EnvironmentService} from '../environment/environment.service';
 import {PipelineService} from '../pipeline/pipeline.service';
@@ -57,10 +57,6 @@ export class ProjectStore {
     getProjectResolver(key: string, opts: LoadOpts[]): Observable<Project> {
         let store = this._projectCache.getValue();
         if (store.size === 0 || !store.get(key)) {
-            opts = opts.concat([
-                new LoadOpts('withGroups', 'groups'),
-                new LoadOpts('withPermission', 'permission')
-            ]);
             return this.resync(key, opts);
         }
 
@@ -71,12 +67,6 @@ export class ProjectStore {
                 return Observable.of(store.get(key));
             }
 
-            funcs = funcs.concat([
-                new LoadOpts('withGroups', 'groups'),
-                new LoadOpts('withPermission', 'permission')
-            ]);
-
-            // TODO: iterate on funcs array and execute handler linked to fetch missing data
             return this.resync(key, funcs);
         }
         return Observable.of(store.get(key));
@@ -87,7 +77,7 @@ export class ProjectStore {
      * @param key
      * @returns {Observable<R>}
      */
-    resync(key: string, opts?: LoadOpts[]): Observable<Project> {
+    resync(key: string, opts: LoadOpts[]): Observable<Project> {
         return this._projectService.getProject(key, opts).map( res => {
             let store = this._projectCache.getValue();
             let proj = store.get(key);
@@ -204,17 +194,6 @@ export class ProjectStore {
      * @returns {Project}
      */
     getProjects(key?: string, opts?: LoadOpts[]): Observable<Map<string, Project>> {
-        if (Array.isArray(opts.length) && opts.length) {
-            opts = opts.concat([
-                new LoadOpts('withGroups', 'groups'),
-                new LoadOpts('withPermission', 'permission')
-            ]);
-        } else {
-            opts = [
-                new LoadOpts('withGroups', 'groups'),
-                new LoadOpts('withPermission', 'permission')
-            ];
-        }
         // If Store contain the project, get IT
         let projects = this._projectCache.getValue();
         if (key && !projects.get(key)) {
@@ -696,11 +675,4 @@ export class ProjectStore {
     }
 
 
-}
-
-export class LoadOpts {
-  constructor(
-    public queryParam: string,
-    public fieldName: string
-  ) { }
 }

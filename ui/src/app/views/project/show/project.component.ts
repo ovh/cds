@@ -1,8 +1,8 @@
 import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {ProjectStore, LoadOpts} from '../../../service/project/project.store';
-import {Project} from '../../../model/project.model';
+import {ProjectStore} from '../../../service/project/project.store';
+import {Project, LoadOpts} from '../../../model/project.model';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
@@ -97,7 +97,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         } else if (this.selectedTab === 'environments') {
             opts.push(new LoadOpts('withEnvironments', 'environments'));
         }
-
 
         this.projectSubscriber = this._projectStore.getProjectResolver(key, opts).subscribe(proj => {
             if (proj) {

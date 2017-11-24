@@ -25,3 +25,10 @@ export class Project {
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
 }
+
+export class LoadOpts {
+  constructor(
+    public queryParam: string,
+    public fieldName: string
+  ) { }
+}

@@ -19,7 +19,7 @@ export class MigrationProjectComponent implements OnInit {
         this._activatedRoute.params.subscribe(d => {
             if (d['key']) {
                 let key = d['key'];
-                this._projectStore.resync(key).pipe(first()).subscribe(p => {
+                this._projectStore.resync(key, []).pipe(first()).subscribe(p => {
                     this.project = p;
                 });
             }
