@@ -1,11 +1,12 @@
 import {Injectable} from '@angular/core';
 import {LastModification} from './model/lastupdate.model';
-import {ProjectStore, LoadOpts} from './service/project/project.store';
+import {ProjectStore} from './service/project/project.store';
 import {ActivatedRoute} from '@angular/router';
 import {ApplicationStore} from './service/application/application.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {TranslateService} from 'ng2-translate';
+import {LoadOpts} from './model/project.model';
 import {PipelineStore} from './service/pipeline/pipeline.store';
 import {WorkflowStore} from './service/workflow/workflow.store';
 import {RouterService} from './service/router/router.service';

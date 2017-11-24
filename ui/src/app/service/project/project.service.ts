@@ -1,11 +1,10 @@
 import {Injectable} from '@angular/core';
-import {Project} from '../../model/project.model';
+import {Project, LoadOpts} from '../../model/project.model';
 import {Observable} from 'rxjs/Observable';
 import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
 import {Notification} from '../../model/notification.model';
-import {LoadOpts} from './project.store';
 import {HttpClient, HttpParams} from '@angular/common/http';
 
 /**
@@ -26,9 +25,19 @@ export class ProjectService {
     getProject(key: string, opts: LoadOpts[]): Observable<Project> {
         let params = new HttpParams();
 
-        if (Array.isArray(opts)) {
-          opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
+        if (Array.isArray(opts) && opts.length) {
+            opts = opts.concat([
+                new LoadOpts('withGroups', 'groups'),
+                new LoadOpts('withPermission', 'permission')
+            ]);
+        } else {
+            opts = [
+                new LoadOpts('withGroups', 'groups'),
+                new LoadOpts('withPermission', 'permission')
+            ];
         }
+
+        opts.forEach((opt) => params = params.append(opt.queryParam, 'true'));
 
         return this._http.get<Project>('/project/' + key, {params: params});
     }

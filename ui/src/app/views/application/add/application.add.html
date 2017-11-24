@@ -50,8 +50,9 @@
                                         </div>
                                         <div class="field" *ngIf="typeofCreation === 'clone'">
                                             <sm-select [options]="{'fullTextSearch': true}"
+                                                [model]="selectedApplicationName"
                                                 (modelChange)="updateSelectedApplicationToClone($event)">
-                                                <option *ngFor="let app of project.applications" value="{{app.name}}">{{app.name}}</option>
+                                                <option *ngFor="let app of project.applications" [value]="app.name">{{app.name}}</option>
                                             </sm-select>
                                         </div>
 
@@ -94,5 +95,3 @@
 <ng-template #loadTemplate>
     <div class="ui text active loader">Loading CDS templates...</div>
 </ng-template>
-
-
