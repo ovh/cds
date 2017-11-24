@@ -26,6 +26,7 @@ const (
 	ContextHatchery
 	ContextWorker
 	ContextService
+	ContextUserSession
 )
 
 //Driver is an interface to all auth method (local, ldap and beyond...)

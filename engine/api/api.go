@@ -250,6 +250,18 @@ func (a *API) CheckConfiguration(config interface{}) error {
 	return nil
 }
 
+func getUserSession(c context.Context) string {
+	i := c.Value(auth.ContextUserSession)
+	if i == nil {
+		return ""
+	}
+	u, ok := i.(string)
+	if !ok {
+		return ""
+	}
+	return u
+}
+
 func getUser(c context.Context) *sdk.User {
 	i := c.Value(auth.ContextUser)
 	if i == nil {
