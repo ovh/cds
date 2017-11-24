@@ -31,7 +31,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 	}(w.Status, w, chanEvent)
 
 	maxsn := MaxSubNumber(w.WorkflowNodeRuns)
-	log.Info("processWorkflowRun> %s/%s %d.%d", p.Name, w.Workflow.Name, w.Number, maxsn)
+	log.Debug("processWorkflowRun> %s/%s %d.%d", p.Name, w.Workflow.Name, w.Number, maxsn)
 	w.LastSubNumber = maxsn
 
 	//Checks startingFromNode

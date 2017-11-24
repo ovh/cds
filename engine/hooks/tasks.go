@@ -262,13 +262,13 @@ func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
 
 	//Save the run number
 	e.WorkflowRun = run.Number
-	log.Info("Hooks> workflow %s/%s#%d has been triggered", t.Config["project"], t.Config["workflow"], run.Number)
+	log.Debug("Hooks> workflow %s/%s#%d has been triggered", t.Config["project"], t.Config["workflow"], run.Number)
 
 	return nil
 }
 
 func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Info("Hooks> Processing scheduled task %s", t.UUID)
+	log.Debug("Hooks> Processing scheduled task %s", t.UUID)
 
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{
@@ -291,7 +291,7 @@ func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeR
 }
 
 func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Info("Hooks> Processing webhook %s", t.UUID)
+	log.Debug("Hooks> Processing webhook %s", t.UUID)
 
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{

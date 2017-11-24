@@ -25,6 +25,20 @@ var (
 		},
 	}
 
+	RepositoryWebHookModel = &sdk.WorkflowHookModel{
+		Author:     "CDS",
+		Type:       sdk.WorkflowHookModelBuiltin,
+		Identifier: "github.com/ovh/cds/hook/builtin/repositorywebhook",
+		Name:       "RepositoryWebHook",
+		Icon:       "fa-anchor",
+		DefaultConfig: sdk.WorkflowNodeHookConfig{
+			"method": {
+				Value:        "POST",
+				Configurable: true,
+			},
+		},
+	}
+
 	GitPollerModel = &sdk.WorkflowHookModel{
 		Author:     "CDS",
 		Type:       sdk.WorkflowHookModelBuiltin,
@@ -53,6 +67,7 @@ var (
 
 	builtinModels = []*sdk.WorkflowHookModel{
 		WebHookModel,
+		RepositoryWebHookModel,
 		GitPollerModel,
 		SchedulerModel,
 	}
