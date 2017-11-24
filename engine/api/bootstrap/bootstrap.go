@@ -105,7 +105,7 @@ func VCSMigrate(db *gorp.DbMap, cache cache.Store) error {
 		accessToken := data["access_token"]
 		accessTokenSecret := data["access_token_secret"]
 
-		//supportedName: stash.ovh.net + github
+		//supportedName: see vcs configuration
 		vcsServerForProject := &sdk.ProjectVCSServer{
 			Name: strings.Replace(r.Name, ".", "_", -1),
 			Data: map[string]string{
