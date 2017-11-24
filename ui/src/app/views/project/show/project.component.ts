@@ -89,7 +89,6 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
           new LoadOpts('withApplicationNames', 'application_names'),
           new LoadOpts('withPipelineNames', 'pipeline_names'),
           new LoadOpts('withWorkflowNames', 'workflow_names'),
-          new LoadOpts('withApplicationPipelines', 'applications'),
         ];
 
         if (this.selectedTab === 'variables') {

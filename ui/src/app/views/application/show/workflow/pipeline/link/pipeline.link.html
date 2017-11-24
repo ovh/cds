@@ -6,7 +6,7 @@
                     <div class="ui field">
                         <label>{{ 'application_pipeline_linkable' | translate }}</label>
                         <sm-select [options]="{'fullTextSearch': true}" [(model)]="selectedPipelines" class="fluid search multiple">
-                            <option *ngFor="let p of getLinkablePipelines()" [value]="p.name">{{p.name}}</option>
+                            <option *ngFor="let pipName of getLinkablePipelines()" [value]="pipName">{{pipName}}</option>
                         </sm-select>
                     </div>
                 </div>

@@ -19,11 +19,13 @@ export class ApplicationSchedulerFormComponent implements OnInit {
     @Input() pipeline: Pipeline;
 
     constructor() {
+
     }
 
     ngOnInit() {
         if (this.scheduler && this.pipeline) {
-            this.scheduler.args = unionBy(this.scheduler.args || [], this.pipeline.parameters, 'id');
+            let filteredPipelineParams = this.pipeline.parameters ? this.pipeline.parameters.filter((p) => p.type !== 'list') : [];
+            this.scheduler.args = unionBy(this.scheduler.args || [], filteredPipelineParams, 'id');
         }
     }
 }

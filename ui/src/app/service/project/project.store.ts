@@ -129,6 +129,38 @@ export class ProjectStore {
      * @param key
      * @returns {Observable<Project>}
      */
+    getProjectApplicationsResolver(key: string): Observable<Project> {
+        let store = this._projectCache.getValue();
+        let missingApps = store.size === 0 || !store.get(key) || !store.get(key).applications || !store.get(key).applications.length;
+
+        if (missingApps) {
+            return this.resyncApplications(key);
+        } else {
+            return Observable.of(store.get(key));
+        }
+    }
+
+    /**
+     * Get project applications from API and store result
+     * @param key
+     * @returns {Observable<R>}
+     */
+    resyncApplications(key: string): Observable<Project> {
+        return this._projectService.getApplications(key)
+          .map((res) => {
+              let store = this._projectCache.getValue();
+              let proj = store.get(key);
+              proj.applications = res;
+              this._projectCache.next(store.set(key, proj));
+              return proj;
+          });
+    }
+
+    /**
+     * Use by router to preload project
+     * @param key
+     * @returns {Observable<Project>}
+     */
     getProjectPipelinesResolver(key: string): Observable<Project> {
         let store = this._projectCache.getValue();
         let missingEnv = store.size === 0 || !store.get(key) || !store.get(key).pipelines || !store.get(key).pipelines.length;

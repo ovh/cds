@@ -43,7 +43,6 @@ export class ProjectForPipelineCreateResolver implements Resolve<Project> {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
         let opts = [
           new LoadOpts('withPipelineNames', 'pipeline_names'),
-          new LoadOpts('withApplications', 'applications'),
         ];
 
         return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());
@@ -58,9 +57,9 @@ export class ProjectForApplicationResolver implements Resolve<Project> {
     resolve(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Observable<any>|Promise<any>|any {
         let params = this.routerService.getRouteSnapshotParams({}, state.root);
         let opts = [
-          new LoadOpts('withPipelines', 'pipelines'),
+          new LoadOpts('withPipelineNames', 'pipeline_names'),
+          new LoadOpts('withApplicationNames', 'application_names'),
           new LoadOpts('withEnvironments', 'environments'),
-          new LoadOpts('withApplicationPipelines', 'applications'),
         ];
 
         return this.projectStore.getProjectResolver(params['key'], opts).pipe(first());

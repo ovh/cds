@@ -7,7 +7,7 @@
                 <div class="ui eight wide field" [class.eight]="isNewNotif" [class.six]="!isNewNotif">
                     <ng-container *ngIf="isNewNotif">
                         <label>{{'notification_on_pipeline_s' | translate}}</label>
-                        <sm-select 
+                        <sm-select
                             class="fluid search multiple"
                             *ngIf="isNewNotif"
                             [(model)]="selected.pipeline"
@@ -53,11 +53,18 @@
                 </div>
                 <div class="ui eight wide field" *ngIf="selected.type === 'clone'">
                     <label>{{'notification_clone' | translate}}</label>
-                    <sm-select class="fluid search"
-                        [options]="{'fullTextSearch': true}"
-                        (modelChange)="updateWithClonedNotification($event)">
-                        <option *ngFor="let n of projectNotifications; let i = index" [value]="i">{{getCloneNotificationLabel(n)}}</option>
-                    </sm-select>
+                    <ng-container *ngIf="loadingApps">
+                        <sm-select class="fluid search">
+                            <option value="">{{'common_loading' | translate}}</option>
+                        </sm-select>
+                    </ng-container>
+                    <ng-container *ngIf="!loadingApps">
+                      <sm-select class="fluid search"
+                          [options]="{'fullTextSearch': true}"
+                          (modelChange)="updateWithClonedNotification($event)">
+                          <option *ngFor="let n of projectNotifications; let i = index" [value]="i">{{getCloneNotificationLabel(n)}}</option>
+                      </sm-select>
+                    </ng-container>
                 </div>
             </div>
 

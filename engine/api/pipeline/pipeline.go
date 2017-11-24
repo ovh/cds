@@ -293,7 +293,7 @@ func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.U
 			  WHERE group_user.user_id = $1
 			  AND pipeline.project_id = $2
 			  ORDER by pipeline.name`
-		args = []interface{}{projID, u.ID}
+		args = []interface{}{u.ID, projID}
 	}
 
 	var res []struct {

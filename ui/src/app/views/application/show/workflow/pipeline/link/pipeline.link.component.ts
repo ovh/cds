@@ -43,17 +43,15 @@ export class ApplicationPipelineLinkComponent {
         });
     }
 
-    getLinkablePipelines(): Array<Pipeline> {
-        let pipelines = new Array<Pipeline>();
-        if (this.project && this.project.pipelines && this.application) {
+    getLinkablePipelines(): Array<string> {
+        let pipelines = new Array<string>();
+        if (this.project && Array.isArray(this.project.pipeline_names) && this.application) {
             if (!this.application.pipelines) {
-                pipelines.push(...this.project.pipelines);
+                pipelines.push(...this.project.pipeline_names);
             } else {
-                this.project.pipelines.forEach( p => {
-                    if (!this.application.pipelines.find( appPip => {
-                        return appPip.pipeline.name === p.name;
-                        })) {
-                        pipelines.push(p);
+                this.project.pipeline_names.forEach(pipName => {
+                    if (!this.application.pipelines.find(appPip => appPip.pipeline.name === pipName)) {
+                        pipelines.push(pipName);
                     }
                 });
             }
