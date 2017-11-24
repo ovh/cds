@@ -78,17 +78,24 @@ func Reassemble(s Chunks, opts *Opts) (*Ctx, error) {
 
 	if ctx.Opts != nil {
 		if ctx.Opts.AESEncryption != nil {
-			content, err := aesDecrypt(ctx.Opts.AESEncryption, bytes.NewBuffer(ctx.Bytes()))
+			content, err := AESDecrypt(ctx.Opts.AESEncryption.Key, bytes.NewBuffer(ctx.Bytes()))
 			if err != nil {
 				return nil, err
 			}
-			ctx.content = content
+
+			ctx.content, err = ioutil.ReadAll(content)
+			if err != nil {
+				return nil, err
+			}
 		} else if ctx.Opts.GPGEncryption != nil {
-			content, err := gpgDecrypt(ctx.Opts.GPGEncryption, bytes.NewBuffer(ctx.Bytes()))
+			content, err := GPGDecrypt(ctx.Opts.GPGEncryption.PrivateKey, ctx.Opts.GPGEncryption.Passphrase, bytes.NewBuffer(ctx.Bytes()))
 			if err != nil {
 				return nil, err
 			}
-			ctx.content = content
+			ctx.content, err = ioutil.ReadAll(content)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

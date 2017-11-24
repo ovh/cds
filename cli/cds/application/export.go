@@ -34,7 +34,7 @@ func exportCmd() *cobra.Command {
 				sdk.Exit("Error %s\n", err)
 			}
 
-			app := exportentities.NewApplication(a)
+			app := exportentities.NewApplication(a, false)
 
 			f, err := exportentities.GetFormat(exportFormat)
 			if err != nil {

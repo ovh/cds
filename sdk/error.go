@@ -126,6 +126,7 @@ var (
 	ErrLastGroupWithWriteRole                = Error{ID: 110, Status: http.StatusForbidden}
 	ErrInvalidEmailDomain                    = Error{ID: 111, Status: http.StatusForbidden}
 	ErrWorkflowNodeRunJobNotFound            = Error{ID: 112, Status: http.StatusNotFound}
+	ErrBuiltinKeyNotFound                    = Error{ID: 113, Status: http.StatusInternalServerError}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -240,6 +241,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrLastGroupWithWriteRole.ID:                "The last group must have the write permission",
 	ErrInvalidEmailDomain.ID:                    "Invalid domain",
 	ErrWorkflowNodeRunJobNotFound.ID:            "Job not found",
+	ErrBuiltinKeyNotFound.ID:                    "Encryption Key not found",
 }
 
 var errorsFrench = map[int]string{
@@ -354,6 +356,7 @@ var errorsFrench = map[int]string{
 	ErrLastGroupWithWriteRole.ID:                "Le dernier groupe doit avoir les droits d'écriture",
 	ErrInvalidEmailDomain.ID:                    "Domaine invalide",
 	ErrWorkflowNodeRunJobNotFound.ID:            "Job non trouvé",
+	ErrBuiltinKeyNotFound.ID:                    "Clé de chiffrage introuvable",
 }
 
 var errorsLanguages = []map[int]string{

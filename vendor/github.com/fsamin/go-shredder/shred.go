@@ -2,6 +2,7 @@ package shredder
 
 import (
 	"bytes"
+	"io/ioutil"
 )
 
 const (
@@ -12,17 +13,23 @@ func shred(ctx *Ctx) ([]Chunk, error) {
 	var content = ctx.content
 	if ctx.Opts != nil {
 		if ctx.Opts.AESEncryption != nil {
-			b, err := aesEncrypt(ctx.Opts.AESEncryption, bytes.NewBuffer(content))
+			b, err := AESEncrypt(ctx.Opts.AESEncryption.Key, bytes.NewBuffer(content))
 			if err != nil {
 				return nil, err
 			}
-			content = b
+			content, err = ioutil.ReadAll(b)
+			if err != nil {
+				return nil, err
+			}
 		} else if ctx.Opts.GPGEncryption != nil {
-			b, err := gpgEncrypt(ctx.Opts.GPGEncryption, bytes.NewBuffer(content))
+			b, err := GPGEncrypt(ctx.Opts.GPGEncryption.PublicKey, bytes.NewBuffer(content))
 			if err != nil {
 				return nil, err
 			}
-			content = b
+			content, err = ioutil.ReadAll(b)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return shredContent(ctx, content), nil
