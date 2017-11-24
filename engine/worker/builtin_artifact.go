@@ -153,6 +153,10 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 				return res
 			}
 
+			if path == "" {
+				path = "."
+			}
+
 			if tag == "" {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = fmt.Sprintf("tag variable is empty. aborting")
@@ -193,6 +197,10 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 
 		destPath := sdk.ParameterValue(a.Parameters, "path")
 		tag := sdk.ParameterValue(a.Parameters, "tag")
+
+		if destPath == "" {
+			destPath = "."
+		}
 
 		if !enabled {
 			sendLog("Artifact Download is disabled.")
