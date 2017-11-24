@@ -346,7 +346,11 @@ func renameNode(db gorp.SqlExecutor, w *sdk.Workflow) error {
 		for _, n := range v {
 			if n.Name == "" {
 				nextNumber := maxNumberByPipeline[n.Pipeline.ID] + 1
-				n.Name = fmt.Sprintf("%s_%d", n.Pipeline.Name, nextNumber)
+				if nextNumber > 1 {
+					n.Name = fmt.Sprintf("%s_%d", n.Pipeline.Name, nextNumber)
+				} else {
+					n.Name = n.Pipeline.Name
+				}
 				maxNumberByPipeline[n.Pipeline.ID] = nextNumber
 			}
 		}
@@ -379,9 +383,14 @@ func saveNodeByPipeline(db gorp.SqlExecutor, dict *map[int64][]*sdk.WorkflowNode
 	(*dict)[n.PipelineID] = append((*dict)[n.PipelineID], n)
 
 	// Check max number for current pipeline
-	if n.Name != "" && strings.HasPrefix(n.Name, n.Pipeline.Name+"_") {
+	if n.Name == n.Pipeline.Name || (n.Name != "" && strings.HasPrefix(n.Name, n.Pipeline.Name+"_")) {
 		pipNumber, errI := strconv.ParseInt(strings.Replace(n.Name, n.Pipeline.Name+"_", "", 1), 10, 64)
-		if errI == nil {
+
+		if n.Name == n.Pipeline.Name {
+			pipNumber = 1
+		}
+
+		if errI == nil || pipNumber == 1 {
 			currentMax, ok := (*mapMaxNumber)[n.PipelineID]
 			if !ok || currentMax < pipNumber {
 				(*mapMaxNumber)[n.PipelineID] = pipNumber

@@ -3,9 +3,8 @@ package workflow
 import (
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/sdk"
 )
 
 // Resync a workflow in the given workflow run
@@ -14,20 +13,41 @@ func Resync(db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, u *sdk.
 	if errW != nil {
 		return sdk.WrapError(errW, "Resync> Cannot load workflow")
 	}
-	wr.Workflow = *wf
+
+	if err := resyncNode(wr.Workflow.Root, *wf); err != nil {
+		return err
+	}
+
+	for i := range wr.Workflow.Joins {
+		join := &wr.Workflow.Joins[i]
+		for j := range join.Triggers {
+			t := &join.Triggers[j]
+			if err := resyncNode(&t.WorkflowDestNode, *wf); err != nil {
+				return err
+			}
+		}
+	}
+
 	return updateWorkflowRun(db, wr)
 }
 
-func resyncNode(db gorp.SqlExecutor, n *sdk.WorkflowNode) error {
-	pip, errP := pipeline.LoadPipelineByID(db, n.Pipeline.ID, true)
-	if errP != nil {
-		return sdk.WrapError(errP, "resyncNode> Cannot load pipeline %s", n.Pipeline.Name)
+func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {
+	newNode := newWorkflow.GetNode(node.ID)
+	if newNode == nil {
+		newNode = newWorkflow.GetNodeByName(node.Name)
 	}
-	n.Pipeline = *pip
-	for i := range n.Triggers {
-		t := &n.Triggers[i]
-		if errR := resyncNode(db, &t.WorkflowDestNode); errR != nil {
-			return sdk.WrapError(errR, "resyncNode> Cannot resync node %s", n.Name)
+	if newNode == nil {
+		return sdk.ErrWorkflowNodeNotFound
+	}
+
+	node.Name = newNode.Name
+	node.Context = newNode.Context
+	node.Pipeline = newNode.Pipeline
+
+	for i := range node.Triggers {
+		t := &node.Triggers[i]
+		if err := resyncNode(&t.WorkflowDestNode, newWorkflow); err != nil {
+			return err
 		}
 	}
 	return nil
