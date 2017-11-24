@@ -32,7 +32,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 	//Check result
 	models := []sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &models))
-	assert.Len(t, models, 3, "")
+	assert.Len(t, models, 4, "")
 }
 
 func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
@@ -54,7 +54,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 	//Check result
 	models := []sdk.WorkflowHookModel{}
 	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &models))
-	assert.Len(t, models, 3, "")
+	assert.Len(t, models, 4, "")
 }
 
 func Test_getWorkflowHookModelHandler(t *testing.T) {
