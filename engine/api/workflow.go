@@ -213,8 +213,12 @@ func (api *API) putWorkflowHandler() Handler {
 			}
 		}
 
-		hooks := wf.GetHooks()
-		if len(hooks) > 0 {
+		oldHooks := oldW.GetHooks()
+		newHooks := wf.GetHooks()
+
+		hookToUpdate, hooKToDelete := workflow.DiffHook(oldHooks, newHooks)
+
+		if len(hookToUpdate) > 0 {
 			//Push the hook to hooks µService
 			dao := services.NewRepository(api.mustDB, api.Cache)
 			//Load service "hooks"
@@ -222,15 +226,14 @@ func (api *API) putWorkflowHandler() Handler {
 			if err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> Unable to get services dao")
 			}
-
 			if wf.Name != name {
 				// update hook
-				for i := range hooks {
-					h := hooks[i]
+				for i := range hookToUpdate {
+					h := hookToUpdate[i]
 					configValue := h.Config["workflow"]
 					configValue.Value = wf.Name
 					h.Config["workflow"] = configValue
-					hooks[i] = h
+					hookToUpdate[i] = h
 				}
 			}
 
@@ -240,17 +243,32 @@ func (api *API) putWorkflowHandler() Handler {
 			}
 
 			var hooksUpdated map[string]sdk.WorkflowNodeHook
-			code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hooks, &hooksUpdated)
+			code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hooksUpdated)
 			if errHooks == nil {
 				for _, h := range hooksUpdated {
 					if err := workflow.UpdateHook(tx, &h); err != nil {
 						return sdk.WrapError(errHooks, "putWorkflowHandler> Cannot update hook")
 					}
 				}
-				log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
+				log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hookToUpdate), wf.ProjectKey, wf.Name, code)
 			} else {
 				return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
 			}
+		}
+
+		if len(hooKToDelete) > 0 {
+			//Push the hook to hooks µService
+			dao := services.NewRepository(api.mustDB, api.Cache)
+			//Load service "hooks"
+			srvs, err := dao.FindByType("hooks")
+			if err != nil {
+				return sdk.WrapError(err, "putWorkflowHandler> Unable to get services dao")
+			}
+			code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, fmt.Sprintf("/task/bulk"), hooKToDelete, nil)
+			if errHooks != nil || code >= 400 {
+				log.Warning("putWorkflowHandler> Unable to delete old hooks")
+			}
+
 		}
 
 		if err := tx.Commit(); err != nil {

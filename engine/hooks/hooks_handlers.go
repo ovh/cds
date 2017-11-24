@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/ovh/cds/engine/api"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -179,6 +180,32 @@ func (s *Service) getTaskExecutionsHandler() api.Handler {
 		}
 
 		return api.WriteJSON(w, r, execs, http.StatusOK)
+	}
+}
+
+func (s *Service) deleteTaskBulkHandler() api.Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		hooks := map[string]sdk.WorkflowNodeHook{}
+		if err := api.UnmarshalBody(r, &hooks); err != nil {
+			return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
+		}
+
+		for uuid := range hooks {
+			//Load the task
+			t := s.Dao.FindTask(uuid)
+			if t == nil {
+				continue
+			}
+
+			//Stop the task
+			if err := s.stopTask(ctx, t); err != nil {
+				return sdk.WrapError(sdk.ErrNotFound, "Hook> putTaskHandler> stop task")
+			}
+			//Delete the task
+			s.Dao.DeleteTask(t)
+		}
+
+		return nil
 	}
 }
 

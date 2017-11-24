@@ -157,3 +157,36 @@ func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeH
 	}
 	return nodes, nil
 }
+
+func DiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[string]sdk.WorkflowNodeHook) (hookToUpdate map[string]sdk.WorkflowNodeHook, hookToDelete map[string]sdk.WorkflowNodeHook) {
+	hookToUpdate = make(map[string]sdk.WorkflowNodeHook)
+	hookToDelete = make(map[string]sdk.WorkflowNodeHook)
+
+	for kNew := range newHooks {
+		hold, ok := oldHooks[kNew]
+		// if new hook
+		if !ok {
+			hookToUpdate[kNew] = newHooks[kNew]
+			continue
+		}
+
+	next:
+		for k, v := range newHooks[kNew].Config {
+			for kold, vold := range hold.Config {
+				if kold == k && v != vold {
+					hookToUpdate[kNew] = newHooks[kNew]
+					break next
+				}
+			}
+		}
+	}
+
+	for kHold := range oldHooks {
+		if _, ok := newHooks[kHold]; !ok {
+			hookToDelete[kHold] = oldHooks[kHold]
+		}
+	}
+	log.Warning("To update: %+v", hookToUpdate)
+	log.Warning("To delete: %v", hookToDelete)
+	return
+}
