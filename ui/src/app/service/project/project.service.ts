@@ -1,5 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Project, LoadOpts} from '../../model/project.model';
+import {Application} from '../../model/application.model';
 import {Observable} from 'rxjs/Observable';
 import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
@@ -304,5 +305,13 @@ export class ProjectService {
      */
     getAllNotifications(key: string): Observable<Array<Notification>> {
         return this._http.get<Array<Notification>>('/project/' + key + '/notifications');
+    }
+
+    /**
+     * Get all applications in project
+     * @param key Project unique key
+     */
+    getApplications(key: string): Observable<Array<Application>> {
+        return this._http.get<Array<Application>>('/project/' + key + '/applications');
     }
 }

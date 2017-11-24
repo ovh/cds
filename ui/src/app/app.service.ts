@@ -30,7 +30,6 @@ export class AppService {
         switch (lastUpdate.type) {
             case 'project':
                 opts = [
-                    new LoadOpts('withApplicationPipelines', 'applications.pipelines'),
                     new LoadOpts('withWorkflows', 'workflows')
                 ];
                 this.updateProjectCache(lastUpdate, opts);

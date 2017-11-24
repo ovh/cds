@@ -83,7 +83,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         this._route.queryParams.subscribe(queryParams => {
            this.appFilter = {
                remote: queryParams['remote'] || '',
-               branch: queryParams['branch'] || 'master',
+               branch: queryParams['branch'] || '',
                version: queryParams['version'] || ' '
            };
 
@@ -173,7 +173,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 'api': environment.apiURL,
                 'key': key,
                 'appName': this.application.name,
-                'branch': this.appFilter.branch,
+                'branch': this.appFilter.branch || 'master',
                 'remote': this.appFilter.remote,
                 'version': this.appFilter.version
             };
