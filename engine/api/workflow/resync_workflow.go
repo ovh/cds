@@ -14,35 +14,43 @@ func Resync(db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, u *sdk.
 		return sdk.WrapError(errW, "Resync> Cannot load workflow")
 	}
 
-	resyncNode(wr.Workflow.Root, *wf)
+	if err := resyncNode(wr.Workflow.Root, *wf); err != nil {
+		return err
+	}
 
 	for i := range wr.Workflow.Joins {
 		join := &wr.Workflow.Joins[i]
 		for j := range join.Triggers {
 			t := &join.Triggers[j]
-			resyncNode(&t.WorkflowDestNode, *wf)
+			if err := resyncNode(&t.WorkflowDestNode, *wf); err != nil {
+				return err
+			}
 		}
 	}
 
 	return updateWorkflowRun(db, wr)
 }
 
-func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) {
+func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {
 	newNode := newWorkflow.GetNode(node.ID)
 	if newNode == nil {
 		newNode = newWorkflow.GetNodeByName(node.Name)
 	}
-	if newNode != nil {
-		node.Name = newNode.Name
-		node.Context = newNode.Context
-		node.Pipeline = newNode.Pipeline
+	if newNode == nil {
+		return sdk.ErrWorkflowNodeNotFound
 	}
+
+	node.Name = newNode.Name
+	node.Context = newNode.Context
+	node.Pipeline = newNode.Pipeline
 
 	for i := range node.Triggers {
 		t := &node.Triggers[i]
-		resyncNode(&t.WorkflowDestNode, newWorkflow)
+		if err := resyncNode(&t.WorkflowDestNode, newWorkflow); err != nil {
+			return err
+		}
 	}
-
+	return nil
 }
 
 //ResyncWorkflowRunStatus resync the status of workflow if you stop a node run when workflow run is building
