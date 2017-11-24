@@ -1,7 +1,6 @@
 package exportentities
 
 import (
-	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -20,8 +19,6 @@ func GetFormat(f string) (Format, error) {
 		return FormatYAML, nil
 	case "json":
 		return FormatJSON, nil
-	case "hcl":
-		return FormatHCL, nil
 	case "toml", "tml":
 		return FormatTOML, nil
 	default:
@@ -31,11 +28,6 @@ func GetFormat(f string) (Format, error) {
 
 //Marshal suppoets JSON, YAML and HCL
 func Marshal(i interface{}, f Format) ([]byte, error) {
-	o, ok := i.(HCLable)
-	if f == FormatHCL && !ok {
-		return nil, ErrUnsupportedHCLFormat
-	}
-
 	var btes []byte
 	var errMarshal error
 	switch f {
@@ -43,14 +35,6 @@ func Marshal(i interface{}, f Format) ([]byte, error) {
 		btes, errMarshal = json.Marshal(i)
 	case FormatYAML:
 		btes, errMarshal = yaml.Marshal(i)
-	case FormatHCL:
-		t, err := o.HCLTemplate()
-		if err != nil {
-			return nil, err
-		}
-		buff := new(bytes.Buffer)
-		errMarshal = t.Execute(buff, o)
-		btes = buff.Bytes()
 	}
 	return btes, errMarshal
 }
@@ -60,8 +44,6 @@ func ReadFile(filename string) ([]byte, Format, error) {
 	format := FormatYAML
 	if strings.HasSuffix(filename, ".json") {
 		format = FormatJSON
-	} else if strings.HasSuffix(filename, ".hcl") {
-		format = FormatHCL
 	}
 
 	btes, err := ioutil.ReadFile(filename)

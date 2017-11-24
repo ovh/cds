@@ -162,7 +162,18 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	v.OutputFormat = "xml"
 	v.OutputDir = output
 
-	tests, err := v.Process([]string{path}, []string{exclude})
+	filepath := strings.Split(path, ",")
+	filepathExcluded := strings.Split(exclude, ",")
+
+	if len(filepath) == 1 {
+		filepath = strings.Split(filepath[0], " ")
+	}
+
+	if len(filepathExcluded) == 1 {
+		filepathExcluded = strings.Split(filepathExcluded[0], " ")
+	}
+
+	tests, err := v.Process(filepath, filepathExcluded)
 	if err != nil {
 		plugin.SendLog(a, "VENOM - Fail on venom: %s\n", err)
 		return plugin.Fail

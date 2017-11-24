@@ -90,6 +90,11 @@ func FormBool(r *http.Request, s string) bool {
 	}
 }
 
+// FormString return a string
+func FormString(r *http.Request, s string) string {
+	return r.FormValue(s)
+}
+
 // requestVarInt return int value for a var in Request
 func requestVarInt(r *http.Request, s string) (int64, error) {
 	vars := mux.Vars(r)

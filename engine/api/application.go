@@ -43,7 +43,6 @@ func (api *API) getApplicationsHandler() Handler {
 
 func (api *API) getApplicationTreeHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		applicationName := vars["permApplicationName"]
