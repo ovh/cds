@@ -1,8 +1,6 @@
 package exportentities
 
 import (
-	"fmt"
-
 	"github.com/ovh/cds/sdk"
 )
 
@@ -16,6 +14,7 @@ type Application struct {
 	Keys           map[string]VariableValue `json:"keys,omitempty" yaml:"keys,omitempty"`
 }
 
+// EncryptedKey represents an encrypted secret
 type EncryptedKey struct {
 	Type    string
 	Name    string
