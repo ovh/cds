@@ -333,6 +333,10 @@ func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
 		rmName := vars["name"]
 		repoName := r.FormValue("repo")
 
+		if repoName == "" {
+			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Missing repository name 'repo' as a query parameter"))
+		}
+
 		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errproj != nil {
 			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
