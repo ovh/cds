@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
@@ -174,8 +175,12 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 				return nil
 			}
 		}
-		if err := json.Unmarshal(body, v); err != nil {
-			return err
+
+		// bitbucket can return 204 with no-content
+		if resp.StatusCode != 204 || strings.TrimSpace(string(body)) != "" {
+			if err := json.Unmarshal(body, v); err != nil {
+				return err
+			}
 		}
 
 		c.consumer.cache.Set(cacheKey, v)
