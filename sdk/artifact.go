@@ -79,6 +79,8 @@ func DownloadArtifacts(project string, application string, pipeline string, tag 
 		return err
 	}
 
+	fmt.Printf("artifacts: %+v", arts)
+
 	for _, a := range arts {
 		err := download(project, application, pipeline, a, destdir)
 		if err != nil {
@@ -91,45 +93,66 @@ func DownloadArtifacts(project string, application string, pipeline string, tag 
 
 func download(project, app, pip string, a Artifact, destdir string) error {
 	var lasterr error
+	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/artifact/download/%d", project, app, pip, a.ID)
+
+	var reader io.ReadCloser
+	var mods []RequestModifier
+
+	fmt.Printf("%+v", a)
+
+	if a.TempURL != "" && a.TempURLSecretKey != "" {
+		fmt.Printf("Download from %s\n", a.TempURL)
+		mods = append(mods, func(r *http.Request) {
+
+		})
+		uri = a.TempURL
+	}
 
 	for retry := 5; retry >= 0; retry-- {
-		uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/artifact/download/%d", project, app, pip, a.ID)
-		reader, code, err := Stream("GET", uri, nil)
+		var code int
+		var err error
+		reader, code, err = Stream("GET", uri, nil, mods...)
 		if err != nil {
 			lasterr = err
 			continue
 		}
+
+		//If internal server error... don't retry
+		if code == 500 {
+			break
+		}
+
 		if code >= 300 {
 			lasterr = fmt.Errorf("HTTP %d", code)
 			continue
 		}
+	}
 
-		if err := os.MkdirAll(destdir, os.FileMode(0744)); err != nil {
-			return err
-		}
+	if err := os.MkdirAll(destdir, os.FileMode(0744)); err != nil {
+		return err
+	}
 
-		destPath := path.Join(destdir, a.Name)
+	destPath := path.Join(destdir, a.Name)
 
-		mode := os.FileMode(0644)
-		if a.Perm != uint32(0) {
-			mode = os.FileMode(a.Perm)
-		}
+	mode := os.FileMode(0644)
+	if a.Perm != uint32(0) {
+		mode = os.FileMode(a.Perm)
+	}
 
-		f, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, mode)
-		if err != nil {
-			lasterr = err
-			continue
-		}
+	f, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, mode)
+	if err != nil {
+		return err
+	}
 
-		_, err = io.Copy(f, reader)
-		if err != nil {
-			lasterr = err
-		}
+	//It panics
+	_, err = io.Copy(f, reader)
+	if err != nil {
+		return err
+	}
 
-		f.Close()
-		if err == nil {
-			return nil
-		}
+	f.Close()
+	if err == nil {
+		return nil
 	}
 
 	return fmt.Errorf("x5: %s", lasterr)
@@ -264,7 +287,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 }
 
 func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, file io.Reader, stat os.FileInfo, md5sum string) error {
-
+	fmt.Println("Upload with temp url")
 	art := Artifact{
 		Name:   filename,
 		MD5sum: md5sum,
@@ -286,8 +309,6 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 	if err := json.Unmarshal(body, &art); err != nil {
 		return err
 	}
-
-	fmt.Println("Temprary URL: ", art.TempURL)
 
 	//Post the file to the temporary URL
 	req, errRequest := http.NewRequest("PUT", art.TempURL, file)
