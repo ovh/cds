@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -15,27 +16,24 @@ import (
 //loadNodeRunJobInfo load infos (workflow_node_run_job_infos) for a job (workflow_node_run_job)
 func loadNodeRunJobInfo(db gorp.SqlExecutor, jobID int64) ([]sdk.SpawnInfo, error) {
 	query := "SELECT spawninfos FROM workflow_node_run_job_info WHERE workflow_node_run_job_id = $1"
-	rows, err := db.Query(query, jobID)
-	if err != nil {
+	res := []struct {
+		Bytes sql.NullString `db:"spawninfos"`
+	}{}
+
+	if _, err := db.Select(&res, query, jobID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
 		return nil, sdk.WrapError(err, "loadNodeRunJobInfo> cannot QueryRow")
 	}
-	defer rows.Close()
 
 	spawnInfos := []sdk.SpawnInfo{}
-	for rows.Next() {
-		infos := []sdk.SpawnInfo{}
-		var bts []byte
-		if err := rows.Scan(&bts); err != nil {
-			return nil, sdk.WrapError(err, "loadNodeRunJobInfo> cannot Scan")
-		}
-		if err := json.Unmarshal(bts, &infos); err != nil {
-			return nil, sdk.WrapError(err, "loadNodeRunJobInfo> cannot Unmarshal")
-		}
-		spawnInfos = append(spawnInfos, infos...)
+	for _, r := range res {
+		v := []sdk.SpawnInfo{}
+		gorpmapping.JSONNullString(r.Bytes, &v)
+		spawnInfos = append(spawnInfos, v...)
 	}
+
 	return spawnInfos, nil
 }
 
