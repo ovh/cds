@@ -56,14 +56,14 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int6
 
 	sqlJobs := []JobRun{}
 	if _, err := db.Select(&sqlJobs, query, groupID, *since, strings.Join(statuses, ","), isSharedInfraGroup); err != nil {
-		return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs")
+		return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (Select)")
 	}
 
 	jobs := make([]sdk.WorkflowNodeJobRun, len(sqlJobs))
 	for i := range sqlJobs {
 		getHatcheryInfo(store, &sqlJobs[i])
 		if err := sqlJobs[i].PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs")
+			return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (PostGet)")
 		}
 		jobs[i] = sdk.WorkflowNodeJobRun(sqlJobs[i])
 	}
@@ -177,13 +177,8 @@ func (j *JobRun) PostUpdate(s gorp.SqlExecutor) error {
 		return errP
 	}
 
-	spawnJSON, errJ := json.Marshal(j.SpawnInfos)
-	if errJ != nil {
-		return errJ
-	}
-
-	query := "update workflow_node_run_job set job = $2, variables = $3, spawninfos = $4 where id = $1"
-	if n, err := s.Exec(query, j.ID, jobJSON, paramsJSON, spawnJSON); err != nil {
+	query := "update workflow_node_run_job set job = $2, variables = $3 where id = $1"
+	if n, err := s.Exec(query, j.ID, jobJSON, paramsJSON); err != nil {
 		return err
 	} else if n, _ := n.RowsAffected(); n == 0 {
 		return fmt.Errorf("Unable to update workflow_node_run_job id = %d", j.ID)
@@ -201,9 +196,9 @@ func getHatcheryInfo(store cache.Store, j *JobRun) {
 
 // PostGet is a db hook on workflow_node_run_job
 func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
-	query := "SELECT job, variables, spawninfos FROM workflow_node_run_job WHERE id = $1"
-	var params, job, spawn []byte
-	if err := s.QueryRow(query, j.ID).Scan(&job, &params, &spawn); err != nil {
+	query := "SELECT job, variables FROM workflow_node_run_job WHERE id = $1"
+	var params, job []byte
+	if err := s.QueryRow(query, j.ID).Scan(&job, &params); err != nil {
 		return err
 	}
 
@@ -211,9 +206,6 @@ func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 		return err
 	}
 	if err := json.Unmarshal(params, &j.Parameters); err != nil {
-		return err
-	}
-	if err := json.Unmarshal(spawn, &j.SpawnInfos); err != nil {
 		return err
 	}
 

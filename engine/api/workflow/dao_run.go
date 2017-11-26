@@ -15,39 +15,39 @@ import (
 )
 
 // insertWorkflowRun inserts in table "workflow_run""
-func insertWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun) error {
-	runDB := Run(*w)
+func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
+	runDB := Run(*wr)
 	if err := db.Insert(&runDB); err != nil {
 		return sdk.WrapError(err, "insertWorkflowRun> Unable to insert run")
 	}
-	w.ID = runDB.ID
+	wr.ID = runDB.ID
 	return nil
 }
 
 // updateWorkflowRun updates in table "workflow_run""
-func updateWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun) error {
-	w.LastModified = time.Now()
+func updateWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
+	wr.LastModified = time.Now()
 
-	for _, info := range w.Infos {
+	for _, info := range wr.Infos {
 		if info.IsError {
-			w.Status = string(sdk.StatusFail)
+			wr.Status = string(sdk.StatusFail)
 		}
 	}
 
-	runDB := Run(*w)
+	runDB := Run(*wr)
 	if _, err := db.Update(&runDB); err != nil {
-		return sdk.WrapError(err, "updateWorkflowRun> Unable to update run")
+		return sdk.WrapError(err, "updateWorkflowRun> Unable to update workflow run")
 	}
-	w.ID = runDB.ID
+	wr.ID = runDB.ID
 	return nil
 }
 
 //UpdateWorkflowRunStatus update status of a workflow run
-func UpdateWorkflowRunStatus(db gorp.SqlExecutor, ID int64, status string) error {
+func UpdateWorkflowRunStatus(db gorp.SqlExecutor, wrID int64, status string) error {
 	//Update workflow run status
 	query := "UPDATE workflow_run SET status = $1, last_modified = $2 WHERE id = $3"
-	if _, err := db.Exec(query, status, time.Now(), ID); err != nil {
-		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", ID, status)
+	if _, err := db.Exec(query, status, time.Now(), wrID); err != nil {
+		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", wrID, status)
 	}
 	return nil
 }

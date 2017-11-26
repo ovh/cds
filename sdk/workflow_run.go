@@ -158,6 +158,15 @@ type WorkflowNodeJobRun struct {
 	SpawnInfos        []SpawnInfo `json:"spawninfos" db:"-"`
 }
 
+//WorkflowNodeJobRunInfo represents info on a job
+type WorkflowNodeJobRunInfo struct {
+	ID                   int64       `json:"id" db:"id"`
+	WorkflowNodeJobRunID int64       `json:"workflow_node_job_run_id,omitempty" db:"workflow_node_job_run_id"`
+	WorkflowNodeRunID    int64       `json:"workflow_node_run_id,omitempty" db:"workflow_node_node_run_id"`
+	SpawnInfos           []SpawnInfo `json:"info" db:"-"`
+	Created              time.Time   `json:"created" db:"created"`
+}
+
 // Translate translates messages in WorkflowNodeJobRun
 func (njr *WorkflowNodeJobRun) Translate(lang string) {
 	for ki, info := range njr.SpawnInfos {
