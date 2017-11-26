@@ -3,6 +3,7 @@ package workflow
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -45,14 +46,14 @@ func insertNodeRunJobInfo(db gorp.SqlExecutor, info *sdk.WorkflowNodeJobRunInfo)
 	log.Warning("insertNodeRunJobInfo > insert info: %+v", info)
 	spawnJSON, errJ := json.Marshal(info.SpawnInfos)
 	if errJ != nil {
-		return errJ
+		return sdk.WrapError(errJ, "insertNodeRunJobInfo> cannot Marshal")
 	}
 
 	query := "insert into workflow_node_run_job_info (workflow_node_run_id, workflow_node_run_job_id, spawninfos, created) values ($1, $2, $3, $4)"
 	if n, err := db.Exec(query, info.WorkflowNodeRunID, info.WorkflowNodeJobRunID, spawnJSON, time.Now()); err != nil {
-		return err
+		return sdk.WrapError(err, "insertNodeRunJobInfo> err while inserting spawninfos into workflow_node_run_job_info")
 	} else if n, _ := n.RowsAffected(); n == 0 {
-		return sdk.WrapError(err, "insertNodeRunJobInfo> Unable to update workflow_node_run_job_info id = %d", info.WorkflowNodeJobRunID)
+		return fmt.Errorf("insertNodeRunJobInfo> Unable to update workflow_node_run_job_info id = %d", info.WorkflowNodeJobRunID)
 	}
 
 	log.Debug("insertNodeRunJobInfo> on node run: %d (%d)", info.ID, info.WorkflowNodeJobRunID)

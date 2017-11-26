@@ -160,11 +160,11 @@ type WorkflowNodeJobRun struct {
 
 //WorkflowNodeJobRunInfo represents info on a job
 type WorkflowNodeJobRunInfo struct {
-	ID                   int64       `json:"id" db:"id"`
-	WorkflowNodeJobRunID int64       `json:"workflow_node_job_run_id,omitempty" db:"workflow_node_job_run_id"`
-	WorkflowNodeRunID    int64       `json:"workflow_node_run_id,omitempty" db:"workflow_node_node_run_id"`
-	SpawnInfos           []SpawnInfo `json:"info" db:"-"`
-	Created              time.Time   `json:"created" db:"created"`
+	ID                   int64       `json:"id"`
+	WorkflowNodeJobRunID int64       `json:"workflow_node_job_run_id,omitempty"`
+	WorkflowNodeRunID    int64       `json:"workflow_node_run_id,omitempty"`
+	SpawnInfos           []SpawnInfo `json:"info"`
+	Created              time.Time   `json:"created"`
 }
 
 // Translate translates messages in WorkflowNodeJobRun

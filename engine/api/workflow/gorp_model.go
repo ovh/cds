@@ -33,9 +33,6 @@ type NodeRun sdk.WorkflowNodeRun
 // JobRun is a gorp wrapper around sdk.WorkflowNodeJobRun
 type JobRun sdk.WorkflowNodeJobRun
 
-// JobRunInfo is a gorp wrapper around sdk.WorkflowNodeJobRunInfo
-type JobRunInfo sdk.WorkflowNodeJobRunInfo
-
 // NodeRunArtifact is a gorp wrapper around sdk.WorkflowNodeRunArtifact
 type NodeRunArtifact sdk.WorkflowNodeRunArtifact
 
@@ -61,7 +58,6 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(NodeRun{}, "workflow_node_run", true, "id"))
 	gorpmapping.Register(gorpmapping.New(sqlNodeRun{}, "workflow_node_run", true, "id"))
 	gorpmapping.Register(gorpmapping.New(JobRun{}, "workflow_node_run_job", true, "id"))
-	gorpmapping.Register(gorpmapping.New(JobRunInfo{}, "workflow_node_run_job_info", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeRunArtifact{}, "workflow_node_run_artifacts", true, "id"))
 	gorpmapping.Register(gorpmapping.New(RunTag{}, "workflow_run_tag", false, "workflow_run_id", "tag"))
 	gorpmapping.Register(gorpmapping.New(NodeHookModel{}, "workflow_hook_model", true, "id"))
