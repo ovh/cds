@@ -30,6 +30,8 @@ func (v *Venom) RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite,
 		// add result in templater
 		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
 
+		l.Debugf("Apply assertions")
+
 		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
 			assertRes = applyChecks(&result, step, h.GetDefaultAssertions(), l)
 		} else {

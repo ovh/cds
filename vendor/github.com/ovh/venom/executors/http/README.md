@@ -15,6 +15,9 @@ In your yaml file, you can use:
   - ignore_verify_ssl optional: set to true if you use a self-signed SSL on remote for example
   - basic_auth_user optional: username to use for HTTP basic authentification
   - basic_auth_password optional: password to use for HTTP basic authentification 
+  - skip_body: skip the body and bodyjson result
+  - skip_headers: skip the headers result
+
 ```
 
 ```yaml
