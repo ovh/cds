@@ -92,7 +92,7 @@
             <div class="ui trigger segment" *ngFor="let s of workflowItem.schedulers">
                 <app-application-scheduler-item
                         [project]="project" [application]="workflowItem.application"
-                        [scheduler]="s" [pipeline]="workflowItem.pipeline"></app-application-scheduler-item>
+                        [scheduler]="s" [pipeline]="workflowItem.pipeline" [edit]="true"></app-application-scheduler-item>
             </div>
             <div class="ui trigger segment" *ngFor="let h of workflowItem.hooks">
                 <app-application-hook-item [project]="project" [application]="workflowItem.application"
