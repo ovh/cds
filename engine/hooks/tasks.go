@@ -8,6 +8,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/fsamin/go-dump"
@@ -21,8 +22,13 @@ import (
 
 //This are all the types
 const (
-	TypeWebHook   = "Webhook"
-	TypeScheduler = "Scheduler"
+	TypeRepoManagerWebHook = "RepoWebHook"
+	TypeWebHook            = "Webhook"
+	TypeScheduler          = "Scheduler"
+
+	GithubHeader    = "X-GitHub-Event"
+	GitlabHeader    = "X-Gitlab-Event"
+	BitbucketHeader = "X-Event-Key"
 )
 
 var (
@@ -114,6 +120,16 @@ func (s *Service) hookToTask(h *sdk.WorkflowNodeHook) (*Task, error) {
 			Type:   TypeWebHook,
 			Config: h.Config,
 		}, nil
+	case workflow.RepositoryWebHookModel.Name:
+		h.Config["webHookURL"] = sdk.WorkflowNodeHookConfigValue{
+			Value:        fmt.Sprintf("%s/webhook/%s", s.Cfg.URLPublic, h.UUID),
+			Configurable: false,
+		}
+		return &Task{
+			UUID:   h.UUID,
+			Type:   TypeRepoManagerWebHook,
+			Config: h.Config,
+		}, nil
 	case workflow.SchedulerModel.Name:
 		return &Task{
 			UUID:   h.UUID,
@@ -153,7 +169,7 @@ func (s *Service) startTask(ctx context.Context, t *Task) error {
 	s.Dao.SaveTask(t)
 
 	switch t.Type {
-	case TypeWebHook:
+	case TypeWebHook, TypeRepoManagerWebHook:
 		log.Debug("Hooks> Webhook tasks %s ready", t.UUID)
 		return nil
 	case TypeScheduler:
@@ -223,7 +239,7 @@ func (s *Service) stopTask(ctx context.Context, t *Task) error {
 	s.Dao.SaveTask(t)
 
 	switch t.Type {
-	case TypeWebHook, TypeScheduler:
+	case TypeWebHook, TypeScheduler, TypeRepoManagerWebHook:
 		log.Debug("Hooks> Tasks %s has been stopped", t.UUID)
 		return nil
 	default:
@@ -293,6 +309,87 @@ func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeR
 func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 	log.Debug("Hooks> Processing webhook %s", t.UUID)
 
+	if t.Type == TypeRepoManagerWebHook {
+		return executeRepositoryWebHook(t)
+	}
+	return executeWebHook(t)
+}
+
+func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
+	// Prepare a struct to send to CDS API
+	h := sdk.WorkflowNodeRunHookEvent{
+		WorkflowNodeHookUUID: t.UUID,
+	}
+
+	payload := make(map[string]interface{})
+	if v, ok := t.WebHook.RequestHeader[GithubHeader]; ok && v[0] == "push" {
+		var pushEvent GithubPushEvent
+		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
+			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read github request: %s", string(t.WebHook.RequestBody))
+		}
+		payload["git.author"] = pushEvent.Pusher.Name
+		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
+		payload["git.hash.before"] = pushEvent.Before
+		payload["git.hash"] = pushEvent.After
+		payload["git.nb.commits"] = len(pushEvent.Commits)
+		payload["git.commits"] = pushEvent.GetCommits()
+		if len(pushEvent.Commits) > 0 {
+			payload["git.message"] = pushEvent.Commits[0].Message
+		}
+	} else if v, ok := t.WebHook.RequestHeader[GitlabHeader]; ok && v[0] == "Push Hook" {
+		var pushEvent GitlabPushEvent
+		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
+			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
+		}
+		payload["git.author"] = pushEvent.UserUsername
+		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
+		payload["git.hash.before"] = pushEvent.Before
+		payload["git.hash"] = pushEvent.After
+		payload["git.nb.commits"] = len(pushEvent.Commits)
+		payload["git.commits"] = pushEvent.GetCommits()
+		if len(pushEvent.Commits) > 0 {
+			payload["git.message"] = pushEvent.Commits[0].Message
+		}
+	} else if v, ok := t.WebHook.RequestHeader[BitbucketHeader]; ok && v[0] == "repo:push" {
+		var pushEvent BitbucketPushEvent
+		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
+			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
+		}
+		payload["git.author"] = pushEvent.Actor.Username
+		payload["git.branch"] = strings.TrimPrefix(pushEvent.Push.Changes[0].New.Name, "refs/heads/")
+		payload["git.hash.before"] = pushEvent.Push.Changes[0].Old.Target.Hash
+		payload["git.hash"] = pushEvent.Push.Changes[0].New.Target.Hash
+		payload["git.nb.commits"] = len(pushEvent.Push.Changes[0].Commits)
+		payload["git.commits"] = pushEvent.GetCommits()
+		if len(pushEvent.Push.Changes[0].Commits) > 0 {
+			payload["git.message"] = pushEvent.Push.Changes[0].Commits[0].Message
+		}
+	} else {
+		values, err := url.ParseQuery(t.WebHook.RequestURL)
+		if err != nil {
+			return nil, sdk.WrapError(err, "Hooks> Unable to parse query url %s", t.WebHook.RequestURL)
+		}
+		payload["git.author"] = values.Get("author")
+		payload["git.branch"] = values.Get("branch")
+		payload["git.message"] = values.Get("message")
+		payload["git.hash"] = values.Get("hash")
+	}
+
+	d := dump.NewDefaultEncoder(&bytes.Buffer{})
+	d.ExtraFields.Type = false
+	d.ExtraFields.Len = false
+	d.ExtraFields.DetailedMap = false
+	d.ExtraFields.DetailedStruct = false
+	d.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+	payloadValues, errDump := d.ToStringMap(payload)
+	if errDump != nil {
+		return nil, sdk.WrapError(errDump, "executeRepositoryWebHook> Cannot dump payload %+v ", payload)
+	}
+	h.Payload = payloadValues
+	return &h, nil
+}
+
+func executeWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{
 		WorkflowNodeHookUUID: t.UUID,
@@ -369,6 +466,7 @@ func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHook
 			payloadValues[k] = v.Value
 		}
 	}
+
 	//try to find some specific values
 	for k := range values {
 		switch k {
