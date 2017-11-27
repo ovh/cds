@@ -7,11 +7,27 @@ import (
 	"os"
 	"time"
 
+	"github.com/rubenv/sql-migrate"
+
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+func (api *API) getMonDBStatusMigrateHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		records, err := migrate.GetMigrationRecords(api.mustDB().Db, "postgres")
+		if err != nil {
+			return sdk.WrapError(err, "DBStatusHandler> Cannot GetMigrationRecords")
+		}
+		m := []sdk.MonDBMigrate{}
+		for _, r := range records {
+			m = append(m, sdk.MonDBMigrate{ID: r.Id, AppliedAt: r.AppliedAt})
+		}
+		return WriteJSON(w, r, m, http.StatusOK)
+	}
+}
 
 func (api *API) getMonDBTimesDBHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
