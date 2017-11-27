@@ -369,7 +369,7 @@ func (api *API) postArtifactWithTempURLHandler() Handler {
 		art.TempURLSecretKey = key
 
 		cacheKey := cache.Key("artifacts", art.GetPath(), art.GetName())
-		api.Cache.Set(cacheKey, art)
+		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour
 
 		return WriteJSON(w, r, art, http.StatusOK)
 	}

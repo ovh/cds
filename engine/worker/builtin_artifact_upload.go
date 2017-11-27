@@ -66,7 +66,7 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 				sendLog(fmt.Sprintf("Uploading '%s'", filename))
 				if err := sdk.UploadArtifact(project, pipeline, application, tag.Value, filePath, buildNumber, environment); err != nil {
 					res.Status = sdk.StatusFail.String()
-					res.Reason = fmt.Sprintf("Error while uploading artefact: %s\n", err)
+					res.Reason = fmt.Sprintf("Error while uploading artefact: %v\n", err)
 					sendLog(res.Reason)
 					return res
 				}
