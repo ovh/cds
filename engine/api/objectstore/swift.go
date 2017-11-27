@@ -169,7 +169,6 @@ func (s *SwiftStore) FetchURL(o Object) (string, string, error) {
 
 	url := s.ObjectTempUrl(container, object, string(key), "GET", time.Now().Add(15*time.Minute))
 
-	log.Info("Fetch URL: %s", string(url))
-
+	log.Debug("SwiftStore> Fetch URL: %s", string(url))
 	return url, string(key), nil
 }

@@ -125,6 +125,8 @@ func download(project, app, pip string, a Artifact, destdir string) error {
 			lasterr = err
 			continue
 		}
+		defer reader.Close()
+
 		//If internal server error... don't retry
 		if code == 500 {
 			lasterr = fmt.Errorf("HTTP %d", code)
@@ -152,23 +154,16 @@ func download(project, app, pip string, a Artifact, destdir string) error {
 		mode = os.FileMode(a.Perm)
 	}
 
-	f, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, mode)
-	if err != nil {
+	f, erropen := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, mode)
+	if erropen != nil {
+		return erropen
+	}
+
+	if _, err := io.Copy(f, reader); err != nil {
 		return err
 	}
 
-	//It panics
-	_, err = io.Copy(f, reader)
-	if err != nil {
-		return err
-	}
-
-	f.Close()
-	if err == nil {
-		return nil
-	}
-
-	return fmt.Errorf("x5: %s", lasterr)
+	return f.Close()
 }
 
 // DownloadArtifact downloads a single artifact from API

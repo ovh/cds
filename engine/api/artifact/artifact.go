@@ -104,8 +104,6 @@ func LoadArtifactsByBuildNumber(db gorp.SqlExecutor, pipelineID int64, applicati
 
 	getFetchURL(arts)
 
-	log.Info("Artifacts %+v", arts)
-
 	return arts, nil
 }
 
