@@ -71,7 +71,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 				}
 				webHookInfo, errWH := repositoriesmanager.GetWebhooksInfos(client)
 				if errWH != nil {
-					return sdk.WrapError(errclient, "getWorkflowHookModelsHandler> Cannot get vcs web hook info")
+					return sdk.WrapError(errWH, "getWorkflowHookModelsHandler> Cannot get vcs web hook info")
 				}
 				repoWebHookEnable = webHookInfo.WebhooksSupported && !webHookInfo.WebhooksDisabled
 
