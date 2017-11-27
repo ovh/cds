@@ -36,7 +36,7 @@ type Artifact struct {
 	MD5sum           string `json:"md5sum,omitempty" cli:"md5sum"`
 	ObjectPath       string `json:"object_path,omitempty"`
 	TempURL          string `json:"temp_url,omitempty"`
-	TempURLSecretKey string `json:"temp_url_secret_key,omitempty"`
+	TempURLSecretKey string `json:"-"`
 }
 
 // ArtifactsStore represents
@@ -102,7 +102,7 @@ func download(project, app, pip string, a Artifact, destdir string) error {
 			if err != nil {
 				return nil, 0, err
 			}
-			resp, err := client.Do(req)
+			resp, err := http.DefaultClient.Do(req)
 			if err != nil {
 				return nil, 0, err
 			}

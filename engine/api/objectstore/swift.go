@@ -130,7 +130,7 @@ func (s *SwiftStore) StoreURL(o Object) (string, string, error) {
 		return "", "", sdk.WrapError(err, "SwiftStore> Unable to get container key %s", container)
 	}
 
-	url := s.ObjectTempUrl(container, object, string(key), "PUT", time.Now().Add(15*time.Minute))
+	url := s.ObjectTempUrl(container, object, string(key), "PUT", time.Now().Add(time.Hour))
 	return url, string(key), nil
 }
 
@@ -167,7 +167,7 @@ func (s *SwiftStore) FetchURL(o Object) (string, string, error) {
 		return "", "", sdk.WrapError(err, "SwiftStore> Unable to get container key %s", container)
 	}
 
-	url := s.ObjectTempUrl(container, object, string(key), "GET", time.Now().Add(15*time.Minute))
+	url := s.ObjectTempUrl(container, object, string(key), "GET", time.Now().Add(time.Hour))
 
 	log.Debug("SwiftStore> Fetch URL: %s", string(url))
 	return url, string(key), nil
