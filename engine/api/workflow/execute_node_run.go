@@ -266,29 +266,32 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	log.Debug("syncStage> work on stage %s", stage.Name)
 	// browse all running jobs
 	for indexJob := range stage.RunJobs {
-		pbJob := &stage.RunJobs[indexJob]
+		runJob := &stage.RunJobs[indexJob]
 		// If job is runnning, sync it
-		if pbJob.Status == sdk.StatusBuilding.String() || pbJob.Status == sdk.StatusWaiting.String() {
-			pbJobDB, errJob := LoadNodeJobRun(db, store, pbJob.ID)
+		if runJob.Status == sdk.StatusBuilding.String() || runJob.Status == sdk.StatusWaiting.String() {
+			runJobDB, errJob := LoadNodeJobRun(db, store, runJob.ID)
 			if errJob != nil {
 				return stageEnd, errJob
 			}
 
-			if pbJobDB.Status == sdk.StatusBuilding.String() || pbJobDB.Status == sdk.StatusWaiting.String() {
+			if runJobDB.Status == sdk.StatusBuilding.String() || runJobDB.Status == sdk.StatusWaiting.String() {
 				stageEnd = false
 			}
-
-			pbJob.SpawnInfos = pbJobDB.SpawnInfos
+			spawnInfos, err := loadNodeRunJobInfo(db, runJob.ID)
+			if err != nil {
+				return false, sdk.WrapError(err, "syncStage> unable to load spawn infos for runJob: %d", runJob.ID)
+			}
+			runJob.SpawnInfos = spawnInfos
 
 			// If same status, sync step status
-			if pbJobDB.Status == pbJob.Status {
-				pbJob.Job.StepStatus = pbJobDB.Job.StepStatus
+			if runJobDB.Status == runJob.Status {
+				runJob.Job.StepStatus = runJobDB.Job.StepStatus
 			} else {
-				pbJob.Status = pbJobDB.Status
-				pbJob.Start = pbJobDB.Start
-				pbJob.Done = pbJobDB.Done
-				pbJob.Model = pbJobDB.Model
-				pbJob.Job = pbJobDB.Job
+				runJob.Status = runJobDB.Status
+				runJob.Start = runJobDB.Start
+				runJob.Done = runJobDB.Done
+				runJob.Model = runJobDB.Model
+				runJob.Job = runJobDB.Job
 			}
 		}
 	}
@@ -373,7 +376,11 @@ func StopWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 		if errNRJ != nil {
 			return sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
 		}
-		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
+
+		if err := AddSpawnInfosNodeJobRun(db, store, proj, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
+			return sdk.WrapError(err, "postJobResult> Cannot save spawn info job %d", njr.ID)
+		}
+
 		if err := UpdateNodeJobRunStatus(db, store, proj, njr, sdk.StatusStopped, chanEvent); err != nil {
 			return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
 		}
@@ -387,14 +394,18 @@ func StopWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, proj *sdk.Proje
 }
 
 // SyncNodeRunRunJob sync step status and spawnInfos in a specific run job
-func SyncNodeRunRunJob(nodeRun *sdk.WorkflowNodeRun, nodeJobRun sdk.WorkflowNodeJobRun) bool {
+func SyncNodeRunRunJob(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun, nodeJobRun sdk.WorkflowNodeJobRun) (bool, error) {
 	found := false
 	for i := range nodeRun.Stages {
 		s := &nodeRun.Stages[i]
 		for j := range s.RunJobs {
 			runJob := &s.RunJobs[j]
 			if runJob.ID == nodeJobRun.ID {
-				runJob.SpawnInfos = nodeJobRun.SpawnInfos
+				spawnInfos, err := loadNodeRunJobInfo(db, runJob.ID)
+				if err != nil {
+					return false, sdk.WrapError(err, "SyncNodeRunRunJob> unable to load spawn infos for runJobID: %d", runJob.ID)
+				}
+				runJob.SpawnInfos = spawnInfos
 				runJob.Job.StepStatus = nodeJobRun.Job.StepStatus
 				found = true
 				break
@@ -402,5 +413,5 @@ func SyncNodeRunRunJob(nodeRun *sdk.WorkflowNodeRun, nodeJobRun sdk.WorkflowNode
 		}
 	}
 
-	return found
+	return found, nil
 }

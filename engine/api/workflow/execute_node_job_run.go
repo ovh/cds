@@ -93,36 +93,28 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
-func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, id int64, infos []sdk.SpawnInfo) (*sdk.WorkflowNodeJobRun, error) {
-	// TODO REFACTOR_SPAWN_INFOS_NODE_JOB_RUN
-
-	// *sdk.WorkflowNodeJobRun -> nil, it's only used in test TestManualRun3
-	return nil, nil
-
-	/*j, err := LoadAndLockNodeJobRunNoWait(db, store, id)
-	if err != nil {
-		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot load node job run %d", id)
+func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, infos []sdk.SpawnInfo) error {
+	wnjri := &sdk.WorkflowNodeJobRunInfo{
+		WorkflowNodeJobRunID: jobID,
+		SpawnInfos:           PrepareSpawnInfos(infos),
 	}
-	if err := prepareSpawnInfos(j, infos); err != nil {
-		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot prepare spawn infos for job run %d", id)
+	if err := insertNodeRunJobInfo(db, wnjri); err != nil {
+		return sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot update node job run infos %d", jobID)
 	}
-
-	if err := UpdateNodeJobRun(db, store, p, j); err != nil {
-		return nil, sdk.WrapError(err, "AddSpawnInfosNodeJobRun> Cannot update node job run %d", id)
-	}
-	return j, nil*/
+	return nil
 }
 
-func prepareSpawnInfos(j *sdk.WorkflowNodeJobRun, infos []sdk.SpawnInfo) error {
+func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 	now := time.Now()
+	prepared := []sdk.SpawnInfo{}
 	for _, info := range infos {
-		j.SpawnInfos = append(j.SpawnInfos, sdk.SpawnInfo{
+		prepared = append(prepared, sdk.SpawnInfo{
 			APITime:    now,
 			RemoteTime: info.RemoteTime,
 			Message:    info.Message,
 		})
 	}
-	return nil
+	return prepared
 }
 
 // TakeNodeJobRun Take an a job run for update
@@ -154,8 +146,8 @@ func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobI
 	job.Job.WorkerID = workerID
 	job.Start = time.Now()
 
-	if err := prepareSpawnInfos(job, infos); err != nil {
-		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot prepare spawn infos for job %d", jobID)
+	if err := AddSpawnInfosNodeJobRun(db, store, p, jobID, PrepareSpawnInfos(infos)); err != nil {
+		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot save spawn info on node job run %d", jobID)
 	}
 
 	if err := UpdateNodeJobRunStatus(db, store, p, job, sdk.StatusBuilding, chanEvent); err != nil {
@@ -373,7 +365,11 @@ func RestartWorkflowNodeJob(db gorp.SqlExecutor, wNodeJob sdk.WorkflowNodeJobRun
 	}
 
 	//Synchronise struct but not in db
-	if sync := SyncNodeRunRunJob(nodeRun, wNodeJob); !sync {
+	sync, errS := SyncNodeRunRunJob(db, nodeRun, wNodeJob)
+	if errS != nil {
+		return sdk.WrapError(errS, "RestartWorkflowNodeJob> error on sync nodeJobRun")
+	}
+	if !sync {
 		log.Warning("RestartWorkflowNodeJob> sync doesn't find a nodeJobRun")
 	}
 

@@ -207,8 +207,8 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 		}
 		defer tx.Rollback()
 
-		if _, err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, id, s); err != nil {
-			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save job %d", id)
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, id, s); err != nil {
+			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d", id)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -275,22 +275,19 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 		return
 	}
 
-	//Update spwan info
 	infos := []sdk.SpawnInfo{{
 		RemoteTime: remoteTime,
 		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}},
 	}}
 
-	//Add spawn infos
-	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, store, p, job.ID, infos); err != nil {
+	if err := workflow.AddSpawnInfosNodeJobRun(tx, store, p, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
 		chError <- sdk.WrapError(err, "postJobResult> Cannot save spawn info job %d", job.ID)
-		return
 	}
 
 	// Update action status
 	log.Debug("postJobResult> Updating %d to %s in queue", job.ID, res.Status)
 	if err := workflow.UpdateNodeJobRunStatus(tx, store, p, job, sdk.Status(res.Status), chEvent); err != nil {
-		chError <- sdk.WrapError(err, "postJobResult> Cannot update %d status", job.ID)
+		chError <- sdk.WrapError(err, "postJobResult> Cannot update NodeJobRun %d status", job.ID)
 		return
 	}
 
@@ -386,7 +383,10 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 			if errNR != nil {
 				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot load node run")
 			}
-			sync := workflow.SyncNodeRunRunJob(nodeRun, *nodeJobRun)
+			sync, errS := workflow.SyncNodeRunRunJob(tx, nodeRun, *nodeJobRun)
+			if errS != nil {
+				return sdk.WrapError(errS, "postWorkflowJobStepStatusHandler> unable to sync nodeJobRun. JobID on handler: %d", id)
+			}
 			if !sync {
 				log.Warning("postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun. JobID on handler: %d", id)
 			}
