@@ -5,6 +5,7 @@ import {RequirementEvent} from '../requirements/requirement.event.model';
 import {Requirement} from '../../model/requirement.model';
 import {ParameterEvent} from '../parameter/parameter.event.model';
 import {Parameter} from '../../model/parameter.model';
+import {Pipeline} from '../../model/pipeline.model';
 import {ActionEvent} from './action.event.model';
 import {ActionStore} from '../../service/action/action.store';
 import {DragulaService} from 'ng2-dragula/components/dragula.provider';
@@ -23,6 +24,7 @@ export class ActionComponent implements OnDestroy {
     publicActions: Array<Action>;
 
     @Input() project: Project;
+    @Input() pipeline: Pipeline;
     @Input() edit = false;
     @Input() suggest: Array<string>;
 
@@ -30,7 +32,6 @@ export class ActionComponent implements OnDestroy {
     set action(data: Action) {
         this.editableAction = cloneDeep(data);
         this.editableAction.showAddStep = false;
-
         if (!this.editableAction.requirements) {
             this.editableAction.requirements = new Array<Requirement>();
         } else {

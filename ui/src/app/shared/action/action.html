@@ -41,7 +41,7 @@
                                         (onChange)="editableAction.hasChanged = true"
                                         (event)="requirementEvent($event)"></app-requirements-list>
                                     <div class="requirementForm" *ngIf="edit">
-                                        <app-requirements-form [suggest]="suggest" (event)="requirementEvent($event)"></app-requirements-form>
+                                        <app-requirements-form [groupsPermission]="pipeline.groups" [suggest]="suggest" [modal]="requirementModal" (event)="requirementEvent($event)"></app-requirements-form>
                                     </div>
                                 </div>
                             </div>

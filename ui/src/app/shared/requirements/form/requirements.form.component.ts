@@ -1,18 +1,21 @@
-import {Component, Input, Output, EventEmitter, ViewChild} from '@angular/core';
+import {Component, Input, Output, OnInit, EventEmitter, ViewChild} from '@angular/core';
 import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {Requirement} from '../../../model/requirement.model';
+import {GroupPermission, adminGroupName} from '../../../model/group.model';
+import {PermissionValue} from '../../../model/permission.model';
 import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {WorkerModel} from '../../../model/worker-model.model';
 import {finalize, first} from 'rxjs/operators';
 import {TranslateService} from 'ng2-translate';
+import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 
 @Component({
     selector: 'app-requirements-form',
     templateUrl: './requirements.form.html',
     styleUrls: ['./requirements.form.scss']
 })
-export class RequirementsFormComponent {
+export class RequirementsFormComponent implements OnInit {
 
     @Input('suggest')
     set suggest(data: Array<string>) {
@@ -31,6 +34,9 @@ export class RequirementsFormComponent {
         return this._suggestWithWorkerModel;
     }
 
+    @Input() modal: SemanticModalComponent;
+    @Input() groupsPermission: Array<GroupPermission>;
+
     @Output() event = new EventEmitter<RequirementEvent>();
 
     newRequirement: Requirement = new Requirement('binary');
@@ -39,8 +45,9 @@ export class RequirementsFormComponent {
     _suggest: Array<string> = [];
     _suggestWithWorkerModel: Array<string> = [];
     loading = true;
-    canDisplayLinkWorkerModel = false;
+    workerModelLinked: WorkerModel;
     isFormValid = false;
+    modelTypeClass: string;
 
     constructor(private _requirementStore: RequirementStore,
         private _workerModelService: WorkerModelService,
@@ -50,17 +57,6 @@ export class RequirementsFormComponent {
             // user does not need to add plugin prequisite manually, so we remove it from list
             this.availableRequirements.push(...r.filter(req => req !== 'plugin').toArray());
         });
-
-        this._workerModelService.getWorkerModels()
-        .pipe(
-            first(),
-            finalize(() => this.loading = false))
-        .subscribe( wms => {
-            this.workerModels = wms;
-            if (Array.isArray(this.workerModels)) {
-                this._suggestWithWorkerModel = this.workerModels.map(wm => wm.name).concat(this._suggest);
-            }
-        });
     }
 
     onSubmitAddRequirement(form): void {
@@ -69,6 +65,33 @@ export class RequirementsFormComponent {
             this.event.emit(new RequirementEvent('add', this.newRequirement));
             this.newRequirement = new Requirement('binary');
         }
+    }
+
+    ngOnInit() {
+        this._workerModelService.getWorkerModels()
+            .pipe(
+              first(),
+              finalize(() => this.loading = false)
+            )
+            .subscribe( wms => {
+                this.workerModels = wms;
+                if (Array.isArray(this.workerModels)) {
+                    let filteredWm = this.workerModels;
+
+                    if (this.groupsPermission) {
+                        filteredWm = this.workerModels.filter((wm) => {
+                            let groupPerm = this.groupsPermission.find((grp) => {
+                                return grp.group.name === wm.group.name && grp.permission >= PermissionValue.READ_EXECUTE;
+                            });
+
+                            return groupPerm != null || wm.group.name === adminGroupName;
+                        });
+                    }
+
+                    this._suggestWithWorkerModel = filteredWm.map(wm => wm.name).concat(this._suggest);
+                }
+            });
+
     }
 
     computeFormValid(form): void {
@@ -91,7 +114,7 @@ export class RequirementsFormComponent {
                 this.newRequirement.name = 'memory_' + this.newRequirement.value;
                 break
             case 'model':
-                this.canDisplayLinkWorkerModel = this.computeDisplayLinkWorkerModel();
+                this.workerModelLinked = this.computeDisplayLinkWorkerModel();
                 this.newRequirement.name = this.newRequirement.value;
                 break
             case 'volume':
@@ -102,6 +125,12 @@ export class RequirementsFormComponent {
                 this.newRequirement.name = this.newRequirement.value;
         }
         this.computeFormValid(form);
+    }
+
+    closeModal() {
+        if (this.modal) {
+          this.modal.hide();
+        }
     }
 
     getVolumeName(): string {
@@ -124,17 +153,11 @@ export class RequirementsFormComponent {
         return this._translate.instant('requirement_help_' + this.newRequirement.type);
     }
 
-    computeDisplayLinkWorkerModel(): boolean {
-        if (this.newRequirement.value === '') {
-            return false;
+    computeDisplayLinkWorkerModel(): WorkerModel {
+        if (this.newRequirement.value === '' || !Array.isArray(this.workerModels)) {
+            return null;
         }
-        if (Array.isArray(this.workerModels)) {
-            for (let wm of this.workerModels) {
-                if (wm.name === this.newRequirement.value) {
-                    return true;
-                }
-            }
-        }
-        return false;
+
+        return this.workerModels.find((wm) => wm.name === this.newRequirement.value);
     }
 }
