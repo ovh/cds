@@ -126,6 +126,9 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 				}
 			}
 		}
+
+		//If we use the var list, it means we do pretty hacky stuffs, so let's ignore all cds vars
+		v.IgnoreVariables = append(v.IgnoreVariables, "cds", "workflow", "git")
 	}
 
 	if varsFromFile != "" {

@@ -8,8 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Process runs tests suite and return a Tests result
-func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
+func (v *Venom) init() error {
+	v.testsuites = []TestSuite{}
 	switch v.LogLevel {
 	case "debug":
 		log.SetLevel(log.DebugLevel)
@@ -24,48 +24,34 @@ func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
 	log.SetOutput(v.LogOutput)
 	switch v.OutputDetails {
 	case DetailsLow, DetailsMedium, DetailsHigh:
-		log.Infof("Detail Level: %s", v.OutputDetails)
+		log.Debug("Detail Level: ", v.OutputDetails)
 	default:
-		return nil, errors.New("Invalid details. Must be low, medium or high")
+		return errors.New("Invalid details. Must be low, medium or high")
+	}
+
+	return nil
+}
+
+// Parse parses tests suite to check context and variables
+func (v *Venom) Parse(path []string, exclude []string) error {
+	if err := v.init(); err != nil {
+		return err
 	}
 
 	filesPath, err := getFilesPath(path, exclude)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if err := v.readFiles(filesPath); err != nil {
-		return nil, err
+		return err
 	}
 
-	//First parse the testsuites to check if all testsuites are fine (context init + variable usages)
-	if err := v.parse(); err != nil {
-		return nil, err
-	}
-
-	//Then process
-	if v.OutputDetails != DetailsLow {
-		pool := v.initBars()
-		defer endBars(v.OutputDetails, pool)
-	}
-
-	for i := range v.testsuites {
-		ts := &v.testsuites[i]
-		v.runTestSuite(ts)
-	}
-
-	testsResult := &Tests{}
-	v.computeStats(testsResult)
-
-	return testsResult, nil
-}
-
-func (v *Venom) parse() error {
 	missingVars := []string{}
 	extractedVars := []string{}
 	for i := range v.testsuites {
 		ts := &v.testsuites[i]
-		log.Info("Parsing testsuite %s", ts.Package)
+		log.Info("Parsing testsuite", ts.Package)
 
 		tvars, textractedVars, err := v.parseTestSuite(ts)
 		if err != nil {
@@ -106,7 +92,15 @@ func (v *Venom) parse() error {
 			}
 		}
 		if !varExtracted {
-			reallyMissingVars = append(reallyMissingVars, k)
+			var ignored bool
+			for _, i := range v.IgnoreVariables {
+				if strings.HasPrefix(k, i) {
+					ignored = true
+				}
+			}
+			if !ignored {
+				reallyMissingVars = append(reallyMissingVars, k)
+			}
 		}
 	}
 
@@ -115,6 +109,37 @@ func (v *Venom) parse() error {
 	}
 
 	return nil
+}
+
+// Process runs tests suite and return a Tests result
+func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
+	if err := v.init(); err != nil {
+		return nil, err
+	}
+
+	filesPath, err := getFilesPath(path, exclude)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := v.readFiles(filesPath); err != nil {
+		return nil, err
+	}
+
+	if v.OutputDetails != DetailsLow {
+		pool := v.initBars()
+		defer endBars(v.OutputDetails, pool)
+	}
+
+	for i := range v.testsuites {
+		ts := &v.testsuites[i]
+		v.runTestSuite(ts)
+	}
+
+	testsResult := &Tests{}
+	v.computeStats(testsResult)
+
+	return testsResult, nil
 }
 
 func (v *Venom) computeStats(testsResult *Tests) {
