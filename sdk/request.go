@@ -211,12 +211,13 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		os.Exit(1)
 	}
 
+	var url = Host + path
 	for i := 0; i < retry; i++ {
 		var req *http.Request
 		if args != nil {
-			req, err = http.NewRequest(method, Host+path, bytes.NewReader(args))
+			req, err = http.NewRequest(method, url, bytes.NewReader(args))
 		} else {
-			req, err = http.NewRequest(method, Host+path, nil)
+			req, err = http.NewRequest(method, url, nil)
 		}
 		if err != nil {
 			savederror = err

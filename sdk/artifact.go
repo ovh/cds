@@ -73,7 +73,6 @@ const (
 // DownloadArtifacts retrieves and download artifacts related to given project-pipeline-tag
 // and download them into destdir
 func DownloadArtifacts(project string, application string, pipeline string, tag string, destdir string, env string) error {
-
 	arts, err := ListArtifacts(project, application, pipeline, tag, env)
 	if err != nil {
 		return err
@@ -91,48 +90,80 @@ func DownloadArtifacts(project string, application string, pipeline string, tag 
 
 func download(project, app, pip string, a Artifact, destdir string) error {
 	var lasterr error
+	var reader io.ReadCloser
+	var doRequest func() (io.ReadCloser, int, error)
+
+	if a.TempURL != "" && a.TempURLSecretKey != "" {
+		if verbose {
+			fmt.Printf(">>> downloading artifact %s from %s\n", a.Name, a.TempURL)
+		}
+		doRequest = func() (io.ReadCloser, int, error) {
+			req, err := http.NewRequest("GET", a.TempURL, nil)
+			if err != nil {
+				return nil, 0, err
+			}
+			resp, err := client.Do(req)
+			if err != nil {
+				return nil, 0, err
+			}
+
+			return resp.Body, resp.StatusCode, nil
+		}
+	} else {
+		doRequest = func() (io.ReadCloser, int, error) {
+			uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/artifact/download/%d", project, app, pip, a.ID)
+			return Stream("GET", uri, nil)
+		}
+	}
 
 	for retry := 5; retry >= 0; retry-- {
-		uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/artifact/download/%d", project, app, pip, a.ID)
-		reader, code, err := Stream("GET", uri, nil)
+		var code int
+		var err error
+
+		reader, code, err = doRequest()
 		if err != nil {
 			lasterr = err
 			continue
 		}
+		defer reader.Close()
+
+		//If internal server error... don't retry
+		if code == 500 {
+			lasterr = fmt.Errorf("HTTP %d", code)
+			break
+		}
+
 		if code >= 300 {
 			lasterr = fmt.Errorf("HTTP %d", code)
 			continue
 		}
-
-		if err := os.MkdirAll(destdir, os.FileMode(0744)); err != nil {
-			return err
-		}
-
-		destPath := path.Join(destdir, a.Name)
-
-		mode := os.FileMode(0644)
-		if a.Perm != uint32(0) {
-			mode = os.FileMode(a.Perm)
-		}
-
-		f, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, mode)
-		if err != nil {
-			lasterr = err
-			continue
-		}
-
-		_, err = io.Copy(f, reader)
-		if err != nil {
-			lasterr = err
-		}
-
-		f.Close()
-		if err == nil {
-			return nil
-		}
 	}
 
-	return fmt.Errorf("x5: %s", lasterr)
+	if lasterr != nil {
+		return lasterr
+	}
+
+	if err := os.MkdirAll(destdir, os.FileMode(0744)); err != nil {
+		return err
+	}
+
+	destPath := path.Join(destdir, a.Name)
+
+	mode := os.FileMode(0644)
+	if a.Perm != uint32(0) {
+		mode = os.FileMode(a.Perm)
+	}
+
+	f, erropen := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY, mode)
+	if erropen != nil {
+		return erropen
+	}
+
+	if _, err := io.Copy(f, reader); err != nil {
+		return err
+	}
+
+	return f.Close()
 }
 
 // DownloadArtifact downloads a single artifact from API
@@ -264,7 +295,6 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 }
 
 func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, file io.Reader, stat os.FileInfo, md5sum string) error {
-
 	art := Artifact{
 		Name:   filename,
 		MD5sum: md5sum,
@@ -287,7 +317,9 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 		return err
 	}
 
-	fmt.Println("Temprary URL: ", art.TempURL)
+	if verbose {
+		fmt.Printf("Uploading %s with to %s", art.Name, art.TempURL)
+	}
 
 	//Post the file to the temporary URL
 	req, errRequest := http.NewRequest("PUT", art.TempURL, file)

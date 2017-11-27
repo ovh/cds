@@ -92,7 +92,7 @@ func (w *currentWorker) processActionVariables(a *sdk.Action, parent *sdk.Action
 func (w *currentWorker) startAction(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
 	log.Debug("startAction> Begin %p", ctx)
 	defer func() {
-		log.Debug("startAction> End %p (%s)", ctx, ctx.Err())
+		log.Debug("startAction> End %p (%v)", ctx, ctx.Err())
 	}()
 	// Process action build arguments
 	for _, abp := range *params {
@@ -419,7 +419,7 @@ func (w *currentWorker) run(ctx context.Context, pbji *worker.PipelineBuildJobIn
 
 	log.Debug("run> Begin %p", ctx)
 	defer func() {
-		log.Debug("run> End %p (%s)", ctx, ctx.Err())
+		log.Debug("run> End %p (%v)", ctx, ctx.Err())
 	}()
 	t0 := time.Now()
 	defer func() {
