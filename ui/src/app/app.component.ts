@@ -46,7 +46,7 @@ export class AppComponent  implements OnInit {
         this.zone = new NgZone({enableLongStackTrace: false});
         _translate.addLangs(['en', 'fr']);
         _translate.setDefaultLang('en');
-        let browserLang = _translate.getBrowserLang();
+        let browserLang = navigator.language.match(/fr/) ? 'fr' : 'en';
         _translate.use(browserLang.match(/en|fr/) ? browserLang : 'en');
         registerLocaleData(browserLang.match(/fr/) ? localeFR : localeEN);
 
