@@ -13,7 +13,7 @@
                             <div class="row">
                                 <div class="five wide column" title="{{'workflow_first_execution' | translate}}">
                                     <i class="calendar icon"></i>
-                                    <span>{{workflowRun.start | amCalendar}}</span>
+                                    <span>{{workflowRun.start | date:'short' }}</span>
                                 </div>
                                 <div class="six wide column centered" title="{{'common_version' | translate}}">
                                     <i class="tag icon"></i>
@@ -23,7 +23,7 @@
                                     <div class="right floated"
                                       *ngIf="workflowRun.status !== pipelineStatusEnum.BUILDING && workflowRun.status !== pipelineStatusEnum.WAITING">
                                         <i class="checked calendar icon"></i>
-                                        <span>{{workflowRun.last_execution | amCalendar}}</span>
+                                        <span>{{workflowRun.last_execution | date:'short' }}</span>
                                     </div>
                                 </div>
                             </div>

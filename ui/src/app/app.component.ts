@@ -1,3 +1,4 @@
+import { registerLocaleData } from '@angular/common';
 import { RouterService } from './service/router/router.service';
 import {Component, OnInit, NgZone} from '@angular/core';
 import {TranslateService} from 'ng2-translate';
@@ -13,6 +14,8 @@ import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
 import {AppService} from './app.service';
 import {LastUpdateService} from './service/sse/lastupdate.sservice';
 import {LastModification} from './model/lastupdate.model';
+import localeFR from '@angular/common/locales/fr';
+import localeEN from '@angular/common/locales/en';
 
 @Component({
     selector: 'app-root',
@@ -45,6 +48,7 @@ export class AppComponent  implements OnInit {
         _translate.setDefaultLang('en');
         let browserLang = _translate.getBrowserLang();
         _translate.use(browserLang.match(/en|fr/) ? browserLang : 'en');
+        registerLocaleData(browserLang.match(/fr/) ? localeFR : localeEN);
 
         this.languageSubscriber = this._language.get().subscribe( l => {
             if (l) {

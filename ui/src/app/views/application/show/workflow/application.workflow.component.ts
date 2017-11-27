@@ -200,7 +200,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
             }
         }
 
-        if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0) {
+        if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0 && Array.isArray(this.project.environments)) {
             // If current item is a deploy or testing pipeline without environment
             // Then add new item on workflow
             this.project.environments.forEach((env, index) => {

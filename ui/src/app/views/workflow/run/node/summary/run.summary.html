@@ -19,7 +19,7 @@
                                     </a>
                                 </div>
                                 <div class="five wide column centered" title="{{ 'common_pipeline_start_title' | translate }}">
-                                    <i class="calendar icon"></i>{{nodeRun.start | amCalendar }}
+                                    <i class="calendar icon"></i>{{nodeRun.start | date:'short' }}
                                 </div>
                                 <div class="five wide column" *ngIf="nodeRun.status !== pipelineStatusEnum.BUILDING && nodeRun.status !== pipelineStatusEnum.WAITING" title="{{ 'common_duration_title' | translate }}">
                                     <div class="right floated">
