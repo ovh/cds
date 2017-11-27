@@ -7,6 +7,24 @@ import (
 	"testing"
 )
 
+func Test_doWebHookExecutionStash(t *testing.T) {
+	s := Service{}
+	task := &TaskExecution{
+		UUID: sdk.RandomString(10),
+		Type: TypeRepoManagerWebHook,
+		WebHook: &WebHookExecution{
+			RequestBody: nil,
+			RequestURL:  "uid=42413e87905b813a375c7043ce9d4047b7e265ae3730b60180cad02ae81cc62385e5b05b9e7c758b15bb3872498a5e88963f3deac308f636baf345ed9cf1b259&project=IRTM&name=rtm-packaging&branch=master&hash=123456789&message=monmessage&author=sguiheux",
+		},
+	}
+	h, err := s.doWebHookExecution(task)
+	test.NoError(t, err)
+
+	assert.Equal(t, "master", h.Payload["git.branch"])
+	assert.Equal(t, "sguiheux", h.Payload["git.author"])
+	assert.Equal(t, "monmessage", h.Payload["git.message"])
+	assert.Equal(t, "123456789", h.Payload["git.hash"])
+}
 func Test_doWebHookExecutionGithub(t *testing.T) {
 	s := Service{}
 	task := &TaskExecution{
