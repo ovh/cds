@@ -141,13 +141,14 @@ func (s *SwiftStore) containerKey(container string) (string, error) {
 	}
 	log.Debug("SwiftStore> Get container %s metadata %+v", container, headers)
 
-	key := headers["X-Container-Meta-Temp-URL-Key"]
+	key := headers["X-Container-Meta-Temp-Url-Key"]
 	if key == "" {
+		log.Info("SwiftStore> Creating new session key for %s", container)
 		skey, _ := sessionstore.NewSessionKey()
 		key = string(skey)
 
 		log.Debug("SwiftStore> Update container %s metadata", container)
-		if err := s.ContainerUpdate(container, swift.Headers{"X-Container-Meta-Temp-URL-Key": key}); err != nil {
+		if err := s.ContainerUpdate(container, swift.Headers{"X-Container-Meta-Temp-Url-Key": key}); err != nil {
 			return "", sdk.WrapError(err, "SwiftStore> Unable to update container metadata %s", container)
 		}
 	}
