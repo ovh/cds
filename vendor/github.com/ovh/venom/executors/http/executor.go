@@ -42,6 +42,8 @@ type Executor struct {
 	IgnoreVerifySSL   bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
 	BasicAuthUser     string      `json:"basic_auth_user" yaml:"basic_auth_user" mapstructure:"basic_auth_user"`
 	BasicAuthPassword string      `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
+	SkipHeaders       bool        `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
+	SkipBody          bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -115,29 +117,34 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	var bb []byte
 	if resp.Body != nil {
 		defer resp.Body.Close()
-		var errr error
-		bb, errr = ioutil.ReadAll(resp.Body)
-		if errr != nil {
-			return nil, errr
-		}
-		r.Body = string(bb)
 
-		bodyJSONArray := []interface{}{}
-		if err := json.Unmarshal(bb, &bodyJSONArray); err != nil {
-			bodyJSONMap := map[string]interface{}{}
-			if err2 := json.Unmarshal(bb, &bodyJSONMap); err2 == nil {
-				r.BodyJSON = bodyJSONMap
+		if !t.SkipBody {
+			var errr error
+			bb, errr = ioutil.ReadAll(resp.Body)
+			if errr != nil {
+				return nil, errr
 			}
-		} else {
-			r.BodyJSON = bodyJSONArray
+			r.Body = string(bb)
+
+			bodyJSONArray := []interface{}{}
+			if err := json.Unmarshal(bb, &bodyJSONArray); err != nil {
+				bodyJSONMap := map[string]interface{}{}
+				if err2 := json.Unmarshal(bb, &bodyJSONMap); err2 == nil {
+					r.BodyJSON = bodyJSONMap
+				}
+			} else {
+				r.BodyJSON = bodyJSONArray
+			}
 		}
 	}
 
-	r.Headers = make(map[string]string)
-
-	for k, v := range resp.Header {
-		r.Headers[k] = v[0]
+	if !t.SkipHeaders {
+		r.Headers = make(map[string]string)
+		for k, v := range resp.Header {
+			r.Headers[k] = v[0]
+		}
 	}
+
 	r.StatusCode = resp.StatusCode
 
 	return executors.Dump(r)
