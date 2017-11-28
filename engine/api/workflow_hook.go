@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getWorkflowHooksHandler() Handler {
@@ -36,12 +35,12 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 
 		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
 		if errP != nil {
-			return sdk.WrapError(errP, "getWorkflowHookModelsHandler")
+			return sdk.WrapError(errP, "getWorkflowHookModelsHandler > project.Load")
 		}
 
 		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, workflowName, getUser(ctx))
 		if errW != nil {
-			return sdk.WrapError(errW, "getWorkflowHookModelsHandler")
+			return sdk.WrapError(errW, "getWorkflowHookModelsHandler > workflow.Load")
 		}
 
 		node := wf.GetNode(nodeID)
@@ -65,7 +64,6 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
 			if vcsServer != nil {
 				client, errclient := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
-				log.Warning("%v", client)
 				if errclient != nil {
 					return sdk.WrapError(errclient, "getWorkflowHookModelsHandler> Cannot get vcs client")
 				}
@@ -83,6 +81,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 			for i := range m {
 				if m[i].Name == workflow.RepositoryWebHookModel.Name {
 					indexToDelete = i
+					break
 				}
 			}
 			m = append(m[0:indexToDelete], m[indexToDelete+1:]...)

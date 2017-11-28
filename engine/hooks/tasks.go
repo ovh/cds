@@ -315,6 +315,17 @@ func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHook
 	return executeWebHook(t)
 }
 
+func getRepositoryHeader(whe *WebHookExecution) string {
+	if v, ok := whe.RequestHeader[GithubHeader]; ok && v[0] == "push" {
+		return GithubHeader
+	} else if v, ok := whe.RequestHeader[GitlabHeader]; ok && v[0] == "Push Hook" {
+		return GitlabHeader
+	} else if v, ok := whe.RequestHeader[BitbucketHeader]; ok && v[0] == "repo:push" {
+		return BitbucketHeader
+	}
+	return ""
+}
+
 func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{
@@ -322,7 +333,8 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 	}
 
 	payload := make(map[string]interface{})
-	if v, ok := t.WebHook.RequestHeader[GithubHeader]; ok && v[0] == "push" {
+	switch getRepositoryHeader(t.WebHook) {
+	case GithubHeader:
 		var pushEvent GithubPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read github request: %s", string(t.WebHook.RequestBody))
@@ -336,7 +348,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
-	} else if v, ok := t.WebHook.RequestHeader[GitlabHeader]; ok && v[0] == "Push Hook" {
+	case GitlabHeader:
 		var pushEvent GitlabPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
@@ -350,7 +362,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
-	} else if v, ok := t.WebHook.RequestHeader[BitbucketHeader]; ok && v[0] == "repo:push" {
+	case BitbucketHeader:
 		var pushEvent BitbucketPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
@@ -364,7 +376,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		if len(pushEvent.Push.Changes[0].Commits) > 0 {
 			payload["git.message"] = pushEvent.Push.Changes[0].Commits[0].Message
 		}
-	} else {
+	default:
 		values, err := url.ParseQuery(t.WebHook.RequestURL)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Hooks> Unable to parse query url %s", t.WebHook.RequestURL)
