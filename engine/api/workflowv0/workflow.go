@@ -301,10 +301,9 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 									pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
 								}
 
-								if remote == "" || (root.Application.RepositoryFullname != "" && remote == root.Application.RepositoryFullname) {
-									opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(root.Application.RepositoryFullname))
-								} else if root.Application.RepositoryFullname != "" && remote != "" {
-									opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+								remoteOpts := getRemoteOpts(remote, root.Application.RepositoryFullname)
+								if remoteOpts != nil {
+									opts = append(opts, remoteOpts)
 								}
 
 								builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, e.ID, 1, opts...)
@@ -319,10 +318,9 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 								pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
 							}
 
-							if remote == "" || (root.Application.RepositoryFullname != "" && remote == root.Application.RepositoryFullname) {
-								opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(root.Application.RepositoryFullname))
-							} else if root.Application.RepositoryFullname != "" && remote != "" {
-								opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+							remoteOpts := getRemoteOpts(remote, root.Application.RepositoryFullname)
+							if remoteOpts != nil {
+								opts = append(opts, remoteOpts)
 							}
 
 							builds, errPB := pipeline.LoadPipelineBuildsByApplicationAndPipeline(db, root.Application.ID, root.Pipeline.ID, root.Environment.ID, 1, opts...)
@@ -503,10 +501,9 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 				}
 
 				if parent.Application.Name == child.Application.Name {
-					if remote == "" || remote == parent.Application.RepositoryFullname {
-						opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(parent.Application.RepositoryFullname))
-					} else {
-						opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+					remoteOpts := getRemoteOpts(remote, parent.Application.RepositoryFullname)
+					if remoteOpts != nil {
+						opts = append(opts, remoteOpts)
 					}
 				}
 
@@ -544,6 +541,16 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 	}
 
 	buildTreeOrder(parent, listTrigger, user)
+	return nil
+}
+
+func getRemoteOpts(remoteFilter, repoFullName string) pipeline.ExecOptionFunc {
+	if remoteFilter == "" || (repoFullName != "" && remoteFilter == repoFullName) {
+		return pipeline.LoadPipelineBuildOpts.WithEmptyRemote(repoFullName)
+	} else if repoFullName != "" && remoteFilter != "" {
+		return pipeline.LoadPipelineBuildOpts.WithRemoteName(remoteFilter)
+	}
+
 	return nil
 }
 
