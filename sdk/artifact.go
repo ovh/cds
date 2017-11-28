@@ -307,7 +307,7 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 		return err
 	}
 
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s/url", project, application, pipeline, buildNumber, tag)
+	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s/url?envName=%s", project, application, pipeline, buildNumber, tag, url.QueryEscape(env))
 	body, _, err := Request("POST", path, b)
 	if err != nil {
 		return err
