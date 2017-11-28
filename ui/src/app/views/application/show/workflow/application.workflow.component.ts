@@ -316,10 +316,8 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
      */
     loadVersions(key: string, appName: string): Observable<Array<string>> {
         this.loading.version = true;
-        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch, this.applicationFilter.remote).pipe(
-            finalize(() => {
-                this.loading.version = false;
-            }))
+        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch || 'master', this.applicationFilter.remote)
+            .pipe(finalize(() => this.loading.version = false))
             .map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]);
 
     }
