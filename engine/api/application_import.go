@@ -55,8 +55,8 @@ func (api *API) postApplicationImportHandler() Handler {
 		log.Debug("postApplicationImportHandler> App: %+v", eapp)
 
 		//Check valid application name
-		regexp := regexp.MustCompile(sdk.NamePattern)
-		if !regexp.MatchString(eapp.Name) {
+		rx := regexp.MustCompile(sdk.NamePattern)
+		if !rx.MatchString(eapp.Name) {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "postApplicationImportHandler> Application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
 		}
 
