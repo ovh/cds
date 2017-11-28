@@ -301,9 +301,9 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 									pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
 								}
 
-								if remote == "" || remote == root.Application.RepositoryFullname {
+								if remote == "" || (root.Application.RepositoryFullname != "" && remote == root.Application.RepositoryFullname) {
 									opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(root.Application.RepositoryFullname))
-								} else {
+								} else if root.Application.RepositoryFullname != "" && remote != "" {
 									opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
 								}
 
@@ -319,9 +319,9 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 								pipeline.LoadPipelineBuildOpts.WithBranchName(branchName),
 							}
 
-							if remote == "" || remote == root.Application.RepositoryFullname {
+							if remote == "" || (root.Application.RepositoryFullname != "" && remote == root.Application.RepositoryFullname) {
 								opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(root.Application.RepositoryFullname))
-							} else {
+							} else if root.Application.RepositoryFullname != "" && remote != "" {
 								opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
 							}
 
