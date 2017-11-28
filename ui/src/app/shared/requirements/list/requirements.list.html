@@ -2,31 +2,13 @@
     <table class="ui fixed celled table">
         <thead>
         <tr>
-            <th class="five wide">{{ 'requirement_name' | translate }}</th>
             <th class="three wide">{{ 'requirement_type' | translate }}</th>
-            <th class="five wide">{{ 'requirement_value' | translate }}</th>
+            <th class="ten wide">{{ 'requirement_value' | translate }}</th>
             <th class="three wide"></th>
         </tr>
         </thead>
         <tbody>
         <tr *ngFor="let r of getDataForCurrentPage()">
-            <td>
-                <div class="ui fluid" *ngIf="edit;else rName">
-                    <input
-                        name="requirementname"
-                        auto-complete
-                        autocomplete="off"
-                        type="text"
-                        [source]="suggest"
-                        [min-chars]="3"
-                        [(ngModel)]="r.name"
-                        (ngModelChange)="change()"
-                        [no-match-found-text]="false">
-                </div>
-                <ng-template #rName>
-                    <span>{{r.name}}</span>
-                </ng-template>
-            </td>
             <td>
                 <div *ngIf="edit;else rType">
                     <div class="ui form">
@@ -44,8 +26,32 @@
                 </ng-template>
             </td>
             <td>
+                <div  *ngIf="!loading && r.type === 'service'">
+                    <div class="ui fluid" *ngIf="edit;else rName">
+                        <label for="requirementname">
+                            {{ 'requirement_hostname_service' | translate }}
+                        </label>
+                        <input
+                            name="requirementname"
+                            auto-complete
+                            autocomplete="off"
+                            type="text"
+                            [source]="suggest"
+                            [min-chars]="3"
+                            [(ngModel)]="r.name"
+                            (ngModelChange)="change()"
+                            [no-match-found-text]="false">
+                    </div>
+                    <ng-template #rName>
+                        <span>{{r.name}}</span>
+                    </ng-template>
+                </div>
+                
                 <div *ngIf="edit;else rValue">
                     <div *ngIf="r.type !== 'model'">
+                        <label for="requirementvalue" *ngIf="!loading && (r.type === 'service')">
+                            {{ 'requirement_value_service' | translate }}
+                        </label>
                         <input
                             name="requirementvalue"
                             auto-complete
@@ -70,6 +76,9 @@
                             [no-match-found-text]="false">
                     </div>
                     <div *ngIf="!loading && (r.type === 'model' || r.type === 'service')">
+                        <label for="opts">
+                            {{ 'requirement_options' | translate }}
+                        </label>
                         <textarea
                             [(ngModel)]="r.opts"
                             (ngModelChange)="change()"
@@ -80,6 +89,7 @@
                 <ng-template #rValue>
                     <span>{{r.value}}</span>
                 </ng-template>
+                
             </td>
             <td class="center">
                 <ng-container *ngIf="edit">
