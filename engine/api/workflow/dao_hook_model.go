@@ -34,7 +34,7 @@ var (
 		DefaultConfig: sdk.WorkflowNodeHookConfig{
 			"method": {
 				Value:        "POST",
-				Configurable: true,
+				Configurable: false,
 			},
 		},
 	}
