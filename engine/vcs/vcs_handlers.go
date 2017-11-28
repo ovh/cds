@@ -46,10 +46,11 @@ func (s *Service) getVCSServersHooksHandler() api.Handler {
 			return sdk.ErrNotFound
 		}
 		res := struct {
-			WebhooksSupported         bool `json:"webhooks_supported"`
-			WebhooksDisabled          bool `json:"webhooks_disabled"`
-			WebhooksCreationSupported bool `json:"webhooks_creation_supported"`
-			WebhooksCreationDisabled  bool `json:"webhooks_creation_disabled"`
+			WebhooksSupported         bool   `json:"webhooks_supported"`
+			WebhooksDisabled          bool   `json:"webhooks_disabled"`
+			WebhooksCreationSupported bool   `json:"webhooks_creation_supported"`
+			WebhooksCreationDisabled  bool   `json:"webhooks_creation_disabled"`
+			WebhooksIcon              string `json:"webhooks_icon"`
 		}{}
 
 		switch {
@@ -58,16 +59,19 @@ func (s *Service) getVCSServersHooksHandler() api.Handler {
 			res.WebhooksDisabled = cfg.Bitbucket.DisableWebHooks
 			res.WebhooksCreationSupported = true
 			res.WebhooksCreationDisabled = cfg.Bitbucket.DisableWebHooksCreation
+			res.WebhooksIcon = sdk.BitbucketIcon
 		case cfg.Github != nil:
 			res.WebhooksSupported = false
 			res.WebhooksDisabled = cfg.Github.DisableWebHooks
 			res.WebhooksCreationSupported = false
 			res.WebhooksCreationDisabled = cfg.Github.DisableWebHooksCreation
+			res.WebhooksIcon = sdk.GitHubIcon
 		case cfg.Gitlab != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Gitlab.DisableWebHooks
 			res.WebhooksCreationSupported = true
 			res.WebhooksCreationDisabled = cfg.Github.DisableWebHooksCreation
+			res.WebhooksIcon = sdk.GitlabIcon
 		}
 
 		return api.WriteJSON(w, r, res, http.StatusOK)
