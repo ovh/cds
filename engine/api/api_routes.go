@@ -111,10 +111,13 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/notifications", r.GET(api.getProjectNotificationsHandler))
 	r.Handle("/project/{permProjectKey}/keys", r.GET(api.getKeysInProjectHandler), r.POST(api.addKeyInProjectHandler))
 	r.Handle("/project/{permProjectKey}/keys/{name}", r.DELETE(api.deleteKeyInProjectHandler))
+	// Import Application
+	r.Handle("/project/{permProjectKey}/import/application", r.POST(api.postApplicationImportHandler))
+	// Export Application
+	r.Handle("/project/{key}/export/application/{permApplicationName}", r.GET(api.getApplicationExportHandler))
 
 	// Application
 	r.Handle("/project/{key}/application/{permApplicationName}", r.GET(api.getApplicationHandler), r.PUT(api.updateApplicationHandler), r.DELETE(api.deleteApplicationHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/export", r.GET(api.getApplicationExportHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/keys", r.GET(api.getKeysInApplicationHandler), r.POST(api.addKeyInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/keys/{name}", r.DELETE(api.deleteKeyInApplicationHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/branches", r.GET(api.getApplicationBranchHandler))

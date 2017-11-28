@@ -10,14 +10,14 @@ type (
 
 	// VariableValue is a struct to export a value of Variable
 	VariableValue struct {
-		Type  string `json:"type" yaml:"type"`
-		Value string `json:"value" yaml:"value"`
+		Type  string `json:"type,omitempty" yaml:"type,omitempty"`
+		Value string `json:"value,omitempty" yaml:"value,omitempty"`
 	}
 
 	// ParameterValue is a struct to export a defautl value of Parameter
 	ParameterValue struct {
-		Type         string `json:"type" yaml:"type"`
-		DefaultValue string `json:"default" yaml:"default"`
+		Type         string `json:"type,omitempty" yaml:"type,omitempty"`
+		DefaultValue string `json:"default,omitempty" yaml:"default,omitempty"`
 	}
 )
 
