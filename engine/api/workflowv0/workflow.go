@@ -545,7 +545,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 }
 
 func getRemoteOpts(remoteFilter, repoFullName string) pipeline.ExecOptionFunc {
-	if remoteFilter == "" || (repoFullName != "" && remoteFilter == repoFullName) {
+	if repoFullName != "" && (remoteFilter == "" || remoteFilter == repoFullName) {
 		return pipeline.LoadPipelineBuildOpts.WithEmptyRemote(repoFullName)
 	} else if repoFullName != "" && remoteFilter != "" {
 		return pipeline.LoadPipelineBuildOpts.WithRemoteName(remoteFilter)
