@@ -161,7 +161,7 @@ func ShouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk
 			if previous == nil {
 				return true
 			}
-			return current.Status != previous.Status
+			return current.Status.String() != previous.Status.String()
 		}
 		return false
 	}
