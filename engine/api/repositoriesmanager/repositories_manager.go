@@ -337,10 +337,8 @@ func (c *vcsClient) UploadReleaseFile(fullname string, releaseName, uploadURL st
 
 // WebhooksInfos is a set of info about webhooks
 type WebhooksInfos struct {
-	WebhooksSupported         bool `json:"webhooks_supported"`
-	WebhooksDisabled          bool `json:"webhooks_disabled"`
-	WebhooksCreationSupported bool `json:"webhooks_creation_supported"`
-	WebhooksCreationDisabled  bool `json:"webhooks_creation_disabled"`
+	WebhooksSupported bool `json:"webhooks_supported"`
+	WebhooksDisabled  bool `json:"webhooks_disabled"`
 }
 
 // GetWebhooksInfos returns webhooks_supported, webhooks_disabled, webhooks_creation_supported, webhooks_creation_disabled for a vcs server

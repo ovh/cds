@@ -78,7 +78,7 @@ func (b *bitbucketClient) CreateHook(repo string, hook sdk.VCSHook) error {
 
 	updatePath := fmt.Sprintf("/projects/%s/repos/%s/settings/hooks/%s/settings", project, slug, bitbucketHookKey)
 	if err := b.do("PUT", "core", updatePath, nil, values, &hook); err != nil {
-		return sdk.WrapError(err, "vcs> bitbucket> CreateHook> Unable to update hook config")
+		return sdk.WrapError(err, "vcs> bitbucket> CreateHook> Unable to update hook config %s", string(values))
 	}
 
 	//If it's the first hook, let's enable the plugin

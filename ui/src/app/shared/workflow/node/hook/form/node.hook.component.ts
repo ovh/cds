@@ -62,7 +62,7 @@ export class WorkflowNodeHookFormComponent {
     }
 
     show(): void {
-        this._hookService.getHookModel().pipe(first()).subscribe(hms => {
+        this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(first()).subscribe(hms => {
             this.hooksModel = hms;
             if (this._hook && this._hook.model) {
                 this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
