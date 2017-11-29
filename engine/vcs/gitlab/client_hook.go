@@ -89,7 +89,8 @@ func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 	if errI != nil {
 		return sdk.WrapError(sdk.ErrInvalidID, "GitlabClient.DeleteHook > Wrong gitlab webhook ID: %s", hook.ID)
 	}
-	res, err := c.client.Projects.DeleteProjectHook(repo, hookID, nil)
+	log.Warning("%s %s", repo, hookID)
+	res, err := c.client.Projects.DeleteProjectHook(repo, hookID)
 	if err != nil {
 		return sdk.WrapError(sdk.ErrInvalidID, "GitlabClient.DeleteHook > Cannot delete gitlab hook %s on project %s. Get code: %s", hook.ID, repo, res.StatusCode)
 	}

@@ -669,7 +669,6 @@ func (s *Service) deleteHookHandler() api.Handler {
 		}
 
 		var hook sdk.VCSHook
-		log.Warning("HookID %s", hookID)
 		if hookID == "" {
 			var err error
 			hook, err = client.GetHook(fmt.Sprintf("%s/%s", owner, repo), hookURL)

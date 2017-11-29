@@ -239,7 +239,6 @@ func (c *vcsClient) UpdateHook(fullname, url string, hook sdk.VCSHook) error {
 }
 
 func (c *vcsClient) DeleteHook(fullname string, hook sdk.VCSHook) error {
-	log.Warning(">>Deleting hook %s", hook.ID)
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks?url=%s&id=%s", c.name, fullname, url.QueryEscape(hook.URL), hook.ID)
 	_, err := c.doJSONRequest("DELETE", path, nil, nil)
 	return err
