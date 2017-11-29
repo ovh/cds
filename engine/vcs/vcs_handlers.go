@@ -651,6 +651,8 @@ func (s *Service) deleteHookHandler() api.Handler {
 			return err
 		}
 
+		hookID := r.URL.Query().Get("id")
+
 		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
 		if !ok {
 			return sdk.WrapError(sdk.ErrUnauthorized, "VCS> deleteHookHandler> Unable to get access token headers")
@@ -666,9 +668,17 @@ func (s *Service) deleteHookHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> deleteHookHandler> Unable to get authorized client")
 		}
 
-		hook, err := client.GetHook(fmt.Sprintf("%s/%s", owner, repo), hookURL)
-		if err != nil {
-			return sdk.WrapError(err, "VCS> deleteHookHandler> Unable to get hook %s", hookURL)
+		var hook sdk.VCSHook
+		if hookID == "" {
+			var err error
+			hook, err = client.GetHook(fmt.Sprintf("%s/%s", owner, repo), hookURL)
+			if err != nil {
+				return sdk.WrapError(err, "VCS> deleteHookHandler> Unable to get hook %s", hookURL)
+			}
+		} else {
+			hook = sdk.VCSHook{
+				ID: hookID,
+			}
 		}
 
 		return client.DeleteHook(fmt.Sprintf("%s/%s", owner, repo), hook)
