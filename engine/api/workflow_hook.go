@@ -59,6 +59,7 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 		if node.Context.Application != nil && node.Context.Application.RepositoryFullname != "" {
 			hasRepoManager = true
 		}
+		var webHookInfo repositoriesmanager.WebhooksInfos
 		if hasRepoManager {
 			// Call VCS to know if repository allows webhook and get the configuration fields
 			vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
@@ -67,25 +68,27 @@ func (api *API) getWorkflowHookModelsHandler() Handler {
 				if errclient != nil {
 					return sdk.WrapError(errclient, "getWorkflowHookModelsHandler> Cannot get vcs client")
 				}
-				webHookInfo, errWH := repositoriesmanager.GetWebhooksInfos(client)
+				var errWH error
+				webHookInfo, errWH = repositoriesmanager.GetWebhooksInfos(client)
 				if errWH != nil {
 					return sdk.WrapError(errWH, "getWorkflowHookModelsHandler> Cannot get vcs web hook info")
 				}
 				repoWebHookEnable = webHookInfo.WebhooksSupported && !webHookInfo.WebhooksDisabled
-
 			}
 		}
 
-		if !repoWebHookEnable {
-			var indexToDelete int
-			for i := range m {
+		var indexToDelete int
+		for i := range m {
+			if !repoWebHookEnable {
 				if m[i].Name == workflow.RepositoryWebHookModel.Name {
 					indexToDelete = i
 					break
 				}
+			} else {
+				m[i].Icon = webHookInfo.Icon
 			}
-			m = append(m[0:indexToDelete], m[indexToDelete+1:]...)
 		}
+		m = append(m[0:indexToDelete], m[indexToDelete+1:]...)
 
 		return WriteJSON(w, r, m, http.StatusOK)
 	}
