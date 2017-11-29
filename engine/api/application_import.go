@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"sync"
 
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
@@ -114,14 +115,15 @@ func (api *API) postApplicationImportHandler() Handler {
 
 		defer tx.Rollback()
 
-		done := make(chan bool)
+		done := new(sync.WaitGroup)
+		done.Add(1)
 		msgChan := make(chan sdk.Message)
 		msgList := []sdk.Message{}
 		go func(array *[]sdk.Message) {
+			defer done.Done()
 			for {
 				m, more := <-msgChan
 				if !more {
-					done <- true
 					return
 				}
 				*array = append(*array, m)
@@ -129,18 +131,9 @@ func (api *API) postApplicationImportHandler() Handler {
 		}(&msgList)
 
 		globalError := application.Import(tx, api.Cache, proj, app, eapp.VCSServer, getUser(ctx), msgChan)
-
 		close(msgChan)
-		<-done
-
-		al := r.Header.Get("Accept-Language")
-		msgListString := []string{}
-		for _, m := range msgList {
-			s := m.String(al)
-			if s != "" {
-				msgListString = append(msgListString, s)
-			}
-		}
+		done.Wait()
+		msgListString := translate(r, msgList)
 
 		if globalError != nil {
 			myError, ok := globalError.(sdk.Error)

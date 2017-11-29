@@ -94,15 +94,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		close(msgChan)
 		<-done
 
-		al := r.Header.Get("Accept-Language")
-		msgListString := []string{}
-
-		for _, m := range allMsg {
-			s := m.String(al)
-			if s != "" {
-				msgListString = append(msgListString, s)
-			}
-		}
+		msgListString := translate(r, allMsg)
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "importNewEnvironmentHandler> Cannot commit transaction")
@@ -208,15 +200,7 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 		close(msgChan)
 		<-done
 
-		al := r.Header.Get("Accept-Language")
-		msgListString := []string{}
-
-		for _, m := range allMsg {
-			s := m.String(al)
-			if s != "" {
-				msgListString = append(msgListString, s)
-			}
-		}
+		msgListString := translate(r, allMsg)
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot commit transaction")
