@@ -289,17 +289,9 @@ func (api *API) applyTemplateHandler() Handler {
 
 		// Apply the template
 		log.Debug("applyTemplateHandler> applyTemplate")
-		msg, errapply := template.ApplyTemplate(api.mustDB(), api.Cache, proj, opts, getUser(ctx), sessionKey, api.Config.URL.API)
+		_, errapply := template.ApplyTemplate(api.mustDB(), api.Cache, proj, opts, getUser(ctx), sessionKey, api.Config.URL.API)
 		if errapply != nil {
 			return sdk.WrapError(errapply, "applyTemplateHandler> Error while applyTemplate")
-		}
-
-		al := r.Header.Get("Accept-Language")
-		msgList := []string{}
-
-		for _, m := range msg {
-			s := m.String(al)
-			msgList = append(msgList, s)
 		}
 
 		go func() {
@@ -359,13 +351,7 @@ func (api *API) applyTemplateOnApplicationHandler() Handler {
 			return sdk.WrapError(err, "applyTemplateOnApplicationHandler> Error on apply template on application")
 		}
 
-		al := r.Header.Get("Accept-Language")
-		msgList := []string{}
-
-		for _, m := range msg {
-			s := m.String(al)
-			msgList = append(msgList, s)
-		}
+		msgList := translate(r, msg)
 
 		go func() {
 			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {

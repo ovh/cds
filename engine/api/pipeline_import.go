@@ -118,17 +118,7 @@ func (api *API) importPipelineHandler() Handler {
 		close(msgChan)
 		<-done
 
-		al := r.Header.Get("Accept-Language")
-		msgListString := []string{}
-
-		for _, m := range allMsg {
-			s := m.String(al)
-			if s != "" {
-				msgListString = append(msgListString, s)
-			}
-		}
-
-		log.Debug("importPipelineHandler >>> %v", msgListString)
+		msgListString := translate(r, allMsg)
 
 		if globalError != nil {
 			myError, ok := globalError.(sdk.Error)
