@@ -26,7 +26,7 @@ const (
 	TypeWebHook            = "Webhook"
 	TypeScheduler          = "Scheduler"
 
-	GithubHeader    = "X-GitHub-Event"
+	GithubHeader    = "X-Github-Event"
 	GitlabHeader    = "X-Gitlab-Event"
 	BitbucketHeader = "X-Event-Key"
 )
