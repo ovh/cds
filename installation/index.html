@@ -331,8 +331,8 @@ There is are two ways to set up CDS:
 Start CDS with local configuration file You can also generate a configuration file template with the following command.
 $ $PATH_TO_CDS/engine config new &gt; my_conf_file.toml  Edit this file.
 Check your configuration file with
-$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Run CDS
-$ $PATH_TO_CDS/engine start api --config my_conf_file. <a class="read-more" href="https://ovh.github.io/cds/installation/installation.configuration/">&raquo;</a></p>
+$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
+$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Run CDS <a class="read-more" href="https://ovh.github.io/cds/installation/installation.configuration/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          

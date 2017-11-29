@@ -51,8 +51,8 @@ There is are two ways to set up CDS:
 Start CDS with local configuration file You can also generate a configuration file template with the following command.
 $ $PATH_TO_CDS/engine config new &amp;gt; my_conf_file.toml  Edit this file.
 Check your configuration file with
-$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Run CDS
-$ $PATH_TO_CDS/engine start api --config my_conf_file.</description>
+$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
+$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Run CDS</description>
     </item>
     
     <item>

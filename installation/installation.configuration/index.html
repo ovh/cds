@@ -412,6 +412,11 @@ Reading configuration file my_new_file.toml
 Configuration file OK
 </code></pre>
 
+<p>Create your database relations</p>
+
+<pre><code class="language-bash">$ $PATH_TO_CDS/engine database upgrade --db-host &lt;host&gt; --db-port &lt;port&gt; --db-user &lt;user&gt; --db-password &lt;password&gt; --db-name &lt;database&gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0
+</code></pre>
+
 <p>Run CDS</p>
 
 <pre><code class="language-bash">$ $PATH_TO_CDS/engine start api --config my_conf_file.toml
