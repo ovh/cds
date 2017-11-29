@@ -46,11 +46,9 @@ func (s *Service) getVCSServersHooksHandler() api.Handler {
 			return sdk.ErrNotFound
 		}
 		res := struct {
-			WebhooksSupported         bool   `json:"webhooks_supported"`
-			WebhooksDisabled          bool   `json:"webhooks_disabled"`
-			WebhooksCreationSupported bool   `json:"webhooks_creation_supported"`
-			WebhooksCreationDisabled  bool   `json:"webhooks_creation_disabled"`
-			WebhooksIcon              string `json:"webhooks_icon"`
+			WebhooksSupported bool   `json:"webhooks_supported"`
+			WebhooksDisabled  bool   `json:"webhooks_disabled"`
+			WebhooksIcon      string `json:"webhooks_icon"`
 		}{}
 
 		switch {
@@ -59,7 +57,7 @@ func (s *Service) getVCSServersHooksHandler() api.Handler {
 			res.WebhooksDisabled = cfg.Bitbucket.DisableWebHooks
 			res.WebhooksIcon = sdk.BitbucketIcon
 		case cfg.Github != nil:
-			res.WebhooksSupported = false
+			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Github.DisableWebHooks
 			res.WebhooksIcon = sdk.GitHubIcon
 		case cfg.Gitlab != nil:
