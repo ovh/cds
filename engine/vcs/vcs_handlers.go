@@ -57,20 +57,14 @@ func (s *Service) getVCSServersHooksHandler() api.Handler {
 		case cfg.Bitbucket != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Bitbucket.DisableWebHooks
-			res.WebhooksCreationSupported = true
-			res.WebhooksCreationDisabled = cfg.Bitbucket.DisableWebHooksCreation
 			res.WebhooksIcon = sdk.BitbucketIcon
 		case cfg.Github != nil:
 			res.WebhooksSupported = false
 			res.WebhooksDisabled = cfg.Github.DisableWebHooks
-			res.WebhooksCreationSupported = false
-			res.WebhooksCreationDisabled = cfg.Github.DisableWebHooksCreation
 			res.WebhooksIcon = sdk.GitHubIcon
 		case cfg.Gitlab != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Gitlab.DisableWebHooks
-			res.WebhooksCreationSupported = true
-			res.WebhooksCreationDisabled = cfg.Github.DisableWebHooksCreation
 			res.WebhooksIcon = sdk.GitlabIcon
 		}
 
