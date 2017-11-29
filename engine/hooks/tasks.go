@@ -307,7 +307,7 @@ func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeR
 }
 
 func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing webhook %s", t.UUID)
+	log.Warning("Hooks> Processing webhook %s %s", t.UUID, t.Type)
 
 	if t.Type == TypeRepoManagerWebHook {
 		return executeRepositoryWebHook(t)
@@ -333,6 +333,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 	}
 
 	payload := make(map[string]interface{})
+	log.Warning("%s", getRepositoryHeader(t.WebHook))
 	switch getRepositoryHeader(t.WebHook) {
 	case GithubHeader:
 		var pushEvent GithubPushEvent
