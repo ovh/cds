@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -102,6 +103,7 @@ var applicationImportCmd = cli.Command{
 	Short: "Import an application",
 	Args: []cli.Arg{
 		{Name: "project-key"},
+		{Name: "filename"},
 	},
 	Flags: []cli.Flag{
 		{
@@ -114,6 +116,27 @@ var applicationImportCmd = cli.Command{
 }
 
 func applicationImportRun(c cli.Values) error {
+	path := c.GetString("filename")
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var format = "yaml"
+	if strings.HasSuffix(path, ".json") {
+		format = "json"
+	}
+
+	msgs, err := client.ApplicationImport(c.GetString("project-key"), f, format, c.GetBool("force"))
+	if err != nil {
+		return err
+	}
+
+	for _, s := range msgs {
+		fmt.Println(s)
+	}
+
 	return nil
 }
 
@@ -145,6 +168,6 @@ func applicationExportRun(c cli.Values) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(btes)
+	fmt.Println(string(btes))
 	return nil
 }
