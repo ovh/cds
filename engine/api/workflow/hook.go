@@ -105,9 +105,9 @@ func updateVCSConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			return sdk.WrapError(sdk.ErrForbidden, "updateVCSConfiguration> hook creation are forbidden")
 		}
 		vcsHook := sdk.VCSHook{
-			Method: "POST",
-			URL:    h.Config["webHookURL"].Value,
-			UUID:   h.UUID,
+			Method:   "POST",
+			URL:      h.Config["webHookURL"].Value,
+			Workflow: true,
 		}
 		if err := client.CreateHook(h.Config["repoFullName"].Value, vcsHook); err != nil {
 			return sdk.WrapError(err, "updateVCSConfiguration> Cannot create hook on repository")

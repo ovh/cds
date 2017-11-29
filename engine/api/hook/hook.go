@@ -293,9 +293,9 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 	h.Link = fmt.Sprintf(s, h.UID, t[0], t[1])
 
 	hook := sdk.VCSHook{
-		Method: "POST",
-		URL:    h.Link,
-		UUID:   h.UID,
+		Method:   "POST",
+		URL:      h.Link,
+		Workflow: false,
 	}
 
 	log.Info("CreateHook> will create %+v", hook)

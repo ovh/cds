@@ -359,5 +359,5 @@ type VCSHook struct {
 	ContentType string   `json:"content_type"`
 	Body        string   `json:"body"`
 	InsecureSSL bool     `json:"insecure_ssl"`
-	UUID        string   `json:"uuid"`
+	Workflow    bool     `json:"workflow"`
 }

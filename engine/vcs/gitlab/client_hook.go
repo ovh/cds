@@ -2,6 +2,8 @@ package gitlab
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/xanzy/go-gitlab"
 
@@ -21,10 +23,19 @@ func (c *gitlabClient) CreateHook(repo string, hook sdk.VCSHook) error {
 	t := true
 	f := false
 
-	log.Warning(">>%s", hook.URL)
+	var url string
+	if !hook.Workflow {
+		var err error
+		url, err = buildGitlabURL(hook.URL)
+		if err != nil {
+			return err
+		}
+	} else {
+		url = hook.URL
+	}
 
 	opt := gitlab.AddProjectHookOptions{
-		URL:                   &hook.URL,
+		URL:                   &url,
 		PushEvents:            &t,
 		MergeRequestsEvents:   &f,
 		TagPushEvents:         &f,
@@ -42,20 +53,53 @@ func (c *gitlabClient) CreateHook(repo string, hook sdk.VCSHook) error {
 //DeleteHook disables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 
+	var url string
+	if !hook.Workflow {
+		var err error
+		url, err = buildGitlabURL(hook.URL)
+		if err != nil {
+			return err
+		}
+	} else {
+		url = hook.URL
+	}
+
 	hooks, _, err := c.client.Projects.ListProjectHooks(repo, nil)
 	if err != nil {
 		return err
 	}
 
-	log.Debug("GitlabClient.DeleteHook: Got '%s'", hook.URL)
-	log.Debug("GitlabClient.DeleteHook: Want '%s'", hook.URL)
+	log.Debug("GitlabClient.DeleteHook: Got '%s'", url)
+	log.Debug("GitlabClient.DeleteHook: Want '%s'", url)
 	for _, h := range hooks {
 		log.Debug("GitlabClient.DeleteHook: Found '%s'", h.URL)
-		if h.URL == hook.URL {
+		if h.URL == url {
 			_, err = c.client.Projects.DeleteProjectHook(repo, h.ID)
 			return err
 		}
 	}
 
 	return fmt.Errorf("not found")
+}
+
+func buildGitlabURL(givenURL string) (string, error) {
+
+	u, err := url.Parse(givenURL)
+	if err != nil {
+		return "", err
+	}
+	q, err := url.ParseQuery(u.RawQuery)
+	if err != nil {
+		return "", err
+	}
+
+	url := fmt.Sprintf("%s://%s/%s?uid=%s", u.Scheme, u.Host, u.Path, q.Get("uid"))
+
+	for k, _ := range q {
+		if k != "uid" && !strings.Contains(q.Get(k), "{") {
+			url = fmt.Sprintf("%s&%s=%s", url, k, q.Get(k))
+		}
+	}
+
+	return url, nil
 }
