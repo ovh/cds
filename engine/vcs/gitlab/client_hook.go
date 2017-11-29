@@ -71,23 +71,10 @@ func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 }
 
 func buildGitlabURL(h sdk.VCSHook) (string, error) {
-
 	u, err := url.Parse(h.URL)
 	if err != nil {
 		return "", err
 	}
-	q, err := url.ParseQuery(u.RawQuery)
-	if err != nil {
-		return "", err
-	}
-
 	url := fmt.Sprintf("%s://%s/%s?uid=%s", u.Scheme, u.Host, u.Path, h.UUID)
-
-	for k, _ := range q {
-		if k != "uid" && !strings.Contains(q.Get(k), "{") {
-			url = fmt.Sprintf("%s&%s=%s", url, k, q.Get(k))
-		}
-	}
-
 	return url, nil
 }
