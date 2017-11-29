@@ -633,7 +633,10 @@ func (s *Service) postHookHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> postHookHandler> Unable to read body")
 		}
 
-		return client.CreateHook(fmt.Sprintf("%s/%s", owner, repo), body)
+		if err := client.CreateHook(fmt.Sprintf("%s/%s", owner, repo), &body); err != nil {
+			return err
+		}
+		return api.WriteJSON(w, r, body, http.StatusOK)
 	}
 }
 

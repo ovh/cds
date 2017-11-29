@@ -57,13 +57,18 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 		return sdk.WrapError(&errmu, "insertHook> Invalid hook configuration")
 	}
 
-	//Keep the uuid if provided
+	// if it's a new hook
 	if hook.UUID == "" {
 		uuid, erruuid := sessionstore.NewSessionKey()
 		if erruuid != nil {
 			return sdk.WrapError(erruuid, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
 		}
 		hook.UUID = string(uuid)
+
+		hook.Config["hookIcon"] = sdk.WorkflowNodeHookConfigValue{
+			Value:        hook.WorkflowHookModel.Icon,
+			Configurable: false,
+		}
 	}
 
 	dbhook := NodeHook(*hook)

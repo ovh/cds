@@ -9,6 +9,7 @@ import (
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"strconv"
 )
 
 func (g *gitlabClient) GetHook(repo, id string) (sdk.VCSHook, error) {
@@ -19,7 +20,7 @@ func (g *gitlabClient) UpdateHook(repo, id string, hook sdk.VCSHook) error {
 }
 
 //CreateHook enables the defaut HTTP POST Hook in Gitlab
-func (c *gitlabClient) CreateHook(repo string, hook sdk.VCSHook) error {
+func (c *gitlabClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 	t := true
 	f := false
 
@@ -43,43 +44,51 @@ func (c *gitlabClient) CreateHook(repo string, hook sdk.VCSHook) error {
 	}
 
 	log.Debug("GitlabClient.CreateHook: %s %s\n", repo, *opt.URL)
-	if _, _, err := c.client.Projects.AddProjectHook(repo, &opt); err != nil {
+	ph, _, err := c.client.Projects.AddProjectHook(repo, &opt)
+	if err != nil {
 		return err
 	}
-
+	hook.ID = fmt.Sprintf("%d", ph.ID)
 	return nil
 }
 
 //DeleteHook disables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
-
-	var url string
 	if !hook.Workflow {
-		var err error
-		url, err = buildGitlabURL(hook.URL)
+		var url string
+		if !hook.Workflow {
+			var err error
+			url, err = buildGitlabURL(hook.URL)
+			if err != nil {
+				return err
+			}
+		} else {
+			url = hook.URL
+		}
+
+		hooks, _, err := c.client.Projects.ListProjectHooks(repo, nil)
 		if err != nil {
 			return err
 		}
-	} else {
-		url = hook.URL
-	}
 
-	hooks, _, err := c.client.Projects.ListProjectHooks(repo, nil)
-	if err != nil {
-		return err
-	}
-
-	log.Debug("GitlabClient.DeleteHook: Got '%s'", url)
-	log.Debug("GitlabClient.DeleteHook: Want '%s'", url)
-	for _, h := range hooks {
-		log.Debug("GitlabClient.DeleteHook: Found '%s'", h.URL)
-		if h.URL == url {
-			_, err = c.client.Projects.DeleteProjectHook(repo, h.ID)
-			return err
+		log.Debug("GitlabClient.DeleteHook: Got '%s'", url)
+		log.Debug("GitlabClient.DeleteHook: Want '%s'", url)
+		for _, h := range hooks {
+			log.Debug("GitlabClient.DeleteHook: Found '%s'", h.URL)
+			if h.URL == url {
+				_, err = c.client.Projects.DeleteProjectHook(repo, h.ID)
+				return err
+			}
 		}
+		return fmt.Errorf("not found")
 	}
+	hookID, errI := strconv.Atoi(hook.ID)
+	if errI != nil {
+		return sdk.WrapError(sdk.ErrInvalidID, "GitlabClient.DeleteHook > Wrong gitlab webhook ID: %s", hook.ID)
+	}
+	_, err := c.client.Projects.DeleteProjectHook(repo, hookID)
+	return err
 
-	return fmt.Errorf("not found")
 }
 
 func buildGitlabURL(givenURL string) (string, error) {

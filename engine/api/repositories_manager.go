@@ -456,9 +456,10 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 			link := fmt.Sprintf(s, h.UID, h.Project, h.Repository)
 
 			vcsHook := sdk.VCSHook{
-				Name:   rm.Name,
-				URL:    link,
-				Method: "GET",
+				Name:     rm.Name,
+				URL:      link,
+				Method:   "GET",
+				Workflow: false,
 			}
 
 			if err := client.DeleteHook(rm.Name, vcsHook); err != nil {
@@ -633,9 +634,10 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 		link := fmt.Sprintf(s, h.UID, t[0], t[1])
 
 		vcsHook := sdk.VCSHook{
-			Name:   rm.Name,
-			URL:    link,
-			Method: "GET",
+			Name:     rm.Name,
+			URL:      link,
+			Method:   "GET",
+			Workflow: false,
 		}
 
 		if errdelete := client.DeleteHook(app.RepositoryFullname, vcsHook); errdelete != nil {

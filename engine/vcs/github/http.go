@@ -201,3 +201,41 @@ func (c *githubClient) get(path string, opts ...getArgFunc) (int, []byte, http.H
 
 	return res.StatusCode, resBody, res.Header, nil
 }
+
+func (c *githubClient) delete(path string) error {
+	if RateLimitRemaining < 100 {
+		return ErrorRateLimit
+	}
+
+	if !strings.HasPrefix(path, APIURL) {
+		path = APIURL + path
+	}
+
+	req, err := http.NewRequest(http.MethodDelete, path, nil)
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("User-Agent", "CDS-gh_client_id="+c.ClientID)
+	req.Header.Add("Authorization", fmt.Sprintf("token %s", c.OAuthToken))
+	log.Debug("Github API>> Request URL %s", req.URL.String())
+
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")
+	rateLimitRemaining := res.Header.Get("X-RateLimit-Remaining")
+	rateLimitReset := res.Header.Get("X-RateLimit-Reset")
+
+	if rateLimitLimit != "" && rateLimitRemaining != "" && rateLimitReset != "" {
+		RateLimitRemaining, _ = strconv.Atoi(rateLimitRemaining)
+		RateLimitReset, _ = strconv.Atoi(rateLimitReset)
+	}
+
+	if res.StatusCode != 204 {
+		return fmt.Errorf("github>delete wrong status code %d on url", res.StatusCode, path)
+	}
+	return nil
+}

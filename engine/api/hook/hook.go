@@ -300,7 +300,7 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 
 	log.Info("CreateHook> will create %+v", hook)
 
-	if err := client.CreateHook(repoFullName, hook); err != nil {
+	if err := client.CreateHook(repoFullName, &hook); err != nil {
 		log.Warning("Cannot create hook on repository manager: %s", err)
 		if strings.Contains(err.Error(), "Not yet implemented") {
 			return nil, sdk.WrapError(sdk.ErrNotImplemented, "CreateHook> Cannot create hook on repository manager")

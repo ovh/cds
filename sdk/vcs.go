@@ -28,7 +28,7 @@ type VCSAuthorizedClient interface {
 	PullRequests(string) ([]VCSPullRequest, error)
 
 	//Hooks
-	CreateHook(repo string, hook VCSHook) error
+	CreateHook(repo string, hook *VCSHook) error
 	GetHook(repo, url string) (VCSHook, error)
 	UpdateHook(repo, url string, hook VCSHook) error
 	DeleteHook(repo string, hook VCSHook) error
