@@ -26,9 +26,9 @@ func (api *API) postApplicationImportHandler() Handler {
 		key := vars["permProjectKey"]
 		force := FormBool(r, "force")
 
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, err)
+		body, errr := ioutil.ReadAll(r.Body)
+		if errr != nil {
+			return sdk.NewError(sdk.ErrWrongRequest, errr)
 		}
 		defer r.Body.Close()
 
@@ -49,15 +49,15 @@ func (api *API) postApplicationImportHandler() Handler {
 		}
 
 		if errapp != nil {
-			return sdk.NewError(sdk.ErrWrongRequest, err)
+			return sdk.NewError(sdk.ErrWrongRequest, errapp)
 		}
 
 		log.Info("postApplicationImportHandler> Import application %s in project %s (force=%v)", eapp.Name, key, force)
 		log.Debug("postApplicationImportHandler> App: %+v", eapp)
 
 		//Check valid application name
-		regexp := regexp.MustCompile(sdk.NamePattern)
-		if !regexp.MatchString(eapp.Name) {
+		rx := regexp.MustCompile(sdk.NamePattern)
+		if !rx.MatchString(eapp.Name) {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "postApplicationImportHandler> Application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
 		}
 
