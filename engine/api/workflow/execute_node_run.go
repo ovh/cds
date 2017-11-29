@@ -365,6 +365,7 @@ func NodeBuildParameters(proj *sdk.Project, wf *sdk.Workflow, wr *sdk.WorkflowRu
 
 // StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
 func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanEvent chan<- interface{}) error {
+	const stopWorkflowNodeRunNBWorker = 5
 	var wg sync.WaitGroup
 	// Load node job run ID
 	ids, errIDS := LoadNodeJobRunIDByNodeRunID(db, nodeRun.ID)
@@ -372,9 +373,9 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 		return sdk.WrapError(errIDS, "StopWorkflowNodeRun> Cannot load node jobs run ids ")
 	}
 
-	chanNjrID := make(chan int64, 5)
-	chanNodeJobRun := make(chan interface{}, 6)
-	chanErr := make(chan error, 6)
+	chanNjrID := make(chan int64, stopWorkflowNodeRunNBWorker)
+	chanNodeJobRun := make(chan interface{}, stopWorkflowNodeRunNBWorker)
+	chanErr := make(chan error, stopWorkflowNodeRunNBWorker)
 	for i := 0; i < 5 && i < len(ids); i++ {
 		go stopWorkflowNodeJobRun(db, store, proj, &nodeRun, stopInfos, chanNjrID, chanNodeJobRun, chanErr, &wg)
 	}
