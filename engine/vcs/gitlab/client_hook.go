@@ -44,9 +44,12 @@ func (c *gitlabClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 	}
 
 	log.Debug("GitlabClient.CreateHook: %s %s\n", repo, *opt.URL)
-	ph, _, err := c.client.Projects.AddProjectHook(repo, &opt)
+	ph, resp, err := c.client.Projects.AddProjectHook(repo, &opt)
 	if err != nil {
 		return err
+	}
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("GitlabClient.CreateHook> Cannot create hook. Http %d, Repo %s, hook %+v", resp.StatusCode, repo, opt)
 	}
 	hook.ID = fmt.Sprintf("%d", ph.ID)
 	return nil
