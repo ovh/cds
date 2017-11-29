@@ -3,7 +3,6 @@ package gitlab
 import (
 	"fmt"
 	"net/url"
-	"strings"
 
 	"github.com/xanzy/go-gitlab"
 
