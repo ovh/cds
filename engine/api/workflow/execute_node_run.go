@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -54,7 +55,6 @@ func syncTakeJobInNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.Wo
 		if chanEvent != nil {
 			chanEvent <- n
 		}
-
 	}
 
 	// Save the node run in database
@@ -364,33 +364,102 @@ func NodeBuildParameters(proj *sdk.Project, wf *sdk.Workflow, wr *sdk.WorkflowRu
 }
 
 // StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
-func StopWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanEvent chan<- interface{}) error {
+func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanEvent chan<- interface{}) error {
+	const stopWorkflowNodeRunNBWorker = 5
+	var wg sync.WaitGroup
 	// Load node job run ID
 	ids, errIDS := LoadNodeJobRunIDByNodeRunID(db, nodeRun.ID)
 	if errIDS != nil {
-		return sdk.WrapError(errIDS, "stopWorkflowNodeRunHandler> Cannot load node job run id")
+		return sdk.WrapError(errIDS, "StopWorkflowNodeRun> Cannot load node jobs run ids ")
 	}
 
-	for _, nrjID := range ids {
-		njr, errNRJ := LoadAndLockNodeJobRunWait(db, store, nrjID)
-		if errNRJ != nil {
-			return sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
-		}
-
-		if err := AddSpawnInfosNodeJobRun(db, store, proj, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
-			return sdk.WrapError(err, "postJobResult> Cannot save spawn info job %d", njr.ID)
-		}
-
-		if err := UpdateNodeJobRunStatus(db, store, proj, njr, sdk.StatusStopped, chanEvent); err != nil {
-			return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
-		}
+	chanNjrID := make(chan int64, stopWorkflowNodeRunNBWorker)
+	chanNodeJobRun := make(chan interface{}, stopWorkflowNodeRunNBWorker)
+	chanErr := make(chan error, stopWorkflowNodeRunNBWorker)
+	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
+		go stopWorkflowNodeJobRun(db, store, proj, &nodeRun, stopInfos, chanNjrID, chanNodeJobRun, chanErr, &wg)
 	}
 
-	if err := updateNodeRunStatus(db, nodeRun.ID, sdk.StatusStopped.String()); err != nil {
-		return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node run status")
+	wg.Add(len(ids))
+	for _, njrID := range ids {
+		chanNjrID <- njrID
+	}
+	close(chanNjrID)
+
+	for i := 0; i < len(ids); i++ {
+		select {
+		case njRun := <-chanNodeJobRun:
+			if chanEvent != nil {
+				chanEvent <- njRun
+			}
+		case err := <-chanErr:
+			return err
+		}
+	}
+	wg.Wait()
+
+	// Update stages from node run
+	for iS := range nodeRun.Stages {
+		stag := &nodeRun.Stages[iS]
+		for iR := range stag.RunJobs {
+			runj := &stag.RunJobs[iR]
+			runj.Status = sdk.StatusStopped.String()
+			for iStep := range runj.Job.StepStatus {
+				stepStat := &runj.Job.StepStatus[iStep]
+				stepStat.Status = sdk.StatusStopped.String()
+			}
+		}
+		stag.Status = sdk.StatusStopped
+	}
+
+	nodeRun.Status = sdk.StatusStopped.String()
+	if errU := UpdateNodeRun(db, &nodeRun); errU != nil {
+		return sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
 	}
 
 	return nil
+}
+
+func stopWorkflowNodeJobRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanNodeJobRun chan<- interface{}, chanErr chan<- error, wg *sync.WaitGroup) {
+	for njrID := range chanNjrID {
+		tx, errTx := db.Begin()
+		if errTx != nil {
+			chanErr <- sdk.WrapError(errTx, "StopWorkflowNodeRun> Cannot create transaction")
+			wg.Done()
+			return
+		}
+
+		njr, errNRJ := LoadAndLockNodeJobRunWait(tx, store, njrID)
+		if errNRJ != nil {
+			chanErr <- sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
+			tx.Rollback()
+			wg.Done()
+			return
+		}
+
+		if err := AddSpawnInfosNodeJobRun(tx, store, proj, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
+			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot save spawn info job %d", njr.ID)
+			tx.Rollback()
+			wg.Done()
+			return
+		}
+
+		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
+		if err := UpdateNodeJobRunStatus(tx, store, proj, njr, sdk.StatusStopped, chanNodeJobRun); err != nil {
+			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
+			tx.Rollback()
+			wg.Done()
+			return
+		}
+
+		if err := tx.Commit(); err != nil {
+			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot commit transaction")
+			tx.Rollback()
+			wg.Done()
+			return
+		}
+		wg.Done()
+	}
 }
 
 // SyncNodeRunRunJob sync step status and spawnInfos in a specific run job

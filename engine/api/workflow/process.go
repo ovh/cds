@@ -19,7 +19,6 @@ import (
 func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64, chanEvent chan<- interface{}) (bool, error) {
 	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess int
 	t0 := time.Now()
-	w.Status = string(sdk.StatusBuilding)
 	log.Debug("processWorkflowRun> Begin [#%d]%s", w.Number, w.Workflow.Name)
 	defer func() {
 		log.Debug("processWorkflowRun> End [#%d]%s - %.3fs", w.Number, w.Workflow.Name, time.Since(t0).Seconds())
@@ -30,6 +29,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 		}
 	}(w.Status, w, chanEvent)
 
+	w.Status = string(sdk.StatusBuilding)
 	maxsn := MaxSubNumber(w.WorkflowNodeRuns)
 	log.Debug("processWorkflowRun> %s/%s %d.%d", p.Name, w.Workflow.Name, w.Number, maxsn)
 	w.LastSubNumber = maxsn
