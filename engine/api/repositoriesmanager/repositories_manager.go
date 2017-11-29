@@ -223,7 +223,7 @@ func (c *vcsClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) 
 
 func (c *vcsClient) CreateHook(fullname string, hook *sdk.VCSHook) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/", c.name, fullname)
-	_, err := c.doJSONRequest("POST", path, &hook, hook)
+	_, err := c.doJSONRequest("POST", path, hook, hook)
 	return err
 }
 

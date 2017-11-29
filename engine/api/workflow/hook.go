@@ -136,7 +136,7 @@ func createVCSConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			Workflow: true,
 		}
 		if err := client.CreateHook(h.Config["repoFullName"].Value, &vcsHook); err != nil {
-			return sdk.WrapError(err, "createVCSConfiguration> Cannot create hook on repository")
+			return sdk.WrapError(err, "createVCSConfiguration> Cannot create hook on repository: %+v", vcsHook)
 		}
 		h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
 			Value:        vcsHook.ID,
