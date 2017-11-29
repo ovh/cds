@@ -20,6 +20,13 @@ import (
 func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
+	defer func(j *sdk.WorkflowNodeJobRun, chanE chan<- interface{}) {
+		// Push update on node run job
+		if chanEvent != nil {
+			chanEvent <- *j
+		}
+	}(job, chanEvent)
+
 	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID)
 	if errLoad != nil {
 		sdk.WrapError(errLoad, "workflow.UpdateNodeJobRunStatus> Unable to load node run id %d", job.WorkflowNodeRunID)
@@ -75,10 +82,6 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 	if err := UpdateNodeJobRun(db, store, p, job); err != nil {
 		return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowNodeJobRun %d", job.ID)
-	}
-	// Push update on node run job
-	if chanEvent != nil {
-		chanEvent <- *job
 	}
 
 	if status == sdk.StatusBuilding {

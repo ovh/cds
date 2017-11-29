@@ -79,7 +79,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun, chEvent c
 
 	if newStatus != wr.Status {
 		wr.Status = newStatus
-		chEvent <- wr
+		chEvent <- *wr
 		return UpdateWorkflowRunStatus(db, wr.ID, newStatus)
 	}
 

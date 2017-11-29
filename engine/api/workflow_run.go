@@ -262,8 +262,9 @@ func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.
 				continue
 			}
 
-			if errS := workflow.StopWorkflowNodeRun(tx, store, p, wnr, stopInfos, chEvent); errS != nil {
+			if errS := workflow.StopWorkflowNodeRun(db, store, p, wnr, stopInfos, chEvent); errS != nil {
 				chError <- sdk.WrapError(errS, "stopWorkflowRunHandler> Unable to stop workflow node run %d", wnr.ID)
+				tx.Rollback()
 			}
 			wnr.Status = sdk.StatusStopped.String()
 		}
@@ -341,14 +342,18 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 		}
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
-		return nil
+		return WriteJSON(w, r, nodeRun, http.StatusOK)
 	}
 }
 
 func stopWorkflowNodeRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, nodeRun *sdk.WorkflowNodeRun, workflowName string, u *sdk.User) {
+	defer close(chEvent)
+	defer close(chError)
+
 	tx, errTx := db.Begin()
 	if errTx != nil {
 		chError <- sdk.WrapError(errTx, "stopWorkflowNodeRunHandler> Unable to create transaction")
+		return
 	}
 	defer tx.Rollback()
 
@@ -357,17 +362,20 @@ func stopWorkflowNodeRun(chEvent chan<- interface{}, chError chan<- error, db *g
 		RemoteTime: time.Now(),
 		Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{u.Username}},
 	}
-	if errS := workflow.StopWorkflowNodeRun(tx, store, p, *nodeRun, stopInfos, chEvent); errS != nil {
+	if errS := workflow.StopWorkflowNodeRun(db, store, p, *nodeRun, stopInfos, chEvent); errS != nil {
 		chError <- sdk.WrapError(errS, "stopWorkflowNodeRunHandler> Unable to stop workflow node run")
+		return
 	}
 
 	wr, errLw := workflow.LoadRun(tx, p.Key, workflowName, nodeRun.Number)
 	if errLw != nil {
 		chError <- sdk.WrapError(errLw, "stopWorkflowNodeRunHandler> Unable to load workflow run %s", workflowName)
+		return
 	}
 
 	if errR := workflow.ResyncWorkflowRunStatus(tx, wr, chEvent); errR != nil {
 		chError <- sdk.WrapError(errR, "stopWorkflowNodeRunHandler> Unable to resync workflow run status")
+		return
 	}
 
 	if errC := tx.Commit(); errC != nil {
@@ -392,6 +400,7 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 		}
+
 		run.Translate(r.Header.Get("Accept-Language"))
 		return WriteJSON(w, r, run, http.StatusOK)
 	}
