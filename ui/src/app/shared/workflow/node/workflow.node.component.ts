@@ -120,7 +120,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                     this.currentNodeRun = null;
                 }
                 this.workflowRun = wr;
-                if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
+                if (wr.nodes && wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
                     this.currentNodeRun = wr.nodes[this.node.id][0];
                 }
             } else {

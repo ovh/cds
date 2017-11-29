@@ -376,13 +376,13 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 	chanNjrID := make(chan int64, stopWorkflowNodeRunNBWorker)
 	chanNodeJobRun := make(chan interface{}, stopWorkflowNodeRunNBWorker)
 	chanErr := make(chan error, stopWorkflowNodeRunNBWorker)
-	for i := 0; i < 5 && i < len(ids); i++ {
+	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
 		go stopWorkflowNodeJobRun(db, store, proj, &nodeRun, stopInfos, chanNjrID, chanNodeJobRun, chanErr, &wg)
 	}
 
+	wg.Add(len(ids))
 	for _, njrID := range ids {
 		chanNjrID <- njrID
-		wg.Add(1)
 	}
 	close(chanNjrID)
 
