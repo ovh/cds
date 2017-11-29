@@ -2,7 +2,6 @@ package gitlab
 
 import (
 	"fmt"
-	"net/url"
 
 	"github.com/xanzy/go-gitlab"
 
@@ -22,13 +21,10 @@ func (c *gitlabClient) CreateHook(repo string, hook sdk.VCSHook) error {
 	t := true
 	f := false
 
-	url, err := buildGitlabURL(hook)
-	if err != nil {
-		return err
-	}
-	log.Warning(">>>%s", url)
+	log.Warning(">>%s", hook.URL)
+
 	opt := gitlab.AddProjectHookOptions{
-		URL:                   &url,
+		URL:                   &hook.URL,
 		PushEvents:            &t,
 		MergeRequestsEvents:   &f,
 		TagPushEvents:         &f,
@@ -46,34 +42,20 @@ func (c *gitlabClient) CreateHook(repo string, hook sdk.VCSHook) error {
 //DeleteHook disables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 
-	url, err := buildGitlabURL(hook)
-	if err != nil {
-		return err
-	}
-
 	hooks, _, err := c.client.Projects.ListProjectHooks(repo, nil)
 	if err != nil {
 		return err
 	}
 
-	log.Debug("GitlabClient.DeleteHook: Got '%s'", url)
-	log.Debug("GitlabClient.DeleteHook: Want '%s'", url)
+	log.Debug("GitlabClient.DeleteHook: Got '%s'", hook.URL)
+	log.Debug("GitlabClient.DeleteHook: Want '%s'", hook.URL)
 	for _, h := range hooks {
 		log.Debug("GitlabClient.DeleteHook: Found '%s'", h.URL)
-		if h.URL == url {
+		if h.URL == hook.URL {
 			_, err = c.client.Projects.DeleteProjectHook(repo, h.ID)
 			return err
 		}
 	}
 
 	return fmt.Errorf("not found")
-}
-
-func buildGitlabURL(h sdk.VCSHook) (string, error) {
-	u, err := url.Parse(h.URL)
-	if err != nil {
-		return "", err
-	}
-	url := fmt.Sprintf("%s://%s/%s?uid=%s", u.Scheme, u.Host, u.Path, h.UUID)
-	return url, nil
 }
