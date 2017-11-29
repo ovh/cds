@@ -43,12 +43,11 @@ func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 		return err
 	}
 
-	var webhook Webhook
-	if err := json.Unmarshal(body, &webhook); err != nil {
+	if err := json.Unmarshal(body, &r); err != nil {
 		log.Warning("github.CreateHook> Cannot unmarshal response")
 		return err
 	}
-	hook.ID = fmt.Sprintf("%d", webhook.ID)
+	hook.ID = fmt.Sprintf("%d", r.ID)
 	return nil
 }
 func (g *githubClient) GetHook(repo, id string) (sdk.VCSHook, error) {

@@ -39,6 +39,7 @@ func (t Timestamp) Equal(u Timestamp) bool {
 
 // WebhookCreate represent struct to create a webhook
 type WebhookCreate struct {
+	ID     int           `json:"id"`
 	Name   string        `json:"name"`
 	Active bool          `json:"active"`
 	Events []string      `json:"events"`
@@ -49,10 +50,6 @@ type WebhookCreate struct {
 type WebHookConfig struct {
 	URL         string `json:"url"`
 	ContentType string `json:"content_type"`
-}
-
-type Webhook struct {
-	ID json.Number
 }
 
 // User represents a GitHub user.
