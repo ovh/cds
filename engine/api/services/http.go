@@ -60,7 +60,7 @@ func doJSONRequest(srv *sdk.Service, method, path string, in interface{}, out in
 
 	if out != nil {
 		if err := json.Unmarshal(res, out); err != nil {
-			return code, sdk.WrapError(err, "services.doJSONRequest> Unable to marshal output %s", string(res))
+			return code, sdk.WrapError(err, "services.doJSONRequest> Unable to marshal output")
 		}
 	}
 
