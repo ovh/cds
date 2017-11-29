@@ -1,7 +1,22 @@
 <form class="ui form requirementForm" #formAddRequirement="ngForm">
     <div class="fields">
-            <div class="five wide field">
+            <div class="three wide field">
                 <div class="field">
+                    <sm-select class="search"
+                        *ngIf="availableRequirements.length > 0"
+                        (onChange)="selectType()"
+                        [(model)]="newRequirement.type"
+                        [options]="{'fullTextSearch': true}"
+                        placeholder="{{ 'requirement_type' | translate }}">
+                        <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
+                    </sm-select>
+                </div>
+            </div>
+            <div class="ten wide field">
+                <div class="field" *ngIf="!loading && (newRequirement.type === 'service')">
+                    <label for="requirementname">
+                        {{ 'requirement_hostname_service' | translate }}
+                    </label>
                     <input
                         name="name"
                         [disabled]="newRequirement.type !== 'service'"
@@ -16,24 +31,13 @@
                         [(ngModel)]="newRequirement.name"
                         [no-match-found-text]="false">
                         <div *ngIf="!formAddRequirement.valid && !formAddRequirement.pristine" class="ui error message">
-                            <p>{{'requirement_name_error' | translate}}</p>
+                            <p>{{'requirement_hostname_error' | translate}}</p>
                         </div>
                 </div>
-            </div>
-            <div class="three wide field">
-                <div class="field">
-                    <sm-select class="search"
-                        *ngIf="availableRequirements.length > 0"
-                        (onChange)="selectType()"
-                        [(model)]="newRequirement.type"
-                        [options]="{'fullTextSearch': true}"
-                        placeholder="{{ 'requirement_type' | translate }}">
-                        <option *ngFor="let r of availableRequirements" value="{{r}}">{{r}}</option>
-                    </sm-select>
-                </div>
-            </div>
-            <div class="five wide field">
                 <div *ngIf="newRequirement.type !== 'model'">
+                    <label for="value" *ngIf="!loading && (newRequirement.type === 'service')">
+                        {{ 'requirement_value_service' | translate }}
+                    </label>
                     <div class="field">
                         <input
                             name="value"
@@ -86,7 +90,7 @@
                         placeholder="{{'requirement_placeholder_opts_' + newRequirement.type | translate}}"></textarea>
                 </div>
             </div>
-            <div class="one wide center mtop8" *ngIf="workerModelLinked != null">
+            <div class="one wide center mtop8" *ngIf="newRequirement.type === 'model' && workerModelLinked != null">
                 <div *ngIf="workerModelLinked.group.name === 'shared.infra'"
                     [smDirTooltip]="'worker_model_official' | translate" smDirPosition="top center">
                     <i class="check circle outline icon large green">
@@ -97,7 +101,6 @@
                     <i class="remove circle outline icon large red">
                     </i>
                 </div>
-
             </div>
             <div class="two wide center field">
                 <button class="ui blue icon button" [disabled]="!isFormValid" (click)="onSubmitAddRequirement(formAddRequirement)"><i class="plus icon"></i></button>
