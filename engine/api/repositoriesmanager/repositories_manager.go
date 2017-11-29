@@ -228,7 +228,7 @@ func (c *vcsClient) CreateHook(fullname string, hook *sdk.VCSHook) error {
 }
 
 func (c *vcsClient) GetHook(fullname, u string) (sdk.VCSHook, error) {
-	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/?url=%s", c.name, fullname, url.QueryEscape(u))
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks?url=%s", c.name, fullname, url.QueryEscape(u))
 	hook := &sdk.VCSHook{}
 	_, err := c.doJSONRequest("GET", path, nil, hook)
 	return *hook, err
@@ -240,7 +240,7 @@ func (c *vcsClient) UpdateHook(fullname, url string, hook sdk.VCSHook) error {
 
 func (c *vcsClient) DeleteHook(fullname string, hook sdk.VCSHook) error {
 	log.Warning(">>Deleting hook %s", hook.ID)
-	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/?url=%s&id=%s", c.name, fullname, url.QueryEscape(hook.URL), hook.ID)
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks?url=%s&id=%s", c.name, fullname, url.QueryEscape(hook.URL), hook.ID)
 	_, err := c.doJSONRequest("DELETE", path, nil, nil)
 	return err
 }
