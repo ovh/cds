@@ -2,8 +2,10 @@ package exportentities
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -50,6 +52,16 @@ func ReadFile(filename string) ([]byte, Format, error) {
 	return btes, format, err
 }
 
+//OpenFile opens a file
+func OpenFile(filename string) (io.ReadCloser, Format, error) {
+	format := FormatYAML
+	if strings.HasSuffix(filename, ".json") {
+		format = FormatJSON
+	}
+	r, err := os.Open(filename)
+	return r, format, err
+}
+
 // ReadURL reads the file given by an URL
 func ReadURL(u string, f string) ([]byte, Format, error) {
 	format, err := GetFormat(f)
@@ -72,4 +84,18 @@ func ReadURL(u string, f string) ([]byte, Format, error) {
 	defer response.Body.Close()
 
 	return body, format, nil
+}
+
+// OpenURL opens an URL
+func OpenURL(u string, f string) (io.ReadCloser, Format, error) {
+	format, err := GetFormat(f)
+	if err != nil {
+		return nil, format, err
+	}
+	var netClient = &http.Client{
+		Timeout: time.Second * 10,
+	}
+
+	response, err := netClient.Get(u)
+	return response.Body, format, err
 }

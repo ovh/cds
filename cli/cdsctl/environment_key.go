@@ -39,10 +39,7 @@ func environmentCreateKeyRun(v cli.Values) error {
 			Type: v["key-type"],
 		},
 	}
-	if err := client.EnvironmentKeyCreate(v["project-key"], v["env-name"], key); err != nil {
-		return err
-	}
-	return nil
+	return client.EnvironmentKeyCreate(v["project-key"], v["env-name"], key)
 }
 
 var environmentKeyListCmd = cli.Command{

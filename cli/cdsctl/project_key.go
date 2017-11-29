@@ -38,10 +38,7 @@ func projectCreateKeyRun(v cli.Values) error {
 			Type: v["key-type"],
 		},
 	}
-	if err := client.ProjectKeyCreate(v["project-key"], key); err != nil {
-		return err
-	}
-	return nil
+	return client.ProjectKeyCreate(v["project-key"], key)
 }
 
 var projectKeyListCmd = cli.Command{
