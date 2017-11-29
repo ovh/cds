@@ -14,7 +14,7 @@ func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 	url := "/repos/" + repo + "/hooks"
 
 	r := WebhookCreate{
-		Name:   repo,
+		Name:   "web",
 		Active: true,
 		Events: []string{"push"},
 		Config: WebHookConfig{
