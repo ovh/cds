@@ -107,6 +107,7 @@ func updateVCSConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		vcsHook := sdk.VCSHook{
 			Method: "POST",
 			URL:    h.Config["webHookURL"].Value,
+			UUID:   h.UUID,
 		}
 		if err := client.CreateHook(h.Config["repoFullName"].Value, vcsHook); err != nil {
 			return sdk.WrapError(err, "updateVCSConfiguration> Cannot create hook on repository")

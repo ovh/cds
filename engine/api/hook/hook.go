@@ -295,6 +295,7 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 	hook := sdk.VCSHook{
 		Method: "POST",
 		URL:    h.Link,
+		UUID:   h.UID,
 	}
 
 	log.Info("CreateHook> will create %+v", hook)

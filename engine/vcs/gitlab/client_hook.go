@@ -23,11 +23,11 @@ func (c *gitlabClient) CreateHook(repo string, hook sdk.VCSHook) error {
 	t := true
 	f := false
 
-	url, err := buildGitlabURL(hook.URL)
+	url, err := buildGitlabURL(hook)
 	if err != nil {
 		return err
 	}
-
+	log.Warning(">>>%s", url)
 	opt := gitlab.AddProjectHookOptions{
 		URL:                   &url,
 		PushEvents:            &t,
@@ -47,7 +47,7 @@ func (c *gitlabClient) CreateHook(repo string, hook sdk.VCSHook) error {
 //DeleteHook disables the defaut HTTP POST Hook in Gitlab
 func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 
-	url, err := buildGitlabURL(hook.URL)
+	url, err := buildGitlabURL(hook)
 	if err != nil {
 		return err
 	}
@@ -70,9 +70,9 @@ func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 	return fmt.Errorf("not found")
 }
 
-func buildGitlabURL(givenURL string) (string, error) {
+func buildGitlabURL(h sdk.VCSHook) (string, error) {
 
-	u, err := url.Parse(givenURL)
+	u, err := url.Parse(h.URL)
 	if err != nil {
 		return "", err
 	}
@@ -81,7 +81,7 @@ func buildGitlabURL(givenURL string) (string, error) {
 		return "", err
 	}
 
-	url := fmt.Sprintf("%s://%s/%s?uid=%s", u.Scheme, u.Host, u.Path, q.Get("uid"))
+	url := fmt.Sprintf("%s://%s/%s?uid=%s", u.Scheme, u.Host, u.Path, h.UUID)
 
 	for k, _ := range q {
 		if k != "uid" && !strings.Contains(q.Get(k), "{") {
