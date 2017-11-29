@@ -110,15 +110,7 @@ func SendMailVerifyToken(userMail, username, token, callback string) error {
 	if err != nil {
 		return err
 	}
-	subject := "Welcome to CDS"
-	if !smtpEnable {
-		fmt.Println("##### NO SMTP DISPLAY MAIL IN CONSOLE ######")
-		fmt.Printf("Subject:%s\n", subject)
-		fmt.Printf("Text:%s\n", mailContent.Bytes())
-		fmt.Println("##### END MAIL ######")
-		return nil
-	}
-	return SendEmail(subject, &mailContent, userMail)
+	return SendEmail("Welcome to CDS", &mailContent, userMail)
 }
 
 func getCallbackURL(username, token, callback string) string {
@@ -150,7 +142,6 @@ func createTemplate(templ, callbackURL string) (bytes.Buffer, error) {
 
 //SendEmail is the core function to send an email
 func SendEmail(subject string, mailContent *bytes.Buffer, userMail string) error {
-
 	from := mail.Address{
 		Name:    "",
 		Address: smtpFrom,
@@ -172,6 +163,14 @@ func SendEmail(subject string, mailContent *bytes.Buffer, userMail string) error
 		message += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
 	message += "\r\n" + mailContent.String()
+
+	if !smtpEnable {
+		fmt.Println("##### NO SMTP DISPLAY MAIL IN CONSOLE ######")
+		fmt.Printf("Subject:%s\n", subject)
+		fmt.Printf("Text:%s\n", message)
+		fmt.Println("##### END MAIL ######")
+		return nil
+	}
 
 	c, err := smtpClient()
 	if err != nil {
