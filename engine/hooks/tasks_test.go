@@ -71,7 +71,7 @@ func Test_doWebHookExecutionGitlab(t *testing.T) {
 	assert.Equal(t, "2", h.Payload["git.nb.commits"])
 }
 
-func Test_doWebHookExecutionBitbucker(t *testing.T) {
+func Test_doWebHookExecutionBitbucket(t *testing.T) {
 	s := Service{}
 	task := &TaskExecution{
 		UUID: sdk.RandomString(10),
@@ -79,7 +79,7 @@ func Test_doWebHookExecutionBitbucker(t *testing.T) {
 		WebHook: &WebHookExecution{
 			RequestBody: []byte(bitbucketPushEvent),
 			RequestHeader: map[string][]string{
-				"X-Event-Key": {"repo:push"},
+				"X-Event-Key": {"repo:refs_changed"},
 			},
 			RequestURL: "",
 		},
