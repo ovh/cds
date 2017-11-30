@@ -377,15 +377,16 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
 		}
-		payload["git.author"] = pushEvent.Actor.Username
-		payload["git.branch"] = strings.TrimPrefix(pushEvent.Push.Changes[0].New.Name, "refs/heads/")
-		payload["git.hash.before"] = pushEvent.Push.Changes[0].Old.Target.Hash
-		payload["git.hash"] = pushEvent.Push.Changes[0].New.Target.Hash
-		payload["git.nb.commits"] = len(pushEvent.Push.Changes[0].Commits)
-		payload["git.commits"] = pushEvent.GetCommits()
-		if len(pushEvent.Push.Changes[0].Commits) > 0 {
-			payload["git.message"] = pushEvent.Push.Changes[0].Commits[0].Message
+		payload["git.author"] = pushEvent.Actor.Name
+
+		if len(pushEvent.Changes) == 0 || pushEvent.Changes[0].Type == "DELETE" {
+			return nil, nil
 		}
+
+		payload["git.branch"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/heads/")
+		payload["git.hash.before"] = pushEvent.Changes[0].FromHash
+		payload["git.hash"] = pushEvent.Changes[0].ToHash
+
 	default:
 		values, err := url.ParseQuery(t.WebHook.RequestURL)
 		if err != nil {
