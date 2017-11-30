@@ -33,7 +33,7 @@ func Test_doWebHookExecutionGithub(t *testing.T) {
 		WebHook: &WebHookExecution{
 			RequestBody: []byte(githubPushEvent),
 			RequestHeader: map[string][]string{
-				"X-GitHub-Event": {"push"},
+				"X-Github-Event": {"push"},
 			},
 			RequestURL: "",
 		},
