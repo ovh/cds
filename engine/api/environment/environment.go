@@ -428,7 +428,7 @@ func LoadEnvironmentByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables
 func AddKeyPairToEnvironment(db gorp.SqlExecutor, envID int64, keyname string, u *sdk.User) error {
-	pub, priv, errGenerate := keys.Generatekeypair(keyname)
+	pub, priv, errGenerate := keys.GenerateSSHKeyPair(keyname)
 	if errGenerate != nil {
 		return errGenerate
 	}

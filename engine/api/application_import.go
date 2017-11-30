@@ -7,12 +7,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -98,13 +100,100 @@ func (api *API) postApplicationImportHandler() Handler {
 			app.ApplicationGroups = append(app.ApplicationGroups, perm)
 		}
 
-		//Compute parameters
+		//Compute variables
 		for p, v := range eapp.Variables {
-			if v.Type == "" {
+			switch v.Type {
+			case "":
 				v.Type = sdk.StringVariable
+			case sdk.SecretVariable:
+				secret, err := project.DecryptWithBuiltinKey(api.mustDB(), proj.ID, v.Value)
+				if err != nil {
+					return sdk.WrapError(err, "postApplicationImportHandler> Unable to decrypt secret variable")
+				}
+				v.Value = secret
 			}
-			param := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
-			app.Variable = append(app.Variable, param)
+
+			vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
+			app.Variable = append(app.Variable, vv)
+		}
+
+		//Compute keys
+		for kname, kval := range eapp.Keys {
+			k := sdk.ApplicationKey{
+				Key: sdk.Key{
+					Name: kname,
+					Type: kval.Type,
+				},
+				ApplicationID: app.ID,
+			}
+
+			if kval.Value != "" {
+				privateKey, err := project.DecryptWithBuiltinKey(api.mustDB(), proj.ID, kval.Value)
+				if err != nil {
+					return sdk.WrapError(err, "postApplicationImportHandler> Unable to decrypt secret")
+				}
+				k.Private = privateKey
+
+				switch k.Type {
+
+				//Compute PGP Keys
+				case sdk.KeyTypePgp:
+					pgpEntity, errPGPEntity := keys.GetOpenPGPEntity(strings.NewReader(k.Private))
+					if errPGPEntity != nil {
+						return sdk.WrapError(errPGPEntity, "postApplicationImportHandler> Unable to read PGP Entity from private key")
+					}
+					pubReader, errPub := keys.GeneratePGPPublicKey(pgpEntity)
+					if errPub != nil {
+						return sdk.WrapError(errPub, "postApplicationImportHandler> Unable to generate pgp public key")
+					}
+					pubBytes, errReadPub := ioutil.ReadAll(pubReader)
+					if errReadPub != nil {
+						return sdk.WrapError(errReadPub, "postApplicationImportHandler> Unable to read pgp public key")
+					}
+					k.Public = string(pubBytes)
+
+				//Compute SSH Keys
+				case sdk.KeyTypeSsh:
+					privKey, errPrivKey := keys.GetSSHPrivateKey(strings.NewReader(privateKey))
+					if errPrivKey != nil {
+						return sdk.WrapError(errPrivKey, "postApplicationImportHandler> Unable to read RSA private key")
+					}
+					pubReader, errPub := keys.GetSSHPublicKey(kname, privKey)
+					if errPub != nil {
+						return sdk.WrapError(errPub, "postApplicationImportHandler> Unable to generate ssh public key")
+					}
+					pubBytes, errReadPub := ioutil.ReadAll(pubReader)
+					if errReadPub != nil {
+						return sdk.WrapError(errReadPub, "postApplicationImportHandler> Unable to read ssh public key")
+					}
+					k.Public = string(pubBytes)
+				default:
+					return sdk.ErrUnknownKeyType
+				}
+			} else {
+				switch k.Type {
+				//Compute PGP Keys
+				case sdk.KeyTypePgp:
+					_, pub, priv, err := keys.GeneratePGPKeyPair(kname)
+					if err != nil {
+						return sdk.WrapError(err, "postApplicationImportHandler> Unable to generate PGP key pair")
+					}
+					k.Private = priv
+					k.Public = pub
+				//Compute SSH Keys
+				case sdk.KeyTypeSsh:
+					pub, priv, err := keys.GenerateSSHKeyPair(kname)
+					if err != nil {
+						return sdk.WrapError(err, "postApplicationImportHandler> Unable to generate SSH key pair")
+					}
+					k.Private = priv
+					k.Public = pub
+				default:
+					return sdk.ErrUnknownKeyType
+				}
+			}
+			app.Keys = append(app.Keys, k)
+
 		}
 
 		tx, errtx := api.mustDB().Begin()
@@ -112,7 +201,6 @@ func (api *API) postApplicationImportHandler() Handler {
 			return sdk.WrapError(errtx, "postApplicationImportHandler> Unable to start transaction")
 
 		}
-
 		defer tx.Rollback()
 
 		done := new(sync.WaitGroup)
@@ -140,7 +228,7 @@ func (api *API) postApplicationImportHandler() Handler {
 			if ok {
 				return WriteJSON(w, r, msgListString, myError.Status)
 			}
-			return sdk.WrapError(globalError, "postApplicationImportHandler> Unable import pipeline")
+			return sdk.WrapError(globalError, "postApplicationImportHandler> Unable import application %s", eapp.Name)
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {

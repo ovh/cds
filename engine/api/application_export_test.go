@@ -63,7 +63,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		},
 		ApplicationID: app.ID,
 	}
-	pub, priv, err = keys.Generatekeypair(k2.Name)
+	pub, priv, err = keys.GenerateSSHKeyPair(k2.Name)
 	test.NoError(t, err)
 	k2.Public = pub
 	k2.Private = priv

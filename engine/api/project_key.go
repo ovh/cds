@@ -89,7 +89,7 @@ func (api *API) addKeyInProjectHandler() Handler {
 
 		switch newKey.Type {
 		case sdk.KeyTypeSsh:
-			pub, priv, errGenerate := keys.Generatekeypair(newKey.Name)
+			pub, priv, errGenerate := keys.GenerateSSHKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate sshKey")
 			}

@@ -349,7 +349,7 @@ func DeleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
 
 // AddKeyPair generate a ssh key pair and add them as project variables
 func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string, u *sdk.User) error {
-	pub, priv, errGenerate := keys.Generatekeypair(keyname)
+	pub, priv, errGenerate := keys.GenerateSSHKeyPair(keyname)
 	if errGenerate != nil {
 		return errGenerate
 	}
