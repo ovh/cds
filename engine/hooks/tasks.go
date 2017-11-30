@@ -18,6 +18,7 @@ import (
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/vmware/govmomi/task"
 )
 
 //This are all the types
@@ -248,6 +249,7 @@ func (s *Service) stopTask(ctx context.Context, t *Task) error {
 }
 
 func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
+	log.Debug("DO Task : %s %+v", t.UUID, e.WebHook)
 	if t.Stopped {
 		return nil
 	}
@@ -257,8 +259,10 @@ func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
 
 	switch {
 	case e.WebHook != nil:
+		log.Debug("doWebHookExecution : %s", t.UUID)
 		h, err = s.doWebHookExecution(e)
 	case e.ScheduledTask != nil:
+		log.Debug("doScheduledTaskExecution : %s", t.UUID)
 		h, err = s.doScheduledTaskExecution(e)
 	default:
 		err = fmt.Errorf("Unsupported task type %s", e.Type)
@@ -336,6 +340,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 	}
 
 	payload := make(map[string]interface{})
+	log.Debug("Header: %s", getRepositoryHeader(t.WebHook))
 	switch getRepositoryHeader(t.WebHook) {
 	case GithubHeader:
 		var pushEvent GithubPushEvent
@@ -373,6 +378,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
 	case BitbucketHeader:
+		log.Debug("%+v", t.WebHook.RequestBody)
 		var pushEvent BitbucketPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
