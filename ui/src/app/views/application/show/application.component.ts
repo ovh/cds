@@ -155,7 +155,6 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
     stopWorker(): void {
        if (this.worker) {
-           this.appFilter.remote = '';
            this.worker.stop();
        }
     }
