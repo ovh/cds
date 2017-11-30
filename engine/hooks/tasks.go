@@ -151,8 +151,6 @@ func (s *Service) startTasks(ctx context.Context) error {
 		return sdk.WrapError(err, "Hook> startTasks> Unable to find all tasks")
 	}
 
-	log.Debug("Hooks> Starting %d tasks", len(tasks))
-
 	//Start the tasks
 	for i := range tasks {
 		t := &tasks[i]
@@ -170,7 +168,6 @@ func (s *Service) startTask(ctx context.Context, t *Task) error {
 
 	switch t.Type {
 	case TypeWebHook, TypeRepoManagerWebHook:
-		log.Debug("Hooks> Webhook tasks %s ready", t.UUID)
 		return nil
 	case TypeScheduler:
 		return s.prepareNextScheduledTaskExecution(t)
@@ -248,7 +245,6 @@ func (s *Service) stopTask(ctx context.Context, t *Task) error {
 }
 
 func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
-	log.Debug("DO Task : %s %+v", t.UUID, e.WebHook)
 	if t.Stopped {
 		return nil
 	}
@@ -258,10 +254,8 @@ func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
 
 	switch {
 	case e.WebHook != nil:
-		log.Debug("doWebHookExecution : %s", t.UUID)
 		h, err = s.doWebHookExecution(e)
 	case e.ScheduledTask != nil:
-		log.Debug("doScheduledTaskExecution : %s", t.UUID)
 		h, err = s.doScheduledTaskExecution(e)
 	default:
 		err = fmt.Errorf("Unsupported task type %s", e.Type)
@@ -363,7 +357,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
 		}
-		// Branch deletion
+		// Branch deletion ( gitlab return 0000000000000000000000000000000000000000 as git hash)
 		if pushEvent.After == "0000000000000000000000000000000000000000" {
 			return nil, nil
 		}
@@ -377,7 +371,6 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
 	case BitbucketHeader:
-		log.Debug("%+v", t.WebHook.RequestBody)
 		var pushEvent BitbucketPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))

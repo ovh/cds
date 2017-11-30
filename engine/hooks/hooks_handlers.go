@@ -217,7 +217,7 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 	//Parse the hook as a task
 	t, err := s.hookToTask(h)
 	if err != nil {
-		return sdk.WrapError(err, "Hooks> postTaskBulkHandler> Unable to parse hook")
+		return sdk.WrapError(err, "Hooks> addTask> Unable to parse hook")
 	}
 
 	//Save the task
@@ -225,7 +225,7 @@ func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
 
 	//Start the task
 	if err := s.startTask(ctx, t); err != nil {
-		return sdk.WrapError(err, "Hooks> postTaskBulkHandler> Unable start task %+v", t)
+		return sdk.WrapError(err, "Hooks> addTask> Unable start task %+v", t)
 	}
 	return nil
 }

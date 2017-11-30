@@ -52,7 +52,7 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 		var hooksUpdated map[string]sdk.WorkflowNodeHook
 		code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hookToUpdate, &hooksUpdated)
 		if errHooks != nil || code >= 400 {
-			return sdk.WrapError(errHooks, "HookRegistration> Unable to create hooks")
+			return sdk.WrapError(errHooks, "HookRegistration> Unable to create hooks [%d]", code)
 		}
 
 		for i := range hooksUpdated {
@@ -63,7 +63,7 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 				}
 			}
 			if err := UpdateHook(db, &h); err != nil {
-				return sdk.WrapError(errHooks, "HookRegistration> Cannot update hook")
+				return sdk.WrapError(err, "HookRegistration> Cannot update hook")
 			}
 		}
 	}
@@ -84,7 +84,7 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 		}
 		code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, fmt.Sprintf("/task/bulk"), hookToDelete, nil)
 		if errHooks != nil || code >= 400 {
-			log.Warning("HookRegistration> Unable to delete old hooks")
+			log.Warning("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
 		}
 	}
 	return nil

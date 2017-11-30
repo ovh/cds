@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
@@ -28,8 +27,7 @@ func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 	}
 	res, err := g.post(url, "application/json", bytes.NewBuffer(b), false)
 	if err != nil {
-		log.Warning("github.CreateHook> Error %s", err)
-		return err
+		return sdk.WrapError(err, "github.CreateHook")
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
@@ -37,15 +35,12 @@ func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 		return err
 	}
 	if res.StatusCode != 201 {
-		err := fmt.Errorf("Unable to create webhook on github. Status code : %d - Body: %s", res.StatusCode, body)
-		log.Warning("github.CreateHook> %s", err)
-		log.Warning("github.CreateHook> Sent data %s", b)
-		return err
+		err := fmt.Errorf("Unable to create webhook on github. Status code : %d - Body: %s. ", res.StatusCode, body)
+		return sdk.WrapError(err, "github.CreateHook. Data : %s", b)
 	}
 
 	if err := json.Unmarshal(body, &r); err != nil {
-		log.Warning("github.CreateHook> Cannot unmarshal response")
-		return err
+		return sdk.WrapError(err, "github.CreateHook> Cannot unmarshal response")
 	}
 	hook.ID = fmt.Sprintf("%d", r.ID)
 	return nil

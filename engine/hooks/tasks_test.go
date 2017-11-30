@@ -33,7 +33,7 @@ func Test_doWebHookExecutionGithub(t *testing.T) {
 		WebHook: &WebHookExecution{
 			RequestBody: []byte(githubPushEvent),
 			RequestHeader: map[string][]string{
-				"X-Github-Event": {"push"},
+				GithubHeader: {"push"},
 			},
 			RequestURL: "",
 		},
@@ -56,7 +56,7 @@ func Test_doWebHookExecutionGitlab(t *testing.T) {
 		WebHook: &WebHookExecution{
 			RequestBody: []byte(gitlabPushEvent),
 			RequestHeader: map[string][]string{
-				"X-Gitlab-Event": {"Push Hook"},
+				GitlabHeader: {"Push Hook"},
 			},
 			RequestURL: "",
 		},
@@ -79,7 +79,7 @@ func Test_doWebHookExecutionBitbucket(t *testing.T) {
 		WebHook: &WebHookExecution{
 			RequestBody: []byte(bitbucketPushEvent),
 			RequestHeader: map[string][]string{
-				"X-Event-Key": {"repo:refs_changed"},
+				BitbucketHeader: {"repo:refs_changed"},
 			},
 			RequestURL: "",
 		},
