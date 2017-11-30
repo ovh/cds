@@ -159,7 +159,7 @@ func DoRequest(srv *sdk.Service, method, path string, args []byte, mods ...sdk.R
 	log.Debug("services.DoRequest> response: %s", string(body))
 
 	// if everything is fine, return body
-	if resp.StatusCode < 500 {
+	if resp.StatusCode < 400 {
 		return body, resp.StatusCode, nil
 	}
 
