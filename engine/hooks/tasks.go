@@ -323,7 +323,7 @@ func getRepositoryHeader(whe *WebHookExecution) string {
 		return GithubHeader
 	} else if v, ok := whe.RequestHeader[GitlabHeader]; ok && v[0] == "Push Hook" {
 		return GitlabHeader
-	} else if v, ok := whe.RequestHeader[BitbucketHeader]; ok && v[0] == "repo:push" {
+	} else if v, ok := whe.RequestHeader[BitbucketHeader]; ok && v[0] == "repo:refs_changed" {
 		return BitbucketHeader
 	}
 	return ""
