@@ -267,6 +267,9 @@ func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
 	if err != nil {
 		return err
 	}
+	if h == nil {
+		return nil
+	}
 
 	// Call CDS API
 	confProj := t.Config["project"]
@@ -340,6 +343,9 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read github request: %s", string(t.WebHook.RequestBody))
 		}
+		if pushEvent.Deleted {
+			return nil, nil
+		}
 		payload["git.author"] = pushEvent.Pusher.Name
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
 		payload["git.hash.before"] = pushEvent.Before
@@ -353,6 +359,10 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		var pushEvent GitlabPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
+		}
+		// Branch deletion
+		if pushEvent.After == "0000000000000000000000000000000000000000" {
+			return nil, nil
 		}
 		payload["git.author"] = pushEvent.UserUsername
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
