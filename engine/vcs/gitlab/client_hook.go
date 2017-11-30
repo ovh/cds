@@ -3,13 +3,13 @@ package gitlab
 import (
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/xanzy/go-gitlab"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
-	"strconv"
 )
 
 func (g *gitlabClient) GetHook(repo, id string) (sdk.VCSHook, error) {
@@ -93,8 +93,7 @@ func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 	if err != nil {
 		return sdk.WrapError(sdk.ErrInvalidID, "GitlabClient.DeleteHook > Cannot delete gitlab hook %s on project %s. Get code: %s", hook.ID, repo, res.StatusCode)
 	}
-	return err
-
+	return nil
 }
 
 func buildGitlabURL(givenURL string) (string, error) {
