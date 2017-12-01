@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"

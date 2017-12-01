@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	
+
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/project"
