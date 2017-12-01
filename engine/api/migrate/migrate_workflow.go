@@ -46,7 +46,7 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 		if force {
 			w, err := workflow.Load(db, store, proj.Key, newW.Name, u)
 			if err == nil {
-				if errD := workflow.Delete(db, w, u); errD != nil {
+				if errD := workflow.Delete(db, store, proj, w, u); errD != nil {
 					return sdk.WrapError(errD, "MigrateToWorkflow")
 				}
 			}

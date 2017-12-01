@@ -36,6 +36,21 @@ func (t Timestamp) Equal(u Timestamp) bool {
 	return t.Time.Equal(u.Time)
 }
 
+// WebhookCreate represent struct to create a webhook
+type WebhookCreate struct {
+	ID     int           `json:"id"`
+	Name   string        `json:"name"`
+	Active bool          `json:"active"`
+	Events []string      `json:"events"`
+	Config WebHookConfig `json:"config"`
+}
+
+// WebHookConfig represent the configuration of a webhook
+type WebHookConfig struct {
+	URL         string `json:"url"`
+	ContentType string `json:"content_type"`
+}
+
 // User represents a GitHub user.
 type User struct {
 	Login             string    `json:"login,omitempty"`

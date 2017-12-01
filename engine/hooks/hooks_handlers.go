@@ -69,22 +69,10 @@ func (s *Service) postTaskHandler() api.Handler {
 		if err := api.UnmarshalBody(r, hook); err != nil {
 			return sdk.WrapError(err, "Hooks> postTaskHandler")
 		}
-
-		//Parse the hook as a task
-		t, err := s.hookToTask(hook)
-		if err != nil {
-			return sdk.WrapError(err, "Hooks> postTaskHandler> Unable to parse hook")
+		if err := s.addTask(ctx, hook); err != nil {
+			return sdk.WrapError(err, "Hooks> postTaskHandler")
 		}
-
-		//Save the task
-		s.Dao.SaveTask(t)
-
-		//Start the task
-		if err := s.startTask(ctx, t); err != nil {
-			return sdk.WrapError(err, "Hooks> postTaskHandler> Unable start task %+v", t)
-		}
-
-		return api.WriteJSON(w, r, t, http.StatusOK)
+		return nil
 	}
 }
 
@@ -216,24 +204,28 @@ func (s *Service) postTaskBulkHandler() api.Handler {
 			return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
 		}
 
-		for k, hook := range hooks {
-			//Parse the hook as a task
-			t, err := s.hookToTask(&hook)
-			if err != nil {
-				return sdk.WrapError(err, "Hooks> postTaskBulkHandler> Unable to parse hook")
+		for _, hook := range hooks {
+			if err := s.addTask(ctx, &hook); err != nil {
+				return sdk.WrapError(err, "Hooks> postTaskBulkHandler")
 			}
-
-			hooks[k] = hook
-
-			//Save the task
-			s.Dao.SaveTask(t)
-
-			//Start the task
-			if err := s.startTask(ctx, t); err != nil {
-				return sdk.WrapError(err, "Hooks> postTaskBulkHandler> Unable start task %+v", t)
-			}
-
 		}
 		return api.WriteJSON(w, r, hooks, http.StatusOK)
 	}
+}
+
+func (s *Service) addTask(ctx context.Context, h *sdk.WorkflowNodeHook) error {
+	//Parse the hook as a task
+	t, err := s.hookToTask(h)
+	if err != nil {
+		return sdk.WrapError(err, "Hooks> addTask> Unable to parse hook")
+	}
+
+	//Save the task
+	s.Dao.SaveTask(t)
+
+	//Start the task
+	if err := s.startTask(ctx, t); err != nil {
+		return sdk.WrapError(err, "Hooks> addTask> Unable start task %+v", t)
+	}
+	return nil
 }

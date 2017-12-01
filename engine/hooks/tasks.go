@@ -26,7 +26,7 @@ const (
 	TypeWebHook            = "Webhook"
 	TypeScheduler          = "Scheduler"
 
-	GithubHeader    = "X-GitHub-Event"
+	GithubHeader    = "X-Github-Event"
 	GitlabHeader    = "X-Gitlab-Event"
 	BitbucketHeader = "X-Event-Key"
 )
@@ -151,8 +151,6 @@ func (s *Service) startTasks(ctx context.Context) error {
 		return sdk.WrapError(err, "Hook> startTasks> Unable to find all tasks")
 	}
 
-	log.Debug("Hooks> Starting %d tasks", len(tasks))
-
 	//Start the tasks
 	for i := range tasks {
 		t := &tasks[i]
@@ -170,7 +168,6 @@ func (s *Service) startTask(ctx context.Context, t *Task) error {
 
 	switch t.Type {
 	case TypeWebHook, TypeRepoManagerWebHook:
-		log.Debug("Hooks> Webhook tasks %s ready", t.UUID)
 		return nil
 	case TypeScheduler:
 		return s.prepareNextScheduledTaskExecution(t)
@@ -267,6 +264,9 @@ func (s *Service) doTask(ctx context.Context, t *Task, e *TaskExecution) error {
 	if err != nil {
 		return err
 	}
+	if h == nil {
+		return nil
+	}
 
 	// Call CDS API
 	confProj := t.Config["project"]
@@ -307,7 +307,7 @@ func (s *Service) doScheduledTaskExecution(t *TaskExecution) (*sdk.WorkflowNodeR
 }
 
 func (s *Service) doWebHookExecution(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
-	log.Debug("Hooks> Processing webhook %s", t.UUID)
+	log.Debug("Hooks> Processing webhook %s %s", t.UUID, t.Type)
 
 	if t.Type == TypeRepoManagerWebHook {
 		return executeRepositoryWebHook(t)
@@ -320,7 +320,7 @@ func getRepositoryHeader(whe *WebHookExecution) string {
 		return GithubHeader
 	} else if v, ok := whe.RequestHeader[GitlabHeader]; ok && v[0] == "Push Hook" {
 		return GitlabHeader
-	} else if v, ok := whe.RequestHeader[BitbucketHeader]; ok && v[0] == "repo:push" {
+	} else if v, ok := whe.RequestHeader[BitbucketHeader]; ok && v[0] == "repo:refs_changed" {
 		return BitbucketHeader
 	}
 	return ""
@@ -339,6 +339,9 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read github request: %s", string(t.WebHook.RequestBody))
 		}
+		if pushEvent.Deleted {
+			return nil, nil
+		}
 		payload["git.author"] = pushEvent.Pusher.Name
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
 		payload["git.hash.before"] = pushEvent.Before
@@ -352,6 +355,10 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		var pushEvent GitlabPushEvent
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read gitlab request: %s", string(t.WebHook.RequestBody))
+		}
+		// Branch deletion ( gitlab return 0000000000000000000000000000000000000000 as git hash)
+		if pushEvent.After == "0000000000000000000000000000000000000000" {
+			return nil, nil
 		}
 		payload["git.author"] = pushEvent.UserUsername
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
@@ -367,15 +374,16 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		if err := json.Unmarshal(t.WebHook.RequestBody, &pushEvent); err != nil {
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
 		}
-		payload["git.author"] = pushEvent.Actor.Username
-		payload["git.branch"] = strings.TrimPrefix(pushEvent.Push.Changes[0].New.Name, "refs/heads/")
-		payload["git.hash.before"] = pushEvent.Push.Changes[0].Old.Target.Hash
-		payload["git.hash"] = pushEvent.Push.Changes[0].New.Target.Hash
-		payload["git.nb.commits"] = len(pushEvent.Push.Changes[0].Commits)
-		payload["git.commits"] = pushEvent.GetCommits()
-		if len(pushEvent.Push.Changes[0].Commits) > 0 {
-			payload["git.message"] = pushEvent.Push.Changes[0].Commits[0].Message
+		payload["git.author"] = pushEvent.Actor.Name
+
+		if len(pushEvent.Changes) == 0 || pushEvent.Changes[0].Type == "DELETE" {
+			return nil, nil
 		}
+
+		payload["git.branch"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/heads/")
+		payload["git.hash.before"] = pushEvent.Changes[0].FromHash
+		payload["git.hash"] = pushEvent.Changes[0].ToHash
+
 	default:
 		values, err := url.ParseQuery(t.WebHook.RequestURL)
 		if err != nil {

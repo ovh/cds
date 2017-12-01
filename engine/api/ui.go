@@ -4,8 +4,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/engine/api/ui"
+	"github.com/ovh/cds/sdk"
 )
 
 func (api *API) getUINavbarHandler() Handler {
