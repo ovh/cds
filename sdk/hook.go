@@ -42,7 +42,7 @@ func AddHook(a *Application, p *Pipeline, host string, project string, repositor
 		return nil, err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("HTTP %d", code)
 	}
 

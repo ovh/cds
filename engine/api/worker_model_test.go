@@ -484,7 +484,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 	w = httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, 204, w.Code)
 
 	t.Logf("Body: %s", w.Body.String())
 

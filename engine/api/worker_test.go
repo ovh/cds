@@ -97,7 +97,7 @@ func Test_workerCheckingHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, 204, w.Code)
 
 	workers, err = worker.LoadWorkers(api.mustDB())
 	if err != nil {
@@ -191,7 +191,7 @@ func Test_workerWaitingHandler(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, 204, w.Code)
 
 	workers, err = worker.LoadWorkers(api.mustDB())
 	if err != nil {

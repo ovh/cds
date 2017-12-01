@@ -112,7 +112,7 @@ func RemoveProject(key string) error {
 		return err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -136,7 +136,7 @@ func UpdateProject(proj *Project) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -163,7 +163,7 @@ func RenameProject(key, newName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -201,7 +201,7 @@ func AddProject(name, key, groupName string) error {
 		return ErrConflict
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -220,7 +220,7 @@ func RemoveGroupFromProject(projectKey, groupname string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -255,7 +255,7 @@ func UpdateGroupInProject(projectKey, groupname string, permission int) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -291,7 +291,7 @@ func AddGroupInProject(projectKey, groupname string, permission int) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -311,7 +311,7 @@ func ShowVariableInProject(projectKey string) ([]Variable, error) {
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -348,7 +348,7 @@ func AddVariableInProject(projectKey, varName, varValue, varType string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -369,7 +369,7 @@ func GetVariableInProject(projectKey, name string) (*Variable, error) {
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -410,7 +410,7 @@ func UpdateVariableInProject(projectKey, oldName, varName, varValue, varType str
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -429,7 +429,7 @@ func RemoveVariableFromProject(projectKey, varName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -500,7 +500,7 @@ func ListProject(mods ...Mod) ([]Project, error) {
 		return nil, err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 

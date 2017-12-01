@@ -205,7 +205,7 @@ func Test_postWorkflowJobRequirementsErrorHandler(t *testing.T) {
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, "This is a requirement log error")
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 
 }
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
@@ -340,7 +340,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, res)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
@@ -431,7 +431,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, tests)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 
 	step := sdk.StepStatus{
 		Status:    sdk.StatusSuccess.String(),
@@ -444,7 +444,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, step)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 
 	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
 	test.NoError(t, errJ)
@@ -504,7 +504,7 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, v)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 }
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
@@ -574,7 +574,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 
 	time.Sleep(1 * time.Second)
 

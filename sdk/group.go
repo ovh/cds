@@ -74,7 +74,7 @@ func AddGroup(name string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -104,7 +104,7 @@ func RenameGroup(oldName, newName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -123,7 +123,7 @@ func RemoveGroup(name string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -140,7 +140,7 @@ func ListGroups() ([]Group, error) {
 		return nil, err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -165,7 +165,7 @@ func AddUsersInGroup(groupName string, users []string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -186,7 +186,7 @@ func GetGroup(groupName string) (Group, error) {
 		return group, err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return group, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -206,7 +206,7 @@ func RemoveUserFromGroup(groupName string, userName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)

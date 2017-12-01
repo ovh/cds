@@ -235,7 +235,7 @@ func DeleteJob(projectKey string, pipelineName string, jobID int64) error {
 	if err != nil {
 		return err
 	}
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	return nil
@@ -518,7 +518,7 @@ func RemoveGroupFromPipeline(projectKey, pipelineName, groupName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -553,7 +553,7 @@ func UpdateGroupInPipeline(projectKey, pipelineName, groupName string, permissio
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -588,7 +588,7 @@ func AddGroupInPipeline(projectKey, pipelineName, groupName string, permission i
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -607,7 +607,7 @@ func ShowParameterInPipeline(projectKey, pipelineName string) ([]Parameter, erro
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -640,7 +640,7 @@ func AddParameterInPipeline(projectKey, pipelineName, paramName, paramValue, par
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -672,7 +672,7 @@ func UpdateParameterInPipeline(projectKey, pipelineName, paramName, newParamName
 		return errr
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -691,7 +691,7 @@ func RemoveParameterFromPipeline(projectKey, pipelineName, paramName string) err
 		return errr
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -782,7 +782,7 @@ func AddSpawnInfosPipelineBuildJob(pipelineBuildJobID int64, infos []SpawnInfo) 
 	if err != nil {
 		return fmt.Errorf("HTTP %d err:%s", code, err)
 	}
-	if code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("HTTP %d body:%s", code, string(out))
 	}
 	return nil

@@ -59,7 +59,7 @@ func AddStage(projectKey, pipelineName, name string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -78,7 +78,7 @@ func GetStage(projectKey, pipelineName, pipelineStageID string) (*Stage, error) 
 	if err != nil {
 		return s, err
 	}
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return s, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -101,7 +101,7 @@ func updateStage(projectKey, pipelineName, pipelineStageID string, stageData *St
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -152,7 +152,7 @@ func MoveStage(projectKey, pipelineName string, pipelineStageID int64, buildOrde
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -172,7 +172,7 @@ func DeleteStage(projectKey, pipelineName, pipelineStageID string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)

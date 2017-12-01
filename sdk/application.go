@@ -83,7 +83,7 @@ func AddApplication(key, appName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -99,7 +99,7 @@ func ListApplications(key string) ([]Application, error) {
 		return nil, err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -183,7 +183,7 @@ func UpdateApplication(app *Application) error {
 		return err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -205,7 +205,7 @@ func RenameApplication(pk, name, newName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -236,7 +236,7 @@ func ShowApplicationVariable(projectKey, appName string) ([]Variable, error) {
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -268,7 +268,7 @@ func AddApplicationVariable(projectKey, appName, varName, varValue string, varTy
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -285,7 +285,7 @@ func GetVariableInApplication(projectKey, appName, name string) (*Variable, erro
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	if e := DecodeError(data); e != nil {
@@ -324,7 +324,7 @@ func UpdateApplicationVariable(projectKey, appName, oldName, varName, varValue, 
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -339,7 +339,7 @@ func RemoveApplicationVariable(projectKey, appName, varName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -355,7 +355,7 @@ func RemoveGroupFromApplication(projectKey, appName, groupName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -387,7 +387,7 @@ func UpdateGroupInApplication(projectKey, appName, groupName string, permission 
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -419,7 +419,7 @@ func AddGroupInApplication(projectKey, appName, groupName string, permission int
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -435,7 +435,7 @@ func ListApplicationPipeline(projectKey, appName string) ([]Pipeline, error) {
 		return nil, errReq
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -472,7 +472,7 @@ func AddApplicationPipeline(projectKey, appName, pipelineName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -493,7 +493,7 @@ func UpdateApplicationPipeline(projectKey, appName, pipelineName string, params 
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -508,7 +508,7 @@ func RemoveApplicationPipeline(projectKey, appName, pipelineName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -523,7 +523,7 @@ func GetPipelineScheduler(projectKey, appName, pipelineName string) ([]PipelineS
 		return nil, err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -564,7 +564,7 @@ func AddPipelineScheduler(projectKey, appName, pipelineName, cronExpr, envName s
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -592,7 +592,7 @@ func UpdatePipelineScheduler(projectKey, appName, pipelineName string, s *Pipeli
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -615,7 +615,7 @@ func DeletePipelineScheduler(projectKey, appName, pipelineName string, s *Pipeli
 		return err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 

@@ -65,7 +65,7 @@ func LoginUser(username, password string) (bool, *UserAPIResponse, error) {
 		return false, nil, err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return false, nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -86,7 +86,7 @@ func DeleteUser(name string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -117,7 +117,7 @@ func AddUser(name, fname, email, callback string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -141,7 +141,7 @@ func updateUser(username string, user *User) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -197,7 +197,7 @@ func VerifyUser(name, token string) (UserAPIResponse, error) {
 		return confirmResponse, err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return confirmResponse, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -230,7 +230,7 @@ func ResetUser(name, email, callback string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -253,7 +253,7 @@ func GetUser(username string) (*User, error) {
 		return nil, errR
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -271,7 +271,7 @@ func ListUsers() ([]User, error) {
 		return nil, err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 

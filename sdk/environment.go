@@ -63,7 +63,7 @@ func AddEnvironment(key, envName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -88,7 +88,7 @@ func UpdateEnvironment(key, oldName, newName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -107,7 +107,7 @@ func ListEnvironments(key string) ([]Environment, error) {
 		return nil, err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -168,7 +168,7 @@ func ShowEnvironmentVariable(projectKey, envName string) ([]Variable, error) {
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -200,7 +200,7 @@ func AddEnvironmentVariable(projectKey, envName, varName, varValue string, varTy
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -219,7 +219,7 @@ func GetEnvironmentVariable(projectKey, envName, varName string) (*Variable, err
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
@@ -258,7 +258,7 @@ func UpdateEnvironmentVariable(projectKey, envName, oldVarName, varName, varValu
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -277,7 +277,7 @@ func RemoveEnvironmentVariable(projectKey, envName, varName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -296,7 +296,7 @@ func RemoveGroupFromEnvironment(projectKey, envName, groupName string) error {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -331,7 +331,7 @@ func UpdateGroupInEnvironment(projectKey, envName, groupName string, permission 
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)
@@ -366,7 +366,7 @@ func AddGroupInEnvironment(projectKey, envName, groupName string, permission int
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
+	if code >= 400 {
 		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 	e := DecodeError(data)

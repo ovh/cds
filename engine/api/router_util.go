@@ -36,12 +36,12 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status 
 	return nil
 }
 
-// writeNoContentMiddleware writes StatusNoContent (204) for each response with No Header Content-Type
+// writeNoContentPostMiddleware writes StatusNoContent (204) for each response with No Header Content-Type
 // this is a PostMiddlewaare, launch if there no error in handler.
 // If there is no Content-Type, it's because there is no body return. In CDS, we
 // always use WriteJSON to send body or explicitly write Content-TYpe as application/octet-stream
 // So, if there is No Content-Type, we return 204
-func (api *API) writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
 	for headerName := range w.Header() {
 		if headerName == "Content-Type" {
 			return ctx, nil

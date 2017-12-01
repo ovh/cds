@@ -28,7 +28,7 @@ func (c *client) UserLogin(username, password string) (bool, string, error) {
 		return false, "", err
 	}
 
-	if code != http.StatusOK {
+	if code >= 400 {
 		return false, "", fmt.Errorf("Error %d", code)
 	}
 
@@ -44,7 +44,7 @@ func (c *client) UserList() ([]sdk.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error %d", code)
 	}
 
@@ -78,7 +78,7 @@ func (c *client) UserGet(username string) (*sdk.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error %d", code)
 	}
 
@@ -91,7 +91,7 @@ func (c *client) UserGetGroups(username string) (map[string][]sdk.Group, error) 
 	if err != nil {
 		return nil, err
 	}
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error %d", code)
 	}
 
@@ -124,7 +124,7 @@ func (c *client) UserConfirm(username, token string) (bool, string, error) {
 	if err != nil {
 		return false, "", err
 	}
-	if code != http.StatusOK {
+	if code >= 400 {
 		return false, "", fmt.Errorf("Error %d", code)
 	}
 

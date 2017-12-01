@@ -14,7 +14,7 @@ func (c *client) Version() (*sdk.Version, error) {
 	if err != nil {
 		return nil, err
 	}
-	if code != http.StatusOK {
+	if code >= 400 {
 		return nil, fmt.Errorf("Error %d", code)
 	}
 	return v, err
