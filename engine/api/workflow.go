@@ -244,7 +244,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Delete(tx, oldW, getUser(ctx)); err != nil {
+		if err := workflow.Delete(tx, api.Cache, p, oldW, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot delete workflow")
 		}
 

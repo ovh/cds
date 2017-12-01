@@ -69,48 +69,53 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 	}
 
 	if len(hookToDelete) > 0 {
-		for _, h := range hookToDelete {
-			if err := deleteVCSConfiguration(db, store, p, h); err != nil {
-				return sdk.WrapError(err, "HookRegistration> Cannot delete vcs configuration for hook %s", h.UUID)
-			}
+		if err := deleteHookConfiguration(db, store, p, hookToDelete); err != nil {
+
 		}
 
-		//Push the hook to hooks µService
-		dao := services.Querier(db, store)
-		//Load service "hooks"
-		srvs, err := dao.FindByType("hooks")
-		if err != nil {
-			return sdk.WrapError(err, "HookRegistration> Unable to get services dao")
-		}
-		code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, fmt.Sprintf("/task/bulk"), hookToDelete, nil)
-		if errHooks != nil || code >= 400 {
-			log.Warning("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
-		}
 	}
 	return nil
 }
 
-func deleteVCSConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, h sdk.WorkflowNodeHook) error {
-	// Call VCS to know if repository allows webhook and get the configuration fields
-	projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
-	if projectVCSServer != nil {
-		client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
-		if errclient != nil {
-			return sdk.WrapError(errclient, "deleteVCSConfiguration> Cannot get vcs client")
+func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, hookToDelete map[string]sdk.WorkflowNodeHook) error {
+	// Delete from vcs configuration if needed
+	for _, h := range hookToDelete {
+		if h.WorkflowHookModel.Name == RepositoryWebHookModel.Name {
+			// Call VCS to know if repository allows webhook and get the configuration fields
+			projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
+			if projectVCSServer != nil {
+				client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
+				if errclient != nil {
+					return sdk.WrapError(errclient, "deleteVCSConfiguration> Cannot get vcs client")
+				}
+				vcsHook := sdk.VCSHook{
+					Method:   "POST",
+					URL:      h.Config["webHookURL"].Value,
+					Workflow: true,
+					ID:       h.Config["webHookID"].Value,
+				}
+				if err := client.DeleteHook(h.Config["repoFullName"].Value, vcsHook); err != nil {
+					return sdk.WrapError(err, "deleteVCSConfiguration> Cannot delete hook on repository")
+				}
+				h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
+					Value:        vcsHook.ID,
+					Configurable: false,
+				}
+			}
 		}
-		vcsHook := sdk.VCSHook{
-			Method:   "POST",
-			URL:      h.Config["webHookURL"].Value,
-			Workflow: true,
-			ID:       h.Config["webHookID"].Value,
-		}
-		if err := client.DeleteHook(h.Config["repoFullName"].Value, vcsHook); err != nil {
-			return sdk.WrapError(err, "deleteVCSConfiguration> Cannot delete hook on repository")
-		}
-		h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
-			Value:        vcsHook.ID,
-			Configurable: false,
-		}
+		return nil
+	}
+
+	//Push the hook to hooks µService
+	dao := services.Querier(db, store)
+	//Load service "hooks"
+	srvs, err := dao.FindByType("hooks")
+	if err != nil {
+		return sdk.WrapError(err, "HookRegistration> Unable to get services dao")
+	}
+	code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, fmt.Sprintf("/task/bulk"), hookToDelete, nil)
+	if errHooks != nil || code >= 400 {
+		log.Warning("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
 }
