@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
 import {WorkflowService} from '../../../../service/workflow/workflow.service';
 import {ToastService} from '../../../toast/ToastService';
 import {TranslateService} from 'ng2-translate';
@@ -17,7 +17,21 @@ import {finalize} from 'rxjs/operators';
 })
 export class WorkflowNodeHookComponent implements AfterViewInit {
 
-    @Input() hook: WorkflowNodeHook;
+    _hook: WorkflowNodeHook;
+    @Input('hook')
+    set hook(data: WorkflowNodeHook) {
+        if (data) {
+            this._hook = data;
+            if (this._hook.config['hookIcon']) {
+                this.icon = (<WorkflowNodeHookConfigValue>this._hook.config['hookIcon']).value.toLowerCase();
+            } else {
+                this.icon = this._hook.model.icon.toLowerCase();
+            }
+        }
+    }
+    get hook() {
+      return this._hook;
+    }
     @Input() readonly = false;
     @Input() workflow: Workflow;
     @Input() project: Project;
@@ -25,7 +39,7 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
 
     @ViewChild('editHook')
     editHook: WorkflowNodeHookFormComponent;
-
+    icon: string;
     loading = false;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _toast: ToastService,

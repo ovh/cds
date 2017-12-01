@@ -9,6 +9,7 @@ export class WorkflowHookModel {
     identifier: string;
     image: string;
     command: string;
+    icon: string;
     default_config: Map<string, WorkflowNodeHookConfigValue>;
     disabled: boolean;
 }
