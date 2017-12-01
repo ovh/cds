@@ -32,7 +32,7 @@ func (g *githubClient) CreateHook(repo string, hook *sdk.VCSHook) error {
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "github.CreateHook> ReadAll")
 	}
 	if res.StatusCode != 201 {
 		err := fmt.Errorf("Unable to create webhook on github. Status code : %d - Body: %s. ", res.StatusCode, body)

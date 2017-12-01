@@ -16,6 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 
 	"github.com/facebookgo/httpcontrol"
+	"github.com/ovh/cds/sdk"
 )
 
 //Github http var
@@ -222,7 +223,7 @@ func (c *githubClient) delete(path string) error {
 
 	res, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "githubClient.delete > Cannot do delete request")
 	}
 
 	rateLimitLimit := res.Header.Get("X-RateLimit-Limit")

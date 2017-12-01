@@ -632,7 +632,7 @@ func (s *Service) postHookHandler() api.Handler {
 		}
 
 		if err := client.CreateHook(fmt.Sprintf("%s/%s", owner, repo), &body); err != nil {
-			return err
+			return sdk.WrapError(err, "postHookHandler> CreateHook")
 		}
 		return api.WriteJSON(w, r, body, http.StatusOK)
 	}
