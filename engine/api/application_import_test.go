@@ -207,6 +207,63 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 }
 
 func Test_postApplicationImportHandler_NewAppFromYAMLWithEmptyKey(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	body := `version: v1.0
+name: myNewApp
+keys:
+  myPGPkey:
+    type: pgp
+  mySSHKey:
+    type: ssh`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 201, rec.Code)
+
+	//Check result
+	t.Logf(">>%s", rec.Body.String())
+
+	app, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithKeys)
+	test.NoError(t, err)
+
+	assert.NotNil(t, app)
+	assert.Equal(t, "myNewApp", app.Name)
+
+	var myPGPkey, mySSHKey bool
+	for _, k := range app.Keys {
+		switch k.Name {
+		case "myPGPkey":
+			myPGPkey = true
+			assert.NotEmpty(t, k.KeyID)
+			assert.NotEmpty(t, k.Private)
+			assert.NotEmpty(t, k.Public)
+			assert.NotEmpty(t, k.Type)
+		case "mySSHKey":
+			mySSHKey = true
+			assert.NotEmpty(t, k.Private)
+			assert.NotEmpty(t, k.Public)
+			assert.NotEmpty(t, k.Type)
+		default:
+			t.Errorf("Unexpected variable %+v", k)
+		}
+	}
+	assert.True(t, myPGPkey, "myPGPkey not found")
+	assert.True(t, mySSHKey, "mySSHKey not found")
 
 }
 
