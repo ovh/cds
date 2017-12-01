@@ -13,15 +13,32 @@ import {Project} from '../../../model/project.model';
 })
 export class ParameterListComponent extends Table {
 
-    @Input() parameters: Array<Parameter>;
+    @Input('parameters')
+    set parameters(newP: Array<Parameter>) {
+        if (Array.isArray(newP)) {
+            this._parameters = newP.map((d) => {
+                d.previousName = d.name;
+                return d;
+            });
+        } else {
+            this._parameters = newP;
+        }
+    }
+    get parameters() {
+        return this._parameters;
+    }
+    @Input() paramsRef: Array<Parameter>;
     @Input() project: Project;
+    @Input() suggest: Array<string>;
 
-    // edit/launcher/ro
+    // edit/launcher/ro/job
     @Input() mode = 'edit';
     @Output() event = new EventEmitter<ParameterEvent>();
 
     public ready = false;
     public parameterTypes: string[];
+
+    private _parameters: Array<Parameter>;
 
     constructor(private _paramService: ParameterService, public _sharedService: SharedService) {
         super();
@@ -34,6 +51,13 @@ export class ParameterListComponent extends Table {
         } else {
             this.ready = true;
         }
+    }
+
+    getDataForCurrentPage(): any[] {
+        if (this.mode === 'job') {
+            return this.getData();
+        }
+        return super.getDataForCurrentPage();
     }
 
     getData(): any[] {
@@ -54,6 +78,13 @@ export class ParameterListComponent extends Table {
             return 2;
         }
         return 4;
+    }
+
+    getRef(p: Parameter): Parameter {
+        if (this.paramsRef) {
+            return this.paramsRef.find(r => r.name === p.name);
+        }
+        return null;
     }
 
 }

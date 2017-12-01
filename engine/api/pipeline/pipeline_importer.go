@@ -6,8 +6,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //ImportUpdate import and update the pipeline in the project
@@ -124,7 +124,9 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 			}
 		} else {
 			//Update
-			log.Debug("> Updating stage %s", s.Name)
+			log.Debug("> Updating stage %s", oldStage.Name)
+			msgChan <- sdk.NewMessage(sdk.MsgPipelineStageUpdating, oldStage.Name)
+			msgChan <- sdk.NewMessage(sdk.MsgPipelineStageDeletingOldJobs, oldStage.Name)
 			for x := range s.Jobs {
 				jobAction := &s.Jobs[x]
 				//Check the job
@@ -133,38 +135,26 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 					return errs
 				}
 			}
+			// Delete all existing jobs in existing stage
+			for _, oj := range oldStage.Jobs {
+				if err := DeleteJob(db, oj, u.ID); err != nil {
+					return sdk.WrapError(err, "ImportUpdate> Unable to delete job %s in %s", oj.Action.Name, pip.Name)
+				}
+				msgChan <- sdk.NewMessage(sdk.MsgPipelineJobDeleted, oj.Action.Name, s.Name)
+			}
+			msgChan <- sdk.NewMessage(sdk.MsgPipelineStageInsertingNewJobs, oldStage.Name)
+			// then insert job from yml into existing stage
 			for x := range s.Jobs {
 				j := &s.Jobs[x]
-				var jobFound bool
-				for _, oj := range oldStage.Jobs {
-					//Update the job
-					if j.Action.Name == oj.Action.Name {
-						j.Action.ID = oj.Action.ID
-						j.PipelineActionID = oj.PipelineActionID
-						j.PipelineStageID = oj.PipelineStageID
-						j.Action.Type = sdk.JoinedAction
-						log.Debug(">> Updating job %s on stage %s on pipeline %s", j.Action.Name, s.Name, pip.Name)
-						if err := UpdateJob(db, j, u.ID); err != nil {
-							return sdk.WrapError(err, "ImportUpdate> Unable to update job %s in %s", j.Action.Name, pip.Name)
-						}
-						if msgChan != nil {
-							msgChan <- sdk.NewMessage(sdk.MsgPipelineJobUpdated, j.Action.Name, s.Name)
-						}
-						jobFound = true
-						break
-					}
+				//Insert the job
+				j.PipelineStageID = oldStage.ID
+				j.Action.Type = sdk.JoinedAction
+				log.Debug(">> Creating job %s on stage %s on pipeline %s stageID: %d", j.Action.Name, s.Name, pip.Name, oldStage.ID)
+				if err := InsertJob(db, j, oldStage.ID, pip); err != nil {
+					return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", j.Action.Name, pip.Name)
 				}
-				if !jobFound {
-					//Insert the job
-					j.PipelineStageID = s.ID
-					j.Action.Type = sdk.JoinedAction
-					log.Debug(">> Creating job %s on stage %s on pipeline %s", j.Action.Name, s.Name, pip.Name)
-					if err := InsertJob(db, j, s.ID, pip); err != nil {
-						return sdk.WrapError(err, "ImportUpdate> Unable to insert job %s in %s", j.Action.Name, pip.Name)
-					}
-					if msgChan != nil {
-						msgChan <- sdk.NewMessage(sdk.MsgPipelineJobAdded, j.Action.Name, s.Name)
-					}
+				if msgChan != nil {
+					msgChan <- sdk.NewMessage(sdk.MsgPipelineJobAdded, j.Action.Name, s.Name)
 				}
 			}
 			//Update stage
@@ -205,7 +195,7 @@ func ImportUpdate(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msg
 }
 
 //Import insert the pipeline in the project
-func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message) error {
+func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan chan<- sdk.Message, u *sdk.User) error {
 	//Set projectID and Key in pipeline
 	pip.ProjectID = proj.ID
 	pip.ProjectKey = proj.Key
@@ -216,8 +206,8 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 		return sdk.WrapError(errExist, "Import> Unable to check if pipeline %s %s exists", proj.Name, pip.Name)
 	}
 	if !ok {
-		if err := importNew(db, proj, pip); err != nil {
-			log.Debug("pipeline.Import> %s", err)
+		if err := importNew(db, proj, pip, u); err != nil {
+			log.Error("pipeline.Import> %s", err)
 			switch err.(type) {
 			case *sdk.Errors:
 				if msgChan != nil {
@@ -248,10 +238,10 @@ func Import(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, msgChan c
 	return nil
 }
 
-func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline) error {
+func importNew(db gorp.SqlExecutor, proj *sdk.Project, pip *sdk.Pipeline, u *sdk.User) error {
 	log.Debug("pipeline.importNew> Creating pipeline %s", pip.Name)
 	//Insert pipeline
-	if err := InsertPipeline(db, pip); err != nil {
+	if err := InsertPipeline(db, proj, pip, u); err != nil {
 		return err
 	}
 

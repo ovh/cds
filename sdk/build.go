@@ -1,25 +1,25 @@
 package sdk
 
 import (
-	"encoding/json"
-	"fmt"
 	"time"
 )
 
 // PipelineBuildJob represents an action to be run
 type PipelineBuildJob struct {
-	ID              int64       `json:"id" db:"id"`
-	Job             ExecutedJob `json:"job" db:"-"`
-	Parameters      []Parameter `json:"parameters,omitempty" db:"-"`
-	Status          string      `json:"status"  db:"status"`
-	Queued          time.Time   `json:"queued,omitempty" db:"queued"`
-	QueuedSeconds   int64       `json:"queued_seconds,omitempty" db:"-"`
-	Start           time.Time   `json:"start,omitempty" db:"start"`
-	Done            time.Time   `json:"done,omitempty" db:"done"`
-	Model           string      `json:"model,omitempty" db:"model"`
-	PipelineBuildID int64       `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
-	BookedBy        Hatchery    `json:"bookedby" db:"-"`
-	SpawnInfos      []SpawnInfo `json:"spawninfos" db:"-"`
+	ID              int64                  `json:"id" db:"id"`
+	Job             ExecutedJob            `json:"job" db:"-"`
+	Parameters      []Parameter            `json:"parameters,omitempty" db:"-"`
+	Status          string                 `json:"status"  db:"status"`
+	Warnings        []PipelineBuildWarning `json:"warnings"  db:"-"`
+	Queued          time.Time              `json:"queued,omitempty" db:"queued"`
+	QueuedSeconds   int64                  `json:"queued_seconds,omitempty" db:"-"`
+	Start           time.Time              `json:"start,omitempty" db:"start"`
+	Done            time.Time              `json:"done,omitempty" db:"done"`
+	Model           string                 `json:"model,omitempty" db:"model"`
+	PipelineBuildID int64                  `json:"pipeline_build_id,omitempty" db:"pipeline_build_id"`
+	BookedBy        Hatchery               `json:"bookedby" db:"-"`
+	SpawnInfos      []SpawnInfo            `json:"spawninfos" db:"-"`
+	ExecGroups      []Group                `json:"exec_groups" db:"-"`
 }
 
 // SpawnInfo contains an information about spawning
@@ -43,12 +43,15 @@ type ExecutedJob struct {
 	StepStatus []StepStatus `json:"step_status" db:"-"`
 	Reason     string       `json:"reason" db:"-"`
 	WorkerName string       `json:"worker_name" db:"-"`
+	WorkerID   string       `json:"worker_id" db:"-"`
 }
 
 // StepStatus Represent a step and his status
 type StepStatus struct {
-	StepOrder int    `json:"step_order" db:"-"`
-	Status    string `json:"status" db:"-"`
+	StepOrder int       `json:"step_order" db:"-"`
+	Status    string    `json:"status" db:"-"`
+	Start     time.Time `json:"start" db:"-"`
+	Done      time.Time `json:"done" db:"-"`
 }
 
 // BuildState define struct returned when looking for build state informations
@@ -101,68 +104,9 @@ const (
 	StatusNeverBuilt Status = "Never Built"
 	StatusUnknown    Status = "Unknown"
 	StatusSkipped    Status = "Skipped"
+	StatusStopped    Status = "Stopped"
+	StatusWarning    Status = "Warning"
 )
-
-// GetBuildQueue retrieves current CDS build in queue
-func GetBuildQueue() ([]PipelineBuildJob, error) {
-	var q []PipelineBuildJob
-
-	path := "/queue?status=all"
-
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	if err = json.Unmarshal(data, &q); err != nil {
-		return nil, err
-	}
-
-	return q, nil
-}
-
-// GetBuildState Get the state of given build
-func GetBuildState(projectKey, appName, pipelineName, env, buildID string) (PipelineBuild, error) {
-	var buildState PipelineBuild
-
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s?envName=%s", projectKey, appName, pipelineName, buildID, env)
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return buildState, err
-	}
-	if code >= 300 {
-		return buildState, fmt.Errorf("HTTP %d", code)
-	}
-
-	err = json.Unmarshal(data, &buildState)
-	if err != nil {
-		return buildState, err
-	}
-	return buildState, nil
-}
-
-// GetBuildActionLog Get the log of the given action for the given build
-func GetBuildActionLog(projectKey, appName, pipelineName, buildID, pipelineActionID string) (BuildState, error) {
-	var buildState BuildState
-
-	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%s/action/%s/log", projectKey, appName, pipelineName, buildID, pipelineActionID)
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return buildState, err
-	}
-	if code >= 300 {
-		return buildState, fmt.Errorf("HTTP %d", code)
-	}
-
-	err = json.Unmarshal(data, &buildState)
-	if err != nil {
-		return buildState, err
-	}
-	return buildState, nil
-}
 
 // Translate translates messages in pipelineBuildJob
 func (p *PipelineBuildJob) Translate(lang string) {
@@ -171,4 +115,14 @@ func (p *PipelineBuildJob) Translate(lang string) {
 		p.SpawnInfos[ki].UserMessage = m.String(lang)
 	}
 
+}
+
+// StatusIsTerminated returns if status is terminated (nothing related to building or waiting, ...)
+func StatusIsTerminated(status string) bool {
+	switch status {
+	case StatusBuilding.String(), StatusWaiting.String():
+		return false
+	default:
+		return true
+	}
 }

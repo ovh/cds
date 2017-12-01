@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ovh/cds/sdk"
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 func Test_computeStats(t *testing.T) {
@@ -199,7 +199,7 @@ func Test_computeStats(t *testing.T) {
 			if got := computeStats(tt.args.res, tt.args.v); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("computeStats() = %v, want %v", got, tt.want)
 			}
-			if tt.args.res.Status != tt.status {
+			if tt.args.res.Status != tt.status.String() {
 				t.Errorf("status = %v, want %v", tt.args.res.Status, tt.status)
 			}
 

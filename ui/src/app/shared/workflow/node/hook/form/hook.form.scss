@@ -1,0 +1,11 @@
+.header {
+  .deleteButton {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+  }
+}
+
+input:read-only {
+  background-color: #dedede !important;
+}

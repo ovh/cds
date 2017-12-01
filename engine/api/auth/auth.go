@@ -1,47 +1,60 @@
 package auth
 
 import (
+	"context"
 	"encoding/base64"
 	"errors"
 	"fmt"
 	"net/http"
-	"strings"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
+	"github.com/ovh/cds/engine/api/hatchery"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/sessionstore"
-	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/log"
+)
+
+type contextKey int
+
+const (
+	ContextUser contextKey = iota
+	ContextHatchery
+	ContextWorker
+	ContextService
+	ContextUserSession
 )
 
 //Driver is an interface to all auth method (local, ldap and beyond...)
 type Driver interface {
 	Open(options interface{}, store sessionstore.Store) error
 	Store() sessionstore.Store
-	Authentify(db gorp.SqlExecutor, username, password string) (bool, error)
-	AuthentifyUser(db gorp.SqlExecutor, user *sdk.User, password string) (bool, error)
-	GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, c *context.Ctx) error
+	CheckAuth(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error)
+	Authentify(username, password string) (bool, error)
 }
 
 //GetDriver is a factory
-func GetDriver(mode string, options interface{}, storeOptions sessionstore.Options) (Driver, error) {
+func GetDriver(c context.Context, mode string, options interface{}, storeOptions sessionstore.Options, DBFunc func() *gorp.DbMap) (Driver, error) {
 	log.Info("Auth> Intializing driver (%s)", mode)
-	store, err := sessionstore.Get(storeOptions.Mode, storeOptions.RedisHost, storeOptions.RedisPassword, storeOptions.TTL)
+	store, err := sessionstore.Get(c, storeOptions.RedisHost, storeOptions.RedisPassword, storeOptions.TTL)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to get AuthDriver : %s\n", err)
+		return nil, fmt.Errorf("unable to get AuthDriver : %v", err)
 	}
 
 	var d Driver
 	switch mode {
 	case "ldap":
-		d = &LDAPClient{}
+		d = &LDAPClient{
+			dbFunc: DBFunc,
+		}
 	default:
-		d = &LocalClient{}
+		d = &LocalClient{
+			dbFunc: DBFunc,
+		}
 	}
 
 	if d == nil {
@@ -64,37 +77,6 @@ func NewSession(d Driver, u *sdk.User) (sessionstore.SessionKey, error) {
 	return session, err
 }
 
-//NewPersistentSession create a new session with token stored as user_key in database
-func NewPersistentSession(db gorp.SqlExecutor, d Driver, u *sdk.User) (sessionstore.SessionKey, error) {
-	u, errLoad := user.LoadUserAndAuth(db, u.Username)
-	if errLoad != nil {
-		return "", errLoad
-	}
-	t, errSession := sessionstore.NewSessionKey()
-	if errSession != nil {
-		return "", errSession
-	}
-	log.Info("NewPersistentSession> New Persistent Session for %s", u.Username)
-	newToken := sdk.UserToken{
-		Token:     string(t),
-		Timestamp: time.Now().Unix(),
-		Comment:   "",
-	}
-	u.Auth.Tokens = append(u.Auth.Tokens, newToken)
-	if err := user.UpdateUserAndAuth(db, *u); err != nil {
-		return "", err
-	}
-
-	session, errStore := d.Store().New(t)
-	if errStore != nil {
-		return "", errStore
-	}
-	log.Info("NewPersistentSession> New Session for %s", u.Username)
-	d.Store().Set(session, "username", u.Username)
-
-	return session, nil
-}
-
 //GetUsername retrieve the username from the token
 func GetUsername(store sessionstore.Store, token string) (string, error) {
 	var username string
@@ -108,129 +90,106 @@ func GetUsername(store sessionstore.Store, token string) (string, error) {
 	return username, nil
 }
 
-//CheckPersistentSession check persistent session token from CLI
-func CheckPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
-	if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-		if getUserPersistentSession(db, store, headers, ctx) {
-			return true
-		}
-		if reloadUserPersistentSession(db, store, headers, ctx) {
-			return true
-		}
-	}
-	return false
-}
-
-func getUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
-	h := headers.Get(sdk.SessionTokenHeader)
-	if h != "" {
-		ok, _ := store.Exists(sessionstore.SessionKey(h))
-		if ok {
-			var usr string
-			store.Get(sessionstore.SessionKey(h), "username", &usr)
-			//Set user in ctx
-			u, err := user.LoadUserWithoutAuth(db, usr)
-			if err != nil {
-				log.Warning("getUserPersistentSession> Unable to load user %s", usr)
-				return false
-			}
-			ctx.User = u
-			return true
-		}
-	}
-	return false
-}
-
-func reloadUserPersistentSession(db gorp.SqlExecutor, store sessionstore.Store, headers http.Header, ctx *context.Ctx) bool {
-	authHeaderValue := headers.Get("Authorization")
-	if authHeaderValue == "" {
-		log.Warning("ReloadUserPersistentSession> No Authorization Header")
-		return false
-	}
-	// Split Basic and (user:pass)64
-	auth := strings.SplitN(authHeaderValue, " ", 2)
-	if len(auth) != 2 || auth[0] != "Basic" {
-		log.Warning("ReloadUserPersistentSession> Wrong Authorization header syntax")
-		return false
-	}
-
-	userPwd, _ := base64.StdEncoding.DecodeString(auth[1])
-	userPwdArray := strings.SplitN(string(userPwd), ":", 2)
-	if len(userPwdArray) != 2 {
-		log.Warning("ReloadUserPersistentSession> Authorization failed")
-		return false
-	}
-
-	// Load user
-	u, err1 := user.LoadUserAndAuth(db, userPwdArray[0])
-	if err1 != nil {
-		log.Warning("ReloadUserPersistentSession> Authorization failed")
-		return false
-	}
-	ctx.User = u
-
-	// Verify token
-	for _, t := range u.Auth.Tokens {
-		if t.Token == userPwdArray[1] {
-			log.Debug("ReloadUserPersistentSession> Persistent session successfully reloaded %s %s", u.Username, t.Token)
-			if _, err := store.New(sessionstore.SessionKey(t.Token)); err != nil {
-				log.Warning("ReloadUserPersistentSession> Unable to create new session %s:%s", t.Token, err)
-				return false
-			}
-			store.Set(sessionstore.SessionKey(t.Token), "username", u.Username)
-			return true
-		}
-	}
-
-	log.Warning("ReloadUserPersistentSession> failed for username:%s", u.Username)
-	return false
-}
-
 //GetWorker returns the worker instance from its id
-func GetWorker(db gorp.SqlExecutor, workerID string) (*sdk.Worker, error) {
+func GetWorker(db *gorp.DbMap, store cache.Store, workerID, workerName string) (*sdk.Worker, error) {
 	// Load worker
-	var w *sdk.Worker
-	var oldWorker sdk.Worker
+	var w = &sdk.Worker{}
 
-	// Try to load worker from cache
 	key := cache.Key("worker", workerID)
-	cache.Get(key, &oldWorker)
-	var putWorkerInCache bool
-	if oldWorker.ID != "" {
-		w = &oldWorker
-	}
-
 	// Else load it from DB
-	if w == nil {
+	if !store.Get(key, w) {
 		var err error
 		w, err = worker.LoadWorker(db, workerID)
 		if err != nil {
-			return nil, fmt.Errorf("cannot load worker: %s", err)
+			return nil, fmt.Errorf("cannot load worker '%s': %s", workerName, err)
 		}
-		putWorkerInCache = true
-	}
-
-	if putWorkerInCache {
-		//Set the worker in cache
-		cache.Set(key, *w)
+		store.Set(key, w)
 	}
 
 	return w, nil
 }
 
-func checkWorkerAuth(db *gorp.DbMap, auth string, ctx *context.Ctx) error {
-	id, err := base64.StdEncoding.DecodeString(auth)
+//GetService returns the service instance from its hash
+func GetService(db *gorp.DbMap, store cache.Store, hash string) (*sdk.Service, error) {
+	//Load the service from the cache
+	//TODO: this should be embeded in the repository layer
+	var srv = &sdk.Service{}
+	key := cache.Key("services", hash)
+	// Else load it from DB
+	if !store.Get(key, srv) {
+		var err error
+		repo := services.NewRepository(func() *gorp.DbMap { return db }, store)
+		srv, err = repo.FindByHash(hash)
+		if err != nil {
+			return nil, fmt.Errorf("cannot load service: %s", err)
+		}
+		store.Set(key, srv)
+	}
+
+	return srv, nil
+}
+
+// ContextValues retuns auth values of a context
+func ContextValues(ctx context.Context) map[interface{}]interface{} {
+	return map[interface{}]interface{}{
+		ContextHatchery: ctx.Value(ContextHatchery),
+		ContextService:  ctx.Value(ContextService),
+		ContextWorker:   ctx.Value(ContextWorker),
+		ContextUser:     ctx.Value(ContextUser),
+	}
+}
+
+// CheckWorkerAuth checks worker authentication
+func CheckWorkerAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header) (context.Context, error) {
+	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
 	if err != nil {
-		return fmt.Errorf("bad worker key syntax: %s", err)
+		return ctx, fmt.Errorf("bad worker key syntax: %s", err)
 	}
 	workerID := string(id)
 
-	w, err := GetWorker(db, workerID)
+	name := headers.Get(cdsclient.RequestedNameHeader)
+	w, err := GetWorker(db, store, workerID, name)
 	if err != nil {
-		return err
+		return ctx, err
 	}
-	ctx.User = &sdk.User{Username: w.Name}
-	ctx.Worker = w
 
-	return nil
+	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: w.Name})
+	ctx = context.WithValue(ctx, ContextWorker, w)
+	return ctx, nil
+}
+
+// CheckServiceAuth checks services authentication
+func CheckServiceAuth(ctx context.Context, db *gorp.DbMap, store cache.Store, headers http.Header) (context.Context, error) {
+	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
+	if err != nil {
+		return ctx, fmt.Errorf("bad service key syntax: %s", err)
+	}
+
+	serviceHash := string(id)
+
+	srv, err := GetService(db, store, serviceHash)
+	if err != nil {
+		return ctx, err
+	}
+
+	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: srv.Name})
+	ctx = context.WithValue(ctx, ContextService, srv)
+	return ctx, nil
+}
+
+// CheckHatcheryAuth checks hatchery authentication
+func CheckHatcheryAuth(ctx context.Context, db *gorp.DbMap, headers http.Header) (context.Context, error) {
+	uid, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
+	if err != nil {
+		return ctx, fmt.Errorf("bad worker key syntax: %s", err)
+	}
+
+	h, err := hatchery.LoadHatchery(db, string(uid))
+	if err != nil {
+		return ctx, fmt.Errorf("Invalid Hatchery UID:%s err:%s", string(uid), err)
+	}
+
+	ctx = context.WithValue(ctx, ContextUser, &sdk.User{Username: h.Name})
+	ctx = context.WithValue(ctx, ContextHatchery, h)
+	return ctx, nil
 }

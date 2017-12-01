@@ -1,62 +1,56 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed,  tick, fakeAsync, inject} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {Injector} from '@angular/core';
 import {LoginComponent} from './login.component';
 
 import {UserService} from '../../../service/user/user.service';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {AppModule} from '../../../app.module';
 import {User} from '../../../model/user.model';
-import {Router} from '@angular/router';
+import {Router, ActivatedRoute} from '@angular/router';
 import {AccountModule} from '../account.module';
+
+import {Observable} from 'rxjs/Observable';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: LoginComponent', () => {
 
-    let injector: Injector;
-    let backend: MockBackend;
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 { provide: APP_BASE_HREF, useValue: '/' },
-                { provide: XHRBackend, useClass: MockBackend },
                 UserService,
                 AuthentificationStore,
-                { provide: Router, useClass: MockRouter}
+                { provide: Router, useClass: MockRouter},
+                { provide: ActivatedRoute, useValue: { queryParams: Observable.of({redirection: null})} },
             ],
             imports : [
                 AppModule,
                 RouterTestingModule.withRoutes([]),
-                AccountModule
+                AccountModule,
+                HttpClientTestingModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
-    it('Click on Login button', fakeAsync( () => {
+    it('Click on Login button', fakeAsync(() => {
+        const http = TestBed.get(HttpTestingController);
+
+        let mock = {
+            'user' : {
+                'username': 'foo'
+            }
+        };
+
         // Create loginComponent
         let fixture = TestBed.createComponent(LoginComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
-
-        // Mock Http login request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '{ "user": { "username": "foo" } }'})));
-        });
-
 
         let compiled = fixture.debugElement.nativeElement;
 
@@ -75,11 +69,11 @@ describe('CDS: LoginComponent', () => {
 
         // Simulate user click
         compiled.querySelector('#loginButton').click();
-        expect(backend.connectionsArray.length).toBe(1);
-        let userSent: User = JSON.parse(backend.connectionsArray[0].request.getBody());
-        expect(userSent.username).toBe('foo');
-        expect(userSent.password).toBe('bar');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/login' && req.body.username === 'foo' && req.body.password === 'bar';
+        })).flush(mock);
 
+        http.verify();
     }));
 });
 

@@ -1,12 +1,13 @@
 package pipeline
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type awolPipelineBuildJob struct {
@@ -16,26 +17,29 @@ type awolPipelineBuildJob struct {
 
 // AWOLPipelineKiller will search in database for actions :
 // - Having building status
-// - Without any logs ouput in the last 15 minutes
-func AWOLPipelineKiller(DBFunc func() *gorp.DbMap) {
-	// If this goroutine exits, then it's a crash
-	defer log.Fatalf("Goroutine of pipeline.AWOLPipelineKiller exited - Exit CDS Engine")
-
+// - Without any logs output in the last 15 minutes
+func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap) {
+	tick := time.NewTicker(1 * time.Minute).C
 	for {
-		time.Sleep(1 * time.Minute)
-		db := DBFunc()
-
-		if db != nil {
-			pbJobDatas, err := loadAWOLPipelineBuildJob(db)
-			if err != nil {
-				log.Warning("AWOLPipelineKiller> Cannot load awol building actions: %s\n", err)
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting AWOLPipelineKiller: %v", c.Err())
 			}
-
-			for _, data := range pbJobDatas {
-				err = killAWOLPipelineBuildJob(db, data)
+			return
+		case <-tick:
+			db := DBFunc()
+			if db != nil {
+				pbJobDatas, err := loadAWOLPipelineBuildJob(db)
 				if err != nil {
-					log.Warning("AWOLPipelineKiller> Cannot kill action build %d: %s\n", data.pipelineBuildJobID, err)
-					time.Sleep(1 * time.Second) // Do not spam an unavailable database
+					log.Warning("AWOLPipelineKiller> Cannot load awol building actions: %s\n", err)
+				}
+
+				for _, data := range pbJobDatas {
+					err = killAWOLPipelineBuildJob(db, data)
+					if err != nil {
+						log.Warning("AWOLPipelineKiller> Cannot kill action build %d: %s\n", data.pipelineBuildJobID, err)
+					}
 				}
 			}
 		}
@@ -55,6 +59,7 @@ func killAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) er
 	if errJob != nil {
 		return errJob
 	}
+
 	pbJob.Job.Reason = "Killed (Reason: Timeout)\n"
 
 	if err := UpdatePipelineBuildJobStatus(tx, pbJob, sdk.StatusFail); err != nil {

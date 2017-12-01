@@ -5,29 +5,26 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
 )
 
 var (
-	loadDefaultDependencies = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
-		if err := loadVariables(db, app, u); err != nil && err != sql.ErrNoRows {
+	loadDefaultDependencies = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+		if err := loadVariables(db, store, app, u); err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadDefaultDependencies", app.Name)
 		}
-		if err := loadTriggers(db, app, u); err != nil && err != sql.ErrNoRows {
-			return sdk.WrapError(err, "application.loadDefaultDependencies", app.Name)
-		}
-		if err := loadRepositoryManager(db, app, u); err != nil && err != sql.ErrNoRows {
+		if err := loadTriggers(db, store, app, u); err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadDefaultDependencies", app.Name)
 		}
 		return nil
 	}
 
-	loadVariables = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+	loadVariables = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		variables, err := GetAllVariableByID(db, app.ID)
 		if err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadVariables> Unable to load variables for application %d", app.ID)
@@ -36,7 +33,7 @@ var (
 		return nil
 	}
 
-	loadVariablesWithClearPassword = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+	loadVariablesWithClearPassword = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		variables, err := GetAllVariableByID(db, app.ID, WithClearPassword())
 		if err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadVariablesWithClearPassword> Unable to load variables for application %d", app.ID)
@@ -45,7 +42,16 @@ var (
 		return nil
 	}
 
-	loadPipelines = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+	loadVariablesWithEncryptedPassword = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+		variables, err := GetAllVariableByID(db, app.ID, WithEncryptPassword())
+		if err != nil && err != sql.ErrNoRows {
+			return sdk.WrapError(err, "application.loadVariablesWithEncryptPassword> Unable to load variables for application %d", app.ID)
+		}
+		app.Variable = variables
+		return nil
+	}
+
+	loadPipelines = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		pipelines, err := GetAllPipelinesByID(db, app.ID)
 		if err != nil && err != sdk.ErrNoAttachedPipeline {
 			return sdk.WrapError(err, "application.loadPipelines> Unable to load pipelines for application %d", app.ID)
@@ -54,9 +60,9 @@ var (
 		return nil
 	}
 
-	loadTriggers = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+	loadTriggers = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		if app.Pipelines == nil {
-			if err := loadPipelines(db, app, u); err != nil {
+			if err := loadPipelines(db, store, app, u); err != nil {
 				return sdk.WrapError(err, "application.loadTriggers")
 			}
 		}
@@ -69,7 +75,7 @@ var (
 			}
 			for i := range appPip.Triggers {
 				trig := &appPip.Triggers[i]
-				a, err := LoadByID(db, trig.DestApplication.ID, u, &loadPipelines)
+				a, err := LoadByID(db, store, trig.DestApplication.ID, u, &loadPipelines)
 				if err != nil && err != sql.ErrNoRows {
 					return sdk.WrapError(err, "application.loadTriggers> Unable to load trigger for application %d, pipeline %s(%d)", app.ID, appPip.Pipeline.Name, appPip.Pipeline.ID)
 				}
@@ -79,39 +85,23 @@ var (
 		return nil
 	}
 
-	loadRepositoryManager = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
-		if app.RepositoryFullname != "" {
-			id, err := db.SelectNullInt("select repositories_manager_id from application where id = $1", app.ID)
-			if err != nil {
-				if err == sql.ErrNoRows {
-					return nil
-				}
-				return sdk.WrapError(err, "application.loadPipelines> Unable to load repositories manager for application %d", app.ID)
-			}
-			if id.Valid {
-				rm, err := repositoriesmanager.LoadByID(db, id.Int64)
-				if err != nil {
-					return sdk.WrapError(err, "application.loadPipelines> Unable to load repositories manager (%d) for application %d", id.Int64, app.ID)
-				}
-				app.RepositoriesManager = rm
-			}
-		}
-		return nil
+	loadKeys = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
+		return LoadAllKeys(db, app)
 	}
 
-	loadGroups = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+	loadGroups = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		if err := LoadGroupByApplication(db, app); err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadGroups> Unable to load group permission for application %d", app.ID)
 		}
 		return nil
 	}
 
-	loadPermission = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+	loadPermission = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		app.Permission = permission.ApplicationPermission(app.ID, u)
 		return nil
 	}
 
-	loadHooks = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+	loadHooks = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		h, err := hook.LoadApplicationHooks(db, app.ID)
 		if err != nil && err != sql.ErrNoRows {
 			return sdk.WrapError(err, "application.loadHooks> Unable to load hooks for application %d", app.ID)
@@ -120,7 +110,7 @@ var (
 		return nil
 	}
 
-	loadNotifs = func(db gorp.SqlExecutor, app *sdk.Application, u *sdk.User) error {
+	loadNotifs = func(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
 		var err error
 		app.Notifications, err = notification.LoadAllUserNotificationSettings(db, app.ID)
 		if err != nil && err != sql.ErrNoRows {

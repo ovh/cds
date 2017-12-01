@@ -1,20 +1,17 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
+import {TestBed, fakeAsync} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
-import {Injector} from '@angular/core';
 import {SharedModule} from '../shared.module';
 import {HistoryComponent} from './history.component';
 import {PipelineBuild, PipelineBuildTrigger} from '../../model/pipeline.model';
 import {User} from '../../model/user.model';
+import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
+import {ToasterService} from 'angular2-toaster';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: History component', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -22,26 +19,19 @@ describe('CDS: History component', () => {
             ],
             providers: [
                 TranslateService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
+                ApplicationPipelineService,
+                ToasterService
             ],
             imports : [
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-
     });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
-    });
-
 
     it('should return that pipeline was triggered by CDS scheduler', fakeAsync( () => {
         // Create component

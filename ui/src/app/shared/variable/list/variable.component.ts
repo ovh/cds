@@ -41,6 +41,7 @@ export class VariableComponent extends Table {
     public ready = false;
     public variableTypes: string[];
     public currentVariableAudits: Array<VariableAudit>;
+    filter: string;
 
     constructor(private _variableService: VariableService, private _sharedService: SharedService, private _projAudit: ProjectAuditService,
         private _envAudit: EnvironmentAuditService, private _appAudit: ApplicationAuditService) {
@@ -57,7 +58,11 @@ export class VariableComponent extends Table {
     }
 
     getData(): any[] {
-        return this.variables;
+        if (!this.filter || this.filter === '') {
+            return this.variables;
+        } else {
+            return this.variables.filter(v => v.name.toLowerCase().indexOf(this.filter.toLowerCase()) !== -1);
+        }
     }
 
     /**

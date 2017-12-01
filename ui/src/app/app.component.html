@@ -1,22 +1,18 @@
 <div id="AppComponent">
-    <div id="navbar" [class.connected]="isConnected">
+    <div id="navbar" *ngIf="isConnected" [class.connected]="isConnected">
         <app-navbar></app-navbar>
     </div>
+    <div id="banner" class="pointing" (click)="refresh()" *ngIf="showUIUpdatedBanner">
+            {{ 'ui_updated' | translate }}
+    </div>
+
     <div class="page" [class.connected]="isConnected">
         <div class="content" [class.connected]="isConnected">
             <div class="toast">
                 <toaster-container></toaster-container>
             </div>
             <router-outlet></router-outlet>
+            <div class="ui active text loader" *ngIf="displayResolver">{{ 'common_loading_project' | translate }}</div>
         </div>
     </div>
 </div>
-
-
-
-
-
-
-
-
-

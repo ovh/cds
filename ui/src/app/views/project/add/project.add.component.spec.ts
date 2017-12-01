@@ -10,15 +10,20 @@ import {TranslateParser} from 'ng2-translate';
 import {ProjectStore} from '../../../service/project/project.store';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 import {ProjectService} from '../../../service/project/project.service';
+import {PipelineService} from '../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../service/environment/environment.service';
+import {VariableService} from '../../../service/variable/variable.service';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectModule} from '../project.module';
 import {SharedModule} from '../../../shared/shared.module';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {ProjectAddComponent} from './project.add.component';
 import {GroupService} from '../../../service/group/group.service';
 import {GroupPermission, Group} from '../../../model/group.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {Router} from '@angular/router';
+import {Project} from '../../../model/project.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Project Show Component', () => {
 
@@ -29,11 +34,15 @@ describe('CDS: Project Show Component', () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
+                MockBackend,
                 {provide: XHRBackend, useClass: MockBackend},
                 TranslateLoader,
                 RepoManagerService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService,
                 ToasterService,
                 TranslateService,
                 TranslateParser,
@@ -44,14 +53,14 @@ describe('CDS: Project Show Component', () => {
                 ProjectModule,
                 SharedModule,
                 RouterTestingModule.withRoutes([]),
-
+                HttpClientTestingModule
             ],
             schemas: [
                 CUSTOM_ELEMENTS_SCHEMA
             ]
         });
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
 
     });
 
@@ -81,12 +90,20 @@ describe('CDS: Project Show Component', () => {
         fixture.componentInstance.project.key = 'BAR';
 
         fixture.componentInstance.project.groups = new Array<GroupPermission>();
-        let gp = new GroupPermission();
-        gp.permission = 7;
-        fixture.componentInstance.project.groups.push(gp);
+        fixture.componentInstance.group = new Group();
+        fixture.componentInstance.group.name = 'foo';
 
         fixture.componentInstance.createProject();
-        expect(projectStore.createProject).toHaveBeenCalled();
+
+        let project = new Project();
+        project.name = 'FooProject';
+        project.key = 'BAR';
+        project.groups = new Array<GroupPermission>();
+        project.groups.push(new GroupPermission());
+        project.groups[0].group = new Group();
+        project.groups[0].group.name = 'foo';
+        project.groups[0].permission = 7;
+        expect(projectStore.createProject).toHaveBeenCalledWith(project);
         expect(router.navigate).toHaveBeenCalled();
     }));
 
@@ -104,41 +121,12 @@ describe('CDS: Project Show Component', () => {
 
         expect(fixture.componentInstance.nameError).toBeTruthy();
         expect(fixture.componentInstance.keyError).toBeTruthy();
-        expect(fixture.componentInstance.groupError).toBeTruthy();
         expect(fixture.componentInstance.sshError).toBeTruthy();
 
         // pattern error
         fixture.componentInstance.project.key = 'aze';
         fixture.componentInstance.createProject();
         expect(fixture.componentInstance.keyError).toBeTruthy();
-
-        // no group with write right
-        fixture.componentInstance.project.groups = new Array<GroupPermission>();
-        let gp = new GroupPermission();
-        gp.permission = 4;
-        fixture.componentInstance.project.groups.push(gp);
-        fixture.componentInstance.createProject();
-        expect(fixture.componentInstance.groupError).toBeTruthy();
-    }));
-
-    it('it should add/remove group', fakeAsync(() => {
-        let fixture = TestBed.createComponent(ProjectAddComponent);
-
-        let gp = new GroupPermission();
-        gp.permission = 4;
-        let g = new Group();
-        gp.group = g;
-        let event = new PermissionEvent('add', gp);
-
-        // add twice
-        fixture.componentInstance.permissionManagement(event);
-        fixture.componentInstance.permissionManagement(event);
-
-        expect(fixture.componentInstance.project.groups.length).toBe(1);
-
-        event.type = 'delete';
-        fixture.componentInstance.permissionManagement(event);
-        expect(fixture.componentInstance.project.groups.length).toBe(0);
     }));
 });
 

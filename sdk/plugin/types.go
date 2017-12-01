@@ -10,11 +10,13 @@ func init() {
 	gob.Register(Job{})
 	gob.Register(Options{})
 	gob.Register(Arguments{})
+	gob.Register(Secrets{})
 }
 
 //CDSAction is the standard CDSAction Plugin interface
 type CDSAction interface {
 	Init(IOptions) string
+	Version() string
 	Name() string
 	Description() string
 	Author() string
@@ -22,26 +24,32 @@ type CDSAction interface {
 	Run(IJob) Result
 }
 
-//IAction is the Run() input args of every plugin
+//IJob is the Run() input args of every plugin
 type IJob interface {
 	ID() int64
+	WorkflowNodeRunID() int64
 	PipelineBuildID() int64
 	StepOrder() int
 	Arguments() Arguments
+	Secrets() Secrets
 }
 
-//Action is the input of the plugin run function
+//Job is the input of the plugin run function
 type Job struct {
 	IDPipelineJobBuild int64
+	IDWorkflowNodeRun  int64
 	IDPipelineBuild    int64
 	Args               Arguments
+	Secrts             Secrets
 	OrderStep          int
 }
 
-func (j Job) ID() int64              { return j.IDPipelineJobBuild }
-func (j Job) Arguments() Arguments   { return j.Args }
-func (j Job) PipelineBuildID() int64 { return j.IDPipelineBuild }
-func (j Job) StepOrder() int         { return j.OrderStep }
+func (j Job) ID() int64                { return j.IDPipelineJobBuild }
+func (j Job) Arguments() Arguments     { return j.Args }
+func (j Job) Secrets() Secrets         { return j.Secrts }
+func (j Job) PipelineBuildID() int64   { return j.IDPipelineBuild }
+func (j Job) WorkflowNodeRunID() int64 { return j.IDWorkflowNodeRun }
+func (j Job) StepOrder() int           { return j.OrderStep }
 
 //IOptions is
 type IOptions interface {
@@ -142,19 +150,44 @@ type IArguments interface {
 	Exists(string) bool
 }
 
+// Arguments type, key: var name, value: value of argument
 type Arguments struct {
 	Data map[string]string
 }
 
+// Get returns an argument from key
 func (p Arguments) Get(key string) string {
 	return p.Data[key]
 }
 
+// Set sets an argument with key / value
 func (p *Arguments) Set(key, value string) {
 	p.Data[key] = value
 }
 
+// Exists returns true if argument exists
 func (p Arguments) Exists(key string) bool {
+	_, ok := p.Data[key]
+	return ok
+}
+
+// Secrets type, key: var name, value: value of secret
+type Secrets struct {
+	Data map[string]string
+}
+
+// Get returns a secret from key
+func (p Secrets) Get(key string) string {
+	return p.Data[key]
+}
+
+// Set sets a secret with key / value
+func (p *Secrets) Set(key, value string) {
+	p.Data[key] = value
+}
+
+// Exists returns true if secret exists
+func (p Secrets) Exists(key string) bool {
 	_, ok := p.Data[key]
 	return ok
 }

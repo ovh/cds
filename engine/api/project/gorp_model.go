@@ -6,35 +6,53 @@ import (
 	"encoding/json"
 
 	"github.com/go-gorp/gorp"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 type dbProject sdk.Project
 type dbVariable sdk.Variable
 type dbProjectVariableAudit sdk.ProjectVariableAudit
+type dbProjectKey sdk.ProjectKey
 
 func init() {
 	gorpmapping.Register(gorpmapping.New(dbProject{}, "project", true, "id"))
 	gorpmapping.Register(gorpmapping.New(dbProjectVariableAudit{}, "project_variable_audit", true, "id"))
+	gorpmapping.Register(gorpmapping.New(dbProjectKey{}, "project_key", false))
 }
 
 // PostGet is a db hook
 func (p *dbProject) PostGet(db gorp.SqlExecutor) error {
-	metadataStr, err := db.SelectNullStr("select metadata from project where id = $1", p.ID)
-	if err != nil {
+	var fields = struct {
+		Metadata   sql.NullString `db:"metadata"`
+		VCSServers []byte         `db:"vcs_servers"`
+	}{}
+
+	if err := db.QueryRow("select metadata,vcs_servers from project where id = $1", p.ID).Scan(&fields.Metadata, &fields.VCSServers); err != nil {
 		return err
 	}
 
-	if metadataStr.Valid {
-		metadata := sdk.Metadata{}
-		if err := json.Unmarshal([]byte(metadataStr.String), &metadata); err != nil {
+	if err := gorpmapping.JSONNullString(fields.Metadata, &p.Metadata); err != nil {
+		return err
+	}
+
+	if len(fields.VCSServers) > 0 {
+		clearVCSServer, err := secret.Decrypt([]byte(fields.VCSServers))
+		if err != nil {
 			return err
 		}
-		p.Metadata = metadata
+
+		if len(clearVCSServer) > 0 {
+			if err := yaml.Unmarshal(clearVCSServer, &p.VCSServers); err != nil {
+				log.Error("Unable to load project %d: %v", p.ID, err)
+			}
+		}
 	}
+
 	return nil
 }
 
@@ -44,7 +62,18 @@ func (p *dbProject) PostUpdate(db gorp.SqlExecutor) error {
 	if err != nil {
 		return err
 	}
-	if _, err := db.Exec("update project set metadata = $2 where id = $1", p.ID, b); err != nil {
+
+	b1, err := yaml.Marshal(p.VCSServers)
+	if err != nil {
+		return err
+	}
+
+	encryptedVCSServerStr, err := secret.Encrypt(b1)
+	if err != nil {
+		return err
+	}
+
+	if _, err := db.Exec("update project set metadata = $2, vcs_servers = $3 where id = $1", p.ID, b, encryptedVCSServerStr); err != nil {
 		return err
 	}
 	return nil

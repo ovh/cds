@@ -8,14 +8,14 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertTriggerParameter insert given parameter in database
 func InsertTriggerParameter(db gorp.SqlExecutor, triggerID int64, p sdk.Parameter) error {
 	if string(p.Type) == string(sdk.SecretVariable) {
-		return sdk.ErrNoDirectSecretUse
+		return sdk.WrapError(sdk.ErrNoDirectSecretUse, "InsertTriggerParameter>")
 	}
 
 	query := `INSERT INTO pipeline_trigger_parameter (pipeline_trigger_id, name, type, value, description) VALUES ($1, $2, $3, $4, $5)`
@@ -110,8 +110,7 @@ func isTriggerLoopFree(tx gorp.SqlExecutor, t *sdk.PipelineTrigger, parents []pa
 	// Load all dest trigger
 	tr, err := LoadTriggersAsSource(tx, t.DestApplication.ID, t.DestPipeline.ID, t.DestEnvironment.ID)
 	if err != nil {
-		log.Warning("isTriggerLoopFree: cannot load trigger as source: %s\n", err)
-		return err
+		return sdk.WrapError(err, "isTriggerLoopFree: cannot load trigger as source")
 	}
 
 	// Add yourself to parent
@@ -162,7 +161,7 @@ func UpdateTrigger(db gorp.SqlExecutor, t *sdk.PipelineTrigger) error {
 	}
 
 	// Update trigger
-	query := `UPDATE pipeline_trigger SET 
+	query := `UPDATE pipeline_trigger SET
 	src_application_id = $1, src_pipeline_id = $2, src_environment_id = $3,
 	dest_application_id = $4, dest_pipeline_id = $5, dest_environment_id = $6,
 	manual = $7
@@ -509,7 +508,7 @@ func LoadTriggers(db gorp.SqlExecutor, appID, pipelineID, envID int64) ([]sdk.Pi
 	JOIN project AS dest_project ON dest_project.id = dest_app.project_id
 	LEFT JOIN environment AS src_env ON src_env.id = src_environment_id
 	LEFT JOIN environment AS dest_env ON dest_env.id = dest_environment_id
-	WHERE %s 
+	WHERE %s
 	`
 
 	var rows *sql.Rows
@@ -789,8 +788,8 @@ func DeleteTrigger(db gorp.SqlExecutor, triggerID int64) error {
 
 // ProcessTriggerParameters replaces all placeholders in trigger before execution
 func ProcessTriggerParameters(t sdk.PipelineTrigger, pbParams []sdk.Parameter) []sdk.Parameter {
-
-	for {
+	loopEscape := 0
+	for loopEscape < 10 {
 		replaced := false
 		// Now for each trigger parameter
 		for _, pbp := range pbParams {
@@ -807,6 +806,7 @@ func ProcessTriggerParameters(t sdk.PipelineTrigger, pbParams []sdk.Parameter) [
 		if !replaced {
 			break
 		}
+		loopEscape++
 	}
 
 	return t.Parameters
@@ -814,9 +814,9 @@ func ProcessTriggerParameters(t sdk.PipelineTrigger, pbParams []sdk.Parameter) [
 
 //ProcessTriggerExpectedValue processes prerequisites expected values
 func ProcessTriggerExpectedValue(payload string, pb *sdk.PipelineBuild) string {
-	for {
+	loopEscape := 0
+	for loopEscape < 10 {
 		replaced := false
-
 		for _, pbp := range pb.Parameters {
 			old := payload
 			payload = strings.Replace(payload, "{{."+pbp.Name+"}}", pbp.Value, -1)
@@ -827,6 +827,7 @@ func ProcessTriggerExpectedValue(payload string, pb *sdk.PipelineBuild) string {
 		if !replaced {
 			break
 		}
+		loopEscape++
 	}
 
 	return payload
@@ -842,19 +843,24 @@ func CheckPrerequisites(t sdk.PipelineTrigger, pb *sdk.PipelineBuild) (bool, err
 	prerequisitesOK := true
 	for _, p := range t.Prerequisites {
 		// Process prerequisite too !
-		p.ExpectedValue = ProcessTriggerExpectedValue(p.ExpectedValue, pb)
+		expectedValue := ProcessTriggerExpectedValue(p.ExpectedValue, pb)
+		var not bool
+		if strings.HasPrefix(expectedValue, "not ") {
+			expectedValue = strings.Replace(expectedValue, "not ", "", 1)
+			not = true
+		}
 		// Look for parameter in PipelineBuild
 		found := false
 		for i := range parameters {
 			if p.Parameter == parameters[i].Name {
 				found = true
-				ok, err := regexp.Match("^"+p.ExpectedValue+"$", []byte(parameters[i].Value))
+				ok, err := regexp.Match("^"+expectedValue+"$", []byte(parameters[i].Value))
 				if err != nil {
-					log.Warning("CheckPrerequisites> Cannot eval regexp '%s': %s", p.ExpectedValue, err)
+					log.Warning("CheckPrerequisites> Cannot eval regexp '%s': %s", expectedValue, err)
 					return false, fmt.Errorf("CheckPrerequisites> %s", err)
 				}
-				if !ok {
-					log.Debug("CheckPrerequisites> Expected %s='%s', got '%s'\n", parameters[i].Name, p.ExpectedValue, parameters[i].Value)
+				if (!not && !ok) || (not && ok) {
+					log.Debug("CheckPrerequisites> Expected %s='%s', got '%s'\n", parameters[i].Name, expectedValue, parameters[i].Value)
 					prerequisitesOK = false
 					break
 				}
@@ -865,13 +871,13 @@ func CheckPrerequisites(t sdk.PipelineTrigger, pb *sdk.PipelineBuild) (bool, err
 		for _, pbp := range pb.Parameters {
 			if p.Parameter == pbp.Name {
 				found = true
-				ok, err := regexp.Match("^"+p.ExpectedValue+"$", []byte(pbp.Value))
+				ok, err := regexp.Match("^"+expectedValue+"$", []byte(pbp.Value))
 				if err != nil {
-					log.Warning("CheckPrerequisites> Cannot eval regexp '%s': %s", p.ExpectedValue, err)
+					log.Warning("CheckPrerequisites> Cannot eval regexp '%s': %s", expectedValue, err)
 					return false, fmt.Errorf("CheckPrerequisites> %s", err)
 				}
-				if !ok {
-					log.Debug("CheckPrerequisites> Expected %s='%s', got '%s'\n", p.Parameter, p.ExpectedValue, pbp.Value)
+				if (!not && !ok) || (not && ok) {
+					log.Debug("CheckPrerequisites> Expected %s='%s', got '%s'\n", p.Parameter, expectedValue, pbp.Value)
 					prerequisitesOK = false
 					break
 				}

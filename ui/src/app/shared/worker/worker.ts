@@ -1,4 +1,5 @@
-import {Observable, BehaviorSubject} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 export class CDSWorker {
 
     // Webworker
@@ -30,7 +31,7 @@ export class CDSWorker {
                 }
             });
             this.webWorker.onerror = function (e) {
-                console.log('Warning Worker Error: ', e);
+                console.log('Worker Error: ', e);
             };
             this.webWorker.postMessage(msgToSend);
         } else {
@@ -43,7 +44,7 @@ export class CDSWorker {
     stop() {
         if (this.webWorker) {
             this.webWorker.terminate();
-            delete this.webWorker;
+            this.webWorker = null;
         }
     }
 }

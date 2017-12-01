@@ -2,10 +2,9 @@ name: Pipeline Export / Import Command TestSuite
 testcases:
 - name: prepare test
   steps:
-  - script: {{.cds.build.cds}} project remove --force ITCLIPIPPRJIMPIMP
+  - script: {{.cds.build.cds}} project remove --force ITCLIPIPPRJIMP
   - script: {{.cds.build.cds}} group remove ITCLIPIPIMP_GRP --force
   - script: {{.cds.build.cds}} project add ITCLIPIPPRJIMP "Test Project" ITCLIPIPIMP_GRP
-  - script: {{.cds.build.cds}} group add ITCLIPIPIMP_GRP_EDIT_TEST
   - script: {{.cds.build.cds}} action remove IT_CLI_pipeline_Test_Echo --force
 
 - name: pipeline add
@@ -61,7 +60,7 @@ testcases:
 
 - name: cleanup
   steps:
-  - script: {{.cds.build.cds}} group remove ITCLIPIPIMP_GRP_EDIT_TEST
-  - script: {{.cds.build.cds}} group remove ITCLIPIPIMP_GRP
   - script: {{.cds.build.cds}} project remove --force ITCLIPIPPRJIMP
+  - script: {{.cds.build.cds}} group remove ITCLIPIPIMP_GRP
   - script: {{.cds.build.cds}} action remove IT_CLI_pipeline_Test_Echo
+  

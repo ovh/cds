@@ -32,8 +32,7 @@
     }
 
     func main() {
-        p := DummyPlugin{}
-        plugin.Serve(&p)
+        plugin.Main(DummyPlugin{})
     }
 
 ```

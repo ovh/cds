@@ -1,55 +1,88 @@
 <ng-container [ngSwitch]="type" *ngIf="edit">
     <div *ngSwitchCase="'number'" class="ui fluid input">
-        <input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+        <input type="number" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
     </div>
     <div *ngSwitchCase="'text'" class="ui form">
-        <codemirror [(ngModel)]="value" [config]="codeMirrorConfig" (change)="changeCodeMirror($event)" #codeMirror (keydown)="sendValueChanged()"></codemirror>
+        <codemirror [(ngModel)]="editableValue" [config]="codeMirrorConfig" (change)="changeCodeMirror($event)" #codeMirror (keydown)="sendValueChanged()"></codemirror>
     </div>
     <div *ngSwitchCase="'boolean'" class="ui checkbox">
-        <input type="checkbox" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+        <input type="checkbox" [(ngModel)]="editableValue" (change)="valueChanged();sendValueChanged()" name="value">
         <label>{{ ' '}}</label>
     </div>
     <div *ngSwitchCase="'list'">
         <div class="ui fluid input" *ngIf="editList">
-            <input type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" placeholder="value1;value2;value3">
+            <input type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" placeholder="value1;value2;value3">
+        </div>
+        <div *ngIf="!editList && editableValue && list">
+            <sm-select class="search fluid"
+                [(model)]="editableValue"
+                [options]="{'fullTextSearch': true}"
+                (modelChange)="valueChanged();sendValueChanged()"
+                (keydown)="sendValueChanged()"
+                name="value">
+
+                <ng-container *ngIf="refValue">
+                    <option *ngFor="let v of refValue" [value]="v">{{v}}</option>
+                </ng-container>
+                <ng-container *ngIf="!refValue">
+                    <option *ngFor="let v of list" [value]="v">{{v}}</option>
+                </ng-container>
+
+            </sm-select>
         </div>
     </div>
+
     <div *ngSwitchCase="'env'">
-        <sm-select class="search fluid" [(model)]="value" (modelChange)="valueChanged()" (onChange)="sendValueChanged()">
-            <option *ngFor="let env of project?.environments" value="{{env.name}}">{{env.name}}</option>
-        </sm-select>
+            <sm-select class="search fluid"
+                       [options]="{'fullTextSearch': true}"
+                       [(model)]="editableValue"
+                       (modelChange)="valueChanged()"
+                       (onChange)="sendValueChanged()">
+                <option *ngFor="let env of projectRo?.environments" value="{{env.name}}">{{env.name}}</option>
+            </sm-select>
     </div>
     <div *ngSwitchCase="'pipeline'">
-        <sm-select class="search fluid" [(model)]="value" (modelChange)="valueChanged()" (onChange)="sendValueChanged()">
-            <option *ngFor="let pip of project?.pipelines" value="{{pip.name}}">{{pip.name}}</option>
+        <sm-select class="search fluid"
+            [options]="{'fullTextSearch': true}"
+            [(model)]="editableValue"
+            (modelChange)="valueChanged()"
+            (onChange)="sendValueChanged()">
+            <option *ngFor="let pip of projectRo?.pipelines" value="{{pip.name}}">{{pip.name}}</option>
         </sm-select>
     </div>
     <div *ngSwitchCase="'repository'">
-        <sm-select class="search fluid" [model]="selectedRepoManager.name" (modelChange)="updateRepoManager($event)">
+        <sm-select class="search fluid"
+            [options]="{'fullTextSearch': true}"
+            [model]="selectedRepoManager.name"
+            (modelChange)="updateRepoManager($event)">
             <option *ngFor="let r of repositoriesManager" value="{{r.name}}">{{r.name}}</option>
         </sm-select>
         <sm-select *ngIf="selectedRepoManager && selectedRepoManager.name !== 'Git Url'"
-                (modelChange)="valueRepoChanged()"
+                placeholder="{{'common_loading' | translate}}"
+                [options]="{'fullTextSearch': true}"
+                (modelChange)="valueRepoChanged($event)"
                 [(model)]="selectedRepo"
                 class="search item"
-                [disabled]="loadingBtn">
-            <option *ngFor="let r of repositories"  value="{{r.fullname}}">{{r.fullname}}</option>
+                [disabled]="loadingRepos">
+            <option *ngFor="let r of repositories" value="{{r.fullname}}">{{r.fullname}}</option>
         </sm-select>
-        <input type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" placeholder="{{'parameter_git_url' | translate }}">
+        <input *ngIf="selectedRepoManager && selectedRepoManager.name === 'Git Url'" type="text" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" placeholder="{{'parameter_git_url' | translate }}">
     </div>
-    <div *ngSwitchDefault class="ui fluid input">
-        <input type="text" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+    <div *ngSwitchDefault>
+        <input auto-complete autocomplete="off" type="text" [(ngModel)]="editableValue"
+               (change)="valueChanged()" (keydown)="sendValueChanged()" name="value" [source]="suggest" [min-chars]="3"
+               [no-match-found-text]="false">
     </div>
 </ng-container>
 <ng-container [ngSwitch]="type" *ngIf="!edit">
     <div *ngSwitchCase="'text'" class="ui form">
-        <textarea readonly rows="{{_sharedService.getTextAreaheight(value)}}">{{value}}</textarea>
+        <textarea readonly rows="{{_sharedService.getTextAreaheight(editableValue)}}">{{editableValue}}</textarea>
     </div>
     <div *ngSwitchCase="'boolean'" class="ui checkbox">
-        <input disabled type="checkbox" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
-        <label>{{ ' '}}</label>
+        <input disabled type="checkbox" [(ngModel)]="editableValue" (change)="valueChanged()" (keydown)="sendValueChanged()" name="value">
+        <label>{{' '}}</label>
     </div>
     <div *ngSwitchDefault class="ui fluid input">
-        {{value}}
+        {{editableValue}}
     </div>
 </ng-container>

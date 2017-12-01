@@ -1,278 +1,378 @@
 package repositoriesmanager
 
 import (
-	"encoding/json"
-	"errors"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"path/filepath"
-	"strconv"
-	"strings"
+	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/repositoriesmanager/repogithub"
-	"github.com/ovh/cds/engine/api/repositoriesmanager/repostash"
-	"github.com/ovh/cds/engine/api/secret/secretbackend"
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
-var (
-	initialized bool
-	options     InitializeOpts
-)
+//LoadAll Load all RepositoriesManager from the database
+func LoadAll(db *gorp.DbMap, store cache.Store) ([]string, error) {
+	serviceDAO := services.NewRepository(func() *gorp.DbMap { return db }, store)
+	srvs, err := serviceDAO.FindByType("vcs")
+	if err != nil {
+		return nil, sdk.WrapError(err, "repositoriesmanager.LoadAll> Unable to load services")
+	}
 
-//InitializeOpts is the struct to init the package
-type InitializeOpts struct {
-	SecretClient           secretbackend.Driver
-	KeysDirectory          string
-	UIBaseURL              string
-	APIBaseURL             string
-	DisableStashSetStatus  bool
-	DisableGithubSetStatus bool
-	DisableGithubStatusURL bool
-	GithubSecret           string
-	StashPrivateKey        string
+	vcsServers := map[string]interface{}{}
+	if _, err := services.DoJSONRequest(srvs, "GET", "/vcs", nil, &vcsServers); err != nil {
+		return nil, err
+	}
+	servers := []string{}
+	for k := range vcsServers {
+		servers = append(servers, k)
+	}
+	return servers, nil
 }
 
-//Initialize initialize private keys stored in Vault
-//CDS private keys in repositories manager have to be stored as secrets in Vault
-//For instance for a repositories manager named "github.com/ovh", the private key
-//is stored in a secret name "repositoriesmanager-secrets-github.com/ovh-privateKey"
-func Initialize(o InitializeOpts) error {
-	options = o
-	repogithub.Init(o.APIBaseURL, o.UIBaseURL)
-	repostash.Init(o.APIBaseURL, o.UIBaseURL)
-
-	_db := database.DB()
-	if _db == nil {
-		return fmt.Errorf("Unable to init repositories manager")
-	}
-	if db := database.DBMap(_db); db != nil {
-		secrets := o.SecretClient.GetSecrets()
-		if secrets.Err() != nil {
-			return secrets.Err()
-		}
-
-		repositoriesManager, err := LoadAll(db)
-		if err != nil {
-			return err
-		}
-		for _, rm := range repositoriesManager {
-			var found bool
-			log.Info("RepositoriesManager> Searching key for %s", rm.Name)
-			s := fmt.Sprintf("cds/repositoriesmanager-secrets-%s-", rm.Name)
-			rmSecrets := map[string]string{}
-			all, _ := secrets.All()
-			for k, v := range all {
-				if strings.HasPrefix(k, s) {
-					found = true
-					log.Info("RepositoriesManager> Found a key for %s", rm.Name)
-					rmSecrets[strings.Replace(k, s, "", -1)] = v
-				}
-			}
-			if !found {
-				switch rm.Type {
-				case sdk.Stash:
-					if o.StashPrivateKey != "" {
-						log.Info("RepositoriesManager> Found a key for %s", rm.Name)
-						btes, err := ioutil.ReadFile(o.StashPrivateKey)
-						if err != nil {
-							log.Warning("RepositoriesManager> Unable to load private key %s : %s", o.StashPrivateKey, err)
-						}
-						rmSecrets["privatekey"] = string(btes)
-						found = true
-					}
-				case sdk.Github:
-					if o.GithubSecret != "" {
-						log.Info("RepositoriesManager> Found a key for %s", rm.Name)
-						rmSecrets["client-secret"] = o.GithubSecret
-						found = true
-					}
-				}
-			}
-			if found {
-				if err := initRepositoriesManager(db, &rm, o.KeysDirectory, rmSecrets); err != nil {
-					log.Warning("RepositoriesManager> Unable init %s", rm.Name)
-				}
-			} else {
-				log.Warning("RepositoriesManager> Unable to find key for %s", rm.Name)
-			}
-		}
-		initialized = true
-		return nil
-	}
-	return errors.New("Cannot init repositories manager")
+type vcsConsumer struct {
+	name   string
+	proj   *sdk.Project
+	dbFunc func() *gorp.DbMap
+	cache  cache.Store
 }
 
-//New instanciate a new RepositoriesManager, act as a Factory with all supported repositories manager
-func New(t sdk.RepositoriesManagerType, id int64, name, URL string, args map[string]string, consumerData string) (*sdk.RepositoriesManager, error) {
-	switch t {
-	case sdk.Stash:
-		//we have to compute the StashConsumer
-		var stash *repostash.StashConsumer
-		//Check if it isn't comming from the DB
-		if id == 0 || consumerData == "" {
-			//Check args
-			if len(args) != 1 || args["key"] == "" {
-				return nil, fmt.Errorf("key args is mandatory to connect to stash")
-			}
-			//FIXME: Stash consumerKey is always CDS, maybe we should take it as argument ?
-			stash = repostash.New(URL, "CDS", args["key"])
-		} else {
-			//It's coming from the database, we just have to unmarshal data from the DB to get consumerData
-			var data map[string]interface{}
-			if err := json.Unmarshal([]byte(consumerData), &data); err != nil {
-				log.Warning("New> Error %s", err)
-				return nil, err
-			}
-			stash = repostash.New(URL, data["consumer_key"].(string), data["private_rsa_key"].(string))
-		}
-		stash.DisableSetStatus = options.DisableStashSetStatus
-
-		if stash.DisableSetStatus {
-			log.Debug("RepositoriesManager> ⚠ Stash Statuses are disabled")
-		}
-
-		rm := sdk.RepositoriesManager{
-			ID:               id,
-			Consumer:         stash,
-			Name:             name,
-			URL:              URL,
-			Type:             sdk.Stash,
-			HooksSupported:   stash.HooksSupported(),
-			PollingSupported: stash.PollingSupported(),
-		}
-		return &rm, nil
-	case sdk.Github:
-		var github *repogithub.GithubConsumer
-		var withHook, withPolling *bool
-		//Check if it isn't comming from the DB
-		if id == 0 || consumerData == "" {
-			//Check args
-			if len(args) < 2 || args["client-id"] == "" || args["client-secret"] == "" {
-				return nil, fmt.Errorf("client-id args and client-secret are mandatory to connect to github : %v", args)
-			}
-
-			github = repogithub.New(args["client-id"], args["client-secret"], options.APIBaseURL+"/repositories_manager/oauth2/callback")
-			if args["with-hooks"] != "" {
-				b, err := strconv.ParseBool(args["with-hooks"])
-				if err == nil {
-					withHook = &b
-				}
-			}
-
-			if args["with-polling"] != "" {
-				b, err := strconv.ParseBool(args["with-polling"])
-				if err == nil {
-					withPolling = &b
-				}
-			}
-		} else {
-			//It's coming from the database, we just have to unmarshal data from the DB to get consumerData
-			var data map[string]interface{}
-			if err := json.Unmarshal([]byte(consumerData), &data); err != nil {
-				log.Warning("New> Error %s", err)
-				return nil, err
-			}
-
-			github = repogithub.New(data["client-id"].(string), data["client-secret"].(string), options.APIBaseURL+"/repositories_manager/oauth2/callback")
-			if data["with-hooks"] != nil {
-				b, ok := data["with-hooks"].(bool)
-				if !ok {
-					b = github.HooksSupported()
-				}
-				withHook = &b
-			}
-
-			if data["with-polling"] != nil {
-				b, ok := data["with-polling"].(bool)
-				if !ok {
-					b = github.PollingSupported()
-				}
-				withPolling = &b
-			}
-		}
-
-		github.DisableSetStatus = options.DisableGithubSetStatus
-		github.DisableStatusURL = options.DisableGithubStatusURL
-
-		if github.DisableSetStatus {
-			log.Debug("RepositoriesManager> ⚠ Github Statuses are disabled")
-		}
-
-		if github.DisableStatusURL {
-			log.Debug("RepositoriesManager> ⚠ Github Statuses URL are disabled")
-		}
-
-		if withHook == nil {
-			log.Debug("with hooks : default")
-			b := github.HooksSupported()
-			withHook = &b
-		}
-		github.WithHooks = *withHook
-		if withPolling == nil {
-			log.Debug("with polling : default")
-			b := github.PollingSupported()
-			withPolling = &b
-		}
-		github.WithPolling = *withPolling
-
-		rm := sdk.RepositoriesManager{
-			ID:               id,
-			Consumer:         github,
-			Name:             name,
-			URL:              repogithub.URL,
-			Type:             sdk.Github,
-			HooksSupported:   *withHook && github.HooksSupported(),
-			PollingSupported: *withPolling && github.PollingSupported(),
-		}
-
-		return &rm, nil
-	}
-	return nil, fmt.Errorf("Unknown type %s. Cannot instanciate repositories manager t=%s id=%d name=%s url=%s args=%s consumerData=%s", t, t, id, name, URL, args, consumerData)
+type vcsClient struct {
+	name   string
+	token  string
+	secret string
+	srvs   []sdk.Service
 }
 
-//Init initializes all repositories with secrets comming from Vault
-func initRepositoriesManager(db gorp.SqlExecutor, rm *sdk.RepositoriesManager, directory string, secrets map[string]string) error {
-	if rm.Type == sdk.Stash {
-		privateKey := secrets["privatekey"]
-		if privateKey == "" {
-			return fmt.Errorf("Cannot init %s. Missing private key", privateKey)
+// GetProjectVCSServer returns sdk.ProjectVCSServer for a project
+func GetProjectVCSServer(p *sdk.Project, name string) *sdk.ProjectVCSServer {
+	for _, v := range p.VCSServers {
+		if v.Name == name {
+			return &v
 		}
-		path := filepath.Join(directory, fmt.Sprintf("%s.%s", rm.Name, "privateKey"))
-		log.Info("RepositoriesManager> Writing stash private key %s", path)
-		if err := ioutil.WriteFile(path, []byte(privateKey), 0600); err != nil {
-			log.Warning("RepositoriesManager> Unable to write stash private key %s : %s", path, err)
-			return err
-		}
-		stash := rm.Consumer.(*repostash.StashConsumer)
-		stash.PrivateRSAKey = path
-		if err := Update(db, rm); err != nil {
-			return err
-		}
-		return nil
 	}
 
-	if rm.Type == sdk.Github {
-		clientSecret := secrets["client-secret"]
-		if clientSecret == "" {
-			return fmt.Errorf("Cannot init %s. Missing client secret", clientSecret)
-		}
-		path := filepath.Join(directory, fmt.Sprintf("%s.%s", rm.Name, "clientSecret"))
-		log.Info("RepositoriesManager> Writing github client secret %s", path)
-		if err := ioutil.WriteFile(path, []byte(clientSecret), 0600); err != nil {
-			log.Warning("RepositoriesManager> Unable to write stash private key %s : %s", path, err)
-			return err
-		}
-		gh := rm.Consumer.(*repogithub.GithubConsumer)
-		gh.ClientSecret = path
-		if err := Update(db, rm); err != nil {
-			return err
-		}
-		return nil
+	return nil
+}
+
+// NewVCSServerConsumer returns a sdk.VCSServer wrapping vcs uservices calls
+func NewVCSServerConsumer(dbFunc func() *gorp.DbMap, store cache.Store, name string) (sdk.VCSServer, error) {
+	return &vcsConsumer{name: name, dbFunc: dbFunc}, nil
+}
+
+func (c *vcsConsumer) AuthorizeRedirect() (string, string, error) {
+	srvDAO := services.Querier(c.dbFunc(), c.cache)
+	srv, err := srvDAO.FindByType("vcs")
+	if err != nil {
+		return "", "", err
 	}
-	return fmt.Errorf("Unsupported repositories manager : %s: %s", rm.Name, rm.Type)
+
+	res := map[string]string{}
+	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
+	log.Info("Performing request on %s", path)
+	if _, err := services.DoJSONRequest(srv, "GET", path, nil, &res); err != nil {
+		return "", "", sdk.WrapError(err, "repositoriesmanager.AuthorizeRedirect> ")
+	}
+
+	return res["token"], res["url"], nil
+}
+
+func (c *vcsConsumer) AuthorizeToken(token string, secret string) (string, string, error) {
+	srvDAO := services.Querier(c.dbFunc(), c.cache)
+	srv, err := srvDAO.FindByType("vcs")
+	if err != nil {
+		return "", "", err
+	}
+
+	body := map[string]string{
+		"token":  token,
+		"secret": secret,
+	}
+
+	res := map[string]string{}
+	path := fmt.Sprintf("/vcs/%s/authorize", c.name)
+	if _, err := services.DoJSONRequest(srv, "POST", path, body, &res); err != nil {
+		return "", "", err
+	}
+
+	return res["token"], res["secret"], nil
+}
+
+func (c *vcsConsumer) GetAuthorizedClient(token string, secret string) (sdk.VCSAuthorizedClient, error) {
+	s := GetProjectVCSServer(c.proj, c.name)
+	if s == nil {
+		return nil, sdk.ErrNoReposManagerClientAuth
+	}
+
+	servicesDao := services.Querier(c.dbFunc(), c.cache)
+	srvs, err := servicesDao.FindByType("vcs")
+	if err != nil {
+		return nil, err
+	}
+
+	return &vcsClient{
+		name:   c.name,
+		token:  token,
+		secret: secret,
+		srvs:   srvs,
+	}, nil
+}
+
+//AuthorizedClient returns an implementation of AuthorizedClient wrapping calls to vcs uService
+func AuthorizedClient(db gorp.SqlExecutor, store cache.Store, repo *sdk.ProjectVCSServer) (sdk.VCSAuthorizedClient, error) {
+	if repo == nil {
+		return nil, sdk.ErrUnauthorized
+	}
+
+	servicesDao := services.Querier(db, store)
+	srvs, err := servicesDao.FindByType("vcs")
+	if err != nil {
+		return nil, err
+	}
+
+	return &vcsClient{
+		name:   repo.Name,
+		token:  repo.Data["token"],
+		secret: repo.Data["secret"],
+		srvs:   srvs,
+	}, nil
+}
+
+func (c *vcsClient) doJSONRequest(method, path string, in interface{}, out interface{}) (int, error) {
+	return services.DoJSONRequest(c.srvs, method, path, in, out, func(req *http.Request) {
+		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
+		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
+	})
+}
+
+func (c *vcsClient) postMultipart(path string, fileContent []byte, out interface{}) (int, error) {
+	return services.PostMultipart(c.srvs, "POST", path, fileContent, out, func(req *http.Request) {
+		req.Header.Set("X-CDS-ACCESS-TOKEN", base64.StdEncoding.EncodeToString([]byte(c.token)))
+		req.Header.Set("X-CDS-ACCESS-TOKEN-SECRET", base64.StdEncoding.EncodeToString([]byte(c.secret)))
+	})
+}
+
+func (c *vcsClient) Repos() ([]sdk.VCSRepo, error) {
+	repos := []sdk.VCSRepo{}
+	path := fmt.Sprintf("/vcs/%s/repos", c.name)
+	if _, err := c.doJSONRequest("GET", path, nil, &repos); err != nil {
+		return nil, err
+	}
+	return repos, nil
+}
+
+func (c *vcsClient) RepoByFullname(fullname string) (sdk.VCSRepo, error) {
+	repo := sdk.VCSRepo{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s", c.name, fullname)
+	if _, err := c.doJSONRequest("GET", path, nil, &repo); err != nil {
+		return repo, err
+	}
+	return repo, nil
+}
+
+func (c *vcsClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
+	branches := []sdk.VCSBranch{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches", c.name, fullname)
+	if _, err := c.doJSONRequest("GET", path, nil, &branches); err != nil {
+		return nil, err
+	}
+	return branches, nil
+}
+
+func (c *vcsClient) Branch(fullname string, branchName string) (*sdk.VCSBranch, error) {
+	branch := sdk.VCSBranch{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/?branch=%s", c.name, fullname, url.QueryEscape(branchName))
+	if _, err := c.doJSONRequest("GET", path, nil, &branch); err != nil {
+		return nil, err
+	}
+	return &branch, nil
+}
+
+func (c *vcsClient) Commits(fullname, branch, since, until string) ([]sdk.VCSCommit, error) {
+	commits := []sdk.VCSCommit{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/branches/commits?branch=%s&since=%s&until=%s", c.name, fullname, url.QueryEscape(branch), url.QueryEscape(since), url.QueryEscape(until))
+	if _, err := c.doJSONRequest("GET", path, nil, &commits); err != nil {
+		return nil, err
+	}
+	return commits, nil
+}
+
+func (c *vcsClient) Commit(fullname, hash string) (sdk.VCSCommit, error) {
+	commit := sdk.VCSCommit{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/commits/%s", c.name, fullname, hash)
+	if _, err := c.doJSONRequest("GET", path, nil, &commit); err != nil {
+		return commit, err
+	}
+	return commit, nil
+}
+
+func (c *vcsClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) {
+	prs := []sdk.VCSPullRequest{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/pullrequests", c.name, fullname)
+	if _, err := c.doJSONRequest("GET", path, nil, &prs); err != nil {
+		return nil, err
+	}
+	return prs, nil
+}
+
+func (c *vcsClient) CreateHook(fullname string, hook sdk.VCSHook) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/", c.name, fullname)
+	_, err := c.doJSONRequest("POST", path, &hook, nil)
+	return err
+}
+
+func (c *vcsClient) GetHook(fullname, u string) (sdk.VCSHook, error) {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/?url=%s", c.name, fullname, url.QueryEscape(u))
+	hook := &sdk.VCSHook{}
+	_, err := c.doJSONRequest("GET", path, nil, hook)
+	return *hook, err
+}
+
+func (c *vcsClient) UpdateHook(fullname, url string, hook sdk.VCSHook) error {
+	return nil
+}
+
+func (c *vcsClient) DeleteHook(fullname string, hook sdk.VCSHook) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/?url=%s", c.name, fullname, url.QueryEscape(hook.URL))
+	_, err := c.doJSONRequest("DELETE", path, nil, nil)
+	return err
+}
+
+func (c *vcsClient) GetEvents(fullname string, dateRef time.Time) ([]interface{}, time.Duration, error) {
+	res := struct {
+		Events []interface{} `json:"events"`
+		Delay  time.Duration `json:"delay"`
+	}{}
+
+	path := fmt.Sprintf("/vcs/%s/repos/%s/events?since=%d", c.name, fullname, dateRef.Unix())
+	if _, err := c.doJSONRequest("GET", path, nil, &res); err != nil {
+		return nil, time.Duration(0), err
+	}
+
+	return res.Events, res.Delay, nil
+}
+
+func (c *vcsClient) PushEvents(fullname string, evts []interface{}) ([]sdk.VCSPushEvent, error) {
+	events := []sdk.VCSPushEvent{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=push", c.name, fullname)
+	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
+func (c *vcsClient) CreateEvents(fullname string, evts []interface{}) ([]sdk.VCSCreateEvent, error) {
+	events := []sdk.VCSCreateEvent{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=create", c.name, fullname)
+	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
+func (c *vcsClient) DeleteEvents(fullname string, evts []interface{}) ([]sdk.VCSDeleteEvent, error) {
+	events := []sdk.VCSDeleteEvent{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=delete", c.name, fullname)
+	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
+func (c *vcsClient) PullRequestEvents(fullname string, evts []interface{}) ([]sdk.VCSPullRequestEvent, error) {
+	events := []sdk.VCSPullRequestEvent{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/events?filter=pullrequests", c.name, fullname)
+	if _, err := c.doJSONRequest("POST", path, evts, &events); err != nil {
+		return nil, err
+	}
+	return events, nil
+}
+
+func (c *vcsClient) SetStatus(event sdk.Event) error {
+	path := fmt.Sprintf("/vcs/%s/status", c.name)
+	_, err := c.doJSONRequest("POST", path, event, nil)
+	return err
+}
+
+func (c *vcsClient) Release(fullname, tagName, releaseTitle, releaseDescription string) (*sdk.VCSRelease, error) {
+	res := struct {
+		Tag         string `json:"tag"`
+		Title       string `json:"title"`
+		Description string `json:"description"`
+	}{
+		Tag:         tagName,
+		Title:       releaseTitle,
+		Description: releaseDescription,
+	}
+
+	release := sdk.VCSRelease{}
+	path := fmt.Sprintf("/vcs/%s/repos/%s/releases", c.name, fullname)
+	_, err := c.doJSONRequest("POST", path, &res, &release)
+	if err != nil {
+		return nil, err
+	}
+	return &release, nil
+}
+
+func (c *vcsClient) UploadReleaseFile(fullname string, releaseName, uploadURL string, artifactName string, r io.ReadCloser) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/releases/%s/artifacts/%s", c.name, fullname, releaseName, artifactName)
+	defer r.Close()
+
+	fileContent, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
+	if _, err := c.postMultipart(path, fileContent, nil); err != nil {
+		return err
+	}
+	return nil
+}
+
+// WebhooksInfos is a set of info about webhooks
+type WebhooksInfos struct {
+	WebhooksSupported         bool `json:"webhooks_supported"`
+	WebhooksDisabled          bool `json:"webhooks_disabled"`
+	WebhooksCreationSupported bool `json:"webhooks_creation_supported"`
+	WebhooksCreationDisabled  bool `json:"webhooks_creation_disabled"`
+}
+
+// GetWebhooksInfos returns webhooks_supported, webhooks_disabled, webhooks_creation_supported, webhooks_creation_disabled for a vcs server
+func GetWebhooksInfos(c sdk.VCSAuthorizedClient) (WebhooksInfos, error) {
+	client, ok := c.(*vcsClient)
+	if !ok {
+		return WebhooksInfos{}, fmt.Errorf("Polling infos cast error")
+	}
+	res := WebhooksInfos{}
+	path := fmt.Sprintf("/vcs/%s/webhooks", client.name)
+	if _, err := client.doJSONRequest("GET", path, nil, &res); err != nil {
+		return WebhooksInfos{}, err
+	}
+	return res, nil
+}
+
+// PollingInfos is a set of info about polling functions
+type PollingInfos struct {
+	PollingSupported bool `json:"polling_supported"`
+	PollingDisabled  bool `json:"polling_disabled"`
+}
+
+// GetPollingInfos returns polling_supported and polling_disabled for a vcs server
+func GetPollingInfos(c sdk.VCSAuthorizedClient) (PollingInfos, error) {
+	client, ok := c.(*vcsClient)
+	if !ok {
+		return PollingInfos{}, fmt.Errorf("Polling infos cast error")
+	}
+	res := PollingInfos{}
+	path := fmt.Sprintf("/vcs/%s/polling", client.name)
+	if _, err := client.doJSONRequest("GET", path, nil, &res); err != nil {
+		return PollingInfos{}, err
+	}
+	return res, nil
 }

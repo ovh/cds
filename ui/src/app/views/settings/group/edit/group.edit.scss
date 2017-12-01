@@ -1,0 +1,21 @@
+@import '../../../../../common';
+
+#GroupEdit {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  height: 100%;
+  padding: 20px;
+
+  .buttons {
+    margin-top: 23px;
+  }
+
+  h2 {
+    text-align: center;
+  }
+
+  h4.ui.header {
+    text-align: center;
+  }
+}

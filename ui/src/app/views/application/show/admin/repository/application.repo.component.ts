@@ -7,6 +7,7 @@ import {Project} from '../../../../../model/project.model';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-repo',
@@ -24,7 +25,7 @@ export class ApplicationRepositoryComponent implements OnInit {
     public loadingBtn = false;
 
     repos: Repository[];
-    reposTmp: Repository[];
+    reposFiltered: Repository[];
     model: string;
 
     @ViewChild('removeWarning') removeWarningModal: WarningModalComponent;
@@ -35,10 +36,10 @@ export class ApplicationRepositoryComponent implements OnInit {
     }
 
     ngOnInit() {
-        if (this.project.repositories_manager && this.project.repositories_manager.length > 0) {
-            this.selectedRepoManager = this.project.repositories_manager[0].name;
+        if (this.project.vcs_servers && this.project.vcs_servers.length > 0) {
+            this.selectedRepoManager = this.project.vcs_servers[0].name;
         }
-        this.updateListRepo();
+        this.updateListRepo(false);
     }
 
     removeRepository(skip?: boolean): void {
@@ -46,9 +47,9 @@ export class ApplicationRepositoryComponent implements OnInit {
             this.removeWarningModal.show();
         } else {
             this.loadingBtn = true;
-            this._appStore.removeRepository(this.project.key, this.application.name, this.application.repositories_manager.name)
+            this._appStore.removeRepository(this.project.key, this.application.name, this.application.vcs_server)
                 .subscribe( () => {
-                    delete this.application.repositories_manager;
+                    delete this.application.vcs_server;
                     delete this.application.repository_fullname;
                     this.loadingBtn = false;
                     this._toast.success('', this._translate.instant('application_repo_detach_ok'));
@@ -58,20 +59,30 @@ export class ApplicationRepositoryComponent implements OnInit {
         }
     }
 
+    filterRepositories(filter: string): void {
+        if (filter.length >= 3) {
+            this.reposFiltered = this.repos.filter(r => {
+                return r.fullname.toLowerCase().indexOf(filter.toLowerCase()) !== -1;
+            });
+        } else {
+            this.reposFiltered = this.repos.slice(0, 50);
+        }
+    }
+
     /**
      * Update list of repo when changing repo manager
      */
-    updateListRepo(): void {
+    updateListRepo(sync: boolean): void {
         if (this.selectedRepoManager) {
             this.loadingRepos = true;
-            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager)
-                .subscribe( repos => {
+            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, sync).pipe(first())
+                .subscribe(repos => {
                     this.repos = repos;
-                    this.reposTmp = this.repos.slice(0, 1000);
-                    this.loadingRepos = false;
-                }, () => {
-                    this.loadingRepos = false;
-                });
+                    this.reposFiltered = repos.slice(0, 50);
+                },
+                null,
+                () => this.loadingRepos = false
+            );
         }
     }
 

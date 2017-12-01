@@ -6,9 +6,9 @@ import {ApplicationStore} from '../../../../../service/application/application.s
 import {ApplicationPipeline} from '../../../../../model/application.model';
 import {Prerequisite} from '../../../../../model/prerequisite.model';
 import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
-
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
+import {Parameter} from '../../../../../model/parameter.model';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-trigger',
@@ -20,8 +20,12 @@ export class ApplicationTriggerComponent {
     // Trigger to edit
     @Input() trigger: Trigger;
 
+    // Pipeline parameters
+    @Input() paramsRef: Array<Parameter>;
+
     // Project data
     @Input() project: Project;
+
     // create/edit
     @Input() mode: string;
 
@@ -29,6 +33,7 @@ export class ApplicationTriggerComponent {
     selectedDestPipeline: Pipeline;
 
     refPrerequisites: Array<Prerequisite>;
+    loading = true;
 
     constructor(private _appStore: ApplicationStore) {
         this.refPrerequisites = new Array<Prerequisite>();
@@ -39,12 +44,17 @@ export class ApplicationTriggerComponent {
      * Refresh available pipeline for the selected application.
      */
     updatePipelineList(): void {
-        this._appStore.getApplications(this.project.key, this.trigger.dest_application.name).subscribe(apps => {
-            let appKey = this.project.key + '-' + this.trigger.dest_application.name;
-            if (apps.get(appKey)) {
-                this.appPipelines = apps.get(appKey).pipelines;
-            }
-        });
+        this._appStore.getApplications(this.project.key, this.trigger.dest_application.name)
+            .pipe(
+                first(),
+                finalize(() => this.loading = false)
+            )
+            .subscribe(apps => {
+                let appKey = this.project.key + '-' + this.trigger.dest_application.name;
+                if (apps.get(appKey)) {
+                    this.appPipelines = apps.get(appKey).pipelines;
+                }
+            });
     }
 
     /**
@@ -55,7 +65,7 @@ export class ApplicationTriggerComponent {
         this.refPrerequisites = new Array<Prerequisite>();
         this.refPrerequisites.push(this.getGitPrerequisite());
         if (this.selectedDestPipeline.parameters) {
-            this.trigger.parameters = _.cloneDeep(this.selectedDestPipeline.parameters);
+            this.trigger.parameters = cloneDeep(this.selectedDestPipeline.parameters);
             this.selectedDestPipeline.parameters.forEach(p => {
                let pre = new Prerequisite();
                pre.parameter = p.name;
@@ -89,7 +99,7 @@ export class ApplicationTriggerComponent {
                 }
                 let indexAdd = this.trigger.prerequisites.findIndex(p => p.parameter === event.prerequisite.parameter);
                 if (indexAdd === -1) {
-                    this.trigger.prerequisites.push(_.cloneDeep(event.prerequisite));
+                    this.trigger.prerequisites.push(cloneDeep(event.prerequisite));
                 }
                 break;
             case 'delete':

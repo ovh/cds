@@ -7,11 +7,11 @@
     </div>
 </div>
 <div class="ui segment">
-    <div *ngIf="project.pipelines && project.pipelines.length > 0;then pipelines; else nopipelines"></div>
+    <div *ngIf="project.pipeline_names && project.pipeline_names.length > 0;then pipelines; else nopipelines"></div>
     <ng-template #pipelines>
         <div class="ui stackable four column grid">
-            <div class="center aligned column" *ngFor="let pip of project.pipelines">
-                <a [routerLink]="['./pipeline', pip.name]">{{pip.name}}</a>
+            <div class="center aligned column" *ngFor="let pipName of project.pipeline_names">
+                <a [routerLink]="['./pipeline', pipName]">{{pipName}}</a>
             </div>
         </div>
     </ng-template>

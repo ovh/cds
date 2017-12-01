@@ -12,6 +12,7 @@ import (
 	"gopkg.in/urfave/cli.v1"
 
 	"github.com/ovh/cds/contrib/plugins/plugin-kafka-publish/kafkapublisher"
+	"github.com/ovh/cds/sdk/plugin"
 )
 
 //This shows the help
@@ -27,34 +28,33 @@ func helpAction(c *cli.Context) error {
 
 //This shows information about the plugin
 func infoAction(c *cli.Context) error {
-	m := KafkaPlugin{}
-	p := m.Parameters()
-
-	fmt.Printf(" - Name:\t%s\n", m.Name())
-	fmt.Printf(" - Author:\t%s\n", m.Author())
-	fmt.Printf(" - Description:\t%s\n", m.Description())
-	fmt.Println(" - Parameters:")
-	for _, n := range p.Names() {
-		fmt.Printf("\t - %s: %s\n", n, p.GetDescription(n))
-	}
+	fmt.Print(plugin.InfoMarkdown(&KafkaPlugin{}))
 	return nil
 }
 
-//This will listen kafka topic forever and manage all incomming context, file and chunks
+//This will listen kafka topic forever and manage all incoming context, file and chunks
 func listenAction(c *cli.Context) error {
 	args := []string{c.Args().First()}
 	args = append(args, c.Args().Tail()...)
-	if len(args) != 5 {
+
+	if len(args) != 4 {
 		cli.ShowCommandHelp(c, "listen")
 		return cli.NewExitError("Invalid usage", 10)
 	}
 
-	//Get arguments from commandline
+	if !c.IsSet("kafka-password") && c.String("kafka-password") == "" {
+		cli.ShowCommandHelp(c, "listen")
+		return cli.NewExitError(
+			"Missing kafka password. Please specify --kafka-password "+
+				"argument or setup CDS_KAFKA_PASSWORD environment variable.", 17)
+	}
+
+	//Get arguments from commandline / environment
 	kafka := c.Args().Get(0)
 	topic := c.Args().Get(1)
 	group := c.Args().Get(2)
 	user := c.Args().Get(3)
-	password := c.Args().Get(4)
+	password := c.String("kafka-password")
 
 	//If provided, read the pgp private key file, and ask for the password
 	pgpPrivKey := c.String("pgp-decrypt")
@@ -99,18 +99,25 @@ func listenAction(c *cli.Context) error {
 func ackAction(c *cli.Context) error {
 	args := []string{c.Args().First()}
 	args = append(args, c.Args().Tail()...)
-	if len(args) != 6 {
+	if len(args) != 5 {
 		cli.ShowCommandHelp(c, "ack")
 		return cli.NewExitError("Invalid usage", 40)
+	}
+
+	if !c.IsSet("kafka-password") && c.String("kafka-password") == "" {
+		cli.ShowCommandHelp(c, "ack")
+		return cli.NewExitError(
+			"Missing kafka password. Please specify --kafka-password "+
+				"argument or setup CDS_KAFKA_PASSWORD environment variable.", 48)
 	}
 
 	//Get arguments from commandline
 	kafka := c.Args().Get(0)
 	topic := c.Args().Get(1)
 	user := c.Args().Get(2)
-	password := c.Args().Get(3)
-	contextFile := c.Args().Get(4)
-	result := c.Args().Get(5)
+	contextFile := c.Args().Get(3)
+	result := c.Args().Get(4)
+	password := c.String("kafka-password")
 
 	//Connect to kafka
 	producer, err := initKafkaProducer(kafka, user, password)
@@ -175,7 +182,7 @@ func ackAction(c *cli.Context) error {
 		}
 	}
 
-	//Prepare the ack object wich will be send to kafka
+	//Prepare the ack object which will be send to kafka
 	ack := kafkapublisher.Ack{
 		Context: *ctx,
 		Result:  result,

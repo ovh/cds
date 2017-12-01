@@ -5,22 +5,23 @@ import (
 	"fmt"
 
 	"github.com/go-gorp/gorp"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // UpdatePipelineApplication Update arguments passed to pipeline
-func UpdatePipelineApplication(db gorp.SqlExecutor, app *sdk.Application, pipelineID int64, params []sdk.Parameter, u *sdk.User) error {
+func UpdatePipelineApplication(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, pipelineID int64, params []sdk.Parameter, u *sdk.User) error {
 	data, err := json.Marshal(params)
 	if err != nil {
 		log.Warning("UpdatePipelineApplication> Cannot marshal parameters:  %s \n", err)
 		return fmt.Errorf("UpdatePipelineApplication>Cannot marshal parameters:  %s", err)
 	}
-	return UpdatePipelineApplicationString(db, app, pipelineID, string(data), u)
+	return UpdatePipelineApplicationString(db, store, app, pipelineID, string(data), u)
 }
 
 // UpdatePipelineApplicationString Update application pipeline parameters
-func UpdatePipelineApplicationString(db gorp.SqlExecutor, app *sdk.Application, pipelineID int64, data string, u *sdk.User) error {
+func UpdatePipelineApplicationString(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, pipelineID int64, data string, u *sdk.User) error {
 	query := `
 		UPDATE application_pipeline SET 
 		args = $1,
@@ -34,5 +35,5 @@ func UpdatePipelineApplicationString(db gorp.SqlExecutor, app *sdk.Application, 
 		return err
 	}
 
-	return UpdateLastModified(db, app, u)
+	return UpdateLastModified(db, store, app, u)
 }

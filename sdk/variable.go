@@ -4,10 +4,10 @@ import "time"
 
 // Variable represent a variable for a project or pipeline
 type Variable struct {
-	ID    int64  `json:"id"`
-	Name  string `json:"name"`
-	Value string `json:"value"`
-	Type  string `json:"type"`
+	ID    int64  `json:"id,omitempty" cli:"-"`
+	Name  string `json:"name" cli:"name"`
+	Value string `json:"value" cli:"value"`
+	Type  string `json:"type" cli:"type"`
 }
 
 // VariableAudit represent audit for a variable
@@ -30,7 +30,7 @@ const (
 )
 
 var (
-	// AvailableVariableType list all exising variable type in CDS
+	// AvailableVariableType list all existing variable type in CDS
 	AvailableVariableType = []string{
 		SecretVariable,
 		TextVariable,
@@ -41,7 +41,7 @@ var (
 	}
 )
 
-// NeedPlaceholder returns true if variable type is either secret or key 
+// NeedPlaceholder returns true if variable type is either secret or key
 func NeedPlaceholder(t string) bool {
 	switch t {
 	case SecretVariable, KeyVariable:
@@ -59,4 +59,28 @@ func VariablerFind(vars []Variable, s string) *Variable {
 		}
 	}
 	return nil
+}
+
+// VariablesFilter return a slice of variables filtered by type
+func VariablesFilter(vars []Variable, types ...string) []Variable {
+	res := []Variable{}
+	for _, v := range vars {
+		for _, s := range types {
+			if v.Type == s {
+				res = append(res, v)
+			}
+		}
+	}
+	return res
+}
+
+// VariablesPrefix add a prefix on all the variable in the slice
+func VariablesPrefix(vars []Variable, prefix string) []Variable {
+	res := make([]Variable, len(vars))
+	for i := range vars {
+		s := vars[i]
+		s.Name = prefix + s.Name
+		res[i] = s
+	}
+	return res
 }

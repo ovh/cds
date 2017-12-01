@@ -6,11 +6,10 @@ import (
 	"path"
 	"strings"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
-// DEPRECATED
 var keysDirectory string
 
 // DEPRECATED
@@ -20,33 +19,30 @@ if [ -z "$PKEY" ]; then
 	ssh "$@"
 else
 	ssh -oStrictHostKeyChecking=no -i "$PKEY" "$@"
-fi
-`
-	pKEY   = "PKEY"
-	gitSSH = "GIT_SSH"
+fi`
 )
 
 // DEPRECATED
-func writeSSHKey(key []byte, keypath string) error {
+func (w *currentWorker) writeSSHKey(key []byte, keypath string) error {
 	log.Debug("writeSSHKey> Writing key in %", keypath)
 	err := ioutil.WriteFile(keypath, key, os.FileMode(0600))
 	if err != nil {
 		return err
 	}
 
-	pkey = keypath
+	w.currentJob.pkey = keypath
 	return nil
 }
 
 // DEPRECATED
-func writeGitSSH(p string) error {
+func (w *currentWorker) writeGitSSH(p string) error {
 	p = path.Join(p, "gitssh.sh")
 	err := ioutil.WriteFile(p, []byte(gitsshscript), os.FileMode(0770))
 	if err != nil {
 		return err
 	}
 
-	gitsshPath = p
+	w.currentJob.gitsshPath = p
 	log.Debug("writeGitSSH> gitssh.sh is  %s", p)
 	return nil
 }
@@ -54,7 +50,7 @@ func writeGitSSH(p string) error {
 // Setup SSH keys will chose from available keys in this order:
 // Environment > Application > Project
 // This is the DEPRECATED way to setup ssh key
-func setupSSHKey(vars []sdk.Variable, keypath string) error {
+func (w *currentWorker) setupSSHKey(vars []sdk.Variable, keypath string) error {
 	log.Debug("setupSSHKey> setup key in %s", keypath)
 	var key sdk.Variable
 	var prio int
@@ -91,11 +87,11 @@ func setupSSHKey(vars []sdk.Variable, keypath string) error {
 			return err
 		}
 
-		if err = writeGitSSH(keypath); err != nil {
+		if err = w.writeGitSSH(keypath); err != nil {
 			return err
 		}
 
-		return writeSSHKey([]byte(key.Value), path.Join(keypath, key.Name))
+		return w.writeSSHKey([]byte(key.Value), path.Join(keypath, key.Name))
 	}
 
 	return nil

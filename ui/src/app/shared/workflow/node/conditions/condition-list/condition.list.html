@@ -1,0 +1,62 @@
+<div class="conditions ui form">
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+        <thead>
+        <tr>
+            <th class="four wide">{{ 'workflow_node_trigger_condition_name' | translate }}</th>
+            <th class="three wide">{{ 'workflow_node_trigger_condition_operator' | translate }}</th>
+            <th class="five wide">{{ 'workflow_node_trigger_condition_value' | translate }}</th>
+            <th class="three wide" *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let c of getDataForCurrentPage()">
+            <td>
+                <div class="ui input field">{{c.variable}}</div>
+            </td>
+            <td>
+                <div *ngIf="c && operators && workflow.permission === permission.READ_WRITE_EXECUTE; then operatorWrite;else operatorRead"></div>
+                <ng-template #operatorWrite>
+                    <sm-select [(model)]="c.operator">
+                        <option *ngFor="let k of operators | keys" [value]="k">{{operators[k]}}</option>
+                    </sm-select>
+                </ng-template>
+                <ng-template #operatorRead>
+                    <div class="ui input">{{c.operator}}</div>
+                </ng-template>
+            </td>
+            <td>
+                <div *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE; then valueWrite;else valueRead"></div>
+                <ng-template #valueWrite>
+                    <div class="ui input">
+                        <input type="text" [(ngModel)]="c.value">
+                    </div>
+                </ng-template>
+                <ng-template #valueRead>
+                    <div class="ui input">{{c.value}}</div>
+                </ng-template>
+            </td>
+            <td class="center" *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE">
+                    <app-delete-button (event)="removeCondition(c)"></app-delete-button>
+            </td>
+        </tr>
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="4">
+                <div class="ui right floated pagination menu" >
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+    <div class="ui info message" *ngIf="!getDataForCurrentPage() || getDataForCurrentPage().length === 0">
+        {{ 'workflow_node_trigger_condition_no' | translate }}
+    </div>
+</div>

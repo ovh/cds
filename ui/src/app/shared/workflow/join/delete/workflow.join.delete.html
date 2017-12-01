@@ -1,0 +1,12 @@
+<ng-template let-context let-modal="modal" #deleteModal>
+        <div class="header">{{ 'workflow_join_delete' | translate }}</div>
+    <div class="content">
+        <div class="">
+            {{ 'workflow_join_delete_alert' | translate }}
+        </div>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+        <button class="ui red button" [disabled]="loading" [class.loading]="loading" (click)="deleteJoin()">{{ 'btn_delete' | translate }}</button>
+    </div>
+</ng-template>

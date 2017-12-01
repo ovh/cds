@@ -2,26 +2,22 @@ package exportentities
 
 import (
 	"errors"
-	"text/template"
 )
 
 type (
+	//Format is a type
 	Format int
-
-	HCLable interface {
-		HCLTemplate() (*template.Template, error)
-	}
 
 	// VariableValue is a struct to export a value of Variable
 	VariableValue struct {
-		Type  string `json:"type" yaml:"type"`
-		Value string `json:"value" yaml:"value"`
+		Type  string `json:"type,omitempty" yaml:"type,omitempty"`
+		Value string `json:"value,omitempty" yaml:"value,omitempty"`
 	}
 
 	// ParameterValue is a struct to export a defautl value of Parameter
 	ParameterValue struct {
-		Type         string `json:"type" yaml:"type"`
-		DefaultValue string `json:"default" yaml:"default"`
+		Type         string `json:"type,omitempty" yaml:"type,omitempty"`
+		DefaultValue string `json:"default,omitempty" yaml:"default,omitempty"`
 	}
 )
 
@@ -29,14 +25,11 @@ type (
 const (
 	FormatJSON Format = iota
 	FormatYAML
-	FormatHCL
 	FormatTOML
 	UnknownFormat
 )
 
 var (
-	// ErrUnsupportedHCLFormat is the error for unsupported HCL format
-	ErrUnsupportedHCLFormat = errors.New("HCL Format is not supported for this entity")
 	// ErrUnsupportedFormat is for unknown format
 	ErrUnsupportedFormat = errors.New("Format is not supported")
 )

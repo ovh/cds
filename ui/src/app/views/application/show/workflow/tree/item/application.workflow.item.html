@@ -3,40 +3,50 @@
      [class.seven]="application.horizontalDepth >= 7"
      [class.six]="application.horizontalDepth === 6"
      [class.five]="application.horizontalDepth === 5">
+
     <div class="column">
         <div class="ui compact segments">
             <div class="ui raised segment"
-                 [class.green]="workflowItem.pipeline.last_pipeline_build?.status === 'Success'"
-                 [class.blue]="workflowItem.pipeline.last_pipeline_build?.status === 'Building'"
-                 [class.red]="workflowItem.pipeline.last_pipeline_build?.status === 'Fail'">
+                 [class.green]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.SUCCESS"
+                 [class.blue]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING"
+                 [class.red]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.FAIL || workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.STOPPED">
 
 
                 <!-- User + date -->
                 <span *ngIf="workflowItem.pipeline.last_pipeline_build"
                       class="user ui blue left ribbon label"
-                      [class.green]="workflowItem.pipeline.last_pipeline_build.status === 'Success'"
-                      [class.blue]="workflowItem.pipeline.last_pipeline_build.status === 'Building'"
-                      [class.red]="workflowItem.pipeline.last_pipeline_build.status === 'Fail'"
+                      [class.green]="workflowItem.pipeline.last_pipeline_build.status === pipelineStatusEnum.SUCCESS"
+                      [class.blue]="workflowItem.pipeline.last_pipeline_build.status === pipelineStatusEnum.BUILDING"
+                      [class.red]="workflowItem.pipeline.last_pipeline_build.status === pipelineStatusEnum.FAIL"
 
                 >
-                    <div smDirTooltip="{{getTriggerSource(workflowItem.pipeline.last_pipeline_build)}}"><i class="user icon"></i>{{getTriggerSource(workflowItem.pipeline.last_pipeline_build) | truncate : 13 }}</div>
+                    <div smDirTooltip="{{getTriggerSource(workflowItem.pipeline.last_pipeline_build)}}, {{workflowItem.pipeline.last_pipeline_build.done | date:'dd/MM/yy HH:mm'}}"><i class="user icon"></i>{{getTriggerSource(workflowItem.pipeline.last_pipeline_build) | truncate : 13 }}</div>
                 </span>
 
                 <!-- Env -->
 
                 <span *ngIf="workflowItem.pipeline.type !== 'build' && workflowItem.environment"
                       class="ui right ribbon label"
-                      [class.green]="workflowItem.pipeline.last_pipeline_build?.status === 'Success'"
-                      [class.blue]="workflowItem.pipeline.last_pipeline_build?.status === 'Building'"
-                      [class.red]="workflowItem.pipeline.last_pipeline_build?.status === 'Fail'"
+                      [class.green]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.SUCCESS"
+                      [class.blue]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING"
+                      [class.red]="workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.FAIL || workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.STOPPED"
 
                 ><div smDirTooltip="{{workflowItem.environment.name}}">{{workflowItem.environment.name | truncate : 20 }}</div></span>
 
                 <div class="ui grid">
                     <div class="row">
                         <div class="three wide column verticalPlayIcon">
-                            <div *ngIf="application.permission > 4">
-                                <a class="pointing" (click)="runPipeline()"><i class="video play outline icon run"></i></a>
+                            <div *ngIf="application.permission > permissionEnum.READ">
+                                <a [class.pointing]="ready" (click)="ready && runPipeline()"
+                                  *ngIf="!loadingPipAction && workflowItem.pipeline.last_pipeline_build?.status !== pipelineStatusEnum.BUILDING">
+                                  <i class="video play outline icon run" [class.disabled]="!ready"></i>
+
+                                </a>
+                                <a [class.pointing]="ready" (click)="ready && stopPipeline()"
+                                  *ngIf="!loadingPipAction && workflowItem.pipeline.last_pipeline_build?.status === pipelineStatusEnum.BUILDING">
+                                  <i class="circular black stop icon build" [class.disabled]="!ready"></i>
+                                </a>
+                                <div *ngIf="loadingPipAction" class="ui text active loader"></div>
                             </div>
                         </div>
                         <div class="ten wide column label">
@@ -45,7 +55,7 @@
                                     <ng-container *ngIf="workflowItem.pipeline.last_pipeline_build"
                                                   [ngSwitch]="workflowItem.pipeline.last_pipeline_build?.status">
                                         <div class="ui active inline blue loader"
-                                             *ngSwitchCase="'Building'"
+                                             *ngSwitchCase="pipelineStatusEnum.BUILDING"
                                              [class.medium]="workflowItem.pipeline.last_pipeline_build.version < 10"
                                              [class.large]="workflowItem.pipeline.last_pipeline_build.version >= 10 && workflowItem.pipeline.last_pipeline_build.version < 10000"
                                              [class.huge]="workflowItem.pipeline.last_pipeline_build.version >= 10000 && workflowItem.pipeline.last_pipeline_build.version < 100000"
@@ -58,6 +68,11 @@
                                           *ngIf="workflowItem.pipeline.name.length <= 17">{{workflowItem.pipeline.name}}</span>
                                     <span class="break" *ngIf="workflowItem.pipeline.name.length > 17"
                                           smDirTooltip="{{workflowItem.pipeline.name}}">{{workflowItem.pipeline.name | truncate:17}}</span>
+                                </div>
+                                <div class="pipelineWarning"
+                                    *ngIf="workflowItem.pipeline.last_pipeline_build && workflowItem.pipeline.last_pipeline_build.warnings && workflowItem.pipeline.last_pipeline_build.warnings.length"
+                                    [smDirTooltip]="'warning_build_title' | translate: {nb: workflowItem.pipeline.last_pipeline_build.warnings.length}">
+                                    <i class="warning sign icon orange"></i>
                                 </div>
                             </div>
                         </div>
@@ -77,7 +92,7 @@
             <div class="ui trigger segment" *ngFor="let s of workflowItem.schedulers">
                 <app-application-scheduler-item
                         [project]="project" [application]="workflowItem.application"
-                        [scheduler]="s" [pipeline]="workflowItem.pipeline"></app-application-scheduler-item>
+                        [scheduler]="s" [pipeline]="workflowItem.pipeline" [edit]="true"></app-application-scheduler-item>
             </div>
             <div class="ui trigger segment" *ngFor="let h of workflowItem.hooks">
                 <app-application-hook-item [project]="project" [application]="workflowItem.application"
@@ -89,25 +104,24 @@
             </div>
         </div>
 
-        <div class="actionMenu" *ngIf="workflowItem && application.permission > 4">
+        <div class="actionMenu" *ngIf="workflowItem && application.permission > permissionEnum.READ">
             <sm-dropdown>
                 <a sm-item class="item" (click)="runPipeline()">{{ 'pipeline_label_run' | translate }}</a>
                 <a sm-item class="item" (click)="runWithParameters()">{{ 'pipeline_label_run_with_parameter' | translate }}</a>
-                <a sm-item class="item" (click)="rollback()">{{ 'pipeline_label_rollback' | translate }}</a>
-                <div class="divider" *ngIf="application.permission === 7"></div>
-                <a sm-item class="item" (click)="openDetachPipelineModal()" *ngIf="application.permission === 7 && application.id === workflowItem.application.id">{{
+                <div class="divider" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE"></div>
+                <a sm-item class="item" (click)="openDetachPipelineModal()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE && application.id === workflowItem.application.id">{{
                     'pipeline_label_detach' | translate }}</a>
-                <a sm-item class="item" (click)="editPipeline()" *ngIf="application.permission === 7">{{ 'pipeline_label_edit' | translate
+                <a sm-item class="item" (click)="editPipeline()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'pipeline_label_edit' | translate
                     }}</a>
-                <div class="divider" *ngIf="application.permission === 7"></div>
-                <a sm-item class="item" (click)="createHook()" *ngIf="application.permission === 7">{{ 'hook_create_label' | translate }}</a>
-                <a sm-item class="item" (click)="createPoller()" *ngIf="application.permission === 7">{{ 'poller_create_label' | translate }}</a>
-                <div class="divider" *ngIf="application.permission === 7"></div>
-                <a sm-item class="item" (click)="openCreateSchedulerModal()" *ngIf="application.permission === 7">{{
+                <div class="divider" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE"></div>
+                <a sm-item class="item" (click)="createHook()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'hook_create_label' | translate }}</a>
+                <a sm-item class="item" (click)="createPoller()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE && application.vcs_server === 'github'">{{ 'poller_create_label' | translate }}</a>
+                <div class="divider" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE"></div>
+                <a sm-item class="item" (click)="openCreateSchedulerModal()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE">{{
                     'scheduler_create_label' | translate }}</a>
                 <a *ngIf="workflowItem.trigger && workflowItem.trigger.id > 0" sm-item class="item" (click)="openEditTriggerModal()">{{
                     'trigger_label_edit' | translate }}</a>
-                <a sm-item class="item" (click)="openCreateTriggerModal()" *ngIf="application.permission === 7">{{ 'trigger_label_new' |
+                <a sm-item class="item" (click)="openCreateTriggerModal()" *ngIf="application.permission === permissionEnum.READ_WRITE_EXECUTE">{{ 'trigger_label_new' |
                     translate }}</a>
             </sm-dropdown>
         </div>
@@ -145,7 +159,7 @@
         env: (workflowItem.trigger?.src_environment.name !== 'NoEnv')?' / ' + workflowItem.trigger?.src_environment.name:''}
         }}" class="fluid" #editTriggerModal>
     <modal-content>
-        <app-application-trigger [project]="project" [trigger]="triggerInModal" mode="edit"></app-application-trigger>
+        <app-application-trigger [project]="project" [trigger]="triggerInModal" [paramsRef]="parameterRefModal" mode="edit"></app-application-trigger>
     </modal-content>
     <modal-actions>
         <button class="ui grey button" (click)="editTriggerModal.hide()">{{ 'btn_cancel' | translate }}</button>
@@ -172,37 +186,17 @@
         <button class="ui green button" (click)="triggerEvent('add')">{{ 'btn_create' | translate }}</button>
     </modal-actions>
 </sm-modal>
-<!-- Application launch -->
-<sm-modal title="{{ 'application_launch_manual_title' | translate}}" class="fluid" #launchModal>
-    <modal-content>
-        <div class="ui form" *ngIf="launchPipelineParams">
-            <div *ngIf="workflowItem.parent;then parent;else orphan"></div>
-            <ng-template #parent>
-                <div class="field">
-                    <label>{{ 'pipeline_parent_version' | translate }}</label>
-                    <sm-select class="fluid search" [disabled]="loading" name="envname" [(model)]="launchParentVersion">
-                        <option *ngFor="let pb of launchOldBuilds" [value]="pb.build_number">{{pb.version}}</option>
-                    </sm-select>
-                </div>
-            </ng-template>
-            <ng-template #orphan>
-                <div class="field">
-                    <label> {{ 'application_launch_git_title' | translate}}</label>
-                    <app-parameter-list [parameters]="launchGitParams" mode="launcher"></app-parameter-list>
-                </div>
-            </ng-template>
 
-            <div class="field" *ngIf="launchPipelineParams.length > 0">
-                <label> {{ 'application_launch_pipeline_title' | translate}}</label>
-                <app-parameter-list [parameters]="launchPipelineParams" mode="launcher"></app-parameter-list>
-            </div>
-        </div>
-    </modal-content>
-    <modal-actions>
-        <div class="ui grey button" (click)="launchModal.hide()">{{ 'btn_cancel' | translate }}</div>
-        <div class="ui green button" (click)="runManual()">{{ 'btn_run' | translate }}</div>
-    </modal-actions>
-</sm-modal>
+<!-- Application launch -->
+<app-pipeline-launch-modal #pipelineLaunchModal
+  [project]="project"
+  [application]="application"
+  [remotes]="remotes"
+  [applicationFilter]="applicationFilter"
+  [workflowItem]="workflowItem"
+  (pipelineRunEvent)="navigateToBuild($event)">
+</app-pipeline-launch-modal>
+
 <!-- Detach pipeline modal -->
 <sm-modal title="{{ 'application_detach_pipeline' | translate}}" class="fluid" #detachPipelineModal>
     <modal-content>
@@ -210,6 +204,6 @@
     </modal-content>
     <modal-actions>
         <div class="ui grey button" (click)="detachPipelineModal.hide()">{{ 'btn_cancel' | translate }}</div>
-        <div class="ui green button" (click)="detachPipeline(workflowItem.pipeline)">{{ 'btn_run' | translate }}</div>
+        <div class="ui green button" (click)="detachPipeline(workflowItem.pipeline)">{{ 'btn_detach' | translate }}</div>
     </modal-actions>
 </sm-modal>

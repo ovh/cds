@@ -1,0 +1,15 @@
+{{ partial "header.html" . }}
+{{ range where .Site.Pages "Source.BaseFileName" "_index" }} 
+	{{ .Content }} 
+{{else}}           
+	<h1>Customize your own home page</h1>
+	<p>
+	  The site is working. Don't forget to customize this homepage with your own. You typically have 2 choices :
+	</p>
+	<ul>
+	  <li><b>1. </b> Create a _index.md document in content folder</li>
+	  <li><b>2. </b> Configure your server to automatically redirect home page to one your documentation page</li>
+	</ul>
+	<p><i class="fa fa-heart fa-4x"></i></p>
+{{ end }}  
+{{ partial "footer.html" . }}

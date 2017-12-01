@@ -1,7 +1,5 @@
 @import '../../../common';
 
-$navbarColor: #344860;
-
 .ui.menu.navbar {
   background-color: $navbarColor;
 
@@ -9,6 +7,11 @@ $navbarColor: #344860;
     height: 50px;
     padding: 5px 10px;
     margin-right: 30px;
+  }
+
+  sui-search {
+    padding-top: 6px;
+    height: 30px;
   }
 
   sm-select {
@@ -24,6 +27,10 @@ $navbarColor: #344860;
     display: flex;
   }
 
+  sm-item a {
+    color: black;
+  }
+
   .item {
     padding-top: 0px;
     padding-bottom: 0px;
@@ -32,4 +39,16 @@ $navbarColor: #344860;
   .item.link::before {
     width: 0px;
   }
+
+
+}
+
+sm-select.languageSelect {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+.ui.selection.dropdown {
+  width: 28rem;
+  min-width: 14rem;
 }

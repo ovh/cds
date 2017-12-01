@@ -1,0 +1,21 @@
+@import '../../../../../common';
+
+.header {
+  .extra {
+    position: absolute;
+    right: 20px;
+    top: 10px;
+  }
+
+  p {
+    padding-top: 5px;
+    color: $cds_color_green;
+    font-size: 0.75em;
+  }
+}
+
+.extra {
+  padding-top: 5px;
+  text-align: right;
+  color: red;
+}

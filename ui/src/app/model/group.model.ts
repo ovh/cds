@@ -1,5 +1,7 @@
 import {User} from './user.model';
 
+export const adminGroupName = 'shared.infra';
+
 export class Group {
     id: number;
     name: string;
@@ -10,6 +12,16 @@ export class Group {
         this.name = '';
         this.admins = [];
         this.users = [];
+    }
+}
+
+export class Groups {
+    groups: Array<Group>;
+    groups_admin: Array<Group>;
+
+    constructor() {
+        this.groups = [];
+        this.groups_admin = [];
     }
 }
 

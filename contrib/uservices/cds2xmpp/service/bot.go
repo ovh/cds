@@ -8,8 +8,8 @@ import (
 	"text/template"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/mattn/go-xmpp"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 

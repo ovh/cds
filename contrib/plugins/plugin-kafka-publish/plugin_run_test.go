@@ -10,7 +10,7 @@ import (
 
 func Test_tmplMessage(t *testing.T) {
 	type args struct {
-		a    plugin.IAction
+		a    plugin.IJob
 		buff []byte
 	}
 
@@ -31,7 +31,7 @@ func Test_tmplMessage(t *testing.T) {
 		{
 			name: "Test 1",
 			args: args{
-				plugin.Action{
+				plugin.Job{
 					Args: plugin.Arguments{
 						Data: map[string]string{
 							"cds.app.name": "MonApplication",

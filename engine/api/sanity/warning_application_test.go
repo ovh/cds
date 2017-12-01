@@ -5,9 +5,12 @@ import (
 
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func Test_checkApplicationVariable(t *testing.T) {
+	log.SetLogger(t)
+
 	type args struct {
 		project  *sdk.Project
 		app      *sdk.Application

@@ -8,8 +8,7 @@ import {HookEvent} from '../hook.event';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
-
-declare var _: any;
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-application-hook-item',
@@ -32,7 +31,7 @@ export class ApplicationHookItemComponent {
 
     editHook(): void {
         if (this.editHookModal) {
-            this.editableHook = _.cloneDeep(this.hook);
+            this.editableHook = cloneDeep(this.hook);
             setTimeout(() => {
                 this.editHookModal.show();
             }, 100);

@@ -1,21 +1,70 @@
-<div class="ui top attached steps dragula-container" [dragula]="'bag-stage'" [dragulaModel]="pipeline.stages">
-    <div id="step{{s.build_order}}" class="step" *ngFor="let s of pipeline.stages" [class.active]="selectedStage?.id === s.id"
-        [class.off]="!s.enabled">
-      <div class="content">
-        <i class="move icon" *ngIf="pipeline.permission === 7"></i>
-        <a class="title pointing" (click)="selectedStage = s">{{s.name}}</a>
-      </div>
+<div id="PipelineEditWorkflow">
+    <div class="ui grid">
+        <div class="row">
+            <div class="column">
+                <ul *ngIf="pipeline" class="dragula-container" [dragula]="'bag-stage'" [dragulaModel]="pipeline.stages">
+                    <li *ngFor="let stage of pipeline.stages" class="stage" id="step{{stage.build_order}}"
+                        [class.two]="pipeline.stages.length === 1"
+                        [class.three]="pipeline.stages.length === 2"
+                        [class.four]="pipeline.stages.length === 3"
+                        [class.five]="pipeline.stages.length === 4"
+                        [class.six]="pipeline.stages.length === 5"
+                        [class.seven]="pipeline.stages.length === 6">
+                        <div class="stageItem">
+                            <a class="pointing" (click)="openEditModal(stage)"><i class="setting icon"></i>{{stage.name}}</a>
+                            <i class="right floated move icon"></i>
+                            <ul>
+                                <li *ngFor="let j of stage.jobs; let i = index" id="Job{{i}}">
+                                    <div class="job ui segment pointing" [class.inactive]="!j.enabled" (click)="selectJob(j, stage)"
+                                         [class.active]="j.pipeline_action_id === selectedJob?.pipeline_action_id">
+                                        {{j.action.name}}
+                                    </div>
+                                </li>
+                                <li class="new job">
+                                    <div class="new job ui segment pointing" (click)="addJob(stage)">
+                                        {{ 'step_add_job' | translate }}
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="stage"
+                        [class.one]="pipeline.stages.length === 0"
+                        [class.two]="pipeline.stages.length === 1"
+                        [class.three]="pipeline.stages.length === 2"
+                        [class.four]="pipeline.stages.length === 3"
+                        [class.five]="pipeline.stages.length === 4"
+                        [class.six]="pipeline.stages.length === 5"
+                        [class.seven]="pipeline.stages.length === 6">
+                        <div class="new stageItem">
+                            <ul>
+                                <li class="job">
+                                    <div id="AddStageAndJob" class="new job ui segment pointing" (click)="addStageAndJob()">
+                                        {{ 'step_add_job' | translate }}
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
-  <div class="step" *ngIf="pipeline.permission === 7">
-    <div class="content">
-      <div class="title">
-        <a class="pointing" (click)="addStage()">
-          <i class="green plus circle icon"></i>{{ 'stage_add_label' | translate }}
-        </a>
-      </div>
+    <div *ngIf="selectedJob && pipeline">
+        <app-action [project]="project" [suggest]="suggest" [action]="selectedJob.action" [pipeline]="pipeline" [edit]="pipeline.permission === permissionValue.READ_WRITE_EXECUTE"
+                    (actionEvent)="jobEvent($event)"></app-action>
     </div>
-  </div>
 </div>
-<div class="ui attached segment" *ngIf="pipeline.stages && pipeline.stages.length > 0 && selectedStage">
-  <app-pipeline-stage [project]="project" [pipeline]="pipeline" [stage]="selectedStage"></app-pipeline-stage>
-</div>
+
+<sm-modal title="{{ 'pipeline_stage_edit' | translate }}" class="fluid" #editStageModal>
+    <modal-content>
+        <app-pipeline-stage-form [project]="project" [pipeline]="pipeline" [stage]="selectedStage"></app-pipeline-stage-form>
+    </modal-content>
+    <modal-actions>
+        <button class="ui grey button" [disabled]="loadingStage" (click)="editStageModal.hide()">{{ 'btn_cancel' | translate }}</button>
+        <button class="ui green button" [disabled]="loadingStage" [class.loading]="loadingStage" (click)="stageEvent('update')"
+                *ngIf="selectedStage?.hasChanged">{{ 'btn_save' | translate }}
+        </button>
+        <app-delete-button (event)="stageEvent('delete')" *ngIf="!selectedStage?.hasChanged"></app-delete-button>
+    </modal-actions>
+</sm-modal>

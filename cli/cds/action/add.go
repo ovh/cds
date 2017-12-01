@@ -26,7 +26,7 @@ func cmdActionAdd() *cobra.Command {
 
 Examples of usage:
 
-$cds action add --url $HOME/src/github.com/ovh/cds/contrib/actions/action-scripts/cds-git-clone.hcl
+$cds action add --url $HOME/src/github.com/ovh/cds/contrib/actions/action-scripts/cds-docker-package.hcl
 
 		`,
 		Run: addAction,

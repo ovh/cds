@@ -1,14 +1,12 @@
-package main
+package api
 
 import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -21,7 +19,7 @@ import (
 
 // TestVerifyUserToken test token verification when OK
 func TestVerifyUserToken(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -37,14 +35,14 @@ func TestVerifyUserToken(t *testing.T) {
 		HashedTokenVerify: hashedToken,
 	}
 
-	user.DeleteUserWithDependenciesByName(db, u.Username)
+	user.DeleteUserWithDependenciesByName(api.mustDB(), u.Username)
 
-	err = user.InsertUser(db, u, a)
+	err = user.InsertUser(api.mustDB(), u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
 	}
 
-	u2, err := user.LoadUserAndAuth(db, "foo")
+	u2, err := user.LoadUserAndAuth(api.mustDB(), "foo")
 	if err != nil {
 		t.Fatalf("Cannot load %s: %s\n", "foo", err)
 	}
@@ -61,9 +59,9 @@ func TestVerifyUserToken(t *testing.T) {
 	}
 }
 
-// TestWrongTokenUser  test token verificaiton when token is wrong
+// TestWrongTokenUser  test token verification when token is wrong
 func TestWrongTokenUser(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -79,14 +77,14 @@ func TestWrongTokenUser(t *testing.T) {
 		HashedTokenVerify: hashedToken,
 	}
 
-	user.DeleteUserWithDependenciesByName(db, u.Username)
+	user.DeleteUserWithDependenciesByName(api.mustDB(), u.Username)
 
-	err = user.InsertUser(db, u, a)
+	err = user.InsertUser(api.mustDB(), u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
 	}
 
-	u2, err := user.LoadUserAndAuth(db, "foo")
+	u2, err := user.LoadUserAndAuth(api.mustDB(), "foo")
 	if err != nil {
 		t.Fatalf("Cannot load %s: %s\n", "foo", err)
 	}
@@ -99,7 +97,7 @@ func TestWrongTokenUser(t *testing.T) {
 
 // TestVerifyResetExpired test validating reset token when time expired
 func TestVerifyResetExpired(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -117,14 +115,14 @@ func TestVerifyResetExpired(t *testing.T) {
 		EmailVerified:     true,
 	}
 
-	user.DeleteUserWithDependenciesByName(db, u.Username)
+	user.DeleteUserWithDependenciesByName(api.mustDB(), u.Username)
 
-	err = user.InsertUser(db, u, a)
+	err = user.InsertUser(api.mustDB(), u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
 	}
 
-	u2, err := user.LoadUserAndAuth(db, "foo")
+	u2, err := user.LoadUserAndAuth(api.mustDB(), "foo")
 	if err != nil {
 		t.Fatalf("Cannot load %s: %s\n", "foo", err)
 	}
@@ -140,7 +138,7 @@ func TestVerifyResetExpired(t *testing.T) {
 
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestVerifyAlreadyDone(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
@@ -158,14 +156,14 @@ func TestVerifyAlreadyDone(t *testing.T) {
 		EmailVerified:     true,
 	}
 
-	user.DeleteUserWithDependenciesByName(db, u.Username)
+	user.DeleteUserWithDependenciesByName(api.mustDB(), u.Username)
 
-	err = user.InsertUser(db, u, a)
+	err = user.InsertUser(api.mustDB(), u, a)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
 	}
 
-	u2, err := user.LoadUserAndAuth(db, "foo")
+	u2, err := user.LoadUserAndAuth(api.mustDB(), "foo")
 	if err != nil {
 		t.Fatalf("Cannot load %s: %s\n", "foo", err)
 	}
@@ -181,37 +179,37 @@ func TestVerifyAlreadyDone(t *testing.T) {
 
 // TestVerifyAlreadyDone test token verification when it's already done
 func TestLoadUserWithGroup(t *testing.T) {
-	db := test.SetupPG(t)
+	api, _, _ := newTestAPI(t)
 	u := &sdk.User{
 		Username: "foo",
 		Email:    "foo.bar@ovh.com",
 		Fullname: "foo bar",
 	}
 
-	user.DeleteUserWithDependenciesByName(db, u.Username)
+	user.DeleteUserWithDependenciesByName(api.mustDB(), u.Username)
 
-	err := user.InsertUser(db, u, nil)
+	err := user.InsertUser(api.mustDB(), u, nil)
 	if err != nil {
 		t.Fatalf("Cannot insert user: %s", err)
 	}
 
 	project1 := &sdk.Project{
-		Key:  assets.RandomString(t, 10),
+		Key:  sdk.RandomString(10),
 		Name: "foo",
 	}
 	project2 := &sdk.Project{
-		Key:  assets.RandomString(t, 10),
+		Key:  sdk.RandomString(10),
 		Name: "bar",
 	}
 
-	project.Delete(db, project1.Key)
-	project.Delete(db, project2.Key)
+	project.Delete(api.mustDB(), api.Cache, project1.Key)
+	project.Delete(api.mustDB(), api.Cache, project2.Key)
 
-	err = project.Insert(db, project1)
+	err = project.Insert(api.mustDB(), api.Cache, project1, u)
 	if err != nil {
 		t.Fatalf("cannot insert project1: %s", err)
 	}
-	err = project.Insert(db, project2)
+	err = project.Insert(api.mustDB(), api.Cache, project2, u)
 	if err != nil {
 		t.Fatalf("cannot insert project2: %s", err)
 	}
@@ -222,39 +220,39 @@ func TestLoadUserWithGroup(t *testing.T) {
 		Type:      sdk.BuildPipeline,
 	}
 
-	err = pipeline.InsertPipeline(db, pipelinePip1)
+	err = pipeline.InsertPipeline(api.mustDB(), project1, pipelinePip1, nil)
 	if err != nil {
 		t.Fatalf("cannot insert pipeline: %s", err)
 	}
 
 	groupInsert := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
-	err = group.InsertGroup(db, groupInsert)
+	err = group.InsertGroup(api.mustDB(), groupInsert)
 	if err != nil {
 		t.Fatalf("cannot insert group: %s", err)
 	}
 
-	err = group.InsertGroupInProject(db, project1.ID, groupInsert.ID, 4)
+	err = group.InsertGroupInProject(api.mustDB(), project1.ID, groupInsert.ID, 4)
 	if err != nil {
 		t.Fatalf("cannot insert project1 in group: %s", err)
 	}
-	err = group.InsertGroupInProject(db, project2.ID, groupInsert.ID, 5)
+	err = group.InsertGroupInProject(api.mustDB(), project2.ID, groupInsert.ID, 5)
 	if err != nil {
 		t.Fatalf("cannot insert project1 in group: %s", err)
 	}
-	err = group.InsertGroupInPipeline(db, pipelinePip1.ID, groupInsert.ID, 7)
+	err = group.InsertGroupInPipeline(api.mustDB(), pipelinePip1.ID, groupInsert.ID, 7)
 	if err != nil {
 		t.Fatalf("cannot insert pipeline1 in group: %s", err)
 	}
 
-	err = group.InsertUserInGroup(db, groupInsert.ID, u.ID, false)
+	err = group.InsertUserInGroup(api.mustDB(), groupInsert.ID, u.ID, false)
 	if err != nil {
 		t.Fatalf("cannot insert user1 in group: %s", err)
 	}
 
-	if err := loadUserPermissions(db, u); err != nil {
+	if err := loadUserPermissions(api.mustDB(), api.Cache, u); err != nil {
 		t.Fatalf("cannot load user group and project: %s", err)
 	}
 
@@ -269,31 +267,118 @@ func TestLoadUserWithGroup(t *testing.T) {
 	}
 }
 
-func Test_getUserGroupsHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+// Test_getUserHandlerOK checks call on /user/{username}
+func Test_getUserHandlerOK(t *testing.T) {
+	api, _, _ := newTestAPI(t, bootstrap.InitiliazeDB)
 
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getUserGroupsHandler"}
-	router.init()
+	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
+	assert.NotZero(t, u1)
+	assert.NotZero(t, pass1)
+
+	uri := api.Router.GetRoute("GET", api.getUserHandler, map[string]string{"username": u1.Username})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	t.Logf("Body: %s", w.Body.String())
+
+	res := sdk.User{}
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Test_getUserHandlerOK checks call on /user/{username} with an admin user
+func Test_getUserHandlerAdmin(t *testing.T) {
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
+	assert.NotZero(t, u1)
+	assert.NotZero(t, pass1)
+
+	uAdmin, passAdmin := assets.InsertAdminUser(api.mustDB())
+	assert.NotZero(t, uAdmin)
+	assert.NotZero(t, passAdmin)
+
+	uri := router.GetRoute("GET", api.getUserHandler, map[string]string{"username": u1.Username})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, uAdmin, passAdmin, "GET", uri, nil)
+
+	//Do the request
+	w := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w, req)
+	assert.Equal(t, 200, w.Code)
+
+	t.Logf("Body: %s", w.Body.String())
+
+	res := sdk.User{}
+	if err := json.Unmarshal(w.Body.Bytes(), &res); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Test_getUserHandlerOK checks call on /user/{username} with a not allowed user
+func Test_getUserHandlerForbidden(t *testing.T) {
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
+
+	u1, pass1 := assets.InsertLambdaUser(api.mustDB())
+	assert.NotZero(t, u1)
+	assert.NotZero(t, pass1)
+
+	uri := router.GetRoute("GET", api.getUserHandler, map[string]string{"username": u1.Username})
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u1, pass1, "GET", uri, nil)
+
+	u2, pass2 := assets.InsertLambdaUser(api.mustDB())
+	assert.NotZero(t, u1)
+	assert.NotZero(t, pass2)
+
+	req2 := assets.NewAuthentifiedRequest(t, u2, pass2, "GET", uri, nil)
+
+	//Do the request
+	w1 := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w1, req)
+	assert.Equal(t, 200, w1.Code)
+
+	res := sdk.User{}
+	if err := json.Unmarshal(w1.Body.Bytes(), &res); err != nil {
+		t.Fatal(err)
+	}
+
+	// user 2 try to call user 1 -> this is forbidden
+	w2 := httptest.NewRecorder()
+	router.Mux.ServeHTTP(w2, req2)
+	assert.Equal(t, 403, w2.Code)
+
+	t.Logf("Body: %s", w2.Body.String())
+}
+
+func Test_getUserGroupsHandler(t *testing.T) {
+	api, _, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	g1 := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
 	g2 := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
 
-	u, pass := assets.InsertLambaUser(t, db, g1, g2)
+	u, pass := assets.InsertLambdaUser(api.mustDB(), g1, g2)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
-	uri := router.getRoute("GET", getUserGroupsHandler, map[string]string{"name": u.Username})
+	uri := router.GetRoute("GET", api.getUserGroupsHandler, map[string]string{"username": u.Username})
 	test.NotEmpty(t, uri)
 	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
 
 	//Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 

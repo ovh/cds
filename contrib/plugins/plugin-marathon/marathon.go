@@ -27,7 +27,7 @@ type MarathonPlugin struct {
 	plugin.Common
 }
 
-//Name return plugin names. It must me the same as the binary file
+//Name return plugin name. It must me the same as the binary file
 func (m MarathonPlugin) Name() string {
 	return "plugin-marathon"
 }
@@ -35,6 +35,7 @@ func (m MarathonPlugin) Name() string {
 //Description explains the purpose of the plugin
 func (m MarathonPlugin) Description() string {
 	return `This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
+
 Your marathon.json file can be templated with cds variables "{{.cds.variables}}". Enable "waitForDeployment" option to ensure deployment is successfull.`
 }
 
@@ -64,8 +65,8 @@ func (m MarathonPlugin) Parameters() plugin.Parameters {
 
 	params.Add("waitForDeployment", plugin.BooleanParameter,
 		`Wait for instances deployment.
-If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successfull result.
-If not set, CDS will consider a successfull result if marathon accepts the provided configuration.`,
+If set, CDS will wait for all instances to be deployed until timeout is over. All instances deployment must be done to get a successful result.
+If not set, CDS will consider a successful result if marathon accepts the provided configuration.`,
 		"true")
 
 	params.Add("insecureSkipVerify", plugin.BooleanParameter,
@@ -146,12 +147,14 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 		return plugin.Fail
 	}
 	defer os.RemoveAll(conf)
+	plugin.SendLog(a, "Templating Configuration File: OK\n")
 
 	//Validate json file and load application
 	appConfig, err := parseApplicationConfigFile(a, conf)
 	if err != nil {
 		return plugin.Fail
 	}
+	plugin.SendLog(a, "Parsing Configuration File: OK\n")
 
 	//Allways put cds.version labels
 	if appConfig.Labels == nil {
@@ -368,20 +371,5 @@ func parseApplicationConfigFile(a plugin.IJob, f string) (*marathon.Application,
 }
 
 func main() {
-
-	if len(os.Args) == 2 && os.Args[1] == "info" {
-		m := MarathonPlugin{}
-		p := m.Parameters()
-
-		fmt.Printf(" - Name:\t%s\n", m.Name())
-		fmt.Printf(" - Author:\t%s\n", m.Author())
-		fmt.Printf(" - Description:\t%s\n", m.Description())
-		fmt.Println(" - Parameters:")
-		for _, n := range p.Names() {
-			fmt.Printf("\t - %s: %s\n", n, p.GetDescription(n))
-		}
-		return
-	}
-
-	plugin.Serve(&MarathonPlugin{})
+	plugin.Main(&MarathonPlugin{})
 }

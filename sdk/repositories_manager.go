@@ -1,33 +1,12 @@
 package sdk
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/url"
 	"time"
 )
-
-//RepositoriesManagerType lists the different repositories manager currently planned to be supported
-type RepositoriesManagerType string
-
-const (
-	//Stash is valued to "STASH"
-	Stash RepositoriesManagerType = "STASH"
-	//Github is valued to "GITHUB"
-	Github RepositoriesManagerType = "GITHUB"
-)
-
-//RepositoriesManager is the struct for every repositories manager.
-//It can be stored in CDS DB in repositories_manager table
-type RepositoriesManager struct {
-	ID               int64                     `json:"id"`
-	Consumer         RepositoriesManagerDriver `json:"-"`
-	Type             RepositoriesManagerType   `json:"type"`
-	Name             string                    `json:"name"`
-	URL              string                    `json:"url"`
-	HooksSupported   bool                      `json:"hooks_supported"`
-	PollingSupported bool                      `json:"polling_supported"`
-}
 
 //RepositoryPoller is an alternative to hooks
 type RepositoryPoller struct {
@@ -43,30 +22,23 @@ type RepositoryPoller struct {
 
 //RepositoryPollerExecution is a polling execution
 type RepositoryPollerExecution struct {
-	ID                    int64            `json:"id" db:"id"`
-	ApplicationID         int64            `json:"-" db:"application_id"`
-	PipelineID            int64            `json:"-" db:"pipeline_id"`
-	ExecutionPlannedDate  time.Time        `json:"execution_planned_date,omitempty" db:"execution_planned_date"`
-	ExecutionDate         *time.Time       `json:"execution_date" db:"execution_date"`
-	Executed              bool             `json:"executed" db:"executed"`
-	PipelineBuildVersions map[string]int64 `json:"pipeline_build_version" db:"-"`
-	PushEvents            []VCSPushEvent   `json:"push_events" db:"-"`
-	Error                 string           `json:"error" db:"error"`
-}
-
-//RepositoriesManagerDriver is the consumer interface
-type RepositoriesManagerDriver interface {
-	AuthorizeRedirect() (string, string, error)
-	AuthorizeToken(string, string) (string, string, error)
-	GetAuthorized(string, string) (RepositoriesManagerClient, error)
-	Data() string
-	HooksSupported() bool
-	PollingSupported() bool
+	ID                    int64                 `json:"id" db:"id"`
+	ApplicationID         int64                 `json:"-" db:"application_id"`
+	PipelineID            int64                 `json:"-" db:"pipeline_id"`
+	ExecutionPlannedDate  time.Time             `json:"execution_planned_date,omitempty" db:"execution_planned_date"`
+	ExecutionDate         *time.Time            `json:"execution_date" db:"execution_date"`
+	Executed              bool                  `json:"executed" db:"executed"`
+	PipelineBuildVersions map[string]int64      `json:"pipeline_build_version" db:"-"`
+	PushEvents            []VCSPushEvent        `json:"push_events" db:"-"`
+	CreateEvents          []VCSCreateEvent      `json:"create_events" db:"-"`
+	DeleteEvents          []VCSDeleteEvent      `json:"delete_events" db:"-"`
+	PullRequestEvents     []VCSPullRequestEvent `json:"pullrequest_events" db:"-"`
+	Error                 string                `json:"error" db:"error"`
 }
 
 //GetReposManager calls API to get list of repositories manager
-func GetReposManager() ([]RepositoriesManager, error) {
-	var rms []RepositoriesManager
+func GetReposManager() ([]string, error) {
+	var rms = []string{}
 	uri := fmt.Sprintf("/repositories_manager")
 
 	data, code, err := Request("GET", uri, nil)
@@ -82,29 +54,6 @@ func GetReposManager() ([]RepositoriesManager, error) {
 		return rms, err
 	}
 	return rms, nil
-}
-
-//AddReposManager add a new repositories manager in CDS
-func AddReposManager(args map[string]string) (*RepositoriesManager, error) {
-	var rm RepositoriesManager
-	uri := fmt.Sprintf("/repositories_manager/add")
-	b, err := json.Marshal(args)
-	if err != nil {
-		return nil, err
-	}
-	data, code, err := Request("POST", uri, b)
-	if err != nil {
-		return nil, err
-	}
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	if err := json.Unmarshal(data, &rm); err != nil {
-		return nil, err
-	}
-	return &rm, nil
-
 }
 
 //ConnectReposManager add a new repositories manager in CDS for a project
@@ -166,8 +115,8 @@ func DisconnectReposManager(key, name string) error {
 }
 
 //GetProjectReposManager returns connected repository manager for a specific project
-func GetProjectReposManager(k string) ([]RepositoriesManager, error) {
-	var rms []RepositoriesManager
+func GetProjectReposManager(k string) ([]ProjectVCSServer, error) {
+	var rms []ProjectVCSServer
 	uri := fmt.Sprintf("/project/%s/repositories_manager", k)
 	data, code, err := Request("GET", uri, nil)
 	if err != nil {
@@ -248,8 +197,8 @@ func AddHookOnRepositoriesManager(projectKey, appName, reposManager, repoFullnam
 }
 
 //DeleteHookOnRepositoriesManager delete hook on stash
-func DeleteHookOnRepositoriesManager(projectKey, appName, reposManager string, hookID int64) error {
-	uri := fmt.Sprintf("/project/%s/application/%s/repositories_manager/%s/hook/%d", projectKey, appName, reposManager, hookID)
+func DeleteHookOnRepositoriesManager(projectKey, appName string, hookID int64) error {
+	uri := fmt.Sprintf("/project/%s/application/%s/repositories_manager/hook/%d", projectKey, appName, hookID)
 	_, code, err := Request("DELETE", uri, nil)
 	if err != nil {
 		return err
@@ -287,21 +236,38 @@ type RepositoriesManagerClient interface {
 
 	//Branches
 	Branches(string) ([]VCSBranch, error)
-	Branch(string, string) (VCSBranch, error)
+	Branch(string, string) (*VCSBranch, error)
 
 	//Commits
 	Commits(repo, branch, since, until string) ([]VCSCommit, error)
 	Commit(repo, hash string) (VCSCommit, error)
+
+	// PullRequests
+	PullRequests(string) ([]VCSPullRequest, error)
 
 	//Hooks
 	CreateHook(repo, url string) error
 	DeleteHook(repo, url string) error
 
 	//Events
-	PushEvents(repo string, dateRef time.Time) ([]VCSPushEvent, time.Duration, error)
+	GetEvents(repo string, dateRef time.Time) ([]interface{}, time.Duration, error)
+	PushEvents(string, []interface{}) ([]VCSPushEvent, error)
+	CreateEvents(string, []interface{}) ([]VCSCreateEvent, error)
+	DeleteEvents(string, []interface{}) ([]VCSDeleteEvent, error)
+	PullRequestEvents(string, []interface{}) ([]VCSPullRequestEvent, error)
 
 	// Set build status on repository
 	SetStatus(event Event) error
+
+	// Release
+	Release(repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
+	UploadReleaseFile(repo string, release *VCSRelease, runArtifact WorkflowNodeRunArtifact, file *bytes.Buffer) error
+}
+
+// VCSRelease represents data about release on github, etc..
+type VCSRelease struct {
+	ID        int64  `json:"id"`
+	UploadURL string `json:"upload_url"`
 }
 
 //VCSRepo represents data about repository even on stash, or github, etc...
@@ -332,16 +298,65 @@ type VCSCommit struct {
 	URL       string    `json:"url"`
 }
 
-//VCSBranch reprensents branches known by the repositories manager
+//VCSRemote represents remotes known by the repositories manager
+type VCSRemote struct {
+	Name string `json:"name"`
+	URL  string `json:"url"`
+}
+
+//VCSBranch represents branches known by the repositories manager
 type VCSBranch struct {
-	ID           string `json:"id"`
-	DisplayID    string `json:"display_id"`
-	LatestCommit string `json:"latest_commit"`
-	Default      bool   `json:"default"`
+	ID           string   `json:"id"`
+	DisplayID    string   `json:"display_id"`
+	LatestCommit string   `json:"latest_commit"`
+	Default      bool     `json:"default"`
+	Parents      []string `json:"parents"`
+}
+
+//VCSPullRequest represents a pull request
+type VCSPullRequest struct {
+	URL    string       `json:"url"`
+	User   VCSAuthor    `json:"user"`
+	Head   VCSPushEvent `json:"head"`
+	Base   VCSPushEvent `json:"base"`
+	Branch VCSBranch    `json:"branch"`
 }
 
 //VCSPushEvent represents a push events for polling
 type VCSPushEvent struct {
+	Repo     string    `json:"repo"`
+	Branch   VCSBranch `json:"branch"`
+	Commit   VCSCommit `json:"commit"`
+	CloneURL string    `json:"clone_url"`
+}
+
+//VCSCreateEvent represents a push events for polling
+type VCSCreateEvent VCSPushEvent
+
+//VCSDeleteEvent represents a push events for polling
+type VCSDeleteEvent struct {
 	Branch VCSBranch `json:"branch"`
-	Commit VCSCommit `json:"commit"`
+}
+
+//VCSPullRequestEvent represents a push events for polling
+type VCSPullRequestEvent struct {
+	Action string       `json:"action"` // opened | closed
+	URL    string       `json:"url"`
+	Repo   string       `json:"repo"`
+	User   VCSAuthor    `json:"user"`
+	Head   VCSPushEvent `json:"head"`
+	Base   VCSPushEvent `json:"base"`
+	Branch VCSBranch    `json:"branch"`
+}
+
+type VCSHook struct {
+	ID          string   `json:"id"`
+	Name        string   `json:"name"`
+	Disable     bool     `json:"disable"`
+	Events      []string `json:"events"`
+	Method      string   `json:"method"`
+	URL         string   `json:"url"`
+	ContentType string   `json:"content_type"`
+	Body        string   `json:"body"`
+	InsecureSSL bool     `json:"insecure_ssl"`
 }

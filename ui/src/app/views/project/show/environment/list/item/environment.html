@@ -1,10 +1,13 @@
-<form class="ui form" *ngIf="editableEnvironment.permission === 7">
+<form class="ui form" *ngIf="environment.permission === 7">
     <div class="fields">
         <div class="eight wide field">
-            <input class="ui input" type="text" name="envname" [(ngModel)]="editableEnvironment.name" [disabled]="loading"
+            <input class="ui input" type="text" name="envname" [(ngModel)]="environment.name" [disabled]="loading"
                    (keydown)="hasChanged = true">
         </div>
         <div class="eight wide right aligned field">
+            <button (click)="cloneModal.show()" type="button" name="clonebtn" class="ui blue button"
+                    [class.loading]="cloneLoading" [class.disabled]="cloneLoading"><i class="copy icon"></i>{{'common_clone' | translate}}
+            </button>
             <div *ngIf="hasChanged;then rename;else delete"></div>
             <ng-template #rename>
                 <button (click)="renameEnvironment()" type="button" name="renamebtn" class="ui green button"
@@ -17,12 +20,27 @@
         </div>
     </div>
 </form>
-<ng-container *ngIf="editableEnvironment.permission === 7">
+<sm-modal title="{{'environment_title_clone' | translate}} '{{environment.name}}'" class="small" #cloneModal>
+    <modal-content>
+        <div class="ui fluid action input">
+          <input type="text" placeholder="{{'environment_clone_placeholder' | translate}}" [(ngModel)]="cloneName">
+          <button class="ui blue right labeled icon button" [class.disabled]="!cloneName" [class.loading]="cloneLoading" (click)="cloneEnvironment(cloneModal)">
+            <i class="copy icon"></i>
+            {{'common_clone' | translate}}
+          </button>
+        </div>
+    </modal-content>
+</sm-modal>
+<ng-container *ngIf="environment.permission === 7">
     <h3>{{ 'environment_variable_form_title' | translate }}</h3>
     <app-variable-form [loading]="addVarLoading" (createVariableEvent)="variableEvent($event)"></app-variable-form>
 </ng-container>
 <h3>{{ 'environment_variable_list_title' | translate }}</h3>
-<app-variable [variables]="editableEnvironment.variables" (event)="variableEvent($event)"
-              [mode]="editableEnvironment.permission === 7?'edit':'ro'" [maxPerPage]="8" [environment]="editableEnvironment" [project]="project" auditContext="environment"></app-variable>
-
-
+<app-variable [variables]="environment.variables" (event)="variableEvent($event)"
+              [mode]="environment.permission === 7?'edit':'ro'"
+              [maxPerPage]="8" [environment]="environment"
+              [project]="project" auditContext="environment">
+</app-variable>
+<div class="mt15" *ngIf="environment && environment.usage">
+    <app-usage [project]="project" [currentUser]="currentUser" [workflows]="attachedWorkflows"></app-usage>
+</div>

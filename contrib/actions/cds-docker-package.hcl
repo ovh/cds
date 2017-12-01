@@ -27,7 +27,15 @@ parameters = {
 	}
 	"dockerRegistry" = {
 		type = "string"
-		description = "Docker Registry. Enter myregistry for build image myregistry/myimage:mytag"
+		description = "Docker Registry Url. Enter myregistry url for build image myregistry/myimage:mytag"
+	}
+	"dockerRegistryUsername" = {
+		type = "string"
+		description = "Docker Registry Username. Enter username to connect on your docker registry."
+	}
+	"dockerRegistryPassword" = {
+		type = "string"
+		description = "Docker Registry Password. Enter password to connect on your docker registry."
 	}
 	"imageName" = {
 		type = "string"
@@ -51,10 +59,14 @@ set -e
 
 IMG=`echo {{.imageName}}| tr '[:upper:]' '[:lower:]'`
 GENTAG="cds{{.cds.version}}"
-echo "Building {{.dockerRegistry}}/${IMG}:${GENTAG}"
+REGISTRY="{{.dockerRegistry}}"
+USERNAME="{{.dockerRegistryUsername}}"
+PASSWORD="{{.dockerRegistryPassword}}"
+
+echo "Building ${REGISTRY}/${IMG}:${GENTAG}"
 
 cd {{.dockerfileDirectory}}
-docker build {{.dockerOpts}} -t {{.dockerRegistry}}/$IMG:$GENTAG .
+docker build {{.dockerOpts}} -t ${REGISTRY}/${IMG}:${GENTAG} .
 
 IFS=', ' read -r -a tags <<< "{{.imageTag}}"
 
@@ -62,25 +74,40 @@ for t in "${tags[@]}"; do
 
 	set +e
 
-	TAG=`echo ${t} | sed 's/\///g'`
-	docker tag {{.dockerRegistry}}/$IMG:$GENTAG {{.dockerRegistry}}/$IMG:$TAG
+	if [[ ! -z "${USERNAME}" && ! -z "${PASSWORD}" && ! -z "${REGISTRY}" ]]; then
+		echo "Login to ${REGISTRY}"
+		docker login -u ${USERNAME} -p ${PASSWORD} ${REGISTRY}
+	fi
 
-    echo "Pushing {{.dockerRegistry}}/$IMG:$TAG"
-	docker push {{.dockerRegistry}}/$IMG:$TAG
+	TAG=`echo ${t} | sed 's/\///g'`
+	docker tag ${REGISTRY}/${IMG}:${GENTAG} ${REGISTRY}/${IMG}:${TAG}
+
+  echo "Pushing ${REGISTRY}/${IMG}:${TAG}"
+	docker push ${REGISTRY}/${IMG}:${TAG}
 
 	if [ $? -ne 0 ]; then
 		set -e
 		echo "/!\ Error while pushing to repository. Automatic retry in 60s..."
-	    sleep 60
-	    docker push {{.dockerRegistry}}/$IMG:$TAG
+		sleep 60
+		docker push ${REGISTRY}/${IMG}:${TAG}
 	fi
 
 	set -e
-	echo " {{.dockerRegistry}}/$IMG:$TAG is pushed"
+	echo " ${REGISTRY}/${IMG}:${TAG} is pushed"
 
-	docker rmi -f {{.dockerRegistry}}/$IMG:$TAG || true;
+	docker rmi -f ${REGISTRY}/${IMG}:${TAG} || true;
 done
-docker rmi -f {{.dockerRegistry}}/$IMG:$GENTAG || true;
+
+IMAGE_ID=`docker images --digests --no-trunc --format "{{.Repository}}:{{.Tag}} {{.ID}}" | grep "${REGISTRY}/${IMG}:${GENTAG}" | awk '{print $2}'`
+IMAGE_DIGEST=`docker images --digests --no-trunc --format "{{.Repository}}:{{.Tag}} {{.Digest}}" | grep "${REGISTRY}/${IMG}:${GENTAG}" | awk '{print $2}'`
+
+echo "ID=$IMAGE_ID"
+worker export image.id ${IMAGE_ID}
+
+echo "DIGEST=$IMAGE_DIGEST"
+worker export image.digest ${IMAGE_DIGEST}
+
+docker rmi -f ${REGISTRY}/${IMG}:${GENTAG} || true;
 
 EOF
 	}]

@@ -1,8 +1,5 @@
 export class RepositoriesManager {
-    id: number;
-    type: string;
     name: string;
-    url: string;
 }
 
 export interface Repository {
@@ -25,6 +22,11 @@ export class Branch {
         this.default = false;
         this.display_id = ' ';
     }
+};
+
+export class Remote {
+    name: string;
+    url: string;
 };
 
 export interface Commit {

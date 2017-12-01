@@ -8,14 +8,18 @@ import (
 
 // Worker represents instances of CDS workers living to serve.
 type Worker struct {
-	ID         string    `json:"id"`
-	Name       string    `json:"name"`
-	LastBeat   time.Time `json:"-"`
-	GroupID    int64     `json:"group_id"`
-	Model      int64     `json:"model"`
-	HatcheryID int64     `json:"hatchery_id"`
-	Status     Status    `json:"status"` // Waiting, Building, Disabled, Unknown
-	Uptodate   bool      `json:"up_to_date"`
+	ID            string    `json:"id" cli:"-"`
+	Name          string    `json:"name" cli:"name"`
+	LastBeat      time.Time `json:"-" cli:"lastbeat"`
+	GroupID       int64     `json:"group_id" cli:"-"`
+	ModelID       int64     `json:"model_id" cli:"-"`
+	ActionBuildID int64     `json:"action_build_id" cli:"-"`
+	Model         *Model    `json:"model" cli:"-"`
+	HatcheryID    int64     `json:"hatchery_id" cli:"-"`
+	HatcheryName  string    `json:"hatchery_name" cli:"-"`
+	JobType       string    `json:"job_type" cli:"-"`    // sdk.JobType...
+	Status        Status    `json:"status" cli:"status"` // Waiting, Building, Disabled, Unknown
+	Uptodate      bool      `json:"up_to_date" cli:"-"`
 }
 
 // Existing worker type
@@ -23,6 +27,7 @@ const (
 	Docker      = "docker"
 	HostProcess = "host"
 	Openstack   = "openstack"
+	VSphere     = "vsphere"
 )
 
 var (
@@ -31,37 +36,57 @@ var (
 		string(Docker),
 		string(HostProcess),
 		string(Openstack),
+		string(VSphere),
 	}
 )
+
+// Existing worker communication
+const (
+	HTTP = "http"
+	GRPC = "grpc"
+)
+
+var (
+	// AvailableWorkerModelCommunication List of all worker model communication
+	AvailableWorkerModelCommunication = []string{
+		string(HTTP),
+		string(GRPC),
+	}
+)
+
+// SpawnErrorForm represents the arguments needed to add error registration on worker model
+type SpawnErrorForm struct {
+	Error string
+}
 
 // Model represents a worker model (ex: Go 1.5.1 Docker Images)
 // with specified capabilities (ex: go, golint and go2xunit binaries)
 type Model struct {
-	ID           int64         `json:"id" db:"id"`
-	Name         string        `json:"name"  db:"name"`
-	Type         string        `json:"type"  db:"type"`
-	Image        string        `json:"image" db:"image"`
-	Capabilities []Requirement `json:"capabilities" db:"-"`
-	CreatedBy    User          `json:"created_by" db:"-"`
-	OwnerID      int64         `json:"owner_id" db:"owner_id"` //DEPRECATED
-	GroupID      int64         `json:"group_id" db:"group_id"`
-}
-
-// ModelStatus sums up the number of worker deployed and wanted for a given model
-type ModelStatus struct {
-	ModelID       int64         `json:"model_id" yaml:"-"`
-	ModelName     string        `json:"model_name" yaml:"name"`
-	ModelGroupID  int64         `json:"model_group_id" yaml:"model_group_id"`
-	CurrentCount  int64         `json:"current_count" yaml:"current"`
-	WantedCount   int64         `json:"wanted_count" yaml:"wanted"`
-	BuildingCount int64         `json:"building_count" yaml:"building"`
-	Requirements  []Requirement `json:"requirements"`
+	ID               int64              `json:"id" db:"id" cli:"-"`
+	Name             string             `json:"name"  db:"name" cli:"name"`
+	Type             string             `json:"type"  db:"type" cli:"type"`
+	Image            string             `json:"image" db:"image" cli:"-"`
+	Capabilities     []Requirement      `json:"capabilities" db:"-" cli:"-"`
+	Communication    string             `json:"communication"  db:"communication" cli:"communication"`
+	Template         *map[string]string `json:"template"  db:"template" cli:"-"`
+	RunScript        string             `json:"run_script"  db:"run_script" cli:"-"`
+	Disabled         bool               `json:"disabled"  db:"disabled" cli:"disabled"`
+	NeedRegistration bool               `json:"need_registration"  db:"need_registration" cli:"-"`
+	LastRegistration time.Time          `json:"last_registration"  db:"last_registration" cli:"-"`
+	UserLastModified time.Time          `json:"user_last_modified"  db:"user_last_modified" cli:"-"`
+	CreatedBy        User               `json:"created_by" db:"-" cli:"-"`
+	Provision        int64              `json:"provision" db:"provision" cli:"provision"`
+	GroupID          int64              `json:"group_id" db:"group_id" cli:"-"`
+	Group            Group              `json:"group" db:"-" cli:"-"`
+	NbSpawnErr       int64              `json:"nb_spawn_err" db:"nb_spawn_err" cli:"nb_spawn_err"`
+	LastSpawnErr     string             `json:"last_spawn_err" db:"last_spawn_err" cli:"-"`
+	DateLastSpawnErr *time.Time         `json:"date_last_spawn_err" db:"date_last_spawn_err" cli:"-"`
 }
 
 // OpenstackModelData type details the "Image" field of Openstack type model
 type OpenstackModelData struct {
 	Image    string `json:"os"`
-	Flavor   string `json:"flavor"`
+	Flavor   string `json:"flavor,omitempty"`
 	UserData string `json:"user_data"`
 }
 
@@ -71,8 +96,7 @@ func GetWorkers(models ...string) ([]Worker, error) {
 		return nil, fmt.Errorf("not implemented")
 	}
 
-	uri := "/worker"
-	data, code, errr := Request("GET", uri, nil)
+	data, code, errr := Request("GET", "/worker", nil)
 	if errr != nil {
 		return nil, errr
 	}
@@ -177,9 +201,18 @@ func UpdateWorkerModel(id int64, name string, t string, value string) error {
 	return nil
 }
 
-// GetWorkerModels retrieves all worker models available to user
+// GetWorkerModels retrieves all worker models available to user (enabled or not)
 func GetWorkerModels() ([]Model, error) {
-	uri := fmt.Sprintf("/worker/model")
+	return getWorkerModels(true)
+}
+
+func getWorkerModels(withDisabled bool) ([]Model, error) {
+	var uri string
+	if withDisabled {
+		uri = fmt.Sprintf("/worker/model")
+	} else {
+		uri = fmt.Sprintf("/worker/model/enabled")
+	}
 
 	data, _, errr := Request("GET", uri, nil)
 	if errr != nil {
@@ -198,96 +231,8 @@ func GetWorkerModels() ([]Model, error) {
 func DeleteWorkerModel(workerModelID int64) error {
 	uri := fmt.Sprintf("/worker/model/%d", workerModelID)
 
-	_, _, err := Request("DELETE", uri, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// AddCapabilityToWorkerModel adds a capability to given model
-func AddCapabilityToWorkerModel(modelID int64, name string, capaType string, value string) error {
-
-	uri := fmt.Sprintf("/worker/model/%d/capability", modelID)
-
-	r := Requirement{
-		Name:  name,
-		Type:  capaType,
-		Value: value,
-	}
-	data, err := json.Marshal(r)
-	if err != nil {
-		return err
-	}
-
-	_, code, err := Request("POST", uri, data)
-	if err != nil {
-		return err
-	}
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
-}
-
-// UpdateCapabilityToWorkerModel updates a capability to given model
-func UpdateCapabilityToWorkerModel(modelID int64, name string, capaType string, value string) error {
-
-	uri := fmt.Sprintf("/worker/model/%d/capability/%s", modelID, name)
-
-	r := Requirement{
-		Name:  name,
-		Type:  capaType,
-		Value: value,
-	}
-	data, err := json.Marshal(r)
-	if err != nil {
-		return err
-	}
-
-	_, code, err := Request("PUT", uri, data)
-	if err != nil {
-		return err
-	}
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
-}
-
-// DeleteWorkerCapability removes a capability from given worker model
-func DeleteWorkerCapability(workerModelID int64, capaName string) error {
-	uri := fmt.Sprintf("/worker/model/%d/capability/%s", workerModelID, capaName)
-
 	if _, _, err := Request("DELETE", uri, nil); err != nil {
 		return err
-	}
-
-	return nil
-}
-
-// SetWorkerStatus update worker status
-func SetWorkerStatus(s Status) error {
-	var uri string
-	switch s {
-	case StatusChecking:
-		uri = fmt.Sprintf("/worker/checking")
-	case StatusWaiting:
-		uri = fmt.Sprintf("/worker/waiting")
-	default:
-		return fmt.Errorf("Unsupported status : %s", s.String())
-	}
-
-	_, code, err := Request("POST", uri, nil)
-	if err != nil {
-		return err
-	}
-
-	if code >= 300 {
-		return fmt.Errorf("cds: api error (%d)", code)
 	}
 
 	return nil

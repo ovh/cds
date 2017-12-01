@@ -3,12 +3,13 @@ package worker
 import (
 	"testing"
 
+	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 )
 
 func TestInsertWorker(t *testing.T) {
-	db := test.SetupPG(t)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	workers, err := LoadWorkers(db)
 	test.NoError(t, err)
@@ -28,7 +29,7 @@ func TestInsertWorker(t *testing.T) {
 }
 
 func TestDeletetWorker(t *testing.T) {
-	db := test.SetupPG(t)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	workers, errl := LoadWorkers(db)
 	test.NoError(t, errl)
@@ -51,7 +52,7 @@ func TestDeletetWorker(t *testing.T) {
 }
 
 func TestLoadWorkers(t *testing.T) {
-	db := test.SetupPG(t)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	workers, errl := LoadWorkers(db)
 	test.NoError(t, errl)

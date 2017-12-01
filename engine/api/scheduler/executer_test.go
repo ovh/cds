@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
@@ -15,11 +16,11 @@ import (
 )
 
 func TestExecuterRun(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, pkey, pkey, nil)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -29,7 +30,7 @@ func TestExecuterRun(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -38,7 +39,7 @@ func TestExecuterRun(t *testing.T) {
 		Name: "TEST_APP",
 	}
 	t.Logf("Insert Application %s for Project %s", app.Name, proj.Name)
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(db, cache, proj, app, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -81,7 +82,7 @@ func TestExecuterRun(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	exs, err := ExecuterRun(db)
+	exs, err := ExecuterRun(func() *gorp.DbMap { return db }, cache)
 	if err != nil {
 		t.Fatal(err)
 	}

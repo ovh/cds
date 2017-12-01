@@ -8,6 +8,7 @@ export class Variable {
     // flag to know if variable data has changed
     hasChanged: boolean;
     updating: boolean;
+    previousName: string;
 
     constructor() {
         this.name = '';

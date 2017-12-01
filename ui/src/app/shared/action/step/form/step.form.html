@@ -1,13 +1,37 @@
 <div class="ui form" *ngIf="step">
-    <div class="fields">
-        <div class="field">
-            <sm-select name="step" class="search" (onChange)="selectPublicAction($event)" [model]="step.name">
-                <option *ngFor="let a of publicActions" value="{{a.name}}">{{a.name}}</option>
+    <div class="field">
+        <button class="ui fluid blue button" (click)="displayChoice()" *ngIf="!showAddStep"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
+        <div *ngIf="showAddStep">
+            <sm-card class="ui card">
+                <card-title><b>{{step?.name}}</b></card-title>
+                <card-subtitle> {{step?.type}}</card-subtitle>
+                <card-content>
+                    <markdown [data]="step?.description"></markdown>
+                </card-content>
+            </sm-card>
+
+            <sm-select name="step" class="search"
+                [options]="{'fullTextSearch': true}"
+                [model]="step.name"
+                (onChange)="selectPublicAction($event)">
+                <option
+                    *ngFor="let a of publicActions"
+                    value="{{a.name}}"
+                    [disabled]="a.deprecated">
+                    {{a.name}}
+                    <span class="right floated" *ngIf="a.deprecated">
+                        <i class="warning orange sign icon"></i>
+                        {{'common_deprecated' | translate}}
+                    </span>
+                </option>
             </sm-select>
         </div>
-        <div class="field">
-            <button name="addstepbtn" class="ui left floated blue button" (click)="addStep()"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
-        </div>
-
+    </div>
+    <div class="field" *ngIf="showAddStep">
+      <div class="ui buttons fluid">
+          <button class="ui green button" (click)="addStep(false)"><i class="plus icon"></i>{{ 'job_add_step' | translate }}</button>
+          <div class="or"></div>
+          <button class="ui grey button" (click)="cancel()">{{'btn_cancel' | translate}}</button>
+      </div>
     </div>
 </div>

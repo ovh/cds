@@ -5,7 +5,7 @@
 ### From sources
 
 ```bash
- $ go get github.com/ovh/cds
+ $ go get github.com/ovh/cds/cli
  $ go install github.com/ovh/cds/cli/cds
 ```
 

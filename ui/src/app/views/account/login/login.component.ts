@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
 import {User} from '../../../model/user.model';
 import {UserService} from '../../../service/user/user.service';
-import {Router} from '@angular/router';
+import {Router, ActivatedRoute} from '@angular/router';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {AccountComponent} from '../account.component';
 
@@ -13,15 +13,25 @@ import {AccountComponent} from '../account.component';
 export class LoginComponent extends AccountComponent {
 
     user: User;
+    redirect: string;
 
-    constructor(private _userService: UserService, private _router: Router, private _authStore: AuthentificationStore) {
+    constructor(private _userService: UserService, private _router: Router,
+        private _authStore: AuthentificationStore, private _route: ActivatedRoute) {
         super(_authStore);
         this.user = new User();
+
+        this._route.queryParams.subscribe(queryParams => {
+           this.redirect = queryParams.redirect;
+        });
     }
 
     signIn() {
         this._userService.login(this.user).subscribe(() => {
-            this._router.navigate(['home']);
+            if (this.redirect) {
+                this._router.navigateByUrl(decodeURIComponent(this.redirect));
+            } else {
+                this._router.navigate(['home']);
+            }
         });
     }
 

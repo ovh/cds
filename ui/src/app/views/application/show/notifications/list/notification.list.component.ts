@@ -5,9 +5,8 @@ import {Application} from '../../../../../model/application.model';
 import {Notification} from '../../../../../model/notification.model';
 import {NotificationEvent} from '../notification.event';
 import {ApplicationNotificationFormModalComponent} from '../form/notification.form.component';
-import {Subscription} from 'rxjs/Rx';
-
-declare var _: any;
+import {Subscription} from 'rxjs/Subscription';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-notification-list',
@@ -67,10 +66,10 @@ export class ApplicationNotificationListComponent extends Table implements After
     openModal(n: Notification, key: string) {
         if (n) {
             this.selectedNotification = new Notification();
-            this.selectedNotification.pipeline = _.cloneDeep(n.pipeline);
-            this.selectedNotification.environment = _.cloneDeep(n.environment);
+            this.selectedNotification.pipeline = cloneDeep(n.pipeline);
+            this.selectedNotification.environment = cloneDeep(n.environment);
             this.selectedNotification.application_pipeline_id = n.application_pipeline_id;
-            this.selectedNotification.notifications[key] = _.cloneDeep(n.notifications[key]);
+            this.selectedNotification.notifications[key] = cloneDeep(n.notifications[key]);
         }
         setTimeout(() => {
             this.editNotifModal.show({autofocus: false, closable: false, observeChanges: false});

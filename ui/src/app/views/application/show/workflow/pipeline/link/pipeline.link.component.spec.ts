@@ -9,6 +9,9 @@ import {ApplicationStore} from '../../../../../../service/application/applicatio
 import {ApplicationService} from '../../../../../../service/application/application.service';
 import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../../service/project/project.service';
+import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../../service/variable/variable.service';
 import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
 import {SharedModule} from '../../../../../../shared/shared.module';
 import {ApplicationModule} from '../../../../application.module';
@@ -18,6 +21,7 @@ import {Pipeline} from '../../../../../../model/pipeline.model';
 import {ApplicationPipelineLinkComponent} from './pipeline.link.component';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {ToasterService} from 'angular2-toaster';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application pipeline link', () => {
 
@@ -37,12 +41,16 @@ describe('CDS: Application pipeline link', () => {
                 TranslateLoader,
                 TranslateParser,
                 ToastService,
-                ToasterService
+                ToasterService,
+                PipelineService,
+                EnvironmentService,
+                VariableService
             ],
             imports: [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 

@@ -1,4 +1,4 @@
-<div id="AddProject">
+<div id="AddProject" class="scrollingContent">
     <form class="ui form" (ngSubmit)="createProject()">
         <h2>{{ 'project_create' | translate }}</h2>
         <div class="ui two column centered grid">
@@ -17,6 +17,12 @@
                 <div class="ui error message" *ngIf="keyError">
                     {{ 'project_key_error' | translate }}
                 </div>
+
+                <hr>
+
+                <div class="ui message">
+                  {{'project_add_ssh_key_help' | translate}}
+                </div>
                 <div class="field">
                     <div class="ui checkbox">
                         <input type="checkbox" name="sshkey" [(ngModel)]="addSshKey">
@@ -30,22 +36,23 @@
                 <div class="ui error message" *ngIf="sshError">
                     {{ 'project_ssh_error' | translate }}
                 </div>
-            </div>
-            <div class="row" *ngIf="project.groups && project.groups.length > 0">
-                <div class="column">
-                    <h3>{{ 'project_permission_list_title' | translate }}</h3>
-                    <app-permission-list [permissions]="project.groups" mode="form"
-                                         (event)="permissionManagement($event)"></app-permission-list>
-                    <div class="ui error message" *ngIf="groupError">
-                        {{ 'project_groups_error' | translate }}
-                    </div>
+
+                <hr>
+
+                <div class="ui message">
+                  {{'project_add_group_help' | translate}}
                 </div>
-            </div>
-            <div class="row">
-                <div class="column">
-                    <h3>{{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" (click)="modalCreateGroup.show()">{{ 'project_permission_form_wizard_new' | translate }}</a></h3>
-                    <app-permission-form (createGroupPermissionEvent)="permissionManagement($event)" buttonType="button" #permForm></app-permission-form>
+                <div class="field">
+                  {{ 'project_permission_form_wizard_title' | translate }} <a class="pointing" (click)="modalCreateGroup.show()">{{ 'project_permission_form_wizard_new' | translate }}</a>
+                  <sm-select class="fluid search"
+                      [options]="{'fullTextSearch': true}"
+                      [model]="group?.id"
+                      (modelChange)="setGroup($event)"
+                      id="PermissionGroup">
+                      <option *ngFor="let g of groupList" [value]="g.id">{{g.name}}</option>
+                  </sm-select>
                 </div>
+
             </div>
             <div class="row">
                 <div class="right aligned column">
@@ -61,6 +68,6 @@
     </modal-content>
     <modal-actions>
         <div class="ui grey button" (click)="modalCreateGroup.hide()">{{ 'btn_cancel' | translate }}</div>
-        <div class="ui green button" (click)="createGroup()">{{ 'btn_create' | translate }}</div>
+        <div class="ui green button" (click)="createGroup()" [class.loading]="loading" [class.disabled]="loading">{{ 'btn_create' | translate }}</div>
     </modal-actions>
 </sm-modal>

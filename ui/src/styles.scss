@@ -31,6 +31,7 @@ input[disabled] {
 }
 
 .CodeMirror {
+  min-height:40px;
   height: auto;
   border: 1px solid rgba(34, 36, 38, 0.14902);
   border-radius: 4px;
@@ -57,6 +58,44 @@ input[disabled] {
 }
 
 // Override semantic-ui color to apply CDS theme
+
+// dropdown
+.ui.buttons {
+  sm-dropdown>.ui.dropdown:last-child .menu {
+    left: auto;
+    right: 0;
+  }
+}
+.ui.selection.dropdown {
+  width: 100%;
+  min-width: 0px;
+}
+.ui.selection.classic.dropdown {
+  width: auto;
+  min-width: 14em;
+}
+
+.ui.circular.labels .label, .ui.circular.label {
+  min-width: inherit;
+  min-height: inherit;
+}
+
+
+// icon
+
+.ui {
+  i.icon.blue {
+    color: $cds_color_teal !important;
+  } 
+
+  i.icon.red {
+    color: $cds_color_red !important;
+  }
+
+  i.icon.green {
+    color: $cds_color_green !important;
+  }
+}
 
 // Segment
 
@@ -113,6 +152,7 @@ input[disabled] {
 .ui.blue.button {
   background-color: $cds_color_teal !important;
 }
+
 .ui.blue.basic.button {
   background-color: transparent !important;
 }
@@ -451,3 +491,78 @@ $verticalTreeHeightLine: 40px;
   top: $navbarHeight + 10px;
 }
 
+.ui.dropdown.nocaret {
+  .dropdown.icon {
+    display: none;
+  }
+}
+
+// Hack navbar select language
+.ui.dropdown.languageSelect {
+  min-width: 1em;
+  border: none;
+  .dropdown.icon {
+    display: none;
+  }
+  padding-right: 1em;
+
+  > .text > .flag {
+    margin-right: 0em;
+  }
+}
+
+ngui-auto-complete {
+  height:200px;
+  overflow-y: auto;
+  z-index: 10 !important;
+}
+ngui-auto-complete .no-match-found {
+  display: none;
+  border: none;
+};
+
+
+.node {
+  white-space: nowrap;
+}
+
+.node rect
+{
+  fill: transparent;
+}
+
+.node circle, .node ellipse  {
+  stroke: #333;
+  fill: white;
+  stroke-width: 1.5px;
+}
+
+.cluster rect {
+  stroke: #333;
+  fill: transparent;
+  fill-opacity: 0.1;
+  stroke-width: 1.5px;
+}
+
+.edgePath path.path {
+  stroke: #333;
+  stroke-width: 4px;
+  fill: none;
+}
+
+foreignObject {
+  overflow: visible;
+}
+
+// Ovveride of ng2-semantic-ui
+sui-search {
+  .ui.input {
+    input {
+      background-color: transparent;
+      border-color: #233332;
+    }
+  }
+}
+.ui.search .prompt {
+  border-radius: 5px;
+}

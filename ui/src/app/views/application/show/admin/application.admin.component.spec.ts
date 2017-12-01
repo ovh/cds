@@ -1,28 +1,32 @@
 /* tslint:disable:no-unused-variable */
 
 import {RouterTestingModule} from '@angular/router/testing';
-import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {Router, ActivatedRoute} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
-import {Injector, Component} from '@angular/core';
+import {fakeAsync, getTestBed, TestBed, tick} from '@angular/core/testing';
+import {Router} from '@angular/router';
+import {Component, Injector} from '@angular/core';
 import {Application} from '../../../../model/application.model';
 import {ApplicationStore} from '../../../../service/application/application.store';
 import {ApplicationAdminComponent} from './application.admin.component';
 import {ApplicationService} from '../../../../service/application/application.service';
 import {SharedModule} from '../../../../shared/shared.module';
-import {TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
+import {TranslateLoader, TranslateService} from 'ng2-translate/ng2-translate';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {Project} from '../../../../model/project.model';
 import {RepoManagerService} from '../../../../service/repomanager/project.repomanager.service';
 import {ApplicationModule} from '../../application.module';
+import {ServicesModule} from '../../../../service/services.module';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {ProjectStore} from '../../../../service/project/project.store';
 import {ProjectService} from '../../../../service/project/project.service';
+import {PipelineService} from '../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../service/environment/environment.service';
+import {VariableService} from '../../../../service/variable/variable.service';
 import {TranslateParser} from 'ng2-translate';
-import {ProjectModule} from '../../../project/project.module';
 import {RepositoriesManager} from '../../../../model/repositories.model';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
+import {ApplicationMigrateService} from '../../../../service/application/application.migration.service';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 
 @Component({
     template: ''
@@ -34,7 +38,6 @@ describe('CDS: Application Admin Component', () => {
 
     let injector: Injector;
     let appStore: ApplicationStore;
-    let backend: MockBackend;
     let router: Router;
 
     beforeEach(() => {
@@ -43,30 +46,35 @@ describe('CDS: Application Admin Component', () => {
                 DummyComponent
             ],
             providers: [
-                { provide: XHRBackend, useClass: MockBackend },
                 ApplicationStore,
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
-                { provide: ToastService, useClass: MockToast },
+                PipelineService,
+                EnvironmentService,
+                VariableService,
+                {provide: ToastService, useClass: MockToast},
                 TranslateLoader,
                 TranslateService,
                 TranslateParser,
-                RepoManagerService
+                RepoManagerService,
+                ApplicationMigrateService,
+                AuthentificationStore
             ],
-            imports : [
+            imports: [
                 RouterTestingModule.withRoutes([
-                    { path: 'project/:key', component: DummyComponent },
-                    { path: 'project/:key/application/:appName', component: DummyComponent }
+                    {path: 'project/:key', component: DummyComponent},
+                    {path: 'project/:key/application/:appName', component: DummyComponent}
                 ]),
                 ApplicationModule,
-                SharedModule
+                ServicesModule,
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
         appStore = injector.get(ApplicationStore);
         router = injector.get(Router);
     });
@@ -74,54 +82,59 @@ describe('CDS: Application Admin Component', () => {
     afterEach(() => {
         injector = undefined;
         appStore = undefined;
-        backend = undefined;
         router = undefined;
     });
 
-    it('Load component + renamed app', fakeAsync( () => {
+    it('Load component + renamed app', fakeAsync(() => {
+        const http = TestBed.get(HttpTestingController);
 
-            // Mock Http login request
-            backend.connections.subscribe(connection => {
-                connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "appRenamed", "permission": 7 }'})));
-            });
+        let appRenamed = new Application();
+        appRenamed.name = 'appRenamed';
+        appRenamed.permission = 7;
 
-            let fixture = TestBed.createComponent(ApplicationAdminComponent);
-            let component = fixture.debugElement.componentInstance;
-            expect(component).toBeTruthy();
 
-            let app: Application = new Application();
-            app.name = 'app';
-            app.permission = 7;
-            let p: Project = new Project();
-            p.key = 'key1';
-            p.name = 'proj1';
-            p.repositories_manager = new Array<RepositoriesManager>();
-            let rm = new RepositoriesManager();
-            p.repositories_manager.push(rm);
+        let fixture = TestBed.createComponent(ApplicationAdminComponent);
+        let component = fixture.debugElement.componentInstance;
+        expect(component).toBeTruthy();
 
-            let pip: Pipeline = new Pipeline();
-            pip.name = 'myPipeline';
-            p.pipelines = new Array<Pipeline>();
-            p.pipelines.push(pip);
+        let app: Application = new Application();
+        app.name = 'app';
+        app.permission = 7;
+        let p: Project = new Project();
+        p.key = 'key1';
+        p.name = 'proj1';
+        p.vcs_servers = new Array<RepositoriesManager>();
+        let rm = new RepositoriesManager();
+        p.vcs_servers.push(rm);
 
-            fixture.componentInstance.application = app;
-            fixture.componentInstance.project = p;
+        let pip: Pipeline = new Pipeline();
+        pip.name = 'myPipeline';
+        p.pipelines = new Array<Pipeline>();
+        p.pipelines.push(pip);
 
-            fixture.detectChanges();
-            tick(50);
+        fixture.componentInstance.application = app;
+        fixture.componentInstance.project = p;
 
-            let compiled = fixture.debugElement.nativeElement;
+        fixture.detectChanges();
+        tick(50);
 
-            let inputName = compiled.querySelector('input[name="formApplicationUpdateName"]');
-            inputName.value = 'appRenamed';
-            inputName.dispatchEvent(new Event('input'));
+        let compiled = fixture.debugElement.nativeElement;
 
-            spyOn(router, 'navigate');
-            compiled.querySelector('button[name="updateNameButton"]').click();
+        let inputName = compiled.querySelector('input[name="formApplicationUpdateName"]');
+        inputName.value = 'appRenamed';
+        inputName.dispatchEvent(new Event('input'));
 
-            expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1', 'application', 'appRenamed']);
+        spyOn(router, 'navigate');
+        compiled.querySelector('button[name="updateNameButton"]').click();
 
-            tick(50);
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/key1/application/app';
+        })).flush(appRenamed);
+
+
+        expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1', 'application', 'appRenamed']);
+
+        tick(50);
 
     }));
 });

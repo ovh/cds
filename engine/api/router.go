@@ -1,54 +1,100 @@
-package main
+package api
 
 import (
+	"bytes"
 	"compress/gzip"
-	"encoding/base64"
+	"context"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"runtime"
 	"time"
 
-	"github.com/go-gorp/gorp"
+	muxcontext "github.com/gorilla/context"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/hatchery"
-	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
-)
-
-var (
-	router    *Router
-	panicked  bool
-	nbPanic   int
-	lastPanic *time.Time
+	"github.com/ovh/cds/sdk/log"
 )
 
 const nbPanicsBeforeFail = 50
 
+// Router is a wrapper around mux.Router
+type Router struct {
+	Background             context.Context
+	AuthDriver             auth.Driver
+	Mux                    *mux.Router
+	SetHeaderFunc          func() map[string]string
+	Prefix                 string
+	URL                    string
+	Middlewares            []Middleware
+	PostMiddlewares        []Middleware
+	mapRouterConfigs       map[string]*RouterConfig
+	mapAsynchronousHandler map[string]HandlerFunc
+	panicked               bool
+	nbPanic                int
+	lastPanic              *time.Time
+}
+
 // Handler defines the HTTP handler used in CDS engine
-type Handler func(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error
+type Handler func(ctx context.Context, w http.ResponseWriter, r *http.Request) error
+
+// AsynchronousHandler defines the HTTP asynchronous handler used in CDS engine
+type AsynchronousHandler func(ctx context.Context, r *http.Request) error
+
+// Middleware defines the HTTP Middleware used in CDS engine
+type Middleware func(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error)
+
+// HandlerFunc defines the way to instanciate a handler
+type HandlerFunc func() Handler
+
+// AsynchronousHandlerFunc defines the way to instanciate a handler
+type AsynchronousHandlerFunc func() AsynchronousHandler
 
 // RouterConfigParam is the type of anonymous function returned by POST, GET and PUT functions
-type RouterConfigParam func(rc *routerConfig)
+type RouterConfigParam func(rc *RouterConfig)
 
-type routerConfig struct {
-	get           Handler
-	post          Handler
-	put           Handler
-	deleteHandler Handler
-	auth          bool
-	isExecution   bool
-	needAdmin     bool
-	needHatchery  bool
+// RouterConfig contains a map of handler configuration. Key is the method of the http route
+type RouterConfig struct {
+	config map[string]*HandlerConfig
 }
+
+// HandlerConfig is the configuration for one handler
+type HandlerConfig struct {
+	Method       string
+	Handler      Handler
+	IsDeprecated bool
+	Options      map[string]string
+}
+
+// NewHandlerConfig returns a new HandlerConfig pointer
+func NewHandlerConfig() *HandlerConfig {
+	return &HandlerConfig{
+		Options: map[string]string{},
+	}
+}
+
+func newRouter(a auth.Driver, m *mux.Router, p string) *Router {
+	return &Router{
+		AuthDriver:             a,
+		Mux:                    m,
+		Prefix:                 p,
+		URL:                    "",
+		mapRouterConfigs:       map[string]*RouterConfig{},
+		mapAsynchronousHandler: map[string]HandlerFunc{},
+		Background:             context.Background(),
+	}
+}
+
+// HandlerConfigParam is a type used in handler configuration, to set specific config on a route given a method
+type HandlerConfigParam func(*HandlerConfig)
+
+// HandlerConfigFunc is a type used in the router configuration fonction "Handle"
+type HandlerConfigFunc func(Handler, ...HandlerConfigParam) *HandlerConfig
 
 // ServeAbsoluteFile Serve file to download
 func (r *Router) ServeAbsoluteFile(uri, path, filename string) {
@@ -57,14 +103,14 @@ func (r *Router) ServeAbsoluteFile(uri, path, filename string) {
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=\"%s\"", filename))
 		http.ServeFile(w, r, path)
 	}
-	router.mux.HandleFunc(r.prefix+uri, f)
+	r.Mux.HandleFunc(r.Prefix+uri, f)
 }
 
-func compress(fn http.HandlerFunc) http.HandlerFunc {
+func (r *Router) compress(fn http.HandlerFunc) http.HandlerFunc {
 	return handlers.CompressHandlerLevel(fn, gzip.DefaultCompression).ServeHTTP
 }
 
-func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
+func (r *Router) recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		var err error
 		defer func() {
@@ -79,43 +125,29 @@ func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 				default:
 					err = sdk.ErrUnknownError
 				}
-				log.Error("[PANIC_RECOVERY] Panic occured on %s:%s, recover %s", req.Method, req.URL.String(), err)
+				log.Error("[PANIC_RECOVERY] Panic occurred on %s:%s, recover %s", req.Method, req.URL.String(), err)
 				trace := make([]byte, 4096)
 				count := runtime.Stack(trace, true)
 				log.Error("[PANIC_RECOVERY] Stacktrace of %d bytes\n%s\n", count, trace)
 
-				//Reinit database connection
-				if _, e := database.Init(
-					viper.GetString(viperDBUser),
-					viper.GetString(viperDBPassword),
-					viper.GetString(viperDBName),
-					viper.GetString(viperDBHost),
-					viper.GetString(viperDBPort),
-					viper.GetString(viperDBSSLMode),
-					viper.GetInt(viperDBTimeout),
-					viper.GetInt(viperDBMaxConn),
-				); e != nil {
-					log.Error("[PANIC_RECOVERY] Unable to reinit db connection : %s", e)
-				}
-
 				//Checking if there are two much panics in two minutes
 				//If last panic was more than 2 minutes ago, reinit the panic counter
-				if lastPanic == nil {
-					nbPanic = 0
+				if r.lastPanic == nil {
+					r.nbPanic = 0
 				} else {
-					dur := time.Since(*lastPanic)
+					dur := time.Since(*r.lastPanic)
 					if dur.Minutes() > float64(2) {
 						log.Info("[PANIC_RECOVERY] Last panic was %d seconds ago", int(dur.Seconds()))
-						nbPanic = 0
+						r.nbPanic = 0
 					}
 				}
 
-				nbPanic++
+				r.nbPanic++
 				now := time.Now()
-				lastPanic = &now
+				r.lastPanic = &now
 				//If two much panic, change the status of /mon/status with panicked = true
-				if nbPanic > nbPanicsBeforeFail {
-					panicked = true
+				if r.nbPanic > nbPanicsBeforeFail {
+					r.panicked = true
 					log.Error("[PANIC_RECOVERY] RESTART NEEDED")
 				}
 
@@ -126,267 +158,296 @@ func recoverWrap(h http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
-//Router is our base router struct
-type Router struct {
-	authDriver auth.Driver
-	mux        *mux.Router
-	prefix     string
+// DefaultHeaders is a set of default header for the router
+func DefaultHeaders() map[string]string {
+	return map[string]string{
+		"Access-Control-Allow-Origin":   "*",
+		"Access-Control-Allow-Methods":  "GET,OPTIONS,PUT,POST,DELETE",
+		"Access-Control-Allow-Headers":  "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, If-Modified-Since, Content-Disposition",
+		"Access-Control-Expose-Headers": "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id, ETag, Content-Disposition",
+		"X-Api-Time":                    time.Now().Format(time.RFC3339),
+		"ETag":                          fmt.Sprintf("%d", time.Now().Unix()),
+	}
 }
 
-var mapRouterConfigs = map[string]*routerConfig{}
-
 // Handle adds all handler for their specific verb in gorilla router for given uri
-func (r *Router) Handle(uri string, handlers ...RouterConfigParam) {
-	uri = r.prefix + uri
-	rc := &routerConfig{auth: true, isExecution: false, needAdmin: false, needHatchery: false}
-	mapRouterConfigs[uri] = rc
+func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
+	uri = r.Prefix + uri
+	cfg := &RouterConfig{
+		config: map[string]*HandlerConfig{},
+	}
+	if r.mapRouterConfigs == nil {
+		r.mapRouterConfigs = map[string]*RouterConfig{}
+	}
+	r.mapRouterConfigs[uri] = cfg
 
-	for _, h := range handlers {
-		h(rc)
+	for i := range handlers {
+		cfg.config[handlers[i].Method] = handlers[i]
 	}
 
 	f := func(w http.ResponseWriter, req *http.Request) {
+		ctx := req.Context()
+
 		// Close indicates  to close the connection after replying to this request
 		req.Close = true
-		// Authorization
-		w.Header().Add("Access-Control-Allow-Origin", "*")
-		w.Header().Add("Access-Control-Allow-Methods", "GET,OPTIONS,PUT,POST,DELETE")
-		w.Header().Add("Access-Control-Allow-Headers", "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id")
-		w.Header().Add("Access-Control-Expose-Headers", "Accept, Origin, Referer, User-Agent, Content-Type, Authorization, Session-Token, Last-Event-Id")
-		w.Header().Add("X-Api-Time", time.Now().Format(time.RFC3339))
 
-		c := &context.Ctx{}
+		// Set default headers
+		if r.SetHeaderFunc != nil {
+			headers := r.SetHeaderFunc()
+			for k, v := range headers {
+				w.Header().Add(k, v)
+			}
+		}
 
+		//Always returns OK on Options method
 		if req.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
 		}
 
-		//Check DB connection
-		db := database.DBMap(database.DB())
-		if db == nil {
-			//We can handle database loss with hook.recovery
-			if req.URL.Path != "/hook" {
-				WriteError(w, req, sdk.ErrServiceUnavailable)
-				return
-			}
-		}
-
-		if rc.auth {
-			if err := r.checkAuthentication(db, req.Header, c); err != nil {
-				log.Warning("Router> Authorization denied on %s %s for %s: %s\n", req.Method, req.URL, req.RemoteAddr, err)
-				WriteError(w, req, sdk.ErrUnauthorized)
-				return
-			}
-		}
-
-		if c.User != nil {
-			if err := loadUserPermissions(db, c.User); err != nil {
-				log.Warning("Router> Unable to load user %s permission : %s", c.User.ID, err)
-				WriteError(w, req, sdk.ErrUnauthorized)
-				return
-			}
-		}
-
-		if c.Hatchery != nil {
-			g, err := loadGroupPermissions(db, c.Hatchery.GroupID)
-			if err != nil {
-				log.Warning("Router> cannot load group permissions for GroupID %d err:%s", c.Hatchery.GroupID, err)
-				WriteError(w, req, sdk.ErrUnauthorized)
-				return
-			}
-			c.User.Groups = append(c.User.Groups, *g)
-		}
-
-		if c.Worker != nil {
-			if err := worker.RefreshWorker(db, c.Worker.ID); err != nil {
-				log.Warning("Router> Unable to refresh worker : %s", err)
-				WriteError(w, req, err)
-				return
-			}
-
-			g, err := loadGroupPermissions(db, c.Worker.GroupID)
-			if err != nil {
-				log.Warning("Router> cannot load group permissions : %s", err)
-				WriteError(w, req, sdk.ErrUnauthorized)
-				return
-			}
-			c.User.Groups = append(c.User.Groups, *g)
-
-			if c.Worker.Model != 0 {
-				//Load model
-				m, err := worker.LoadWorkerModelByID(db, c.Worker.Model)
-				if err != nil {
-					log.Warning("Router> cannot load worker: %s", err)
-					WriteError(w, req, sdk.ErrUnauthorized)
-					return
-				}
-
-				//If worker model is owned by shared.infra, let's add SharedInfraGroup in user's group
-				if m.GroupID == group.SharedInfraGroup.ID {
-					c.User.Groups = append(c.User.Groups, *group.SharedInfraGroup)
-				} else {
-					log.Debug("Router> loading groups permission for model %d", c.Worker.Model)
-					modelGroup, errLoad2 := loadGroupPermissions(db, m.GroupID)
-					if errLoad2 != nil {
-						log.Warning("checkWorkerAuth> Cannot load group: %s\n", errLoad2)
-						WriteError(w, req, sdk.ErrUnauthorized)
-						return
-					}
-					//Anyway, add the group of the model as a group of the user
-					c.User.Groups = append(c.User.Groups, *modelGroup)
-				}
-			}
-		}
-
-		permissionOk := true
-		if rc.auth && rc.needHatchery && c.Hatchery == nil {
-			permissionOk = false
-		} else if rc.auth && rc.needAdmin && !c.User.Admin {
-			permissionOk = false
-		} else if rc.auth && !rc.needAdmin && !c.User.Admin {
-			permissionOk = checkPermission(mux.Vars(req), c, getPermissionByMethod(req.Method, rc.isExecution))
-		}
-		if !permissionOk {
-			WriteError(w, req, sdk.ErrForbidden)
+		//Get route configuration
+		rc := cfg.config[req.Method]
+		if rc == nil || rc.Handler == nil {
+			WriteError(w, req, sdk.ErrNotFound)
 			return
 		}
 
+		//Log request
 		start := time.Now()
 		defer func() {
 			end := time.Now()
 			latency := end.Sub(start)
-			log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
+			if rc.IsDeprecated {
+				log.Error("%-7s | %13v | DEPRECATED ROUTE | %v", req.Method, latency, req.URL)
+				w.Header().Add("X-CDS-WARNING", "deprecated route")
+			} else {
+				log.Debug("%-7s | %13v | %v", req.Method, latency, req.URL)
+			}
 		}()
 
-		if req.Method == "GET" && rc.get != nil {
-			if err := rc.get(w, req, db, c); err != nil {
+		for _, m := range r.Middlewares {
+			var err error
+			ctx, err = m(ctx, w, req, rc)
+			if err != nil {
 				WriteError(w, req, err)
+				return
 			}
+		}
+
+		if err := rc.Handler(ctx, w, req); err != nil {
+			WriteError(w, req, err)
 			return
 		}
 
-		if req.Method == "POST" && rc.post != nil {
-			if err := rc.post(w, req, db, c); err != nil {
-				WriteError(w, req, err)
+		for _, m := range r.PostMiddlewares {
+			var err error
+			ctx, err = m(ctx, w, req, rc)
+			if err != nil {
+				log.Error("PostMiddlewares > %s", err)
 			}
-			return
 		}
-
-		if req.Method == "PUT" && rc.put != nil {
-			if err := rc.put(w, req, db, c); err != nil {
-				WriteError(w, req, err)
-			}
-			return
-		}
-
-		if req.Method == "DELETE" && rc.deleteHandler != nil {
-			if err := rc.deleteHandler(w, req, db, c); err != nil {
-				WriteError(w, req, err)
-			}
-			return
-		}
-		WriteError(w, req, sdk.ErrNotFound)
 	}
-	router.mux.HandleFunc(uri, compress(recoverWrap(f)))
+
+	r.Mux.HandleFunc(uri, r.compress(r.recoverWrap(f)))
+}
+
+type asynchronousRequest struct {
+	nbErrors      int
+	err           error
+	contextValues map[interface{}]interface{}
+	vars          map[string]string
+	request       http.Request
+	body          io.Reader
+}
+
+func (r *asynchronousRequest) do(ctx context.Context, h AsynchronousHandler) error {
+	for k, v := range r.contextValues {
+		ctx = context.WithValue(ctx, k, v)
+	}
+	req := &r.request
+
+	var buf bytes.Buffer
+	tee := io.TeeReader(r.body, &buf)
+	r.body = &buf
+	req.Body = ioutil.NopCloser(tee)
+	//Recreate a new buffer from the bytes stores in memory
+	for k, v := range r.vars {
+		muxcontext.Set(req, k, v)
+	}
+	r.err = h(ctx, req)
+	if r.err != nil {
+		r.nbErrors++
+	}
+	return r.err
+}
+
+func processAsyncRequests(ctx context.Context, chanRequest chan asynchronousRequest, handlerFunc AsynchronousHandlerFunc, retry int) {
+	handler := handlerFunc()
+	for {
+		select {
+		case req := <-chanRequest:
+			if err := req.do(ctx, handler); err != nil {
+				if req.nbErrors > retry {
+					log.Error("Asynchronous Request on Error : %v", err)
+				} else {
+					chanRequest <- req
+				}
+			}
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+// Asynchronous handles an AsynchronousHandlerFunc
+func (r *Router) Asynchronous(handler AsynchronousHandlerFunc, retry int) HandlerFunc {
+	chanRequest := make(chan asynchronousRequest, runtime.GOMAXPROCS(0))
+	go processAsyncRequests(r.Background, chanRequest, handler, retry)
+
+	return func() Handler {
+		return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+			async := asynchronousRequest{
+				contextValues: auth.ContextValues(ctx),
+				request:       *r,
+				vars:          mux.Vars(r),
+			}
+			if btes, err := ioutil.ReadAll(r.Body); err == nil {
+				async.body = bytes.NewBuffer(btes)
+			}
+			log.Debug("Router> Asynchronous call of %s", r.URL.String())
+			chanRequest <- async
+			w.WriteHeader(http.StatusAccepted)
+			return nil
+		}
+	}
+}
+
+// DEPRECATED marks the handler as deprecated
+var DEPRECATED = func(rc *HandlerConfig) {
+	rc.Options["isDeprecated"] = "true"
 }
 
 // GET will set given handler only for GET request
-func GET(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.get = h
+func (r *Router) GET(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := NewHandlerConfig()
+	rc.Handler = h()
+	rc.Options["auth"] = "true"
+	rc.Method = "GET"
+	rc.Options["allowServices"] = "false"
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // POST will set given handler only for POST request
-func POST(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.post = h
+func (r *Router) POST(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := NewHandlerConfig()
+	rc.Handler = h()
+	rc.Options["auth"] = "true"
+	rc.Options["allowServices"] = "false"
+	rc.Method = "POST"
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // POSTEXECUTE will set given handler only for POST request and add a flag for execution permission
-func POSTEXECUTE(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.post = h
-		rc.isExecution = true
+func (r *Router) POSTEXECUTE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := NewHandlerConfig()
+	rc.Handler = h()
+	rc.Options["auth"] = "true"
+	rc.Options["allowServices"] = "false"
+	rc.Method = "POST"
+	rc.Options["isExecution"] = "true"
+	for _, c := range cfg {
+		c(rc)
 	}
-	return f
+	return rc
 }
 
 // PUT will set given handler only for PUT request
-func PUT(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.put = h
+func (r *Router) PUT(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := NewHandlerConfig()
+	rc.Handler = h()
+	rc.Options["allowServices"] = "false"
+	rc.Options["auth"] = "true"
+	rc.Method = "PUT"
+	for _, c := range cfg {
+		c(rc)
+	}
+	return rc
+}
+
+// DELETE will set given handler only for DELETE request
+func (r *Router) DELETE(h HandlerFunc, cfg ...HandlerConfigParam) *HandlerConfig {
+	rc := NewHandlerConfig()
+	rc.Handler = h()
+	rc.Options["allowServices"] = "false"
+	rc.Options["auth"] = "true"
+	rc.Method = "DELETE"
+	for _, c := range cfg {
+		c(rc)
+	}
+	return rc
+}
+
+// NeedAdmin set the route for cds admin only (or not)
+func NeedAdmin(admin bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["needAdmin"] = fmt.Sprintf("%v", admin)
 	}
 	return f
 }
 
-// NeedAdmin set the route for cds admin only (or not)
-func NeedAdmin(admin bool) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.needAdmin = admin
+// NeedUsernameOrAdmin set the route for cds admin or current user = username called on route
+func NeedUsernameOrAdmin(need bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["needUsernameOrAdmin"] = fmt.Sprintf("%v", need)
 	}
 	return f
 }
 
 // NeedHatchery set the route for hatchery only
-func NeedHatchery() RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.needHatchery = true
+func NeedHatchery() HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["needHatchery"] = "true"
 	}
 	return f
 }
 
-// DELETE will set given handler only for DELETE request
-func DELETE(h Handler) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.deleteHandler = h
+// NeedService set the route for hatchery only
+func NeedService() HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["needService"] = "true"
+	}
+	return f
+}
+
+// NeedWorker set the route for worker only
+func NeedWorker() HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["needWorker"] = "true"
+	}
+	return f
+}
+
+// AllowServices allows CDS service to use this route
+func AllowServices(s bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["allowServices"] = fmt.Sprintf("%v", s)
 	}
 	return f
 }
 
 // Auth set manually whether authorisation layer should be applied
 // Authorization is enabled by default
-func Auth(v bool) RouterConfigParam {
-	f := func(rc *routerConfig) {
-		rc.auth = v
+func Auth(v bool) HandlerConfigParam {
+	f := func(rc *HandlerConfig) {
+		rc.Options["auth"] = fmt.Sprintf("%v", v)
 	}
 	return f
-}
-
-func (r *Router) checkAuthHeader(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
-	return r.authDriver.GetCheckAuthHeaderFunc(localCLientAuthMode)(db, headers, c)
-}
-
-func (r *Router) checkAuthentication(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
-	c.Agent = sdk.Agent(headers.Get("User-Agent"))
-
-	switch headers.Get("User-Agent") {
-	// TODO: case sdk.WorkerAgent should be moved here
-	case sdk.HatcheryAgent:
-		return r.checkHatcheryAuth(db, headers, c)
-	default:
-		return r.checkAuthHeader(db, headers, c)
-	}
-}
-
-func (r *Router) checkHatcheryAuth(db *gorp.DbMap, headers http.Header, c *context.Ctx) error {
-	id, err := base64.StdEncoding.DecodeString(headers.Get(sdk.AuthHeader))
-	if err != nil {
-		return fmt.Errorf("bad worker key syntax: %s", err)
-	}
-
-	h, err := hatchery.LoadHatchery(db, string(id))
-	if err != nil {
-		return fmt.Errorf("Invalid Hatchery ID:%s err:%s", string(id), err)
-	}
-
-	c.User = &sdk.User{Username: h.Name}
-	c.Hatchery = h
-	return nil
 }
 
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {

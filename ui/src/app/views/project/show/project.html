@@ -2,22 +2,25 @@
 <ng-template #projectPart>
     <div id="ProjectShow">
     <div class="CDSbreadcrumb">
-        <app-breadcrumb [project]="project"></app-breadcrumb>
+        <app-breadcrumb [project]="project"  [workflow]="workflowName" [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun"
+        [wPipeline]="workflowPipeline"></app-breadcrumb>
     </div>
 
     <div class="CDSmenu">
         <sm-menu title="" class="pointing secondary">
-            <a sm-item [class.active]="selectedTab === 'applications'" (click)="showTab('applications')"><i class="rocket icon"></i>{{
+            <a *ngIf="currentUser.admin || project.workflow_migration !== 'NOT_BEGUN'" sm-item [class.active]="selectedTab === 'workflows'" id="ProjectWorkflowTab" (click)="showTab('workflows')"><i class="share alternate icon"></i>{{
+                'common_workflows' | translate }}</a>
+            <a sm-item [class.active]="selectedTab === 'applications'" id="ProjectApplicationTab" (click)="showTab('applications')"><i class="rocket icon"></i>{{
                 'common_applications' | translate }}</a>
-            <a sm-item [class.active]="selectedTab === 'pipelines'" (click)="showTab('pipelines')"><i class="sitemap icon"></i>{{
+            <a sm-item [class.active]="selectedTab === 'pipelines'" id="ProjectPipelineTab" (click)="showTab('pipelines')"><i class="sitemap icon"></i>{{
                 'common_pipelines' | translate }}</a>
-            <a sm-item [class.active]="selectedTab === 'environments'" (click)="showTab('environments')"><i class="tree icon"></i>{{
+            <a sm-item [class.active]="selectedTab === 'environments'" id="ProjectEnvironmentTab" (click)="showTab('environments')"><i class="tree icon"></i>{{
                 'common_environments' | translate }}</a>
-            <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')"><i class="font icon"></i>{{
+            <a sm-item [class.active]="selectedTab === 'variables'" id="ProjectVariableTab" (click)="showTab('variables')"><i class="font icon"></i>{{
                 'common_variables' | translate }}</a>
-            <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')"><i class="users icon"></i>{{
+            <a sm-item [class.active]="selectedTab === 'permissions'" id="ProjectPermissionTab" (click)="showTab('permissions')"><i class="users icon"></i>{{
                 'common_permissions' | translate }}</a>
-            <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="project.permission === 7"><i class="graduation icon"></i>{{
+            <a sm-item [class.active]="selectedTab === 'advanced'" id="ProjectAdvancedTab" (click)="showTab('advanced')" *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE"><i class="graduation icon"></i>{{
                 'common_advanced' | translate }}</a>
         </sm-menu>
     </div>
@@ -25,6 +28,9 @@
     <div class="scrollingContent">
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab">
+                <div *ngSwitchCase="'workflows'">
+                    <app-project-workflows [project]="project"></app-project-workflows>
+                </div>
                 <div *ngSwitchCase="'applications'">
                     <app-project-applications [project]="project"></app-project-applications>
                 </div>
@@ -34,29 +40,30 @@
                 <div *ngSwitchCase="'environments'">
                     <h3>{{ 'project_env_list_title' | translate}}</h3>
                     <app-environment-list [project]="project"></app-environment-list>
-
                 </div>
 
                 <div *ngSwitchCase="'variables'">
-                    <ng-container *ngIf="project.permission === 7">
-                        <h3>{{ 'project_variable_form_title' | translate }}</h3>
-                        <app-variable-form (createVariableEvent)="variableEvent($event)" [loading]="varFormLoading"></app-variable-form>
-                    </ng-container>
-                    <div>
-                        <h3>{{ 'project_variable_list_title' | translate }}</h3>
-                        <app-variable [project]="project" [variables]="project.variables" [mode]="project.permission === 7? 'edit': 'ro'" (event)="variableEvent($event)" auditContext="project"></app-variable>
-                    </div>
-                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="variableEvent($event, true)" #varWarning></app-warning-modal>
+                  <app-project-variables [project]="project"></app-project-variables>
                 </div>
 
                 <div *ngSwitchCase="'permissions'">
                     <h3>{{ 'project_permission_list_title' | translate }}</h3>
-                    <app-permission-list [permissions]="project.groups" (event)="groupEvent($event)" [edit]="project.permission === 7"></app-permission-list>
-                    <ng-container *ngIf="project.permission === 7">
+                    <app-permission-list [permissions]="project.groups" (event)="groupEvent($event)" [edit]="project.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+                    <ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE">
                         <h3>{{ 'project_permission_form_title' | translate }}</h3>
                         <app-permission-form (createGroupPermissionEvent)="groupEvent($event)" [loading]="permFormLoading"></app-permission-form>
                     </ng-container>
-                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
+                    <ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE">
+                        <h3>{{ 'project_env_permission_form_title' | translate }}</h3>
+                        <app-permission-env-form [project]="project" [loading]="permEnvFormLoading" (addEnvPermEvent)="addEnvPermEvent($event)"></app-permission-env-form>
+                    </ng-container>
+                    <ng-container *ngFor="let env of project.environments">
+                        <h3>{{env.name}}</h3>
+                        <app-permission-list [permissions]="env.groups" (event)="envGroupEvent($event, env, false)" [edit]="env.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+                    </ng-container>
+                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="envGroupEvent($event, null, true)" #permEnvGroupWarning></app-warning-modal>
+                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="addEnvPermEvent($event, null, true)" #permEnvWarning></app-warning-modal>
+                    <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, null, true)" #permWarning></app-warning-modal>
                 </div>
                 <div *ngSwitchCase="'advanced'">
                     <h3>{{ 'project_advanced_title' | translate }}</h3>

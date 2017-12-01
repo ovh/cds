@@ -1,0 +1,76 @@
+<h2 *ngIf="user && user.id && user.username === currentUser.username">{{ 'user_my_profile' | translate }} - {{user.username}}</h2>
+<h2 *ngIf="user && user.id && user.username !== currentUser.username">{{ 'user_edit_title' | translate }} {{user.username}}</h2>
+
+<div *ngIf="user;then showUser;else loadUser"></div>
+<ng-template #showUser>
+  <div id="UserEdit" *ngIf="user">
+    <form class="ui form">
+      <div class="ui grid">
+        <div class="ten wide column">
+            <div class="field">
+                <label>{{'user_label_username' | translate}}</label>
+                <input class="ui input" type="text" name="username" [(ngModel)]="user.username" [disabled]="loading">
+            </div>
+            <div class="field">
+                <label>{{'user_label_fullname' | translate}}</label>
+                <input class="ui input" type="text" name="fullname" [(ngModel)]="user.fullname" [disabled]="loading">
+            </div>
+            <div class="field">
+                <label>{{'user_label_email' | translate}}</label>
+                <input class="ui input" type="text" name="email" [(ngModel)]="user.email" [disabled]="loading">
+            </div>
+            <div class="field" *ngIf="currentUser.admin">
+                <div class="ui checkbox">
+                    <input type="checkbox" name="admin" [(ngModel)]="user.admin" [disabled]="loading">
+                    <label>{{'user_label_admin' | translate}}</label>
+                </div>
+            </div>
+            <div class="field">
+                <app-delete-button *ngIf="user && user.id && currentUser.admin && user.username !== currentUser.username" class="left floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
+                <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
+                  <i class="save icon"></i>{{ 'btn_save' | translate }}
+                </button>
+            </div>
+
+            <h3>{{ 'group_list_title' | translate }}</h3>
+            <table class="ui fixed celled table" *ngIf="groups || groupsAdmin">
+                <thead>
+                <tr>
+                    <th class="three wide">{{ 'group_name' | translate }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let v of groupsAdmin">
+                    <td>
+                        <a class="ui" [routerLink]="['/settings', 'group', v?.name]">
+                          <i class="fa fa-user-circle-o" title="{{ 'group_user_is_admin' | translate }}"></i>
+                          {{v?.name}}
+                        </a>
+                    </td>
+                </tr>
+                <tr *ngFor="let v of groups">
+                    <td>
+                        <a class="ui" [routerLink]="['/settings', 'group', v?.name]">
+                          {{v?.name}}
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+
+        <div class="six wide column">
+          <div class="ui tall stacked segment">
+            <h4 class="ui header"><i class="fa fa-book fa-3x"></i></h4>
+            <a href="https://ovh.github.io/cds">https://ovh.github.io/cds</a>
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</ng-template>
+<ng-template #loadUser>
+    <div class="ui text active loader">{{ 'user_load_user' | translate }}</div>
+</ng-template>

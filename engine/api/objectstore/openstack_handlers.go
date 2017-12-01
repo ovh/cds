@@ -2,6 +2,7 @@ package objectstore
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,17 +14,24 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (ops *OpenstackStore) refreshTokenRoutine() {
+func (ops *OpenstackStore) refreshTokenRoutine(c context.Context) {
+	tick := time.NewTicker(20 * time.Hour).C
 	for {
-		time.Sleep(20 * time.Hour)
-
-		tk, endpoint, err := getToken(ops.user, ops.password, ops.address, ops.tenant, ops.region)
-		if err != nil {
-			log.Error("refreshTokenRoutine> Cannot refresh token: %s\n", err)
-			continue
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting refreshTokenRoutine: %v", c.Err())
+				return
+			}
+		case <-tick:
+			tk, endpoint, err := getToken(ops.user, ops.password, ops.address, ops.tenant, ops.region)
+			if err != nil {
+				log.Error("refreshTokenRoutine> Cannot refresh token: %s\n", err)
+				continue
+			}
+			ops.token = tk
+			ops.endpoint = endpoint
 		}
-		ops.token = tk
-		ops.endpoint = endpoint
 	}
 }
 
@@ -265,7 +273,8 @@ func getToken(user, password, url, project, region string) (*Token, string, erro
 				log.Debug("OpenStack> Looking for region %s service 'swift' (got %s)\n", region, e.Region)
 				if e.Region == region {
 					log.Debug("OpenStack> Got Swift in %s !\n", region)
-					endpoint = sc.Endpoints[0].PublicURL
+					endpoint = e.PublicURL
+
 				}
 			}
 		}

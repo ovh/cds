@@ -1,0 +1,14 @@
+@import '../../../../common';
+#settings-sidebar {
+  width: 6rem;
+  text-align: center;
+  .ui.header .icon:only-child {
+    margin-right: 0rem;
+  }
+  .item {
+    padding: 0.92857143em 0.2em;
+  }
+  h4 {
+    margin: 0.5em;
+  }
+}

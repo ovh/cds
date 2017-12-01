@@ -1,14 +1,14 @@
 package event
 
 import (
+	"context"
 	"fmt"
 	"os"
 
-	"github.com/docker/docker/pkg/namesgenerator"
+	"github.com/moby/moby/pkg/namesgenerator"
 
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var hostname, cdsname string
@@ -54,16 +54,31 @@ func Initialize(k KafkaConfig) error {
 }
 
 // DequeueEvent runs in a goroutine and dequeue event from cache
-func DequeueEvent() {
+func DequeueEvent(c context.Context) {
 	for {
 		e := sdk.Event{}
-		cache.Dequeue("events", &e)
+		Cache.DequeueWithContext(c, "events", &e)
+		if err := c.Err(); err != nil {
+			log.Error("Exiting event.DequeueEvent : %v", err)
+			return
+		}
+
 		for _, b := range brokers {
 			if err := b.sendEvent(&e); err != nil {
 				log.Warning("Error while sending message: %s", err)
 			}
 		}
 	}
+}
+
+// GetHostname returns Hostname of this cds instance
+func GetHostname() string {
+	return hostname
+}
+
+// GetCDSName returns cdsname of this cds instance
+func GetCDSName() string {
+	return cdsname
 }
 
 // Close closes event system

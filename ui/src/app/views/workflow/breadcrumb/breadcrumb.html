@@ -1,0 +1,22 @@
+<div class="ui large breadcrumb">
+    <i class="browser icon"></i>
+    <a class="section" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'workflows'}">{{ project?.name}}</a>
+
+    <i *ngIf="workflowName" class="right chevron icon divider"></i>
+    <i *ngIf="workflowName" class="share alternate icon"></i>
+    <a *ngIf="workflowName" href="#" class="section" [class.active]="workflowName && !run" [routerLink]="['/project', project.key, 'workflow', workflowName]">{{ workflowName}}</a>
+    <sm-dropdown *ngIf="project && workflowName">
+        <a href="#" sm-item *ngFor="let w of project.workflows" [routerLink]="['/project', project.key, 'workflow', w.name]">{{w.name}}</a>
+    </sm-dropdown>
+
+    <ng-container *ngIf="project && workflowName && run">
+        <i class="right chevron icon divider"></i>
+        <a class="section" [class.active]="workflowName && run" [routerLink]="['/project', project.key, 'workflow', workflowName, 'run', run]">{{ '#' + run}}</a>
+    </ng-container>
+    <ng-container *ngIf="project && workflowName && run && nodeName">
+        <i class="right chevron icon divider"></i>
+        <i class="share alternate icon"></i>
+        {{nodeName}}
+    </ng-container>
+
+</div>

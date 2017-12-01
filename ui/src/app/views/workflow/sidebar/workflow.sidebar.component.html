@@ -1,0 +1,24 @@
+<div id="WorkflowSidebar" *ngIf="open">
+    <sui-multi-select class="selection"
+                      [(ngModel)]="selectedTags"
+                      [options]="tagsSelectable"
+                      [isSearchable]="true"
+                      (ngModelChange)="refreshRun()"
+                      #multiSelect>
+        <sui-select-option *ngFor="let option of multiSelect.filteredOptions"
+                           [value]="option">
+        </sui-select-option>
+    </sui-multi-select>
+    <ul>
+        <li *ngFor="let r of filteredWorkflowRuns">
+            <app-status-icon [status]="r.status"></app-status-icon>
+            <a href="#" [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', r.num]">Run {{r.num}}</a>
+            <ng-container *ngFor="let t of r.tags">
+              <div class="ui label" *ngIf="canDisplayTag(t)">{{t.value}}</div>
+            </ng-container>
+        </li>
+        <li *ngIf="ready && (!workflowRuns || workflowRuns.length === 0)">{{ 'workflow_run_never' | translate }}</li>
+    </ul>
+
+</div>
+<div class="ui text active loader" *ngIf="!ready && open">{{ 'workflow_run_loading' | translate }}</div>

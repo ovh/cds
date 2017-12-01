@@ -1,8 +1,11 @@
 package plugin
 
 import (
+	"context"
 	"net/rpc"
+	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/hashicorp/go-plugin"
 )
@@ -23,17 +26,32 @@ func Serve(a CDSAction) {
 			p.PluginName(): p,
 		},
 	})
-
 }
 
 //NewClient has to be called every time we nedd to call a plugin
-func NewClient(name, binary, id, url string, tlsSkipVerify bool) *Client {
+func NewClient(ctx context.Context, name, binary, id, url string, tlsSkipVerify bool, envs ...string) *Client {
+	cmd := exec.CommandContext(ctx, binary)
+
+	env := os.Environ()
+	cmd.Env = []string{}
+	// filter technical env variables
+	for _, e := range env {
+		if strings.HasPrefix(e, "CDS_") {
+			continue
+		}
+		cmd.Env = append(cmd.Env, e)
+	}
+	// additionnal env variables
+	for _, e := range envs {
+		cmd.Env = append(cmd.Env, e)
+	}
+
 	client := plugin.NewClient(&plugin.ClientConfig{
 		HandshakeConfig: Handshake,
 		Plugins: map[string]plugin.Plugin{
 			name: CDSActionPlugin{},
 		},
-		Cmd: exec.Command(binary),
+		Cmd: cmd,
 	})
 
 	options := Options{

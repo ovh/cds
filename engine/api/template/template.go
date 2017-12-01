@@ -4,15 +4,16 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/templateextension"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // ApplyTemplate creates an application and configure it with given template
-func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey, apiURL string) ([]sdk.Message, error) {
+func ApplyTemplate(db *gorp.DbMap, store cache.Store, proj *sdk.Project, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey, apiURL string) ([]sdk.Message, error) {
 	var app *sdk.Application
 	if opts.TemplateName == templateextension.EmptyTemplate.Name {
 		app = &sdk.Application{
@@ -38,7 +39,7 @@ func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOpt
 
 		// Apply the template
 		var erra error
-		app, erra = templateextension.Apply(db, templ, proj, opts.TemplateParams, opts.ApplicationName)
+		app, erra = templateextension.Apply(db, store, templ, proj, opts.TemplateParams, opts.ApplicationName)
 		if erra != nil {
 			log.Warning("ApplyTemplate> error applying template : %s", erra)
 			return nil, erra
@@ -71,13 +72,13 @@ func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOpt
 		}
 	}(&msgList)
 
-	if err := application.Import(tx, proj, app, app.RepositoriesManager, user, msgChan); err != nil {
+	if err := application.Import(tx, store, proj, app, app.VCSServer, user, msgChan); err != nil {
 		log.Warning("ApplyTemplate> error applying template : %s", err)
 		close(msgChan)
 		return msgList, err
 	}
 
-	if errProj := project.UpdateLastModified(tx, user, proj); errProj != nil {
+	if errProj := project.UpdateLastModified(tx, store, user, proj, sdk.ProjectApplicationLastModificationType); errProj != nil {
 		log.Warning("ApplyTemplate> cannot update project last modified date : %s", errProj)
 		close(msgChan)
 		return msgList, errProj
@@ -98,7 +99,7 @@ func ApplyTemplate(db *gorp.DbMap, proj *sdk.Project, opts sdk.ApplyTemplatesOpt
 }
 
 // ApplyTemplateOnApplication configure an application it with given template
-func ApplyTemplateOnApplication(db *gorp.DbMap, proj *sdk.Project, app *sdk.Application, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey, apiURL string) ([]sdk.Message, error) {
+func ApplyTemplateOnApplication(db *gorp.DbMap, store cache.Store, proj *sdk.Project, app *sdk.Application, opts sdk.ApplyTemplatesOptions, user *sdk.User, sessionKey sessionstore.SessionKey, apiURL string) ([]sdk.Message, error) {
 	//Get the template
 	sdktmpl, err := templateextension.LoadByName(db, opts.TemplateName)
 	if err != nil {
@@ -116,7 +117,7 @@ func ApplyTemplateOnApplication(db *gorp.DbMap, proj *sdk.Project, app *sdk.Appl
 	}
 
 	// Apply the template
-	appTempl, err := templateextension.Apply(db, templ, proj, opts.TemplateParams, opts.ApplicationName)
+	appTempl, err := templateextension.Apply(db, store, templ, proj, opts.TemplateParams, opts.ApplicationName)
 	if err != nil {
 		log.Warning("ApplyTemplateOnApplication> error applying template : %s", err)
 		return nil, err
@@ -149,7 +150,7 @@ func ApplyTemplateOnApplication(db *gorp.DbMap, proj *sdk.Project, app *sdk.Appl
 	}(&msgList)
 
 	//Import the pipelines
-	if err := application.ImportPipelines(tx, proj, app, user, msgChan); err != nil {
+	if err := application.ImportPipelines(tx, store, proj, app, user, msgChan); err != nil {
 		log.Warning("ApplyTemplateOnApplication> error applying template : %s", err)
 		close(msgChan)
 		return msgList, err

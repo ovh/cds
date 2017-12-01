@@ -1,0 +1,42 @@
+@import '../../../common';
+
+$sidebarWidth: 255px;
+
+.content-wrap, .sidebar {
+  transition: width 0.1s;
+
+}
+
+.sidebar {
+  float: left;
+  width: 0;
+  background: #FFFFFF;
+  height: calc( 100% - #{2*$navbarHeight});
+
+  &.expanded {
+    width: $sidebarWidth;
+    position: fixed;
+    z-index: 4;
+    border-right: 1px rgba(34, 36, 38, 0.15) solid;
+  }
+}
+
+.content-wrap {
+  float: right;
+  width: calc(100% - #{$sidebarWidth});
+  height: calc( 100% - #{$navbarHeight});
+  margin-left: 10px;
+
+  &.expanded {
+    width: 100%;
+  }
+
+  .open.button {
+    padding-left: -10px;
+    border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-top-right-radius: 0px;
+    position: absolute;
+    z-index: 10;
+  }
+}

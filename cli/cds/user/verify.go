@@ -7,22 +7,17 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/sdk"
 	"os"
 	"path"
-)
 
-type configFile struct {
-	User     string `json:"user"`
-	Password string `json:"password"`
-	Host     string `json:"host"`
-}
+	"github.com/ovh/cds/cli/cds/login"
+	"github.com/ovh/cds/sdk"
+)
 
 func cmdUserVerify() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "verify",
 		Short: "cds user verify <username> <token>",
-		Long:  ``,
 		Run:   verifyUser,
 	}
 
@@ -36,27 +31,28 @@ func verifyUser(cmd *cobra.Command, args []string) {
 	name := args[0]
 	token := args[1]
 
-	userData, err := sdk.VerifyUser(name, token)
-	if err != nil {
-		sdk.Exit("%s\n", err)
+	userData, errv := sdk.VerifyUser(name, token)
+	if errv != nil {
+		sdk.Exit("%s\n", errv)
 	}
 
-	userDataString, err := json.MarshalIndent(userData, " ", " ")
-	if err != nil {
-		fmt.Printf("VerifyUser: Cannot marshal userData: %s\n", err)
-		sdk.Exit("%s\n", err)
+	userDataString, errm := json.MarshalIndent(userData, " ", " ")
+	if errm != nil {
+		fmt.Printf("VerifyUser: Cannot marshal userData: %s\n", errm)
+		sdk.Exit("%s\n", errm)
 	}
 	fmt.Printf("Account informations : %s\n", userDataString)
 
-	fileContent := &configFile{
-		User:     userData.User.Username,
-		Password: userData.Password,
-		Host:     sdk.Host,
+	fileContent := &login.Config{
+		User: userData.User.Username,
+
+		Token: userData.Token,
+		Host:  sdk.Host,
 	}
 
-	jsonStr, err := json.MarshalIndent(fileContent, "", "  ")
-	if err != nil {
-		sdk.Exit("%s\n", err)
+	jsonStr, errm := json.MarshalIndent(fileContent, "", "  ")
+	if errm != nil {
+		sdk.Exit("%s\n", errm)
 	}
 	jsonStr = append(jsonStr, '\n')
 
@@ -67,8 +63,8 @@ func verifyUser(cmd *cobra.Command, args []string) {
 			sdk.Exit("%s\n", err)
 		}
 	}
-	err = ioutil.WriteFile(sdk.CDSConfigFile, jsonStr, 0600)
-	if err != nil {
+
+	if err := ioutil.WriteFile(sdk.CDSConfigFile, jsonStr, 0600); err != nil {
 		sdk.Exit("%s\n", err)
 	}
 

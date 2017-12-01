@@ -1,0 +1,47 @@
+<div class="history">
+<table class="ui fixed celled table">
+    <thead>
+    <tr>
+        <th class="center one wide">{{ 'common_status' | translate }}</th>
+        <th class="one wide">{{ 'common_version' | translate }}</th>
+        <th class="three wide">{{ 'common_trigger_by' | translate }}</th>
+        <th class="three wide">{{ 'common_date_start' | translate }}</th>
+        <th class="three wide">{{ 'common_date_end' | translate }}</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr *ngFor="let nr of getDataForCurrentPage()" [class.active]="currentBuild && currentBuild.id === nr.id" class="pointing" (click)="goToSubNumber(nr)">
+        <td class="center">
+            <app-status-icon [status]="nr.status"></app-status-icon>
+        </td>
+        <td>
+            {{nr.num + '.' + nr.subnumber}}
+        </td>
+        <td>
+            {{getTriggerSource(nr)}}
+        </td>
+        <td>
+            {{nr.start | date:'short'}}
+        </td>
+        <td>
+            {{nr.done | date:'short'}}
+        </td>
+    </tr>
+    </tbody>
+    <tfoot *ngIf="getNbOfPages() > 1">
+    <tr>
+        <th colspan="5">
+            <div class="ui right floated pagination menu" >
+                <a class="icon item" (click)="downPage()">
+                    <i class="left chevron icon"></i>
+                </a>
+                <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                <a class="icon item" (click)="upPage()">
+                    <i class="right chevron icon"></i>
+                </a>
+            </div>
+        </th>
+    </tr>
+    </tfoot>
+</table>
+</div>

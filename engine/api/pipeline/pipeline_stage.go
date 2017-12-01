@@ -13,8 +13,8 @@ import (
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/trigger"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -28,7 +28,7 @@ func LoadStage(db gorp.SqlExecutor, pipelineID int64, stageID int64) (*sdk.Stage
 		SELECT pipeline_stage.id, pipeline_stage.pipeline_id, pipeline_stage.name, pipeline_stage.build_order, pipeline_stage.enabled, pipeline_stage_prerequisite.parameter, pipeline_stage_prerequisite.expected_value
 		FROM pipeline_stage
 		LEFT OUTER JOIN pipeline_stage_prerequisite ON pipeline_stage_prerequisite.pipeline_stage_id = pipeline_stage.id
-		WHERE pipeline_stage.pipeline_id = $1 
+		WHERE pipeline_stage.pipeline_id = $1
 		AND pipeline_stage.id = $2;
 		`
 
@@ -98,7 +98,7 @@ func LoadStages(db gorp.SqlExecutor, pipelineID int64) ([]sdk.Stage, error) {
 		SELECT pipeline_stage.id, pipeline_stage.name, pipeline_stage.enabled, pipeline_stage_prerequisite.parameter, pipeline_stage_prerequisite.expected_value
 		FROM pipeline_stage
 		LEFT OUTER JOIN pipeline_stage_prerequisite ON pipeline_stage_prerequisite.pipeline_stage_id = pipeline_stage.id
-	 	WHERE pipeline_id = $1 
+	 	WHERE pipeline_id = $1
 		ORDER BY build_order ASC`
 
 	rows, err := db.Query(query, pipelineID)
@@ -152,22 +152,22 @@ func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) er
 	}
 
 	query := `
-	SELECT  pipeline_stage_R.id as stage_id, pipeline_stage_R.pipeline_id, pipeline_stage_R.name, pipeline_stage_R.last_modified, 
-			pipeline_stage_R.build_order, pipeline_stage_R.enabled, pipeline_stage_R.parameter, 
+	SELECT  pipeline_stage_R.id as stage_id, pipeline_stage_R.pipeline_id, pipeline_stage_R.name, pipeline_stage_R.last_modified,
+			pipeline_stage_R.build_order, pipeline_stage_R.enabled, pipeline_stage_R.parameter,
 			pipeline_stage_R.expected_value, pipeline_action_R.id as pipeline_action_id, pipeline_action_R.action_id, pipeline_action_R.action_last_modified,
 			pipeline_action_R.action_args, pipeline_action_R.action_enabled
 	FROM (
-		SELECT  pipeline_stage.id, pipeline_stage.pipeline_id, 
-				pipeline_stage.name, pipeline_stage.last_modified ,pipeline_stage.build_order, 
-				pipeline_stage.enabled, 
+		SELECT  pipeline_stage.id, pipeline_stage.pipeline_id,
+				pipeline_stage.name, pipeline_stage.last_modified ,pipeline_stage.build_order,
+				pipeline_stage.enabled,
 				pipeline_stage_prerequisite.parameter, pipeline_stage_prerequisite.expected_value
 		FROM pipeline_stage
 		LEFT OUTER JOIN pipeline_stage_prerequisite ON pipeline_stage.id = pipeline_stage_prerequisite.pipeline_stage_id
 		WHERE pipeline_id = $1
 	) as pipeline_stage_R
 	LEFT OUTER JOIN (
-		SELECT  pipeline_action.id, action.id as action_id, action.name as action_name, action.last_modified as action_last_modified, 
-				pipeline_action.args as action_args, pipeline_action.enabled as action_enabled, 
+		SELECT  pipeline_action.id, action.id as action_id, action.name as action_name, action.last_modified as action_last_modified,
+				pipeline_action.args as action_args, pipeline_action.enabled as action_enabled,
 				pipeline_action.pipeline_stage_id
 		FROM action
 		JOIN pipeline_action ON pipeline_action.action_id = action.id
@@ -420,33 +420,23 @@ func DeleteAllStage(db gorp.SqlExecutor, pipelineID int64, userID int64) error {
 }
 
 // MoveStage Move a stage
-func MoveStage(db *gorp.DbMap, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pipeline) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
+func MoveStage(db gorp.SqlExecutor, stageToMove *sdk.Stage, newBuildOrder int, p *sdk.Pipeline) error {
 
 	if stageToMove.BuildOrder > newBuildOrder {
-		if err := moveUpStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
+		if err := moveUpStages(db, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
 			return err
 		}
 	} else if stageToMove.BuildOrder < newBuildOrder {
-		if err := moveDownStages(tx, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
+		if err := moveDownStages(db, stageToMove.PipelineID, stageToMove.BuildOrder, newBuildOrder); err != nil {
 			return err
 		}
 	}
 
 	stageToMove.BuildOrder = newBuildOrder
-	if err := UpdateStage(tx, stageToMove); err != nil {
+	if err := UpdateStage(db, stageToMove); err != nil {
 		return err
 	}
-
-	if err := UpdatePipelineLastModified(tx, p); err != nil {
-		return err
-	}
-
-	return tx.Commit()
+	return nil
 }
 
 func moveUpStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosition int) error {
@@ -471,7 +461,8 @@ func moveDownStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosit
 
 // CheckPrerequisites verifies that all prerequisite are matched before scheduling
 func CheckPrerequisites(s sdk.Stage, pb *sdk.PipelineBuild) (bool, error) {
-	for {
+	loopEscape := 0
+	for loopEscape < 10 {
 		replaced := false
 		// Now for each trigger parameter
 		for _, pbp := range pb.Parameters {
@@ -488,6 +479,7 @@ func CheckPrerequisites(s sdk.Stage, pb *sdk.PipelineBuild) (bool, error) {
 		if !replaced {
 			break
 		}
+		loopEscape++
 	}
 
 	// Check conditions
@@ -502,6 +494,12 @@ func CheckPrerequisites(s sdk.Stage, pb *sdk.PipelineBuild) (bool, error) {
 			if param == pbp.Name {
 				//Process expected value as in triggers
 				var expectedValue = trigger.ProcessTriggerExpectedValue(p.ExpectedValue, pb)
+				var not bool
+				if strings.HasPrefix(expectedValue, "not ") {
+					expectedValue = strings.Replace(expectedValue, "not ", "", 1)
+					not = true
+				}
+
 				//Checking regular expression
 				if !strings.HasPrefix(expectedValue, "^") {
 					expectedValue = "^" + expectedValue
@@ -515,7 +513,7 @@ func CheckPrerequisites(s sdk.Stage, pb *sdk.PipelineBuild) (bool, error) {
 					log.Warning("CheckPrerequisites> Cannot eval regexp '%s': %s", p.ExpectedValue, err)
 					return false, fmt.Errorf("CheckPrerequisites> %s", err)
 				}
-				if !ok {
+				if (!not && !ok) || (not && ok) {
 					log.Debug("CheckPrerequisites> Expected '%s', got '%s'\n", p.ExpectedValue, pbp.Value)
 					return false, nil
 				}

@@ -41,19 +41,24 @@
 
 
                                         <div class="field" *ngIf="typeofCreation === 'template' && selectedTemplate.name !== ''">
-                                            <sm-select (modelChange)="updateSelectedTemplateToUse($event)" [model]="selectedTemplate.name">
+                                            <sm-select
+                                                [model]="selectedTemplate.name"
+                                                [options]="{'fullTextSearch': true}"
+                                                (modelChange)="updateSelectedTemplateToUse($event)">
                                                 <option *ngFor="let t of templates" value="{{t.name}}">{{t.name}}</option>
                                             </sm-select>
                                         </div>
                                         <div class="field" *ngIf="typeofCreation === 'clone'">
-                                            <sm-select (modelChange)="updateSelectedApplicationToClone($event)">
-                                                <option *ngFor="let app of project.applications" value="{{app.name}}">{{app.name}}</option>
+                                            <sm-select [options]="{'fullTextSearch': true}"
+                                                [model]="selectedApplicationName"
+                                                (modelChange)="updateSelectedApplicationToClone($event)">
+                                                <option *ngFor="let app of project.applications" [value]="app.name">{{app.name}}</option>
                                             </sm-select>
                                         </div>
 
 
                                         <div class="field" *ngIf="parameters && parameters.length > 0">
-                                            <app-parameter-list [parameters]="parameters" mode="launcher"></app-parameter-list>
+                                            <app-parameter-list [parameters]="parameters" mode="launcher" [project]="project" [suggest]="suggestion"></app-parameter-list>
                                         </div>
                                         <div class="field" *ngIf="variables && variables.length > 0">
                                             <app-variable [variables]="variables" mode="launcher"></app-variable>
@@ -90,5 +95,3 @@
 <ng-template #loadTemplate>
     <div class="ui text active loader">Loading CDS templates...</div>
 </ng-template>
-
-

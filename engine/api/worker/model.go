@@ -2,13 +2,40 @@ package worker
 
 import (
 	"database/sql"
+	"fmt"
+	"sort"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
+
+const columns = `
+	worker_model.id,
+	worker_model.type,
+	worker_model.name,
+	worker_model.image,
+	worker_model.group_id,
+	worker_model.last_registration,
+	worker_model.need_registration,
+	worker_model.disabled,
+	worker_model.template,
+	worker_model.communication,
+	worker_model.run_script,
+	worker_model.provision,
+	worker_model.user_last_modified,
+	worker_model.last_spawn_err,
+	worker_model.nb_spawn_err,
+	worker_model.date_last_spawn_err,
+	"group".name as groupname`
+
+type dbResultWMS struct {
+	WorkerModel
+	GroupName string `db:"groupname"`
+}
 
 // InsertWorkerModel insert a new worker model in database
 func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
@@ -20,8 +47,12 @@ func InsertWorkerModel(db gorp.SqlExecutor, model *sdk.Model) error {
 	return nil
 }
 
-// UpdateWorkerModel update a worker model
+// UpdateWorkerModel update a worker model. If worker model have SpawnErr -> clear them
 func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
+	model.UserLastModified = time.Now()
+	model.NeedRegistration = true
+	model.NbSpawnErr = 0
+	model.LastSpawnErr = ""
 	dbmodel := WorkerModel(model)
 	if _, err := db.Update(&dbmodel); err != nil {
 		return err
@@ -31,82 +62,86 @@ func UpdateWorkerModel(db gorp.SqlExecutor, model sdk.Model) error {
 
 // LoadWorkerModels retrieves models from database
 func LoadWorkerModels(db gorp.SqlExecutor) ([]sdk.Model, error) {
-	ms := []WorkerModel{}
-	if _, err := db.Select(&ms, "select * from worker_model order by name"); err != nil {
-		log.Warning("LoadWorkerModels> Unable to load worker models : %T %s", err, err)
+	wms := []dbResultWMS{}
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id order by worker_model.name`, columns)
+	if _, err := db.Select(&wms, query); err != nil {
+		return nil, sdk.WrapError(err, "LoadAllWorkerModels> ")
+	}
+	return scanWorkerModels(db, wms)
+}
+
+// loadWorkerModel retrieves a specific worker model in database
+func loadWorkerModel(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Model, error) {
+	wms := []dbResultWMS{}
+	if _, err := db.Select(&wms, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNoWorkerModel
+		}
 		return nil, err
 	}
-	models := []sdk.Model{}
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
-			return nil, err
-		}
-		models = append(models, sdk.Model(ms[i]))
+	if len(wms) == 0 {
+		return nil, sdk.ErrNoWorkerModel
 	}
-	return models, nil
+	r, err := scanWorkerModels(db, wms)
+	if err != nil {
+		return nil, err
+	}
+	if len(r) != 1 {
+		return nil, fmt.Errorf("worker model not unique")
+	}
+	return &r[0], nil
 }
 
 // LoadWorkerModelByName retrieves a specific worker model in database
 func LoadWorkerModelByName(db gorp.SqlExecutor, name string) (*sdk.Model, error) {
-	m := WorkerModel(sdk.Model{})
-	if err := db.SelectOne(&m, "select * from worker_model where name = $1", name); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoWorkerModel
-		}
-		return nil, err
-	}
-	if err := m.PostSelect(db); err != nil {
-		return nil, err
-	}
-
-	model := sdk.Model(m)
-	return &model, nil
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.name = $1`, columns)
+	return loadWorkerModel(db, query, name)
 }
 
 // LoadWorkerModelByID retrieves a specific worker model in database
 func LoadWorkerModelByID(db gorp.SqlExecutor, ID int64) (*sdk.Model, error) {
-	m := WorkerModel(sdk.Model{})
-	if err := db.SelectOne(&m, "select * from worker_model where id = $1", ID); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrNoWorkerModel
-		}
-		return nil, err
-	}
-	if err := m.PostSelect(db); err != nil {
-		return nil, err
-	}
-	model := sdk.Model(m)
-	return &model, nil
+	query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id and worker_model.id = $1`, columns)
+	return loadWorkerModel(db, query, ID)
 }
 
 // LoadWorkerModelsByUser returns worker models list according to user's groups
 func LoadWorkerModelsByUser(db gorp.SqlExecutor, user *sdk.User) ([]sdk.Model, error) {
-	ms := []WorkerModel{}
+	wms := []dbResultWMS{}
 	if user.Admin {
-		query := `	select * from worker_model`
-		if _, err := db.Select(&ms, query); err != nil {
-			return nil, err
+		query := fmt.Sprintf(`select %s from worker_model JOIN "group" on worker_model.group_id = "group".id`, columns)
+		if _, err := db.Select(&wms, query); err != nil {
+			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for admin")
 		}
 	} else {
-		query := `	select *
+		query := fmt.Sprintf(`select %s
 					from worker_model
+					JOIN "group" on worker_model.group_id = "group".id
 					where group_id in (select group_id from group_user where user_id = $1)
 					union
-					select * from worker_model
-					where group_id = $2
-					order by name`
-		if _, err := db.Select(&ms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
-			return nil, err
+					select %s from worker_model
+					JOIN "group" on worker_model.group_id = "group".id
+					where group_id = $2`, columns, columns)
+		if _, err := db.Select(&wms, query, user.ID, group.SharedInfraGroup.ID); err != nil {
+			return nil, sdk.WrapError(err, "LoadWorkerModelsByUser> for user")
 		}
 	}
+	return scanWorkerModels(db, wms)
+}
 
+func scanWorkerModels(db gorp.SqlExecutor, rows []dbResultWMS) ([]sdk.Model, error) {
 	models := []sdk.Model{}
-	for i := range ms {
-		if err := ms[i].PostSelect(db); err != nil {
+	for _, row := range rows {
+		m := row.WorkerModel
+		m.Group = sdk.Group{ID: m.GroupID, Name: row.GroupName}
+		if err := m.PostSelect(db); err != nil {
 			return nil, err
 		}
-		models = append(models, sdk.Model(ms[i]))
+		models = append(models, sdk.Model(m))
 	}
+	// as we can't use order by name with sql union without alias, sort models here
+	sort.Slice(models, func(i, j int) bool {
+		return models[i].Name <= models[j].Name
+	})
 	return models, nil
 }
 
@@ -144,39 +179,71 @@ func LoadWorkerModelCapabilities(db gorp.SqlExecutor, workerID int64) ([]sdk.Req
 	return capas, nil
 }
 
-// DeleteWorkerModelCapability removes a capability from existing worker model
-func DeleteWorkerModelCapability(db gorp.SqlExecutor, workerID int64, capaName string) error {
-	query := `DELETE FROM worker_capability WHERE worker_model_id = $1 AND name = $2`
-
-	res, err := db.Exec(query, workerID, capaName)
-	if err != nil {
-		return err
+// ComputeRegistrationNeeds checks if worker models need to be register
+// if requirements contains "binary" type: all workers model need to be registered again by
+// setting flag need_registration to true in DB.
+func ComputeRegistrationNeeds(db gorp.SqlExecutor, allBinaryReqs []sdk.Requirement, reqs []sdk.Requirement) error {
+	log.Debug("ComputeRegistrationNeeds>")
+	for _, r := range reqs {
+		if r.Type == sdk.BinaryRequirement {
+			exist := false
+			for _, e := range allBinaryReqs {
+				if e.Value == r.Value {
+					exist = true
+					break
+				}
+			}
+			if !exist {
+				return updateAllToNeedRegistration(db)
+			}
+		}
 	}
-
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows <= 0 {
-		return sdk.ErrNoWorkerModelCapa
-	}
-
 	return nil
 }
 
-// UpdateWorkerModelCapability update a worker model capability
-func UpdateWorkerModelCapability(db gorp.SqlExecutor, capa sdk.Requirement, modelID int64) error {
-	query := `UPDATE worker_capability SET type=$1, argument=$2 WHERE worker_model_id = $3 AND name = $4`
-	res, err := db.Exec(query, string(capa.Type), capa.Value, modelID, capa.Name)
+func updateAllToNeedRegistration(db gorp.SqlExecutor) error {
+	query := `UPDATE worker_model SET need_registration = $1`
+	res, err := db.Exec(query, true)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "updateAllToNeedRegistration>")
 	}
+
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "updateAllToNeedRegistration>")
 	}
-	if rows <= 0 {
-		return sdk.ErrNoWorkerModelCapa
+	log.Debug("updateAllToNeedRegistration> %d worker model(s) need registration", rows)
+	return nil
+}
+
+// UpdateSpawnErrorWorkerModel updates worker model error registration
+func UpdateSpawnErrorWorkerModel(db gorp.SqlExecutor, modelID int64, info string) error {
+	query := `UPDATE worker_model SET nb_spawn_err=nb_spawn_err+1, last_spawn_err=$1, date_last_spawn_err=$2 WHERE id = $3`
+	res, err := db.Exec(query, info, time.Now(), modelID)
+	if err != nil {
+		return sdk.WrapError(err, "UpdateSpawnErrorWorkerModel>")
 	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return sdk.WrapError(err, "UpdateSpawnErrorWorkerModel>")
+	}
+	log.Debug("UpdateSpawnErrorWorkerModel> %d worker model updated", rows)
+	return nil
+}
+
+// updateRegistration updates need_registration to false and last_registration time, reset err registration
+func updateRegistration(db gorp.SqlExecutor, modelID int64) error {
+	query := `UPDATE worker_model SET need_registration=$1, last_registration = $2, nb_spawn_err=$3, last_spawn_err=$4 WHERE id = $5`
+	res, err := db.Exec(query, false, time.Now(), 0, "", modelID)
+	if err != nil {
+		return sdk.WrapError(err, "updateRegistration>")
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return sdk.WrapError(err, "updateRegistration>")
+	}
+	log.Debug("updateRegistration> %d worker model updated", rows)
 	return nil
 }

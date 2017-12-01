@@ -4,7 +4,7 @@ import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {ActivatedRoute, Router} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Injector} from '@angular/core';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {PipelineService} from '../../../../service/pipeline/pipeline.service';
@@ -15,6 +15,7 @@ import {SharedModule} from '../../../../shared/shared.module';
 import {PipelineAdminComponent} from './pipeline.admin.component';
 import {Project} from '../../../../model/project.model';
 import {Pipeline} from '../../../../model/pipeline.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Pipeline Admin Component', () => {
 
@@ -25,6 +26,7 @@ describe('CDS: Pipeline Admin Component', () => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
+                MockBackend,
                 {provide: XHRBackend, useClass: MockBackend},
                 PipelineService,
                 PipelineStore,
@@ -38,12 +40,13 @@ describe('CDS: Pipeline Admin Component', () => {
             imports: [
                 PipelineModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
     });
 
     afterEach(() => {

@@ -1,0 +1,42 @@
+@import '../../../../common';
+#WorkflowShow {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  height: 100%;
+  .over {
+    z-index: 1;
+    background: white;
+  }
+  .scrollingContent {
+    overflow-x: auto;
+
+    .paddingContent {
+      padding: 0;
+      .viewContent {
+        #WorkflowShowGraph {
+          margin-top: -35px;
+
+          .winfo{
+            z-index: 1;
+          }
+
+          .cardinfo {
+            border-radius: 0 0 0.28571429rem 0.28571429rem;
+          }
+
+          .center {
+            text-align: center;
+          }
+
+          .graph {
+            margin-top: 10px;
+          }
+        }
+        .padded {
+          padding: 0 100px 0 100px;
+        }
+      }
+    }
+  }
+}

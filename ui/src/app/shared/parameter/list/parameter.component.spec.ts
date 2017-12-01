@@ -1,22 +1,20 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed, tick, fakeAsync, inject} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {Injector} from '@angular/core';
 import {SharedModule} from '../../shared.module';
 import {ParameterService} from '../../../service/parameter/parameter.service';
 import {ParameterListComponent} from './parameter.component';
 import {Parameter} from '../../../model/parameter.model';
 import {ParameterEvent} from '../parameter.event.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: Parameter List Component', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -25,40 +23,32 @@ describe('CDS: Parameter List Component', () => {
             providers: [
                 ParameterService,
                 TranslateService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
                 RepoManagerService,
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
     it('should load component + update description', fakeAsync( () => {
-        // Mock Http request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '["string", "password"]'})));
-        });
+        const http = TestBed.get(HttpTestingController);
+
+        let typeMock = ['string', 'password'];
 
         // Create component
         let fixture = TestBed.createComponent(ParameterListComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        expect(backend.connectionsArray[0].request.url).toBe('/parameter/type', 'Component must load parameter type');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/parameter/type';
+        })).flush(typeMock);
 
         let params: Parameter[] = [];
         let p: Parameter = new Parameter();
@@ -87,6 +77,8 @@ describe('CDS: Parameter List Component', () => {
         expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(
             new ParameterEvent('delete', fixture.componentInstance.parameters[0])
         );
+
+        http.verify();
     }));
 });
 

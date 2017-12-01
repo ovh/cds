@@ -2,6 +2,7 @@ package worker
 
 import (
 	"testing"
+	"time"
 
 	"github.com/go-gorp/gorp"
 	"github.com/stretchr/testify/assert"
@@ -58,6 +59,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 				Value: "capa_1",
 			},
 		},
+		UserLastModified: time.Now(),
 	}
 
 	if err := InsertWorkerModel(db, &m); err != nil {
@@ -69,7 +71,7 @@ func insertWorkerModel(t *testing.T, db gorp.SqlExecutor, name string, groupID i
 }
 
 func TestInsertWorkerModel(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -80,9 +82,16 @@ func TestInsertWorkerModel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Cannot load worker model: %s", err)
 	}
+	m1.Group = sdk.Group{}
+
+	// lastregistration is LOCALTIMESTAMP (at sql insert)
+	// set it manually to allow use EqualValues on others fields
+	m.LastRegistration = m1.LastRegistration
+	m.UserLastModified = m1.UserLastModified
+
 	assert.EqualValues(t, m, m1)
 
-	s := test.RandomString(t, 10)
+	s := sdk.RandomString(10)
 	_, hash, _ := user.GeneratePassword()
 	u := &sdk.User{
 		Admin:    false,
@@ -103,11 +112,17 @@ func TestInsertWorkerModel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Cannot load worker model by user: %s", err)
 	}
-	assert.EqualValues(t, []sdk.Model{*m}, m3)
+	m3u := m3[0]
+	m3u.Group = sdk.Group{}
+
+	m.UserLastModified = m3u.UserLastModified
+	m.LastRegistration = m3u.LastRegistration
+
+	assert.EqualValues(t, *m, m3u)
 }
 
 func TestLoadWorkerModel(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g, err := group.LoadGroup(db, "shared.infra")
@@ -123,10 +138,13 @@ func TestLoadWorkerModel(t *testing.T) {
 	}
 	assert.NotNil(t, m)
 	assert.Equal(t, sdk.Docker, m.Type)
+
+	_, errNotExist := LoadWorkerModelByName(db, "NotExisting")
+	assert.Equal(t, errNotExist, sdk.ErrNoWorkerModel)
 }
 
 func TestLoadWorkerModels(t *testing.T) {
-	db := test.SetupPG(t)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)
@@ -151,7 +169,7 @@ func TestLoadWorkerModels(t *testing.T) {
 }
 
 func TestLoadWorkerModelCapabilities(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g, err := group.LoadGroup(db, "shared.infra")
@@ -168,7 +186,7 @@ func TestLoadWorkerModelCapabilities(t *testing.T) {
 }
 
 func TestUpdateWorkerModel(t *testing.T) {
-	db := test.SetupPG(t)
+	db, _ := test.SetupPG(t, bootstrap.InitiliazeDB)
 	deleteAllWorkerModel(t, db)
 
 	g := insertGroup(t, db)

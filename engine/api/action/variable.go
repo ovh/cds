@@ -70,9 +70,6 @@ func ProcessActionBuildVariables(projectVariables []sdk.Variable, appVariables [
 		for i := range abv {
 			// Replace possible variable with its value
 			for _, v := range abv {
-				/*if v.Type == sdk.PasswordParameter {
-					continue
-				}*/
 				newValue := abv[i]
 				newValue.Value = strings.Replace(newValue.Value, "{{."+v.Name+"}}", v.Value, -1)
 				if abv[i].Value != newValue.Value {

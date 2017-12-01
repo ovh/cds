@@ -4,7 +4,7 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {Injector} from '@angular/core';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {SharedModule} from '../../../shared/shared.module';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {PipelineRunWorkflowComponent} from './workflow.component';
 import {PipelineBuild, PipelineBuildJob} from '../../../model/pipeline.model';
@@ -12,6 +12,9 @@ import {Stage} from '../../../model/stage.model';
 import {Job} from '../../../model/job.model';
 import {Action} from '../../../model/action.model';
 import {ApplicationRunModule} from '../application.run.module';
+import {NotificationService} from '../../../service/notification/notification.service';
+import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Pipeline Run Workflow', () => {
 
@@ -24,11 +27,14 @@ describe('CDS: Pipeline Run Workflow', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
+                NotificationService,
+                ApplicationPipelineService
             ],
             imports: [
                 ApplicationRunModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
@@ -59,7 +65,7 @@ describe('CDS: Pipeline Run Workflow', () => {
         expect(compiled.querySelectorAll('.ban.grey.icon').length).toBe(2);
         expect(compiled.querySelectorAll('.check.green.icon').length).toBe(1);
         expect(compiled.querySelectorAll('.remove.red.icon').length).toBe(1);
-        expect(compiled.querySelectorAll('.wait.orange.icon').length).toBe(1);
+        expect(compiled.querySelectorAll('.wait.blue.icon').length).toBe(1);
         expect(compiled.querySelectorAll('.ui.small.active.inline.blue.loader').length).toBe(1);
 
 

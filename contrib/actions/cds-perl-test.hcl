@@ -22,8 +22,13 @@ requirements = {
 parameters = {
 	 "testDirectory" = {
 		type = "string"
-		description = "Directory where is Perl Source Code"
+		description = "Directory in which prove will be launched"
 		value = "./src"
+	}
+	 "proveOptions" = {
+		type = "string"
+		description = "Options passed to prove"
+		value = "-r --timer"
 	}
 }
 
@@ -36,16 +41,16 @@ set -e
 
 cd {{.testDirectory}}
 mkdir -p results
-prove -r --timer --formatter=TAP::Formatter::JUnit > results/resultsUnitsTests.xml
+prove --formatter=TAP::Formatter::JUnit {{.proveOptions}} > results/resultsUnitsTests.xml
 
 EOF
 	}, {
-		final = true
+		always_executed = true
 		artifactUpload = {
 				path = "{{.testDirectory}}/results/resultsUnitsTests.xml"
 				tag = "{{.cds.version}}"
 	  }
 	}, {
-		final = true
+		always_executed = true
 		jUnitReport = "{{.testDirectory}}/results/resultsUnitsTests.xml"
 	}]

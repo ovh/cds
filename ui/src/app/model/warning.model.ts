@@ -4,25 +4,18 @@ import {Application} from './application.model';
 import {Environment} from './environment.model';
 import {Pipeline} from './pipeline.model';
 
-export class WarningsUI {
-    [key: string]: WarningUI;
-}
-
 export class WarningUI {
-    pipelines: WarningsPipeline;
-    applications: WarningsApplication;
-    environments: WarningsEnvironment; // Not implemented
+    pipelines: Map<string, WarningPipeline>;
+    applications: Map<string, WarningApplication>;
+    environments: Map<string, WarningEnvironment>; // Not implemented
     variables: WarningAPI[]; // Not implemented
 
     constructor() {
-        this.pipelines = new WarningsPipeline();
-        this.applications = new WarningsApplication();
-        this.environments = new WarningsEnvironment();
+        this.pipelines = new Map<string, WarningPipeline>();
+        this.applications = new Map<string, WarningApplication>();
+        this.environments = new Map<string, WarningEnvironment>();
+        this.variables = new Array<WarningAPI>();
     }
-}
-
-export class WarningsPipeline {
-    [name: string]: WarningPipeline;
 }
 
 export class WarningPipeline {
@@ -35,10 +28,6 @@ export class WarningPipeline {
     }
 }
 
-export class WarningsApplication {
-    [name: string]: WarningApplication;
-}
-
 export class WarningApplication {
     variables: WarningAPI[]; // Not implemented
     actions: WarningAPI[];
@@ -47,10 +36,6 @@ export class WarningApplication {
         this.variables = [];
         this.actions = [];
     }
-}
-
-export class WarningsEnvironment {
-    [name: string]: WarningEnvironment;
 }
 
 export class WarningEnvironment {
@@ -75,4 +60,4 @@ export class WarningAPI {
 
 export interface MessageParams {
     [key: string]: string;
-};
+}

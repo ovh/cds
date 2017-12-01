@@ -3,7 +3,6 @@
 import {TestBed, fakeAsync, tick, getTestBed} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {Injector} from '@angular/core';
 import {ActionStepFormComponent} from './step.form.component';
@@ -14,10 +13,9 @@ import {Action} from '../../../../model/action.model';
 import {StepEvent} from '../step.event';
 
 
-describe('CDS: Action Component', () => {
+describe('CDS: Step Form Component', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -27,7 +25,6 @@ describe('CDS: Action Component', () => {
                 SharedService,
                 TranslateService,
                 ParameterService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser
             ],
@@ -38,12 +35,10 @@ describe('CDS: Action Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
     });
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
     });
 
 
@@ -55,7 +50,7 @@ describe('CDS: Action Component', () => {
 
 
         let step = new Action();
-        step.final = true;
+        step.always_executed = true;
         fixture.componentInstance.step = step;
         fixture.componentInstance.publicActions = new Array<Action>();
         let a = new Action();
@@ -69,8 +64,18 @@ describe('CDS: Action Component', () => {
 
 
         let compiled = fixture.debugElement.nativeElement;
-        expect(compiled.querySelector('.ui.blue.button')).toBeTruthy('Add button must be displayed');
-        compiled.querySelector('.ui.blue.button').click();
+        expect(compiled.querySelector('.ui.fluid.blue.button')).toBeTruthy('Add button must be displayed');
+        compiled.querySelector('.ui.fluid.blue.button').click();
+
+        fixture.detectChanges();
+        tick(50);
+
+        expect(fixture.componentInstance.create.emit).toHaveBeenCalledWith(
+            new StepEvent('displayChoice', null)
+        );
+
+        expect(compiled.querySelector('.ui.green.button')).toBeTruthy('Add green button must be displayed');
+        compiled.querySelector('.ui.green.button').click();
 
         fixture.detectChanges();
         tick(50);
@@ -78,8 +83,5 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.create.emit).toHaveBeenCalledWith(
             new StepEvent('add', fixture.componentInstance.step)
         );
-
-
     }));
 });
-

@@ -1,0 +1,22 @@
+<div id="settings-sidebar" class="ui vertical menu">
+  <a href="#" class="item" [routerLink]="['user', currentUser.username]">
+    <h4 class="ui header"><i class="child layout icon"></i></h4>
+    <h4>{{ 'navbar_profile' | translate }}</h4>
+  </a>
+  <a href="#" class="item" [routerLink]="['action']">
+    <h4 class="ui header"><i class="cubes layout icon"></i></h4>
+    <h4>{{ 'navbar_actions' | translate }}</h4>
+  </a>
+  <a href="#" class="item" [routerLink]="['user']" *ngIf="currentUser.admin">
+    <h4 class="ui header"><i class="user layout icon"></i></h4>
+    <h4>{{ 'navbar_users' | translate }}</h4>
+  </a>
+  <a href="#" class="item" [routerLink]="['group']">
+    <h4 class="ui header"><i class="users layout icon"></i></h4>
+    <h4>{{ 'navbar_groups' | translate }}</h4>
+  </a>
+  <a href="#" class="item" [routerLink]="['worker-model']">
+    <h4 class="ui header"><i class="wrench layout icon"></i></h4>
+    <h4>{{ 'navbar_worker_models' | translate }}</h4>
+  </a>
+</div>

@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"bytes"
@@ -9,10 +9,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -20,27 +18,24 @@ import (
 )
 
 func TestAddJobHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddJobHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -49,7 +44,7 @@ func TestAddJobHandler(t *testing.T) {
 		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
-	test.NoError(t, pipeline.InsertStage(db, stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
 	assert.NotZero(t, stage.ID)
 
 	// 5. Prepare the request
@@ -69,7 +64,7 @@ func TestAddJobHandler(t *testing.T) {
 		"stageID":         strconv.FormatInt(stage.ID, 10),
 	}
 
-	uri := router.getRoute("POST", addJobToStageHandler, vars)
+	uri := router.GetRoute("POST", api.addJobToStageHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("POST", uri, body)
@@ -77,7 +72,7 @@ func TestAddJobHandler(t *testing.T) {
 
 	//6. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -89,27 +84,24 @@ func TestAddJobHandler(t *testing.T) {
 }
 
 func TestUpdateJobHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateJobHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -118,7 +110,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
-	test.NoError(t, pipeline.InsertStage(db, stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
 
 	//5. Prepare the request
 	job := &sdk.Job{
@@ -129,7 +121,7 @@ func TestUpdateJobHandler(t *testing.T) {
 			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(db, job, stage.ID, pip))
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
@@ -153,7 +145,7 @@ func TestUpdateJobHandler(t *testing.T) {
 		"jobID":           strconv.FormatInt(job.PipelineActionID, 10),
 	}
 
-	uri := router.getRoute("PUT", updateJobHandler, vars)
+	uri := router.GetRoute("PUT", api.updateJobHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("PUT", uri, body)
@@ -161,7 +153,7 @@ func TestUpdateJobHandler(t *testing.T) {
 
 	//7. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -173,27 +165,24 @@ func TestUpdateJobHandler(t *testing.T) {
 }
 
 func TestDeleteJobHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteJobHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, u))
 
 	//4. Add Stage
 	stage := &sdk.Stage{
@@ -202,7 +191,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		Name:       "Stage1",
 		PipelineID: pip.ID,
 	}
-	test.NoError(t, pipeline.InsertStage(db, stage))
+	test.NoError(t, pipeline.InsertStage(api.mustDB(), stage))
 
 	//5. Prepare the request
 	job := &sdk.Job{
@@ -210,10 +199,10 @@ func TestDeleteJobHandler(t *testing.T) {
 		PipelineStageID: stage.ID,
 		Action: sdk.Action{
 			Enabled: true,
-			Name: "myJob",
+			Name:    "myJob",
 		},
 	}
-	test.NoError(t, pipeline.InsertJob(db, job, stage.ID, pip))
+	test.NoError(t, pipeline.InsertJob(api.mustDB(), job, stage.ID, pip))
 	assert.NotZero(t, job.PipelineActionID)
 	assert.NotZero(t, job.Action.ID)
 
@@ -224,7 +213,7 @@ func TestDeleteJobHandler(t *testing.T) {
 		"jobID":           strconv.FormatInt(job.PipelineActionID, 10),
 	}
 
-	uri := router.getRoute("DELETE", deleteJobHandler, vars)
+	uri := router.GetRoute("DELETE", api.deleteJobHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("DELETE", uri, nil)
@@ -232,7 +221,7 @@ func TestDeleteJobHandler(t *testing.T) {
 
 	//7. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)

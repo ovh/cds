@@ -10,13 +10,10 @@ DEPS=$(shell go list -f '{{range .TestImports}}{{.}} {{end}}' ./...)
 PACKAGES=$(shell go list ./...)
 VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods -nilfunc -printf -rangeloops -shift -structtags -unsafeptr
 
-.PHONY: test examples authors changelog check-format
+.PHONY: test examples changelog check-format coverage cover
 
 build:
 	go build
-
-authors:
-	git log --format='%aN <%aE>' | sort -u > AUTHORS
 
 deps:
 	@echo "--> Installing build dependencies"
@@ -39,6 +36,10 @@ vet:
 cover:
 	@echo "--> Running go test --cover"
 	@go test --cover
+
+coverage:
+	@echo "--> Running go coverage"
+	@go test -covermode=count -coverprofile=coverage
 
 format:
 	@echo "--> Running go fmt"

@@ -29,10 +29,11 @@ type Store interface {
 	Exists(SessionKey) (bool, error)
 	Get(SessionKey, string, interface{}) error
 	Set(SessionKey, string, interface{}) error
+	Delete(SessionKey) error
 }
 
 //Options is a struct to switch from in memory to redis session store
 type Options struct {
-	Mode, RedisHost, RedisPassword string
-	TTL                            int
+	RedisHost, RedisPassword string
+	TTL                      int
 }

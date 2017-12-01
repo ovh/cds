@@ -1,30 +1,27 @@
-package main
+package api
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/action"
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/auth"
-	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/template"
 	"github.com/ovh/cds/engine/api/templateextension"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.TemplateExtension, []sdk.TemplateParam, io.ReadCloser, func(), error) {
@@ -82,348 +79,286 @@ func fileUploadAndGetTemplate(w http.ResponseWriter, r *http.Request) (*sdk.Temp
 	return ap, params, content, deferFunc, nil
 }
 
-func getTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	tmpls, err := templateextension.All(db)
-	if err != nil {
-		log.Warning("getTemplatesHandler>%T %s", err, err)
-		return err
-
-	}
-	return WriteJSON(w, r, tmpls, http.StatusOK)
-}
-
-func addTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	//Upload file and get as a template object
-	templ, params, file, deferFunc, err := fileUploadAndGetTemplate(w, r)
-	if deferFunc != nil {
-		defer deferFunc()
-	}
-	if err != nil {
-		log.Warning("addTemplateHandler>%T %s", err, err)
-		return err
-
-	}
-	defer file.Close()
-
-	log.Debug("Uploaded template %s", templ.Identifier)
-	log.Debug("Template params %v", params)
-
-	//Check actions
-	for _, a := range templ.Actions {
-		log.Debug("Checking action %s", a)
-		pa, err := action.LoadPublicAction(db, a)
+func (api *API) getTemplatesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		tmpls, err := templateextension.All(api.mustDB())
 		if err != nil {
-			return err
-
+			return sdk.WrapError(err, "getTemplatesHandler>%T", err)
 		}
-		if pa == nil {
-			return sdk.ErrNoAction
-		}
+		return WriteJSON(w, r, tmpls, http.StatusOK)
 	}
-
-	//Upload to objectstore
-	objectpath, err := objectstore.StoreTemplateExtension(*templ, file)
-	if err != nil {
-		log.Warning("addTemplateHandler>%T %s", err, err)
-		return err
-	}
-
-	//Set the objectpath in the template
-	templ.ObjectPath = objectpath
-
-	//Insert in database
-	if err := templateextension.Insert(db, templ); err != nil {
-		log.Warning("addTemplateHandler>%T %s", err, err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, templ, http.StatusOK)
 }
 
-func updateTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get id from URL
-	vars := mux.Vars(r)
-	sid := vars["id"]
+func (api *API) addTemplateHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		//Upload file and get as a template object
+		templ, params, file, deferFunc, errf := fileUploadAndGetTemplate(w, r)
+		if deferFunc != nil {
+			defer deferFunc()
+		}
+		if errf != nil {
+			return sdk.WrapError(errf, "addTemplateHandler>%T", errf)
+		}
+		defer file.Close()
 
-	if sid == "" {
-		return sdk.ErrWrongRequest
+		log.Debug("Uploaded template %s", templ.Identifier)
+		log.Debug("Template params %v", params)
 
-	}
+		//Check actions
+		for _, a := range templ.Actions {
+			log.Debug("Checking action %s", a)
+			pa, err := action.LoadPublicAction(api.mustDB(), a)
+			if err != nil {
+				return sdk.WrapError(err, "addTemplateHandler> err on loadPublicAction")
+			}
+			if pa == nil {
+				return sdk.ErrNoAction
+			}
+		}
 
-	//Get int from string
-	id, err := strconv.Atoi(sid)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
-	//Find it
-	templ, err := templateextension.LoadByID(db, int64(id))
-	if err != nil {
-		log.Warning("updateTemplateHandler>Unable to load template: %s", err)
-		return sdk.NewError(sdk.ErrNotFound, err)
-	}
-
-	//Store previous file from objectstore
-	tmpbuf, err := objectstore.FetchTemplateExtension(*templ)
-	if err != nil {
-		log.Warning("updateTemplateHandler>Unable to fetch template: %s", err)
-		return sdk.NewError(sdk.ErrPluginInvalid, err)
-	}
-	defer tmpbuf.Close()
-
-	//Read it
-	btes, err := ioutil.ReadAll(tmpbuf)
-	if err != nil {
-		log.Warning("updateTemplateHandler>%T %s", err, err)
-		return err
-
-	}
-
-	//Delete from storage
-	if err := objectstore.DeleteTemplateExtension(*templ); err != nil {
-		return err
-
-	}
-
-	//Upload file and get as a template object
-	templ2, params, file, deferFunc, err := fileUploadAndGetTemplate(w, r)
-	if deferFunc != nil {
-		defer deferFunc()
-	}
-	if err != nil {
-		log.Warning("addTemplateHandler>%T %s", err, err)
-		return err
-
-	}
-	defer file.Close()
-	templ2.ID = templ.ID
-
-	log.Debug("Uploaded template %s", templ2.Identifier)
-	log.Debug("Template params %v", params)
-
-	//Check actions
-	for _, a := range templ2.Actions {
-		log.Debug("updateTemplateHandler> Checking action %s", a)
-		pa, err := action.LoadPublicAction(db, a)
+		//Upload to objectstore
+		objectpath, err := objectstore.StoreTemplateExtension(*templ, file)
 		if err != nil {
+			return sdk.WrapError(err, "addTemplateHandler>%T", err)
+		}
+
+		//Set the objectpath in the template
+		templ.ObjectPath = objectpath
+
+		//Insert in database
+		if err := templateextension.Insert(api.mustDB(), templ); err != nil {
+			return sdk.WrapError(err, "addTemplateHandler>%T", err)
+		}
+
+		return WriteJSON(w, r, templ, http.StatusOK)
+	}
+}
+
+func (api *API) updateTemplateHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		id, errr := requestVarInt(r, "id")
+		if errr != nil {
+			return sdk.WrapError(errr, "updateTemplateHandler> Invalid id")
+		}
+
+		//Find it
+		templ, errLoad := templateextension.LoadByID(api.mustDB(), int64(id))
+		if errLoad != nil {
+			return sdk.WrapError(sdk.ErrNotFound, "updateTemplateHandler>Unable to load template: %s", errLoad)
+		}
+
+		//Store previous file from objectstore
+		tmpbuf, errFetch := objectstore.FetchTemplateExtension(*templ)
+		if errFetch != nil {
+			return sdk.WrapError(sdk.ErrPluginInvalid, "updateTemplateHandler>Unable to fetch template: %s", errFetch)
+		}
+		defer tmpbuf.Close()
+
+		//Read it
+		btes, errRead := ioutil.ReadAll(tmpbuf)
+		if errRead != nil {
+			return sdk.WrapError(errRead, "updateTemplateHandler>%T", errRead)
+		}
+
+		//Delete from storage
+		if err := objectstore.DeleteTemplateExtension(*templ); err != nil {
+			return sdk.WrapError(err, "updateTemplateHandler> error on DeleteTemplateExtension")
+		}
+
+		//Upload file and get as a template object
+		templ2, params, file, deferFunc, err := fileUploadAndGetTemplate(w, r)
+		if deferFunc != nil {
+			defer deferFunc()
+		}
+		if err != nil {
+			return sdk.WrapError(err, "addTemplateHandler>%T", err)
+		}
+
+		defer file.Close()
+		templ2.ID = templ.ID
+
+		log.Debug("Uploaded template %s", templ2.Identifier)
+		log.Debug("Template params %v", params)
+
+		//Check actions
+		for _, a := range templ2.Actions {
+			log.Debug("updateTemplateHandler> Checking action %s", a)
+			pa, errlp := action.LoadPublicAction(api.mustDB(), a)
+			if errlp != nil {
+				return sdk.WrapError(errlp, "updateTemplateHandler> error on loadPublicAction")
+			}
+			if pa == nil {
+				return sdk.ErrNoAction
+			}
+		}
+
+		//Upload to objectstore
+		objectpath, errStore := objectstore.StoreTemplateExtension(*templ2, file)
+		if errStore != nil {
+			return sdk.WrapError(errStore, "updateTemplateHandler>%T", errStore)
+		}
+
+		templ2.ObjectPath = objectpath
+
+		if errUpdate := templateextension.Update(api.mustDB(), templ2); errUpdate != nil {
+			//re-store the old file in case of error
+			if _, err := objectstore.StoreTemplateExtension(*templ2, ioutil.NopCloser(bytes.NewBuffer(btes))); err != nil {
+				return sdk.WrapError(err, "updateTemplateHandler> Error while uploading to object store %s", templ2.Name)
+			}
+
+			return sdk.WrapError(errUpdate, "updateTemplateHandler>%T", errUpdate)
+		}
+
+		return WriteJSON(w, r, templ2, http.StatusOK)
+	}
+}
+
+func (api *API) deleteTemplateHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		id, errr := requestVarInt(r, "id")
+		if errr != nil {
+			return sdk.WrapError(errr, "deleteTemplateHandler> Invalid id")
+		}
+
+		//Load it
+		templ, err := templateextension.LoadByID(api.mustDB(), int64(id))
+		if err != nil {
+			return sdk.WrapError(err, "deleteTemplateHandler> error on LoadByID")
+		}
+
+		//Delete it
+		if err := templateextension.Delete(api.mustDB(), templ); err != nil {
+			return sdk.WrapError(err, "deleteTemplateHandler> error on Delete")
+		}
+
+		//Delete from storage
+		if err := objectstore.DeleteTemplateExtension(*templ); err != nil {
+			return sdk.WrapError(err, "deleteTemplateHandler> error on DeleteTemplate")
+		}
+
+		//OK
+		return nil
+	}
+}
+
+func (api *API) getBuildTemplatesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		tpl, err := templateextension.LoadByType(api.mustDB(), "BUILD")
+		if err != nil {
+			return sdk.WrapError(err, "getBuildTemplatesHandler> error on loadByType")
+		}
+		return WriteJSON(w, r, tpl, http.StatusOK)
+	}
+}
+
+func (api *API) getDeployTemplatesHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		tpl, err := templateextension.LoadByType(api.mustDB(), "DEPLOY")
+		if err != nil {
+			return sdk.WrapError(err, "getDeployTemplatesHandler> error on loadByType")
+		}
+		return WriteJSON(w, r, tpl, http.StatusOK)
+	}
+}
+
+func (api *API) applyTemplateHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+
+		// Load the project
+		proj, errload := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx),
+			project.LoadOptions.Default,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithGroups)
+		if errload != nil {
+			return sdk.WrapError(errload, "applyTemplatesHandler> Cannot load project %s", projectKey)
+		}
+
+		// Parse body to sdk.ApplyTemplatesOptions
+		var opts sdk.ApplyTemplatesOptions
+		if err := UnmarshalBody(r, &opts); err != nil {
 			return err
 		}
-		if pa == nil {
-			return sdk.ErrNoAction
-		}
-	}
 
-	//Upload to objectstore
-	objectpath, err := objectstore.StoreTemplateExtension(*templ2, file)
-	if err != nil {
-		log.Warning("updateTemplateHandler>%T %s", err, err)
-		return err
-	}
-
-	templ2.ObjectPath = objectpath
-
-	if err := templateextension.Update(db, templ2); err != nil {
-		//re-store the old file in case of error
-		if _, err := objectstore.StoreTemplateExtension(*templ2, ioutil.NopCloser(bytes.NewBuffer(btes))); err != nil {
-			log.Warning("updateTemplateHandler> Error while uploading to object store %s: %s\n", templ2.Name, err)
-			return err
-
+		// Create a session for current user
+		sessionKey, errnew := auth.NewSession(api.Router.AuthDriver, getUser(ctx))
+		if errnew != nil {
+			return sdk.WrapError(errnew, "applyTemplateHandler> Error while creating new session")
 		}
 
-		log.Warning("updateTemplateHandler>%T %s", err, err)
-		return err
+		// Apply the template
+		log.Debug("applyTemplateHandler> applyTemplate")
+		_, errapply := template.ApplyTemplate(api.mustDB(), api.Cache, proj, opts, getUser(ctx), sessionKey, api.Config.URL.API)
+		if errapply != nil {
+			return sdk.WrapError(errapply, "applyTemplateHandler> Error while applyTemplate")
+		}
 
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
+				log.Error("applyTemplatesHandler> Cannot check warnings: %s", err)
+			}
+		}()
+
+		proj, errPrj := project.Load(api.mustDB(), api.Cache, proj.Key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithPipelines)
+		if errPrj != nil {
+			return sdk.WrapError(errPrj, "applyTemplatesHandler> Cannot load project")
+		}
+
+		for _, a := range proj.Applications {
+			if err := sanity.CheckApplication(api.mustDB(), proj, &a); err != nil {
+				return sdk.WrapError(err, "applyTemplatesHandler> Cannot check application sanity")
+			}
+		}
+
+		return WriteJSON(w, r, proj, http.StatusOK)
 	}
-
-	return WriteJSON(w, r, templ2, http.StatusOK)
 }
 
-func deleteTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get id from URL
-	vars := mux.Vars(r)
-	sid := vars["id"]
+func (api *API) applyTemplateOnApplicationHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		appName := vars["permApplicationName"]
 
-	if sid == "" {
-		return sdk.ErrWrongRequest
+		// Load the project
+		proj, errLoad := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
+		if errLoad != nil {
+			return sdk.WrapError(errLoad, "applyTemplateOnApplicationHandler> Cannot load project %s", projectKey)
+		}
 
-	}
+		// Load the application
+		app, errLoadByName := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.Default)
+		if errLoadByName != nil {
+			return sdk.WrapError(errLoadByName, "applyTemplateOnApplicationHandler> Cannot load application %s", appName)
+		}
 
-	//Get int from string
-	id, err := strconv.Atoi(sid)
-	if err != nil {
-		return sdk.ErrWrongRequest
-
-	}
-
-	//Load it
-	templ, err := templateextension.LoadByID(db, int64(id))
-	if err != nil {
-		return err
-
-	}
-
-	//Delete it
-	if err := templateextension.Delete(db, templ); err != nil {
-		return err
-
-	}
-
-	//Delete from storage
-	if err := objectstore.DeleteTemplateExtension(*templ); err != nil {
-		return err
-
-	}
-
-	//OK
-	return nil
-}
-
-func getBuildTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	tpl, err := templateextension.LoadByType(db, "BUILD")
-	if err != nil {
-		return err
-
-	}
-	return WriteJSON(w, r, tpl, http.StatusOK)
-}
-
-func getDeployTemplatesHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	tpl, err := templateextension.LoadByType(db, "DEPLOY")
-	if err != nil {
-		return err
-
-	}
-	return WriteJSON(w, r, tpl, http.StatusOK)
-}
-
-func applyTemplateHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	vars := mux.Vars(r)
-	projectKey := vars["permProjectKey"]
-
-	// Load the project
-	proj, err := project.Load(db, projectKey, c.User,
-		project.LoadOptions.Default,
-		project.LoadOptions.WithEnvironments,
-		project.LoadOptions.WithGroups)
-	if err != nil {
-		log.Warning("applyTemplatesHandler> Cannot load project %s: %s\n", projectKey, err)
-		return err
-	}
-
-	// Parse body to sdk.ApplyTemplatesOptions
-	var opts sdk.ApplyTemplatesOptions
-	if err := UnmarshalBody(r, &opts); err != nil {
-		return err
-	}
-
-	// Create a session for current user
-	sessionKey, err := auth.NewSession(router.authDriver, c.User)
-	if err != nil {
-		log.Error("applyTemplateHandler> Error while creating new session: %s\n", err)
-		return err
-
-	}
-
-	// Apply the template
-	log.Debug("applyTemplateHandler> applyTemplate")
-	msg, err := template.ApplyTemplate(db, proj, opts, c.User, sessionKey, viper.GetString(viperURLAPI))
-	if err != nil {
-		return err
-
-	}
-
-	al := r.Header.Get("Accept-Language")
-	msgList := []string{}
-
-	for _, m := range msg {
-		s := m.String(al)
-		msgList = append(msgList, s)
-	}
-
-	log.Debug("applyTemplatesHandler> Check warnings on project")
-	if err := sanity.CheckProjectPipelines(db, proj); err != nil {
-		log.Warning("applyTemplatesHandler> Cannot check warnings: %s\n", err)
-		return err
-
-	}
-
-	apps, errApp := application.LoadAll(db, proj.Key, c.User, application.LoadOptions.WithVariables)
-	if errApp != nil {
-		log.Warning("applyTemplatesHandler> Cannot load applications: %s\n", err)
-		return err
-
-	}
-	proj.Applications = apps
-
-	for _, a := range apps {
-		if err := sanity.CheckApplication(db, proj, &a); err != nil {
-			log.Warning("applyTemplatesHandler> Cannot check application sanity: %s\n", err)
+		// Parse body to sdk.ApplyTemplatesOptions
+		var opts sdk.ApplyTemplatesOptions
+		if err := UnmarshalBody(r, &opts); err != nil {
 			return err
 		}
+
+		//Create a session for current user
+		sessionKey, err := auth.NewSession(api.Router.AuthDriver, getUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "applyTemplateOnApplicationHandler> Error while creating new session")
+		}
+
+		//Apply the template
+		msg, err := template.ApplyTemplateOnApplication(api.mustDB(), api.Cache, proj, app, opts, getUser(ctx), sessionKey, api.Config.URL.API)
+		if err != nil {
+			return sdk.WrapError(err, "applyTemplateOnApplicationHandler> Error on apply template on application")
+		}
+
+		msgList := translate(r, msg)
+
+		go func() {
+			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
+				log.Error("applyTemplatesHandler> Cannot check warnings: %s", err)
+			}
+		}()
+
+		return WriteJSON(w, r, msgList, http.StatusOK)
 	}
-
-	return WriteJSON(w, r, proj, http.StatusOK)
-}
-
-func applyTemplateOnApplicationHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get pipeline and action name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	appName := vars["permApplicationName"]
-
-	// Load the project
-	proj, err := project.Load(db, projectKey, c.User, project.LoadOptions.Default)
-	if err != nil {
-		log.Warning("applyTemplateOnApplicationHandler> Cannot load project %s: %s\n", projectKey, err)
-		return err
-
-	}
-
-	// Load the application
-	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.Default)
-	if err != nil {
-		log.Warning("applyTemplateOnApplicationHandler> Cannot load application %s: %s\n", appName, err)
-		return err
-
-	}
-
-	// Parse body to sdk.ApplyTemplatesOptions
-	var opts sdk.ApplyTemplatesOptions
-	if err := UnmarshalBody(r, &opts); err != nil {
-		return err
-	}
-
-	//Create a session for current user
-	sessionKey, err := auth.NewSession(router.authDriver, c.User)
-	if err != nil {
-		log.Error("Instance> Error while creating new session: %s\n", err)
-		return err
-
-	}
-
-	//Apply the template
-	msg, err := template.ApplyTemplateOnApplication(db, proj, app, opts, c.User, sessionKey, viper.GetString(viperURLAPI))
-	if err != nil {
-		return err
-
-	}
-
-	al := r.Header.Get("Accept-Language")
-	msgList := []string{}
-
-	for _, m := range msg {
-		s := m.String(al)
-		msgList = append(msgList, s)
-	}
-
-	log.Debug("applyTemplatesHandler> Check warnings on project")
-	if err := sanity.CheckProjectPipelines(db, proj); err != nil {
-		log.Warning("applyTemplatesHandler> Cannot check warnings: %s\n", err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, msgList, http.StatusOK)
 }

@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -42,8 +42,9 @@ type DeploymentID struct {
 
 // DeploymentStep is a step in the application deployment plan
 type DeploymentStep struct {
-	Action string `json:"action"`
-	App    string `json:"app"`
+	Action                string                  `json:"action"`
+	App                   string                  `json:"app"`
+	ReadinessCheckResults *[]ReadinessCheckResult `json:"readinessCheckResults,omitempty"`
 }
 
 // StepActions is a series of deployment steps

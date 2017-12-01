@@ -8,9 +8,8 @@ import {StepEvent} from '../step.event';
     styleUrls: ['./step.form.scss']
 })
 export class ActionStepFormComponent implements OnInit {
-
     @Input() publicActions: Array<Action>;
-    @Input() final: boolean;
+    showAddStep: boolean;
     @Output() create = new EventEmitter<StepEvent>();
 
     step: Action;
@@ -22,17 +21,29 @@ export class ActionStepFormComponent implements OnInit {
     }
 
     selectPublicAction(name: string): void {
-        let index = this.publicActions.findIndex(a => a.name === name);
-        if (index >= 0) {
-            this.step = this.publicActions[index];
+        let step = this.publicActions.find(a => a.name === name);
+        if (step) {
+            this.step = step;
         }
     };
 
-    addStep(): void {
+    addStep(optional: boolean, always_executed: boolean): void {
         if (this.step) {
-            this.step.final = this.final;
+            this.step.optional = optional;
+            this.step.always_executed = always_executed;
             this.step.enabled = true;
+            this.showAddStep = false;
             this.create.emit(new StepEvent('add', this.step));
         }
+    }
+
+    cancel(): void {
+        this.showAddStep = false;
+        this.create.emit(new StepEvent('cancel', null));
+    }
+
+    displayChoice(): void {
+        this.showAddStep = true;
+        this.create.emit(new StepEvent('displayChoice', null));
     }
 }

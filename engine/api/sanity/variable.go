@@ -7,26 +7,19 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //checkGitVariables needs full loaded project, pipeline
-func checkGitVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) []sdk.Warning {
+func checkGitVariables(db gorp.SqlExecutor, store cache.Store, vars []string, p *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) []sdk.Warning {
 	var warnings []sdk.Warning
 
-	var errrepos error
-	p.ReposManager, errrepos = repositoriesmanager.LoadAllForProject(db, p.Key)
-	if errrepos != nil {
-		log.Warning("checkGitVariables> Unable to load reposmanager for project %s : %s", p.Key, errrepos)
-		return nil
-	}
-
 	var errapps error
-	p.Applications, errapps = application.LoadAll(db, p.Key, nil, application.LoadOptions.WithPipelines, application.LoadOptions.WithVariables)
+	p.Applications, errapps = application.LoadAll(db, store, p.Key, nil, application.LoadOptions.WithPipelines, application.LoadOptions.WithVariables)
 	if errapps != nil {
 		log.Warning("checkGitVariables> Unable to load applications for project %s : %s", p.Key, errapps)
 		return nil
@@ -80,7 +73,7 @@ func checkGitVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, pip *
 			warnings = append(warnings, w)
 		}
 
-		if len(p.ReposManager) == 0 {
+		if len(p.VCSServers) == 0 {
 			w := sdk.Warning{
 				ID: GitURLWithoutLinkedRepository,
 				MessageParam: map[string]string{
@@ -95,7 +88,7 @@ func checkGitVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, pip *
 			for _, app := range p.Applications {
 				ok, _ := application.IsAttached(db, p.ID, a.ID, pip.Name)
 				if ok {
-					if app.RepositoriesManager == nil || app.RepositoryFullname == "" {
+					if app.VCSServer == "" || app.RepositoryFullname == "" {
 						w := sdk.Warning{
 							ID: GitURLWithoutLinkedRepository,
 							MessageParam: map[string]string{
@@ -377,7 +370,7 @@ func checkProjectVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, p
 			}
 		}
 		if !found {
-			log.Warning("Variable %s was not found in project %s !\n", m, p.Key)
+			log.Warning("Variable %s was not found in project %s !", m, p.Key)
 			w := sdk.Warning{
 				ID: ProjectVariableDoesNotExist,
 				MessageParam: map[string]string{
@@ -396,11 +389,11 @@ func checkProjectVariables(db gorp.SqlExecutor, vars []string, p *sdk.Project, p
 }
 
 // For each application variable used, check it's present in application where pipeline is used
-func checkApplicationVariables(db gorp.SqlExecutor, vars []string, project *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
+func checkApplicationVariables(db gorp.SqlExecutor, store cache.Store, vars []string, project *sdk.Project, pip *sdk.Pipeline, a *sdk.Action) ([]sdk.Warning, error) {
 	var warnings []sdk.Warning
 
 	// Load all application where pipeline is attached
-	apps, err := application.LoadByPipeline(db, pip.ID, nil)
+	apps, err := application.LoadByPipeline(db, store, pip.ID, nil)
 	if err != nil {
 		return nil, err
 	}

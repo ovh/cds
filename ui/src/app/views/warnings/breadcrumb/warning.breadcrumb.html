@@ -1,0 +1,15 @@
+<div class="ui large breadcrumb" *ngIf="project && projects && warningsCount">
+    <!-- PROJECT -->
+    <i class="browser icon"></i>
+    <a class="section">
+        {{ project.name }} <span *ngIf="projects &&  warningsCount.get(project.key) > 0">{{' (' + warningsCount.get(project.key) + ')'}}</span>
+    </a>
+    <sm-dropdown class="search">
+        <ng-container *ngFor="let p of projects">
+            <a sm-item *ngIf="warningsCount.get(p.key) > 0"
+              [routerLink]="'/warnings/show'" [queryParams]="{ key: p.key }">
+                {{p.name + ' (' + warningsCount.get(p.key) + ')'}}
+            </a>
+        </ng-container>
+    </sm-dropdown>
+</div>

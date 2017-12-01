@@ -1,26 +1,79 @@
 <div class="ui large breadcrumb">
+    <!-- PROJECT -->
     <i class="browser icon"></i>
-    <a class="section" [class.active]="!application && !pipeline && !action" (click)="navigateToProject()">{{ project?.name}}</a>
+    <a class="section" [class.active]="!application && !pipeline && !action"
+       [routerLink]="['/project', project.key]"
+       [queryParams]="getProjectQueryParams()">
+        {{ project?.name}}
+    </a>
 
-    <i *ngIf="application" class="right chevron icon divider"></i>
-    <i *ngIf="application" class="rocket icon"></i>
-    <a class="section" [class.active]="application && !pipeline && !action" (click)="navigateToApplication(application?.name)">{{ application?.name}}</a>
-    <sm-dropdown *ngIf="application">
-        <sm-item *ngFor="let app of project.applications" (click)="navigateToApplication(app.name)">{{app.name}}</sm-item>
-    </sm-dropdown>
+    <!-- APPLICATION -->
+    <ng-container *ngIf="application">
+        <i class="right chevron icon divider"></i>
+        <i class="rocket icon"></i>
+        <a class="section" [class.active]="application && !pipeline && !action"
+           [routerLink]="['/project', project.key, 'application', application?.name]"
+           [queryParams]="getApplicationQueryParams()">
+            {{ application?.name}}
+        </a>
+        <sm-dropdown>
+            <a sm-item *ngFor="let app of project.applications"
+                     [routerLink]="['/project', project.key, 'application', app?.name]">
+                {{app.name}}
+            </a>
+        </sm-dropdown>
+    </ng-container>
 
-    <i *ngIf="pipeline" class="right chevron icon divider"></i>
-    <i *ngIf="pipeline" class="sitemap icon"></i>
-    <a class="section" [class.active]="pipeline && !action && !version" (click)="navigateToPipeline(pipeline?.name)">{{ pipeline?.name}}</a>
-    <sm-dropdown *ngIf="project && !application && pipeline">
-        <sm-item *ngFor="let pip of project.pipelines" (click)="navigateToPipeline(pip.name)">{{pip.name}}</sm-item>
-    </sm-dropdown>
-    <sm-dropdown *ngIf="project && application && pipeline">
-        <sm-item *ngFor="let apppip of application.pipelines" (click)="navigateToPipeline(apppip.pipeline.name)">{{apppip.pipeline.name}}</sm-item>
-    </sm-dropdown>
 
-    <i *ngIf="application && pipeline && version && version > 0" class="right chevron icon divider"></i>
-    <a *ngIf="application && pipeline && version && version > 0" class="section active" (click)="navigateToBuild()">{{ 'v' + version}}</a>
+    <!-- Pipeline -->
+    <ng-container *ngIf="pipeline">
+        <i class="right chevron icon divider"></i>
+        <i class="sitemap icon"></i>
+        <a class="section" [class.active]="pipeline && !action && !version"
+           [routerLink]="['/project', project.key, 'pipeline', pipeline?.name]"
+           [queryParams]="getPipelineQueryParams()">{{ pipeline?.name}}</a>
+        <sm-dropdown *ngIf="project && !application">
+            <a sm-item *ngFor="let pip of project.pipelines"
+                     [routerLink]="['/project', project.key, 'pipeline', pip?.name]">
+                {{pip.name}}
+            </a>
+        </sm-dropdown>
+        <sm-dropdown *ngIf="project && application">
+            <a *ngFor="let apppip of application.pipelines"
+                     [routerLink]="['/project', project.key, 'pipeline', apppip?.pipeline.name]">
+                {{apppip.pipeline.name}}
+            </a>
+        </sm-dropdown>
+    </ng-container>
+
+    <ng-container *ngIf="workflow">
+            <i class="right chevron icon divider"></i>
+            <i class="share alternate icon"></i>
+            <a class="section"  [routerLink]="['/project', project.key, 'workflow', workflow]">{{ workflow}}</a>
+    </ng-container>
+
+    <ng-container *ngIf="workflowRun">
+            <i class="right chevron icon divider"></i>
+            <a class="section"  [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun]">{{ '#' + workflowRun}}</a>
+    </ng-container>
+
+    <ng-container *ngIf="workflowRunNode && wPipeline">
+            <i class="right chevron icon divider"></i>
+            <i class="sitemap icon"></i>
+            <a class="section" [routerLink]="['/project', project.key, 'workflow', workflow, 'run', workflowRun, 'node', workflowRunNode]"
+                [queryParams]="{ name: wPipeline}">{{ wPipeline}}</a>
+    </ng-container>
+
+    <!-- BUILD -->
+    <ng-container *ngIf="application && pipeline && version && version > 0">
+        <i class="right chevron icon divider"></i>
+        <a class="section active"
+           [routerLink]="['/project', project?.key, 'application', application?.name, 'pipeline', pipeline?.name, 'build', this.buildNumber]"
+           [queryParams]="getBuildQueryParams()">
+            {{ 'v' + version}}
+        </a>
+    </ng-container>
+
 
     <i *ngIf="action" class="right chevron icon divider"></i>
     <div class="section">{{ action?.name}}</div>

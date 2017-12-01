@@ -85,8 +85,8 @@ func addPipelineHook(cmd *cobra.Command, args []string) {
 	}
 
 	//If the application is attached to a repositories manager, parameter <host>/<project>/<slug> aren't taken in account
-	if a.RepositoriesManager != nil {
-		err = sdk.AddHookOnRepositoriesManager(pipelineProject, appName, a.RepositoriesManager.Name, a.RepositoryFullname, pipelineName)
+	if a.VCSServer != "" {
+		err = sdk.AddHookOnRepositoriesManager(pipelineProject, appName, a.VCSServer, a.RepositoryFullname, pipelineName)
 		if err != nil {
 			sdk.Exit("✘ Error: Cannot add hook to pipeline %s-%s-%s (%s)\n", pipelineProject, appName, pipelineName, err)
 		}
@@ -129,7 +129,7 @@ func deletePipelineHook(cmd *cobra.Command, args []string) {
 	}
 
 	//If the application is attached to a repositories manager, parameter <host>/<project>/<slug> aren't taken in account
-	if a.RepositoriesManager != nil {
+	if a.VCSServer != "" {
 		if len(args) != 4 {
 			sdk.Exit("Wrong usage: See %s\n", cmd.Short)
 		}
@@ -140,7 +140,7 @@ func deletePipelineHook(cmd *cobra.Command, args []string) {
 			sdk.Exit("Hook id must be a number (%s)\n", err)
 		}
 
-		err = sdk.DeleteHookOnRepositoriesManager(pipelineProject, appName, a.RepositoriesManager.Name, hookID)
+		err = sdk.DeleteHookOnRepositoriesManager(pipelineProject, appName, hookID)
 		if err != nil {
 			sdk.Exit("Cannot delete on pipeline %s-%s-%s (%s)\n", pipelineProject, appName, pipelineName, err)
 		}

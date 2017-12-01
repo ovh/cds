@@ -32,13 +32,27 @@ var listCmd = &cobra.Command{
 }
 
 func workerList(cmd *cobra.Command, args []string) {
+
+	models, err := sdk.GetWorkerModels()
+	if err != nil {
+		sdk.Exit("Error: cannot get worker models (%s)\n", err)
+	}
+
+	mmodels := make(map[int64]sdk.Model, len(models))
+	for _, m := range models {
+		mmodels[m.ID] = m
+	}
 	workers, err := sdk.GetWorkers()
 	if err != nil {
 		sdk.Exit("Error: Cannot get worker (%s)\n", err)
 	}
 
 	for _, w := range workers {
-		fmt.Printf("%-50s %s\n", w.Name, w.Status)
+		m := "N/A"
+		if _, ok := mmodels[w.ModelID]; ok {
+			m = mmodels[w.ModelID].Type
+		}
+		fmt.Printf("%-10s %-50s %s\n", m, w.Name, w.Status)
 	}
 }
 

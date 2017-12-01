@@ -18,11 +18,12 @@ export class TestTableComponent extends Table {
     @Input('statusFilter')
     set statusFilter(status: string) {
         this.filter = status;
-       this.updateFilteredTests();
+        this.updateFilteredTests();
     }
 
     constructor() {
         super();
+        this.nbElementsByPage = 20;
     }
 
     getData(): any[] {
@@ -34,20 +35,51 @@ export class TestTableComponent extends Table {
 
     updateFilteredTests(): void {
         this.filteredTests = new Array<TestCase>();
-        if (this.filter === 'error') {
-            if (this.tests) {
-                this.tests.forEach(ts => {
+        if (!this.tests) {
+            return;
+        }
+        switch (this.filter) {
+            case 'error':
+                for (let ts of this.tests) {
                     if (ts.errors > 0 || ts.failures > 0) {
-                        this.filteredTests.push(...ts.tests.filter(tc => {
-                            return (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0);
-                        }));
+                        let testCases = ts.tests
+                        .filter(tc => (tc.errors && tc.errors.length > 0) || (tc.failures && tc.failures.length > 0))
+                        .map(tc => {
+                            tc.fullname = ts.name + ' / ' + tc.name;
+                            return tc;
+                        });
+                        this.filteredTests.push(...testCases);
                     }
-                });
-            }
+                };
+                break;
+            case 'skipped':
+                for (let ts of this.tests) {
+                    if (ts.skipped > 0) {
+                        let testCases = ts.tests
+                        .filter(tc => (tc.skipped && tc.skipped.length > 0))
+                        .map(tc => {
+                            tc.fullname = ts.name + ' / ' + tc.name;
+                            return tc;
+                        });
+                        this.filteredTests.push(...testCases);
+                    }
+                };
+                break;
+            default:
+                for (let ts of this.tests) {
+                    let testCases = ts.tests.map(tc => {
+                        tc.fullname = ts.name + ' / ' + tc.name;
+                        return tc;
+                    });
+                    this.filteredTests.push(...testCases);
+                }
         }
     }
 
     getLogs(logs) {
-        return ansi_up.ansi_to_html(logs.value);
+        if (logs && logs.value) {
+            return ansi_up.ansi_to_html(logs.value);
+        }
+        return '';
     }
 }

@@ -1,16 +1,16 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, fakeAsync, tick, getTestBed} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {fakeAsync, TestBed, tick} from '@angular/core/testing';
+import {TranslateLoader, TranslateParser, TranslateService} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, ResponseOptions, Response} from '@angular/http';
+import {XHRBackend} from '@angular/http';
 import {ActionComponent} from './action.component';
 import {SharedService} from '../shared.service';
 import {SharedModule} from '../shared.module';
-import {RequirementStore} from '../../service/worker/requirement/requirement.store';
+import {RequirementStore} from '../../service/worker-model/requirement/requirement.store';
 import {ParameterService} from '../../service/parameter/parameter.service';
-import {RequirementService} from '../../service/worker/requirement/requirement.service';
+import {RequirementService} from '../../service/worker-model/requirement/requirement.service';
 import {Action} from '../../model/action.model';
 import {RequirementEvent} from '../requirements/requirement.event.model';
 import {Requirement} from '../../model/requirement.model';
@@ -19,19 +19,17 @@ import {ParameterEvent} from '../parameter/parameter.event.model';
 import {ActionEvent} from './action.event.model';
 import {ActionStore} from '../../service/action/action.store';
 import {ActionService} from '../../service/action/action.service';
-import {Injector} from '@angular/core';
 import {RepoManagerService} from '../../service/repomanager/project.repomanager.service';
 import {StepEvent} from './step/step.event';
+import {WorkerModelService} from '../../service/worker-model/worker-model.service';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: Action Component', () => {
 
-    let injector: Injector;
-    let backend: MockBackend;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-            ],
+            declarations: [],
             providers: [
                 SharedService,
                 TranslateService,
@@ -41,28 +39,21 @@ describe('CDS: Action Component', () => {
                 RepoManagerService,
                 ActionStore,
                 ActionService,
-                { provide: XHRBackend, useClass: MockBackend },
+                WorkerModelService,
+                {provide: XHRBackend, useClass: MockBackend},
                 TranslateLoader,
                 TranslateParser
             ],
-            imports : [
+            imports: [
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
-
-    it('should create and then delete a requirement', fakeAsync( () => {
+    it('should create and then delete a requirement', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -98,7 +89,7 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.editableAction.requirements.length).toBe(0, 'Action must have 0 requirement');
     }));
 
-    it('should create and then delete a parameter', fakeAsync( () => {
+    it('should create and then delete a parameter', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -130,7 +121,7 @@ describe('CDS: Action Component', () => {
         expect(fixture.componentInstance.editableAction.parameters.length).toBe(0, 'Action must have 0 parameter');
     }));
 
-    it('should send delete action event', fakeAsync( () => {
+    it('should send delete action event', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -139,6 +130,7 @@ describe('CDS: Action Component', () => {
         let action: Action = new Action();
         action.name = 'FooAction';
         action.requirements = new Array<Requirement>();
+        action.id = 1;
         fixture.componentInstance.editableAction = action;
 
         fixture.detectChanges();
@@ -146,6 +138,7 @@ describe('CDS: Action Component', () => {
 
         // readonly , no button
         expect(fixture.debugElement.nativeElement.querySelector('.ui.red.button')).toBeFalsy();
+        expect(fixture.debugElement.nativeElement.querySelector('button[name="updatebtn"]')).toBeFalsy();
 
         fixture.componentInstance.edit = true;
 
@@ -160,11 +153,11 @@ describe('CDS: Action Component', () => {
         tick(50);
         compiled.querySelector('.ui.red.button.active').click();
 
-        expect(compiled.querySelector('button[name="updatebtn"]')).toBeFalsy();
+        expect(compiled.querySelector('button[name="updatebtn"]')).toBeTruthy();
         expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('delete', action));
     }));
 
-    it('should send update action event', fakeAsync( () => {
+    it('should send insert action event', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -189,54 +182,59 @@ describe('CDS: Action Component', () => {
         tick(50);
 
         expect(compiled.querySelector('button[name="deletebtn"]')).toBeFalsy();
+        expect(compiled.querySelector('button[name="updatebtn"]')).toBeFalsy();
 
-        let btn = compiled.querySelector('button[name="updatebtn"]');
+        let btn = compiled.querySelector('button[name="addbtn"]');
         btn.click();
 
-        expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('update', action));
+        expect(fixture.componentInstance.actionEvent.emit).toHaveBeenCalledWith(new ActionEvent('insert', action));
     }));
 
-    it('should add and then remove a step', fakeAsync( () => {
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '[{ "name" : "action1" }]'})));
-        });
+    it('should add and then remove a step', fakeAsync(() => {
+            const http = TestBed.get(HttpTestingController);
 
-        // Create component
-        let fixture = TestBed.createComponent(ActionComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        expect(backend.connectionsArray[0].request.url).toBe('/action', 'Component must load public action');
-
-        let action: Action = new Action();
-        action.name = 'FooAction';
-        action.requirements = new Array<Requirement>();
-        fixture.componentInstance.editableAction = action;
-        fixture.componentInstance.edit = true;
-
-        fixture.detectChanges();
-        tick(50);
+            let actionMock = new Action();
+            actionMock.name = 'action1';
 
 
-        let step = new Action();
-        step.final = false;
-        step.name = 'action1';
-        let event = new StepEvent('add', step);
-        fixture.componentInstance.stepManagement(event);
+            // Create component
+            let fixture = TestBed.createComponent(ActionComponent);
+            let component = fixture.debugElement.componentInstance;
+            expect(component).toBeTruthy();
 
-        expect(fixture.componentInstance.nonFinalSteps.length).toBe(1, 'Action must have 1 non final step');
-        expect(fixture.componentInstance.nonFinalSteps[0].name).toBe('action1');
+            http.expectOne(((req: HttpRequest<any>) => {
+                return req.url === '/action';
+            })).flush(actionMock);
 
-        event.type = 'add';
-        step.final = true;
-        step.name = 'action2';
-        fixture.componentInstance.stepManagement(event);
-        expect(fixture.componentInstance.finalSteps.length).toBe(1, 'Action must have 1 final step');
-        expect(fixture.componentInstance.finalSteps[0].name).toBe('action2');
+            let action: Action = new Action();
+            action.name = 'FooAction';
+            action.requirements = new Array<Requirement>();
+            fixture.componentInstance.editableAction = action;
+            fixture.componentInstance.edit = true;
 
-    }));
+            fixture.detectChanges();
+            tick(50);
 
-    it('should init nonFinalSteps and finalSteps', fakeAsync( () => {
+
+            let step = new Action();
+            step.always_executed = false;
+            step.name = 'action1';
+            let event = new StepEvent('add', step);
+            fixture.componentInstance.stepManagement(event);
+
+            expect(fixture.componentInstance.steps.length).toBe(1, 'Action must have 1 step');
+            expect(fixture.componentInstance.steps[0].name).toBe('action1');
+
+            event.type = 'add';
+            step.always_executed = true;
+            step.name = 'action2';
+            fixture.componentInstance.stepManagement(event);
+            expect(fixture.componentInstance.steps.length).toBe(2, 'Action must have 2 steps');
+            expect(fixture.componentInstance.steps[1].name).toBe('action2');
+        })
+    );
+
+    it('should init step not always executed and step always executed', fakeAsync(() => {
         // Create component
         let fixture = TestBed.createComponent(ActionComponent);
         let component = fixture.debugElement.componentInstance;
@@ -246,19 +244,18 @@ describe('CDS: Action Component', () => {
         action.name = 'rootAction';
 
         let step1 = new Action();
-        step1.final = true;
+        step1.always_executed = true;
 
         let step2 = new Action();
-        step2.final = false;
+        step2.always_executed = false;
 
         action.actions = new Array<Action>();
         action.actions.push(step1, step2);
 
         fixture.componentInstance.action = action;
 
-        expect(fixture.componentInstance.nonFinalSteps.length).toBe(1);
-        expect(fixture.componentInstance.finalSteps.length).toBe(1);
+        expect(fixture.componentInstance.steps.length).toBe(2);
 
     }));
-});
-
+})
+;

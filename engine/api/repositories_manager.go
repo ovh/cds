@@ -1,21 +1,17 @@
-package main
+package api
 
 import (
-	"database/sql"
-	"errors"
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
-	"github.com/spf13/viper"
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hook"
 	"github.com/ovh/cds/engine/api/permission"
@@ -23,729 +19,716 @@ import (
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/workflow"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/api/user"
+	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
-func getRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	rms, err := repositoriesmanager.LoadAll(db)
-	if err != nil {
-		log.Warning("getRepositoriesManagerHandler> error %s\n", err)
-		return err
-
-	}
-	return WriteJSON(w, r, rms, http.StatusOK)
-}
-
-func addRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	var args interface{}
-	options := map[string]string{}
-
-	if err := UnmarshalBody(r, &args); err != nil {
-		return err
-	}
-
-	t := args.(map[string]interface{})["type"].(string)
-	name := args.(map[string]interface{})["name"].(string)
-	url := args.(map[string]interface{})["url"].(string)
-
-	for k, v := range args.(map[string]interface{}) {
-		if k != "type" && k != "name" && k != "url" {
-			options[k] = v.(string)
-		}
-	}
-
-	if t == "" || name == "" || url == "" {
-		log.Warning("addProjectVCSHandler> Bad request : type=%s name=%s url=%s\n", t, name, url)
-		return sdk.ErrWrongRequest
-
-	}
-
-	rm, err := repositoriesmanager.New(sdk.RepositoriesManagerType(t), 0, name, url, options, "")
-	if err != nil {
-		log.Warning("addRepositoriesManagerHandler> cannot create %s\n", err)
-		return err
-
-	}
-	if err := repositoriesmanager.Insert(db, rm); err != nil {
-		log.Warning("addRepositoriesManagerHandler> cannot insert %s\n", err)
-		return err
-
-	}
-	return WriteJSON(w, r, rm, http.StatusCreated)
-}
-
-func getRepositoriesManagerForProjectHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	key := vars["permProjectKey"]
-
-	rms, err := repositoriesmanager.LoadAllForProject(db, key)
-	if err != nil {
-		log.Warning("getRepositoriesManagerForProjectHandler> error %s\n", err)
-		return err
-
-	}
-	return WriteJSON(w, r, rms, http.StatusOK)
-}
-
-func repositoriesManagerAuthorize(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["permProjectKey"]
-	rmName := vars["name"]
-
-	//Load the repositories manager from the DB
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	var lastModified time.Time
-
-	//If we don't find any repositories manager for the project, let's insert it
-	if err == sql.ErrNoRows {
-		var err error
-		rm, err = repositoriesmanager.LoadByName(db, rmName)
+func (api *API) getRepositoriesManagerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		rms, err := repositoriesmanager.LoadAll(api.mustDB(), api.Cache)
 		if err != nil {
-			log.Warning("repositoriesManagerAuthorize> error while loading repositories manager %s\n", err)
-			return sdk.ErrNoReposManager
+			return sdk.WrapError(err, "getRepositoriesManagerHandler> error")
+		}
+		return WriteJSON(w, r, rms, http.StatusOK)
+	}
+}
+
+func (api *API) getRepositoriesManagerForProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+
+		proj, errproj := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errproj != nil {
+			return errproj
 		}
 
-		tx, err := db.Begin()
+		return WriteJSON(w, r, proj.VCSServers, http.StatusOK)
+	}
+}
+
+func (api *API) repositoriesManagerAuthorizeHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+		rmName := vars["name"]
+
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
+		}
+
+		if repositoriesmanager.GetProjectVCSServer(proj, rmName) != nil {
+			return sdk.WrapError(errP, "repositoriesManagerAuthorize> Cannot load project")
+		}
+
+		vcsServer, errVcsServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
+		if errVcsServer != nil {
+			return sdk.WrapError(errVcsServer, "repositoriesManagerAuthorize> Cannot start transaction")
+		}
+
+		token, url, err := vcsServer.AuthorizeRedirect()
 		if err != nil {
-			log.Warning("repositoriesManagerAuthorize> Cannot start transaction %s\n", err)
-			return err
+			return sdk.WrapError(sdk.ErrNoReposManagerAuth, "repositoriesManagerAuthorize> error with AuthorizeRedirect %s", err)
+		}
+		log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s", proj.Key, token, url)
+
+		data := map[string]string{
+			"project_key":          proj.Key,
+			"last_modified":        strconv.FormatInt(time.Now().Unix(), 10),
+			"repositories_manager": rmName,
+			"url":           url,
+			"request_token": token,
+			"username":      getUser(ctx).Username,
+		}
+
+		api.Cache.Set(cache.Key("reposmanager", "oauth", token), data)
+		return WriteJSON(w, r, data, http.StatusOK)
+	}
+}
+
+func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		cberr := r.FormValue("error")
+		errDescription := r.FormValue("error_description")
+		errURI := r.FormValue("error_uri")
+
+		if cberr != "" {
+			log.Error("Callback Error: %s - %s - %s", cberr, errDescription, errURI)
+			return fmt.Errorf("OAuth Error %s", cberr)
+		}
+
+		code := r.FormValue("code")
+		state := r.FormValue("state")
+
+		data := map[string]string{}
+
+		if !api.Cache.Get(cache.Key("reposmanager", "oauth", state), &data) {
+			return sdk.WrapError(sdk.ErrForbidden, "repositoriesManagerAuthorizeCallback> Error")
+		}
+		projectKey := data["project_key"]
+		rmName := data["repositories_manager"]
+		username := data["username"]
+
+		u, errU := user.LoadUserWithoutAuth(api.mustDB(), username)
+		if errU != nil {
+			return sdk.WrapError(errU, "repositoriesManagerAuthorizeCallback> Cannot load user %s", username)
+		}
+
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, u)
+		if errP != nil {
+			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
+		}
+
+		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
+		if errVCSServer != nil {
+			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot load project")
+		}
+
+		token, secret, err := vcsServer.AuthorizeToken(state, code)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
+
+		}
+
+		if token == "" || secret == "" {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> token or secret is empty", err)
+		}
+
+		tx, errT := api.mustDB().Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot start transaction")
 		}
 		defer tx.Rollback()
 
-		var errI error
-		lastModified, errI = repositoriesmanager.InsertForProject(tx, rm, projectKey)
-		if errI != nil {
-			log.Warning("repositoriesManagerAuthorize> error while inserting repositories manager for project %s: %s\n", projectKey, errI)
-			return errI
+		vcsServerForProject := &sdk.ProjectVCSServer{
+			Name: rmName,
+			Data: map[string]string{
+				"token":  token,
+				"secret": secret,
+			},
+		}
+
+		if err := repositoriesmanager.InsertForProject(tx, proj, vcsServerForProject); err != nil {
+			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with InsertForProject")
+		}
+
+		if err := project.UpdateLastModified(tx, api.Cache, u, proj, sdk.ProjectLastModificationType); err != nil {
+			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot update project last modified date")
 		}
 
 		if err := tx.Commit(); err != nil {
-			log.Warning("repositoriesManagerAuthorize> Cannot commit transaction %s\n", err)
+			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
+		}
+
+		//Redirect on UI advanced project page
+		url := fmt.Sprintf("%s/project/%s?tab=advanced", api.Config.URL.UI, projectKey)
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+
+		return nil
+	}
+}
+
+func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		rmName := vars["name"]
+
+		var tv map[string]interface{}
+		if err := UnmarshalBody(r, &tv); err != nil {
 			return err
 		}
-	} else if err != nil {
-		log.Warning("repositoriesManagerAuthorize> error %s\n", err)
-		return err
-	}
 
-	token, url, err := rm.Consumer.AuthorizeRedirect()
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorize> error with AuthorizeRedirect %s\n", err)
-		return sdk.ErrNoReposManagerAuth
-
-	}
-	log.Info("repositoriesManagerAuthorize> [%s] RequestToken=%s; URL=%s\n", projectKey, token, url)
-
-	data := map[string]string{
-		"project_key":          projectKey,
-		"last_modified":        strconv.FormatInt(lastModified.Unix(), 10),
-		"repositories_manager": rmName,
-		"url":           url,
-		"request_token": token,
-	}
-
-	cache.Set(cache.Key("reposmanager", "oauth", token), data)
-
-	return WriteJSON(w, r, data, http.StatusOK)
-}
-
-func repositoriesManagerOAuthCallbackHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	cberr := r.FormValue("error")
-	errDescription := r.FormValue("error_description")
-	errURI := r.FormValue("error_uri")
-
-	if cberr != "" {
-		log.Error("Callback Error: %s - %s - %s", cberr, errDescription, errURI)
-		return fmt.Errorf("OAuth Error %s", cberr)
-	}
-
-	code := r.FormValue("code")
-	state := r.FormValue("state")
-
-	data := map[string]string{}
-
-	cache.Get(cache.Key("reposmanager", "oauth", state), &data)
-	projectKey := data["project_key"]
-	rmName := data["repositories_manager"]
-
-	//Load the repositories manager from the DB
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> error %s\n", err)
-		return sdk.ErrNoReposManager
-
-	}
-
-	accessToken, accessTokenSecret, err := rm.Consumer.AuthorizeToken(state, code)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
-		return sdk.ErrNoReposManagerClientAuth
-
-	}
-
-	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
-	result := map[string]string{
-		"project_key":          projectKey,
-		"repositories_manager": rmName,
-		"access_token":         accessToken,
-		"access_token_secret":  accessTokenSecret,
-	}
-
-	if err := repositoriesmanager.SaveDataForProject(db, rm, projectKey, result); err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Error with SaveDataForProject: %s", err)
-		return err
-	}
-
-	//Redirect on UI advanced project page
-	url := fmt.Sprintf("%s/#/project/%s?tab=advanced", baseURL, projectKey)
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-
-	return nil
-}
-
-func repositoriesManagerAuthorizeCallback(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["permProjectKey"]
-	rmName := vars["name"]
-
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot find repository manager %s for project %s\n", rmName, projectKey)
-		return sdk.ErrNoReposManager
-
-	}
-
-	var tv map[string]interface{}
-	if err := UnmarshalBody(r, &tv); err != nil {
-		return err
-	}
-
-	var token, verifier string
-	if tv["request_token"] != nil {
-		token = tv["request_token"].(string)
-	}
-	if tv["verifier"] != nil {
-		verifier = tv["verifier"].(string)
-	}
-
-	if token == "" || verifier == "" {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot get token nor verifier from data")
-		return sdk.ErrWrongRequest
-
-	}
-
-	accessToken, accessTokenSecret, err := rm.Consumer.AuthorizeToken(token, verifier)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
-		return sdk.ErrNoReposManagerClientAuth
-
-	}
-
-	log.Info("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s\n", projectKey, accessToken, accessTokenSecret)
-	result := map[string]string{
-		"project_key":          projectKey,
-		"repositories_manager": rmName,
-		"access_token":         accessToken,
-		"access_token_secret":  accessTokenSecret,
-	}
-
-	if err := repositoriesmanager.SaveDataForProject(db, rm, projectKey, result); err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Error with SaveDataForProject: %s", err)
-		return err
-
-	}
-
-	p, err := project.Load(db, projectKey, c.User, project.LoadOptions.WithRepositoriesManagers)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot load project %s: %s\n", projectKey, err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, p, http.StatusOK)
-}
-
-func deleteRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["permProjectKey"]
-	rmName := vars["name"]
-
-	p, err := project.Load(db, projectKey, c.User)
-	if err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> Cannot load project %s: %s\n", projectKey, err)
-		return err
-
-	}
-
-	//Load the repositories manager from the DB
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> error loading %s-%s: %s\n", projectKey, rmName, err)
-		return sdk.ErrNoReposManager
-
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> Cannot start transaction: %s\n", err)
-		return err
-
-	}
-	defer tx.Rollback()
-
-	if err := repositoriesmanager.DeleteForProject(tx, rm, p); err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> error deleting %s-%s: %s\n", projectKey, rmName, err)
-		return err
-
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> Cannot commit transaction: %s\n", err)
-		return err
-
-	}
-
-	p.ReposManager, err = repositoriesmanager.LoadAllForProject(db, p.Key)
-	if err != nil {
-		log.Warning("deleteRepositoriesManagerHandler> Cannot load repos manager for project %s: %s\n", p.Key, err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, p, http.StatusOK)
-
-}
-
-func getReposFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["permProjectKey"]
-	rmName := vars["name"]
-
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("getReposFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
-
-	}
-
-	var repos []sdk.VCSRepo
-	cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
-	cache.Get(cacheKey, &repos)
-	if repos == nil || len(repos) == 0 {
-		log.Debug("getReposFromRepositoriesManagerHandler> loading from Stash")
-		repos, err = client.Repos()
-	}
-	if err != nil {
-		log.Warning("getReposFromRepositoriesManagerHandler> Cannot get repos: %s", err)
-		return err
-
-	}
-	return WriteJSON(w, r, repos, http.StatusOK)
-}
-
-func getRepoFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["permProjectKey"]
-	rmName := vars["name"]
-	repoName := r.FormValue("repo")
-
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
-
-	}
-	repo, err := client.RepoByFullname(repoName)
-	if err != nil {
-		log.Warning("repositoriesManagerAuthorizeCallback> Cannot get repos: %s", err)
-		return err
-
-	}
-	return WriteJSON(w, r, repo, http.StatusOK)
-}
-
-func attachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	appName := vars["permApplicationName"]
-	rmName := vars["name"]
-	fullname := r.FormValue("fullname")
-
-	app, err := application.LoadByName(db, projectKey, appName, c.User)
-	if err != nil {
-		log.Warning("attachRepositoriesManager> Cannot load application %s: %s\n", appName, err)
-		return err
-
-	}
-
-	//Load the repositoriesManager for the project
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("attachRepositoriesManager> error loading %s-%s: %s\n", projectKey, rmName, err)
-		return sdk.ErrNoReposManager
-
-	}
-
-	//Get an authorized Client
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
-	}
-
-	_, errR := client.RepoByFullname(fullname)
-	if errR != nil {
-		log.Warning("attachRepositoriesManager> Cannot get repo %s: %s", fullname, errR)
-		return sdk.ErrRepoNotFound
-	}
-
-	app.RepositoriesManager = rm
-	app.RepositoryFullname = fullname
-
-	if err := repositoriesmanager.InsertForApplication(db, app, projectKey); err != nil {
-		log.Warning("attachRepositoriesManager> Cannot insert for application: %s", err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, app, http.StatusOK)
-}
-
-func detachRepositoriesManager(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	appName := vars["permApplicationName"]
-	rmName := vars["name"]
-
-	app, err := application.LoadByName(db, projectKey, appName, c.User, application.LoadOptions.WithHooks)
-	if err != nil {
-		return err
-	}
-
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("detachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
-
-	}
-
-	//Remove all the things in a transaction
-	tx, err := db.Begin()
-	defer tx.Rollback()
-
-	if err := repositoriesmanager.DeleteForApplication(tx, projectKey, app); err != nil {
-		log.Warning("detachRepositoriesManager> Cannot delete for application: %s", err)
-		return err
-
-	}
-
-	for _, h := range app.Hooks {
-		s := viper.GetString(viperURLAPI) + hook.HookLink
-		link := fmt.Sprintf(s, h.UID, h.Project, h.Repository)
-
-		if err = client.DeleteHook(h.Project+"/"+h.Repository, link); err != nil {
-			log.Warning("detachRepositoriesManager> Cannot delete hook on stash: %s", err)
-			//do no return, try to delete the hook in database
+		var token, verifier string
+		if tv["request_token"] != nil {
+			token = tv["request_token"].(string)
+		}
+		if tv["verifier"] != nil {
+			verifier = tv["verifier"].(string)
 		}
 
-		if err := hook.DeleteHook(tx, h.ID); err != nil {
-			log.Warning("detachRepositoriesManager> Cannot get hook: %s", err)
-			return err
-
+		if token == "" || verifier == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "repositoriesManagerAuthorizeCallback> Cannot get token nor verifier from data")
 		}
-	}
 
-	// Remove reposmanager poller
-	if err := poller.DeleteAll(tx, app.ID); err != nil {
-		return err
+		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "repositoriesManagerAuthorizeCallback> Cannot load project")
+		}
 
-	}
+		vcsServer, errVCSServer := repositoriesmanager.NewVCSServerConsumer(api.mustDB, api.Cache, rmName)
+		if errVCSServer != nil {
+			return sdk.WrapError(errVCSServer, "repositoriesManagerAuthorizeCallback> Cannot load project")
+		}
 
-	if err := tx.Commit(); err != nil {
-		log.Warning("detachRepositoriesManager> Cannot commit transaction: %s", err)
-		return err
+		tx, errT := api.mustDB().Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot start transaction")
+		}
+		defer tx.Rollback()
 
-	}
+		token, secret, err := vcsServer.AuthorizeToken(token, verifier)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "repositoriesManagerAuthorizeCallback> Error with AuthorizeToken: %s", err)
+		}
+		log.Debug("repositoriesManagerAuthorizeCallback> [%s] AccessToken=%s; AccessTokenSecret=%s", projectKey, token, secret)
 
-	return WriteJSON(w, r, app, http.StatusOK)
-}
-
-func getRepositoriesManagerForApplicationsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	return errors.New("Not implemented")
-}
-
-func addHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	appName := vars["permApplicationName"]
-	rmName := vars["name"]
-
-	var data map[string]string
-	if err := UnmarshalBody(r, &data); err != nil {
-		return err
-	}
-
-	repoFullname := data["repository_fullname"]
-	pipelineName := data["pipeline_name"]
-
-	app, err := application.LoadByName(db, projectKey, appName, c.User)
-	if err != nil {
-		return sdk.ErrApplicationNotFound
-
-	}
-
-	pipeline, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
-	if err != nil {
-		return sdk.ErrPipelineNotFound
-
-	}
-
-	if !permission.AccessToPipeline(sdk.DefaultEnv.ID, pipeline.ID, c.User, permission.PermissionReadWriteExecute) {
-		log.Warning("addHookOnRepositoriesManagerHandler> You don't have enought right on this pipeline %s", pipeline.Name)
-		return sdk.ErrForbidden
-
-	}
-
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> error loading %s-%s: %s\n", projectKey, rmName, err)
-		return sdk.ErrNoReposManager
-
-	}
-
-	b, e := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
-	if e != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s): %s", rmName, projectKey, appName, e)
-		return e
-
-	}
-
-	if !b {
-		return sdk.ErrNoReposManagerClientAuth
-
-	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot start transaction: %s", err)
-		return err
-
-	}
-	defer tx.Rollback()
-
-	_, err = hook.CreateHook(tx, projectKey, rm, repoFullname, app, pipeline)
-	if err != nil {
-		return err
-
-	}
-
-	if err := application.UpdateLastModified(tx, app, c.User); err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot update application last modified date: %s", err)
-		return err
-
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot commit transaction: %s", err)
-		return err
-
-	}
-
-	app.Hooks, err = hook.LoadApplicationHooks(db, app.ID)
-	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot load application hooks: %s", err)
-		return err
-
-	}
-
-	return WriteJSON(w, r, app, http.StatusCreated)
-}
-
-func deleteHookOnRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	// Get project name in URL
-	vars := mux.Vars(r)
-	projectKey := vars["key"]
-	appName := vars["permApplicationName"]
-	rmName := vars["name"]
-	hookIDString := vars["hookId"]
-
-	hookID, errparse := strconv.ParseInt(hookIDString, 10, 64)
-	if errparse != nil {
-		return sdk.WrapError(sdk.ErrWrongRequest, "deleteHookOnRepositoriesManagerHandler> Unable to parse hook id")
-	}
-
-	app, errload := application.LoadByName(db, projectKey, appName, c.User)
-	if errload != nil {
-		return sdk.WrapError(errload, "deleteHookOnRepositoriesManagerHandler> Application %s/%s not found ", projectKey, appName)
-	}
-
-	h, errhook := hook.LoadHook(db, hookID)
-	if errhook != nil {
-		return sdk.WrapError(errhook, "deleteHookOnRepositoriesManagerHandler> Unable to load hook %d ", hookID)
-	}
-
-	tx, errtx := db.Begin()
-	if errtx != nil {
-		return sdk.WrapError(errtx, "deleteHookOnRepositoriesManagerHandler> Unable to start transaction")
-	}
-	defer tx.Rollback()
-
-	if errdelete := hook.DeleteHook(tx, h.ID); errdelete != nil {
-		return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Unable to delete hook %d", h.ID)
-	}
-
-	if errupdate := application.UpdateLastModified(tx, app, c.User); errupdate != nil {
-		return sdk.WrapError(errupdate, "deleteHookOnRepositoriesManagerHandler> Unable to update last modified")
-	}
-
-	if errtx := tx.Commit(); errtx != nil {
-		return sdk.WrapError(errtx, "deleteHookOnRepositoriesManagerHandler> Unable to commit transaction")
-	}
-
-	var errW error
-	app.Workflows, errW = workflow.LoadCDTree(db, projectKey, app.Name, c.User)
-	if errW != nil {
-		return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Unable to load workflow")
-	}
-
-	b, errcheck := repositoriesmanager.CheckApplicationIsAttached(db, rmName, projectKey, appName)
-	if errcheck != nil {
-		return sdk.WrapError(errcheck, "deleteHookOnRepositoriesManagerHandler> Cannot check app (%s,%s,%s)", rmName, projectKey, appName)
-	}
-
-	if !b {
-		return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "deleteHookOnRepositoriesManagerHandler> Applicaiton %s is not attached to any repository", appName)
-	}
-
-	client, errauth := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if errauth != nil {
-		return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, rmName)
-	}
-
-	t := strings.Split(app.RepositoryFullname, "/")
-	if len(t) != 2 {
-		return sdk.WrapError(sdk.ErrRepoNotFound, "deleteHookOnRepositoriesManagerHandler> Application %s repository fullname is not valid %s", app.Name, app.RepositoryFullname)
-	}
-
-	s := viper.GetString(viperURLAPI) + hook.HookLink
-	link := fmt.Sprintf(s, h.UID, t[0], t[1])
-
-	if errdelete := client.DeleteHook(app.RepositoryFullname, link); errdelete != nil {
-		return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash")
-	}
-
-	return WriteJSON(w, r, app, http.StatusOK)
-}
-
-func addApplicationFromRepositoriesManagerHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	vars := mux.Vars(r)
-	projectKey := vars["permProjectKey"]
-	rmName := vars["name"]
-
-	var data map[string]string
-	if err := UnmarshalBody(r, &data); err != nil {
-		return err
-	}
-
-	repoFullname := data["repository_fullname"]
-	if repoFullname == "" {
-		log.Warning("addApplicationFromRepositoriesManagerHandler>Repository fullname is mandatory")
-		return sdk.ErrWrongRequest
-
-	}
-
-	proj, err := project.Load(db, projectKey, c.User)
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s\n", projectKey, err)
-		return sdk.ErrInvalidProject
-	}
-
-	rm, err := repositoriesmanager.LoadForProject(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> error loading %s-%s: %s\n", projectKey, rmName, err)
-		return sdk.ErrNoReposManager
-
-	}
-
-	client, err := repositoriesmanager.AuthorizedClient(db, projectKey, rmName)
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
-		return sdk.ErrNoReposManagerClientAuth
-
-	}
-
-	repo, err := client.RepoByFullname(repoFullname)
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot get repo: %s", err)
-		return sdk.ErrRepoNotFound
-	}
-
-	app := sdk.Application{
-		Name:       repo.Slug,
-		ProjectKey: projectKey,
-		Variable: []sdk.Variable{
-			sdk.Variable{
-				Name:  "repo",
-				Type:  sdk.StringVariable,
-				Value: repo.SSHCloneURL,
+		vcsServerForProject := &sdk.ProjectVCSServer{
+			Name: rmName,
+			Data: map[string]string{
+				"token":  token,
+				"secret": secret,
 			},
-		},
+		}
+
+		if err := repositoriesmanager.InsertForProject(tx, proj, vcsServerForProject); err != nil {
+			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with SaveDataForProject")
+		}
+
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectLastModificationType); err != nil {
+			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot update project last modified date")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(errT, "repositoriesManagerAuthorizeCallback> Cannot commit transaction")
+		}
+
+		return WriteJSON(w, r, proj, http.StatusOK)
 	}
+}
 
-	tx, err := db.Begin()
-	if err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot start transaction: %s\n", err)
-		return err
+func (api *API) deleteRepositoriesManagerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		rmName := vars["name"]
 
+		p, errl := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if errl != nil {
+			return sdk.WrapError(errl, "deleteRepositoriesManagerHandler> Cannot load project %s", projectKey)
+		}
+
+		// Load the repositories manager from the DB
+		vcsServer := repositoriesmanager.GetProjectVCSServer(p, rmName)
+		if vcsServer == nil {
+			return sdk.ErrRepoNotFound
+		}
+
+		tx, errb := api.mustDB().Begin()
+		if errb != nil {
+			return sdk.WrapError(errb, "deleteRepositoriesManagerHandler> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		if err := repositoriesmanager.DeleteForProject(tx, p, vcsServer); err != nil {
+			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> error deleting %s-%s", projectKey, rmName)
+		}
+
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
+			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot update project last modified date")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot commit transaction")
+		}
+
+		return WriteJSON(w, r, p, http.StatusOK)
 	}
+}
 
-	defer tx.Rollback()
+func (api *API) getReposFromRepositoriesManagerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 
-	//Insert application in database
-	if err := application.Insert(tx, proj, &app); err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline: %s\n", err)
-		return err
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		rmName := vars["name"]
+		sync := FormBool(r, "synchronize")
 
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if errproj != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+		}
+
+		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s", rmName)
+
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rmName)
+		if vcsServer == nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+		}
+
+		log.Debug("getReposFromRepositoriesManagerHandler> Loading repo for %s; ok", vcsServer.Name)
+
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+		}
+
+		cacheKey := cache.Key("reposmanager", "repos", projectKey, rmName)
+		if sync {
+			api.Cache.Delete(cacheKey)
+		}
+
+		var repos []sdk.VCSRepo
+		if !api.Cache.Get(cacheKey, &repos) || len(repos) == 0 {
+			log.Debug("getReposFromRepositoriesManagerHandler> loading from Stash")
+			repos, err = client.Repos()
+			api.Cache.SetWithTTL(cacheKey, repos, 0)
+		}
+		if err != nil {
+			return sdk.WrapError(err, "getReposFromRepositoriesManagerHandler> Cannot get repos")
+
+		}
+		return WriteJSON(w, r, repos, http.StatusOK)
 	}
+}
 
-	//Fetch groups from project
-	if err := group.LoadGroupByProject(tx, proj); err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot load group from project: %s\n", err)
-		return err
+func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		// Get project name in URL
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		rmName := vars["name"]
+		repoName := r.FormValue("repo")
+
+		if repoName == "" {
+			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Missing repository name 'repo' as a query parameter"))
+		}
+
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if errproj != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+		}
+
+		vcsServer := repositoriesmanager.GetProjectVCSServer(proj, rmName)
+		if vcsServer == nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getReposFromRepositoriesManagerHandler> Cannot get client got %s %s", projectKey, rmName)
+		}
+
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, vcsServer)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "getRepoFromRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rmName, err)
+		}
+
+		log.Info("getRepoFromRepositoriesManagerHandler> Loading repository on %s", vcsServer.Name)
+
+		repo, err := client.RepoByFullname(repoName)
+		if err != nil {
+			return sdk.WrapError(err, "getRepoFromRepositoriesManagerHandler> Cannot get repos")
+		}
+		return WriteJSON(w, r, repo, http.StatusOK)
 	}
+}
 
-	//Add the  groups on the application
-	if err := application.AddGroup(tx, proj, &app, proj.ProjectGroups...); err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot add groups on application: %s\n", err)
-		return err
+func (api *API) attachRepositoriesManagerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		appName := vars["permApplicationName"]
+		rmName := vars["name"]
+		fullname := r.FormValue("fullname")
+
+		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
+		if err != nil {
+			return sdk.WrapError(err, "attachRepositoriesManager> Cannot load application %s", appName)
+		}
+
+		//Load the repositoriesManager for the project
+		rm, err := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s: %s", projectKey, rmName, err)
+		}
+
+		//Get an authorized Client
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
+		}
+
+		if _, err := client.RepoByFullname(fullname); err != nil {
+			return sdk.WrapError(sdk.ErrRepoNotFound, "attachRepositoriesManager> Cannot get repo %s: %s", fullname, err)
+		}
+
+		app.VCSServer = rm.Name
+		app.RepositoryFullname = fullname
+
+		tx, errT := api.mustDB().Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "attachRepositoriesManager> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		if err := repositoriesmanager.InsertForApplication(tx, app, projectKey); err != nil {
+			return sdk.WrapError(err, "attachRepositoriesManager> Cannot insert for application")
+		}
+
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "attachRepositoriesManager> Cannot update application last modified date")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "attachRepositoriesManager> Cannot commit transaction")
+		}
+
+		return WriteJSON(w, r, app, http.StatusOK)
 	}
+}
 
-	//Commit the transaction
-	if err = tx.Commit(); err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot commit transaction: %s\n", err)
-		return err
+func (api *API) detachRepositoriesManagerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		appName := vars["permApplicationName"]
+		rmName := vars["name"]
+
+		app, errl := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithHooks)
+		if errl != nil {
+			return sdk.WrapError(errl, "detachRepositoriesManager> error on load project %s", projectKey)
+		}
+
+		//Load the repositoriesManager for the project
+		rm, err := repositoriesmanager.LoadForProject(api.mustDB(), projectKey, rmName)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s: %s", projectKey, rmName, err)
+		}
+
+		//Get an authorized Client
+		client, err := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
+		if err != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "attachRepositoriesManager> Cannot get client got %s %s : %s", projectKey, rmName, err)
+		}
+
+		//Remove all the things in a transaction
+		tx, errT := api.mustDB().Begin()
+		if errT != nil {
+			return sdk.WrapError(errT, "detachRepositoriesManager> Cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		if err := repositoriesmanager.DeleteForApplication(tx, app); err != nil {
+			return sdk.WrapError(err, "detachRepositoriesManager> Cannot delete for application")
+		}
+
+		for _, h := range app.Hooks {
+			s := api.Config.URL.API + hook.HookLink
+			link := fmt.Sprintf(s, h.UID, h.Project, h.Repository)
+
+			vcsHook := sdk.VCSHook{
+				Name:   rm.Name,
+				URL:    link,
+				Method: "GET",
+			}
+
+			if err := client.DeleteHook(rm.Name, vcsHook); err != nil {
+				log.Warning("detachRepositoriesManager> Cannot delete hook on stash: %s", err)
+				//do no return, try to delete the hook in database
+			}
+
+			if err := hook.DeleteHook(tx, h.ID); err != nil {
+				return sdk.WrapError(err, "detachRepositoriesManager> Cannot get hook")
+			}
+		}
+
+		// Remove reposmanager poller
+		if err := poller.DeleteAll(tx, app.ID); err != nil {
+			return sdk.WrapError(err, "detachRepositoriesManager> error on poller.DeleteAll")
+		}
+
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "detachRepositoriesManager> Cannot update application last modified date")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "detachRepositoriesManager> Cannot commit transaction")
+		}
+
+		return WriteJSON(w, r, app, http.StatusOK)
 	}
+}
 
-	//Attach the application to the repositories manager
-	app.RepositoriesManager = rm
-	app.RepositoryFullname = repoFullname
-	if err := repositoriesmanager.InsertForApplication(db, &app, projectKey); err != nil {
-		log.Warning("addApplicationFromRepositoriesManagerHandler> Cannot attach application: %s", err)
-		return err
+func (api *API) addHookOnRepositoriesManagerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		appName := vars["permApplicationName"]
+		rmName := vars["name"]
+
+		var data map[string]string
+		if err := UnmarshalBody(r, &data); err != nil {
+			return err
+		}
+
+		repoFullname := data["repository_fullname"]
+		pipelineName := data["pipeline_name"]
+
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if errproj != nil {
+			return errproj
+		}
+
+		app, errla := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
+		if errla != nil {
+			return sdk.ErrApplicationNotFound
+		}
+
+		pipeline, errl := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
+		if errl != nil {
+			return sdk.ErrPipelineNotFound
+		}
+
+		if !permission.AccessToPipeline(sdk.DefaultEnv.ID, pipeline.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+			return sdk.WrapError(sdk.ErrForbidden, "addHookOnRepositoriesManagerHandler> You don't have enought right on this pipeline %s", pipeline.Name)
+		}
+
+		//Load the repositoriesManager for the project
+		rm := repositoriesmanager.GetProjectVCSServer(proj, rmName)
+		if rm == nil {
+			return sdk.WrapError(sdk.ErrNoReposManager, "attachRepositoriesManager> error loading %s-%s", projectKey, rmName)
+		}
+
+		tx, errb := api.mustDB().Begin()
+		if errb != nil {
+			return sdk.WrapError(errb, "addHookOnRepositoriesManagerHandler> cannot start transaction")
+		}
+		defer tx.Rollback()
+
+		if _, err := hook.CreateHook(tx, api.Cache, proj, rmName, repoFullname, app, pipeline); err != nil {
+			return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot create hook")
+		}
+
+		if err := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot update application last modified date")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "addHookOnRepositoriesManagerHandler> cannot commit transaction")
+		}
+
+		var errlah error
+		app.Hooks, errlah = hook.LoadApplicationHooks(api.mustDB(), app.ID)
+		if errlah != nil {
+			return sdk.WrapError(errlah, "addHookOnRepositoriesManagerHandler> cannot load application hooks")
+		}
+
+		var errW error
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
+		if errW != nil {
+			return sdk.WrapError(errW, "addHookOnRepositoriesManagerHandler> Cannot load workflow")
+		}
+
+		return WriteJSON(w, r, app, http.StatusCreated)
 	}
+}
 
-	return nil
+func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["key"]
+		appName := vars["permApplicationName"]
+		hookIDString := vars["hookId"]
+
+		hookID, errparse := strconv.ParseInt(hookIDString, 10, 64)
+		if errparse != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "deleteHookOnRepositoriesManagerHandler> Unable to parse hook id")
+		}
+
+		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if errproj != nil {
+			return sdk.WrapError(errproj, "deleteHookOnRepositoriesManagerHandler> unable to load project")
+		}
+
+		app, errload := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx))
+		if errload != nil {
+			return sdk.WrapError(errload, "deleteHookOnRepositoriesManagerHandler> Application %s/%s not found ", projectKey, appName)
+		}
+
+		h, errhook := hook.LoadHook(api.mustDB(), hookID)
+		if errhook != nil {
+			return sdk.WrapError(errhook, "deleteHookOnRepositoriesManagerHandler> Unable to load hook %d ", hookID)
+		}
+
+		tx, errtx := api.mustDB().Begin()
+		if errtx != nil {
+			return sdk.WrapError(errtx, "deleteHookOnRepositoriesManagerHandler> Unable to start transaction")
+		}
+		defer tx.Rollback()
+
+		if errdelete := hook.DeleteHook(tx, h.ID); errdelete != nil {
+			return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Unable to delete hook %d", h.ID)
+		}
+
+		if errupdate := application.UpdateLastModified(tx, api.Cache, app, getUser(ctx)); errupdate != nil {
+			return sdk.WrapError(errupdate, "deleteHookOnRepositoriesManagerHandler> Unable to update last modified")
+		}
+
+		if errtx := tx.Commit(); errtx != nil {
+			return sdk.WrapError(errtx, "deleteHookOnRepositoriesManagerHandler> Unable to commit transaction")
+		}
+
+		var errW error
+		app.Workflows, errW = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, app.Name, getUser(ctx), "", "", 0)
+		if errW != nil {
+			return sdk.WrapError(errW, "deleteHookOnRepositoriesManagerHandler> Unable to load workflow")
+		}
+
+		rm := repositoriesmanager.GetProjectVCSServer(proj, app.VCSServer)
+		if rm == nil {
+			return sdk.ErrNoReposManager
+		}
+
+		client, errauth := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
+		if errauth != nil {
+			return sdk.WrapError(errauth, "deleteHookOnRepositoriesManagerHandler> Cannot get client %s %s", projectKey, app.VCSServer)
+		}
+
+		t := strings.Split(app.RepositoryFullname, "/")
+		if len(t) != 2 {
+			return sdk.WrapError(sdk.ErrRepoNotFound, "deleteHookOnRepositoriesManagerHandler> Application %s repository fullname is not valid %s", app.Name, app.RepositoryFullname)
+		}
+
+		s := api.Config.URL.API + hook.HookLink
+		log.Info("Will delete hook %s", h.UID)
+		link := fmt.Sprintf(s, h.UID, t[0], t[1])
+
+		vcsHook := sdk.VCSHook{
+			Name:   rm.Name,
+			URL:    link,
+			Method: "GET",
+		}
+
+		if errdelete := client.DeleteHook(app.RepositoryFullname, vcsHook); errdelete != nil {
+			return sdk.WrapError(errdelete, "deleteHookOnRepositoriesManagerHandler> Cannot delete hook on stash")
+		}
+
+		return WriteJSON(w, r, app, http.StatusOK)
+	}
+}
+
+//TODO Workflow as code here
+func (api *API) addApplicationFromRepositoriesManagerHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		projectKey := vars["permProjectKey"]
+		rmName := vars["name"]
+
+		var data map[string]string
+		if err := UnmarshalBody(r, &data); err != nil {
+			return err
+		}
+
+		repoFullname := data["repository_fullname"]
+		if repoFullname == "" {
+			return sdk.WrapError(sdk.ErrWrongRequest, "addApplicationFromRepositoriesManagerHandler>Repository fullname is mandatory")
+		}
+
+		proj, errlp := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
+		if errlp != nil {
+			return sdk.WrapError(sdk.ErrInvalidProject, "addApplicationFromRepositoriesManagerHandler: Cannot load %s: %s", projectKey, errlp)
+		}
+
+		rm := repositoriesmanager.GetProjectVCSServer(proj, rmName)
+		if rm == nil {
+			return sdk.WrapError(sdk.ErrNoReposManager, "addApplicationFromRepositoriesManagerHandler> Unable to laod repo manager")
+		}
+
+		client, errac := repositoriesmanager.AuthorizedClient(api.mustDB(), api.Cache, rm)
+		if errac != nil {
+			return sdk.WrapError(sdk.ErrNoReposManagerClientAuth, "addApplicationFromRepositoriesManagerHandler> Cannot get client got %s %s: %s", projectKey, rmName, errac)
+		}
+
+		repo, errlr := client.RepoByFullname(repoFullname)
+		if errlr != nil {
+			return sdk.WrapError(sdk.ErrRepoNotFound, "addApplicationFromRepositoriesManagerHandler> Cannot get repo: %s", errlr)
+		}
+
+		app := sdk.Application{
+			Name:       repo.Slug,
+			ProjectKey: projectKey,
+			Variable: []sdk.Variable{
+				sdk.Variable{
+					Name:  "repo",
+					Type:  sdk.StringVariable,
+					Value: repo.SSHCloneURL,
+				},
+			},
+		}
+
+		tx, errb := api.mustDB().Begin()
+		if errb != nil {
+			return sdk.WrapError(errb, "addApplicationFromRepositoriesManagerHandler> Cannot start transaction")
+		}
+
+		defer tx.Rollback()
+
+		//Insert application in database
+		if err := application.Insert(tx, api.Cache, proj, &app, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot insert pipeline")
+		}
+
+		//Fetch groups from project
+		if err := group.LoadGroupByProject(tx, proj); err != nil {
+			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot load group from project")
+		}
+
+		//Add the  groups on the application
+		if err := application.AddGroup(tx, api.Cache, proj, &app, getUser(ctx), proj.ProjectGroups...); err != nil {
+			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot add groups on application")
+		}
+
+		//Commit the transaction
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot commit transaction")
+		}
+
+		//Attach the application to the repositories manager
+		app.VCSServer = rm.Name
+		app.RepositoryFullname = repoFullname
+		if err := repositoriesmanager.InsertForApplication(api.mustDB(), &app, projectKey); err != nil {
+			return sdk.WrapError(err, "addApplicationFromRepositoriesManagerHandler> Cannot attach application")
+		}
+
+		return nil
+	}
 }

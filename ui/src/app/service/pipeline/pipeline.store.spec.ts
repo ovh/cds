@@ -1,162 +1,133 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, async, getTestBed} from '@angular/core/testing';
+import {async, TestBed} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
-import {MockBackend} from '@angular/http/testing';
-import {Http, RequestOptions, Response, ResponseOptions} from '@angular/http';
-import {Injector} from '@angular/core';
 import {AppModule} from '../../app.module';
-import {AuthentificationStore} from '../auth/authentification.store';
-import {HttpService} from '../http-service.service';
-import {RouterModule, Router} from '@angular/router';
+import {RouterModule} from '@angular/router';
 import {PipelineStore} from './pipeline.store';
 import {Pipeline} from '../../model/pipeline.model';
-import {ToastService} from '../../shared/toast/ToastService';
 import {Stage} from '../../model/stage.model';
 import {Action} from '../../model/action.model';
 import {Job} from '../../model/job.model';
 import {Project} from '../../model/project.model';
-import {GroupPermission} from '../../model/group.model';
+import {Group, GroupPermission} from '../../model/group.model';
 import {Parameter} from '../../model/parameter.model';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
+import {first} from 'rxjs/operators';
 
 describe('CDS: pipeline Store', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
-    let pipelineStore: PipelineStore;
-
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
                 {provide: APP_BASE_HREF, useValue: '/'},
-                MockBackend,
-                {
-                    provide: Http,
-                    useFactory: (backendParam: MockBackend,
-                                 defaultOptions: RequestOptions,
-                                 toast: ToastService,
-                                 authStore: AuthentificationStore,
-                                 router: Router) =>
-                        new HttpService(backendParam, defaultOptions, toast, authStore, router),
-                    deps: [MockBackend, RequestOptions, ToastService, AuthentificationStore]
-                }
             ],
             imports: [
                 AppModule,
-                RouterModule
+                RouterModule,
+                HttpClientTestingModule
             ]
         });
-        injector = getTestBed();
-        backend = injector.get(MockBackend);
-        pipelineStore = injector.get(PipelineStore);
 
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
-        pipelineStore = undefined;
     });
 
     it('Create and Delete Pipeline', async(() => {
-        let call = 0;
+        const pipelineStore = TestBed.get(PipelineStore);
+        const http = TestBed.get(HttpTestingController);
+
+        let pipeline1 = new Pipeline();
+        pipeline1.name = 'myPipeline';
+
+        let pipeline2 = new Pipeline();
+        pipeline2.name = 'myPipeline2';
+
         let projectKey = 'key1';
-        // Mock Http pipeline request
-        backend.connections.subscribe(connection => {
-            switch (call) {
-                case 0:
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline" }'})));
-                    break;
-                case 1:
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline2" }'})));
-                    break;
-                case 2:
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline" }'})));
-                    break;
-                case 3:
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline" }'})));
-                    break;
-            }
 
-
-        });
         // Create 1st pipeline
         let checkPipelineCreated = false;
         pipelineStore.createPipeline(projectKey, createPipeline('myPipeline')).subscribe(res => {
             expect(res.name).toBe('myPipeline', 'Wrong pipeline name');
             checkPipelineCreated = true;
         });
-        expect(call).toBe(1, 'Need to have done 1 http call');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline'
+        })).flush(pipeline1);
 
         // check get pipeline (get from cache)
         let checkedSinglePipeline = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').name).toBe('myPipeline', 'Wrong pipeline name. Must be myPipeline');
             checkedSinglePipeline = true;
-        }).unsubscribe();
+        });
         expect(checkedSinglePipeline).toBeTruthy('Need to get pipeline myPipeline');
-        expect(call).toBe(1, 'Need to have done 1 http call');
-
 
         // check get pipeline not in cache
         let checkednotCachedPipeline = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline2').subscribe(pips => {
-            expect(pips.get(projectKey + '-' + 'myPipeline2')).toBeTruthy();
-            expect(pips.get(projectKey + '-' + 'myPipeline2').name).toBe('myPipeline2', 'Wrong pipeline name. Must be myPipeline2');
+        pipelineStore.getPipelines(projectKey, 'myPipeline2').pipe(first()).subscribe(pips => {
+            expect(pips.get(projectKey + '-' + 'myPipeline2')).toBeFalsy();
             checkednotCachedPipeline = true;
-        }).unsubscribe();
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline2'
+        })).flush(pipeline2);
         expect(checkednotCachedPipeline).toBeTruthy('Need to get pipeline myPipeline2');
-        expect(call).toBe(2, 'Need to have done 2 http call');
+
+        // Now in cache
+        let checkedInCachedPipeline = false;
+        pipelineStore.getPipelines(projectKey, 'myPipeline2').pipe(first()).subscribe(pips => {
+            expect(pips.get(projectKey + '-' + 'myPipeline2')).toBeTruthy();
+            checkedInCachedPipeline = true;
+        });
+        expect(checkedInCachedPipeline).toBeTruthy();
 
         // Pipeline deletion
-
         pipelineStore.deletePipeline(projectKey, 'myPipeline2').subscribe(() => {
         });
-        expect(call).toBe(3, 'Need to have done 3 http call');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline2'
+        })).flush(null);
 
         let checkedDeletedPipeline = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline2').first().subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline2').pipe(first()).subscribe(pips => {
             checkedDeletedPipeline = true;
         });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline2'
+        })).flush(pipeline2);
         expect(checkedDeletedPipeline).toBeTruthy('Need to get pipeline myPipeline');
-        expect(call).toBe(4, 'Need to have done 4 http call');
+
+        http.verify();
     }));
 
     it('Update pipeline', async(() => {
-        let call = 0;
+        const pipelineStore = TestBed.get(PipelineStore);
+        const http = TestBed.get(HttpTestingController);
+
+        let pip1 = new Pipeline();
+        pip1.name = 'myPipeline';
+
+        let pipUp = new Pipeline();
+        pipUp.name = 'myPipelineUpdate1';
+
         let projectKey = 'key1';
-        // Mock Http pipeline request
-        backend.connections.subscribe(connection => {
-            switch (call) {
-                case 0: // create pipeline
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline" }'})));
-                    break;
-                case 1: // 1st update
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipelineUpdate1" }'})));
-                    break;
-            }
 
-
-        });
         // Create pipeline
         let p = createPipeline('myPipeline');
         pipelineStore.createPipeline(projectKey, p).subscribe(() => {
         });
-        expect(call).toBe(1, 'Need to have done 1 http call');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline'
+        })).flush(pip1);
 
         // Update
         p.name = 'myPipelineUpdate1';
         pipelineStore.updatePipeline(projectKey, 'myPipeline', p).subscribe(() => {
         });
-        expect(call).toBe(2, 'Need to have done 2 http call');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline'
+        })).flush(pipUp);
 
         // check get pipeline
         let checkedPipeline = false;
@@ -167,87 +138,87 @@ describe('CDS: pipeline Store', () => {
             checkedPipeline = true;
         }).unsubscribe();
         expect(checkedPipeline).toBeTruthy('Need to get pipeline myPipelineUpdate1');
-        expect(call).toBe(2, 'Need to have done 2 http call');
+
+        http.verify();
     }));
 
     it('should create/update and delete a stage', async(() => {
-        let call = 0;
+        const pipelineStore = TestBed.get(PipelineStore);
+        const http = TestBed.get(HttpTestingController);
+
+        let pip1 = new Pipeline();
+        pip1.name = 'myPipeline';
+
+        let pipAddStage = new Pipeline();
+        pipAddStage.stages = new Array<Stage>();
+        let s1 = new Stage();
+        s1.name = 'stage1';
+        pipAddStage.stages.push(s1);
+
+        let pipUpStage = new Pipeline();
+        pipUpStage.stages = new Array<Stage>();
+        let s2 = new Stage();
+        s2.name = 'stage1Updated';
+        pipUpStage.stages.push(s2);
+
+        let pipDelStage = new Pipeline();
+        pipDelStage.stages = new Array<Stage>();
+
         let projectKey = 'key1';
-        // Mock Http pipeline request
-        backend.connections.subscribe(connection => {
-            switch (call) {
-                case 0:
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline" }'})));
-                    break;
-                case 1:
-                    call++;
-                    connection.mockRespond(
-                        new Response(
-                            new ResponseOptions({body: `{ "name": "myPipeline", "stages": [{ "name": "stage1" }] }`})));
-                    break;
-                case 2:
-                    call++;
-                    connection.mockRespond(
-                        new Response(
-                            new ResponseOptions({body: `{ "name": "myPipeline", "stages": [{ "name": "stage1Updated" }] }`})));
-                    break;
-                case 3:
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline", "stages": [] }'})));
-                    break;
-            }
 
-
-        });
         // Create 1st pipeline
         let checkPipelineCreated = false;
         pipelineStore.createPipeline(projectKey, createPipeline('myPipeline')).subscribe(res => {
             expect(res.name).toBe('myPipeline', 'Wrong pipeline name');
             checkPipelineCreated = true;
-        }).unsubscribe();
-        expect(call).toBe(1, 'Need to have done 1 http call');
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline'
+        })).flush(pip1);
 
         // ADD STAGE
-
         let s: Stage = new Stage();
         s.name = 'stage1';
+        s.id = 1;
         pipelineStore.addStage(projectKey, 'myPipeline', s).subscribe(() => {
-        }).unsubscribe();
-        expect(call).toBe(2, 'Need to have done 2 http call');
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage'
+        })).flush(pipAddStage);
 
         // check get pipeline (get from cache)
         let checkStageAdd = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').stages.length).toBe(1, 'Must have 1 stage');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].name).toBe('stage1', 'Wrong stage');
             checkStageAdd = true;
-        }).unsubscribe();
+        });
         expect(checkStageAdd).toBeTruthy();
-        expect(call).toBe(2, 'Need to have done 2 http call');
 
         // UPDATE STAGE
 
         pipelineStore.updateStage(projectKey, 'myPipeline', s).subscribe(() => {
         });
-        expect(call).toBe(3, 'Need to have done 3 http call');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage/1'
+        })).flush(pipUpStage);
 
         let checkStageUpdate = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').stages.length).toBe(1, 'Must have 1 stage');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].name).toBe('stage1Updated', 'Wrong stage');
             checkStageUpdate = true;
-        }).unsubscribe();
+        });
         expect(checkStageUpdate).toBeTruthy();
-        expect(call).toBe(3, 'Need to have done 3 http call');
 
         // DELETE STAGE
-
         pipelineStore.removeStage(projectKey, 'myPipeline', s).subscribe(() => {
         });
-        expect(call).toBe(4, 'Need to have done 4 http call');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage/1'
+        })).flush(pipDelStage);
 
         let checkStageDelete = false;
         pipelineStore.getPipelines(projectKey, 'myPipeline').subscribe(pips => {
@@ -256,264 +227,264 @@ describe('CDS: pipeline Store', () => {
             checkStageDelete = true;
         }).unsubscribe();
         expect(checkStageDelete).toBeTruthy();
-        expect(call).toBe(4, 'Need to have done 4 http call');
 
+        http.verify();
     }));
 
     it('should create/update and delete a job', async(() => {
-        let call = 0;
+        const pipelineStore = TestBed.get(PipelineStore);
+        const http = TestBed.get(HttpTestingController);
+
+        let pip = new Pipeline();
+        pip.name = 'myPipeline';
+        pip.stages = new Array<Stage>();
+        let s = new Stage();
+        s.id = 1;
+        pip.stages.push(s);
+
+        let pipAddJob = new Pipeline();
+        pipAddJob.name = 'myPipeline';
+        pipAddJob.stages = new Array<Stage>();
+        let sAdd = new Stage();
+        sAdd.id = 1;
+        sAdd.jobs = new Array<Job>();
+        let jAdd = new Job();
+        jAdd.action = new Action();
+        jAdd.action.name = 'action1';
+        sAdd.jobs.push(jAdd);
+        pipAddJob.stages.push(sAdd);
+
+        let pipUpJob = new Pipeline();
+        pipUpJob.name = 'myPipeline';
+        pipUpJob.stages = new Array<Stage>();
+        let sUp = new Stage();
+        sUp.id = 1;
+        sUp.jobs = new Array<Job>();
+        let jUp = new Job();
+        jUp.action = new Action();
+        jUp.action.name = 'action1Updated';
+        sUp.jobs.push(jUp);
+        pipUpJob.stages.push(sUp);
+
+        let pipDelJob = new Pipeline();
+        pipDelJob.name = 'myPipeline';
+        pipDelJob.stages = new Array<Stage>();
+        let sDel = new Stage();
+        sDel.id = 1;
+        sDel.jobs = new Array<Job>();
+        pipDelJob.stages.push(sDel);
+
         let projectKey = 'key1';
-        // Mock Http pipeline request
-        backend.connections.subscribe(connection => {
-            switch (call) {
-                case 0:
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline", "stages": [{ "id": 1 }] }'})));
-                    break;
-                case 1:
-                    call++;
-                    connection.mockRespond(
-                        new Response(
-                            new ResponseOptions({
-                                body: `{ 
-                                "name": "myPipeline", 
-                                "stages": [{ "id": 1, "jobs": [{"action": { "name": "action1" }}] }] 
-                            }`
-                            })));
-                    break;
-                case 2:
-                    call++;
-                    connection.mockRespond(
-                        new Response(
-                            new ResponseOptions({
-                                body: `{ 
-                                "name": "myPipeline", 
-                                "stages": [{ "id": 1, "jobs": [ {"action": { "name": "action1Updated" }}] }] 
-                            }`
-                            })));
-                    break;
-                case 3:
-                    call++;
-                    connection.mockRespond(
-                        new Response(
-                            new ResponseOptions({
-                                body: `{ 
-                                "name": "myPipeline", 
-                                "stages": [{ "id": 1, "jobs": [] }] 
-                            }`
-                            })
-                        )
-                    );
-                    break;
-            }
 
-
-        });
         // Create 1st pipeline
         let checkPipelineCreated = false;
         pipelineStore.createPipeline(projectKey, createPipeline('myPipeline')).subscribe(res => {
             expect(res.name).toBe('myPipeline', 'Wrong pipeline name');
             checkPipelineCreated = true;
-        }).unsubscribe();
-        expect(call).toBe(1, 'Need to have done 1 http call');
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline'
+        })).flush(pip);
 
         // ADD Job
         let j = new Job();
         let a: Action = new Action();
         a.name = 'action1';
         j.action = a;
+        j.pipeline_action_id = 0;
         pipelineStore.addJob(projectKey, 'myPipeline', 1, j).subscribe(() => {
-        }).unsubscribe();
-        expect(call).toBe(2, 'Need to have done 2 http call');
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage/1/job'
+        })).flush(pipAddJob);
 
 
         let checkJobAdd = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').stages.length).toBe(1, 'Must have 1 stage');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].jobs.length).toBe(1, 'Must have 1 action');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].jobs[0].action.name).toBe('action1', 'Wrong action');
             checkJobAdd = true;
-        }).unsubscribe();
+        });
         expect(checkJobAdd).toBeTruthy();
-        expect(call).toBe(2, 'Need to have done 2 http call');
 
-        // UPDATE STAGE
+        // UPDATE JOB
 
         pipelineStore.updateJob(projectKey, 'myPipeline', 1, j).subscribe(() => {
         });
-        expect(call).toBe(3, 'Need to have done 3 http call');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage/1/job/0'
+        })).flush(pipUpJob);
 
         let checkJobUpdate = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').stages.length).toBe(1, 'Must have 1 stage');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].jobs.length).toBe(1, 'Must have 1 action');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].jobs[0].action.name).toBe('action1Updated', 'Wrong action');
             checkJobUpdate = true;
-        }).unsubscribe();
+        });
         expect(checkJobUpdate).toBeTruthy();
-        expect(call).toBe(3, 'Need to have done 3 http call');
 
-        // DELETE STAGE
-
+        // DELETE JOB
         pipelineStore.removeJob(projectKey, 'myPipeline', 1, j).subscribe(() => {
         });
-        expect(call).toBe(4, 'Need to have done 4 http call');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/stage/1/job/0'
+        })).flush(pipDelJob);
 
         let checkJobDelete = false;
-        pipelineStore.getPipelines(projectKey, 'myPipeline').subscribe(pips => {
+        pipelineStore.getPipelines(projectKey, 'myPipeline').pipe(first()).subscribe(pips => {
             expect(pips.get(projectKey + '-' + 'myPipeline')).toBeTruthy();
             expect(pips.get(projectKey + '-' + 'myPipeline').stages.length).toBe(1, 'Must have10 stage');
             expect(pips.get(projectKey + '-' + 'myPipeline').stages[0].jobs.length).toBe(0);
             checkJobDelete = true;
-        }).unsubscribe();
+        });
         expect(checkJobDelete).toBeTruthy();
-        expect(call).toBe(4, 'Need to have done 4 http call');
 
+        http.verify();
     }));
 
-    it('should add/update/delete a permission', async( () => {
-        let call = 0;
-        // Mock Http application request
-        backend.connections.subscribe(connection => {
-            switch (call) {
-                case 0: // create application
-                    call ++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline", "last_modified": 0 }'})));
-                    break;
-                case 1: // Add variable
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                        "name": "myPipeline", 
-                        "last_modified": 123,
-                        "groups": [ {"permission": 7} ] }`
-                    })));
-                    break;
-                case 2: // update variable
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                         "name": "myPipeline", 
-                        "last_modified": 456,
-                        "groups": [ {"permission": 4} ] }`
-                    })));
-                    break;
-                case 3: // delete variable
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                         "name": "myPipeline", 
-                        "last_modified": 789,
-                        "groups": [ ] }`
-                    })));
-                    break;
-            }
+    it('should add/update/delete a permission', async(() => {
+        const pipelineStore = TestBed.get(PipelineStore);
+        const http = TestBed.get(HttpTestingController);
 
+        let grp1 = new Group();
+        grp1.name = 'grp';
 
-        });
+        let pip = new Pipeline();
+        pip.name = 'myPipeline';
+        pip.last_modified = 0;
+
+        let pipAddGroup = new Pipeline();
+        pipAddGroup.name = 'myPipeline';
+        pipAddGroup.last_modified = 123;
+        pipAddGroup.groups = new Array<GroupPermission>();
+        let gpAdd = new GroupPermission();
+        gpAdd.group = grp1;
+        gpAdd.permission = 7;
+        pipAddGroup.groups.push(gpAdd);
+
+        let pipUpGroup = new Pipeline();
+        pipUpGroup.name = 'myPipeline';
+        pipUpGroup.last_modified = 456;
+        pipUpGroup.groups = new Array<GroupPermission>();
+        let gpUp = new GroupPermission();
+        gpUp.group = grp1;
+        gpUp.permission = 4;
+        pipUpGroup.groups.push(gpUp);
+
+        let pipDelGroup = new Pipeline();
+        pipDelGroup.name = 'myPipeline';
+        pipDelGroup.last_modified = 789;
+        pipDelGroup.groups = new Array<GroupPermission>();
 
         let proj: Project = new Project();
         proj.key = 'key1';
 
         // Create pipeline
-        let pip = createPipeline('myPipeline');
-        pipelineStore.createPipeline(proj.key, pip).subscribe( () => {});
-        expect(call).toBe(1, 'Need to have done 1 http call');
+        let pipeline = createPipeline('myPipeline');
+        pipelineStore.createPipeline(proj.key, pipeline).subscribe(() => {
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline'
+        })).flush(pip);
 
         let gp: GroupPermission = new GroupPermission();
         gp.permission = 0;
+        gp.group = new Group();
+        gp.group.name = 'grp';
 
-
-        pipelineStore.addPermission(proj.key, pip.name, gp).subscribe(() => {});
-        expect(call).toBe(2, 'Need to have done 2 http call');
+        pipelineStore.addPermission(proj.key, pip.name, gp).subscribe(() => {
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/group'
+        })).flush(pipAddGroup);
 
         // check get pipeline
         let checkedAddPermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(123, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(1, 'A group must have been added');
             expect(apps.get(proj.key + '-myPipeline').groups[0].permission).toBe(7, 'Permission must be 7');
             checkedAddPermission = true;
-        }).unsubscribe();
+        });
         expect(checkedAddPermission).toBeTruthy('Need pipeline to be updated');
-        expect(call).toBe(2, 'Need to have done 2 http call');
 
-
-        pipelineStore.updatePermission(proj.key, pip.name, gp).subscribe(() => {});
-        expect(call).toBe(3, 'Need to have done 3 http call');
+        pipelineStore.updatePermission(proj.key, pip.name, gp).subscribe(() => {
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/group/grp'
+        })).flush(pipUpGroup);
 
         // check get pipeline
         let checkedUpdatePermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(456, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(1, 'Pip must have 1 group');
             expect(apps.get(proj.key + '-myPipeline').groups[0].permission).toBe(4, 'Group permission must be 4');
             checkedUpdatePermission = true;
-        }).unsubscribe();
+        });
         expect(checkedUpdatePermission).toBeTruthy('Need pipeline to be updated');
-        expect(call).toBe(3, 'Need to have done 3 http call');
 
-
-        pipelineStore.removePermission(proj.key, pip.name, gp).subscribe(() => {});
-        expect(call).toBe(4, 'Need to have done 4 http call');
+        pipelineStore.removePermission(proj.key, pip.name, gp).subscribe(() => {
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/group/grp'
+        })).flush(pipDelGroup);
 
         // check get pipeline
         let checkedDeletePermission = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(789, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').groups.length).toBe(0, 'Ouo must have 0 group');
             checkedDeletePermission = true;
-        }).unsubscribe();
+        });
         expect(checkedDeletePermission).toBeTruthy('Need pipeline to be updated');
-        expect(call).toBe(4, 'Need to have done 3 http call');
 
-
+        http.verify();
     }));
 
-    it('should add/update/delete a parameter', async( () => {
-        let call = 0;
-        // Mock Http application request
-        backend.connections.subscribe(connection => {
-            switch (call) {
-                case 0: // create application
-                    call ++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "myPipeline", "last_modified": 0 }'})));
-                    break;
-                case 1: // Add variable
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                        "name": "myPipeline", 
-                        "last_modified": 123,
-                        "parameters": [ {"name": "foo"} ] }`
-                    })));
-                    break;
-                case 2: // update variable
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                         "name": "myPipeline", 
-                        "last_modified": 456,
-                        "parameters": [ {"name": "fooUpdated"} ] }`
-                    })));
-                    break;
-                case 3: // delete variable
-                    call++;
-                    connection.mockRespond(new Response(new ResponseOptions({body: `{ 
-                         "name": "myPipeline", 
-                        "last_modified": 789,
-                        "parameters": [ ] }`
-                    })));
-                    break;
-            }
+    it('should add/update/delete a parameter', async(() => {
+        const pipelineStore = TestBed.get(PipelineStore);
+        const http = TestBed.get(HttpTestingController);
 
+        let pip = new Pipeline();
+        pip.name = 'myPipeline';
+        pip.last_modified = 0;
 
-        });
+        let pipAddParam = new Pipeline();
+        pipAddParam.name = 'myPipeline';
+        pipAddParam.last_modified = 123;
+        pipAddParam.parameters = new Array<Parameter>();
+        let pa = new Parameter();
+        pa.name = 'foo';
+        pipAddParam.parameters.push(pa);
+
+        let pipUpParam = new Pipeline();
+        pipUpParam.name = 'myPipeline';
+        pipUpParam.last_modified = 456;
+        pipUpParam.parameters = new Array<Parameter>();
+        let pa2 = new Parameter();
+        pa2.name = 'fooUpdated';
+        pipUpParam.parameters.push(pa2);
+
+        let pipDelParam = new Pipeline();
+        pipDelParam.name = 'myPipeline';
+        pipDelParam.last_modified = 789;
+        pipDelParam.parameters = new Array<Parameter>();
 
         let proj: Project = new Project();
         proj.key = 'key1';
 
         // Create pipeline
-        let pip = createPipeline('myPipeline');
-        pipelineStore.createPipeline(proj.key, pip).subscribe( () => {});
-        expect(call).toBe(1, 'Need to have done 1 http call');
+        let pipeline = createPipeline('myPipeline');
+        pipelineStore.createPipeline(proj.key, pipeline).subscribe(() => {
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline'
+        })).flush(pip);
 
         let param: Parameter = new Parameter();
         param.name = 'foo';
@@ -522,50 +493,56 @@ describe('CDS: pipeline Store', () => {
         param.value = 'bar';
 
 
-        pipelineStore.addParameter(proj.key, pip.name, param).subscribe(() => {});
-        expect(call).toBe(2, 'Need to have done 2 http call');
+        pipelineStore.addParameter(proj.key, pip.name, param).subscribe(() => {
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/parameter/foo'
+        })).flush(pipAddParam);
 
         // check get pipeline
         let checkedAddParam = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(123, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(1, 'A parameter must have been added');
             expect(apps.get(proj.key + '-myPipeline').parameters[0].name).toBe('foo', 'Name must be foo');
             checkedAddParam = true;
-        }).unsubscribe();
+        });
         expect(checkedAddParam).toBeTruthy('Need pipeline to be updated');
-        expect(call).toBe(2, 'Need to have done 2 http call');
 
 
-        pipelineStore.updateParameter(proj.key, pip.name, param).subscribe(() => {});
-        expect(call).toBe(3, 'Need to have done 3 http call');
+        pipelineStore.updateParameter(proj.key, pip.name, param).subscribe(() => {
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/parameter/foo'
+        })).flush(pipUpParam);
 
         // check get pipeline
         let checkedUpdateParam = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(456, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(1, 'Pip must have 1 group');
             expect(apps.get(proj.key + '-myPipeline').parameters[0].name).toBe('fooUpdated', 'Name must be fooUpdated');
             checkedUpdateParam = true;
-        }).unsubscribe();
+        });
         expect(checkedUpdateParam).toBeTruthy('Need pipeline to be updated');
-        expect(call).toBe(3, 'Need to have done 3 http call');
 
 
-        pipelineStore.removeParameter(proj.key, pip.name, param).subscribe(() => {});
-        expect(call).toBe(4, 'Need to have done 4 http call');
+        pipelineStore.removeParameter(proj.key, pip.name, param).subscribe(() => {
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/project/key1/pipeline/myPipeline/parameter/foo'
+        })).flush(pipDelParam);
 
         // check get pipeline
         let checkedDeleteParam = false;
-        pipelineStore.getPipelines(proj.key, 'myPipeline').subscribe( apps => {
+        pipelineStore.getPipelines(proj.key, 'myPipeline').pipe(first()).subscribe(apps => {
             expect(apps.get(proj.key + '-myPipeline').last_modified).toBe(789, 'Pip lastModified date must have been updated');
             expect(apps.get(proj.key + '-myPipeline').parameters.length).toBe(0, 'Pip must have 0 parameter');
             checkedDeleteParam = true;
         }).unsubscribe();
         expect(checkedDeleteParam).toBeTruthy('Need pipeline to be updated');
-        expect(call).toBe(4, 'Need to have done 3 http call');
 
-
+        http.verify();
     }));
 
     function createPipeline(name: string): Pipeline {

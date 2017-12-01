@@ -1,0 +1,17 @@
+<ng-template let-context let-modal="modal" #nodeConditionsModal>
+    <div class="header">{{ 'workflow_node_condition_edit' | translate }}</div>
+    <div class="content">
+        <div class="ui form" *ngIf="project && node">
+            <h3>{{ 'workflow_node_condition_list' | translate }}</h3>
+            <app-workflow-node-condition-list [workflow]="workflow" [(conditions)]="node.context.conditions" [operators]="operators"></app-workflow-node-condition-list>
+            <ng-container *ngIf="workflow.permission === permission.READ_WRITE_EXECUTE">
+                <h3>{{ 'workflow_node_condition_form' | translate}}</h3>
+                <app-workflow-node-condition-form [operators]="operators" [names]="conditionNames" (addEvent)="addCondition($event)"></app-workflow-node-condition-form>
+            </ng-container>
+        </div>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="saveConditions()">{{ 'btn_save' | translate }}</button>
+    </div>
+</ng-template>

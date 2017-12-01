@@ -1,8 +1,8 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
 	"github.com/ovh/tat"
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 

@@ -2,4 +2,3 @@
 declare var module: {
     id: string;
 };
-declare var Prism: any;

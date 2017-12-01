@@ -1,14 +1,12 @@
-package main
+package api
 
 import (
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -16,20 +14,17 @@ import (
 )
 
 func Test_attachPipelinesToApplicationHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_attachPipelinesToApplicationHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -39,7 +34,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -51,7 +46,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip2); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip2, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -60,7 +55,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -70,12 +65,12 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		"key": proj.Key,
 		"permApplicationName": app.Name,
 	}
-	route := router.getRoute("POST", attachPipelinesToApplicationHandler, vars)
+	route := router.GetRoute("POST", api.attachPipelinesToApplicationHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_attachPipelinesToApplicationHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200))
 	tester.Run()
 
-	appDB, err := application.LoadByName(db, proj.Key, app.Name, u, application.LoadOptions.WithPipelines)
+	appDB, err := application.LoadByName(api.mustDB(), api.Cache, proj.Key, app.Name, u, application.LoadOptions.WithPipelines)
 	test.NoError(t, err)
 
 	assert.Equal(t, len(appDB.Pipelines), 2)

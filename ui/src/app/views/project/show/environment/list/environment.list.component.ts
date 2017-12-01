@@ -1,8 +1,11 @@
 import {Component, DoCheck, Input, OnDestroy, OnInit} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {Environment} from '../../../../../model/environment.model';
+import {EnvironmentService} from '../../../../../service/environment/environment.service';
+import {ProjectStore} from '../../../../../service/project/project.store';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Subscription} from 'rxjs/Rx';
+import {Subscription} from 'rxjs/Subscription';
+import {finalize, flatMap, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-environment-list',
@@ -15,15 +18,14 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     oldLastModifiedDate: number;
     selectedEnv: Environment;
     envInRoute: string;
+    loading: boolean;
 
     routerSubscription: Subscription;
+    envSub: Subscription;
 
-    constructor(private _routerActivatedRoute: ActivatedRoute, private _router: Router) {
-        this.routerSubscription = this._routerActivatedRoute.queryParams.subscribe(q => {
-           if (q['envName']) {
-               this.envInRoute = q['envName'];
-           }
-        });
+    constructor(private _routerActivatedRoute: ActivatedRoute, private _router: Router,
+      private _environmentService: EnvironmentService, private _projectStore: ProjectStore) {
+        this.loading = true;
     }
 
     ngOnDestroy(): void {
@@ -33,13 +35,31 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     }
 
     ngOnInit(): void {
-        if (this.project.environments && this.project.environments.length > 0) {
-            if (this.envInRoute) {
-                this.selectNewEnv(this.envInRoute);
-            } else {
-                this.selectNewEnv(this.project.environments[0].name);
+        this.routerSubscription = this._routerActivatedRoute.queryParams
+          .pipe(
+            first(),
+            finalize(() => this.loading = false)
+          )
+          .map((q) => {
+            if (q['envName']) {
+                this.envInRoute = q['envName'];
             }
-        }
+            return q;
+          })
+          .pipe(
+              flatMap((q) => this._projectStore.getProjectEnvironmentsResolver(this.project.key))
+          )
+          .subscribe((proj) => {
+            this.project = proj;
+            if (this.project.environments && this.project.environments.length > 0) {
+                if (this.envInRoute) {
+                    this.selectNewEnv(this.envInRoute);
+                } else {
+                    this.selectNewEnv(this.project.environments[0].name);
+                }
+            }
+            this.oldLastModifiedDate = new Date(this.project.last_modified).getTime();
+          });
     }
 
     /**
@@ -47,14 +67,15 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
      * Do not work with ngOnChange.
      */
     ngDoCheck() {
-        if (this.project.last_modified !== this.oldLastModifiedDate) {
+        if (new Date(this.project.last_modified).getTime() !== this.oldLastModifiedDate) {
+            this.oldLastModifiedDate = new Date(this.project.last_modified).getTime();
             // If environment changed - update selected env
             if (this.selectedEnv && this.project.environments) {
                 let index = this.project.environments.findIndex(e => e.id === this.selectedEnv.id);
                 if (index >= -1) {
                     this.selectedEnv = this.project.environments[index];
                 } else {
-                    this.selectedEnv = undefined;
+                    this.selectedEnv = null;
                 }
             } else if (this.project.environments && this.project.environments.length > 0) {
                 if (this.envInRoute) {
@@ -66,7 +87,7 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
                     this.selectedEnv = this.project.environments[0];
                 }
             } else {
-                this.selectedEnv = undefined;
+                this.selectedEnv = null;
             }
         }
     }
@@ -74,6 +95,9 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     selectNewEnv(envName): void {
         if (this.project.environments && this.project.environments.length > 0) {
             this.selectedEnv = this.project.environments.find(e => e.name === envName);
+            if (!this.selectedEnv) {
+                this.selectedEnv = this.project.environments[0];
+            }
             this._router.navigate(['/project/', this.project.key], {queryParams: { tab: 'environments', envName: this.selectedEnv.name}});
         }
     }

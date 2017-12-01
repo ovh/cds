@@ -1,0 +1,15 @@
+@import '../../../../common';
+
+#WorkflowRun {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  height: 100%;
+
+  .scrollingContent {
+    overflow-x: auto;
+  }
+  .title {
+    font-weight: 600;
+  }
+}

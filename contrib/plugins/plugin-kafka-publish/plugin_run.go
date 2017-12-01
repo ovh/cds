@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"math"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -60,13 +61,26 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 	//Check if every file exist
 	artifactsList := job.Arguments().Get("artifacts")
 	if strings.TrimSpace(artifactsList) != "" {
-		artifacts := strings.Split(artifactsList, ",")
-		for _, f := range artifacts {
-			if _, err := os.Stat(f); os.IsNotExist(err) {
-				Logf("%s : no such file", f)
+
+		var artifacts []string
+		//If the parameter contains a comma, consider it as a list; else glob it
+		if strings.Contains(artifactsList, ",") {
+			artifacts := strings.Split(artifactsList, ",")
+			for _, f := range artifacts {
+				if _, err := os.Stat(f); os.IsNotExist(err) {
+					Logf("%s : no such file", f)
+					return plugin.Fail
+				}
+			}
+		} else {
+			filesPath, err := filepath.Glob(artifactsList)
+			if err != nil {
+				Logf("Unable to parse files %s: %s", artifactsList, err)
 				return plugin.Fail
 			}
+			artifacts = filesPath
 		}
+
 		files = append(files, artifacts...)
 	}
 
@@ -138,15 +152,23 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 
 	//Log every 5 sesonds
 	ticker := time.NewTicker(time.Second * 5)
+	stop := make(chan bool, 1)
+	defer func() {
+		stop <- true
+		ticker.Stop()
+	}()
 	go func() {
 		t0 := time.Now()
-		for t := range ticker.C {
-			delta := math.Floor(t.Sub(t0).Seconds())
-			Logf("[%d seconds] Please wait...\n", int(delta))
+		for {
+			select {
+			case t := <-ticker.C:
+				delta := math.Floor(t.Sub(t0).Seconds())
+				Logf("[%d seconds] Please wait...\n", int(delta))
+			case <-stop:
+				return
+			}
 		}
 	}()
-
-	defer ticker.Stop()
 
 	//Wait for ack
 	ack, err := ackFromKafka(kafka, ackTopic, group, user, password, time.Duration(timeout)*time.Second, job.ID())
@@ -157,7 +179,9 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 
 	//Check the ack
 	Logf("Got ACK from %s : %s", ackTopic, ack.Result)
-	Logf(string(ack.Log))
+	if len(ack.Log) > 0 {
+		Logf(string(ack.Log))
+	}
 	if ack.Result == "OK" {
 		return plugin.Success
 	}

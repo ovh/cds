@@ -1,32 +1,66 @@
 <div class="ui form">
     <div class="inline fields">
         <div class="eight wide field paramName">
-            <i class="move icon" *ngIf="edit"></i>{{step.name}}
+            <span>
+                <i class="move icon" *ngIf="edit"></i>
+                {{step.name}}
+            </span>
+            <span class="textOrange" *ngIf="action.deprecated">
+                <i class="warning orange sign icon"></i>{{'common_deprecated' | translate}}
+            </span>
         </div>
-        <div class="right aligned four wide field">
-            <div class="field">
-                <div class="ui checkbox" *ngIf="edit">
-                    <input type="checkbox" name="active" [checked]="step.enabled" (change)="step.enabled = updateStepBool(step.enabled)">
-                    <label>{{ 'common_enable' | translate }}</label>
+        <div class="eight wide inline field">
+                <div class="five wide field">
+                    <div class="ui checkbox" *ngIf="edit">
+                        <input type="checkbox" name="active" [checked]="step.enabled" (change)="step.enabled = updateStepBool(step.enabled)">
+                        <label>{{ 'common_enable' | translate }}</label>
+                    </div>
                 </div>
-            </div>
+                <div class="five wide field">
+                    <div class="ui checkbox" *ngIf="edit">
+                        <input type="checkbox" name="active" [checked]="step.optional" (change)="step.optional = updateStepBool(step.optional)">
+                        <label>{{ 'action_optional' | translate}}</label>
+                    </div>
+                    <span [smDirTooltip]="'action_optional_details' | translate" smDirPosition="top center">
+                      <i class="info circle icon"></i>
+                    </span>
+                </div>
+                <div class="five wide field">
+                    <div class="ui checkbox" *ngIf="edit">
+                        <input type="checkbox" name="active" [checked]="step.always_executed" (change)="step.always_executed = updateStepBool(step.always_executed)">
+                        <label>{{ 'action_always_executed' | translate}}</label>
+                    </div>
+                    <span [smDirTooltip]="'action_always_executed_details' | translate" smDirPosition="top center">
+                      <i class="info circle icon"></i>
+                    </span>
+                </div>
+            <!-- </div> -->
             <ng-container *ngIf="!edit">
                 <ng-container *ngIf="step.enabled">{{ 'common_enabled_f' | translate }}</ng-container>
                 <ng-container *ngIf="!step.enabled">{{ 'common_disabled_f' | translate }}</ng-container>
             </ng-container>
         </div>
 
-        <div class="right aligned eight wide field" *ngIf="edit">
+        <div class="right aligned four wide field" *ngIf="edit">
             <div style="width: 100%;">
                 <app-delete-button buttonType="icon" (event)="removeStep()"></app-delete-button>
             </div>
         </div>
     </div>
 </div>
-<ng-container *ngFor="let p of step.parameters">
-    <label style="display: inline"><b>{{p.name + ' :'}}</b></label>
-    <div style="display: inline">
-        <app-parameter-value [edit]="edit" [project]="project" [type]="p.type" [(value)]="p.value"
-                             (valueUpdating)="action.hasChanged = true"></app-parameter-value>
+<div class="ui stackable grid">
+    <div class="row" *ngFor="let p of step.parameters">
+        <div class="two wide column">
+            <label>
+              <b>{{p.name}}</b>
+              <span *ngIf="p.description" [smDirTooltip]="p.description" smDirPosition="right center">
+                <i class="info circle icon"></i>
+              </span>
+            </label>
+        </div>
+        <div class="fourteen wide column">
+            <app-parameter-value [edit]="edit" [type]="p.type" [(value)]="p.value" [editList]="false" [suggest]="suggest"
+                                 (valueUpdating)="action.hasChanged = true" [ref]="originalParam.get(p.name)"></app-parameter-value>
+        </div>
     </div>
-</ng-container>
+</div>

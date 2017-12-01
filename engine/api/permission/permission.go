@@ -2,11 +2,12 @@ package permission
 
 import (
 	"database/sql"
+	"encoding/json"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const (
@@ -49,6 +50,22 @@ func ProjectPermission(projectKey string, user *sdk.User) int {
 		for _, pg := range g.ProjectGroups {
 			if pg.Project.Key == projectKey && pg.Permission > max {
 				max = pg.Permission
+			}
+		}
+	}
+	return max
+}
+
+// WorkflowPermission  Get the permission for the given workflow
+func WorkflowPermission(workflowID int64, user *sdk.User) int {
+	if user.Admin {
+		return PermissionReadWriteExecute
+	}
+	max := 0
+	for _, g := range user.Groups {
+		for _, wg := range g.WorkflowGroups {
+			if wg.Workflow.ID == workflowID && wg.Permission > max {
+				max = wg.Permission
 			}
 		}
 	}
@@ -206,8 +223,9 @@ func ApplicationPipelineEnvironmentUsers(db gorp.SqlExecutor, appID, pipID, envI
 			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while scanning user : %s", err)
 			continue
 		}
-		uTemp, err := u.FromJSON([]byte(data))
-		if err != nil {
+
+		uTemp := &sdk.User{}
+		if err := json.Unmarshal([]byte(data), uTemp); err != nil {
 			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while parsing user : %s", err)
 			continue
 		}

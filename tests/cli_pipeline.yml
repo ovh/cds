@@ -38,7 +38,7 @@ testcases:
 
 - name: pipeline parameter update
   steps:
-  - script: {{.cds.build.cds}} pipeline parameter update ITCLIPIPPRJ HelloPipeline VAR_1 varValueUpdated TEXTE "Le parametre var1"
+  - script: {{.cds.build.cds}} pipeline parameter update ITCLIPIPPRJ HelloPipeline VAR_1 VAR_1 varValueUpdated TEXTE "Le parametre var1"
 
 - name: pipeline parameter show
   steps:
@@ -74,7 +74,7 @@ testcases:
 
 - name: cleanup
   steps:
+  - script: {{.cds.build.cds}} project remove --force ITCLIPIPPRJ
   - script: {{.cds.build.cds}} group remove ITCLIPIP_GRP_EDIT_TEST
   - script: {{.cds.build.cds}} group remove ITCLIPIP_GRP
-  - script: {{.cds.build.cds}} project remove --force ITCLIPIPPRJ
   - script: {{.cds.build.cds}} action remove IT_CLI_pipeline_Test_Echo

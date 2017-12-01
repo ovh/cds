@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Verify verify user token
@@ -24,8 +26,7 @@ func Verify(u *sdk.User, token string) (string, string, error) {
 		return "", "", fmt.Errorf("Reset operation expired")
 	}
 
-	err := checkToken(u, token)
-	if err != nil {
+	if err := checkToken(u, token); err != nil {
 		return "", "", err
 	}
 	return regenerateAndStoreAuth()
@@ -53,6 +54,21 @@ func IsValidEmail(email string) bool {
 	return regexp.MatchString(email)
 }
 
+// IsAllowedDomain return true is email is allowed, false otherwise
+func IsAllowedDomain(allowedDomains string, email string) bool {
+	if allowedDomains != "" {
+		allowedDomains := strings.Split(allowedDomains, ",")
+		for _, domain := range allowedDomains {
+			if strings.HasSuffix(email, "@"+domain) && strings.Count(email, "@") == 1 {
+				return true
+			}
+		}
+		return false
+	}
+	// no restriction, domain is ok
+	return true
+}
+
 // LoadUserWithoutAuthByID load user information without secret
 func LoadUserWithoutAuthByID(db gorp.SqlExecutor, userID int64) (*sdk.User, error) {
 	query := `SELECT username, admin, data, origin FROM "user" WHERE id = $1`
@@ -60,14 +76,14 @@ func LoadUserWithoutAuthByID(db gorp.SqlExecutor, userID int64) (*sdk.User, erro
 	var jsonUser []byte
 	var username, origin string
 	var admin bool
-	err := db.QueryRow(query, userID).Scan(&username, &admin, &jsonUser, &origin)
-	if err != nil {
+
+	if err := db.QueryRow(query, userID).Scan(&username, &admin, &jsonUser, &origin); err != nil {
 		return nil, err
 	}
 
 	// Load user
-	u, err := sdk.NewUser(username).FromJSON(jsonUser)
-	if err != nil {
+	u := &sdk.User{}
+	if err := json.Unmarshal(jsonUser, u); err != nil {
 		return nil, err
 	}
 
@@ -85,14 +101,14 @@ func LoadUserWithoutAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	var id int64
 	var admin bool
 	var origin string
-	err := db.QueryRow(query, name).Scan(&id, &admin, &jsonUser, &origin)
-	if err != nil {
+
+	if err := db.QueryRow(query, name).Scan(&id, &admin, &jsonUser, &origin); err != nil {
 		return nil, err
 	}
 
 	// Load user
-	u, err := sdk.NewUser(name).FromJSON(jsonUser)
-	if err != nil {
+	u := &sdk.User{}
+	if err := json.Unmarshal(jsonUser, u); err != nil {
 		return nil, err
 	}
 
@@ -111,20 +127,20 @@ func LoadUserAndAuth(db gorp.SqlExecutor, name string) (*sdk.User, error) {
 	var id int64
 	var admin bool
 	var origin string
-	err := db.QueryRow(query, name).Scan(&id, &admin, &jsonUser, &jsonAuth, &origin)
-	if err != nil {
+
+	if err := db.QueryRow(query, name).Scan(&id, &admin, &jsonUser, &jsonAuth, &origin); err != nil {
 		return nil, err
 	}
 
 	// Load user
-	u, err := sdk.NewUser(name).FromJSON(jsonUser)
-	if err != nil {
+	u := &sdk.User{}
+	if err := json.Unmarshal(jsonUser, u); err != nil {
 		return nil, err
 	}
 
 	// Load Auth
-	a, err := sdk.NewAuth("").FromJSON(jsonAuth)
-	if err != nil {
+	a := &sdk.Auth{}
+	if err := json.Unmarshal(jsonAuth, a); err != nil {
 		return nil, err
 	}
 
@@ -140,8 +156,7 @@ func FindUserIDByName(db gorp.SqlExecutor, name string) (int64, error) {
 	query := `SELECT id FROM "user" WHERE username = $1`
 
 	var id int64
-	err := db.QueryRow(query, name).Scan(&id)
-	if err != nil {
+	if err := db.QueryRow(query, name).Scan(&id); err != nil {
 		return 0, err
 	}
 	return id, nil
@@ -204,17 +219,29 @@ func CountUser(db gorp.SqlExecutor) (int64, error) {
 
 // UpdateUser update given user
 func UpdateUser(db gorp.SqlExecutor, u sdk.User) error {
-	query := `UPDATE "user" SET username=$1, admin=$2, data=$3 WHERE id=$4`
 	u.Groups = nil
-	_, err := db.Exec(query, u.Username, u.Admin, u.JSON(), u.ID)
+	su, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+	query := `UPDATE "user" SET username=$1, admin=$2, data=$3 WHERE id=$4`
+	_, err = db.Exec(query, u.Username, u.Admin, su, u.ID)
 	return err
 }
 
 // UpdateUserAndAuth update given user
 func UpdateUserAndAuth(db gorp.SqlExecutor, u sdk.User) error {
-	query := `UPDATE "user" SET username=$1, admin=$2, data=$3, auth=$4 WHERE id=$5`
 	u.Groups = nil
-	_, err := db.Exec(query, u.Username, u.Admin, u.JSON(), u.Auth.JSON(), u.ID)
+	su, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+	sa, err := json.Marshal(u.Auth)
+	if err != nil {
+		return err
+	}
+	query := `UPDATE "user" SET username=$1, admin=$2, data=$3, auth=$4 WHERE id=$5`
+	_, err = db.Exec(query, u.Username, u.Admin, su, sa, u.ID)
 	return err
 }
 
@@ -229,17 +256,12 @@ func DeleteUserWithDependenciesByName(db gorp.SqlExecutor, s string) error {
 
 // DeleteUserWithDependencies Delete user and all his dependencies
 func DeleteUserWithDependencies(db gorp.SqlExecutor, u *sdk.User) error {
-
-	err := deleteUserFromUserGroup(db, u)
-	if err != nil {
-		log.Warning("DeleteUserWithDependencies>User cannot be removed from group_user table: %s", err)
-		return err
+	if err := deleteUserFromUserGroup(db, u); err != nil {
+		return sdk.WrapError(err, "DeleteUserWithDependencies>User cannot be removed from group_user table")
 	}
 
-	err = deleteUser(db, u)
-	if err != nil {
-		log.Warning("DeleteUserWithDependencies> User cannot be removed from user table: %s", err)
-		return err
+	if err := deleteUser(db, u); err != nil {
+		return sdk.WrapError(err, "DeleteUserWithDependencies> User cannot be removed from user table")
 	}
 	return nil
 }
@@ -258,7 +280,71 @@ func deleteUser(db gorp.SqlExecutor, u *sdk.User) error {
 
 // InsertUser Insert new user
 func InsertUser(db gorp.SqlExecutor, u *sdk.User, a *sdk.Auth) error {
+	su, err := json.Marshal(u)
+	if err != nil {
+		return err
+	}
+	sa, err := json.Marshal(a)
+	if err != nil {
+		return err
+	}
 	query := `INSERT INTO "user" (username, admin, data, auth, created, origin) VALUES($1,$2,$3,$4,$5,$6) RETURNING id`
-	err := db.QueryRow(query, u.Username, u.Admin, u.JSON(), a.JSON(), time.Now(), u.Origin).Scan(&u.ID)
-	return err
+	return db.QueryRow(query, u.Username, u.Admin, su, sa, time.Now(), u.Origin).Scan(&u.ID)
+}
+
+// NewPersistentSession creates a new persistent session token in database
+func NewPersistentSession(db gorp.SqlExecutor, u *sdk.User) (sessionstore.SessionKey, error) {
+	t, errSession := sessionstore.NewSessionKey()
+	if errSession != nil {
+		return "", errSession
+	}
+	newToken := sdk.UserToken{
+		Token:              string(t),
+		Comment:            fmt.Sprintf("New persistent session for %s", u.Username),
+		CreationDate:       time.Now(),
+		LastConnectionDate: time.Now(),
+		UserID:             u.ID,
+	}
+
+	if err := InsertPersistentSessionToken(db, newToken); err != nil {
+		return "", err
+	}
+	return t, nil
+}
+
+// LoadPersistentSessionToken load a token from the database
+func LoadPersistentSessionToken(db gorp.SqlExecutor, k sessionstore.SessionKey) (*sdk.UserToken, error) {
+	tdb := persistentSessionToken{}
+	if err := db.SelectOne(&tdb, "select * from user_persistent_session where token = $1", string(k)); err != nil {
+		return nil, err
+	}
+	t := sdk.UserToken(tdb)
+	return &t, nil
+}
+
+// InsertPersistentSessionToken create a new persistent session
+func InsertPersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
+	tdb := persistentSessionToken(t)
+	if err := db.Insert(&tdb); err != nil {
+		return sdk.WrapError(err, "InsertPersistentSessionToken> Unable to insert persistent session token for user %d", t.UserID)
+	}
+	return nil
+}
+
+// UpdatePersistentSessionToken updates a persistent session
+func UpdatePersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
+	tdb := persistentSessionToken(t)
+	if _, err := db.Update(&tdb); err != nil {
+		return sdk.WrapError(err, "UpdatePersistentSessionToken> Unable to update persistent session token for user %d", t.UserID)
+	}
+	return nil
+}
+
+// DeletePersistentSessionToken deletes a persistent session
+func DeletePersistentSessionToken(db gorp.SqlExecutor, t sdk.UserToken) error {
+	tdb := persistentSessionToken(t)
+	if _, err := db.Delete(&tdb); err != nil {
+		return sdk.WrapError(err, "DeletePersistentSessionToken> Unable to delete persistent session token for user %d", t.UserID)
+	}
+	return nil
 }

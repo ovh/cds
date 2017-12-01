@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
-import {Http} from '@angular/http';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
+import {HttpClient} from '@angular/common/http';
 
 /**
  * Service to access Parameter commons.
@@ -10,7 +10,7 @@ export class ParameterService {
 
     private parametersType: string[];
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
     }
 
     /**
@@ -26,9 +26,9 @@ export class ParameterService {
      * @returns {Observable<string[]>}
      */
     getTypesFromAPI(): Observable<string[]> {
-        return this._http.get('/parameter/type').map(res => {
-            this.parametersType = res.json();
-            return this.parametersType;
+        return this._http.get<string[]>('/parameter/type').map( pts => {
+            this.parametersType = <string[]>pts;
+            return pts;
         });
     }
 }

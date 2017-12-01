@@ -12,6 +12,7 @@ import {ParameterFormComponent} from './parameter.form';
 import {Parameter} from '../../../model/parameter.model';
 import {ParameterEvent} from '../parameter.event.model';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: parameter From Component', () => {
 
@@ -25,6 +26,7 @@ describe('CDS: parameter From Component', () => {
             providers: [
                 ParameterService,
                 TranslateService,
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
@@ -32,12 +34,13 @@ describe('CDS: parameter From Component', () => {
             ],
             imports : [
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
 
     });
 
@@ -86,9 +89,9 @@ describe('CDS: parameter From Component', () => {
         tick(50);
 
         spyOn(fixture.componentInstance.createParameterEvent, 'emit');
-        compiled.querySelector('.ui.green.button').click();
+        compiled.querySelector('.ui.blue.button').click();
 
+        parameter.value = '';
         expect(fixture.componentInstance.createParameterEvent.emit).toHaveBeenCalledWith(new ParameterEvent('add', parameter));
     }));
 });
-

@@ -1,0 +1,13 @@
+@import "../../../../common";
+
+#WarningShow {
+  display: flex;
+  flex-direction: column;
+  align-content: stretch;
+  height: 100%;
+
+  ul {
+    list-style: none;
+  }
+}
+

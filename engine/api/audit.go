@@ -1,30 +1,38 @@
-package main
+package api
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk/log"
-	"github.com/ovh/cds/sdk"
 )
 
 const (
 	maxVersion = 10
+	delay      = 1
 )
 
-func auditCleanerRoutine(DBFunc func() *gorp.DbMap) {
-	defer sdk.Exit("AuditCleanerRoutine exited")
+func auditCleanerRoutine(c context.Context, DBFunc func() *gorp.DbMap) {
+	tick := time.NewTicker(delay * time.Minute).C
 
 	for {
-		db := DBFunc()
-		if db != nil {
-			err := actionAuditCleaner(db)
-			if err != nil {
-				log.Warning("AuditCleanerRoutine> Action clean failed: %s\n", err)
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting auditCleanerRoutine: %v", c.Err())
+			}
+			return
+		case <-tick:
+			db := DBFunc()
+			if db != nil {
+				err := actionAuditCleaner(DBFunc())
+				if err != nil {
+					log.Warning("AuditCleanerRoutine> Action clean failed: %s", err)
+				}
 			}
 		}
-		time.Sleep(1 * time.Minute)
 	}
 }
 
@@ -65,16 +73,10 @@ func actionAuditCleaner(db *gorp.DbMap) error {
 		OFFSET $2
 	)`
 	for _, id := range toDel {
-		_, err = tx.Exec(query, id, maxVersion)
-		if err != nil {
+		if _, err := tx.Exec(query, id, maxVersion); err != nil {
 			return err
 		}
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return tx.Commit()
 }

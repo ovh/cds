@@ -9,9 +9,10 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/notification"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
+
+var Cache cache.Store
 
 // Publish sends a event to a queue
 //func Publish(event sdk.Event, eventType string) {
@@ -24,11 +25,9 @@ func Publish(payload interface{}) {
 		Payload:   structs.Map(payload),
 	}
 
-	log.Debug("Publish> new event %+v", event)
-	cache.Enqueue("events", event)
-
+	Cache.Enqueue("events", event)
 	// send to cache for cds repositories manager
-	cache.Enqueue("events_repositoriesmanager", event)
+	Cache.Enqueue("events_repositoriesmanager", event)
 }
 
 // PublishActionBuild sends a actionBuild event
@@ -63,8 +62,8 @@ func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *
 
 	rmn := ""
 	rfn := ""
-	if pb.Application.RepositoriesManager != nil {
-		rmn = pb.Application.RepositoriesManager.Name
+	if pb.Application.VCSServer != "" {
+		rmn = pb.Application.VCSServer
 		rfn = pb.Application.RepositoryFullname
 	}
 
@@ -85,5 +84,70 @@ func PublishPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *
 		Hash:                  pb.Trigger.VCSChangesHash,
 	}
 
+	Publish(e)
+}
+
+// PublishWorkflowRun publish event on a workflow run
+func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
+	e := sdk.EventWorkflowRun{
+		ID:           wr.ID,
+		Number:       wr.Number,
+		Status:       wr.Status,
+		Start:        wr.Start.Unix(),
+		ProjectKey:   projectKey,
+		WorkflowName: wr.Workflow.Name,
+		Workflow:     wr.Workflow,
+	}
+	Publish(e)
+}
+
+// PublishWorkflowNodeRun publish event on a workflow node run
+func PublishWorkflowNodeRun(nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, projectKey string) {
+	e := sdk.EventWorkflowNodeRun{
+		ID:             nr.ID,
+		Number:         nr.Number,
+		SubNumber:      nr.SubNumber,
+		Status:         nr.Status,
+		Start:          nr.Start.Unix(),
+		ProjectKey:     projectKey,
+		Manual:         nr.Manual,
+		HookEvent:      nr.HookEvent,
+		Payload:        nr.Payload,
+		SourceNodeRuns: nr.SourceNodeRuns,
+	}
+
+	node := wr.Workflow.GetNode(nr.WorkflowNodeID)
+	if node != nil {
+		e.PipelineName = node.Pipeline.Name
+	}
+	if node.Context != nil {
+		if node.Context.Application != nil {
+			e.ApplicationName = node.Context.Application.Name
+			e.RepositoryManagerName = node.Context.Application.VCSServer
+		}
+		if node.Context.Environment != nil {
+			e.EnvironmentName = node.Context.Environment.Name
+		}
+	}
+
+	if nr.Status != sdk.StatusBuilding.String() && nr.Status != sdk.StatusWaiting.String() {
+		e.Done = nr.Done.Unix()
+	}
+	Publish(e)
+}
+
+// EventWorkflowNodeJobRun publish event on a workflow node job run
+func PublishWorkflowNodeJobRun(njr sdk.WorkflowNodeJobRun) {
+	e := sdk.EventWorkflowNodeJobRun{
+		ID:                njr.ID,
+		Status:            njr.Status,
+		WorkflowNodeRunID: njr.WorkflowNodeRunID,
+		Start:             njr.Start.Unix(),
+		Model:             njr.Model,
+		Queued:            njr.Queued.Unix(),
+	}
+	if njr.Status != sdk.StatusBuilding.String() && njr.Status != sdk.StatusWaiting.String() {
+		e.Done = njr.Done.Unix()
+	}
 	Publish(e)
 }

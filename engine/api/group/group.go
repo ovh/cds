@@ -2,52 +2,40 @@ package group
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
 // DeleteGroupAndDependencies deletes group and all subsequent group_project, pipeline_project
 func DeleteGroupAndDependencies(db gorp.SqlExecutor, group *sdk.Group) error {
-	err := DeleteGroupUserByGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group user %s: %s\n", group.Name, err)
-		return err
+	if err := DeleteGroupUserByGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group user %s: %s", group.Name)
 	}
 
-	err = deleteGroupEnvironmentByGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group env %s: %s\n", group.Name, err)
-		return err
+	if err := deleteGroupEnvironmentByGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group env %s: %s", group.Name)
 	}
 
-	err = deleteGroupPipelineByGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group pipeline %s: %s\n", group.Name, err)
-		return err
+	if err := deleteGroupPipelineByGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group pipeline %s: %s", group.Name)
 	}
 
-	err = deleteGroupApplicationByGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group application %s: %s\n", group.Name, err)
-		return err
+	if err := deleteGroupApplicationByGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group application %s: %s", group.Name)
 	}
 
-	err = deleteGroupProjectByGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group project %s: %s\n", group.Name, err)
-		return err
+	if err := deleteGroupProjectByGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group project %s: %s", group.Name)
 	}
 
-	err = deleteGroup(db, group)
-	if err != nil {
-		log.Warning("deleteGroupAndDependencies: Cannot delete group %s: %s\n", group.Name, err)
-		return err
+	if err := deleteGroup(db, group); err != nil {
+		return sdk.WrapError(err, "deleteGroupAndDependencies: Cannot delete group %s: %s", group.Name)
 	}
 
 	return nil
@@ -58,35 +46,27 @@ func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 	// check projectKey pattern
 	regexp := regexp.MustCompile(sdk.NamePattern)
 	if !regexp.MatchString(group.Name) {
-		log.Warning("AddGroup: Wrong pattern for group name : %s\n", group.Name)
-		return 0, false, sdk.ErrInvalidGroupPattern
+		return 0, false, sdk.WrapError(sdk.ErrInvalidGroupPattern, "AddGroup: Wrong pattern for group name : %s", group.Name)
 	}
 
 	// Check that group does not already exists
 	query := `SELECT id FROM "group" WHERE "group".name = $1`
-	rows, err := db.Query(query, group.Name)
-	if err != nil {
-		log.Warning("AddGroup: Cannot check if group %s exist: %s\n", group.Name, err)
-		return 0, false, err
+	rows, errq := db.Query(query, group.Name)
+	if errq != nil {
+		return 0, false, sdk.WrapError(errq, "AddGroup: Cannot check if group %s exist: %s", group.Name)
 	}
 	defer rows.Close()
 
 	if rows.Next() {
-		log.Warning("AddGroup: Group %s already exists\n", group.Name)
-
 		var groupID int64
 		if err := rows.Scan(&groupID); err != nil {
-			log.Warning("AddGroup: Cannot get the ID of the existing group %s (%s)\n", group.Name, err)
-			return 0, false, sdk.ErrGroupExists
+			return 0, false, sdk.WrapError(sdk.ErrGroupExists, "AddGroup: Cannot get the ID of the existing group %s (%s)", group.Name, err)
 		}
-
-		return groupID, false, sdk.ErrGroupExists
+		return groupID, false, sdk.WrapError(sdk.ErrGroupExists, "AddGroup: Group %s already exists")
 	}
 
-	err = InsertGroup(db, group)
-	if err != nil {
-		log.Warning("AddGroup: Cannot insert group: %s\n", err)
-		return 0, false, err
+	if err := InsertGroup(db, group); err != nil {
+		return 0, false, sdk.WrapError(err, "AddGroup: Cannot insert group")
 	}
 	return group.ID, true, nil
 }
@@ -108,25 +88,9 @@ func LoadGroup(db gorp.SqlExecutor, name string) (*sdk.Group, error) {
 	}, nil
 }
 
-// LoadGroupByID retrieves group informations from database
-func LoadGroupByID(db gorp.SqlExecutor, id int64) (*sdk.Group, error) {
-	query := `SELECT "group".id FROM "group" WHERE "group".id = $1`
-	var name string
-	if err := db.QueryRow(query, name).Scan(&id); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, sdk.ErrGroupNotFound
-		}
-		return nil, err
-	}
-	return &sdk.Group{
-		ID:   id,
-		Name: name,
-	}, nil
-}
-
 // LoadUserGroup retrieves all group users from database
 func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
-	query := `SELECT "user".username, "group_user".group_admin FROM "user"
+	query := `SELECT "user".username, "user".data, "group_user".group_admin FROM "user"
 	 		  JOIN group_user ON group_user.user_id = "user".id
 	 		  WHERE group_user.group_id = $1 ORDER BY "user".username ASC`
 
@@ -137,16 +101,22 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	defer rows.Close()
 
 	for rows.Next() {
-		var userName string
+		var username string
+		var jsonUser []byte
 		var admin bool
-		if err := rows.Scan(&userName, &admin); err != nil {
+		if err := rows.Scan(&username, &jsonUser, &admin); err != nil {
 			return err
 		}
-		u := sdk.User{Username: userName}
+
+		u := &sdk.User{}
+		if err := json.Unmarshal(jsonUser, u); err != nil {
+			return sdk.WrapError(err, "LoadUserGroup> Error while converting jsonUser")
+		}
+
 		if admin {
-			group.Admins = append(group.Admins, u)
+			group.Admins = append(group.Admins, *u)
 		} else {
-			group.Users = append(group.Users, u)
+			group.Users = append(group.Users, *u)
 		}
 	}
 	return nil
@@ -156,7 +126,7 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 func LoadGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
 	groups := []sdk.Group{}
 
-	query := `SELECT * FROM "group"`
+	query := `SELECT * FROM "group" ORDER BY name`
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -184,6 +154,7 @@ func LoadGroupByUser(db gorp.SqlExecutor, userID int64) ([]sdk.Group, error) {
 		FROM "group"
 		JOIN "group_user" ON "group".id = "group_user".group_id
 		WHERE "group_user".user_id = $1
+    ORDER BY "group".name
 		`
 	rows, err := db.Query(query, userID)
 	if err != nil {
@@ -241,6 +212,7 @@ func LoadPublicGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
 		SELECT id, name
 		FROM "group"
 		WHERE name = $1
+		ORDER BY name
 		`
 	rows, err := db.Query(query, SharedInfraGroup.Name)
 	if err != nil {
@@ -279,7 +251,6 @@ func CheckUserInGroup(db gorp.SqlExecutor, groupID, userID int64) (bool, error) 
 
 // DeleteUserFromGroup remove user from group
 func DeleteUserFromGroup(db gorp.SqlExecutor, groupID, userID int64) error {
-
 	// Check if there are admin left
 	var isAdm bool
 	err := db.QueryRow(`SELECT group_admin FROM "group_user" WHERE group_id = $1 AND user_id = $2`, groupID, userID).Scan(&isAdm)
@@ -334,6 +305,11 @@ func DeleteGroupUserByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 
 // UpdateGroup updates group informations in database
 func UpdateGroup(db gorp.SqlExecutor, g *sdk.Group, oldName string) error {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(g.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid group name. It should match %s", sdk.NamePattern))
+	}
+
 	query := `UPDATE "group" set name=$1 WHERE name=$2`
 	_, err := db.Exec(query, g.Name, oldName)
 
@@ -346,6 +322,11 @@ func UpdateGroup(db gorp.SqlExecutor, g *sdk.Group, oldName string) error {
 
 // InsertGroup insert given group into given database
 func InsertGroup(db gorp.SqlExecutor, g *sdk.Group) error {
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(g.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid group name. It should match %s", sdk.NamePattern))
+	}
+
 	query := `INSERT INTO "group" (name) VALUES($1) RETURNING id`
 	err := db.QueryRow(query, g.Name).Scan(&g.ID)
 	return err
@@ -407,8 +388,6 @@ func SetUserGroupAdmin(db gorp.SqlExecutor, groupID int64, userID int64) error {
 // RemoveUserGroupAdmin remove the privilege to perform operations on given group
 func RemoveUserGroupAdmin(db gorp.SqlExecutor, groupID int64, userID int64) error {
 	query := `UPDATE "group_user" SET group_admin = false WHERE group_id = $1 AND user_id = $2`
-	if _, err := db.Exec(query, groupID, userID); err != nil {
-		return err
-	}
-	return nil
+	_, err := db.Exec(query, groupID, userID)
+	return err
 }

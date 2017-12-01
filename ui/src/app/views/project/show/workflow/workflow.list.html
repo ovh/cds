@@ -1,0 +1,21 @@
+<div class="ui grid">
+    <div class="eight wide column">
+        <h3>{{ 'project_workflows_list' | translate }}</h3>
+    </div>
+    <div class="right aligned eight wide column" *ngIf="project.permission === 7">
+        <a class="ui blue button" [routerLink]="['./workflow']">{{ 'workflow_create' | translate }}</a>
+    </div>
+</div>
+<div class="ui segment">
+    <div *ngIf="project.workflow_names && project.workflow_names.length > 0;then workflows;else noworkflows"></div>
+    <ng-template #workflows>
+        <div class="ui stackable four column grid">
+            <div class="center aligned column" *ngFor="let wfName of project.workflow_names">
+                <a [routerLink]="['./workflow', wfName]">{{wfName}}</a>
+            </div>
+        </div>
+    </ng-template>
+    <ng-template #noworkflows>
+        <span>{{ 'project_no_workflow' | translate }}</span>
+    </ng-template>
+</div>

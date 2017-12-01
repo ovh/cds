@@ -1,58 +1,103 @@
-import {Component, OnInit, AfterViewInit} from '@angular/core';
+import {AfterViewInit, Component, OnInit} from '@angular/core';
 import {ProjectStore} from '../../service/project/project.store';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
-import {Project} from '../../model/project.model';
+import {NavbarService} from '../../service/navbar/navbar.service';
 import {ApplicationStore} from '../../service/application/application.store';
 import {Application} from '../../model/application.model';
-import {Router} from '@angular/router';
+import {User} from '../../model/user.model';
+import {NavigationEnd, Router} from '@angular/router';
 import {TranslateService} from 'ng2-translate';
 import {List} from 'immutable';
+import {LanguageStore} from '../../service/language/language.store';
+import {Subscription} from 'rxjs/Subscription';
+import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
+import {RouterService} from '../../service/router/router.service';
+import {WarningStore} from '../../service/warning/warning.store';
+import {WarningUI} from '../../model/warning.model';
+import {WarningService} from '../../service/warning/warning.service';
+import {filter} from 'rxjs/operators';
+import {NavbarData, NavbarProjectData} from 'app/model/navbar.model';
 
 @Component({
     selector: 'app-navbar',
     templateUrl: './navbar.html',
     styleUrls: ['./navbar.scss']
 })
+@AutoUnsubscribe()
 export class NavbarComponent implements OnInit, AfterViewInit {
 
     // flag to indicate that the component is ready to use
     public ready = false;
 
     // List of projects in the nav bar
-    navProjects: List<Project>;
+    navProjects: NavbarData;
     navRecentApp: List<Application>;
+    searchItems: Array<string>;
 
-    selectedProjectKey: string;
-    selectedApplicationName: string;
-    listApplications: Array<Application>;
+    listApplications: List<Application>;
 
-    constructor(private _projectStore: ProjectStore,
+    currentCountry: string;
+    langSubscrition: Subscription;
+
+    warnings: Map<string, WarningUI>;
+    warningsCount: number;
+    currentRoute: {};
+
+    userSubscription: Subscription;
+    warningSubscription: Subscription;
+
+    public currentUser: User;
+
+    constructor(private _navbarService: NavbarService,
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
-                private _router: Router,
-                private _translate: TranslateService) {
-        this.selectedProjectKey = '#NOPROJECT#';
+                private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
+                private _translate: TranslateService, private _warningStore: WarningStore,
+                private _authentificationStore: AuthentificationStore, private _warningService: WarningService) {
+        this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
+            this.currentUser = u;
+        });
+
+        this.langSubscrition = this._language.get().subscribe(l => {
+            this.currentCountry = l;
+        });
+
+        this.warningSubscription = this._warningStore.getWarnings().subscribe(ws => {
+            this.warnings = ws;
+            this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
+        });
+
+        this._router.events.pipe(
+            filter(e => e instanceof NavigationEnd),
+        ).forEach(() => {
+            this.currentRoute = this._routerService.getRouteParams({}, this._router.routerState.root);
+            this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
+        });
     }
 
-    ngAfterViewInit () {
-        this._translate.get('navbar_projects_placeholder').subscribe( () => {
+    changeCountry() {
+        this._language.set(this.currentCountry);
+    }
+
+    ngAfterViewInit() {
+        this._translate.get('navbar_projects_placeholder').subscribe(() => {
             this.ready = true;
         });
     }
 
     ngOnInit() {
         // Listen list of nav project
-        this._authStore.getUserlst().subscribe( user => {
+        this._authStore.getUserlst().subscribe(user => {
             if (user) {
-                this.getProjects();
+                this.getData();
             }
         });
 
         // Listen change on recent app viewed
-        this._appStore.getRecentApplications().subscribe( app => {
-            if (app) {
-                this.navRecentApp = app;
-                this.listApplications = this.navRecentApp.toArray();
+        this._appStore.getRecentApplications().subscribe(apps => {
+            if (apps) {
+                this.navRecentApp = apps;
+                this.listApplications = apps;
             }
         });
     }
@@ -60,16 +105,35 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     /**
      * Listen change on project list.
      */
-    getProjects(): void {
-        this._projectStore.getProjectsList().subscribe( projects => {
-            if (projects.size > 0) {
-                this.navProjects = projects;
+    getData(): void {
+        this._navbarService.getData().subscribe(data => {
+            if (data.projects && data.projects.length > 0) {
+                this.navProjects = data;
+                this.searchItems = new Array<string>();
+
+                this.navProjects.projects.forEach(p => {
+                    if (p.application_names && p.application_names.length > 0) {
+                        p.application_names.forEach(a => {
+                            this.searchItems.push(p.name + '/' + a);
+                        })
+                    }
+                });
             }
         });
     }
 
+    navigateToResult(result: string) {
+        let splittedSelection = result.split('/', 2);
+        let project = this.navProjects.projects.find(p => p.name === splittedSelection[0]);
+        if (splittedSelection.length === 1) {
+            this.navigateToProject(project.key);
+        } else if (splittedSelection.length === 2) {
+            this.navigateToApplication(project.key, project.application_names.find(a => a === splittedSelection[1]));
+        }
+    }
+
     selectAllProjects(): void {
-        this.listApplications = this.navRecentApp.toArray();
+        this.listApplications = this.navRecentApp;
     }
 
     /**
@@ -82,45 +146,27 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             return;
         }
 
-        let selectedProject = this.navProjects.filter(p => {
+        let selectedProject = this.navProjects.projects.filter(p => {
             return p.key === key;
-        }).toArray()[0];
-        this.listApplications = selectedProject.applications;
+        })[0];
+        let apps = selectedProject.application_names.map((a) => {
+            let app = new Application();
+            app.name = a;
+            app.project_key = selectedProject.key;
+            return app
+        });
+        this.listApplications = List(apps);
         this._router.navigate(['/project/' + key]);
+    }
+
+    getWarningParams(): {} {
+        return this.currentRoute;
     }
 
     /**
      * Navigate to the selected application.
      */
-    navigateToApplication(route: string): void {
-        if (route === '#NOAPP#') {
-            return;
-        }
-        this.selectedApplicationName = '#NOAPP#';
-        this._router.navigate([route]);
-    }
-
-    applicationKeyEvent(event: KeyboardEvent, a): void {
-        if (event.key === 'Escape') {
-            this.selectedProjectKey = '#NOPROJECT#';
-            this.selectedApplicationName = '#NOAPP#';
-            this.selectAllProjects();
-        }
-    }
-
-    filterApplication(event: any): void {
-        if (this.selectedProjectKey === '#NOPROJECT#') {
-            let apps = new Array<Application>();
-            if (this.navProjects) {
-                this.navProjects.toArray().forEach(p => {
-                    if (p.applications) {
-                        apps.push(...p.applications.filter(app => {
-                            return app.name.toLocaleLowerCase().indexOf(event.toLowerCase()) !== -1;
-                        }));
-                    }
-                });
-            }
-            this.listApplications = apps;
-        }
+    navigateToApplication(key: string, appName: string): void {
+        this._router.navigate(['project', key, 'application', appName]);
     }
 }

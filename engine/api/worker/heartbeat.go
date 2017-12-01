@@ -1,35 +1,40 @@
 package worker
 
 import (
+	"context"
 	"time"
 
-	"github.com/ovh/cds/engine/api/database"
+	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // WorkerHeartbeatTimeout defines the number of seconds allowed for workers to refresh their beat
-var WorkerHeartbeatTimeout = 1200.0
+var WorkerHeartbeatTimeout = 600.0
 
-// Heartbeat runs in a goroutine and check last beat from all workers
-func Heartbeat() {
-	// If this goroutine exit, then it's a crash
-	defer log.Fatalf("Goroutine of worker.Heartbeat exited - Exit CDS Engine")
+// CheckHeartbeat runs in a goroutine and check last beat from all workers
+func CheckHeartbeat(c context.Context, DBFunc func() *gorp.DbMap) {
+	tick := time.NewTicker(10 * time.Second).C
 
 	for {
-		time.Sleep(10 * time.Second)
-		if db := database.DB(); db != nil {
-			w, err := LoadDeadWorkers(database.DBMap(db), WorkerHeartbeatTimeout)
-			if err != nil {
-				log.Warning("WorkerHeartbeat> Cannot load dead workers: %s", err)
-				time.Sleep(10 * time.Second)
-				continue
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting WorkerHeartbeat: %v", c.Err())
 			}
-
-			for i := range w {
-				log.Debug("WorkerHeartbeat> Delete worker %s[%s] LastBeat:%d hatchery:%d status:%s", w[i].Name, w[i].ID, w[i].LastBeat, w[i].HatcheryID, w[i].Status)
-				if err = DeleteWorker(database.DBMap(db), w[i].ID); err != nil {
-					log.Warning("WorkerHeartbeat> Cannot delete worker %s: %s", w[i].ID, err)
+			return
+		case <-tick:
+			if db := DBFunc(); db != nil {
+				w, err := LoadDeadWorkers(db, WorkerHeartbeatTimeout)
+				if err != nil {
+					log.Warning("WorkerHeartbeat> Cannot load dead workers: %s", err)
 					continue
+				}
+				for i := range w {
+					log.Debug("WorkerHeartbeat> Delete worker %s[%s] LastBeat:%d hatchery:%d status:%s", w[i].Name, w[i].ID, w[i].LastBeat, w[i].HatcheryID, w[i].Status)
+					if errD := DeleteWorker(db, w[i].ID); errD != nil {
+						log.Warning("WorkerHeartbeat> Cannot delete worker %s: %s", w[i].ID, errD)
+						continue
+					}
 				}
 			}
 		}

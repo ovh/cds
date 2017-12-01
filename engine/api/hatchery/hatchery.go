@@ -2,34 +2,37 @@ package hatchery
 
 import (
 	"crypto/rand"
+	"crypto/sha512"
 	"database/sql"
+	"encoding/base64"
 	"encoding/hex"
 	"math"
 	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // InsertHatchery registers in database new hatchery
 func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
-	tx, err := dbmap.Begin()
-	if err != nil {
-		return err
+	tx, errb := dbmap.Begin()
+	if errb != nil {
+		return errb
 	}
 	defer tx.Rollback()
 
-	h.UID, err = generateID()
-	if err != nil {
-		return err
+	var errg error
+	h.UID, errg = generateID()
+	if errg != nil {
+		return errg
 	}
 
 	query := `INSERT INTO hatchery (name, group_id, last_beat, uid) VALUES ($1, $2, NOW(), $3) RETURNING id`
-	err = tx.QueryRow(query, h.Name, h.GroupID, h.UID).Scan(&h.ID)
-	if err != nil {
+	if err := tx.QueryRow(query, h.Name, h.GroupID, h.UID).Scan(&h.ID); err != nil {
 		return err
 	}
 
@@ -39,10 +42,10 @@ func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 	}
 
 	//only local hatcheries declare model on registration
-	h.Model.CreatedBy = sdk.User{Username: h.Name}
+	h.Model.CreatedBy = sdk.User{Fullname: "Hatchery", Username: h.Name}
 	h.Model.Type = string(sdk.HostProcess)
 	h.Model.GroupID = h.GroupID
-	h.Model.OwnerID = h.ID
+	h.Model.UserLastModified = time.Now()
 
 	if err := worker.InsertWorkerModel(tx, &h.Model); err != nil && strings.Contains(err.Error(), "idx_worker_model_name") {
 		return sdk.ErrModelNameExist
@@ -51,8 +54,7 @@ func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 	}
 
 	query = `INSERT INTO hatchery_model (hatchery_id, worker_model_id) VALUES ($1, $2)`
-	_, err = tx.Exec(query, h.ID, h.Model.ID)
-	if err != nil {
+	if _, err := tx.Exec(query, h.ID, h.Model.ID); err != nil {
 		return err
 	}
 
@@ -61,38 +63,29 @@ func InsertHatchery(dbmap *gorp.DbMap, h *sdk.Hatchery) error {
 
 // DeleteHatchery removes from database given hatchery and linked model
 func DeleteHatchery(dbmap *gorp.DbMap, id int64, workerModelID int64) error {
-	tx, err := dbmap.Begin()
-	if err != nil {
-		return err
+	tx, errb := dbmap.Begin()
+	if errb != nil {
+		return errb
 	}
 	defer tx.Rollback()
 
 	query := `DELETE FROM hatchery_model WHERE hatchery_id = $1`
-	_, err = tx.Exec(query, id)
-	if err != nil {
+	if _, err := tx.Exec(query, id); err != nil {
 		return err
 	}
 
 	if workerModelID > 0 {
-		err = worker.DeleteWorkerModel(tx, workerModelID)
-		if err != nil {
+		if err := worker.DeleteWorkerModel(tx, workerModelID); err != nil {
 			return err
 		}
 	}
 
 	query = `DELETE FROM hatchery WHERE id = $1`
-	_, err = tx.Exec(query, id)
-	if err != nil {
+	if _, err := tx.Exec(query, id); err != nil {
 		return err
 	}
 
 	return tx.Commit()
-}
-
-// Exists returns an error is hatchery with given id does not exists
-func Exists(db gorp.SqlExecutor, id int64) error {
-	query := `SELECT id FROM hatchery WHERE id = $1`
-	return db.QueryRow(query, id).Scan(&id)
 }
 
 // LoadDeadHatcheries load hatchery with refresh last beat > timeout
@@ -146,16 +139,43 @@ func LoadHatchery(db gorp.SqlExecutor, uid string) (*sdk.Hatchery, error) {
 	return &h, nil
 }
 
-// LoadHatcheryByID fetch hatchery info from database given ID
-func LoadHatcheryByID(db gorp.SqlExecutor, id int64) (*sdk.Hatchery, error) {
+// LoadHatcheryByName fetch hatchery info from database given name
+func LoadHatcheryByName(db gorp.SqlExecutor, name string) (*sdk.Hatchery, error) {
 	query := `SELECT id, uid, name, last_beat, group_id, worker_model_id
 			FROM hatchery
 			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
-			WHERE id = $1`
+			WHERE hatchery.name = $1`
 
 	var h sdk.Hatchery
 	var wmID sql.NullInt64
-	err := db.QueryRow(query, id).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
+	err := db.QueryRow(query, name).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sdk.ErrNoHatchery
+		}
+		return nil, err
+	}
+
+	if wmID.Valid {
+		h.Model.ID = wmID.Int64
+	}
+
+	return &h, nil
+}
+
+// LoadHatcheryByNameAndToken fetch hatchery info from database given name and hashed token
+func LoadHatcheryByNameAndToken(db gorp.SqlExecutor, name, token string) (*sdk.Hatchery, error) {
+	query := `SELECT hatchery.id, hatchery.uid, hatchery.name, hatchery.last_beat, hatchery.group_id, hatchery_model.worker_model_id
+			FROM hatchery
+			LEFT JOIN hatchery_model ON hatchery_model.hatchery_id = hatchery.id
+			LEFT JOIN token ON hatchery.group_id = token.group_id
+			WHERE hatchery.name = $1 AND token.token = $2`
+
+	var h sdk.Hatchery
+	var wmID sql.NullInt64
+	hasher := sha512.New()
+	hashed := base64.StdEncoding.EncodeToString(hasher.Sum([]byte(token)))
+	err := db.QueryRow(query, name, hashed).Scan(&h.ID, &h.UID, &h.Name, &h.LastBeat, &h.GroupID, &wmID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoHatchery
@@ -200,6 +220,26 @@ func LoadHatcheries(db gorp.SqlExecutor) ([]sdk.Hatchery, error) {
 	return hatcheries, nil
 }
 
+// Update update hatchery
+func Update(db gorp.SqlExecutor, hatch sdk.Hatchery) error {
+	query := `UPDATE hatchery SET name = $1, group_id = $2, last_beat = NOW(), uid = $3  WHERE id = $4`
+	res, err := db.Exec(query, hatch.Name, hatch.GroupID, hatch.UID, hatch.ID)
+	if err != nil {
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if n == 0 {
+		return sdk.ErrNotFound
+	}
+
+	return nil
+}
+
 // RefreshHatchery Update hatchery last_beat
 func RefreshHatchery(db gorp.SqlExecutor, hatchID string) error {
 	query := `UPDATE hatchery SET last_beat = NOW() WHERE id = $1`
@@ -223,14 +263,12 @@ func RefreshHatchery(db gorp.SqlExecutor, hatchID string) error {
 func generateID() (string, error) {
 	size := 64
 	bs := make([]byte, size)
-	_, err := rand.Read(bs)
-	if err != nil {
-		log.Error("generateID: rand.Read failed: %s\n", err)
-		return "", err
+	if _, err := rand.Read(bs); err != nil {
+		return "", sdk.WrapError(err, "generateID> rand.Read failed")
 	}
 	str := hex.EncodeToString(bs)
 	token := []byte(str)[0:size]
 
-	log.Debug("generateID: new generated id: %s\n", token)
+	log.Debug("generateID> new generated id: %s", token)
 	return string(token), nil
 }

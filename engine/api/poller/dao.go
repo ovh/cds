@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -15,8 +14,7 @@ func Insert(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	dbPoller := RepositoryPoller(*poller)
 
 	if err := db.Insert(&dbPoller); err != nil {
-		log.Warning("InsertPoller> Error :%s", err)
-		return err
+		return sdk.WrapError(err, "InsertPoller> Error")
 	}
 
 	newPoller := sdk.RepositoryPoller(dbPoller)
@@ -29,18 +27,20 @@ func Insert(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 func Delete(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	dbPoller := RepositoryPoller(*poller)
 	if _, err := db.Delete(&dbPoller); err != nil {
-		log.Warning("DeletePoller> Error :%s", err)
-		return err
+		return sdk.WrapError(err, "DeletePoller> Error")
 	}
 	return nil
 }
 
 // DeleteAll  Delete all the poller of the given application
 func DeleteAll(db gorp.SqlExecutor, appID int64) error {
+	if err := DeleteExecutionByApplicationID(db, appID); err != nil {
+		return sdk.WrapError(err, "DeleteAll")
+	}
+
 	query := "DELETE FROM poller WHERE application_id = $1"
 	if _, err := db.Exec(query, appID); err != nil {
-		log.Warning("DeleteAllPoller> Error :%s", err)
-		return err
+		return sdk.WrapError(err, "DeleteAllPoller> Error")
 	}
 	return nil
 }
@@ -48,14 +48,13 @@ func DeleteAll(db gorp.SqlExecutor, appID int64) error {
 //Update update the poller
 func Update(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 	query := `
-        UPDATE  poller 
+        UPDATE  poller
         SET enabled = $3, name = $4
         WHERE application_id = $1
         AND pipeline_id  = $2
     `
 	if _, err := db.Exec(query, poller.Application.ID, poller.Pipeline.ID, poller.Enabled, poller.Name); err != nil {
-		log.Warning("UpdatePoller> Error :%s", err)
-		return err
+		return sdk.WrapError(err, "UpdatePoller> Error")
 	}
 	return nil
 }
@@ -64,44 +63,6 @@ func Update(db gorp.SqlExecutor, poller *sdk.RepositoryPoller) error {
 func LoadAll(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
 	dbPollers := []RepositoryPoller{}
 	if _, err := db.Select(&dbPollers, "SELECT * FROM poller"); err != nil {
-		return nil, err
-	}
-
-	pollers, err := unwrapPollers(db, dbPollers)
-	if err != nil {
-		return nil, err
-	}
-
-	return pollers, nil
-}
-
-//LoadEnabled load all RepositoryPoller
-func LoadEnabled(db gorp.SqlExecutor) ([]sdk.RepositoryPoller, error) {
-	dbPollers := []RepositoryPoller{}
-	if _, err := db.Select(&dbPollers, "SELECT * FROM poller WHERE enabled = true"); err != nil {
-		return nil, err
-	}
-
-	pollers, err := unwrapPollers(db, dbPollers)
-	if err != nil {
-		return nil, err
-	}
-
-	return pollers, nil
-}
-
-//LoadEnabledByProject load all RepositoryPoller for a project
-func LoadEnabledByProject(db gorp.SqlExecutor, projKey string) ([]sdk.RepositoryPoller, error) {
-	query := `
-        SELECT poller.application_id, poller.pipeline_id, poller.name, poller.enabled, poller.date_creation
-        FROM poller, application, project
-        WHERE poller.application_id = application.id
-		AND application.project_id = project.id
-		and project.projectkey = $1
-		AND enabled = true
-    `
-	dbPollers := []RepositoryPoller{}
-	if _, err := db.Select(&dbPollers, query, projKey); err != nil {
 		return nil, err
 	}
 

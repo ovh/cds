@@ -6,131 +6,150 @@ import (
 	"sync"
 
 	"github.com/go-gorp/gorp"
+	_ "github.com/lib/pq"
 
 	"github.com/ovh/cds/sdk/log"
 )
 
-var (
+// DBConnectionFactory is a database connection factory on postgres with gorp
+type DBConnectionFactory struct {
 	dbDriver         string
 	dbUser           string
 	dbPassword       string
 	dbName           string
 	dbHost           string
-	dbPort           string
+	dbPort           int
 	dbSSLMode        string
 	dbTimeout        int
+	dbConnectTimeout int
 	dbMaxConn        int
 	db               *sql.DB
-	mutex            = &sync.Mutex{}
+	mutex            *sync.Mutex
 	SecretDBUser     string
 	SecretDBPassword string
-)
+}
 
 // DB returns the current sql.DB object
-func DB() *sql.DB {
-	if db == nil {
-		if dbName == "" {
+func (f *DBConnectionFactory) DB() *sql.DB {
+	if f.db == nil {
+		if f.dbName == "" {
 			return nil
 		}
-		_, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
+		newF, err := Init(f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbConnectTimeout, f.dbTimeout, f.dbMaxConn)
 		if err != nil {
 			log.Error("Database> cannot init db connection : %s", err)
 			return nil
 		}
+		*f = *newF
 	}
-	if err := db.Ping(); err != nil {
+	if err := f.db.Ping(); err != nil {
 		log.Error("Database> cannot ping db : %s", err)
-		db = nil
+		f.db = nil
 		return nil
 	}
-	return db
+	return f.db
 }
 
 // GetDBMap returns a gorp.DbMap pointer
-func GetDBMap() *gorp.DbMap {
-	return DBMap(DB())
+func (f *DBConnectionFactory) GetDBMap() *gorp.DbMap {
+	return DBMap(f.DB())
 }
 
 //Set is for tetsing purpose, we need to set manually the connection
-func Set(d *sql.DB) {
-	db = d
+func (f *DBConnectionFactory) Set(d *sql.DB) {
+	f.db = d
 }
 
 // Init initialize sql.DB object by checking environment variables and connecting to database
-func Init(user, password, name, host, port, sslmode string, timeout, maxconn int) (*sql.DB, error) {
-	mutex.Lock()
-	defer mutex.Unlock()
+func Init(user, password, name, host string, port int, sslmode string, connectTimeout, timeout, maxconn int) (*DBConnectionFactory, error) {
+	f := &DBConnectionFactory{
+		dbDriver:         "postgres",
+		dbUser:           user,
+		dbPassword:       password,
+		dbName:           name,
+		dbHost:           host,
+		dbPort:           port,
+		dbSSLMode:        sslmode,
+		dbTimeout:        timeout,
+		dbConnectTimeout: connectTimeout,
+		dbMaxConn:        maxconn,
+		mutex:            &sync.Mutex{},
+	}
+
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
 
 	// Try to close before reinit
-	if db != nil {
-		if err := db.Close(); err != nil {
+	if f.db != nil {
+		if err := f.db.Close(); err != nil {
 			log.Error("Cannot close connection to DB : %s", err)
 		}
 	}
 
 	var err error
 
-	dbDriver = "postgres"
-	dbUser = user
-	dbPassword = password
-	dbName = name
-	dbHost = host
-	dbPort = port
-	dbSSLMode = sslmode
-	dbTimeout = timeout
-	dbMaxConn = maxconn
-
-	if dbUser == "" ||
-		dbPassword == "" ||
-		dbName == "" ||
-		dbHost == "" ||
-		dbPort == "" {
+	if f.dbUser == "" ||
+		f.dbPassword == "" ||
+		f.dbName == "" ||
+		f.dbHost == "" ||
+		f.dbPort == 0 {
 		return nil, fmt.Errorf("Missing database infos")
 	}
 
-	if SecretDBUser != "" {
-		dbUser = SecretDBUser
+	if f.SecretDBUser != "" {
+		f.dbUser = f.SecretDBUser
 	}
 
-	if SecretDBPassword != "" {
-		dbPassword = SecretDBPassword
+	if f.SecretDBPassword != "" {
+		f.dbPassword = f.SecretDBPassword
 	}
 
-	if timeout < 200 || timeout > 15000 {
-		timeout = 3000
+	if f.dbTimeout < 200 || f.dbTimeout > 30000 {
+		f.dbTimeout = 3000
+	}
+
+	if f.dbConnectTimeout <= 0 {
+		f.dbConnectTimeout = 10
 	}
 
 	// connect_timeout in seconds
 	// statement_timeout in milliseconds
-	// yeah...
-	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s connect_timeout=10 statement_timeout=%d", dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, timeout)
-	db, err = sql.Open(dbDriver, dsn)
+	dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%d sslmode=%s connect_timeout=%d statement_timeout=%d", f.dbUser, f.dbPassword, f.dbName, f.dbHost, f.dbPort, f.dbSSLMode, f.dbConnectTimeout, f.dbTimeout)
+	f.db, err = sql.Open(f.dbDriver, dsn)
 	if err != nil {
-		db = nil
+		f.db = nil
 		log.Error("Cannot open database: %s", err)
 		return nil, err
 	}
 
-	if err = db.Ping(); err != nil {
-		db = nil
+	if err = f.db.Ping(); err != nil {
+		f.db = nil
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(maxconn)
-	db.SetMaxIdleConns(int(maxconn / 2))
+	f.db.SetMaxOpenConns(f.dbMaxConn)
+	f.db.SetMaxIdleConns(int(f.dbMaxConn / 2))
 
-	return db, nil
+	return f, nil
 }
 
 // Status returns database driver and status in a printable string
-func Status() string {
-	if db == nil {
-		return fmt.Sprintf("Database: %s KO (no connection)", dbDriver)
-	}
-	err := db.Ping()
-	if err != nil {
-		return fmt.Sprintf("Database: %s KO (%s)", dbDriver, err)
+func (f *DBConnectionFactory) Status() string {
+	if f.db == nil {
+		return fmt.Sprintf("Database: %s KO (no connection)", f.dbDriver)
 	}
 
-	return fmt.Sprintf("Database: %s OK (%d conns)", dbDriver, db.Stats().OpenConnections)
+	if err := f.db.Ping(); err != nil {
+		return fmt.Sprintf("Database: %s KO (%s)", f.dbDriver, err)
+	}
+
+	return fmt.Sprintf("Database: %s OK (%d conns)", f.dbDriver, f.db.Stats().OpenConnections)
+}
+
+// Close closes the database, releasing any open resources.
+func (f *DBConnectionFactory) Close() error {
+	if f.db != nil {
+		return f.db.Close()
+	}
+	return nil
 }

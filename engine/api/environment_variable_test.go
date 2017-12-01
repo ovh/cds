@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"bytes"
@@ -6,14 +6,11 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
@@ -21,16 +18,13 @@ import (
 )
 
 func TestAddVariableInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestAddVariableInEnvironmentHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -38,7 +32,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Prod",
 	}
-	if err := environment.InsertEnvironment(db, &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -58,15 +52,16 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 		"name":                addVarRequest.Name,
 	}
 
-	uri := router.getRoute("POST", addVariableInEnvironmentHandler, vars)
+	uri := router.GetRoute("POST", api.addVariableInEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("POST", uri, body)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//4. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -75,7 +70,7 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 	assert.Equal(t, len(projectResult.Environments), 1)
 	assert.Equal(t, len(projectResult.Environments[0].Variable), 1)
 
-	envDb, err := environment.LoadEnvironmentByName(db, proj.Key, "Prod")
+	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")
 	if err != nil {
 		t.Fail()
 		return
@@ -85,16 +80,13 @@ func TestAddVariableInEnvironmentHandler(t *testing.T) {
 }
 
 func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestUpdateVariableInEnvironmentHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -102,7 +94,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Prod",
 	}
-	if err := environment.InsertEnvironment(db, &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -113,7 +105,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(api.mustDB(), env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -130,15 +122,16 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 		"name":                v.Name,
 	}
 
-	uri := router.getRoute("PUT", updateVariableInEnvironmentHandler, vars)
+	uri := router.GetRoute("PUT", api.updateVariableInEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("PUT", uri, body)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//5. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -147,7 +140,7 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 	assert.Equal(t, len(projectResult.Environments), 1)
 	assert.Equal(t, len(projectResult.Environments[0].Variable), 1)
 
-	envDb, err := environment.LoadEnvironmentByName(db, proj.Key, "Prod")
+	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")
 	if err != nil {
 		t.Fail()
 		return
@@ -157,16 +150,13 @@ func TestUpdateVariableInEnvironmentHandler(t *testing.T) {
 }
 
 func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestDeleteVariableFromEnvironmentHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -174,7 +164,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Prod",
 	}
-	if err := environment.InsertEnvironment(db, &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -185,7 +175,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(api.mustDB(), env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -196,15 +186,16 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 		"name":                v.Name,
 	}
 
-	uri := router.getRoute("DELETE", deleteVariableFromEnvironmentHandler, vars)
+	uri := router.GetRoute("DELETE", api.deleteVariableFromEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, err := http.NewRequest("DELETE", uri, nil)
+	test.NoError(t, err)
 	assets.AuthentifyRequest(t, req, u, pass)
 
 	//5. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -213,7 +204,7 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 	assert.Equal(t, len(projectResult.Environments), 1)
 	assert.Equal(t, len(projectResult.Environments[0].Variable), 0)
 
-	envDb, err := environment.LoadEnvironmentByName(db, proj.Key, "Prod")
+	envDb, err := environment.LoadEnvironmentByName(api.mustDB(), proj.Key, "Prod")
 	if err != nil {
 		t.Fail()
 		return
@@ -222,16 +213,13 @@ func TestDeleteVariableFromEnvironmentHandler(t *testing.T) {
 }
 
 func TestGetVariablesInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetVariablesInEnvironmentHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create env
@@ -239,7 +227,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Name:      "Prod",
 	}
-	if err := environment.InsertEnvironment(db, &env); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(), &env); err != nil {
 		t.Fail()
 		return
 	}
@@ -250,7 +238,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 		Value: "bar",
 		Type:  sdk.StringVariable,
 	}
-	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(api.mustDB(), env.ID, &v, u); err != nil {
 		t.Fail()
 		return
 	}
@@ -261,7 +249,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 		"name":                v.Name,
 	}
 
-	uri := router.getRoute("GET", getVariablesInEnvironmentHandler, vars)
+	uri := router.GetRoute("GET", api.getVariablesInEnvironmentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	req, _ := http.NewRequest("GET", uri, nil)
@@ -269,7 +257,7 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 
 	//5. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	assert.Equal(t, 200, w.Code)
 	res, _ := ioutil.ReadAll(w.Body)
@@ -279,167 +267,25 @@ func TestGetVariablesInEnvironmentHandler(t *testing.T) {
 	assert.Equal(t, varsResult[0].Name, "foo")
 }
 
-func TestGetEnvironmentsAuditHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestGetVariablesInEnvironmentHandler"}
-	router.init()
-
-	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
-
-	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
-	test.NotNil(t, proj)
-
-	//3. Create env
-	env := sdk.Environment{
-		ProjectID: proj.ID,
-		Name:      "Prod",
-	}
-	if err := environment.InsertEnvironment(db, &env); err != nil {
-		t.Fail()
-		return
-	}
-
-	//4. add an audit
-	if err := environment.CreateAudit(db, proj.Key, &env, u); err != nil {
-		t.Fail()
-		return
-	}
-
-	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": "Prod",
-	}
-
-	uri := router.getRoute("GET", getEnvironmentsAuditHandler, vars)
-	test.NotEmpty(t, uri)
-
-	req, _ := http.NewRequest("GET", uri, nil)
-	assets.AuthentifyRequest(t, req, u, pass)
-
-	//5. Do the request
-	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
-
-	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
-	auditsResult := []sdk.VariableAudit{}
-	json.Unmarshal(res, &auditsResult)
-	assert.Equal(t, len(auditsResult), 1)
-}
-
-func TestRestoreEnvironmentAuditHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/TestRestoreEnvironmentAuditHandler"}
-	router.init()
-
-	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
-
-	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
-	test.NotNil(t, proj)
-
-	//3. Create env
-	env := sdk.Environment{
-		ProjectID: proj.ID,
-		Name:      "Prod",
-	}
-	if err := environment.InsertEnvironment(db, &env); err != nil {
-		t.Fail()
-		return
-	}
-
-	//4. Add a variable
-	v := sdk.Variable{
-		Name:  "foo",
-		Value: "bar",
-		Type:  sdk.StringVariable,
-	}
-	if err := environment.InsertVariable(db, env.ID, &v, u); err != nil {
-		t.Fail()
-		return
-	}
-
-	//5. add an audit
-	if err := environment.CreateAudit(db, proj.Key, &env, u); err != nil {
-		t.Fail()
-		return
-	}
-
-	//6. Get audit ID
-	a, err := environment.GetEnvironmentAudit(db, proj.Key, env.Name)
-	if err != nil {
-		t.Fail()
-		return
-	}
-
-	//7. Update Variable
-	v.Value = "new bar"
-	if err := environment.UpdateVariable(db, env.ID, &v, u); err != nil {
-		t.Fail()
-		return
-	}
-
-	//8. Prepare request
-	vars := map[string]string{
-		"key": proj.Key,
-		"permEnvironmentName": "Prod",
-		"auditID":             strconv.Itoa(a[0].ID),
-	}
-
-	uri := router.getRoute("PUT", restoreEnvironmentAuditHandler, vars)
-	test.NotEmpty(t, uri)
-
-	req, err := http.NewRequest("PUT", uri, nil)
-	assets.AuthentifyRequest(t, req, u, pass)
-
-	//9. Do the request
-	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
-
-	assert.Equal(t, 200, w.Code)
-	res, _ := ioutil.ReadAll(w.Body)
-	projResult := sdk.Project{}
-	json.Unmarshal(res, &projResult)
-	assert.Equal(t, len(projResult.Environments), 1)
-	assert.Equal(t, len(projResult.Environments[0].Variable), 1)
-	assert.Equal(t, projResult.Environments[0].Variable[0].Value, "bar")
-
-	envDb, err := environment.LoadEnvironmentByName(db, proj.Key, "Prod")
-	if err != nil {
-		t.Fail()
-		return
-	}
-	assert.Equal(t, len(envDb.Variable), 1)
-	assert.Equal(t, envDb.Variable[0].Value, "bar")
-}
-
 func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getVariableAuditInEnvironmentHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	// Insert env
 	e := &sdk.Environment{
 		Name:      "Production",
 		ProjectID: proj.ID,
 	}
-	if err := environment.InsertEnvironment(db, e); err != nil {
+	if err := environment.InsertEnvironment(api.mustDB(), e); err != nil {
 		t.Fatal(err)
 	}
 
@@ -449,7 +295,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 		Type:  "string",
 		Value: "bar",
 	}
-	if err := environment.InsertVariable(db, e.ID, &v, u); err != nil {
+	if err := environment.InsertVariable(api.mustDB(), e.ID, &v, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -459,7 +305,7 @@ func Test_getVariableAuditInEnvironmentHandler(t *testing.T) {
 		"name":                "foo",
 	}
 
-	route := router.getRoute("GET", getVariableAuditInEnvironmentHandler, vars)
+	route := router.GetRoute("GET", api.getVariableAuditInEnvironmentHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 
 	var audits []sdk.EnvironmentVariableAudit

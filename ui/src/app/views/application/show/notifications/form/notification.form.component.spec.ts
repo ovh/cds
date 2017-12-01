@@ -9,6 +9,9 @@ import {ApplicationStore} from '../../../../../service/application/application.s
 import {ApplicationService} from '../../../../../service/application/application.service';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../service/project/project.service';
+import {PipelineService} from '../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../service/variable/variable.service';
 import {AuthentificationStore} from '../../../../../service/auth/authentification.store';
 import {SharedModule} from '../../../../../shared/shared.module';
 import {ApplicationNotificationFormModalComponent} from './notification.form.component';
@@ -19,6 +22,10 @@ import {UserNotificationSettings, UserNotificationTemplate, Notification} from '
 import {Pipeline} from '../../../../../model/pipeline.model';
 import {Environment} from '../../../../../model/environment.model';
 import {NotificationEvent} from '../notification.event';
+import {Operator} from 'rxjs/Operator';
+import {Observable} from 'rxjs/Observable';
+import {Subscriber} from 'rxjs/Subscriber';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application notifications', () => {
 
@@ -34,6 +41,9 @@ describe('CDS: Application notifications', () => {
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService,
                 TranslateService,
                 TranslateLoader,
                 TranslateParser
@@ -41,7 +51,8 @@ describe('CDS: Application notifications', () => {
             imports: [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
@@ -498,8 +509,11 @@ describe('CDS: Application notifications', () => {
     }));
 });
 
-class MockEventEmitter extends EventEmitter {
+class MockEventEmitter extends EventEmitter<NotificationEvent> {
     event: NotificationEvent;
+    __isAsync: any;
+
+
 
     constructor() {
         super();

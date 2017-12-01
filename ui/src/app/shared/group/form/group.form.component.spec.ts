@@ -1,18 +1,12 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, fakeAsync, tick} from '@angular/core/testing';
+import {TestBed, fakeAsync, tick} from '@angular/core/testing';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
-import {Injector} from '@angular/core';
 import {SharedModule} from '../../shared.module';
 import {GroupFormComponent} from './group.form.component';
 
 describe('CDS: Group form component', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -20,7 +14,6 @@ describe('CDS: Group form component', () => {
             ],
             providers: [
                 TranslateService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
             ],
@@ -30,16 +23,7 @@ describe('CDS: Group form component', () => {
             ]
         });
 
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-
     });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
-    });
-
 
     it('should load component and disable button', fakeAsync( () => {
         // Create component

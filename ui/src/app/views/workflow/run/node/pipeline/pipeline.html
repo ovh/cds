@@ -1,0 +1,72 @@
+<div id="NodeRunPipeline">
+    <div class="ui grid">
+        <div class="row">
+            <div class="column">
+                <ul *ngIf="nodeRun">
+                    <li *ngFor="let stage of nodeRun.stages" class="stage"
+                        [class.one]="nodeRun.stages.length === 1"
+                        [class.two]="nodeRun.stages.length === 2"
+                        [class.three]="nodeRun.stages.length === 3"
+                        [class.four]="nodeRun.stages.length === 4"
+                        [class.five]="nodeRun.stages.length === 5"
+                        [class.six]="nodeRun.stages.length === 6"
+                        [class.seven]="nodeRun.stages.length === 7">
+                        <div class="stageItem">
+                            {{stage.name}}
+                            <ul>
+                                <li *ngFor="let j of stage.jobs">
+                                    <div class="job ui segment pointing"
+                                         [class.active]="selectedRunJob && selectedRunJob.job.pipeline_action_id === j.pipeline_action_id"
+                                         [class.success]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.SUCCESS"
+                                         [class.inactive]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.DISABLED || mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.SKIPPED"
+                                         [class.fail]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.FAIL"
+                                         [class.building]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.BUILDING || mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.WAITING"
+                                         (click)="selectedJob(j)">
+                                        <div class="truncate">
+                                            <app-status-icon [status]="mapJobStatus.get(j.pipeline_action_id)" [value]="99"></app-status-icon>
+                                            {{j.action.name}}
+                                        </div>
+                                        <div class="duration" *ngIf="mapJobStatus.get(j.pipeline_action_id) !== pipelineStatusEnum.DISABLED && mapJobStatus.get(j.pipeline_action_id) !== pipelineStatusEnum.SKIPPED">
+                                            <span *ngIf="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.WAITING">
+                                                 {{ 'workflow_run_node_job_queued' | translate: {time: jobTime.get(j.pipeline_action_id)} }}
+                                            </span>
+                                            <span *ngIf="mapJobStatus.get(j.pipeline_action_id) !== pipelineStatusEnum.WAITING">
+                                                {{jobTime.get(j.pipeline_action_id)}}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <div class="ui info message" *ngIf="!nodeRun.stages || nodeRun.stages.length === 0">
+                        {{ 'pipeline_stage_no' | translate }}
+                    </div>
+                </ul>
+            </div>
+        </div>
+        <div class="row">
+            <div class="column">
+                <div class="log animated fadeIn" *ngIf="selectedRunJob && mapStepStatus">
+                    <ul>
+                        <li>
+                            <app-workflow-rin-job-spawn-info [spawnInfos]="selectedRunJob.spawninfos" [variables]="selectedRunJob.parameters"></app-workflow-rin-job-spawn-info>
+                        </li>
+                        <li *ngFor="let step of selectedRunJob.job.action.actions; let i = index">
+                            <app-workflow-step-log
+                                    [project]="project"
+                                    [workflowName]="workflowName"
+                                    [nodeRun]="nodeRun"
+                                    [job]="selectedRunJob.job"
+                                    [nodeJobRun]="selectedRunJob"
+                                    [step]="step"
+                                    [stepOrder]="i"
+                                    [stepStatus]="mapStepStatus[selectedRunJob.job.pipeline_action_id + '-' + i]">
+                            </app-workflow-step-log>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

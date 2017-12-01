@@ -1,0 +1,29 @@
+<form class="ui form" *ngIf="project && pipeline && stage">
+    <div class="field">
+        <div class="inline fields">
+            <div class="eight wide field">
+                <label>{{'common_name' | translate}}</label>
+                <input type="text" name="stageName" [(ngModel)]="stage.name" (keydown)="stage.hasChanged = true" *ngIf="pipeline.permission === permissionEnum.READ_WRITE_EXECUTE">
+                <div class="inline" *ngIf="pipeline.permission !== permissionEnum.READ_WRITE_EXECUTE">{{stage.name}}</div>
+            </div>
+            <div class="eight wide field">
+                <div class="ui checkbox">
+                    <input type="checkbox" name="enabled" [(ngModel)]="stage.enabled" (change)="stage.hasChanged = true" [disabled]="pipeline.permission !== permissionEnum.READ_WRITE_EXECUTE">
+                    <label>{{ 'common_enable' | translate }}</label>
+                </div>
+            </div>
+        </div>
+        <div class="field">
+            <label>{{'prerequisite_title_s' | translate }}</label>
+            <app-prerequisites-list
+                    [prerequisites]="stage.prerequisites"
+                    [edit]="pipeline.permission === permissionEnum.READ_WRITE_EXECUTE"
+                    (event)="prerequisiteEvent($event)"></app-prerequisites-list>
+        </div>
+        <div class="field">
+            <label>{{'prerequisite_add' | translate }}</label>
+            <app-prerequisites-form [prerequisites]="availablePrerequisites"
+                                    (event)="prerequisiteEvent($event)"></app-prerequisites-form>
+        </div>
+    </div>
+</form>

@@ -4,6 +4,7 @@ $greyBackground: rgba(249, 249, 249, 1);
 $darkGreyColor: rgba(34, 36, 38, 0.15);
 
 $navbarHeight: 50px;
+$navbarColor: #344860;
 
 $sidebarOpenWidth: 0px;
 $sidebarCloseWidth: 0px;
@@ -12,6 +13,7 @@ $sidebarCloseWidth: 0px;
 $cds_color_green : #21BA45;
 $cds_color_teal : #4fa3e3;
 $cds_color_red : #FF4F60;
+$cds_color_orange : #FE9A76;
 
 $cds_color_light_green : #E5FFE5;
 $cds_color_light_red: #FFD2D6;
@@ -34,18 +36,25 @@ pre {
 
 // View style
 .CDSbreadcrumb {
-  padding: 20px 20px 20px 50px;
-  height: 58px;
+  padding: 15px;
   z-index: 100;
+  height: $navbarHeight;
+  position: relative;
+  background: #FFFFFF;
+  box-shadow: 0px 1px 2px 0 rgba(34, 36, 38, 0.15);
+  margin: 0;
+  padding: 1em 1em;
+  border: 1px solid rgba(34, 36, 38, 0.15);
 }
 
 .CDSmenu {
-  padding-left: 30px;
+  padding: 0.25em 30px 0 30px;
   height: 40px;
 }
 
 .scrollingContent {
   overflow-y: auto;
+  overflow-x: hidden;
   position: relative;
   flex: 1;
 
@@ -57,7 +66,6 @@ pre {
 
     .viewContent {
       padding-top: 25px;
-      padding-bottom: 50px;
     }
   }
 }

@@ -1,22 +1,22 @@
 <div class="summary" *ngIf="currentBuild"
-     [class.success]="currentBuild.status === 'Success'"
-     [class.fail]="currentBuild.status === 'Fail'"
-     [class.building]="currentBuild.status === 'Building'">
+     [class.success]="currentBuild.status === pipelineStatusEnum.SUCCESS"
+     [class.fail]="currentBuild.status === pipelineStatusEnum.FAIL"
+     [class.building]="currentBuild.status === pipelineStatusEnum.BUILDING">
     <div class="ui grid">
         <div class="row">
             <div class="five wide column">
                 <span class="title">{{ 'common_pipeline_title' | translate }}</span>
                 <span class="content">
-                        {{ currentBuild.application.name + ' / '}}
-                        {{ currentBuild.pipeline.name}}
-                        {{ ' v' + currentBuild.version}}
-                        </span>
+                    {{ currentBuild.application.name + ' / '}}
+                    {{ currentBuild.pipeline.name}}
+                    {{ ' v' + currentBuild.version}}
+                </span>
             </div>
             <div class="five wide column">
                 <span class="title">{{ 'common_pipeline_start_title' | translate }}</span>
-                <span class="content">{{currentBuild.start | amCalendar }}</span>
+                <span class="content">{{currentBuild.start | date:'short' }}</span>
             </div>
-            <div class="five wide column" *ngIf="currentBuild.status !== 'Building'">
+            <div class="five wide column" *ngIf="currentBuild.status !== pipelineStatusEnum.BUILDING">
                 <span class="title">{{ 'common_duration_title' | translate }}</span>
                 <span class="content">{{duration}}</span>
             </div>
@@ -37,41 +37,12 @@
         </div>
         <div class="row">
             <div class="right aligned column">
-                <div class="ui buttons" *ngIf="currentBuild.status !== 'Building'">
-                    <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="runAgain()" *ngIf="currentBuild.status === 'Fail'">{{'pipeline_label_run_again' | translate}}</button>
+                <div class="ui buttons" *ngIf="currentBuild.status !== pipelineStatusEnum.BUILDING">
+                    <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="runAgain()" *ngIf="currentBuild.status === pipelineStatusEnum.FAIL">{{'pipeline_label_run_again' | translate}}</button>
                     <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="runNew()">{{ 'pipeline_label_run_new' | translate }}</button>
                 </div>
-                <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="stop()" *ngIf="currentBuild.status === 'Building'">{{ 'pipeline_label_stop' | translate }}</button>
+                <button class="ui green basic button" [class.loading]="loading" [disabled]="loading" (click)="stop()" *ngIf="currentBuild.status === pipelineStatusEnum.BUILDING">{{ 'pipeline_label_stop' | translate }}</button>
             </div>
         </div>
     </div>
 </div>
-<sm-modal title="{{ 'application_launch_manual_title' | translate}}" class="fluid" #launchModal>
-    <modal-content>
-        <div class="ui form" *ngIf="launchPipelineParams">
-            <div *ngIf="parent; then parent; else orphan"></div>
-            <ng-template #parent>
-                <div class="field">
-                    <label>{{ 'pipeline_parent_version' | translate }}</label>
-                    <sm-select class="fluid search" [disabled]="loading" name="envname" [(model)]="launchParentVersion">
-                        <option *ngFor="let pb of launchOldBuilds" [value]="pb.build_number">{{pb.version}}</option>
-                    </sm-select>
-                </div>
-            </ng-template>
-            <ng-template #orphan>
-                <div class="field">
-                    <label> {{ 'application_launch_git_title' | translate}}</label>
-                    <app-parameter-list [parameters]="launchGitParams" mode="launcher"></app-parameter-list>
-                </div>
-            </ng-template>
-            <div class="field" *ngIf="launchPipelineParams.length > 0">
-                <label> {{ 'application_launch_pipeline_title' | translate}}</label>
-                <app-parameter-list [parameters]="launchPipelineParams" mode="launcher"></app-parameter-list>
-            </div>
-        </div>
-    </modal-content>
-    <modal-actions>
-        <div class="ui grey button" (click)="launchModal.hide()">{{ 'btn_cancel' | translate }}</div>
-        <div class="ui green button" (click)="runManual()">{{ 'btn_run' | translate }}</div>
-    </modal-actions>
-</sm-modal>

@@ -8,13 +8,13 @@ import (
 
 // User represent a CDS user.
 type User struct {
-	ID       int64   `json:"id" yaml:"-"`
-	Username string  `json:"username" yaml:"username"`
-	Fullname string  `json:"fullname" yaml:"fullname,omitempty"`
-	Email    string  `json:"email" yaml:"email,omitempty"`
-	Admin    bool    `json:"admin" yaml:"admin,omitempty"`
-	Auth     Auth    `json:"-" yaml:"-"`
-	Groups   []Group `json:"groups,omitempty" yaml:"-"`
+	ID       int64   `json:"id" yaml:"-" cli:"-"`
+	Username string  `json:"username" yaml:"username" cli:"username,key"`
+	Fullname string  `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
+	Email    string  `json:"email" yaml:"email,omitempty" cli:"-"`
+	Admin    bool    `json:"admin" yaml:"admin,omitempty" cli:"-"`
+	Auth     Auth    `json:"-" yaml:"-" cli:"-"`
+	Groups   []Group `json:"groups,omitempty" yaml:"-" cli:"-"`
 	Origin   string  `json:"origin" yaml:"origin,omitempty"`
 }
 
@@ -48,22 +48,6 @@ func NewUser(username string) *User {
 	return u
 }
 
-// JSON return the marshalled string of User object
-func (u *User) JSON() string {
-	data, err := json.Marshal(u)
-	if err != nil {
-		fmt.Printf("User.JSON: cannot marshal: %s\n", err)
-		return ""
-	}
-
-	return string(data)
-}
-
-// FromJSON unmarshal given json data into User object
-func (u *User) FromJSON(data []byte) (*User, error) {
-	return u, json.Unmarshal(data, &u)
-}
-
 //LoginUser call the /login handler
 func LoginUser(username, password string) (bool, *UserAPIResponse, error) {
 	request := UserLoginRequest{
@@ -87,7 +71,7 @@ func LoginUser(username, password string) (bool, *UserAPIResponse, error) {
 
 	loginResponse := &UserAPIResponse{}
 	if err := json.Unmarshal(data, loginResponse); err != nil {
-		return false, nil, fmt.Errorf("Error unmarshalling reponse: %s", err)
+		return false, nil, fmt.Errorf("Error unmarshalling response: %s", err)
 	}
 
 	return true, loginResponse, nil
@@ -219,7 +203,7 @@ func VerifyUser(name, token string) (UserAPIResponse, error) {
 
 	err = json.Unmarshal(data, &confirmResponse)
 	if err != nil {
-		return confirmResponse, fmt.Errorf("Error unmarshalling reponse: %s", err)
+		return confirmResponse, fmt.Errorf("Error unmarshalling response: %s", err)
 	}
 
 	return confirmResponse, nil

@@ -8,9 +8,12 @@ import (
 
 	_ "github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func Test_checkActionRequirements(t *testing.T) {
+	log.SetLogger(t)
+
 	type args struct {
 		a    *sdk.Action
 		proj string
@@ -38,6 +41,8 @@ func Test_checkActionRequirements(t *testing.T) {
 }
 
 func Test_checkMultipleWorkerModelWarning(t *testing.T) {
+	log.SetLogger(t)
+
 	type args struct {
 		proj string
 		pip  string
@@ -123,6 +128,8 @@ func Test_checkMultipleWorkerModelWarning(t *testing.T) {
 }
 
 func Test_checkMultipleHostnameWarning(t *testing.T) {
+	log.SetLogger(t)
+
 	type args struct {
 		proj string
 		pip  string
@@ -190,6 +197,8 @@ func Test_checkMultipleHostnameWarning(t *testing.T) {
 }
 
 func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
+	log.SetLogger(t)
+
 	type args struct {
 		proj string
 		pip  string
@@ -400,6 +409,8 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 }
 
 func Test_checkIncompatibleBinaryWithModelRequirement(t *testing.T) {
+	log.SetLogger(t)
+
 	type args struct {
 		proj      string
 		pip       string
@@ -518,6 +529,8 @@ func Test_checkIncompatibleBinaryWithModelRequirement(t *testing.T) {
 }
 
 func Test_checkIncompatibleServiceWithModelRequirement(t *testing.T) {
+	log.SetLogger(t)
+
 	type args struct {
 		proj      string
 		pip       string
@@ -611,6 +624,8 @@ func Test_checkIncompatibleServiceWithModelRequirement(t *testing.T) {
 }
 
 func Test_checkIncompatibleMemoryWithModelRequirement(t *testing.T) {
+	log.SetLogger(t)
+
 	type args struct {
 		proj      string
 		pip       string

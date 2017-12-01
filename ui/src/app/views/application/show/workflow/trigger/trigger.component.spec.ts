@@ -13,6 +13,9 @@ import {ApplicationStore} from '../../../../../service/application/application.s
 import {ApplicationService} from '../../../../../service/application/application.service';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../service/project/project.service';
+import {PipelineService} from '../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../service/variable/variable.service';
 import {ApplicationTriggerComponent} from './trigger.component';
 import {Project} from '../../../../../model/project.model';
 import {Application, ApplicationPipeline} from '../../../../../model/application.model';
@@ -20,10 +23,11 @@ import {Pipeline} from '../../../../../model/pipeline.model';
 import {Trigger} from '../../../../../model/trigger.model';
 import {ApplicationModule} from '../../../application.module';
 import {Map} from 'immutable';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Parameter} from '../../../../../model/parameter.model';
 import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
 import {Prerequisite} from '../../../../../model/prerequisite.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application Workflow', () => {
 
@@ -35,23 +39,28 @@ describe('CDS: Application Workflow', () => {
             declarations: [
             ],
             providers: [
+                MockBackend,
                 { provide: APP_BASE_HREF, useValue: '/' },
                 { provide: XHRBackend, useClass: MockBackend },
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
                 ApplicationStore, ApplicationService,
-                ProjectStore, ProjectService
+                ProjectStore, ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService
             ],
             imports : [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
     });
 
     afterEach(() => {

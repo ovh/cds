@@ -31,6 +31,10 @@ func listArtifacts(cmd *cobra.Command, args []string) {
 	pipeline := args[2]
 	tag := args[3]
 
+	if env == "" {
+		env = sdk.DefaultEnv.Name
+	}
+
 	arts, err := sdk.ListArtifacts(project, appName, pipeline, tag, env)
 	if err != nil {
 		sdk.Exit("Error: Cannot list artifacts in %s-%s-%s/%s (%s)\n", project, appName, pipeline, tag, err)

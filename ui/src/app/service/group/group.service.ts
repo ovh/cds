@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Group} from '../../model/group.model';
-import {Http} from '@angular/http';
+import {HttpClient} from '@angular/common/http';
 
 /**
  * Service to access Group from API.
@@ -11,7 +11,15 @@ import {Http} from '@angular/http';
 export class GroupService {
 
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
+    }
+
+    /**
+     * Get the list of groups
+     * @returns {Observable<Group>}
+     */
+    getGroupByName(name: string): Observable<Group> {
+        return this._http.get<Group>('/group/' + name);
     }
 
     /**
@@ -19,9 +27,7 @@ export class GroupService {
      * @returns {Observable<Group[]>}
      */
     getGroups(): Observable<Group[]> {
-        return this._http.get('/group').map(res => {
-            return res.json();
-        });
+        return this._http.get<Group[]>('/group');
     }
 
     /**
@@ -29,7 +35,7 @@ export class GroupService {
      * @param group Group to create
      * @returns {Observable<boolean>}
      */
-    addGroup(group: Group): Observable<boolean> {
+    createGroup(group: Group): Observable<boolean> {
         return this._http.post('/group', group).map(() => {
             return true;
         });
@@ -40,8 +46,8 @@ export class GroupService {
      * @param group Group updated
      * @returns {Observable<boolean>}
      */
-    updateGroup(group: Group): Observable<boolean> {
-        return this._http.put('/group/' + group.name, group).map(() => {
+    updateGroup(groupname: string, group: Group): Observable<boolean> {
+        return this._http.put('/group/' + groupname, group).map(() => {
             return true;
         });
     }
@@ -56,4 +62,53 @@ export class GroupService {
             return true;
         });
     }
+
+    /**
+     * Add a user in a group
+     * @param name Group name
+     * @param user User to add into group
+     * @returns {Observable<boolean>}
+     */
+    addUser(name: string, username: string): Observable<boolean> {
+        return this._http.post('/group/' + name + '/user', [username]).map(() => {
+            return true;
+        });
+    }
+
+    /**
+     * Remove user from group
+     * @param name Group name
+     * @param user User to remove from gropu
+     * @returns {Observable<boolean>}
+     */
+    removeUser(name: string, username: string): Observable<boolean> {
+        return this._http.delete('/group/' + name + '/user/' + username).map(() => {
+            return true;
+        });
+    }
+
+    /**
+     * Add admin in a group
+     * @param name Group name
+     * @param user User to add
+     * @returns {Observable<boolean>}
+     */
+    addUserAdmin(name: string, username: string): Observable<boolean> {
+        return this._http.post('/group/' + name + '/user/' + username + '/admin', null).map(() => {
+            return true;
+        });
+    }
+
+    /**
+     * Remove an admin from a group
+     * @param name Group name
+     * @param user user to add into group
+     * @returns {Observable<boolean>}
+     */
+    removeUserAdmin(name: string, username: string): Observable<boolean> {
+        return this._http.delete('/group/' + name + '/user/' + username + '/admin').map(() => {
+            return true;
+        });
+    }
+
 }

@@ -1,0 +1,162 @@
+<h2 *ngIf="workerModel && workerModel.id">{{ 'worker_model_edit_title' | translate }} {{workerModel.name}}</h2>
+
+<div *ngIf="workerModel;then showWorkerModel;else loadWorkerModel"></div>
+<ng-template #showWorkerModel>
+  <div id="WorkerModelEdit">
+    <form class="ui form">
+      <div class="ui grid">
+        <div class="ten wide column">
+            <div class="two fields">
+              <div class="field">
+                  <label>{{'worker_model_name' | translate}}</label>
+                  <input class="ui input" type="text" name="name" [(ngModel)]="workerModel.name" [disabled]="loading">
+              </div>
+              <div class="field">
+                  <label>{{'worker_model_group' | translate}}</label>
+                  <sm-select class="fluid search"
+                      name="group"
+                      *ngIf="workerModelGroups"
+                      [disabled]="loading"
+                      [(model)]="workerModel.group_id"
+                      [options]="{'fullTextSearch': true}">
+                      <option *ngFor="let group of workerModelGroups" [value]="group.id">{{group.name}}</option>
+                  </sm-select>
+              </div>
+            </div>
+            <div class="field" *ngIf="workerModel.id">
+              <label>{{'worker_model_status' | translate}}</label>
+              <div class="ui icon message" *ngIf="!workerModel.disabled">
+                <i class="check green icon"></i>
+                <div class="content">
+                  <p>{{ 'worker_model_enabled' | translate }}</p>
+                </div>
+                <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=true;clickSaveButton()">{{ 'worker_model_disable' | translate }}</button>
+              </div>
+
+              <div class="ui icon message" *ngIf="workerModel.disabled">
+                <i class="warning red icon"></i>
+                <div class="content">
+                  <p>{{ 'worker_model_disabled' | translate }}</p>
+                </div>
+                <button *ngIf="canEdit" class="ui right floated button" (click)="workerModel.disabled=false;clickSaveButton()">{{ 'worker_model_enable' | translate }}</button>
+              </div>
+              <div class="ui icon message" *ngIf="workerModel.nb_spawn_err > 0">
+                <i class="warning red icon"></i>
+                <div class="content">
+                  <p>{{ 'worker_model_error' | translate }}</p>
+                  <p>{{workerModel.last_spawn_err}}</p>
+                  <div>
+                    <i class="fa fa-question-circle"></i> {{'worker_model_help_error' | translate}}
+                    <div class="ui list">
+                      <div class="item" *ngIf="workerModel.type === 'docker'">{{'worker_model_help_error_docker_1' | translate}}</div>
+                      <div class="item" *ngIf="workerModel.type === 'docker'">{{'worker_model_help_error_docker_2' | translate}}</div>
+                      <div class="item" *ngIf="workerModel.type === 'host'">{{'worker_model_help_error_host_1' | translate}}</div>
+                      <div class="item" *ngIf="workerModel.type === 'host'">{{'worker_model_help_error_host_2' | translate}}</div>
+                      <div class="item" *ngIf="workerModel.type === 'openstack'">{{'worker_model_help_error_openstack_1' | translate}}</div>
+                      <div class="item" *ngIf="workerModel.type === 'openstack'">{{'worker_model_help_error_openstack_2' | translate}}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="three fields">
+              <div class="seven wide field">
+                  <label>{{'worker_model_type' | translate}}</label>
+                  <sm-select class="fluid search"
+                      name="type"
+                      *ngIf="workerModelTypes"
+                      [disabled]="loading"
+                      [(model)]="workerModel.type"
+                      [options]="{'fullTextSearch': true}">
+                      <option *ngFor="let type of workerModelTypes" [value]="type">{{type}}</option>
+                  </sm-select>
+              </div>
+              <div class="five wide field">
+                <label>{{'worker_model_communication' | translate}}</label>
+                <sm-select class="fluid search"
+                    name="type"
+                    *ngIf="workerModelCommunications"
+                    [disabled]="loading"
+                    [(model)]="workerModel.communication"
+                    [options]="{'fullTextSearch': true}">
+                    <option *ngFor="let communication of workerModelCommunications" [value]="communication">{{communication}}</option>
+                </sm-select>
+              </div>
+              <div class="four wide field">
+                  <label>{{'worker_model_provision' | translate}}</label>
+                  <input class="ui input" type="number" name="provision" [(ngModel)]="workerModel.provision" [disabled]="loading">
+              </div>
+            </div>
+            <div class="field">
+              <label>{{'worker_model_image' | translate}}</label>
+              <input class="ui input" type="text" name="image" [(ngModel)]="workerModel.image" [disabled]="loading">
+            </div>
+
+            <div *ngIf="canEdit" class="field">
+                <app-delete-button *ngIf="workerModel.id" class="left floated" (event)="clickDeleteButton()" [loading]="deleteLoading"></app-delete-button>
+                <button class="ui green right floated button" [class.loading]="loading" (click)="clickSaveButton()">
+                  <i class="save icon"></i>{{ 'btn_save' | translate }}
+                </button>
+            </div>
+        </div>
+        <div class="six wide column">
+          <div class="ui tall stacked segment">
+            <h4 class="ui header"><i class="fa fa-book fa-3x"></i></h4>
+            <p>{{'worker_model_help_line_1' | translate}}</p>
+            <p>{{'worker_model_help_line_2' | translate}}</p>
+
+            <i class="fa fa-question-circle"></i> {{'worker_model_help_howtos' | translate}}
+            <div class="ui list">
+              <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-simple/">{{'worker_model_help_howto_link_1' | translate}}</a>
+              <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-customized/">{{'worker_model_help_howto_link_2' | translate}}</a>
+              <a class="item" href="https://ovh.github.io/cds/tutorials/tutorials.worker-model-openstack/">{{'worker_model_help_howto_link_3' | translate}}</a>
+              <a class="item" href="https://ovh.github.io/cds/advanced/advanced.worker.model/">{{'worker_model_help_howto_link_4' | translate}}</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="ten wide column" *ngIf="workerModel.id">
+          <div class="ui raised segment">
+
+            <h3 class="ui header">{{'worker_model_capabilities' | translate}}
+              <i *ngIf="!workerModel.need_registration" class="fa fa-check" style="cursor:pointer" title="{{'worker_model_capabilities_up_to_date' | translate}}"></i>
+              <i *ngIf="workerModel.need_registration" class="fa fa-warning" style="cursor:pointer" title="{{'worker_model_capabilities_need_refresh' | translate}}{{workerModel.last_registration}}"></i>
+            </h3>
+            <p>
+              {{'worker_model_help_capabilities' | translate}}
+            </p>
+          </div>
+
+          <table class="ui fixed celled table">
+              <tr *ngFor="let v of workerModel?.capabilities">
+                  <td>
+                      <div class="ui">{{v.value}}</div>
+                  </td>
+              </tr>
+          </table>
+        </div>
+
+        <div class="six wide column" *ngIf="workerModel.id">
+          <div class="field" *ngIf="workerModel.created_by?.username !== ''">
+            <h3>{{'worker_model_created_by' | translate}}</h3>
+            <div>
+              <i class="fa fa-user"></i> {{workerModel.created_by?.fullname}} ({{workerModel.created_by?.username}})
+              <span *ngIf="workerModel.created_by?.admin"><b>Admin</b></span>
+            </div>
+            <div *ngIf="workerModel.created_by?.email !== ''">
+              <i class="fa fa-envelope"></i> {{workerModel.created_by?.email}}
+            </div>
+          </div>
+          <div class="field" *ngIf="workerModel.user_last_modified !== ''">
+            <h3>{{'worker_model_last_modified' | translate}}</h3>
+              {{workerModel.user_last_modified}}
+          </div>
+        </div>
+
+      </div>
+    </form>
+  </div>
+</ng-template>
+<ng-template #loadWorkerModel>
+    <div class="ui text active loader">{{ 'worker_model_load_worker_model' | translate }}</div>
+</ng-template>

@@ -1,0 +1,6 @@
+<div class="workflowHook" (click)="openEditHookModal()" [class.pointing]="!readonly">
+    <i class="git square icon"></i>
+</div>
+<ng-container>
+    <app-workflow-node-hook-form [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="updateHook($event)" [loading]="loading" [hook]="hook" #editHook></app-workflow-node-hook-form>
+</ng-container>

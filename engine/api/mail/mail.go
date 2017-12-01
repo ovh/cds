@@ -9,6 +9,7 @@ import (
 	"net/smtp"
 	"text/template"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -109,21 +110,10 @@ func SendMailVerifyToken(userMail, username, token, callback string) error {
 	if err != nil {
 		return err
 	}
-	subject := "Welcome to CDS"
-	if !smtpEnable {
-		fmt.Println("##### NO SMTP DISPLAY MAIL IN CONSOLE ######")
-		fmt.Printf("Subject:%s\n", subject)
-		fmt.Printf("Text:%s\n", mailContent.Bytes())
-		fmt.Println("##### END MAIL ######")
-		return nil
-	}
-	return SendEmail(subject, &mailContent, userMail)
+	return SendEmail("Welcome to CDS", &mailContent, userMail)
 }
 
 func getCallbackURL(username, token, callback string) string {
-	if callback == "cdscli" {
-		return fmt.Sprintf("cds user verify %s %s", username, token)
-	}
 	return fmt.Sprintf(callback, username, token)
 }
 
@@ -152,7 +142,6 @@ func createTemplate(templ, callbackURL string) (bytes.Buffer, error) {
 
 //SendEmail is the core function to send an email
 func SendEmail(subject string, mailContent *bytes.Buffer, userMail string) error {
-
 	from := mail.Address{
 		Name:    "",
 		Address: smtpFrom,
@@ -175,41 +164,43 @@ func SendEmail(subject string, mailContent *bytes.Buffer, userMail string) error
 	}
 	message += "\r\n" + mailContent.String()
 
+	if !smtpEnable {
+		fmt.Println("##### NO SMTP DISPLAY MAIL IN CONSOLE ######")
+		fmt.Printf("Subject:%s\n", subject)
+		fmt.Printf("Text:%s\n", message)
+		fmt.Println("##### END MAIL ######")
+		return nil
+	}
+
 	c, err := smtpClient()
 	if err != nil {
-		log.Warning("Cannot get smtp client:%s\n", err.Error())
-		return err
+		return sdk.WrapError(err, "Cannot get smtp client")
 	}
 	defer c.Close()
 
 	// To && From
 	if err = c.Mail(from.Address); err != nil {
-		log.Warning("Error with c.Mail:%s\n", err.Error())
-		return err
+		return sdk.WrapError(err, "Error with c.Mail")
 	}
 
 	if err = c.Rcpt(to.Address); err != nil {
-		log.Warning("Error with c.Rcpt:%s\n", err.Error())
-		return err
+		return sdk.WrapError(err, "Error with c.Rcpt")
 	}
 
 	// Data
 	w, err := c.Data()
 	if err != nil {
-		log.Warning("Error with c.Data:%s\n", err.Error())
-		return err
+		return sdk.WrapError(err, "Error with c.Data")
 	}
 
 	_, err = w.Write([]byte(message))
 	if err != nil {
-		log.Warning("Error with c.Write:%s", err.Error())
-		return err
+		return sdk.WrapError(err, "Error with c.Write")
 	}
 
 	err = w.Close()
 	if err != nil {
-		log.Warning("Error with c.Close:%s", err.Error())
-		return err
+		return sdk.WrapError(err, "Error with c.Close")
 	}
 
 	c.Quit()

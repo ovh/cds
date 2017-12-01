@@ -1,33 +1,46 @@
-<div class="AppRepository" [hidden]="!project.repositories_manager || project.repositories_manager.length === 0">
-    <form class="ui form" (ngSubmit)="linkRepository()" [hidden]="application.repositories_manager">
+<div class="AppRepository" [hidden]="!project.vcs_servers || project.vcs_servers.length === 0">
+
+    <form class="ui form" (ngSubmit)="linkRepository()" [hidden]="application.vcs_server">
         <div class="fields">
             <div class="three wide field">
                 <label>{{'repoman_name' | translate}}</label>
-                <sm-select class="fluid search" [disabled]="loadingBtn" name="repomanname" [(model)]="selectedRepoManager" (onChange)="updateListRepo()">
-                    <option *ngFor="let r of project?.repositories_manager" value="{{r.name}}">{{r.name}}</option>
+                <sm-select class="fluid search"
+                    name="repomanname"
+                    [disabled]="loadingRepos"
+                    [(model)]="selectedRepoManager"
+                    [options]="{'fullTextSearch': true}"
+                    (onChange)="updateListRepo(false)">
+                    <option *ngFor="let r of project?.vcs_servers" value="{{r.name}}">{{r.name}}</option>
                 </sm-select>
             </div>
             <div class="five wide field">
                 <label>{{'repo_name' | translate}}</label>
                 <sm-select
-                        placeholder="{{'navbar_applications_placeholder' | translate}}"
-                        [(model)]="selectedRepo"
-                        class="search item"
-                        [disabled]="loadingBtn">
-                    <option *ngFor="let r of reposTmp"  value="{{r.fullname}}">{{r.fullname}}</option>
+                    class="search item"
+                    placeholder="{{'navbar_applications_placeholder' | translate}}"
+                    [(model)]="selectedRepo"
+                    [options]="{'fullTextSearch': true}"
+                    (onSearchChange)="filterRepositories($event)"
+                    [disabled]="loadingRepos">
+                    <option *ngFor="let r of reposFiltered"  value="{{r.fullname}}">{{r.fullname}}</option>
                 </sm-select>
             </div>
-            <div class="eight wide right aligned field">
+            <div class="four wide field">
+                <button name="resync" class="ui blue button" [class.loading]="loadingRepos" type="button"
+                    (click)="updateListRepo(true)"
+                >{{ 'btn_resync_repo' | translate }}</button>
+            </div>
+            <div class="four wide right aligned field">
                 <button name="addrepobtn" class="ui green button" [class.loading]="loadingBtn" type="submit">{{ 'btn_link' | translate }}</button>
                 <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="linkRepository(true)" #linkWarning></app-warning-modal>
             </div>
         </div>
     </form>
-    <div [hidden]="!application.repositories_manager">
-        <form class="ui form" [hidden]="!application.repositories_manager">
+    <div [hidden]="!application.vcs_server">
+        <form class="ui form" [hidden]="!application.vcs_server">
             <div class="fields">
                 <div class="eight wide field">
-                    <span>{{application.repositories_manager?.name}}</span>
+                    <span>{{application.vcs_server}}</span>
                     <span>&#10145;</span>
                     <span>{{application.repository_fullname}}</span>
                 </div>
@@ -39,7 +52,7 @@
         </form>
     </div>
 </div>
-<div [hidden]="project.repositories_manager && project.repositories_manager.length > 0">
+<div [hidden]="project.vcs_servers && project.vcs_servers.length > 0">
     <p>
         {{ 'application_repoman_cant' | translate }}<a [routerLink]="['/project', project.key]" [queryParams]="{tab: 'advanced'}">{{'application_repoman_cant_link' | translate}}</a>
     </p>

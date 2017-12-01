@@ -18,7 +18,12 @@
                 <div *ngIf="edit;then wPermission;else rPermission"></div>
                 <ng-template #wPermission>
                     <div class="ui form">
-                        <sm-select class="search" [disabled]="gp.updating" [(model)]="gp.permission" (modelChange)="castPermission(gp)" (onChange)="gp.hasChanged = true">
+                        <sm-select class="search"
+                            [options]="{'fullTextSearch': true}"
+                            [disabled]="gp.updating"
+                            [(model)]="gp.permission"
+                            (modelChange)="castPermission(gp)"
+                            (onChange)="gp.hasChanged = true">
                             <option *ngFor="let p of permissionsList" [value]="p.value">{{p.name | translate}}</option>
                         </sm-select>
                     </div>

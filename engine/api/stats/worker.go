@@ -1,41 +1,43 @@
 package stats
 
 import (
+	"context"
 	"database/sql"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/database"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // StartRoutine starts a routine collecting regular build statistics
-func StartRoutine() {
-
+func StartRoutine(c context.Context, DBFunc func() *gorp.DbMap) {
 	go func() {
-		defer sdk.Exit("StatsRoutine exited")
-
+		tick := time.NewTicker(10 * time.Second).C
 		for {
-
-			time.Sleep(2 * time.Second)
-
-			db := database.DBMap(database.DB())
-			if db != nil {
-				err := createTodaysRow(db)
-				if err != nil {
-					log.Error("StatsRoutine: Cannot create today's row: %s\n", err)
-					continue
+			select {
+			case <-c.Done():
+				if c.Err() != nil {
+					log.Error("Exiting Stat routine: %v", c.Err())
 				}
-
-				err = updateWorkerStats(db)
-				if err != nil {
-					log.Warning("StatsRoutine> Cannot update build stats: %s\n", err)
-				}
-				err = updatePipelineStats(db)
-				if err != nil {
-					log.Warning("StatsRoutine> Cannot update build stats: %s\n", err)
+				return
+			case <-tick:
+				db := DBFunc()
+				if db != nil {
+					err := createTodaysRow(db)
+					if err != nil {
+						log.Error("StatsRoutine: Cannot create today's row: %s\n", err)
+						continue
+					}
+					err = updateWorkerStats(db)
+					if err != nil {
+						log.Warning("StatsRoutine> Cannot update build stats: %s\n", err)
+					}
+					err = updatePipelineStats(db)
+					if err != nil {
+						log.Warning("StatsRoutine> Cannot update build stats: %s\n", err)
+					}
 				}
 			}
 		}

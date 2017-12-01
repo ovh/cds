@@ -2,14 +2,37 @@
 <ng-template #showPipeline>
     <div id="PipelineShow">
         <div class="CDSbreadcrumb">
-            <app-breadcrumb [project]="project" [pipeline]="pipeline" [application]="application" [version]="version" [buildNumber]="buildNumber" [envName]="envName" [branch]="branch"></app-breadcrumb>
+            <app-breadcrumb [project]="project"
+                            [pipeline]="pipeline"
+                            [application]="application"
+                            [workflow]="workflowName"
+                            [version]="version"
+                            [buildNumber]="buildNumber"
+                            [envName]="envName"
+                            [remote]="remote"
+                            [branch]="branch">
+            </app-breadcrumb>
         </div>
         <div class="CDSmenu">
             <sm-menu title="" class="pointing secondary">
-                <a sm-item [class.active]="selectedTab === 'pipeline'" (click)="showTab('pipeline')"><i class="sitemap icon"></i>{{ 'common_pipeline' | translate }}</a>
-                <a sm-item [class.active]="selectedTab === 'parameters'" (click)="showTab('parameters')"><i class="font icon"></i>{{ 'common_parameters' | translate }}</a>
-                <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')"><i class="users icon"></i>{{ 'common_permissions' | translate }}</a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="pipeline.permission === 7"><i class="graduation icon"></i>{{ 'common_advanced' | translate }}</a>
+                <a sm-item [class.active]="selectedTab === 'pipeline'" (click)="showTab('pipeline')">
+                    <i class="sitemap icon"></i>{{ 'common_pipeline' | translate }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'parameters'" (click)="showTab('parameters')">
+                    <i class="font icon"></i>{{ 'common_parameters' | translate }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')">
+                    <i class="users icon"></i>{{ 'common_permissions' | translate }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'usage'" [class.disabled]="usageCount === 0" (click)="usageCount > 0 && showTab('usage')">
+                    <i class="plug icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'audits'" (click)="showTab('audits')">
+                    <i class="history icon"></i>{{'common_audit' | translate }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="pipeline.permission === 7">
+                    <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
+                </a>
             </sm-menu>
         </div>
 
@@ -17,7 +40,7 @@
             <div class="paddingContent">
                 <div class="viewContent" [ngSwitch]="selectedTab">
                     <div *ngSwitchCase="'pipeline'">
-                        <app-pipeline-workflow [project]="project" [pipeline]="pipeline"></app-pipeline-workflow>
+                        <app-pipeline-workflow [project]="project" [currentPipeline]="pipeline" [queryParams]="queryParams"></app-pipeline-workflow>
                     </div>
                     <div *ngSwitchCase="'parameters'">
                         <h3>{{ 'pipeline_parameters_list_title' | translate }}</h3>
@@ -38,8 +61,14 @@
                         </ng-container>
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                     </div>
+                    <div *ngSwitchCase="'usage'">
+                        <app-usage [project]="project" [applications]="applications" [workflows]="workflows" [environments]="environments" [currentUser]="currentUser"></app-usage>
+                    </div>
                     <div *ngSwitchCase="'advanced'">
                         <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>
+                    </div>
+                    <div *ngSwitchCase="'audits'">
+                        <app-pipeline-audit [project]="project" [pipeline]="pipeline"></app-pipeline-audit>
                     </div>
                 </div>
             </div>
@@ -49,4 +78,3 @@
 <ng-template #loadPipeline>
     <div class="ui text active loader">Loading pipeline...</div>
 </ng-template>
-

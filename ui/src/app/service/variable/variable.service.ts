@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
-import {Http} from '@angular/http';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
+import {HttpClient, HttpParams} from '@angular/common/http';
+import {Variable} from '../../model/variable.model';
 
 /**
  * Service to access Variable commons.
@@ -11,7 +12,11 @@ export class VariableService {
 
     private variablesType: string[];
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
+    }
+
+    get(key: string): Observable<Variable[]> {
+      return this._http.get<Variable[]>(`/project/${key}/variable`);
     }
 
     /**
@@ -27,9 +32,23 @@ export class VariableService {
      * @returns {Observable<string[]>}
      */
     getTypesFromAPI(): Observable<string[]> {
-        return this._http.get('/variable/type').map(res => {
-            this.variablesType = res.json();
-            return this.variablesType;
+        return this._http.get<string[]>('/variable/type').map(vts => {
+            this.variablesType = <string[]>vts;
+            return vts;
         });
+    }
+
+    /**
+     * Get all available variable
+     * @param key
+     * @returns {Observable<Array<string>>}
+     */
+    getContextVariable(key: string, pipelineId?: number): Observable<Array<string>> {
+        let params = new HttpParams();
+        if (pipelineId != null) {
+            params = params.append('pipId', pipelineId.toString());
+        }
+
+        return this._http.get<Array<string>>('/suggest/variable/' + key, {params: params});
     }
 }

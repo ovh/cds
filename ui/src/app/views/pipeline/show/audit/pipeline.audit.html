@@ -1,0 +1,71 @@
+<div class="variable" *ngIf="audits">
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+        <thead>
+        <tr>
+            <th class="four wide">{{ 'audit_action' | translate}}</th>
+            <th class="four wide">{{ 'audit_username' | translate }}</th>
+            <th class="three wide">{{ 'audit_time_author' | translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let a of getDataForCurrentPage(); let idx = index" (click)="compareIndex(idx)" class="pointing">
+            <td>
+                {{a.action}}
+            </td>
+            <td>
+                {{a.username}}
+            </td>
+            <td>
+                {{a.versionned | date:'short' }}
+            </td>
+        </tr>
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="3">
+                <div class="ui right floated pagination menu">
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)"
+                       [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'variable_no' | translate }}
+    </div>
+</div>
+<div *ngIf="currentCompare" class="area">
+    <table class="ui fixed celled table">
+        <thead>
+        <tr>
+            <th class="four wide column">{{ 'audit_context' | translate }}</th>
+            <th class="six wide column">{{ 'audit_before' | translate }}</th>
+            <th class="six wide column">{{ 'audit_after'|translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let c of currentCompare">
+            <td valign="top">{{c.title}}</td>
+            <td valign="top">
+                <span *ngIf="c.type === 'string'">{{c.before}}</span>
+                <span *ngIf="c.type === 'json' && c.before && c.before !== 'null'">
+                            <codemirror [(ngModel)]="c.before" [config]="codeMirrorConfig"></codemirror>
+                        </span>
+            </td>
+            <td valign="top">
+                <span *ngIf="c.type === 'string'">{{c.after}}</span>
+                <span *ngIf="c.type === 'json' && c.after && c.after !== 'null'">
+                            <codemirror [(ngModel)]="c.after" [config]="codeMirrorConfig"></codemirror>
+                        </span>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

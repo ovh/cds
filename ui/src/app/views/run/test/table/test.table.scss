@@ -15,3 +15,16 @@ $squareSize: 32px;
     overflow-y: auto;
   }
 }
+
+.msgEmpty {
+  text-align: center;
+  margin-top: 75px;
+}
+
+.big {
+  font-size: 2.5rem;
+}
+
+.ui.message:first-child {
+  margin-top: 75px;
+}

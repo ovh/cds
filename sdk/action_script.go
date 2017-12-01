@@ -1,12 +1,11 @@
 package sdk
 
 import (
-	"net/http"
-	"time"
-
-	"io/ioutil"
-
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"sort"
+	"time"
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/hashicorp/hcl"
@@ -20,12 +19,15 @@ type ActionScript struct {
 	Parameters   map[string]Parameter   `json:"parameters,omitempty"`
 	Steps        []struct {
 		Enabled          *bool                        `json:"enabled"`
-		Final            bool                         `json:"final"`
+		AlwaysExecuted   bool                         `json:"always_executed"`
 		ArtifactUpload   map[string]string            `json:"artifactUpload,omitempty"`
 		ArtifactDownload map[string]string            `json:"artifactDownload,omitempty"`
+		GitClone         map[string]string            `json:"gitClone,omitempty"`
+		GitTag           map[string]string            `json:"gitTag,omitempty"`
 		Script           string                       `json:"script,omitempty"`
 		JUnitReport      string                       `json:"jUnitReport,omitempty"`
 		Plugin           map[string]map[string]string `json:"plugin,omitempty"`
+		Release          map[string]string            `json:"release,omitempty"`
 	} `json:"steps"`
 }
 
@@ -57,6 +59,36 @@ func NewStepJUnitReport(s string) Action {
 				Type:  StringParameter,
 			},
 		},
+	}
+	return newAction
+}
+
+// NewStepGitClone returns an action (basically used as a step of a job) of GitClone type
+func NewStepGitClone(v map[string]string) Action {
+	newAction := Action{
+		Name:       GitCloneAction,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
+	}
+	return newAction
+}
+
+// NewStepGitTag returns an action (basically used as a step of a job) of GitTag type
+func NewStepGitTag(v map[string]string) Action {
+	newAction := Action{
+		Name:       GitTagAction,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
+	}
+	return newAction
+}
+
+// NewStepRelease returns an action (basically used as a step of a job) of Release type
+func NewStepRelease(v map[string]string) Action {
+	newAction := Action{
+		Name:       ReleaseAction,
+		Type:       BuiltinAction,
+		Parameters: ParametersFromMap(v),
 	}
 	return newAction
 }
@@ -177,6 +209,21 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 			goto next
 		}
 
+		//Action builtin = GitClone
+		if v.GitClone != nil {
+			newAction = NewStepGitClone(v.GitClone)
+			goto next
+		}
+
+		// Action builtin = GitTag
+		if v.GitTag != nil {
+			newAction = NewStepGitTag(v.GitTag)
+		}
+
+		if v.Release != nil {
+			newAction = NewStepRelease(v.Release)
+		}
+
 		//Action builtin = Plugin
 		if v.Plugin != nil {
 			a, err := NewStepPlugin(v.Plugin)
@@ -195,11 +242,55 @@ func NewActionFromScript(btes []byte) (*Action, error) {
 		} else {
 			newAction.Enabled = true
 		}
-		newAction.Final = v.Final
+		newAction.AlwaysExecuted = v.AlwaysExecuted
 		a.Actions = append(a.Actions, newAction)
 	}
 
 	return &a, nil
+}
+
+// ActionInfoMarkdown returns string formatted with markdown
+func ActionInfoMarkdown(a *Action, filename string) string {
+	var sp, rq string
+	ps := a.Parameters
+	sort.Slice(ps, func(i, j int) bool { return ps[i].Name < ps[j].Name })
+	for _, p := range ps {
+		sp += fmt.Sprintf("* **%s**: %s\n", p.Name, p.Description)
+	}
+	if sp == "" {
+		sp = "No Parameter"
+	}
+
+	rs := a.Requirements
+	sort.Slice(rs, func(i, j int) bool { return rs[i].Name < rs[j].Name })
+	for _, r := range rs {
+		rq += fmt.Sprintf("* **%s**: type: %s Value: %s\n", r.Name, r.Type, r.Value)
+	}
+
+	if rq == "" {
+		rq = "No Requirement"
+	}
+
+	info := fmt.Sprintf(`
+%s
+
+## Parameters
+
+%s
+
+## Requirements
+
+%s
+
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/%s)
+
+`,
+		a.Description,
+		sp,
+		rq,
+		filename)
+
+	return info
 }
 
 func loadRemoteScript(url string) (*Action, error) {

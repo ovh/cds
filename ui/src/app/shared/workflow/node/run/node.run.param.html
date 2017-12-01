@@ -1,0 +1,34 @@
+<ng-template let-context let-modal="modal" #runWithParamModal>
+    <div class="header">
+        {{'workflow_run_with_parameters' | translate}}
+        <div class="extra" *ngIf="num">
+            <button type="button" class="ui small green button" [class.loading]="loading" [disabled]="loading" (click)="resync()">{{ 'workflow_resync' | translate }}</button>
+        </div>
+    </div>
+    <div class="content">
+        <div class="ui form" *ngIf="workflow">
+            <ng-container *ngIf="_nodeToRun">
+                <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
+                <app-parameter-list [project]="project" [parameters]="_nodeToRun.context.default_pipeline_parameters"
+                                    [paramsRef]="_nodeToRun.pipeline.parameters" mode="launcher"
+                                    [suggest]="[]"></app-parameter-list>
+            </ng-container>
+            <ng-container>
+                <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
+                <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig" #textareaCodeMirror></codemirror>
+                <div class="extra">
+                    <ng-container *ngIf="invalidJSON">
+                        {{ 'workflow_context_invalid' | translate}}
+                    </ng-container>
+                    <ng-container *ngIf="!invalidJSON">
+                        <button class="ui small blue button" (click)="reindent()">Reindent</button>
+                    </ng-container>
+                </div>
+            </ng-container>
+        </div>
+    </div>
+    <div class="actions">
+        <button class="ui red button" [disabled]="loading" (click)="modal.approve(false)">Cancel</button>
+        <button class="ui green button" [class.loading]="loading" [disabled]="loading" (click)="run()" autofocus>OK</button>
+    </div>
+</ng-template>

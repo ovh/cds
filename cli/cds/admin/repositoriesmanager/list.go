@@ -12,7 +12,6 @@ func listReposManagerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "cds reposmanager list",
-		Long:  ``,
 		Run:   listReposManager,
 	}
 
@@ -33,6 +32,6 @@ func listReposManager(cmd *cobra.Command, args []string) {
 	}
 
 	for _, rm := range rms {
-		fmt.Printf("%s %s %s\n", rm.Type, rm.Name, rm.URL)
+		fmt.Println(rm)
 	}
 }

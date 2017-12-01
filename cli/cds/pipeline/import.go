@@ -21,7 +21,7 @@ func importCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "import",
 		Short: "cds pipeline import <projectKey> [file] [--url <url> --format json|yaml] [--force]",
-		Long:  "See documentation on https://github.com/ovh/cds/tree/master/doc/tutorials",
+		Long:  "See documentation on https://ovh.github.io/cds/building-pipelines/building-pipelines.configuration-file/",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 1 {
 				sdk.Exit("Wrong usage: see %s\n", cmd.Short)
@@ -55,7 +55,7 @@ func importCmd() *cobra.Command {
 			}
 
 			var url string
-			url = fmt.Sprintf("/project/%s/pipeline/import?format=%s", projectKey, importFormat)
+			url = fmt.Sprintf("/project/%s/import/pipeline?format=%s", projectKey, importFormat)
 
 			if importForce {
 				url += "&forceUpdate=true"
@@ -65,7 +65,7 @@ func importCmd() *cobra.Command {
 			if sdk.ErrorIs(err, sdk.ErrPipelineAlreadyExists) {
 				fmt.Print("Pipline already exists. ")
 				if cli.AskForConfirmation("Do you want to override ?") {
-					url = fmt.Sprintf("/project/%s/pipeline/import?format=%s&forceUpdate=true", projectKey, importFormat)
+					url = fmt.Sprintf("/project/%s/import/pipeline?format=%s&forceUpdate=true", projectKey, importFormat)
 					data, code, err = sdk.Request("POST", url, btes)
 				} else {
 					sdk.Exit("Aborted\n")

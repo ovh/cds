@@ -1,5 +1,5 @@
 <div class="pipelineAdmin">
-    <app-zone header="aAA">
+    <app-zone header="{{ 'pipeline_administration' | translate }}">
         <app-zone-content>
             <form class="ui form" (ngSubmit)="updatePipeline()" #projectUpdateFrom="ngForm">
                 <div class="fields">
@@ -11,7 +11,11 @@
                 <div class="fields">
                     <div class="eight wide field">
                         <label>{{ 'pipeline_type' | translate }}</label>
-                        <sm-select class="search fluid" [disabled]="loading" [(model)]="editablePipeline.type" *ngIf="pipelineTypes.length > 0">
+                        <sm-select class="search fluid"
+                            *ngIf="pipelineTypes.length > 0"
+                            [options]="{'fullTextSearch': true}"
+                            [disabled]="loading"
+                            [(model)]="editablePipeline.type">
                             <option *ngFor="let t of pipelineTypes" value="{{t}}">{{t}}</option>
                         </sm-select>
                     </div>

@@ -1,4 +1,4 @@
-package project
+package project_test
 
 import (
 	"testing"
@@ -9,10 +9,37 @@ import (
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/test"
+	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
 )
+
+func TestInsertProject(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	project.Delete(db, cache, "key")
+
+	u, _ := assets.InsertAdminUser(db)
+
+	proj := sdk.Project{
+		Name: "test proj",
+		Key:  "key",
+	}
+	assert.NoError(t, project.Insert(db, cache, &proj, u))
+}
+
+func TestInsertProject_withWrongKey(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+
+	proj := sdk.Project{
+		Name: "test proj",
+		Key:  "error key",
+	}
+
+	assert.Error(t, project.Insert(db, cache, &proj, u))
+}
 
 func TestDelete(t *testing.T) {
 	//covered by TestLoadAll
@@ -27,10 +54,10 @@ func TestExist(t *testing.T) {
 }
 
 func TestLoadAll(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
 
-	Delete(db, "test_TestLoadAll")
-	Delete(db, "test_TestLoadAll1")
+	project.Delete(db, cache, "test_TestLoadAll")
+	project.Delete(db, cache, "test_TestLoadAll1")
 
 	proj := sdk.Project{
 		Key:  "test_TestLoadAll",
@@ -57,8 +84,8 @@ func TestLoadAll(t *testing.T) {
 		t.Fatalf("Cannot insert group : %s", err)
 	}
 
-	test.NoError(t, Insert(db, &proj))
-	test.NoError(t, Insert(db, &proj1))
+	test.NoError(t, project.Insert(db, cache, &proj, nil))
+	test.NoError(t, project.Insert(db, cache, &proj1, nil))
 	test.NoError(t, group.InsertGroupInProject(db, proj.ID, g.ID, permission.PermissionReadWriteExecute))
 	test.NoError(t, group.LoadGroupByProject(db, &proj))
 
@@ -66,9 +93,9 @@ func TestLoadAll(t *testing.T) {
 	user.DeleteUserWithDependenciesByName(db, "test_TestLoadAll_user")
 
 	u1, _ := InsertAdminUser(t, db, "test_TestLoadAll_admin")
-	u2, _ := InsertLambaUser(t, db, "test_TestLoadAll_user", &proj.ProjectGroups[0].Group)
+	u2, _ := InsertLambdaUser(t, db, "test_TestLoadAll_user", &proj.ProjectGroups[0].Group)
 
-	actualGroups1, err := LoadAll(db, u1)
+	actualGroups1, err := project.LoadAll(db, cache, u1)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups1) > 1, "This should return more than one project")
 
@@ -79,16 +106,16 @@ func TestLoadAll(t *testing.T) {
 		}
 	}
 
-	actualGroups2, err := LoadAll(db, u2)
+	actualGroups2, err := project.LoadAll(db, cache, u2)
 	test.NoError(t, err)
 	assert.True(t, len(actualGroups2) == 1, "This should return one project")
 
-	ok, err := Exist(db, "test_TestLoadAll")
+	ok, err := project.Exist(db, "test_TestLoadAll")
 	test.NoError(t, err)
 	assert.True(t, ok)
 
-	Delete(db, "test_TestLoadAll")
-	Delete(db, "test_TestLoadAll1")
+	project.Delete(db, cache, "test_TestLoadAll")
+	project.Delete(db, cache, "test_TestLoadAll1")
 
 }
 
@@ -110,8 +137,8 @@ func InsertAdminUser(t *testing.T, db *gorp.DbMap, s string) (*sdk.User, string)
 	return u, password
 }
 
-// InsertLambaUser have to be used only for tests
-func InsertLambaUser(t *testing.T, db gorp.SqlExecutor, s string, groups ...*sdk.Group) (*sdk.User, string) {
+// InsertLambdaUser have to be used only for tests
+func InsertLambdaUser(t *testing.T, db gorp.SqlExecutor, s string, groups ...*sdk.Group) (*sdk.User, string) {
 	password, hash, _ := user.GeneratePassword()
 	u := &sdk.User{
 		Admin:    false,

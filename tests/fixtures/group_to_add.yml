@@ -1,0 +1,10 @@
+---
+- group:
+    name: ITCLIAPP_GRP_EDIT_TEST
+  permission: 7
+- group:
+    name: ITCLIAPP_GRP_EDIT_TEST1
+  permission: 7
+- group:
+    name: ITCLIAPP_GRP_EDIT_TEST2
+  permission: 5

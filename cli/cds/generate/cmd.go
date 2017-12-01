@@ -28,7 +28,7 @@ func workercmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
 		Short: "cds generate token -g <group> -e <expiration>",
-		Long:  "generate a token for worker linked to given group permisions",
+		Long:  "generate a token for worker linked to given group permissions",
 		Run:   worker,
 	}
 
@@ -55,5 +55,5 @@ func worker(cmd *cobra.Command, args []string) {
 		sdk.Exit("Error: cannot generate token (%s)\n", err)
 	}
 
-	fmt.Printf("%s\n", token)
+	fmt.Printf("%s\n", token.Token)
 }

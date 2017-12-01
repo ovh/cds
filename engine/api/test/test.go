@@ -1,109 +1,146 @@
 package test
 
 import (
-	"flag"
-	"math/rand"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
+	"os/user"
+	"path"
+	"reflect"
+	"strconv"
 	"testing"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
+	"github.com/ovh/cds/engine/api/event"
+	"github.com/ovh/cds/engine/api/pipeline"
+	"github.com/ovh/cds/engine/api/secret"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 //DBDriver is exported for testing purpose
 var (
-	DBDriver   string
-	dbUser     string
-	dbPassword string
-	dbName     string
-	dbHost     string
-	dbPort     string
-	dbSSLMode  string
+	DBDriver      string
+	dbUser        string
+	dbPassword    string
+	dbName        string
+	dbHost        string
+	dbPort        int64
+	dbSSLMode     string
+	RedisHost     string
+	RedisPassword string
 )
 
 func init() {
-	if flag.Lookup("dbDriver") == nil {
-		flag.String("dbDriver", "", "driver")
-		flag.String("dbUser", "cds", "user")
-		flag.String("dbPassword", "cds", "password")
-		flag.String("dbName", "cds", "database name")
-		flag.String("dbHost", "localhost", "host")
-		flag.String("dbPort", "15432", "port")
-		flag.String("sslMode", "disable", "ssl mode")
-
-		log.Initialize(&log.Conf{Level: "debug"})
-		flag.Parse()
-	}
+	log.Initialize(&log.Conf{Level: "debug"})
 }
 
-type bootstrap func(func() *gorp.DbMap) error
+type Bootstrapf func(sdk.DefaultValues, func() *gorp.DbMap) error
+
+var DBConnectionFactory *database.DBConnectionFactory
 
 // SetupPG setup PG DB for test
-func SetupPG(t *testing.T, bootstrapFunc ...bootstrap) *gorp.DbMap {
-	DBDriver = flag.Lookup("dbDriver").Value.String()
-	dbUser = flag.Lookup("dbUser").Value.String()
-	dbPassword = flag.Lookup("dbPassword").Value.String()
-	dbName = flag.Lookup("dbName").Value.String()
-	dbHost = flag.Lookup("dbHost").Value.String()
-	dbPort = flag.Lookup("dbPort").Value.String()
-	dbSSLMode = flag.Lookup("sslMode").Value.String()
-
+func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Store) {
 	log.SetLogger(t)
+	cfg := LoadTestingConf(t)
+	DBDriver = cfg["dbDriver"]
+	dbUser = cfg["dbUser"]
+	dbPassword = cfg["dbPassword"]
+	dbName = cfg["dbName"]
+	dbHost = cfg["dbHost"]
+	var err error
+	dbPort, err = strconv.ParseInt(cfg["dbPort"], 10, 64)
+	if err != nil {
+		t.Errorf("Error when unmarshal config %s", err)
+	}
+	dbSSLMode = cfg["sslMode"]
+	RedisHost = cfg["redisHost"]
+	RedisPassword = cfg["redisPassword"]
+
+	secret.Init("3dojuwevn94y7orh5e3t4ejtmbtstest")
 
 	if DBDriver == "" {
-		t.Skip("This should be run with a database")
-		return nil
+		t.Fatalf("This should be run with a database")
+		return nil, nil
 	}
-	if database.DB() == nil {
-		db, err := database.Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, 2000, 100)
+	if DBConnectionFactory == nil {
+		var err error
+		DBConnectionFactory, err = database.Init(dbUser, dbPassword, dbName, dbHost, int(dbPort), dbSSLMode, 10, 2000, 100)
 		if err != nil {
-			t.Fatalf("Cannot open database: %s\n", err)
-			return nil
+			t.Fatalf("Cannot open database: %s", err)
+			return nil, nil
 		}
-
-		if err = db.Ping(); err != nil {
-			t.Fatalf("Cannot ping database: %s\n", err)
-			return nil
-		}
-		database.Set(db)
-
-		db.SetMaxOpenConns(100)
-		db.SetMaxIdleConns(20)
-
-		// Gracefully shutdown sql connections
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		signal.Notify(c, syscall.SIGTERM)
-		signal.Notify(c, syscall.SIGKILL)
-		go func() {
-			<-c
-			log.Warning("Cleanup SQL connections\n")
-			db.Close()
-			os.Exit(0)
-		}()
 	}
 
 	for _, f := range bootstrapFunc {
-		if err := f(database.GetDBMap); err != nil {
-			return nil
+		if err := f(sdk.DefaultValues{SharedInfraToken: sdk.RandomString(32)}, DBConnectionFactory.GetDBMap); err != nil {
+			log.Error("Error: %v", err)
+			return nil, nil
 		}
 	}
 
-	return database.DBMap(database.DB())
+	store, err := cache.NewRedisStore(RedisHost, RedisPassword, 60)
+	if err != nil {
+		t.Fatalf("Unable to connect to redis: %v", err)
+	}
+	event.Cache = store
+	pipeline.Store = store
+
+	return DBConnectionFactory.GetDBMap(), store
 }
 
-// RandomString have to be used only for tests
-func RandomString(t *testing.T, strlen int) string {
-	rand.Seed(time.Now().UTC().UnixNano())
-	const chars = "abcdefghijklmnopqrstuvwxyz0123456789"
-	result := make([]byte, strlen)
-	for i := 0; i < strlen; i++ {
-		result[i] = chars[rand.Intn(len(chars))]
+// LoadTestingConf loads test configuraiton tests.cfg.json
+func LoadTestingConf(t *testing.T) map[string]string {
+	var f string
+	u, _ := user.Current()
+	if u != nil {
+		f = path.Join(u.HomeDir, ".cds", "tests.cfg.json")
 	}
-	return string(result)
+
+	if _, err := os.Stat(f); err == nil {
+		t.Logf("Tests configuration read from %s", f)
+		btes, err := ioutil.ReadFile(f)
+		if err != nil {
+			t.Fatalf("Error reading %s: %v", f, err)
+		}
+		if len(btes) != 0 {
+			cfg := map[string]string{}
+			if err := json.Unmarshal(btes, &cfg); err != nil {
+				t.Fatalf("Error reading %s: %v", f, err)
+			}
+			return cfg
+		}
+	} else {
+		t.Fatalf("Error reading %s: %v", f, err)
+	}
+	return nil
+}
+
+//GetTestName returns the name the the test
+func GetTestName(t *testing.T) string {
+	v := reflect.ValueOf(*t)
+	name := v.FieldByName("name")
+	return name.String()
+}
+
+//FakeHTTPClient implements sdk.HTTPClient and returns always the same response
+type FakeHTTPClient struct {
+	T        *testing.T
+	Response *http.Response
+	Error    error
+}
+
+//Do implements sdk.HTTPClient and returns always the same response
+func (f *FakeHTTPClient) Do(r *http.Request) (*http.Response, error) {
+	b, err := ioutil.ReadAll(r.Body)
+	if err == nil {
+		r.Body.Close()
+	}
+
+	f.T.Logf("FakeHTTPClient> Do> %s %s: Payload %s", r.Method, r.URL.String(), string(b))
+	return f.Response, f.Error
 }

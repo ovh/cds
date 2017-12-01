@@ -24,14 +24,18 @@ of the Linux kernel source tree.
 
 It can be accessed online too:
 
-https://www.kernel.org/doc/Documentation/SubmittingPatches
+https://www.kernel.org/doc/html/latest/process/submitting-patches.html
 
 You can submit your patches via GitHub
 
+### Pull Request Reviews: 
+
+Since it has been decided to squash all the commits of a pull request, we ask you to not amend your commits during the code review process. It ensures traceability of code review comments.
+
 ## Licensing for new files:
 
-Tat is licensed under a (modified) BSD license. Anything contributed to
-Tat must be released under this license.
+CDS is licensed under a (modified) BSD license. Anything contributed to
+CDS must be released under this license.
 
 When introducing a new file into the project, please make sure it has a
 copyright header making clear under which license it''s being released.

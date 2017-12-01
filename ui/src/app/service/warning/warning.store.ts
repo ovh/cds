@@ -1,7 +1,8 @@
 import {Injectable} from '@angular/core';
-import {BehaviorSubject, Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 import {
-    WarningsUI, WarningAPI, WarningUI, WarningPipeline, WarningApplication,
+    WarningAPI, WarningUI, WarningPipeline, WarningApplication,
     WarningEnvironment
 } from '../../model/warning.model';
 
@@ -10,59 +11,57 @@ import {
 export class WarningStore {
 
     // List of all project. Use by Navbar
-    private _warningCache: BehaviorSubject<WarningsUI> = new BehaviorSubject(null);
+    private _warningCache: BehaviorSubject<Map<string, WarningUI>> = new BehaviorSubject(new Map<string, WarningUI>());
 
     /**
      * Get a WarningsUI Observable
      * @returns {Observable<WarningsUI>}
      */
-    getWarnings(): Observable<WarningsUI> {
-        return new Observable<WarningsUI>(fn => this._warningCache.subscribe(fn));
+    getWarnings(): Observable<Map<string, WarningUI>> {
+        return new Observable<Map<string, WarningUI>>(fn => this._warningCache.subscribe(fn));
     }
 
     /**
      * Update warning Store.
      */
     updateWarnings(warnings: WarningAPI[]): void {
-        let updatedWarnings: WarningsUI = new WarningsUI();
+        let updatedWarnings: Map<string, WarningUI> = new Map<string, WarningUI>();
         warnings.forEach(function (w) {
             if (w.project && w.project.key) {
 
-                // if not in list, create new warning on the current project
-                if (!updatedWarnings[w.project.key]) {
-                    updatedWarnings[w.project.key] = new WarningUI();
+                if (!updatedWarnings.get(w.project.key)) {
+                    updatedWarnings.set(w.project.key, new WarningUI());
                 }
-
-                let warningUI = updatedWarnings[w.project.key];
+                let warningUI = updatedWarnings.get(w.project.key);
 
                 // If warning on pipeline
                 if (w.pipeline && w.pipeline.name) {
-                    if (!warningUI.pipelines[w.pipeline.name]) {
-                        warningUI.pipelines[w.pipeline.name] = new WarningPipeline();
+                    if (!warningUI.pipelines.get(w.pipeline.name)) {
+                        warningUI.pipelines.set(w.pipeline.name, new WarningPipeline());
                     }
                 }
 
                 // If warning on application
                 if (w.application && w.application.name) {
-                    if (!warningUI.applications[w.application.name]) {
-                        warningUI.applications[w.application.name] = new WarningApplication();
+                    if (!warningUI.applications.get(w.application.name)) {
+                        warningUI.applications.set(w.application.name, new WarningApplication());
                     }
                 }
 
                 // If warning on an action
                 if (w.action && w.action.name) {
-                    warningUI.pipelines[w.pipeline.name].jobs.push(w);
+                    warningUI.pipelines.get(w.pipeline.name).jobs.push(w);
 
                     // If action link to an application
                     if (w.application && w.application.name) {
-                        warningUI.applications[w.application.name].actions.push(w);
+                        warningUI.applications.get(w.application.name).actions.push(w);
                     }
                 }
 
                 // If Warning on environment
                 if (w.environment && w.environment.name) {
-                    if (!warningUI.environments[w.environment.name]) {
-                        warningUI.environments[w.environment.name] = new WarningEnvironment();
+                    if (!warningUI.environments.get(w.environment.name)) {
+                        warningUI.environments.set(w.environment.name, new WarningEnvironment());
                     }
                 }
 

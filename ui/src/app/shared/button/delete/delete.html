@@ -1,7 +1,11 @@
-<button class="ui red button" (click)="showConfirmation = true" *ngIf="!showConfirmation && buttonType === 'normal'"><i class="trash icon"></i>{{ 'btn_delete' | translate }}</button>
-<button class="ui red icon button" (click)="showConfirmation = true" *ngIf="!showConfirmation && buttonType === 'icon'"><i class="trash icon"></i></button>
-<div class="ui buttons" *ngIf="showConfirmation">
+<button class="ui red button {{class}}" [class.loading]="loading" [class.disabled]="loading" (click)="showConfirmation = true" *ngIf="!showConfirmation && buttonType === 'normal'" [disabled]="disabled">
+    <i class="trash icon"></i>
+    <span *ngIf="title">{{title}}</span>
+    <span *ngIf="!title">{{ 'btn_delete' | translate }}</span>
+</button>
+<button class="ui red icon button {{class}}" [class.loading]="loading" [class.disabled]="loading" (click)="showConfirmation = true" *ngIf="!showConfirmation && buttonType === 'icon'" [disabled]="disabled"><i class="trash icon"></i></button>
+<div class="ui buttons {{class}}" *ngIf="showConfirmation">
     <button class="ui grey button" [class.disabled]="loading" (click)="showConfirmation = false"><i class="ban icon"></i></button>
     <div class="or"></div>
-    <button class="ui red button active" [class.loading]="loading" [class.disabled]="loading" (click)="deleteEvent()"><i class="check icon"></i></button>
+    <button class="ui red button active" [class.disabled]="loading" (click)="deleteEvent()"><i class="check icon"></i></button>
 </div>

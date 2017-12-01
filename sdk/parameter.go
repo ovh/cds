@@ -80,6 +80,15 @@ func ParameterFind(vars []Parameter, s string) *Parameter {
 	return nil
 }
 
+// ParameterValue return a parameter value given its name if it exists in array, else it returns empty string
+func ParameterValue(vars []Parameter, s string) string {
+	p := ParameterFind(vars, s)
+	if p == nil {
+		return ""
+	}
+	return p.Value
+}
+
 // ParametersFromMap returns an array of parameters from a map
 func ParametersFromMap(m map[string]string) []Parameter {
 	res := []Parameter{}
@@ -87,4 +96,77 @@ func ParametersFromMap(m map[string]string) []Parameter {
 		res = append(res, Parameter{Name: k, Value: v, Type: "string"})
 	}
 	return res
+}
+
+// ParametersToMap returns a map from a slice of parameters
+func ParametersToMap(params []Parameter) map[string]string {
+	res := map[string]string{}
+	for _, p := range params {
+		res[p.Name] = p.Value
+	}
+	return res
+}
+
+// ParametersFromProjectVariables returns a map from a slice of parameters
+func ParametersFromProjectVariables(proj *Project) map[string]string {
+	if proj == nil {
+		return nil
+	}
+	params := variablesToParameters("cds.proj", proj.Variable)
+	return ParametersToMap(params)
+}
+
+// ParametersFromApplicationVariables returns a map from a slice of parameters
+func ParametersFromApplicationVariables(app *Application) map[string]string {
+	if app == nil {
+		return nil
+	}
+	params := variablesToParameters("cds.app", app.Variable)
+	return ParametersToMap(params)
+}
+
+// ParametersFromEnvironmentVariables returns a map from a slice of parameters
+func ParametersFromEnvironmentVariables(env *Environment) map[string]string {
+	if env == nil {
+		return nil
+	}
+	params := variablesToParameters("cds.env", env.Variable)
+	return ParametersToMap(params)
+}
+
+// ParametersFromPipelineParameters returns a map from a slice of parameters
+func ParametersFromPipelineParameters(pipParams []Parameter) map[string]string {
+	res := []Parameter{}
+	for _, t := range pipParams {
+		t.Name = "cds.pip." + t.Name
+		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
+	}
+	return ParametersToMap(res)
+}
+
+func variablesToParameters(prefix string, variables []Variable) []Parameter {
+	res := []Parameter{}
+	for _, t := range variables {
+		if NeedPlaceholder(t.Type) {
+			continue
+		}
+		t.Name = prefix + "." + t.Name
+		res = append(res, Parameter{Name: t.Name, Type: t.Type, Value: t.Value})
+	}
+	return res
+}
+
+// ParametersMapMerge merges two maps of parameters preserving all values
+func ParametersMapMerge(params map[string]string, otherParams map[string]string) map[string]string {
+	for k, v := range otherParams {
+		if val, ok := params[k]; ok {
+			if val != v {
+				params[k] = fmt.Sprintf("%s,%s", val, v)
+				continue
+			}
+			continue
+		}
+		params[k] = v
+	}
+	return params
 }

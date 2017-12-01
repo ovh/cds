@@ -1,7 +1,7 @@
 import {Project} from './project.model';
 import {Application} from './application.model';
 import {Environment} from './environment.model';
-import {Pipeline} from './pipeline.model';
+import {Pipeline, PipelineBuild} from './pipeline.model';
 import {Trigger} from './trigger.model';
 import {Scheduler} from './scheduler.model';
 import {RepositoryPoller} from './polling.model';
@@ -30,4 +30,11 @@ export interface ParentItem {
     buildNumber: number;
     version: number;
     branch: string;
-};
+}
+
+export class WorkflowStatusResponse {
+    builds: Array<PipelineBuild>;
+    schedulers: Array<Scheduler>;
+    pollers: Array<RepositoryPoller>;
+    hooks: Array<Hook>;
+}

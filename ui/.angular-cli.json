@@ -21,10 +21,11 @@
       "styles": [
         "../node_modules/dragula/dist/dragula.css",
         "../node_modules/codemirror/lib/codemirror.css",
+        "../node_modules/codemirror/addon/hint/show-hint.css",
         "../node_modules/semantic-ui/dist/semantic.css",
         "../node_modules/angular2-toaster/toaster.css",
         "../node_modules/font-awesome/css/font-awesome.css",
-        "../node_modules/hover.css/css/hover.css",
+        "../node_modules/animate.css/animate.min.css",
         "styles.scss"
       ],
       "scripts": [
@@ -42,8 +43,15 @@
         "../node_modules/codemirror/mode/css/css.js",
         "../node_modules/codemirror/mode/powershell/powershell.js",
         "../node_modules/codemirror/mode/python/python.js",
+        "../node_modules/codemirror/addon/hint/show-hint.js",
+        "../node_modules/codemirror/mode/javascript/javascript.js",
+        "../node_modules/codemirror/addon/edit/matchbrackets.js",
+        "../node_modules/codemirror/addon/display/autorefresh.js",
+        "../resources/cds-hint.js",
         "../node_modules/ansi_up/ansi_up.js",
-        "../node_modules/duration-js/duration.js"
+        "../node_modules/duration-js/duration.js",
+        "../node_modules/graphlib/dist/graphlib.js",
+        "../node_modules/dagre/dist/dagre.js"
       ],
       "environmentSource": "environments/environment.ts",
       "environments": {
@@ -53,15 +61,14 @@
       }
     }
   ],
-  "e2e": {
-    "protractor": {
-      "config": "./protractor.conf.js"
-    }
-  },
   "lint": [
     {
       "files": "src/**/*.ts",
-      "project": "src/tsconfig.app.json"
+      "project": "src/tsconfig.app.json",
+      "exclude": [
+        "src/**/*.spec.ts",
+        "src/test.ts"
+      ]
     },
     {
       "files": "src/**/*.spec.ts",

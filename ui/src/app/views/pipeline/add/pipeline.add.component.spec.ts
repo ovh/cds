@@ -8,11 +8,14 @@ import {ApplicationStore} from '../../../service/application/application.store';
 import {ApplicationService} from '../../../service/application/application.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../../shared/shared.module';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Injector} from '@angular/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectStore} from '../../../service/project/project.store';
 import {ProjectService} from '../../../service/project/project.service';
+import {PipelineService} from '../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../service/environment/environment.service';
+import {VariableService} from '../../../service/variable/variable.service';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {Project} from '../../../model/project.model';
@@ -23,9 +26,9 @@ import {Application} from '../../../model/application.model';
 import {Variable} from '../../../model/variable.model';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {PipelineModule} from '../pipeline.module';
-import {PipelineService} from '../../../service/pipeline/pipeline.service';
 import {PipelineAddComponent} from './pipeline.add.component';
 import {Pipeline} from '../../../model/pipeline.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Pipeline Add Component', () => {
 
@@ -40,6 +43,7 @@ describe('CDS: Pipeline Add Component', () => {
             declarations: [
             ],
             providers: [
+                MockBackend,
                 { provide: XHRBackend, useClass: MockBackend },
                 AuthentificationStore,
                 ProjectStore,
@@ -51,17 +55,20 @@ describe('CDS: Pipeline Add Component', () => {
                 TranslateLoader,
                 TranslateParser,
                 PipelineStore,
-                PipelineService
+                PipelineService,
+                EnvironmentService,
+                VariableService
             ],
             imports : [
                 PipelineModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
         pipStore = injector.get(PipelineStore);
         router = injector.get(Router);
         prjStore = injector.get(ProjectStore);
@@ -95,7 +102,7 @@ describe('CDS: Pipeline Add Component', () => {
         fixture.componentInstance.newPipeline = new Pipeline();
         fixture.componentInstance.newPipeline.name = 'myPip';
         fixture.componentInstance.newPipeline.type = 'build';
-        fixture.componentInstance.selectedApplications = new Array<String>();
+        fixture.componentInstance.selectedApplications = new Array<string>();
         fixture.componentInstance.selectedApplications.push('app2');
 
         spyOn(pipStore, 'createPipeline').and.callFake( () => {
@@ -103,7 +110,7 @@ describe('CDS: Pipeline Add Component', () => {
         });
 
         fixture.componentInstance.createPipeline();
-        expect(fixture.componentInstance.newPipeline.attached_application.length).toBe(1);
+        expect(fixture.componentInstance.newPipeline.usage.applications.length).toBe(1);
         expect(pipStore.createPipeline).toHaveBeenCalledWith(project.key, fixture.componentInstance.newPipeline);
 
     }));

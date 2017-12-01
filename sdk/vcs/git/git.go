@@ -8,12 +8,10 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"syscall"
-	"time"
-
-	"path/filepath"
 
 	"github.com/ovh/cds/sdk/vcs"
 )
@@ -37,145 +35,10 @@ type AuthOpts struct {
 	PrivateKey vcs.SSHKey
 }
 
-// CloneOpts is a optional structs for git clone command
-type CloneOpts struct {
-	Depth                   int
-	SingleBranch            bool
-	Branch                  string
-	Recursive               bool
-	Verbose                 bool
-	Quiet                   bool
-	CheckoutCommit          string
-	NoStrictHostKeyChecking bool
-}
-
 // OutputOpts is a optional structs for git clone command
 type OutputOpts struct {
 	Stdout io.Writer
 	Stderr io.Writer
-}
-
-// Clone make a git clone
-func Clone(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) error {
-	if verbose {
-		t1 := time.Now()
-		defer LogFunc("Git clone %s (%v s)\n", path, int(time.Since(t1).Seconds()))
-	}
-
-	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "ftp://") || strings.HasPrefix(repo, "ftps://") {
-		return fmt.Errorf("Git protocol not supported")
-	}
-
-	if strings.HasPrefix(repo, "https://") {
-		return gitCloneOverHTTPS(repo, path, auth, opts, output)
-	}
-	return gitCloneOverSSH(repo, path, auth, opts, output)
-}
-
-func gitCloneOverHTTPS(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) error {
-	if auth == nil {
-		cmd := gitCommand(repo, path, opts)
-		return runCommand(cmd, output)
-	}
-	u, err := url.Parse(repo)
-	if err != nil {
-		return err
-	}
-
-	u.User = url.UserPassword(auth.Username, auth.Password)
-
-	cmd := gitCommand(u.String(), path, opts)
-	return runCommand(cmd, output)
-}
-
-func gitCloneOverSSH(repo string, path string, auth *AuthOpts, opts *CloneOpts, output *OutputOpts) error {
-	if auth == nil {
-		return fmt.Errorf("Authentication is required for git over ssh")
-	}
-
-	keyDir := filepath.Dir(auth.PrivateKey.Filename)
-	allCmd := gitCommand(repo, path, opts)
-
-	gitSSHCmd := exec.Command("ssh").Path
-	if opts != nil && opts.NoStrictHostKeyChecking {
-		gitSSHCmd += " -o StrictHostKeyChecking=no"
-	}
-	gitSSHCmd += " -i " + auth.PrivateKey.Filename
-
-	var wrapper string
-	if runtime.GOOS == "windows" {
-		gitSSHCmd += " %*"
-		wrapper = gitSSHCmd
-	} else {
-		gitSSHCmd += ` "$@"`
-		wrapper = `#!/bin/sh
-` + gitSSHCmd
-	}
-
-	wrapperPath := filepath.Join(keyDir, "gitwrapper")
-	if err := ioutil.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
-		return err
-	}
-
-	return runCommand(allCmd, output, "GIT_SSH="+wrapperPath)
-}
-
-func gitCommand(repo string, path string, opts *CloneOpts) cmds {
-	allCmd := []cmd{}
-	gitcmd := cmd{
-		cmd:  "git",
-		args: []string{"clone"},
-	}
-
-	if opts != nil {
-		if opts.Quiet {
-			gitcmd.args = append(gitcmd.args, "--quiet")
-		} else if opts.Verbose {
-			gitcmd.args = append(gitcmd.args, "--verbose")
-		}
-
-		if opts.CheckoutCommit == "" {
-			if opts.Depth != 0 {
-				gitcmd.args = append(gitcmd.args, "--depth", fmt.Sprintf("%d", opts.Depth))
-			}
-		}
-
-		if opts.Branch != "" {
-			gitcmd.args = append(gitcmd.args, "--branch", opts.Branch)
-		} else if opts.SingleBranch {
-			gitcmd.args = append(gitcmd.args, "--single-branch")
-		}
-
-		if opts.Recursive {
-			gitcmd.args = append(gitcmd.args, "--recursive")
-		}
-	}
-
-	gitcmd.args = append(gitcmd.args, repo)
-
-	if path != "" {
-		gitcmd.args = append(gitcmd.args, path)
-	}
-
-	allCmd = append(allCmd, gitcmd)
-
-	if opts != nil && opts.CheckoutCommit != "" {
-		resetCmd := cmd{
-			cmd:  "git",
-			args: []string{"reset", "--hard", opts.CheckoutCommit},
-		}
-		//Locate the git reset cmd to the right directory
-		if path == "" {
-			t := strings.Split(repo, "/")
-			resetCmd.dir = strings.TrimSuffix(t[len(t)-1], ".git")
-		} else {
-			resetCmd.dir = path
-		}
-
-		allCmd = append(allCmd, resetCmd)
-	}
-
-	return cmds(allCmd)
 }
 
 type cmds []cmd
@@ -198,15 +61,69 @@ func (c cmd) String() string {
 	return c.cmd + " " + strings.Join(c.args, " ")
 }
 
-func runCommand(cmds cmds, output *OutputOpts, envs ...string) error {
+func getRepoURL(repo string, auth *AuthOpts) (string, error) {
+	if strings.HasPrefix(repo, "http://") || strings.HasPrefix(repo, "ftp://") || strings.HasPrefix(repo, "ftps://") {
+		return "", fmt.Errorf("Git protocol not supported")
+	}
+	if auth != nil && strings.HasPrefix(repo, "https://") {
+		u, err := url.Parse(repo)
+		if err != nil {
+			return "", err
+		}
+		u.User = url.UserPassword(auth.Username, auth.Password)
+		return u.String(), nil
+	}
+	return repo, nil
+}
+
+func runGitCommands(repo string, commands []cmd, auth *AuthOpts, output *OutputOpts) error {
+	if strings.HasPrefix(repo, "https://") {
+		return runGitCommandRaw(commands, output)
+	}
+	return runGitCommandsOverSSH(commands, auth, output)
+}
+
+func runGitCommandsOverSSH(commands []cmd, auth *AuthOpts, output *OutputOpts) error {
+	if auth == nil {
+		return fmt.Errorf("Authentication is required for git over ssh")
+	}
+
+	keyDir := filepath.Dir(auth.PrivateKey.Filename)
+
+	gitSSHCmd := exec.Command("ssh").Path
+	gitSSHCmd += " -i " + auth.PrivateKey.Filename
+	gitSSHCmd += " -o StrictHostKeyChecking=no"
+
+	var wrapper string
+	if runtime.GOOS == "windows" {
+		gitSSHCmd += " %*"
+		wrapper = gitSSHCmd
+	} else {
+		gitSSHCmd += ` "$@"`
+		wrapper = `#!/bin/sh
+` + gitSSHCmd
+	}
+
+	wrapperPath := filepath.Join(keyDir, "gitwrapper")
+	if err := ioutil.WriteFile(wrapperPath, []byte(wrapper), os.FileMode(0700)); err != nil {
+		return err
+	}
+
+	return runGitCommandRaw(commands, output, "GIT_SSH="+wrapperPath)
+}
+
+func runGitCommandRaw(cmds cmds, output *OutputOpts, envs ...string) error {
 	osEnv := os.Environ()
 	for _, e := range envs {
 		osEnv = append(osEnv, e)
 	}
 	for _, c := range cmds {
+		for i, arg := range c.args {
+			c.args[i] = os.ExpandEnv(arg)
+		}
 		cmd := exec.Command(c.cmd, c.args...)
 		if c.dir != "" {
-			cmd.Dir = c.dir
+			cmd.Dir = os.ExpandEnv(c.dir)
 		}
 		cmd.Env = osEnv
 

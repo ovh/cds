@@ -1,9 +1,10 @@
 package group
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -43,93 +44,104 @@ func IsInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64) (bool, e
 	return count > 0, nil
 }
 
+// checkAtLeastOneGroupWithWriteRoleOnEnvironment is clear enough i think
+func checkAtLeastOneGroupWithWriteRoleOnEnvironment(db gorp.SqlExecutor, envID int64) (bool, error) {
+	query := `select count(group_id) from environment_group where environment_id = $1 and role = $2`
+	nb, err := db.SelectInt(query, envID, 7)
+	if err != nil {
+		return false, sdk.WrapError(err, "CheckAtLeastOneGroupWithWriteRoleOnEnvironment")
+	}
+	return nb > 0, err
+}
+
 // InsertGroupInEnvironment add permissions on Environment to Group
 func InsertGroupInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64, role int) error {
 	query := `INSERT INTO environment_group (environment_id, group_id,role) VALUES($1,$2,$3)`
-	_, err := db.Exec(query, environmentID, groupID, role)
-	return err
+	if _, err := db.Exec(query, environmentID, groupID, role); err != nil {
+		return sdk.WrapError(err, "InsertGroupInEnvironment")
+	}
+
+	return nil
 }
 
 // InsertGroupsInEnvironment Link the given groups and the given environment
 func InsertGroupsInEnvironment(db gorp.SqlExecutor, groupPermission []sdk.GroupPermission, envID int64) error {
 	for _, g := range groupPermission {
 		if err := InsertGroupInEnvironment(db, envID, g.Group.ID, g.Permission); err != nil {
-			log.Warning("InsertGroupsInEnvironment> unable to insert group %d %s on env %d : %s", g.Group.ID, g.Group.Name, envID, err)
-			return err
+			return sdk.WrapError(err, "InsertGroupsInEnvironment> unable to insert group %d %s on env %d ", g.Group.ID, g.Group.Name, envID)
 		}
 	}
 	return nil
 }
 
 // UpdateGroupRoleInEnvironment update permission on environment
-func UpdateGroupRoleInEnvironment(db gorp.SqlExecutor, key, envName, groupName string, role int) error {
+func UpdateGroupRoleInEnvironment(db gorp.SqlExecutor, environmentID, groupID int64, role int) error {
 	query := `UPDATE environment_group
 	          SET role=$1
-	          FROM environment, project, "group"
-	          WHERE environment.id = environment_id AND environment.project_id = project.id AND "group".id = group_id
-	          AND environment.name = $2 AND  project.projectKey = $3 AND "group".name = $4 `
-	if _, err := db.Exec(query, role, envName, key, groupName); err != nil {
+	          WHERE environment_id = $2 and group_id = $3`
+	if _, err := db.Exec(query, role, environmentID, groupID); err != nil {
 		return err
 	}
 
-	// Update project
-	query = `
-		UPDATE project 
-		SET last_modified = current_timestamp
-		WHERE id IN (
-			SELECT id 
-			FROM project
-			WHERE projectKey = $1
-		)
-	`
-	_, err := db.Exec(query, key)
-	return err
+	ok, err := checkAtLeastOneGroupWithWriteRoleOnEnvironment(db, environmentID)
+	if err != nil {
+		return sdk.WrapError(err, "UpdateGroupRoleInEnvironment")
+	}
+	if !ok {
+		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "UpdateGroupRoleInEnvironment")
+	}
+
+	return nil
 }
 
 // DeleteAllGroupFromEnvironment remove all group from the given environment
+// Deprecated
 func DeleteAllGroupFromEnvironment(db gorp.SqlExecutor, environmentID int64) error {
-	// Update environment
-	query := `
-		UPDATE environment 
-		SET last_modified = current_timestamp
-		WHERE id = $1
-	`
-	if _, err := db.Exec(query, environmentID); err != nil {
-		return err
-	}
-	//Delete assocation
-	query = `DELETE FROM environment_group
+	//Delete association
+	query := `DELETE FROM environment_group
 		  WHERE environment_id=$1`
 	_, err := db.Exec(query, environmentID)
 	return err
 }
 
 // DeleteGroupFromEnvironment removes access to environment to group members
-func DeleteGroupFromEnvironment(db gorp.SqlExecutor, key, envName, groupName string) error {
-	// Update project
-	query := `
-		UPDATE project 
-		SET last_modified = current_timestamp
-		WHERE id IN (
-			SELECT id 
-			FROM project
-			WHERE projectKey = $1
-		)
-	`
-	if _, err := db.Exec(query, key); err != nil {
-		return err
+func DeleteGroupFromEnvironment(db gorp.SqlExecutor, envID, groupID int64) error {
+	query := `DELETE FROM environment_group
+		  WHERE environment_id = $1 
+		  AND group_id = $2`
+	if _, err := db.Exec(query, envID, groupID); err != nil {
+		return sdk.WrapError(err, "DeleteGroupFromEnvironment")
 	}
-
-	query = `DELETE FROM environment_group
-		  USING environment, project, "group"
-		  WHERE environment.id = environment_group.environment_id AND environment.project_id = project.id AND "group".id = environment_group.group_id
-		  AND environment.name = $1 AND  project.projectKey = $2 AND "group".name = $3`
-	_, err := db.Exec(query, envName, key, groupName)
-	return err
+	ok, err := checkAtLeastOneGroupWithWriteRoleOnEnvironment(db, envID)
+	if err != nil {
+		return sdk.WrapError(err, "deleteGroupEnvironmentByGroup")
+	}
+	if !ok {
+		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "deleteGroupEnvironmentByGroup")
+	}
+	return nil
 }
 
 func deleteGroupEnvironmentByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
+	envIDs := []int64{}
+	if _, err := db.Select(&envIDs, "SELECT environment_id from environment_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
+		return sdk.WrapError(err, "deleteGroupEnvironmentByGroup")
+	}
+
 	query := `DELETE FROM environment_group WHERE group_id=$1`
-	_, err := db.Exec(query, group.ID)
-	return err
+	if _, err := db.Exec(query, group.ID); err != nil {
+		return sdk.WrapError(err, "deleteGroupEnvironmentByGroup")
+	}
+
+	for _, id := range envIDs {
+		ok, err := checkAtLeastOneGroupWithWriteRoleOnEnvironment(db, id)
+		if err != nil {
+			return sdk.WrapError(err, "deleteGroupEnvironmentByGroup")
+		}
+		if !ok {
+			return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "deleteGroupEnvironmentByGroup")
+		}
+	}
+
+	return nil
 }

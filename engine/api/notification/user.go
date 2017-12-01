@@ -4,13 +4,15 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/permission"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -44,7 +46,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 	}
 	params["cds.status"] = pb.Status.String()
 	//Set PipelineBuild UI URL
-	params["cds.buildURL"] = fmt.Sprintf("%s/#/project/%s/application/%s/pipeline/%s/build/%d?env=%s&tab=detail", uiURL, pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, pb.Environment.Name)
+	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/application/%s/pipeline/%s/build/%d?envName=%s", uiURL, pb.Pipeline.ProjectKey, pb.Application.Name, pb.Pipeline.Name, pb.BuildNumber, url.QueryEscape(pb.Environment.Name))
 	//find author (triggeredBy user or changes author)
 	if pb.Trigger.TriggeredBy != nil {
 		params["cds.author"] = pb.Trigger.TriggeredBy.Username
@@ -117,7 +119,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 						username = pb.Trigger.VCSChangesAuthor
 					}
 					if username != "" {
-						u, err := pipelineInitiator(db, username)
+						u, err := user.LoadUserWithoutAuth(db, username)
 						if err != nil {
 							log.Warning("notification[Email].SendPipelineBuild> Cannot load author %s: %s", username, err)
 							continue
@@ -159,7 +161,7 @@ func ShouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk
 			if previous == nil {
 				return true
 			}
-			return current.Status != previous.Status
+			return current.Status.String() != previous.Status.String()
 		}
 		return false
 	}
@@ -175,7 +177,6 @@ func ShouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk
 	case sdk.StatusBuilding:
 		return notif.Start()
 	}
-
 	return false
 }
 
@@ -422,20 +423,4 @@ func InsertOrUpdateUserNotificationSettings(db gorp.SqlExecutor, appID, pipID, e
 	}
 
 	return nil
-}
-
-func pipelineInitiator(db gorp.SqlExecutor, username string) (*sdk.User, error) {
-	query := `
-		SELECT data FROM "user"
-		WHERE "user".username = $1
-	`
-	var data string
-	err := db.QueryRow(query, username).Scan(&data)
-	if err != nil {
-		return nil, err
-	}
-
-	// Load user
-	u, err := sdk.NewUser(username).FromJSON([]byte(data))
-	return u, err
 }

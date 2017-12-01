@@ -2,18 +2,22 @@
 
 import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
 import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
+import {Response, ResponseOptions, ResponseType} from '@angular/http';
 import {Router, ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {ApplicationShowComponent} from './application.component';
 import {ApplicationStore} from '../../../service/application/application.store';
 import {ApplicationService} from '../../../service/application/application.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../../shared/shared.module';
-import {Observable} from 'rxjs/Rx';
+import {ServicesModule} from '../../../service/services.module';
+import {Observable} from 'rxjs/Observable';
 import {Injector} from '@angular/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectStore} from '../../../service/project/project.store';
 import {ProjectService} from '../../../service/project/project.service';
+import {EnvironmentService} from '../../../service/environment/environment.service';
+import {PipelineService} from '../../../service/pipeline/pipeline.service';
+import {VariableService} from '../../../service/variable/variable.service';
 import {ApplicationModule} from '../application.module';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
@@ -29,12 +33,13 @@ import {Notification} from '../../../model/notification.model';
 import {NotificationEvent} from './notifications/notification.event';
 import {Pipeline} from '../../../model/pipeline.model';
 import {Environment} from '../../../model/environment.model';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: Application', () => {
 
     let injector: Injector;
     let appStore: ApplicationStore;
-    let backend: MockBackend;
     let router: Router;
     let prjStore: ProjectStore;
 
@@ -43,29 +48,32 @@ describe('CDS: Application', () => {
             declarations: [
             ],
             providers: [
-                { provide: XHRBackend, useClass: MockBackend },
                 AuthentificationStore,
                 ApplicationStore,
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
+                PipelineService,
+                VariableService,
+                EnvironmentService,
                 ApplicationWorkflowService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: Router, useClass: MockRouter},
                 { provide: ToastService, useClass: MockToast},
                 TranslateService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
             ],
             imports : [
                 ApplicationModule,
+                ServicesModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
         appStore = injector.get(ApplicationStore);
         router = injector.get(Router);
         prjStore = injector.get(ProjectStore);
@@ -74,26 +82,11 @@ describe('CDS: Application', () => {
     afterEach(() => {
         injector = undefined;
         appStore = undefined;
-        backend = undefined;
         router = undefined;
         prjStore = undefined;
     });
 
     it('Load component + load application', fakeAsync( () => {
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '[]'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
-                    break;
-            }
-
-        });
 
         spyOn(appStore, 'updateRecentApplication');
 
@@ -113,19 +106,19 @@ describe('CDS: Application', () => {
     }));
 
     it('Load component + load application with error', fakeAsync( () => {
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            connection.mockError(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
-        });
+        const http = TestBed.get(HttpTestingController);
 
         spyOn(appStore, 'updateRecentApplication');
         spyOn(router, 'navigate');
-
 
         // Create component
         let fixture = TestBed.createComponent(ApplicationShowComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
+
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/key1/application/app1';
+        })).flush({'name': 'app1'}, { status: 404, statusText: 'App does not exist'});
 
         expect(appStore.updateRecentApplication).not.toHaveBeenCalled();
         expect(router.navigate).toHaveBeenCalledWith(['/project', 'key1']);
@@ -133,22 +126,6 @@ describe('CDS: Application', () => {
 
     it('should run add variable', fakeAsync( () => {
         let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '[]'})));
-                    break;
-                case 3:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
-                    break;
-            }
-
-        });
 
         prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
 
@@ -178,23 +155,6 @@ describe('CDS: Application', () => {
     }));
 
     it('should run update variable', fakeAsync( () => {
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '[]'})));
-                    break;
-                case 3:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
-                    break;
-            }
-
-        });
 
         prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
 
@@ -224,23 +184,6 @@ describe('CDS: Application', () => {
     }));
 
     it('should run remove variable', fakeAsync( () => {
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '[]'})));
-                    break;
-                case 3:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
-                    break;
-            }
-
-        });
 
         prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
 
@@ -270,23 +213,6 @@ describe('CDS: Application', () => {
     }));
 
     it('should run add permission', fakeAsync( () => {
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '[]'})));
-                    break;
-                case 3:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
-                    break;
-            }
-
-        });
 
         prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
 
@@ -316,23 +242,6 @@ describe('CDS: Application', () => {
     }));
 
     it('should run update permission', fakeAsync( () => {
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '[]'})));
-                    break;
-                case 3:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
-                    break;
-            }
-
-        });
 
         prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
 
@@ -362,23 +271,6 @@ describe('CDS: Application', () => {
     }));
 
     it('should run remove permission', fakeAsync( () => {
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '[]'})));
-                    break;
-                case 3:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
-                    break;
-            }
-
-        });
 
         prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
 
@@ -409,22 +301,6 @@ describe('CDS: Application', () => {
 
     it('should run add/update/delete notification', fakeAsync( () => {
         let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '[]'})));
-                    break;
-                case 3:
-                    connection.mockRespond(new Response(new ResponseOptions({ body : '{ "name": "app1" }'})));
-                    break;
-            }
-
-        });
 
         prjStore.getProjects('key1').subscribe(() => {}).unsubscribe();
 
@@ -477,6 +353,9 @@ describe('CDS: Application', () => {
 
 class MockToast {
     success(title: string, msg: string) {
+
+    }
+    error(title: string, msg: string) {
 
     }
 }

@@ -1,0 +1,18 @@
+{{ if (index .Page.Menus "main") }}
+{{ $style := .Get "style"}}
+{{ $nohidden := .Get "nohidden"}}
+{{ if $style}}
+	<div class="children">
+		{{ range (index .Page.Menus "main").Children }}
+			{{ if or (not $nohidden ) (and (ne $nohidden nil) (.Identifier))   }} 
+				{{(printf "<%s>" $style)|safeHTML}}<a href="{{.URL}}" >{{ .Name }}</a>{{(printf "</%s>" $style)|safeHTML}}
+			{{ end }}
+		{{end}}
+	</div>
+{{else}}
+		{{ range (index .Page.Menus "main").Children }}
+			<li><a href="{{.URL}}" >{{ .Name }}</a></li>
+		{{ end }}
+{{end}}
+{{ end }}
+{{.Inner|safeHTML}}

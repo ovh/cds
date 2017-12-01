@@ -1,0 +1,29 @@
+  - action:
+      navigate:
+          url: '{{.ui.url}}/project/{{.ui.project}}'
+    screenshot: e2e_2_application_1_navigate.png
+  - action:
+      click:
+        find: '#ProjectApplicationTab'
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}?tab=applications
+    screenshot: e2e_2_application_2_navigate.png
+  - action:
+      click:
+          find: 'a.ui.blue.button'
+          wait: 2
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/application
+    screenshot: e2e_2_application_3_navigate.png
+  - action:
+      fill:
+      - find: input[name="appname"]
+        text: '{{.ui.application}}'
+    screenshot: e2e_2_application_4_form_create.png
+  - action:
+      click:
+        find: button.ui.green
+        wait: 2
+    screenshot: e2e_2_application_5_form_submit.png
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/application/{{.ui.application}}

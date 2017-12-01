@@ -38,7 +38,6 @@ var downgradeCmd = &cobra.Command{
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Show current migration status",
-	Long:  "",
 	Run:   statusCmdFunc,
 }
 
@@ -47,18 +46,21 @@ var (
 	sqlMigrateDryRun    bool
 	sqlMigrateLimitUp   int
 	sqlMigrateLimitDown int
+	connFactrory        = &DBConnectionFactory{}
 )
 
 func setFlags(cmd *cobra.Command) {
 	pflags := cmd.Flags()
-	pflags.StringVarP(&dbUser, "db-user", "", "cds", "DB User")
-	pflags.StringVarP(&dbPassword, "db-password", "", "", "DB Password")
-	pflags.StringVarP(&dbName, "db-name", "", "cds", "DB Name")
-	pflags.StringVarP(&dbHost, "db-host", "", "localhost", "DB Host")
-	pflags.StringVarP(&dbPort, "db-port", "", "5432", "DB Port")
-	pflags.StringVarP(&dbSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
-	pflags.IntVarP(&dbMaxConn, "db-maxconn", "", 20, "DB Max connection")
-	pflags.IntVarP(&dbTimeout, "db-timeout", "", 3000, "Statement timeout value")
+	pflags.StringVarP(&connFactrory.dbUser, "db-user", "", "cds", "DB User")
+	pflags.StringVarP(&connFactrory.dbPassword, "db-password", "", "", "DB Password")
+	pflags.StringVarP(&connFactrory.dbName, "db-name", "", "cds", "DB Name")
+	pflags.StringVarP(&connFactrory.dbHost, "db-host", "", "localhost", "DB Host")
+	pflags.IntVarP(&connFactrory.dbPort, "db-port", "", 5432, "DB Port")
+	pflags.StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
+	pflags.StringVarP(&connFactrory.dbSSLMode, "db-sslmode", "", "require", "DB SSL Mode: require (default), verify-full, or disable")
+	pflags.IntVarP(&connFactrory.dbMaxConn, "db-maxconn", "", 20, "DB Max connection")
+	pflags.IntVarP(&connFactrory.dbTimeout, "db-timeout", "", 3000, "Statement timeout value in milliseconds")
+	pflags.IntVarP(&connFactrory.dbConnectTimeout, "db-connect-timeout", "", 10, "Maximum wait for connection, in seconds")
 }
 
 func init() {
@@ -69,19 +71,15 @@ func init() {
 	DBCmd.AddCommand(downgradeCmd)
 	DBCmd.AddCommand(statusCmd)
 
-	upgradeCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	upgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run upgrade")
 	upgradeCmd.Flags().IntVarP(&sqlMigrateLimitUp, "limit", "", 0, "Max number of migrations to apply (0 = unlimited)")
 
-	downgradeCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 	downgradeCmd.Flags().BoolVarP(&sqlMigrateDryRun, "dry-run", "", false, "Dry run downgrade")
 	downgradeCmd.Flags().IntVarP(&sqlMigrateLimitDown, "limit", "", 1, "Max number of migrations to apply (0 = unlimited)")
-
-	statusCmd.Flags().StringVarP(&sqlMigrateDir, "migrate-dir", "", "./engine/sql", "CDS SQL Migration directory")
 }
 
 type statusRow struct {
-	Id        string
+	ID        string
 	Migrated  bool
 	AppliedAt time.Time
 }
@@ -99,7 +97,8 @@ func downgradeCmdFunc(cmd *cobra.Command, args []string) {
 }
 
 func statusCmdFunc(cmd *cobra.Command, args []string) {
-	db, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
+	var err error
+	connFactrory, err = Init(connFactrory.dbUser, connFactrory.dbPassword, connFactrory.dbName, connFactrory.dbHost, connFactrory.dbPort, connFactrory.dbSSLMode, connFactrory.dbConnectTimeout, connFactrory.dbTimeout, connFactrory.dbMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
@@ -113,7 +112,7 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 		sdk.Exit("Error: %s\n", err)
 	}
 
-	records, err := migrate.GetMigrationRecords(db, "postgres")
+	records, err := migrate.GetMigrationRecords(connFactrory.DB(), "postgres")
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
@@ -128,12 +127,16 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 
 	for _, m := range migrations {
 		rows[m.Id] = &statusRow{
-			Id:       m.Id,
+			ID:       m.Id,
 			Migrated: false,
 		}
 	}
 
 	for _, r := range records {
+		if _, ok := rows[r.Id]; !ok {
+			fmt.Printf("Record '%s' not in migration list, manual migration needed\n", r.Id)
+			continue
+		}
 		rows[r.Id].Migrated = true
 		rows[r.Id].AppliedAt = r.AppliedAt
 	}
@@ -153,12 +156,12 @@ func statusCmdFunc(cmd *cobra.Command, args []string) {
 	}
 
 	table.Render()
-
 }
 
 //ApplyMigrations applies migration (or not depending on dryrun flag)
 func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) error {
-	db, err := Init(dbUser, dbPassword, dbName, dbHost, dbPort, dbSSLMode, dbTimeout, dbMaxConn)
+	var err error
+	connFactrory, err = Init(connFactrory.dbUser, connFactrory.dbPassword, connFactrory.dbName, connFactrory.dbHost, connFactrory.dbPort, connFactrory.dbSSLMode, connFactrory.dbConnectTimeout, connFactrory.dbTimeout, connFactrory.dbMaxConn)
 	if err != nil {
 		sdk.Exit("Error: %s\n", err)
 	}
@@ -168,7 +171,7 @@ func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) err
 	}
 
 	if dryrun {
-		migrations, _, err := migrate.PlanMigration(db, "postgres", source, dir, limit)
+		migrations, _, err := migrate.PlanMigration(connFactrory.DB(), "postgres", source, dir, limit)
 		if err != nil {
 			return fmt.Errorf("Cannot plan migration: %s", err)
 		}
@@ -184,13 +187,13 @@ func ApplyMigrations(dir migrate.MigrationDirection, dryrun bool, limit int) err
 		sdk.Exit("Error: %s\n", err)
 	}
 	hostname = fmt.Sprintf("%s-%d", hostname, time.Now().UnixNano())
-	if err := lockMigrate(db, hostname); err != nil {
+	if err := lockMigrate(connFactrory.DB(), hostname); err != nil {
 		sdk.Exit("Unable to lock database: %s\n", err)
 	}
 
-	defer unlockMigrate(db, hostname)
+	defer unlockMigrate(connFactrory.DB(), hostname)
 
-	n, err := migrate.ExecMax(db, "postgres", source, dir, limit)
+	n, err := migrate.ExecMax(connFactrory.DB(), "postgres", source, dir, limit)
 	if err != nil {
 		return fmt.Errorf("Migration failed: %s", err)
 	}
@@ -222,7 +225,7 @@ func printMigration(m *migrate.PlannedMigration, dir migrate.MigrationDirection)
 
 //MigrationLock is used to lock the migration (managed by gorp)
 type MigrationLock struct {
-	Id       string     `db:"id"`
+	ID       string     `db:"id"`
 	Locked   *time.Time `db:"locked"`
 	Unlocked *time.Time `db:"unlocked"`
 }
@@ -230,7 +233,7 @@ type MigrationLock struct {
 func lockMigrate(db *sql.DB, id string) error {
 	// construct a gorp DbMap
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
-	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "Id")
+	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "ID")
 	// create table if not exist
 	if err := dbmap.CreateTablesIfNotExists(); err != nil {
 		return err
@@ -249,12 +252,12 @@ func lockMigrate(db *sql.DB, id string) error {
 	}
 
 	if len(pendingMigration) > 0 {
-		return fmt.Errorf("Migration is locked by %s since %v", pendingMigration[0].Id, pendingMigration[0].Locked)
+		return fmt.Errorf("Migration is locked by %s since %v", pendingMigration[0].ID, pendingMigration[0].Locked)
 	}
 
 	t := time.Now()
 	m := MigrationLock{
-		Id:     id,
+		ID:     id,
 		Locked: &t,
 	}
 
@@ -272,7 +275,7 @@ func lockMigrate(db *sql.DB, id string) error {
 func unlockMigrate(db *sql.DB, id string) error {
 	// construct a gorp DbMap
 	dbmap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
-	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "Id")
+	dbmap.AddTableWithName(MigrationLock{}, "gorp_migrations_lock").SetKeys(false, "ID")
 
 	tx, err := dbmap.Begin()
 	if err != nil {

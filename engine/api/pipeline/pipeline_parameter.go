@@ -2,8 +2,10 @@ package pipeline
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/sdk"
@@ -61,26 +63,24 @@ func GetAllParametersInPipeline(db gorp.SqlExecutor, pipelineID int64 /*, args .
 
 // InsertParameterInPipeline Insert a new parameter in the given pipeline
 func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk.Parameter) error {
+	if param.Type == "" {
+		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid parameter, wrong type"))
+	}
+
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(param.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid parameter name. It should match %s", sdk.NamePattern))
+	}
 
 	if string(param.Type) == string(sdk.SecretVariable) {
-		return sdk.ErrNoDirectSecretUse
+		return sdk.WrapError(sdk.ErrNoDirectSecretUse, "InsertParameterInPipeline>")
 	}
 
-	/* DEPRECATED: no more password in parameter type
-	clear, cipher, err := secret.EncryptS(param.Type, param.Value)
-	if err != nil {
-		return err
-	}
-
-	query := `INSERT INTO pipeline_parameter(pipeline_id, name, value, cipher_value, type, description)
-		  VALUES($1, $2, $3, $4, $5, $6) RETURNING id`
-	err = db.QueryRow(query, pipelineID, param.Name, clear, cipher, string(param.Type), param.Description).Scan(&param.ID)
-	*/
 	query := `INSERT INTO pipeline_parameter(pipeline_id, name, value, type, description)
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 	err := db.QueryRow(query, pipelineID, param.Name, param.Value, string(param.Type), param.Description).Scan(&param.ID)
 	if err != nil {
-		return fmt.Errorf("cannot insert in pipeline_parameter (pID:%d): %s", pipelineID, err)
+		return sdk.WrapError(err, "InsertParameterInPipeline> cannot insert in pipeline_parameter (pID:%d)", pipelineID)
 	}
 
 	query = `SELECT id FROM pipeline_trigger WHERE dest_pipeline_id = $1`
@@ -94,14 +94,13 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 	for rows.Next() {
 		err = rows.Scan(&id)
 		if err != nil {
-			return fmt.Errorf("cannot scan pipeline_trigger (pID:%d): %s", pipelineID, err)
+			return sdk.WrapError(err, "InsertParameterInPipeline> cannot scan pipeline_trigger (pID:%d)", pipelineID)
 		}
 		ids = append(ids, id)
 	}
 	for _, id := range ids {
-		err = trigger.InsertTriggerParameter(db, id, *param)
-		if err != nil {
-			return fmt.Errorf("cannot InsertTriggerParameter (tID:%d): %s", id, err)
+		if err := trigger.InsertTriggerParameter(db, id, *param); err != nil {
+			return sdk.WrapError(err, "InsertParameterInPipeline> InsertTriggerParameter (tID:%d)", id)
 		}
 	}
 
@@ -109,35 +108,34 @@ func InsertParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param *sdk
 }
 
 // UpdateParameterInPipeline Update a parameter in the given pipeline
-func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, param sdk.Parameter) error {
-	/* DEPRECATED: no more password in parameter
-		clear, cipher, err := secret.EncryptS(param.Type, param.Value)
-	if err != nil {
-		return err
+func UpdateParameterInPipeline(db gorp.SqlExecutor, pipelineID int64, oldParamName string, param sdk.Parameter) error {
+	if param.Type == "" {
+		return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Invalid parameter, wrong type"))
+	}
+
+	rx := regexp.MustCompile(sdk.NamePattern)
+	if !rx.MatchString(param.Name) {
+		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid parameter name. It should match %s", sdk.NamePattern))
 	}
 
 	// update parameter
-	query := `UPDATE pipeline_parameter SET value=$1, cipher_value=$2, type=$3, description=$4, name=$6 WHERE pipeline_id=$5 AND id=$7`
-	_, err = db.Exec(query, clear, cipher, string(param.Type), param.Description, pipelineID, param.Name, param.ID)
+	query := `UPDATE pipeline_parameter SET value=$1, type=$2, description=$3, name=$4 WHERE pipeline_id=$5 AND name=$6`
+	_, err := db.Exec(query, param.Value, string(param.Type), param.Description, param.Name, pipelineID, oldParamName)
 	if err != nil {
-		return err
-	}
-	*/
-	// update parameter
-	query := `UPDATE pipeline_parameter SET value=$1, type=$2, description=$3, name=$5 WHERE pipeline_id=$4 AND id=$6`
-	_, err := db.Exec(query, param.Value, string(param.Type), param.Description, pipelineID, param.Name, param.ID)
-	if err != nil {
+		if errPG, ok := err.(*pq.Error); ok && errPG.Code == "23505" {
+			return sdk.ErrParameterExists
+		}
 		return err
 	}
 
 	// Update this parameter in triggers as well
-	query = `UPDATE pipeline_trigger_parameter SET type=$1, description=$2 WHERE id IN (
+	query = `UPDATE pipeline_trigger_parameter SET type=$1, description=$2, name=$3 WHERE id IN (
 		SELECT pipeline_trigger_parameter.id FROM pipeline_trigger_parameter
 		JOIN pipeline_trigger ON pipeline_trigger.id = pipeline_trigger_parameter.pipeline_trigger_id
-		WHERE pipeline_trigger.dest_pipeline_id = $3
-		AND pipeline_trigger_parameter.name = $4
+		WHERE pipeline_trigger.dest_pipeline_id = $4
+		AND pipeline_trigger_parameter.name = $5
 	)`
-	_, err = db.Exec(query, string(param.Type), param.Description, pipelineID, param.Name)
+	_, err = db.Exec(query, string(param.Type), param.Description, param.Name, pipelineID, oldParamName)
 	return err
 }
 

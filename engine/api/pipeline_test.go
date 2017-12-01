@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"bytes"
@@ -7,12 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-gorp/gorp"
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
@@ -21,57 +18,34 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func insertTestPipeline(db *gorp.DbMap, t *testing.T, name string) (*sdk.Project, *sdk.Pipeline, *sdk.Application) {
-	pkey := assets.RandomString(t, 10)
-	projectFoo := assets.InsertTestProject(t, db, pkey, pkey)
-
-	p := &sdk.Pipeline{
-		Name:      name,
-		ProjectID: projectFoo.ID,
-		Type:      sdk.BuildPipeline,
-	}
-
-	app := &sdk.Application{
-		Name: "App1",
-	}
-
-	test.NoError(t, application.Insert(db, projectFoo, app))
-	test.NoError(t, pipeline.InsertPipeline(db, p))
-
-	return projectFoo, p, app
-}
-
 func Test_runPipelineHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler"}
-	router.init()
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
-	appName := assets.RandomString(t, 10)
+	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	//6. Prepare the run request
@@ -86,7 +60,7 @@ func Test_runPipelineHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", runPipelineHandler, vars)
+	uri := router.GetRoute("POST", api.runPipelineHandler, vars)
 	test.NotEmpty(t, uri)
 
 	//8. Send the request
@@ -99,7 +73,7 @@ func Test_runPipelineHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	//9. Check response
 	assert.Equal(t, 200, w.Code)
@@ -119,37 +93,34 @@ func Test_runPipelineHandler(t *testing.T) {
 }
 
 func Test_runPipelineWithLastParentHandler(t *testing.T) {
-	db := test.SetupPG(t, bootstrap.InitiliazeDB)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_runPipelineHandler"}
-	router.init()
+	api, db, router := newTestAPI(t, bootstrap.InitiliazeDB)
 
 	//1. Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//2. Create project
-	proj := assets.InsertTestProject(t, db, assets.RandomString(t, 10), assets.RandomString(t, 10))
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
 	test.NotNil(t, proj)
 
 	//3. Create Pipeline
-	pipelineKey := assets.RandomString(t, 10)
+	pipelineKey := sdk.RandomString(10)
 	pip := &sdk.Pipeline{
 		Name:       pipelineKey,
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, pip))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip, nil))
 
 	//4. Insert Application
-	appName := assets.RandomString(t, 10)
+	appName := sdk.RandomString(10)
 	app := &sdk.Application{
 		Name: appName,
 	}
-	test.NoError(t, application.Insert(db, proj, app))
+	test.NoError(t, application.Insert(api.mustDB(), api.Cache, proj, app, nil))
 
 	//5. Attach pipeline to application
-	_, err := application.AttachPipeline(db, app.ID, pip.ID)
+	_, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
 	//6. Prepare the run request
@@ -164,7 +135,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		"permApplicationName": app.Name,
 		"permPipelineKey":     pip.Name,
 	}
-	uri := router.getRoute("POST", runPipelineHandler, vars)
+	uri := router.GetRoute("POST", api.runPipelineHandler, vars)
 	test.NotEmpty(t, uri)
 
 	//8. Send the request
@@ -177,7 +148,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 
 	//8. Do the request
 	w := httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	//9. Check response
 	assert.Equal(t, 200, w.Code)
@@ -195,27 +166,28 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	assert.Equal(t, "NoEnv", pb.Environment.Name)
 
 	//9. Update build status to Success
-	err = pipeline.UpdatePipelineBuildStatusAndStage(db, &pb, sdk.StatusSuccess)
+	err = pipeline.UpdatePipelineBuildStatusAndStage(api.mustDB(), &pb, sdk.StatusSuccess)
 	test.NoError(t, err)
 
 	//10. Create another Pipeline
 	pip2 := &sdk.Pipeline{
-		Name:       assets.RandomString(t, 10),
+		Name:       sdk.RandomString(10),
 		Type:       sdk.BuildPipeline,
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip2)
+	err = pipeline.InsertPipeline(api.mustDB(), proj, pip2, u)
 	test.NoError(t, err)
 
 	//11. Insert another Application
 	app2 := &sdk.Application{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
-	err = application.Insert(db, proj, app2)
+	err = application.Insert(api.mustDB(), api.Cache, proj, app2, nil)
+	test.NoError(t, err)
 
 	//12. Attach pipeline to application
-	_, err = application.AttachPipeline(db, app2.ID, pip2.ID)
+	_, err = application.AttachPipeline(api.mustDB(), app2.ID, pip2.ID)
 	test.NoError(t, err)
 
 	//13. Prepare the pipelne trigger
@@ -231,7 +203,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 	}
 
 	//14. Insert the pipeline trigger
-	tx, _ := db.Begin()
+	tx, _ := api.mustDB().Begin()
 	defer tx.Rollback()
 	err = trigger.InsertTrigger(tx, &tigrou)
 	test.NoError(t, err)
@@ -254,7 +226,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 		"permApplicationName": app2.Name,
 		"permPipelineKey":     pip2.Name,
 	}
-	uri = router.getRoute("POST", runPipelineWithLastParentHandler, vars)
+	uri = router.GetRoute("POST", api.runPipelineWithLastParentHandler, vars)
 	test.NotEmpty(t, uri)
 
 	//17. Send the request
@@ -267,7 +239,7 @@ func Test_runPipelineWithLastParentHandler(t *testing.T) {
 
 	//18. Do the request
 	w = httptest.NewRecorder()
-	router.mux.ServeHTTP(w, req)
+	router.Mux.ServeHTTP(w, req)
 
 	//19. Check response
 	assert.Equal(t, 200, w.Code)

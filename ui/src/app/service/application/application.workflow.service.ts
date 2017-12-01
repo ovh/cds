@@ -1,13 +1,12 @@
 import {Injectable} from '@angular/core';
-import {Http, URLSearchParams, RequestOptions} from '@angular/http';
-import {Observable} from 'rxjs/Rx';
-import {Branch} from '../../model/repositories.model';
+import {Observable} from 'rxjs/Observable';
+import {Branch, Remote} from '../../model/repositories.model';
+import {HttpClient, HttpParams} from '@angular/common/http';
 
-declare var _: any;
 @Injectable()
 export class ApplicationWorkflowService {
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
     }
 
     /**
@@ -16,8 +15,20 @@ export class ApplicationWorkflowService {
      * @param appName Application Name
      * @returns {Observable<Array<Branch>>}
      */
-    getBranches(key: string, appName: string): Observable<Array<Branch>> {
-        return this._http.get('/project/' + key + '/application/' + appName + '/branches').map(res => res.json());
+    getBranches(key: string, appName: string, remote: string = ''): Observable<Array<Branch>> {
+        let params = new HttpParams();
+        params = params.append('remote', remote);
+        return this._http.get<Array<Branch>>('/project/' + key + '/application/' + appName + '/branches', {params});
+    }
+
+    /**
+     * Get the list of remotes for the application
+     * @param key Project unique key
+     * @param appName Application Name
+     * @returns {Observable<Array<Branch>>}
+     */
+    getRemotes(key: string, appName: string): Observable<Array<Remote>> {
+        return this._http.get<Array<Remote>>('/project/' + key + '/application/' + appName + '/remotes');
     }
 
     /**
@@ -27,10 +38,10 @@ export class ApplicationWorkflowService {
      * @param branchName branch name
      * @returns {Observable<Array<number>>}
      */
-    getVersions(key: string, appName: string, branchName: string): Observable<Array<number>> {
-        let options = new RequestOptions();
-        options.params = new URLSearchParams();
-        options.params.set('branch', branchName);
-        return this._http.get('/project/' + key + '/application/' + appName + '/version', options).map(res => res.json());
+    getVersions(key: string, appName: string, branchName: string, remote: string = ''): Observable<Array<number>> {
+        let params = new HttpParams();
+        params = params.append('remote', remote);
+        params = params.append('branch', branchName);
+        return this._http.get<Array<number>>('/project/' + key + '/application/' + appName + '/version', {params});
     }
 }

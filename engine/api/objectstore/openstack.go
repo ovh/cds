@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/url"
@@ -22,7 +23,7 @@ type OpenstackStore struct {
 }
 
 // NewOpenstackStore create a new ObjectStore with openstack driver and check configuration
-func NewOpenstackStore(address, user, password, tenant, region, containerprefix string) (*OpenstackStore, error) {
+func NewOpenstackStore(c context.Context, address, user, password, tenant, region, containerprefix string) (*OpenstackStore, error) {
 	log.Info("Objectstore> Initialize Swift(Openstack) driver on address: %s, tenant: %s, region: %s, prefix: %s", address, tenant, region, containerprefix)
 	if address == "" {
 		return nil, fmt.Errorf("artifact storage is openstack, but flag --artifact_address is not provided")
@@ -54,7 +55,7 @@ func NewOpenstackStore(address, user, password, tenant, region, containerprefix 
 	if err != nil {
 		return nil, err
 	}
-	go ops.refreshTokenRoutine()
+	go ops.refreshTokenRoutine(c)
 
 	log.Debug("NewOpenstackStore> Got token %dchar at %s\n", len(ops.token.ID), ops.endpoint)
 	return ops, nil
@@ -78,7 +79,7 @@ func (ops *OpenstackStore) Store(o Object, data io.ReadCloser) (string, error) {
 	container := ops.containerprefix + o.GetPath()
 	object := o.GetName()
 
-	ops.escape(container, object)
+	escape(container, object)
 
 	log.Debug("OpenstackStore> Storing /%s/%s\n", container, object)
 
@@ -103,7 +104,7 @@ func (ops *OpenstackStore) Store(o Object, data io.ReadCloser) (string, error) {
 func (ops *OpenstackStore) Fetch(o Object) (io.ReadCloser, error) {
 	container := ops.containerprefix + o.GetPath()
 	object := o.GetName()
-	ops.escape(container, object)
+	escape(container, object)
 
 	log.Debug("OpenstackStore> Fetching /%s/%s\n", container, object)
 
@@ -115,7 +116,7 @@ func (ops *OpenstackStore) Fetch(o Object) (io.ReadCloser, error) {
 	return data, nil
 }
 
-func (ops *OpenstackStore) escape(container, object string) (string, string) {
+func escape(container, object string) (string, string) {
 	container = url.QueryEscape(container)
 	container = strings.Replace(container, "/", "-", -1)
 	object = url.QueryEscape(object)

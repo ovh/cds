@@ -1,6 +1,7 @@
-package main
+package api
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -10,16 +11,23 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
+
+func deleteUserPermissionCache(ctx context.Context, store cache.Store) {
+	if getUser(ctx) != nil {
+		k := cache.Key("users", getUser(ctx).Username, "permissions")
+		store.Delete(k)
+	}
+}
 
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
 func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status int) error {
 	b, e := json.Marshal(data)
 	if e != nil {
-		log.Warning("WriteJSON> unable to marshal : %s", e)
-		return sdk.ErrUnknownError
+		return sdk.WrapError(e, "WriteJSON> unable to marshal : %s", e)
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -41,36 +49,21 @@ func UnmarshalBody(r *http.Request, i interface{}) error {
 	return nil
 }
 
-func (r *Router) getRoute(method string, handler Handler, vars map[string]string) string {
-	sf1 := reflect.ValueOf(handler)
+// GetRoute returns the routes given a handler
+func (r *Router) GetRoute(method string, handler HandlerFunc, vars map[string]string) string {
+	p1 := reflect.ValueOf(handler()).Pointer()
 	var url string
-	for uri, routerConfig := range mapRouterConfigs {
-		if strings.HasPrefix(uri, r.prefix) {
-			switch method {
-			case "GET":
-				sf2 := reflect.ValueOf(routerConfig.get)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
-			case "POST":
-				sf2 := reflect.ValueOf(routerConfig.post)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
-			case "PUT":
-				sf2 := reflect.ValueOf(routerConfig.put)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
-			case "DELETE":
-				sf2 := reflect.ValueOf(routerConfig.deleteHandler)
-				if sf1.Pointer() == sf2.Pointer() {
-					url = uri
-					break
-				}
+	for uri, routerConfig := range r.mapRouterConfigs {
+		rc := routerConfig.config[method]
+		if rc == nil {
+			continue
+		}
+
+		if strings.HasPrefix(uri, r.Prefix) {
+			sf2 := reflect.ValueOf(rc.Handler)
+			if p1 == sf2.Pointer() {
+				url = uri
+				break
 			}
 		}
 	}
@@ -97,6 +90,11 @@ func FormBool(r *http.Request, s string) bool {
 	}
 }
 
+// FormString return a string
+func FormString(r *http.Request, s string) string {
+	return r.FormValue(s)
+}
+
 // requestVarInt return int value for a var in Request
 func requestVarInt(r *http.Request, s string) (int64, error) {
 	vars := mux.Vars(r)
@@ -111,4 +109,16 @@ func requestVarInt(r *http.Request, s string) (int64, error) {
 		return id, sdk.WrapError(sdk.ErrWrongRequest, "requestVarInt> %s is not an integer: %s", s, idString)
 	}
 	return id, nil
+}
+
+func translate(r *http.Request, msgList []sdk.Message) []string {
+	al := r.Header.Get("Accept-Language")
+	msgListString := []string{}
+	for _, m := range msgList {
+		s := m.String(al)
+		if s != "" {
+			msgListString = append(msgListString, s)
+		}
+	}
+	return msgListString
 }

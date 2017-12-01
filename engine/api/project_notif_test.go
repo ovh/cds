@@ -1,13 +1,11 @@
-package main
+package api
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/test"
@@ -17,42 +15,39 @@ import (
 )
 
 func Test_getProjectNotificationsHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_getProjectNotificationsHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
 
 	// Create project
-	p := assets.InsertTestProject(t, db, strings.ToUpper(assets.RandomString(t, 4)), assets.RandomString(t, 10))
-	test.NoError(t, group.InsertUserInGroup(db, p.ProjectGroups[0].Group.ID, u.ID, true))
+	p := assets.InsertTestProject(t, db, api.Cache, strings.ToUpper(sdk.RandomString(4)), sdk.RandomString(10), u)
+	test.NoError(t, group.InsertUserInGroup(api.mustDB(), p.ProjectGroups[0].Group.ID, u.ID, true))
 
-	app := &sdk.Application{Name: assets.RandomString(t, 10)}
-	err := application.Insert(db, p, app)
+	app := &sdk.Application{Name: sdk.RandomString(10)}
+	err := application.Insert(api.mustDB(), api.Cache, p, app, u)
 	test.NoError(t, err)
-	test.NoError(t, group.InsertGroupInApplication(db, app.ID, p.ProjectGroups[0].Group.ID, 7))
+	test.NoError(t, group.InsertGroupInApplication(api.mustDB(), app.ID, p.ProjectGroups[0].Group.ID, 7))
 
 	pip := &sdk.Pipeline{
-		Name:      assets.RandomString(t, 10),
+		Name:      sdk.RandomString(10),
 		Type:      "build",
 		ProjectID: p.ID,
 	}
-	err = pipeline.InsertPipeline(db, pip)
+	err = pipeline.InsertPipeline(api.mustDB(), p, pip, nil)
 	test.NoError(t, err)
-	test.NoError(t, group.InsertGroupInPipeline(db, pip.ID, p.ProjectGroups[0].Group.ID, 7))
+	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, p.ProjectGroups[0].Group.ID, 7))
 
-	_, err = application.AttachPipeline(db, app.ID, pip.ID)
+	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip.ID)
 	test.NoError(t, err)
 
-	appPips, err := application.GetAllPipelinesByID(db, app.ID)
+	appPips, err := application.GetAllPipelinesByID(api.mustDB(), app.ID)
 	test.NoError(t, err)
 
 	notifsToAdd := []sdk.UserNotification{}
@@ -79,7 +74,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 		"key": p.Key,
 		"permApplicationName": app.Name,
 	}
-	route := router.getRoute("POST", addNotificationsHandler, vars)
+	route := router.GetRoute("POST", api.addNotificationsHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_getProjectNotificationsHandler", "POST", route, notifsToAdd).Headers(headers).Checkers(iffy.ExpectStatus(200))
 	tester.Run()
@@ -88,7 +83,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 	vars = map[string]string{
 		"permProjectKey": p.Key,
 	}
-	route = router.getRoute("GET", getProjectNotificationsHandler, vars)
+	route = router.GetRoute("GET", api.getProjectNotificationsHandler, vars)
 	tester.AddCall("Test_getProjectNotificationsHandler", "GET", route, nil).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.ExpectListLength(1), iffy.DumpResponse(t))
 	tester.Run()
 

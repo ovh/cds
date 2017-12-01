@@ -1,0 +1,16 @@
+  - action:
+      fill:
+      - find: '#WorkflowPipelineSelect input.search'
+        text: '{{.ui.pipeline}}'
+      - find: input[name="name"]
+        text: '{{.ui.workflow}}'
+      - find: 'textarea[name="description"]'
+        text: 'Workflow e2e'
+    screenshot: e2e_4_workflow_create_1.png
+  - action:
+      click:
+         find: button.ui.green
+         wait: 2
+    screenshot: e2e_4_workflow_create_2_submit.png
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/workflow/{{.ui.workflow}}

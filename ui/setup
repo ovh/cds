@@ -1,19 +1,19 @@
 #!/bin/sh
 
-cd /data
+cd /app
 
 if [ ! -z ${BASE_URL} ]; then
     echo "replace base url with ${BASE_URL}"
-    sed -i "s#base.*href.*#base href=\"${BASE_URL}\"\>#" index.html
+    sed -i "s#base href=\"/\"#base href=\"${BASE_URL}\"#g" index.html
 fi;
 
 cd assets
-if [ ! -z ${BUILD_NUMBER} ]; then
+if [ ! -z ${VERSION} ]; then
     echo "replace base url with ${VERSION}"
-    sed -i "s#VERSION#$BUILD_NUMBER#" version.json
+    sed -i "s#0#$VERSION#" version.json
 fi;
 
 echo "################"
 echo "S.T.A.R.T.I.N.G"
 echo "################"
-cd /data && ./caddy
+cd /app && ./caddy

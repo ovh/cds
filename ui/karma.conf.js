@@ -7,7 +7,6 @@ module.exports = function (config) {
         frameworks: ['jasmine', '@angular/cli'],
         plugins: [
             require('karma-jasmine'),
-            require('karma-phantomjs-launcher'),
             require('karma-chrome-launcher'),
             require('karma-coverage-istanbul-reporter'),
             require('karma-junit-reporter'),
@@ -40,7 +39,7 @@ module.exports = function (config) {
         },
         reporters: config.angularCli && config.angularCli.codeCoverage
             ? ['progress', 'coverage-istanbul', 'junit']
-            : ['progress', 'kjhtml'],
+            : ['progress'],
         junitReporter: {
             outputDir: 'tests', // results will be saved as $outputDir/$browserName.xml
             outputFile: 'results.xml', // if included, results will be saved as $outputDir/$browserName/$outputFile
@@ -50,12 +49,24 @@ module.exports = function (config) {
         colors: true,
         logLevel: config.LOG_INFO,
         autoWatch: true,
-        //browsers: ['Chrome'],
-        browsers: ['PhantomJS'],
+        browsers: ['ChromeHeadless'],
         browserNoActivityTimeout: 60000,
         singleRun: false,
         phantomjsLauncher: {
             exitOnResourceError: false
-        }
+        },
+        customLaunchers: {
+            ChromeHeadless: {
+                base: 'Chrome',
+                flags: [
+                    '--no-sandbox',
+                    // See https://chromium.googlesource.com/chromium/src/+/lkgr/headless/README.md
+                    '--headless',
+                    '--disable-gpu',
+                    // Without a remote debugging port, Google Chrome exits immediately.
+                    ' --remote-debugging-port=9222',
+                ]
+            }
+        },
     });
 };

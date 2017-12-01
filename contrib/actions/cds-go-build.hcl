@@ -16,7 +16,7 @@ requirements = {
 
 // Parameters
 parameters = {
-	 "package" = {
+	"package" = {
 		type = "string"
 		description = "go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar"
 		value = ""
@@ -30,6 +30,11 @@ parameters = {
 		type = "string"
 		description = "flags for go build. Put -ldflags \"-X main.xyz=abc\" for go build -ldflags \"-X main.xyz=abc\""
 		value = ""
+	}
+	"gopath" = {
+		type = "string"
+		description = "set a $GOPATH. If empty, this action try to get env $GOPATH. If $GOPATH is empty, action will set it to $HOME/go"
+		value = "$HOME/go"
 	}
 	"os" = {
 		type = "list"
@@ -45,6 +50,11 @@ parameters = {
 		type = "boolean"
 		description = "Upload Binary as CDS Artifact"
 		value = "true"
+	}
+	"cgoDisabled" = {
+		type = "boolean"
+		description = "if true (checked) -> export CGO_ENABLED=0 before go build"
+		value = "false"
 	}
 	"runGoGet" = {
 		type = "boolean"
@@ -71,6 +81,19 @@ set -e
 
 export GOOS="{{.os}}"
 export GOARCH="{{.architecture}}"
+export GOPATH_SETTED="{{.gopath}}"
+
+if [ "x${GOPATH_SETTED}" == "x" ]; then
+	if [ "x${GOPATH}" == "x" ]; then
+		echo "Using default GOPATH setted to $HOME/go"
+		export GOPATH=$HOME/go
+	else
+		echo "Using worker environment GOPATH var setted to ${GOPATH}"
+	fi;
+else
+	echo "Using user GOPATH setted to ${GOPATH_SETTED}"
+	export GOPATH=${GOPATH_SETTED}
+fi;
 
 if [ ! -d "${GOPATH}/src/{{.package}}" ]; then
   echo "directory '${GOPATH}/src/{{.package}}' does not exist"
@@ -93,6 +116,11 @@ fi;
 
 if [ "xtrue" == "x${{.detectRaceCondition}}" ]; then
   GOARGS="${{GOARGS}} -race"
+fi;
+
+if [ "xtrue" == "x{{.cgoDisabled}}" ]; then
+  export CGO_ENABLED=0
+  echo "run with CGO_ENABLED=0";
 fi;
 
 if [ "x" != "x{{.preRun}}" ]; then

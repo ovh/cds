@@ -11,19 +11,31 @@ import (
 
 // Project represent a team with group of users and pipelines
 type Project struct {
-	ID            int64                 `json:"-" yaml:"-" db:"id"`
-	Key           string                `json:"key" yaml:"key" db:"projectkey"`
-	Name          string                `json:"name" yaml:"name" db:"name"`
-	Pipelines     []Pipeline            `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"`
-	Applications  []Application         `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"`
-	ProjectGroups []GroupPermission     `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"`
-	Variable      []Variable            `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"`
-	Environments  []Environment         `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"`
-	Permission    int                   `json:"permission"  yaml:"-" db:"-"`
-	Created       time.Time             `json:"created"  yaml:"created" db:"created"`
-	LastModified  time.Time             `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
-	ReposManager  []RepositoriesManager `json:"repositories_manager"  yaml:"-" db:"-"`
-	Metadata      Metadata              `json:"metadata" yaml:"metadata" db:"-"`
+	ID                int64              `json:"-" yaml:"-" db:"id" cli:"-"`
+	Key               string             `json:"key" yaml:"key" db:"projectkey" cli:"key,key"`
+	Name              string             `json:"name" yaml:"name" db:"name" cli:"name"`
+	Workflows         []Workflow         `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
+	WorkflowNames     []string           `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
+	Pipelines         []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
+	PipelineNames     []string           `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
+	Applications      []Application      `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
+	ApplicationNames  []string           `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
+	ProjectGroups     []GroupPermission  `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
+	Variable          []Variable         `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
+	Environments      []Environment      `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`
+	Permission        int                `json:"permission"  yaml:"-" db:"-"  cli:"-"`
+	Created           time.Time          `json:"created"  yaml:"created" db:"created" `
+	LastModified      time.Time          `json:"last_modified"  yaml:"last_modified" db:"last_modified"`
+	Metadata          Metadata           `json:"metadata" yaml:"metadata" db:"-" cli:"-"`
+	WorkflowMigration string             `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
+	Keys              []ProjectKey       `json:"keys" yaml:"keys" db:"-" cli:"-"`
+	VCSServers        []ProjectVCSServer `json:"vcs_servers" yaml:"vcs_servers" db:"-" cli:"-"`
+}
+
+// ProjectVCSServer represents associations between a project and a vcs server
+type ProjectVCSServer struct {
+	Name string            `json:"name" yaml:"name" db:"-" cli:"-"`
+	Data map[string]string `json:"-" yaml:"data" db:"-" cli:"-"`
 }
 
 // ProjectVariableAudit represents an audit on a project variable
@@ -41,18 +53,44 @@ type ProjectVariableAudit struct {
 // Metadata represents metadata
 type Metadata map[string]string
 
-//ProjectLastUpdates update times of project, application and pipelines
-type ProjectLastUpdates struct {
-	Key          string `json:"key"`
+//LastModification is stored in cache and used for ProjectLastUpdates computing
+type LastModification struct {
+	Key          string `json:"key,omitempty"`
+	Name         string `json:"name"`
+	Username     string `json:"username"`
 	LastModified int64  `json:"last_modified"`
-	Applications []struct {
-		Name         string `json:"name"`
-		LastModified int64  `json:"last_modified"`
-	} `json:"applications"`
-	Pipelines []struct {
-		Name         string `json:"name"`
-		LastModified int64  `json:"last_modified"`
-	} `json:"pipelines"`
+	Type         string `json:"type,omitempty"`
+}
+
+const (
+	// ApplicationLastModificationType represent key for last update event about application
+	ApplicationLastModificationType = "application"
+	// PipelineLastModificationType represent key for last update event about pipeline
+	PipelineLastModificationType = "pipeline"
+	// WorkflowLastModificationType represent key for last update event about workflow
+	WorkflowLastModificationType = "workflow"
+	// ProjectLastModificationType represent key for last update event about project
+	ProjectLastModificationType = "project"
+	// ProjectPipelineLastModificationType represent key for last update event about project.pipeline (rename, delete or add a pipeline)
+	ProjectPipelineLastModificationType = "project.pipeline"
+	// ProjectApplicationLastModificationType represent key for last update event about project.application (rename, delete or add an application)
+	ProjectApplicationLastModificationType = "project.application"
+	// ProjectEnvironmentLastModificationType represent key for last update event about project.environment (rename, delete or add an environment)
+	ProjectEnvironmentLastModificationType = "project.environment"
+	// ProjectWorkflowLastModificationType represent key for last update event about project.workflow (rename, delete or add a workflow)
+	ProjectWorkflowLastModificationType = "project.workflow"
+	// ProjectVariableLastModificationType represent key for last update event about project.variable (rename, delete or add a variable)
+	ProjectVariableLastModificationType = "project.variable"
+)
+
+//ProjectLastUpdates update times of project, application and pipelines
+// Deprecated
+type ProjectLastUpdates struct {
+	LastModification
+	Applications []LastModification `json:"applications"`
+	Pipelines    []LastModification `json:"pipelines"`
+	Environments []LastModification `json:"environments"`
+	Workflows    []LastModification `json:"workflows"`
 }
 
 // ProjectKeyPattern  pattern for project key
@@ -68,7 +106,6 @@ func NewProject(key string) *Project {
 
 // RemoveProject call api to delete a project
 func RemoveProject(key string) error {
-
 	url := fmt.Sprintf("/project/%s", key)
 	data, code, err := Request("DELETE", url, nil)
 	if err != nil {
@@ -112,7 +149,6 @@ func UpdateProject(proj *Project) error {
 
 // RenameProject call API to update project
 func RenameProject(key, newName string) error {
-
 	p := NewProject(key)
 	p.Name = newName
 
@@ -140,7 +176,6 @@ func RenameProject(key, newName string) error {
 
 // AddProject creates a new project available only to creator by default
 func AddProject(name, key, groupName string) error {
-
 	regexp := regexp.MustCompile(ProjectKeyPattern)
 	if !regexp.MatchString(key) {
 		return fmt.Errorf("project key '%s' must contain only upper-case alphanumerical characters", key)
@@ -179,7 +214,6 @@ func AddProject(name, key, groupName string) error {
 
 // RemoveGroupFromProject  call api to remove a group from the project
 func RemoveGroupFromProject(projectKey, groupname string) error {
-
 	path := fmt.Sprintf("/project/%s/group/%s", projectKey, groupname)
 	data, code, err := Request("DELETE", path, nil)
 	if err != nil {
@@ -199,7 +233,6 @@ func RemoveGroupFromProject(projectKey, groupname string) error {
 
 // UpdateGroupInProject  call api to update group permission on project
 func UpdateGroupInProject(projectKey, groupname string, permission int) error {
-
 	if permission < 4 || permission > 7 {
 		return fmt.Errorf("Permission should be between 4-7 \n")
 	}
@@ -428,6 +461,15 @@ func WithEnvironments() Mod {
 	return f
 }
 
+// WithEnvs is a func parameter of GetProject
+func WithEnvs() RequestModifier {
+	return func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withEnvironments", "true")
+		r.URL.RawQuery = q.Encode()
+	}
+}
+
 // WithPipelines is a func parameter of ListProject
 func WithPipelines() Mod {
 	f := func(s string) string {
@@ -484,14 +526,22 @@ func WithApplicationHistory(length int) Mod {
 }
 
 // GetProject retrieves project informations from CDS
-func GetProject(key string, mods ...Mod) (Project, error) {
+func GetProject(key string, mods ...RequestModifier) (Project, error) {
 	var p Project
 	path := fmt.Sprintf("/project/%s", key)
-	for _, f := range mods {
-		path = f(path)
+
+	if len(mods) == 0 {
+		mods = append(mods, func(r *http.Request) {
+			q := r.URL.Query()
+			q.Set("withApplications", "true")
+			q.Set("withPipelines", "true")
+			q.Set("withEnvironments", "true")
+			q.Set("withGroups", "true")
+			r.URL.RawQuery = q.Encode()
+		})
 	}
 
-	data, _, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil, mods...)
 	if err != nil {
 		return p, err
 	}

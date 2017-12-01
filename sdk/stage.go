@@ -8,16 +8,31 @@ import (
 
 // Stage Pipeline step that parallelize actions by order
 type Stage struct {
-	ID                int64              `json:"id" yaml:"pipeline_stage_id"`
-	Name              string             `json:"name"`
-	PipelineID        int64              `json:"-" yaml:"-"`
-	BuildOrder        int                `json:"build_order"`
-	Enabled           bool               `json:"enabled"`
-	PipelineBuildJobs []PipelineBuildJob `json:"builds"`
-	Prerequisites     []Prerequisite     `json:"prerequisites"`
-	LastModified      int64              `json:"last_modified"`
-	Jobs              []Job              `json:"jobs"`
-	Status            Status             `json:"status"`
+	ID                int64                  `json:"id" yaml:"pipeline_stage_id"`
+	Name              string                 `json:"name"`
+	PipelineID        int64                  `json:"-" yaml:"-"`
+	BuildOrder        int                    `json:"build_order"`
+	Enabled           bool                   `json:"enabled"`
+	PipelineBuildJobs []PipelineBuildJob     `json:"builds"`
+	RunJobs           []WorkflowNodeJobRun   `json:"run_jobs"`
+	Prerequisites     []Prerequisite         `json:"prerequisites"`
+	LastModified      int64                  `json:"last_modified"`
+	Jobs              []Job                  `json:"jobs"`
+	Status            Status                 `json:"status"`
+	Warnings          []PipelineBuildWarning `json:"warnings"`
+}
+
+// Conditions returns stage prerequisites as a set of WorkflowTriggerCondition regex
+func (s *Stage) Conditions() []WorkflowNodeCondition {
+	res := []WorkflowNodeCondition{}
+	for _, p := range s.Prerequisites {
+		res = append(res, WorkflowNodeCondition{
+			Value:    p.ExpectedValue,
+			Variable: p.Parameter,
+			Operator: WorkflowConditionsOperatorRegex,
+		})
+	}
+	return res
 }
 
 // NewStage instanciate a new Stage
@@ -26,23 +41,6 @@ func NewStage(name string) *Stage {
 		Name: name,
 	}
 	return s
-}
-
-// JSON return the marshalled string of Stage object
-func (s *Stage) JSON() string {
-
-	data, err := json.Marshal(s)
-	if err != nil {
-		fmt.Printf("Action.JSON: cannot marshal: %s\n", err)
-		return ""
-	}
-
-	return string(data)
-}
-
-// FromJSON unmarshal given json data into Stage object
-func (s *Stage) FromJSON(data []byte) (*Stage, error) {
-	return s, json.Unmarshal(data, &s)
 }
 
 // AddStage creates a new stage

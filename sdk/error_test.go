@@ -8,7 +8,7 @@ import (
 func TestErrorIs(t *testing.T) {
 	type args struct {
 		err error
-		t   *Error
+		t   Error
 	}
 	tests := []struct {
 		name string

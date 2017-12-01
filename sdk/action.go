@@ -9,16 +9,18 @@ import (
 
 // Action is the base element of CDS pipeline
 type Action struct {
-	ID           int64         `json:"id" yaml:"-"`
-	Name         string        `json:"name"`
-	Type         string        `json:"type" yaml:"-"` // Source - Build - Packaging - Deployment
-	Description  string        `json:"description" yaml:"desc,omitempty"`
-	Requirements []Requirement `json:"requirements"`
-	Parameters   []Parameter   `json:"parameters"`
-	Actions      []Action      `json:"actions" yaml:"actions,omitempty"`
-	Enabled      bool          `json:"enabled" yaml:"-"`
-	Final        bool          `json:"final" yaml:"-"`
-	LastModified int64         `json:"last_modified"`
+	ID             int64         `json:"id" yaml:"-"`
+	Name           string        `json:"name" cli:"name"`
+	Type           string        `json:"type" yaml:"-" cli:"type"`
+	Description    string        `json:"description" yaml:"desc,omitempty"`
+	Requirements   []Requirement `json:"requirements"`
+	Parameters     []Parameter   `json:"parameters"`
+	Actions        []Action      `json:"actions" yaml:"actions,omitempty"`
+	Enabled        bool          `json:"enabled" yaml:"-"`
+	Deprecated     bool          `json:"deprecated" yaml:"-"`
+	Optional       bool          `json:"optional" yaml:"-"`
+	AlwaysExecuted bool          `json:"always_executed" yaml:"-"`
+	LastModified   int64         `json:"last_modified" cli:"modified"`
 }
 
 // ActionAudit Audit on action
@@ -66,49 +68,11 @@ const (
 // Builtin Action
 const (
 	ScriptAction   = "Script"
-	NotifAction    = "Notif"
 	JUnitAction    = "JUnit"
 	GitCloneAction = "GitClone"
+	GitTagAction   = "GitTag"
+	ReleaseAction  = "Release"
 )
-
-const (
-	//BinaryRequirement refers to the need to a specific binary on host running the action
-	BinaryRequirement = "binary"
-	// NetworkAccessRequirement refers to the need of an opened network acces to given endpoint.
-	NetworkAccessRequirement = "network"
-	// ModelRequirement refers to the need fo a specific model
-	ModelRequirement = "model"
-	// HostnameRequirement checks the hostname of the worker
-	HostnameRequirement = "hostname"
-	//PluginRequirement installs & checks plugins of the worker
-	PluginRequirement = "plugin"
-	//ServiceRequirement links a service to a worker
-	ServiceRequirement = "service"
-	//MemoryRequirement set memory limit on a container
-	MemoryRequirement = "memory"
-)
-
-var (
-	// AvailableRequirementsType List of all requirements
-	AvailableRequirementsType = []string{
-		BinaryRequirement,
-		NetworkAccessRequirement,
-		ModelRequirement,
-		HostnameRequirement,
-		PluginRequirement,
-		ServiceRequirement,
-		MemoryRequirement,
-	}
-)
-
-// Requirement can be :
-// - a binary "which /usr/bin/docker"
-// - a network access "telnet google.com 443"
-type Requirement struct {
-	Name  string `json:"name"`
-	Type  string `json:"type" yaml:"-"`
-	Value string `json:"value" yaml:"-"`
-}
 
 // NewAction instanciate a new Action
 func NewAction(name string) *Action {
@@ -146,18 +110,6 @@ func NewJoinedAction(actionName string, parameters []Parameter) (*Action, error)
 	return NewAction(actionName).Add(a), nil
 }
 
-// Requirement add given requirement to Action
-func (a *Action) Requirement(name string, t string, value string) *Action {
-	r := Requirement{
-		Name:  name,
-		Type:  t,
-		Value: value,
-	}
-
-	a.Requirements = append(a.Requirements, r)
-	return a
-}
-
 // Parameter add given parameter to Action
 func (a *Action) Parameter(p Parameter) *Action {
 	a.Parameters = append(a.Parameters, p)
@@ -168,23 +120,6 @@ func (a *Action) Parameter(p Parameter) *Action {
 func (a *Action) Add(child Action) *Action {
 	a.Actions = append(a.Actions, child)
 	return a
-}
-
-// JSON return the marshalled string of Action object
-func (a *Action) JSON() string {
-
-	data, err := json.Marshal(a)
-	if err != nil {
-		fmt.Printf("Action.JSON: cannot marshal: %s\n", err)
-		return ""
-	}
-
-	return string(data)
-}
-
-// FromJSON unmarshal given json data into Action object
-func (a *Action) FromJSON(data []byte) (*Action, error) {
-	return a, json.Unmarshal(data, &a)
 }
 
 // AddAction creates a new action available only to creator by default
@@ -383,24 +318,4 @@ func ImportAction(action *Action) (*Action, error) {
 		return nil, err
 	}
 	return &act, nil
-}
-
-//GetRequirements returns the list of all used requirements
-func GetRequirements() ([]Requirement, error) {
-	path := "/action/requirement"
-
-	data, code, err := Request("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	var req []Requirement
-	err = json.Unmarshal(data, &req)
-	if err != nil {
-		return nil, err
-	}
-	return req, nil
 }

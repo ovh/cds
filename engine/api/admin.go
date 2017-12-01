@@ -1,35 +1,39 @@
-package main
+package api
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/go-gorp/gorp"
-
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
-	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk"
 )
 
-func adminTruncateWarningsHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	if _, err := db.Exec("delete from warning"); err != nil {
-		log.Warning("adminTruncateWarningsHandler> Unable to truncate warning : %s", err)
-		return err
+func (api *API) adminTruncateWarningsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if _, err := api.mustDB().Exec("delete from warning"); err != nil {
+			return sdk.WrapError(err, "adminTruncateWarningsHandler> Unable to truncate warning ")
+		}
+		return nil
 	}
-	return nil
 }
 
-func postAdminMaintenanceHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	cache.SetWithTTL("maintenance", true, -1)
-	return nil
+func (api *API) postAdminMaintenanceHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		api.Cache.SetWithTTL("maintenance", true, -1)
+		return nil
+	}
 }
 
-func getAdminMaintenanceHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	var m bool
-	cache.Get("maintenance", &m)
-	return WriteJSON(w, r, m, http.StatusOK)
+func (api *API) getAdminMaintenanceHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		var m bool
+		api.Cache.Get("maintenance", &m)
+		return WriteJSON(w, r, m, http.StatusOK)
+	}
 }
 
-func deleteAdminMaintenanceHandler(w http.ResponseWriter, r *http.Request, db *gorp.DbMap, c *context.Ctx) error {
-	cache.Delete("maintenance")
-	return nil
+func (api *API) deleteAdminMaintenanceHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		api.Cache.Delete("maintenance")
+		return nil
+	}
 }

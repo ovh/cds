@@ -8,8 +8,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // DeletePipelineActionByStage Delete all action from a stage
@@ -206,7 +206,7 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 			var found bool
 			for x := range step.Parameters {
 				sp := &step.Parameters[x]
-				if strings.ToLower(sp.Name) == strings.ToLower(a.Name) {
+				if strings.ToLower(sp.Name) == strings.ToLower(ap.Name) {
 					found = true
 					break
 				}
@@ -226,4 +226,19 @@ func CheckJob(db gorp.SqlExecutor, job *sdk.Job) error {
 		return errs
 	}
 	return nil
+}
+
+// GetPipelineIDFromJoinedActionID returns the pipeline id from any joined action
+func GetPipelineIDFromJoinedActionID(db gorp.SqlExecutor, id int64) (int64, error) {
+	query := `
+	SELECT 	pipeline_stage.pipeline_id
+	FROM 	pipeline_action, pipeline_stage
+	WHERE 	pipeline_action.pipeline_stage_id = pipeline_stage.id
+	AND 	pipeline_action.action_id = $1
+	`
+	id, err := db.SelectInt(query, id)
+	if err != nil {
+		return 0, sdk.WrapError(err, "GetPipelineIDFromJoinedActionID")
+	}
+	return id, nil
 }

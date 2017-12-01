@@ -10,6 +10,7 @@ import {ApplicationPipelineService} from '../../../../service/application/pipeli
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {ApplicationRunModule} from '../../application.run.module';
 import {SharedModule} from '../../../../shared/shared.module';
+import {DurationService} from '../../../../shared/duration/duration.service';
 import {StepLogComponent} from './step.log.component';
 
 describe('App: CDS', () => {
@@ -27,6 +28,7 @@ describe('App: CDS', () => {
                 AuthentificationStore,
                 TranslateLoader,
                 TranslateService,
+                DurationService,
                 TranslateParser
             ],
             imports : [
@@ -50,4 +52,3 @@ describe('App: CDS', () => {
         expect(app).toBeTruthy();
     }));
 });
-

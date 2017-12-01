@@ -13,9 +13,8 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var apiURL string
@@ -73,7 +72,7 @@ func UpdateHook(db gorp.SqlExecutor, h sdk.Hook) error {
 
 // InsertHook add link between git repository and pipeline in database
 func InsertHook(db gorp.SqlExecutor, h *sdk.Hook) error {
-	query := `INSERT INTO hook (pipeline_id, kind, host, project, repository, application_id,enabled, uid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
+	query := `INSERT INTO hook (pipeline_id, kind, host, project, repository, application_id, enabled, uid) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`
 
 	// Generate UID
 	uid, err := generateHash()
@@ -93,9 +92,9 @@ func InsertHook(db gorp.SqlExecutor, h *sdk.Hook) error {
 // LoadHook loads a single hook
 func LoadHook(db gorp.SqlExecutor, id int64) (sdk.Hook, error) {
 	h := sdk.Hook{ID: id}
-	query := `SELECT application_id, pipeline_id, kind, host, project, repository, enabled FROM hook WHERE id = $1`
+	query := `SELECT uid, application_id, pipeline_id, kind, host, project, repository, enabled FROM hook WHERE id = $1`
 
-	err := db.QueryRow(query, id).Scan(&h.ApplicationID, &h.Pipeline.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.Enabled)
+	err := db.QueryRow(query, id).Scan(&h.UID, &h.ApplicationID, &h.Pipeline.ID, &h.Kind, &h.Host, &h.Project, &h.Repository, &h.Enabled)
 	if err != nil {
 		return h, err
 	}
@@ -239,122 +238,81 @@ func generateHash() (string, error) {
 
 // DeleteBranchBuilds deletes all builds related to given branch in given applications in pipeline_build
 func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) error {
-
 	for i := range hooks {
-		err := deleteBranchBuilds(db, hooks[i].ApplicationID, branch)
-		if err != nil {
-			log.Warning("DeleteBranchBuilds> Cannot delete branch builds for branch %s in %d\n", branch, hooks[i].ApplicationID)
+		if err := pipeline.DeleteBranchBuilds(db, hooks[i].ApplicationID, branch); err != nil {
+			return sdk.WrapError(err, "DeleteBranchBuilds> Cannot delete branch builds for branch %s in %d", branch, hooks[i].ApplicationID)
 		}
 	}
-	return nil
-}
-
-func deleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
-
-	pbs, errPB := pipeline.LoadPipelineBuildByApplicationAndBranch(db, appID, branch)
-	if errPB != nil {
-		return errPB
-	}
-
-	// Disabled building worker
-	for _, pb := range pbs {
-		if pb.Status != sdk.StatusBuilding {
-			continue
-		}
-		for _, s := range pb.Stages {
-			if s.Status != sdk.StatusBuilding {
-				continue
-			}
-			for _, pbJob := range s.PipelineBuildJobs {
-				if err := worker.DisableBuildingWorker(db, pbJob.ID); err != nil {
-					log.Warning("deleteBranchBuilds> Cannot disabled worker")
-					return err
-				}
-			}
-		}
-
-		// Stop building pipeline
-		if err := pipeline.StopPipelineBuild(db, &pb); err != nil {
-			log.Warning("deleteBranchBuilds> Cannot stop pipeline")
-			continue
-		}
-
-	}
-	// Now select all related build in pipeline build
-	query := `SELECT id FROM pipeline_build WHERE vcs_changes_branch = $1 AND application_id = $2`
-	rows, err := db.Query(query, branch, appID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			return err
-		}
-
-		if err := pipeline.DeletePipelineBuildByID(db, id); err != nil {
-			log.Warning("deleteBranchBuilds> Cannot delete PipelineBuild %d: %s\n", id, err)
-		}
-	}
-	rows.Close()
-
 	return nil
 }
 
 // CreateHook in CDS db + repo manager webhook
-func CreateHook(tx gorp.SqlExecutor, projectKey string, rm *sdk.RepositoriesManager, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
-	client, err := repositoriesmanager.AuthorizedClient(tx, projectKey, rm.Name)
+func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, repoFullName string, application *sdk.Application, pipeline *sdk.Pipeline) (*sdk.Hook, error) {
+	server := repositoriesmanager.GetProjectVCSServer(proj, rm)
+	if server == nil {
+		return nil, fmt.Errorf("Unable to find repository manager")
+	}
+	client, err := repositoriesmanager.AuthorizedClient(tx, store, server)
 	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot get client got %s %s : %s", projectKey, rm.Name, err)
+		return nil, sdk.WrapError(err, "CreateHook> Cannot get client, got  %s %s", proj.Key, rm)
+	}
+
+	//Check if the webhooks if disabled
+	if info, err := repositoriesmanager.GetWebhooksInfos(client); err != nil {
 		return nil, err
+	} else if !info.WebhooksSupported || info.WebhooksDisabled || info.WebhooksCreationDisabled || !info.WebhooksCreationSupported {
+		return nil, sdk.WrapError(sdk.NewError(sdk.ErrForbidden, fmt.Errorf("Webhooks are not supported on %s", server.Name)), "CreateHook>")
 	}
 
 	t := strings.Split(repoFullName, "/")
 	if len(t) != 2 {
-		log.Warning("CreateHook> Wrong repo fullname %s.", repoFullName)
-		return nil, fmt.Errorf("CreateHook> Wrong repo fullname %s.", repoFullName)
+		return nil, sdk.WrapError(fmt.Errorf("CreateHook> Wrong repo fullname %s", repoFullName), "")
 	}
 
 	var h sdk.Hook
 
-	h, err = FindHook(tx, application.ID, pipeline.ID, string(rm.Type), rm.URL, t[0], t[1])
+	h, err = FindHook(tx, application.ID, pipeline.ID, rm, rm, t[0], t[1])
 	if err == sql.ErrNoRows {
 		h = sdk.Hook{
 			Pipeline:      *pipeline,
 			ApplicationID: application.ID,
-			Kind:          string(rm.Type),
-			Host:          rm.URL,
+			Kind:          rm,
+			Host:          rm,
 			Project:       t[0],
 			Repository:    t[1],
 			Enabled:       true,
 		}
-		err = InsertHook(tx, &h)
-		if err != nil {
-			log.Warning("addHookOnRepositoriesManagerHandler> Cannot insert hook: %s", err)
-			return nil, err
+		if err := InsertHook(tx, &h); err != nil {
+			return nil, sdk.WrapError(err, "CreateHook> Cannot insert hook")
 		}
 	} else if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot get hook: %s", err)
-		return nil, err
+		return nil, sdk.WrapError(err, "CreateHook> Cannot get hook")
 	}
 
 	s := apiURL + HookLink
-	link := fmt.Sprintf(s, h.UID, t[0], t[1])
+	h.Link = fmt.Sprintf(s, h.UID, t[0], t[1])
 
-	h.Link = link
+	hook := sdk.VCSHook{
+		Method: "POST",
+		URL:    h.Link,
+	}
 
-	err = client.CreateHook(repoFullName, link)
-	if err != nil {
-		log.Warning("addHookOnRepositoriesManagerHandler> Cannot create hook on stash: %s", err)
-		return nil, err
+	log.Info("CreateHook> will create %+v", hook)
+
+	if err := client.CreateHook(repoFullName, hook); err != nil {
+		log.Warning("Cannot create hook on repository manager: %s", err)
+		if strings.Contains(err.Error(), "Not yet implemented") {
+			return nil, sdk.WrapError(sdk.ErrNotImplemented, "CreateHook> Cannot create hook on repository manager")
+		}
+		if err := DeleteHook(tx, h.ID); err != nil {
+			return nil, sdk.WrapError(err, "CreateHook> Cannot rollback hook creation")
+		}
 	}
 	return &h, nil
 }
 
 //Recovery try to recovers hook in case of error
-func Recovery(h ReceivedHook, err error) {
+func Recovery(store cache.Store, h ReceivedHook, err error) {
 	log.Debug("hook.Recovery> %s", h.Repository)
 	switch err.(type) {
 	case sdk.Error:
@@ -380,7 +338,7 @@ func Recovery(h ReceivedHook, err error) {
 		return
 	}
 
-	cache.Enqueue("hook:recovery", h)
+	store.Enqueue("hook:recovery", h)
 
 	return
 }

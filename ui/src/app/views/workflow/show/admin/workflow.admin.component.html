@@ -1,0 +1,97 @@
+<div id="WorkflowAdmin">
+    <app-zone header="{{ 'workflow_rename_title' | translate }}">
+        <app-zone-content class="bottom">
+            <form class="ui form" (ngSubmit)="onSubmitWorkflowUpdate()" #workflowUpdateFrom="ngForm">
+                <div class="fields">
+                    <div class="seven wide field">
+                        <input type="text" name="formWorkflowUpdateName"
+                               placeholder="{{ 'workflow_name' | translate}}"
+                               [(ngModel)]="workflow.name"
+                               [disabled]="loading"
+                               required
+                               #formWorkflowUpdateName="ngModel"
+                               pattern="[a-zA-Z0-9]*">
+                        <div *ngIf="formWorkflowUpdateName && !formWorkflowUpdateName.valid && !formWorkflowUpdateName.pristine"
+                             class="ui error message">
+                            <p>{{'workflow_update_name_error' | translate}}</p>
+                        </div>
+                    </div>
+                    <div class="nine wide right aligned field">
+                        <button class="ui green button" name="btnrename" [class.loading]="loading">{{ 'btn_rename' | translate }}</button>
+                    </div>
+                </div>
+            </form>
+            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)" #updateWarning></app-warning-modal>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'workflow_sidebar_tag_zone' | translate }}">
+        <app-zone-content class="bottom">
+            <div class="ui form">
+                <div class="fields">
+                    <div class="fourteen wide field">
+                        <sui-multi-select  class="selection" *ngIf="existingTags.length > 0"
+                           [ngModel]="selectedTags"
+                           [options]="existingTags"
+                           [isSearchable]="true"
+                           (ngModelChange)="updateTagMetadata($event)"
+                           #multiSelect>
+                            <sui-select-option *ngFor="let i of multiSelect.filteredOptions"
+                                               [value]="i">
+                            </sui-select-option>
+                        </sui-multi-select>
+                    </div>
+                    <div class="two wide right aligned field">
+                        <button id="tagButton" class="ui selection green button" name="btnsavetag" (click)="updateWorkflow()" [class.loading]="loading">{{ 'btn_save' | translate }}</button>
+                    </div>
+                </div>
+            </div>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'workflow_history_length_title' | translate }}">
+        <app-zone-content class="bottom">
+            <div class="ui form">
+                <div class="fields">
+                    <div class="three wide field">
+                        <input type="number" name="formWorkflowUpdateHistory"
+                               placeholder="{{ 'workflow_history_length' | translate}}"
+                               [(ngModel)]="_tagWorkflow.history_length"
+                               [disabled]="loading"
+                               required
+                               #formWorkflowUpdateHistory="ngModel"
+                               min="1"
+                               max="500">
+                    </div>
+                    <div class="eleven wide field">
+                        <sui-multi-select  class="selection" *ngIf="existingTags.length > 0"
+                           [(ngModel)]="_tagWorkflow.purge_tags"
+                           [options]="existingTags"
+                           [isSearchable]="true"
+                           #multiSelectPurge>
+                            <sui-select-option *ngFor="let i of multiSelectPurge.filteredOptions" [value]="i">
+                            </sui-select-option>
+                        </sui-multi-select>
+                    </div>
+                    <div class="two wide right aligned field">
+                        <button class="ui green button" name="btnhistorylength" [class.loading]="loading" (click)="updateWorkflow()">
+                            {{ 'btn_save' | translate }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)" #updateWarning></app-warning-modal>
+        </app-zone-content>
+    </app-zone>
+    <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">
+        <app-zone-content class="bottom">
+            <div class="ui grid">
+                <div class="eight wide column">
+                    <div class="title">{{ 'workflow_delete_label' | translate}}</div>
+                    <div class="description">{{ 'workflow_delete_description' | translate}}</div>
+                </div>
+                <div class="eight wide right aligned column">
+                    <app-delete-button [loading]="loading" (event)="deleteWorkflow()"></app-delete-button>
+                </div>
+            </div>
+        </app-zone-content>
+    </app-zone>
+</div>

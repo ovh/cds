@@ -1,22 +1,24 @@
-import {Component, EventEmitter, Input, NgZone, OnInit, Output, ViewChild} from '@angular/core';
+import {Component, EventEmitter, Input, NgZone, OnInit, OnDestroy, Output, ViewChild} from '@angular/core';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {Application} from '../../../../model/application.model';
 import {Project} from '../../../../model/project.model';
-import {WorkflowItem} from '../../../../model/application.workflow.model';
+import {WorkflowItem, WorkflowStatusResponse} from '../../../../model/application.workflow.model';
 import {PipelineBuild, PipelineType} from '../../../../model/pipeline.model';
 import {ApplicationPipelineLinkComponent} from './pipeline/link/pipeline.link.component';
-import {Branch} from '../../../../model/repositories.model';
+import {Branch, Remote} from '../../../../model/repositories.model';
 import {Router} from '@angular/router';
-
-declare var _: any;
-declare var jQuery: any;
+import {cloneDeep} from 'lodash';
+import {Observable} from 'rxjs/Observable';
+import {finalize} from 'rxjs/operators';
+import 'rxjs/add/observable/zip';
 
 @Component({
     selector: 'app-application-workflow',
     templateUrl: './application.workflow.html',
     styleUrls: ['./application.workflow.scss']
 })
-export class ApplicationWorkflowComponent implements OnInit {
+export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
+    readonly ORIENTATION_KEY = 'CDS-ORIENTATION';
 
     @Input() project: Project;
     @Input() application: Application;
@@ -27,11 +29,24 @@ export class ApplicationWorkflowComponent implements OnInit {
     zone: NgZone;
 
     // Worflow to display
-    workflowOrientation = 'horizontal';
+    private _workflowOrientationValue = localStorage.getItem(this.ORIENTATION_KEY) || 'horizontal';
+    set workflowOrientation(orientation: string) {
+        this._workflowOrientationValue = orientation;
+        localStorage.setItem(this.ORIENTATION_KEY, orientation);
+    }
+    get workflowOrientation() {
+        return this._workflowOrientationValue;
+    }
 
     // Filter values
+    remotes: Array<Remote>;
     branches: Array<Branch>;
-    versions: Array<string | number>;
+    versions: Array<string>;
+    loading: {remote: boolean, branch: boolean, version: boolean} = {
+        remote: true,
+        branch: true,
+        version: true
+    };
 
     // Modal Component to link pipeline
     @ViewChild('linkPipelineComponent')
@@ -41,20 +56,63 @@ export class ApplicationWorkflowComponent implements OnInit {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
+    ngOnDestroy(): void {
+        this.applicationFilter.remote = '';
+        this.changeWorkerEvent.emit(true);
+    }
+
     ngOnInit(): void {
         this.generateParentInformation();
-        // Load branches
-        this._appWorkflow.getBranches(this.project.key, this.application.name).subscribe(branches => {
-            branches.unshift(new Branch());
-            this.branches = branches;
+        this.fetchRepositoryInfos();
+    }
 
-            this.branches.forEach(b => {
-                if (b.default && (!this.applicationFilter.branch || this.applicationFilter === '')) {
-                    this.applicationFilter.branch = b.display_id;
+    fetchRepositoryInfos() {
+        this.remotes = null;
+        this.branches = null;
+        if (this.application.repository_fullname) {
+            this.loading.remote = true;
+            this.loading.branch = true;
+            Observable.zip(
+                this._appWorkflow.getRemotes(this.project.key, this.application.name),
+                this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote),
+                (remotes, branches) => {
+                    this.remotes = remotes;
+                    this.branches = branches;
+                    if (Array.isArray(remotes) && remotes.length) {
+                        let remoteFound = remotes.find((r) => r.name === this.applicationFilter.remote);
+                        this.applicationFilter.remote = remoteFound ? remoteFound.name : remotes[0].name;
+                    }
+
+                    if (!this.applicationFilter.branch) {
+                      this.setDefaultBranchFilter();
+                    }
+
+                    this.loadVersions(this.project.key, this.application.name).subscribe();
                 }
-            });
+            ).pipe(
+                finalize(() => {
+                    this.loading.remote = false;
+                    this.loading.branch = false;
+                })
+            ).subscribe();
+        } else {
+            this.loading.branch = false;
+            this.loading.remote = false;
 
-            this.loadVersions(this.project.key, this.application.name);
+            this.loadVersions(this.project.key, this.application.name).subscribe(() => {
+                this.applicationFilter.branch = 'master';
+                this.applicationFilter.remote = '';
+                this.remotes = [];
+                this.branches = [];
+            });
+        }
+    }
+
+    setDefaultBranchFilter() {
+        this.branches.forEach(b => {
+            if (b.default) {
+                this.applicationFilter.branch = b.display_id;
+            }
         });
     }
 
@@ -89,72 +147,95 @@ export class ApplicationWorkflowComponent implements OnInit {
         }
     }
 
-    switchApplication(): void {
+    switchApplication(application: Application): void {
+        this.application = application;
         this.generateParentInformation();
+        this.fetchRepositoryInfos();
     }
 
     /**
      * Refresh workflow trees.
      * @param app Application data updated
      */
-    refreshWorkflow(app: Application): void {
+    refreshWorkflow(resp: WorkflowStatusResponse): void {
         if (this.application.workflows) {
             this.zone.run(() => {
                 this.application.workflows.forEach((w) => {
-                    this.updateTree(w, app);
+                    this.updateTreeStatus(w, resp);
                 });
             });
         }
     }
 
-    /**
-     * Update workflow Item
-     * @param w Workflow Item to update
-     * @param app Application data updated
-     */
-    updateTree(w: WorkflowItem, app: Application): void {
-        // If same app, try to find pipeline
-        if (w.application.id === app.id && app.pipelines_build) {
-            let pipelineBuildUpdated = app.pipelines_build.filter(
-                pb => pb.pipeline.id === w.pipeline.id && pb.environment.id === w.environment.id
-            );
-            // If pipeline found : update it
-            if (pipelineBuildUpdated && pipelineBuildUpdated.length === 1) {
-                w.pipeline.last_pipeline_build = pipelineBuildUpdated[0];
+    updateTreeStatus(w: WorkflowItem, resp: WorkflowStatusResponse): void {
+        // Find pipeline build for current workflow item
+        if (resp.builds) {
+            let pb = resp.builds.find(p => {
+                return p.application.id === w.application.id &&
+                    p.pipeline.id === w.pipeline.id &&
+                    p.environment.id === w.environment.id;
+            });
 
-                // Check update scheduler
-                if (w.schedulers) {
-                    this.updateSchedulers(w, app);
+            if (pb) {
+                w.pipeline.last_pipeline_build = pb;
+                if (w.schedulers && resp.schedulers && resp.schedulers.length > 0) {
+                    w.schedulers.forEach(s => {
+                        let sInApp = resp.schedulers.find(sc => {
+                            return sc.id === s.id;
+                        });
+                        if (sInApp && sInApp.next_execution) {
+                            s.next_execution = sInApp.next_execution;
+                        }
+                    });
                 }
+                if (w.poller && resp.pollers && resp.pollers.length > 0) {
+                    let poller = resp.pollers.find(p => {
+                        return p.application.id === w.poller.application.id
+                            && p.pipeline.id === w.poller.pipeline.id;
+                    });
+                    if (poller && poller.next_execution) {
+                        w.poller.next_execution = poller.next_execution;
+                    }
+                }
+            }
+        }
 
-            } else if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0) {
-                // If current item is a deploy or testing pipeline without environment
-                // Then add new item on workflow
-                this.project.environments.forEach((env, index) => {
-                    let pipelineBuild = app.pipelines_build.filter(pb => pb.pipeline.id === w.pipeline.id && pb.environment.id === env.id);
-                    let pbToAssign: PipelineBuild = undefined;
+        if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0 && Array.isArray(this.project.environments)) {
+            // If current item is a deploy or testing pipeline without environment
+            // Then add new item on workflow
+            this.project.environments.forEach((env, index) => {
+                let pbToAssign: PipelineBuild;
+                if (resp.builds) {
+                    let pipelineBuild = resp.builds.filter(p => p.application.id === w.application.id &&
+                    p.pipeline.id === w.pipeline.id &&
+                    p.environment.id === env.id);
+
                     if (pipelineBuild && pipelineBuild.length === 1) {
                         pbToAssign = pipelineBuild[0];
                     }
-
-                    if (index === 0) {
-                        w.environment = env;
-                        w.pipeline.last_pipeline_build = pbToAssign;
-                    } else {
-                        let newItem = _.cloneDeep(w);
-                        newItem.environment = env;
-                        newItem.pipeline.last_pipeline_build = pbToAssign;
-                        this.application.workflows.push(newItem);
-                    }
-
-                });
-            }
+                }
+                if (index === 0) {
+                    w.environment = env;
+                    w.pipeline.last_pipeline_build = pbToAssign;
+                } else {
+                    let newItem = cloneDeep(w);
+                    newItem.environment = env;
+                    newItem.pipeline.last_pipeline_build = pbToAssign;
+                    this.application.workflows.push(newItem);
+                }
+            });
         }
+
         // Update parent info
-        if (w.parent && w.parent.application_id === app.id && app.pipelines_build) {
-            let parentUpdated = app.pipelines_build.filter(
-                pb => pb.pipeline.id === w.parent.pipeline_id && pb.environment.id === w.parent.environment_id
-            );
+        if (w.parent) {
+            let parentUpdated: Array<PipelineBuild>;
+            if (resp.builds) {
+                parentUpdated = resp.builds.filter(
+                    p => p.pipeline.id === w.parent.pipeline_id &&
+                    p.environment.id === w.parent.environment_id &&
+                    p.application.id === w.parent.application_id
+                );
+            }
             if (parentUpdated && parentUpdated.length === 1) {
                 w.parent.buildNumber = parentUpdated[0].build_number;
                 w.parent.version = parentUpdated[0].version;
@@ -167,52 +248,78 @@ export class ApplicationWorkflowComponent implements OnInit {
         // Check subpipeline
         if (w.subPipelines) {
             w.subPipelines.forEach((sub) => {
-                this.updateTree(sub, app);
+                this.updateTreeStatus(sub, resp);
             });
         }
-    };
-
-    /**
-     * Update scheduler last execution date;
-     * @param w Workflow item to update
-     * @param app Data up to date
-     */
-    updateSchedulers(w: WorkflowItem, app: Application): void {
-        w.schedulers.forEach(s => {
-            let sInApp = app.schedulers.find(sc => {
-                return sc.id === s.id;
-            });
-            if (sInApp && sInApp.next_execution) {
-                s.next_execution = sInApp.next_execution;
-            }
-        });
     }
 
     /**
      * Action when changing branch
      */
     changeBranch(): void {
-        // reinit verison filter
-        this.applicationFilter.version = '';
-        jQuery('.cdsVersion div.text')[0].textContent = '';
-        this.changeVersion();
-
+        if (!this.application.repository_fullname) {
+            return;
+        }
         // Load the versions of the new branch
-        this.loadVersions(this.project.key, this.application.name);
-    };
+        this.loadVersions(this.project.key, this.application.name)
+            .subscribe(() => this.changeVersion());
+    }
+    /**
+     * Action when changing remote
+     */
+    changeRemote(): void {
+        if (!this.application.repository_fullname) {
+            return;
+        }
+        this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote)
+          .subscribe(branches => {
+              this.branches = branches;
+
+              if (Array.isArray(branches) && branches.length) {
+                let branchFound = branches.find((br) => br.display_id === this.applicationFilter.branch);
+                this.applicationFilter.branch = branchFound ? branchFound.display_id : branches[0].display_id;
+              }
+
+              this.loadVersions(this.project.key, this.application.name)
+                  .subscribe(() => this.changeVersion());
+          });
+    }
 
     /**
      * Action when changing version
      */
-    changeVersion(): void {
+    changeVersion(version?: string): void {
         this.applicationFilter.branch = this.applicationFilter.branch.trim();
-        if (this.applicationFilter.version.trim() === '') {
-            this.applicationFilter.version = 0;
+
+        if (!version && Array.isArray(this.versions) && this.versions.length) {
+            this.applicationFilter.version = this.versions[0];
         }
-        this._router.navigate(['/project/', this.project.key, 'application', this.application.name],
-            {queryParams: {tab: 'workflow', branch: this.applicationFilter.branch, version: this.applicationFilter.version}});
+
+        if (version) {
+            this.applicationFilter.version = version;
+        }
+
+        this._router.navigate(['/project/', this.project.key, 'application', this.application.name], {
+          queryParams: {
+            tab: 'workflow',
+            branch: this.applicationFilter.branch,
+            version: this.applicationFilter.version,
+            remote: this.applicationFilter.remote
+          }
+        });
         this.changeWorkerEvent.emit(true);
         this.clearTree(this.application.workflows);
+    }
+
+    /**
+     * Load the list of version for the current application on the selected branch
+     */
+    loadVersions(key: string, appName: string): Observable<Array<string>> {
+        this.loading.version = true;
+        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch || 'master', this.applicationFilter.remote)
+            .pipe(finalize(() => this.loading.version = false))
+            .map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]);
+
     }
 
     clearTree(items: Array<WorkflowItem>): void {
@@ -224,20 +331,9 @@ export class ApplicationWorkflowComponent implements OnInit {
         });
     }
 
-    /**
-     * Load the list of version for the current application on the selected branch
-     */
-    loadVersions(key: string, appName: string): void {
-        this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch).subscribe(versions => {
-            this.versions = versions;
-            this.versions.unshift(' ');
-        });
-    };
-
     openLinkPipelineModal(): void {
         if (this.linkPipelineComponent) {
             this.linkPipelineComponent.show({autofocus: false, closable: false, observeChanges: true});
         }
     }
 }
-

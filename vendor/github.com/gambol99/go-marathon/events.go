@@ -1,5 +1,5 @@
 /*
-Copyright 2014 Rohith All rights reserved.
+Copyright 2014 The go-marathon Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -273,9 +273,10 @@ type EventGroupChangeFailed struct {
 
 // EventDeploymentSuccess describes a 'deployment_success' event.
 type EventDeploymentSuccess struct {
-	ID        string `json:"id"`
-	EventType string `json:"eventType"`
-	Timestamp string `json:"timestamp"`
+	ID        string          `json:"id"`
+	EventType string          `json:"eventType"`
+	Timestamp string          `json:"timestamp"`
+	Plan      *DeploymentPlan `json:"plan"`
 }
 
 // EventDeploymentFailed describes a 'deployment_failed' event.

@@ -4,6 +4,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
@@ -12,54 +13,46 @@ import (
 )
 
 // RunPipeline  the given pipeline with the given parameters
-func RunPipeline(db gorp.SqlExecutor, projectKey string, app *sdk.Application, pipelineName string, environmentName string, params []sdk.Parameter, version int64, trigger sdk.PipelineBuildTrigger, user *sdk.User) (*sdk.PipelineBuild, error) {
+func RunPipeline(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecutor, projectKey string, app *sdk.Application, pipelineName string, environmentName string, params []sdk.Parameter, version int64, trigger sdk.PipelineBuildTrigger, user *sdk.User) (*sdk.PipelineBuild, error) {
 	// Load pipeline + Args + stage + action
 	p, err := pipeline.LoadPipeline(db, projectKey, pipelineName, false)
 	if err != nil {
-		log.Warning("scheduler.Run> Cannot load pipeline %s: %s\n", pipelineName, err)
-		return nil, err
+		return nil, sdk.WrapError(err, "queue.Run> Cannot load pipeline %s", pipelineName)
 	}
 	parameters, err := pipeline.GetAllParametersInPipeline(db, p.ID)
 	if err != nil {
-		log.Warning("scheduler.Run> Cannot load pipeline %s parameters: %s\n", pipelineName, err)
-		return nil, err
+		return nil, sdk.WrapError(err, "queue.Run> Cannot load pipeline %s parameters", pipelineName)
 	}
 	p.Parameter = parameters
 
 	// Pipeline type check
 	if p.Type == sdk.BuildPipeline && environmentName != "" && environmentName != sdk.DefaultEnv.Name {
-		log.Warning("scheduler.Run> Pipeline %s/%s/%s is a %s pipeline, but environment '%s' was provided\n", projectKey, app.Name, pipelineName, p.Type, environmentName)
-		return nil, sdk.ErrEnvironmentProvided
+		return nil, sdk.WrapError(sdk.ErrEnvironmentProvided, "queue.Run> Pipeline %s/%s/%s is a %s pipeline, but environment '%s' was provided", projectKey, app.Name, pipelineName, p.Type, environmentName)
 	}
 	if p.Type != sdk.BuildPipeline && (environmentName == "" || environmentName == sdk.DefaultEnv.Name) {
-		log.Warning("scheduler.Run> Pipeline %s/%s/%s is a %s pipeline, but no environment was provided\n", projectKey, app.Name, pipelineName, p.Type)
-		return nil, sdk.ErrNoEnvironmentProvided
+		return nil, sdk.WrapError(sdk.ErrNoEnvironmentProvided, "queue.Run> Pipeline %s/%s/%s is a %s pipeline, but no environment was provided", projectKey, app.Name, pipelineName, p.Type)
 	}
 
 	applicationPipelineParams, err := application.GetAllPipelineParam(db, app.ID, p.ID)
 	if err != nil {
-		log.Warning("scheduler.Run> Cannot load application pipeline args: %s\n", err)
-		return nil, err
+		return nil, sdk.WrapError(err, "queue.Run> Cannot load application pipeline args")
 	}
 
 	// Load project + var
-	projectData, err := project.Load(db, projectKey, user)
+	projectData, err := project.Load(db, store, projectKey, user)
 	if err != nil {
-		log.Warning("scheduler.Run> Cannot load project %s: %s\n", projectKey, err)
-		return nil, err
+		return nil, sdk.WrapError(err, "queue.Run> Cannot load project %s", projectKey)
 	}
 	projectsVar, err := project.GetAllVariableInProject(db, projectData.ID, project.WithClearPassword())
 	if err != nil {
-		log.Warning("scheduler.Run> Cannot load project variable: %s\n", err)
-		return nil, err
+		return nil, sdk.WrapError(err, "queue.Run> Cannot load project variable")
 	}
 	projectData.Variable = projectsVar
 	var env *sdk.Environment
 	if environmentName != "" && environmentName != sdk.DefaultEnv.Name {
 		env, err = environment.LoadEnvironmentByName(db, projectKey, environmentName)
 		if err != nil {
-			log.Warning("scheduler.Run> Cannot load environment %s for project %s: %s\n", environmentName, projectKey, err)
-			return nil, err
+			return nil, sdk.WrapError(err, "queue.Run> Cannot load environment %s for project %s", environmentName, projectKey)
 		}
 	} else {
 		env = &sdk.DefaultEnv
@@ -67,9 +60,15 @@ func RunPipeline(db gorp.SqlExecutor, projectKey string, app *sdk.Application, p
 
 	pb, err := pipeline.InsertPipelineBuild(db, projectData, p, app, applicationPipelineParams, params, env, version, trigger)
 	if err != nil {
-		log.Warning("scheduler.Run> Cannot start pipeline %s: %s\n", pipelineName, err)
-		return nil, err
+		return nil, sdk.WrapError(err, "queue.Run> Cannot start pipeline %s", pipelineName)
 	}
+
+	go func() {
+		db := DBFunc()
+		if _, err := pipeline.UpdatePipelineBuildCommits(db, projectData, p, app, env, pb); err != nil {
+			log.Warning("queue.Run> Unable to update pipeline build commits : %s", err)
+		}
+	}()
 
 	return pb, nil
 }

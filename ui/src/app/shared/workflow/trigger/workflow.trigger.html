@@ -1,0 +1,16 @@
+<ng-template let-context let-modal="modal" #triggerModal>
+    <div class="header" *ngIf="!trigger.workflow_dest_node || !trigger.workflow_dest_node.id">{{ 'workflow_node_trigger_title' | translate: {pip: triggerSrcNode?.pipeline?.name} }}</div>
+    <div class="header" *ngIf="trigger.workflow_dest_node && trigger.workflow_dest_node.id">{{ 'workflow_node_trigger_title_edit' | translate: {pip: triggerSrcNode?.pipeline?.name} }}</div>
+    <div class="content">
+        <div class="ui form" *ngIf="project && trigger">
+            <ng-container *ngIf="!trigger.workflow_dest_node|| !trigger.workflow_dest_node.id">
+                <h3>{{ 'workflow_node_form_title' | translate }}</h3>
+                <app-workflow-node-form [project]="project" [node]="trigger.workflow_dest_node" (nodeChange)="destNodeChange($event)"></app-workflow-node-form>
+            </ng-container>
+        </div>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="hide()">{{ 'common_close' | translate }}</button>
+        <button class="ui green button" [disabled]="loading" [class.loading]="loading" (click)="saveTrigger()">{{ 'btn_save' | translate }}</button>
+    </div>
+</ng-template>

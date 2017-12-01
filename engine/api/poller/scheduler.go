@@ -1,12 +1,13 @@
 package poller
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -15,15 +16,22 @@ var (
 )
 
 //Scheduler is the goroutine which compute date of next execution for pipeline scheduler
-func Scheduler(DBFunc func() *gorp.DbMap) {
-	defer log.Error("poller.Scheduler> has been exited !")
+func Scheduler(c context.Context, DBFunc func() *gorp.DbMap) {
+	tick := time.NewTicker(10 * time.Second).C
 	for {
-		_, status, err := SchedulerRun(DBFunc())
-		if err != nil {
-			log.Error("poller.Scheduler> %s: %s", status, err)
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting poller.Scheduler: %v", c.Err())
+				return
+			}
+		case <-tick:
+			_, status, err := SchedulerRun(DBFunc())
+			if err != nil {
+				log.Error("poller.Scheduler> %s: %s", status, err)
+			}
+			pollerStatus = status
 		}
-		pollerStatus = status
-		time.Sleep(10 * time.Second)
 	}
 }
 

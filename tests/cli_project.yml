@@ -24,14 +24,6 @@ testcases:
   steps:
   - script: {{.cds.build.cds}} project group add CLIPROJ ITCLIPROJ_GRP_EDIT_TEST 7
 
-- name: project group update
-  steps:
-  - script: {{.cds.build.cds}} project group update CLIPROJ ITCLIPROJ_GRP_EDIT_TEST 4
-
-- name: project group remove
-  steps:
-  - script: {{.cds.build.cds}} project group remove CLIPROJ ITCLIPROJ_GRP_EDIT_TEST
-
 - name: project variable add
   steps:
   - script: {{.cds.build.cds}} project variable add CLIPROJ VAR_1 varValue TEXT
@@ -51,6 +43,18 @@ testcases:
 - name: project variable add
   steps:
   - script: {{.cds.build.cds}} project variable add CLIPROJ VAR_2 projectVariable TEXT
+
+- name: project group remove
+  steps:
+  - script: {{.cds.build.cds}} project group remove CLIPROJ ITCLIPROJ_GRP_EDIT_TEST
+    assertions:
+      - result.code ShouldEqual 0
+
+- name: project group remove
+  steps:
+  - script: {{.cds.build.cds}} project group remove CLIPROJ ITCLIPROJ_GRP_TEST
+    assertions:
+      - result.code ShouldEqual 1
 
 - name: clean
   steps:

@@ -21,6 +21,8 @@ testcases:
   - script: {{.cds.build.cds}} pipeline hook list ITSCGITHOOK TestApp MultiPass --show-url-only
   - script: curl -i -X POST `{{.cds.build.cds}} pipeline hook list ITSCGITHOOK TestApp MultiPass --show-url-only`
   - script: {{.cds.build.cds}} pipeline history ITSCGITHOOK TestApp MultiPass | egrep "Building|Success"
+    retry: 5
+    delay: 5
 
 - name: Streaming logs of triggered pipeline
   steps:

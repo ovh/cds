@@ -1,13 +1,24 @@
 *.swp
 .idea
+.vscode
 .DS_Store
+dump.rdb
 cli/cds/cds
-engine/api/api
+engine/engine
+engine/dist
 engine/api/.secrets
-engine/hatchery/hatchery
+engine/api/config.toml
+engine/config.toml
 engine/worker/worker
 *.out
+*.coverprofile
+*.log
+*.test
+coverage.html
+cover.html
 .bash_aliases
+npm-debug.log
+debug.test
 
 # UI
 ui/node_modules
@@ -16,3 +27,5 @@ ui/tests
 ui/typings
 ui/src/app/**/*.js
 ui/semantic
+ui/e2e/*.png
+ui/documentation

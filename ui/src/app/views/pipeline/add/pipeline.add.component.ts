@@ -5,6 +5,7 @@ import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
+import {Usage} from '../../../model/usage.model';
 
 @Component({
     selector: 'app-pipeline-add',
@@ -45,8 +46,11 @@ export class PipelineAddComponent {
         }
 
         if (this.selectedApplications && this.selectedApplications.length > 0) {
+            if (!this.newPipeline.usage) {
+                this.newPipeline.usage = new Usage();
+            }
             this.selectedApplications.forEach(name => {
-                this.newPipeline.attached_application.push(this.project.applications.find(a => {
+                this.newPipeline.usage.applications.push(this.project.applications.find(a => {
                     return a.name === name;
                 }));
             });

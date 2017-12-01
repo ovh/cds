@@ -3,6 +3,7 @@ import {TestBed, fakeAsync, tick, getTestBed} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {ApplicationModule} from '../../../../application.module';
 import {SharedModule} from '../../../../../../shared/shared.module';
+import {ServicesModule} from '../../../../../../service/services.module';
 import {RouterTestingModule} from '@angular/router/testing';
 import {ApplicationWorkflowItemComponent} from './application.workflow.item.component';
 import {WorkflowItem} from '../../../../../../model/application.workflow.model';
@@ -12,13 +13,15 @@ import {Parameter} from '../../../../../../model/parameter.model';
 import {Injector} from '@angular/core';
 import {ApplicationPipelineService} from '../../../../../../service/application/pipeline/application.pipeline.service';
 import {Router, NavigationExtras} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {PipelineBuild, Pipeline, PipelineRunRequest, PipelineBuildTrigger} from '../../../../../../model/pipeline.model';
 import {Project} from '../../../../../../model/project.model';
 import {Application} from '../../../../../../model/application.model';
 import {TranslateParser, TranslateService, TranslateLoader} from 'ng2-translate';
 import {PipelineStore} from '../../../../../../service/pipeline/pipeline.store';
 import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../../../service/environment/environment.service';
+import {VariableService} from '../../../../../../service/variable/variable.service';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Map} from 'immutable';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
@@ -27,6 +30,8 @@ import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../../service/project/project.service';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {Scheduler} from '../../../../../../model/scheduler.model';
+import {NotificationService} from '../../../../../../service/notification/notification.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application Workflow Item', () => {
 
@@ -41,13 +46,16 @@ describe('CDS: Application Workflow Item', () => {
                 TranslateParser, TranslateService, TranslateLoader,
                 PipelineStore, PipelineService,
                 ApplicationStore, ApplicationService,
-                ProjectStore, ProjectService,
+                ProjectStore, ProjectService, NotificationService,
+                EnvironmentService, VariableService,
                 {provide: ToastService, useClass: MockToast}
             ],
             imports: [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                ServicesModule,
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
@@ -122,6 +130,7 @@ describe('CDS: Application Workflow Item', () => {
             return Observable.of(pb);
         });
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
@@ -137,7 +146,6 @@ describe('CDS: Application Workflow Item', () => {
         request.parent_pipeline_id = 2;
 
         expect(appPipStore.run).toHaveBeenCalledWith('key1', 'app1', 'pip1', request);
-
     }));
 
     it('should run a pipeline without parent', fakeAsync(() => {
@@ -163,11 +171,6 @@ describe('CDS: Application Workflow Item', () => {
         workflowItem.pipeline = new Pipeline();
         workflowItem.pipeline.name = 'pip1';
         workflowItem.pipeline.parameters = new Array<Parameter>();
-        let paramPip = new Parameter();
-        paramPip.name = 'fooPip';
-        paramPip.value = 'barrPip';
-        paramPip.type = 'string';
-        workflowItem.pipeline.parameters.push(paramPip);
 
         // env
         workflowItem.environment = new Environment();
@@ -207,10 +210,11 @@ describe('CDS: Application Workflow Item', () => {
             return Observable.of(pb);
         });
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         let request: PipelineRunRequest = new PipelineRunRequest();
         request.env = workflowItem.environment;
-        request.parameters = workflowItem.pipeline.parameters;
+        request.parameters = new Array<Parameter>();
         let p = new Parameter();
         p.name = 'git.branch';
         p.value = 'toto';
@@ -273,6 +277,7 @@ describe('CDS: Application Workflow Item', () => {
         });
 
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         expect(fixture.componentInstance.runWithParameters).toHaveBeenCalled();
     }));
@@ -329,188 +334,9 @@ describe('CDS: Application Workflow Item', () => {
             return true;
         });
         fixture.componentInstance.runPipeline();
+        tick(1100);
 
         expect(fixture.componentInstance.runWithParameters).toHaveBeenCalled();
-    }));
-
-    it('should load manual run data without parent information', fakeAsync(() => {
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationWorkflowItemComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        let appFilter = {branch: 'master'};
-        fixture.componentInstance.applicationFilter = appFilter;
-
-        let workflowItem = new WorkflowItem();
-        // project
-        workflowItem.project = new Project();
-        workflowItem.project.key = 'key1';
-
-        // application
-        workflowItem.application = new Application();
-        workflowItem.application.name = 'app1';
-        workflowItem.application.id = 6;
-
-        // pipeline
-        workflowItem.pipeline = new Pipeline();
-        workflowItem.pipeline.name = 'pip1';
-        workflowItem.pipeline.parameters = new Array<Parameter>();
-        let paramPip = new Parameter();
-        paramPip.name = 'fooPip';
-        paramPip.value = '';
-        paramPip.type = 'string';
-        workflowItem.pipeline.parameters.push(paramPip);
-
-        // env
-        workflowItem.environment = new Environment();
-        workflowItem.environment.name = 'prod';
-        workflowItem.environment.id = 4;
-
-
-        fixture.componentInstance.project = workflowItem.project;
-        fixture.componentInstance.workflowItem = workflowItem;
-        fixture.componentInstance.application = workflowItem.application;
-        fixture.componentInstance.launchModal = new SemanticModalComponent();
-
-        fixture.detectChanges();
-        tick(250);
-
-
-
-
-        let pipStore: PipelineStore = injector.get(PipelineStore);
-        spyOn(pipStore, 'getPipelines').and.callFake(() => {
-            let mapApp: Map<string, Pipeline> = Map<string, Pipeline>();
-            let pip: Pipeline = new Pipeline();
-            pip.name = 'pip1';
-            pip.parameters = new Array<Parameter>();
-            let p1 = new Parameter();
-            p1.name = 'foo';
-            pip.parameters.push(p1);
-            return Observable.of(mapApp.set('key1-pip1', pip));
-        });
-
-        spyOn(fixture.componentInstance.launchModal, 'show').and.callFake(() => true);
-
-        fixture.componentInstance.runWithParameters();
-
-        // Check Git params
-        expect(fixture.componentInstance.launchGitParams.length).toBe(1);
-        expect(fixture.componentInstance.launchGitParams[0].name).toBe('git.branch');
-        expect(fixture.componentInstance.launchGitParams[0].value).toBe(appFilter.branch);
-
-        // Check parent
-        expect(fixture.componentInstance.launchParentBuildNumber).toBeFalsy();
-
-        // Check run parameter
-        expect(fixture.componentInstance.launchPipelineParams.length).toBe(1);
-        expect(fixture.componentInstance.launchPipelineParams[0].name).toBe('foo');
-
-        tick(150);
-        // Open modal?
-        expect(fixture.componentInstance.launchModal.show).toHaveBeenCalled();
-    }));
-
-    it('should load manual run data with parent information', fakeAsync(() => {
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationWorkflowItemComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        let appFilter = {branch: 'master'};
-        fixture.componentInstance.applicationFilter = appFilter;
-
-        let workflowItem = new WorkflowItem();
-        // project
-        workflowItem.project = new Project();
-        workflowItem.project.key = 'key1';
-
-        // application
-        workflowItem.application = new Application();
-        workflowItem.application.name = 'app1';
-        workflowItem.application.id = 6;
-
-        // pipeline
-        workflowItem.pipeline = new Pipeline();
-        workflowItem.pipeline.name = 'pip1';
-        workflowItem.pipeline.parameters = new Array<Parameter>();
-        let paramPip = new Parameter();
-        paramPip.name = 'fooPip';
-        paramPip.value = '';
-        paramPip.type = 'string';
-        workflowItem.pipeline.parameters.push(paramPip);
-
-        workflowItem.parent = {version: 1, application_id: 1, branch: 'master', buildNumber: 1, pipeline_id: 1, environment_id: 1};
-
-        // env
-        workflowItem.environment = new Environment();
-        workflowItem.environment.name = 'prod';
-        workflowItem.environment.id = 4;
-
-        // trigger
-        workflowItem.trigger = new Trigger();
-        workflowItem.trigger.id = 1;
-        workflowItem.trigger.parameters = new Array<Parameter>();
-        workflowItem.trigger.parameters.push(createParam('onlyInTrigger'));
-        workflowItem.trigger.parameters.push(createParam('commonParam'));
-        workflowItem.trigger.src_application = workflowItem.application;
-        workflowItem.trigger.src_pipeline = workflowItem.pipeline;
-        workflowItem.trigger.src_environment = workflowItem.environment;
-
-
-        fixture.componentInstance.project = workflowItem.project;
-        fixture.componentInstance.workflowItem = workflowItem;
-        fixture.componentInstance.application = workflowItem.application;
-        fixture.componentInstance.launchModal = new SemanticModalComponent();
-
-        fixture.detectChanges();
-        tick(250);
-
-
-
-
-        let pipStore: PipelineStore = injector.get(PipelineStore);
-        spyOn(pipStore, 'getPipelines').and.callFake(() => {
-            let mapApp: Map<string, Pipeline> = Map<string, Pipeline>();
-            let pip: Pipeline = new Pipeline();
-            pip.name = 'pip1';
-            pip.parameters = new Array<Parameter>();
-            pip.parameters.push(createParam('commonParam', 'customValue'));
-            pip.parameters.push(createParam('onlyInPip'));
-            return Observable.of(mapApp.set('key1-pip1', pip));
-        });
-
-        let appPipService: ApplicationPipelineService = injector.get(ApplicationPipelineService);
-        spyOn(appPipService, 'buildHistory').and.callFake(() => {
-           let pbs = new Array<PipelineBuild>();
-           pbs.push(createPipelineBuild(1));
-            pbs.push(createPipelineBuild(2));
-            pbs.push(createPipelineBuild(3));
-            return Observable.of(pbs);
-        });
-
-        spyOn(fixture.componentInstance.launchModal, 'show').and.callFake(() => true);
-
-        fixture.componentInstance.runWithParameters();
-
-        // Check Git params
-        expect(fixture.componentInstance.launchGitParams.length).toBe(1);
-        expect(fixture.componentInstance.launchGitParams[0].name).toBe('git.branch');
-        expect(fixture.componentInstance.launchGitParams[0].value).toBe(appFilter.branch);
-
-        // Check parent
-        expect(fixture.componentInstance.launchParentBuildNumber).toBe(1);
-
-        // Check run parameter
-        expect(fixture.componentInstance.launchPipelineParams.length).toBe(2);
-        expect(fixture.componentInstance.launchPipelineParams[0].name).toBe('commonParam');
-        expect(fixture.componentInstance.launchPipelineParams[0].value).toBe('commonParam-Value');
-        expect(fixture.componentInstance.launchPipelineParams[1].name).toBe('onlyInPip');
-
-        tick(150);
-        // Open modal?
-       expect(fixture.componentInstance.launchModal.show).toHaveBeenCalled();
     }));
 
     it('should add/update/delete trigger', fakeAsync(() => {
@@ -550,6 +376,7 @@ describe('CDS: Application Workflow Item', () => {
         fixture.componentInstance.triggerInModal = new Trigger();
         fixture.componentInstance.triggerInModal.src_application = workflowItem.application;
         fixture.componentInstance.triggerInModal.src_pipeline = workflowItem.pipeline;
+        fixture.componentInstance.triggerInModal.parameters = new Array<Parameter>()
 
         // Add trigger
 

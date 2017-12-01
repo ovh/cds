@@ -10,14 +10,16 @@ import {ApplicationPipelineBuildComponent} from './pipeline.build.component';
 import {ApplicationRunModule} from './application.run.module';
 import {SharedModule} from '../../shared/shared.module';
 import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {Project} from '../../model/project.model';
 import {Application} from '../../model/application.model';
 import {Pipeline} from '../../model/pipeline.model';
 import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
+import {RouterService} from '../../service/router/router.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
-describe('App: CDS', () => {
+describe('CDS: Application Run Component', () => {
 
     let injector: Injector;
 
@@ -31,6 +33,7 @@ describe('App: CDS', () => {
                 TranslateParser,
                 ApplicationPipelineService,
                 AuthentificationStore,
+                RouterService,
                 TranslateLoader,
                 TranslateService,
                 TranslateParser
@@ -38,7 +41,8 @@ describe('App: CDS', () => {
             imports : [
                 ApplicationRunModule,
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 
@@ -63,6 +67,7 @@ class MockActivatedRoutes extends ActivatedRoute {
         this.params = Observable.of({buildNumber: '123'});
 
         this.snapshot = new ActivatedRouteSnapshot();
+        Object.defineProperty(this.snapshot, 'children', []);
         this.snapshot.queryParams = { envName: 'NoEnv'};
 
         this.queryParams = Observable.of({ envName: 'NoEnv'});
@@ -75,6 +80,9 @@ class MockActivatedRoutes extends ActivatedRoute {
 
         let pipeline = new Pipeline();
         pipeline.name = 'pipName';
+
         this.data = Observable.of({ project: project, application: application, pipeline: pipeline });
+
+
     }
 }

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package github.com.ovh.cds.sdk;
+option go_package = "sdk";
+
+import "google/protobuf/timestamp.proto";
+
+//Result represents an execution Result
+//Generate *.pb.go files with: 
+// 	protoc --go_out=plugins=grpc:. ./result.proto
+// 	protoc-go-inject-tag -input=./log.pb.go
+//	=> github.com/favadi/protoc-go-inject-tag
+message Result {
+	int64 id = 1;
+	int64 buildID = 2;
+	string status = 3;
+	int64 version = 4;
+    string reason = 5;
+    google.protobuf.Timestamp remoteTime = 6;
+	string duration = 7;
+}

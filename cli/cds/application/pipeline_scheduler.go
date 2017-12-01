@@ -27,7 +27,7 @@ var (
 
 	cmdApplicationPipelineSchedulerAdd = &cobra.Command{
 		Use:   "add",
-		Short: "cds application pipeline scheduler add <projectKey> <applicationName> <pipelineName> <cron expression> [-e environment] [-p <pipelineParam>=<value>]",
+		Short: "cds application pipeline scheduler add <projectKey> <applicationName> <pipelineName> <cron expression> [-e environment] [-p <param>=<value>]",
 		Run:   applicationPipelineSchedulerAdd,
 	}
 

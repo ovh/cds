@@ -7,7 +7,12 @@
                 <div class="ui eight wide field" [class.eight]="isNewNotif" [class.six]="!isNewNotif">
                     <ng-container *ngIf="isNewNotif">
                         <label>{{'notification_on_pipeline_s' | translate}}</label>
-                        <sm-select [(model)]="selected.pipeline" class="fluid search multiple" (onChange)="updateNeedEnv($event)" *ngIf="isNewNotif">
+                        <sm-select
+                            class="fluid search multiple"
+                            *ngIf="isNewNotif"
+                            [(model)]="selected.pipeline"
+                            [options]="{'fullTextSearch': true}"
+                            (onChange)="updateNeedEnv($event)">
                             <option *ngFor="let p of application.pipelines" [value]="p.pipeline.name">{{p.pipeline.name}}</option>
                         </sm-select>
                     </ng-container>
@@ -20,7 +25,9 @@
                     <ng-container *ngIf="needEnv">
                         <ng-container *ngIf="isNewNotif">
                             <label>{{'notification_on_environment_s' | translate}}</label>
-                            <sm-select [(model)]="selected.environment" class="fluid search multiple">
+                            <sm-select class="fluid search multiple"
+                                [(model)]="selected.environment"
+                                [options]="{'fullTextSearch': true}">
                                 <option *ngFor="let e of project.environments" [value]="e.name">{{e.name}}</option>
                             </sm-select>
                         </ng-container>
@@ -46,9 +53,18 @@
                 </div>
                 <div class="ui eight wide field" *ngIf="selected.type === 'clone'">
                     <label>{{'notification_clone' | translate}}</label>
-                    <sm-select class="fluid search" (modelChange)="updateWithClonedNotification($event)">
-                        <option *ngFor="let n of projectNotifications; let i = index" [value]="i">{{getCloneNotificationLabel(n)}}</option>
-                    </sm-select>
+                    <ng-container *ngIf="loadingApps">
+                        <sm-select class="fluid search">
+                            <option value="">{{'common_loading' | translate}}</option>
+                        </sm-select>
+                    </ng-container>
+                    <ng-container *ngIf="!loadingApps">
+                      <sm-select class="fluid search"
+                          [options]="{'fullTextSearch': true}"
+                          (modelChange)="updateWithClonedNotification($event)">
+                          <option *ngFor="let n of projectNotifications; let i = index" [value]="i">{{getCloneNotificationLabel(n)}}</option>
+                      </sm-select>
+                    </ng-container>
                 </div>
             </div>
 
@@ -56,13 +72,17 @@
             <div class="ui fields">
                 <div class="ui five wide field">
                     <label>{{'notification_on_success' | translate}}</label>
-                    <sm-select [(model)]="selected.notification.on_success" class="fluid search">
+                    <sm-select class="fluid search"
+                        [options]="{'fullTextSearch': true}"
+                        [(model)]="selected.notification.on_success">
                         <option *ngFor="let os of notificationOnSuccess" [value]="os">{{os}}</option>
                     </sm-select>
                 </div>
                 <div class="ui six wide field">
                     <label>{{'notification_on_failure' | translate}}</label>
-                    <sm-select [(model)]="selected.notification.on_failure" class="fluid search">
+                    <sm-select class="fluid search"
+                        [(model)]="selected.notification.on_failure"
+                        [options]="{'fullTextSearch': true}">
                         <option *ngFor="let off of notificationOnFailure" [value]="off">{{off}}</option>
                     </sm-select>
                 </div>

@@ -35,11 +35,16 @@ func initCli(mainFunc func()) *cli.App {
 				Name:      "listen",
 				Aliases:   []string{"l"},
 				Usage:     "Listen a Kafka topic and wait for chunks",
-				ArgsUsage: "<kafka> <topic> <group> <user> <password>",
+				ArgsUsage: "<kafka> <topic> <group> <user>",
 				Flags: []cli.Flag{
 					cli.StringFlag{
+						Name:   "kafka-password",
+						Usage:  " <password> Specify kafka password",
+						EnvVar: "CDS_KAFKA_PASSWORD",
+					},
+					cli.StringFlag{
 						Name:  "pgp-decrypt",
-						Usage: " <file> Decrypt incomming with a private ARMOR GPG Key",
+						Usage: " <file> Decrypt incoming with a private ARMOR GPG Key",
 						Value: "",
 					},
 					cli.StringFlag{
@@ -53,8 +58,13 @@ func initCli(mainFunc func()) *cli.App {
 			cli.Command{
 				Name:      "ack",
 				Usage:     "Send Ack to CDS",
-				ArgsUsage: "<kafka> <topic> <user> <password> <cds-action json file> <OK|KO>",
+				ArgsUsage: "<kafka> <topic> <user> <cds-action json file> <OK|KO>",
 				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:   "kafka-password",
+						Usage:  " <password> Specify kafka password",
+						EnvVar: "CDS_KAFKA_PASSWORD",
+					},
 					cli.StringFlag{
 						Name:  "log",
 						Usage: "--log <file>: Attach a log file",

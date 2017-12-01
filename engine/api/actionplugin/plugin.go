@@ -1,6 +1,7 @@
 package actionplugin
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -10,8 +11,8 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/action"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
@@ -19,7 +20,7 @@ import (
 func Get(name, path string) (*sdk.ActionPlugin, *plugin.Parameters, error) {
 	//FIXME: run this in a jail with apparmor
 	log.Debug("actionplugin.Get> Getting info from '%s' (%s)", name, path)
-	client := plugin.NewClient(name, path, "ID", "http://127.0.0.1:8081", true)
+	client := plugin.NewClient(context.Background(), name, path, "ID", "http://127.0.0.1:8081", true)
 	defer func() {
 		log.Debug("actionplugin.Get> kill rpc-server")
 		client.Kill()
@@ -27,7 +28,7 @@ func Get(name, path string) (*sdk.ActionPlugin, *plugin.Parameters, error) {
 	log.Debug("actionplugin.Get> Client '%s'", name)
 	_plugin, err := client.Instance()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, sdk.WrapError(err, "actionplugin.Get> ")
 	}
 
 	fi, err := os.Open(path)
@@ -175,8 +176,7 @@ func Delete(db *gorp.DbMap, name string, userID int64) error {
 
 	a, err := action.LoadPublicAction(tx, name)
 	if err != nil {
-		log.Warning("plugin.Delete> Action: Cannot get action %s: %s\n", name, err)
-		return err
+		return sdk.WrapError(err, "plugin.Delete> Action: Cannot get action %s", name)
 	}
 
 	query := "DELETE FROM plugin WHERE name = $1"

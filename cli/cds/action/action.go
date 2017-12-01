@@ -7,6 +7,7 @@ func init() {
 	Cmd.AddCommand(cmdActionRemove())
 	Cmd.AddCommand(cmdActionList)
 	Cmd.AddCommand(cmdActionShow())
+	Cmd.AddCommand(cmdActionDoc())
 }
 
 // Cmd action

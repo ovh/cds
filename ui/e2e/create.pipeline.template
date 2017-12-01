@@ -1,0 +1,44 @@
+  - action:
+      navigate:
+          url: '{{.ui.url}}/project/{{.ui.project}}'
+    screenshot: e2e_3_pipeline_1_navigate.png
+  - action:
+      click:
+        find: '#ProjectPipelineTab'
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}?tab=pipelines
+    screenshot: e2e_3_pipeline_2_navigate.png
+  - action:
+      click:
+          find: 'a.ui.blue.button'
+          wait: 1
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/pipeline
+    screenshot: e2e_3_pipeline_3_navigate.png
+  - action:
+      fill:
+      - find: input[name="pipname"]
+        text: '{{.ui.pipeline}}'
+      - find: '#PipelineLinkedApplicationSelect input.search'
+        text: '{{.ui.application}}'
+        key: 'ENTER'
+    screenshot: e2e_3_pipeline_4_form_create.png
+  - action:
+      click:
+        find: button.ui.green
+        wait: 2
+    screenshot: e2e_3_pipeline_5_form_submit.png
+    assertions:
+    - result.url ShouldEqual {{.ui.url}}/project/{{.ui.project}}/pipeline/{{.ui.pipeline}}
+  - action:
+      click:
+        find: '#AddStageAndJob'
+        wait: 2
+    screenshot: e2e_3_pipeline_6_job_submit.png
+  - action:
+      click:
+        find: '#Job0'
+        wait: 1
+    screenshot: e2e_3_pipeline_7_job_select.png
+  - type: exec
+    script: '{{.cds.build.cds}} pipeline job append {{.ui.project}} {{.ui.pipeline}} "New Job" Script -p "script=echo hello"'

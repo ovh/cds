@@ -42,7 +42,6 @@ export class PermissionListComponent extends Table {
             if (perm) {
                 return perm.name;
             }
-
         }
     }
 

@@ -1,18 +1,22 @@
 # CDS: Continuous Delivery Service
 
-<img align="right" src="https://raw.githubusercontent.com/ovh/cds/master/logo-background.png">
+[![Join the chat at https://gitter.im/ovh-cds/Lobby](https://badges.gitter.im/ovh-cds/Lobby.svg)](https://gitter.im/ovh-cds/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ovh/cds)](https://goreportcard.com/report/github.com/ovh/cds)
+[![Coverage Status](https://coveralls.io/repos/github/ovh/cds/badge.svg?branch=master)](https://coveralls.io/github/ovh/cds?branch=master)
+
+<img align="right" src="https://raw.githubusercontent.com/ovh/cds/master/logo-background.png" width="25%">
 
 CDS is a pipeline based Continuous Delivery Service written in Go(lang).
 
-**/!\ This project is under active development.**
+**This project is under active development**
 
 ## Documentation
 
-Documentation is available [here](/doc/overview/introduction.md)
+Documentation is available [here](https://ovh.github.io/cds/)
 
 ## Overview
 
-CDS is composend of several components/
+CDS is composend of several components
 
 ### API
 
@@ -28,11 +32,11 @@ CDS Command line interface: [read more](cli/cds)
 
 ### Worker
 
-In CDS, a worker is an agent executing actions pushed in queue by CDS engine: [read more](/doc/overview/worker.md)
+In CDS, a worker is an agent executing actions pushed in queue by CDS engine: [read more](https://ovh.github.io/cds/advanced/advanced.worker/)
 
 ### Hatchery
 
-In CDS, a hatchery is an agent which spawn workers: [read more](/doc/overview/hatchery.md)
+In CDS, a hatchery is an agent which spawn workers: [read more](https://ovh.github.io/cds/advanced/advanced.hatcheries/)
 
 ### Contrib
 

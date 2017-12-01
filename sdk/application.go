@@ -16,25 +16,27 @@ type Repository struct {
 
 // Application represent an application in a project
 type Application struct {
-	ID                  int64                 `json:"id" db:"id"`
-	Name                string                `json:"name" db:"name"`
-	Description         string                `json:"description"  db:"description"`
-	ProjectID           int64                 `json:"-" db:"project_id"`
-	ProjectKey          string                `json:"project_key" db:"-"`
-	ApplicationGroups   []GroupPermission     `json:"groups,omitempty" db:"-"`
-	Variable            []Variable            `json:"variables,omitempty" db:"-"`
-	Pipelines           []ApplicationPipeline `json:"pipelines,omitempty" db:"-"`
-	PipelinesBuild      []PipelineBuild       `json:"pipelines_build,omitempty" db:"-"`
-	Permission          int                   `json:"permission" db:"-"`
-	Notifications       []UserNotification    `json:"notifications,omitempty" db:"-"`
-	LastModified        time.Time             `json:"last_modified" db:"last_modified"`
-	RepositoriesManager *RepositoriesManager  `json:"repositories_manager,omitempty" db:"-"`
-	RepositoryFullname  string                `json:"repository_fullname,omitempty" db:"repo_fullname"`
-	RepositoryPollers   []RepositoryPoller    `json:"pollers,omitempty" db:"-"`
-	Hooks               []Hook                `json:"hooks,omitempty" db:"-"`
-	Workflows           []CDPipeline          `json:"workflows,omitempty" db:"-"`
-	Schedulers          []PipelineScheduler   `json:"schedulers,omitempty" db:"-"`
-	Metadata            Metadata              `json:"metadata" yaml:"metadata" db:"-"`
+	ID                 int64                 `json:"id" db:"id"`
+	Name               string                `json:"name" db:"name" cli:"name"`
+	Description        string                `json:"description"  db:"description"`
+	ProjectID          int64                 `json:"-" db:"project_id"`
+	ProjectKey         string                `json:"project_key" db:"-"`
+	ApplicationGroups  []GroupPermission     `json:"groups,omitempty" db:"-"`
+	Variable           []Variable            `json:"variables,omitempty" db:"-"`
+	Pipelines          []ApplicationPipeline `json:"pipelines,omitempty" db:"-"`
+	PipelinesBuild     []PipelineBuild       `json:"pipelines_build,omitempty" db:"-"`
+	Permission         int                   `json:"permission" db:"-"`
+	Notifications      []UserNotification    `json:"notifications,omitempty" db:"-"`
+	LastModified       time.Time             `json:"last_modified" db:"last_modified"`
+	VCSServer          string                `json:"vcs_server,omitempty" db:"vcs_server"`
+	RepositoryFullname string                `json:"repository_fullname,omitempty" db:"repo_fullname"`
+	RepositoryPollers  []RepositoryPoller    `json:"pollers,omitempty" db:"-"`
+	Hooks              []Hook                `json:"hooks,omitempty" db:"-"`
+	Workflows          []CDPipeline          `json:"workflows,omitempty" db:"-"`
+	Schedulers         []PipelineScheduler   `json:"schedulers,omitempty" db:"-"`
+	Metadata           Metadata              `json:"metadata" yaml:"metadata" db:"-"`
+	WorkflowMigration  string                `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
+	Keys               []ApplicationKey      `json:"keys" yaml:"keys" db:"-"`
 }
 
 // ApplicationVariableAudit represents an audit on an application variable
@@ -551,7 +553,7 @@ func AddPipelineScheduler(projectKey, appName, pipelineName, cronExpr, envName s
 
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler", projectKey, appName, pipelineName)
 	if envName != "" {
-		path = path + url.QueryEscape("?envName="+envName)
+		path = path + "?envName=" + url.QueryEscape(envName)
 	}
 	data, code, err := Request("POST", path, b)
 	if err != nil {

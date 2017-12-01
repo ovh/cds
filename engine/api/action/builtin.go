@@ -5,8 +5,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // CreateBuiltinActions add builtin actions in database if needed
@@ -24,42 +24,6 @@ Make sure that the binary used is in
 the pre-requisites of action`,
 		Type: sdk.TextParameter})
 	if err := checkBuiltinAction(db, script); err != nil {
-		return err
-	}
-
-	// ----------------------------------- Notif  ---------------------------
-	notif := sdk.NewAction(sdk.NotifAction)
-	notif.Description = `CDS Builtin Action. This action can be used to send
-information to notification systems.
-Each notification system can interpret this
-notification as desired.
-
-You can write content in a file, using messagefile
-attribute.
-
-Consult documentation for more information`
-	notif.Type = sdk.BuiltinAction
-	notif.Parameter(sdk.Parameter{
-		Name:  "destination",
-		Value: "all",
-		Description: `Destination of notification: email, tat, slack, jabber...
-Check CDS Documentation for available type. Default to all`,
-		Type: sdk.StringParameter})
-	notif.Parameter(sdk.Parameter{
-		Name:        "title",
-		Description: "Title of notification",
-		Type:        sdk.StringParameter})
-	notif.Parameter(sdk.Parameter{
-		Name:        "message",
-		Description: "Message of notification (optional)",
-		Type:        sdk.TextParameter})
-	notif.Parameter(sdk.Parameter{
-		Name:        "messagefile",
-		Value:       "",
-		Description: "Message could be in this file (optional)",
-		Type:        sdk.StringParameter})
-
-	if err := checkBuiltinAction(db, notif); err != nil {
 		return err
 	}
 
@@ -118,13 +82,103 @@ Clone a repository into a new directory.`
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:        "directory",
-		Description: "The name of a new directory to clone into.",
-		Value:       "",
+		Description: "The name of a directory to clone into.",
+		Value:       "{{.cds.workspace}}",
 		Type:        sdk.StringParameter,
 	})
 	gitclone.Requirement("git", sdk.BinaryRequirement, "git")
 
 	if err := checkBuiltinAction(db, gitclone); err != nil {
+		return err
+	}
+
+	// ----------------------------------- Git tag    -----------------------
+	gittag := sdk.NewAction(sdk.GitTagAction)
+	gittag.Type = sdk.BuiltinAction
+	gittag.Description = `CDS Builtin Action.
+Tag the current branch and push it.`
+
+	gittag.Parameter(sdk.Parameter{
+		Name:        "url",
+		Description: "URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.",
+		Value:       "{{.git.http_url}}",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "authPrivateKey",
+		Value:       "",
+		Description: "Set the private key to be able to git push to the remote",
+		Type:        sdk.KeyParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "user",
+		Description: "Set the user to be able to git clone from https with authentication",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "password",
+		Description: "Set the password to be able to git clone from https with authentication",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "signKey",
+		Value:       "",
+		Description: "Set the key to be able to sign the tag",
+		Type:        sdk.KeyParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "tagName",
+		Description: "Set the name of the tag. Must match semver. If empty CDS will make a patch version",
+		Value:       "",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "tagMessage",
+		Description: "Set a message for the tag.",
+		Value:       "",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Parameter(sdk.Parameter{
+		Name:        "path",
+		Description: "The path to your git directory.",
+		Value:       "{{.cds.workspace}}",
+		Type:        sdk.StringParameter,
+	})
+	gittag.Requirement("git", sdk.BinaryRequirement, "git")
+	gittag.Requirement("gpg", sdk.BinaryRequirement, "gpg")
+
+	if err := checkBuiltinAction(db, gittag); err != nil {
+		return err
+	}
+
+	// ----------------------------------- Git Release -----------------------
+	gitrelease := sdk.NewAction(sdk.ReleaseAction)
+	gitrelease.Type = sdk.BuiltinAction
+	gitrelease.Description = `CDS Builtin Action. Make a release using repository manager.`
+
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "tag",
+		Description: "Tag name.",
+		Value:       "{{.cds.release.version}}",
+		Type:        sdk.StringParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "title",
+		Value:       "",
+		Description: "Set a title for the release",
+		Type:        sdk.StringParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "releaseNote",
+		Description: "Set a release note for the release",
+		Type:        sdk.TextParameter,
+	})
+	gitrelease.Parameter(sdk.Parameter{
+		Name:        "artifacts",
+		Description: "Set a list of artifacts, separate by , . You can also use regexp.",
+		Type:        sdk.StringParameter,
+	})
+	if err := checkBuiltinAction(db, gitrelease); err != nil {
 		return err
 	}
 
@@ -134,7 +188,7 @@ Clone a repository into a new directory.`
 // checkBuiltinAction add builtin actions in database if needed
 func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	var name string
-	err := db.QueryRow(`SELECT action.name FROM action WHERE action.name = $1`, a.Name).Scan(&name)
+	err := db.QueryRow(`SELECT action.name FROM action WHERE action.name = $1 and action.type = $2`, a.Name, sdk.BuiltinAction).Scan(&name)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
@@ -143,6 +197,8 @@ func checkBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 		if errcreate := createBuiltinAction(db, a); errcreate != nil {
 			return errcreate
 		}
+	} else {
+		log.Debug("checkBuiltinAction> builtin action %s already exists", a.Name)
 	}
 
 	return nil
@@ -155,6 +211,7 @@ func createBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 	}
 	defer tx.Rollback()
 
+	log.Info("createBuiltinAction> create builtin action %s", a.Name)
 	if err := InsertAction(tx, a, true); err != nil {
 		return err
 	}
@@ -165,26 +222,28 @@ func createBuiltinAction(db *gorp.DbMap, a *sdk.Action) error {
 // CreateBuiltinArtifactActions  Create Action BuiltinArtifact
 func CreateBuiltinArtifactActions(db *gorp.DbMap) error {
 	var name string
-	query := `SELECT action.name FROM action where action.name = $1`
+	query := `SELECT action.name FROM action where action.name = $1 and action.type = $2`
 
 	// Check ArtifactUpload action
-	err := db.QueryRow(query, sdk.ArtifactUpload).Scan(&name)
+	err := db.QueryRow(query, sdk.ArtifactUpload, sdk.BuiltinAction).Scan(&name)
 	if err != nil && err == sql.ErrNoRows {
 		err = createBuiltinArtifactUploadAction(db)
 		if err != nil {
-			log.Warning("CreateBuiltinArtifactActions> CreateBuiltinArtifactActions err:%s", err.Error())
-			return err
+			return sdk.WrapError(err, "CreateBuiltinArtifactActions> cannot create builtin artifact upload action")
 		}
+	} else {
+		log.Debug("CreateBuiltinArtifactActions> builtin action %s already exists", sdk.ArtifactUpload)
 	}
 
 	// Check ArtifactDownload action
-	err = db.QueryRow(query, sdk.ArtifactDownload).Scan(&name)
+	err = db.QueryRow(query, sdk.ArtifactDownload, sdk.BuiltinAction).Scan(&name)
 	if err != nil && err == sql.ErrNoRows {
 		err = createBuiltinArtifactDownloadAction(db)
 		if err != nil {
-			log.Warning("CreateBuiltinArtifactActions> createBuiltinArtifactDownloadAction err:%s", err.Error())
-			return err
+			return sdk.WrapError(err, "CreateBuiltinArtifactActions> cannot create builtin artifact download action")
 		}
+	} else {
+		log.Debug("CreateBuiltinArtifactActions> builtin action %s already exists", sdk.ArtifactDownload)
 	}
 
 	return nil
@@ -214,10 +273,9 @@ func createBuiltinArtifactUploadAction(db *gorp.DbMap) error {
 	}
 	defer tx.Rollback()
 
-	err = InsertAction(tx, upload, true)
-	if err != nil {
-		log.Warning("CreateBuiltinArtifactActions> createBuiltinArtifactUploadAction err:%s", err.Error())
-		return err
+	log.Info("createBuiltinArtifactUploadAction> create builtin action %s", upload.Name)
+	if err := InsertAction(tx, upload, true); err != nil {
+		return sdk.WrapError(err, "CreateBuiltinArtifactActions> createBuiltinArtifactUploadAction err")
 	}
 
 	return tx.Commit()
@@ -247,6 +305,11 @@ func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 		Type:        sdk.BooleanParameter,
 		Description: "Enable artifact download",
 		Value:       "true"})
+	dl.Parameter(sdk.Parameter{
+		Name:        "pattern",
+		Type:        sdk.StringParameter,
+		Description: "Empty: download all files. Otherwise, enter regexp pattern to choose file: (fileA|fileB)",
+		Value:       ""})
 
 	tx, err := db.Begin()
 	if err != nil {
@@ -254,10 +317,9 @@ func createBuiltinArtifactDownloadAction(db *gorp.DbMap) error {
 	}
 	defer tx.Rollback()
 
-	err = InsertAction(tx, dl, true)
-	if err != nil {
-		log.Warning("CreateBuiltinArtifactActions> createBuiltinArtifactDownloadAction err:%s", err.Error())
-		return err
+	log.Info("createBuiltinArtifactDownloadAction> create builtin action %s", dl.Name)
+	if err := InsertAction(tx, dl, true); err != nil {
+		return sdk.WrapError(err, "CreateBuiltinArtifactActions> createBuiltinArtifactDownloadAction err")
 	}
 
 	return tx.Commit()

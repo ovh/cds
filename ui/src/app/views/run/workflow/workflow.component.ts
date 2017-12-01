@@ -1,16 +1,24 @@
-import {Component, Input} from '@angular/core';
-import {Pipeline, PipelineBuild, PipelineBuildJob} from '../../../model/pipeline.model';
+import {Component, Input, OnDestroy} from '@angular/core';
+import {TranslateService} from 'ng2-translate';
+import {Subscription} from 'rxjs/Subscription';
+import {Pipeline, PipelineBuild, PipelineBuildJob, PipelineStatus} from '../../../model/pipeline.model';
 import {Stage} from '../../../model/stage.model';
 import {Job} from '../../../model/job.model';
 import {Project} from '../../../model/project.model';
 import {Application} from '../../../model/application.model';
 import {DurationService} from '../../../shared/duration/duration.service';
+import {NotificationService} from '../../../service/notification/notification.service';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
+import {first} from 'rxjs/operators';
+
 
 @Component({
     selector: 'app-pipeline-run-workflow',
     templateUrl: './workflow.html',
     styleUrls: ['./workflow.scss']
 })
+@AutoUnsubscribe()
 export class PipelineRunWorkflowComponent {
 
     @Input() previousBuild: PipelineBuild;
@@ -28,6 +36,9 @@ export class PipelineRunWorkflowComponent {
     }
 
     currentBuild: PipelineBuild;
+    notificationSubscription: Subscription;
+    previousStatus: string;
+    pipelineStatusEnum = PipelineStatus;
 
     selectedPipJob: PipelineBuildJob;
     jobSelected: Job;
@@ -36,7 +47,10 @@ export class PipelineRunWorkflowComponent {
     mapJobProgression: { [key: number]: number };
     mapJobDuration: { [key: number]: string };
 
-    constructor(private _durationService: DurationService) {
+    nextBuilds: Array<PipelineBuild>;
+
+    constructor(private _durationService: DurationService, private _translate: TranslateService,
+        private _notification: NotificationService, private _appPipService: ApplicationPipelineService) {
         this.initData();
     }
 
@@ -52,6 +66,19 @@ export class PipelineRunWorkflowComponent {
 
     refreshBuild(data: PipelineBuild): void {
         this.currentBuild = data;
+
+        if (this.previousStatus && this.currentBuild && this.previousStatus === PipelineStatus.BUILDING &&
+            this.previousBuild && this.previousBuild.id !== this.currentBuild.id &&
+                this.currentBuild.status !== PipelineStatus.BUILDING) {
+            this.handleNotification(this.currentBuild);
+        }
+
+        if (this.currentBuild) {
+            this.previousStatus = this.currentBuild.status;
+            if (this.currentBuild.status === PipelineStatus.SUCCESS) {
+                this.getTriggeredPipeline();
+            }
+        }
         // Set selected job if needed or refresh step_status
         if (this.currentBuild.stages) {
             this.currentBuild.stages.forEach((s, sIndex) => {
@@ -59,7 +86,7 @@ export class PipelineRunWorkflowComponent {
                 if (s.builds) {
                     s.builds.forEach((pipJob, pjIndex) => {
                         // Update percent progression
-                        if (pipJob.status === 'Building') {
+                        if (pipJob.status === PipelineStatus.BUILDING) {
                             this.updateJobProgression(pipJob);
                         }
                         // Update duration
@@ -95,15 +122,30 @@ export class PipelineRunWorkflowComponent {
         }
     }
 
+    handleNotification(pipelineBuild: PipelineBuild): void {
+        switch (pipelineBuild.status) {
+        case PipelineStatus.SUCCESS:
+            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_success', {
+                pipelineName: pipelineBuild.pipeline.name
+            }), { icon: 'assets/images/checked.png' }).subscribe();
+            break;
+        case PipelineStatus.FAIL:
+            this.notificationSubscription = this._notification.create(this._translate.instant('notification_on_pipeline_failing', {
+                pipelineName: pipelineBuild.pipeline.name
+            }), { icon: 'assets/images/close.png' }).subscribe();
+            break;
+        }
+    }
+
     updateJobDuration(pipJob: PipelineBuildJob): void {
         switch (pipJob.status) {
-            case 'Waiting':
+            case PipelineStatus.WAITING:
                 if (pipJob.queued) {
                     this.mapJobDuration[pipJob.job.pipeline_action_id] =
                         'Queued ' + this._durationService.duration(new Date(pipJob.queued), new Date()) + ' ago';
                 }
                 break;
-            case 'Building':
+            case PipelineStatus.BUILDING:
                 if (pipJob.start) {
                     this.mapJobDuration[pipJob.job.pipeline_action_id] =
                         this._durationService.duration(new Date(pipJob.start), new Date());
@@ -154,5 +196,16 @@ export class PipelineRunWorkflowComponent {
                 }
             });
         }
+    }
+
+    getTriggeredPipeline(): void {
+        this._appPipService.getTriggeredPipeline(
+            this.project.key,
+            this.currentBuild.application.name,
+            this.currentBuild.pipeline.name,
+            this.currentBuild.build_number)
+            .pipe(first()).subscribe( builds => {
+            this.nextBuilds = builds;
+        });
     }
 }

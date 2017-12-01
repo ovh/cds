@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package grpc;
+
+import "github.com/ovh/cds/sdk/log.proto";
+import "github.com/ovh/cds/sdk/result.proto";
+import "google/protobuf/empty.proto";
+
+// WorkflowQueue is the GRPC service for http handlers "/queue/workflows
+// Generate code with "protoc --proto_path=${GOPATH}/src:. --go_out=plugins=grpc:. *.proto"
+service WorkflowQueue {
+    rpc SendLog(stream github.com.ovh.cds.sdk.Log) returns (google.protobuf.Empty) {}
+    rpc SendResult(github.com.ovh.cds.sdk.Result) returns (google.protobuf.Empty) {}
+}

@@ -2,6 +2,7 @@ import {Component, OnInit, ViewChild, QueryList, ViewChildren, OnDestroy} from '
 import {ActivatedRoute, Router} from '@angular/router';
 import {Application, ApplicationFilter} from '../../../model/application.model';
 import {ApplicationStore} from '../../../service/application/application.store';
+import {ProjectStore} from '../../../service/project/project.store';
 import {Project} from '../../../model/project.model';
 import {environment} from '../../../../environments/environment';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
@@ -12,16 +13,17 @@ import {TranslateService} from 'ng2-translate';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {Subscription} from 'rxjs/Subscription';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
-import {WorkflowItem} from '../../../model/application.workflow.model';
 import {CDSWorker} from '../../../shared/worker/worker';
 import {NotificationEvent} from './notifications/notification.event';
 import {ApplicationNotificationListComponent} from './notifications/list/notification.list.component';
+import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 
 @Component({
     selector: 'app-application-show',
     templateUrl: './application.html',
     styleUrls: ['./application.scss']
 })
+@AutoUnsubscribe()
 export class ApplicationShowComponent implements OnInit, OnDestroy {
 
     // Flag to show the page or not
@@ -35,14 +37,10 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     project: Project;
     application: Application;
 
-    // Init workflow
-    workflowInit = false;
-
     // Subscription
     applicationSubscription: Subscription;
-    workersSubscription: Map<string, Subscription> = new Map<string, Subscription>();
-    workers: Map<string, CDSWorker> = new Map<string, CDSWorker>();
-    applicationsWorflow: Array<string> = new Array<string>();
+    workerSubscription: Subscription;
+    worker: CDSWorker;
 
     // Selected tab
     selectedTab = 'workflow';
@@ -62,60 +60,75 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
     // Filter
     appFilter: ApplicationFilter = {
+        remote: '',
         branch: '',
-        version: 0
+        version: ' '
     };
+
+    // queryparam for breadcrum
+    workflowName: string;
+    workflowNum: string;
+    workflowNodeRun: string;
+    workflowPipeline: string;
 
     constructor(private _applicationStore: ApplicationStore, private _route: ActivatedRoute,
                 private _router: Router, private _authStore: AuthentificationStore,
-                private _toast: ToastService, public _translate: TranslateService) {
+                private _toast: ToastService, public _translate: TranslateService,
+                private _projectStore: ProjectStore) {
         // Update data if route change
-        this._route.data.subscribe( datas => {
+        this._route.data.subscribe(datas => {
             this.project = datas['project'];
         });
 
         this._route.queryParams.subscribe(queryParams => {
-           this.appFilter.branch = queryParams['branch'] ? queryParams['branch'] : 'master';
-           this.appFilter.version = queryParams['version'] ? Number(queryParams['version']) : 0;
+           this.appFilter = {
+               remote: queryParams['remote'] || '',
+               branch: queryParams['branch'] || '',
+               version: queryParams['version'] || ' '
+           };
+
            if (this.project && this.application) {
-               this.startWorkers(this.project.key);
+               this.startWorker(this.project.key);
            }
         });
+
+        if (this._route.snapshot && this._route.queryParams) {
+            this.workflowName = this._route.snapshot.queryParams['workflow'];
+            this.workflowNum = this._route.snapshot.queryParams['run'];
+            this.workflowNodeRun = this._route.snapshot.queryParams['node'];
+        }
+        this.workflowPipeline = this._route.snapshot.queryParams['wpipeline'];
         this._route.params.subscribe(params => {
             let key = params['key'];
             let appName = params['appName'];
             if (key && appName) {
-                 if (this.applicationSubscription) {
+                if (this.applicationSubscription) {
                     this.applicationSubscription.unsubscribe();
                 }
                 if (this.application && this.application.name !== appName) {
-                     this.application = undefined;
-                    this.stopWorkers();
+                    this.application = null;
+                    this.stopWorker();
                 }
                 if (!this.application) {
-                    this.applicationSubscription = this._applicationStore.getApplications(key, appName).subscribe(apps => {
+                    this.applicationSubscription = this._applicationStore.getApplications(key, appName, this.appFilter).subscribe(apps => {
                         if (apps) {
                             let updatedApplication = apps.get(key + '-' + appName);
-                            if (updatedApplication && !updatedApplication.externalChange &&
-                                (!this.application || this.application.last_modified < updatedApplication.last_modified)) {
+                            if (updatedApplication && !updatedApplication.externalChange) {
                                 this.readyApp = true;
                                 this.application = updatedApplication;
 
-                                // List applications in workflow
-                                this.checkOtherAppInWorkflow(key);
-
                                 // Start worker
-                                this.startWorkers(key);
+                                this.startWorker(key);
 
                                 // Update recent application viewed
                                 this._applicationStore.updateRecentApplication(key, this.application);
 
                                 // Switch workflow
                                 if (this.workflowComponentList && this.workflowComponentList.length > 0) {
-                                    this.workflowComponentList.first.switchApplication();
+                                    this.workflowComponentList.first.switchApplication(this.application);
                                 }
                             } else if (updatedApplication && updatedApplication.externalChange) {
-                                // TODO show warning
+                                this._toast.info('', this._translate.instant('warning_application'));
                             }
                         }
                     }, () => {
@@ -127,10 +140,8 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        if (this.applicationSubscription) {
-            this.applicationSubscription.unsubscribe();
-        }
-       this.stopWorkers();
+        this.appFilter.remote = '';
+        this.stopWorker();
     }
 
     ngOnInit() {
@@ -142,27 +153,17 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
         });
     }
 
-    stopWorkers(): void {
-        if (this.workers) {
-            this.workers.forEach( v => {
-                v.stop();
-            });
-        }
-        if (this.workersSubscription) {
-            this.workersSubscription.forEach( v => {
-                v.unsubscribe();
-            });
-        }
-        this.workersSubscription = new Map<string, Subscription>();
-        this.workers = new Map<string, CDSWorker>();
+    stopWorker(): void {
+       if (this.worker) {
+           this.worker.stop();
+       }
     }
 
     /**
      * Start workers to pull workflow.
      */
-    startWorkers(key: string): void {
-        this.stopWorkers();
-        this.checkOtherAppInWorkflow(key);
+    startWorker(key: string): void {
+        this.stopWorker();
 
         if (this.application.workflows && this.application.workflows.length > 0) {
             let msgToSend = {
@@ -170,64 +171,20 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 'session': this._authStore.getSessionToken(),
                 'api': environment.apiURL,
                 'key': key,
-                'appName': '',
-                'branch': this.appFilter.branch,
+                'appName': this.application.name,
+                'branch': this.appFilter.branch || 'master',
+                'remote': this.appFilter.remote,
                 'version': this.appFilter.version
             };
 
-            this.applicationsWorflow.forEach(a => {
-                let cdsWorker = new CDSWorker('assets/worker/web/workflow.js?appName=' + a);
-
-                let sub = cdsWorker.response().subscribe(msg => {
-                    if (this.application.workflows && this.workflowComponentList
-                        && this.workflowComponentList.length > 0 && msg && msg !== '') {
-                        this.workflowComponentList.first.refreshWorkflow(JSON.parse(msg));
-                    }
-                });
-                this.workersSubscription.set(a, sub);
-
-                msgToSend.appName = a;
-                cdsWorker.start(msgToSend);
-                this.workers.set(a, cdsWorker);
-
-
+            this.worker = new CDSWorker('assets/worker/web/workflow.js?appName=' + this.application.name);
+            this.workerSubscription = this.worker.response().subscribe(msg => {
+                if (this.application.workflows && this.workflowComponentList
+                    && this.workflowComponentList.length > 0 && msg && msg !== '') {
+                    this.workflowComponentList.first.refreshWorkflow(JSON.parse(msg));
+                }
             });
-        }
-    }
-
-    /**
-     * Browse all sub applications in workflow and add worker subscription
-     * @param key
-     */
-    checkOtherAppInWorkflow(key: string): void {
-        this.applicationsWorflow = new Array<string>();
-        if (this.application && this.application.workflows) {
-            this.workflowInit = true;
-            this.application.workflows.forEach( w => {
-                this.isAnOtherApp(w, key, 1);
-            });
-        }
-    }
-
-    /**
-     * Recursive function adding worker subscription on sub application
-     * @param w
-     * @param key
-     */
-    isAnOtherApp(w: WorkflowItem, key: string, horizontalDepth: number): void {
-        if (!this.applicationsWorflow.find(a => {
-            return a === w.application.name;
-            })) {
-            this.applicationsWorflow.push(w.application.name);
-        }
-        if (w.subPipelines) {
-            w.subPipelines.forEach( sub => {
-                this.isAnOtherApp(sub, key, horizontalDepth + 1);
-            });
-        } else {
-            if (!this.application.horizontalDepth || this.application.horizontalDepth < horizontalDepth) {
-                this.application.horizontalDepth = horizontalDepth;
-            }
+            this.worker.start(msgToSend);
         }
     }
 
@@ -235,9 +192,11 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
      * Reinit worker the the current tab.
      *
      */
-    changeWorkerFilter(): void {
-        this.stopWorkers();
-        this.startWorkers(this.project.key);
+    changeWorkerFilter(destroy: boolean): void {
+        this.stopWorker();
+        if (!destroy) {
+            this.startWorker(this.project.key);
+        }
     }
 
     showTab(tab: string): void {

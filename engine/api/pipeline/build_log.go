@@ -1,10 +1,12 @@
 package pipeline
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // UpdateLog Update a pipeline build step log
@@ -99,6 +101,15 @@ func DeleteBuildLogs(db gorp.SqlExecutor, pipJobID int64) error {
 	return err
 }
 
+// DeleteBuildLogsByApplicationID Delete all log from the given build
+func DeleteBuildLogsByApplicationID(db gorp.SqlExecutor, appID int64) error {
+	query := `DELETE FROM pipeline_build_log WHERE pipeline_build_id IN (
+				SELECT id from pipeline_build WHERE application_id = $1
+			)`
+	_, err := db.Exec(query, appID)
+	return err
+}
+
 // DeleteBuildLogsByPipelineBuildID Delete all log from the given build
 func DeleteBuildLogsByPipelineBuildID(db gorp.SqlExecutor, pipID int64) error {
 	query := `DELETE FROM pipeline_build_log WHERE pipeline_build_id = $1`
@@ -138,13 +149,18 @@ func LoadPipelineStepBuildLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineB
 
 	// Get the logs for the given pbJob
 	logs, errLog := LoadStepLogs(db, currentPbJob.ID, stepOrder)
-	if errLog != nil {
+	if errLog != nil && errLog != sql.ErrNoRows {
 		return nil, errLog
+	}
+
+	var buildLog sdk.Log
+	if logs != nil {
+		buildLog = *logs
 	}
 
 	result := &sdk.BuildState{
 		Status:   sdk.StatusFromString(stepStatus),
-		StepLogs: *logs,
+		StepLogs: buildLog,
 	}
 	return result, nil
 }

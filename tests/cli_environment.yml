@@ -14,7 +14,7 @@ testcases:
 
 - name: environment list
   steps:
-  - script: {{.cds.build.cds}} environment list TEST
+  - script: {{.cds.build.cds}} environment list ITCLIENVPRJ
 
 - name: environment show
   steps:
@@ -52,12 +52,8 @@ testcases:
   steps:
   - script: {{.cds.build.cds}} environment group update ITCLIENVPRJ PROD ITCLIENV_GRP_EDIT_TEST 4
 
-- name: environment group remove
-  steps:
-  - script: {{.cds.build.cds}} environment group remove ITCLIENVPRJ PROD ITCLIENV_GRP_EDIT_TEST
-
 - name: clean
   steps:
+  - script: {{.cds.build.cds}} project remove --force ITCLIENVPRJ
   - script: {{.cds.build.cds}} group remove ITCLIENV_GRP
   - script: {{.cds.build.cds}} group remove ITCLIENV_GRP_EDIT_TEST
-  - script: {{.cds.build.cds}} project remove --force ITCLIENVPRJ

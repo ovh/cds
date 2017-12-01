@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"path"
 	"strings"
@@ -22,7 +23,6 @@ var (
 	// Host defines the endpoint for all SDK requests
 	Host           string
 	user           string
-	password       string
 	token          string
 	hash           string
 	skipReadConfig bool
@@ -38,7 +38,7 @@ var (
 	// HTTP client
 	client HTTPClient
 	// current agent calling
-	agent Agent
+	agent string
 	// CDSConfigFile is path to the default config file
 	CDSConfigFile = path.Join(os.Getenv("HOME"), ".cds", "config.json")
 )
@@ -55,18 +55,16 @@ func Authorization(h string) {
 	skipReadConfig = true
 }
 
-// Agent describe the type of authentication method to use
-type Agent string
-
 // Different values of agent
 const (
-	SDKAgent      Agent = "CDS/sdk"
-	WorkerAgent         = "CDS/worker"
-	HatcheryAgent       = "CDS/hatchery"
+	SDKAgent      = "CDS/sdk"
+	WorkerAgent   = "CDS/worker"
+	HatcheryAgent = "CDS/hatchery"
+	ServiceAgent  = "CDS/service"
 )
 
 //SetAgent set a agent value
-func SetAgent(a Agent) {
+func SetAgent(a string) {
 	agent = a
 }
 
@@ -119,9 +117,6 @@ func ReadConfig() error {
 		if viper.GetString("user") != "" {
 			user = viper.GetString("user")
 		}
-		if viper.GetString("password") != "" {
-			password = viper.GetString("password")
-		}
 		if viper.GetString("token") != "" {
 			token = viper.GetString("token")
 		}
@@ -134,14 +129,11 @@ func ReadConfig() error {
 	if val := os.Getenv("CDS_USER"); val != "" {
 		user = val
 	}
-	if val := os.Getenv("CDS_PASSWORD"); val != "" {
-		password = val
-	}
 	if val := os.Getenv("CDS_TOKEN"); val != "" {
 		token = val
 	}
 
-	if user != "" && (password != "" || token != "") {
+	if user != "" && token != "" {
 		return nil
 	}
 
@@ -173,7 +165,6 @@ func SetHTTPClient(c HTTPClient) {
 func Options(h, u, p, t string) {
 	Host = h
 	user = u
-	password = p
 	token = t
 	skipReadConfig = true
 }
@@ -203,12 +194,6 @@ func Request(method string, path string, args []byte, mods ...RequestModifier) (
 		return nil, code, err
 	}
 
-	if verbose {
-		if len(body) > 0 {
-			log.Printf("Response Body: %s\n", body)
-		}
-	}
-
 	if err := DecodeError(body); err != nil {
 		return nil, code, err
 	}
@@ -226,16 +211,13 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		os.Exit(1)
 	}
 
-	if verbose {
-		log.Printf("Request %s Body : %s", Host+path, string(args))
-	}
-
+	var url = Host + path
 	for i := 0; i < retry; i++ {
 		var req *http.Request
 		if args != nil {
-			req, err = http.NewRequest(method, Host+path, bytes.NewReader(args))
+			req, err = http.NewRequest(method, url, bytes.NewReader(args))
 		} else {
-			req, err = http.NewRequest(method, Host+path, nil)
+			req, err = http.NewRequest(method, url, nil)
 		}
 		if err != nil {
 			savederror = err
@@ -248,7 +230,9 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		}
 
 		if verbose {
-
+			fmt.Println("********REQUEST**********")
+			dmp, _ := httputil.DumpRequestOut(req, true)
+			fmt.Printf("%s", string(dmp))
 		}
 
 		//No auth on /login route
@@ -257,9 +241,6 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 				basedHash := base64.StdEncoding.EncodeToString([]byte(hash))
 				req.Header.Set(AuthHeader, basedHash)
 			}
-			if user != "" && password != "" {
-				req.SetBasicAuth(user, password)
-			}
 			if user != "" && token != "" {
 				req.Header.Add(SessionTokenHeader, token)
 				req.SetBasicAuth(user, token)
@@ -267,6 +248,13 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		}
 
 		resp, err := client.Do(req)
+
+		if err == nil && verbose {
+			fmt.Println("********RESPONSE**********")
+			dmp, _ := httputil.DumpResponse(resp, true)
+			fmt.Printf("%s", string(dmp))
+			fmt.Println("**************************")
+		}
 
 		// if everything is fine, return body
 		if err == nil && resp.StatusCode < 500 {
@@ -315,7 +303,7 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 }
 
 // UploadMultiPart upload multipart
-func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...RequestModifier) ([]byte, int, error) {
+func UploadMultiPart(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, int, error) {
 
 	if verbose {
 		log.Printf("Starting UploadMultiPart %s %s", method, path)
@@ -341,9 +329,6 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 		basedHash := base64.StdEncoding.EncodeToString([]byte(hash))
 		req.Header.Set(AuthHeader, basedHash)
 	}
-	if user != "" && password != "" {
-		req.SetBasicAuth(user, password)
-	}
 	if user != "" && token != "" {
 		req.Header.Add(SessionTokenHeader, token)
 		req.SetBasicAuth(user, token)
@@ -368,8 +353,8 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 	}
 
 	if verbose {
-		if len(body.Bytes()) > 0 {
-			log.Printf("Response Body: %s\n", body.String())
+		if len(respBody) > 0 {
+			log.Printf("Response Body: %s\n", respBody)
 		}
 	}
 
@@ -399,9 +384,6 @@ func Upload(method string, path string, body io.ReadCloser, mods ...RequestModif
 	if hash != "" {
 		basedHash := base64.StdEncoding.EncodeToString([]byte(hash))
 		req.Header.Set(AuthHeader, basedHash)
-	}
-	if user != "" && password != "" {
-		req.SetBasicAuth(user, password)
 	}
 	resp, err := client.Do(req)
 	if err != nil {

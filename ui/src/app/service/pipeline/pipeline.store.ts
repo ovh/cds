@@ -1,8 +1,10 @@
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
-import {BehaviorSubject, Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 
 import {Pipeline} from '../../model/pipeline.model';
+import {Application} from '../../model/application.model';
 import {PipelineService} from './pipeline.service';
 import {Stage} from '../../model/stage.model';
 import {Job} from '../../model/job.model';
@@ -58,16 +60,35 @@ export class PipelineStore {
         return new Observable<List<string>>(fn => this._pipelineType.subscribe(fn));
     }
 
-    getPipelines(key: string, pipName: string): Observable<Map<string, Pipeline>> {
+    getPipelines(key: string, pipName?: string): Observable<Map<string, Pipeline>> {
       let store = this._pipeline.getValue();
       let pipKey = key + '-' + pipName;
-      let pipeline = store.get(pipKey);
-      if (!pipeline) {
-        this._pipelineService.getPipeline(key, pipName).subscribe( res => {
-          this._pipeline.next(store.set(pipKey, res));
-        });
+      if (pipName && !store.get(pipKey)) {
+        this.resync(key, pipName);
       }
       return new Observable<Map<string, Pipeline>>(fn => this._pipeline.subscribe(fn));
+    }
+
+    resync(key: string, pipName: string) {
+        let store = this._pipeline.getValue();
+        let pipKey = key + '-' + pipName;
+        this._pipelineService.getPipeline(key, pipName).subscribe(res => {
+            this._pipeline.next(store.set(pipKey, res));
+        });
+    }
+
+    externalModification(pipKey: string) {
+        let cache = this._pipeline.getValue();
+        let pipToUpdate = cache.get(pipKey);
+        if (pipToUpdate) {
+            pipToUpdate.externalChange = true;
+            this._pipeline.next(cache.set(pipKey, pipToUpdate));
+        }
+    }
+
+    removeFromStore(pipKey: string) {
+        let cache = this._pipeline.getValue();
+        this._pipeline.next(cache.delete(pipKey));
     }
 
     /**
@@ -115,9 +136,8 @@ export class PipelineStore {
      */
     deletePipeline(key: string, pipName: string): Observable<boolean> {
         return this._pipelineService.deletePipeline(key, pipName).map(() => {
-            let cache = this._pipeline.getValue();
             let pipKey = key + '-' + pipName;
-            this._pipeline.next(cache.remove(pipKey));
+            this.removeFromStore(pipKey);
             return true;
         });
     }
@@ -130,7 +150,8 @@ export class PipelineStore {
      */
     addStage(key: string, pipName: string, stage: Stage): Observable<Pipeline> {
         return this._pipelineService.insertStage(key, pipName, stage).map(res => {
-            return this.refreshPipelineStageCache(key, pipName, res);
+            this.refreshPipelineStageCache(key, pipName, res);
+            return res;
         });
     }
 
@@ -350,5 +371,26 @@ export class PipelineStore {
         return this._pipelineService.moveStage(key, pipName, stageMoved).map( pip => {
            return this.refreshPipelineStageCache(key, pipName, pip);
         });
+    }
+
+
+    /**
+     * Refresh pipeline cache
+     * @param key Project unique key
+     * @param pipName Pipeline Name
+     * @param pipeline updated stages pipeline
+     * @returns {Pipeline}
+     */
+    refreshPipelineApplicationsCache(key: string, pipName: string, apps: Array<Application>): Pipeline {
+        let cache = this._pipeline.getValue();
+        let pipKey = key + '-' + pipName;
+        let pipelineToUpdate = cache.get(pipKey);
+        if (pipelineToUpdate) {
+            if (pipelineToUpdate.usage) {
+                pipelineToUpdate.usage.applications = apps;
+            }
+            this._pipeline.next(cache.set(pipKey, pipelineToUpdate));
+        }
+        return pipelineToUpdate;
     }
 }

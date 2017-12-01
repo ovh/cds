@@ -7,17 +7,22 @@ import {ApplicationWorkflowComponent} from './application.workflow.component';
 import {ApplicationModule} from '../../application.module';
 import {SharedModule} from '../../../../shared/shared.module';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
+import {ProjectService} from '../../../../service/project/project.service';
+import {PipelineService} from '../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../service/environment/environment.service';
+import {VariableService} from '../../../../service/variable/variable.service';
 import {Injector} from '@angular/core';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {Project} from '../../../../model/project.model';
 import {Application, ApplicationFilter} from '../../../../model/application.model';
 import {XHRBackend} from '@angular/http';
 import {MockBackend} from '@angular/http/testing';
-import {Observable} from 'rxjs/Rx';
-import {WorkflowItem} from '../../../../model/application.workflow.model';
+import {Observable} from 'rxjs/Observable';
+import {WorkflowItem, WorkflowStatusResponse} from '../../../../model/application.workflow.model';
 import {PipelineBuild, Pipeline} from '../../../../model/pipeline.model';
 import {Environment} from '../../../../model/environment.model';
 import {Scheduler, SchedulerExecution} from '../../../../model/scheduler.model';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Application Workflow', () => {
 
@@ -29,22 +34,28 @@ describe('CDS: Application Workflow', () => {
             declarations: [
             ],
             providers: [
+                MockBackend,
                 { provide: APP_BASE_HREF, useValue: '/' },
                 { provide: XHRBackend, useClass: MockBackend },
                 ApplicationWorkflowService,
                 TranslateService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService
             ],
             imports : [
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
 
         injector = getTestBed();
-        backend = injector.get(XHRBackend);
+        backend = injector.get(MockBackend);
     });
 
     afterEach(() => {
@@ -64,9 +75,10 @@ describe('CDS: Application Workflow', () => {
         p.name = 'projectName';
 
         let a: Application = new Application();
+        a.repository_fullname = 'repoFullName';
         a.name = 'appName';
 
-        let appFilter: ApplicationFilter = { branch: 'foo', version: 1 };
+        let appFilter: ApplicationFilter = { branch: '', version: '1', remote: 'barremote' };
 
         fixture.componentInstance.project = p;
         fixture.componentInstance.application = a;
@@ -74,6 +86,9 @@ describe('CDS: Application Workflow', () => {
 
         // Create spy
         let workflowService: ApplicationWorkflowService = injector.get(ApplicationWorkflowService);
+        spyOn(workflowService, 'getRemotes').and.callFake(() => {
+            return Observable.of([{ 'name' : 'barremote', url: 'https://github.com/barremote/barremote.git' }]);
+        });
         spyOn(workflowService, 'getBranches').and.callFake(() => {
             return Observable.of([{ 'display_id' : 'branche1', default: true}, { 'display_id' : 'branche2'}, { 'display_id' : 'master'},
                 { 'display_id' : 'branche3' }]);
@@ -86,10 +101,13 @@ describe('CDS: Application Workflow', () => {
         fixture.componentInstance.ngOnInit();
 
         // Check
-        expect(fixture.componentInstance.applicationFilter.branch).toBe('foo');
-        expect(JSON.stringify(fixture.componentInstance.versions)).toBe(JSON.stringify([' ', 1, 2, 3]));
+        expect(fixture.componentInstance.applicationFilter.branch).toBe('branche1');
+        expect(JSON.stringify(fixture.componentInstance.versions)).toBe(JSON.stringify([' ', '1', '2', '3']));
+        expect(JSON.stringify(fixture.componentInstance.remotes)).toBe(JSON.stringify([{
+            'name' : 'barremote',
+            url: 'https://github.com/barremote/barremote.git'
+        }]));
         expect(JSON.stringify(fixture.componentInstance.branches)).toBe(JSON.stringify([
-            {'default': false, 'display_id': ' '},
             {'display_id': 'branche1', 'default': true},
             {'display_id': 'branche2'},
             {'display_id': 'master'},
@@ -157,8 +175,7 @@ describe('CDS: Application Workflow', () => {
 
 
         // Updated Application to apply
-        let upApp: Application = new Application();
-        upApp.id = 1;
+        let upApp: WorkflowStatusResponse = new WorkflowStatusResponse();
 
         upApp.schedulers = new Array<Scheduler>();
         let sUp = new Scheduler();
@@ -182,7 +199,7 @@ describe('CDS: Application Workflow', () => {
         pbItem2.version = 5;
 
         pbs.push(pbItem1, pbItem2);
-        upApp.pipelines_build = pbs;
+        upApp.builds = pbs;
 
         // Init component with input datas
         fixture.componentInstance.project = p;
@@ -248,8 +265,7 @@ describe('CDS: Application Workflow', () => {
         a.workflows = currentWorkflow;
 
         // Updated Application to apply
-        let upApp: Application = new Application();
-        upApp.id = 1;
+        let upApp: WorkflowStatusResponse = new WorkflowStatusResponse();
 
         let pbs: Array<PipelineBuild> = new Array<PipelineBuild>();
 
@@ -267,7 +283,7 @@ describe('CDS: Application Workflow', () => {
 
 
         pbs.push(pbItem1, pbItem2);
-        upApp.pipelines_build = pbs;
+        upApp.builds = pbs;
 
         fixture.componentInstance.project = p;
         fixture.componentInstance.application = a;

@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"fmt"
+
 	"gopkg.in/yaml.v2"
 
 	"github.com/spf13/cobra"
@@ -85,7 +86,7 @@ func addParameterInPipeline(cmd *cobra.Command, args []string) {
 func cmdPipelineUpdateParameter() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update",
-		Short: "cds pipeline parameter update <projectKey> <pipelineName> <paramName> <paramValue> <paramType> <paramDescription>",
+		Short: "cds pipeline parameter update <projectKey> <pipelineName> <paramName> <newParamName> <paramValue> <paramType> <paramDescription>",
 		Long:  ``,
 		Run:   updateParameterInPipeline,
 	}
@@ -93,17 +94,18 @@ func cmdPipelineUpdateParameter() *cobra.Command {
 }
 
 func updateParameterInPipeline(cmd *cobra.Command, args []string) {
-	if len(args) != 6 {
+	if len(args) != 7 {
 		sdk.Exit("Wrong usage: %s\n", cmd.Short)
 	}
 	projectKey := args[0]
 	pipelineName := args[1]
 	paramName := args[2]
-	paramValue := args[3]
-	paramType := args[4]
-	paramDescription := args[5]
+	newParamName := args[3]
+	paramValue := args[4]
+	paramType := args[5]
+	paramDescription := args[6]
 
-	err := sdk.UpdateParameterInPipeline(projectKey, pipelineName, paramName, paramValue, paramType, paramDescription)
+	err := sdk.UpdateParameterInPipeline(projectKey, pipelineName, paramName, newParamName, paramValue, paramType, paramDescription)
 	if err != nil {
 		sdk.Exit("Error: cannot update parameter %s in pipeline %s (%s)\n", paramName, pipelineName, err)
 	}

@@ -5,6 +5,12 @@ import (
 	"fmt"
 )
 
+// DefaultValues contains default user values for init DB
+type DefaultValues struct {
+	DefaultGroupName string
+	SharedInfraToken string
+}
+
 var ConfigURLUIKey = "url.ui"
 
 // GetConfigUser retrieve 'common' configuration CDS

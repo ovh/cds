@@ -1,13 +1,14 @@
 package sessionstore
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //Redis is a redis client
@@ -17,38 +18,45 @@ type Redis struct {
 }
 
 //Keep redis in good health and remove HSet for expired session
-func (s *Redis) vacuumCleaner() {
-	log.Info("Redis> Starting Session Vaccum Cleaner")
+func (s *Redis) vacuumCleaner(c context.Context) {
+	tick := time.NewTicker(5 * time.Minute).C
 	for {
-		keys, err := s.store.Client.Keys("session:*:data").Result()
-		if err != nil {
-			log.Error("RedisSessionStore> Unable to get keys in store : %s", err)
-		}
-		for _, k := range keys {
-			sessionKey := strings.Replace(k, ":data", "", -1)
-			sessionExist, err := s.store.Client.Exists(sessionKey).Result()
-			if err != nil {
-				log.Warning("RedisSessionStore> Unable to get key %s from store : %s", sessionKey, err)
+		select {
+		case <-c.Done():
+			if c.Err() != nil {
+				log.Error("Exiting sessionstore.vacuumCleaner: %v", c.Err())
+				return
 			}
-			if !sessionExist {
-				if err := s.store.Client.Del(k).Err(); err != nil {
-					log.Error("RedisSessionStore> Unable to clear session %s from store : %s", sessionKey, err)
+		case <-tick:
+			keys, err := s.store.Client.Keys("session:*:data").Result()
+			if err != nil {
+				log.Error("RedisSessionStore> Unable to get keys in store : %s", err)
+			}
+			for _, k := range keys {
+				sessionKey := strings.Replace(k, ":data", "", -1)
+				sessionExist, err := s.store.Client.Exists(sessionKey).Result()
+				if err != nil {
+					log.Warning("RedisSessionStore> Unable to get key %s from store : %s", sessionKey, err)
+				}
+				if sessionExist == 0 {
+					if err := s.store.Client.Del(k).Err(); err != nil {
+						log.Error("RedisSessionStore> Unable to clear session %s from store : %s", sessionKey, err)
+					}
 				}
 			}
 		}
-		time.Sleep(5 * time.Minute)
 	}
 }
 
 //NewRedis creates a ready to use redisstore
-func NewRedis(redisHost, redisPassword string, ttl int) (*Redis, error) {
+func NewRedis(c context.Context, redisHost, redisPassword string, ttl int) (*Redis, error) {
 	r, err := cache.NewRedisStore(redisHost, redisPassword, ttl*60)
 	if err != nil {
 		return nil, err
 	}
 	log.Info("Redis> Store ready")
 	redisStore := &Redis{ttl * 1440, r}
-	go redisStore.vacuumCleaner()
+	go redisStore.vacuumCleaner(c)
 	return redisStore, nil
 }
 
@@ -83,7 +91,7 @@ func (s *Redis) Exists(token SessionKey) (bool, error) {
 		log.Warning("Redis> unable check session exist %s : %s", key, err)
 		return false, err
 	}
-	if exists {
+	if exists == 1 {
 		if err := s.store.Client.Expire(key, time.Duration(s.ttl)*time.Minute).Err(); err != nil {
 			log.Warning("Redis> unable to update session expire %s : %s", key, err)
 		}
@@ -91,7 +99,7 @@ func (s *Redis) Exists(token SessionKey) (bool, error) {
 		log.Debug("Session %s invalid", key)
 	}
 
-	return exists, nil
+	return exists == 1, nil
 }
 
 //Set set a value in session with a key
@@ -107,8 +115,7 @@ func (s *Redis) Set(token SessionKey, f string, data interface{}) error {
 	}
 
 	if err := s.store.Client.HSet(key, f, string(b)).Err(); err != nil {
-		log.Warning("Redis> unable create redis session %s : %s", key, err)
-		return err
+		return sdk.WrapError(err, "Redis> unable create redis session %s ", key)
 	}
 	return nil
 }
@@ -122,16 +129,27 @@ func (s *Redis) Get(token SessionKey, f string, data interface{}) error {
 	key := cache.Key("session", string(token), "data")
 	sval, err := s.store.Client.HGet(key, f).Result()
 	if err != nil {
-		log.Warning("Redis> unable to get %s %s", key, f)
-		return err
+		return sdk.WrapError(err, "Redis> unable to get %s %s", key, f)
 	}
 
 	if sval != "" {
 		if err := json.Unmarshal([]byte(sval), data); err != nil {
-			log.Warning("Redis> Cannot unmarshal %s :%s", key, err)
-			return err
+			return sdk.WrapError(err, "Redis> Cannot unmarshal %s ", key)
 		}
 	}
 
+	return nil
+}
+
+//Delete delete a session
+func (s *Redis) Delete(token SessionKey) error {
+	key := cache.Key("session", string(token))
+	if err := s.store.Client.Del(key).Err(); err != nil {
+		return err
+	}
+	keyData := cache.Key("session", string(token), "data")
+	if err := s.store.Client.Del(keyData).Err(); err != nil {
+		return err
+	}
 	return nil
 }

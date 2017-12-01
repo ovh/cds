@@ -2,7 +2,8 @@
 <ng-template #showApp>
     <div id="ApplicationShow">
         <div class="CDSbreadcrumb">
-            <app-breadcrumb [project]="project" [application]="application"></app-breadcrumb>
+            <app-breadcrumb [project]="project" [application]="application" [workflow]="workflowName" [workflowRun]="workflowNum" [workflowRunNode]="workflowNodeRun"
+             [wPipeline]="workflowPipeline"></app-breadcrumb>
         </div>
         <div class="CDSmenu">
             <sm-menu title="" class="pointing secondary">
@@ -18,7 +19,7 @@
             <div class="paddingContent">
                 <div class="viewContent">
                     <div [hidden]="selectedTab !== 'workflow'" class="workflow">
-                        <app-application-workflow [project]="project" [application]="application" [(applicationFilter)]="appFilter" (changeWorkerEvent)="changeWorkerFilter()" #workflow></app-application-workflow>
+                        <app-application-workflow [project]="project" [application]="application" [(applicationFilter)]="appFilter" (changeWorkerEvent)="changeWorkerFilter($event)" #workflow></app-application-workflow>
                     </div>
                     <div [ngSwitch]="selectedTab">
                         <div *ngSwitchCase="'variables'">

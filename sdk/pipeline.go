@@ -11,35 +11,46 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/runabove/venom"
+	"github.com/ovh/venom"
 )
 
 // Pipeline represents the complete behavior of CDS for each projects
 type Pipeline struct {
-	ID                  int64             `json:"id" yaml:"-"`
-	Name                string            `json:"name"`
-	Type                string            `json:"type"`
-	ProjectKey          string            `json:"projectKey"`
-	ProjectID           int64             `json:"-"`
-	LastPipelineBuild   *PipelineBuild    `json:"last_pipeline_build"`
-	Stages              []Stage           `json:"stages"`
-	GroupPermission     []GroupPermission `json:"groups,omitempty"`
-	Parameter           []Parameter       `json:"parameters,omitempty"`
-	AttachedApplication []Application     `json:"attached_application,omitempty"`
-	Permission          int               `json:"permission"`
-	LastModified        int64             `json:"last_modified"`
+	ID                int64             `json:"id" yaml:"-"`
+	Name              string            `json:"name" cli:"name"`
+	Type              string            `json:"type"`
+	ProjectKey        string            `json:"projectKey"`
+	ProjectID         int64             `json:"-"`
+	LastPipelineBuild *PipelineBuild    `json:"last_pipeline_build"`
+	Stages            []Stage           `json:"stages"`
+	GroupPermission   []GroupPermission `json:"groups,omitempty"`
+	Parameter         []Parameter       `json:"parameters,omitempty"`
+	Usage             *Usage            `json:"usage,omitempty"`
+	Permission        int               `json:"permission"`
+	LastModified      int64             `json:"last_modified" cli:"modified"`
+}
+
+// PipelineAudit represents pipeline audit
+type PipelineAudit struct {
+	ID         int64     `json:"id" db:"id"`
+	PipelineID int64     `json:"pipeline_id" db:"pipeline_id"`
+	UserName   string    `json:"username" db:"username"`
+	Versionned time.Time `json:"versionned" db:"versionned"`
+	Pipeline   *Pipeline `json:"pipeline" db:"-"`
+	Action     string    `json:"action" db:"action"`
 }
 
 // PipelineBuild Struct for history table
 type PipelineBuild struct {
-	ID          int64       `json:"id"`
-	BuildNumber int64       `json:"build_number"`
-	Version     int64       `json:"version"`
-	Parameters  []Parameter `json:"parameters"`
-	Status      Status      `json:"status"`
-	Start       time.Time   `json:"start,omitempty"`
-	Done        time.Time   `json:"done,omitempty"`
-	Stages      []Stage     `json:"stages"`
+	ID          int64                  `json:"id"`
+	BuildNumber int64                  `json:"build_number"`
+	Version     int64                  `json:"version"`
+	Parameters  []Parameter            `json:"parameters"`
+	Status      Status                 `json:"status"`
+	Warnings    []PipelineBuildWarning `json:"warnings"`
+	Start       time.Time              `json:"start,omitempty"`
+	Done        time.Time              `json:"done,omitempty"`
+	Stages      []Stage                `json:"stages"`
 
 	Pipeline    Pipeline    `json:"pipeline"`
 	Application Application `json:"application"`
@@ -73,6 +84,8 @@ type PipelineBuildDbResult struct {
 	VCSChangesBranch      sql.NullString `db:"vcs_branch"`
 	VCSChangesHash        sql.NullString `db:"vcs_hash"`
 	VCSChangesAuthor      sql.NullString `db:"vcs_author"`
+	VCSRemoteURL          sql.NullString `db:"vcs_remote_url"`
+	VCSRemote             sql.NullString `db:"vcs_remote"`
 	ParentPipelineBuildID sql.NullInt64  `db:"parent_pipeline_build"`
 	Username              sql.NullString `db:"username"`
 	ScheduledTrigger      bool           `db:"scheduled_trigger"`
@@ -87,13 +100,23 @@ type PipelineBuildTrigger struct {
 	VCSChangesBranch    string         `json:"vcs_branch"`
 	VCSChangesHash      string         `json:"vcs_hash"`
 	VCSChangesAuthor    string         `json:"vcs_author"`
+	VCSRemote           string         `json:"vcs_remote,omitempty"`
+	VCSRemoteURL        string         `json:"vcs_remote_url,omitempty"`
 }
 
-// Different types of Pipeline
+// PipelineBuildWarning Struct for display warnings about build
+type PipelineBuildWarning struct {
+	Type   string `json:"type"`
+	Action Action `json:"action"`
+}
+
 const (
+	// Different types of Pipeline
 	BuildPipeline      = "build"
 	DeploymentPipeline = "deployment"
 	TestingPipeline    = "testing"
+	// Different types of warning for PipelineBuild
+	OptionalStepFailed = "optional_step_failed"
 )
 
 // AvailablePipelineType List of all pipeline type
@@ -128,9 +151,21 @@ type RunRequest struct {
 	Params              []Parameter `json:"parameters,omitempty"`
 	Env                 Environment `json:"env,omitempty"`
 	ParentBuildNumber   int64       `json:"parent_build_number,omitempty"`
+	ParentVersion       int64       `json:"parent_version,omitempty"`
 	ParentPipelineID    int64       `json:"parent_pipeline_id,omitempty"`
 	ParentEnvironmentID int64       `json:"parent_environment_id,omitempty"`
 	ParentApplicationID int64       `json:"parent_application_id,omitempty"`
+}
+
+// GetPipelineOptions are options for GetPipeline
+var GetPipelineOptions = struct {
+	WithApplications RequestModifier
+}{
+	WithApplications: func(r *http.Request) {
+		q := r.URL.Query()
+		q.Set("withApplications", "true")
+		r.URL.RawQuery = q.Encode()
+	},
 }
 
 // ListPipelines retrieves all available pipelines to called
@@ -151,9 +186,9 @@ func ListPipelines(projectKey string) ([]Pipeline, error) {
 }
 
 // GetPipeline retrieves pipeline definition from CDS
-func GetPipeline(key, name string) (*Pipeline, error) {
+func GetPipeline(key, name string, opts ...RequestModifier) (*Pipeline, error) {
 	path := fmt.Sprintf("/project/%s/pipeline/%s", key, name)
-	data, _, errr := Request("GET", path, nil)
+	data, _, errr := Request("GET", path, nil, opts...)
 	if errr != nil {
 		return nil, errr
 	}
@@ -617,10 +652,10 @@ func AddParameterInPipeline(projectKey, pipelineName, paramName, paramValue, par
 }
 
 // UpdateParameterInPipeline update a variable in a pipeline
-func UpdateParameterInPipeline(projectKey, pipelineName, paramName, paramValue, paramType, paramDescription string) error {
+func UpdateParameterInPipeline(projectKey, pipelineName, paramName, newParamName, paramValue, paramType, paramDescription string) error {
 
 	newParam := Parameter{
-		Name:        paramName,
+		Name:        newParamName,
 		Value:       paramValue,
 		Type:        paramType,
 		Description: paramDescription,
@@ -733,19 +768,6 @@ func GetBuildingPipelineByHash(hash string) ([]PipelineBuild, error) {
 	}
 
 	return pbs, nil
-}
-
-// BookPipelineBuildJob books a job for a Hatchery
-func BookPipelineBuildJob(pipelineBuildJobID int64) error {
-	path := fmt.Sprintf("/queue/%d/book", pipelineBuildJobID)
-	data, code, err := Request("POST", path, nil)
-	if err != nil {
-		return fmt.Errorf("HTTP %d err:%s", code, err)
-	}
-	if code != http.StatusOK {
-		return fmt.Errorf("HTTP %d body:%s", code, string(data))
-	}
-	return nil
 }
 
 // AddSpawnInfosPipelineBuildJob books a job for a Hatchery

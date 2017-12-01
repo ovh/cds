@@ -14,15 +14,19 @@ import {Environment} from '../../../../../model/environment.model';
 import {NotificationEvent} from '../notification.event';
 import {TranslateService} from 'ng2-translate';
 import {DeleteButtonComponent} from '../../../../../shared/button/delete/delete.button';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {ProjectService} from '../../../../../service/project/project.service';
-
-declare var _: any;
+import {ProjectStore} from '../../../../../service/project/project.store';
+import {cloneDeep} from 'lodash';
+import {Subscription} from 'rxjs/Subscription';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-notification-form-modal',
     templateUrl: './notification.form.html',
     styleUrls: ['./notification.form.scss']
 })
+@AutoUnsubscribe()
 export class ApplicationNotificationFormModalComponent implements AfterViewInit {
 
     // Component output
@@ -51,6 +55,8 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
 
     // Only set to edit an existing notification
     isNewNotif = true;
+    applicationsSubscribtion: Subscription;
+    loadingApps = true;
 
     @Input('notification')
     set notification(data: Notification) {
@@ -80,13 +86,20 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
     @ViewChild('deleteButton')
     deleteButtonComponent: DeleteButtonComponent;
 
-    constructor(private _translate: TranslateService, private _projectService: ProjectService) {
+    constructor(private _translate: TranslateService, private _projectService: ProjectService, private _projectStore: ProjectStore) {
         this.initForm();
-        this.notificationTypes.push('clone');
+        if (this.notificationTypes.indexOf('clone') === -1) {
+            this.notificationTypes.push('clone');
+        }
     }
 
     ngAfterViewInit(): void {
         this.modal.onModalShow.subscribe(() => {
+            this.applicationsSubscribtion = this._projectStore.getProjectApplicationsResolver(this.project.key)
+                .pipe(
+                    finalize(() => this.loadingApps = false)
+                )
+                .subscribe((proj) => this.project = proj);
             if (this.deleteButtonComponent) {
                 this.deleteButtonComponent.reset();
             }
@@ -166,7 +179,7 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
                                 notification.pipeline = n.pipeline;
                                 notification.environment = n.environment;
                                 notification.notifications = {};
-                                notification.notifications[key] = _.cloneDeep(n.notifications[key]);
+                                notification.notifications[key] = cloneDeep(n.notifications[key]);
                                 this.projectNotifications.push(notification);
                             }
                         }

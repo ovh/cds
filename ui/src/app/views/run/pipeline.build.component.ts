@@ -2,13 +2,14 @@ import {Component, OnDestroy, NgZone} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Application} from '../../model/application.model';
 import {Project} from '../../model/project.model';
-import {Pipeline, PipelineBuild} from '../../model/pipeline.model';
-import {Subscription} from 'rxjs/Rx';
+import {Pipeline, PipelineBuild, PipelineStatus} from '../../model/pipeline.model';
+import {Subscription} from 'rxjs/Subscription';
 import {environment} from '../../../environments/environment';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {CDSWorker} from '../../shared/worker/worker';
 import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
 import {DurationService} from '../../shared/duration/duration.service';
+import {RouterService} from '../../service/router/router.service';
 
 declare var Duration: any;
 
@@ -31,6 +32,7 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     previousBuild: PipelineBuild;
     duration: string;
     branch: string;
+    remote: string;
     appVersionFilter: number;
 
     // Allow angular update from work started outside angular context
@@ -50,7 +52,8 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
 
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-                private _router: Router, private _appPipService: ApplicationPipelineService, private _durationService: DurationService) {
+                private _router: Router, private _appPipService: ApplicationPipelineService, private _durationService: DurationService,
+                private _routerService: RouterService) {
         this.zone = new NgZone({enableLongStackTrace: false});
 
         // Get from pipeline resolver
@@ -74,22 +77,25 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
                 this.appVersionFilter = q['version'];
             }
             if (q['ts'] && this.project && this.application && this.currentBuildNumber) {
-                this.startWorker();
+                this.startWorker(this._activatedRoute);
                 this.currentBuild = undefined;
                 this.histories = undefined;
             }
+            this.remote = q['remote'] || null;
         });
+        // Current route param
         this._activatedRoute.params.subscribe(params => {
             let buildNumber = params['buildNumber'];
-
             if (buildNumber && this.envName) {
                 this.currentBuildNumber = Number(buildNumber);
-                this.startWorker();
+                this.startWorker(this._activatedRoute);
             }
         });
     }
 
-    startWorker(): void {
+    startWorker(_activatedRoute: ActivatedRoute): void {
+        let paramSnap = this._routerService.getRouteSnapshotParams({}, _activatedRoute.snapshot);
+        let querySnap = this._routerService.getRouteSnapshotQueryParams({}, _activatedRoute.snapshot);
         if (this.workerSubscription) {
             this.workerSubscription.unsubscribe();
         }
@@ -101,20 +107,22 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             user: this._authStore.getUser(),
             session: this._authStore.getSessionToken(),
             api: environment.apiURL,
-            key: this.project.key,
-            appName: this.application.name,
-            pipName: this.pipeline.name,
-            envName: this.envName,
-            buildNumber: this.currentBuildNumber
+            key: paramSnap['key'],
+            appName: paramSnap['appName'],
+            pipName: paramSnap['pipName'],
+            envName: querySnap['envName'],
+            remote: querySnap['remote'],
+            buildNumber: paramSnap['buildNumber']
         });
 
+        this.currentBuild = undefined;
         this.worker.response().subscribe(msg => {
             if (msg) {
                 let build: PipelineBuild = JSON.parse(msg);
                 this.zone.run(() => {
                     this.currentBuild = build;
 
-                    if (this.currentBuild.status !== 'Building') {
+                    if (this.currentBuild.status !== PipelineStatus.BUILDING) {
                         this.duration = this._durationService.duration(
                             new Date(this.currentBuild.start), new Date(this.currentBuild.done));
                     }
@@ -148,11 +156,19 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
     }
 
     showTab(tab: string): void {
-        this._router.navigateByUrl('/project/' + this.project.key +
+        let url = '/project/' + this.project.key +
             '/application/' + this.application.name +
             '/pipeline/' + this.pipeline.name +
             '/build/' + this.currentBuildNumber +
-            '?envName=' + this.envName + '&tab=' + tab);
+            '?envName=' + this.envName + '&tab=' + tab;
+
+        if (this.remote) {
+            url += '&remote=' + this.remote;
+        }
+        if (this.branch) {
+            url += '&branch=' + this.branch;
+        }
+        this._router.navigateByUrl(url);
     }
 
     loadHistory(pb: PipelineBuild): void {
@@ -161,13 +177,13 @@ export class ApplicationPipelineBuildComponent implements OnDestroy {
             env = pb.environment.name;
         }
         this._appPipService.buildHistory(this.project.key, pb.application.name, pb.pipeline.name,
-            env, 50, '', pb.trigger.vcs_branch).subscribe(pbs => {
+            env, 50, '', pb.trigger.vcs_branch, pb.trigger.vcs_remote).subscribe(pbs => {
             this.histories = pbs;
             this.nbHistory = this.histories.length;
         });
 
         this._appPipService.buildHistory(this.project.key, pb.application.name, pb.pipeline.name,
-            env, 1, 'Success', pb.trigger.vcs_branch).subscribe(pbs => {
+            env, 1, PipelineStatus.SUCCESS, pb.trigger.vcs_branch, pb.trigger.vcs_remote).subscribe(pbs => {
             if (pbs && pbs.length === 1) {
                 this.previousBuild = pbs[0];
             }

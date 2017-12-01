@@ -11,11 +11,16 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/facebookgo/httpcontrol"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/spf13/cobra"
+
+	"github.com/ovh/cds/sdk"
 )
 
 //HTTP Constants
@@ -27,6 +32,9 @@ const (
 	RequestedWithHeader = "X-Requested-With"
 )
 
+//VERSION is set with -ldflags "-X main.VERSION={{.cds.proj.version}}+{{.cds.version}}"
+var VERSION = "snapshot"
+
 var (
 	auth   IOptions
 	client *http.Client
@@ -35,7 +43,13 @@ var (
 )
 
 //Common is the base plugin struct every plugin should be composed by
-type Common struct{}
+type Common struct {
+	Name        string
+	Description string
+	Parameters  Parameters
+	Author      string
+	Format      string `json:"-" yaml:"-" xml:"-"`
+}
 
 //SetTrace is for debug
 func SetTrace(traceHandle io.Writer) {
@@ -68,6 +82,82 @@ func (p *Common) Init(o IOptions) string {
 	return "plugin: initialized on " + o.GetURL()
 }
 
+//Version is a common function for all plugins
+func (*Common) Version() string {
+	return VERSION
+}
+
+// Main func call by plugin, display info only
+func Main(p CDSAction) {
+	var format string
+
+	var cmdInfo = &cobra.Command{
+		Use:   "info",
+		Short: "Print plugin Information anything to the screen: info --format <yml>",
+		Run: func(cmd *cobra.Command, args []string) {
+			if format != "markdown" {
+				if err := sdk.Output(format, p, fmt.Printf); err != nil {
+					fmt.Printf("Error:%s", err)
+				}
+				return
+			}
+			fmt.Print(InfoMarkdown(p))
+		},
+	}
+
+	var cmdVersion = &cobra.Command{
+		Use:   "version",
+		Short: "Print plugin version",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Print(sdk.VERSION)
+		},
+	}
+
+	cmdInfo.Flags().StringVarP(&format, "format", "", "markdown", "--format:yaml, json, xml, markdown")
+
+	var rootCmd = &cobra.Command{
+		Run: func(cmd *cobra.Command, args []string) {
+			Serve(p)
+		},
+	}
+	rootCmd.AddCommand(cmdInfo)
+	rootCmd.AddCommand(cmdVersion)
+	rootCmd.Execute()
+}
+
+// InfoMarkdown returns string formatted with markdown
+func InfoMarkdown(pl CDSAction) string {
+	var sp string
+	var keys []string
+	for k := range pl.Parameters().DataDescription {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	pe := pl.Parameters().DataDescription
+	for _, k := range keys {
+		v := pe[k]
+		sp += fmt.Sprintf("* **%s**: %s\n", k, v)
+	}
+
+	info := fmt.Sprintf(`
+%s
+
+## Parameters
+
+%s
+
+## More
+
+More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/%s/README.md)
+
+`,
+		pl.Description(),
+		sp,
+		pl.Name())
+
+	return info
+}
+
 // request executes an authentificated HTTP request on $path given $method
 func request(method string, path string, args []byte) ([]byte, int, error) {
 	if auth == nil {
@@ -88,6 +178,7 @@ func request(method string, path string, args []byte) ([]byte, int, error) {
 	}
 
 	basedHash := base64.StdEncoding.EncodeToString([]byte(auth.Hash()))
+	req.Header.Set("User-Agent", "CDS/worker")
 	req.Header.Set(AuthHeader, basedHash)
 	req.Header.Set(RequestedWithHeader, RequestedWithValue)
 	resp, err := client.Do(req)
@@ -125,11 +216,18 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 		//If action is nil: do nothing
 		return nil
 	}
-	Trace.Printf(format+"\n", i)
-
-	now, _ := ptypes.TimestampProto(time.Now())
 
 	s := fmt.Sprintf(format, i...)
+
+	for k, v := range j.Secrets().Data {
+		if len(v) >= 6 {
+			s = strings.Replace(s, v, "**"+k+"**", -1)
+		}
+	}
+
+	Trace.Println(s)
+
+	now, _ := ptypes.TimestampProto(time.Now())
 	l := Log{
 		PipelineBuildJobID: j.ID(),
 		PipelineBuildID:    j.PipelineBuildID(),
@@ -145,9 +243,14 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 		return err
 	}
 
-	path := fmt.Sprintf("/build/%d/log", j.ID())
-	_, _, err = request("POST", path, data)
-	if err != nil {
+	var path string
+	if j.WorkflowNodeRunID() > 0 {
+		path = fmt.Sprintf("/queue/workflows/%d/log", j.ID())
+	} else {
+		path = fmt.Sprintf("/build/%d/log", j.ID())
+	}
+
+	if _, _, err := request("POST", path, data); err != nil {
 		return err
 	}
 	return nil

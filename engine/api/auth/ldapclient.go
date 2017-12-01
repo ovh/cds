@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"database/sql"
 	"errors"
@@ -13,12 +14,10 @@ import (
 	"github.com/go-gorp/gorp"
 	"gopkg.in/ldap.v2"
 
-	"github.com/ovh/cds/engine/api/cache"
-	"github.com/ovh/cds/engine/api/context"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/user"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 const errUserNotFound = "user not found"
@@ -42,10 +41,11 @@ type LDAPDriver interface {
 
 //LDAPClient enbeddes the LDAP connecion
 type LDAPClient struct {
-	store sessionstore.Store
-	conn  *ldap.Conn
-	conf  LDAPConfig
-	local *LocalClient
+	store  sessionstore.Store
+	conn   *ldap.Conn
+	conf   LDAPConfig
+	local  *LocalClient
+	dbFunc func() *gorp.DbMap
 }
 
 //Entry represents a LDAP entity
@@ -59,7 +59,9 @@ func (c *LDAPClient) Open(options interface{}, store sessionstore.Store) error {
 	log.Info("Auth> Connecting to session store")
 	c.store = store
 	//LDAP Client needs a local client to check local users
-	c.local = &LocalClient{}
+	c.local = &LocalClient{
+		dbFunc: c.dbFunc,
+	}
 	c.local.Open(options, store)
 	return c.openLDAP(options)
 }
@@ -139,10 +141,47 @@ func (c *LDAPClient) Store() sessionstore.Store {
 	return c.store
 }
 
+func (c *LDAPClient) CheckAuth(ctx context.Context, w http.ResponseWriter, req *http.Request) (context.Context, error) {
+
+	//Check if its coming from CLI
+	if req.Header.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
+		var ok bool
+		ctx, ok = getUserPersistentSession(ctx, c.dbFunc(), c.Store(), req.Header)
+		if ok {
+			return ctx, nil
+		}
+	}
+
+	//Get the session token
+	sessionToken := req.Header.Get(sdk.SessionTokenHeader)
+	if sessionToken == "" {
+		return ctx, fmt.Errorf("no session header")
+	}
+	exists, err := c.store.Exists(sessionstore.SessionKey(sessionToken))
+	if err != nil {
+		return ctx, err
+	}
+	username, err := GetUsername(c.store, sessionToken)
+	if err != nil {
+		return ctx, err
+	}
+	//Find the suer
+	u, err := c.searchAndInsertOrUpdateUser(c.dbFunc(), username)
+	if err != nil {
+		return ctx, err
+	}
+	ctx = context.WithValue(ctx, ContextUser, u)
+
+	if !exists {
+		return ctx, fmt.Errorf("invalid session")
+	}
+	return ctx, nil
+}
+
 //Bind binds
 func (c *LDAPClient) Bind(username, password string) error {
 	bindRequest := fmt.Sprintf(c.conf.DN, username)
-	bindRequest = strings.Replace(bindRequest, "{{.ldap-base}}", c.conf.Base, -1)
+	bindRequest = strings.Replace(bindRequest, "{{.ldapBase}}", c.conf.Base, -1)
 	log.Debug("LDAP> Bind user %s", bindRequest)
 
 	if err := c.conn.Bind(bindRequest, password); err != nil {
@@ -165,53 +204,46 @@ func (c *LDAPClient) Bind(username, password string) error {
 
 //Search search
 func (c *LDAPClient) Search(filter string, attributes ...string) ([]Entry, error) {
-	entries := []Entry{}
-	key := cache.Key("ldap", filter)
-	cache.Get(key, &entries)
+	attr := append(attributes, "dn")
+	// Search for the given username
+	searchRequest := ldap.NewSearchRequest(
+		c.conf.Base,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		filter,
+		attr,
+		nil,
+	)
 
-	if len(entries) == 0 {
-		attr := append(attributes, "dn")
-		// Search for the given username
-		searchRequest := ldap.NewSearchRequest(
-			c.conf.Base,
-			ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-			filter,
-			attr,
-			nil,
-		)
-
-		sr, err := c.conn.Search(searchRequest)
-		if err != nil {
-			if shoudRetry(err) {
-				err = c.openLDAP(c.conf)
-				if err != nil {
-					return nil, err
-				}
-				sr, err = c.conn.Search(searchRequest)
-				if err != nil {
-					return nil, err
-				}
-			} else {
+	sr, err := c.conn.Search(searchRequest)
+	if err != nil {
+		if shoudRetry(err) {
+			err = c.openLDAP(c.conf)
+			if err != nil {
 				return nil, err
 			}
-		}
-
-		if len(sr.Entries) < 1 {
-			return nil, errors.New(errUserNotFound)
-		}
-
-		for _, e := range sr.Entries {
-			entry := Entry{
-				DN:         e.DN,
-				Attributes: make(map[string]string),
+			sr, err = c.conn.Search(searchRequest)
+			if err != nil {
+				return nil, err
 			}
-			for _, a := range attr {
-				entry.Attributes[a] = e.GetAttributeValue(a)
-			}
-			entries = append(entries, entry)
+		} else {
+			return nil, err
 		}
-		//Put ldap entries in cache for 5 minutes to avoid LDAP flood
-		cache.SetWithTTL(key, entries, 300)
+	}
+
+	if len(sr.Entries) < 1 {
+		return nil, errors.New(errUserNotFound)
+	}
+
+	entries := []Entry{}
+	for _, e := range sr.Entries {
+		entry := Entry{
+			DN:         e.DN,
+			Attributes: make(map[string]string),
+		}
+		for _, a := range attr {
+			entry.Attributes[a] = e.GetAttributeValue(a)
+		}
+		entries = append(entries, entry)
 	}
 
 	return entries, nil
@@ -238,7 +270,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 		return u, nil
 	}
 
-	//If user doesn't exist and search was'nt successfull => exist
+	//If user doesn't exist and search was'nt successful => exist
 	if errSearch != nil {
 		log.Warning("LDAP> Search error %s: %s", search, errSearch)
 		return nil, errSearch
@@ -289,7 +321,7 @@ func (c *LDAPClient) searchAndInsertOrUpdateUser(db gorp.SqlExecutor, username s
 }
 
 //Authentify check username and password
-func (c *LDAPClient) Authentify(db gorp.SqlExecutor, username, password string) (bool, error) {
+func (c *LDAPClient) Authentify(username, password string) (bool, error) {
 	//Bind user
 	if err := c.Bind(username, password); err != nil {
 		log.Warning("LDAP> Bind error %s %s", username, err)
@@ -298,71 +330,15 @@ func (c *LDAPClient) Authentify(db gorp.SqlExecutor, username, password string) 
 			return false, err
 		}
 		//Try local auth
-		return c.local.Authentify(db, username, password)
+		return c.local.Authentify(username, password)
 	}
 
 	log.Debug("LDAP> Bind successful %s", username)
 
 	//Search user, refresh data and update database
-	if _, err := c.searchAndInsertOrUpdateUser(db, username); err != nil {
+	if _, err := c.searchAndInsertOrUpdateUser(c.dbFunc(), username); err != nil {
 		return false, err
 	}
 
 	return true, nil
-}
-
-//AuthentifyUser check password in database
-func (c *LDAPClient) AuthentifyUser(db gorp.SqlExecutor, u *sdk.User, password string) (bool, error) {
-	return c.Authentify(db, u.Username, password)
-}
-
-//GetCheckAuthHeaderFunc returns the func to heck http headers.
-//Options is a const to switch from session to basic auth or both
-func (c *LDAPClient) GetCheckAuthHeaderFunc(options interface{}) func(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
-	return func(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
-		//Check if its a worker
-		if h := headers.Get(sdk.AuthHeader); h != "" {
-			if err := checkWorkerAuth(db, h, ctx); err != nil {
-				return err
-			}
-			return nil
-		}
-		//Check if its comming from CLI
-		if headers.Get(sdk.RequestedWithHeader) == sdk.RequestedWithValue {
-			if getUserPersistentSession(db, c.Store(), headers, ctx) {
-				return nil
-			}
-			if reloadUserPersistentSession(db, c.Store(), headers, ctx) {
-				return nil
-			}
-		}
-
-		return c.checkUserSessionAuth(db, headers, ctx)
-	}
-}
-
-func (c *LDAPClient) checkUserSessionAuth(db *gorp.DbMap, headers http.Header, ctx *context.Ctx) error {
-	sessionToken := headers.Get(sdk.SessionTokenHeader)
-	if sessionToken == "" {
-		return fmt.Errorf("no session header")
-	}
-	exists, err := c.store.Exists(sessionstore.SessionKey(sessionToken))
-	if err != nil {
-		return err
-	}
-	username, err := GetUsername(c.store, sessionToken)
-	if err != nil {
-		return err
-	}
-	u, err := c.searchAndInsertOrUpdateUser(db, username)
-	if err != nil {
-		return err
-	}
-	ctx.User = u
-
-	if !exists {
-		return fmt.Errorf("invalid session")
-	}
-
-	return nil
 }

@@ -1,6 +1,8 @@
 package group
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -39,6 +41,15 @@ func InsertGroupsInPipeline(db gorp.SqlExecutor, groupPermission []sdk.GroupPerm
 	return nil
 }
 
+func checkAtLeastOneGroupWithWriteRoleOnPipeline(db gorp.SqlExecutor, pipID int64) (bool, error) {
+	query := `select count(group_id) from pipeline_group where pipeline_id = $1 and role = $2`
+	nb, err := db.SelectInt(query, pipID, 7)
+	if err != nil {
+		return false, sdk.WrapError(err, "CheckAtLeastOneGroupWithWriteRoleOnPipeline")
+	}
+	return nb > 0, err
+}
+
 // InsertGroupInPipeline add permissions on Pipeline to Group
 func InsertGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64, role int) error {
 	query := `INSERT INTO pipeline_group (pipeline_id, group_id,role) VALUES($1,$2,$3)`
@@ -49,14 +60,35 @@ func InsertGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64, role 
 // UpdateGroupRoleInPipeline update permission on pipeline
 func UpdateGroupRoleInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64, role int) error {
 	query := `UPDATE pipeline_group SET role=$1 WHERE pipeline_id=$2 AND group_id=$3`
-	_, err := db.Exec(query, role, pipelineID, groupID)
+	if _, err := db.Exec(query, role, pipelineID, groupID); err != nil {
+		return sdk.WrapError(err, "UpdateGroupRoleInPipeline")
+	}
+
+	ok, err := checkAtLeastOneGroupWithWriteRoleOnPipeline(db, pipelineID)
+	if err != nil {
+		return sdk.WrapError(err, "UpdateGroupRoleInPipeline")
+	}
+	if !ok {
+		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "UpdateGroupRoleInPipeline")
+	}
 	return err
 }
 
 // DeleteGroupFromPipeline removes access to pipeline to group members
 func DeleteGroupFromPipeline(db gorp.SqlExecutor, pipelineID, groupID int64) error {
 	query := `DELETE FROM pipeline_group WHERE pipeline_id=$1 AND group_id=$2`
-	_, err := db.Exec(query, pipelineID, groupID)
+	if _, err := db.Exec(query, pipelineID, groupID); err != nil {
+		return sdk.WrapError(err, "DeleteGroupFromPipeline")
+	}
+
+	ok, err := checkAtLeastOneGroupWithWriteRoleOnPipeline(db, pipelineID)
+	if err != nil {
+		return sdk.WrapError(err, "DeleteGroupFromPipeline")
+	}
+	if !ok {
+		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "DeleteGroupFromPipeline")
+	}
+
 	return err
 }
 
@@ -82,8 +114,41 @@ func CheckGroupInPipeline(db gorp.SqlExecutor, pipelineID, groupID int64) (bool,
 	return false, nil
 }
 
+// LoadGroupInPipelineByName checks if group has access to pipeline with the name
+func LoadGroupInPipelineByName(db gorp.SqlExecutor, pipelineID int64, groupName string) (int64, error) {
+	query := `SELECT pipeline_group.group_id FROM pipeline_group
+	JOIN "group" AS grouptable ON grouptable.id = pipeline_group.group_id
+	WHERE pipeline_group.pipeline_id = $1 AND grouptable.name = $2`
+
+	var nb int64
+	err := db.QueryRow(query, pipelineID, groupName).Scan(&nb)
+	if err != nil && err != sql.ErrNoRows {
+		return 0, err
+	}
+
+	return nb, nil
+}
+
 func deleteGroupPipelineByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
+	pipelineIDs := []int64{}
+	if _, err := db.Select(&pipelineIDs, "SELECT pipeline_id from pipeline_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
+		return sdk.WrapError(err, "deleteGroupPipelineByGroup")
+	}
+
 	query := `DELETE FROM pipeline_group WHERE group_id=$1`
-	_, err := db.Exec(query, group.ID)
-	return err
+	if _, err := db.Exec(query, group.ID); err != nil {
+		return sdk.WrapError(err, "deleteGroupPipelineByGroup")
+	}
+
+	for _, id := range pipelineIDs {
+		ok, err := checkAtLeastOneGroupWithWriteRoleOnPipeline(db, id)
+		if err != nil {
+			return sdk.WrapError(err, "deleteGroupPipelineByGroup")
+		}
+		if !ok {
+			return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "deleteGroupPipelineByGroup")
+		}
+	}
+
+	return nil
 }

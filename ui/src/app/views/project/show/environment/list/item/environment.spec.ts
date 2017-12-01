@@ -6,21 +6,26 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {ProjectEnvironmentComponent} from './environment.component';
+import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
 import {ProjectStore} from '../../../../../../service/project/project.store';
 import {ProjectService} from '../../../../../../service/project/project.service';
+import {EnvironmentService} from '../../../../../../service/environment/environment.service';
+import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
 import {ProjectModule} from '../../../../project.module';
 import {SharedModule} from '../../../../../../shared/shared.module';
+import {ServicesModule} from '../../../../../../service/services.module';
 import {Project} from '../../../../../../model/project.model';
 import {Environment} from '../../../../../../model/environment.model';
 import {ToasterService} from 'angular2-toaster';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {VariableService} from '../../../../../../service/variable/variable.service';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {VariableEvent} from '../../../../../../shared/variable/variable.event.model';
 import {Variable} from '../../../../../../model/variable.model';
 import {ProjectAuditService} from '../../../../../../service/project/project.audit.service';
 import {EnvironmentAuditService} from '../../../../../../service/environment/environment.audit.service';
 import {ApplicationAuditService} from '../../../../../../service/application/application.audit.service';
+import {HttpClientTestingModule} from '@angular/common/http/testing';
 
 describe('CDS: Environment Component', () => {
 
@@ -41,11 +46,16 @@ describe('CDS: Environment Component', () => {
                 TranslateParser,
                 ToasterService,
                 VariableService,
+                EnvironmentService,
+                PipelineService,
+                AuthentificationStore
             ],
             imports : [
                 ProjectModule,
                 SharedModule,
-                RouterTestingModule.withRoutes([])
+                ServicesModule,
+                RouterTestingModule.withRoutes([]),
+                HttpClientTestingModule
             ]
         });
 

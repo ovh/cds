@@ -33,19 +33,22 @@ type Stage struct {
 
 // Job represents exported sdk.Job
 type Job struct {
-	Description  string        `json:"description,omitempty" yaml:"description,omitempty"`
-	Enabled      *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty"`
-	Steps        []Step        `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
-	Requirements []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty" hcl:"requirement,omitempty"`
+	Description    string        `json:"description,omitempty" yaml:"description,omitempty"`
+	Enabled        *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty"`
+	Steps          []Step        `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
+	Requirements   []Requirement `json:"requirements,omitempty" yaml:"requirements,omitempty" hcl:"requirement,omitempty"`
+	Optional       *bool         `json:"optional,omitempty" yaml:"optional,omitempty" hcl:"optional,omitempty"`
+	AlwaysExecuted *bool         `json:"always_executed,omitempty" yaml:"always_executed,omitempty" hcl:"always_executed,omitempty"`
 }
 
 // Step represents exported step used in a job
 type Step map[string]interface{}
 
+// IsValid returns true is the step is valid
 func (s Step) IsValid() bool {
 	keys := []string{}
 	for k := range s {
-		if k != "enabled" && k != "final" {
+		if k != "enabled" && k != "optional" && k != "always_executed" {
 			keys = append(keys, k)
 		}
 	}
@@ -55,13 +58,14 @@ func (s Step) IsValid() bool {
 func (s Step) key() string {
 	keys := []string{}
 	for k := range s {
-		if k != "enabled" && k != "final" {
+		if k != "enabled" && k != "optional" && k != "always_executed" {
 			keys = append(keys, k)
 		}
 	}
 	return keys[0]
 }
 
+//AsScript returns the step a sdk.Action
 func (s Step) AsScript() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -80,11 +84,15 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 	a := sdk.NewStepScript(bS)
 
 	var err error
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
 	if err != nil {
 		return nil, true, err
 	}
@@ -92,6 +100,7 @@ func (s Step) AsScript() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsAction returns the step a sdk.Action
 func (s Step) AsAction() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -118,17 +127,22 @@ func (s Step) AsAction() (*sdk.Action, bool, error) {
 		return nil, true, err
 	}
 
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
 	if err != nil {
 		return nil, true, err
 	}
 	return a, true, nil
 }
 
+//AsJUnitReport returns the step a sdk.Action
 func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -147,11 +161,15 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	a := sdk.NewStepJUnitReport(bS)
 
 	var err error
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
+	if err != nil {
+		return nil, true, err
+	}
+	a.Optional, err = s.IsFlagged("optional")
 	if err != nil {
 		return nil, true, err
 	}
@@ -159,6 +177,46 @@ func (s Step) AsJUnitReport() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsGitClone returns the step a sdk.Action
+func (s Step) AsGitClone() (*sdk.Action, bool, error) {
+	if !s.IsValid() {
+		return nil, false, fmt.Errorf("Malformatted Step")
+	}
+
+	bI, ok := s["gitClone"]
+	if !ok {
+		return nil, false, nil
+	}
+
+	if reflect.ValueOf(bI).Kind() != reflect.Map {
+		return nil, false, nil
+	}
+
+	argss := map[string]string{}
+	if err := mapstructure.Decode(bI, &argss); err != nil {
+		return nil, true, sdk.WrapError(err, "Malformatted Step")
+	}
+
+	a := sdk.NewStepGitClone(argss)
+
+	var err error
+	a.Enabled, err = s.IsFlagged("enabled")
+	if err != nil {
+		return nil, true, err
+	}
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
+	if err != nil {
+		return nil, true, err
+	}
+
+	return &a, true, nil
+}
+
+//AsArtifactUpload returns the step a sdk.Action
 func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -181,11 +239,15 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	a := sdk.NewStepArtifactUpload(argss)
 
 	var err error
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
 	if err != nil {
 		return nil, true, err
 	}
@@ -193,6 +255,7 @@ func (s Step) AsArtifactUpload() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
+//AsArtifactDownload returns the step a sdk.Action
 func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	if !s.IsValid() {
 		return nil, false, fmt.Errorf("Malformatted Step")
@@ -210,11 +273,15 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	a := sdk.NewStepArtifactDownload(argss)
 
 	var err error
-	a.Enabled, err = s.IsEnabled()
+	a.Enabled, err = s.IsFlagged("enabled")
 	if err != nil {
 		return nil, true, err
 	}
-	a.Final, err = s.IsFinal()
+	a.Optional, err = s.IsFlagged("optional")
+	if err != nil {
+		return nil, true, err
+	}
+	a.AlwaysExecuted, err = s.IsFlagged("always_executed")
 	if err != nil {
 		return nil, true, err
 	}
@@ -222,26 +289,16 @@ func (s Step) AsArtifactDownload() (*sdk.Action, bool, error) {
 	return &a, true, nil
 }
 
-func (s Step) IsEnabled() (bool, error) {
-	bI, ok := s["enabled"]
+// IsFlagged returns true the step has the flag set
+func (s Step) IsFlagged(flag string) (bool, error) {
+	bI, ok := s[flag]
 	if !ok {
-		return true, nil
+		// enabled is true by default
+		return flag == "enabled", nil
 	}
 	bS, ok := bI.(bool)
 	if !ok {
-		return false, fmt.Errorf("Malformatted Step : enabled attribute must be true|false")
-	}
-	return bS, nil
-}
-
-func (s Step) IsFinal() (bool, error) {
-	bI, ok := s["final"]
-	if !ok {
-		return false, nil
-	}
-	bS, ok := bI.(bool)
-	if !ok {
-		return false, fmt.Errorf("Malformatted Step : final attribute must be true|false (%v)", bI)
+		return false, fmt.Errorf("Malformatted Step : %s attribute must be true|false", flag)
 	}
 	return bS, nil
 }
@@ -392,67 +449,102 @@ func newJobs(jobs []sdk.Job) map[string]Job {
 func newSteps(a sdk.Action) []Step {
 	res := []Step{}
 	for i := range a.Actions {
-		a := &a.Actions[i]
+		act := &a.Actions[i]
 		s := Step{}
-		if !a.Enabled {
-			s["enabled"] = a.Enabled
+		if !act.Enabled {
+			s["enabled"] = act.Enabled
 		}
-		if a.Final {
-			s["final"] = a.Final
+		if act.Optional {
+			s["optional"] = act.Optional
+		}
+		if act.AlwaysExecuted {
+			s["always_executed"] = act.AlwaysExecuted
 		}
 
-		switch a.Type {
+		switch act.Type {
 		case sdk.BuiltinAction:
-			switch a.Name {
+			switch act.Name {
 			case sdk.ScriptAction:
-				script := sdk.ParameterFind(a.Parameters, "script")
+				script := sdk.ParameterFind(act.Parameters, "script")
 				if script != nil {
 					s["script"] = script.Value
 				}
 			case sdk.ArtifactDownload:
 				artifactDownloadArgs := map[string]string{}
-				path := sdk.ParameterFind(a.Parameters, "path")
+				path := sdk.ParameterFind(act.Parameters, "path")
 				if path != nil {
 					artifactDownloadArgs["path"] = path.Value
 				}
-				tag := sdk.ParameterFind(a.Parameters, "tag")
+				tag := sdk.ParameterFind(act.Parameters, "tag")
 				if tag != nil {
 					artifactDownloadArgs["tag"] = tag.Value
 				}
-				application := sdk.ParameterFind(a.Parameters, "application")
+				application := sdk.ParameterFind(act.Parameters, "application")
 				if application != nil {
 					artifactDownloadArgs["application"] = application.Value
 				}
-				pipeline := sdk.ParameterFind(a.Parameters, "pipeline")
+				pipeline := sdk.ParameterFind(act.Parameters, "pipeline")
 				if pipeline != nil {
 					artifactDownloadArgs["pipeline"] = pipeline.Value
 				}
 				s["artifactDownload"] = artifactDownloadArgs
 			case sdk.ArtifactUpload:
 				artifactUploadArgs := map[string]string{}
-				path := sdk.ParameterFind(a.Parameters, "path")
+				path := sdk.ParameterFind(act.Parameters, "path")
 				if path != nil {
 					artifactUploadArgs["path"] = path.Value
 				}
-				tag := sdk.ParameterFind(a.Parameters, "tag")
+				tag := sdk.ParameterFind(act.Parameters, "tag")
 				if tag != nil {
 					artifactUploadArgs["tag"] = tag.Value
 				}
 				s["artifactUpload"] = artifactUploadArgs
+			case sdk.GitCloneAction:
+				gitCloneArgs := map[string]string{}
+				branch := sdk.ParameterFind(act.Parameters, "branch")
+				if branch != nil {
+					gitCloneArgs["branch"] = branch.Value
+				}
+				commit := sdk.ParameterFind(act.Parameters, "commit")
+				if commit != nil {
+					gitCloneArgs["commit"] = commit.Value
+				}
+				directory := sdk.ParameterFind(act.Parameters, "directory")
+				if directory != nil {
+					gitCloneArgs["directory"] = directory.Value
+				}
+				password := sdk.ParameterFind(act.Parameters, "password")
+				if password != nil {
+					gitCloneArgs["password"] = password.Value
+				}
+				privateKey := sdk.ParameterFind(act.Parameters, "privateKey")
+				if privateKey != nil {
+					gitCloneArgs["privateKey"] = privateKey.Value
+				}
+				url := sdk.ParameterFind(act.Parameters, "url")
+				if url != nil {
+					gitCloneArgs["url"] = url.Value
+				}
+				user := sdk.ParameterFind(act.Parameters, "user")
+				if user != nil {
+					gitCloneArgs["user"] = user.Value
+				}
+
+				s["gitClone"] = gitCloneArgs
 			case sdk.JUnitAction:
-				path := sdk.ParameterFind(a.Parameters, "path")
+				path := sdk.ParameterFind(act.Parameters, "path")
 				if path != nil {
 					s["jUnitReport"] = path.Value
 				}
 			}
 		default:
 			args := map[string]string{}
-			for _, p := range a.Parameters {
+			for _, p := range act.Parameters {
 				if p.Value != "" {
 					args[p.Name] = p.Value
 				}
 			}
-			s[a.Name] = args
+			s[act.Name] = args
 		}
 		res = append(res, s)
 	}
@@ -509,10 +601,11 @@ func (p *Pipeline) Pipeline() (*sdk.Pipeline, error) {
 					sdk.Job{
 						Enabled: true,
 						Action: sdk.Action{
-							Enabled: true,
-							Name:    p.Name,
-							Actions: actions,
-							Type:    sdk.JoinedAction,
+							Enabled:      true,
+							Name:         p.Name,
+							Actions:      actions,
+							Type:         sdk.JoinedAction,
+							Requirements: computeJobRequirements(p.Requirements),
 						},
 					},
 				},
@@ -625,6 +718,11 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 		return
 	}
 
+	a, ok, e = s.AsGitClone()
+	if ok {
+		return
+	}
+
 	a, ok, e = s.AsScript()
 	if ok {
 		return
@@ -638,21 +736,9 @@ func computeStep(s Step) (a *sdk.Action, e error) {
 	return
 }
 
-func computeJob(name string, j Job) (*sdk.Job, error) {
-	job := sdk.Job{
-		Action: sdk.Action{
-			Name:        name,
-			Description: j.Description,
-			Type:        sdk.JoinedAction,
-		},
-	}
-	if j.Enabled != nil {
-		job.Enabled = *j.Enabled
-	} else {
-		job.Enabled = true
-	}
-	job.Action.Enabled = job.Enabled
-	for _, r := range j.Requirements {
+func computeJobRequirements(req []Requirement) []sdk.Requirement {
+	res := []sdk.Requirement{}
+	for _, r := range req {
 		var name, tpe, val string
 		if r.Binary != "" {
 			name = r.Binary
@@ -683,8 +769,30 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 			val = r.Service.Value
 			tpe = sdk.ServiceRequirement
 		}
-		job.Action.Requirement(name, tpe, val)
+		res = append(res, sdk.Requirement{
+			Name:  name,
+			Type:  tpe,
+			Value: val,
+		})
 	}
+	return res
+}
+
+func computeJob(name string, j Job) (*sdk.Job, error) {
+	job := sdk.Job{
+		Action: sdk.Action{
+			Name:        name,
+			Description: j.Description,
+			Type:        sdk.JoinedAction,
+		},
+	}
+	if j.Enabled != nil {
+		job.Enabled = *j.Enabled
+	} else {
+		job.Enabled = true
+	}
+	job.Action.Enabled = job.Enabled
+	job.Action.Requirements = computeJobRequirements(j.Requirements)
 
 	//Compute steps for the jobs
 	children, err := computeSteps(j.Steps)

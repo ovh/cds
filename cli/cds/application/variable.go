@@ -17,6 +17,8 @@ var applicationVariableCmd = &cobra.Command{
 	Aliases: []string{"v"},
 }
 
+var force *bool
+
 func init() {
 	applicationVariableCmd.AddCommand(cmdApplicationShowVariable())
 	applicationVariableCmd.AddCommand(cmdApplicationAddVariable())
@@ -61,10 +63,13 @@ func cmdApplicationAddVariable() *cobra.Command {
 		Long:  ``,
 		Run:   addApplicationVariable,
 	}
+	force = cmd.Flags().BoolP("force", "", false, "force update if variable already exist")
+
 	return cmd
 }
 
 func addApplicationVariable(cmd *cobra.Command, args []string) {
+	var err error
 	if len(args) != 5 {
 		sdk.Exit("Wrong usage: %s\n", cmd.Short)
 	}
@@ -74,9 +79,33 @@ func addApplicationVariable(cmd *cobra.Command, args []string) {
 	varValue := args[3]
 	varType := args[4]
 
-	if err := sdk.AddApplicationVariable(projectKey, appName, varName, varValue, varType); err != nil {
+	if *force {
+		variables, errSh := sdk.ShowApplicationVariable(projectKey, appName)
+		if errSh != nil {
+			sdk.Exit("Error: cannot get existing variables for application %s (%s)\n", appName, err)
+		}
+
+		varExist := false
+		for _, v := range variables {
+			if v.Name == varName {
+				varExist = true
+				break
+			}
+		}
+
+		if !varExist {
+			err = sdk.AddApplicationVariable(projectKey, appName, varName, varValue, varType)
+		} else {
+			err = sdk.UpdateApplicationVariable(projectKey, appName, varName, varName, varValue, varType)
+		}
+	} else {
+		err = sdk.AddApplicationVariable(projectKey, appName, varName, varValue, varType)
+	}
+
+	if err != nil {
 		sdk.Exit("Error: cannot add variable %s in application %s (%s)\n", varName, appName, err)
 	}
+
 	fmt.Printf("OK\n")
 }
 

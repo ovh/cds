@@ -1,42 +1,58 @@
 <div class="ui filter form">
     <div class="filter ui stackable grid">
-        <div class="four wide column">
-            <div class="inline fields">
-                <div class="sixteen wide field">
-                    <label>{{ 'application_workflow_orientation_title' | translate }}</label>
-                    <sm-select class="search" [(model)]="workflowOrientation">
-                        <option value="vertical">{{ 'workflow_orientation_vertical' | translate }}</option>
-                        <option value="horizontal">{{ 'workflow_orientation_horizontal' | translate }}</option>
-                        <option value="hierarchical">{{ 'workflow_orientation_tree' | translate }}</option>
-
-                    </sm-select>
-                </div>
-            </div>
-        </div>
-        <div class="four wide column">
-            <div class="inline fields">
-                <div class="sixteen wide field" *ngIf="branches && branches.length > 0">
-                    <label>{{ 'application_workflow_branch_title' | translate }}</label>
-                    <sm-select [(model)]="applicationFilter.branch" (modelChange)="changeBranch()" class="search">
-                        <option *ngFor="let branch of branches" value="{{branch.display_id}}">{{ branch.display_id}}</option>
-                    </sm-select>
-                </div>
-            </div>
-        </div>
-        <div class="six wide column">
-            <div class="inline fields">
-                <div class="sixteen wide field cdsVersion" *ngIf="branches && branches.length > 0 && versions">
-                    <label>{{ 'application_workflow_version_title' | translate }}</label>
-                    <sm-select [(model)]="applicationFilter.version" (modelChange)="changeVersion()">
-                        <option *ngFor="let v of versions" value="{{v}}">{{ v }}</option>
-                    </sm-select>
-                </div>
-            </div>
-        </div>
         <div class="two wide column">
-            <div class="sixteen wide right aligned field pipeline" *ngIf="!application.pipelines || project.pipelines.length > application.pipelines.length">
-                <button class="ui blue button" (click)="openLinkPipelineModal()">{{ 'application_workflow_pipeline_add' | translate }}</button>
-                <app-application-pipeline-link [project]="project" [application]="application" #linkPipelineComponent></app-application-pipeline-link>
+            <sm-select class="search" [(model)]="workflowOrientation">
+                <option value="vertical">{{ 'workflow_orientation_vertical' | translate }}</option>
+                <option value="horizontal">{{ 'workflow_orientation_horizontal' | translate }}</option>
+                <option value="hierarchical">{{ 'workflow_orientation_tree' | translate }}</option>
+            </sm-select>
+
+        </div>
+        <div class="four wide column">
+          <sm-select class="search"
+              placeholder="{{'application_workflow_remote_title' | translate}}"
+              *ngIf="!loading.remote && remotes != null"
+              [options]="{'fullTextSearch': true}"
+              [(model)]="applicationFilter.remote"
+              (modelChange)="changeRemote()">
+              <option *ngFor="let remote of remotes" value="{{remote.name}}">{{ remote.name }}</option>
+          </sm-select>
+          <sm-select *ngIf="loading.remote"
+              [placeholder]="'common_loading' | translate">
+          </sm-select>
+        </div>
+        <div class="four wide column">
+            <sm-select class="search"
+                placeholder="{{'application_workflow_branch_title' | translate}}"
+                *ngIf="!loading.branch && branches != null"
+                [options]="{'fullTextSearch': true}"
+                [(model)]="applicationFilter.branch"
+                (modelChange)="changeBranch()">
+                <option *ngFor="let branch of branches" value="{{branch.display_id}}">{{ branch.display_id}}</option>
+            </sm-select>
+            <sm-select *ngIf="loading.branch"
+                [placeholder]="'common_loading' | translate">
+            </sm-select>
+        </div>
+        <div class="four wide column">
+            <sm-select *ngIf="!loading.version && versions != null"
+                [(model)]="applicationFilter.version"
+                (modelChange)="changeVersion(applicationFilter.version)"
+                       placeholder="{{ 'application_workflow_version_title' | translate }}">
+                <option *ngFor="let v of versions" value="{{v}}">{{ v }}</option>
+            </sm-select>
+            <sm-select *ngIf="loading.version"
+                [placeholder]="'common_loading' | translate">
+            </sm-select>
+        </div>
+
+        <div class="two wide column">
+            <div class="sixteen wide right aligned field pipeline"
+                 *ngIf="!application.pipelines || project.pipeline_names.length > application.pipelines.length">
+                <button class="ui blue button" (click)="openLinkPipelineModal()">{{ 'application_workflow_pipeline_add' | translate }}
+                </button>
+                <app-application-pipeline-link [project]="project" [application]="application"
+                                               #linkPipelineComponent></app-application-pipeline-link>
             </div>
         </div>
     </div>
@@ -47,7 +63,12 @@
          [class.horizontal]="workflowOrientation === 'horizontal'"
          [class.vertical]="workflowOrientation === 'vertical'"
          [class.hierarchical]="workflowOrientation === 'hierarchical'">
-        <app-application-tree-workflow *ngIf="application.workflows" [project]="project" [application]="application" [workflowItems]="application.workflows" [orientation]="workflowOrientation" [applicationFilter]="applicationFilter"></app-application-tree-workflow>
+        <app-application-tree-workflow *ngIf="application.workflows"
+          [ready]="!loading.version && !loading.branch && !loading.remote"
+          [project]="project"
+          [application]="application"
+          [remotes]="remotes"
+          [workflowItems]="application.workflows" [orientation]="workflowOrientation"
+          [applicationFilter]="applicationFilter"></app-application-tree-workflow>
     </div>
 </div>
-

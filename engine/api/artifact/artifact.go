@@ -2,9 +2,9 @@ package artifact
 
 import (
 	"database/sql"
-	"fmt"
 	"io"
 	"strings"
+	"sync"
 
 	"github.com/go-gorp/gorp"
 
@@ -49,10 +49,28 @@ func LoadArtifactByHash(db gorp.SqlExecutor, hash string) (*sdk.Artifact, error)
 
 // LoadArtifactsByBuildNumber Load artifact by pipeline ID and buildNUmber
 func LoadArtifactsByBuildNumber(db gorp.SqlExecutor, pipelineID int64, applicationID int64, buildNumber int64, environmentID int64) ([]sdk.Artifact, error) {
-	query := `SELECT id, name, tag, download_hash, size, perm, md5sum, object_path
-	          FROM "artifact"
-	          WHERE build_number = $1 AND pipeline_id = $2 AND application_id = $3 AND environment_id = $4
-	          ORDER BY name`
+	query := `SELECT 	artifact.id, 
+						artifact.name, 
+						artifact.tag, 
+						artifact.download_hash, 
+						artifact.size, 
+						artifact.perm, 
+						artifact.md5sum, 
+						artifact.object_path,  
+						pipeline.name, 
+						project.projectKey, 
+						application.name, 
+						environment.name
+	          FROM artifact
+			  JOIN pipeline ON artifact.pipeline_id = pipeline.id
+			  JOIN project ON pipeline.project_id = project.id
+			  JOIN application ON application.id = artifact.application_id
+			  JOIN environment ON environment.id = artifact.environment_id		   
+			  WHERE build_number = $1 
+			  AND pipeline_id = $2 
+			  AND application_id = $3 
+			  AND environment_id = $4
+	          ORDER BY artifact.name`
 
 	rows, err := db.Query(query, buildNumber, pipelineID, applicationID, environmentID)
 	if err != nil {
@@ -65,7 +83,7 @@ func LoadArtifactsByBuildNumber(db gorp.SqlExecutor, pipelineID int64, applicati
 		art := sdk.Artifact{}
 		var md5sum, objectpath sql.NullString
 		var size, perm sql.NullInt64
-		err = rows.Scan(&art.ID, &art.Name, &art.Tag, &art.DownloadHash, &size, &perm, &md5sum, &objectpath)
+		err = rows.Scan(&art.ID, &art.Name, &art.Tag, &art.DownloadHash, &size, &perm, &md5sum, &objectpath, &art.Pipeline, &art.Project, &art.Application, &art.Environment)
 		if err != nil {
 			return nil, err
 		}
@@ -83,13 +101,54 @@ func LoadArtifactsByBuildNumber(db gorp.SqlExecutor, pipelineID int64, applicati
 		}
 		arts = append(arts, art)
 	}
+
+	getFetchURL(arts)
+
 	return arts, nil
+}
+
+func getFetchURL(arts []sdk.Artifact) {
+	//When listing artifacts, try to get a temp url
+	if objectstore.Instance().TemporaryURLSupported {
+		if store, ok := objectstore.Storage().(objectstore.DriverWithRedirect); ok {
+			wg := &sync.WaitGroup{}
+			wg.Add(len(arts))
+			for i := range arts {
+				go func(a *sdk.Artifact) {
+					defer wg.Done()
+					url, key, err := store.FetchURL(a)
+					if err != nil {
+						log.Error("artifact>Unable to get Temp URL for %s/%s: %v", a.GetPath(), a.GetName(), err)
+						return
+					}
+					a.TempURL = url
+					a.TempURLSecretKey = key
+				}(&arts[i])
+			}
+			wg.Wait()
+		}
+	}
 }
 
 // LoadArtifacts Load artifact by pipeline ID
 func LoadArtifacts(db gorp.SqlExecutor, pipelineID int64, applicationID int64, environmentID int64, tag string) ([]sdk.Artifact, error) {
-	query := `SELECT id, name, download_hash, size, perm, md5sum, object_path
-		FROM "artifact" 
+	query := `SELECT 	artifact.id, 
+						artifact.name, 
+						artifact.tag, 
+						artifact.download_hash, 
+						artifact.size, 
+						artifact.perm, 
+						artifact.md5sum, 
+						artifact.object_path,  
+						pipeline.name, 
+						project.projectKey, 
+						application.name, 
+						environment.name
+		FROM artifact
+		JOIN pipeline ON artifact.pipeline_id = pipeline.id
+		JOIN project ON pipeline.project_id = project.id
+		JOIN application ON application.id = artifact.application_id
+		JOIN environment ON environment.id = artifact.environment_id	
 		WHERE tag = $1 
 		AND pipeline_id = $2 
 		AND application_id = $3 
@@ -105,7 +164,7 @@ func LoadArtifacts(db gorp.SqlExecutor, pipelineID int64, applicationID int64, e
 		art := sdk.Artifact{}
 		var md5sum, objectpath sql.NullString
 		var size, perm sql.NullInt64
-		err = rows.Scan(&art.ID, &art.Name, &art.DownloadHash, &size, &perm, &md5sum, &objectpath)
+		err = rows.Scan(&art.ID, &art.Name, &art.Tag, &art.DownloadHash, &size, &perm, &md5sum, &objectpath, &art.Pipeline, &art.Project, &art.Application, &art.Environment)
 		if err != nil {
 			return nil, err
 		}
@@ -123,6 +182,8 @@ func LoadArtifacts(db gorp.SqlExecutor, pipelineID int64, applicationID int64, e
 		}
 		arts = append(arts, art)
 	}
+
+	getFetchURL(arts)
 
 	return arts, nil
 }
@@ -158,11 +219,46 @@ func LoadArtifact(db gorp.SqlExecutor, id int64) (*sdk.Artifact, error) {
 	return s, err
 }
 
+// DeleteArtifactsByApplicationID Delete all artifact related to given application
+func DeleteArtifactsByApplicationID(db gorp.SqlExecutor, id int64) error {
+	query := `SELECT artifact.name, artifact.tag, pipeline.name, project.projectKey, application.name, environment.name FROM artifact
+						JOIN pipeline ON artifact.pipeline_id = pipeline.id
+						JOIN project ON pipeline.project_id = project.id
+						JOIN application ON application.id = artifact.application_id
+						JOIN environment ON environment.id = artifact.environment_id
+						WHERE artifact.application_id = $1 FOR UPDATE`
+
+	arts := []sdk.Artifact{}
+	rows, errR := db.Query(query, id)
+	if errR != nil {
+		return sdk.WrapError(errR, "DeleteArtifactsByApplicationID> Cannot select artifact")
+	}
+	for rows.Next() {
+		s := sdk.Artifact{}
+		if err := rows.Scan(&s.Name, &s.Tag, &s.Pipeline, &s.Project, &s.Application, &s.Environment); err != nil {
+			rows.Close()
+			return sdk.WrapError(err, "DeleteArtifactsByApplicationID> Cannot select artifact")
+		}
+		arts = append(arts, s)
+	}
+	rows.Close()
+
+	for _, a := range arts {
+		if err := objectstore.DeleteArtifact(&a); err != nil && !strings.Contains(err.Error(), "404") {
+			return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in store")
+		}
+		query = `DELETE FROM artifact WHERE id = $1`
+		if _, err := db.Exec(query, id); err != nil {
+			return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in DB")
+		}
+	}
+	return nil
+}
+
 // DeleteArtifact lock the artifact in database,
 // then remove the actual object using storage driver,
 // finally remove artifact from database if actual delete is performed
 func DeleteArtifact(db gorp.SqlExecutor, id int64) error {
-
 	query := `SELECT artifact.name, artifact.tag, pipeline.name, project.projectKey, application.name, environment.name FROM artifact
 						JOIN pipeline ON artifact.pipeline_id = pipeline.id
 						JOIN project ON pipeline.project_id = project.id
@@ -171,27 +267,23 @@ func DeleteArtifact(db gorp.SqlExecutor, id int64) error {
 						WHERE artifact.id = $1 FOR UPDATE`
 
 	s := sdk.Artifact{}
-	err := db.QueryRow(query, id).Scan(&s.Name, &s.Tag, &s.Pipeline, &s.Project, &s.Application, &s.Environment)
-	if err != nil {
-		return err
+	if err := db.QueryRow(query, id).Scan(&s.Name, &s.Tag, &s.Pipeline, &s.Project, &s.Application, &s.Environment); err != nil {
+		return sdk.WrapError(err, "DeleteArtifact> Cannot select artifact")
 	}
 
-	err = objectstore.DeleteArtifact(s)
-	// If it's 404, it's lost anyway...
-	if err != nil && !strings.Contains(err.Error(), "404") {
-		return err
+	if err := objectstore.DeleteArtifact(&s); err != nil && !strings.Contains(err.Error(), "404") {
+		return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in store")
 	}
 
 	query = `DELETE FROM artifact WHERE id = $1`
-	_, err = db.Exec(query, id)
-	if err != nil {
-		return err
+	if _, err := db.Exec(query, id); err != nil {
+		return sdk.WrapError(err, "DeleteArtifact> Cannot delete artifact in DB")
 	}
 
 	return nil
 }
 
-func insertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, environmentID int64, art sdk.Artifact) error {
+func InsertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, environmentID int64, art sdk.Artifact) error {
 	query := `DELETE FROM "artifact" WHERE name = $1 AND tag = $2 AND pipeline_id = $3 AND application_id = $4 AND environment_id = $5`
 	_, err := db.Exec(query, art.Name, art.Tag, pipelineID, applicationID, environmentID)
 	if err != nil {
@@ -209,36 +301,34 @@ func insertArtifact(db gorp.SqlExecutor, pipelineID, applicationID int64, enviro
 	return nil
 }
 
-// SaveFile Insert file in db and write it in data directory
-func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artifact, content io.ReadCloser, e *sdk.Environment) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
+// SaveWorkflowFile Insert file in db and write it in data directory
+func SaveWorkflowFile(art *sdk.WorkflowNodeRunArtifact, content io.ReadCloser) error {
 	objectPath, err := objectstore.StoreArtifact(art, content)
 	if err != nil {
-		return err
+		return sdk.WrapError(err, "SaveWorkflowFile> Cannot store artifact")
 	}
 	log.Debug("objectpath=%s\n", objectPath)
 	art.ObjectPath = objectPath
-	if err = insertArtifact(tx, p.ID, a.ID, e.ID, art); err != nil {
-		return err
+	return nil
+}
+
+// SaveFile Insert file in db and write it in data directory
+func SaveFile(db *gorp.DbMap, p *sdk.Pipeline, a *sdk.Application, art sdk.Artifact, content io.ReadCloser, e *sdk.Environment) error {
+	tx, errB := db.Begin()
+	if errB != nil {
+		return sdk.WrapError(errB, "Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	objectPath, errO := objectstore.StoreArtifact(&art, content)
+	if errO != nil {
+		return sdk.WrapError(errO, "SaveFile>Cannot store artifact")
+	}
+	log.Debug("objectpath=%s\n", objectPath)
+	art.ObjectPath = objectPath
+	if err := InsertArtifact(tx, p.ID, a.ID, e.ID, art); err != nil {
+		return sdk.WrapError(err, "SaveFile> Cannot insert artifact in DB")
 	}
 
 	return tx.Commit()
-}
-
-// StreamFile Stream artifact
-func StreamFile(w io.Writer, art sdk.Artifact) error {
-	f, err := objectstore.FetchArtifact(art)
-	if err != nil {
-		return fmt.Errorf("cannot fetch artifact: %s", err)
-	}
-
-	if err := objectstore.StreamFile(w, f); err != nil {
-		return err
-	}
-	return f.Close()
 }

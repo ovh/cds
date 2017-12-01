@@ -1,59 +1,44 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {fakeAsync, inject, TestBed, tick} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {Injector} from '@angular/core';
-
 import {UserService} from '../../../service/user/user.service';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {AppModule} from '../../../app.module';
 import {PasswordComponent} from './password.component';
 import {RouterTestingModule} from '@angular/router/testing';
 import {AccountModule} from '../account.module';
+import {HttpRequest} from '@angular/common/http';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {User} from '../../../model/user.model';
 
 describe('CDS: PasswordComponent', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
-                { provide: APP_BASE_HREF, useValue: '/' },
-                { provide: XHRBackend, useClass: MockBackend },
+                {provide: APP_BASE_HREF, useValue: '/'},
                 UserService,
                 AuthentificationStore,
             ],
-            imports : [
+            imports: [
                 AppModule,
                 RouterTestingModule.withRoutes([]),
-                AccountModule
+                AccountModule,
+                HttpClientTestingModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
-    it('Reset Password OK', fakeAsync( () => {
+    it('Reset Password OK', fakeAsync(() => {
+        const http = TestBed.get(HttpTestingController);
+
         // Create loginComponent
         let fixture = TestBed.createComponent(PasswordComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
-
-        // Mock Http reset password request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({})));
-        });
 
         let compiled = fixture.debugElement.nativeElement;
 
@@ -73,10 +58,10 @@ describe('CDS: PasswordComponent', () => {
         // Simulate user click
         compiled.querySelector('#resetPasswordButton').click();
 
-        expect(backend.connectionsArray.length).toBe(1);
-        let request: any = JSON.parse(backend.connectionsArray[0].request.getBody());
-        expect(request.user.username).toBe('foo', 'Username must be foo');
-        expect(request.user.email).toBe('bar@foo.bar', 'Email must be bar@foo.bar');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === 'foo.bar/user/foo/reset' && req.body.user.username === 'foo' && req.body.user.email === 'bar@foo.bar';
+        })).flush(null);
+
         expect(fixture.componentInstance.showWaitingMessage).toBeTruthy('Waiting message must be true');
 
     }));

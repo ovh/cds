@@ -5,9 +5,10 @@ import (
 	"time"
 
 	"github.com/go-gorp/gorp"
+	"github.com/lib/pq"
 
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func loadPipelineSchedulers(db gorp.SqlExecutor, query string, args ...interface{}) ([]sdk.PipelineScheduler, error) {
@@ -36,6 +37,27 @@ func loadPipelineSchedulers(db gorp.SqlExecutor, query string, args ...interface
 	return ps, nil
 }
 
+func loadAndLockPipelineScheduler(db gorp.SqlExecutor, id int64) (*sdk.PipelineScheduler, error) {
+	query := `
+			SELECT 	pipeline_scheduler.*
+			FROM 	pipeline_scheduler
+			WHERE   pipeline_scheduler.id = $1
+			FOR UPDATE NOWAIT`
+
+	var gorpPS = &PipelineScheduler{}
+	if err := db.SelectOne(gorpPS, query, id); err != nil {
+		if pqerr, ok := err.(*pq.Error); ok && pqerr.Code == "55P03" {
+			// 55P03 already lock, no error
+			log.Debug("loadAndLockPipelineScheduler> Unable to lock to pipeline_scheduler pqerr:%+v", pqerr)
+			return nil, nil
+		}
+		log.Error("loadAndLockPipelineScheduler> Unable to lock to pipeline_scheduler err:%+v", err)
+		return nil, err
+	}
+	ps := sdk.PipelineScheduler(*gorpPS)
+	return &ps, nil
+}
+
 // LoadAll retrieves all pipeline scheduler from database
 func LoadAll(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, error) {
 	return loadPipelineSchedulers(db, "select * from pipeline_scheduler")
@@ -48,8 +70,7 @@ func Insert(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 	}
 	ds := PipelineScheduler(*s)
 	if err := db.Insert(&ds); err != nil {
-		log.Warning("Insert> Unable to insert pipeline scheduler : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "Insert> Unable to insert pipeline scheduler : %T ", err)
 	}
 	*s = sdk.PipelineScheduler(ds)
 	return nil
@@ -59,8 +80,7 @@ func Insert(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 func Update(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 	ds := PipelineScheduler(*s)
 	if n, err := db.Update(&ds); err != nil {
-		log.Warning("Update> Unable to update pipeline scheduler : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "Update> Unable to update pipeline scheduler : %T ", err)
 	} else if n == 0 {
 		return sdk.ErrNotFound
 	}
@@ -72,12 +92,24 @@ func Update(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 func Delete(db gorp.SqlExecutor, s *sdk.PipelineScheduler) error {
 	ds := PipelineScheduler(*s)
 	if n, err := db.Delete(&ds); err != nil {
-		log.Warning("Delete> Unable to delete pipeline scheduler : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "Delete> Unable to delete pipeline scheduler : %T ", err)
 	} else if n == 0 {
 		return sdk.ErrNotFound
 	}
 	*s = sdk.PipelineScheduler(ds)
+	return nil
+}
+
+// DeleteByApplicationID Delete all scheduler for the given application
+func DeleteByApplicationID(db gorp.SqlExecutor, appID int64) error {
+	if err := DeleteExecutionByApplicationID(db, appID); err != nil {
+		return sdk.WrapError(err, "DeleteByApplicationID")
+	}
+
+	query := "DELETE FROM pipeline_scheduler WHERE application_id = $1"
+	if _, err := db.Exec(query, appID); err != nil {
+		return sdk.WrapError(err, "DeleteByApplicationID")
+	}
 	return nil
 }
 
@@ -96,8 +128,7 @@ func Load(db gorp.SqlExecutor, id int64) (*sdk.PipelineScheduler, error) {
 func InsertExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) error {
 	ds := PipelineSchedulerExecution(*s)
 	if err := db.Insert(&ds); err != nil {
-		log.Warning("InsertExecution> Unable to insert pipeline scheduler execution : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "InsertExecution> Unable to insert pipeline scheduler execution : %T ", err)
 	}
 	*s = sdk.PipelineSchedulerExecution(ds)
 	return nil
@@ -107,8 +138,7 @@ func InsertExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) err
 func UpdateExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) error {
 	ds := PipelineSchedulerExecution(*s)
 	if n, err := db.Update(&ds); err != nil {
-		log.Warning("UpdateExecution> Unable to update pipeline scheduler execution : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "UpdateExecution> Unable to update pipeline scheduler execution : %T ", err)
 	} else if n == 0 {
 		return sdk.ErrNotFound
 	}
@@ -116,12 +146,20 @@ func UpdateExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) err
 	return nil
 }
 
+//DeleteExecutionByApplicationID deletes executions for the given application
+func DeleteExecutionByApplicationID(db gorp.SqlExecutor, appID int64) error {
+	query := "DELETE FROM pipeline_scheduler_execution WHERE pipeline_scheduler_id IN (SELECT id FROM pipeline_scheduler WHERE application_id = $1)"
+	if _, err := db.Exec(query, appID); err != nil {
+		return sdk.WrapError(err, "DeleteExecutionByApplicationID")
+	}
+	return nil
+}
+
 //DeleteExecution deletes executions
 func DeleteExecution(db gorp.SqlExecutor, s *sdk.PipelineSchedulerExecution) error {
 	ds := PipelineSchedulerExecution(*s)
 	if n, err := db.Delete(&ds); err != nil {
-		log.Warning("DeleteExecution> Unable to delete pipeline scheduler execution : %T %s", err, err)
-		return err
+		return sdk.WrapError(err, "DeleteExecution> Unable to delete pipeline scheduler execution : %T ", err)
 	} else if n == 0 {
 		return sdk.ErrNotFound
 	}
@@ -213,7 +251,7 @@ func LoadPastExecutions(db gorp.SqlExecutor, id int64) ([]sdk.PipelineSchedulerE
 //LoadPendingExecutions loads all pipeline execution
 func LoadPendingExecutions(db gorp.SqlExecutor) ([]sdk.PipelineSchedulerExecution, error) {
 	as := []PipelineSchedulerExecution{}
-	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution where executed = false and execution_planned_date <=  now()"); err != nil {
+	if _, err := db.Select(&as, "select * from pipeline_scheduler_execution where executed = 'false' and execution_planned_date <= $1", time.Now()); err != nil {
 		log.Warning("LoadPendingExecutions> Unable to load pipeline scheduler execution : %T %s", err, err)
 		return nil, err
 	}
@@ -240,13 +278,7 @@ func LoadUnscheduledPipelines(db gorp.SqlExecutor) ([]sdk.PipelineScheduler, err
 			res = append(res, s)
 		}
 	}
-	return ps, nil
-}
-
-//LockPipelineExecutions locks table LockPipelineExecutions
-func LockPipelineExecutions(db gorp.SqlExecutor) error {
-	_, err := db.Exec("LOCK TABLE pipeline_scheduler_execution IN ACCESS EXCLUSIVE MODE NOWAIT")
-	return err
+	return res, nil
 }
 
 //GetByApplication get all pipeline schedulers for an application

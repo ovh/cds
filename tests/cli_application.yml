@@ -14,7 +14,7 @@ testcases:
 
 - name: application list
   steps:
-  - script: {{.cds.build.cds}} application list TEST
+  - script: {{.cds.build.cds}} application list ITCLIAPPPRJ
 
 - name: application show
   steps:
@@ -59,6 +59,7 @@ testcases:
 
 - name: clean
   steps:
+  - script: {{.cds.build.cds}} project remove --force ITCLIAPPPRJ
   - script: {{.cds.build.cds}} group remove ITCLIAPP_GRP
   - script: {{.cds.build.cds}} group remove ITCLIAPP_GRP_EDIT_TEST
-  - script: {{.cds.build.cds}} project remove --force ITCLIAPPPRJ
+

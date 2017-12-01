@@ -9,13 +9,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/ovh/cds/sdk"
-
 	"github.com/ovh/cds/cli/cds/action"
 	"github.com/ovh/cds/cli/cds/admin"
 	"github.com/ovh/cds/cli/cds/application"
 	"github.com/ovh/cds/cli/cds/artifact"
-	"github.com/ovh/cds/cli/cds/dashboard"
 	"github.com/ovh/cds/cli/cds/environment"
 	"github.com/ovh/cds/cli/cds/generate"
 	"github.com/ovh/cds/cli/cds/group"
@@ -25,17 +22,19 @@ import (
 	"github.com/ovh/cds/cli/cds/project"
 	"github.com/ovh/cds/cli/cds/track"
 	"github.com/ovh/cds/cli/cds/trigger"
+	"github.com/ovh/cds/cli/cds/ui"
 	"github.com/ovh/cds/cli/cds/update"
 	"github.com/ovh/cds/cli/cds/user"
 	"github.com/ovh/cds/cli/cds/version"
 	"github.com/ovh/cds/cli/cds/wizard"
 	"github.com/ovh/cds/cli/cds/worker"
+	"github.com/ovh/cds/cli/cds/workflow"
+	"github.com/ovh/cds/sdk"
 )
 
 var rootCmd = &cobra.Command{
 	Use:   "cds",
 	Short: "CDS - Command Line Tool",
-	Long:  `CDS - Command Line Tool`,
 }
 
 func displayWarnings() {
@@ -66,7 +65,7 @@ func main() {
 		sdk.CDSConfigFile = internal.ConfigFile
 
 		//On login command: do nothing
-		if cmd == login.Cmd {
+		if cmd == login.CmdLogin || cmd == login.CmdSignup {
 			return
 		}
 
@@ -98,13 +97,15 @@ func main() {
 
 	}
 
-	rootCmd.AddCommand(login.Cmd)
+	rootCmd.AddCommand(login.CmdLogin)
+	rootCmd.AddCommand(login.CmdSignup)
 	rootCmd.AddCommand(action.Cmd)
 	rootCmd.AddCommand(application.Cmd())
 	rootCmd.AddCommand(artifact.Cmd)
 	rootCmd.AddCommand(environment.Cmd())
 	rootCmd.AddCommand(statusCmd)
 	rootCmd.AddCommand(pipeline.Cmd())
+	rootCmd.AddCommand(workflow.Cmd())
 	rootCmd.AddCommand(project.Cmd)
 	rootCmd.AddCommand(group.Cmd)
 	rootCmd.AddCommand(user.Cmd)
@@ -112,7 +113,7 @@ func main() {
 	rootCmd.AddCommand(update.Cmd)
 	rootCmd.AddCommand(version.Cmd)
 	rootCmd.AddCommand(trigger.Cmd())
-	rootCmd.AddCommand(dashboard.Cmd)
+	rootCmd.AddCommand(ui.Cmd)
 	rootCmd.AddCommand(wizard.Cmd)
 	rootCmd.AddCommand(track.Cmd)
 	rootCmd.AddCommand(generate.Cmd())

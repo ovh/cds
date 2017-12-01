@@ -26,7 +26,7 @@ func resetUser(cmd *cobra.Command, args []string) {
 	name := args[0]
 	email := args[1]
 
-	err := sdk.ResetUser(name, email, "cdscli")
+	err := sdk.ResetUser(name, email, "cds user verify %s %s")
 	if err != nil {
 		sdk.Exit("Error: cannot reset user %s (%s)\n", name, err)
 	}

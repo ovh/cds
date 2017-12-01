@@ -1,0 +1,32 @@
+name: Create project/application/pipeline
+vars:
+  ui.url: '{{.cds.build.url}}'
+  ui.user: '{{.cds.build.user}}'
+  ui.password: '{{.cds.build.user_password}}'
+  ui.project: 'UIE2E'
+  ui.pipeline: 'PipelineUIE2E'
+  ui.application: 'ApplicationUIE2E'
+  ui.environment: 'EnvironmentUIE2E'
+  ui.workflow: 'WorkflowUIE2E'
+testcases:
+- name: CreateProjAppPip
+  context:
+    type: web
+    width: 1920
+    height: 1080
+    driver: chrome
+    args:
+    - 'disable-gpu'
+    - 'no-sandbox'
+  steps:
+{{.templateLogin}}
+{{.templateCreateProject}}
+{{.templateCreateApplication}}
+{{.templateCreatePipeline}}
+  - action:
+      navigate:
+        url: '{{.ui.url}}/project/{{.ui.project}}/workflow'
+    screenshot: barw_workflowform.png
+  - action:
+      wait: 2
+{{.templateCreateWorkflow}}

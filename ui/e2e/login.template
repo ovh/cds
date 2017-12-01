@@ -1,0 +1,19 @@
+  - action:
+      navigate:
+        url: '{{.ui.url}}'
+        reset: true
+    screenshot: e2e_0_login_1_navigate.png
+    assertions:
+    - result.title ShouldEqual CDS
+  - action:
+      fill:
+      - find: 'input[name="username"]'
+        text: '{{.ui.user}}'
+      - find: 'input[name="password"]'
+        text: '{{.ui.password}}'
+    screenshot: e2e_0_login_2_type.png
+  - action:
+      click:
+        find: 'button#loginButton'
+        wait: 2
+    screenshot: e2e_0_login_3_click.png

@@ -15,19 +15,23 @@ func (t *TemplatePlain) Name() string {
 
 func (t *TemplatePlain) Description() string {
 	return `
-This sample template create
+This template creates:
+
 - a build pipeline with	two stages: Commit Stage and Packaging Stage
 - a deploy pipeline with one stage: Deploy Stage
 
-Commit Stage :
+Commit Stage:
+
 - run git clone
 - run make build
 
 Packaging Stage:
+
 - run docker build and docker push
 
 Deploy Stage:
-- it's en empty script
+
+- it's an empty script
 
 Packaging and Deploy are optional.
 `
@@ -70,7 +74,7 @@ func (t *TemplatePlain) Parameters() []sdk.TemplateParam {
 
 func (t *TemplatePlain) ActionsNeeded() []string {
 	return []string{
-		"CDS_GitClone",
+		sdk.GitCloneAction,
 	}
 }
 
@@ -90,7 +94,7 @@ func (t *TemplatePlain) Apply(opts template.IApplyOptions) (sdk.Application, err
 			Name: "Compile",
 			Actions: []sdk.Action{
 				sdk.Action{
-					Name: "CDS_GitClone",
+					Name: sdk.GitCloneAction,
 				},
 				sdk.NewActionScript(`#!/bin/bash
 
@@ -124,7 +128,7 @@ cd $(ls -1) && make`,
 			Name: "Docker package",
 			Actions: []sdk.Action{
 				sdk.Action{
-					Name: "CDS_GitClone",
+					Name: sdk.GitCloneAction,
 				},
 				sdk.NewActionScript(`#!/bin/bash
 set -ex
@@ -226,6 +230,5 @@ echo "CALL YOUR DEPLOY SCRIPT HERE"`, []sdk.Requirement{
 }
 
 func main() {
-	p := TemplatePlain{}
-	template.Serve(&p)
+	template.Main(&TemplatePlain{})
 }

@@ -1,25 +1,21 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
+import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {VariableComponent} from './variable.component';
 import {VariableService} from '../../../service/variable/variable.service';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {SharedService} from '../../shared.service';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {Variable} from '../../../model/variable.model';
-import {Injector} from '@angular/core';
 import {SharedModule} from '../../shared.module';
 import {VariableEvent} from '../variable.event.model';
 import {ProjectAuditService} from '../../../service/project/project.audit.service';
 import {EnvironmentAuditService} from '../../../service/environment/environment.audit.service';
 import {ApplicationAuditService} from '../../../service/application/application.audit.service';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
 
 describe('CDS: Variable List Component', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -29,7 +25,6 @@ describe('CDS: Variable List Component', () => {
                 VariableService,
                 SharedService,
                 TranslateService,
-                { provide: XHRBackend, useClass: MockBackend },
                 TranslateLoader,
                 TranslateParser,
                 ProjectAuditService,
@@ -38,33 +33,26 @@ describe('CDS: Variable List Component', () => {
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
 
-    it('Load Component + update value', fakeAsync( () => {
-        // Mock Http request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '["string", "password"]'})));
-        });
+    it('Load Component + update value', fakeAsync(  () => {
+        const http = TestBed.get(HttpTestingController);
+
+        let mock = ['string', 'password'];
 
         // Create component
         let fixture = TestBed.createComponent(VariableComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        expect(backend.connectionsArray[0].request.url).toBe('/variable/type', 'Component must load variable type');
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/variable/type';
+        })).flush(mock);
 
         let vars: Variable[] = [];
         let variable: Variable = new Variable();

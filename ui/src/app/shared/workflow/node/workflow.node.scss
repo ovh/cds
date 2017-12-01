@@ -1,0 +1,176 @@
+@import '../../../../common';
+$boxHeight: 68px;
+$boxWidth: 155px;
+.workflowNode {
+  width: 100%;
+  height: 100%;
+
+  .nodePipeline {
+    position: relative;
+    background: white;
+    border: 1px solid grey;
+    border-radius: 5px;
+    width: 100%;
+    height: 100%;
+
+    .footer {
+      position: absolute;
+      bottom: 5px;
+      left: 10px;
+      width: 90%;
+      p {
+        width: 100%;
+        margin: 0;
+        padding: 0 0 0 10px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      p.ellipsis {
+        text-overflow: ellipsis;
+      }
+    }
+
+    .rename {
+      width: 100%;
+      position: absolute;
+      top: 0;
+      display:flex;
+      align-items:center;
+      height:100%;
+      padding: 17px 5px 5px 5px;
+
+      .full {
+        width: 100%;
+
+        .buttonLine {
+          margin-top: 6px;
+          text-align:center;
+          color: $cds_color_red;
+          font-weight: 600;
+
+          button {
+            margin-top: -3px;
+          }
+        }
+
+        .ui.mini.input {
+          width: 100%;
+        }
+      }
+    }
+
+    .pipeline {
+      height: 100%;
+      width: 90%;
+      p {
+        width: 100%;
+        margin: 0;
+        padding: 0 0 0 20px;
+        white-space: nowrap;
+        overflow: hidden;
+        height:100%;
+        display: flex;
+        align-items: center;
+      }
+      p.ellipsis {
+        text-overflow: ellipsis;
+
+        a {
+          color: black;
+
+          i {
+            font-size: 1em;
+            margin: 0;
+          }
+        }
+      }
+
+      i {
+        margin-top: 10px;
+        font-size: 2.2em;
+        &.icon.build {
+          margin-left: 3px;
+          margin-top: 7px;
+          font-size: 1.2em;
+        }
+      }
+    }
+
+    .ribbon.label {
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      font-size: 0.7em;
+      border: 1px solid black;
+      background-color: $cds_color_light_teal;
+      color: black;
+      border-radius: 2px;
+      padding-left: 10px;
+      z-index: 10;
+    }
+    .ui.ribbon.label:after {
+      content: none;
+    }
+
+    sm-dropdown {
+      z-index: 3;
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      .dropdown.icon {
+        display: none;
+      }
+    }
+  }
+  .nodePipeline.running {
+    border: none;
+  }
+  .nodePipeline.success {
+    background-color: $cds_color_light_green;
+    border: 2px solid $cds_color_green;
+  }
+  .nodePipeline.fail {
+    background-color: $cds_color_light_red;
+    border: 2px solid $cds_color_red;
+  }
+  .nodePipeline.inactive {
+    background-color: $cds_color_light_grey;
+    border: 2px solid grey;
+  }
+  .nodePipeline.building {
+    background-color: $cds_color_light_teal;
+    border: 2px solid $cds_color_teal;
+  }
+
+  // Loader
+  .ui.medium.loader {
+    margin-right: 5px;
+    .ui.circular.label {
+      margin-top: 4px;
+    }
+  }
+  .ui.large.loader {
+    margin-right: 5px;
+    .ui.circular.label {
+      margin-top: 12px;
+    }
+  }
+  .ui.huge.loader {
+    margin-right: 5px;
+    margin-top: 4px;
+    .ui.circular.label {
+      margin-top: 15px;
+    }
+  }
+  .ui.massive.loader {
+    margin-right: 5px;
+    .ui.circular.label {
+      margin-top: 20px;
+    }
+  }
+  // End loader
+
+  .mr5 {
+    margin-right: 5px;
+  }
+}

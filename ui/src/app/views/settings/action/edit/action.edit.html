@@ -1,0 +1,50 @@
+<h2 *ngIf="action && action.id">{{ 'action_edit_title' | translate }} {{action.name}} - {{action.type}}</h2>
+
+<div *ngIf="action;then showAction;else loadAction"></div>
+<ng-template #showAction>
+<div id="ActionEdit">
+  <div class="ui info message" *ngIf="action.type === 'Builtin'">
+      {{ 'action_edit_builtin' | translate }}
+  </div>
+  <div class="ui info message" *ngIf="action.type === 'Plugin'">
+      {{ 'action_edit_plugin' | translate }}
+  </div>
+  <form class="ui form">
+    <div class="ui grid">
+      <div class="thirteen wide column">
+          <app-action [edit]="isAdmin && action.type !== 'Builtin' && action.type !== 'Plugin'"
+                      [action]="action"
+                      (actionEvent)="actionEvent($event)"></app-action>
+
+          <div *ngIf="isAdmin && pipelinesUsingAction">
+              <h3>{{ 'pipelines_using_action' | translate }}</h3>
+              <ul>
+                <li *ngFor="let p of pipelinesUsingAction">
+                  <a [routerLink]="['/project/', p.key, 'pipeline', p.pipeline_name]">{{p.project_name}} - {{p.pipeline_name}} - {{p.action_name}}</a>
+                </li>
+              </ul>
+          </div>
+      </div>
+
+      <div class="three wide column">
+        <div class="ui tall stacked segment">
+          <h4 class="ui header"><i class="fa fa-book fa-x4"></i> Documentation</h4>
+
+          <div class="ui list">
+            <a class="item" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions/">What's an action?</a>
+            <a class="item" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin/">Built-in</a>
+            <a class="item" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/">User-Actions</a>
+            <a class="item" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins/">Plugins Actions</a>
+          </div>
+
+          <a href="https://ovh.github.io/cds">https://ovh.github.io/cds</a>
+        </div>
+      </div>
+
+    </div>
+  </form>
+</div>
+</ng-template>
+<ng-template #loadAction>
+    <div class="ui text active loader">{{ 'action_load_action' | translate }}</div>
+</ng-template>

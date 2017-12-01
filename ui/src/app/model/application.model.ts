@@ -18,13 +18,14 @@ export class Application {
     pipelines_build: Array<PipelineBuild>;
     permission: number;
     notifications: Array<Notification>;
-    last_modified: number;
-    repositories_manager: RepositoriesManager;
+    last_modified: string;
+    vcs_server: string;
     repository_fullname: string;
     pollers: Array<RepositoryPoller>;
     hooks: Array<Hook>;
     workflows: Array<WorkflowItem>;
     schedulers: Array<Scheduler>;
+    workflow_migration: string;
 
     project_key: string; // project unique key
 
@@ -43,6 +44,7 @@ export class ApplicationPipeline {
 }
 
 export interface ApplicationFilter {
+    remote: string;
     branch: string;
-    version: number;
+    version: string;
 };

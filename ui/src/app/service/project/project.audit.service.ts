@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
-import {Http} from '@angular/http';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {VariableAudit} from '../../model/variable.model';
+import {HttpClient} from '@angular/common/http';
 /**
  * Service to access Project from API.
  * Only used by ProjectStore
@@ -10,11 +10,11 @@ import {VariableAudit} from '../../model/variable.model';
 export class ProjectAuditService {
 
 
-    constructor(private _http: Http) {
+    constructor(private _http: HttpClient) {
     }
 
     getVariableAudit(key: string, varName: string): Observable<Array<VariableAudit>> {
-        return this._http.get('/project/' + key + '/variable/' + varName + '/audit').map(res => res.json());
+        return this._http.get<Array<VariableAudit>>('/project/' + key + '/variable/' + varName + '/audit');
     }
 }
 

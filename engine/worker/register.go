@@ -1,80 +1,57 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
-	"os"
-	"time"
+	"runtime"
 
 	"github.com/ovh/cds/engine/api/worker"
-	"github.com/ovh/cds/sdk/log"
 	"github.com/ovh/cds/sdk"
-	"github.com/spf13/viper"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Workers need to register to main api so they can run actions
-func register(cdsURI string, name string, uk string) error {
-	log.Info("Registering [%s] at [%s]\n", name, cdsURI)
+func (w *currentWorker) register(form worker.RegistrationForm) error {
+	log.Info("Registering %s on %s", form.Name, w.apiEndpoint)
+	sdk.InitEndpoint(w.apiEndpoint)
+	sdk.Authorization("")
 
-	sdk.InitEndpoint(cdsURI)
-	sdk.Authorization(WorkerID)
-
-	requirements, errR := sdk.GetRequirements()
+	requirements, errR := w.client.Requirements()
 	if errR != nil {
 		log.Warning("register> unable to get requirements : %s", errR)
-	}
-
-	log.Debug("Checking %d requirements", len(requirements))
-	binaryCapabilities := LoopPath(requirements)
-
-	in := worker.RegistrationForm{
-		Name:               name,
-		UserKey:            uk,
-		Model:              model,
-		Hatchery:           hatchery,
-		BinaryCapabilities: binaryCapabilities,
-		Version:            VERSION,
-	}
-
-	body, errM := json.Marshal(in)
-	if errM != nil {
-		log.Info("register: Cannot marshal body: %s", errM)
-		return errM
-	}
-
-	data, code, errR := sdk.Request("POST", "/worker", body)
-	if errR != nil {
-		log.Info("Cannot register worker: %s", errR)
 		return errR
 	}
 
-	if code == http.StatusUnauthorized {
-		// Nothing to do here, better exit
-		time.Sleep(10 * time.Second)
-		sdk.Exit("register> Got HTTP %d, exiting\n", code)
+	log.Debug("Checking %d requirements", len(requirements))
+	form.BinaryCapabilities = LoopPath(w, requirements)
+	form.Version = sdk.VERSION
+	form.OS = runtime.GOOS
+	form.Arch = runtime.GOOS
+
+	worker, uptodate, err := w.client.WorkerRegister(form)
+	if err != nil {
+		sdk.Exit("register> Got HTTP %d, exiting\n", err)
+		return err
 	}
 
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
+	w.id = worker.ID
+	w.groupID = worker.GroupID
+	if worker.Model != nil {
+		w.model = *worker.Model
 	}
+	sdk.Authorization(worker.ID)
+	w.initGRPCConn()
+	log.Info("%s Registered on %s", form.Name, w.apiEndpoint)
 
-	var w sdk.Worker
-	json.Unmarshal(data, &w)
-	WorkerID = w.ID
-	sdk.Authorization(w.ID)
-	initGRPCConn()
-	log.Info("Registered: %s\n", data)
-
-	if !w.Uptodate {
-		log.Warning("-=-=-=-=- Please update your worker binary -=-=-=-=-")
+	if !uptodate {
+		log.Warning("-=-=-=-=- Please update your worker binary - Worker Version %s -=-=-=-=-", sdk.VERSION)
 	}
 
 	return nil
 }
 
-func unregister() error {
-	alive = false
+func (w *currentWorker) unregister() error {
+	log.Info("Unregistering worker")
+	w.id = ""
 	_, code, err := sdk.Request("POST", "/worker/unregister", nil)
 	if err != nil {
 		return err
@@ -83,24 +60,15 @@ func unregister() error {
 		return fmt.Errorf("HTTP %d", code)
 	}
 
-	if viper.GetBool("single_use") {
-		if hatchery > 0 {
-			log.Info("unregister> waiting 30min to be killed by hatchery, if not killed, worker will exit")
-			time.Sleep(30 * time.Minute)
-		}
-		log.Info("unregister> worker will exit")
-		time.Sleep(3 * time.Second)
-		os.Exit(0)
-	}
 	return nil
 }
 
 // LoopPath return the list of evailable command in path
-func LoopPath(reqs []sdk.Requirement) []string {
+func LoopPath(w *currentWorker, reqs []sdk.Requirement) []string {
 	binaries := []string{}
 	for _, req := range reqs {
 		if req.Type == sdk.BinaryRequirement {
-			if b, _ := checkBinaryRequirement(req); b {
+			if b, _ := checkBinaryRequirement(w, req); b {
 				binaries = append(binaries, req.Value)
 			}
 		}

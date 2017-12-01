@@ -1,9 +1,9 @@
-import {Component, Input, OnInit, OnDestroy} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {Application} from '../../../../../model/application.model';
 import {RepositoryPoller} from '../../../../../model/polling.model';
 import {ApplicationStore} from '../../../../../service/application/application.store';
-import {Subscription} from 'rxjs/Rx';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-poller-form',
@@ -20,8 +20,8 @@ export class ApplicationPollerFormComponent implements OnInit {
 
 
     ngOnInit() {
-        if (!this.application.repositories_manager) {
-            this._appStore.getApplications(this.project.key, this.application.name).first().subscribe( apps => {
+        if (!this.application.vcs_server) {
+            this._appStore.getApplications(this.project.key, this.application.name).pipe(first()).subscribe( apps => {
                 let appKey = this.project.key + '-' + this.application.name;
                 if (apps.get(appKey)) {
                     this.application = apps.get(appKey);

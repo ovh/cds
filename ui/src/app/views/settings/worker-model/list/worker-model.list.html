@@ -1,0 +1,77 @@
+
+<h2>{{ 'worker_model_list_title' | translate }}</h2>
+
+<div *ngIf="workerModels;then showWorkerModels;else loadWorkerModels"></div>
+<ng-template #showWorkerModels>
+  <div class="model">
+      <div class="ui form">
+          <div class="fields">
+            <div class="twelve wide field">
+              <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
+            </div>
+            <div class="four wide field">
+              <a class="ui right floated green button" [routerLink]="['add']">{{ 'btn_add' | translate }}</a>
+            </div>
+          </div>
+      </div>
+
+      <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+          <thead>
+          <tr>
+              <th class="one wide">{{ 'worker_model_type' | translate }}</th>
+              <th class="four wide">{{ 'worker_model_name' | translate }}</th>
+              <th class="three wide">{{ 'worker_model_image' | translate }}</th>
+              <th class="three wide">{{ 'worker_model_group' | translate }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let v of getDataForCurrentPage()">
+              <td>
+                  <a class="ui" [routerLink]="[v.name]">
+                    <div class="ui">{{v.type}}</div>
+                  </a>
+              </td>
+              <td>
+                  <a class="ui" [routerLink]="[v.name]">
+                    <div class="ui">{{v.name}}
+                        <span *ngIf="v.disabled==='true'"> {{ 'worker_model_disabled' | translate }}</span>
+                        <span *ngIf="v.nb_spawn_err > 0">  <i class="warning sign icon orange" title="{{ 'worker_model_warning' | translate }}"></i> </span>
+                    </div>
+                  </a>
+              </td>
+              <td>
+                  <a class="ui" [routerLink]="[v.name]">
+                    <div class="ui">{{v.image.substr(0, 60)}}</div>
+                  </a>
+              </td>
+              <td>
+                  <a class="ui" [routerLink]="[v.name]">
+                    <div class="ui">{{v.group.name}}</div>
+                  </a>
+              </td>
+          </tr>
+          </tbody>
+          <tfoot *ngIf="getNbOfPages() > 1">
+          <tr>
+              <th colspan="4">
+                  <div class="ui right floated pagination menu" >
+                      <a class="icon item" (click)="downPage()">
+                          <i class="left chevron icon"></i>
+                      </a>
+                      <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                      <a class="icon item" (click)="upPage()">
+                          <i class="right chevron icon"></i>
+                      </a>
+                  </div>
+              </th>
+          </tr>
+          </tfoot>
+      </table>
+      <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+          {{ 'worker_model_none' | translate }}
+      </div>
+  </div>
+</ng-template>
+<ng-template #loadWorkerModels>
+    <div class="ui text active loader">{{ 'worker_model_load_worker_models' | translate }}</div>
+</ng-template>

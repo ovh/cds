@@ -1,0 +1,25 @@
+<div class="ui segment">
+    <ul *ngIf="project">
+        <h3>{{project.key}}</h3>
+        <li *ngFor="let app of project.applications">
+            <a href="#" [routerLink]="['/project', project.key, 'application', app.name]">
+
+            <span [ngSwitch]="app.workflow_migration">
+                <span *ngSwitchCase="'STARTED'">
+                    <i class="orange battery medium icon"></i>
+                </span>
+                <span *ngSwitchCase="'DONE'">
+                    <i class="green battery full icon"></i>
+                </span>
+                <span *ngSwitchDefault>
+                    <i class="battery empty icon"></i>
+                </span>
+            </span>
+                {{app.name}}
+            </a>
+        </li>
+        <div class="ui info message" *ngIf="!project.applications || project.applications.length === 0">
+            {{ 'common_no_application' | translate }}
+        </div>
+    </ul>
+</div>

@@ -1,5 +1,5 @@
 import {BrowserModule} from '@angular/platform-browser';
-import {NgModule} from '@angular/core';
+import {NgModule, LOCALE_ID} from '@angular/core';
 import {AppComponent} from './app.component';
 import {ServicesModule} from './service/services.module';
 import {TranslateModule, TranslateLoader, TranslateStaticLoader} from 'ng2-translate';
@@ -8,6 +8,8 @@ import {routing} from './app.routing';
 import {NavbarModule} from './views/navbar/navbar.module';
 import {SharedModule} from './shared/shared.module';
 import {ToasterModule} from 'angular2-toaster/angular2-toaster';
+import {AppService} from './app.service';
+import {HttpClientModule} from '@angular/common/http';
 
 @NgModule({
     declarations: [
@@ -15,6 +17,7 @@ import {ToasterModule} from 'angular2-toaster/angular2-toaster';
     ],
     imports: [
         BrowserModule,
+        HttpClientModule,
         NavbarModule,
         SharedModule,
         ServicesModule.forRoot(),
@@ -30,6 +33,8 @@ import {ToasterModule} from 'angular2-toaster/angular2-toaster';
         ServicesModule,
     ],
     providers: [
+        AppService,
+        { provide: LOCALE_ID, useValue: navigator.language.match(/fr/) ? 'fr' : 'en' }
     ],
     bootstrap: [AppComponent]
 })

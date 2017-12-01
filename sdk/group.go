@@ -6,16 +6,20 @@ import (
 	"net/http"
 )
 
+// SharedInfraGroupName is the name of the builtin group used to share infrastructure between projects
+const SharedInfraGroupName = "shared.infra"
+
 // Group represent a group of user.
 type Group struct {
 	ID                int64              `json:"id" yaml:"-"`
-	Name              string             `json:"name" yaml:"name"`
+	Name              string             `json:"name" yaml:"name" cli:"name"`
 	Admins            []User             `json:"admins,omitempty" yaml:"admin,omitempty"`
 	Users             []User             `json:"users,omitempty" yaml:"users,omitempty"`
 	ProjectGroups     []ProjectGroup     `json:"projects,omitempty" yaml:"-"`
 	PipelineGroups    []PipelineGroup    `json:"pipelines,omitempty" yaml:"-"`
 	ApplicationGroups []ApplicationGroup `json:"applications,omitempty" yaml:"-"`
 	EnvironmentGroups []EnvironmentGroup `json:"environments,omitempty" yaml:"-"`
+	WorkflowGroups    []WorkflowGroup    `json:"workflows,omitempty" yaml:"-"`
 }
 
 // GroupPermission represent a group and his role in the project
@@ -48,9 +52,10 @@ type ProjectGroup struct {
 	Permission int     `json:"permission"`
 }
 
-// FromJSON unmarshal given json data into Group object
-func (p *Group) FromJSON(data []byte) (*Group, error) {
-	return p, json.Unmarshal(data, &p)
+// WorkflowGroup represents the permission to a workflow
+type WorkflowGroup struct {
+	Workflow   Workflow `json:"workflow"`
+	Permission int      `json:"permission"`
 }
 
 // AddGroup creates a new group
@@ -222,7 +227,7 @@ func SetUserGroupAdmin(groupName string, userName string) error {
 	}
 
 	if code >= 300 {
-		return fmt.Errorf("HTTP %d\n", code)
+		return fmt.Errorf("HTTP %d", code)
 	}
 
 	return nil
@@ -238,7 +243,7 @@ func UnsetUserGroupAdmin(groupName string, userName string) error {
 	}
 
 	if code >= 300 {
-		return fmt.Errorf("HTTP %d\n", code)
+		return fmt.Errorf("HTTP %d", code)
 	}
 
 	return nil

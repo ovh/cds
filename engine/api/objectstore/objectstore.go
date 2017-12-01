@@ -1,6 +1,7 @@
 package objectstore
 
 import (
+	"context"
 	"fmt"
 	"io"
 
@@ -8,6 +9,7 @@ import (
 )
 
 var storage Driver
+var instance sdk.ArtifactsStore
 
 //Status is for status handler
 func Status() string {
@@ -18,26 +20,36 @@ func Status() string {
 	return storage.Status()
 }
 
+// Instance returns the objectstore singleton
+func Instance() sdk.ArtifactsStore {
+	return instance
+}
+
+// Storage returns the Driver singleton
+func Storage() Driver {
+	return storage
+}
+
 //StoreArtifact an artifact with default objectstore driver
-func StoreArtifact(art sdk.Artifact, data io.ReadCloser) (string, error) {
+func StoreArtifact(o Object, data io.ReadCloser) (string, error) {
 	if storage != nil {
-		return storage.Store(&art, data)
+		return storage.Store(o, data)
 	}
 	return "", fmt.Errorf("store not initialized")
 }
 
 //FetchArtifact an artifact with default objectstore driver
-func FetchArtifact(art sdk.Artifact) (io.ReadCloser, error) {
+func FetchArtifact(o Object) (io.ReadCloser, error) {
 	if storage != nil {
-		return storage.Fetch(&art)
+		return storage.Fetch(o)
 	}
 	return nil, fmt.Errorf("store not initialized")
 }
 
 //DeleteArtifact an artifact with default objectstore driver
-func DeleteArtifact(art sdk.Artifact) error {
+func DeleteArtifact(o Object) error {
 	if storage != nil {
-		return storage.Delete(&art)
+		return storage.Delete(o)
 	}
 	return fmt.Errorf("store not initialized")
 }
@@ -100,10 +112,15 @@ type Driver interface {
 	Delete(o Object) error
 }
 
+type DriverWithRedirect interface {
+	StoreURL(o Object) (string, string, error)
+	FetchURL(o Object) (string, string, error)
+}
+
 // Initialize setup wanted ObjectStore driver
-func Initialize(cfg Config) error {
+func Initialize(c context.Context, cfg Config) error {
 	var err error
-	storage, err = New(cfg)
+	storage, err = New(c, cfg)
 	if err != nil {
 		return err
 	}
@@ -150,67 +167,40 @@ type ConfigOptionsFilesystem struct {
 }
 
 // New initialise a new ArtifactStorage
-func New(cfg Config) (Driver, error) {
+func New(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
-	case Openstack, Swift:
-		return NewOpenstackStore(cfg.Options.Openstack.Address,
+	case Openstack:
+		instance = sdk.ArtifactsStore{
+			Name:                  "Openstack",
+			Private:               false,
+			TemporaryURLSupported: false,
+		}
+		return NewOpenstackStore(c, cfg.Options.Openstack.Address,
 			cfg.Options.Openstack.Username,
 			cfg.Options.Openstack.Password,
 			cfg.Options.Openstack.Tenant,
 			cfg.Options.Openstack.Region,
 			cfg.Options.Openstack.ContainerPrefix)
+	case Swift:
+		instance = sdk.ArtifactsStore{
+			Name:                  "Swift",
+			Private:               false,
+			TemporaryURLSupported: true,
+		}
+		return NewSwiftStore(cfg.Options.Openstack.Address,
+			cfg.Options.Openstack.Username,
+			cfg.Options.Openstack.Password,
+			cfg.Options.Openstack.Region,
+			cfg.Options.Openstack.Tenant,
+			cfg.Options.Openstack.ContainerPrefix)
 	case Filesystem:
+		instance = sdk.ArtifactsStore{
+			Name:                  "Local FS",
+			Private:               false,
+			TemporaryURLSupported: false,
+		}
 		return NewFilesystemStore(cfg.Options.Filesystem.Basedir)
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")
 	}
-}
-
-//StreamFile streams file
-func StreamFile(w io.Writer, f io.ReadCloser) error {
-	n, err := copyBuffer(w, f, nil)
-	if err != nil {
-		return fmt.Errorf("cannot stream to client [%dbytes copied]: %s", n, err)
-	}
-	return nil
-}
-
-func copyBuffer(dst io.Writer, src io.Reader, buf []byte) (written int64, err error) {
-	// If the reader has a WriteTo method, use it to do the copy.
-	// Avoids an allocation and a copy.
-	if wt, ok := src.(io.WriterTo); ok {
-		return wt.WriteTo(dst)
-	}
-	// Similarly, if the writer has a ReadFrom method, use it to do the copy.
-	if rt, ok := dst.(io.ReaderFrom); ok {
-		return rt.ReadFrom(src)
-	}
-	if buf == nil {
-		buf = make([]byte, 32*1024)
-	}
-	for {
-		nr, er := src.Read(buf)
-		if nr > 0 {
-			nw, ew := dst.Write(buf[0:nr])
-			if nw > 0 {
-				written += int64(nw)
-			}
-			if ew != nil {
-				err = fmt.Errorf("writer: %s", ew)
-				break
-			}
-			if nr != nw {
-				err = io.ErrShortWrite
-				break
-			}
-		}
-		if er == io.EOF {
-			break
-		}
-		if er != nil {
-			err = fmt.Errorf("reader: %s", er)
-			break
-		}
-	}
-	return written, err
 }

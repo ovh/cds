@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/base64"
@@ -7,36 +7,30 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/loopfz/gadgeto/iffy"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
 )
 
 func Test_updateStepStatusHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_updateStepStatusHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, pass := assets.InsertAdminUser(t, db)
+	u, pass := assets.InsertAdminUser(api.mustDB())
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -46,7 +40,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -55,15 +49,15 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	pb, err := pipeline.InsertPipelineBuild(db, proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
+	pb, err := pipeline.InsertPipelineBuild(api.mustDB(), proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -77,7 +71,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 			StepStatus: []sdk.StepStatus{},
 		},
 	}
-	if err := pipeline.InsertPipelineBuildJob(db, pbJob); err != nil {
+	if err := pipeline.InsertPipelineBuildJob(api.mustDB(), pbJob); err != nil {
 		t.Fatal(err)
 	}
 
@@ -89,7 +83,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	vars := map[string]string{
 		"id": strconv.FormatInt(pbJob.ID, 10),
 	}
-	route := router.getRoute("POST", updateStepStatusHandler, vars)
+	route := router.GetRoute("POST", api.updateStepStatusHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
 	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()
@@ -99,7 +93,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()
 
-	pbJobCheck, errC := pipeline.GetPipelineBuildJob(db, pbJob.ID)
+	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), pbJob.ID)
 	if errC != nil {
 		t.Fatal(errC)
 	}
@@ -109,30 +103,27 @@ func Test_updateStepStatusHandler(t *testing.T) {
 }
 
 func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
-	db := test.SetupPG(t)
-
-	router = &Router{auth.TestLocalAuth(t), mux.NewRouter(), "/Test_addSpawnInfosPipelineBuildJobHandler"}
-	router.init()
+	api, db, router := newTestAPI(t)
 
 	//Create admin user
-	u, _ := assets.InsertAdminUser(t, db)
+	u, _ := assets.InsertAdminUser(api.mustDB())
 
 	g := &sdk.Group{
-		Name: assets.RandomString(t, 10),
+		Name: sdk.RandomString(10),
 	}
-	if err := group.InsertGroup(db, g); err != nil {
+	if err := group.InsertGroup(api.mustDB(), g); err != nil {
 		t.Fatal(err)
 	}
-	if err := group.InsertUserInGroup(db, g.ID, u.ID, true); err != nil {
+	if err := group.InsertUserInGroup(api.mustDB(), g.ID, u.ID, true); err != nil {
 		t.Fatal(err)
 	}
 
 	//Create a fancy httptester
-	tester := iffy.NewTester(t, router.mux)
+	tester := iffy.NewTester(t, router.Mux)
 
 	//Insert Project
-	pkey := assets.RandomString(t, 10)
-	proj := assets.InsertTestProject(t, db, pkey, pkey)
+	pkey := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, api.Cache, pkey, pkey, u)
 
 	//Insert Pipeline
 	pip := &sdk.Pipeline{
@@ -142,7 +133,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(db, pip); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -151,15 +142,15 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		Name: "TEST_APP",
 	}
 
-	if err := application.Insert(db, proj, app); err != nil {
+	if err := application.Insert(api.mustDB(), api.Cache, proj, app, u); err != nil {
 		t.Fatal(err)
 	}
 
-	if _, err := application.AttachPipeline(db, app.ID, pip.ID); err != nil {
+	if _, err := application.AttachPipeline(api.mustDB(), app.ID, pip.ID); err != nil {
 		t.Fatal(err)
 	}
 
-	pb, erri := pipeline.InsertPipelineBuild(db, proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
+	pb, erri := pipeline.InsertPipelineBuild(api.mustDB(), proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
 	if erri != nil {
 		t.Fatal(erri)
 	}
@@ -173,23 +164,23 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 			StepStatus: []sdk.StepStatus{},
 		},
 	}
-	if err := pipeline.InsertPipelineBuildJob(db, pbJob); err != nil {
+	if err := pipeline.InsertPipelineBuildJob(api.mustDB(), pbJob); err != nil {
 		t.Fatal(err)
 	}
 
 	vars := map[string]string{
 		"id": strconv.FormatInt(pbJob.ID, 10),
 	}
-	route := router.getRoute("POST", addSpawnInfosPipelineBuildJobHandler, vars)
+	route := router.GetRoute("POST", api.addSpawnInfosPipelineBuildJobHandler, vars)
 
 	h := http.Header{}
 	h.Set("User-Agent", string(sdk.HatcheryAgent))
 
-	tk, errg := worker.GenerateToken()
+	tk, errg := token.GenerateToken()
 	if errg != nil {
 		t.Fatal(errg)
 	}
-	if err := worker.InsertToken(db, g.ID, tk, sdk.Daily); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, tk, sdk.Daily); err != nil {
 		t.Fatal(err)
 	}
 
@@ -197,7 +188,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		Name:    "HATCHERY_TEST",
 		GroupID: g.ID,
 	}
-	if err := hatchery.InsertHatchery(db, &hatch); err != nil {
+	if err := hatchery.InsertHatchery(api.mustDB(), &hatch); err != nil {
 		t.Fatal(err)
 	}
 
@@ -210,11 +201,12 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	basedHash := base64.StdEncoding.EncodeToString([]byte(hatch.UID))
 	h.Set(sdk.AuthHeader, basedHash)
 	h.Add(sdk.SessionTokenHeader, tk)
+	h.Add("User-Agent", sdk.HatcheryAgent)
 
 	tester.AddCall("Test_addSpawnInfosPipelineBuildJobHandler", "POST", route, request).Headers(h).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()
 
-	pbJobCheck, errC := pipeline.GetPipelineBuildJob(db, pbJob.ID)
+	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), pbJob.ID)
 	if errC != nil {
 		t.Fatal(errC)
 	}

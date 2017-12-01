@@ -1,11 +1,8 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
-import {ActivatedRoute, ActivatedRouteSnapshot, Data} from '@angular/router';
+import {TestBed, fakeAsync,  inject} from '@angular/core/testing';
+import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
-import {Observable} from 'rxjs/Rx';
-import {Injector} from '@angular/core';
+import {Observable} from 'rxjs/Observable';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {ProjectService} from '../../../service/project/project.service';
 import {ProjectStore} from '../../../service/project/project.store';
@@ -21,71 +18,55 @@ import {Pipeline} from '../../../model/pipeline.model';
 import {Project} from '../../../model/project.model';
 import {Parameter} from '../../../model/parameter.model';
 import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
+import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
+import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
+import {HttpRequest} from '@angular/common/http';
+import {AuthentificationStore} from '../../../service/auth/authentification.store';
 
 describe('CDS: Pipeline Show', () => {
-
-    let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [],
             providers: [
-                {provide: XHRBackend, useClass: MockBackend},
                 PipelineService,
                 PipelineStore,
                 ProjectService,
                 ProjectStore,
+                ApplicationPipelineService,
                 {provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 {provide: ToastService, useClass: MockToast},
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
+                AuthentificationStore
             ],
             imports: [
                 PipelineModule,
                 RouterTestingModule.withRoutes([]),
-                SharedModule
+                SharedModule,
+                HttpClientTestingModule
             ]
         });
-
-        injector = getTestBed();
-        backend = injector.get(XHRBackend);
-    });
-
-    afterEach(() => {
-        injector = undefined;
-        backend = undefined;
     });
 
     it('should load component', fakeAsync(() => {
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "pip1" }'})));
-                    break;
-            }
+        const http = TestBed.get(HttpTestingController);
 
-        });
+        let pipelineMock = new Pipeline();
+        pipelineMock.name = 'pip1';
 
         // Create component
         let fixture = TestBed.createComponent(PipelineShowComponent);
         let component = fixture.debugElement.componentInstance;
         expect(component).toBeTruthy();
 
-        let projStore: ProjectStore = injector.get(ProjectStore);
-        projStore.getProjects('key1').subscribe(() => {
-        }).unsubscribe();
-
-        let pipStore: PipelineStore = injector.get(PipelineStore);
+        let pipStore: PipelineStore = TestBed.get(PipelineStore);
         pipStore.getPipelines('key1', 'pip1').subscribe(() => {
-        }).unsubscribe();
+        });
+        http.expectOne(((req: HttpRequest<any>) => {
+            return req.url === '/project/key1/pipeline/pip1';
+        })).flush(pipelineMock);
 
         fixture.componentInstance.ngOnInit();
 
@@ -96,20 +77,6 @@ describe('CDS: Pipeline Show', () => {
     }));
 
     it('should run add/update/delete permission', fakeAsync(() => {
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "app1" }'})));
-                    break;
-            }
-
-        });
 
         // Create component
         let fixture = TestBed.createComponent(PipelineShowComponent);
@@ -128,7 +95,7 @@ describe('CDS: Pipeline Show', () => {
         gp.group = new Group();
         gp.group.name = 'grp1';
 
-        let pipStore: PipelineStore = injector.get(PipelineStore);
+        let pipStore: PipelineStore = TestBed.get(PipelineStore);
         spyOn(pipStore, 'addPermission').and.callFake(() => {
             return Observable.of(new Pipeline());
         });
@@ -158,20 +125,6 @@ describe('CDS: Pipeline Show', () => {
     }));
 
     it('should run add/update/delete parameters', fakeAsync(() => {
-        let call = 0;
-        // Mock Http
-        backend.connections.subscribe(connection => {
-            call++;
-            switch (call) {
-                case 1:
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "key": "key1", "name": "prj1" }'})));
-                    break;
-                case 2:
-                    connection.mockRespond(new Response(new ResponseOptions({body: '{ "name": "app1" }'})));
-                    break;
-            }
-
-        });
 
         // Create component
         let fixture = TestBed.createComponent(PipelineShowComponent);
@@ -194,7 +147,7 @@ describe('CDS: Pipeline Show', () => {
         // ADD
 
         let event: ParameterEvent = new ParameterEvent('add', param);
-        let pipStore: PipelineStore = injector.get(PipelineStore);
+        let pipStore: PipelineStore = TestBed.get(PipelineStore);
         spyOn(pipStore, 'addParameter').and.callFake(() => {
             return Observable.of(new Pipeline());
         });

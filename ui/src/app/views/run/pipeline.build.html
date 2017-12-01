@@ -1,6 +1,6 @@
 <div id="ApplicationPipelineBuild">
     <div class="CDSbreadcrumb">
-        <app-breadcrumb [project]="project" [application]="application" [pipeline]="pipeline" [appVersion]="appVersionFilter" [version]="currentBuild?.version" [buildNumber]="currentBuild?.build_number" [envName]="envName" [branch]="branch"></app-breadcrumb>
+        <app-breadcrumb [project]="project" [application]="application" [pipeline]="pipeline" [appVersion]="appVersionFilter" [version]="currentBuild?.version" [buildNumber]="currentBuild?.build_number" [envName]="envName" [branch]="branch" [remote]="remote"></app-breadcrumb>
     </div>
 
     <ng-container *ngIf="application && currentBuild">
@@ -14,11 +14,11 @@
                 <i class="sitemap icon"></i>
                 {{ 'common_pipeline' | translate }}
             </a>
-            <!--a sm-item [class.active]="selectedTab === 'commit'" (click)="(commits && commits.length > 0)?showTab('commit') : showTab(selectedTab)" [class.disabled]="!commits || commits.length === 0">
-                <span *ngIf="commits">{{ commits.length + ' '}}</span>
-                <span *ngIf="commits && commits.length > 1">{{ 'common_commits' | translate }}</span>
-                <span *ngIf="!commits || (commits && commits.length < 2)">{{ 'common_commit' | translate }}</span>
-            </a-->
+            <a sm-item [class.active]="selectedTab === 'commit'" (click)="(currentBuild?.commits && currentBuild?.commits.length > 0)?showTab('commit') : showTab(selectedTab)" [class.disabled]="!currentBuild?.commits || currentBuild?.commits.length === 0">
+                <span *ngIf="currentBuild?.commits">{{ currentBuild?.commits.length + ' '}}</span>
+                <span *ngIf="currentBuild?.commits && currentBuild?.commits.length > 1">{{ 'common_commits' | translate }}</span>
+                <span *ngIf="!currentBuild?.commits || (currentBuild?.commits && currentBuild?.commits.length < 2)">{{ 'common_commit' | translate }}</span>
+            </a>
             <a sm-item [class.active]="selectedTab === 'test'" (click)="(nbTests > 0)?showTab('test') : showTab(selectedTab)" [class.disabled]="nbTests === 0">
                 <span *ngIf="nbTests > 1">{{ 'common_tests' | translate }}</span>
                 <span *ngIf="nbTests < 2">{{ 'common_test' | translate }}</span>
@@ -37,7 +37,7 @@
         </sm-menu>
     </div>
 
-    <div class="scrollingContent">
+    <div class="scrollingContent" ngx-auto-scroll>
         <div class="paddingContent">
             <div class="viewContent" [ngSwitch]="selectedTab" *ngIf="currentBuild">
                 <div *ngSwitchCase="'pipeline'" >
@@ -50,11 +50,11 @@
                 <div *ngSwitchCase="'artifact'">
                     <app-artifact-list [artifacts]="currentBuild?.artifacts"></app-artifact-list>
                 </div>
-                <!--div *ngSwitchCase="'commit'">
-                    <app-commit-list [commits]="commits"></app-commit-list>
-                </div-->
+                <div *ngSwitchCase="'commit'">
+                    <app-commit-list [commits]="currentBuild?.commits"></app-commit-list>
+                </div>
                 <div *ngSwitchCase="'history'">
-                    <app-history [history]="histories" [currentBuild]="currentBuild" *ngIf="histories"></app-history>
+                    <app-history [history]="histories" [currentBuild]="currentBuild" [project]="project" *ngIf="histories" (buildDeletedEvent)="loadHistory(currentBuild)"></app-history>
                 </div>
             </div>
 

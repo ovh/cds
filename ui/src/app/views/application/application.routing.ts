@@ -3,7 +3,7 @@ import {Routes, RouterModule} from '@angular/router';
 import {CanActivateAuthRoute} from '../../service/auth/authenRouteActivate';
 import {ApplicationShowComponent} from './show/application.component';
 import {ApplicationAddComponent} from './add/application.add.component';
-import {ProjectResolver} from '../../service/project/project.resolver';
+import {ProjectForApplicationResolver, ProjectForWorkflowResolver} from '../../service/project/project.resolver';
 
 const applicationRoutes: Routes = [
     {
@@ -13,13 +13,13 @@ const applicationRoutes: Routes = [
         children: [
             { path: '', component: ApplicationAddComponent ,
                 resolve: {
-                    project: ProjectResolver
+                    project: ProjectForWorkflowResolver
                 }
             },
             { path: ':appName',
                 component: ApplicationShowComponent,
                 resolve: {
-                    project: ProjectResolver
+                    project: ProjectForApplicationResolver
                 }
             },
             {

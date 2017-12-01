@@ -1,6 +1,8 @@
 package group
 
 import (
+	"database/sql"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/sdk"
@@ -28,10 +30,37 @@ func LoadAllProjectGroupByRole(db gorp.SqlExecutor, projectID int64, role int) (
 	return groupsPermission, nil
 }
 
+func checkAtLeastOneGroupWithWriteRoleOnProject(db gorp.SqlExecutor, projectID int64) (bool, error) {
+	query := `select count(group_id) from project_group where project_id = $1 and role = $2`
+	nb, err := db.SelectInt(query, projectID, 7)
+	if err != nil {
+		return false, sdk.WrapError(err, "CheckAtLeastOneGroupWithWriteRoleOnProject")
+	}
+	return nb > 0, err
+}
+
 // DeleteGroupFromProject  Delete the group from the given project
 func DeleteGroupFromProject(db gorp.SqlExecutor, projectID, groupID int64) error {
 	query := `DELETE FROM project_group WHERE project_id=$1 AND group_id=$2`
-	_, err := db.Exec(query, projectID, groupID)
+	if _, err := db.Exec(query, projectID, groupID); err != nil {
+		return sdk.WrapError(err, "DeleteGroupFromProject")
+	}
+
+	ok, err := checkAtLeastOneGroupWithWriteRoleOnProject(db, projectID)
+	if err != nil {
+		return sdk.WrapError(err, "DeleteGroupFromProject")
+	}
+	if !ok {
+		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "DeleteGroupFromProject")
+	}
+
+	return nil
+}
+
+// DeleteAllGroupFromProject Delete all groups from the given project ID
+func DeleteAllGroupFromProject(db gorp.SqlExecutor, projectID int64) error {
+	query := `DELETE FROM project_group WHERE project_id=$1 `
+	_, err := db.Exec(query, projectID)
 	return err
 }
 
@@ -39,7 +68,19 @@ func DeleteGroupFromProject(db gorp.SqlExecutor, projectID, groupID int64) error
 func UpdateGroupRoleInProject(db gorp.SqlExecutor, projectID, groupID int64, role int) error {
 	query := `UPDATE project_group SET role=$1 WHERE project_id=$2 AND group_id=$3`
 	_, err := db.Exec(query, role, projectID, groupID)
-	return err
+	if _, err := db.Exec(query, projectID, groupID); err != nil {
+		return sdk.WrapError(err, "UpdateGroupRoleInProject")
+	}
+
+	ok, err := checkAtLeastOneGroupWithWriteRoleOnProject(db, projectID)
+	if err != nil {
+		return sdk.WrapError(err, "UpdateGroupRoleInProject")
+	}
+	if !ok {
+		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "UpdateGroupRoleInProject")
+	}
+
+	return nil
 }
 
 // InsertGroupInProject Attach a group to a project
@@ -53,35 +94,31 @@ func InsertGroupInProject(db gorp.SqlExecutor, projectID, groupID int64, role in
 func DeleteGroupProjectByProject(db gorp.SqlExecutor, projectID int64) error {
 	query := `DELETE FROM project_group WHERE project_id=$1`
 	_, err := db.Exec(query, projectID)
-	if err != nil {
-		return err
-	}
-	// Update project
-	query = `
-		UPDATE project 
-		SET last_modified = current_timestamp
-		WHERE id=$1
-	`
-	_, err = db.Exec(query, projectID)
 	return err
 }
 
 func deleteGroupProjectByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
-	query := `DELETE FROM project_group WHERE group_id=$1`
-	_, err := db.Exec(query, group.ID)
-	if err != nil {
-		return err
+	projectIDs := []int64{}
+	if _, err := db.Select(&projectIDs, "SELECT project_id from project_group where group_id = $1", group.ID); err != nil && err != sql.ErrNoRows {
+		return sdk.WrapError(err, "deleteGroupProjectByGroup")
 	}
-	// Update project
-	query = `
-		UPDATE project 
-		SET last_modified = current_timestamp
-		WHERE id in (
-			select project_id from project_group where group_id=$1
-		)
-	`
-	_, err = db.Exec(query, group.ID)
-	return err
+
+	query := `DELETE FROM project_group WHERE group_id=$1`
+	if _, err := db.Exec(query, group.ID); err != nil {
+		return sdk.WrapError(err, "deleteGroupProjectByGroup")
+	}
+
+	for _, id := range projectIDs {
+		ok, err := checkAtLeastOneGroupWithWriteRoleOnProject(db, id)
+		if err != nil {
+			return sdk.WrapError(err, "deleteGroupProjectByGroup")
+		}
+		if !ok {
+			return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "deleteGroupProjectByGroup")
+		}
+	}
+
+	return nil
 }
 
 // CheckGroupInProject  Check if the group is already attached to the project

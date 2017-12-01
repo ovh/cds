@@ -1,6 +1,6 @@
-import {CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, CanActivateChild} from '@angular/router';
+import {CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot, CanActivateChild, NavigationExtras} from '@angular/router';
 import {Injectable} from '@angular/core';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {AuthentificationStore} from './authentification.store';
 
 
@@ -13,12 +13,18 @@ export class CanActivateAuthRoute implements CanActivate , CanActivateChild {
         route: ActivatedRouteSnapshot,
         state: RouterStateSnapshot
     ): Observable<boolean>|Promise<boolean>|boolean {
-            if (this._authStore.isConnected()) {
-                return true;
-            } else {
-                this._router.navigate(['account/login']);
-                return false;
+        if (this._authStore.isConnected()) {
+            return true;
+        }
+
+        let navigationExtras: NavigationExtras = {
+            queryParams: {
+                redirect: state.url
             }
+        };
+
+        this._router.navigate(['account/login'], navigationExtras);
+        return false;
     }
 
     canActivateChild(
@@ -27,10 +33,14 @@ export class CanActivateAuthRoute implements CanActivate , CanActivateChild {
     ): Observable<boolean>|Promise<boolean>|boolean {
         if (this._authStore.isConnected()) {
             return true;
-        } else {
-            this._router.navigate(['account/login']);
-            return false;
         }
+        let navigationExtras: NavigationExtras = {
+            queryParams: {
+                redirect: state.url
+            }
+        };
+
+        this._router.navigate(['account/login'], navigationExtras);
+        return false;
     }
 }
-
