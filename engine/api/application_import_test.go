@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/sdk"
@@ -91,12 +92,212 @@ variables:
 
 }
 
-func Test_postApplicationImportHandler_NewAppFromYAMLWithSecrets(t *testing.T) {
+func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	//We will create an app, with a pgp key, export it then import as a new application(with a different name)
+	//This is also a good test for export secrets
+
+	app := &sdk.Application{
+		Name: "myNewApp",
+	}
+	test.NoError(t, application.Insert(db, api.Cache, proj, app, u))
+
+	k := &sdk.ApplicationKey{
+		Key: sdk.Key{
+			Name: "mykey",
+			Type: "pgp",
+		},
+		ApplicationID: app.ID,
+	}
+
+	kid, pubR, privR, err := keys.GeneratePGPKeyPair(k.Name)
+	test.NoError(t, err)
+	pub, _ := ioutil.ReadAll(pubR)
+	priv, _ := ioutil.ReadAll(privR)
+	k.Public = string(pub)
+	k.Private = string(priv)
+	k.KeyID = kid
+	if err := application.InsertKey(api.mustDB(), k); err != nil {
+		t.Fatal(err)
+	}
+
+	test.NoError(t, application.InsertVariable(api.mustDB(), api.Cache, app, sdk.Variable{
+		Name:  "myPassword",
+		Type:  sdk.SecretVariable,
+		Value: "MySecretValue",
+	}, u))
+
+	//Export all the things
+	vars := map[string]string{
+		"key": proj.Key,
+		"permApplicationName": app.Name,
+	}
+	uri := api.Router.GetRoute("GET", api.getApplicationExportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "GET", uri, nil)
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	//Check result
+	body := rec.Body.String()
+	t.Logf(">>%s", body)
+
+	//Change the name of the application
+	body = strings.Replace(body, app.Name, "myNewApp-1", 1)
+
+	//Import the new application
+	vars = map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri = api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec = httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 201, rec.Code)
+
+	//Check result
+	t.Logf(">>%s", rec.Body.String())
+
+	app, err = application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	test.NoError(t, err)
+
+	//Reload the application to check the keys
+	app1, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp-1", nil, application.LoadOptions.WithKeys, application.LoadOptions.WithVariablesWithClearPassword)
+	test.NoError(t, err)
+
+	assert.NotNil(t, app1)
+	assert.Equal(t, "myNewApp-1", app1.Name)
+
+	//Check keys
+	for _, k := range app.Keys {
+		var keyFound bool
+		for _, kk := range app1.Keys {
+			assert.Equal(t, k.Name, kk.Name)
+			assert.Equal(t, k.Public, kk.Public)
+			assert.Equal(t, k.Private, kk.Private)
+			assert.Equal(t, k.Type, kk.Type)
+			keyFound = true
+			break
+		}
+		assert.True(t, keyFound)
+	}
+
+	//Check variables
+	for _, v := range app1.Variable {
+		switch v.Name {
+		case "myPassword":
+			assert.True(t, v.Type == sdk.SecretVariable, "myPassword.type should be type password")
+			assert.True(t, v.Value == "MySecretValue", "myPassword.value is wrong")
+		default:
+			t.Errorf("Unexpected variable %+v", v)
+		}
+	}
+}
+
+func Test_postApplicationImportHandler_NewAppFromYAMLWithEmptyKey(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	body := `version: v1.0
+name: myNewApp
+keys:
+  myPGPkey:
+    type: pgp
+  mySSHKey:
+    type: ssh`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 201, rec.Code)
+
+	//Check result
+	t.Logf(">>%s", rec.Body.String())
+
+	app, err := application.LoadByName(db, api.Cache, proj.Key, "myNewApp", nil, application.LoadOptions.WithKeys)
+	test.NoError(t, err)
+
+	assert.NotNil(t, app)
+	assert.Equal(t, "myNewApp", app.Name)
+
+	var myPGPkey, mySSHKey bool
+	for _, k := range app.Keys {
+		switch k.Name {
+		case "myPGPkey":
+			myPGPkey = true
+			assert.NotEmpty(t, k.KeyID)
+			assert.NotEmpty(t, k.Private)
+			assert.NotEmpty(t, k.Public)
+			assert.NotEmpty(t, k.Type)
+		case "mySSHKey":
+			mySSHKey = true
+			assert.NotEmpty(t, k.Private)
+			assert.NotEmpty(t, k.Public)
+			assert.NotEmpty(t, k.Type)
+		default:
+			t.Errorf("Unexpected variable %+v", k)
+		}
+	}
+	assert.True(t, myPGPkey, "myPGPkey not found")
+	assert.True(t, mySSHKey, "mySSHKey not found")
 
 }
 
 func Test_postApplicationImportHandler_ExistingAppFromYAMLWithoutForce(t *testing.T) {
+	api, db, _ := newTestAPI(t)
+	u, pass := assets.InsertAdminUser(db)
+	proj := assets.InsertTestProject(t, db, api.Cache, sdk.RandomString(10), sdk.RandomString(10), u)
+	test.NotNil(t, proj)
 
+	app := sdk.Application{
+		Name: "myNewApp",
+	}
+	test.NoError(t, application.Insert(db, api.Cache, proj, &app, u))
+
+	//Prepare request
+	vars := map[string]string{
+		"permProjectKey": proj.Key,
+	}
+	uri := api.Router.GetRoute("POST", api.postApplicationImportHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, nil)
+
+	body := `version: v1.0
+name: myNewApp`
+	req.Body = ioutil.NopCloser(strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-yaml")
+
+	//Do the request
+	rec := httptest.NewRecorder()
+	api.Router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 409, rec.Code)
+
+	//Check result
+	t.Logf(">>%s", rec.Body.String())
 }
 
 func Test_postApplicationImportHandler_ExistingAppFromYAMLWithPermissions(t *testing.T) {
