@@ -35,12 +35,9 @@ func (c *client) ApplicationExport(projectKey, name string, exportWithPermission
 	if exportWithPermissions {
 		path += "&withPermissions=true"
 	}
-	body, code, err := c.Request("GET", path, nil)
+	body, _, err := c.Request("GET", path, nil)
 	if err != nil {
 		return nil, err
-	}
-	if code != 200 {
-		return nil, fmt.Errorf("HTTP Code %d", code)
 	}
 	return body, nil
 }

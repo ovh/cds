@@ -9,13 +9,7 @@ import (
 // TemplateList
 func (c *client) TemplateList() ([]sdk.Template, error) {
 	templates := []sdk.Template{}
-	code, err := c.GetJSON("/template/build", templates)
-	if code != 200 {
-		if err == nil {
-			return nil, fmt.Errorf("HTTP Code %d", code)
-		}
-	}
-	if err != nil {
+	if _, err := c.GetJSON("/template/build", templates); err != nil {
 		return nil, err
 	}
 	return templates, nil
@@ -44,11 +38,6 @@ func (c *client) TemplateApplicationCreate(projectKey, name string, template *sd
 		TemplateName:    template.Name,
 		TemplateParams:  template.Params,
 	}
-	code, err := c.PostJSON(fmt.Sprintf("/project/%s/template", projectKey), opts, nil)
-	if code != 200 {
-		if err == nil {
-			return fmt.Errorf("HTTP Code %d", code)
-		}
-	}
+	_, err := c.PostJSON(fmt.Sprintf("/project/%s/template", projectKey), opts, nil)
 	return err
 }

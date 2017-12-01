@@ -220,7 +220,7 @@ func DeleteApplication(pk, name string) error {
 	if err != nil {
 		return err
 	}
-	if code != 200 {
+	if code >= 400 {
 		return fmt.Errorf("HTTP %d", code)
 	}
 

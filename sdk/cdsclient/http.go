@@ -96,6 +96,9 @@ func (c *client) RequestJSON(method, path string, in interface{}, out interface{
 		}
 	}
 
+	if code >= 400 {
+		return code, fmt.Errorf("HTTP %d", code)
+	}
 	return code, nil
 }
 
