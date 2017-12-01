@@ -3,7 +3,6 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 )
 
 // Stage Pipeline step that parallelize actions by order

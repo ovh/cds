@@ -3,7 +3,6 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 )
 
 // SharedInfraGroupName is the name of the builtin group used to share infrastructure between projects

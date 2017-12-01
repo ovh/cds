@@ -3,7 +3,6 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 )
 
 // Hook used to link a git repository to a given pipeline
