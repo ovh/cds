@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"io/ioutil"
-	"strings"
 	"testing"
 
 	"github.com/ovh/cds/engine/api/test"
@@ -21,28 +20,31 @@ func TestGenerateSSHKeyPair(t *testing.T) {
 	t.Logf("Pub key:\n%s\n", pub)
 	t.Logf("Priv key:\n%s\n", priv)
 
-	priv2, err := GetSSHPrivateKey(strings.NewReader(priv))
+	priv2, err := GetSSHPrivateKey(priv)
 	test.NoError(t, err)
 	pub2, err := GetSSHPublicKey("foo", priv2)
 	test.NoError(t, err)
+
+	pubBytes, err := ioutil.ReadAll(pub)
+	test.NoError(t, err)
+
 	pub2Bytes, err := ioutil.ReadAll(pub2)
 	test.NoError(t, err)
 
-	assert.Equal(t, pub, string(pub2Bytes))
-
+	assert.Equal(t, string(pubBytes), string(pub2Bytes))
 }
 
 func TestGenerateGPGKeyPair(t *testing.T) {
-	kid, pub, priv, err := GeneratePGPKeyPair("mykey")
+	_, pubR, privR, err := GeneratePGPKeyPair("mykey")
 	if err != nil {
 		t.Fatalf("cannot generate keypair: %s\n", err)
 	}
-	t.Logf("Pub key:\n%s\n", pub)
-	t.Logf("Priv key:\n%s\n", priv)
-	t.Logf("ID key:\n%s\n", kid)
+
+	priv, _ := ioutil.ReadAll(privR)
+	pub, _ := ioutil.ReadAll(pubR)
 
 	stringToEncode := "I am a secret"
-	entityList, err := openpgp.ReadArmoredKeyRing(strings.NewReader(pub))
+	entityList, err := openpgp.ReadArmoredKeyRing(bytes.NewBuffer(pub))
 
 	// encrypt string
 
@@ -66,7 +68,7 @@ func TestGenerateGPGKeyPair(t *testing.T) {
 
 	//Decrypt string
 
-	entityPrivate, errE := openpgp.ReadArmoredKeyRing(strings.NewReader(priv))
+	entityPrivate, errE := openpgp.ReadArmoredKeyRing(bytes.NewBuffer(priv))
 	if errE != nil {
 		t.Fatalf("Cannot read private key: %s\n", errE)
 	}
@@ -79,23 +81,24 @@ func TestGenerateGPGKeyPair(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Cannot read message %s\n", err)
 	}
-	bytes, err := ioutil.ReadAll(md.UnverifiedBody)
+	btes, err := ioutil.ReadAll(md.UnverifiedBody)
 	if err != nil {
 		t.Fatalf("Cannot readall %s\n", err)
 	}
-	decStr := string(bytes)
+	decStr := string(btes)
 	t.Logf("Decrypted string:\n%s\n", decStr)
 
 	assert.Equal(t, stringToEncode, decStr)
 
 	//Open PGP Entity
-	entity, err := GetOpenPGPEntity(strings.NewReader(priv))
+	entity, err := GetOpenPGPEntity(bytes.NewBuffer(priv))
 	assert.NoError(t, err)
 	assert.NotNil(t, entity)
 
 	//Regenerate public key from the private key
 	pubReader, err := GeneratePGPPublicKey(entity)
 	assert.NoError(t, err)
+
 	pub2, _ := ioutil.ReadAll(pubReader)
 	t.Logf(string(pub2))
 	assert.Equal(t, string(pub), string(pub2))

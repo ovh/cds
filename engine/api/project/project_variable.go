@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"regexp"
 	"time"
 
@@ -349,15 +350,25 @@ func DeleteAllVariable(db gorp.SqlExecutor, projectID int64) error {
 
 // AddKeyPair generate a ssh key pair and add them as project variables
 func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string, u *sdk.User) error {
-	pub, priv, errGenerate := keys.GenerateSSHKeyPair(keyname)
+	pubR, privR, errGenerate := keys.GenerateSSHKeyPair(keyname)
 	if errGenerate != nil {
 		return errGenerate
+	}
+
+	pub, errPub := ioutil.ReadAll(pubR)
+	if errPub != nil {
+		return sdk.WrapError(errPub, "project.Insert> Unable to read public key")
+	}
+
+	priv, errPriv := ioutil.ReadAll(privR)
+	if errPriv != nil {
+		return sdk.WrapError(errPriv, "project.Insert>  Unable to read private key")
 	}
 
 	v := &sdk.Variable{
 		Name:  keyname,
 		Type:  sdk.KeyVariable,
-		Value: priv,
+		Value: string(priv),
 	}
 
 	if err := InsertVariable(db, proj, v, u); err != nil {
@@ -367,7 +378,7 @@ func AddKeyPair(db gorp.SqlExecutor, proj *sdk.Project, keyname string, u *sdk.U
 	p := &sdk.Variable{
 		Name:  keyname + ".pub",
 		Type:  sdk.TextVariable,
-		Value: pub,
+		Value: string(pub),
 	}
 
 	return InsertVariable(db, proj, p, u)

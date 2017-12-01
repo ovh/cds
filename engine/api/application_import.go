@@ -135,7 +135,6 @@ func (api *API) postApplicationImportHandler() Handler {
 				k.Private = privateKey
 
 				switch k.Type {
-
 				//Compute PGP Keys
 				case sdk.KeyTypePgp:
 					pgpEntity, errPGPEntity := keys.GetOpenPGPEntity(strings.NewReader(k.Private))
@@ -151,7 +150,7 @@ func (api *API) postApplicationImportHandler() Handler {
 						return sdk.WrapError(errReadPub, "postApplicationImportHandler> Unable to read pgp public key")
 					}
 					k.Public = string(pubBytes)
-
+					k.KeyID = pgpEntity.PrimaryKey.KeyIdShortString()
 				//Compute SSH Keys
 				case sdk.KeyTypeSsh:
 					privKey, errPrivKey := keys.GetSSHPrivateKey(strings.NewReader(privateKey))
@@ -174,20 +173,39 @@ func (api *API) postApplicationImportHandler() Handler {
 				switch k.Type {
 				//Compute PGP Keys
 				case sdk.KeyTypePgp:
-					_, pub, priv, err := keys.GeneratePGPKeyPair(kname)
+					id, pubR, privR, err := keys.GeneratePGPKeyPair(kname)
 					if err != nil {
 						return sdk.WrapError(err, "postApplicationImportHandler> Unable to generate PGP key pair")
 					}
-					k.Private = priv
-					k.Public = pub
+					pub, errPub := ioutil.ReadAll(pubR)
+					if errPub != nil {
+						return sdk.WrapError(errPub, "postApplicationImportHandler> Unable to read public key")
+					}
+
+					priv, errPriv := ioutil.ReadAll(privR)
+					if errPriv != nil {
+						return sdk.WrapError(errPriv, "postApplicationImportHandlert>  Unable to read private key")
+					}
+					k.KeyID = id
+					k.Private = string(priv)
+					k.Public = string(pub)
 				//Compute SSH Keys
 				case sdk.KeyTypeSsh:
-					pub, priv, err := keys.GenerateSSHKeyPair(kname)
+					pubR, privR, err := keys.GenerateSSHKeyPair(kname)
 					if err != nil {
 						return sdk.WrapError(err, "postApplicationImportHandler> Unable to generate SSH key pair")
 					}
-					k.Private = priv
-					k.Public = pub
+					pub, errPub := ioutil.ReadAll(pubR)
+					if errPub != nil {
+						return sdk.WrapError(errPub, "postApplicationImportHandler> Unable to read public key")
+					}
+
+					priv, errPriv := ioutil.ReadAll(privR)
+					if errPriv != nil {
+						return sdk.WrapError(errPriv, "postApplicationImportHandlert>  Unable to read private key")
+					}
+					k.Private = string(priv)
+					k.Public = string(pub)
 				default:
 					return sdk.ErrUnknownKeyType
 				}

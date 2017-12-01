@@ -23,31 +23,25 @@ const (
 )
 
 // GenerateSSHKeyPair generates a RSA private / public key, 4096 bits
-func GenerateSSHKeyPair(keyname string) (pub string, priv string, err error) {
+func GenerateSSHKeyPair(keyname string) (pub io.Reader, priv io.Reader, err error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
 
-	var privb bytes.Buffer
+	var privb = new(bytes.Buffer)
 	privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
-	if err = pem.Encode(&privb, privateKeyPEM); err != nil {
-		return
+	if err := pem.Encode(privb, privateKeyPEM); err != nil {
+		return nil, nil, err
 	}
 
 	// generate and write public key
 	pubkey, err := GetSSHPublicKey(keyname, privateKey)
 	if err != nil {
-		return
+		return nil, nil, err
 	}
-	priv = privb.String()
-	pubBtes, err := ioutil.ReadAll(pubkey)
-	if err != nil {
-		return
-	}
-	pub = string(pubBtes)
 
-	return pub, priv, err
+	return pubkey, privb, err
 }
 
 //GetSSHPrivateKey returns the RSA private key

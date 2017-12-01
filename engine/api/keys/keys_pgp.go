@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 
 	"github.com/ovh/cds/sdk"
 	"golang.org/x/crypto/openpgp"
@@ -69,7 +68,7 @@ func GeneratePGPPrivateKey(key *openpgp.Entity) (io.Reader, error) {
 	}
 	defer w.Close()
 	if err := key.SerializePrivate(w, &packet.Config{}); err != nil {
-		return nil, sdk.WrapError(errPrivEncode, "GeneratePGPPrivateKey> Cannot serialize private key")
+		return nil, sdk.WrapError(err, "GeneratePGPPrivateKey> Cannot serialize private key")
 	}
 	return bufPrivate, nil
 }
@@ -89,36 +88,22 @@ func GeneratePGPPublicKey(key *openpgp.Entity) (io.Reader, error) {
 }
 
 // GeneratePGPKeyPair generates a private / public PGP key
-func GeneratePGPKeyPair(name string) (id string, pub string, priv string, err error) {
+func GeneratePGPKeyPair(name string) (id string, pub io.Reader, priv io.Reader, err error) {
 	key, err := NewOpenPGPEntity(name)
 	if err != nil {
-		return
+		return id, nil, nil, err
 	}
 	id = key.PrimaryKey.KeyIdShortString()
 
 	bufPrivate, err := GeneratePGPPrivateKey(key)
 	if err != nil {
-		return
+		return id, nil, nil, err
 	}
 
 	bufPublic, err := GeneratePGPPublicKey(key)
 	if err != nil {
-		return
+		return id, nil, nil, err
 	}
 
-	btesPrivate, err := ioutil.ReadAll(bufPrivate)
-	if err != nil {
-		err = sdk.WrapError(err, "GeneratePGPKeyPair> Unable to read private key")
-		return
-	}
-	priv = string(btesPrivate)
-
-	btesPublic, err := ioutil.ReadAll(bufPublic)
-	if err != nil {
-		err = sdk.WrapError(err, "GeneratePGPKeyPair> Unable to read public key")
-		return
-	}
-	pub = string(btesPublic)
-
-	return
+	return id, bufPublic, bufPrivate, err
 }

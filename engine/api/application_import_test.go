@@ -114,10 +114,12 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 		ApplicationID: app.ID,
 	}
 
-	kid, pub, priv, err := keys.GeneratePGPKeyPair(k.Name)
+	kid, pubR, privR, err := keys.GeneratePGPKeyPair(k.Name)
 	test.NoError(t, err)
-	k.Public = pub
-	k.Private = priv
+	pub, _ := ioutil.ReadAll(pubR)
+	priv, _ := ioutil.ReadAll(privR)
+	k.Public = string(pub)
+	k.Private = string(priv)
 	k.KeyID = kid
 	if err := application.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
