@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
@@ -81,7 +82,7 @@ func (c *client) ProjectList() ([]sdk.Project, error) {
 	return p, nil
 }
 
-func (c *client) ProjectGroupsImport(projectKey string, content []byte, format string, force bool) (sdk.Project, error) {
+func (c *client) ProjectGroupsImport(projectKey string, content io.Reader, format string, force bool) (sdk.Project, error) {
 	var url string
 	var proj sdk.Project
 	url = fmt.Sprintf("/project/%s/group/import?format=%s", projectKey, format)

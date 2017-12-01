@@ -59,16 +59,19 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 
 	//Set repositories manager
 	app.VCSServer = repomanager
-	if app.VCSServer != "" && app.RepositoryFullname != "" && len(app.Pipelines) > 0 {
+	if app.VCSServer != "" && app.RepositoryFullname != "" {
 		if err := repositoriesmanager.InsertForApplication(db, app, proj.Key); err != nil {
 			return err
 		}
-		//Manage hook
-		if _, err := hook.CreateHook(db, store, proj, repomanager, app.RepositoryFullname, app, &app.Pipelines[0].Pipeline); err != nil {
-			return err
-		}
-		if msgChan != nil {
-			msgChan <- sdk.NewMessage(sdk.MsgHookCreated, app.RepositoryFullname, app.Pipelines[0].Pipeline.Name)
+
+		if len(app.Pipelines) > 0 {
+			//Manage hook
+			if _, err := hook.CreateHook(db, store, proj, repomanager, app.RepositoryFullname, app, &app.Pipelines[0].Pipeline); err != nil {
+				return err
+			}
+			if msgChan != nil {
+				msgChan <- sdk.NewMessage(sdk.MsgHookCreated, app.RepositoryFullname, app.Pipelines[0].Pipeline.Name)
+			}
 		}
 	}
 

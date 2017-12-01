@@ -72,8 +72,8 @@ services:
     image: ovhcom/cds-engine:latest
     command: /app/cds-engine-linux-amd64 start hatchery:swarm
     environment:
-      CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_NAME: hatchery-swarm
-      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
+      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_NAME: hatchery-swarm
+      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       DOCKER_HOST: tcp://${HOSTNAME}:2375
       # DOCKER_HOST="unix://var/run/docker.sock"
       # DOCKER_CERT_PATH=/Users/me/.docker/machines/.client

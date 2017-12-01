@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 	"regexp"
 	"strings"
@@ -49,7 +50,12 @@ var environmentGroupImportCmd = cli.Command{
 }
 
 func environmentGroupImportRun(v cli.Values) error {
-	var btes []byte
+	var reader io.ReadCloser
+	defer func() {
+		if reader != nil {
+			reader.Close()
+		}
+	}()
 	var format = "yaml"
 
 	if strings.HasSuffix(v["path"], ".json") {
@@ -59,19 +65,19 @@ func environmentGroupImportRun(v cli.Values) error {
 	isURL, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, v["path"])
 	if isURL {
 		var err error
-		btes, _, err = exportentities.ReadURL(v["path"], format)
+		reader, _, err = exportentities.OpenURL(v["path"], format)
 		if err != nil {
 			return err
 		}
 	} else {
 		var err error
-		btes, _, err = exportentities.ReadFile(v["path"])
+		reader, _, err = exportentities.OpenFile(v["path"])
 		if err != nil {
 			return err
 		}
 	}
 
-	if _, err := client.EnvironmentGroupsImport(v["project-key"], v["environment-name"], btes, format, v.GetBool("force")); err != nil {
+	if _, err := client.EnvironmentGroupsImport(v["project-key"], v["environment-name"], reader, format, v.GetBool("force")); err != nil {
 		return err
 	}
 	fmt.Printf("Groups imported in environment %s with success\n", v["environment-name"])

@@ -3,6 +3,7 @@ package cdsclient
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/url"
 
 	"github.com/ovh/cds/sdk"
@@ -62,7 +63,7 @@ func (c *client) EnvironmentList(key string) ([]sdk.Environment, error) {
 	return envs, nil
 }
 
-func (c *client) EnvironmentGroupsImport(projectKey, envName string, content []byte, format string, force bool) (sdk.Environment, error) {
+func (c *client) EnvironmentGroupsImport(projectKey, envName string, content io.Reader, format string, force bool) (sdk.Environment, error) {
 	var url string
 	var env sdk.Environment
 	url = fmt.Sprintf("/project/%s/environment/%s/group/import?format=%s", projectKey, envName, format)

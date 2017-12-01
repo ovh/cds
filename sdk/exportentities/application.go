@@ -6,6 +6,7 @@ import (
 
 // Application represents exported sdk.Application
 type Application struct {
+	Version        string                   `json:"version,omitempty" yaml:"version,omitempty"`
 	Name           string                   `json:"name" yaml:"name"`
 	VCSServer      string                   `json:"vcs_server,omitempty" yaml:"vcs_server,omitempty"`
 	RepositoryName string                   `json:"repo,omitempty" yaml:"repo,omitempty"`
@@ -13,6 +14,10 @@ type Application struct {
 	Variables      map[string]VariableValue `json:"variables,omitempty" yaml:"variables,omitempty"`
 	Keys           map[string]VariableValue `json:"keys,omitempty" yaml:"keys,omitempty"`
 }
+
+type ApplicationVersion string
+
+const ApplicationVersion1 = "v1.0"
 
 // EncryptedKey represents an encrypted secret
 type EncryptedKey struct {
@@ -23,6 +28,7 @@ type EncryptedKey struct {
 
 // NewApplication instanciance an exportable application from an sdk.Application
 func NewApplication(app *sdk.Application, withPermissions bool, keys []EncryptedKey) (a Application, err error) {
+	a.Version = ApplicationVersion1
 	a.Name = app.Name
 
 	if app.VCSServer != "" {
@@ -32,8 +38,12 @@ func NewApplication(app *sdk.Application, withPermissions bool, keys []Encrypted
 
 	a.Variables = make(map[string]VariableValue, len(app.Variable))
 	for _, v := range app.Variable {
+		at := string(v.Type)
+		if at == "string" {
+			at = ""
+		}
 		a.Variables[v.Name] = VariableValue{
-			Type:  string(v.Type),
+			Type:  at,
 			Value: v.Value,
 		}
 	}
@@ -51,34 +61,4 @@ func NewApplication(app *sdk.Application, withPermissions bool, keys []Encrypted
 		}
 	}
 	return a, nil
-}
-
-// Application returns a new sdk.Application
-func (a *Application) Application() (*sdk.Application, error) {
-	app := new(sdk.Application)
-
-	app.Name = a.Name
-	app.VCSServer = a.VCSServer
-	app.RepositoryFullname = a.RepositoryName
-
-	//Compute permissions
-	for g, p := range a.Permissions {
-		perm := sdk.GroupPermission{
-			Group:      sdk.Group{Name: g},
-			Permission: p,
-		}
-		app.ApplicationGroups = append(app.ApplicationGroups, perm)
-	}
-
-	//Compute parameters
-	for p, v := range a.Variables {
-		param := sdk.Variable{
-			Name:  p,
-			Type:  v.Type,
-			Value: v.Value,
-		}
-		app.Variable = append(app.Variable, param)
-	}
-
-	return app, nil
 }

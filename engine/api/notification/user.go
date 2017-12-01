@@ -177,7 +177,6 @@ func ShouldSendUserNotification(notif sdk.UserNotificationSettings, current *sdk
 	case sdk.StatusBuilding:
 		return notif.Start()
 	}
-
 	return false
 }
 

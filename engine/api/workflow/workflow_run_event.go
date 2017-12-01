@@ -17,9 +17,9 @@ func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}) ([]
 	for {
 		select {
 		case e, has := <-cError:
-			log.Info("GetWorkflowRunEventData> cError has: %t err:%s", has, e)
+			log.Info("GetWorkflowRunEventData> cError has: %t err:%v", has, e)
 			if !has {
-				return wrs, wnrs, wnjrs, nil
+				return wrs, wnrs, wnjrs, e
 			}
 			if e != nil {
 				return nil, nil, nil, e
@@ -36,6 +36,8 @@ func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}) ([]
 				wnrs = append(wnrs, x)
 			case sdk.WorkflowRun:
 				wrs = append(wrs, x)
+			default:
+				log.Warning("GetWorkflowRunEventData> unknown type %T", w)
 			}
 		}
 	}
