@@ -31,7 +31,9 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 		hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
 	}
 
+	var icon string
 	if hook.WorkflowHookModelID != 0 {
+		icon = hook.WorkflowHookModel.Icon
 		model, errm := LoadHookModelByID(db, hook.WorkflowHookModelID)
 		if errm != nil {
 			return sdk.WrapError(errm, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
@@ -66,7 +68,7 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 		hook.UUID = string(uuid)
 
 		hook.Config["hookIcon"] = sdk.WorkflowNodeHookConfigValue{
-			Value:        hook.WorkflowHookModel.Icon,
+			Value:        icon,
 			Configurable: false,
 		}
 	}
