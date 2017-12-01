@@ -114,7 +114,7 @@ func updateUser(username string, user *User) error {
 	}
 
 	url := fmt.Sprintf("/user/%s", username)
-	data, _, err := Request("PUT", url, data)
+	data, _, err = Request("PUT", url, data)
 	if err != nil {
 		return err
 	}
@@ -219,7 +219,7 @@ func GetUser(username string) (*User, error) {
 
 // ListUsers returns all available user to caller
 func ListUsers() ([]User, error) {
-	data, code, err := Request("GET", "/user", nil)
+	data, _, err := Request("GET", "/user", nil)
 	if err != nil {
 		return nil, err
 	}
