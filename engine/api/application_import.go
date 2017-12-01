@@ -257,6 +257,6 @@ func (api *API) postApplicationImportHandler() Handler {
 			return sdk.WrapError(err, "postApplicationImportHandler> Cannot commit transaction")
 		}
 
-		return WriteJSON(w, r, msgListString, http.StatusCreated)
+		return WriteJSON(w, r, msgListString, http.StatusOK)
 	}
 }

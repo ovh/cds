@@ -41,6 +41,15 @@ var LoadOptions = struct {
 	WithKeys:                       &loadKeys,
 }
 
+// Exists checks if an application given its name exists
+func Exists(db gorp.SqlExecutor, projectKey, appName string) (bool, error) {
+	count, err := db.SelectInt("SELECT count(1) FROM application join project ON project.id = application.project_id WHERE project.projectkey = $1 AND application.name = $2", projectKey, appName)
+	if err != nil {
+		return false, err
+	}
+	return count == 1, nil
+}
+
 // LoadByName load an application from DB
 func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	var query string
