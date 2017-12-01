@@ -83,7 +83,7 @@ func (c *gitlabClient) DeleteHook(repo string, hook sdk.VCSHook) error {
 				return sdk.WrapError(err, "github.DeleteHook> DeleteProjectHook")
 			}
 		}
-		return fmt.Errorf("not found")
+		return fmt.Errorf("github.DeleteHook> not found")
 	}
 	hookID, errI := strconv.Atoi(hook.ID)
 	if errI != nil {
