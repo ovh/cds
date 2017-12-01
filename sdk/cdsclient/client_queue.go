@@ -117,12 +117,9 @@ func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*worke
 	path := fmt.Sprintf("/queue/workflows/%d/take", job.ID)
 	var info worker.WorkflowNodeJobRunInfo
 
-	if code, err := c.PostJSON(path, &in, &info); err != nil {
+	if _, err := c.PostJSON(path, &in, &info); err != nil {
 		return nil, err
-	} else if code >= 400 {
-		return nil, nil
 	}
-
 	return &info, nil
 }
 
@@ -131,10 +128,8 @@ func (c *client) QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error) {
 	path := fmt.Sprintf("/queue/workflows/%d/infos", id)
 	var job sdk.WorkflowNodeJobRun
 
-	if code, err := c.GetJSON(path, &job); err != nil {
+	if _, err := c.GetJSON(path, &job); err != nil {
 		return nil, err
-	} else if code >= 400 {
-		return nil, fmt.Errorf("HTTP Error: %d", code)
 	}
 	return &job, nil
 }
@@ -146,12 +141,8 @@ func (c *client) QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.Sp
 		// DEPRECATED code -> it's for pipelineBuildJob
 		path = fmt.Sprintf("/queue/%d/spawn/infos", id)
 	}
-	if code, err := c.PostJSON(path, &in, nil); err != nil {
-		return err
-	} else if code >= 400 {
-		return fmt.Errorf("HTTP Error: %d", code)
-	}
-	return nil
+	_, err := c.PostJSON(path, &in, nil)
+	return err
 }
 
 // QueueJobBook books a job for a Hatchery
@@ -161,23 +152,14 @@ func (c *client) QueueJobBook(isWorkflowJob bool, id int64) error {
 		// DEPRECATED code -> it's for pipelineBuildJob
 		path = fmt.Sprintf("/queue/%d/book", id)
 	}
-	if code, err := c.PostJSON(path, nil, nil); err != nil {
-		return err
-	} else if code >= 400 {
-		return fmt.Errorf("HTTP Error: %d", code)
-	}
-	return nil
+	_, err := c.PostJSON(path, nil, nil)
+	return err
 }
 
 func (c *client) QueueSendResult(id int64, res sdk.Result) error {
 	path := fmt.Sprintf("/queue/workflows/%d/result", id)
-
-	if code, err := c.PostJSON(path, res, nil); err != nil {
-		return err
-	} else if code >= 400 {
-		return fmt.Errorf("HTTP Error: %d", code)
-	}
-	return nil
+	_, err := c.PostJSON(path, res, nil)
+	return err
 }
 
 func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
@@ -243,10 +225,6 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
 
 func (c *client) QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error {
 	path := fmt.Sprintf("/queue/workflows/%d/tag", jobID)
-	if code, err := c.PostJSON(path, tags, nil); err != nil {
-		return err
-	} else if code >= 400 {
-		return fmt.Errorf("HTTP Error: %d", code)
-	}
-	return nil
+	_, err := c.PostJSON(path, tags, nil)
+	return err
 }

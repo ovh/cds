@@ -78,13 +78,9 @@ func AddApplication(key, appName string) error {
 	}
 
 	url := fmt.Sprintf("/project/%s/applications", key)
-	data, code, err := Request("POST", url, data)
+	data, _, err = Request("POST", url, data)
 	if err != nil {
 		return err
-	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	return DecodeError(data)
@@ -92,20 +88,14 @@ func AddApplication(key, appName string) error {
 
 // ListApplications returns all available application for the given project
 func ListApplications(key string) ([]Application, error) {
-
 	url := fmt.Sprintf("/project/%s/applications", key)
-	data, code, err := Request("GET", url, nil)
+	data, _, err := Request("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	var applications []Application
-	err = json.Unmarshal(data, &applications)
-	if err != nil {
+	if err := json.Unmarshal(data, &applications); err != nil {
 		return nil, err
 	}
 
@@ -178,13 +168,9 @@ func UpdateApplication(app *Application) error {
 	}
 
 	url := fmt.Sprintf("/project/%s/application/%s", app.ProjectKey, app.Name)
-	data, code, err := Request("PUT", url, data)
+	data, _, err = Request("PUT", url, data)
 	if err != nil {
 		return err
-	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	return DecodeError(data)
@@ -200,13 +186,9 @@ func RenameApplication(pk, name, newName string) error {
 	}
 
 	url := fmt.Sprintf("/project/%s/application/%s", pk, name)
-	data, code, err := Request("PUT", url, data)
+	data, _, err = Request("PUT", url, data)
 	if err != nil {
 		return err
-	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	return DecodeError(data)
@@ -216,33 +198,21 @@ func RenameApplication(pk, name, newName string) error {
 func DeleteApplication(pk, name string) error {
 
 	path := fmt.Sprintf("/project/%s/application/%s", pk, name)
-	_, code, err := Request("DELETE", path, nil)
-	if err != nil {
-		return err
-	}
-	if code >= 400 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
+	_, _, err := Request("DELETE", path, nil)
+	return err
 }
 
 // ShowApplicationVariable  show variables for an application
 func ShowApplicationVariable(projectKey, appName string) ([]Variable, error) {
 
 	path := fmt.Sprintf("/project/%s/application/%s/variable", projectKey, appName)
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	var variables []Variable
-	err = json.Unmarshal(data, &variables)
-	if err != nil {
+	if err := json.Unmarshal(data, &variables); err != nil {
 		return nil, err
 	}
 	return variables, nil
@@ -250,7 +220,6 @@ func ShowApplicationVariable(projectKey, appName string) ([]Variable, error) {
 
 // AddApplicationVariable  add a variable in an application
 func AddApplicationVariable(projectKey, appName, varName, varValue string, varType string) error {
-
 	newVar := Variable{
 		Name:  varName,
 		Value: varValue,
@@ -263,15 +232,10 @@ func AddApplicationVariable(projectKey, appName, varName, varValue string, varTy
 	}
 
 	path := fmt.Sprintf("/project/%s/application/%s/variable/%s", projectKey, appName, varName)
-	data, code, err := Request("POST", path, data)
+	data, _, err = Request("POST", path, data)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	return DecodeError(data)
 }
 
@@ -280,14 +244,11 @@ func GetVariableInApplication(projectKey, appName, name string) (*Variable, erro
 	var v Variable
 
 	path := fmt.Sprintf("/project/%s/application/%s/variable/%s", projectKey, appName, name)
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
 	if e := DecodeError(data); e != nil {
 		return nil, e
 	}
@@ -319,13 +280,9 @@ func UpdateApplicationVariable(projectKey, appName, oldName, varName, varValue, 
 	}
 
 	path := fmt.Sprintf("/project/%s/application/%s/variable/%s", projectKey, appName, varName)
-	data, code, err := Request("PUT", path, data)
+	data, _, err = Request("PUT", path, data)
 	if err != nil {
 		return err
-	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	return DecodeError(data)
@@ -334,29 +291,19 @@ func UpdateApplicationVariable(projectKey, appName, oldName, varName, varValue, 
 // RemoveApplicationVariable  remove a variable from an application
 func RemoveApplicationVariable(projectKey, appName, varName string) error {
 	path := fmt.Sprintf("/project/%s/application/%s/variable/%s", projectKey, appName, varName)
-	data, code, err := Request("DELETE", path, nil)
+	data, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	return DecodeError(data)
 }
 
 // RemoveGroupFromApplication  call api to remove a group from the given application
 func RemoveGroupFromApplication(projectKey, appName, groupName string) error {
-
 	path := fmt.Sprintf("/project/%s/application/%s/group/%s", projectKey, appName, groupName)
-	data, code, err := Request("DELETE", path, nil)
+	data, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
-	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	return DecodeError(data)
@@ -364,7 +311,6 @@ func RemoveGroupFromApplication(projectKey, appName, groupName string) error {
 
 // UpdateGroupInApplication  call api to update group permission for the given application
 func UpdateGroupInApplication(projectKey, appName, groupName string, permission int) error {
-
 	if permission < 4 || permission > 7 {
 		return fmt.Errorf("Permission should be between 4-7")
 	}
@@ -382,21 +328,15 @@ func UpdateGroupInApplication(projectKey, appName, groupName string, permission 
 	}
 
 	path := fmt.Sprintf("/project/%s/application/%s/group/%s", projectKey, appName, groupName)
-	data, code, err := Request("PUT", path, data)
+	data, _, err = Request("PUT", path, data)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	return DecodeError(data)
 }
 
 // AddGroupInApplication  add a group in an application
 func AddGroupInApplication(projectKey, appName, groupName string, permission int) error {
-
 	if permission < 4 || permission > 7 {
 		return fmt.Errorf("Permission should be between 4-7 ")
 	}
@@ -414,15 +354,10 @@ func AddGroupInApplication(projectKey, appName, groupName string, permission int
 	}
 
 	path := fmt.Sprintf("/project/%s/application/%s/group", projectKey, appName)
-	data, code, err := Request("POST", path, data)
+	data, _, err = Request("POST", path, data)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	return DecodeError(data)
 }
 
@@ -430,15 +365,10 @@ func AddGroupInApplication(projectKey, appName, groupName string, permission int
 func ListApplicationPipeline(projectKey, appName string) ([]Pipeline, error) {
 	var pipelines []Pipeline
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline", projectKey, appName)
-	data, code, errReq := Request("GET", path, nil)
+	data, _, errReq := Request("GET", path, nil)
 	if errReq != nil {
 		return nil, errReq
 	}
-
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	if e := DecodeError(data); e != nil {
 		return nil, e
 	}
@@ -465,68 +395,46 @@ func AttachPipeline(key, app, pip string) error {
 
 // AddApplicationPipeline  add a pipeline in an application
 func AddApplicationPipeline(projectKey, appName, pipelineName string) error {
-
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s", projectKey, appName, pipelineName)
-	data, code, err := Request("POST", path, nil)
+	data, _, err := Request("POST", path, nil)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	return DecodeError(data)
 }
 
 // UpdateApplicationPipeline  add a pipeline in an application
 func UpdateApplicationPipeline(projectKey, appName, pipelineName string, params []Parameter) error {
-
 	data, err := json.Marshal(params)
 	if err != nil {
 		return err
 	}
 
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s", projectKey, appName, pipelineName)
-	data, code, err := Request("PUT", path, data)
+	data, _, err = Request("PUT", path, data)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	return DecodeError(data)
 }
 
 // RemoveApplicationPipeline  remove a pipeline from an application
 func RemoveApplicationPipeline(projectKey, appName, pipelineName string) error {
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s", projectKey, appName, pipelineName)
-	data, code, err := Request("DELETE", path, nil)
+	data, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	return DecodeError(data)
 }
 
 //GetPipelineScheduler returns all pipeline scheduler
 func GetPipelineScheduler(projectKey, appName, pipelineName string) ([]PipelineScheduler, error) {
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler", projectKey, appName, pipelineName)
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	if err := DecodeError(data); err != nil {
 		return nil, err
 	}
@@ -555,17 +463,13 @@ func AddPipelineScheduler(projectKey, appName, pipelineName, cronExpr, envName s
 	if envName != "" {
 		path = path + "?envName=" + url.QueryEscape(envName)
 	}
-	data, code, err := Request("POST", path, b)
+	data, _, err := Request("POST", path, b)
 	if err != nil {
 		return nil, err
 	}
 
 	if err := DecodeError(data); err != nil {
 		return nil, err
-	}
-
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	if err := json.Unmarshal(data, &s); err != nil {
@@ -583,17 +487,13 @@ func UpdatePipelineScheduler(projectKey, appName, pipelineName string, s *Pipeli
 	}
 
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler", projectKey, appName, pipelineName)
-	data, code, err := Request("PUT", path, b)
+	data, _, err := Request("PUT", path, b)
 	if err != nil {
 		return nil, err
 	}
 
 	if err := DecodeError(data); err != nil {
 		return nil, err
-	}
-
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	if err := json.Unmarshal(data, s); err != nil {
@@ -606,17 +506,13 @@ func UpdatePipelineScheduler(projectKey, appName, pipelineName string, s *Pipeli
 //DeletePipelineScheduler update a pipeline scheduler
 func DeletePipelineScheduler(projectKey, appName, pipelineName string, s *PipelineScheduler) error {
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/scheduler/%d", projectKey, appName, pipelineName, s.ID)
-	data, code, err := Request("DELETE", path, nil)
+	data, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
 	}
 
 	if err := DecodeError(data); err != nil {
 		return err
-	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	return nil

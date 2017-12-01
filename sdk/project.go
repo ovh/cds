@@ -107,20 +107,11 @@ func NewProject(key string) *Project {
 // RemoveProject call api to delete a project
 func RemoveProject(key string) error {
 	url := fmt.Sprintf("/project/%s", key)
-	data, code, err := Request("DELETE", url, nil)
+	data, _, err := Request("DELETE", url, nil)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // UpdateProject call API to update project
@@ -131,20 +122,12 @@ func UpdateProject(proj *Project) error {
 	}
 
 	url := fmt.Sprintf("/project/%s", proj.Key)
-	data, code, err := Request("PUT", url, data)
+	data, _, err = Request("PUT", url, data)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // RenameProject call API to update project
@@ -158,20 +141,12 @@ func RenameProject(key, newName string) error {
 	}
 
 	url := fmt.Sprintf("/project/%s", key)
-	data, code, err := Request("PUT", url, data)
+	data, _, err = Request("PUT", url, data)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // AddProject creates a new project available only to creator by default
@@ -193,42 +168,24 @@ func AddProject(name, key, groupName string) error {
 	}
 
 	data, code, err := Request("POST", "/project", data)
+	if code == 409 {
+		return ErrConflict
+	}
 	if err != nil {
 		return err
 	}
 
-	if code == 409 {
-		return ErrConflict
-	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveGroupFromProject  call api to remove a group from the project
 func RemoveGroupFromProject(projectKey, groupname string) error {
 	path := fmt.Sprintf("/project/%s/group/%s", projectKey, groupname)
-	data, code, err := Request("DELETE", path, nil)
+	data, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // UpdateGroupInProject  call api to update group permission on project
@@ -250,25 +207,16 @@ func UpdateGroupInProject(projectKey, groupname string, permission int) error {
 	}
 
 	path := fmt.Sprintf("/project/%s/group/%s", projectKey, groupname)
-	data, code, err := Request("PUT", path, data)
+	data, _, err = Request("PUT", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // AddGroupInProject  add a group in a project
 func AddGroupInProject(projectKey, groupname string, permission int) error {
-
 	if permission < 4 || permission > 7 {
 		return fmt.Errorf("Permission should be between 4-7 \n")
 	}
@@ -286,38 +234,23 @@ func AddGroupInProject(projectKey, groupname string, permission int) error {
 	}
 
 	path := fmt.Sprintf("/project/%s/group", projectKey)
-	data, code, err := Request("POST", path, data)
+	data, _, err = Request("POST", path, data)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // ShowVariableInProject  show variables for a project
 func ShowVariableInProject(projectKey string) ([]Variable, error) {
-
 	path := fmt.Sprintf("/project/%s/variable", projectKey)
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	var variables []Variable
-	err = json.Unmarshal(data, &variables)
-	if err != nil {
+	if err := json.Unmarshal(data, &variables); err != nil {
 		return nil, err
 	}
 	return variables, nil
@@ -330,7 +263,6 @@ func AddProjectVariable(key, name, val string, t string) error {
 
 // AddVariableInProject  add a variable in a project
 func AddVariableInProject(projectKey, varName, varValue, varType string) error {
-
 	newVar := Variable{
 		Name:  varName,
 		Value: varValue,
@@ -343,20 +275,12 @@ func AddVariableInProject(projectKey, varName, varValue, varType string) error {
 	}
 
 	path := fmt.Sprintf("/project/%s/variable/%s", projectKey, varName)
-	data, code, err := Request("POST", path, data)
+	data, _, err = Request("POST", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // GetVariableInProject Get a variable by her name in the given project
@@ -364,21 +288,17 @@ func GetVariableInProject(projectKey, name string) (*Variable, error) {
 	var v Variable
 
 	path := fmt.Sprintf("/project/%s/variable/%s", projectKey, name)
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
 	e := DecodeError(data)
 	if e != nil {
 		return nil, e
 	}
 
-	err = json.Unmarshal(data, &v)
-	if err != nil {
+	if err := json.Unmarshal(data, &v); err != nil {
 		return nil, err
 	}
 
@@ -405,39 +325,23 @@ func UpdateVariableInProject(projectKey, oldName, varName, varValue, varType str
 	}
 
 	path := fmt.Sprintf("/project/%s/variable/%s", projectKey, varName)
-	data, code, err := Request("PUT", path, data)
+	data, _, err = Request("PUT", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveVariableFromProject  remove a variable from a project
 func RemoveVariableFromProject(projectKey, varName string) error {
 	path := fmt.Sprintf("/project/%s/variable/%s", projectKey, varName)
-	data, code, err := Request("DELETE", path, nil)
+	data, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // Mod is the functional parameter type of sdk function to alter their behavior
@@ -495,18 +399,13 @@ func ListProject(mods ...Mod) ([]Project, error) {
 		uri = m(uri)
 	}
 
-	data, code, err := Request("GET", uri, nil)
+	data, _, err := Request("GET", uri, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	var projects []Project
-	err = json.Unmarshal(data, &projects)
-	if err != nil {
+	if err := json.Unmarshal(data, &projects); err != nil {
 		return nil, err
 	}
 
@@ -556,12 +455,7 @@ func GetProject(key string, mods ...RequestModifier) (Project, error) {
 
 // DeleteProject removes a project and all its pipeline from CDS
 func DeleteProject(key string) error {
-
 	path := fmt.Sprintf("/project/%s", key)
 	_, _, err := Request("DELETE", path, nil)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

@@ -59,29 +59,19 @@ type WorkflowGroup struct {
 
 // AddGroup creates a new group
 func AddGroup(name string) error {
-
 	a := Group{Name: name}
-
 	data, err := json.MarshalIndent(a, " ", " ")
 	if err != nil {
 		return err
 	}
 
 	url := fmt.Sprintf("/group")
-	data, code, err := Request("POST", url, data)
+	data, _, err = Request("POST", url, data)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // RenameGroup Rename a group
@@ -98,49 +88,30 @@ func RenameGroup(oldName, newName string) error {
 	}
 
 	url := fmt.Sprintf("/group/%s", oldName)
-	data, code, err := Request("PUT", url, data)
+	data, _, err = Request("PUT", url, data)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveGroup remove group
 func RemoveGroup(name string) error {
 	url := fmt.Sprintf("/group/%s", name)
-	data, code, err := Request("DELETE", url, nil)
+	data, _, err := Request("DELETE", url, nil)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // ListGroups returns all available group to caller
 func ListGroups() ([]Group, error) {
-	data, code, err := Request("GET", "/group", nil)
+	data, _, err := Request("GET", "/group", nil)
 	if err != nil {
 		return nil, err
-	}
-
-	if code >= 400 {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	var groups []Group
@@ -159,20 +130,12 @@ func AddUsersInGroup(groupName string, users []string) error {
 	}
 
 	path := fmt.Sprintf("/group/%s/user", groupName)
-	data, code, err := Request("POST", path, data)
+	data, _, err = Request("POST", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // GetGroup call API to get Group information
@@ -180,17 +143,12 @@ func GetGroup(groupName string) (Group, error) {
 	path := fmt.Sprintf("/group/%s", groupName)
 
 	var group Group
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return group, err
 	}
 
-	if code >= 400 {
-		return group, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
-	err = json.Unmarshal(data, &group)
-	if err != nil {
+	if err := json.Unmarshal(data, &group); err != nil {
 		return group, err
 	}
 
@@ -200,50 +158,23 @@ func GetGroup(groupName string) (Group, error) {
 // RemoveUserFromGroup call API to remove a  user in the group
 func RemoveUserFromGroup(groupName string, userName string) error {
 	path := fmt.Sprintf("/group/%s/user/%s", groupName, userName)
-	data, code, err := Request("DELETE", path, nil)
+	data, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
 	}
-
-	if code >= 400 {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // SetUserGroupAdmin grants to given user privileges on given group
 func SetUserGroupAdmin(groupName string, userName string) error {
 	uri := fmt.Sprintf("/group/%s/user/%s/admin", groupName, userName)
-
-	_, code, err := Request("POST", uri, nil)
-	if err != nil {
-		return err
-	}
-
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
+	_, _, err := Request("POST", uri, nil)
+	return err
 }
 
 // UnsetUserGroupAdmin removes user priviles on group
 func UnsetUserGroupAdmin(groupName string, userName string) error {
 	uri := fmt.Sprintf("/group/%s/user/%s/admin", groupName, userName)
-
-	_, code, err := Request("DELETE", uri, nil)
-	if err != nil {
-		return err
-	}
-
-	if code >= 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
+	_, _, err := Request("DELETE", uri, nil)
+	return err
 }

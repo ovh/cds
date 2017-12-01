@@ -36,17 +36,12 @@ func AddHook(a *Application, p *Pipeline, host string, project string, repositor
 	}
 
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/hook", p.ProjectKey, a.Name, p.Name)
-	data, code, err := Request("POST", uri, data)
+	data, _, err = Request("POST", uri, data)
 	if err != nil {
 		return nil, err
 	}
 
-	if code >= 400 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	err = json.Unmarshal(data, &h)
-	if err != nil {
+	if err := json.Unmarshal(data, &h); err != nil {
 		return nil, err
 	}
 
