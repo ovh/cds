@@ -506,7 +506,6 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 		} else {
 			fromNodes = append(fromNodes, wf.Root)
 		}
-		t0 := time.Now()
 
 		var wg sync.WaitGroup
 		workerOptions := &workerOpts{
@@ -535,7 +534,6 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			}
 		}
 		wg.Wait()
-		fmt.Println("time elapsed ", time.Since(t0).Seconds())
 
 		if lastRun == nil {
 			var errmr error
