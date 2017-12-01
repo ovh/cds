@@ -333,7 +333,6 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 	}
 
 	payload := make(map[string]interface{})
-	log.Debug("Header: %s", getRepositoryHeader(t.WebHook))
 	switch getRepositoryHeader(t.WebHook) {
 	case GithubHeader:
 		var pushEvent GithubPushEvent

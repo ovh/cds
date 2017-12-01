@@ -125,7 +125,7 @@ func (api *API) postWorkflowHandler() Handler {
 		}
 
 		if err := workflow.HookRegistration(tx, api.Cache, nil, wf, p); err != nil {
-			return sdk.WrapError(err, "putWorkflowHandler")
+			return sdk.WrapError(err, "postWorkflowHandler")
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
