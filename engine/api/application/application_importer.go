@@ -15,13 +15,52 @@ import (
 
 //Import is able to create a new application and all its components
 func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, repomanager string, u *sdk.User, msgChan chan<- sdk.Message) error {
-	//Save application in database
-	if err := Insert(db, store, proj, app, u); err != nil {
-		return sdk.WrapError(err, "application.Import")
+	doUpdate, erre := Exists(db, proj.Key, app.Name)
+	if erre != nil {
+		return sdk.WrapError(erre, "application.Import> Unable to check if application exists")
 	}
 
-	if msgChan != nil {
-		msgChan <- sdk.NewMessage(sdk.MsgAppCreated, app.Name)
+	if doUpdate {
+		oldApp, errlo := LoadByName(db, store, proj.Key, app.Name, u, LoadOptions.WithGroups, LoadOptions.WithKeys, LoadOptions.WithVariablesWithClearPassword)
+		if errlo != nil {
+			return sdk.WrapError(errlo, "application.Import> Unable to check if application exists")
+		}
+		//Delete all Variables
+		if err := DeleteAllVariable(db, oldApp.ID); err != nil {
+			return sdk.WrapError(err, "application.Import> Cannot delete application variable")
+		}
+
+		///Delete all Keys
+		if err := DeleteAllApplicationKeys(db, oldApp.ID); err != nil {
+			return sdk.WrapError(err, "application.Import")
+		}
+
+		//Delete groups
+		if err := group.DeleteAllGroupFromApplication(db, oldApp.ID); err != nil {
+			return sdk.WrapError(err, "application.Import> Unable to delete group")
+		}
+
+		app.ProjectID = oldApp.ProjectID
+		app.ID = oldApp.ID
+
+		//Save app in database
+		if err := Update(db, store, app, u); err != nil {
+			return sdk.WrapError(err, "application.Import> Unable to update application")
+		}
+
+		if msgChan != nil {
+			msgChan <- sdk.NewMessage(sdk.MsgAppUpdated, app.Name)
+		}
+
+	} else {
+		//Save application in database
+		if err := Insert(db, store, proj, app, u); err != nil {
+			return sdk.WrapError(err, "application.Import")
+		}
+
+		if msgChan != nil {
+			msgChan <- sdk.NewMessage(sdk.MsgAppCreated, app.Name)
+		}
 	}
 
 	//Inherit project groups if not provided
