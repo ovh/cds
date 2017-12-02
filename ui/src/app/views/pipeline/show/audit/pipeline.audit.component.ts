@@ -216,9 +216,16 @@ export class PipelineAuditComponent extends Table implements OnInit {
 
     getUpdateJobDiff(path: string, pathSplitted: Array<string>, pipTo: Pipeline, pipFrom: Pipeline): PipelineAuditDiff {
         let diff = new PipelineAuditDiff();
+        if (!pathSplitted.length || pathSplitted.length < 2) {
+          return;
+        }
 
         let stage: Stage = pipTo[pathSplitted[0]][pathSplitted[1]];
-        let job: Job = stage.jobs[pathSplitted[3]];
+        let job: Job = new Job();
+
+        if (pathSplitted.length > 3) {
+          job = stage.jobs[pathSplitted[3]];
+        }
 
         if (path.indexOf('requirements') !== -1) {
             diff.title = 'Update ' + stage.name + ' > ' + job.action.name + ' > requirements';

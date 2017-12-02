@@ -103,6 +103,7 @@
   "audit_username" : "Utilisateur",
   "audit_before" : "Avant modification",
   "audit_after" : "Après modification",
+  "audit_diff" : "Différences",
   "audit_context" : "Contexte",
 
   "btn_cancel" : "Annuler",

@@ -42,28 +42,32 @@
     </div>
 </div>
 <div *ngIf="currentCompare" class="area">
-    <table class="ui fixed celled table">
+    <table class="ui fixed striped table">
         <thead>
         <tr>
-            <th class="four wide column">{{ 'audit_context' | translate }}</th>
-            <th class="six wide column">{{ 'audit_before' | translate }}</th>
-            <th class="six wide column">{{ 'audit_after'|translate }}</th>
+            <th class="two wide column">{{ 'audit_context' | translate }}</th>
+            <th class="five wide column">{{ 'audit_before' | translate }}</th>
+            <th class="six wide column">{{ 'audit_diff'|translate }}</th>
+            <th class="five wide column">{{ 'audit_after'|translate }}</th>
         </tr>
         </thead>
         <tbody>
         <tr *ngFor="let c of currentCompare">
-            <td valign="top">{{c.title}}</td>
+            <td class="pad" valign="top">{{c.title}}</td>
             <td valign="top">
                 <span *ngIf="c.type === 'string'">{{c.before}}</span>
                 <span *ngIf="c.type === 'json' && c.before && c.before !== 'null'">
-                            <codemirror [(ngModel)]="c.before" [config]="codeMirrorConfig"></codemirror>
-                        </span>
+                    <codemirror [(ngModel)]="c.before" [config]="codeMirrorConfig"></codemirror>
+                </span>
+            </td>
+            <td valign="top">
+                <app-diff [original]="c.before" [updated]="c.after"></app-diff>
             </td>
             <td valign="top">
                 <span *ngIf="c.type === 'string'">{{c.after}}</span>
                 <span *ngIf="c.type === 'json' && c.after && c.after !== 'null'">
-                            <codemirror [(ngModel)]="c.after" [config]="codeMirrorConfig"></codemirror>
-                        </span>
+                    <codemirror [(ngModel)]="c.after" [config]="codeMirrorConfig"></codemirror>
+                </span>
             </td>
         </tr>
         </tbody>
