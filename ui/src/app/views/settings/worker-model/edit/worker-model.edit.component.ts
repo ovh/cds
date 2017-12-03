@@ -5,6 +5,7 @@ import {WorkerModel} from '../../../../model/worker-model.model';
 import {Group} from '../../../../model/group.model';
 import {WorkerModelService} from '../../../../service/worker-model/worker-model.service';
 import {GroupService} from '../../../../service/group/group.service';
+import {SharedService} from '../../../../shared/shared.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {User} from '../../../../model/user.model';
@@ -27,7 +28,8 @@ export class WorkerModelEditComponent implements OnInit {
     private workerModelNamePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
     private workerModelPatternError = false;
 
-    constructor(private _workerModelService: WorkerModelService, private _groupService: GroupService,
+    constructor(private sharedService: SharedService,
+                private _workerModelService: WorkerModelService, private _groupService: GroupService,
                 private _toast: ToastService, private _translate: TranslateService,
                 private _route: ActivatedRoute, private _router: Router,
                 private _authentificationStore: AuthentificationStore) {
@@ -123,5 +125,9 @@ export class WorkerModelEditComponent implements OnInit {
             this.loading = false;
         });
       }
+    }
+
+    getDescriptionHeight(): number {
+        return this.sharedService.getTextAreaheight(this.workerModel.description);
     }
 }
