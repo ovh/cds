@@ -169,9 +169,7 @@ func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User) (*s
 
 // LoadByPipelineName loads a workflow for a given project key and pipeline name (ie. checking permissions)
 func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) ([]sdk.Workflow, error) {
-	res := []sdk.Workflow{}
 	dbRes := []Workflow{}
-
 	query := `
 		select distinct workflow.*
 		from workflow
@@ -183,17 +181,44 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) 
 
 	if _, err := db.Select(&dbRes, query, projectKey, pipName); err != nil {
 		if err == sql.ErrNoRows {
-			return res, nil
+			return []sdk.Workflow{}, nil
 		}
 		return nil, sdk.WrapError(err, "LoadByPipelineName> Unable to load workflows for project %s and pipeline %s", projectKey, pipName)
 	}
 
-	for _, w := range dbRes {
+	res := make([]sdk.Workflow, len(dbRes))
+	for i, w := range dbRes {
 		w.ProjectKey = projectKey
-		if err := w.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadByPipelineName> Unable to execute post get")
+		res[i] = sdk.Workflow(w)
+	}
+
+	return res, nil
+}
+
+// LoadByApplicationName loads a workflow for a given project key and application name (ie. checking permissions)
+func LoadByApplicationName(db gorp.SqlExecutor, projectKey string, appName string) ([]sdk.Workflow, error) {
+	dbRes := []Workflow{}
+	query := `
+		select distinct workflow.*
+		from workflow
+		join project on project.id = workflow.project_id
+		join workflow_node on workflow_node.workflow_id = workflow.id
+		join workflow_node_context on workflow_node_context.workflow_node_id = workflow_node.id
+		join application on workflow_node_context.application_id = application.id
+		where project.projectkey = $1 and application.name = $2
+		order by workflow.name asc`
+
+	if _, err := db.Select(&dbRes, query, projectKey, appName); err != nil {
+		if err == sql.ErrNoRows {
+			return []sdk.Workflow{}, nil
 		}
-		res = append(res, sdk.Workflow(w))
+		return nil, sdk.WrapError(err, "LoadByApplicationName> Unable to load workflows for project %s and application %s", projectKey, appName)
+	}
+
+	res := make([]sdk.Workflow, len(dbRes))
+	for i, w := range dbRes {
+		w.ProjectKey = projectKey
+		res[i] = sdk.Workflow(w)
 	}
 
 	return res, nil
@@ -201,9 +226,7 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey string, pipName string) 
 
 // LoadByEnvName loads a workflow for a given project key and environment name (ie. checking permissions)
 func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sdk.Workflow, error) {
-	res := []sdk.Workflow{}
 	dbRes := []Workflow{}
-
 	query := `
 		select distinct workflow.*
 		from workflow
@@ -216,17 +239,15 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 
 	if _, err := db.Select(&dbRes, query, projectKey, envName); err != nil {
 		if err == sql.ErrNoRows {
-			return res, nil
+			return []sdk.Workflow{}, nil
 		}
 		return nil, sdk.WrapError(err, "LoadByEnvName> Unable to load workflows for project %s and environment %s", projectKey, envName)
 	}
 
-	for _, w := range dbRes {
+	res := make([]sdk.Workflow, len(dbRes))
+	for i, w := range dbRes {
 		w.ProjectKey = projectKey
-		if err := w.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "LoadByEnvName> Unable to execute post get")
-		}
-		res = append(res, sdk.Workflow(w))
+		res[i] = sdk.Workflow(w)
 	}
 
 	return res, nil

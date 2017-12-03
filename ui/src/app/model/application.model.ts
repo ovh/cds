@@ -6,6 +6,7 @@ import {Parameter} from './parameter.model';
 import {RepositoriesManager} from './repositories.model';
 import {RepositoryPoller} from './polling.model';
 import {Hook} from './hook.model';
+import {Usage} from './usage.model';
 import {WorkflowItem} from './application.workflow.model';
 import {Scheduler} from './scheduler.model';
 
@@ -26,6 +27,7 @@ export class Application {
     workflows: Array<WorkflowItem>;
     schedulers: Array<Scheduler>;
     workflow_migration: string;
+    usage: Usage;
 
     project_key: string; // project unique key
 

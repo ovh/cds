@@ -1,5 +1,7 @@
-import {Component, Input, Output, EventEmitter, OnInit} from '@angular/core';
+import {Component, Input, Output, EventEmitter, OnInit, OnChanges} from '@angular/core';
 import {Environment} from '../../../../../../model/environment.model';
+import {Application} from '../../../../../../model/application.model';
+import {Pipeline} from '../../../../../../model/pipeline.model';
 import {User} from '../../../../../../model/user.model';
 import {Workflow} from '../../../../../../model/workflow.model';
 import {Project} from '../../../../../../model/project.model';
@@ -17,16 +19,19 @@ import {finalize} from 'rxjs/operators';
     templateUrl: './environment.html',
     styleUrls: ['./environment.scss']
 })
-export class ProjectEnvironmentComponent {
+export class ProjectEnvironmentComponent implements OnChanges {
 
     editableEnvironment: Environment;
     attachedWorkflows: Array<Workflow> = [];
+    attachedPipelines: Array<Pipeline> = [];
+    attachedApplications: Array<Application> = [];
     oldEnvName: string;
     cloneName: string;
     currentUser: User;
 
     hasChanged = false;
     loading = false;
+    loadingUsage = true;
     cloneLoading = false;
     addVarLoading = false;
 
@@ -37,9 +42,6 @@ export class ProjectEnvironmentComponent {
         }
         this.oldEnvName = data.name;
         this.editableEnvironment = cloneDeep(data);
-        if (data.usage) {
-            this.attachedWorkflows = data.usage.workflows || [];
-        }
     }
     get environment() {
         return this.editableEnvironment;
@@ -49,8 +51,22 @@ export class ProjectEnvironmentComponent {
     @Output() deletedEnv = new EventEmitter<string>();
 
     constructor(private _projectStore: ProjectStore, private _toast: ToastService,
-      private _translate: TranslateService, private _authenticationStore: AuthentificationStore) {
+      private _translate: TranslateService, private _authenticationStore: AuthentificationStore,
+      private _environmentService: EnvironmentService) {
           this.currentUser = this._authenticationStore.getUser();
+    }
+
+    ngOnChanges() {
+        this.loadingUsage = true;
+        this._environmentService.getUsage(this.project.key, this.oldEnvName)
+          .pipe(finalize(() => this.loadingUsage = false))
+          .subscribe((usage) => {
+            if (usage) {
+                this.attachedWorkflows = usage.workflows || [];
+                this.attachedApplications = usage.applications || [];
+                this.attachedPipelines = usage.pipelines || [];
+            }
+          });
     }
 
     renameEnvironment(): void {

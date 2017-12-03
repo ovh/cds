@@ -29,6 +29,8 @@ export class ApplicationService {
         params = params.append('withHooks', 'true');
         params = params.append('withWorkflow', 'true');
         params = params.append('withNotifs', 'true');
+        params = params.append('withUsage', 'true');
+
         if (filter) {
             if (filter.branch) {
                 params = params.append('branchName', filter.branch);

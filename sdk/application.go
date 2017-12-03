@@ -37,6 +37,7 @@ type Application struct {
 	Metadata           Metadata              `json:"metadata" yaml:"metadata" db:"-"`
 	WorkflowMigration  string                `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
 	Keys               []ApplicationKey      `json:"keys" yaml:"keys" db:"-"`
+	Usage              *Usage                `json:"usage,omitempty" db:"-" cli:"-"`
 }
 
 // ApplicationVariableAudit represents an audit on an application variable

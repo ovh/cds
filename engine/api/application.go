@@ -22,6 +22,7 @@ import (
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/trigger"
+	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -198,6 +199,7 @@ func (api *API) getApplicationHandler() Handler {
 		withTriggers := FormBool(r, "withTriggers")
 		withSchedulers := FormBool(r, "withSchedulers")
 		withKeys := FormBool(r, "withKeys")
+		withUsage := FormBool(r, "withUsage")
 		branchName := r.FormValue("branchName")
 		remote := r.FormValue("remote")
 		versionString := r.FormValue("version")
@@ -277,10 +279,42 @@ func (api *API) getApplicationHandler() Handler {
 			app.PipelinesBuild = pipelineBuilds
 		}
 
+		if withUsage {
+			usage, errU := loadApplicationUsage(api.mustDB(), projectKey, applicationName)
+			if errU != nil {
+				return sdk.WrapError(errU, "getApplicationHandler> Cannot load application usage")
+			}
+			app.Usage = &usage
+		}
+
 		app.Permission = permission.ApplicationPermission(app.ID, getUser(ctx))
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
+}
+
+func loadApplicationUsage(db gorp.SqlExecutor, projKey, appName string) (sdk.Usage, error) {
+	usage := sdk.Usage{}
+
+	wf, errW := workflow.LoadByApplicationName(db, projKey, appName)
+	if errW != nil {
+		return usage, sdk.WrapError(errW, "loadApplicationUsage> Cannot load workflows linked to application %s in project %s", appName, projKey)
+	}
+	usage.Workflows = wf
+
+	envs, errEnv := environment.LoadByApplicationName(db, projKey, appName)
+	if errEnv != nil {
+		return usage, sdk.WrapError(errEnv, "loadApplicationUsage> Cannot load environments linked to application %s in project %s", appName, projKey)
+	}
+	usage.Environments = envs
+
+	pips, errPips := pipeline.LoadByApplicationName(db, projKey, appName)
+	if errPips != nil {
+		return usage, sdk.WrapError(errPips, "loadApplicationUsage> Cannot load pipelines linked to application %s in project %s", appName, projKey)
+	}
+	usage.Pipelines = pips
+
+	return usage, nil
 }
 
 func (api *API) getApplicationBranchHandler() Handler {

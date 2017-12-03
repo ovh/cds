@@ -7,11 +7,24 @@
         </div>
         <div class="CDSmenu">
             <sm-menu title="" class="pointing secondary">
-                <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')"><i class="rocket icon"></i>{{ 'common_workflow' | translate }}</a>
-                <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')"><i class="font icon"></i>{{ 'common_variables' | translate }}</a>
-                <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')"><i class="users icon"></i>{{ 'common_permissions' | translate }}</a>
-                <a sm-item [class.active]="selectedTab === 'notifications'" (click)="showTab('notifications')"><i class="mail icon"></i>{{ 'common_notifications' | translate }}</a>
-                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="application.permission === 7"><i class="graduation icon"></i>{{ 'common_advanced' | translate }}</a>
+                <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')">
+                  <i class="rocket icon"></i>{{ 'common_workflow' | translate }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')">
+                  <i class="font icon"></i>{{ 'common_variables' | translate }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'permissions'" (click)="showTab('permissions')">
+                  <i class="users icon"></i>{{ 'common_permissions' | translate }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'notifications'" (click)="showTab('notifications')">
+                  <i class="mail icon"></i>{{ 'common_notifications' | translate }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'usage'" [class.disabled]="usageCount === 0" (click)="usageCount > 0 && showTab('usage')">
+                    <i class="plug icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
+                </a>
+                <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="application.permission === 7">
+                  <i class="graduation icon"></i>{{ 'common_advanced' | translate }}
+                </a>
             </sm-menu>
         </div>
 
@@ -46,6 +59,10 @@
                             <h3>{{ 'application_notifications_list_title' | translate }}</h3>
                             <app-notification-list (event)="notificationEvent($event)" [project]="project" [application]="application" [loading]="notifFormLoading" [notifications]="application.notifications" [edit]="application.permission === 7" #notificationList></app-notification-list>
                             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="notificationEvent($event, true)" #notifWarning></app-warning-modal>
+                        </div>
+
+                        <div *ngSwitchCase="'usage'">
+                            <app-usage [project]="project" [workflows]="workflows" [pipelines]="pipelines" [environments]="environments" [currentUser]="currentUser"></app-usage>
                         </div>
 
                         <div *ngSwitchCase="'advanced'">

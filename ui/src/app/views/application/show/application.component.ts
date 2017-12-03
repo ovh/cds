@@ -4,6 +4,10 @@ import {Application, ApplicationFilter} from '../../../model/application.model';
 import {ApplicationStore} from '../../../service/application/application.store';
 import {ProjectStore} from '../../../service/project/project.store';
 import {Project} from '../../../model/project.model';
+import {User} from '../../../model/user.model';
+import {Pipeline} from '../../../model/pipeline.model';
+import {Workflow} from '../../../model/workflow.model';
+import {Environment} from '../../../model/environment.model';
 import {environment} from '../../../../environments/environment';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {ApplicationWorkflowComponent} from './workflow/application.workflow.component';
@@ -71,10 +75,17 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     workflowNodeRun: string;
     workflowPipeline: string;
 
+    pipelines: Array<Pipeline> = new Array<Pipeline>();
+    workflows: Array<Workflow> = new Array<Workflow>();
+    environments: Array<Environment> = new Array<Environment>();
+    currentUser: User;
+    usageCount = 0;
+
     constructor(private _applicationStore: ApplicationStore, private _route: ActivatedRoute,
                 private _router: Router, private _authStore: AuthentificationStore,
                 private _toast: ToastService, public _translate: TranslateService,
                 private _projectStore: ProjectStore) {
+        this.currentUser = this._authStore.getUser();
         // Update data if route change
         this._route.data.subscribe(datas => {
             this.project = datas['project'];
@@ -116,6 +127,11 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                             if (updatedApplication && !updatedApplication.externalChange) {
                                 this.readyApp = true;
                                 this.application = updatedApplication;
+
+                                this.workflows = updatedApplication.usage.workflows || [];
+                                this.environments = updatedApplication.usage.environments || [];
+                                this.pipelines = updatedApplication.usage.pipelines || [];
+                                this.usageCount = this.pipelines.length + this.environments.length + this.workflows.length;
 
                                 // Start worker
                                 this.startWorker(key);
@@ -167,7 +183,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
         if (this.application.workflows && this.application.workflows.length > 0) {
             let msgToSend = {
-                'user': this._authStore.getUser(),
+                'user': this.currentUser,
                 'session': this._authStore.getSessionToken(),
                 'api': environment.apiURL,
                 'key': key,

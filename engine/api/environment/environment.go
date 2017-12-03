@@ -146,6 +146,25 @@ func LoadByPipelineName(db gorp.SqlExecutor, projectKey, pipName string) ([]sdk.
 	return envs, nil
 }
 
+// LoadByApplicationName load environments linked to an application
+func LoadByApplicationName(db gorp.SqlExecutor, projectKey, appName string) ([]sdk.Environment, error) {
+	envs := []sdk.Environment{}
+	query := `SELECT DISTINCT environment.*
+	FROM environment
+	JOIN project ON project.id = environment.project_id
+	JOIN pipeline_trigger ON pipeline_trigger.dest_environment_id = environment.id OR pipeline_trigger.src_environment_id = environment.id
+	JOIN application ON application.id = pipeline_trigger.src_application_id OR application.id = pipeline_trigger.dest_application_id
+	WHERE project.projectKey = $1 AND environment.name != $2 AND application.name = $3`
+
+	if _, err := db.Select(&envs, query, projectKey, sdk.DefaultEnv.Name, appName); err != nil {
+		if err == sql.ErrNoRows {
+			return envs, nil
+		}
+		return nil, err
+	}
+	return envs, nil
+}
+
 // LoadByWorkflowID loads environments from database for a given workflow id
 func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Environment, error) {
 	envs := []sdk.Environment{}
