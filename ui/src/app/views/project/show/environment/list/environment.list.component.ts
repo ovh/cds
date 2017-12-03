@@ -5,7 +5,7 @@ import {EnvironmentService} from '../../../../../service/environment/environment
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs/Subscription';
-import {finalize, flatMap, first} from 'rxjs/operators';
+import {flatMap} from 'rxjs/operators';
 
 @Component({
     selector: 'app-environment-list',
@@ -35,21 +35,22 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     }
 
     ngOnInit(): void {
+        let currentTab;
         this.routerSubscription = this._routerActivatedRoute.queryParams
-          .pipe(
-            first(),
-            finalize(() => this.loading = false)
-          )
           .map((q) => {
             if (q['envName']) {
                 this.envInRoute = q['envName'];
             }
+            currentTab = q['tab'];
             return q;
           })
           .pipe(
               flatMap((q) => this._projectStore.getProjectEnvironmentsResolver(this.project.key))
           )
           .subscribe((proj) => {
+            if (currentTab !== 'environments') {
+              return;
+            }
             this.project = proj;
             if (this.project.environments && this.project.environments.length > 0) {
                 if (this.envInRoute) {
@@ -59,7 +60,8 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
                 }
             }
             this.oldLastModifiedDate = new Date(this.project.last_modified).getTime();
-          });
+            this.loading = false
+          }, () => this.loading = false);
     }
 
     /**
