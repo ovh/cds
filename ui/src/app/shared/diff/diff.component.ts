@@ -1,4 +1,5 @@
-import {Component, Input, ViewChild, OnInit} from '@angular/core';
+import {Component, Input, ViewChild, OnInit, ComponentFactoryResolver, ViewContainerRef} from '@angular/core';
+import {SpanColoredComponent} from './span-colored/span-colored.component';
 import * as JsDiff from 'diff';
 
 @Component({
@@ -10,9 +11,9 @@ export class DiffComponent implements OnInit {
 
     @Input() original: string;
     @Input() updated: string;
-    @ViewChild('diffDisplayUpdated') diffDisplayUpdated;
+    @ViewChild('diffDisplayUpdated', {read: ViewContainerRef}) diffDisplayUpdated;
 
-    constructor() {
+    constructor(private componentFactoryResolver: ComponentFactoryResolver) {
 
     }
 
@@ -27,6 +28,8 @@ export class DiffComponent implements OnInit {
       if (!Array.isArray(diff)) {
         return;
       }
+      let viewContainerRef = this.diffDisplayUpdated;
+      viewContainerRef.clear();
 
       diff.forEach((part) => {
         let color;
@@ -37,12 +40,10 @@ export class DiffComponent implements OnInit {
         } else {
           color = 'white';
         }
-        let span = document.createElement('span');
-        span.style['background-color'] = color;
-        span.appendChild(document.createTextNode(part.value));
-        fragment.appendChild(span);
+        let componentFactory = this.componentFactoryResolver.resolveComponentFactory(SpanColoredComponent)
+        let componentRef = viewContainerRef.createComponent(componentFactory);
+        (<SpanColoredComponent>componentRef.instance).color = color;
+        (<SpanColoredComponent>componentRef.instance).text = part.value;
       });
-
-      this.diffDisplayUpdated.nativeElement.appendChild(fragment);
     }
 }

@@ -1,5 +1,5 @@
 <div class="variable" *ngIf="audits">
-    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+    <table class="ui fixed selectable celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
             <th class="four wide">{{ 'audit_action' | translate}}</th>
@@ -8,7 +8,7 @@
         </tr>
         </thead>
         <tbody>
-        <tr *ngFor="let a of getDataForCurrentPage(); let idx = index" (click)="compareIndex(idx)" class="pointing">
+        <tr *ngFor="let a of getDataForCurrentPage(); let idx = index" (click)="compareIndex(idx)" class="pointing" [class.active]="indexSelected === idx">
             <td>
                 {{a.action}}
             </td>

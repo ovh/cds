@@ -70,6 +70,7 @@ import {WorkflowNodeConditionFormComponent} from './workflow/node/conditions/con
 import {WorkflowNodeConditionListComponent} from './workflow/node/conditions/condition-list/condition.list.component';
 import {WorkflowNodeConditionsComponent} from './workflow/node/conditions/node.conditions.component';
 import {DiffComponent} from './diff/diff.component';
+import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -130,8 +131,10 @@ import {DiffComponent} from './diff/diff.component';
         UsagePipelinesComponent,
         UsageEnvironmentsComponent,
         UsageComponent,
-        DiffComponent
+        DiffComponent,
+        SpanColoredComponent
     ],
+    entryComponents: [SpanColoredComponent],
     providers: [
         DurationService,
         PermissionService,
@@ -200,7 +203,8 @@ import {DiffComponent} from './diff/diff.component';
         UsagePipelinesComponent,
         UsageEnvironmentsComponent,
         UsageComponent,
-        DiffComponent
+        DiffComponent,
+        SpanColoredComponent
     ]
 })
 export class SharedModule {

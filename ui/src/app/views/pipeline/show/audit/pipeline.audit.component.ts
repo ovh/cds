@@ -30,7 +30,7 @@ export class PipelineAuditComponent extends Table implements OnInit {
     public auditModalTmpl: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
-
+    indexSelected: number;
     codeMirrorConfig: any;
 
     constructor(private _auditService: PipelineAuditService, private _modalService: SuiModalService) {
@@ -56,6 +56,7 @@ export class PipelineAuditComponent extends Table implements OnInit {
     }
 
     compareIndex(i): void {
+        this.indexSelected = i;
         let indexToCompare = (this.currentPage - 1) * this.nbElementsByPage + i;
 
         let pipFrom = cloneDeep(this.audits[indexToCompare].pipeline);
