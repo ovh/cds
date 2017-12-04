@@ -96,8 +96,6 @@ func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data N
 			return data, err
 		}
 
-		fmt.Println(key, name, apps, workflows)
-
 		var appNames = []string{}
 		if apps.Valid {
 			appNames = strings.Split(apps.String, ",")
