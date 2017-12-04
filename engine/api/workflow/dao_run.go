@@ -285,14 +285,14 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 	}
 
 	for _, n := range dbNodeRuns {
-		if err := n.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "loadRun> Unable to load workflow nodes run; postGet Error")
+		wnr, err := fromDBNodeRun(n)
+		if err != nil {
+			return nil, err
 		}
-		wnr := sdk.WorkflowNodeRun(n)
 		if wr.WorkflowNodeRuns == nil {
 			wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
 		}
-		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], wnr)
+		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], *wnr)
 	}
 
 	for k := range wr.WorkflowNodeRuns {

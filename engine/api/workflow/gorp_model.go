@@ -1,6 +1,9 @@
 package workflow
 
 import (
+	"database/sql"
+	"time"
+
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 
 	"github.com/ovh/cds/sdk"
@@ -28,7 +31,27 @@ type JoinTrigger sdk.WorkflowNodeJoinTrigger
 type Run sdk.WorkflowRun
 
 // NodeRun is a gorp wrapper around sdk.WorkflowNodeRun
-type NodeRun sdk.WorkflowNodeRun
+type NodeRun struct {
+	WorkflowRunID      int64          `db:"workflow_run_id"`
+	ID                 int64          `db:"id"`
+	WorkflowNodeID     int64          `db:"workflow_node_id"`
+	Number             int64          `db:"num"`
+	SubNumber          int64          `db:"sub_num"`
+	Status             string         `db:"status"`
+	Start              time.Time      `db:"start"`
+	Done               time.Time      `db:"done"`
+	LastModified       time.Time      `db:"last_modified"`
+	HookEvent          sql.NullString `db:"hook_event"`
+	Manual             sql.NullString `db:"manual"`
+	SourceNodeRuns     sql.NullString `db:"source_node_runs"`
+	Payload            sql.NullString `db:"payload"`
+	PipelineParameters sql.NullString `db:"pipeline_parameters"`
+	BuildParameters    sql.NullString `db:"build_parameters"`
+	Tests              sql.NullString `db:"tests"`
+	Commits            sql.NullString `db:"commits"`
+	Stages             sql.NullString `db:"stages"`
+	TriggersRun        sql.NullString `db:"triggers_run"`
+}
 
 // JobRun is a gorp wrapper around sdk.WorkflowNodeJobRun
 type JobRun sdk.WorkflowNodeJobRun
@@ -56,7 +79,6 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(JoinTrigger{}, "workflow_node_join_trigger", true, "id"))
 	gorpmapping.Register(gorpmapping.New(Run{}, "workflow_run", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeRun{}, "workflow_node_run", true, "id"))
-	gorpmapping.Register(gorpmapping.New(sqlNodeRun{}, "workflow_node_run", true, "id"))
 	gorpmapping.Register(gorpmapping.New(JobRun{}, "workflow_node_run_job", true, "id"))
 	gorpmapping.Register(gorpmapping.New(NodeRunArtifact{}, "workflow_node_run_artifacts", true, "id"))
 	gorpmapping.Register(gorpmapping.New(RunTag{}, "workflow_run_tag", false, "workflow_run_id", "tag"))
