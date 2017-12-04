@@ -591,8 +591,8 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 				workerOptions.wg.Done()
 				return
 			}
-			workerOptions.chanNodeRun <- true
 		}
+		workerOptions.chanNodeRun <- true
 
 		if err := tx.Commit(); err != nil {
 			workerOptions.chanError <- sdk.WrapError(err, "runFromNode> Unable to commit transaction")
