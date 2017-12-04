@@ -16,5 +16,5 @@
 </ng-container>
 <div *ngIf="loading" class="ui text active loader">{{'common_loading_environments' | translate}}...</div>
 <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="envGroupEvent($event, null, true)" #permEnvGroupWarning></app-warning-modal>
-<app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="addEnvPermEvent($event, null, true)" #permEnvWarning></app-warning-modal>
-<app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, null, true)" #permWarning></app-warning-modal>
+<app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="addEnvPermEvent($event, true)" #permEnvWarning></app-warning-modal>
+<app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
