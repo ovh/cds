@@ -12,8 +12,7 @@ import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-project-permissions',
-    templateUrl: './permission.html',
-    // styleUrls: ['./variable.list.scss']
+    templateUrl: './permission.html'
 })
 export class ProjectPermissionsComponent implements OnInit {
 
