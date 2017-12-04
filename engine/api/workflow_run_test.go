@@ -555,7 +555,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	}, nil)
 	test.NoError(t, err)
 
-	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name)
+	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, true)
 	test.NoError(t, err)
 
 	//Prepare request
@@ -677,7 +677,7 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
-	workflowRun, errWR := workflow.LoadRunByID(db, wr.ID)
+	workflowRun, errWR := workflow.LoadRunByID(db, wr.ID, true)
 	test.NoError(t, errWR)
 
 	assert.Equal(t, "New awesome stage", workflowRun.Workflow.Root.Pipeline.Stages[0].Name)
@@ -925,7 +925,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	}, nil)
 	test.NoError(t, err)
 
-	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name)
+	lastrun, err := workflow.LoadLastRun(api.mustDB(), proj.Key, w1.Name, true)
 	test.NoError(t, err)
 
 	// Update step status

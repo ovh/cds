@@ -117,7 +117,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 
 		//Load workflow run
-		workflowRun, err := workflow.LoadRunByID(api.mustDB(), noderun.WorkflowRunID)
+		workflowRun, err := workflow.LoadRunByID(api.mustDB(), noderun.WorkflowRunID, false)
 		if err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load workflow run")
 		}
@@ -522,7 +522,7 @@ func (api *API) postWorkflowJobTagsHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		workflowRun, errl := workflow.LoadAndLockRunByJobID(tx, id)
+		workflowRun, errl := workflow.LoadAndLockRunByJobID(tx, id, false)
 		if errl != nil {
 			return sdk.WrapError(errl, "postWorkflowJobTagsHandler> Unable to load node run id %d", id)
 		}

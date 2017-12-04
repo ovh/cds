@@ -147,7 +147,7 @@ func (api *API) getLatestWorkflowRunHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		run, err := workflow.LoadLastRun(api.mustDB(), key, name)
+		run, err := workflow.LoadLastRun(api.mustDB(), key, name, true)
 		if err != nil {
 			return sdk.WrapError(err, "getLatestWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -165,7 +165,7 @@ func (api *API) resyncWorkflowRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadRun(api.mustDB(), key, name, number)
+		run, err := workflow.LoadRun(api.mustDB(), key, name, number, false)
 		if err != nil {
 			return sdk.WrapError(err, "resyncWorkflowRunHandler> Unable to load last workflow run [%s/%d]", name, number)
 		}
@@ -195,7 +195,7 @@ func (api *API) getWorkflowRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadRun(api.mustDB(), key, name, number)
+		run, err := workflow.LoadRun(api.mustDB(), key, name, number, true)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -214,7 +214,7 @@ func (api *API) stopWorkflowRunHandler() Handler {
 			return err
 		}
 
-		run, errL := workflow.LoadRun(api.mustDB(), key, name, number)
+		run, errL := workflow.LoadRun(api.mustDB(), key, name, number, false)
 		if errL != nil {
 			return sdk.WrapError(errL, "stopWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -294,7 +294,7 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 			return err
 		}
 
-		run, errR := workflow.LoadRun(api.mustDB(), key, name, number)
+		run, errR := workflow.LoadRun(api.mustDB(), key, name, number, false)
 		if errR != nil {
 			return sdk.WrapError(errR, "getWorkflowNodeRunHistoryHandler")
 		}
@@ -368,7 +368,7 @@ func stopWorkflowNodeRun(chEvent chan<- interface{}, chError chan<- error, db *g
 		return
 	}
 
-	wr, errLw := workflow.LoadRun(tx, p.Key, workflowName, nodeRun.Number)
+	wr, errLw := workflow.LoadRun(tx, p.Key, workflowName, nodeRun.Number, false)
 	if errLw != nil {
 		chError <- sdk.WrapError(errLw, "stopWorkflowNodeRunHandler> Unable to load workflow run %s", workflowName)
 		return
@@ -431,7 +431,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		var lastRun *sdk.WorkflowRun
 		if opts.Number != nil {
 			var errlr error
-			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number)
+			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, false)
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
 			}
@@ -712,7 +712,7 @@ func (api *API) getWorkflowRunArtifactsHandler() Handler {
 			return sdk.WrapError(errNu, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
 		}
 
-		wr, errW := workflow.LoadRun(api.mustDB(), key, name, number)
+		wr, errW := workflow.LoadRun(api.mustDB(), key, name, number, true)
 		if errW != nil {
 			return errW
 		}
