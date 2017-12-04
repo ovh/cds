@@ -151,7 +151,7 @@ func updateTags(db gorp.SqlExecutor, r *Run) error {
 }
 
 // LoadLastRun returns the last run for a workflow
-func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string) (*sdk.WorkflowRun, error) {
+func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string, withArtifacts bool) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.*
 	from workflow_run
 	join project on workflow_run.project_id = project.id
@@ -159,11 +159,11 @@ func LoadLastRun(db gorp.SqlExecutor, projectkey, workflowname string) (*sdk.Wor
 	where project.projectkey = $1
 	and workflow.name = $2
 	order by workflow_run.num desc limit 1`
-	return loadRun(db, query, projectkey, workflowname)
+	return loadRun(db, withArtifacts, query, projectkey, workflowname)
 }
 
 // LoadRun returns a specific run
-func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64) (*sdk.WorkflowRun, error) {
+func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64, withArtifacts bool) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.*
 	from workflow_run
 	join project on workflow_run.project_id = project.id
@@ -171,35 +171,35 @@ func LoadRun(db gorp.SqlExecutor, projectkey, workflowname string, number int64)
 	where project.projectkey = $1
 	and workflow.name = $2
 	and workflow_run.num = $3`
-	return loadRun(db, query, projectkey, workflowname, number)
+	return loadRun(db, withArtifacts, query, projectkey, workflowname, number)
 }
 
 // LoadRunByIDAndProjectKey returns a specific run
-func LoadRunByIDAndProjectKey(db gorp.SqlExecutor, projectkey string, id int64) (*sdk.WorkflowRun, error) {
+func LoadRunByIDAndProjectKey(db gorp.SqlExecutor, projectkey string, id int64, withArtifacts bool) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.*
 	from workflow_run
 	join project on workflow_run.project_id = project.id
 	where project.projectkey = $1
 	and workflow_run.id = $2`
-	return loadRun(db, query, projectkey, id)
+	return loadRun(db, withArtifacts, query, projectkey, id)
 }
 
 // LoadRunByID loads run by ID
-func LoadRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
+func LoadRunByID(db gorp.SqlExecutor, id int64, withArtifacts bool) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.*
 	from workflow_run
 	where workflow_run.id = $1`
-	return loadRun(db, query, id)
+	return loadRun(db, withArtifacts, query, id)
 }
 
 // LoadAndLockRunByJobID loads a run by a job id
-func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
+func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64, withArtifacts bool) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.*
 	from workflow_run
 	join workflow_node_run on workflow_run.id = workflow_node_run.workflow_run_id
 	join workflow_node_run_job on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
 	where workflow_node_run_job.id = $1 for update`
-	return loadRun(db, query, id)
+	return loadRun(db, withArtifacts, query, id)
 }
 
 //LoadRuns loads all runs
@@ -259,7 +259,7 @@ func loadRunTags(db gorp.SqlExecutor, run *sdk.WorkflowRun) error {
 	return nil
 }
 
-func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.WorkflowRun, error) {
+func loadRun(db gorp.SqlExecutor, withArtifacts bool, query string, args ...interface{}) (*sdk.WorkflowRun, error) {
 	runDB := &Run{}
 	if err := db.SelectOne(runDB, query, args...); err != nil {
 		if err == sql.ErrNoRows {
@@ -285,6 +285,15 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 		if wr.WorkflowNodeRuns == nil {
 			wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
 		}
+
+		if withArtifacts {
+			arts, errA := loadArtifactByNodeRunID(db, wnr.ID)
+			if errA != nil {
+				return nil, sdk.WrapError(errA, "loadRun>Error loading artifacts for run %d", wnr.ID)
+			}
+			wnr.Artifacts = arts
+		}
+
 		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], *wnr)
 	}
 

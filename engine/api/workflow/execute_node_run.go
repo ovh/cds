@@ -153,7 +153,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 	}
 
 	//Reload the workflow
-	updatedWorkflowRun, err := LoadRunByID(db, n.WorkflowRunID)
+	updatedWorkflowRun, err := LoadRunByID(db, n.WorkflowRunID, false)
 	if err != nil {
 		return sdk.WrapError(err, "workflow.execute> Unable to reload workflow run id=%d", n.WorkflowRunID)
 	}

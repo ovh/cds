@@ -41,7 +41,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			Operators: sdk.WorkflowConditionsOperators,
 		}
 
-		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name)
+		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name, false)
 		if errr != nil {
 			if errr != sdk.ErrWorkflowNotFound {
 				return sdk.WrapError(errr, "getWorkflowTriggerConditionHandler> Unable to load last run workflow")
@@ -123,7 +123,7 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 			return sdk.WrapError(errw, "getWorkflowTriggerJoinConditionHandler> Unable to load workflow")
 		}
 
-		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name)
+		wr, errr := workflow.LoadLastRun(api.mustDB(), key, name, false)
 		if errr != nil {
 			if errr != sdk.ErrWorkflowNotFound {
 				return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load last run workflow")

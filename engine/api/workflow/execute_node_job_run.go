@@ -56,7 +56,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		job.Done = time.Now()
 		job.Status = status.String()
 
-		wf, errLoadWf := LoadRunByID(db, node.WorkflowRunID)
+		wf, errLoadWf := LoadRunByID(db, node.WorkflowRunID, false)
 		if errLoadWf != nil {
 			return sdk.WrapError(errLoadWf, "workflow.UpdateNodeJobRunStatus> Unable to load run id %d", node.WorkflowRunID)
 		}

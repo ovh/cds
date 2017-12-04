@@ -46,7 +46,7 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 			return sdk.WrapError(errWNR, "releaseApplicationWorkflowHandler")
 		}
 
-		workflowRun, errWR := workflow.LoadRunByIDAndProjectKey(api.mustDB(), key, wNodeRun.WorkflowRunID)
+		workflowRun, errWR := workflow.LoadRunByIDAndProjectKey(api.mustDB(), key, wNodeRun.WorkflowRunID, true)
 		if errWR != nil {
 			return sdk.WrapError(errWR, "releaseApplicationWorkflowHandler")
 		}

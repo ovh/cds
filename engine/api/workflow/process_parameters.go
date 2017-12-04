@@ -106,7 +106,7 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 
 func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunIds []int64, payload map[string]string) ([]sdk.Parameter, error) {
 	//Load workflow run
-	w, err := LoadRunByID(db, run.WorkflowRunID)
+	w, err := LoadRunByID(db, run.WorkflowRunID, false)
 	if err != nil {
 		return nil, sdk.WrapError(err, "getParentParameters> Unable to load workflow run")
 	}
@@ -152,7 +152,7 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 
 func getNodeRunBuildParameters(db gorp.SqlExecutor, proj *sdk.Project, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
 	//Load workflow run
-	w, err := LoadRunByID(db, run.WorkflowRunID)
+	w, err := LoadRunByID(db, run.WorkflowRunID, false)
 	if err != nil {
 		return nil, sdk.WrapError(err, "getNodeRunParameters> Unable to load workflow run")
 	}
