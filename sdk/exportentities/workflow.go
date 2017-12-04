@@ -8,12 +8,13 @@ type Workflow struct {
 	Workflow map[string]WorkflowEntry `json:"workflow,omitempty" yaml:"workflow,omitempty"`
 	Hooks    map[string][]HookEntry   `json:"hooks,omitempty" yaml:"hooks,omitempty"`
 	// This will be filled for simple workflows
-	DependsOn       []string                   `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
-	Conditions      sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	PipelineName    string                     `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	ApplicationName string                     `json:"application,omitempty" yaml:"application,omitempty"`
-	EnvironmentName string                     `json:"environment,omitempty" yaml:"environment,omitempty"`
-	PipelineHooks   []HookEntry                `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
+	DependsOn       []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
+	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	PipelineName    string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
+	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
+	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
+	PipelineHooks   []HookEntry                 `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
+	Permissions     map[string]int              `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 }
 
 type WorkflowEntry struct {
@@ -33,12 +34,20 @@ type WorkflowVersion string
 
 const WorkflowVersion1 = "v1.0"
 
-func NewWorkflow(w sdk.Workflow, version WorkflowVersion) (Workflow, error) {
+func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	e := Workflow{}
-	e.Version = string(version)
+	e.Version = WorkflowVersion1
+	e.Version = string(WorkflowVersion1)
 	e.Workflow = map[string]WorkflowEntry{}
 	e.Hooks = map[string][]HookEntry{}
 	nodeIDs := w.Nodes()
+
+	if withPermission {
+		e.Permissions = make(map[string]int, len(w.Groups))
+		for _, p := range w.Groups {
+			e.Permissions[p.Group.Name] = p.Permission
+		}
+	}
 
 	var craftWorkflowEntry = func(n *sdk.WorkflowNode) (WorkflowEntry, error) {
 		entry := WorkflowEntry{}
@@ -81,9 +90,13 @@ func NewWorkflow(w sdk.Workflow, version WorkflowVersion) (Workflow, error) {
 		e.PipelineName = entry.PipelineName
 		e.EnvironmentName = entry.EnvironmentName
 		e.DependsOn = entry.DependsOn
-		e.Conditions = entry.Conditions
+		if len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "" {
+			e.Conditions = &entry.Conditions
+		}
 		for _, h := range hooks {
-			//TODO check != nil
+			if e.Hooks == nil {
+				e.Hooks = make(map[string][]HookEntry)
+			}
 			e.PipelineHooks = append(e.PipelineHooks, HookEntry{
 				Model:  h.WorkflowHookModel.Name,
 				Config: h.Config.Values(),
@@ -101,9 +114,15 @@ func NewWorkflow(w sdk.Workflow, version WorkflowVersion) (Workflow, error) {
 				return e, err
 			}
 			e.Workflow[n.Name] = entry
+			if len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "" {
+				e.Conditions = &entry.Conditions
+			}
 		}
+
 		for _, h := range hooks {
-			//TODO check != nil
+			if e.Hooks == nil {
+				e.Hooks = make(map[string][]HookEntry)
+			}
 			e.Hooks[w.GetNode(h.WorkflowNodeID).Name] = append(e.Hooks[w.GetNode(h.WorkflowNodeID).Name], HookEntry{
 				Model:  h.WorkflowHookModel.Name,
 				Config: h.Config.Values(),

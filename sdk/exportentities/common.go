@@ -28,6 +28,18 @@ func GetFormat(f string) (Format, error) {
 	}
 }
 
+//GetContentType returns the content type for a content type
+func GetContentType(f Format) string {
+	switch f {
+	case FormatYAML:
+		return "application/x-yaml"
+	case FormatJSON:
+		return "application/json"
+	default:
+		return "application/octet-stream"
+	}
+}
+
 //Marshal suppoets JSON, YAML and HCL
 func Marshal(i interface{}, f Format) ([]byte, error) {
 	var btes []byte

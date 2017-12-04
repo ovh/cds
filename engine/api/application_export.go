@@ -97,7 +97,7 @@ func (api *API) getApplicationExportHandler() Handler {
 			return sdk.WrapError(err, "getApplicationExportHandler>")
 		}
 
-		w.Header().Add("Content-Type", "application/"+format)
+		w.Header().Add("Content-Type", exportentities.GetContentType(f))
 		w.WriteHeader(http.StatusOK)
 		w.Write(b)
 
