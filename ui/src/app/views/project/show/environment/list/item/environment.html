@@ -41,6 +41,13 @@
               [maxPerPage]="8" [environment]="environment"
               [project]="project" auditContext="environment">
 </app-variable>
-<div class="mt15" *ngIf="environment && environment.usage">
-    <app-usage [project]="project" [currentUser]="currentUser" [workflows]="attachedWorkflows"></app-usage>
+<div class="mt15 animated fadeIn" *ngIf="!loadingUsage">
+    <app-usage
+      [project]="project"
+      [currentUser]="currentUser"
+      [workflows]="attachedWorkflows"
+      [applications]="attachedApplications"
+      [pipelines]="attachedPipelines">
+    </app-usage>
 </div>
+<div class="ui inline active centered small text loader" *ngIf="loadingUsage">Loading environment usage...</div>

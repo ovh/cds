@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -58,35 +61,37 @@ func (api *API) getEnvironmentHandler() Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		environmentName := vars["permEnvironmentName"]
-		withWorkflows := FormBool(r, "withWorkflows")
+		withUsage := FormBool(r, "withUsage")
 
-		tx, errTx := api.mustDB().Begin()
-		if errTx != nil {
-			return sdk.WrapError(errTx, "getEnvironmentHandler> Cannot start transaction")
-		}
-		defer tx.Rollback()
-
-		environment, errEnv := environment.LoadEnvironmentByName(tx, projectKey, environmentName)
+		env, errEnv := environment.LoadEnvironmentByName(api.mustDB(), projectKey, environmentName)
 		if errEnv != nil {
 			return sdk.WrapError(errEnv, "getEnvironmentHandler> Cannot load environment %s for project %s from db", environmentName, projectKey)
 		}
+		env.Usage = &sdk.Usage{}
 
-		if withWorkflows {
-			environment.Usage = &sdk.Usage{}
-			wf, errW := workflow.LoadByEnvName(tx, projectKey, environmentName)
+		if withUsage {
+			wf, errW := workflow.LoadByEnvName(api.mustDB(), projectKey, environmentName)
 			if errW != nil {
-				return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environments %s in project %s", environmentName, projectKey)
+				return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environment %s in project %s", environmentName, projectKey)
 			}
-			environment.Usage.Workflows = wf
+			env.Usage.Workflows = wf
+
+			apps, errApps := application.LoadByEnvName(api.mustDB(), projectKey, environmentName)
+			if errApps != nil {
+				return sdk.WrapError(errApps, "getEnvironmentHandler> Cannot load applications linked to environment %s in project %s", environmentName, projectKey)
+			}
+			env.Usage.Applications = apps
+
+			pips, errPips := pipeline.LoadByEnvName(api.mustDB(), projectKey, environmentName)
+			if errPips != nil {
+				return sdk.WrapError(errApps, "getEnvironmentHandler> Cannot load pipelines linked to environment %s in project %s", environmentName, projectKey)
+			}
+			env.Usage.Pipelines = pips
 		}
 
-		environment.Permission = permission.EnvironmentPermission(environment.ID, getUser(ctx))
+		env.Permission = permission.EnvironmentPermission(env.ID, getUser(ctx))
 
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "getEnvironmentHandler> Cannot commit transaction")
-		}
-
-		return WriteJSON(w, r, environment, http.StatusOK)
+		return WriteJSON(w, r, env, http.StatusOK)
 	}
 }
 
@@ -95,16 +100,37 @@ func (api *API) getEnvironmentUsageHandler() Handler {
 		vars := mux.Vars(r)
 		projectKey := vars["key"]
 		environmentName := vars["permEnvironmentName"]
-		usage := sdk.Usage{}
-
-		wf, errW := workflow.LoadByEnvName(api.mustDB(), projectKey, environmentName)
-		if errW != nil {
-			return sdk.WrapError(errW, "getEnvironmentHandler> Cannot load workflows linked to environments %s in project %s", environmentName, projectKey)
+		usage, err := loadEnvironmentUsage(api.mustDB(), projectKey, environmentName)
+		if err != nil {
+			return sdk.WrapError(err, "getEnvironmentHandler> Cannot load usage for environment %s in project %s", environmentName, projectKey)
 		}
-		usage.Workflows = wf
 
 		return WriteJSON(w, r, usage, http.StatusOK)
 	}
+}
+
+func loadEnvironmentUsage(db gorp.SqlExecutor, projectKey, envName string) (sdk.Usage, error) {
+	usage := sdk.Usage{}
+
+	wf, errW := workflow.LoadByEnvName(db, projectKey, envName)
+	if errW != nil {
+		return usage, sdk.WrapError(errW, "loadEnvironmentUsage> Cannot load workflows linked to environment %s in project %s", envName, projectKey)
+	}
+	usage.Workflows = wf
+
+	apps, errApps := application.LoadByEnvName(db, projectKey, envName)
+	if errApps != nil {
+		return usage, sdk.WrapError(errApps, "loadEnvironmentUsage> Cannot load applications linked to environment %s in project %s", envName, projectKey)
+	}
+	usage.Applications = apps
+
+	pips, errPips := pipeline.LoadByEnvName(db, projectKey, envName)
+	if errPips != nil {
+		return usage, sdk.WrapError(errApps, "loadEnvironmentUsage> Cannot load pipelines linked to environment %s in project %s", envName, projectKey)
+	}
+	usage.Pipelines = pips
+
+	return usage, nil
 }
 
 // Deprecated

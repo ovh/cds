@@ -126,6 +126,44 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Pipeline, er
 	return pips, nil
 }
 
+// LoadByEnvName loads pipelines from database for a given project key and environment name
+func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Pipeline, error) {
+	pips := []sdk.Pipeline{}
+	query := `SELECT DISTINCT pipeline.* FROM pipeline
+	JOIN pipeline_trigger ON pipeline.id = pipeline_trigger.src_pipeline_id OR pipeline.id = pipeline_trigger.dest_pipeline_id
+	JOIN environment ON environment.id = pipeline_trigger.src_environment_id OR environment.id = pipeline_trigger.dest_environment_id
+	JOIN project ON pipeline.project_id = project.id
+	WHERE project.projectkey = $1 AND environment.name = $2`
+
+	if _, err := db.Select(&pips, query, projKey, envName); err != nil {
+		if err == sql.ErrNoRows {
+			return pips, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByEnvName> Unable to load pipelines linked to environment %s", envName)
+	}
+
+	return pips, nil
+}
+
+// LoadByApplicationName loads pipelines from database for a given project key and application name
+func LoadByApplicationName(db gorp.SqlExecutor, projKey, appName string) ([]sdk.Pipeline, error) {
+	pips := []sdk.Pipeline{}
+	query := `SELECT DISTINCT pipeline.* FROM pipeline
+	JOIN pipeline_trigger ON pipeline.id = pipeline_trigger.src_pipeline_id OR pipeline.id = pipeline_trigger.dest_pipeline_id
+	JOIN application ON application.id = pipeline_trigger.src_application_id OR application.id = pipeline_trigger.dest_application_id
+	JOIN project ON pipeline.project_id = project.id
+	WHERE project.projectkey = $1 AND application.name = $2`
+
+	if _, err := db.Select(&pips, query, projKey, appName); err != nil {
+		if err == sql.ErrNoRows {
+			return pips, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByApplicationName> Unable to load pipelines linked to application %s", appName)
+	}
+
+	return pips, nil
+}
+
 func loadPipelineDependencies(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 	if err := LoadPipelineStage(db, p); err != nil {
 		return err

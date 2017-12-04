@@ -146,6 +146,25 @@ func LoadByWorkflowID(db gorp.SqlExecutor, workflowID int64) ([]sdk.Application,
 	return apps, nil
 }
 
+// LoadByEnvName loads applications from database for a given project key and environment name
+func LoadByEnvName(db gorp.SqlExecutor, projKey, envName string) ([]sdk.Application, error) {
+	apps := []sdk.Application{}
+	query := `SELECT DISTINCT application.* FROM application
+	JOIN pipeline_trigger ON application.id = pipeline_trigger.src_application_id OR application.id = pipeline_trigger.dest_application_id
+	JOIN environment ON environment.id = pipeline_trigger.src_environment_id OR environment.id = pipeline_trigger.dest_environment_id
+	JOIN project ON application.project_id = project.id
+	WHERE project.projectkey = $1 AND environment.name = $2`
+
+	if _, err := db.Select(&apps, query, projKey, envName); err != nil {
+		if err == sql.ErrNoRows {
+			return apps, nil
+		}
+		return nil, sdk.WrapError(err, "LoadByEnvName> Unable to load applications linked to environment %s", envName)
+	}
+
+	return apps, nil
+}
+
 // LoadByPipeline Load application where pipeline is attached
 func LoadByPipeline(db gorp.SqlExecutor, store cache.Store, pipelineID int64, u *sdk.User, opts ...LoadOptionFunc) ([]sdk.Application, error) {
 	query := `SELECT distinct application.*

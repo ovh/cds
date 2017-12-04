@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {Environment} from '../../model/environment.model';
+import {Usage} from '../../model/usage.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
 /**
  * Service to access Environment Audit from API.
@@ -17,5 +18,9 @@ export class EnvironmentService {
         params = params.append('withUsage', 'true');
 
         return this._http.get<Array<Environment>>('/project/' + key + '/environment', {params});
+    }
+
+    getUsage(key: string, envName: string): Observable<Usage> {
+        return this._http.get<Usage>('/project/' + key + '/environment/' + envName + '/usage');
     }
 }
