@@ -33,7 +33,7 @@ func Test_doWebHookExecutionGithub(t *testing.T) {
 		WebHook: &WebHookExecution{
 			RequestBody: []byte(githubPushEvent),
 			RequestHeader: map[string][]string{
-				"X-GitHub-Event": {"push"},
+				GithubHeader: {"push"},
 			},
 			RequestURL: "",
 		},
@@ -56,7 +56,7 @@ func Test_doWebHookExecutionGitlab(t *testing.T) {
 		WebHook: &WebHookExecution{
 			RequestBody: []byte(gitlabPushEvent),
 			RequestHeader: map[string][]string{
-				"X-Gitlab-Event": {"Push Hook"},
+				GitlabHeader: {"Push Hook"},
 			},
 			RequestURL: "",
 		},
@@ -71,7 +71,7 @@ func Test_doWebHookExecutionGitlab(t *testing.T) {
 	assert.Equal(t, "2", h.Payload["git.nb.commits"])
 }
 
-func Test_doWebHookExecutionBitbucker(t *testing.T) {
+func Test_doWebHookExecutionBitbucket(t *testing.T) {
 	s := Service{}
 	task := &TaskExecution{
 		UUID: sdk.RandomString(10),
@@ -79,7 +79,7 @@ func Test_doWebHookExecutionBitbucker(t *testing.T) {
 		WebHook: &WebHookExecution{
 			RequestBody: []byte(bitbucketPushEvent),
 			RequestHeader: map[string][]string{
-				"X-Event-Key": {"repo:push"},
+				BitbucketHeader: {"repo:refs_changed"},
 			},
 			RequestURL: "",
 		},
@@ -88,186 +88,61 @@ func Test_doWebHookExecutionBitbucker(t *testing.T) {
 	test.NoError(t, err)
 
 	assert.Equal(t, "name-of-branch", h.Payload["git.branch"])
-	assert.Equal(t, "emmap1", h.Payload["git.author"])
-	assert.Equal(t, "commit message\n", h.Payload["git.message"])
-	assert.Equal(t, "709d658dc5b6d6afcd46049c2f332ee3f515a67d", h.Payload["git.hash"])
-	assert.Equal(t, "1", h.Payload["git.nb.commits"])
+	assert.Equal(t, "steven.guiheux", h.Payload["git.author"])
+	assert.Equal(t, "9f4fac7ec5642099982a86f584f2c4a362adb670", h.Payload["git.hash"])
 }
 
 var bitbucketPushEvent = `
 	{
-	"actor": {
-		"type": "user",
-		"username": "emmap1",
-		"display_name": "Emma",
-		"uuid": "{a54f16da-24e9-4d7f-a3a7-b1ba2cd98aa3}",
-		"links": {
-			"self": {
-				"href": "https://api.bitbucket.org/api/2.0/users/emmap1"
-			},
-			"html": {
-				"href": "https://api.bitbucket.org/emmap1"
-			},
-			"avatar": {
-				"href": "https://bitbucket-api-assetroot.s3.amazonaws.com/c/photos/2015/Feb/26/3613917261-0-emmap1-avatar_avatar.png"
-			}
-		}
-	},
-	"repository": {
-		"type": "repository",
-		"links": {
-			"self": {
-				"href": "https://api.bitbucket.org/api/2.0/repositories/bitbucket/bitbucket"
-			},
-			"html": {
-				"href": "https://api.bitbucket.org/bitbucket/bitbucket"
-			},
-			"avatar": {
-				"href": "https://api-staging-assetroot.s3.amazonaws.com/c/photos/2014/Aug/01/bitbucket-logo-2629490769-3_avatar.png"
-			}
-		},
-		"uuid": "{673a6070-3421-46c9-9d48-90745f7bfe8e}",
-		"project": {},
-		"full_name": "team_name/repo_name",
-		"name": "repo_name",
-		"website": "https://mywebsite.com/",
-		"owner": {
-			"type": "user",
-			"username": "emmap1",
-			"display_name": "Emma",
-			"uuid": "{a54f16da-24e9-4d7f-a3a7-b1ba2cd98aa3}",
-			"links": {
-				"self": {
-					"href": "https://api.bitbucket.org/api/2.0/users/emmap1"
-				},
-				"html": {
-					"href": "https://api.bitbucket.org/emmap1"
-				},
-				"avatar": {
-					"href": "https://bitbucket-api-assetroot.s3.amazonaws.com/c/photos/2015/Feb/26/3613917261-0-emmap1-avatar_avatar.png"
-				}
-			}
-		},
-		"scm": "git",
-		"is_private": true
-	},
-	"push": {
-		"changes": [{
-			"new": {
-				"type": "branch",
-				"name": "name-of-branch",
-				"target": {
-					"type": "commit",
-					"hash": "709d658dc5b6d6afcd46049c2f332ee3f515a67d",
-					"author": {},
-					"message": "new commit message\n",
-					"date": "2015-06-09T03:34:49+00:00",
-					"parents": [{
-						"type": "commit",
-						"hash": "1e65c05c1d5171631d92438a13901ca7dae9618c",
-						"links": {
-							"self": {
-								"href": "https://api.bitbucket.org/2.0/repositories/user_name/repo_name/commit/8cbbd65829c7ad834a97841e0defc965718036a0"
-							},
-							"html": {
-								"href": "https://bitbucket.org/user_name/repo_name/commits/8cbbd65829c7ad834a97841e0defc965718036a0"
-							}
-						}
-					}],
-					"links": {
-						"self": {
-							"href": "https://api.bitbucket.org/2.0/repositories/user_name/repo_name/commit/c4b2b7914156a878aa7c9da452a09fb50c2091f2"
-						},
-						"html": {
-							"href": "https://bitbucket.org/user_name/repo_name/commits/c4b2b7914156a878aa7c9da452a09fb50c2091f2"
-						}
-					}
-				},
-				"links": {
-					"self": {
-						"href": "https://api.bitbucket.org/2.0/repositories/user_name/repo_name/refs/branches/master"
-					},
-					"commits": {
-						"href": "https://api.bitbucket.org/2.0/repositories/user_name/repo_name/commits/master"
-					},
-					"html": {
-						"href": "https://bitbucket.org/user_name/repo_name/branch/master"
-					}
-				}
-			},
-			"old": {
-				"type": "branch",
-				"name": "name-of-branch",
-				"target": {
-					"type": "commit",
-					"hash": "1e65c05c1d5171631d92438a13901ca7dae9618c",
-					"author": {},
-					"message": "old commit message\n",
-					"date": "2015-06-08T21:34:56+00:00",
-					"parents": [{
-						"type": "commit",
-						"hash": "e0d0c2041e09746be5ce4b55067d5a8e3098c843",
-						"links": {
-							"self": {
-								"href": "https://api.bitbucket.org/2.0/repositories/user_name/repo_name/commit/9c4a3452da3bc4f37af5a6bb9c784246f44406f7"
-							},
-							"html": {
-								"href": "https://bitbucket.org/user_name/repo_name/commits/9c4a3452da3bc4f37af5a6bb9c784246f44406f7"
-							}
-						}
-					}],
-					"links": {
-						"self": {
-							"href": "https://api.bitbucket.org/2.0/repositories/user_name/repo_name/commit/b99ea6dad8f416e57c5ca78c1ccef590600d841b"
-						},
-						"html": {
-							"href": "https://bitbucket.org/user_name/repo_name/commits/b99ea6dad8f416e57c5ca78c1ccef590600d841b"
-						}
-					}
-				},
-				"links": {
-					"self": {
-						"href": "https://api.bitbucket.org/2.0/repositories/user_name/repo_name/refs/branches/master"
-					},
-					"commits": {
-						"href": "https://api.bitbucket.org/2.0/repositories/user_name/repo_name/commits/master"
-					},
-					"html": {
-						"href": "https://bitbucket.org/user_name/repo_name/branch/master"
-					}
-				}
-			},
-			"links": {
-				"html": {
-					"href": "https://bitbucket.org/user_name/repo_name/branches/compare/c4b2b7914156a878aa7c9da452a09fb50c2091f2..b99ea6dad8f416e57c5ca78c1ccef590600d841b"
-				},
-				"diff": {
-					"href": "https://api.bitbucket.org/2.0/repositories/user_name/repo_name/diff/c4b2b7914156a878aa7c9da452a09fb50c2091f2..b99ea6dad8f416e57c5ca78c1ccef590600d841b"
-				},
-				"commits": {
-					"href": "https://api.bitbucket.org/2.0/repositories/user_name/repo_name/commits?include=c4b2b7914156a878aa7c9da452a09fb50c2091f2&exclude=b99ea6dad8f416e57c5ca78c1ccef590600d841b"
-				}
-			},
-			"created": false,
-			"forced": false,
-			"closed": false,
-			"commits": [{
-				"hash": "03f4a7270240708834de475bcf21532d6134777e",
-				"type": "commit",
-				"message": "commit message\n",
-				"author": {},
-				"links": {
-					"self": {
-						"href": "https://api.bitbucket.org/2.0/repositories/user/repo/commit/03f4a7270240708834de475bcf21532d6134777e"
-					},
-					"html": {
-						"href": "https://bitbucket.org/user/repo/commits/03f4a7270240708834de475bcf21532d6134777e"
-					}
-				}
-			}],
-			"truncated": false
-		}]
-	}
+    "eventKey": "repo:refs_changed",
+    "date": "2017-11-30T15:24:01+0100",
+    "actor": {
+        "name": "steven.guiheux",
+        "emailAddress": "steven.guiheux@corp.ovh.com",
+        "id": 1363,
+        "displayName": "Steven Guiheux",
+        "active": true,
+        "slug": "steven.guiheux",
+        "type": "NORMAL"
+    },
+    "repository": {
+        "slug": "sseclient",
+        "id": 6096,
+        "name": "sseclient",
+        "scmId": "git",
+        "state": "AVAILABLE",
+        "statusMessage": "Available",
+        "forkable": true,
+        "project": {
+            "key": "~STEVEN.GUIHEUX",
+            "id": 112,
+            "name": "Steven Guiheux",
+            "type": "PERSONAL",
+            "owner": {
+                "name": "steven.guiheux",
+                "emailAddress": "steven.guiheux@corp.ovh.com",
+                "id": 1363,
+                "displayName": "Steven Guiheux",
+                "active": true,
+                "slug": "steven.guiheux",
+                "type": "NORMAL"
+            }
+        },
+        "public": true
+    },
+    "changes": [
+        {
+            "ref": {
+                "id": "refs/heads/name-of-branch",
+                "displayId": "name-of-branch",
+                "type": "BRANCH"
+            },
+            "refId": "refs/heads/name-of-branch",
+            "fromHash": "0000000000000000000000000000000000000000",
+            "toHash": "9f4fac7ec5642099982a86f584f2c4a362adb670",
+            "type": "ADD"
+        }
+    ]
 }
 `
 

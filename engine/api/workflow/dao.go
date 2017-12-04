@@ -458,10 +458,16 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 }
 
 // Delete workflow
-func Delete(db gorp.SqlExecutor, w *sdk.Workflow, u *sdk.User) error {
+func Delete(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, u *sdk.User) error {
 	//Detach root from workflow
 	if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
 		return sdk.WrapError(err, "Delete> Unable to detache workflow root")
+	}
+
+	hooks := w.GetHooks()
+	// Delete all hooks
+	if err := deleteHookConfiguration(db, store, p, hooks); err != nil {
+		return sdk.WrapError(err, "Delete> Unable to delete hooks from workflow")
 	}
 
 	// Delete all JOINs

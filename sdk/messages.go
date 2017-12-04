@@ -20,6 +20,7 @@ var (
 //Message list
 var (
 	MsgAppCreated                          = &Message{"MsgAppCreated", trad{FR: "L'application %s a été créée avec succès", EN: "Application %s successfully created"}, nil}
+	MsgAppUpdated                          = &Message{"MsgAppUpdated", trad{FR: "L'application %s a été mise à jour avec succès", EN: "Application %s successfully updated"}, nil}
 	MsgPipelineCreated                     = &Message{"MsgPipelineCreated", trad{FR: "Le pipeline %s a été créé avec succès", EN: "Pipeline %s successfully created"}, nil}
 	MsgPipelineCreationAborted             = &Message{"MsgPipelineCreationAborted", trad{FR: "La création du pipeline %s a été abandonnée", EN: "Pipeline %s creation aborted"}, nil}
 	MsgPipelineExists                      = &Message{"MsgPipelineExists", trad{FR: "Le pipeline %s existe déjà", EN: "Pipeline %s already exist"}, nil}
@@ -29,6 +30,7 @@ var (
 	MsgAppGroupSetPermission               = &Message{"MsgAppGroupSetPermission", trad{FR: "Permission accordée au groupe %s sur l'application %s", EN: "Permission applied to group %s to application %s"}, nil}
 	MsgAppVariablesCreated                 = &Message{"MsgAppVariablesCreated", trad{FR: "Les variables ont été ajoutées avec succès sur l'application %s", EN: "Application variables for %s are successfully created"}, nil}
 	MsgHookCreated                         = &Message{"MsgHookCreated", trad{FR: "Hook créé sur le depôt %s vers le pipeline %s", EN: "Hook created on repository %s to pipeline %s"}, nil}
+	MsgAppKeyCreated                       = &Message{"MsgAppKeyCreated", trad{FR: "La clé %s %s a été créée sur l'application %s", EN: "%s key %s created on application %s"}, nil}
 	MsgEnvironmentExists                   = &Message{"MsgEnvironmentExists", trad{FR: "L'environnement %s existe déjà", EN: "Environment %s already exist"}, nil}
 	MsgEnvironmentCreated                  = &Message{"MsgEnvironmentCreated", trad{FR: "L'environnement %s a été créé avec succès", EN: "Environment %s successfully created"}, nil}
 	MsgEnvironmentVariableUpdated          = &Message{"MsgEnvironmentVariableUpdated", trad{FR: "La variable %s de l'environnement %s a été mise à jour", EN: "Variable %s on environment %s has been updated"}, nil}

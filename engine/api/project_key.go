@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 
@@ -89,19 +90,37 @@ func (api *API) addKeyInProjectHandler() Handler {
 
 		switch newKey.Type {
 		case sdk.KeyTypeSsh:
-			pub, priv, errGenerate := keys.Generatekeypair(newKey.Name)
+			pubR, privR, errGenerate := keys.GenerateSSHKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate sshKey")
 			}
-			newKey.Public = pub
-			newKey.Private = priv
+			pub, errPub := ioutil.ReadAll(pubR)
+			if errPub != nil {
+				return sdk.WrapError(errPub, "addKeyInProjectHandler> Unable to read public key")
+			}
+
+			priv, errPriv := ioutil.ReadAll(privR)
+			if errPriv != nil {
+				return sdk.WrapError(errPriv, "addKeyInProjectHandler> Unable to read private key")
+			}
+			newKey.Public = string(pub)
+			newKey.Private = string(priv)
 		case sdk.KeyTypePgp:
-			kid, pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
+			kid, pubR, privR, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate pgpKey")
 			}
-			newKey.Public = pub
-			newKey.Private = priv
+			pub, errPub := ioutil.ReadAll(pubR)
+			if errPub != nil {
+				return sdk.WrapError(errPub, "addKeyInProjectHandler> Unable to read public key")
+			}
+
+			priv, errPriv := ioutil.ReadAll(privR)
+			if errPriv != nil {
+				return sdk.WrapError(errPriv, "addKeyInProjectHandler> Unable to read private key")
+			}
+			newKey.Public = string(pub)
+			newKey.Private = string(priv)
 			newKey.KeyID = kid
 		default:
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInProjectHandler> unknown key of type: %s", newKey.Type)

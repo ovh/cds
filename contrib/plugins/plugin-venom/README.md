@@ -28,10 +28,10 @@ As CDS admin:
 
 - **path** : Path containers yml venom files. Format: adirectory/, ./*aTest.yml, ./foo/b*/**/z*.yml. Default: "."
 - **exclude** : Exclude some files, one file per line. Default: empty
-- **parallel** : Launch Test Suites in parallel. Enter here number of routines. Default: 2
 - **output** : Directory where output xunit result file. Default: "."
 - **details** : Output Details Level: low, medium, high. Default: low
 - **loglevel** : Log Level: debug, info, warn or error. Default: error
 - **vars** : Empty: all {{.cds...}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty
+- **vars-from-file** : Path to vars yml. filename.yaml or filename.json. See https://github.com/ovh/venom#run-venom-with-file-var
 
 Add an extra step of type "junit" on your job to view results on CDS UI.

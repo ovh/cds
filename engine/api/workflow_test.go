@@ -1,19 +1,14 @@
 package api
 
 import (
-	"bytes"
 	"encoding/json"
-	"io/ioutil"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/engine/api/test/assets"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -256,92 +251,6 @@ func Test_putWorkflowHandler(t *testing.T) {
 	assert.Equal(t, "Description 2", workflow1.Description)
 }
 
-func Test_postWorkflowWithHooksHandler(t *testing.T) {
-	// Init database
-	api, db, router := newTestAPI(t)
-	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
-
-	repo := services.NewRepository(api.mustDB, api.Cache)
-	repo.Insert(&sdk.Service{
-		Name:    "test-hooks-service",
-		HTTPURL: "http://localhost",
-		Type:    "hooks",
-	})
-
-	services.HTTPClient = &test.FakeHTTPClient{
-		T: t,
-		Response: &http.Response{
-			Status:     "200 OK",
-			StatusCode: 200,
-			Body:       ioutil.NopCloser(new(bytes.Buffer)),
-		},
-	}
-
-	// Init user
-	u, pass := assets.InsertAdminUser(api.mustDB())
-	// Init project
-	key := sdk.RandomString(10)
-	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
-	// Init pipeline
-	pip := sdk.Pipeline{
-		Name:      "pipeline1",
-		ProjectID: proj.ID,
-		Type:      sdk.BuildPipeline,
-	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, nil))
-
-	//Prepare request
-	vars := map[string]string{
-		"permProjectKey": proj.Key,
-	}
-	uri := router.GetRoute("POST", api.postWorkflowHandler, vars)
-	test.NotEmpty(t, uri)
-
-	t.Logf("%+v", workflow.WebHookModel)
-
-	var wf = &sdk.Workflow{
-		Name:        "Name",
-		Description: "Description",
-		Root: &sdk.WorkflowNode{
-			PipelineID: pip.ID,
-			Hooks: []sdk.WorkflowNodeHook{
-				{
-					Config: sdk.WorkflowNodeHookConfig{
-						"method": sdk.WorkflowNodeHookConfigValue{
-							Value:        "GET",
-							Configurable: true,
-						},
-					},
-					WorkflowHookModelID: workflow.WebHookModel.ID,
-				},
-				{
-					Config: sdk.WorkflowNodeHookConfig{
-						"cron": sdk.WorkflowNodeHookConfigValue{
-							Value:        "* * * * *",
-							Configurable: true,
-						},
-						"timezone": sdk.WorkflowNodeHookConfigValue{
-							Value:        "",
-							Configurable: true,
-						},
-					},
-					WorkflowHookModelID: workflow.SchedulerModel.ID,
-				},
-			},
-		},
-	}
-
-	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, &wf)
-
-	//Do the request
-	w := httptest.NewRecorder()
-	router.Mux.ServeHTTP(w, req)
-	assert.Equal(t, 201, w.Code)
-	test.NoError(t, json.Unmarshal(w.Body.Bytes(), &wf))
-
-	t.Logf("%s", dump.MustSdump(wf))
-}
-
 func Test_deleteWorkflowHandler(t *testing.T) {
 	// Init database
 	api, db, router := newTestAPI(t)
@@ -372,17 +281,6 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 		Description: "Description",
 		Root: &sdk.WorkflowNode{
 			PipelineID: pip.ID,
-			Hooks: []sdk.WorkflowNodeHook{
-				{
-					Config: sdk.WorkflowNodeHookConfig{
-						"method": sdk.WorkflowNodeHookConfigValue{
-							Value:        "GET",
-							Configurable: true,
-						},
-					},
-					WorkflowHookModelID: workflow.WebHookModel.ID,
-				},
-			},
 		},
 	}
 

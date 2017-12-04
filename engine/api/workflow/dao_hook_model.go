@@ -16,7 +16,7 @@ var (
 		Type:       sdk.WorkflowHookModelBuiltin,
 		Identifier: "github.com/ovh/cds/hook/builtin/webhook",
 		Name:       "WebHook",
-		Icon:       "fa-anchor",
+		Icon:       "Linkify",
 		DefaultConfig: sdk.WorkflowNodeHookConfig{
 			"method": {
 				Value:        "POST",
@@ -30,7 +30,7 @@ var (
 		Type:       sdk.WorkflowHookModelBuiltin,
 		Identifier: "github.com/ovh/cds/hook/builtin/repositorywebhook",
 		Name:       "RepositoryWebHook",
-		Icon:       "fa-anchor",
+		Icon:       "Linkify",
 		DefaultConfig: sdk.WorkflowNodeHookConfig{
 			"method": {
 				Value:        "POST",

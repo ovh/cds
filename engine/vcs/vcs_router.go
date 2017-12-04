@@ -32,7 +32,7 @@ func (s *Service) initRouter(ctx context.Context) {
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/commits/{commit}", r.GET(s.getCommitHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/pullrequests", r.GET(s.getPullRequestsHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/events", r.GET(s.getEventsHandler), r.POST(s.postFilterEventsHandler))
-	r.Handle("/vcs/{name}/repos/{owner}/{repo}/hooks/", r.GET(s.getHookHandler), r.POST(s.postHookHandler), r.DELETE(s.deleteHookHandler))
+	r.Handle("/vcs/{name}/repos/{owner}/{repo}/hooks", r.GET(s.getHookHandler), r.POST(s.postHookHandler), r.DELETE(s.deleteHookHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases", r.POST(s.postReleaseHandler))
 	r.Handle("/vcs/{name}/repos/{owner}/{repo}/releases/{release}/artifacts/{artifactName}", r.POST(s.postUploadReleaseFileHandler))
 

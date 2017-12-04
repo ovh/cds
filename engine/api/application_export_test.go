@@ -1,6 +1,7 @@
 package api
 
 import (
+	"io/ioutil"
 	"net/http/httptest"
 	"testing"
 
@@ -49,10 +50,13 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		},
 		ApplicationID: app.ID,
 	}
-	kid, pub, priv, err := keys.GeneratePGPKeyPair(k.Name)
+	kid, pubR, privR, err := keys.GeneratePGPKeyPair(k.Name)
 	test.NoError(t, err)
-	k.Public = pub
-	k.Private = priv
+	pub, _ := ioutil.ReadAll(pubR)
+	priv, _ := ioutil.ReadAll(privR)
+
+	k.Public = string(pub)
+	k.Private = string(priv)
 	k.KeyID = kid
 	test.NoError(t, application.InsertKey(api.mustDB(), k))
 
@@ -63,10 +67,13 @@ func Test_getApplicationExportHandler(t *testing.T) {
 		},
 		ApplicationID: app.ID,
 	}
-	pub, priv, err = keys.Generatekeypair(k2.Name)
+	pubR, privR, err = keys.GenerateSSHKeyPair(k2.Name)
 	test.NoError(t, err)
-	k2.Public = pub
-	k2.Private = priv
+	pub, _ = ioutil.ReadAll(pubR)
+	priv, _ = ioutil.ReadAll(privR)
+
+	k2.Public = string(pub)
+	k2.Private = string(priv)
 	k2.KeyID = kid
 	test.NoError(t, application.InsertKey(api.mustDB(), k2))
 

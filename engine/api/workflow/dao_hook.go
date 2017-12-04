@@ -31,7 +31,9 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 		hook.WorkflowHookModelID = hook.WorkflowHookModel.ID
 	}
 
+	var icon string
 	if hook.WorkflowHookModelID != 0 {
+		icon = hook.WorkflowHookModel.Icon
 		model, errm := LoadHookModelByID(db, hook.WorkflowHookModelID)
 		if errm != nil {
 			return sdk.WrapError(errm, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
@@ -57,13 +59,18 @@ func insertHook(db gorp.SqlExecutor, node *sdk.WorkflowNode, hook *sdk.WorkflowN
 		return sdk.WrapError(&errmu, "insertHook> Invalid hook configuration")
 	}
 
-	//Keep the uuid if provided
+	// if it's a new hook
 	if hook.UUID == "" {
 		uuid, erruuid := sessionstore.NewSessionKey()
 		if erruuid != nil {
 			return sdk.WrapError(erruuid, "insertHook> Unable to load model %d", hook.WorkflowHookModelID)
 		}
 		hook.UUID = string(uuid)
+
+		hook.Config["hookIcon"] = sdk.WorkflowNodeHookConfigValue{
+			Value:        icon,
+			Configurable: false,
+		}
 	}
 
 	dbhook := NodeHook(*hook)
@@ -156,35 +163,4 @@ func loadHooks(db gorp.SqlExecutor, node *sdk.WorkflowNode) ([]sdk.WorkflowNodeH
 		nodes = append(nodes, sdk.WorkflowNodeHook(res[i]))
 	}
 	return nodes, nil
-}
-
-func DiffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[string]sdk.WorkflowNodeHook) (hookToUpdate map[string]sdk.WorkflowNodeHook, hookToDelete map[string]sdk.WorkflowNodeHook) {
-	hookToUpdate = make(map[string]sdk.WorkflowNodeHook)
-	hookToDelete = make(map[string]sdk.WorkflowNodeHook)
-
-	for kNew := range newHooks {
-		hold, ok := oldHooks[kNew]
-		// if new hook
-		if !ok {
-			hookToUpdate[kNew] = newHooks[kNew]
-			continue
-		}
-
-	next:
-		for k, v := range newHooks[kNew].Config {
-			for kold, vold := range hold.Config {
-				if kold == k && v != vold {
-					hookToUpdate[kNew] = newHooks[kNew]
-					break next
-				}
-			}
-		}
-	}
-
-	for kHold := range oldHooks {
-		if _, ok := newHooks[kHold]; !ok {
-			hookToDelete[kHold] = oldHooks[kHold]
-		}
-	}
-	return
 }
