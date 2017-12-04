@@ -326,7 +326,7 @@ func (api *API) stopWorkflowNodeRunHandler() Handler {
 		}
 
 		// Load node run
-		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id)
+		nodeRun, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, false)
 		if err != nil {
 			return sdk.WrapError(err, "stopWorkflowNodeRunHandler> Unable to load last workflow run")
 		}
@@ -396,7 +396,7 @@ func (api *API) getWorkflowNodeRunHandler() Handler {
 		if err != nil {
 			return err
 		}
-		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id)
+		run, err := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, true)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
 		}
@@ -586,7 +586,7 @@ func (api *API) getWorkflowNodeRunArtifactsHandler() Handler {
 		if errI != nil {
 			return sdk.WrapError(sdk.ErrInvalidID, "getWorkflowJobArtifactsHandler> Invalid node job run ID")
 		}
-		nodeRun, errR := workflow.LoadNodeRun(api.mustDB(), key, name, number, id)
+		nodeRun, errR := workflow.LoadNodeRun(api.mustDB(), key, name, number, id, true)
 		if errR != nil {
 			return sdk.WrapError(errR, "getWorkflowJobArtifactsHandler> Cannot load node run")
 		}
@@ -698,7 +698,7 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 		}
 
 		// Check nodeRunID is link to workflow
-		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, number, nodeRunID)
+		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, number, nodeRunID, false)
 		if errNR != nil {
 			return sdk.WrapError(errNR, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find nodeRun %d/%d for workflow %s in project %s", nodeRunID, number, workflowName, projectKey)
 		}

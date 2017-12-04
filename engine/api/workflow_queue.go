@@ -102,7 +102,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		}
 
 		//Load the node run
-		noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID)
+		noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, false)
 		if errn != nil {
 			return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
 		}
@@ -589,7 +589,7 @@ func (api *API) postWorkflowJobVariableHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run %d", id)
 		}
 
-		node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID)
+		node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, false)
 		if errn != nil {
 			return sdk.WrapError(errn, "postWorkflowJobVariableHandler> Unable to load node %d", job.WorkflowNodeRunID)
 		}
@@ -666,7 +666,7 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 			return sdk.WrapError(errJ, "Cannot load node job run")
 		}
 
-		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID)
+		nodeRun, errR := workflow.LoadNodeRunByID(api.mustDB(), nodeJobRun.WorkflowNodeRunID, true)
 		if errR != nil {
 			return sdk.WrapError(errR, "Cannot load node run")
 		}

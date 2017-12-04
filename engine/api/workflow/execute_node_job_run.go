@@ -27,7 +27,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 	}(job, chanEvent)
 
-	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID)
+	node, errLoad := LoadNodeRunByID(db, job.WorkflowNodeRunID, false)
 	if errLoad != nil {
 		sdk.WrapError(errLoad, "workflow.UpdateNodeJobRunStatus> Unable to load node run id %d", job.WorkflowNodeRunID)
 	}
@@ -86,7 +86,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 
 	if status == sdk.StatusBuilding {
 		// Sync job status in noderun
-		nodeRun, errNR := LoadNodeRunByID(db, node.ID)
+		nodeRun, errNR := LoadNodeRunByID(db, node.ID, false)
 		if errNR != nil {
 			return sdk.WrapError(errNR, "workflow.UpdateNodeJobRunStatus> Cannot LoadNodeRunByID node run %d", node.ID)
 		}

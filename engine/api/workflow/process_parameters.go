@@ -113,7 +113,7 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 
 	params := []sdk.Parameter{}
 	for _, nodeRunID := range nodeRunIds {
-		parentNodeRun, errNR := LoadNodeRunByID(db, nodeRunID)
+		parentNodeRun, errNR := LoadNodeRunByID(db, nodeRunID, false)
 		if errNR != nil {
 			return nil, sdk.WrapError(errNR, "getParentParameters> Cannot get parent node run")
 		}
