@@ -651,8 +651,8 @@ export class ProjectStore {
                 let index = projectUpdate.environments.findIndex(env => env.id === res.id);
                 projectUpdate.environments[index] = res;
                 this._projectCache.next(cache.set(key, projectUpdate));
-                return projectUpdate;
             }
+            return projectUpdate;
         });
     }
 

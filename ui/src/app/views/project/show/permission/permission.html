@@ -1,0 +1,20 @@
+<h3>{{ 'project_permission_list_title' | translate }}</h3>
+<app-permission-list [permissions]="project.groups" (event)="groupEvent($event)" [edit]="project.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+<ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE">
+    <h3>{{ 'project_permission_form_title' | translate }}</h3>
+    <app-permission-form (createGroupPermissionEvent)="groupEvent($event)" [loading]="permFormLoading"></app-permission-form>
+</ng-container>
+<ng-container *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE">
+    <h3>{{ 'project_env_permission_form_title' | translate }}</h3>
+    <app-permission-env-form [project]="project" [loading]="permEnvFormLoading" (addEnvPermEvent)="addEnvPermEvent($event)"></app-permission-env-form>
+</ng-container>
+<ng-container *ngIf="!loading">
+    <ng-container *ngFor="let env of project.environments">
+        <h3>{{env.name}}</h3>
+        <app-permission-list [permissions]="env.groups" (event)="envGroupEvent($event, env, false)" [edit]="env.permission === permissionEnum.READ_WRITE_EXECUTE"></app-permission-list>
+    </ng-container>
+</ng-container>
+<div *ngIf="loading" class="ui text active loader">{{'common_loading_environments' | translate}}...</div>
+<app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="envGroupEvent($event, null, true)" #permEnvGroupWarning></app-warning-modal>
+<app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="addEnvPermEvent($event, null, true)" #permEnvWarning></app-warning-modal>
+<app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, null, true)" #permWarning></app-warning-modal>
