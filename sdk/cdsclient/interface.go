@@ -15,6 +15,7 @@ type ExportImportInterface interface {
 	PipelineImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
 	ApplicationExport(projectKey, name string, exportWithPermissions bool, format string) ([]byte, error)
 	ApplicationImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
+	WorkflowExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
 }
 
 // ApplicationClient exposes application related functions
