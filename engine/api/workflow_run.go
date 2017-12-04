@@ -517,7 +517,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 		}
 		wg.Add(len(fromNodes))
 		for i := 0; i < nbWorker && i < len(fromNodes); i++ {
-			go runFromNodeWorker(db, store, *opts, p, wf, lastRun, u, workerOptions)
+			go runFromNode(db, store, *opts, p, wf, lastRun, u, workerOptions)
 		}
 		for _, fromNode := range fromNodes {
 			workerOptions.chanNodesToRun <- *fromNode
@@ -530,6 +530,8 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			case err := <-workerOptions.chanError:
 				if chError != nil {
 					chError <- err
+				} else {
+					log.Warning("postWorkflowRunHandler> Cannot run from node %v", err)
 				}
 			}
 		}
@@ -550,7 +552,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	}
 }
 
-func runFromNodeWorker(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHandlerOption, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, u *sdk.User, workerOptions *workerOpts) {
+func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHandlerOption, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, u *sdk.User, workerOptions *workerOpts) {
 	for fromNode := range workerOptions.chanNodesToRun {
 		tx, errb := db.Begin()
 		if errb != nil {
