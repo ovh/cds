@@ -21,4 +21,4 @@
 <div class="ui info message" *ngIf="!loading && (!project.environments || project.environments.length === 0)">
     {{ 'environment_no' | translate }}
 </div>
-<div *ngIf="loading" class="ui text active loader">Loading environments...</div>
+<div *ngIf="loading" class="ui text active loader">{{'common_loading_environments' | translate}}...</div>

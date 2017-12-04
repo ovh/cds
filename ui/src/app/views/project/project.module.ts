@@ -12,6 +12,7 @@ import {ProjectEnvironmentComponent} from './show/environment/list/item/environm
 import {ProjectEnvironmentFormComponent} from './show/environment/form/environment.form.component';
 import {ProjectPipelinesComponent} from './show/pipeline/pipeline.list.component';
 import {ProjectVariablesComponent} from './show/variable/variable.list.component';
+import {ProjectPermissionsComponent} from './show/permission/permission.component';
 import {ProjectApplicationListComponent} from './show/application/application.list.component';
 import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.component';
 
@@ -25,6 +26,7 @@ import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.compon
         ProjectEnvironmentComponent,
         ProjectPipelinesComponent,
         ProjectVariablesComponent,
+        ProjectPermissionsComponent,
         ProjectRepoManagerComponent,
         ProjectRepoManagerFormComponent,
         ProjectShowComponent,

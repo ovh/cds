@@ -159,6 +159,7 @@
   "common_history" : "History",
   "common_loading" : "Loading...",
   "common_loading_project" : "Loading project...",
+  "common_loading_environments" : "Loading environments",
   "common_loading_workflow" : "Loading workflow...",
   "common_name" : "Name",
   "common_no" : "No",
