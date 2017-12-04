@@ -5,6 +5,7 @@ import {Group} from './group.model';
 export class WorkerModel {
     id: number;
     name: string;
+    description: string;
     type: string;
     image: string;
     capabilities: Array<Requirement>;

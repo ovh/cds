@@ -64,6 +64,7 @@ type SpawnErrorForm struct {
 type Model struct {
 	ID               int64              `json:"id" db:"id" cli:"-"`
 	Name             string             `json:"name"  db:"name" cli:"name"`
+	Description      string             `json:"description"  db:"description" cli:"description"`
 	Type             string             `json:"type"  db:"type" cli:"type"`
 	Image            string             `json:"image" db:"image" cli:"-"`
 	Capabilities     []Requirement      `json:"capabilities" db:"-" cli:"-"`
