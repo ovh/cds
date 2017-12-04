@@ -83,7 +83,6 @@ func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data N
 		args = []interface{}{groupID, group.SharedInfraGroup.ID}
 	}
 
-	fmt.Println("Narvar: ", query, args)
 	rows, err := db.Query(query, args...)
 	if err != nil {
 		return data, err
