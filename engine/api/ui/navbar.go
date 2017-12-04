@@ -35,19 +35,34 @@ func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data N
 
 	if u == nil || u.Admin {
 		query = `
-		select project.projectkey, project.name, string_agg(application.name, ','), string_agg(workflow.name, ',')
+		select distinct project.projectkey, project.name, applications.names, workflows.names
 		from project
-		left outer join application on project.id = application.project_id
-		left outer join workflow on project.id = workflow.project_id
-		group by project.projectkey, project.name
+		left outer join (
+			select project_id, string_agg(name, ',') as "names"
+			from application
+			group by project_id
+		) as "applications"  on project.id = applications.project_id
+		left outer join (
+			select project_id, string_agg(name, ',') as "names"
+			from workflow
+			group by project_id
+		) as "workflows"  on project.id = workflows.project_id
 		order by project.name`
 	} else {
 		query = `
-		select project.projectkey, project.name, string_agg(application.name, ','), string_agg(workflow.name, ',')
+		select distinct project.projectkey, project.name, applications.names, workflows.names
 		from project
-		left outer join application on project.id = application.project_id
-		left outer join workflow on project.id = workflow.project_id
-		and project.id IN (
+		left outer join (
+			select project_id, string_agg(name, ',') as "names"
+			from application
+			group by project_id
+		) as "applications"  on project.id = applications.project_id
+		left outer join (
+			select project_id, string_agg(name, ',') as "names"
+			from workflow
+			group by project_id
+		) as "workflows"  on project.id = workflows.project_id
+		where project.id IN (
 			SELECT project_group.project_id
 			FROM project_group
 			WHERE
@@ -55,7 +70,6 @@ func LoadNavbarData(db gorp.SqlExecutor, store cache.Store, u *sdk.User) (data N
 				OR
 				$2 = ANY(string_to_array($1, ',')::int[])
 		)
-		group by project.projectkey, project.name
 		order by project.name`
 
 		var groupID string
