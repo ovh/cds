@@ -119,7 +119,7 @@ func TestManualRun1(t *testing.T) {
 	assert.Equal(t, int64(2), lastrun.Number)
 
 	//TestLoadNodeRun
-	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.RootID][0].ID)
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 2, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, true)
 	test.NoError(t, err)
 	test.Equal(t, lastrun.WorkflowNodeRuns[w1.RootID][0], nodeRun)
 
@@ -176,7 +176,6 @@ func TestManualRun1(t *testing.T) {
 	//TestLoadRunByID
 	_, err = workflow.LoadRunByIDAndProjectKey(db, proj.Key, wr2.ID)
 	test.NoError(t, err)
-
 }
 
 func TestManualRun2(t *testing.T) {
@@ -397,7 +396,7 @@ func TestManualRun3(t *testing.T) {
 		}, nil)
 
 		//Load workflow node run
-		nodeRun, err := workflow.LoadNodeRunByID(db, j.WorkflowNodeRunID)
+		nodeRun, err := workflow.LoadNodeRunByID(db, j.WorkflowNodeRunID, false)
 		if err != nil {
 			t.Fatal(err)
 		}

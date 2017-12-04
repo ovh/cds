@@ -3,7 +3,6 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 )
 
 // User represent a CDS user.
@@ -60,13 +59,9 @@ func LoginUser(username, password string) (bool, *UserAPIResponse, error) {
 		return false, nil, err
 	}
 
-	data, code, err := Request("POST", "/login", data)
+	data, _, err = Request("POST", "/login", data)
 	if err != nil {
 		return false, nil, err
-	}
-
-	if code != http.StatusOK {
-		return false, nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	loginResponse := &UserAPIResponse{}
@@ -79,21 +74,13 @@ func LoginUser(username, password string) (bool, *UserAPIResponse, error) {
 
 // DeleteUser Call API to delete the given user
 func DeleteUser(name string) error {
-
 	url := fmt.Sprintf("/user/%s", name)
-	data, code, err := Request("DELETE", url, nil)
+	data, _, err := Request("DELETE", url, nil)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // AddUser creates a new user available only to creator by default
@@ -112,21 +99,12 @@ func AddUser(name, fname, email, callback string) error {
 		return err
 	}
 
-	data, code, err := Request("POST", "/user/signup", data)
+	data, _, err = Request("POST", "/user/signup", data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
-
+	return DecodeError(data)
 }
 
 func updateUser(username string, user *User) error {
@@ -136,19 +114,12 @@ func updateUser(username string, user *User) error {
 	}
 
 	url := fmt.Sprintf("/user/%s", username)
-	data, code, err := Request("PUT", url, data)
+	data, _, err = Request("PUT", url, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // UpdateUserEmail Change user email address
@@ -192,17 +163,12 @@ func VerifyUser(name, token string) (UserAPIResponse, error) {
 	confirmResponse := UserAPIResponse{}
 
 	path := fmt.Sprintf("/user/%s/confirm/%s", name, token)
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return confirmResponse, err
 	}
 
-	if code != http.StatusOK {
-		return confirmResponse, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
-	err = json.Unmarshal(data, &confirmResponse)
-	if err != nil {
+	if err := json.Unmarshal(data, &confirmResponse); err != nil {
 		return confirmResponse, fmt.Errorf("Error unmarshalling response: %s", err)
 	}
 
@@ -225,19 +191,12 @@ func ResetUser(name, email, callback string) error {
 	}
 
 	path := fmt.Sprintf("/user/%s/reset", name)
-	data, code, err := Request("POST", path, data)
+	data, _, err = Request("POST", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // GetUser return the given user
@@ -247,14 +206,9 @@ func GetUser(username string) (*User, error) {
 	}
 
 	user := &User{}
-
-	data, code, errR := Request("GET", fmt.Sprintf("/user/%s", username), nil)
+	data, _, errR := Request("GET", fmt.Sprintf("/user/%s", username), nil)
 	if errR != nil {
 		return nil, errR
-	}
-
-	if code != http.StatusOK {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	if err := json.Unmarshal(data, user); err != nil {
@@ -265,19 +219,13 @@ func GetUser(username string) (*User, error) {
 
 // ListUsers returns all available user to caller
 func ListUsers() ([]User, error) {
-
-	data, code, err := Request("GET", "/user", nil)
+	data, _, err := Request("GET", "/user", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code != http.StatusOK {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	var users []User
-	err = json.Unmarshal(data, &users)
-	if err != nil {
+	if err := json.Unmarshal(data, &users); err != nil {
 		return nil, err
 	}
 

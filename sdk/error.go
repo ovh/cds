@@ -127,6 +127,7 @@ var (
 	ErrInvalidEmailDomain                    = Error{ID: 111, Status: http.StatusForbidden}
 	ErrWorkflowNodeRunJobNotFound            = Error{ID: 112, Status: http.StatusNotFound}
 	ErrBuiltinKeyNotFound                    = Error{ID: 113, Status: http.StatusInternalServerError}
+	ErrStepNotFound                          = Error{ID: 114, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -242,6 +243,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrInvalidEmailDomain.ID:                    "Invalid domain",
 	ErrWorkflowNodeRunJobNotFound.ID:            "Job not found",
 	ErrBuiltinKeyNotFound.ID:                    "Encryption Key not found",
+	ErrStepNotFound.ID:                          "Step not found",
 }
 
 var errorsFrench = map[int]string{
@@ -357,6 +359,7 @@ var errorsFrench = map[int]string{
 	ErrInvalidEmailDomain.ID:                    "Domaine invalide",
 	ErrWorkflowNodeRunJobNotFound.ID:            "Job non trouvé",
 	ErrBuiltinKeyNotFound.ID:                    "Clé de chiffrage introuvable",
+	ErrStepNotFound.ID:                          "Step introuvable",
 }
 
 var errorsLanguages = []map[int]string{

@@ -50,7 +50,6 @@ testcases:
   - script: {{.cds.build.cds}} pipeline import ITCLIPIPPRJIMP pip.yml
     assertions:
       - result.code ShouldEqual 1
-      - result.systemout ShouldContainSubstring IT_CLI_pipeline_Test_Echo_Error
 
 - name: pipeline show should fail
   steps:

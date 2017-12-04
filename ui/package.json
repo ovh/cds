@@ -38,6 +38,7 @@
     "codemirror": "^5.22.0",
     "core-js": "^2.4.1",
     "dagre-d3": "https://github.com/sguiheux/dagre-d3/tarball/reworkDependencies",
+    "diff": "^3.4.0",
     "dragula": "^3.7.2",
     "duration-js": "^3.9.2",
     "enhanced-resolve": "3.3.0",

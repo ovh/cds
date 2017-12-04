@@ -100,11 +100,10 @@ func RunFromHook(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.
 //ManualRunFromNode is the entry point to trigger manually a piece of an existing run workflow
 func ManualRunFromNode(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Workflow, number int64, e *sdk.WorkflowNodeRunManual, nodeID int64, chanEvent chan<- interface{}) (*sdk.WorkflowRun, error) {
 	lastWorkflowRun, errLoadRun := LoadRun(db, w.ProjectKey, w.Name, number)
-	lastWorkflowRun.Tag(tagTriggeredBy, e.User.Username)
-
 	if errLoadRun != nil {
 		return nil, sdk.WrapError(errLoadRun, "ManualRunFromNode> Unable to load last run")
 	}
+	lastWorkflowRun.Tag(tagTriggeredBy, e.User.Username)
 
 	if _, err := processWorkflowRun(db, store, p, lastWorkflowRun, nil, e, &nodeID, chanEvent); err != nil {
 		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to process workflow run")

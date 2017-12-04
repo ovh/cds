@@ -35,6 +35,11 @@ func (api *API) addWorkerModelHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "addWorkerModel> groupID should be set")
 		}
 
+		// check if worker model already exists
+		if _, err := worker.LoadWorkerModelByName(api.mustDB(), model.Name); err == nil {
+			return sdk.WrapError(sdk.ErrModelNameExist, "getWorkerModel> worker model already exists")
+		}
+
 		//User must be admin of the group set in the model
 		var ok bool
 		for _, g := range getUser(ctx).Groups {
@@ -133,6 +138,10 @@ func (api *API) updateWorkerModelHandler() Handler {
 		var renamed bool
 		if model.Name != old.Name {
 			renamed = true
+			// check if worker model already exists
+			if _, err := worker.LoadWorkerModelByName(api.mustDB(), model.Name); err == nil {
+				return sdk.WrapError(sdk.ErrModelNameExist, "getWorkerModel> worker model already exists")
+			}
 		}
 
 		//If the model image has not been set, keep the old image
@@ -227,7 +236,6 @@ func (api *API) updateWorkerModelHandler() Handler {
 					return sdk.WrapError(err, "updateWorkerModel> cannot update pipeline")
 				}
 			}
-
 		}
 
 		if err := tx.Commit(); err != nil {

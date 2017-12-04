@@ -23,6 +23,10 @@
                   </sm-select>
               </div>
             </div>
+            <div class="field">
+              <label>{{'common_description' | translate}}</label>
+              <textarea name="description" [(ngModel)]="workerModel.description" rows="3"></textarea>
+            </div>
             <div class="three fields">
               <div class="seven wide field">
                   <label>{{'worker_model_type' | translate}}</label>

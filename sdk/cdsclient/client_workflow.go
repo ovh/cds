@@ -36,12 +36,7 @@ func (c *client) WorkflowRunGet(projectKey string, workflowName string, number i
 }
 
 func (c *client) WorkflowDelete(projectKey string, workflowName string) error {
-	code, err := c.DeleteJSON(fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
-	if code != 200 {
-		if err == nil {
-			return fmt.Errorf("HTTP Code %d", code)
-		}
-	}
+	_, err := c.DeleteJSON(fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
 	return err
 }
 

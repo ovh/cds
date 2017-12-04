@@ -87,28 +87,28 @@ type WorkflowRunTag struct {
 	Value         string `json:"value" db:"value"`
 }
 
-//WorkflowNodeRun is as execution instance of a node
+//WorkflowNodeRun is as execution instance of a node. This type is duplicated for database persistence in the engine/api/workflow package
 type WorkflowNodeRun struct {
-	WorkflowRunID      int64                            `json:"workflow_run_id" db:"workflow_run_id"`
-	ID                 int64                            `json:"id" db:"id"`
-	WorkflowNodeID     int64                            `json:"workflow_node_id" db:"workflow_node_id"`
-	Number             int64                            `json:"num" db:"num"`
-	SubNumber          int64                            `json:"subnumber" db:"sub_num"`
-	Status             string                           `json:"status" db:"status"`
-	Stages             []Stage                          `json:"stages" db:"-"`
-	Start              time.Time                        `json:"start" db:"start"`
-	LastModified       time.Time                        `json:"last_modified" db:"last_modified"`
-	Done               time.Time                        `json:"done" db:"done"`
-	HookEvent          *WorkflowNodeRunHookEvent        `json:"hook_event" db:"-"`
-	Manual             *WorkflowNodeRunManual           `json:"manual" db:"-"`
-	SourceNodeRuns     []int64                          `json:"source_node_runs" db:"-"`
-	Payload            interface{}                      `json:"payload" db:"-"`
-	PipelineParameters []Parameter                      `json:"pipeline_parameters" db:"-"`
-	BuildParameters    []Parameter                      `json:"build_parameters" db:"-"`
-	Artifacts          []WorkflowNodeRunArtifact        `json:"artifacts,omitempty" db:"-"`
-	Tests              *venom.Tests                     `json:"tests,omitempty" db:"-"`
-	Commits            []VCSCommit                      `json:"commits,omitempty" db:"-"`
-	TriggersRun        map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty" db:"-"`
+	WorkflowRunID      int64                            `json:"workflow_run_id"`
+	ID                 int64                            `json:"id"`
+	WorkflowNodeID     int64                            `json:"workflow_node_id"`
+	Number             int64                            `json:"num"`
+	SubNumber          int64                            `json:"subnumber"`
+	Status             string                           `json:"status"`
+	Stages             []Stage                          `json:"stages"`
+	Start              time.Time                        `json:"start"`
+	LastModified       time.Time                        `json:"last_modified"`
+	Done               time.Time                        `json:"done"`
+	HookEvent          *WorkflowNodeRunHookEvent        `json:"hook_event"`
+	Manual             *WorkflowNodeRunManual           `json:"manual"`
+	SourceNodeRuns     []int64                          `json:"source_node_runs"`
+	Payload            interface{}                      `json:"payload"`
+	PipelineParameters []Parameter                      `json:"pipeline_parameters"`
+	BuildParameters    []Parameter                      `json:"build_parameters"`
+	Artifacts          []WorkflowNodeRunArtifact        `json:"artifacts,omitempty"`
+	Tests              *venom.Tests                     `json:"tests,omitempty"`
+	Commits            []VCSCommit                      `json:"commits,omitempty"`
+	TriggersRun        map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty"`
 }
 
 // WorkflowNodeTriggerRun Represent the state of a trigger

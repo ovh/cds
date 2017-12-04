@@ -202,13 +202,6 @@ func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, err
 	return loadRun(db, query, id)
 }
 
-func loadAndLockRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
-	query := `select workflow_run.*
-	from workflow_run
-	where workflow_run.id = $1 for update nowait`
-	return loadRun(db, query, id)
-}
-
 //LoadRuns loads all runs
 //It retuns runs, offset, limit count and an error
 func LoadRuns(db gorp.SqlExecutor, projectkey, workflowname string, offset, limit int) ([]sdk.WorkflowRun, int, int, int, error) {
@@ -285,14 +278,14 @@ func loadRun(db gorp.SqlExecutor, query string, args ...interface{}) (*sdk.Workf
 	}
 
 	for _, n := range dbNodeRuns {
-		if err := n.PostGet(db); err != nil {
-			return nil, sdk.WrapError(err, "loadRun> Unable to load workflow nodes run; postGet Error")
+		wnr, err := fromDBNodeRun(n)
+		if err != nil {
+			return nil, err
 		}
-		wnr := sdk.WorkflowNodeRun(n)
 		if wr.WorkflowNodeRuns == nil {
 			wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
 		}
-		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], wnr)
+		wr.WorkflowNodeRuns[wnr.WorkflowNodeID] = append(wr.WorkflowNodeRuns[wnr.WorkflowNodeID], *wnr)
 	}
 
 	for k := range wr.WorkflowNodeRuns {

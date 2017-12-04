@@ -23,6 +23,11 @@
                   </sm-select>
               </div>
             </div>
+            <div class="field">
+              <label>{{'common_description' | translate}}</label>
+              <textarea name="description" [(ngModel)]="workerModel.description"
+                        rows="{{getDescriptionHeight()}}"></textarea>
+            </div>
             <div class="field" *ngIf="workerModel.id">
               <label>{{'worker_model_status' | translate}}</label>
               <div class="ui icon message" *ngIf="!workerModel.disabled">

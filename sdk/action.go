@@ -3,7 +3,6 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"time"
 )
 
@@ -125,7 +124,6 @@ func (a *Action) Add(child Action) *Action {
 // AddAction creates a new action available only to creator by default
 // params are stringParameter only (for now), with no description
 func AddAction(name string, params []Parameter, requirements []Requirement) error {
-
 	a := NewAction(name)
 	a.Parameters = params
 	a.Requirements = requirements
@@ -137,16 +135,12 @@ func AddAction(name string, params []Parameter, requirements []Requirement) erro
 	}
 
 	url := fmt.Sprintf("/action/%s", name)
-	data, code, err := Request("POST", url, data)
+	data, _, err = Request("POST", url, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
+	if e := DecodeError(data); e != nil {
 		return e
 	}
 
@@ -189,14 +183,9 @@ func UpdateAction(a Action) error {
 
 // ListActions returns all available actions to caller
 func ListActions() ([]Action, error) {
-
-	data, code, err := Request("GET", "/action", nil)
+	data, _, err := Request("GET", "/action", nil)
 	if err != nil {
 		return nil, err
-	}
-
-	if code != http.StatusOK {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
 	}
 
 	var acts []Action
@@ -218,8 +207,7 @@ func GetAction(name string) (Action, error) {
 		return a, err
 	}
 
-	err = json.Unmarshal(data, &a)
-	if err != nil {
+	if err := json.Unmarshal(data, &a); err != nil {
 		return a, err
 	}
 

@@ -3,7 +3,6 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"time"
 )
@@ -50,7 +49,6 @@ var DefaultEnv = Environment{
 
 // AddEnvironment create an environment
 func AddEnvironment(key, envName string) error {
-
 	env := NewEnvironment(envName)
 	data, err := json.Marshal(env)
 	if err != nil {
@@ -58,24 +56,16 @@ func AddEnvironment(key, envName string) error {
 	}
 
 	url := fmt.Sprintf("/project/%s/environment", key)
-	data, code, err := Request("POST", url, data)
+	data, _, err = Request("POST", url, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // UpdateEnvironment create an environment
 func UpdateEnvironment(key, oldName, newName string) error {
-
 	env := NewEnvironment(newName)
 	data, err := json.Marshal(env)
 	if err != nil {
@@ -83,37 +73,24 @@ func UpdateEnvironment(key, oldName, newName string) error {
 	}
 
 	url := fmt.Sprintf("/project/%s/environment/%s", key, url.QueryEscape(oldName))
-	data, code, err := Request("PUT", url, data)
+	data, _, err = Request("PUT", url, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // ListEnvironments returns all available environments for the given project
 func ListEnvironments(key string) ([]Environment, error) {
-
 	url := fmt.Sprintf("/project/%s/environment", key)
-	data, code, err := Request("GET", url, nil)
+	data, _, err := Request("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code != http.StatusOK {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	var envs []Environment
-	err = json.Unmarshal(data, &envs)
-	if err != nil {
+	if err := json.Unmarshal(data, &envs); err != nil {
 		return nil, err
 	}
 
@@ -130,8 +107,7 @@ func GetEnvironment(pk, name string) (*Environment, error) {
 		return nil, err
 	}
 
-	err = json.Unmarshal(data, &e)
-	if err != nil {
+	if err := json.Unmarshal(data, &e); err != nil {
 		return nil, err
 	}
 
@@ -140,10 +116,8 @@ func GetEnvironment(pk, name string) (*Environment, error) {
 
 // DeleteEnvironment delete an environment from CDS
 func DeleteEnvironment(pk, name string) error {
-
 	path := fmt.Sprintf("/project/%s/environment/%s", pk, url.QueryEscape(name))
-	_, _, err := Request("DELETE", path, nil)
-	if err != nil {
+	if _, _, err := Request("DELETE", path, nil); err != nil {
 		return err
 	}
 	return nil
@@ -155,26 +129,19 @@ func CloneEnvironment(pk, name, new string) (*Environment, error) {
 	if _, _, err := Request("POST", path, nil); err != nil {
 		return nil, err
 	}
-
 	return GetEnvironment(pk, new)
 }
 
 // ShowEnvironmentVariable  show variables for an environment
 func ShowEnvironmentVariable(projectKey, envName string) ([]Variable, error) {
-
 	path := fmt.Sprintf("/project/%s/environment/%s/variable", projectKey, url.QueryEscape(envName))
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	var variables []Variable
-	err = json.Unmarshal(data, &variables)
-	if err != nil {
+	if err := json.Unmarshal(data, &variables); err != nil {
 		return nil, err
 	}
 	return variables, nil
@@ -182,7 +149,6 @@ func ShowEnvironmentVariable(projectKey, envName string) ([]Variable, error) {
 
 // AddEnvironmentVariable  add a variable in an environment
 func AddEnvironmentVariable(projectKey, envName, varName, varValue string, varType string) error {
-
 	newVar := Variable{
 		Name:  varName,
 		Value: varValue,
@@ -195,38 +161,24 @@ func AddEnvironmentVariable(projectKey, envName, varName, varValue string, varTy
 	}
 
 	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, url.QueryEscape(envName), varName)
-	data, code, err := Request("POST", path, data)
+	data, _, err = Request("POST", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // GetEnvironmentVariable Get a specific variable from the given environment
 func GetEnvironmentVariable(projectKey, envName, varName string) (*Variable, error) {
 	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, url.QueryEscape(envName), varName)
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	myVar := &Variable{}
-
-	err = json.Unmarshal(data, &myVar)
-	if err != nil {
+	if err := json.Unmarshal(data, &myVar); err != nil {
 		return nil, err
 	}
 	return myVar, nil
@@ -234,7 +186,6 @@ func GetEnvironmentVariable(projectKey, envName, varName string) (*Variable, err
 
 // UpdateEnvironmentVariable update a variable in an environment
 func UpdateEnvironmentVariable(projectKey, envName, oldVarName, varName, varValue, varType string) error {
-
 	oldVar, errGetVar := GetEnvironmentVariable(projectKey, envName, oldVarName)
 	if errGetVar != nil {
 		return errGetVar
@@ -253,57 +204,34 @@ func UpdateEnvironmentVariable(projectKey, envName, oldVarName, varName, varValu
 	}
 
 	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, url.QueryEscape(envName), varName)
-	data, code, err := Request("PUT", path, data)
+	data, _, err = Request("PUT", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveEnvironmentVariable  remove a variable from an environment
 func RemoveEnvironmentVariable(projectKey, envName, varName string) error {
 	path := fmt.Sprintf("/project/%s/environment/%s/variable/%s", projectKey, url.QueryEscape(envName), varName)
-	data, code, err := Request("DELETE", path, nil)
+	data, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveGroupFromEnvironment  call api to remove a group from the given environment
 func RemoveGroupFromEnvironment(projectKey, envName, groupName string) error {
 	path := fmt.Sprintf("/project/%s/environment/%s/group/%s", projectKey, url.QueryEscape(envName), groupName)
-	data, code, err := Request("DELETE", path, nil)
+	data, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // UpdateGroupInEnvironment  call api to update group permission for the given environment
@@ -326,24 +254,16 @@ func UpdateGroupInEnvironment(projectKey, envName, groupName string, permission 
 	}
 
 	path := fmt.Sprintf("/project/%s/environment/%s/group/%s", projectKey, url.QueryEscape(envName), groupName)
-	data, code, err := Request("PUT", path, data)
+	data, _, err = Request("PUT", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // AddGroupInEnvironment  add a group in an environment
 func AddGroupInEnvironment(projectKey, envName, groupName string, permission int) error {
-
 	if permission < 4 || permission > 7 {
 		return fmt.Errorf("Permission should be between 4-7")
 	}
@@ -361,17 +281,10 @@ func AddGroupInEnvironment(projectKey, envName, groupName string, permission int
 	}
 
 	path := fmt.Sprintf("/project/%s/environment/%s/group", projectKey, url.QueryEscape(envName))
-	data, code, err := Request("POST", path, data)
+	data, _, err = Request("POST", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }

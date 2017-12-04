@@ -1,4 +1,5 @@
 import {Component, Input, Output, EventEmitter, OnInit, OnChanges} from '@angular/core';
+import {Router} from '@angular/router';
 import {Environment} from '../../../../../../model/environment.model';
 import {Application} from '../../../../../../model/application.model';
 import {Pipeline} from '../../../../../../model/pipeline.model';
@@ -50,7 +51,7 @@ export class ProjectEnvironmentComponent implements OnChanges {
 
     @Output() deletedEnv = new EventEmitter<string>();
 
-    constructor(private _projectStore: ProjectStore, private _toast: ToastService,
+    constructor(private _projectStore: ProjectStore, private _toast: ToastService, private _router: Router,
       private _translate: TranslateService, private _authenticationStore: AuthentificationStore,
       private _environmentService: EnvironmentService) {
           this.currentUser = this._authenticationStore.getUser();
@@ -87,7 +88,10 @@ export class ProjectEnvironmentComponent implements OnChanges {
                 this.cloneName = '';
                 cloneModal.hide();
             }))
-            .subscribe(() => this._toast.success('', this._translate.instant('environment_cloned')));
+            .subscribe(() => {
+              this._toast.success('', this._translate.instant('environment_cloned'));
+              this._router.navigate(['/project/', this.project.key], {queryParams: { tab: 'environments', envName: this.cloneName}});
+            });
     }
 
     deleteEnvironment(): void {
