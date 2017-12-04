@@ -198,6 +198,10 @@ func Request(method string, path string, args []byte, mods ...RequestModifier) (
 		return nil, code, err
 	}
 
+	if code >= 400 {
+		return body, code, fmt.Errorf("HTTP %d", code)
+	}
+
 	return body, code, nil
 }
 

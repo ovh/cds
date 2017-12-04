@@ -217,28 +217,15 @@ func AddPipeline(name string, projectKey string, pipelineType string, params []P
 	}
 
 	url := fmt.Sprintf("/project/%s/pipeline", projectKey)
-	_, code, err := Request("POST", url, data)
-	if err != nil {
-		return err
-	}
-	if code > 300 {
-		return fmt.Errorf("HTTP %d", code)
-	}
-
-	return nil
+	_, _, err = Request("POST", url, data)
+	return err
 }
 
 // DeleteJob delete the given job from the given pipeline
 func DeleteJob(projectKey string, pipelineName string, jobID int64) error {
 	path := fmt.Sprintf("/project/%s/pipeline/%s/action/%d", projectKey, pipelineName, jobID)
-	data, code, err := Request("DELETE", path, nil)
-	if err != nil {
-		return err
-	}
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	return nil
+	_, _, err := Request("DELETE", path, nil)
+	return err
 }
 
 // MoveActionInPipeline Move an action in a pipeline
@@ -290,15 +277,10 @@ func MoveActionInPipeline(projectKey, pipelineName string, actionPipelineID int6
 // - If the pipeline build result is success, it will restart all actions
 func RestartPipeline(key, app, pip, env string, bn int) (chan Log, error) {
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d/restart", key, app, pip, bn)
-
-	_, code, err := Request("POST", uri, nil)
+	_, _, err := Request("POST", uri, nil)
 	if err != nil {
 		return nil, err
 	}
-	if code > 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
 	return StreamPipelineBuild(key, app, pip, env, bn, false)
 }
 
@@ -308,21 +290,16 @@ func RestartPipeline(key, app, pip, env string, bn int) (chan Log, error) {
 func GetPipelineCommits(key, app, pip, env string, bn int) ([]VCSCommit, error) {
 	commits := []VCSCommit{}
 	uri := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/build/%d/commits?envName=%s", key, app, pip, bn, url.QueryEscape(env))
-	data, code, err := Request("GET", uri, nil)
+	data, _, err := Request("GET", uri, nil)
 	if err != nil {
 		return commits, err
 	}
-	if code > 300 {
-		return commits, fmt.Errorf("HTTP %d", code)
-	}
-
 	json.Unmarshal([]byte(data), &commits)
 	return commits, nil
 }
 
 // RunPipeline trigger a CDS pipeline
 func RunPipeline(key, appName, name, env string, stream bool, request RunRequest, followTriggers bool) (chan Log, error) {
-
 	request.Env = Environment{Name: env}
 
 	data, err := json.Marshal(request)
@@ -331,13 +308,9 @@ func RunPipeline(key, appName, name, env string, stream bool, request RunRequest
 	}
 
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/run", key, appName, name)
-	_, code, err := Request("POST", path, data)
+	_, _, err = Request("POST", path, data)
 	if err != nil {
 		return nil, err
-	}
-
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
 	}
 
 	if stream {
@@ -354,17 +327,12 @@ func GetPipelineBuildHistory(key, appName, name, env string) ([]PipelineBuild, e
 	if env != "" {
 		path = fmt.Sprintf("%s?envName=%s", path, url.QueryEscape(env))
 	}
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
-	err = json.Unmarshal([]byte(data), &res)
-	if err != nil {
+	if err := json.Unmarshal([]byte(data), &res); err != nil {
 		return nil, err
 	}
 
@@ -511,26 +479,17 @@ func DeletePipeline(key, name string) error {
 
 // RemoveGroupFromPipeline  call api to remove a group from the given pipeline
 func RemoveGroupFromPipeline(projectKey, pipelineName, groupName string) error {
-
 	path := fmt.Sprintf("/project/%s/pipeline/%s/group/%s", projectKey, pipelineName, groupName)
-	data, code, err := Request("DELETE", path, nil)
+	data, _, err := Request("DELETE", path, nil)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // UpdateGroupInPipeline  call api to update group permission on pipeline
 func UpdateGroupInPipeline(projectKey, pipelineName, groupName string, permission int) error {
-
 	if permission < 4 || permission > 7 {
 		return fmt.Errorf("Permission should be between 4-7 \n")
 	}
@@ -548,24 +507,16 @@ func UpdateGroupInPipeline(projectKey, pipelineName, groupName string, permissio
 	}
 
 	path := fmt.Sprintf("/project/%s/pipeline/%s/group/%s", projectKey, pipelineName, groupName)
-	data, code, err := Request("PUT", path, data)
+	data, _, err = Request("PUT", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // AddGroupInPipeline  add a group in a pipeline
 func AddGroupInPipeline(projectKey, pipelineName, groupName string, permission int) error {
-
 	if permission < 4 || permission > 7 {
 		return fmt.Errorf("Permission should be between 4-7 \n")
 	}
@@ -583,37 +534,23 @@ func AddGroupInPipeline(projectKey, pipelineName, groupName string, permission i
 	}
 
 	path := fmt.Sprintf("/project/%s/pipeline/%s/group", projectKey, pipelineName)
-	data, code, err := Request("POST", path, data)
+	data, _, err = Request("POST", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-	return nil
+	return DecodeError(data)
 }
 
 // ShowParameterInPipeline  show parameters for a pipeline
 func ShowParameterInPipeline(projectKey, pipelineName string) ([]Parameter, error) {
-
 	path := fmt.Sprintf("/project/%s/pipeline/%s/parameter", projectKey, pipelineName)
-	data, code, err := Request("GET", path, nil)
+	data, _, err := Request("GET", path, nil)
 	if err != nil {
 		return nil, err
 	}
-
-	if code != http.StatusCreated && code != http.StatusOK {
-		return nil, fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
 	var params []Parameter
-	err = json.Unmarshal(data, &params)
-	if err != nil {
+	if err := json.Unmarshal(data, &params); err != nil {
 		return nil, err
 	}
 	return params, nil
@@ -621,7 +558,6 @@ func ShowParameterInPipeline(projectKey, pipelineName string) ([]Parameter, erro
 
 // AddParameterInPipeline  add a variable in a pipeline
 func AddParameterInPipeline(projectKey, pipelineName, paramName, paramValue, paramType, paramDescription string) error {
-
 	newParam := Parameter{
 		Name:        paramName,
 		Value:       paramValue,
@@ -635,25 +571,16 @@ func AddParameterInPipeline(projectKey, pipelineName, paramName, paramValue, par
 	}
 
 	path := fmt.Sprintf("/project/%s/pipeline/%s/parameter/%s", projectKey, pipelineName, paramName)
-	data, code, err := Request("POST", path, data)
+	data, _, err = Request("POST", path, data)
 	if err != nil {
 		return err
 	}
 
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-	e := DecodeError(data)
-	if e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // UpdateParameterInPipeline update a variable in a pipeline
 func UpdateParameterInPipeline(projectKey, pipelineName, paramName, newParamName, paramValue, paramType, paramDescription string) error {
-
 	newParam := Parameter{
 		Name:        newParamName,
 		Value:       paramValue,
@@ -667,39 +594,21 @@ func UpdateParameterInPipeline(projectKey, pipelineName, paramName, newParamName
 	}
 
 	path := fmt.Sprintf("/project/%s/pipeline/%s/parameter/%s", projectKey, pipelineName, paramName)
-	data, code, errr := Request("PUT", path, data)
+	data, _, errr := Request("PUT", path, data)
 	if errr != nil {
 		return errr
 	}
-
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
-	if err := DecodeError(data); err != nil {
-		return err
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // RemoveParameterFromPipeline  remove a parameter from a pipeline
 func RemoveParameterFromPipeline(projectKey, pipelineName, paramName string) error {
 	path := fmt.Sprintf("/project/%s/pipeline/%s/parameter/%s", projectKey, pipelineName, paramName)
-	data, code, errr := Request("DELETE", path, nil)
+	data, _, errr := Request("DELETE", path, nil)
 	if errr != nil {
 		return errr
 	}
-
-	if code != http.StatusCreated && code != http.StatusOK {
-		return fmt.Errorf("Error [%d]: %s", code, data)
-	}
-
-	if err := DecodeError(data); err != nil {
-		return err
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // GetPipelineBuildStatus retrieves current build information.
@@ -716,14 +625,10 @@ func GetPipelineBuildStatus(proj, app, pip, env string, buildNumber int64) (Pipe
 			proj, app, pip, buildNumber, url.QueryEscape(env))
 	}
 
-	data, code, errr := Request("GET", uri, nil)
+	data, _, errr := Request("GET", uri, nil)
 	if errr != nil {
 		return pb, errr
 	}
-	if code >= 300 {
-		return pb, fmt.Errorf("HTTP %d", code)
-	}
-
 	if err := json.Unmarshal(data, &pb); err != nil {
 		return pb, err
 	}
@@ -733,18 +638,12 @@ func GetPipelineBuildStatus(proj, app, pip, env string, buildNumber int64) (Pipe
 
 // GetBuildingPipelines retrieves all building pipelines
 func GetBuildingPipelines() ([]PipelineBuild, error) {
-
-	data, code, err := Request("GET", "/mon/building", nil)
+	data, _, err := Request("GET", "/mon/building", nil)
 	if err != nil {
 		return nil, err
 	}
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
 	var pbs []PipelineBuild
-	err = json.Unmarshal(data, &pbs)
-	if err != nil {
+	if err := json.Unmarshal(data, &pbs); err != nil {
 		return nil, err
 	}
 
@@ -755,14 +654,10 @@ func GetBuildingPipelines() ([]PipelineBuild, error) {
 func GetBuildingPipelineByHash(hash string) ([]PipelineBuild, error) {
 	var pbs []PipelineBuild
 
-	data, code, errr := Request("GET", "/mon/building/"+hash, nil)
+	data, _, errr := Request("GET", "/mon/building/"+hash, nil)
 	if errr != nil {
 		return nil, errr
 	}
-	if code >= 300 {
-		return nil, fmt.Errorf("HTTP %d", code)
-	}
-
 	if err := json.Unmarshal(data, &pbs); err != nil {
 		return nil, err
 	}
@@ -778,14 +673,8 @@ func AddSpawnInfosPipelineBuildJob(pipelineBuildJobID int64, infos []SpawnInfo) 
 	}
 
 	path := fmt.Sprintf("/queue/%d/spawn/infos", pipelineBuildJobID)
-	out, code, err := Request("POST", path, data)
-	if err != nil {
-		return fmt.Errorf("HTTP %d err:%s", code, err)
-	}
-	if code != http.StatusOK {
-		return fmt.Errorf("HTTP %d body:%s", code, string(out))
-	}
-	return nil
+	_, _, err := Request("POST", path, data)
+	return err
 }
 
 // Translate translates messages in pipelineBuild

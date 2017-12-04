@@ -239,6 +239,10 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 			return
 		}
 
+		// writeNoContentPostMiddleware is compliant Middleware Interface
+		// but no need to check ct, err in return
+		writeNoContentPostMiddleware(ctx, w, req, rc)
+
 		for _, m := range r.PostMiddlewares {
 			var err error
 			ctx, err = m(ctx, w, req, rc)

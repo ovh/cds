@@ -17,11 +17,9 @@ func (c *client) PipelineImport(projectKey string, content io.Reader, format str
 		url += "&forceUpdate=true"
 	}
 
-	btes, code, errReq := c.Request("POST", url, content)
-	if code != 200 {
-		if errReq == nil {
-			return nil, fmt.Errorf("HTTP Code %d", code)
-		}
+	btes, _, errReq := c.Request("POST", url, content)
+	if errReq != nil {
+		return nil, errReq
 	}
 
 	var msgs []string
@@ -29,7 +27,7 @@ func (c *client) PipelineImport(projectKey string, content io.Reader, format str
 		return []string{string(btes)}, errReq
 	}
 
-	return msgs, errReq
+	return msgs, nil
 }
 
 func (c *client) ApplicationImport(projectKey string, content io.Reader, format string, force bool) ([]string, error) {

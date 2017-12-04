@@ -96,13 +96,9 @@ func GetWorkers(models ...string) ([]Worker, error) {
 		return nil, fmt.Errorf("not implemented")
 	}
 
-	data, code, errr := Request("GET", "/worker", nil)
+	data, _, errr := Request("GET", "/worker", nil)
 	if errr != nil {
 		return nil, errr
-	}
-
-	if code != 200 {
-		return nil, fmt.Errorf("API error (%d)", code)
 	}
 
 	var workers []Worker
@@ -115,18 +111,8 @@ func GetWorkers(models ...string) ([]Worker, error) {
 
 // DisableWorker order the engine to disable given worker, not allowing it to take builds
 func DisableWorker(workerID string) error {
-	uri := fmt.Sprintf("/worker/%s/disable", workerID)
-
-	_, code, err := Request("POST", uri, nil)
-	if err != nil {
-		return err
-	}
-
-	if code != 200 {
-		return fmt.Errorf("API error (%d)", code)
-	}
-
-	return nil
+	_, _, err := Request("POST", fmt.Sprintf("/worker/%s/disable", workerID), nil)
+	return err
 }
 
 // AddWorkerModel registers a new worker model available

@@ -43,10 +43,6 @@ func (w *currentWorker) takePipelineBuildJob(ctx context.Context, pipelineBuildJ
 		log.Info("takeJob> Cannot take job %d : %s. This worker can work on another job", pipelineBuildJobID, errr)
 		return true
 	}
-	if code != http.StatusOK {
-		log.Info("takeJob> Cannot take pbjob, http code recieved from API:%d. This worker can work on another job", code)
-		return true
-	}
 
 	t := ""
 	if isBooked {
