@@ -556,7 +556,7 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 	for fromNode := range workerOptions.chanNodesToRun {
 		tx, errb := db.Begin()
 		if errb != nil {
-			workerOptions.chanError <- sdk.WrapError(errb, "runFromNodeWorker> Cannot start transaction")
+			workerOptions.chanError <- sdk.WrapError(errb, "runFromNode> Cannot start transaction")
 			workerOptions.wg.Done()
 			return
 		}
@@ -564,7 +564,7 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 		// Check Env Permission
 		if fromNode.Context.Environment != nil {
 			if !permission.AccessToEnvironment(fromNode.Context.Environment.ID, u, permission.PermissionReadExecute) {
-				workerOptions.chanError <- sdk.WrapError(sdk.ErrNoEnvExecution, "runFromNodeWorker> Not enough right to run on environment %s", fromNode.Context.Environment.Name)
+				workerOptions.chanError <- sdk.WrapError(sdk.ErrNoEnvExecution, "runFromNode> Not enough right to run on environment %s", fromNode.Context.Environment.Name)
 				tx.Rollback()
 				workerOptions.wg.Done()
 				return
@@ -586,7 +586,7 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 		if lastRun != nil {
 			_, errmr := workflow.ManualRunFromNode(tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID, workerOptions.chanEvent)
 			if errmr != nil {
-				workerOptions.chanError <- sdk.WrapError(errmr, "runFromNodeWorker> Unable to run workflow from node")
+				workerOptions.chanError <- sdk.WrapError(errmr, "runFromNode> Unable to run workflow from node")
 				tx.Rollback()
 				workerOptions.wg.Done()
 				return
@@ -595,7 +595,7 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 		}
 
 		if err := tx.Commit(); err != nil {
-			workerOptions.chanError <- sdk.WrapError(err, "runFromNodeWorker> Unable to commit transaction")
+			workerOptions.chanError <- sdk.WrapError(err, "runFromNode> Unable to commit transaction")
 			tx.Rollback()
 			workerOptions.wg.Done()
 			return
