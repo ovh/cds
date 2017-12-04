@@ -30,12 +30,16 @@ export class ApplicationSchedulerItemComponent {
 
     @Output() event = new EventEmitter();
 
+    show = false;
+
     constructor(private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService) {
+
     }
 
     editScheduler(): void {
         if (this.editSchedulerModal) {
             this.editableScheduler = cloneDeep(this.scheduler);
+            this.show = true;
             setTimeout(() => {
                 this.editSchedulerModal.show();
             }, 100);
@@ -44,6 +48,7 @@ export class ApplicationSchedulerItemComponent {
 
     close(): void {
         if (this.editSchedulerModal) {
+            this.show = false;
             this.editSchedulerModal.hide();
         }
     }

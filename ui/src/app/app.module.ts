@@ -1,5 +1,5 @@
 import {BrowserModule} from '@angular/platform-browser';
-import {NgModule} from '@angular/core';
+import {NgModule, LOCALE_ID} from '@angular/core';
 import {AppComponent} from './app.component';
 import {ServicesModule} from './service/services.module';
 import {TranslateModule, TranslateLoader, TranslateStaticLoader} from 'ng2-translate';
@@ -34,6 +34,7 @@ import {HttpClientModule} from '@angular/common/http';
     ],
     providers: [
         AppService,
+        { provide: LOCALE_ID, useValue: navigator.language.match(/fr/) ? 'fr' : 'en' }
     ],
     bootstrap: [AppComponent]
 })

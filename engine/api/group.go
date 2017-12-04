@@ -73,7 +73,7 @@ func (api *API) deleteGroupHandler() Handler {
 		}
 
 		for _, pg := range g.ProjectGroups {
-			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), &pg.Project); err != nil {
+			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), &pg.Project, sdk.ProjectLastModificationType); err != nil {
 				return sdk.WrapError(err, "deleteGroupHandler> Cannot update project last modified date")
 			}
 		}

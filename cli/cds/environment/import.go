@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/hashicorp/hcl"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 
@@ -31,8 +30,6 @@ func importCmd() *cobra.Command {
 			importFormat = "yaml"
 			if strings.HasSuffix(name, ".json") {
 				importFormat = "json"
-			} else if strings.HasSuffix(name, ".hcl") {
-				importFormat = "hcl"
 			}
 
 			var payload = &exportentities.Environment{}
@@ -49,8 +46,8 @@ func importCmd() *cobra.Command {
 
 			var errorParse error
 			switch f {
-			case exportentities.FormatJSON, exportentities.FormatHCL:
-				errorParse = hcl.Unmarshal(btes, payload)
+			case exportentities.FormatJSON:
+				errorParse = json.Unmarshal(btes, payload)
 			case exportentities.FormatYAML:
 				errorParse = yaml.Unmarshal(btes, payload)
 			}

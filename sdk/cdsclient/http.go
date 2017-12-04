@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"strings"
 
 	"github.com/ovh/cds/sdk"
@@ -79,7 +80,12 @@ func (c *client) RequestJSON(method, path string, in interface{}, out interface{
 		}
 	}
 
-	res, code, err := c.Request(method, path, b, mods...)
+	var body io.Reader
+	if len(b) > 0 {
+		body = bytes.NewBuffer(b)
+	}
+
+	res, code, err := c.Request(method, path, body, mods...)
 	if err != nil {
 		return code, err
 	}
@@ -90,12 +96,15 @@ func (c *client) RequestJSON(method, path string, in interface{}, out interface{
 		}
 	}
 
+	if code >= 400 {
+		return code, fmt.Errorf("HTTP %d", code)
+	}
 	return code, nil
 }
 
 // Request executes an authentificated HTTP request on $path given $method and $args
-func (c *client) Request(method string, path string, args []byte, mods ...RequestModifier) ([]byte, int, error) {
-	respBody, code, err := c.Stream(method, path, args, false, mods...)
+func (c *client) Request(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, int, error) {
+	respBody, code, err := c.Stream(method, path, body, false, mods...)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -105,58 +114,51 @@ func (c *client) Request(method string, path string, args []byte, mods ...Reques
 		respBody.Close()
 	}()
 
-	var body []byte
-	body, err = ioutil.ReadAll(respBody)
+	var bodyBtes []byte
+	bodyBtes, err = ioutil.ReadAll(respBody)
 	if err != nil {
 		return nil, code, err
 	}
 
 	if c.config.Verbose {
-		if len(body) > 0 {
+		if len(bodyBtes) > 0 {
 			log.Printf("Response Body: %s\n", body)
 		}
 	}
 
-	if err := sdk.DecodeError(body); err != nil {
+	if err := sdk.DecodeError(bodyBtes); err != nil {
 		return nil, code, err
 	}
 
-	return body, code, nil
+	return bodyBtes, code, nil
 }
 
 // Stream makes an authenticated http request and return io.ReadCloser
-func (c *client) Stream(method string, path string, args []byte, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, int, error) {
+func (c *client) Stream(method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, int, error) {
 	var savederror error
 
-	if c.config.Verbose {
-		log.Printf("Request %s Body : %s", c.config.Host+path, string(args))
-	}
-
 	for i := 0; i <= c.config.Retry; i++ {
-		var requestError error
-		var req *http.Request
-		if args != nil {
-			req, requestError = http.NewRequest(method, c.config.Host+path, bytes.NewReader(args))
-		} else {
-			req, requestError = http.NewRequest(method, c.config.Host+path, nil)
-		}
+		req, requestError := http.NewRequest(method, c.config.Host+path, body)
 		if requestError != nil {
 			savederror = requestError
 			continue
-		}
-
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("User-Agent", c.config.userAgent)
-		req.Header.Set("Connection", "close")
-		req.Header.Add(RequestedWithHeader, RequestedWithValue)
-		if c.name != "" {
-			req.Header.Add(RequestedNameHeader, c.name)
 		}
 
 		for i := range mods {
 			if mods[i] != nil {
 				mods[i](req)
 			}
+		}
+
+		if req.Header.Get("Content-Type") == "" {
+			req.Header.Set("Content-Type", "application/json")
+		}
+
+		req.Header.Set("User-Agent", c.config.userAgent)
+		req.Header.Set("Connection", "close")
+		req.Header.Add(RequestedWithHeader, RequestedWithValue)
+		if c.name != "" {
+			req.Header.Add(RequestedNameHeader, c.name)
 		}
 
 		//No auth on /login route
@@ -172,7 +174,9 @@ func (c *client) Stream(method string, path string, args []byte, noTimeout bool,
 		}
 
 		if c.config.Verbose {
-			log.Printf("Request Headers: %+v\n", req.Header)
+			log.Println("********REQUEST**********")
+			dmp, _ := httputil.DumpRequestOut(req, true)
+			log.Printf("%s", string(dmp))
 		}
 
 		var errDo error
@@ -181,6 +185,13 @@ func (c *client) Stream(method string, path string, args []byte, noTimeout bool,
 			resp, errDo = NoTimeout(c.HTTPClient).Do(req)
 		} else {
 			resp, errDo = c.HTTPClient.Do(req)
+		}
+
+		if errDo == nil && c.config.Verbose {
+			log.Println("********RESPONSE**********")
+			dmp, _ := httputil.DumpResponse(resp, true)
+			log.Printf("%s", string(dmp))
+			log.Println("**************************")
 		}
 
 		// if everything is fine, return body

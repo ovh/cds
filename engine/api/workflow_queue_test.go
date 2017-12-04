@@ -29,7 +29,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-type test_runWorkflowCtx struct {
+type testRunWorkflowCtx struct {
 	user        *sdk.User
 	password    string
 	project     *sdk.Project
@@ -41,7 +41,7 @@ type test_runWorkflowCtx struct {
 	hatchery    *sdk.Hatchery
 }
 
-func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) test_runWorkflowCtx {
+func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) testRunWorkflowCtx {
 	u, pass := assets.InsertAdminUser(api.mustDB())
 	key := sdk.RandomString(10)
 	proj := assets.InsertTestProject(t, db, api.Cache, key, key, u)
@@ -115,7 +115,7 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 		t.FailNow()
 	}
 
-	return test_runWorkflowCtx{
+	return testRunWorkflowCtx{
 		user:     u,
 		password: pass,
 		project:  proj,
@@ -124,7 +124,7 @@ func test_runWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) te
 	}
 }
 
-func test_getWorkflowJob(t *testing.T, api *API, router *Router, ctx *test_runWorkflowCtx) {
+func testGetWorkflowJob(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
 
@@ -144,7 +144,7 @@ func test_getWorkflowJob(t *testing.T, api *API, router *Router, ctx *test_runWo
 	ctx.job = &jobs[0]
 }
 
-func test_registerWorker(t *testing.T, api *API, router *Router, ctx *test_runWorkflowCtx) {
+func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
 	var err error
 	//Generate token
 	ctx.workerToken, err = token.GenerateToken()
@@ -160,7 +160,7 @@ func test_registerWorker(t *testing.T, api *API, router *Router, ctx *test_runWo
 	test.NoError(t, err)
 }
 
-func test_registerHatchery(t *testing.T, api *API, router *Router, ctx *test_runWorkflowCtx) {
+func testRegisterHatchery(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
 	//Generate token
 	tk, err := token.GenerateToken()
 	test.NoError(t, err)
@@ -178,16 +178,16 @@ func test_registerHatchery(t *testing.T, api *API, router *Router, ctx *test_run
 	test.NoError(t, err)
 }
 
-func Test_getWorkflowJobQueueHandler(t *testing.T) {
+func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 }
 
 func Test_postWorkflowJobRequirementsErrorHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
+	ctx := testRunWorkflow(t, api, router, db)
 
 	uri := router.GetRoute("POST", api.postWorkflowJobRequirementsErrorHandler, nil)
 	test.NotEmpty(t, uri)
@@ -199,19 +199,19 @@ func Test_postWorkflowJobRequirementsErrorHandler(t *testing.T) {
 	assert.Equal(t, 403, rec.Code)
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 
 	//This call must work
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, "This is a requirement log error")
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 
 }
 func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	takeForm := worker.TakeForm{
@@ -227,7 +227,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
@@ -251,8 +251,8 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 }
 func Test_postBookWorkflowJobHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -263,7 +263,7 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 	}
 
 	//Register the hatchery
-	test_registerHatchery(t, api, router, &ctx)
+	testRegisterHatchery(t, api, router, &ctx)
 
 	//TakeBook
 	uri := router.GetRoute("POST", api.postBookWorkflowJobHandler, vars)
@@ -278,8 +278,8 @@ func Test_postBookWorkflowJobHandler(t *testing.T) {
 
 func Test_postWorkflowJobResultHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -290,7 +290,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 
 	//Take
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
@@ -340,32 +340,40 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, res)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 }
 
 func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
+	//Prepare request
+	vars := map[string]string{
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"id":               fmt.Sprintf("%d", ctx.job.ID),
+	}
+
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 	//Register the hatchery
-	test_registerHatchery(t, api, router, &ctx)
+	testRegisterHatchery(t, api, router, &ctx)
 
 	//Send spawninfo
 	info := []sdk.SpawnInfo{}
 	uri := router.Prefix + fmt.Sprintf("/queue/workflows/%d/spawn/infos", ctx.job.ID)
+	test.NotEmpty(t, uri)
 
 	req := assets.NewAuthentifiedRequestFromHatchery(t, ctx.hatchery, "POST", uri, info)
 	rec := httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 202, rec.Code)
-	time.Sleep(1 * time.Second)
 
 	//spawn
-	uri = router.Prefix + fmt.Sprintf("/queue/workflows/%d/take", ctx.job.ID)
+	uri = router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
+	test.NotEmpty(t, uri)
 
 	takeForm := worker.TakeForm{
 		BookedJobID: ctx.job.ID,
@@ -376,6 +384,10 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
+
+	vars = map[string]string{
+		"permID": fmt.Sprintf("%d", ctx.job.ID),
+	}
 
 	//Send test
 	tests := venom.Tests{
@@ -413,26 +425,26 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 			},
 		},
 	}
-	uri = router.Prefix + fmt.Sprintf("/queue/workflows/%d/test", ctx.job.ID)
+	uri = router.GetRoute("POST", api.postWorkflowJobTestsResultsHandler, vars)
+	test.NotEmpty(t, uri)
 
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, tests)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-	time.Sleep(1 * time.Second)
+	assert.Equal(t, 204, rec.Code)
 
 	step := sdk.StepStatus{
 		Status:    sdk.StatusSuccess.String(),
 		StepOrder: 0,
 	}
 
-	uri = router.Prefix + fmt.Sprintf("/queue/workflows/%d/step", ctx.job.ID)
+	uri = router.GetRoute("POST", api.postWorkflowJobStepStatusHandler, vars)
+	test.NotEmpty(t, uri)
 
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, step)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
-	time.Sleep(1 * time.Second)
+	assert.Equal(t, 204, rec.Code)
 
 	wNodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, ctx.job.ID)
 	test.NoError(t, errJ)
@@ -441,13 +453,13 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 
 	assert.NotNil(t, nodeRun.Tests)
 	assert.Equal(t, 2, nodeRun.Tests.Total)
-	t.Logf("%+v", nodeRun.Tests)
+	//t.Logf("%+v", nodeRun.Tests)
 }
 
 func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	//Prepare request
@@ -458,7 +470,7 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 
 	//Take
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
@@ -474,24 +486,31 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	router.Mux.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
 
+	vars = map[string]string{
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+		"permID":           fmt.Sprintf("%d", ctx.job.ID),
+	}
+
 	//Send result
 	v := sdk.Variable{
 		Name:  "var",
 		Value: "value",
 	}
 
-	uri = router.Prefix + fmt.Sprintf("/queue/workflows/%d/variable", ctx.job.ID)
+	uri = router.GetRoute("POST", api.postWorkflowJobVariableHandler, vars)
+	test.NotEmpty(t, uri)
 
 	req = assets.NewAuthentifiedRequestFromWorker(t, ctx.worker, "POST", uri, v)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 202, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 }
 
 func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	api, db, router := newTestAPI(t)
-	ctx := test_runWorkflow(t, api, router, db)
-	test_getWorkflowJob(t, api, router, &ctx)
+	ctx := testRunWorkflow(t, api, router, db)
+	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
 	// Init store
@@ -515,7 +534,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	}
 
 	//Register the worker
-	test_registerWorker(t, api, router, &ctx)
+	testRegisterWorker(t, api, router, &ctx)
 
 	//Take
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
@@ -555,7 +574,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	req = assets.NewAuthentifiedMultipartRequestFromWorker(t, ctx.worker, "POST", uri, path.Join(os.TempDir(), "myartifact"), "myartifact", params)
 	rec = httptest.NewRecorder()
 	router.Mux.ServeHTTP(rec, req)
-	assert.Equal(t, 200, rec.Code)
+	assert.Equal(t, 204, rec.Code)
 
 	time.Sleep(1 * time.Second)
 
@@ -606,7 +625,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	assert.Equal(t, 200, rec.Code)
 	assert.Equal(t, "Hi, I am foo", string(body))
 }
-func Test_getWorkflowJobArtifactsHandler(t *testing.T) {
+func TestGetWorkflowJobArtifactsHandler(t *testing.T) {
 	//api, db, router := newTestAPI(t)
 	//ctx := runWorkflow(t, db, "Test_postWorkflowJobRequirementsErrorHandler")
 }

@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -12,7 +13,9 @@ import (
 
 	"github.com/ovh/cds/engine/api/application"
 	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
@@ -31,9 +34,9 @@ func (api *API) uploadArtifactHandler() Handler {
 
 		//parse the multipart form in the request
 		if err := r.ParseMultipartForm(100000); err != nil {
-			log.Warning("uploadArtifactHandler: Error parsing multipart form: %s", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return sdk.WrapError(err, "uploadArtifactHandler>  Error parsing multipart form")
 		}
+
 		//get a ref to the parsed multipart form
 		m := r.MultipartForm
 		envName := m.Value["env"][0]
@@ -143,14 +146,22 @@ func (api *API) downloadArtifactHandler() Handler {
 			return sdk.WrapError(err, "downloadArtifactHandler> Cannot load artifact")
 		}
 
-		log.Debug("downloadArtifactHandler: Serving %+v", art)
+		f, err := objectstore.FetchArtifact(art)
+		if err != nil {
+			return sdk.WrapError(err, "downloadArtifactHandler> Cannot fetch artifact")
+		}
+
+		if _, err := io.Copy(w, f); err != nil {
+			_ = f.Close()
+			return sdk.WrapError(err, "downloadArtifactHandler> Cannot stream artifact")
+		}
+
+		if err := f.Close(); err != nil {
+			return sdk.WrapError(err, "downloadArtifactHandler> Cannot close artifact")
+		}
 
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
-
-		if err := artifact.StreamFile(w, art); err != nil {
-			return sdk.WrapError(err, "downloadArtifactHandler> Cannot stream artifact")
-		}
 		return nil
 	}
 }
@@ -254,6 +265,12 @@ func (api *API) listArtifactsHandler() Handler {
 	}
 }
 
+func (api *API) getArtifactsStoreHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return WriteJSON(w, r, objectstore.Instance(), http.StatusOK)
+	}
+}
+
 func (api *API) downloadArtifactDirectHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -264,13 +281,156 @@ func (api *API) downloadArtifactDirectHandler() Handler {
 			return sdk.WrapError(err, "downloadArtifactDirectHandler> Could not load artifact with hash %s", hash)
 		}
 
+		log.Debug("downloadArtifactDirectHandler: Serving %+v", art)
+		f, err := objectstore.FetchArtifact(art)
+		if err != nil {
+			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot fetch artifact")
+		}
+
+		if _, err := io.Copy(w, f); err != nil {
+			_ = f.Close()
+			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot stream artifact")
+		}
+
+		if err := f.Close(); err != nil {
+			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot close artifact")
+		}
+
 		w.Header().Add("Content-Type", "application/octet-stream")
 		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
-		log.Debug("downloadArtifactDirectHandler: Serving %+v", art)
-		if err := artifact.StreamFile(w, art); err != nil {
-			return sdk.WrapError(err, "downloadArtifactDirectHandler: Cannot stream artifact")
+		return nil
+	}
+}
+
+func (api *API) postArtifactWithTempURLHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !objectstore.Instance().TemporaryURLSupported {
+			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLHandler")
 		}
+
+		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
+		if !ok {
+			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLHandler > cast error")
+		}
+
+		vars := mux.Vars(r)
+		proj := vars["key"]
+		pip := vars["permPipelineKey"]
+		app := vars["permApplicationName"]
+		tag := vars["tag"]
+		buildNumberString := vars["buildNumber"]
+		envName := r.FormValue("envName")
+
+		var env *sdk.Environment
+		if envName == "" || envName == sdk.DefaultEnv.Name {
+			env = &sdk.DefaultEnv
+		} else {
+			var errE error
+			env, errE = environment.LoadEnvironmentByName(api.mustDB(), proj, envName)
+			if errE != nil {
+				return sdk.WrapError(errE, "postArtifactWithTempURLHandler> Cannot load environment %s", envName)
+			}
+		}
+
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLHandler> No enought right on this environment %s")
+		}
+
+		buildNumber, errI := strconv.Atoi(buildNumberString)
+		if errI != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postArtifactWithTempURLHandler> BuildNumber must be an integer: %s", errI)
+		}
+
+		hash, errG := generateHash()
+		if errG != nil {
+			return sdk.WrapError(errG, "postArtifactWithTempURLHandler> Could not generate hash")
+		}
+
+		art := new(sdk.Artifact)
+		if err := UnmarshalBody(r, art); err != nil {
+			return sdk.WrapError(err, "postArtifactWithTempURLHandler> Unable to unmarshal artifact")
+		}
+
+		art.DownloadHash = hash
+		art.Project = proj
+		art.Application = app
+		art.Pipeline = pip
+		art.Environment = env.Name
+		art.BuildNumber = buildNumber
+		art.Tag = tag
+
+		url, key, err := store.StoreURL(art)
+		if err != nil {
+			return sdk.WrapError(err, "postArtifactWithTempURLHandler> Could not generate hash")
+		}
+
+		art.TempURL = url
+		art.TempURLSecretKey = key
+
+		cacheKey := cache.Key("artifacts", art.GetPath(), art.GetName())
+		api.Cache.SetWithTTL(cacheKey, art, 60*60) //Put this in cache for 1 hour
+
+		return WriteJSON(w, r, art, http.StatusOK)
+	}
+}
+
+func (api *API) postArtifactWithTempURLCallbackHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		if !objectstore.Instance().TemporaryURLSupported {
+			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLCallbackHandler")
+		}
+
+		vars := mux.Vars(r)
+		projKey := vars["key"]
+		pipName := vars["permPipelineKey"]
+		appName := vars["permApplicationName"]
+		envName := r.FormValue("envName")
+
+		art := new(sdk.Artifact)
+		if err := UnmarshalBody(r, art); err != nil {
+			return sdk.WrapError(err, "postArtifactWithTempURLCallbackHandler> Unable to read artifact")
+		}
+
+		cacheKey := cache.Key("artifacts", art.GetPath(), art.GetName())
+		cachedArt := new(sdk.Artifact)
+		if !api.Cache.Get(cacheKey, cachedArt) {
+			return sdk.WrapError(sdk.ErrNotFound, "postArtifactWithTempURLCallbackHandler> Unable to find artifact")
+		}
+
+		if art.DownloadHash != cachedArt.DownloadHash {
+			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLCallbackHandler> Submitted artifact doesn't match")
+		}
+
+		var env *sdk.Environment
+		if envName == "" || envName == sdk.DefaultEnv.Name {
+			env = &sdk.DefaultEnv
+		} else {
+			var errE error
+			env, errE = environment.LoadEnvironmentByName(api.mustDB(), projKey, envName)
+			if errE != nil {
+				return sdk.WrapError(errE, "postArtifactWithTempURLCallbackHandler> Cannot load environment %s", envName)
+			}
+		}
+
+		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLCallbackHandler> No enought right on this environment %s")
+		}
+
+		pip, errpip := pipeline.LoadPipeline(api.mustDB(), projKey, pipName, false)
+		if errpip != nil {
+			return sdk.WrapError(errpip, "postArtifactWithTempURLCallbackHandler> Unable to load pipeline %s/%s", projKey, pipName)
+		}
+
+		app, errapp := application.LoadByName(api.mustDB(), api.Cache, projKey, appName, getUser(ctx))
+		if errapp != nil {
+			return sdk.WrapError(errapp, "postArtifactWithTempURLCallbackHandler> Unable to load application %s/%s", projKey, appName)
+		}
+
+		if err := artifact.InsertArtifact(api.mustDB(), pip.ID, app.ID, env.ID, *art); err != nil {
+			return sdk.WrapError(err, "postArtifactWithTempURLCallbackHandler> Unable to save artifact")
+		}
+
 		return nil
 	}
 }

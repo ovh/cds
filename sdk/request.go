@@ -198,6 +198,10 @@ func Request(method string, path string, args []byte, mods ...RequestModifier) (
 		return nil, code, err
 	}
 
+	if code >= 400 {
+		return body, code, fmt.Errorf("HTTP %d", code)
+	}
+
 	return body, code, nil
 }
 
@@ -211,12 +215,13 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		os.Exit(1)
 	}
 
+	var url = Host + path
 	for i := 0; i < retry; i++ {
 		var req *http.Request
 		if args != nil {
-			req, err = http.NewRequest(method, Host+path, bytes.NewReader(args))
+			req, err = http.NewRequest(method, url, bytes.NewReader(args))
 		} else {
-			req, err = http.NewRequest(method, Host+path, nil)
+			req, err = http.NewRequest(method, url, nil)
 		}
 		if err != nil {
 			savederror = err
@@ -302,7 +307,7 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 }
 
 // UploadMultiPart upload multipart
-func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...RequestModifier) ([]byte, int, error) {
+func UploadMultiPart(method string, path string, body io.Reader, mods ...RequestModifier) ([]byte, int, error) {
 
 	if verbose {
 		log.Printf("Starting UploadMultiPart %s %s", method, path)
@@ -352,8 +357,8 @@ func UploadMultiPart(method string, path string, body *bytes.Buffer, mods ...Req
 	}
 
 	if verbose {
-		if len(body.Bytes()) > 0 {
-			log.Printf("Response Body: %s\n", body.String())
+		if len(respBody) > 0 {
+			log.Printf("Response Body: %s\n", respBody)
 		}
 	}
 

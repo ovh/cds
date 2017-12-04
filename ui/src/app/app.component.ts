@@ -1,3 +1,4 @@
+import { registerLocaleData } from '@angular/common';
 import { RouterService } from './service/router/router.service';
 import {Component, OnInit, NgZone} from '@angular/core';
 import {TranslateService} from 'ng2-translate';
@@ -13,6 +14,8 @@ import {AutoUnsubscribe} from './shared/decorator/autoUnsubscribe';
 import {AppService} from './app.service';
 import {LastUpdateService} from './service/sse/lastupdate.sservice';
 import {LastModification} from './model/lastupdate.model';
+import localeFR from '@angular/common/locales/fr';
+import localeEN from '@angular/common/locales/en';
 
 @Component({
     selector: 'app-root',
@@ -43,8 +46,9 @@ export class AppComponent  implements OnInit {
         this.zone = new NgZone({enableLongStackTrace: false});
         _translate.addLangs(['en', 'fr']);
         _translate.setDefaultLang('en');
-        let browserLang = _translate.getBrowserLang();
+        let browserLang = navigator.language.match(/fr/) ? 'fr' : 'en';
         _translate.use(browserLang.match(/en|fr/) ? browserLang : 'en');
+        registerLocaleData(browserLang.match(/fr/) ? localeFR : localeEN);
 
         this.languageSubscriber = this._language.get().subscribe( l => {
             if (l) {
@@ -91,6 +95,9 @@ export class AppComponent  implements OnInit {
 
     startLastUpdateSSE(): void {
         this._last.getLastUpdate().subscribe(msg => {
+            if (msg === 'ACK') {
+                return;
+            }
             let lastUpdateEvent: LastModification = JSON.parse(msg);
             this._appService.updateCache(lastUpdateEvent);
         });

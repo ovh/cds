@@ -2,16 +2,15 @@ package venom
 
 import (
 	"errors"
-	"io"
+	"fmt"
 	"strings"
-	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
 
-// Process runs tests suite and return a Tests result
-func Process(path []string, variables map[string]string, exclude []string, parallel int, logLevel string, detailsLevel string, writer io.Writer) (*Tests, error) {
-	switch logLevel {
+func (v *Venom) init() error {
+	v.testsuites = []TestSuite{}
+	switch v.LogLevel {
 	case "debug":
 		log.SetLevel(log.DebugLevel)
 	case "info":
@@ -22,53 +21,131 @@ func Process(path []string, variables map[string]string, exclude []string, paral
 		log.SetLevel(log.WarnLevel)
 	}
 
-	log.SetOutput(writer)
-	switch detailsLevel {
+	log.SetOutput(v.LogOutput)
+	switch v.OutputDetails {
 	case DetailsLow, DetailsMedium, DetailsHigh:
-		log.Infof("Detail Level: %s", detailsLevel)
+		log.Debug("Detail Level: ", v.OutputDetails)
 	default:
-		return nil, errors.New("Invalid details. Must be low, medium or high")
+		return errors.New("Invalid details. Must be low, medium or high")
 	}
 
-	chanEnd := make(chan TestSuite, 1)
-	parallels := make(chan TestSuite, parallel)
-	wg := sync.WaitGroup{}
-	testsResult := &Tests{}
+	return nil
+}
 
-	filesPath := getFilesPath(path, exclude)
-	wg.Add(len(filesPath))
-	chanToRun := make(chan TestSuite, len(filesPath)+1)
+// Parse parses tests suite to check context and variables
+func (v *Venom) Parse(path []string, exclude []string) error {
+	if err := v.init(); err != nil {
+		return err
+	}
 
-	go computeStats(testsResult, chanEnd, &wg)
+	filesPath, err := getFilesPath(path, exclude)
+	if err != nil {
+		return err
+	}
 
-	bars, err := readFiles(variables, detailsLevel, filesPath, chanToRun, writer)
+	if err := v.readFiles(filesPath); err != nil {
+		return err
+	}
+
+	missingVars := []string{}
+	extractedVars := []string{}
+	for i := range v.testsuites {
+		ts := &v.testsuites[i]
+		log.Info("Parsing testsuite", ts.Package)
+
+		tvars, textractedVars, err := v.parseTestSuite(ts)
+		if err != nil {
+			return err
+		}
+		for _, k := range tvars {
+			var found bool
+			for i := 0; i < len(missingVars); i++ {
+				if missingVars[i] == k {
+					found = true
+					break
+				}
+			}
+			if !found {
+				missingVars = append(missingVars, k)
+			}
+		}
+		for _, k := range textractedVars {
+			var found bool
+			for i := 0; i < len(extractedVars); i++ {
+				if extractedVars[i] == k {
+					found = true
+					break
+				}
+			}
+			if !found {
+				extractedVars = append(extractedVars, k)
+			}
+		}
+	}
+
+	reallyMissingVars := []string{}
+	for _, k := range missingVars {
+		var varExtracted bool
+		for _, e := range extractedVars {
+			if strings.HasPrefix(k, e) {
+				varExtracted = true
+			}
+		}
+		if !varExtracted {
+			var ignored bool
+			for _, i := range v.IgnoreVariables {
+				if strings.HasPrefix(k, i) {
+					ignored = true
+				}
+			}
+			if !ignored {
+				reallyMissingVars = append(reallyMissingVars, k)
+			}
+		}
+	}
+
+	if len(reallyMissingVars) > 0 {
+		return fmt.Errorf("Missing variables %v", reallyMissingVars)
+	}
+
+	return nil
+}
+
+// Process runs tests suite and return a Tests result
+func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
+	if err := v.init(); err != nil {
+		return nil, err
+	}
+
+	filesPath, err := getFilesPath(path, exclude)
 	if err != nil {
 		return nil, err
 	}
 
-	pool := initBars(detailsLevel, bars)
+	if err := v.readFiles(filesPath); err != nil {
+		return nil, err
+	}
 
-	go func() {
-		for ts := range chanToRun {
-			parallels <- ts
-			go func(ts TestSuite) {
-				runTestSuite(&ts, bars, detailsLevel)
-				chanEnd <- ts
-				<-parallels
-			}(ts)
-		}
-	}()
+	if v.OutputDetails != DetailsLow {
+		pool := v.initBars()
+		defer endBars(v.OutputDetails, pool)
+	}
 
-	wg.Wait()
+	for i := range v.testsuites {
+		ts := &v.testsuites[i]
+		v.runTestSuite(ts)
+	}
 
-	endBars(detailsLevel, pool)
+	testsResult := &Tests{}
+	v.computeStats(testsResult)
 
 	return testsResult, nil
 }
 
-func computeStats(testsResult *Tests, chanEnd <-chan TestSuite, wg *sync.WaitGroup) {
-	for t := range chanEnd {
-		testsResult.TestSuites = append(testsResult.TestSuites, t)
+func (v *Venom) computeStats(testsResult *Tests) {
+	for i := range v.testsuites {
+		t := &v.testsuites[i]
+		testsResult.TestSuites = append(testsResult.TestSuites, *t)
 		if t.Failures > 0 {
 			testsResult.TotalKO += t.Failures
 		} else {
@@ -79,7 +156,6 @@ func computeStats(testsResult *Tests, chanEnd <-chan TestSuite, wg *sync.WaitGro
 		}
 
 		testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
-		wg.Done()
 	}
 }
 

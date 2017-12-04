@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {Component, Input, ViewChild} from '@angular/core';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
@@ -8,10 +8,11 @@ import {Pipeline} from '../../../../model/pipeline.model';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {Router} from '@angular/router';
-import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
-import {Subscription} from 'rxjs/Subscription';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
+import {finalize} from 'rxjs/operators';
+import {TranslateService} from 'ng2-translate';
+import {ToastService} from '../../../toast/ToastService';
 
 @Component({
     selector: 'app-workflow-node-run-param',
@@ -30,8 +31,9 @@ export class WorkflowNodeRunParamComponent {
     @Input() project: Project;
     @Input() workflow: Workflow;
     @Input() num: number;
+
     @Input('nodeToRun')
-    set nodeToRun (data: WorkflowNode) {
+    set nodeToRun(data: WorkflowNode) {
         if (data) {
             this._nodeToRun = cloneDeep(data);
             this.updateDefaultPipelineParameters();
@@ -41,9 +43,11 @@ export class WorkflowNodeRunParamComponent {
             this.getPipeline();
         }
     };
+
     get nodeToRun(): WorkflowNode {
         return this._nodeToRun;
     }
+
     _nodeToRun: WorkflowNode;
 
     codeMirrorConfig: {};
@@ -53,7 +57,7 @@ export class WorkflowNodeRunParamComponent {
     loading = false;
 
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
-                private _pipStore: PipelineStore, private _workflowCoreService: WorkflowCoreService) {
+                private _workflowCoreService: WorkflowCoreService, private _translate: TranslateService, private _toast: ToastService) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -66,9 +70,9 @@ export class WorkflowNodeRunParamComponent {
     getPipeline(): void {
         if (this.project.pipelines) {
             this.project.pipelines.forEach(p => {
-               if (p.id === this.nodeToRun.pipeline.id && p.last_modified === this.nodeToRun.pipeline.last_modified) {
-                   this.isSync = true;
-               }
+                if (p.id === this.nodeToRun.pipeline.id && p.last_modified === this.nodeToRun.pipeline.last_modified) {
+                    this.isSync = true;
+                }
             });
         }
     }
@@ -106,9 +110,13 @@ export class WorkflowNodeRunParamComponent {
     }
 
     resync(): void {
-        this._workflowRunService.resync(this.project.key, this.workflow, this.nodeRun.num).subscribe(wr => {
+        this.loading = true;
+        this._workflowRunService.resync(this.project.key, this.workflow, this.nodeRun.num)
+        .pipe(finalize(() => {
+            this.loading = false;
+        })).subscribe(wr => {
             this.nodeToRun = Workflow.getNodeByID(this._nodeToRun.id, wr.workflow);
-            this.isSync = true;
+            this._toast.success('', this._translate.instant('workflow_run_resync_done'));
         });
     }
 
@@ -133,12 +141,12 @@ export class WorkflowNodeRunParamComponent {
         }
 
         this.loading = true;
-        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).finally(() => {
+        this._workflowRunService.runWorkflow(this.project.key, this.workflow.name, request).pipe(finalize(() => {
             this.loading = false;
-        }).subscribe(wr => {
+        })).subscribe(wr => {
             this.modal.approve(true);
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
-                {queryParams: { subnum: wr.last_subnumber }});
+                {queryParams: {subnum: wr.last_subnumber}});
             this._workflowCoreService.setCurrentWorkflowRun(wr);
         });
     }

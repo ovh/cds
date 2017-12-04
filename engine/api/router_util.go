@@ -36,6 +36,21 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status 
 	return nil
 }
 
+// writeNoContentPostMiddleware writes StatusNoContent (204) for each response with No Header Content-Type
+// this is a PostMiddlewaare, launch if there no error in handler.
+// If there is no Content-Type, it's because there is no body return. In CDS, we
+// always use WriteJSON to send body or explicitly write Content-TYpe as application/octet-stream
+// So, if there is No Content-Type, we return 204
+func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, req *http.Request, rc *HandlerConfig) (context.Context, error) {
+	for headerName := range w.Header() {
+		if headerName == "Content-Type" {
+			return ctx, nil
+		}
+	}
+	w.WriteHeader(http.StatusNoContent)
+	return ctx, nil
+}
+
 // UnmarshalBody read the request body and tries to json.unmarshal it. It returns sdk.ErrWrongRequest in case of error.
 func UnmarshalBody(r *http.Request, i interface{}) error {
 	data, errRead := ioutil.ReadAll(r.Body)
@@ -90,6 +105,11 @@ func FormBool(r *http.Request, s string) bool {
 	}
 }
 
+// FormString return a string
+func FormString(r *http.Request, s string) string {
+	return r.FormValue(s)
+}
+
 // requestVarInt return int value for a var in Request
 func requestVarInt(r *http.Request, s string) (int64, error) {
 	vars := mux.Vars(r)
@@ -104,4 +124,16 @@ func requestVarInt(r *http.Request, s string) (int64, error) {
 		return id, sdk.WrapError(sdk.ErrWrongRequest, "requestVarInt> %s is not an integer: %s", s, idString)
 	}
 	return id, nil
+}
+
+func translate(r *http.Request, msgList []sdk.Message) []string {
+	al := r.Header.Get("Accept-Language")
+	msgListString := []string{}
+	for _, m := range msgList {
+		s := m.String(al)
+		if s != "" {
+			msgListString = append(msgListString, s)
+		}
+	}
+	return msgListString
 }

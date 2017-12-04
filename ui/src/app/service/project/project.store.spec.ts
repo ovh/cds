@@ -13,6 +13,7 @@ import {HttpClientTestingModule, HttpTestingController} from '@angular/common/ht
 import {HttpRequest} from '@angular/common/http';
 import {Application} from '../../model/application.model';
 import {RepositoriesManager} from '../../model/repositories.model';
+import {first} from 'rxjs/operators';
 
 describe('CDS: project Store', () => {
 
@@ -42,13 +43,13 @@ describe('CDS: project Store', () => {
         projects.push(createProject('key4', 'myProject4'));
 
         // Get projects from HTTP Call
-        projectStore.getProjectsList().first().subscribe(() => {
+        projectStore.getProjectsList().pipe(first()).subscribe(() => {
         });
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === 'foo.bar/project'
         })).flush(projects);
 
-        projectStore.getProjectsList().first().subscribe(pdata => {
+        projectStore.getProjectsList().pipe(first()).subscribe(pdata => {
             expect(pdata.size).toBe(4, 'Wrong number of project. Must be 4.');
         });
 
@@ -78,7 +79,7 @@ describe('CDS: project Store', () => {
 
         // check cache for nav
         let checkedNav = false;
-        projectStore.getProjectsList().first().subscribe(projects => {
+        projectStore.getProjectsList().pipe(first()).subscribe(projects => {
             expect(projects.size).toBe(2, 'Wrong number of project. Must be 2.');
             checkedNav = true;
         });
@@ -91,7 +92,7 @@ describe('CDS: project Store', () => {
             return req.url === 'foo.bar/project/key1'
         })).flush(project);
         let checkedSingleProject = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             expect(projs.get('key1').name).toBe('myProject', 'Wrong project name. Must be myProject');
             checkedSingleProject = true;
         });
@@ -141,7 +142,7 @@ describe('CDS: project Store', () => {
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === 'foo.bar/project/key1'
         })).flush(projectMock);
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             expect(projs.get('key1').applications.length).toBe(3, 'Wrong number of applications. Must be 3.');
             projectChecked = true;
         });
@@ -150,7 +151,7 @@ describe('CDS: project Store', () => {
         projectStore.updateApplicationName('key1', 'app2', 'appupdated');
 
         let projectAppChecked = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             expect(projs.get('key1').applications.length).toBe(3, 'Wrong number of applications. Must be 3.');
             expect(projs.get('key1').applications[1].name).toBe('appupdated');
             projectAppChecked = true;
@@ -186,7 +187,7 @@ describe('CDS: project Store', () => {
 
         // check cache for nav
         let checkedNav = false;
-        projectStore.getProjectsList().first().subscribe(projects => {
+        projectStore.getProjectsList().pipe(first()).subscribe(projects => {
             expect(projects.size).toBe(1, 'Wrong number of project. Must be 1.');
             expect(projects.get(0).name).toBe('myProjectUpdate1', 'Wrong name of project. Must be myProjectUpdate1');
             checkedNav = true;
@@ -200,7 +201,7 @@ describe('CDS: project Store', () => {
             return req.url === 'foo.bar/project/key1'
         })).flush(projectUp);
         let checkedSingleProject = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             expect(projs.get('key1').name).toBe('myProjectUpdate1', 'Wrong project name. Must be myProjectUpdate1');
             checkedSingleProject = true;
         });
@@ -216,7 +217,7 @@ describe('CDS: project Store', () => {
 
         // check get project: second time (get from cache
         let checkedSingleProjectTwice = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             expect(projs.get('key1').name).toBe('myProjectUpdate2', 'Wrong project name. Must be myProjectUpdate2');
             checkedSingleProjectTwice = true;
         });
@@ -252,7 +253,7 @@ describe('CDS: project Store', () => {
 
 
         // Get project in cache
-        projectStore.getProjects('key1').first().subscribe(() => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(() => {
         });
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === 'foo.bar/project/key1'
@@ -267,7 +268,7 @@ describe('CDS: project Store', () => {
         })).flush(projectRepoAdd);
 
         let addRepoCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             addRepoCheck = true;
             expect(projs.get('key1').last_modified).toBe('123', 'Project must have been updated');
         });
@@ -281,7 +282,7 @@ describe('CDS: project Store', () => {
         })).flush(projectValidation);
 
         let validationRepoCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             validationRepoCheck = true;
             expect(projs.get('key1').last_modified).toBe('456');
             expect(projs.get('key1').vcs_servers.length).toBe(1);
@@ -295,7 +296,7 @@ describe('CDS: project Store', () => {
         })).flush(projectRepoDel);
 
         let deleteRepoCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             deleteRepoCheck = true;
             expect(projs.get('key1').last_modified).toBe('789');
             expect(projs.get('key1').vcs_servers.length).toBe(0);
@@ -330,7 +331,7 @@ describe('CDS: project Store', () => {
         projectDelVar.variables = new Array<Variable>();
 
         // Get project in cache
-        projectStore.getProjects('key1').first().subscribe(() => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(() => {
         });
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === 'foo.bar/project/key1'
@@ -349,7 +350,7 @@ describe('CDS: project Store', () => {
         })).flush(projectAddVar);
 
         let addVariableCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             addVariableCheck = true;
             expect(projs.get('key1').last_modified).toBe('123', 'Project must have been updated');
             expect(projs.get('key1').variables.length).toBe(1, 'Project must have 1 variable');
@@ -366,7 +367,7 @@ describe('CDS: project Store', () => {
         })).flush(projectUpVar.variables[0]);
 
         let updateVariableCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             updateVariableCheck = true;
             expect(projs.get('key1').variables.length).toBe(1);
             expect(projs.get('key1').variables[0].name).toBe('myvarUpdate');
@@ -381,7 +382,7 @@ describe('CDS: project Store', () => {
         })).flush(projectDelVar);
 
         let deleteVariableCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             deleteVariableCheck = true;
             expect(projs.get('key1').variables.length).toBe(0);
         });
@@ -438,7 +439,7 @@ describe('CDS: project Store', () => {
         })).flush(projectAddGrp.groups);
 
         let addPermissionCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             addPermissionCheck = true;
             expect(projs.get('key1').groups.length).toBe(1, 'Project must have 1 group');
             expect(projs.get('key1').groups[0].permission).toBe(7);
@@ -454,7 +455,7 @@ describe('CDS: project Store', () => {
         })).flush(projectUpGrp.groups[0]);
 
         let updatePermissionCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             updatePermissionCheck = true;
             expect(projs.get('key1').groups.length).toBe(1);
             expect(projs.get('key1').groups[0].permission).toBe(4);
@@ -470,7 +471,7 @@ describe('CDS: project Store', () => {
         })).flush(projectDelGrp.groups);
 
         let deletePermissionCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             deletePermissionCheck = true;
             expect(projs.get('key1').groups.length).toBe(0);
         });
@@ -521,7 +522,7 @@ describe('CDS: project Store', () => {
         })).flush(projectAddEnv);
 
         let addEnvCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             addEnvCheck = true;
             expect(projs.get('key1').last_modified).toBe('123', 'Project must have been updated');
             expect(projs.get('key1').environments.length).toBe(1, 'Project must have 1 variable');
@@ -538,7 +539,7 @@ describe('CDS: project Store', () => {
         })).flush(projectUpEnv);
 
         let renameEnvCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             renameEnvCheck = true;
             expect(projs.get('key1').last_modified).toBe('456');
             expect(projs.get('key1').environments.length).toBe(1);
@@ -555,7 +556,7 @@ describe('CDS: project Store', () => {
         })).flush(projectDelEnv);
 
         let deleteEnvCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             deleteEnvCheck = true;
             expect(projs.get('key1').last_modified).toBe('789');
             expect(projs.get('key1').environments.length).toBe(0);
@@ -623,7 +624,7 @@ describe('CDS: project Store', () => {
         })).flush(projectAddEnvVar);
 
         let addEnvCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             addEnvCheck = true;
             expect(projs.get('key1').last_modified).toBe('123', 'Project must have been updated');
             expect(projs.get('key1').environments.length).toBe(1, 'Project must have 1 variable');
@@ -641,7 +642,7 @@ describe('CDS: project Store', () => {
         })).flush(projectUpEnvVar);
 
         let renameVarEnvCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             renameVarEnvCheck = true;
             expect(projs.get('key1').last_modified).toBe('456');
             expect(projs.get('key1').environments.length).toBe(1);
@@ -659,7 +660,7 @@ describe('CDS: project Store', () => {
         })).flush(projectDelEnvVar);
 
         let deleteVarCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             deleteVarCheck = true;
             expect(projs.get('key1').last_modified).toBe('789');
             expect(projs.get('key1').environments.length).toBe(1);
@@ -735,7 +736,7 @@ describe('CDS: project Store', () => {
         })).flush(projectAddEnvGroup.environments[0]);
 
         let addEnvCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             addEnvCheck = true;
             expect(projs.get('key1').environments.length).toBe(1, 'Project must have 1 env');
             expect(projs.get('key1').environments[0].groups.length).toBe(1);
@@ -753,7 +754,7 @@ describe('CDS: project Store', () => {
         })).flush(projectUpEnvGroup.environments[0]);
 
         let renameVarEnvCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             renameVarEnvCheck = true;
             expect(projs.get('key1').environments.length).toBe(1);
             expect(projs.get('key1').environments[0].groups.length).toBe(1);
@@ -769,7 +770,7 @@ describe('CDS: project Store', () => {
         })).flush(null);
 
         let deletePermCheck = false;
-        projectStore.getProjects('key1').first().subscribe(projs => {
+        projectStore.getProjects('key1').pipe(first()).subscribe(projs => {
             deletePermCheck = true;
             expect(projs.get('key1').environments.length).toBe(1);
             expect(projs.get('key1').environments[0].groups.length).toBe(0);

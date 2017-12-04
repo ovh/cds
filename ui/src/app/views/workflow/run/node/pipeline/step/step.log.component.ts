@@ -1,8 +1,8 @@
-import {Component, Input, OnInit, OnDestroy, NgZone, ViewChild, ElementRef} from '@angular/core';
-import {Subscription} from 'rxjs/Rx';
+import {Component, Input, OnInit, NgZone, ViewChild, ElementRef, OnDestroy} from '@angular/core';
+import {Subscription} from 'rxjs/Subscription';
 import {Action} from '../../../../../../model/action.model';
 import {Project} from '../../../../../../model/project.model';
-import {Job} from '../../../../../../model/job.model';
+import {Job, StepStatus} from '../../../../../../model/job.model';
 import {BuildResult, Log, PipelineStatus} from '../../../../../../model/pipeline.model';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../../model/workflow.run.model';
 import {CDSWorker} from '../../../../../../shared/worker/worker';
@@ -32,24 +32,35 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     // Dynamic
     @Input('stepStatus')
-    set stepStatus (data: string) {
-        if (data && !this.currentStatus && this.showLog) {
+    set stepStatus (data: StepStatus) {
+        if (data && data.status && !this.currentStatus && this.showLog) {
             this.initWorker();
         }
-        this.currentStatus = data;
+        if (data) {
+            this.currentStatus = data.status;
+            if (!this._force  && PipelineStatus.isActive(data.status)) {
+                this.showLog = true;
+            }
+        }
+        this._stepStatus = data;
+        this.computeDuration();
+    }
+    get stepStatus() {
+        return this._stepStatus;
     }
     logs: Log;
     currentStatus: string;
     set showLog(data: boolean) {
-        this._showLog = data;
-
-        if (data) {
+        let neverRun = PipelineStatus.neverRun(this.currentStatus);
+        if (data && !neverRun) {
             this.initWorker();
         } else {
             if (this.worker) {
                 this.worker.stop();
+                this.worker = null;
             }
         }
+        this._showLog = data;
     }
     get showLog() {
       return this._showLog;
@@ -61,10 +72,11 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     startExec: Date;
     doneExec: Date;
     duration: string;
-    intervalListener: any;
 
     zone: NgZone;
     _showLog = false;
+    _force = false;
+    _stepStatus: StepStatus;
     pipelineBuildStatusEnum = PipelineStatus;
     @ViewChild('logsContent') logsElt: ElementRef;
 
@@ -76,14 +88,18 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         let isLastStep = this.stepOrder === this.job.action.actions.length - 1;
 
         this.zone = new NgZone({enableLongStackTrace: false});
-        if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
-            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) || (nodeRunDone && isLastStep)) {
+        if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING || this.currentStatus === this.pipelineBuildStatusEnum.WAITING ||
+            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) ||
+            (nodeRunDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
           this.showLog = true;
         }
     }
 
-    ngOnDestroy() {
-        clearInterval(this.intervalListener);
+    ngOnDestroy(): void {
+        if (this.worker) {
+            this.worker.stop();
+            this.worker = null;
+        }
     }
 
     copyRawLog() {
@@ -96,6 +112,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
         if (!this.logs) {
             this.loading = true;
         }
+
         if (!this.worker) {
             this.worker = new CDSWorker('./assets/worker/web/workflow-log.js');
             this.worker.start({
@@ -118,7 +135,6 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                             this.logs = build.step_logs;
                         }
                         if (this.loading) {
-                            this.computeDuration();
                             this.loading = false;
                         }
                     });
@@ -128,20 +144,28 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     computeDuration() {
-        this.startExec = new Date(this.logs.start.seconds * 1000);
-        this.doneExec = this.logs.done && this.logs.done.seconds ? new Date(this.logs.done.seconds * 1000) : null;
-        if (!this.duration) {
-            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec || new Date()) + ')';
+        if (!this.stepStatus || PipelineStatus.neverRun(this.currentStatus)) {
+            return;
         }
-        this.intervalListener = setInterval(() => {
-            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec || new Date()) + ')';
-            if (this.currentStatus !== PipelineStatus.BUILDING && this.currentStatus !== PipelineStatus.WAITING) {
-                clearInterval(this.intervalListener);
-            }
-        }, 5000);
+        if (this.stepStatus.start && this.stepStatus.start.indexOf('0001-01-01') !== -1) {
+            return;
+        }
+        this.startExec = this.stepStatus.start ? new Date(this.stepStatus.start) : new Date();
+
+        if (this.stepStatus.done && this.stepStatus.done.indexOf('0001-01-01') !== -1) {
+            this.doneExec = new Date();
+        } else {
+            this.doneExec = new Date(this.stepStatus.done);
+        }
+
+        this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
     }
 
     toggleLogs() {
+        this._force = true;
+        if (!this.showLog && PipelineStatus.neverRun(this.currentStatus)) {
+            return;
+        }
         this.showLog = !this.showLog;
     }
 

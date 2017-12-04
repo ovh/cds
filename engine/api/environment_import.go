@@ -2,11 +2,11 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/hashicorp/hcl"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/environment"
@@ -45,8 +45,8 @@ func (api *API) importNewEnvironmentHandler() Handler {
 
 		var errorParse error
 		switch f {
-		case exportentities.FormatJSON, exportentities.FormatHCL:
-			errorParse = hcl.Unmarshal(data, payload)
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, payload)
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, payload)
 		}
@@ -94,15 +94,7 @@ func (api *API) importNewEnvironmentHandler() Handler {
 		close(msgChan)
 		<-done
 
-		al := r.Header.Get("Accept-Language")
-		msgListString := []string{}
-
-		for _, m := range allMsg {
-			s := m.String(al)
-			if s != "" {
-				msgListString = append(msgListString, s)
-			}
-		}
+		msgListString := translate(r, allMsg)
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "importNewEnvironmentHandler> Cannot commit transaction")
@@ -162,8 +154,8 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 
 		var errorParse error
 		switch f {
-		case exportentities.FormatJSON, exportentities.FormatHCL:
-			errorParse = hcl.Unmarshal(data, payload)
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, payload)
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, payload)
 		}
@@ -201,22 +193,14 @@ func (api *API) importIntoEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Error on import")
 		}
 
-		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(api.mustDB(), api.Cache, getUser(ctx), proj, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot update project last modified date")
 		}
 
 		close(msgChan)
 		<-done
 
-		al := r.Header.Get("Accept-Language")
-		msgListString := []string{}
-
-		for _, m := range allMsg {
-			s := m.String(al)
-			if s != "" {
-				msgListString = append(msgListString, s)
-			}
-		}
+		msgListString := translate(r, allMsg)
 
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "importIntoEnvironmentHandler> Cannot commit transaction")

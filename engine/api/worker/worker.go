@@ -58,11 +58,11 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 		// Worker is awol while building !
 		// We need to restart this action
 		if jobID.Valid == false {
-			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but action_build_id is NULL!", name)
+			return fmt.Errorf("DeleteWorker> Worker %s crashed while building but action_build_id is NULL!", name)
 		}
 
 		if !jobType.Valid {
-			return fmt.Errorf("DeleteWorker> Meh, worker %s crashed while building but job_type is NULL!", name)
+			return fmt.Errorf("DeleteWorker> Worker %s crashed while building but job_type is NULL!", name)
 		}
 
 		switch jobType.String {
@@ -83,7 +83,7 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 			}
 		}
 
-		log.Info("Worker %s crashed while building %d !", name, jobID.Int64)
+		log.Info("DeleteWorker> Worker %s crashed while building %d !", name, jobID.Int64)
 	}
 
 	// Well then, let's remove this loser
@@ -224,8 +224,8 @@ func RefreshWorker(db gorp.SqlExecutor, w *sdk.Worker) error {
 	if w == nil {
 		return sdk.WrapError(sdk.ErrUnknownError, "RefreshWorker> Invalid worker")
 	}
-	query := `UPDATE worker SET last_beat = $1 WHERE id = $2`
-	res, err := db.Exec(query, time.Now(), w.ID)
+	query := `UPDATE worker SET last_beat = now() WHERE id = $1`
+	res, err := db.Exec(query, w.ID)
 	if err != nil {
 		return sdk.WrapError(err, "RefreshWorker> Unable to update worker: %s", w.ID)
 	}

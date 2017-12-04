@@ -9,6 +9,8 @@ import {Branch, Remote} from '../../../../model/repositories.model';
 import {Router} from '@angular/router';
 import {cloneDeep} from 'lodash';
 import {Observable} from 'rxjs/Observable';
+import {finalize} from 'rxjs/operators';
+import 'rxjs/add/observable/zip';
 
 @Component({
     selector: 'app-application-workflow',
@@ -87,10 +89,12 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
 
                     this.loadVersions(this.project.key, this.application.name).subscribe();
                 }
-            ).finally(() => {
-                this.loading.remote = false;
-                this.loading.branch = false;
-            }).subscribe();
+            ).pipe(
+                finalize(() => {
+                    this.loading.remote = false;
+                    this.loading.branch = false;
+                })
+            ).subscribe();
         } else {
             this.loading.branch = false;
             this.loading.remote = false;
@@ -196,7 +200,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
             }
         }
 
-        if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0) {
+        if (w.environment.name === 'NoEnv' && Number(PipelineType[w.pipeline.type]) > 0 && Array.isArray(this.project.environments)) {
             // If current item is a deploy or testing pipeline without environment
             // Then add new item on workflow
             this.project.environments.forEach((env, index) => {
@@ -312,9 +316,10 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
      */
     loadVersions(key: string, appName: string): Observable<Array<string>> {
         this.loading.version = true;
-        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch, this.applicationFilter.remote)
-            .finally(() => this.loading.version = false)
+        return this._appWorkflow.getVersions(key, appName, this.applicationFilter.branch || 'master', this.applicationFilter.remote)
+            .pipe(finalize(() => this.loading.version = false))
             .map((versions) => this.versions = [' ', ...versions.map((v) => v.toString())]);
+
     }
 
     clearTree(items: Array<WorkflowItem>): void {

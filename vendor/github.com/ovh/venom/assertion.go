@@ -30,29 +30,44 @@ func (t *testingT) Error(args ...interface{}) {
 	}
 }
 
-// applyChecks apply checks on result, return true if all assertions are OK, false otherwise
-func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l Logger) (bool, []Failure, []Failure, string, string) {
-	isOK, errors, failures, systemout, systemerr := applyAssertions(*executorResult, step, defaultAssertions, l)
-	if !isOK {
-		return isOK, errors, failures, systemout, systemerr
-	}
-
-	isOKExtract, errorsExtract, failuresExtract := applyExtracts(executorResult, step, l)
-
-	errors = append(errors, errorsExtract...)
-	failures = append(failures, failuresExtract...)
-
-	return isOKExtract, errors, failures, systemout, systemerr
+type assertionsApplied struct {
+	ok        bool
+	errors    []Failure
+	failures  []Failure
+	systemout string
+	systemerr string
 }
 
-func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l Logger) (bool, []Failure, []Failure, string, string) {
+// applyChecks apply checks on result, return true if all assertions are OK, false otherwise
+func applyChecks(executorResult *ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l Logger) assertionsApplied {
+	res := applyAssertions(*executorResult, step, defaultAssertions, l)
+	if !res.ok {
+		return res
+	}
+
+	resExtract := applyExtracts(executorResult, step, l)
+
+	res.errors = append(res.errors, resExtract.errors...)
+	res.failures = append(res.failures, resExtract.failures...)
+	res.ok = resExtract.ok
+
+	return res
+}
+
+func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssertions *StepAssertions, l Logger) assertionsApplied {
 	var sa StepAssertions
 	var errors []Failure
 	var failures []Failure
 	var systemerr, systemout string
 
 	if err := mapstructure.Decode(step, &sa); err != nil {
-		return false, []Failure{{Value: RemoveNotPrintableChar(fmt.Sprintf("error decoding assertions: %s", err))}}, failures, systemout, systemerr
+		return assertionsApplied{
+			false,
+			[]Failure{{Value: RemoveNotPrintableChar(fmt.Sprintf("error decoding assertions: %s", err))}},
+			failures,
+			systemout,
+			systemerr,
+		}
 	}
 
 	if len(sa.Assertions) == 0 && defaultAssertions != nil {
@@ -80,7 +95,7 @@ func applyAssertions(executorResult ExecutorResult, step TestStep, defaultAssert
 		systemout = fmt.Sprintf("%v", executorResult["result.systemout"])
 	}
 
-	return isOK, errors, failures, systemout, systemerr
+	return assertionsApplied{isOK, errors, failures, systemout, systemerr}
 }
 
 func check(assertion string, executorResult ExecutorResult, l Logger) (*Failure, *Failure) {

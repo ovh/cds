@@ -1,5 +1,5 @@
 import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeHook} from '../../../../model/workflow.model';
+import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
 import {WorkflowService} from '../../../../service/workflow/workflow.service';
 import {ToastService} from '../../../toast/ToastService';
 import {TranslateService} from 'ng2-translate';
@@ -8,6 +8,7 @@ import {Project} from '../../../../model/project.model';
 import {HookEvent} from './hook.event';
 import {cloneDeep} from 'lodash';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-hook',
@@ -16,7 +17,21 @@ import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 })
 export class WorkflowNodeHookComponent implements AfterViewInit {
 
-    @Input() hook: WorkflowNodeHook;
+    _hook: WorkflowNodeHook;
+    @Input('hook')
+    set hook(data: WorkflowNodeHook) {
+        if (data) {
+            this._hook = data;
+            if (this._hook.config['hookIcon']) {
+                this.icon = (<WorkflowNodeHookConfigValue>this._hook.config['hookIcon']).value.toLowerCase();
+            } else {
+                this.icon = this._hook.model.icon.toLowerCase();
+            }
+        }
+    }
+    get hook() {
+      return this._hook;
+    }
     @Input() readonly = false;
     @Input() workflow: Workflow;
     @Input() project: Project;
@@ -24,7 +39,7 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
 
     @ViewChild('editHook')
     editHook: WorkflowNodeHookFormComponent;
-
+    icon: string;
     loading = false;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _toast: ToastService,
@@ -51,9 +66,9 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
             Workflow.updateHook(workflowToUpdate, h.hook);
 
         }
-        this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate).finally(() => {
+        this._workflowStore.updateWorkflow(workflowToUpdate.project_key, workflowToUpdate).pipe(finalize(() => {
             this.loading = false;
-        }).subscribe(() => {
+        })).subscribe(() => {
             this.editHook.modal.approve(true);
             this._toast.success('', this._translate.instant('workflow_updated'));
         });

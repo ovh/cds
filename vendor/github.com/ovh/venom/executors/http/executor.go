@@ -42,6 +42,8 @@ type Executor struct {
 	IgnoreVerifySSL   bool        `json:"ignore_verify_ssl" yaml:"ignore_verify_ssl" mapstructure:"ignore_verify_ssl"`
 	BasicAuthUser     string      `json:"basic_auth_user" yaml:"basic_auth_user" mapstructure:"basic_auth_user"`
 	BasicAuthPassword string      `json:"basic_auth_password" yaml:"basic_auth_password" mapstructure:"basic_auth_password"`
+	SkipHeaders       bool        `json:"skip_headers" yaml:"skip_headers" mapstructure:"skip_headers"`
+	SkipBody          bool        `json:"skip_body" yaml:"skip_body" mapstructure:"skip_body"`
 }
 
 // Result represents a step result. Json and yaml descriptor are used for json output
@@ -56,6 +58,12 @@ type Result struct {
 	Err         string      `json:"err,omitempty" yaml:"err,omitempty"`
 }
 
+// ZeroValueResult return an empty implemtation of this executor result
+func (Executor) ZeroValueResult() venom.ExecutorResult {
+	r, _ := executors.Dump(Result{})
+	return r
+}
+
 // GetDefaultAssertions return default assertions for this executor
 // Optional
 func (Executor) GetDefaultAssertions() venom.StepAssertions {
@@ -64,6 +72,11 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 
 // Run execute TestStep
 func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
+	t0 := time.Now()
+	l.Debugf("http.Run> Begin")
+	defer func() {
+		l.Debugf("http.Run> End (%.3f seconds)", time.Since(t0).Seconds())
+	}()
 
 	// transform step to Executor Instance
 	var t Executor
@@ -85,13 +98,15 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		req.Header.Set(k, v)
 	}
 
-    tr := &http.Transport{
-        TLSClientConfig: &tls.Config{InsecureSkipVerify: t.IgnoreVerifySSL},
-    }
-    client := &http.Client{Transport: tr}
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: t.IgnoreVerifySSL},
+	}
+	client := &http.Client{Transport: tr}
 
 	start := time.Now()
+	l.Debugf("http.Run.doRequest> Begin")
 	resp, err := client.Do(req)
+	l.Debugf("http.Run.doRequest> End (%.3f seconds)", time.Since(t0).Seconds())
 	if err != nil {
 		return nil, err
 	}
@@ -102,29 +117,34 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	var bb []byte
 	if resp.Body != nil {
 		defer resp.Body.Close()
-		var errr error
-		bb, errr = ioutil.ReadAll(resp.Body)
-		if errr != nil {
-			return nil, errr
-		}
-		r.Body = string(bb)
 
-		bodyJSONArray := []interface{}{}
-		if err := json.Unmarshal(bb, &bodyJSONArray); err != nil {
-			bodyJSONMap := map[string]interface{}{}
-			if err2 := json.Unmarshal(bb, &bodyJSONMap); err2 == nil {
-				r.BodyJSON = bodyJSONMap
+		if !t.SkipBody {
+			var errr error
+			bb, errr = ioutil.ReadAll(resp.Body)
+			if errr != nil {
+				return nil, errr
 			}
-		} else {
-			r.BodyJSON = bodyJSONArray
+			r.Body = string(bb)
+
+			bodyJSONArray := []interface{}{}
+			if err := json.Unmarshal(bb, &bodyJSONArray); err != nil {
+				bodyJSONMap := map[string]interface{}{}
+				if err2 := json.Unmarshal(bb, &bodyJSONMap); err2 == nil {
+					r.BodyJSON = bodyJSONMap
+				}
+			} else {
+				r.BodyJSON = bodyJSONArray
+			}
 		}
 	}
 
-	r.Headers = make(map[string]string)
-
-	for k, v := range resp.Header {
-		r.Headers[k] = v[0]
+	if !t.SkipHeaders {
+		r.Headers = make(map[string]string)
+		for k, v := range resp.Header {
+			r.Headers[k] = v[0]
+		}
 	}
+
 	r.StatusCode = resp.StatusCode
 
 	return executors.Dump(r)
@@ -196,7 +216,7 @@ func (e Executor) getRequest() (*http.Request, error) {
 	}
 
 	if len(e.BasicAuthUser) > 0 || len(e.BasicAuthPassword) > 0 {
-	    req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
 
 	if writer != nil {

@@ -23,7 +23,8 @@ type Service struct {
 type Configuration struct {
 	Name string `toml:"name" comment:"Name of this CDS VCS Service"`
 	HTTP struct {
-		Port int `toml:"port" default:"8084" toml:"name"`
+		Addr string `toml:"addr" default:"" commented:"true" comment:"Listen address without port, example: 127.0.0.1"`
+		Port int    `toml:"port" default:"8084" toml:"name"`
 	} `toml:"http" comment:"######################\n CDS VCS HTTP Configuration \n######################"`
 	URL string `default:"http://localhost:8084"`
 	UI  struct {
@@ -70,9 +71,8 @@ type GithubServerConfiguration struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
-	DisableWebHooks         bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
-	DisableWebHooksCreation bool `toml:"disableWebHooksCreation" comment:"Does webhooks creation are supported by VCS Server" json:"disable_web_hook_creation"`
-	DisablePolling          bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	DisableWebHooks bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisablePolling  bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 }
 
 func (s GithubServerConfiguration) check() error {
@@ -95,9 +95,8 @@ type GitlabServerConfiguration struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
-	DisableWebHooks         bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
-	DisableWebHooksCreation bool `toml:"disableWebHooksCreation" comment:"Does webhooks creation are supported by VCS Server" json:"disable_web_hook_creation"`
-	DisablePolling          bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	DisableWebHooks bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisablePolling  bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 }
 
 func (s GitlabServerConfiguration) check() error {
@@ -112,9 +111,8 @@ type BitbucketServerConfiguration struct {
 		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
 	}
-	DisableWebHooks         bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
-	DisableWebHooksCreation bool `toml:"disableWebHooksCreation" comment:"Does webhooks creation are supported by VCS Server" json:"disable_web_hook_creation"`
-	DisablePolling          bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
+	DisableWebHooks bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
+	DisablePolling  bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
 }
 
 func (s BitbucketServerConfiguration) check() error {

@@ -15,39 +15,39 @@ import (
 )
 
 // insertWorkflowRun inserts in table "workflow_run""
-func insertWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun) error {
-	runDB := Run(*w)
+func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
+	runDB := Run(*wr)
 	if err := db.Insert(&runDB); err != nil {
 		return sdk.WrapError(err, "insertWorkflowRun> Unable to insert run")
 	}
-	w.ID = runDB.ID
+	wr.ID = runDB.ID
 	return nil
 }
 
 // updateWorkflowRun updates in table "workflow_run""
-func updateWorkflowRun(db gorp.SqlExecutor, w *sdk.WorkflowRun) error {
-	w.LastModified = time.Now()
+func updateWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
+	wr.LastModified = time.Now()
 
-	for _, info := range w.Infos {
+	for _, info := range wr.Infos {
 		if info.IsError {
-			w.Status = string(sdk.StatusFail)
+			wr.Status = string(sdk.StatusFail)
 		}
 	}
 
-	runDB := Run(*w)
+	runDB := Run(*wr)
 	if _, err := db.Update(&runDB); err != nil {
-		return sdk.WrapError(err, "updateWorkflowRun> Unable to update run")
+		return sdk.WrapError(err, "updateWorkflowRun> Unable to update workflow run")
 	}
-	w.ID = runDB.ID
+	wr.ID = runDB.ID
 	return nil
 }
 
 //UpdateWorkflowRunStatus update status of a workflow run
-func UpdateWorkflowRunStatus(db gorp.SqlExecutor, ID int64, status string) error {
+func UpdateWorkflowRunStatus(db gorp.SqlExecutor, wrID int64, status string) error {
 	//Update workflow run status
 	query := "UPDATE workflow_run SET status = $1, last_modified = $2 WHERE id = $3"
-	if _, err := db.Exec(query, status, time.Now(), ID); err != nil {
-		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", ID, status)
+	if _, err := db.Exec(query, status, time.Now(), wrID); err != nil {
+		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", wrID, status)
 	}
 	return nil
 }
@@ -119,15 +119,12 @@ func (r *Run) PostGet(db gorp.SqlExecutor) error {
 	return nil
 }
 
-func updateTags(db gorp.SqlExecutor, r *Run) error {
-	if _, err := db.Exec("delete from workflow_run_tag where workflow_run_id = $1", r.ID); err != nil {
-		return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
-	}
-
+// InsertWorkflowRunTags  inserts new tags in database
+func InsertWorkflowRunTags(db gorp.SqlExecutor, runID int64, runTags []sdk.WorkflowRunTag) error {
 	tags := []interface{}{}
-	for i := range r.Tags {
-		r.Tags[i].WorkflowRunID = r.ID
-		t := RunTag(r.Tags[i])
+	for i := range runTags {
+		runTags[i].WorkflowRunID = runID
+		t := RunTag(runTags[i])
 		tags = append(tags, &t)
 	}
 
@@ -136,8 +133,21 @@ func updateTags(db gorp.SqlExecutor, r *Run) error {
 			return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
 		}
 	}
-
 	return nil
+}
+
+// UpdateWorkflowRunTags updates new tags in database
+func UpdateWorkflowRunTags(db gorp.SqlExecutor, r *sdk.WorkflowRun) error {
+	run := Run(*r)
+	return updateTags(db, &run)
+}
+
+func updateTags(db gorp.SqlExecutor, r *Run) error {
+	if _, err := db.Exec("delete from workflow_run_tag where workflow_run_id = $1", r.ID); err != nil {
+		return sdk.WrapError(err, "Run.updateTags> Unable to store tags")
+	}
+
+	return InsertWorkflowRunTags(db, r.ID, r.Tags)
 }
 
 // LoadLastRun returns the last run for a workflow
@@ -179,6 +189,16 @@ func LoadRunByID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
 	query := `select workflow_run.*
 	from workflow_run
 	where workflow_run.id = $1`
+	return loadRun(db, query, id)
+}
+
+// LoadAndLockRunByJobID loads a run by a job id
+func LoadAndLockRunByJobID(db gorp.SqlExecutor, id int64) (*sdk.WorkflowRun, error) {
+	query := `select workflow_run.*
+	from workflow_run
+	join workflow_node_run on workflow_run.id = workflow_node_run.workflow_run_id
+	join workflow_node_run_job on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
+	where workflow_node_run_job.id = $1 for update`
 	return loadRun(db, query, id)
 }
 
@@ -361,10 +381,12 @@ func PurgeWorkflowRun(db gorp.SqlExecutor, wf sdk.Workflow) error {
 		qDelete := `
 			UPDATE workflow_run SET to_delete = true
 			WHERE workflow_run.id IN (
-				SELECT workflow_run.id FROM workflow_run ORDER BY workflow_run.id DESC OFFSET $1 ROWS
+				SELECT workflow_run.id FROM workflow_run
+				WHERE workflow_run.workflow_id = $1
+				ORDER BY workflow_run.id DESC OFFSET $2 ROWS
 			)
 		`
-		if _, err := db.Exec(qDelete, wf.HistoryLength); err != nil {
+		if _, err := db.Exec(qDelete, wf.ID, wf.HistoryLength); err != nil {
 			log.Warning("PurgeWorkflowRun> Unable to update workflow run for purge without tags for workflow id %d and history length %d : %s", wf.ID, wf.HistoryLength, err)
 			return err
 		}

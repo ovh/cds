@@ -3,6 +3,7 @@ package bitbucket
 import (
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
@@ -83,7 +84,9 @@ func (b *bitbucketClient) findUser(email string) *User {
 	if !b.consumer.cache.Get(stashUserKey, &stashUser) && email != "" {
 		newStashUser, err := b.findByEmail(email)
 		if err != nil {
-			log.Warning("Unable to get stash user %s : %s", email, err)
+			if !strings.Contains(err.Error(), "User not found") {
+				log.Warning("Unable to get stash user %s : %s", email, err)
+			}
 			return nil
 		}
 		b.consumer.cache.Set(stashUserKey, newStashUser)

@@ -7,13 +7,17 @@ import {ApplicationWorkflowComponent} from './application.workflow.component';
 import {ApplicationModule} from '../../application.module';
 import {SharedModule} from '../../../../shared/shared.module';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
+import {ProjectService} from '../../../../service/project/project.service';
+import {PipelineService} from '../../../../service/pipeline/pipeline.service';
+import {EnvironmentService} from '../../../../service/environment/environment.service';
+import {VariableService} from '../../../../service/variable/variable.service';
 import {Injector} from '@angular/core';
 import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
 import {Project} from '../../../../model/project.model';
 import {Application, ApplicationFilter} from '../../../../model/application.model';
 import {XHRBackend} from '@angular/http';
 import {MockBackend} from '@angular/http/testing';
-import {Observable} from 'rxjs/Rx';
+import {Observable} from 'rxjs/Observable';
 import {WorkflowItem, WorkflowStatusResponse} from '../../../../model/application.workflow.model';
 import {PipelineBuild, Pipeline} from '../../../../model/pipeline.model';
 import {Environment} from '../../../../model/environment.model';
@@ -36,7 +40,11 @@ describe('CDS: Application Workflow', () => {
                 ApplicationWorkflowService,
                 TranslateService,
                 TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                ProjectService,
+                PipelineService,
+                EnvironmentService,
+                VariableService
             ],
             imports : [
                 ApplicationModule,

@@ -17,17 +17,17 @@
             </span>
         </div>
     </div>
-
-
 </div>
-<sm-modal
+<sm-modal #editSchedulerModal
         title="{{ 'scheduler_edit_title' | translate: {
         app: application.name,
         pip: pipeline.name,
         env: (scheduler.environment_name !== 'NoEnv')?' / ' + scheduler.environment_name:''
-    } }}" #editSchedulerModal>
+    } }}">
     <modal-content>
-        <app-application-scheduler-form [project]="project" [application]="application" [scheduler]="editableScheduler"></app-application-scheduler-form>
+        <ng-container *ngIf="show">
+            <app-application-scheduler-form [project]="project" [application]="application" [pipeline]="pipeline" [scheduler]="editableScheduler" [edit]="true"></app-application-scheduler-form>
+        </ng-container>
     </modal-content>
     <modal-actions>
         <button class="ui grey button" (click)="close()">{{ 'btn_cancel' | translate }}</button>

@@ -279,7 +279,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         }
 
         this.svgContainer.insert(componentRef.hostView, 0);
-        this.g.setNode('join-' + join.id, {
+        this.g.setNode('join-' + join.id, <any>{
             shape: 'circle',
             label: () => {
                 componentRef.location.nativeElement.style.width = '100%';
@@ -344,7 +344,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
             this.svgContainer.insert(componentRef.hostView, 0);
             this.g.setNode(
-                'hook-' + node.id + '-' + h.id, {
+                'hook-' + node.id + '-' + h.id, <any>{
                     label: () => {
                         componentRef.location.nativeElement.style.width = '100%';
                         componentRef.location.nativeElement.style.height = '100%';
@@ -371,7 +371,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
         }
 
         this.svgContainer.insert(componentRef.hostView, 0);
-        this.g.setNode('node-' + node.id, {
+        this.g.setNode('node-' + node.id, <any>{
             label: () => {
                 componentRef.location.nativeElement.style.width = '97%';
                 componentRef.location.nativeElement.style.height = '100%';

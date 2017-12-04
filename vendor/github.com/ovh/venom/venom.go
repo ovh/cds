@@ -1,46 +1,69 @@
 package venom
 
 import (
-	"bytes"
-	"encoding/json"
-	"encoding/xml"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
-	"time"
 
-	"github.com/mndrix/tap-go"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	pb "gopkg.in/cheggaaa/pb.v1"
 )
 
 // Version of Venom
 // One Line for this, used by release.sh script
 // Keep "const Version on one line"
-const Version = "0.15.0"
+const Version = "0.16.0"
 
-// PrintFunc used by venom to print output
-var PrintFunc = fmt.Printf
+func New() *Venom {
+	v := &Venom{
+		LogLevel:             "info",
+		LogOutput:            os.Stdout,
+		OutputDetails:        "medium",
+		PrintFunc:            fmt.Printf,
+		executors:            map[string]Executor{},
+		contexts:             map[string]TestCaseContext{},
+		variables:            map[string]string{},
+		IgnoreVariables:      []string{},
+		OutputFormat:         "xml",
+		OutputResume:         false,
+		OutputResumeFailures: false,
+	}
+	return v
+}
 
-var (
-	executors = map[string]Executor{}
-	contexts  = map[string]TestCaseContext{}
-)
+type Venom struct {
+	LogLevel  string
+	LogOutput io.Writer
 
-const (
-	// ContextKey is key for Test Case Context. this
-	// can be used by executors for getting context
-	ContextKey = "tcContext"
-)
+	PrintFunc func(format string, a ...interface{}) (n int, err error)
+	executors map[string]Executor
+	contexts  map[string]TestCaseContext
+
+	testsuites      []TestSuite
+	variables       map[string]string
+	IgnoreVariables []string
+
+	OutputDetails        string
+	outputProgressBar    map[string]*pb.ProgressBar
+	OutputFormat         string
+	OutputDir            string
+	OutputResume         bool
+	OutputResumeFailures bool
+}
+
+func (v *Venom) AddVariables(variables map[string]string) {
+	for k, variable := range variables {
+		v.variables[k] = variable
+	}
+}
 
 // RegisterExecutor register Test Executors
-func RegisterExecutor(name string, e Executor) {
-	executors[name] = e
+func (v *Venom) RegisterExecutor(name string, e Executor) {
+	v.executors[name] = e
 }
 
 // WrapExecutor initializes a test by name
 // no type -> exec is default
-func WrapExecutor(t map[string]interface{}, tcc TestCaseContext) (*ExecutorWrap, error) {
+func (v *Venom) WrapExecutor(t map[string]interface{}, tcc TestCaseContext) (*ExecutorWrap, error) {
 	var name string
 	var retry, delay, timeout int
 
@@ -67,7 +90,7 @@ func WrapExecutor(t map[string]interface{}, tcc TestCaseContext) (*ExecutorWrap,
 		return nil, errTimeout
 	}
 
-	if e, ok := executors[name]; ok {
+	if e, ok := v.executors[name]; ok {
 		ew := &ExecutorWrap{
 			executor: e,
 			retry:    retry,
@@ -81,15 +104,15 @@ func WrapExecutor(t map[string]interface{}, tcc TestCaseContext) (*ExecutorWrap,
 }
 
 // RegisterTestCaseContext new register TestCaseContext
-func RegisterTestCaseContext(name string, tcc TestCaseContext) {
-	contexts[name] = tcc
+func (v *Venom) RegisterTestCaseContext(name string, tcc TestCaseContext) {
+	v.contexts[name] = tcc
 }
 
 // ContextWrap initializes a context for a testcase
 // no type -> parent context
-func ContextWrap(tc *TestCase) (TestCaseContext, error) {
+func (v *Venom) ContextWrap(tc *TestCase) (TestCaseContext, error) {
 	if tc.Context == nil {
-		return contexts["default"], nil
+		return v.contexts["default"], nil
 	}
 	var typeName string
 	if itype, ok := tc.Context["type"]; ok {
@@ -97,10 +120,10 @@ func ContextWrap(tc *TestCase) (TestCaseContext, error) {
 	}
 
 	if typeName == "" {
-		return contexts["default"], nil
+		return v.contexts["default"], nil
 	}
-	contexts[typeName].SetTestCase(*tc)
-	return contexts[typeName], nil
+	v.contexts[typeName].SetTestCase(*tc)
+	return v.contexts[typeName], nil
 }
 
 func getAttrInt(t map[string]interface{}, name string) (int, error) {
@@ -116,136 +139,4 @@ func getAttrInt(t map[string]interface{}, name string) (int, error) {
 		out = 0
 	}
 	return out, nil
-}
-
-// Exit func display an error message on stderr and exit 1
-func Exit(format string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, format, args...)
-	os.Exit(1)
-}
-
-// OutputResult output result to sdtout, files...
-func OutputResult(format string, resume, resumeFailures bool, outputDir string, tests Tests, elapsed time.Duration, detailsLevel string) error {
-	var data []byte
-	var err error
-	switch format {
-	case "json":
-		data, err = json.MarshalIndent(tests, "", "  ")
-		if err != nil {
-			log.Fatalf("Error: cannot format output json (%s)", err)
-		}
-	case "tap":
-		data, err = outputTapFormat(tests)
-		if err != nil {
-			log.Fatalf("Error: cannot format output tap (%s)", err)
-		}
-	case "yml", "yaml":
-		data, err = yaml.Marshal(tests)
-		if err != nil {
-			log.Fatalf("Error: cannot format output yaml (%s)", err)
-		}
-	default:
-		dataxml, errm := xml.MarshalIndent(tests, "", "  ")
-		if errm != nil {
-			log.Fatalf("Error: cannot format xml output: %s", errm)
-		}
-		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>\n`), dataxml...)
-	}
-
-	if detailsLevel == "high" {
-		PrintFunc(string(data))
-	}
-
-	if resume {
-		outputResume(tests, elapsed, resumeFailures)
-	}
-
-	if outputDir != "" {
-		filename := outputDir + "/" + "test_results" + "." + format
-		if err := ioutil.WriteFile(filename, data, 0644); err != nil {
-			return fmt.Errorf("Error while creating file %s, err:%s", filename, err)
-		}
-	}
-	return nil
-}
-
-func outputTapFormat(tests Tests) ([]byte, error) {
-	t := tap.New()
-	buf := new(bytes.Buffer)
-	t.Writer = buf
-	t.Header(tests.Total)
-	for _, ts := range tests.TestSuites {
-		for _, tc := range ts.TestCases {
-			name := ts.Name + " / " + tc.Name
-			if len(tc.Skipped) > 0 {
-				t.Skip(1, name)
-				continue
-			}
-
-			if len(tc.Errors) > 0 {
-				t.Fail(name)
-				for _, e := range tc.Errors {
-					t.Diagnosticf("Error: %s", e.Value)
-				}
-				continue
-			}
-
-			if len(tc.Failures) > 0 {
-				t.Fail(name)
-				for _, e := range tc.Failures {
-					t.Diagnosticf("Failure: %s", e.Value)
-				}
-				continue
-			}
-
-			t.Pass(name)
-		}
-	}
-
-	return buf.Bytes(), nil
-}
-
-func outputResume(tests Tests, elapsed time.Duration, resumeFailures bool) {
-
-	if resumeFailures {
-		for _, t := range tests.TestSuites {
-			if t.Failures > 0 || t.Errors > 0 {
-				PrintFunc("FAILED %s\n", t.Name)
-				PrintFunc("--------------\n")
-
-				for _, tc := range t.TestCases {
-					for _, f := range tc.Failures {
-						PrintFunc("%s\n", f.Value)
-					}
-					for _, f := range tc.Errors {
-						PrintFunc("%s\n", f.Value)
-					}
-				}
-				PrintFunc("-=-=-=-=-=-=-=-=-\n")
-			}
-		}
-	}
-
-	totalTestCases := 0
-	totalTestSteps := 0
-	for _, t := range tests.TestSuites {
-		if t.Failures > 0 || t.Errors > 0 {
-			PrintFunc("FAILED %s\n", t.Name)
-		}
-		totalTestCases += len(t.TestCases)
-		for _, tc := range t.TestCases {
-			totalTestSteps += len(tc.TestSteps)
-		}
-	}
-
-	PrintFunc("Total:%d TotalOK:%d TotalKO:%d TotalSkipped:%d TotalTestSuite:%d TotalTestCase:%d TotalTestStep:%d Duration:%s\n",
-		tests.Total,
-		tests.TotalOK,
-		tests.TotalKO,
-		tests.TotalSkipped,
-		len(tests.TestSuites),
-		totalTestCases,
-		totalTestSteps,
-		elapsed,
-	)
 }

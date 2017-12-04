@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -10,6 +11,58 @@ import (
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
+
+func syncTakeJobInNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.WorkflowNodeJobRun, stageIndex int, chanEvent chan<- interface{}) (errExecute error) {
+	t0 := time.Now()
+	log.Debug("workflow.syncTakeJobInNodeRun> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
+	defer func() {
+		log.Debug("workflow.syncTakeJobInNodeRun> End [#%d.%d] runID=%d (%s) - %.3fs", n.Number, n.SubNumber, n.WorkflowRunID, n.Status, time.Since(t0).Seconds())
+		if errExecute != nil {
+			log.Error("workflow.syncTakeJobInNodeRun.defer> Unable to execute run %d: %v", n.WorkflowRunID, errExecute)
+		}
+	}()
+
+	//If status is not waiting neither build: nothing to do
+	if sdk.StatusIsTerminated(n.Status) {
+		return nil
+	}
+
+	//Browse stages
+	stage := &n.Stages[stageIndex]
+	if stage.Status == sdk.StatusWaiting {
+		stage.Status = sdk.StatusBuilding
+	}
+	isStopped := true
+	for i := range stage.RunJobs {
+		rj := &stage.RunJobs[i]
+		if rj.ID == j.ID {
+			rj.Status = j.Status
+			rj.Start = j.Start
+			rj.Done = j.Done
+			rj.Model = j.Model
+			rj.Job = j.Job
+		}
+		if rj.Status != sdk.StatusStopped.String() {
+			isStopped = false
+		}
+	}
+	if isStopped {
+		stage.Status = sdk.StatusStopped
+	}
+
+	if n.Status == sdk.StatusWaiting.String() {
+		n.Status = sdk.StatusBuilding.String()
+		if chanEvent != nil {
+			chanEvent <- n
+		}
+	}
+
+	// Save the node run in database
+	if err := UpdateNodeRun(db, n); err != nil {
+		return sdk.WrapError(fmt.Errorf("Unable to update node id=%d at status %s. err:%s", n.ID, n.Status, err), "workflow.syncTakeJobInNodeRun> Unable to execute node")
+	}
+	return nil
+}
 
 func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun, chanEvent chan<- interface{}) (errExecute error) {
 	t0 := time.Now()
@@ -22,7 +75,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 	}()
 
 	//If status is not waiting neither build: nothing to do
-	if n.Status != sdk.StatusWaiting.String() && n.Status != sdk.StatusBuilding.String() {
+	if sdk.StatusIsTerminated(n.Status) {
 		return nil
 	}
 
@@ -93,10 +146,6 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
 	n.Status = newStatus
-	//If the node is over, push the status in the build parameter, so it would be availabe in children build parameters
-	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
-		sdk.AddParameter(&n.BuildParameters, "cds.status", sdk.StringParameter, n.Status)
-	}
 
 	// Save the node run in database
 	if err := UpdateNodeRun(db, n); err != nil {
@@ -217,29 +266,32 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	log.Debug("syncStage> work on stage %s", stage.Name)
 	// browse all running jobs
 	for indexJob := range stage.RunJobs {
-		pbJob := &stage.RunJobs[indexJob]
+		runJob := &stage.RunJobs[indexJob]
 		// If job is runnning, sync it
-		if pbJob.Status == sdk.StatusBuilding.String() || pbJob.Status == sdk.StatusWaiting.String() {
-			pbJobDB, errJob := LoadNodeJobRun(db, store, pbJob.ID)
+		if runJob.Status == sdk.StatusBuilding.String() || runJob.Status == sdk.StatusWaiting.String() {
+			runJobDB, errJob := LoadNodeJobRun(db, store, runJob.ID)
 			if errJob != nil {
 				return stageEnd, errJob
 			}
 
-			if pbJobDB.Status == sdk.StatusBuilding.String() || pbJobDB.Status == sdk.StatusWaiting.String() {
+			if runJobDB.Status == sdk.StatusBuilding.String() || runJobDB.Status == sdk.StatusWaiting.String() {
 				stageEnd = false
 			}
-
-			pbJob.SpawnInfos = pbJobDB.SpawnInfos
+			spawnInfos, err := loadNodeRunJobInfo(db, runJob.ID)
+			if err != nil {
+				return false, sdk.WrapError(err, "syncStage> unable to load spawn infos for runJob: %d", runJob.ID)
+			}
+			runJob.SpawnInfos = spawnInfos
 
 			// If same status, sync step status
-			if pbJobDB.Status == pbJob.Status {
-				pbJob.Job.StepStatus = pbJobDB.Job.StepStatus
+			if runJobDB.Status == runJob.Status {
+				runJob.Job.StepStatus = runJobDB.Job.StepStatus
 			} else {
-				pbJob.Status = pbJobDB.Status
-				pbJob.Start = pbJobDB.Start
-				pbJob.Done = pbJobDB.Done
-				pbJob.Model = pbJobDB.Model
-				pbJob.Job = pbJobDB.Job
+				runJob.Status = runJobDB.Status
+				runJob.Start = runJobDB.Start
+				runJob.Done = runJobDB.Done
+				runJob.Model = runJobDB.Model
+				runJob.Job = runJobDB.Job
 			}
 		}
 	}
@@ -312,27 +364,123 @@ func NodeBuildParameters(proj *sdk.Project, wf *sdk.Workflow, wr *sdk.WorkflowRu
 }
 
 // StopWorkflowNodeRun to stop a workflow node run with a specific spawn info
-func StopWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanEvent chan<- interface{}) error {
+func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanEvent chan<- interface{}) error {
+	const stopWorkflowNodeRunNBWorker = 5
+	var wg sync.WaitGroup
 	// Load node job run ID
 	ids, errIDS := LoadNodeJobRunIDByNodeRunID(db, nodeRun.ID)
 	if errIDS != nil {
-		return sdk.WrapError(errIDS, "stopWorkflowNodeRunHandler> Cannot load node job run id")
+		return sdk.WrapError(errIDS, "StopWorkflowNodeRun> Cannot load node jobs run ids ")
 	}
 
-	for _, nrjID := range ids {
-		njr, errNRJ := LoadAndLockNodeJobRunWait(db, store, nrjID)
-		if errNRJ != nil {
-			return sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
-		}
-		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
-		if err := UpdateNodeJobRunStatus(db, store, proj, njr, sdk.StatusStopped, chanEvent); err != nil {
-			return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
-		}
+	chanNjrID := make(chan int64, stopWorkflowNodeRunNBWorker)
+	chanNodeJobRun := make(chan interface{}, stopWorkflowNodeRunNBWorker)
+	chanErr := make(chan error, stopWorkflowNodeRunNBWorker)
+	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
+		go stopWorkflowNodeJobRun(db, store, proj, &nodeRun, stopInfos, chanNjrID, chanNodeJobRun, chanErr, &wg)
 	}
 
-	if err := updateNodeRunStatus(db, nodeRun.ID, sdk.StatusStopped.String()); err != nil {
-		return sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node run status")
+	wg.Add(len(ids))
+	for _, njrID := range ids {
+		chanNjrID <- njrID
+	}
+	close(chanNjrID)
+
+	for i := 0; i < len(ids); i++ {
+		select {
+		case njRun := <-chanNodeJobRun:
+			if chanEvent != nil {
+				chanEvent <- njRun
+			}
+		case err := <-chanErr:
+			return err
+		}
+	}
+	wg.Wait()
+
+	// Update stages from node run
+	for iS := range nodeRun.Stages {
+		stag := &nodeRun.Stages[iS]
+		for iR := range stag.RunJobs {
+			runj := &stag.RunJobs[iR]
+			runj.Status = sdk.StatusStopped.String()
+			for iStep := range runj.Job.StepStatus {
+				stepStat := &runj.Job.StepStatus[iStep]
+				stepStat.Status = sdk.StatusStopped.String()
+			}
+		}
+		stag.Status = sdk.StatusStopped
+	}
+
+	nodeRun.Status = sdk.StatusStopped.String()
+	if errU := UpdateNodeRun(db, &nodeRun); errU != nil {
+		return sdk.WrapError(errU, "StopWorkflowNodeRun> Cannot update node run")
 	}
 
 	return nil
+}
+
+func stopWorkflowNodeJobRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanNodeJobRun chan<- interface{}, chanErr chan<- error, wg *sync.WaitGroup) {
+	for njrID := range chanNjrID {
+		tx, errTx := db.Begin()
+		if errTx != nil {
+			chanErr <- sdk.WrapError(errTx, "StopWorkflowNodeRun> Cannot create transaction")
+			wg.Done()
+			return
+		}
+
+		njr, errNRJ := LoadAndLockNodeJobRunWait(tx, store, njrID)
+		if errNRJ != nil {
+			chanErr <- sdk.WrapError(errNRJ, "StopWorkflowNodeRun> Cannot load node job run id")
+			tx.Rollback()
+			wg.Done()
+			return
+		}
+
+		if err := AddSpawnInfosNodeJobRun(tx, store, proj, njr.ID, []sdk.SpawnInfo{stopInfos}); err != nil {
+			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot save spawn info job %d", njr.ID)
+			tx.Rollback()
+			wg.Done()
+			return
+		}
+
+		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
+		if err := UpdateNodeJobRunStatus(tx, store, proj, njr, sdk.StatusStopped, chanNodeJobRun); err != nil {
+			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
+			tx.Rollback()
+			wg.Done()
+			return
+		}
+
+		if err := tx.Commit(); err != nil {
+			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot commit transaction")
+			tx.Rollback()
+			wg.Done()
+			return
+		}
+		wg.Done()
+	}
+}
+
+// SyncNodeRunRunJob sync step status and spawnInfos in a specific run job
+func SyncNodeRunRunJob(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun, nodeJobRun sdk.WorkflowNodeJobRun) (bool, error) {
+	found := false
+	for i := range nodeRun.Stages {
+		s := &nodeRun.Stages[i]
+		for j := range s.RunJobs {
+			runJob := &s.RunJobs[j]
+			if runJob.ID == nodeJobRun.ID {
+				spawnInfos, err := loadNodeRunJobInfo(db, runJob.ID)
+				if err != nil {
+					return false, sdk.WrapError(err, "SyncNodeRunRunJob> unable to load spawn infos for runJobID: %d", runJob.ID)
+				}
+				runJob.SpawnInfos = spawnInfos
+				runJob.Job.StepStatus = nodeJobRun.Job.StepStatus
+				found = true
+				break
+			}
+		}
+	}
+
+	return found, nil
 }

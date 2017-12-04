@@ -260,7 +260,7 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 	//Check if the webhooks if disabled
 	if info, err := repositoriesmanager.GetWebhooksInfos(client); err != nil {
 		return nil, err
-	} else if !info.WebhooksSupported || info.WebhooksDisabled || info.WebhooksCreationDisabled || !info.WebhooksCreationSupported {
+	} else if !info.WebhooksSupported || info.WebhooksDisabled {
 		return nil, sdk.WrapError(sdk.NewError(sdk.ErrForbidden, fmt.Errorf("Webhooks are not supported on %s", server.Name)), "CreateHook>")
 	}
 
@@ -293,13 +293,14 @@ func CreateHook(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, rm, r
 	h.Link = fmt.Sprintf(s, h.UID, t[0], t[1])
 
 	hook := sdk.VCSHook{
-		Method: "POST",
-		URL:    h.Link,
+		Method:   "POST",
+		URL:      h.Link,
+		Workflow: false,
 	}
 
 	log.Info("CreateHook> will create %+v", hook)
 
-	if err := client.CreateHook(repoFullName, hook); err != nil {
+	if err := client.CreateHook(repoFullName, &hook); err != nil {
 		log.Warning("Cannot create hook on repository manager: %s", err)
 		if strings.Contains(err.Error(), "Not yet implemented") {
 			return nil, sdk.WrapError(sdk.ErrNotImplemented, "CreateHook> Cannot create hook on repository manager")

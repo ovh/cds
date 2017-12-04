@@ -32,6 +32,9 @@ const (
 	RequestedWithHeader = "X-Requested-With"
 )
 
+//VERSION is set with -ldflags "-X main.VERSION={{.cds.proj.version}}+{{.cds.version}}"
+var VERSION = "snapshot"
+
 var (
 	auth   IOptions
 	client *http.Client
@@ -77,6 +80,11 @@ func (p *Common) Init(o IOptions) string {
 		}
 	}
 	return "plugin: initialized on " + o.GetURL()
+}
+
+//Version is a common function for all plugins
+func (*Common) Version() string {
+	return VERSION
 }
 
 // Main func call by plugin, display info only

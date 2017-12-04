@@ -51,44 +51,6 @@ describe('CDS: Requirement Form Component', () => {
         backend = undefined;
     });
 
-
-    it('should create a new requirement and auto write value', fakeAsync( () => {
-        let call = 0;
-        // Mock Http request
-        backend.connections.subscribe(connection => {
-            connection.mockRespond(new Response(new ResponseOptions({ body : '["binary", "network"]'})));
-        });
-
-
-        // Create component
-        let fixture = TestBed.createComponent(RequirementsFormComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        let compiled = fixture.debugElement.nativeElement;
-
-        let r = new Requirement('binary');
-        r.name = 'foo';
-        r.value = 'foo';
-
-        fixture.detectChanges();
-        tick(50);
-
-        // simulate typing new variable
-        let inputName = compiled.querySelector('input[name="name"]');
-        inputName.value = r.name;
-        inputName.dispatchEvent(new Event('input'));
-        inputName.dispatchEvent(new Event('keyup'));
-
-        fixture.detectChanges();
-        tick(50);
-
-        spyOn(fixture.componentInstance.event, 'emit');
-        compiled.querySelector('.ui.blue.button').click();
-
-        expect(fixture.componentInstance.event.emit).toHaveBeenCalledWith(new RequirementEvent('add', r));
-    }));
-
     it('should create a new requirement and auto write name', fakeAsync( () => {
         let call = 0;
         // Mock Http request

@@ -456,7 +456,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	assert.Equal(t, app2.ID, w2.Root.Context.Application.ID)
 	assert.Equal(t, env.ID, w2.Root.Context.Environment.ID)
 
-	test.NoError(t, workflow.Delete(db, w2, u))
+	test.NoError(t, workflow.Delete(db, cache, proj, w2, u))
 }
 
 func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
@@ -1004,7 +1004,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 		}
 	}
 
-	test.NoError(t, workflow.Delete(db, w2, u))
+	test.NoError(t, workflow.Delete(db, cache, proj, w2, u))
 }
 
 func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
@@ -1097,5 +1097,5 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	fmt.Println(string(btes))
 
-	test.NoError(t, workflow.Delete(db, &w, u))
+	test.NoError(t, workflow.Delete(db, cache, proj, &w, u))
 }

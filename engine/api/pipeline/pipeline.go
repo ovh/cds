@@ -274,6 +274,46 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 	return pip, nil
 }
 
+// LoadAllNames returns all pipeline names
+func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.User) ([]string, error) {
+	var query string
+	var args []interface{}
+
+	if u == nil || u.Admin {
+		query = `SELECT pipeline.id, pipeline.name
+			  FROM pipeline
+			  WHERE project_id = $1
+			  ORDER BY pipeline.name`
+		args = []interface{}{projID}
+	} else {
+		query = `SELECT distinct(pipeline.id), pipeline.name
+			  FROM pipeline
+			  JOIN pipeline_group ON pipeline.id = pipeline_group.pipeline_id
+			  JOIN group_user ON pipeline_group.group_id = group_user.group_id
+			  WHERE group_user.user_id = $1
+			  AND pipeline.project_id = $2
+			  ORDER by pipeline.name`
+		args = []interface{}{u.ID, projID}
+	}
+
+	var res []struct {
+		ID   int64  `db:"id"`
+		Name string `db:"name"`
+	}
+	if _, err := db.Select(&res, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return []string{}, nil
+		}
+		return nil, sdk.WrapError(err, "application.loadpipelinenames")
+	}
+	var pipelineNames []string
+	for _, pip := range res {
+		pipelineNames = append(pipelineNames, pip.Name)
+	}
+
+	return pipelineNames, nil
+}
+
 // LoadPipelineByGroup loads all pipelines where group has access
 func LoadPipelineByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	query := `SELECT project.projectKey, pipeline.id, pipeline.name,pipeline_group.role FROM pipeline

@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 
@@ -51,7 +52,7 @@ func (api *API) deleteKeyInProjectHandler() Handler {
 				if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot delete key %s", k.Name)
 				}
-				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
 					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot update project last modified date")
 				}
 			}
@@ -89,19 +90,37 @@ func (api *API) addKeyInProjectHandler() Handler {
 
 		switch newKey.Type {
 		case sdk.KeyTypeSsh:
-			pub, priv, errGenerate := keys.Generatekeypair(newKey.Name)
+			pubR, privR, errGenerate := keys.GenerateSSHKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate sshKey")
 			}
-			newKey.Public = pub
-			newKey.Private = priv
+			pub, errPub := ioutil.ReadAll(pubR)
+			if errPub != nil {
+				return sdk.WrapError(errPub, "addKeyInProjectHandler> Unable to read public key")
+			}
+
+			priv, errPriv := ioutil.ReadAll(privR)
+			if errPriv != nil {
+				return sdk.WrapError(errPriv, "addKeyInProjectHandler> Unable to read private key")
+			}
+			newKey.Public = string(pub)
+			newKey.Private = string(priv)
 		case sdk.KeyTypePgp:
-			kid, pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
+			kid, pubR, privR, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInProjectHandler> Cannot generate pgpKey")
 			}
-			newKey.Public = pub
-			newKey.Private = priv
+			pub, errPub := ioutil.ReadAll(pubR)
+			if errPub != nil {
+				return sdk.WrapError(errPub, "addKeyInProjectHandler> Unable to read public key")
+			}
+
+			priv, errPriv := ioutil.ReadAll(privR)
+			if errPriv != nil {
+				return sdk.WrapError(errPriv, "addKeyInProjectHandler> Unable to read private key")
+			}
+			newKey.Public = string(pub)
+			newKey.Private = string(priv)
 			newKey.KeyID = kid
 		default:
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInProjectHandler> unknown key of type: %s", newKey.Type)
@@ -117,7 +136,7 @@ func (api *API) addKeyInProjectHandler() Handler {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot insert project key")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot update project last modified date")
 		}
 

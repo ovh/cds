@@ -133,16 +133,12 @@ func ManualRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.Wo
 		Start:        time.Now(),
 		LastModified: time.Now(),
 		ProjectID:    w.ProjectID,
-		Status:       string(sdk.StatusWaiting),
+		Status:       sdk.StatusWaiting.String(),
 	}
 	wr.Tag(tagTriggeredBy, e.User.Username)
 
 	if err := insertWorkflowRun(db, wr); err != nil {
 		return nil, sdk.WrapError(err, "ManualRun> Unable to manually run workflow %s/%s", w.ProjectKey, w.Name)
-	}
-
-	if chanEvent != nil {
-		chanEvent <- *wr
 	}
 
 	hasRun, errWR := processWorkflowRun(db, store, p, wr, nil, e, nil, chanEvent)

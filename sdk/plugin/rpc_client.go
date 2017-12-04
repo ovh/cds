@@ -75,3 +75,14 @@ func (c *CDSActionRPC) Init(id IOptions) string {
 	}
 	return resp
 }
+
+//Version of the plugin
+func (c *CDSActionRPC) Version() string {
+	var resp string
+	err := c.client.Call("Plugin.Version", new(interface{}), &resp)
+	if err != nil {
+		log.Println("[ERROR] Plugin.Version rpc failed")
+		panic(err)
+	}
+	return resp
+}

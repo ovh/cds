@@ -1,9 +1,20 @@
 import {
-    AfterViewInit, Component, ElementRef,
-    EventEmitter, Input, NgZone, OnInit, Output, ViewChild, ChangeDetectorRef
+    AfterViewInit,
+    ChangeDetectorRef,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    NgZone,
+    OnInit,
+    Output,
+    ViewChild
 } from '@angular/core';
 import {
-    Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions, WorkflowNodeContext, WorkflowNodeHook, WorkflowNodeJoin,
+    Workflow,
+    WorkflowNode,
+    WorkflowNodeHook,
+    WorkflowNodeJoin,
     WorkflowNodeTrigger,
     WorkflowPipelineNameImpact
 } from '../../../model/workflow.model';
@@ -18,7 +29,6 @@ import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
-import {CDSWorker} from '../../worker/worker';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {Router} from '@angular/router';
 import {PipelineStatus} from '../../../model/pipeline.model';
@@ -30,6 +40,7 @@ import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.ser
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowNodeConditionsComponent} from './conditions/node.conditions.component';
+import {first} from 'rxjs/operators';
 
 declare var _: any;
 
@@ -95,9 +106,9 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     workflowCoreSub: Subscription;
 
     constructor(private elementRef: ElementRef, private _changeDetectorRef: ChangeDetectorRef,
-        private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
-        private _wrService: WorkflowRunService, private _pipelineStore: PipelineStore, private _router: Router,
-        private _modalService: SuiModalService, private _workflowCoreService: WorkflowCoreService) {
+                private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
+                private _wrService: WorkflowRunService, private _pipelineStore: PipelineStore, private _router: Router,
+                private _modalService: SuiModalService, private _workflowCoreService: WorkflowCoreService) {
 
     }
 
@@ -109,7 +120,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                     this.currentNodeRun = null;
                 }
                 this.workflowRun = wr;
-                if (wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
+                if (wr.nodes && wr.nodes[this.node.id] && wr.nodes[this.node.id].length > 0) {
                     this.currentNodeRun = wr.nodes[this.node.id][0];
                 }
             } else {
@@ -196,6 +207,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                 }
             });
     }
+
     openEditRunConditions(): void {
         this.workflowConditions.show();
     }
@@ -242,11 +254,13 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         this.updateWorkflow(clonedWorkflow, this.workflowContext.modal);
     }
 
-    deleteNode(b: boolean): void {
-        if (b) {
-            let clonedWorkflow: Workflow = cloneDeep(this.workflow);
+    deleteNode(b: string): void {
+        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
+        if (b === 'all') {
+            // Delete Node with Child
             if (clonedWorkflow.root.id === this.node.id) {
                 this.deleteWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
+                return;
             } else {
                 clonedWorkflow.root.triggers.forEach((t, i) => {
                     this.removeNode(this.node.id, t.workflow_dest_node, clonedWorkflow.root, i);
@@ -260,10 +274,15 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                         }
                     });
                 }
-
-                this.updateWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
+            }
+        } else if (b === 'only') {
+            let ok = Workflow.removeNodeWithoutChild(clonedWorkflow, this.node);
+            if (!ok) {
+                this._toast.error('', this._translate.instant('workflow_node_remove_multiple_parent'));
+                return;
             }
         }
+        this.updateWorkflow(clonedWorkflow, this.workflowDeleteNode.modal);
     }
 
     removeNodeFromJoin(id: number, node: WorkflowNode, parent: WorkflowNodeJoin, index: number) {
@@ -336,7 +355,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
             '/project', this.project.key,
             'workflow', this.workflow.name,
             'run', this.currentNodeRun.num,
-            'node', this.currentNodeRun.id], {queryParams: { name: pip }});
+            'node', this.currentNodeRun.id], {queryParams: {name: pip}});
     }
 
     rename(): void {
@@ -347,8 +366,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         $event.stopPropagation();
         this.loadingStop = true;
         this._wrService.stopNodeRun(this.project.key, this.workflow.name, this.currentNodeRun.num, this.currentNodeRun.id)
-            .finally(() => this.loadingStop = false)
-            .first()
+            .pipe(first())
             .subscribe(() => {
                 this.currentNodeRun.status = this.pipelineStatus.STOPPED;
                 this._changeDetectorRef.detach();

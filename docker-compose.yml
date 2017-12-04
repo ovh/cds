@@ -63,7 +63,7 @@ services:
   # DOCKER_TLS_VERIFY=1
   #
   # If you don't want to open the docker tcp post, you can bind the docker socket in the volumes section 
-  # and set DOCKER_HOST to ///var/run/docker.sock
+  # and set DOCKER_HOST to unix://var/run/docker.sock
   #
   # If your are a Docker for Desktop user (Docker4Mac or Docker4Windows) you will probably have to bind 
   # your docker socket to a tcp port with a socat like
@@ -72,10 +72,10 @@ services:
     image: ovhcom/cds-engine:latest
     command: /app/cds-engine-linux-amd64 start hatchery:swarm
     environment:
-      CDS_HATCHERY_LOCAL_COMMONCONFIGURATION_NAME: hatchery-swarm
-      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
+      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_NAME: hatchery-swarm
+      CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_TOKEN: changeitchangeitchangeitchangeitchangeitchangeitchangeitchangeit
       DOCKER_HOST: tcp://${HOSTNAME}:2375
-      # DOCKER_HOST: ///var/run/docker.sock
+      # DOCKER_HOST="unix://var/run/docker.sock"
       # DOCKER_CERT_PATH=/Users/me/.docker/machines/.client
       # DOCKER_TLS_VERIFY=1
       CDS_HATCHERY_SWARM_COMMONCONFIGURATION_API_HTTP_URL: http://cds-api:8081

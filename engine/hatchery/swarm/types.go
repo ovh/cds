@@ -12,8 +12,8 @@ import (
 type HatcheryConfiguration struct {
 	hatchery.CommonConfiguration `mapstructure:"commonConfiguration" toml:"commonConfiguration"`
 
-	// RatioService Percent reserved for spwaning worker with service requirement
-	RatioService int `mapstructure:"ratioService" toml:"ratioService" default:"75" commented:"false" comment:"Percent reserved for spwaning worker with service requirement"`
+	// RatioService Percent reserved for spawning worker with service requirement
+	RatioService int `mapstructure:"ratioService" toml:"ratioService" default:"75" commented:"false" comment:"Percent reserved for spawning worker with service requirement"`
 
 	// MaxContainers
 	MaxContainers int `mapstructure:"maxContainers" toml:"maxContainers" default:"10" commented:"false" comment:"Max Containers on Host managed by this Hatchery"`

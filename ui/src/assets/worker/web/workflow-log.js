@@ -31,7 +31,7 @@ function loadLog (user, session, api) {
         if (xhr.status === 200 && xhr.responseText !== null) {
             postMessage(xhr.responseText);
             var jsonLogs = JSON.parse(xhr.responseText);
-            if (jsonLogs && jsonLogs.status !== 'Building') {
+            if (jsonLogs && jsonLogs.status !== 'Building' && jsonLogs.status !== 'Waiting') {
                 close();
             }
         }

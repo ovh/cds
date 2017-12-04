@@ -124,6 +124,9 @@ var (
 	ErrHookNotFound                          = Error{ID: 108, Status: http.StatusNotFound}
 	ErrDefaultGroupPermission                = Error{ID: 109, Status: http.StatusBadRequest}
 	ErrLastGroupWithWriteRole                = Error{ID: 110, Status: http.StatusForbidden}
+	ErrInvalidEmailDomain                    = Error{ID: 111, Status: http.StatusForbidden}
+	ErrWorkflowNodeRunJobNotFound            = Error{ID: 112, Status: http.StatusNotFound}
+	ErrBuiltinKeyNotFound                    = Error{ID: 113, Status: http.StatusInternalServerError}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -236,6 +239,9 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowNodeParentNotRun.ID:              "Cannot run a node if their parents have never been launched",
 	ErrDefaultGroupPermission.ID:                "Only read permission is allowed to default group",
 	ErrLastGroupWithWriteRole.ID:                "The last group must have the write permission",
+	ErrInvalidEmailDomain.ID:                    "Invalid domain",
+	ErrWorkflowNodeRunJobNotFound.ID:            "Job not found",
+	ErrBuiltinKeyNotFound.ID:                    "Encryption Key not found",
 }
 
 var errorsFrench = map[int]string{
@@ -348,6 +354,9 @@ var errorsFrench = map[int]string{
 	ErrWorkflowNodeParentNotRun.ID:              "Il est interdit de lancer un noeuds si ses parents n'ont jamais été lancés",
 	ErrDefaultGroupPermission.ID:                "Le groupe par défaut ne peut être utilisé qu'en lecture seule",
 	ErrLastGroupWithWriteRole.ID:                "Le dernier groupe doit avoir les droits d'écriture",
+	ErrInvalidEmailDomain.ID:                    "Domaine invalide",
+	ErrWorkflowNodeRunJobNotFound.ID:            "Job non trouvé",
+	ErrBuiltinKeyNotFound.ID:                    "Clé de chiffrage introuvable",
 }
 
 var errorsLanguages = []map[int]string{

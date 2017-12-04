@@ -4,28 +4,23 @@ import (
 	"context"
 	"fmt"
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 //RunTestStep executes a venom testcase is a venom context
-func RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCase, step TestStep, templater *Templater, l Logger, detailsLevel string) ExecutorResult {
-	var isOK bool
-	var errors []Failure
-	var failures []Failure
-	var systemerr, systemout string
+func (v *Venom) RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCase, step TestStep, l Logger) ExecutorResult {
+	var assertRes assertionsApplied
 
 	var retry int
 	var result ExecutorResult
 
-	for retry = 0; retry <= e.retry && !isOK; retry++ {
-		if retry > 1 && !isOK {
-			log.Debugf("Sleep %d, it's %d attempt", e.delay, retry)
+	for retry = 0; retry <= e.retry && !assertRes.ok; retry++ {
+		if retry > 1 && !assertRes.ok {
+			l.Debugf("Sleep %d, it's %d attempt", e.delay, retry)
 			time.Sleep(time.Duration(e.delay) * time.Second)
 		}
 
 		var err error
-		result, err = runTestStepExecutor(tcc, e, ts, step, templater, l)
+		result, err = runTestStepExecutor(tcc, e, ts, step, l)
 
 		if err != nil {
 			tc.Failures = append(tc.Failures, Failure{Value: RemoveNotPrintableChar(err.Error())})
@@ -35,27 +30,29 @@ func RunTestStep(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, tc *TestCa
 		// add result in templater
 		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
 
+		l.Debugf("Apply assertions")
+
 		if h, ok := e.executor.(executorWithDefaultAssertions); ok {
-			isOK, errors, failures, systemout, systemerr = applyChecks(&result, step, h.GetDefaultAssertions(), l)
+			assertRes = applyChecks(&result, step, h.GetDefaultAssertions(), l)
 		} else {
-			isOK, errors, failures, systemout, systemerr = applyChecks(&result, step, nil, l)
+			assertRes = applyChecks(&result, step, nil, l)
 		}
 		// add result again for extracts values
 		ts.Templater.Add(tc.Name, stringifyExecutorResult(result))
 
-		log.Debugf("result step:%+v", result)
+		l.Debugf("result step:%+v", result)
 
-		if isOK {
+		if assertRes.ok {
 			break
 		}
 	}
-	tc.Errors = append(tc.Errors, errors...)
-	tc.Failures = append(tc.Failures, failures...)
-	if retry > 1 && (len(failures) > 0 || len(errors) > 0) {
+	tc.Errors = append(tc.Errors, assertRes.errors...)
+	tc.Failures = append(tc.Failures, assertRes.failures...)
+	if retry > 1 && (len(assertRes.failures) > 0 || len(assertRes.errors) > 0) {
 		tc.Failures = append(tc.Failures, Failure{Value: fmt.Sprintf("It's a failure after %d attempts", retry)})
 	}
-	tc.Systemout.Value += systemout
-	tc.Systemerr.Value += systemerr
+	tc.Systemout.Value += assertRes.systemout
+	tc.Systemerr.Value += assertRes.systemerr
 
 	return result
 }
@@ -68,7 +65,7 @@ func stringifyExecutorResult(e ExecutorResult) map[string]string {
 	return out
 }
 
-func runTestStepExecutor(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, step TestStep, templater *Templater, l Logger) (ExecutorResult, error) {
+func runTestStepExecutor(tcc TestCaseContext, e *ExecutorWrap, ts *TestSuite, step TestStep, l Logger) (ExecutorResult, error) {
 	if e.timeout == 0 {
 		return e.executor.Run(tcc, l, step)
 	}

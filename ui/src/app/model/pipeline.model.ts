@@ -20,6 +20,22 @@ export class PipelineStatus {
     static SKIPPED = 'Skipped';
     static NEVER_BUILT = 'Never Built';
     static STOPPED = 'Stopped';
+
+    static neverRun(status: string) {
+      if (status === this.SKIPPED || status === this.NEVER_BUILT || status === this.SKIPPED || status === this.DISABLED) {
+        return true;
+      }
+
+      return false;
+    }
+
+    static isActive(status: string) {
+      if (status === this.WAITING || status === this.BUILDING) {
+        return true;
+      }
+
+      return false;
+    }
 }
 
 export class PipelineAudit {
@@ -222,6 +238,7 @@ export class TestSuite {
 
 export class TestCase {
     classname: string;
+    fullname: string;
     name: string;
     time: string;
     errors: Array<Failure>;

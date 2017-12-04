@@ -1,8 +1,8 @@
-<div class="ui grid">
+<div class="ui grid" *ngIf="!loading">
     <div class="three wide column">
         <div class="ui vertical steps">
             <div class="step" *ngFor="let e of project.environments; let i = index"
-                 [class.active]="selectedEnv.name === e.name">
+                 [class.active]="selectedEnv?.name === e.name">
                 <div class="content">
                     <a class="title pointing" (click)="selectNewEnv(e.name)">{{e.name}}</a>
                 </div>
@@ -13,14 +13,12 @@
         </div>
     </div>
     <div class="thirteen wide stretched detailed column">
-        <ng-container *ngIf="!loading && selectedEnv !== null && selectedEnv !== undefined">
+        <ng-container *ngIf="selectedEnv != null">
             <app-environment [environment]="selectedEnv" [project]="project" (deletedEnv)="deleteEnv($event)"></app-environment>
-        </ng-container>
-        <ng-container *ngIf="loading">
-            <div class="ui text active center loader"></div>
         </ng-container>
     </div>
 </div>
-<div class="ui info message" *ngIf="!project.environments || project.environments.length === 0">
+<div class="ui info message" *ngIf="!loading && (!project.environments || project.environments.length === 0)">
     {{ 'environment_no' | translate }}
 </div>
+<div *ngIf="loading" class="ui text active loader">Loading environments...</div>

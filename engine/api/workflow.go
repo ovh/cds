@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/go-gorp/gorp"
@@ -13,10 +12,8 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
@@ -123,27 +120,16 @@ func (api *API) postWorkflowHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 
-		//Push the hook to hooks µService
-		dao := services.NewRepository(api.mustDB, api.Cache)
-		//Load service "hooks"
-		srvs, err := dao.FindByType("hooks")
-		if err != nil {
-			return sdk.WrapError(err, "putWorkflowHandler> Unable to get services dao")
+		if err := workflow.HookRegistration(tx, api.Cache, nil, wf, p); err != nil {
+			return sdk.WrapError(err, "postWorkflowHandler")
 		}
 
-		//Perform the request on one off the hooks service
-		hooks := wf.GetHooks()
-		if len(hooks) > 0 {
-			if len(srvs) < 1 {
-				return sdk.WrapError(fmt.Errorf("postWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
-			}
-			if _, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hooks, nil); errHooks != nil {
-				return sdk.WrapError(errHooks, "postWorkflowHandler> Unable to create hooks")
-			}
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
+			return sdk.WrapError(err, "postWorkflowHandler> Cannot update project workflows last modified")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -199,48 +185,18 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
-			return sdk.WrapError(err, "putWorkflowHandler> Cannot update project last modified date")
+		if err := workflow.UpdateLastModifiedDate(tx, api.Cache, getUser(ctx), p.Key, oldW); err != nil {
+			return sdk.WrapError(err, "putWorkflowHandler> Cannot update last modified date for workflow")
 		}
 
-		hooks := wf.GetHooks()
-		if len(hooks) > 0 {
-			//Push the hook to hooks µService
-			dao := services.NewRepository(api.mustDB, api.Cache)
-			//Load service "hooks"
-			srvs, err := dao.FindByType("hooks")
-			if err != nil {
-				return sdk.WrapError(err, "putWorkflowHandler> Unable to get services dao")
+		if oldW.Name != wf.Name {
+			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
+				return sdk.WrapError(err, "putWorkflowHandler> Cannot update project last modified date")
 			}
+		}
 
-			if wf.Name != name {
-				// update hook
-				for i := range hooks {
-					h := hooks[i]
-					configValue := h.Config["workflow"]
-					configValue.Value = wf.Name
-					h.Config["workflow"] = configValue
-					hooks[i] = h
-				}
-			}
-
-			//Perform the request on one off the hooks service
-			if len(srvs) < 1 {
-				return sdk.WrapError(fmt.Errorf("putWorkflowHandler> No hooks service available, please try again"), "Unable to get services dao")
-			}
-
-			var hooksUpdated map[string]sdk.WorkflowNodeHook
-			code, errHooks := services.DoJSONRequest(srvs, http.MethodPost, "/task/bulk", hooks, &hooksUpdated)
-			if errHooks == nil {
-				for _, h := range hooksUpdated {
-					if err := workflow.UpdateHook(tx, &h); err != nil {
-						return sdk.WrapError(errHooks, "putWorkflowHandler> Cannot update hook")
-					}
-				}
-				log.Debug("putWorkflowHandler> %d hooks created for workflow %s/%s (HTTP status code %d)", len(hooks), wf.ProjectKey, wf.Name, code)
-			} else {
-				return sdk.WrapError(errHooks, "putWorkflowHandler> Unable to create hooks")
-			}
+		if err := workflow.HookRegistration(tx, api.Cache, oldW, wf, p); err != nil {
+			return sdk.WrapError(err, "putWorkflowHandler")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -288,11 +244,11 @@ func (api *API) deleteWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := workflow.Delete(tx, oldW, getUser(ctx)); err != nil {
+		if err := workflow.Delete(tx, api.Cache, p, oldW, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot delete workflow")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
 		}
 

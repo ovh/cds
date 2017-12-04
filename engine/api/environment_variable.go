@@ -83,7 +83,7 @@ func (api *API) restoreEnvironmentAuditHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "restoreEnvironmentAuditHandler> Cannot update last modified date")
 		}
 
@@ -211,7 +211,7 @@ func (api *API) deleteVariableFromEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromEnvironmentHandler> Cannot update last modified date")
 		}
 
@@ -275,7 +275,7 @@ func (api *API) updateVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "updateVariableInEnvironmentHandler: Cannot update last modified date")
 		}
 
@@ -356,7 +356,7 @@ func (api *API) addVariableInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler> Cannot update environment last modified date")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "addVariableInEnvironmentHandler: Cannot update last modified date")
 		}
 		if err := tx.Commit(); err != nil {

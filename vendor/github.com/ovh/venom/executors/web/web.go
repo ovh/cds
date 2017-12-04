@@ -38,6 +38,12 @@ type Result struct {
 	URL         string   `json:"url,omitempty" yaml:"url,omitempty"`
 }
 
+// ZeroValueResult return an empty implemtation of this executor result
+func (Executor) ZeroValueResult() venom.ExecutorResult {
+	r, _ := executors.Dump(Result{})
+	return r
+}
+
 // Run execute TestStep
 func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 	var ctx *webctx.WebTestCaseContext

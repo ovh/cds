@@ -5,6 +5,7 @@ import {RequirementEvent} from '../requirements/requirement.event.model';
 import {Requirement} from '../../model/requirement.model';
 import {ParameterEvent} from '../parameter/parameter.event.model';
 import {Parameter} from '../../model/parameter.model';
+import {Pipeline} from '../../model/pipeline.model';
 import {ActionEvent} from './action.event.model';
 import {ActionStore} from '../../service/action/action.store';
 import {DragulaService} from 'ng2-dragula/components/dragula.provider';
@@ -23,6 +24,7 @@ export class ActionComponent implements OnDestroy {
     publicActions: Array<Action>;
 
     @Input() project: Project;
+    @Input() pipeline: Pipeline;
     @Input() edit = false;
     @Input() suggest: Array<string>;
 
@@ -30,9 +32,10 @@ export class ActionComponent implements OnDestroy {
     set action(data: Action) {
         this.editableAction = cloneDeep(data);
         this.editableAction.showAddStep = false;
-
         if (!this.editableAction.requirements) {
             this.editableAction.requirements = new Array<Requirement>();
+        } else {
+            this.prepareEditRequirements();
         }
         this.steps = new Array<Action>();
         if (this.editableAction.actions) {
@@ -97,6 +100,39 @@ export class ActionComponent implements OnDestroy {
         }
     }
 
+    prepareEditRequirements(): void {
+        this.editableAction.requirements.forEach(req => {
+            if (req.type === 'model' || req.type === 'service') {
+                let spaceIdx = req.value.indexOf(' ');
+                if (spaceIdx > 1) {
+                    let newValue = req.value.substring(0, spaceIdx);
+                    let newOpts = req.value.substring(spaceIdx + 1, req.value.length);
+                    req.value = newValue.trim();
+                    req.opts = newOpts.replace(/\s/g, '\n');
+                }
+            }
+        });
+    }
+
+    parseRequirements(): void {
+        // for each type 'model' and 'service', concat value with opts
+        // and replace \n with space
+        this.editableAction.requirements.forEach(req => {
+            if ((req.type === 'model' || req.type === 'service') && req.opts) {
+                let spaceIdx = req.value.indexOf(' ');
+                let newValue = req.value;
+                // if there is a space in name and opts not empty
+                // override name with opts only
+                if (spaceIdx > 1 && req.opts !== '') {
+                    newValue = req.value.substring(0, spaceIdx);
+                }
+                let newOpts = req.opts.replace(/\n/g, ' ');
+                req.value = (newValue + ' ' + newOpts).trim();
+                req.opts = '';
+            }
+        })
+    }
+
     /**
      * Manage Parameter Event
      * @param p event
@@ -151,6 +187,7 @@ export class ActionComponent implements OnDestroy {
      */
     sendActionEvent(type: string): void {
         // Rebuild step
+        this.parseRequirements();
         this.editableAction.actions = new Array<Action>();
         if (this.steps) {
             this.steps.forEach(s => {

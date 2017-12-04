@@ -78,7 +78,7 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectVariableLastModificationType); err != nil {
 			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot update last modified")
 		}
 
@@ -138,7 +138,7 @@ func (api *API) deleteVariableFromProjectHandler() Handler {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot delete %s", varName)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectVariableLastModificationType); err != nil {
 			return sdk.WrapError(err, "deleteVariableFromProject: Cannot update last modified date")
 		}
 
@@ -234,7 +234,7 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 			}
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectVariableLastModificationType); err != nil {
 			return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot update last modified")
 		}
 
@@ -285,7 +285,7 @@ func (api *API) updateVariableInProjectHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInProject: Cannot update variable %s in project %s", varName, p.Name)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectVariableLastModificationType); err != nil {
 			return sdk.WrapError(err, "updateVariableInProject: Cannot update last modified date")
 		}
 
@@ -377,7 +377,7 @@ func (api *API) addVariableInProjectHandler() Handler {
 
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectVariableLastModificationType); err != nil {
 			return sdk.WrapError(err, "updateVariablesInProjectHandler: Cannot update last modified")
 		}
 

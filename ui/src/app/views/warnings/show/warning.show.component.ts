@@ -6,6 +6,7 @@ import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {Subscription} from 'rxjs/Subscription';
 import {ProjectStore} from '../../../service/project/project.store';
 import {Project} from '../../../model/project.model';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-warning-show',
@@ -42,7 +43,7 @@ export class WarningShowComponent {
     }
 
     loadProject(key: string): void {
-        this._projectStore.getProjectResolver(key).first().subscribe(p => {
+        this._projectStore.getProjectResolver(key, []).pipe(first()).subscribe(p => {
             this.project = p;
         });
     }

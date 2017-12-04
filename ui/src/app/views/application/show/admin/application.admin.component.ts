@@ -11,6 +11,7 @@ import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {User} from '../../../../model/user.model';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-admin',
@@ -50,9 +51,10 @@ export class ApplicationAdminComponent implements OnInit {
     }
 
     generateWorkflow(force: boolean): void {
-        this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name, force).first().finally(() => {
+        this._appMigrateSerivce.migrateApplicationToWorkflow(this.project.key, this.application.name, force)
+            .pipe(first()).pipe(finalize(() => {
             this.loading = true;
-        }).subscribe(() => {
+        })).subscribe(() => {
             this._router.navigate(['/project', this.project.key], { queryParams: { tab: 'workflows'} });
         });
     }
@@ -62,7 +64,8 @@ export class ApplicationAdminComponent implements OnInit {
             this.updateWarningModal.show();
         } else {
             this.loading = true;
-            this._applicationStore.renameApplication(this.project.key, this.application.name, this.newName).first().subscribe( () => {
+            this._applicationStore.renameApplication(this.project.key, this.application.name, this.newName)
+                .pipe(first()).subscribe( () => {
                 this.loading = false;
                 this._toast.success('', this._translate.instant('application_update_ok'));
                 this._router.navigate(['/project', this.project.key, 'application', this.newName]);
@@ -79,9 +82,9 @@ export class ApplicationAdminComponent implements OnInit {
 
     migrationClean(): void {
         this.loading = true;
-        this._appMigrateSerivce.cleanWorkflow(this.project.key, this.application.name).finally(() => {
+        this._appMigrateSerivce.cleanWorkflow(this.project.key, this.application.name).pipe(finalize(() => {
             this.loading = false;
-        }).subscribe(() => {
+        })).subscribe(() => {
            this._toast.success('', this._translate.instant('application_workflow_migration_ok'));
            this.migrationModal.approve(true);
         });

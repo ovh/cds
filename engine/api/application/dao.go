@@ -41,6 +41,15 @@ var LoadOptions = struct {
 	WithKeys:                       &loadKeys,
 }
 
+// Exists checks if an application given its name exists
+func Exists(db gorp.SqlExecutor, projectKey, appName string) (bool, error) {
+	count, err := db.SelectInt("SELECT count(1) FROM application join project ON project.id = application.project_id WHERE project.projectkey = $1 AND application.name = $2", projectKey, appName)
+	if err != nil {
+		return false, err
+	}
+	return count == 1, nil
+}
+
 // LoadByName load an application from DB
 func LoadByName(db gorp.SqlExecutor, store cache.Store, projectKey, appName string, u *sdk.User, opts ...LoadOptionFunc) (*sdk.Application, error) {
 	var query string
@@ -295,6 +304,44 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 		args = []interface{}{key, u.ID}
 	}
 	return loadapplications(db, store, u, opts, query, args...)
+}
+
+// LoadAllNames returns all application names
+func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]string, error) {
+	var query string
+	var args []interface{}
+
+	if u == nil || u.Admin {
+		query = `
+		SELECT application.name
+		FROM application
+		WHERE application.project_id= $1
+		ORDER BY application.name ASC`
+		args = []interface{}{projID}
+	} else {
+		query = `
+			SELECT distinct application.name
+			FROM application
+			WHERE application.id IN (
+				SELECT application_group.application_id
+				FROM application_group
+				JOIN group_user ON application_group.group_id = group_user.group_id
+				WHERE group_user.user_id = $2
+			)
+			AND application.project_id = $1
+			ORDER by application.name ASC`
+		args = []interface{}{projID, u.ID}
+	}
+
+	res := []string{}
+	if _, err := db.Select(&res, query, args...); err != nil {
+		if err == sql.ErrNoRows {
+			return res, nil
+		}
+		return nil, sdk.WrapError(err, "application.loadapplicationnames")
+	}
+
+	return res, nil
 }
 
 func loadapplications(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOptionFunc, query string, args ...interface{}) ([]sdk.Application, error) {

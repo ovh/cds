@@ -370,7 +370,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//AddSpawnInfosNodeJobRun
-		j, err := workflow.AddSpawnInfosNodeJobRun(db, cache, proj, j.ID, []sdk.SpawnInfo{
+		err := workflow.AddSpawnInfosNodeJobRun(db, cache, proj, j.ID, []sdk.SpawnInfo{
 			sdk.SpawnInfo{
 				APITime:    time.Now(),
 				RemoteTime: time.Now(),

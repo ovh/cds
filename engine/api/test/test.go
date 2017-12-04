@@ -93,6 +93,7 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 	return DBConnectionFactory.GetDBMap(), store
 }
 
+// LoadTestingConf loads test configuraiton tests.cfg.json
 func LoadTestingConf(t *testing.T) map[string]string {
 	var f string
 	u, _ := user.Current()

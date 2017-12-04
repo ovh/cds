@@ -1,8 +1,10 @@
 import {Pipeline} from './pipeline.model';
+import {Parameter} from './parameter.model';
+
 export class Scheduler {
     id: number;
     environment_name: string;
-    args: string;
+    args: Parameter[];
     crontab: string;
     timezone: string;
     disabled: boolean;

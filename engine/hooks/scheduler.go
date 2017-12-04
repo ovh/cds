@@ -60,7 +60,6 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 				}
 				for _, e := range execs {
 					if e.ProcessingTimestamp == 0 && e.Timestamp <= time.Now().UnixNano() {
-						log.Debug("Hooks> retryTaskExecutionsRoutine > enqueing task %s (%v, %v)", t.UUID, e.Timestamp, time.Now().UnixNano())
 						s.Dao.EnqueueTaskExecution(&e)
 						continue
 					}

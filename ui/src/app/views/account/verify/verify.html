@@ -8,7 +8,7 @@
                     {{ 'account_verify_title' | translate }}
                 </h3>
                 <div class="ui attached segment word-break-all">
-                    <pre [innerHtml]="userVerified | prettyjson"></pre>
+                    <pre [innerHtml]="userVerified | json"></pre>
                 </div>
                 <div class="ui bottom attached segment">
                     <button id="loginButton" class="ui button green" type="button" (click)="signIn()">{{ 'account_login_btn_connect' | translate }}</button>

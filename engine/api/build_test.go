@@ -85,12 +85,12 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	}
 	route := router.GetRoute("POST", api.updateStepStatusHandler, vars)
 	headers := assets.AuthHeaders(t, u, pass)
-	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
+	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(204), iffy.DumpResponse(t))
 	tester.Run()
 	tester.Reset()
 
 	request.Status = "Success"
-	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
+	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(204), iffy.DumpResponse(t))
 	tester.Run()
 
 	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), pbJob.ID)

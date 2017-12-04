@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 
@@ -59,7 +60,7 @@ func (api *API) deleteKeyInEnvironmentHandler() Handler {
 				if err := environment.DeleteEnvironmentKey(tx, env.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot delete key %s", k.Name)
 				}
-				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 					return sdk.WrapError(err, "deleteKeyInEnvironmentHandler> Cannot update application last modified date")
 				}
 			}
@@ -104,19 +105,37 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 
 		switch newKey.Type {
 		case sdk.KeyTypeSsh:
-			pub, priv, errGenerate := keys.Generatekeypair(newKey.Name)
+			pubR, privR, errGenerate := keys.GenerateSSHKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInEnvironmentHandler> Cannot generate sshKey")
 			}
-			newKey.Public = pub
-			newKey.Private = priv
+			pub, errPub := ioutil.ReadAll(pubR)
+			if errPub != nil {
+				return sdk.WrapError(errPub, "addKeyInApplicationHandler> Unable to read public key")
+			}
+
+			priv, errPriv := ioutil.ReadAll(privR)
+			if errPriv != nil {
+				return sdk.WrapError(errPriv, "addKeyInApplicationHandler>  Unable to read private key")
+			}
+			newKey.Private = string(priv)
+			newKey.Public = string(pub)
 		case sdk.KeyTypePgp:
-			kid, pub, priv, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
+			kid, pubR, privR, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInEnvironmentHandler> Cannot generate pgpKey")
 			}
-			newKey.Public = pub
-			newKey.Private = priv
+			pub, errPub := ioutil.ReadAll(pubR)
+			if errPub != nil {
+				return sdk.WrapError(errPub, "addKeyInEnvironmentHandler> Unable to read public key")
+			}
+
+			priv, errPriv := ioutil.ReadAll(privR)
+			if errPriv != nil {
+				return sdk.WrapError(errPriv, "addKeyInEnvironmentHandler>  Unable to read private key")
+			}
+			newKey.Private = string(priv)
+			newKey.Public = string(pub)
 			newKey.KeyID = kid
 		default:
 			return sdk.WrapError(sdk.ErrUnknownKeyType, "addKeyInEnvironmentHandler> unknown key of type: %s", newKey.Type)
@@ -132,7 +151,7 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot insert application key")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectEnvironmentLastModificationType); err != nil {
 			return sdk.WrapError(err, "addKeyInEnvironmentHandler> Cannot update project last modified date")
 		}
 

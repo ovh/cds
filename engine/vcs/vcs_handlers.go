@@ -46,28 +46,24 @@ func (s *Service) getVCSServersHooksHandler() api.Handler {
 			return sdk.ErrNotFound
 		}
 		res := struct {
-			WebhooksSupported         bool `json:"webhooks_supported"`
-			WebhooksDisabled          bool `json:"webhooks_disabled"`
-			WebhooksCreationSupported bool `json:"webhooks_creation_supported"`
-			WebhooksCreationDisabled  bool `json:"webhooks_creation_disabled"`
+			WebhooksSupported bool   `json:"webhooks_supported"`
+			WebhooksDisabled  bool   `json:"webhooks_disabled"`
+			WebhooksIcon      string `json:"webhooks_icon"`
 		}{}
 
 		switch {
 		case cfg.Bitbucket != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Bitbucket.DisableWebHooks
-			res.WebhooksCreationSupported = true
-			res.WebhooksCreationDisabled = cfg.Bitbucket.DisableWebHooksCreation
+			res.WebhooksIcon = sdk.BitbucketIcon
 		case cfg.Github != nil:
-			res.WebhooksSupported = false
+			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Github.DisableWebHooks
-			res.WebhooksCreationSupported = false
-			res.WebhooksCreationDisabled = cfg.Github.DisableWebHooksCreation
+			res.WebhooksIcon = sdk.GitHubIcon
 		case cfg.Gitlab != nil:
 			res.WebhooksSupported = true
 			res.WebhooksDisabled = cfg.Gitlab.DisableWebHooks
-			res.WebhooksCreationSupported = true
-			res.WebhooksCreationDisabled = cfg.Github.DisableWebHooksCreation
+			res.WebhooksIcon = sdk.GitlabIcon
 		}
 
 		return api.WriteJSON(w, r, res, http.StatusOK)
@@ -635,7 +631,10 @@ func (s *Service) postHookHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> postHookHandler> Unable to read body")
 		}
 
-		return client.CreateHook(fmt.Sprintf("%s/%s", owner, repo), body)
+		if err := client.CreateHook(fmt.Sprintf("%s/%s", owner, repo), &body); err != nil {
+			return sdk.WrapError(err, "postHookHandler> CreateHook")
+		}
+		return api.WriteJSON(w, r, body, http.StatusOK)
 	}
 }
 
@@ -649,6 +648,8 @@ func (s *Service) deleteHookHandler() api.Handler {
 		if err != nil {
 			return err
 		}
+
+		hookID := r.URL.Query().Get("id")
 
 		accessToken, accessTokenSecret, ok := getAccessTokens(ctx)
 		if !ok {
@@ -665,9 +666,18 @@ func (s *Service) deleteHookHandler() api.Handler {
 			return sdk.WrapError(err, "VCS> deleteHookHandler> Unable to get authorized client")
 		}
 
-		hook, err := client.GetHook(fmt.Sprintf("%s/%s", owner, repo), hookURL)
-		if err != nil {
-			return sdk.WrapError(err, "VCS> deleteHookHandler> Unable to get hook %s", hookURL)
+		var hook sdk.VCSHook
+		if hookID == "" {
+			var err error
+			hook, err = client.GetHook(fmt.Sprintf("%s/%s", owner, repo), hookURL)
+			if err != nil {
+				return sdk.WrapError(err, "VCS> deleteHookHandler> Unable to get hook %s", hookURL)
+			}
+		} else {
+			hook = sdk.VCSHook{
+				ID:       hookID,
+				Workflow: true,
+			}
 		}
 
 		return client.DeleteHook(fmt.Sprintf("%s/%s", owner, repo), hook)

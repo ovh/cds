@@ -8,6 +8,7 @@ import {Prerequisite} from '../../../../../model/prerequisite.model';
 import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
 import {cloneDeep} from 'lodash';
 import {Parameter} from '../../../../../model/parameter.model';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-trigger',
@@ -32,6 +33,7 @@ export class ApplicationTriggerComponent {
     selectedDestPipeline: Pipeline;
 
     refPrerequisites: Array<Prerequisite>;
+    loading = true;
 
     constructor(private _appStore: ApplicationStore) {
         this.refPrerequisites = new Array<Prerequisite>();
@@ -42,12 +44,17 @@ export class ApplicationTriggerComponent {
      * Refresh available pipeline for the selected application.
      */
     updatePipelineList(): void {
-        this._appStore.getApplications(this.project.key, this.trigger.dest_application.name).subscribe(apps => {
-            let appKey = this.project.key + '-' + this.trigger.dest_application.name;
-            if (apps.get(appKey)) {
-                this.appPipelines = apps.get(appKey).pipelines;
-            }
-        });
+        this._appStore.getApplications(this.project.key, this.trigger.dest_application.name)
+            .pipe(
+                first(),
+                finalize(() => this.loading = false)
+            )
+            .subscribe(apps => {
+                let appKey = this.project.key + '-' + this.trigger.dest_application.name;
+                if (apps.get(appKey)) {
+                    this.appPipelines = apps.get(appKey).pipelines;
+                }
+            });
     }
 
     /**

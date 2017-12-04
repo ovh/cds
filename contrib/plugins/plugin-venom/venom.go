@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -51,7 +50,6 @@ func (s VenomPlugin) Parameters() plugin.Parameters {
 	params := plugin.NewParameters()
 	params.Add("path", plugin.StringParameter, "Path containers yml venom files. Format: adirectory/, ./*aTest.yml, ./foo/b*/**/z*.yml", ".")
 	params.Add("exclude", plugin.TextParameter, "Exclude some files, one file per line", "")
-	params.Add("parallel", plugin.StringParameter, "Launch Test Suites in parallel. Enter here number of routines", "2")
 	params.Add("output", plugin.StringParameter, "Directory where output xunit result file", ".")
 	params.Add("details", plugin.StringParameter, "Output Details Level: low, medium, high", "low")
 	params.Add("loglevel", plugin.StringParameter, "Log Level: debug, info, warn or error", "error")
@@ -65,8 +63,7 @@ type venomWriter struct {
 }
 
 func (w venomWriter) Write(buf []byte) (int, error) {
-	err := plugin.SendLog(w, "VENOM %s", buf)
-	return 0, err
+	return len(buf), plugin.SendLog(w, "VENOM %s", buf)
 }
 
 // Run execute the action
@@ -74,9 +71,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	// Parse parameters
 	path := a.Arguments().Get("path")
 	exclude := a.Arguments().Get("exclude")
-	parallel := a.Arguments().Get("parallel")
 	output := a.Arguments().Get("output")
-	details := a.Arguments().Get("details")
 	loglevel := a.Arguments().Get("loglevel")
 	vars := a.Arguments().Get("vars")
 	varsFromFile := a.Arguments().Get("vars-from-file")
@@ -84,25 +79,20 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	if path == "" {
 		path = "."
 	}
-	p, err := strconv.Atoi(parallel)
-	if err != nil {
-		plugin.SendLog(a, "VENOM - parallel arg must be an integer\n")
-		return plugin.Fail
-	}
 
-	venom.RegisterExecutor(exec.Name, exec.New())
-	venom.RegisterExecutor(http.Name, http.New())
-	venom.RegisterExecutor(imap.Name, imap.New())
-	venom.RegisterExecutor(readfile.Name, readfile.New())
-	venom.RegisterExecutor(smtp.Name, smtp.New())
-	venom.RegisterExecutor(ssh.Name, ssh.New())
-	venom.RegisterExecutor(web.Name, web.New())
-	venom.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
+	v := venom.New()
+	v.RegisterExecutor(exec.Name, exec.New())
+	v.RegisterExecutor(http.Name, http.New())
+	v.RegisterExecutor(imap.Name, imap.New())
+	v.RegisterExecutor(readfile.Name, readfile.New())
+	v.RegisterExecutor(smtp.Name, smtp.New())
+	v.RegisterExecutor(ssh.Name, ssh.New())
+	v.RegisterExecutor(web.Name, web.New())
+	v.RegisterExecutor(dbfixtures.Name, dbfixtures.New())
+	v.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
+	v.RegisterTestCaseContext(webctx.Name, webctx.New())
 
-	venom.RegisterTestCaseContext(defaultctx.Name, defaultctx.New())
-	venom.RegisterTestCaseContext(webctx.Name, webctx.New())
-
-	venom.PrintFunc = func(format string, aa ...interface{}) (n int, err error) {
+	v.PrintFunc = func(format string, aa ...interface{}) (n int, err error) {
 		plugin.SendLog(a, format, aa)
 		return 0, nil
 	}
@@ -136,6 +126,9 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 				}
 			}
 		}
+
+		//If we use the var list, it means we do pretty hacky stuffs, so let's ignore all cds vars
+		v.IgnoreVariables = append(v.IgnoreVariables, "cds", "workflow", "git")
 	}
 
 	if varsFromFile != "" {
@@ -165,7 +158,25 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 		}
 	}
 
-	tests, err := venom.Process([]string{path}, data, []string{exclude}, p, loglevel, details, w)
+	v.AddVariables(data)
+	v.LogLevel = loglevel
+	v.OutputDetails = "low"
+	v.LogOutput = w
+	v.OutputFormat = "xml"
+	v.OutputDir = output
+
+	filepath := strings.Split(path, ",")
+	filepathExcluded := strings.Split(exclude, ",")
+
+	if len(filepath) == 1 {
+		filepath = strings.Split(filepath[0], " ")
+	}
+
+	if len(filepathExcluded) == 1 {
+		filepathExcluded = strings.Split(filepathExcluded[0], " ")
+	}
+
+	tests, err := v.Process(filepath, filepathExcluded)
 	if err != nil {
 		plugin.SendLog(a, "VENOM - Fail on venom: %s\n", err)
 		return plugin.Fail
@@ -173,7 +184,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 
 	elapsed := time.Since(start)
 	plugin.SendLog(a, "VENOM - Output test results under: %s\n", output)
-	if err := venom.OutputResult("xml", false, true, output, *tests, elapsed, "low"); err != nil {
+	if err := v.OutputResult(*tests, elapsed); err != nil {
 		plugin.SendLog(a, "VENOM - Error while uploading test results: %s\n", err)
 		return plugin.Fail
 	}

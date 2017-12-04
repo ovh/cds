@@ -26,7 +26,7 @@ func NewRepository(dbFunc func() *gorp.DbMap, store cache.Store) *Repository {
 
 // Querier returns a fresh repository
 func Querier(db gorp.SqlExecutor, store cache.Store) *Repository {
-	return &Repository{querier: db}
+	return &Repository{querier: db, store: store}
 }
 
 // Tx return the current gorp.SqlExecutor

@@ -28,6 +28,12 @@ Reading configuration file my_new_file.toml
 Configuration file OK
 ```
 
+Create your database relations
+
+```bash
+$ $PATH_TO_CDS/engine database upgrade --db-host <host> --db-port <port> --db-user <user> --db-password <password> --db-name <database> --migrate-dir $PATH_TO_CDS/engine/sql --limit 0
+```
+
 Run CDS
 
 ```bash

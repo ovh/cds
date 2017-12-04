@@ -1,17 +1,15 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"sort"
 
 	"github.com/gorilla/mux"
 
-	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -108,11 +106,12 @@ func (api *API) releaseApplicationWorkflowHandler() Handler {
 		}
 
 		for _, a := range artifactToUpload {
-			b := &bytes.Buffer{}
-			if err := artifact.StreamFile(b, &a); err != nil {
-				return sdk.WrapError(err, "Cannot get artifact")
+			f, err := objectstore.FetchArtifact(&a)
+			if err != nil {
+				return sdk.WrapError(err, "releaseApplicationWorkflowHandler> Cannot fetch artifact")
 			}
-			if err := client.UploadReleaseFile(workflowNode.Context.Application.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, ioutil.NopCloser(b)); err != nil {
+
+			if err := client.UploadReleaseFile(workflowNode.Context.Application.RepositoryFullname, fmt.Sprintf("%d", release.ID), release.UploadURL, a.Name, f); err != nil {
 				return sdk.WrapError(err, "releaseApplicationWorkflowHandler")
 			}
 		}

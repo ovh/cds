@@ -29,7 +29,7 @@ func showApplication(cmd *cobra.Command, args []string) {
 
 	projectKey := args[0]
 	appName := args[1]
-	p, err := sdk.GetApplication(projectKey, appName)
+	p, err := sdk.GetApplication(projectKey, appName, sdk.GetApplicationOptions.WithTriggers)
 	if err != nil {
 		sdk.Exit("Error: cannot retrieve application informations: %s\n", err)
 	}

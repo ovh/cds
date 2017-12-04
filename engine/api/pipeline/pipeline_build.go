@@ -66,7 +66,7 @@ const (
 			pb.vcs_changes_branch as vcs_branch, pb.vcs_changes_hash as vcs_hash, pb.vcs_changes_author as vcs_author,
 			pb.vcs_remote as vcs_remote, pb.vcs_remote_url as vcs_remote_url,
 			pb.parent_pipeline_build_id as parent_pipeline_build,
-			application.vcs_server as vcs_server, application.repo_fullname as repo_fullname, 
+			application.vcs_server as vcs_server, application.repo_fullname as repo_fullname,
 			"user".username as username,
 			pb.scheduled_trigger as scheduled_trigger
 		FROM pipeline_build pb
@@ -304,15 +304,15 @@ func withBranchName(branchName string) ExecOptionFunc {
 func withRemoteName(remote string) ExecOptionFunc {
 	return func(nbArg int) (string, string, int) {
 		if remote == "" {
-			return " AND pb.vcs_remote IS NULL", "", nbArg
+			return " AND (pb.vcs_remote IS NULL OR pb.vcs_remote = '')", "", nbArg
 		}
-		return fmt.Sprintf(" AND pb.vcs_remote = $%d", nbArg), remote, nbArg + 1
+		return fmt.Sprintf(" AND lower(pb.vcs_remote) = lower($%d)", nbArg), remote, nbArg + 1
 	}
 }
 
 func withEmptyRemote(remote string) ExecOptionFunc {
 	return func(nbArg int) (string, string, int) {
-		return fmt.Sprintf(" AND (pb.vcs_remote = $%d OR pb.vcs_remote IS NULL OR pb.vcs_remote = '')", nbArg), remote, nbArg + 1
+		return fmt.Sprintf(" AND (lower(pb.vcs_remote) = lower($%d) OR pb.vcs_remote IS NULL OR pb.vcs_remote = '')", nbArg), remote, nbArg + 1
 	}
 }
 
@@ -524,29 +524,31 @@ func UpdatePipelineBuildStatusAndStage(db gorp.SqlExecutor, pb *sdk.PipelineBuil
 	if _, err := db.Exec(query, newStatus.String(), string(stagesB), pb.ID, pb.Done); err != nil {
 		return err
 	}
-	//Send notification
-	//Load previous pipeline (some app, pip, env and branch)
-	//Load branch and remote
-	branch, remote := GetVCSInfosInParams(pb.Parameters)
-	//Get the history
-	var previous *sdk.PipelineBuild
-	history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 0,
-		LoadPipelineBuildOpts.WithBranchName(branch),
-		LoadPipelineBuildOpts.WithRemoteName(remote))
-	if err != nil {
-		log.Error("UpdatePipelineBuildStatusAndStage> error while loading previous pipeline build")
-	}
-	//Be sure to get the previous one
-	if len(history) == 2 {
-		for i := range history {
-			if previous == nil || previous.BuildNumber > history[i].BuildNumber {
-				previous = &history[i]
-			}
-		}
-	}
 
 	if pb.Status != newStatus {
 		pb.Status = newStatus
+
+		//Send notification
+		//Load previous pipeline (some app, pip, env and branch)
+		//Load branch and remote
+		branch, remote := GetVCSInfosInParams(pb.Parameters)
+		//Get the history
+		var previous *sdk.PipelineBuild
+		history, err := LoadPipelineBuildsByApplicationAndPipeline(db, pb.Application.ID, pb.Pipeline.ID, pb.Environment.ID, 2,
+			LoadPipelineBuildOpts.WithBranchName(branch),
+			LoadPipelineBuildOpts.WithRemoteName(remote))
+		if err != nil {
+			log.Error("UpdatePipelineBuildStatusAndStage> error while loading previous pipeline build")
+		}
+		//Be sure to get the previous one
+		if len(history) == 2 {
+			for i := range history {
+				if previous == nil || previous.BuildNumber > history[i].BuildNumber {
+					previous = &history[i]
+				}
+			}
+		}
+
 		event.PublishPipelineBuild(db, pb, previous)
 	}
 
@@ -569,7 +571,6 @@ func DeletePipelineBuildByApplicationID(db gorp.SqlExecutor, appID int64) error 
 
 	_, errDelete := db.Exec(query, appID)
 	return errDelete
-
 }
 
 // DeletePipelineBuildByID  Delete pipeline build by his ID
@@ -594,7 +595,7 @@ func DeletePipelineBuildByID(db gorp.SqlExecutor, pbID int64) error {
 // GetLastBuildNumberInTx returns the last build number at the time of query.
 // Should be used only for non-sensitive query
 func GetLastBuildNumberInTx(db *gorp.DbMap, pipID, appID, envID int64) (int64, error) {
-	// JIRA CD-1164: When starting a lot of pipeline in a short time,
+	// When starting a lot of pipeline in a short time,
 	// there is a race condition when fetching the last build number used.
 	// The solution implemented here is to lock the actual last build.
 	// We then try to select build number twice until we got the same value locked
@@ -629,6 +630,10 @@ func GetLastBuildNumber(db gorp.SqlExecutor, pipID, appID, envID int64) (int64, 
 // InsertBuildVariable adds a variable exported in user scripts and forwarded by building worker
 func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error {
 
+	if strings.Contains(v.Value, "{{.") {
+		return sdk.ErrWrongRequest
+	}
+
 	// Load args from pipeline build and lock it
 	query := `SELECT args FROM pipeline_build WHERE id = $1 FOR UPDATE`
 	var argsJSON string
@@ -642,12 +647,24 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 		return err
 	}
 
-	// Add build variable
-	params = append(params, sdk.Parameter{
-		Name:  v.Name,
-		Type:  sdk.StringParameter,
-		Value: v.Value,
-	})
+	// check if build variable already exist
+	found := false
+	for i := range params {
+		p := &params[i]
+		// overwrite if variable already exist
+		if p.Name == v.Name {
+			p.Value = v.Value
+			found = true
+			break
+		}
+	}
+	if !found {
+		params = append(params, sdk.Parameter{
+			Name:  v.Name,
+			Type:  sdk.StringParameter,
+			Value: v.Value,
+		})
+	}
 
 	// Update pb in database
 	data, errj := json.Marshal(params)

@@ -20,4 +20,6 @@ export class Job {
 export class StepStatus {
     step_order: number;
     status: string;
+    start: string;
+    done: string;
 }

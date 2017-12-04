@@ -10,8 +10,11 @@ export class Project {
     key: string;
     name: string;
     workflows: Array<Workflow>;
+    workflow_names: Array<string>;
     pipelines: Array<Pipeline>;
+    pipeline_names: Array<string>;
     applications: Array<Application>;
+    application_names: Array<string>;
     groups: Array<GroupPermission>;
     variables: Array<Variable>;
     environments: Array<Environment>;
@@ -21,4 +24,11 @@ export class Project {
     vcs_servers: Array<RepositoriesManager>;
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
+}
+
+export class LoadOpts {
+  constructor(
+    public queryParam: string,
+    public fieldName: string
+  ) { }
 }

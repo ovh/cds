@@ -8,6 +8,7 @@ import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.r
 import {TranslateService} from 'ng2-translate';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-run-summary',
@@ -57,8 +58,10 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
     stop(): void {
         this.loading = true;
         this._wrService.stopNodeRun(this.project.key, this.workflow.name, this.nodeRun.num, this.nodeRun.id)
-            .finally(() => this.loading = false)
-            .first().subscribe(() => {
+            .pipe(
+                first(),
+                finalize(() => this.loading = false)
+            ).subscribe(() => {
             this._toast.success('', this._translate.instant('pipeline_stop'));
         });
     }
@@ -72,7 +75,7 @@ export class WorkflowNodeRunSummaryComponent implements OnInit {
 
         this.loading = true;
         this._wrService.runWorkflow(this.project.key, this.workflow.name, request)
-          .finally(() => this.loading = false)
+          .pipe(finalize(() => this.loading = false))
           .subscribe(wr => {
               this._router.navigate(['project', this.project.key, 'workflow', this.workflow.name, 'run', this.nodeRun.num]);
           });

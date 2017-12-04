@@ -188,4 +188,18 @@ export class WorkflowStore {
             return w;
         });
     }
+
+    externalModification(wfKey: string) {
+        let cache = this._workflows.getValue();
+        let wfToUpdate = cache.get(wfKey);
+        if (wfToUpdate) {
+            wfToUpdate.externalChange = true;
+            this._workflows.next(cache.set(wfKey, wfToUpdate));
+        }
+    }
+
+    removeFromStore(wfKey: string) {
+        let cache = this._workflows.getValue();
+        this._workflows.next(cache.delete(wfKey));
+    }
 }

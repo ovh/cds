@@ -1,10 +1,8 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, fakeAsync, tick, getTestBed} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateParser, TranslateLoader} from 'ng2-translate';
 import {RouterTestingModule} from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
 import {Injector} from '@angular/core';
 import {SharedService} from '../../shared.service';
 import {ParameterService} from '../../../service/parameter/parameter.service';
@@ -17,7 +15,6 @@ import {StepEvent} from './step.event';
 describe('CDS: Action Component', () => {
 
     let injector: Injector;
-    let backend: MockBackend;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -27,10 +24,8 @@ describe('CDS: Action Component', () => {
                 SharedService,
                 TranslateService,
                 ParameterService,
-                MockBackend,
-                { provide: XHRBackend, useClass: MockBackend },
-                TranslateLoader,
-                TranslateParser
+                TranslateParser,
+                TranslateLoader
             ],
             imports : [
                 RouterTestingModule.withRoutes([]),
@@ -39,12 +34,10 @@ describe('CDS: Action Component', () => {
         });
 
         injector = getTestBed();
-        backend = injector.get(MockBackend);
     });
 
     afterEach(() => {
         injector = undefined;
-        backend = undefined;
     });
 
 

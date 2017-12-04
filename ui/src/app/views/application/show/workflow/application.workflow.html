@@ -11,7 +11,7 @@
         <div class="four wide column">
           <sm-select class="search"
               placeholder="{{'application_workflow_remote_title' | translate}}"
-              *ngIf="!loading.remote && remotes"
+              *ngIf="!loading.remote && remotes != null"
               [options]="{'fullTextSearch': true}"
               [(model)]="applicationFilter.remote"
               (modelChange)="changeRemote()">
@@ -24,7 +24,7 @@
         <div class="four wide column">
             <sm-select class="search"
                 placeholder="{{'application_workflow_branch_title' | translate}}"
-                *ngIf="!loading.branch && branches"
+                *ngIf="!loading.branch && branches != null"
                 [options]="{'fullTextSearch': true}"
                 [(model)]="applicationFilter.branch"
                 (modelChange)="changeBranch()">
@@ -35,7 +35,7 @@
             </sm-select>
         </div>
         <div class="four wide column">
-            <sm-select *ngIf="!loading.version && versions"
+            <sm-select *ngIf="!loading.version && versions != null"
                 [(model)]="applicationFilter.version"
                 (modelChange)="changeVersion(applicationFilter.version)"
                        placeholder="{{ 'application_workflow_version_title' | translate }}">
@@ -48,7 +48,7 @@
 
         <div class="two wide column">
             <div class="sixteen wide right aligned field pipeline"
-                 *ngIf="!application.pipelines || project.pipelines.length > application.pipelines.length">
+                 *ngIf="!application.pipelines || project.pipeline_names.length > application.pipelines.length">
                 <button class="ui blue button" (click)="openLinkPipelineModal()">{{ 'application_workflow_pipeline_add' | translate }}
                 </button>
                 <app-application-pipeline-link [project]="project" [application]="application"

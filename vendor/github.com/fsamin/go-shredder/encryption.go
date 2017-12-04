@@ -13,24 +13,24 @@ import (
 	"github.com/maxwellhealth/go-gpg"
 )
 
-func gpgEncrypt(opt *GPGEncryption, content io.Reader) ([]byte, error) {
+func GPGEncrypt(publicKey []byte, content io.Reader) (io.Reader, error) {
 	buf := new(bytes.Buffer)
-	if err := gpg.Encode(opt.PublicKey, content, buf); err != nil {
+	if err := gpg.Encode(publicKey, content, buf); err != nil {
 		return nil, err
 	}
-	return buf.Bytes(), nil
+	return buf, nil
 }
 
-func gpgDecrypt(opt *GPGEncryption, content io.Reader) ([]byte, error) {
+func GPGDecrypt(privateKey, passphrase []byte, content io.Reader) (io.Reader, error) {
 	buf := new(bytes.Buffer)
-	if err := gpg.Decode(opt.PrivateKey, opt.Passphrase, content, buf); err != nil {
+	if err := gpg.Decode(privateKey, passphrase, content, buf); err != nil {
 		return nil, err
 	}
-	return buf.Bytes(), nil
+	return buf, nil
 }
 
-func aesEncrypt(opt *AESEncryption, content io.Reader) ([]byte, error) {
-	block, err := aes.NewCipher(opt.Key)
+func AESEncrypt(key []byte, content io.Reader) (io.Reader, error) {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
@@ -47,11 +47,11 @@ func aesEncrypt(opt *AESEncryption, content io.Reader) ([]byte, error) {
 	}
 	cfb := cipher.NewCFBEncrypter(block, iv)
 	cfb.XORKeyStream(ciphertext[aes.BlockSize:], []byte(b))
-	return ciphertext, nil
+	return bytes.NewBuffer(ciphertext), nil
 }
 
-func aesDecrypt(opt *AESEncryption, content io.Reader) ([]byte, error) {
-	block, err := aes.NewCipher(opt.Key)
+func AESDecrypt(key []byte, content io.Reader) (io.Reader, error) {
+	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
@@ -70,5 +70,5 @@ func aesDecrypt(opt *AESEncryption, content io.Reader) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return data, nil
+	return bytes.NewBuffer(data), nil
 }

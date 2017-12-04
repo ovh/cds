@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/hatchery"
 	"github.com/ovh/cds/engine/api/token"
 	"github.com/ovh/cds/sdk"
@@ -25,6 +26,7 @@ func (api *API) registerHatcheryHandler() Handler {
 			return sdk.WrapError(sdk.ErrUnauthorized, "registerHatcheryHandler> Invalid token")
 		}
 		hatch.GroupID = tk.GroupID
+		hatch.IsSharedInfra = tk.GroupID == group.SharedInfraGroup.ID
 
 		oldH, errL := hatchery.LoadHatcheryByNameAndToken(api.mustDB(), hatch.Name, tk.Token)
 		if errL != nil && errL != sdk.ErrNoHatchery {

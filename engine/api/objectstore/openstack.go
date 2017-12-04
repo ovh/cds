@@ -79,7 +79,7 @@ func (ops *OpenstackStore) Store(o Object, data io.ReadCloser) (string, error) {
 	container := ops.containerprefix + o.GetPath()
 	object := o.GetName()
 
-	ops.escape(container, object)
+	escape(container, object)
 
 	log.Debug("OpenstackStore> Storing /%s/%s\n", container, object)
 
@@ -104,7 +104,7 @@ func (ops *OpenstackStore) Store(o Object, data io.ReadCloser) (string, error) {
 func (ops *OpenstackStore) Fetch(o Object) (io.ReadCloser, error) {
 	container := ops.containerprefix + o.GetPath()
 	object := o.GetName()
-	ops.escape(container, object)
+	escape(container, object)
 
 	log.Debug("OpenstackStore> Fetching /%s/%s\n", container, object)
 
@@ -116,7 +116,7 @@ func (ops *OpenstackStore) Fetch(o Object) (io.ReadCloser, error) {
 	return data, nil
 }
 
-func (ops *OpenstackStore) escape(container, object string) (string, string) {
+func escape(container, object string) (string, string) {
 	container = url.QueryEscape(container)
 	container = strings.Replace(container, "/", "-", -1)
 	object = url.QueryEscape(object)

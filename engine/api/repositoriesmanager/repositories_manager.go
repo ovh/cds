@@ -221,14 +221,14 @@ func (c *vcsClient) PullRequests(fullname string) ([]sdk.VCSPullRequest, error) 
 	return prs, nil
 }
 
-func (c *vcsClient) CreateHook(fullname string, hook sdk.VCSHook) error {
-	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/", c.name, fullname)
-	_, err := c.doJSONRequest("POST", path, &hook, nil)
+func (c *vcsClient) CreateHook(fullname string, hook *sdk.VCSHook) error {
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks", c.name, fullname)
+	_, err := c.doJSONRequest("POST", path, hook, hook)
 	return err
 }
 
 func (c *vcsClient) GetHook(fullname, u string) (sdk.VCSHook, error) {
-	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/?url=%s", c.name, fullname, url.QueryEscape(u))
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks?url=%s", c.name, fullname, url.QueryEscape(u))
 	hook := &sdk.VCSHook{}
 	_, err := c.doJSONRequest("GET", path, nil, hook)
 	return *hook, err
@@ -239,7 +239,7 @@ func (c *vcsClient) UpdateHook(fullname, url string, hook sdk.VCSHook) error {
 }
 
 func (c *vcsClient) DeleteHook(fullname string, hook sdk.VCSHook) error {
-	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks/?url=%s", c.name, fullname, url.QueryEscape(hook.URL))
+	path := fmt.Sprintf("/vcs/%s/repos/%s/hooks?url=%s&id=%s", c.name, fullname, url.QueryEscape(hook.URL), hook.ID)
 	_, err := c.doJSONRequest("DELETE", path, nil, nil)
 	return err
 }
@@ -322,6 +322,7 @@ func (c *vcsClient) Release(fullname, tagName, releaseTitle, releaseDescription 
 
 func (c *vcsClient) UploadReleaseFile(fullname string, releaseName, uploadURL string, artifactName string, r io.ReadCloser) error {
 	path := fmt.Sprintf("/vcs/%s/repos/%s/releases/%s/artifacts/%s", c.name, fullname, releaseName, artifactName)
+	defer r.Close()
 
 	fileContent, err := ioutil.ReadAll(r)
 	if err != nil {
@@ -336,10 +337,9 @@ func (c *vcsClient) UploadReleaseFile(fullname string, releaseName, uploadURL st
 
 // WebhooksInfos is a set of info about webhooks
 type WebhooksInfos struct {
-	WebhooksSupported         bool `json:"webhooks_supported"`
-	WebhooksDisabled          bool `json:"webhooks_disabled"`
-	WebhooksCreationSupported bool `json:"webhooks_creation_supported"`
-	WebhooksCreationDisabled  bool `json:"webhooks_creation_disabled"`
+	WebhooksSupported bool   `json:"webhooks_supported"`
+	WebhooksDisabled  bool   `json:"webhooks_disabled"`
+	Icon              string `json:"webhooks_icon"`
 }
 
 // GetWebhooksInfos returns webhooks_supported, webhooks_disabled, webhooks_creation_supported, webhooks_creation_disabled for a vcs server

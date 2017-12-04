@@ -23,13 +23,8 @@ func (c *client) UserLogin(username, password string) (bool, string, error) {
 		Token    string   `json:"token,omitempty"`
 	}{}
 
-	code, err := c.PostJSON("/login", r, &response)
-	if err != nil {
+	if _, err := c.PostJSON("/login", r, &response); err != nil {
 		return false, "", err
-	}
-
-	if code != http.StatusOK {
-		return false, "", fmt.Errorf("Error %d", code)
 	}
 
 	if response.Token != "" {
@@ -40,14 +35,9 @@ func (c *client) UserLogin(username, password string) (bool, string, error) {
 
 func (c *client) UserList() ([]sdk.User, error) {
 	res := []sdk.User{}
-	code, err := c.GetJSON("/user", &res)
-	if err != nil {
+	if _, err := c.GetJSON("/user", &res); err != nil {
 		return nil, err
 	}
-	if code != http.StatusOK {
-		return nil, fmt.Errorf("Error %d", code)
-	}
-
 	return res, nil
 }
 
@@ -74,12 +64,8 @@ func (c *client) UserSignup(username, fullname, email, callback string) error {
 
 func (c *client) UserGet(username string) (*sdk.User, error) {
 	res := sdk.User{}
-	code, err := c.GetJSON("/user/"+url.QueryEscape(username), &res)
-	if err != nil {
+	if _, err := c.GetJSON("/user/"+url.QueryEscape(username), &res); err != nil {
 		return nil, err
-	}
-	if code != http.StatusOK {
-		return nil, fmt.Errorf("Error %d", code)
 	}
 
 	return &res, nil
@@ -87,16 +73,10 @@ func (c *client) UserGet(username string) (*sdk.User, error) {
 
 func (c *client) UserGetGroups(username string) (map[string][]sdk.Group, error) {
 	res := map[string][]sdk.Group{}
-	code, err := c.GetJSON("/user/"+url.QueryEscape(username)+"/groups", &res)
-	if err != nil {
+	if _, err := c.GetJSON("/user/"+url.QueryEscape(username)+"/groups", &res); err != nil {
 		return nil, err
 	}
-	if code != http.StatusOK {
-		return nil, fmt.Errorf("Error %d", code)
-	}
-
 	return res, nil
-
 }
 
 func (c *client) UserReset(username, email, callback string) error {
@@ -120,13 +100,8 @@ func (c *client) UserReset(username, email, callback string) error {
 
 func (c *client) UserConfirm(username, token string) (bool, string, error) {
 	res := sdk.UserAPIResponse{}
-	code, err := c.GetJSON("/user/"+url.QueryEscape(username)+"/confirm/"+url.QueryEscape(token), &res)
-	if err != nil {
+	if _, err := c.GetJSON("/user/"+url.QueryEscape(username)+"/confirm/"+url.QueryEscape(token), &res); err != nil {
 		return false, "", err
 	}
-	if code != http.StatusOK {
-		return false, "", fmt.Errorf("Error %d", code)
-	}
-
 	return true, res.Password, nil
 }

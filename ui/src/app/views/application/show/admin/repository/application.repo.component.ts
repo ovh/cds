@@ -7,6 +7,7 @@ import {Project} from '../../../../../model/project.model';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from 'ng2-translate';
 import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
+import {first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-repo',
@@ -74,7 +75,7 @@ export class ApplicationRepositoryComponent implements OnInit {
     updateListRepo(sync: boolean): void {
         if (this.selectedRepoManager) {
             this.loadingRepos = true;
-            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, sync).first()
+            this._repoManagerService.getRepositories(this.project.key, this.selectedRepoManager, sync).pipe(first())
                 .subscribe(repos => {
                     this.repos = repos;
                     this.reposFiltered = repos.slice(0, 50);

@@ -45,7 +45,7 @@
                 <div class="buttonLine">
                     <button class="ui mini icon left floated button" (click)="displayInputName = false"><i class="ban icon"></i></button>
                     <span class="pointing" (click)="openWarningModal()" *ngIf="nameWarning &&
-                    (nameWarning.hooks.length > 0 || nameWarning.joinTriggers.length > 0 || nameWarning.triggers.length > 0)">
+                    (nameWarning.hooks?.length > 0 || nameWarning.joinTriggers?.length > 0 || nameWarning.triggers?.length > 0)">
                         {{ 'workflow_node_name_warning'  | translate }}
                     </span>
                     <button class="ui mini icon right floated green button" (click)="rename()" [class.loading]="loading" [disabled]="loading"><i class="check icon"></i></button>

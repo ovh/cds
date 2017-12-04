@@ -207,8 +207,8 @@ func (api *API) postSpawnInfosWorkflowJobHandler() AsynchronousHandler {
 		}
 		defer tx.Rollback()
 
-		if _, err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, id, s); err != nil {
-			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save job %d", id)
+		if err := workflow.AddSpawnInfosNodeJobRun(tx, api.Cache, p, id, s); err != nil {
+			return sdk.WrapError(err, "postSpawnInfosWorkflowJobHandler> Cannot save spawn info on node job run %d", id)
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -236,27 +236,32 @@ func (api *API) postWorkflowJobResultHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowJobResultHandler> cannot unmarshal request")
 		}
 
+		log.Info("postWorkflowJobResultHandler> start res.BuildID %d", res.BuildID)
+
 		chanEvent := make(chan interface{}, 1)
 		chanError := make(chan error, 1)
-		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx).Name, &res)
+		go postJobResult(chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx), &res)
 
 		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
+			log.Info("postWorkflowJobResultHandler> end with err res.BuildID %d, err:%s", res.BuildID, err)
 			return err
 		}
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
+		log.Info("postWorkflowJobResultHandler> end res.BuildID %d", res.BuildID)
 		return nil
 	}
 }
 
-func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, workerName string, res *sdk.Result) {
+func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.Worker, res *sdk.Result) {
 	defer close(chEvent)
 	defer close(chError)
 
 	//Start the transaction
 	tx, errb := db.Begin()
 	if errb != nil {
+		log.Info("postJobResult> Cannot begin tx job %d", res.BuildID)
 		chError <- sdk.WrapError(errb, "postJobResult> Cannot begin tx")
 		return
 	}
@@ -265,37 +270,46 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 	//Load workflow node job run
 	job, errj := workflow.LoadAndLockNodeJobRunWait(tx, store, res.BuildID)
 	if errj != nil {
+		log.Info("postWorkflowJobResultHandler>  Unable to load node run job %d", res.BuildID)
 		chError <- sdk.WrapError(errj, "postJobResult> Unable to load node run job %d", res.BuildID)
 		return
 	}
 
 	remoteTime, errt := ptypes.Timestamp(res.RemoteTime)
 	if errt != nil {
+		log.Info("postJobResult>  Cannot parse remote time job %d", res.BuildID)
 		chError <- sdk.WrapError(errt, "postJobResult> Cannot parse remote time")
 		return
 	}
 
-	//Update spwan info
 	infos := []sdk.SpawnInfo{{
 		RemoteTime: remoteTime,
-		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{workerName, res.Duration}},
+		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{wr.Name, res.Duration}},
 	}}
 
-	//Add spawn infos
-	if _, err := workflow.AddSpawnInfosNodeJobRun(tx, store, p, job.ID, infos); err != nil {
+	if err := workflow.AddSpawnInfosNodeJobRun(tx, store, p, job.ID, workflow.PrepareSpawnInfos(infos)); err != nil {
+		log.Info("postJobResult> Cannot save spawn info job %d", job.ID)
 		chError <- sdk.WrapError(err, "postJobResult> Cannot save spawn info job %d", job.ID)
-		return
 	}
 
 	// Update action status
 	log.Debug("postJobResult> Updating %d to %s in queue", job.ID, res.Status)
 	if err := workflow.UpdateNodeJobRunStatus(tx, store, p, job, sdk.Status(res.Status), chEvent); err != nil {
-		chError <- sdk.WrapError(err, "postJobResult> Cannot update %d status", job.ID)
+		log.Info("postJobResult> Cannot update NodeJobRun %d status", job.ID)
+		chError <- sdk.WrapError(err, "postJobResult> Cannot update NodeJobRun %d status", job.ID)
+		return
+	}
+
+	//Update worker status
+	if err := worker.UpdateWorkerStatus(tx, wr.ID, sdk.StatusWaiting); err != nil {
+		log.Info("postJobResult> Cannot update worker %d status", wr.ID)
+		chError <- sdk.WrapError(err, "postJobResult> Cannot update worker %d status", wr.ID)
 		return
 	}
 
 	//Commit the transaction
 	if err := tx.Commit(); err != nil {
+		log.Info("postJobResult> Cannot commit tx")
 		chError <- sdk.WrapError(err, "postJobResult> Cannot commit tx")
 		return
 	}
@@ -326,8 +340,8 @@ func (api *API) postWorkflowJobLogsHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobStepStatusHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobStepStatusHandler> Invalid id")
@@ -348,10 +362,15 @@ func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
 			jobStep := &nodeJobRun.Job.StepStatus[i]
 			if step.StepOrder == jobStep.StepOrder {
 				jobStep.Status = step.Status
+				if sdk.StatusIsTerminated(step.Status) {
+					jobStep.Done = step.Done
+				}
 				found = true
+				break
 			}
 		}
 		if !found {
+			step.Done = time.Time{}
 			nodeJobRun.Job.StepStatus = append(nodeJobRun.Job.StepStatus, step)
 		}
 
@@ -367,7 +386,24 @@ func (api *API) postWorkflowJobStepStatusHandler() AsynchronousHandler {
 		defer tx.Rollback()
 
 		if err := workflow.UpdateNodeJobRun(tx, api.Cache, p, nodeJobRun); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run")
+			return sdk.WrapError(err, "postWorkflowJobStepStatusHandler> Error while update job run. JobID on handler: %d", id)
+		}
+
+		if !found {
+			nodeRun, errNR := workflow.LoadAndLockNodeRunByID(tx, nodeJobRun.WorkflowNodeRunID, false)
+			if errNR != nil {
+				return sdk.WrapError(errNR, "postWorkflowJobStepStatusHandler> Cannot load node run")
+			}
+			sync, errS := workflow.SyncNodeRunRunJob(tx, nodeRun, *nodeJobRun)
+			if errS != nil {
+				return sdk.WrapError(errS, "postWorkflowJobStepStatusHandler> unable to sync nodeJobRun. JobID on handler: %d", id)
+			}
+			if !sync {
+				log.Warning("postWorkflowJobStepStatusHandler> sync doesn't find a nodeJobRun. JobID on handler: %d", id)
+			}
+			if errU := workflow.UpdateNodeRun(tx, nodeRun); errU != nil {
+				return sdk.WrapError(errU, "postWorkflowJobStepStatusHandler> Cannot update node run. JobID on handler: %d", id)
+			}
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -399,8 +435,8 @@ func (api *API) getWorkflowJobQueueHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobTestsResultsHandler() AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobTestsResultsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Unmarshal into results
 		var new venom.Tests
 		if err := UnmarshalBody(r, &new); err != nil {
@@ -424,7 +460,7 @@ func (api *API) postWorkflowJobTestsResultsHandler() AsynchronousHandler {
 		}
 		defer tx.Rollback()
 
-		wnjr, err := workflow.LoadAndLockNodeRunByID(tx, nodeRunJob.WorkflowNodeRunID)
+		wnjr, err := workflow.LoadAndLockNodeRunByID(tx, nodeRunJob.WorkflowNodeRunID, false)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowJobTestsResultsHandler> Cannot load node job")
 		}
@@ -468,8 +504,47 @@ func (api *API) postWorkflowJobTestsResultsHandler() AsynchronousHandler {
 	}
 }
 
-func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
+func (api *API) postWorkflowJobTagsHandler() AsynchronousHandler {
 	return func(ctx context.Context, r *http.Request) error {
+		id, errr := requestVarInt(r, "permID")
+		if errr != nil {
+			return sdk.WrapError(errr, "postWorkflowJobTagsHandler> Invalid id")
+		}
+
+		var tags = []sdk.WorkflowRunTag{}
+		if err := UnmarshalBody(r, &tags); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to unmarshal body")
+		}
+
+		tx, errb := api.mustDB().Begin()
+		if errb != nil {
+			return sdk.WrapError(errb, "postWorkflowJobTagsHandler> Unable to start transaction")
+		}
+		defer tx.Rollback()
+
+		workflowRun, errl := workflow.LoadAndLockRunByJobID(tx, id)
+		if errl != nil {
+			return sdk.WrapError(errl, "postWorkflowJobTagsHandler> Unable to load node run id %d", id)
+		}
+
+		for _, t := range tags {
+			workflowRun.Tag(t.Tag, t.Value)
+		}
+
+		if err := workflow.UpdateWorkflowRunTags(tx, workflowRun); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to insert tags")
+		}
+
+		if err := tx.Commit(); err != nil {
+			return sdk.WrapError(err, "postWorkflowJobTagsHandler> Unable to commit transaction")
+		}
+
+		return nil
+	}
+}
+
+func (api *API) postWorkflowJobVariableHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobVariableHandler> Invalid id")
@@ -494,7 +569,7 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 
 		job, errj := workflow.LoadAndLockNodeJobRunWait(tx, api.Cache, id)
 		if errj != nil {
-			return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job")
+			return sdk.WrapError(errj, "postWorkflowJobVariableHandler> Unable to load job %d", id)
 		}
 
 		found := false
@@ -511,12 +586,12 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 		}
 
 		if err := workflow.UpdateNodeJobRun(tx, api.Cache, p, job); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run")
+			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node job run %d", id)
 		}
 
 		node, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID)
 		if errn != nil {
-			return sdk.WrapError(errn, "postWorkflowJobVariableHandler> Unable to load node")
+			return sdk.WrapError(errn, "postWorkflowJobVariableHandler> Unable to load node %d", job.WorkflowNodeRunID)
 		}
 
 		found = false
@@ -533,7 +608,7 @@ func (api *API) postWorkflowJobVariableHandler() AsynchronousHandler {
 		}
 
 		if err := workflow.UpdateNodeRun(tx, node); err != nil {
-			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node run")
+			return sdk.WrapError(err, "postWorkflowJobVariableHandler> Unable to update node run %d", node.ID)
 		}
 
 		if err := tx.Commit(); err != nil {

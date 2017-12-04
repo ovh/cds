@@ -10,13 +10,17 @@
             [options]="{'fullTextSearch': true}"
             [(model)]="trigger.dest_application.name"
             (modelChange)="updatePipelineList()">
-            <option *ngFor="let app of project.applications" value="{{app.name}}">{{app.name}}</option>
+            <option *ngFor="let appName of project.application_names" value="{{appName}}">{{appName}}</option>
         </sm-select>
     </div>
     <div class="four wide column" *ngIf="trigger.dest_application.name">
         <span *ngIf="mode === 'edit'">{{ trigger.dest_pipeline.name}}</span>
+        <sm-select
+            *ngIf="loading && mode === 'create'">
+            <option>{{ 'common_loading' | translate }}</option>
+        </sm-select>
         <sm-select placeholder="Pipeline"
-            *ngIf="mode === 'create'"
+            *ngIf="!loading && mode === 'create'"
             [options]="{'fullTextSearch': true}"
             [(model)]="trigger.dest_pipeline.name"
             (modelChange)="updateDestPipeline()">

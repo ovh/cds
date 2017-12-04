@@ -2,11 +2,11 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/hashicorp/hcl"
 	"gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/group"
@@ -32,7 +32,7 @@ func (api *API) importPipelineHandler() Handler {
 		}
 
 		if err := group.LoadGroupByProject(api.mustDB(), proj); err != nil {
-			return sdk.WrapError(errp, "importPipelineHandler> Unable to load project permissions %s", key)
+			return sdk.WrapError(err, "importPipelineHandler> Unable to load project permissions %s", key)
 		}
 
 		// Get body
@@ -51,8 +51,8 @@ func (api *API) importPipelineHandler() Handler {
 		payload := &exportentities.Pipeline{}
 		var errorParse error
 		switch f {
-		case exportentities.FormatJSON, exportentities.FormatHCL:
-			errorParse = hcl.Unmarshal(data, payload)
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, payload)
 		case exportentities.FormatYAML:
 			errorParse = yaml.Unmarshal(data, payload)
 		}
@@ -118,17 +118,7 @@ func (api *API) importPipelineHandler() Handler {
 		close(msgChan)
 		<-done
 
-		al := r.Header.Get("Accept-Language")
-		msgListString := []string{}
-
-		for _, m := range allMsg {
-			s := m.String(al)
-			if s != "" {
-				msgListString = append(msgListString, s)
-			}
-		}
-
-		log.Debug("importPipelineHandler >>> %v", msgListString)
+		msgListString := translate(r, allMsg)
 
 		if globalError != nil {
 			myError, ok := globalError.(sdk.Error)
@@ -138,7 +128,7 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(globalError, "importPipelineHandler> Unable import pipeline")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Unable to update project")
 		}
 

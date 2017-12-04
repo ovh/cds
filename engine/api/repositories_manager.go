@@ -155,7 +155,7 @@ func (api *API) repositoriesManagerOAuthCallbackHandler() Handler {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with InsertForProject")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, u, proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, u, proj, sdk.ProjectLastModificationType); err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot update project last modified date")
 		}
 
@@ -228,7 +228,7 @@ func (api *API) repositoriesManagerAuthorizeCallbackHandler() Handler {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Error with SaveDataForProject")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectLastModificationType); err != nil {
 			return sdk.WrapError(err, "repositoriesManagerAuthorizeCallback> Cannot update project last modified date")
 		}
 
@@ -267,7 +267,7 @@ func (api *API) deleteRepositoriesManagerHandler() Handler {
 			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> error deleting %s-%s", projectKey, rmName)
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
 			return sdk.WrapError(err, "deleteRepositoriesManagerHandler> Cannot update project last modified date")
 		}
 
@@ -332,6 +332,10 @@ func (api *API) getRepoFromRepositoriesManagerHandler() Handler {
 		projectKey := vars["permProjectKey"]
 		rmName := vars["name"]
 		repoName := r.FormValue("repo")
+
+		if repoName == "" {
+			return sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Missing repository name 'repo' as a query parameter"))
+		}
 
 		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
 		if errproj != nil {
@@ -452,9 +456,10 @@ func (api *API) detachRepositoriesManagerHandler() Handler {
 			link := fmt.Sprintf(s, h.UID, h.Project, h.Repository)
 
 			vcsHook := sdk.VCSHook{
-				Name:   rm.Name,
-				URL:    link,
-				Method: "GET",
+				Name:     rm.Name,
+				URL:      link,
+				Method:   "GET",
+				Workflow: false,
 			}
 
 			if err := client.DeleteHook(rm.Name, vcsHook); err != nil {
@@ -629,9 +634,10 @@ func (api *API) deleteHookOnRepositoriesManagerHandler() Handler {
 		link := fmt.Sprintf(s, h.UID, t[0], t[1])
 
 		vcsHook := sdk.VCSHook{
-			Name:   rm.Name,
-			URL:    link,
-			Method: "GET",
+			Name:     rm.Name,
+			URL:      link,
+			Method:   "GET",
+			Workflow: false,
 		}
 
 		if errdelete := client.DeleteHook(app.RepositoryFullname, vcsHook); errdelete != nil {

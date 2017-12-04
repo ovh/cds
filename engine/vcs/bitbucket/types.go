@@ -3,8 +3,19 @@ package bitbucket
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 )
+
+// WebHook Represent a webhook in bitbucket model
+type WebHook struct {
+	ID            int               `json:"id, omitempty"`
+	Active        bool              `json:"active"`
+	Configuration map[string]string `json:"configuration"`
+	Events        []string          `json:"events"`
+	Name          string            `json:"name"`
+	URL           string            `json:"url"`
+}
 
 type Branch struct {
 	ID         string `json:"id"`
@@ -70,7 +81,7 @@ type HooksConfig struct {
 }
 
 func (h *HooksConfig) MarshalJSON() ([]byte, error) {
-	m := make(map[string]string)
+	m := make(map[string]interface{})
 	m["version"] = h.Version
 	m["locationCount"] = fmt.Sprintf("%d", len(h.Details))
 	for i, d := range h.Details {
@@ -86,12 +97,14 @@ func (h *HooksConfig) MarshalJSON() ([]byte, error) {
 		m["branchFilter"+keySuffix] = d.BranchFilter
 		m["tagFilter"+keySuffix] = d.TagFilter
 		m["userFilter"+keySuffix] = d.UserFilter
+		m["skipSsl"+keySuffix] = d.SkipSsl
+		m["useAuth"+keySuffix] = d.UseAuth
 	}
 	return json.Marshal(m)
 }
 
 func (h *HooksConfig) UnmarshalJSON(b []byte) error {
-	m := make(map[string]string)
+	m := make(map[string]interface{})
 	if err := json.Unmarshal(b, &m); err != nil {
 		return err
 	}
@@ -109,14 +122,18 @@ func (h *HooksConfig) UnmarshalJSON(b []byte) error {
 		if i > 0 {
 			keySuffix = fmt.Sprintf("%d", i+1)
 		}
+		skipSsl, _ := strconv.ParseBool(fmt.Sprintf("%s", m["skipSsl"+keySuffix]))
+		useAuth, _ := strconv.ParseBool(fmt.Sprintf("%s", m["useAuth"+keySuffix]))
 		h.Details[i] = HookConfigDetail{
-			BranchFilter:    m["branchFilter"+keySuffix],
-			Method:          m["httpMethod"+keySuffix],
-			PostContentType: m["postContentType"+keySuffix],
-			PostData:        m["postData"+keySuffix],
-			TagFilter:       m["tagFilter"+keySuffix],
-			URL:             m["url"+keySuffix],
-			UserFilter:      m["userFilter"+keySuffix],
+			BranchFilter:    fmt.Sprintf("%s", m["branchFilter"+keySuffix]),
+			Method:          fmt.Sprintf("%s", m["httpMethod"+keySuffix]),
+			PostContentType: fmt.Sprintf("%s", m["postContentType"+keySuffix]),
+			PostData:        fmt.Sprintf("%s", m["postData"+keySuffix]),
+			TagFilter:       fmt.Sprintf("%s", m["tagFilter"+keySuffix]),
+			URL:             fmt.Sprintf("%s", m["url"+keySuffix]),
+			UserFilter:      fmt.Sprintf("%s", m["userFilter"+keySuffix]),
+			SkipSsl:         skipSsl,
+			UseAuth:         useAuth,
 		}
 	}
 	return nil
@@ -130,6 +147,8 @@ type HookConfigDetail struct {
 	BranchFilter    string `json:"branchFilter"`
 	TagFilter       string `json:"tagFilter"`
 	UserFilter      string `json:"userFilter"`
+	SkipSsl         bool   `json:"skipSsl"`
+	UseAuth         bool   `json:"useAuth"`
 }
 
 type Hook struct {

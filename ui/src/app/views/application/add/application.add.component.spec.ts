@@ -1,14 +1,15 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend} from '@angular/http';
 import {Router, ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
+import {EnvironmentService} from '../../../service/environment/environment.service';
 import {ApplicationStore} from '../../../service/application/application.store';
 import {ApplicationService} from '../../../service/application/application.service';
+import {PipelineService} from '../../../service/pipeline/pipeline.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {SharedModule} from '../../../shared/shared.module';
-import {Observable} from 'rxjs/Rx';
+import {ServicesModule} from '../../../service/services.module';
+import {Observable} from 'rxjs/Observable';
 import {Injector} from '@angular/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ProjectStore} from '../../../service/project/project.store';
@@ -30,7 +31,6 @@ describe('CDS: Application Add Component', () => {
 
     let injector: Injector;
     let appStore: ApplicationStore;
-    let backend: MockBackend;
     let router: Router;
     let prjStore: ProjectStore;
 
@@ -39,13 +39,13 @@ describe('CDS: Application Add Component', () => {
             declarations: [
             ],
             providers: [
-                MockBackend,
-                { provide: XHRBackend, useClass: MockBackend },
                 AuthentificationStore,
                 ApplicationStore,
                 ApplicationService,
                 ProjectStore,
                 ProjectService,
+                EnvironmentService,
+                PipelineService,
                 { provide: ActivatedRoute, useClass: MockActivatedRoutes},
                 { provide: Router, useClass: MockRouter},
                 { provide: ToastService, useClass: MockToast},
@@ -59,12 +59,12 @@ describe('CDS: Application Add Component', () => {
                 ApplicationModule,
                 RouterTestingModule.withRoutes([]),
                 SharedModule,
+                ServicesModule,
                 HttpClientTestingModule
             ]
         });
 
         injector = getTestBed();
-        backend = injector.get(MockBackend);
         appStore = injector.get(ApplicationStore);
         router = injector.get(Router);
         prjStore = injector.get(ProjectStore);
@@ -73,7 +73,6 @@ describe('CDS: Application Add Component', () => {
     afterEach(() => {
         injector = undefined;
         appStore = undefined;
-        backend = undefined;
         router = undefined;
         prjStore = undefined;
     });

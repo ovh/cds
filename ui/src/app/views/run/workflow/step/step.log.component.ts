@@ -1,7 +1,7 @@
 import {Component, Input, OnInit, OnDestroy, NgZone, ElementRef, ViewChild} from '@angular/core';
 import {Action} from '../../../../model/action.model';
 import {CDSWorker} from '../../../../shared/worker/worker';
-import {Subscription} from 'rxjs/Rx';
+import {Subscription} from 'rxjs/Subscription';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {DurationService} from '../../../../shared/duration/duration.service';
 import {environment} from '../../../../../environments/environment';
@@ -36,18 +36,25 @@ export class StepLogComponent implements OnInit, OnDestroy {
             this.initWorker();
         }
         this.currentStatus = data;
+        if (data === PipelineStatus.BUILDING) {
+            this.showLog = true;
+        }
     }
     logs: Log;
     currentStatus: string;
     set showLog(data: boolean) {
-        this._showLog = data;
-        if (data) {
+        let neverRun = PipelineStatus.neverRun(this.currentStatus);
+        if (data && !neverRun) {
             this.initWorker();
         } else {
             if (this.worker) {
                 this.worker.stop();
             }
         }
+        if (data && neverRun) {
+            return;
+        }
+        this._showLog = data;
     }
     get showLog() {
       return this._showLog;
@@ -76,7 +83,8 @@ export class StepLogComponent implements OnInit, OnDestroy {
 
         this.zone = new NgZone({enableLongStackTrace: false});
         if (this.currentStatus === this.pipelineBuildStatusEnum.BUILDING ||
-            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) || (pipelineBuildDone && isLastStep)) {
+            (this.currentStatus === this.pipelineBuildStatusEnum.FAIL && !this.step.optional) ||
+                (pipelineBuildDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
           this.showLog = true;
         }
     }
@@ -128,21 +136,30 @@ export class StepLogComponent implements OnInit, OnDestroy {
         if (this.workerSubscription) {
             this.workerSubscription.unsubscribe();
         }
+        if (this.worker) {
+            this.worker.stop();
+        }
         clearInterval(this.intervalListener);
     }
 
     computeDuration() {
-        this.startExec = new Date(this.logs.start.seconds * 1000);
-        this.doneExec = this.logs.done && this.logs.done.seconds ? new Date(this.logs.done.seconds * 1000) : null;
+        if (!this.logs || PipelineStatus.neverRun(this.currentStatus)) {
+            return;
+        }
+        this.startExec = this.logs.start && this.logs.start.seconds > 0 ? new Date(this.logs.start.seconds * 1000) : new Date();
+        this.doneExec = this.logs.done && this.logs.done.seconds > 0 ? new Date(this.logs.done.seconds * 1000) : new Date();
         if (!this.duration) {
-            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec || new Date()) + ')';
+            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
         }
         this.intervalListener = setInterval(() => {
-            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec || new Date()) + ')';
+            this.startExec = this.logs.start && this.logs.start.seconds > 0 ? new Date(this.logs.start.seconds * 1000) : new Date();
+            this.doneExec = this.logs.done && this.logs.done.seconds > 0 ? new Date(this.logs.done.seconds * 1000) : new Date();
+
+            this.duration = '(' + this._durationService.duration(this.startExec, this.doneExec) + ')';
             if (this.currentStatus !== PipelineStatus.BUILDING && this.currentStatus !== PipelineStatus.WAITING) {
                 clearInterval(this.intervalListener);
             }
-        }, 5000);
+        }, 2000);
     }
 
     toggleLogs() {

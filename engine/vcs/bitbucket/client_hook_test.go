@@ -15,7 +15,7 @@ func TestCreateHook(t *testing.T) {
 		URL:    "http://localhost:8080",
 	}
 
-	err := client.CreateHook("CDS/cds-event-function", h)
+	err := client.CreateHook("CDS/cds-event-function", &h)
 	test.NoError(t, err)
 }
 
@@ -27,7 +27,7 @@ func TestDeleteHook(t *testing.T) {
 		URL:    "http://localhost:8080",
 	}
 
-	err := client.CreateHook("CDS/cds-event-function", h)
+	err := client.CreateHook("CDS/cds-event-function", &h)
 	test.NoError(t, err)
 
 	err = client.DeleteHook("CDS/cds-event-function", h)
@@ -42,7 +42,7 @@ func TestUpdateHook(t *testing.T) {
 		URL:    "http://localhost:8080",
 	}
 
-	err := client.CreateHook("CDS/cds-event-function", h)
+	err := client.CreateHook("CDS/cds-event-function", &h)
 	test.NoError(t, err)
 
 	h = sdk.VCSHook{

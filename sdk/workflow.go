@@ -25,45 +25,6 @@ type Workflow struct {
 	PurgeTags     []string           `json:"purge_tags,omitempty" db:"-" cli:"-"`
 }
 
-// FilterHooksConfig filter all hooks configuration and remove somme configuration key
-func (w *Workflow) FilterHooksConfig(s ...string) {
-	if w.Root == nil {
-		return
-	}
-
-	w.Root.FilterHooksConfig(s...)
-	for i := range w.Joins {
-		for j := range w.Joins[i].Triggers {
-			w.Joins[i].Triggers[j].WorkflowDestNode.FilterHooksConfig(s...)
-		}
-	}
-}
-
-// GetHooks returns the list of all hooks in the workflow tree
-func (w *Workflow) GetHooks() map[string]WorkflowNodeHook {
-	if w.Root == nil {
-		return nil
-	}
-
-	res := map[string]WorkflowNodeHook{}
-
-	a := w.Root.GetHooks()
-	for k, v := range a {
-		res[k] = v
-	}
-
-	for _, j := range w.Joins {
-		for _, t := range j.Triggers {
-			b := t.WorkflowDestNode.GetHooks()
-			for k, v := range b {
-				res[k] = v
-			}
-		}
-	}
-
-	return res
-}
-
 //JoinsID returns joins ID
 func (w *Workflow) JoinsID() []int64 {
 	res := []int64{}
@@ -90,6 +51,23 @@ func (w *Workflow) Nodes() []int64 {
 		}
 	}
 	return res
+}
+
+//GetNodeByName returns the node given its name
+func (w *Workflow) GetNodeByName(name string) *WorkflowNode {
+	n := w.Root.GetNodeByName(name)
+	if n != nil {
+		return n
+	}
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			n = t.WorkflowDestNode.GetNodeByName(name)
+			if n != nil {
+				return n
+			}
+		}
+	}
+	return nil
 }
 
 //GetNode returns the node given its id
@@ -238,42 +216,6 @@ type WorkflowNode struct {
 	Triggers         []WorkflowNodeTrigger `json:"triggers,omitempty" db:"-"`
 }
 
-// FilterHooksConfig filter all hooks configuration and remove somme configuration key
-func (n *WorkflowNode) FilterHooksConfig(s ...string) {
-	if n == nil {
-		return
-	}
-
-	for _, h := range n.Hooks {
-		for i := range s {
-			for k := range h.Config {
-				if k == s[i] {
-					delete(h.Config, k)
-					break
-				}
-			}
-		}
-	}
-}
-
-//GetHooks returns all hooks for the node and its children
-func (n *WorkflowNode) GetHooks() map[string]WorkflowNodeHook {
-	res := map[string]WorkflowNodeHook{}
-
-	for _, h := range n.Hooks {
-		res[h.UUID] = h
-	}
-
-	for _, t := range n.Triggers {
-		b := t.WorkflowDestNode.GetHooks()
-		for k, v := range b {
-			res[k] = v
-		}
-	}
-
-	return res
-}
-
 // EqualsTo returns true if a node has the same pipeline and context than another
 func (n *WorkflowNode) EqualsTo(n1 *WorkflowNode) bool {
 	if n.PipelineID != n1.PipelineID {
@@ -292,6 +234,23 @@ func (n *WorkflowNode) EqualsTo(n1 *WorkflowNode) bool {
 		return false
 	}
 	return true
+}
+
+//GetNodeByName returns the node given its name
+func (n *WorkflowNode) GetNodeByName(name string) *WorkflowNode {
+	if n == nil {
+		return nil
+	}
+	if n.Name == name {
+		return n
+	}
+	for _, t := range n.Triggers {
+		n = t.WorkflowDestNode.GetNodeByName(name)
+		if n != nil {
+			return n
+		}
+	}
+	return nil
 }
 
 //GetNode returns the node given its id
@@ -507,52 +466,6 @@ type WorkflowNodeContext struct {
 	DefaultPayload            interface{}            `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters,omitempty" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions,omitempty" db:"-"`
-}
-
-//WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
-type WorkflowNodeHook struct {
-	ID                  int64                  `json:"id" db:"id"`
-	UUID                string                 `json:"uuid" db:"uuid"`
-	WorkflowNodeID      int64                  `json:"workflow_node_id" db:"workflow_node_id"`
-	WorkflowHookModelID int64                  `json:"workflow_hook_model_id" db:"workflow_hook_model_id"`
-	WorkflowHookModel   WorkflowHookModel      `json:"model" db:"-"`
-	Config              WorkflowNodeHookConfig `json:"config" db:"-"`
-}
-
-var WorkflowHookModelBuiltin = "builtin"
-
-//WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
-type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
-
-//Values returns configurable values of a hook config
-func (c WorkflowNodeHookConfig) Values() map[string]string {
-	res := map[string]string{}
-	for k, v := range c {
-		if v.Configurable {
-			res[k] = v.Value
-		}
-	}
-	return res
-}
-
-// WorkflowNodeHookConfigValue represents the value of a node hook config
-type WorkflowNodeHookConfigValue struct {
-	Value        string `json:"value"`
-	Configurable bool   `json:"configurable"`
-}
-
-//WorkflowHookModel represents a hook which can be used in workflows.
-type WorkflowHookModel struct {
-	ID            int64                  `json:"id" db:"id" cli:"-"`
-	Name          string                 `json:"name" db:"name" cli:"name"`
-	Type          string                 `json:"type"  db:"type"`
-	Author        string                 `json:"author" db:"author"`
-	Description   string                 `json:"description" db:"description"`
-	Identifier    string                 `json:"identifier" db:"identifier"`
-	Icon          string                 `json:"icon" db:"icon"`
-	Command       string                 `json:"command" db:"command"`
-	DefaultConfig WorkflowNodeHookConfig `json:"default_config" db:"-"`
-	Disabled      bool                   `json:"disabled" db:"disabled"`
 }
 
 //WorkflowList return the list of the workflows for a project

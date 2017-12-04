@@ -52,6 +52,11 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 		}
 	}
 
+	// Delete application_key
+	if err := DeleteAllApplicationKeys(db, applicationID); err != nil {
+		return sdk.WrapError(err, "DeleteApplication")
+	}
+
 	// Delete application artifact left
 	query = `DELETE FROM artifact WHERE application_id = $1`
 	if _, err = db.Exec(query, applicationID); err != nil {
@@ -84,6 +89,15 @@ func DeleteApplication(db gorp.SqlExecutor, applicationID int64) error {
 	query = `DELETE FROM application WHERE id=$1`
 	if _, err := db.Exec(query, applicationID); err != nil {
 		return sdk.WrapError(err, "DeleteApplication> Cannot delete application")
+	}
+	return nil
+}
+
+//DeleteAllApplicationKeys deletes all application keys
+func DeleteAllApplicationKeys(db gorp.SqlExecutor, applicationID int64) error {
+	query := `DELETE FROM application_key WHERE application_id = $1`
+	if _, err := db.Exec(query, applicationID); err != nil {
+		return sdk.WrapError(err, "DeleteAllApplicationKey> Cannot delete application key")
 	}
 	return nil
 }

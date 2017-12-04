@@ -32,6 +32,7 @@ type Router struct {
 	Prefix                 string
 	URL                    string
 	Middlewares            []Middleware
+	PostMiddlewares        []Middleware
 	mapRouterConfigs       map[string]*RouterConfig
 	mapAsynchronousHandler map[string]HandlerFunc
 	panicked               bool
@@ -238,6 +239,17 @@ func (r *Router) Handle(uri string, handlers ...*HandlerConfig) {
 			return
 		}
 
+		// writeNoContentPostMiddleware is compliant Middleware Interface
+		// but no need to check ct, err in return
+		writeNoContentPostMiddleware(ctx, w, req, rc)
+
+		for _, m := range r.PostMiddlewares {
+			var err error
+			ctx, err = m(ctx, w, req, rc)
+			if err != nil {
+				log.Error("PostMiddlewares > %s", err)
+			}
+		}
 	}
 
 	r.Mux.HandleFunc(uri, r.compress(r.recoverWrap(f)))
