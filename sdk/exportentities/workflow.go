@@ -34,6 +34,7 @@ type WorkflowVersion string
 
 const WorkflowVersion1 = "v1.0"
 
+//NewWorkflow creates a new exportable workflow
 func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	e := Workflow{}
 	e.Version = WorkflowVersion1
