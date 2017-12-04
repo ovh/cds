@@ -61,5 +61,6 @@ func main() {
 	cmd.AddCommand(cmdExit(w))
 	cmd.AddCommand(cmdVersion)
 	cmd.AddCommand(cmdRegister(w))
+	cmd.AddCommand(cmdRequirements(w))
 	cmd.Execute()
 }
