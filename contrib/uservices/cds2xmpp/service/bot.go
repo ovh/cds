@@ -143,7 +143,7 @@ func (bot *botClient) sendPresencesOnConfs() error {
 
 func (bot *botClient) sendToXMPP() {
 	for {
-		cdsbot.XMPPClient.Send(<-bot.chats)
+		cdsbot.XMPPClient.SendHtml(<-bot.chats)
 		time.Sleep(time.Duration(viper.GetInt("xmpp_delay")) * time.Second)
 	}
 }
