@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -459,7 +460,16 @@ func (api *API) postWorkflowRunHandler() Handler {
 	}
 }
 
+type workerOpts struct {
+	wg             *sync.WaitGroup
+	chanNodesToRun chan sdk.WorkflowNode
+	chanNodeRun    chan bool
+	chanError      chan error
+	chanEvent      chan<- interface{}
+}
+
 func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, opts *sdk.WorkflowRunPostHandlerOption, u *sdk.User) {
+	const nbWorker int = 5
 	defer close(chEvent)
 	defer close(chError)
 
@@ -497,34 +507,35 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			fromNodes = append(fromNodes, wf.Root)
 		}
 
+		var wg sync.WaitGroup
+		workerOptions := &workerOpts{
+			wg:             &wg,
+			chanNodesToRun: make(chan sdk.WorkflowNode, nbWorker),
+			chanNodeRun:    make(chan bool, nbWorker),
+			chanError:      make(chan error, nbWorker),
+			chanEvent:      chEvent,
+		}
+		wg.Add(len(fromNodes))
+		for i := 0; i < nbWorker && i < len(fromNodes); i++ {
+			go runFromNode(db, store, *opts, p, wf, lastRun, u, workerOptions)
+		}
 		for _, fromNode := range fromNodes {
-			// Check Env Permission
-			if fromNode.Context.Environment != nil {
-				if !permission.AccessToEnvironment(fromNode.Context.Environment.ID, u, permission.PermissionReadExecute) {
-					chError <- sdk.WrapError(sdk.ErrNoEnvExecution, "postWorkflowRunHandler> Not enough right to run on environment %s", fromNode.Context.Environment.Name)
-				}
-			}
+			workerOptions.chanNodesToRun <- *fromNode
+		}
+		close(workerOptions.chanNodesToRun)
 
-			//If payload is not set, keep the default payload
-			if opts.Manual.Payload == interface{}(nil) {
-				opts.Manual.Payload = fromNode.Context.DefaultPayload
-			}
-
-			//If PipelineParameters are not set, keep the default PipelineParameters
-			if len(opts.Manual.PipelineParameters) == 0 {
-				opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
-			}
-			log.Debug("Manual run: %#v", opts.Manual)
-
-			//Manual run
-			if lastRun != nil {
-				var errmr error
-				_, errmr = workflow.ManualRunFromNode(tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID, chEvent)
-				if errmr != nil {
-					chError <- sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow from node")
+		for i := 0; i < len(fromNodes); i++ {
+			select {
+			case <-workerOptions.chanNodeRun:
+			case err := <-workerOptions.chanError:
+				if chError != nil {
+					chError <- err
+				} else {
+					log.Warning("postWorkflowRunHandler> Cannot run from node %v", err)
 				}
 			}
 		}
+		wg.Wait()
 
 		if lastRun == nil {
 			var errmr error
@@ -538,6 +549,59 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	//Commit and return success
 	if err := tx.Commit(); err != nil {
 		chError <- sdk.WrapError(err, "postWorkflowRunHandler> Unable to commit transaction")
+	}
+}
+
+func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHandlerOption, p *sdk.Project, wf *sdk.Workflow, lastRun *sdk.WorkflowRun, u *sdk.User, workerOptions *workerOpts) {
+	for fromNode := range workerOptions.chanNodesToRun {
+		tx, errb := db.Begin()
+		if errb != nil {
+			workerOptions.chanError <- sdk.WrapError(errb, "runFromNode> Cannot start transaction")
+			workerOptions.wg.Done()
+			return
+		}
+
+		// Check Env Permission
+		if fromNode.Context.Environment != nil {
+			if !permission.AccessToEnvironment(fromNode.Context.Environment.ID, u, permission.PermissionReadExecute) {
+				workerOptions.chanError <- sdk.WrapError(sdk.ErrNoEnvExecution, "runFromNode> Not enough right to run on environment %s", fromNode.Context.Environment.Name)
+				tx.Rollback()
+				workerOptions.wg.Done()
+				return
+			}
+		}
+
+		//If payload is not set, keep the default payload
+		if opts.Manual.Payload == interface{}(nil) {
+			opts.Manual.Payload = fromNode.Context.DefaultPayload
+		}
+
+		//If PipelineParameters are not set, keep the default PipelineParameters
+		if len(opts.Manual.PipelineParameters) == 0 {
+			opts.Manual.PipelineParameters = fromNode.Context.DefaultPipelineParameters
+		}
+		log.Debug("Manual run: %#v", opts.Manual)
+
+		//Manual run
+		if lastRun != nil {
+			_, errmr := workflow.ManualRunFromNode(tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID, workerOptions.chanEvent)
+			if errmr != nil {
+				workerOptions.chanError <- sdk.WrapError(errmr, "runFromNode> Unable to run workflow from node")
+				tx.Rollback()
+				workerOptions.wg.Done()
+				return
+			}
+			workerOptions.chanNodeRun <- true
+		}
+
+		if err := tx.Commit(); err != nil {
+			workerOptions.chanError <- sdk.WrapError(err, "runFromNode> Unable to commit transaction")
+			tx.Rollback()
+			workerOptions.wg.Done()
+			return
+		}
+
+		workerOptions.wg.Done()
 	}
 }
 
@@ -723,8 +787,8 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 		}
 
 		if stepStatus == "" {
-			return sdk.WrapError(fmt.Errorf("getWorkflowNodeRunJobStepHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
-				stepOrder, runJobID, nodeRunID, number, workflowName, projectKey), "")
+			return sdk.WrapError(sdk.ErrStepNotFound, "getWorkflowNodeRunJobStepHandler> Cannot find step %d on job %d in nodeRun %d/%d for workflow %s in project %s",
+				stepOrder, runJobID, nodeRunID, number, workflowName, projectKey)
 		}
 
 		logs, errL := workflow.LoadStepLogs(api.mustDB(), runJobID, stepOrder)
