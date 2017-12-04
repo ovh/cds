@@ -32,7 +32,7 @@ func New(c Config) Interface {
 }
 
 // NewService returns client for a service
-func NewService(endpoint string) Interface {
+func NewService(endpoint string, timeout time.Duration) Interface {
 	conf := Config{
 		Host:  endpoint,
 		Retry: 2,
@@ -40,7 +40,7 @@ func NewService(endpoint string) Interface {
 	cli := new(client)
 	cli.config = conf
 	cli.HTTPClient = &http.Client{
-		Timeout: time.Second * 10,
+		Timeout: timeout,
 	}
 	cli.isService = true
 	cli.init()

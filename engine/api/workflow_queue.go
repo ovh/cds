@@ -504,8 +504,8 @@ func (api *API) postWorkflowJobTestsResultsHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobTagsHandler() AsynchronousHandler {
-	return func(ctx context.Context, r *http.Request) error {
+func (api *API) postWorkflowJobTagsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		id, errr := requestVarInt(r, "permID")
 		if errr != nil {
 			return sdk.WrapError(errr, "postWorkflowJobTagsHandler> Invalid id")
