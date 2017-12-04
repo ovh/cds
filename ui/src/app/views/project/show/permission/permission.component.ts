@@ -32,7 +32,7 @@ export class ProjectPermissionsComponent implements OnInit {
 
     constructor(
       private _projectStore: ProjectStore,
-      private _translate: TranslateService,
+      public _translate: TranslateService,
       private _toast: ToastService) {
 
     }
