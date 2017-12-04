@@ -30,7 +30,7 @@ export class PipelineAuditComponent extends Table implements OnInit {
     public auditModalTmpl: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
-
+    indexSelected: number;
     codeMirrorConfig: any;
 
     constructor(private _auditService: PipelineAuditService, private _modalService: SuiModalService) {
@@ -56,6 +56,7 @@ export class PipelineAuditComponent extends Table implements OnInit {
     }
 
     compareIndex(i): void {
+        this.indexSelected = i;
         let indexToCompare = (this.currentPage - 1) * this.nbElementsByPage + i;
 
         let pipFrom = cloneDeep(this.audits[indexToCompare].pipeline);
@@ -216,9 +217,16 @@ export class PipelineAuditComponent extends Table implements OnInit {
 
     getUpdateJobDiff(path: string, pathSplitted: Array<string>, pipTo: Pipeline, pipFrom: Pipeline): PipelineAuditDiff {
         let diff = new PipelineAuditDiff();
+        if (!pathSplitted.length || pathSplitted.length < 2) {
+          return;
+        }
 
         let stage: Stage = pipTo[pathSplitted[0]][pathSplitted[1]];
-        let job: Job = stage.jobs[pathSplitted[3]];
+        let job: Job = new Job();
+
+        if (pathSplitted.length > 3) {
+          job = stage.jobs[pathSplitted[3]];
+        }
 
         if (path.indexOf('requirements') !== -1) {
             diff.title = 'Update ' + stage.name + ' > ' + job.action.name + ' > requirements';
