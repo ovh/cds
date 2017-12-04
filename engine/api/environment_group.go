@@ -232,7 +232,7 @@ func (api *API) deleteGroupFromEnvironmentHandler() Handler {
 			return sdk.WrapError(errE, "deleteGroupFromEnvironmentHandler: Cannot load environment")
 		}
 
-		g, errG := group.LoadGroup(api.mustDB(), envName)
+		g, errG := group.LoadGroup(api.mustDB(), groupName)
 		if errG != nil {
 			return sdk.WrapError(errG, "deleteGroupFromEnvironmentHandler: Cannot load group")
 		}
