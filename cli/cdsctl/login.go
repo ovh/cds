@@ -114,7 +114,7 @@ func doLogin(url, username, password string, env bool) error {
 		fmt.Printf("export CDS_USER=%s\n", username)
 		fmt.Printf("export CDS_TOKEN=%s\n", token)
 		fmt.Println("# Run this command to configure your shell:")
-		fmt.Println(`# eval "$(cds login -H HOST -u USERNAME -p PASSWORD --env)`)
+		fmt.Println(`# eval $(cds login -H HOST -u USERNAME -p PASSWORD --env)`)
 		return nil
 	}
 
