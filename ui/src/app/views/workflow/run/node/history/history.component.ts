@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter} from '@angular/core';
+import {Component, Input} from '@angular/core';
 import {Table} from '../../../../../shared/table/table';
 import {Project} from '../../../../../model/project.model';
 import {WorkflowNodeRun, WorkflowRun} from '../../../../../model/workflow.run.model';
@@ -17,8 +17,6 @@ export class WorkflowNodeRunHistoryComponent extends Table {
     @Input() history: Array<WorkflowNodeRun>;
     @Input() currentBuild: WorkflowNodeRun;
     @Input() workflowName: string;
-
-    @Output() historyChanged = new EventEmitter<number>();
 
     loading: boolean;
 
