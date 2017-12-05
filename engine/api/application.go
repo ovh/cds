@@ -408,11 +408,21 @@ func (api *API) getApplicationRemoteHandler() Handler {
 				}
 				found[pr.Head.Repo] = true
 			}
-		} else {
-			var errg error
-			remotes, errg = pipeline.GetRemotes(api.mustDB(), app)
-			if errg != nil {
-				return sdk.WrapError(errg, "getApplicationRemoteHandler> Cannot get remotes from builds")
+		}
+
+		oldRemotes, errg := pipeline.GetRemotes(api.mustDB(), app)
+		if errg != nil {
+			return sdk.WrapError(errg, "getApplicationRemoteHandler> Cannot get remotes from builds")
+		}
+		for _, oldRemote := range oldRemotes {
+			exist := false
+			for _, remote := range remotes {
+				if remote.Name == oldRemote.Name {
+					exist = true
+				}
+			}
+			if !exist {
+				remotes = append(remotes, oldRemote)
 			}
 		}
 

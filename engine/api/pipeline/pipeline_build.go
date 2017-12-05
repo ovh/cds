@@ -1458,7 +1458,7 @@ func GetRemotes(db gorp.SqlExecutor, app *sdk.Application) ([]sdk.VCSRemote, err
 	defer rows.Close()
 	for rows.Next() {
 		var remoteURL, remote sql.NullString
-		err := rows.Scan(&remoteURL, remote)
+		err := rows.Scan(&remoteURL, &remote)
 		if err != nil {
 			return nil, err
 		}
