@@ -14,7 +14,6 @@ testcases:
   - script: {{.cds.build.cdsctl}} group remove ITCLIAPP_GRP_EDIT_TEST2 --force
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP
   - script: {{.cds.build.cdsctl}} project create ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
-  - script: {{.cds.build.cdsctl}} project add ITCLIAPPPRJ "Test Project" ITCLIAPP_GRP
   - script: {{.cds.build.cdsctl}} application add ITCLIAPPPRJ apptest
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST
   - script: {{.cds.build.cdsctl}} group add ITCLIAPP_GRP_EDIT_TEST1
