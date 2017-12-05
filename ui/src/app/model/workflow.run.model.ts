@@ -8,6 +8,10 @@ import {Job} from './job.model';
 import {Hatchery} from './hatchery.model';
 import {User} from './user.model';
 
+
+export class RunNumber {
+    num: number;
+}
 export class WorkflowRunRequest {
     hook: WorkflowNodeRunHookEvent;
     manual: WorkflowNodeRunManual;

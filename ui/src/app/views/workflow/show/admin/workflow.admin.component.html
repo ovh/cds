@@ -81,6 +81,26 @@
             <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)" #updateWarning></app-warning-modal>
         </app-zone-content>
     </app-zone>
+    <app-zone header="{{ 'workflow_runnumber_title' | translate }}">
+        <app-zone-content class="bottom">
+            <form class="ui form" (ngSubmit)="onSubmitWorkflowRunNumUpdate()" #workflowRunNumUpdateFrom="ngForm">
+                <div class="fields">
+                    <div class="seven wide field">
+                        <input type="number" name="formWorkflowRunNumUpdateNumber"
+                               placeholder="{{ 'common_loading' | translate}}"
+                               [(ngModel)]="runnumber"
+                               [disabled]="loading"
+                               required
+                               #formWorkflowRunNumUpdateNumber="ngModel">
+                    </div>
+                    <div class="nine wide right aligned field">
+                        <button class="ui green button" name="btnrename" [class.loading]="loading">{{ 'btn_save' | translate }}</button>
+                    </div>
+                </div>
+            </form>
+            <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="onSubmitWorkflowUpdate(true)" #updateWarning></app-warning-modal>
+        </app-zone-content>
+    </app-zone>
     <app-zone header="{{ 'danger_zone' | translate }}" headerClass="red inverted">
         <app-zone-content class="bottom">
             <div class="ui grid">

@@ -359,6 +359,40 @@ ORDER BY tags.tag;
 	return rmap, nil
 }
 
+// LoadCurrentRunNum
+func LoadCurrentRunNum(db gorp.SqlExecutor, projectkey, workflowname string) (int64, error) {
+	query := `SELECT COALESCE(workflow_sequences.current_val, 0)  as run_num
+			FROM workflow
+			LEFT JOIN workflow_sequences ON workflow.id = workflow_sequences.workflow_id
+			JOIN project ON project.id = workflow.project_id
+			WHERE project.projectkey = $1 AND workflow.name = $2;
+
+    `
+	i, err := db.SelectInt(query, projectkey, workflowname)
+	if err != nil {
+		return 0, sdk.WrapError(err, "LoadCurrentRunNum> Cannot load workflow run current num")
+	}
+	return int64(i), nil
+}
+
+// UpdateRunNum Update run number for the given workflow
+func UpdateRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
+	if num == 1 {
+		if _, err := nextRunNumber(db, w); err != nil {
+			return sdk.WrapError(err, "UpdateRunNum> Cannot create run number")
+		}
+		return nil
+	}
+
+	query := `
+		UPDATE workflow_sequences set current_val = $1 WHERE workflow_id = $2
+	`
+	if _, err := db.Exec(query, num, w.ID); err != nil {
+		return sdk.WrapError(err, "UpdateRunNum> Cannot update run number")
+	}
+	return nil
+}
+
 func nextRunNumber(db gorp.SqlExecutor, w *sdk.Workflow) (int64, error) {
 	i, err := db.SelectInt("select workflow_sequences_nextval($1)", w.ID)
 	if err != nil {
