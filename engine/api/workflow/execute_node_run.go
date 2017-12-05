@@ -374,10 +374,10 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 	}
 
 	chanNjrID := make(chan int64, stopWorkflowNodeRunNBWorker)
-	chanNodeJobRun := make(chan interface{}, stopWorkflowNodeRunNBWorker)
+	chanNodeJobRunDone := make(chan bool, stopWorkflowNodeRunNBWorker)
 	chanErr := make(chan error, stopWorkflowNodeRunNBWorker)
 	for i := 0; i < stopWorkflowNodeRunNBWorker && i < len(ids); i++ {
-		go stopWorkflowNodeJobRun(db, store, proj, &nodeRun, stopInfos, chanNjrID, chanNodeJobRun, chanErr, &wg)
+		go stopWorkflowNodeJobRun(db, store, proj, &nodeRun, stopInfos, chanNjrID, chanEvent, chanErr, chanNodeJobRunDone, &wg)
 	}
 
 	wg.Add(len(ids))
@@ -388,10 +388,7 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 
 	for i := 0; i < len(ids); i++ {
 		select {
-		case njRun := <-chanNodeJobRun:
-			if chanEvent != nil {
-				chanEvent <- njRun
-			}
+		case <-chanNodeJobRunDone:
 		case err := <-chanErr:
 			return err
 		}
@@ -420,7 +417,7 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 	return nil
 }
 
-func stopWorkflowNodeJobRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanNodeJobRun chan<- interface{}, chanErr chan<- error, wg *sync.WaitGroup) {
+func stopWorkflowNodeJobRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, nodeRun *sdk.WorkflowNodeRun, stopInfos sdk.SpawnInfo, chanNjrID <-chan int64, chanNodeJobRun chan<- interface{}, chanErr chan<- error, chanDone chan<- bool, wg *sync.WaitGroup) {
 	for njrID := range chanNjrID {
 		tx, errTx := db.Begin()
 		if errTx != nil {
@@ -458,6 +455,7 @@ func stopWorkflowNodeJobRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project
 			wg.Done()
 			return
 		}
+		chanDone <- true
 		wg.Done()
 	}
 }
