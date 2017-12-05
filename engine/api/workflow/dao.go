@@ -326,7 +326,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.WrapError(err, "Insert> Cannot rename node")
 	}
 
-	if err := insertNode(db, w, w.Root, u, false); err != nil {
+	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
 		return sdk.WrapError(err, "Insert> Unable to insert workflow root node")
 	}
 
@@ -336,7 +336,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 
 	for i := range w.Joins {
 		j := &w.Joins[i]
-		if err := insertJoin(db, w, j, u); err != nil {
+		if err := insertJoin(db, store, w, j, u); err != nil {
 			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
@@ -455,7 +455,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	}
 
 	// Inser new Root Node
-	if err := insertNode(db, w, w.Root, u, false); err != nil {
+	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
 		return sdk.WrapError(err, "Update> unable to update root node on workflow(%d)", w.ID)
 	}
 
@@ -464,7 +464,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	// Insert new JOIN
 	for i := range w.Joins {
 		j := &w.Joins[i]
-		if err := insertJoin(db, w, j, u); err != nil {
+		if err := insertJoin(db, store, w, j, u); err != nil {
 			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
