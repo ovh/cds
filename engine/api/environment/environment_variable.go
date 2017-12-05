@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -287,7 +286,7 @@ func InsertVariable(db gorp.SqlExecutor, environmentID int64, variable *sdk.Vari
 	query := `INSERT INTO environment_variable(environment_id, name, value, cipher_value, type)
 		  VALUES($1, $2, $3, $4, $5) RETURNING id`
 
-	rx := regexp.MustCompile(sdk.NamePattern)
+	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
 	}
@@ -327,7 +326,7 @@ func UpdateVariable(db gorp.SqlExecutor, envID int64, variable *sdk.Variable, u 
 		return sdk.WrapError(errV, "UpdateVariable> Cannot load variable %d", variable.ID)
 	}
 
-	rx := regexp.MustCompile(sdk.NamePattern)
+	rx := sdk.NamePatternRegex
 	if !rx.MatchString(variable.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid variable name. It should match %s", sdk.NamePattern))
 	}

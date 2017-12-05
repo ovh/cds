@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	"github.com/go-gorp/gorp"
@@ -437,7 +436,7 @@ func (api *API) addApplicationHandler() Handler {
 		}
 
 		// check application name pattern
-		regexp := regexp.MustCompile(sdk.NamePattern)
+		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(app.Name) {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "addApplicationHandler: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
 		}
@@ -690,7 +689,7 @@ func (api *API) updateApplicationHandler() Handler {
 		}
 
 		// check application name pattern
-		regexp := regexp.MustCompile(sdk.NamePattern)
+		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(appPost.Name) {
 			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "updateApplicationHandler> Application name %s do not respect pattern %s", appPost.Name, sdk.NamePattern)
 		}

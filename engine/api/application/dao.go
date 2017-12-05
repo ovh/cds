@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -217,7 +216,7 @@ func unwrap(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts []LoadOpti
 // Insert add an application id database
 func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.Application, u *sdk.User) error {
 	// check application name pattern
-	regexp := regexp.MustCompile(sdk.NamePattern)
+	regexp := sdk.NamePatternRegex
 	if !regexp.MatchString(app.Name) {
 		return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Insert: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
 	}
@@ -243,7 +242,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 
 // Update updates application id database
 func Update(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, u *sdk.User) error {
-	rx := regexp.MustCompile(sdk.NamePattern)
+	rx := sdk.NamePatternRegex
 	if !rx.MatchString(app.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid application name. It should match %s", sdk.NamePattern))
 	}

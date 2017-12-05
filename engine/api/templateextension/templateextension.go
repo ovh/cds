@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -132,7 +131,7 @@ func Instance(tmpl *sdk.TemplateExtension, u *sdk.User, sessionKey sessionstore.
 
 //Apply will call the apply function of the template and returns a fresh new application
 func Apply(db gorp.SqlExecutor, store cache.Store, templ template.Interface, proj *sdk.Project, params []sdk.TemplateParam, appName string) (*sdk.Application, error) {
-	regexp := regexp.MustCompile(sdk.NamePattern)
+	regexp := sdk.NamePatternRegex
 	if !regexp.MatchString(appName) {
 		return nil, sdk.ErrInvalidApplicationPattern
 	}

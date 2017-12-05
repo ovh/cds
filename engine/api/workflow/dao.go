@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -538,7 +537,7 @@ func IsValid(w *sdk.Workflow, proj *sdk.Project) error {
 	}
 
 	//Check workflow name
-	rx := regexp.MustCompile(sdk.NamePattern)
+	rx := sdk.NamePatternRegex
 	if !rx.MatchString(w.Name) {
 		return sdk.NewError(sdk.ErrWorkflowInvalid, fmt.Errorf("Invalid workflow name. It should match %s", sdk.NamePattern))
 	}

@@ -4,7 +4,6 @@ import (
 	"context"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 
 	"github.com/gorilla/mux"
 
@@ -83,7 +82,7 @@ func (api *API) addKeyInApplicationHandler() Handler {
 		}
 
 		// check application name pattern
-		regexp := regexp.MustCompile(sdk.NamePattern)
+		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(newKey.Name) {
 			return sdk.WrapError(sdk.ErrInvalidKeyPattern, "addKeyInApplicationHandler: Key name %s do not respect pattern %s", newKey.Name, sdk.NamePattern)
 		}

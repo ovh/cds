@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -418,7 +417,7 @@ func LoadGroupByPipeline(db gorp.SqlExecutor, pipeline *sdk.Pipeline) error {
 
 // UpdatePipeline update the pipeline
 func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
-	rx := regexp.MustCompile(sdk.NamePattern)
+	rx := sdk.NamePatternRegex
 	if !rx.MatchString(p.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid pipeline name. It should match %s", sdk.NamePattern))
 	}
@@ -433,7 +432,7 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 func InsertPipeline(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
 	query := `INSERT INTO pipeline (name, project_id, type, last_modified) VALUES ($1,$2,$3, current_timestamp) RETURNING id`
 
-	rx := regexp.MustCompile(sdk.NamePattern)
+	rx := sdk.NamePatternRegex
 	if !rx.MatchString(p.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid pipeline name. It should match %s", sdk.NamePattern))
 	}

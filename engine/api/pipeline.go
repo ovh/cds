@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	"github.com/go-gorp/gorp"
@@ -502,7 +501,7 @@ func (api *API) updatePipelineHandler() Handler {
 		}
 
 		// check pipeline name pattern
-		regexp := regexp.MustCompile(sdk.NamePattern)
+		regexp := sdk.NamePatternRegex
 		if !regexp.MatchString(p.Name) {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "updatePipelineHandler: Pipeline name %s do not respect pattern", p.Name)
 		}
@@ -596,7 +595,7 @@ func (api *API) addPipelineHandler() Handler {
 		}
 
 		// check pipeline name pattern
-		if regexp := regexp.MustCompile(sdk.NamePattern); !regexp.MatchString(p.Name) {
+		if regexp := sdk.NamePatternRegex; !regexp.MatchString(p.Name) {
 			return sdk.WrapError(sdk.ErrInvalidPipelinePattern, "AddPipeline: Pipeline name %s do not respect pattern %s", p.Name, sdk.NamePattern)
 		}
 

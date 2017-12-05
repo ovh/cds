@@ -1,9 +1,15 @@
 package sdk
 
-import "reflect"
+import (
+	"reflect"
+	"regexp"
+)
 
 // NamePattern  Pattern for project/application/pipeline/group name
 const NamePattern = "^[a-zA-Z0-9._-]{1,}$"
+
+// NamePatternRegex  Pattern regexp
+var NamePatternRegex = regexp.MustCompile(NamePattern)
 
 // InterfaceSlice cast a untyped slice into a slice of untypes things. It will panic if the parameter is not a slice
 func InterfaceSlice(slice interface{}) []interface{} {
