@@ -7,6 +7,11 @@ import (
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
+const (
+	TaskExecutionDoing = "DOING"
+	TaskExecutionDone  = "DONE"
+)
+
 // Service is the stuct representing a hooks µService
 type Service struct {
 	Cfg    Configuration
@@ -71,6 +76,7 @@ type TaskExecution struct {
 	Config              sdk.WorkflowNodeHookConfig
 	WebHook             *WebHookExecution
 	ScheduledTask       *ScheduledTaskExecution
+	Status              string
 }
 
 // WebHookExecution contains specific data for a webhook execution

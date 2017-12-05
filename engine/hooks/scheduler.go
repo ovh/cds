@@ -59,6 +59,9 @@ func (s *Service) retryTaskExecutionsRoutine(c context.Context) error {
 					continue
 				}
 				for _, e := range execs {
+					if e.Status == TaskExecutionDoing {
+						continue
+					}
 					if e.ProcessingTimestamp == 0 && e.Timestamp <= time.Now().UnixNano() {
 						log.Warning("Enqueing %s %d/%d  %s", e.UUID, e.NbErrors, s.Cfg.RetryError, e.LastError)
 						s.Dao.EnqueueTaskExecution(&e)
@@ -127,6 +130,7 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		}
 		t.ProcessingTimestamp = time.Now().UnixNano()
 		t.LastError = ""
+		t.Status = TaskExecutionDoing
 		s.Dao.SaveTaskExecution(&t)
 
 		task := s.Dao.FindTask(t.UUID)
@@ -144,6 +148,7 @@ func (s *Service) dequeueTaskExecutions(c context.Context) error {
 		}
 
 		//Save the execution
+		t.Status = TaskExecutionDone
 		t.ProcessingTimestamp = time.Now().UnixNano()
 		s.Dao.SaveTaskExecution(&t)
 
