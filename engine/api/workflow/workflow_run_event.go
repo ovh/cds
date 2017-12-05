@@ -13,21 +13,20 @@ func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}) ([]
 	wrs := []sdk.WorkflowRun{}
 	wnrs := []sdk.WorkflowNodeRun{}
 	wnjrs := []sdk.WorkflowNodeJobRun{}
+	var err error
 
 	for {
 		select {
 		case e, has := <-cError:
 			log.Info("GetWorkflowRunEventData> cError has: %t err:%v", has, e)
+			err = sdk.WrapError(e, "GetWorkflowRunEventData> Error received")
 			if !has {
-				return wrs, wnrs, wnjrs, e
-			}
-			if e != nil {
-				return nil, nil, nil, e
+				return wrs, wnrs, wnjrs, err
 			}
 		case w, has := <-cEvent:
 			log.Info("GetWorkflowRunEventData> cEvent has: %t", has)
 			if !has {
-				return wrs, wnrs, wnjrs, nil
+				return wrs, wnrs, wnjrs, err
 			}
 			switch x := w.(type) {
 			case sdk.WorkflowNodeJobRun:
