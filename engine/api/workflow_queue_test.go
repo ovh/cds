@@ -183,6 +183,48 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
+
+	// Get workflow run number
+
+	//Prepare request
+	vars := map[string]string{
+		"key":              ctx.project.Key,
+		"permWorkflowName": ctx.workflow.Name,
+	}
+	uri := router.GetRoute("GET", api.getWorkflowRunNumHandler, vars)
+	test.NotEmpty(t, uri)
+	req := assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	var n struct {
+		Num int `json:"num"`
+	}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &n))
+	assert.Equal(t, 1, n.Num)
+
+	// Update workflow run number
+
+	//Prepare request
+	uri = router.GetRoute("POST", api.postWorkflowRunNumHandler, vars)
+	test.NotEmpty(t, uri)
+
+	n.Num = 10
+	req = assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "POST", uri, n)
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	uri = router.GetRoute("GET", api.getWorkflowRunNumHandler, vars)
+	test.NotEmpty(t, uri)
+	req = assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	rec = httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &n))
+	assert.Equal(t, 10, n.Num)
 }
 
 func Test_postWorkflowJobRequirementsErrorHandler(t *testing.T) {

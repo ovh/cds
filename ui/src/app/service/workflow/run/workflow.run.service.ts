@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {Workflow} from '../../../model/workflow.model';
-import {WorkflowNodeRun, WorkflowRun, WorkflowRunRequest} from '../../../model/workflow.run.model';
+import {RunNumber, WorkflowNodeRun, WorkflowRun, WorkflowRunRequest} from '../../../model/workflow.run.model';
 import {HttpClient} from '@angular/common/http';
 
 @Injectable()
@@ -86,5 +86,28 @@ export class WorkflowRunService {
     resync(key: string, workflow: Workflow, workflow_run_id: number): Observable<WorkflowRun> {
         return this._http.post<WorkflowRun>(
             '/project/' + key + '/workflows/' + workflow.name + '/runs/' + workflow_run_id + '/resync', null);
+    }
+
+    /**
+     * Get current run number for the given workflow
+     * @param {string} key Project unique key
+     * @param {Workflow} workflow Workflow
+     * @returns {Observable<number>}
+     */
+    getRunNumber(key: string, workflow: Workflow): Observable<RunNumber> {
+        return this._http.get<RunNumber>('/project/' + key + '/workflows/' + workflow.name + '/runs/num');
+    }
+
+    /**
+     * Update run number
+     * @param {string} key Project unique key
+     * @param {Workflow} workflow Workflow to update
+     * @param {number} num New run number
+     * @returns {Observable<boolean>}
+     */
+    updateRunNumber(key: string, workflow: Workflow, num: number): Observable<boolean> {
+        let r = new RunNumber();
+        r.num = num;
+        return this._http.post<void>('/project/' + key + '/workflows/' + workflow.name + '/runs/num', r).map(() => true);
     }
 }

@@ -142,6 +142,61 @@ func (api *API) getWorkflowRunsHandler() Handler {
 	}
 }
 
+func (api *API) getWorkflowRunNumHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		num, err := workflow.LoadCurrentRunNum(api.mustDB(), key, name)
+		if err != nil {
+			return sdk.WrapError(err, "getWorkflowRunNumHandler> Cannot load current run num")
+		}
+
+		m := struct {
+			Num int64 `json:"num"`
+		}{
+			Num: num,
+		}
+		return WriteJSON(w, r, m, http.StatusOK)
+	}
+}
+
+func (api *API) postWorkflowRunNumHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+
+		m := struct {
+			Num int64 `json:"num"`
+		}{}
+
+		if err := UnmarshalBody(r, &m); err != nil {
+			return sdk.WrapError(err, "postWorkflowRunNumHandler>")
+		}
+
+		num, err := workflow.LoadCurrentRunNum(api.mustDB(), key, name)
+		if err != nil {
+			return sdk.WrapError(err, "postWorkflowRunNumHandler> Cannot load current run num")
+		}
+
+		if m.Num < num {
+			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowRunNumHandler> Cannot num must be > %d, got %d", num, m.Num)
+		}
+
+		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		if errW != nil {
+			return sdk.WrapError(errW, "postWorkflowRunNumHandler > Cannot load workflow")
+		}
+		if err := workflow.UpdateRunNum(api.mustDB(), wf, m.Num); err != nil {
+			return sdk.WrapError(err, "postWorkflowRunNumHandler> ")
+		}
+
+		return WriteJSON(w, r, m, http.StatusOK)
+	}
+}
+
 func (api *API) getLatestWorkflowRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

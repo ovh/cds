@@ -9,7 +9,7 @@ import { WarningModalComponent } from '../../../../shared/modal/warning/warning.
 import { ToastService } from '../../../../shared/toast/ToastService';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {cloneDeep} from 'lodash';
-import {finalize} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-admin',
@@ -33,6 +33,8 @@ export class WorkflowAdminComponent implements OnInit {
     get workflow() { return this._workflow};
 
     oldName: string;
+
+    runnumber: number;
 
     existingTags = new Array<string>();
     selectedTags = new Array<string>();
@@ -65,6 +67,9 @@ export class WorkflowAdminComponent implements OnInit {
                 }
             });
         });
+        this._workflowRunService.getRunNumber(this.project.key, this.workflow).pipe(first()).subscribe(n => {
+            this.runnumber = n.num;
+        });
     }
 
     updateWorkflow(): void {
@@ -78,6 +83,15 @@ export class WorkflowAdminComponent implements OnInit {
 
     updateTagMetadata(m): void {
         this._tagWorkflow.metadata['default_tags'] = m.join(',');
+    }
+
+    onSubmitWorkflowRunNumUpdate() {
+        this.loading = true;
+        this._workflowRunService.updateRunNumber(this.project.key, this.workflow, this.runnumber).pipe(first(), finalize(() => {
+            this.loading = false;
+        })).subscribe(() => {
+            this._toast.success('', this._translate.instant('workflow_updated'));
+        });
     }
 
     onSubmitWorkflowUpdate(skip?: boolean) {
