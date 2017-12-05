@@ -37,7 +37,7 @@ func updateWorkflowTriggerJoinSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) erro
 	return nil
 }
 
-func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
+func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
 	log.Debug("insertNode> insert or update node %d (%s) on %s(%#v)", n.ID, n.Ref, n.Pipeline.Name, n.Context)
 
 	if !nodeNamePattern.MatchString(n.Name) {
@@ -96,6 +96,14 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 		}
 
 		if h.WorkflowHookModel.Name == RepositoryWebHookModel.Name {
+			if n.Context.Application == nil {
+				app, errA := application.LoadByID(db, store, n.Context.ApplicationID, u)
+				if errA != nil {
+					return sdk.WrapError(errA, "InsertOrUpdateNode> Cannot load application %d", n.Context.ApplicationID)
+				}
+				n.Context.Application = app
+			}
+
 			if n.Context.Application == nil || n.Context.Application.RepositoryFullname == "" || n.Context.Application.VCSServer == "" {
 				return sdk.WrapError(sdk.ErrForbidden, "InsertOrUpdateNode> Cannot create an repository webhook on an application without a repository")
 			}
@@ -118,7 +126,7 @@ func insertNode(db gorp.SqlExecutor, w *sdk.Workflow, n *sdk.WorkflowNode, u *sd
 	//Insert triggers
 	for i := range n.Triggers {
 		t := &n.Triggers[i]
-		if err := insertTrigger(db, w, n, t, u); err != nil {
+		if err := insertTrigger(db, store, w, n, t, u); err != nil {
 			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
 		}
 	}

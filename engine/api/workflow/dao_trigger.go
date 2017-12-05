@@ -11,7 +11,7 @@ import (
 )
 
 // insertTrigger inserts a trigger
-func insertTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, trigger *sdk.WorkflowNodeTrigger, u *sdk.User) error {
+func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, trigger *sdk.WorkflowNodeTrigger, u *sdk.User) error {
 	defer func() {
 		log.Debug("insertTrigger> insert or update node %d (%s) on %s trigger %d", node.ID, node.Ref, node.Pipeline.Name, trigger.ID)
 	}()
@@ -20,7 +20,7 @@ func insertTrigger(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode,
 	trigger.WorkflowDestNodeID = 0
 
 	//Setup destination node
-	if err := insertNode(db, w, &trigger.WorkflowDestNode, u, false); err != nil {
+	if err := insertNode(db, store, w, &trigger.WorkflowDestNode, u, false); err != nil {
 		return sdk.WrapError(err, "insertTrigger> Unable to setup destination node %d on trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 	trigger.WorkflowDestNodeID = trigger.WorkflowDestNode.ID
