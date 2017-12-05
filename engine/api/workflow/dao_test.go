@@ -5,6 +5,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/ovh/cds/sdk/exportentities"
+
 	"github.com/fsamin/go-dump"
 	"github.com/stretchr/testify/assert"
 
@@ -31,7 +33,7 @@ func TestLoadAllShouldNotReturnAnyWorkflows(t *testing.T) {
 	assert.Equal(t, 0, len(ws))
 }
 
-func TestInsertSimpleWorkflow(t *testing.T) {
+func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)
 
@@ -73,6 +75,13 @@ func TestInsertSimpleWorkflow(t *testing.T) {
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
+
+	exp, err := exportentities.NewWorkflow(*w1, false)
+	test.NoError(t, err)
+	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
+	test.NoError(t, err)
+
+	fmt.Println(string(btes))
 
 }
 
@@ -163,7 +172,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	assert.Equal(t, w.Root.Context.EnvironmentID, w1.Root.Context.EnvironmentID)
 }
 
-func TestInsertComplexeWorkflow(t *testing.T) {
+func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 
 	u, _ := assets.InsertAdminUser(db)
@@ -213,10 +222,12 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 		ProjectID:  proj.ID,
 		ProjectKey: proj.Key,
 		Root: &sdk.WorkflowNode{
+			Name:     "Root",
 			Pipeline: pip1,
 			Triggers: []sdk.WorkflowNodeTrigger{
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
+						Name:     "First",
 						Pipeline: pip2,
 						Context: &sdk.WorkflowNodeContext{
 							Conditions: sdk.WorkflowNodeConditions{
@@ -232,6 +243,7 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 						Triggers: []sdk.WorkflowNodeTrigger{
 							sdk.WorkflowNodeTrigger{
 								WorkflowDestNode: sdk.WorkflowNode{
+									Name:     "Second",
 									Pipeline: pip3,
 									Context: &sdk.WorkflowNodeContext{
 										Conditions: sdk.WorkflowNodeConditions{
@@ -251,6 +263,7 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 				},
 				sdk.WorkflowNodeTrigger{
 					WorkflowDestNode: sdk.WorkflowNode{
+						Name:     "Last",
 						Pipeline: pip4,
 						Context: &sdk.WorkflowNodeContext{
 							Conditions: sdk.WorkflowNodeConditions{
@@ -284,6 +297,13 @@ func TestInsertComplexeWorkflow(t *testing.T) {
 	workflow.Sort(&w)
 
 	assertEqualNode(t, w.Root, w1.Root)
+
+	exp, err := exportentities.NewWorkflow(w, false)
+	test.NoError(t, err)
+	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
+	test.NoError(t, err)
+
+	fmt.Println(string(btes))
 }
 
 func assertEqualNode(t *testing.T, n1, n2 *sdk.WorkflowNode) {
@@ -439,7 +459,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	test.NoError(t, workflow.Delete(db, cache, proj, w2, u))
 }
 
-func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
+func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 	u, _ := assets.InsertAdminUser(db)
 	key := sdk.RandomString(10)
@@ -633,6 +653,13 @@ func TestInsertComplexeWorkflowWithJoins(t *testing.T) {
 		w1.Root.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.Triggers[0].WorkflowDestNode.ID,
 	}, w1.Joins[0].SourceNodeIDs)
 	assert.Equal(t, pip5.Name, w.Joins[0].Triggers[0].WorkflowDestNode.Pipeline.Name)
+
+	exp, err := exportentities.NewWorkflow(*w1, false)
+	test.NoError(t, err)
+	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
+	test.NoError(t, err)
+
+	fmt.Println(string(btes))
 
 }
 
@@ -980,7 +1007,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	test.NoError(t, workflow.Delete(db, cache, proj, w2, u))
 }
 
-func TestInsertSimpleWorkflowWithHook(t *testing.T) {
+func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 	db, cache := test.SetupPG(t)
 	test.NoError(t, workflow.CreateBuiltinWorkflowHookModels(db))
 	u, _ := assets.InsertAdminUser(db)
@@ -1062,6 +1089,13 @@ func TestInsertSimpleWorkflowWithHook(t *testing.T) {
 
 	assert.Len(t, w.Root.Hooks, 1)
 	t.Log(w.Root.Hooks)
+
+	exp, err := exportentities.NewWorkflow(*w1, false)
+	test.NoError(t, err)
+	btes, err := exportentities.Marshal(exp, exportentities.FormatYAML)
+	test.NoError(t, err)
+
+	fmt.Println(string(btes))
 
 	test.NoError(t, workflow.Delete(db, cache, proj, &w, u))
 }
