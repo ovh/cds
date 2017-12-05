@@ -16,7 +16,7 @@ import (
 
 type decryptFunc func(gorp.SqlExecutor, int64, string) (string, error)
 
-// ParseAndImport parse an exportentities.Application and insert or update teh application in database
+// ParseAndImport parse an exportentities.Application and insert or update the application in database
 func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eapp *exportentities.Application, force bool, decryptFunc decryptFunc, u *sdk.User) ([]sdk.Message, error) {
 	log.Info("ParseAndImport>> Import application %s in project %s (force=%v)", eapp.Name, proj.Key, force)
 	log.Debug("ParseAndImport>> App: %+v", eapp)
