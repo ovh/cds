@@ -133,7 +133,7 @@ func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobI
 	}
 
 	// reload and recheck status
-	job, errl := LoadAndLockNodeJobRunWait(db, store, jobID)
+	job, errl := LoadAndLockNodeJobRunNoWait(db, store, jobID)
 	if errl != nil {
 		if errPG, ok := errl.(*pq.Error); ok && errPG.Code == "55P03" {
 			errl = sdk.ErrJobAlreadyBooked
