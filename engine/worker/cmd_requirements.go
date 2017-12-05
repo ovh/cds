@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -22,7 +23,7 @@ func cmdRequirements(w *currentWorker) *cobra.Command {
 		Short: "worker requirements --format json|csv|keyval",
 		Run:   requirementsCmd(w),
 	}
-	c.Flags().StringVar(&cmdRequirementsFormat, "format", "json", "Output format. json, csv, keyval")
+	c.Flags().StringVar(&cmdRequirementsFormat, "format", "json", "Output format. json, csv, env")
 	return c
 }
 
@@ -39,7 +40,6 @@ func requirementsCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		}
 
 		req, errRequest := http.NewRequest("GET", fmt.Sprintf("http://127.0.0.1:%d/requirements", port), nil)
-		req.Header.Add("Content-Type", "application/json")
 		if errRequest != nil {
 			sdk.Exit("cannot post worker tag (Request): %s\n", errRequest)
 		}
@@ -66,11 +66,11 @@ func requirementsCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if resp.StatusCode < 300 {
 			switch cmdRequirementsFormat {
 			case "json":
-				fmt.Printf("body: %+v\n", string(body))
+				fmt.Println(string(body))
 			case "csv":
-				printCSVRequirements(reqs)
-			case "keyval":
-				printKeyValRequirements(reqs)
+				fmt.Print(getCSVRequirements(reqs))
+			case "env":
+				fmt.Print(getEnvRequirements(reqs))
 			}
 			return
 		}
@@ -79,16 +79,20 @@ func requirementsCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	}
 }
 
-func printCSVRequirements(requirements []sdk.Requirement) {
+func getCSVRequirements(requirements []sdk.Requirement) string {
+	var r string
 	for _, req := range requirements {
-		fmt.Printf("%s;%s;%s\n", req.Type, req.Name, req.Value)
+		r += fmt.Sprintf("%s;\"%s\";\"%s\"\n", req.Type, req.Name, req.Value)
 	}
+	return r
 }
 
-func printKeyValRequirements(requirements []sdk.Requirement) {
+func getEnvRequirements(requirements []sdk.Requirement) string {
+	var r string
 	for _, req := range requirements {
-		fmt.Printf("%s=%s\n", req.Name, req.Value)
+		r += fmt.Sprintf("export %s=\"%s\"\n", strings.ToUpper(req.Name), strings.Replace(req.Value, "\"", "\\\"", -1))
 	}
+	return r
 }
 
 func (wk *currentWorker) requirementsHandler(w http.ResponseWriter, r *http.Request) {
