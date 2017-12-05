@@ -20,7 +20,7 @@ var cmdRequirementsFormat string
 func cmdRequirements(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "requirements",
-		Short: "worker requirements --format json|csv|keyval",
+		Short: "worker requirements --format json|csv|env",
 		Run:   requirementsCmd(w),
 	}
 	c.Flags().StringVar(&cmdRequirementsFormat, "format", "json", "Output format. json, csv, env")
