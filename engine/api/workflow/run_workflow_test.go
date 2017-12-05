@@ -113,7 +113,7 @@ func TestManualRun1(t *testing.T) {
 		t.Logf("%s: \t%s", k, m1[k])
 	}
 
-	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1")
+	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
 	test.NoError(t, err)
 
 	assert.Equal(t, int64(2), lastrun.Number)
@@ -174,7 +174,7 @@ func TestManualRun1(t *testing.T) {
 	assert.Len(t, runs, 2)
 
 	//TestLoadRunByID
-	_, err = workflow.LoadRunByIDAndProjectKey(db, proj.Key, wr2.ID)
+	_, err = workflow.LoadRunByIDAndProjectKey(db, proj.Key, wr2.ID, false)
 	test.NoError(t, err)
 }
 
@@ -402,7 +402,7 @@ func TestManualRun3(t *testing.T) {
 		}
 
 		//Load workflow run
-		workflowRun, err := workflow.LoadRunByID(db, nodeRun.WorkflowRunID)
+		workflowRun, err := workflow.LoadRunByID(db, nodeRun.WorkflowRunID, false)
 		if err != nil {
 			t.Fatal(err)
 		}
