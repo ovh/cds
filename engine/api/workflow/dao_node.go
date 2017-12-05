@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"regexp"
 
 	"github.com/go-gorp/gorp"
 
@@ -17,7 +16,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-var nodeNamePattern = regexp.MustCompile(sdk.NamePattern)
+var nodeNamePattern = sdk.NamePatternRegex
 
 func updateWorkflowTriggerSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) error {
 	//Update node

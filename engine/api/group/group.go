@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/go-gorp/gorp"
@@ -44,7 +43,7 @@ func DeleteGroupAndDependencies(db gorp.SqlExecutor, group *sdk.Group) error {
 // AddGroup creates a new group in database
 func AddGroup(db gorp.SqlExecutor, group *sdk.Group) (int64, bool, error) {
 	// check projectKey pattern
-	regexp := regexp.MustCompile(sdk.NamePattern)
+	regexp := sdk.NamePatternRegex
 	if !regexp.MatchString(group.Name) {
 		return 0, false, sdk.WrapError(sdk.ErrInvalidGroupPattern, "AddGroup: Wrong pattern for group name : %s", group.Name)
 	}
@@ -305,7 +304,7 @@ func DeleteGroupUserByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 
 // UpdateGroup updates group informations in database
 func UpdateGroup(db gorp.SqlExecutor, g *sdk.Group, oldName string) error {
-	rx := regexp.MustCompile(sdk.NamePattern)
+	rx := sdk.NamePatternRegex
 	if !rx.MatchString(g.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid group name. It should match %s", sdk.NamePattern))
 	}
@@ -322,7 +321,7 @@ func UpdateGroup(db gorp.SqlExecutor, g *sdk.Group, oldName string) error {
 
 // InsertGroup insert given group into given database
 func InsertGroup(db gorp.SqlExecutor, g *sdk.Group) error {
-	rx := regexp.MustCompile(sdk.NamePattern)
+	rx := sdk.NamePatternRegex
 	if !rx.MatchString(g.Name) {
 		return sdk.NewError(sdk.ErrInvalidName, fmt.Errorf("Invalid group name. It should match %s", sdk.NamePattern))
 	}

@@ -2,11 +2,11 @@ package application
 
 import (
 	"io/ioutil"
-	"regexp"
 	"strings"
 	"sync"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
@@ -22,7 +22,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	log.Debug("ParseAndImport>> App: %+v", eapp)
 
 	//Check valid application name
-	rx := regexp.MustCompile(sdk.NamePattern)
+	rx := sdk.NamePatternRegex
 	if !rx.MatchString(eapp.Name) {
 		return nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "ParseAndImport>> Application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
 	}
