@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/user"
 	"path"
-	"reflect"
 	"strconv"
 	"testing"
 
@@ -122,9 +121,7 @@ func LoadTestingConf(t *testing.T) map[string]string {
 
 //GetTestName returns the name the the test
 func GetTestName(t *testing.T) string {
-	v := reflect.ValueOf(*t)
-	name := v.FieldByName("name")
-	return name.String()
+	return t.Name()
 }
 
 //FakeHTTPClient implements sdk.HTTPClient and returns always the same response

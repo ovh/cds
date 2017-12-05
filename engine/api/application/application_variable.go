@@ -45,8 +45,8 @@ func WithEncryptPassword() FuncArg {
 	}
 }
 
-// Deprecated
 // GetAudit retrieve the current application variable audit
+// Deprecated
 func GetAudit(db gorp.SqlExecutor, key, appName string, auditID int64) ([]sdk.Variable, error) {
 	query := `
 		SELECT application_variable_audit_old.data
@@ -77,8 +77,8 @@ func GetAudit(db gorp.SqlExecutor, key, appName string, auditID int64) ([]sdk.Va
 	return variables, err
 }
 
-//Deprecated
 // GetVariableAudit Get variable audit for the given application
+// Deprecated
 func GetVariableAudit(db gorp.SqlExecutor, key, appName string) ([]sdk.VariableAudit, error) {
 	audits := []sdk.VariableAudit{}
 	query := `

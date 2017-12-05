@@ -58,10 +58,10 @@ func (a *dbApplication) PostInsert(db gorp.SqlExecutor) error {
 }
 
 // PostGet is a db hook
-func (pva *dbApplicationVariableAudit) PostGet(db gorp.SqlExecutor) error {
+func (ava *dbApplicationVariableAudit) PostGet(db gorp.SqlExecutor) error {
 	var before, after sql.NullString
 	query := "SELECT variable_before, variable_after from application_variable_audit WHERE id = $1"
-	if err := db.QueryRow(query, pva.ID).Scan(&before, &after); err != nil {
+	if err := db.QueryRow(query, ava.ID).Scan(&before, &after); err != nil {
 		return err
 	}
 
@@ -73,7 +73,7 @@ func (pva *dbApplicationVariableAudit) PostGet(db gorp.SqlExecutor) error {
 		if sdk.NeedPlaceholder(vBefore.Type) {
 			vBefore.Value = sdk.PasswordPlaceholder
 		}
-		pva.VariableBefore = vBefore
+		ava.VariableBefore = vBefore
 
 	}
 
@@ -85,7 +85,7 @@ func (pva *dbApplicationVariableAudit) PostGet(db gorp.SqlExecutor) error {
 		if sdk.NeedPlaceholder(vAfter.Type) {
 			vAfter.Value = sdk.PasswordPlaceholder
 		}
-		pva.VariableAfter = vAfter
+		ava.VariableAfter = vAfter
 	}
 
 	return nil
