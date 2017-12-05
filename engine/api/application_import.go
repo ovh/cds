@@ -6,19 +6,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"regexp"
-	"strings"
-	"sync"
 
 	"github.com/gorilla/mux"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/ovh/cds/engine/api/application"
-	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) postApplicationImportHandler() Handler {
@@ -27,6 +22,12 @@ func (api *API) postApplicationImportHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 		force := FormBool(r, "force")
+
+		//Load project
+		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
+		if errp != nil {
+			return sdk.WrapError(errp, "postApplicationImportHandler>> Unable load project")
+		}
 
 		body, errr := ioutil.ReadAll(r.Body)
 		if errr != nil {
@@ -54,191 +55,13 @@ func (api *API) postApplicationImportHandler() Handler {
 			return sdk.NewError(sdk.ErrWrongRequest, errapp)
 		}
 
-		log.Info("postApplicationImportHandler> Import application %s in project %s (force=%v)", eapp.Name, key, force)
-		log.Debug("postApplicationImportHandler> App: %+v", eapp)
-
-		//Check valid application name
-		rx := regexp.MustCompile(sdk.NamePattern)
-		if !rx.MatchString(eapp.Name) {
-			return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "postApplicationImportHandler> Application name %s do not respect pattern %s", eapp.Name, sdk.NamePattern)
-		}
-
-		//Load project
-		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.WithGroups)
-		if errp != nil {
-			return sdk.WrapError(errp, "postApplicationImportHandler> Unable load project")
-		}
-
-		//Check if app exist
-		oldApp, errl := application.LoadByName(api.mustDB(), api.Cache, key, eapp.Name, nil, application.LoadOptions.WithVariablesWithClearPassword, application.LoadOptions.WithKeys)
-		if errl != nil && sdk.ErrorIs(errl, sdk.ErrApplicationNotFound) {
-			return sdk.WrapError(errl, "postApplicationImportHandler> Unable to load application")
-		}
-
-		//If the application exist and we don't want to force, raise an error
-		if oldApp != nil && !force {
-			return sdk.ErrApplicationExist
-		}
-
-		//Craft the application
-		app := new(sdk.Application)
-		app.Name = eapp.Name
-		app.VCSServer = eapp.VCSServer
-		app.RepositoryFullname = eapp.RepositoryName
-
-		//Inherit permissions from project
-		if len(eapp.Permissions) == 0 {
-			eapp.Permissions = make(map[string]int)
-			for _, p := range proj.ProjectGroups {
-				eapp.Permissions[p.Group.Name] = p.Permission
-			}
-		}
-
-		//Compute permissions
-		for g, p := range eapp.Permissions {
-			perm := sdk.GroupPermission{Group: sdk.Group{Name: g}, Permission: p}
-			app.ApplicationGroups = append(app.ApplicationGroups, perm)
-		}
-
-		//Compute variables
-		for p, v := range eapp.Variables {
-			switch v.Type {
-			case "":
-				v.Type = sdk.StringVariable
-			case sdk.SecretVariable:
-				secret, err := project.DecryptWithBuiltinKey(api.mustDB(), proj.ID, v.Value)
-				if err != nil {
-					return sdk.WrapError(err, "postApplicationImportHandler> Unable to decrypt secret variable")
-				}
-				v.Value = secret
-			}
-
-			vv := sdk.Variable{Name: p, Type: v.Type, Value: v.Value}
-			app.Variable = append(app.Variable, vv)
-		}
-
-		//Compute keys
-		for kname, kval := range eapp.Keys {
-			k := sdk.ApplicationKey{
-				Key: sdk.Key{
-					Name: kname,
-					Type: kval.Type,
-				},
-				ApplicationID: app.ID,
-			}
-
-			if kval.Value != "" {
-				privateKey, err := project.DecryptWithBuiltinKey(api.mustDB(), proj.ID, kval.Value)
-				if err != nil {
-					return sdk.WrapError(err, "postApplicationImportHandler> Unable to decrypt secret")
-				}
-				k.Private = privateKey
-
-				switch k.Type {
-				//Compute PGP Keys
-				case sdk.KeyTypePgp:
-					pgpEntity, errPGPEntity := keys.GetOpenPGPEntity(strings.NewReader(k.Private))
-					if errPGPEntity != nil {
-						return sdk.WrapError(errPGPEntity, "postApplicationImportHandler> Unable to read PGP Entity from private key")
-					}
-					pubReader, errPub := keys.GeneratePGPPublicKey(pgpEntity)
-					if errPub != nil {
-						return sdk.WrapError(errPub, "postApplicationImportHandler> Unable to generate pgp public key")
-					}
-					pubBytes, errReadPub := ioutil.ReadAll(pubReader)
-					if errReadPub != nil {
-						return sdk.WrapError(errReadPub, "postApplicationImportHandler> Unable to read pgp public key")
-					}
-					k.Public = string(pubBytes)
-					k.KeyID = pgpEntity.PrimaryKey.KeyIdShortString()
-				//Compute SSH Keys
-				case sdk.KeyTypeSsh:
-					privKey, errPrivKey := keys.GetSSHPrivateKey(strings.NewReader(privateKey))
-					if errPrivKey != nil {
-						return sdk.WrapError(errPrivKey, "postApplicationImportHandler> Unable to read RSA private key")
-					}
-					pubReader, errPub := keys.GetSSHPublicKey(kname, privKey)
-					if errPub != nil {
-						return sdk.WrapError(errPub, "postApplicationImportHandler> Unable to generate ssh public key")
-					}
-					pubBytes, errReadPub := ioutil.ReadAll(pubReader)
-					if errReadPub != nil {
-						return sdk.WrapError(errReadPub, "postApplicationImportHandler> Unable to read ssh public key")
-					}
-					k.Public = string(pubBytes)
-				default:
-					return sdk.ErrUnknownKeyType
-				}
-			} else {
-				switch k.Type {
-				//Compute PGP Keys
-				case sdk.KeyTypePgp:
-					id, pubR, privR, err := keys.GeneratePGPKeyPair(kname)
-					if err != nil {
-						return sdk.WrapError(err, "postApplicationImportHandler> Unable to generate PGP key pair")
-					}
-					pub, errPub := ioutil.ReadAll(pubR)
-					if errPub != nil {
-						return sdk.WrapError(errPub, "postApplicationImportHandler> Unable to read public key")
-					}
-
-					priv, errPriv := ioutil.ReadAll(privR)
-					if errPriv != nil {
-						return sdk.WrapError(errPriv, "postApplicationImportHandlert>  Unable to read private key")
-					}
-					k.KeyID = id
-					k.Private = string(priv)
-					k.Public = string(pub)
-				//Compute SSH Keys
-				case sdk.KeyTypeSsh:
-					pubR, privR, err := keys.GenerateSSHKeyPair(kname)
-					if err != nil {
-						return sdk.WrapError(err, "postApplicationImportHandler> Unable to generate SSH key pair")
-					}
-					pub, errPub := ioutil.ReadAll(pubR)
-					if errPub != nil {
-						return sdk.WrapError(errPub, "postApplicationImportHandler> Unable to read public key")
-					}
-
-					priv, errPriv := ioutil.ReadAll(privR)
-					if errPriv != nil {
-						return sdk.WrapError(errPriv, "postApplicationImportHandlert>  Unable to read private key")
-					}
-					k.Private = string(priv)
-					k.Public = string(pub)
-				default:
-					return sdk.ErrUnknownKeyType
-				}
-			}
-			app.Keys = append(app.Keys, k)
-
-		}
-
-		tx, errtx := api.mustDB().Begin()
-		if errtx != nil {
-			return sdk.WrapError(errtx, "postApplicationImportHandler> Unable to start transaction")
-
+		tx, err := api.mustDB().Begin()
+		if err != nil {
+			return sdk.WrapError(err, "postApplicationImportHandler> Unable to start tx")
 		}
 		defer tx.Rollback()
 
-		done := new(sync.WaitGroup)
-		done.Add(1)
-		msgChan := make(chan sdk.Message)
-		msgList := []sdk.Message{}
-		go func(array *[]sdk.Message) {
-			defer done.Done()
-			for {
-				m, more := <-msgChan
-				if !more {
-					return
-				}
-				*array = append(*array, m)
-			}
-		}(&msgList)
-
-		globalError := application.Import(tx, api.Cache, proj, app, eapp.VCSServer, getUser(ctx), msgChan)
-		close(msgChan)
-		done.Wait()
+		msgList, globalError := application.ParseAndImport(tx, api.Cache, proj, eapp, force, project.DecryptWithBuiltinKey, getUser(ctx))
 		msgListString := translate(r, msgList)
 
 		if globalError != nil {
