@@ -110,7 +110,7 @@ func doLogin(url, username, password string, env bool) error {
 	}
 
 	if env {
-		fmt.Printf("export CDS_API=%s\n", url)
+		fmt.Printf("export CDS_HOST=%s\n", url)
 		fmt.Printf("export CDS_USER=%s\n", username)
 		fmt.Printf("export CDS_TOKEN=%s\n", token)
 		fmt.Println("# Run this command to configure your shell:")
