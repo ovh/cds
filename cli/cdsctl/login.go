@@ -24,9 +24,9 @@ var loginCmd = cli.Command{
 	Short: "Login to CDS",
 	Flags: []cli.Flag{
 		{
-			Name:      "host",
+			Name:      "api-url",
 			ShortHand: "H",
-			Usage:     "CDS API Url",
+			Usage:     "CDS API URL",
 			IsValid: func(s string) bool {
 				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
 				return match
@@ -51,7 +51,7 @@ var loginCmd = cli.Command{
 }
 
 func loginRun(v cli.Values) error {
-	url := v.GetString("host")
+	url := v.GetString("api-url")
 	username := v.GetString("username")
 	password := v.GetString("password")
 	env := v.GetBool("env")
@@ -62,7 +62,7 @@ func loginRun(v cli.Values) error {
 	}
 
 	if !env {
-		fmt.Println("CDS API Url:", url)
+		fmt.Println("CDS API URL:", url)
 	}
 
 	//Take the user from flags or ask for on command line
@@ -110,11 +110,11 @@ func doLogin(url, username, password string, env bool) error {
 	}
 
 	if env {
-		fmt.Printf("export CDS_HOST=%s\n", url)
+		fmt.Printf("export CDS_API_URL=%s\n", url)
 		fmt.Printf("export CDS_USER=%s\n", username)
 		fmt.Printf("export CDS_TOKEN=%s\n", token)
 		fmt.Println("# Run this command to configure your shell:")
-		fmt.Println(`# eval $(cds login -H HOST -u USERNAME -p PASSWORD --env)`)
+		fmt.Println(`# eval $(cds login -H API_URL -u USERNAME -p PASSWORD --env)`)
 		return nil
 	}
 
