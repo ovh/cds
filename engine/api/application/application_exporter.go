@@ -38,7 +38,7 @@ func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, 
 	for _, v := range app.Variable {
 		switch v.Type {
 		case sdk.KeyVariable:
-			return sdk.WrapError(errload, "application.Export> Unable to eport application %s because of variable %s", appName, v.Name)
+			return sdk.WrapError(fmt.Errorf("Unsupported variable %s", v.Name), "application.Export> Unable to export application")
 		case sdk.SecretVariable:
 			content, err := encryptFunc(db, app.ProjectID, fmt.Sprintf("appID:%d:%s", app.ID, v.Name), v.Value)
 			if err != nil {
