@@ -129,7 +129,7 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 			if p.Name == "" || p.Name == "cds.semver" || p.Name == "cds.release.version" ||
 				strings.HasPrefix(p.Name, "cds.proj") || strings.HasPrefix(p.Name, "workflow.") ||
 				strings.HasPrefix(p.Name, "cds.version") || strings.HasPrefix(p.Name, "cds.run.number") ||
-				strings.HasPrefix(p.Name, "cds.workflow") {
+				strings.HasPrefix(p.Name, "cds.workflow") || strings.HasPrefix(p.Name, "job.requirement") {
 				continue
 			}
 

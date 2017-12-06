@@ -208,6 +208,9 @@ func addJobsToQueue(db gorp.SqlExecutor, stage *sdk.Stage, run *sdk.WorkflowNode
 		}
 		job.Action.Requirements = jobRequirements
 
+		// add requirements in job parameters, to use them as {{.job.requirement...}} in job
+		jobParams = append(jobParams, prepareRequirementsToNodeJobRunParameters(jobRequirements)...)
+
 		//Create the job run
 		wjob := sdk.WorkflowNodeJobRun{
 			WorkflowNodeRunID: run.ID,
