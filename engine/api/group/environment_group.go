@@ -8,6 +8,34 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// LoadGroupsByEnvironment retrieves all groups related to an env
+func LoadGroupsByEnvironment(db gorp.SqlExecutor, envID int64) ([]sdk.GroupPermission, error) {
+	query := `SELECT "group".id,"group".name,environment_group.role FROM "group"
+	 		  JOIN environment_group ON environment_group.group_id = "group".id
+			  WHERE environment_group.environment_id = $1
+	 		  ORDER BY "group".name ASC`
+
+	rows, err := db.Query(query, envID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	groups := []sdk.GroupPermission{}
+	for rows.Next() {
+		var group sdk.Group
+		var perm int
+		if err := rows.Scan(&group.ID, &group.Name, &perm); err != nil {
+			return groups, err
+		}
+		groups = append(groups, sdk.GroupPermission{
+			Group:      group,
+			Permission: perm,
+		})
+	}
+	return groups, nil
+}
+
 // LoadAllEnvironmentGroupByRole load all group for the given environment and role
 func LoadAllEnvironmentGroupByRole(db gorp.SqlExecutor, environmentID int64, role int) ([]sdk.GroupPermission, error) {
 	groupsPermission := []sdk.GroupPermission{}

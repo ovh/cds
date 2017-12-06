@@ -250,6 +250,11 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}", r.GET(api.getVariableInEnvironmentHandler), r.POST(api.addVariableInEnvironmentHandler), r.PUT(api.updateVariableInEnvironmentHandler), r.DELETE(api.deleteVariableFromEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}/audit", r.GET(api.getVariableAuditInEnvironmentHandler))
 
+	// Import Environment
+	r.Handle("/project/{permProjectKey}/import/environment", r.POST(api.postEnvironmentImportHandler))
+	// Export Environment
+	r.Handle("/project/{key}/export/environment/{permEnvironmentName}", r.GET(api.getEnvironmentExportHandler))
+
 	// Artifacts
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/artifact/{tag}", r.GET(api.listArtifactsHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/{buildNumber}/artifact", r.GET(api.listArtifactsBuildHandler))
