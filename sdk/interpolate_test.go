@@ -1,6 +1,67 @@
 package sdk
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
+
+func BenchmarkInterpolate(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+
+		type args struct {
+			input string
+			vars  map[string]string
+		}
+		test := struct {
+			name    string
+			args    args
+			want    string
+			wantErr bool
+		}{
+			name: "config",
+			args: args{
+				input: `
+				{
+				"env": {
+				"KEYA":"{{.cds.env.vAppKey}}",
+				"KEYB": "{{.cds.env.vAppKeyHatchery}}",
+				"ADDR":"{{.cds.env.addr}}"
+				},
+				"labels": {
+				"TOKEN": "{{.cds.env.token}}",
+				"HOST": "cds-hatchery-marathon-{{.cds.env.name}}.{{.cds.env.vHost}}",
+				}
+				}`,
+				vars: map[string]string{"cds.env.name": "", "cds.env.token": "aValidTokenString", "cds.env.addr": "", "cds.env.vAppKey": "aValue"},
+			},
+			want: `
+				{
+				"env": {
+				"KEYA":"aValue",
+				"KEYB": "{{.cds.env.vAppKeyHatchery}}",
+				"ADDR":""
+				},
+				"labels": {
+				"TOKEN": "aValidTokenString",
+				"HOST": "cds-hatchery-marathon-.{{.cds.env.vHost}}",
+				}
+				}`,
+		}
+
+		for i := 0; i < 60; i++ {
+			test.args.vars[fmt.Sprint("%d", i)] = fmt.Sprintf(">>%d<<", i)
+		}
+
+		got, err := Interpolate(test.args.input, test.args.vars)
+		if (err != nil) != test.wantErr {
+			b.Errorf("Interpolate() error = %v, wantErr %v", err, test.wantErr)
+			return
+		}
+		if got != test.want {
+			b.Errorf("Interpolate() = %v, want %v", got, test.want)
+		}
+	}
+}
 
 func TestInterpolate(t *testing.T) {
 	type args struct {
