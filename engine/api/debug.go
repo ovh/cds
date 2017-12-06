@@ -25,6 +25,11 @@ import (
 func (api *API) getProfileIndexHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		session := getUserSession(ctx)
+
+		if session == "" {
+			session = r.FormValue("Session-Token")
+		}
+
 		str := fmt.Sprintf(`<html>
 			<head>
 			<title>CDS Debug</title>
