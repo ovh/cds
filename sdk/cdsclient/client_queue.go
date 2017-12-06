@@ -94,18 +94,20 @@ func (c *client) QueuePolling(ctx context.Context, jobs chan<- sdk.WorkflowNodeJ
 	}
 }
 
-func (c *client) Queue() ([]sdk.WorkflowNodeJobRun, []sdk.PipelineBuildJob, error) {
+func (c *client) QueueWorkflowNodeJobRun() ([]sdk.WorkflowNodeJobRun, error) {
 	wJobs := []sdk.WorkflowNodeJobRun{}
 	if _, err := c.GetJSON("/queue/workflows", &wJobs); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
+	return wJobs, nil
+}
 
+func (c *client) QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error) {
 	pbJobs := []sdk.PipelineBuildJob{}
 	if _, err := c.GetJSON("/queue?status=all", &pbJobs); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-
-	return wJobs, pbJobs, nil
+	return pbJobs, nil
 }
 
 func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*worker.WorkflowNodeJobRunInfo, error) {

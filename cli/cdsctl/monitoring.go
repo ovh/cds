@@ -39,8 +39,8 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 
 // Termui wrapper designed for dashboard creation
 type Termui struct {
-	header *termui.Par
-	msg    string
+	header, times *termui.Par
+	msg           string
 
 	current  string
 	selected string
@@ -100,6 +100,7 @@ func (ui *Termui) init() {
 	})
 
 	ui.initHeader()
+	ui.initTimes()
 	go ui.showMonitoring()
 }
 
@@ -110,14 +111,14 @@ func (ui *Termui) draw(i int) {
 	success, successColor := statusShort(sdk.StatusSuccess.String())
 	fail, failColor := statusShort(sdk.StatusFail.String())
 	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
-	ui.header.Text = fmt.Sprintf(" [CDS | (q)uit | Legend: ](fg-cyan) [Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s) | %s",
+	ui.header.Text = fmt.Sprintf(" [CDS | (q)uit | Legend: ](fg-cyan) [Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s)",
 		checking, checkingColor,
 		waiting, waitingColor,
 		building, buildingColor,
 		success, successColor,
 		fail, failColor,
-		disabled, disabledColor,
-		ui.msg)
+		disabled, disabledColor)
+	ui.times.Text = fmt.Sprintf(ui.msg)
 	termui.Body.Align()
 	termui.Render(termui.Body)
 }
@@ -132,6 +133,16 @@ func (ui *Termui) initHeader() {
 	ui.header = p
 }
 
+func (ui *Termui) initTimes() {
+	p := termui.NewPar("")
+	p.Height = 1
+	p.TextFgColor = termui.ColorWhite
+	p.BorderLabel = ""
+	p.BorderFg = termui.ColorCyan
+	p.Border = false
+	ui.times = p
+}
+
 ////////////
 
 func (ui *Termui) showMonitoring() {
@@ -141,7 +152,7 @@ func (ui *Termui) showMonitoring() {
 	ui.queue.ItemFgColor = termui.ColorWhite
 	ui.queue.ItemBgColor = termui.ColorBlack
 
-	heightBottom := 18
+	heightBottom := 19
 	heightQueue := (termui.TermHeight() - heightBottom)
 	if heightQueue <= 0 {
 		heightQueue = 4
@@ -192,6 +203,9 @@ func (ui *Termui) showMonitoring() {
 	termui.Body.AddRows(
 		termui.NewRow(
 			termui.NewCol(12, 0, ui.header),
+		),
+		termui.NewRow(
+			termui.NewCol(12, 0, ui.times),
 		),
 	)
 
@@ -555,13 +569,22 @@ func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[i
 
 func (ui *Termui) updateQueue(baseURL string) string {
 	start := time.Now()
-	wJobs, pbJobs, err := client.Queue()
-	if err != nil {
-		ui.msg = fmt.Sprintf("[%s](bg-red)", err.Error())
+	wJobs, errw := client.QueueWorkflowNodeJobRun()
+	if errw != nil {
+		ui.msg = fmt.Sprintf("[%s](bg-red)", errw.Error())
 		return ""
 	}
 	elapsed := time.Since(start)
-	msg := fmt.Sprintf("[queue %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
+	msg := fmt.Sprintf("[queue wf %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
+
+	start = time.Now()
+	pbJobs, errpb := client.QueuePipelineBuildJob()
+	if errpb != nil {
+		ui.msg = fmt.Sprintf("[%s](bg-red)", errpb.Error())
+		return ""
+	}
+	elapsed = time.Since(start)
+	msg += fmt.Sprintf(" | [queue pb %s](fg-cyan,bg-default)", sdk.Round(elapsed, time.Millisecond).String())
 
 	var maxQueued time.Duration
 	booked := make(map[string]int)
