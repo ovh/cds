@@ -29,7 +29,7 @@ func exportCmd() *cobra.Command {
 				sdk.Exit("Error %s\n", err)
 			}
 
-			e := exportentities.NewEnvironment(env)
+			e := exportentities.NewEnvironment(env, false, nil)
 
 			f, err := exportentities.GetFormat(exportFormat)
 			if err != nil {

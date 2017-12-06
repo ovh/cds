@@ -32,11 +32,7 @@ func exportCmd() *cobra.Command {
 				sdk.Exit("Error %s\n", err)
 			}
 
-			p := exportentities.NewPipeline(pip)
-
-			if !exportWithPermissions {
-				p.Permissions = nil
-			}
+			p := exportentities.NewPipeline(pip, exportWithPermissions)
 
 			f, err := exportentities.GetFormat(exportFormat)
 			if err != nil {
