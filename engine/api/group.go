@@ -88,7 +88,7 @@ func (api *API) deleteGroupHandler() Handler {
 			p := &sdk.Project{
 				Key: pg.Pipeline.ProjectKey,
 			}
-			if err := pipeline.UpdatePipelineLastModified(tx, p, &pg.Pipeline, getUser(ctx)); err != nil {
+			if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, p, &pg.Pipeline, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "deleteGroupHandler> Cannot update pipeline last modified date")
 			}
 		}

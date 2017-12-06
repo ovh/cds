@@ -30,7 +30,7 @@ type dbEncryptedData struct {
 }
 
 // EncryptWithBuiltinKey encrypt a content with the builtin gpg key encode, compress it and encode with base64
-func EncryptWithBuiltinKey(db *gorp.DbMap, projectID int64, name, content string) (string, error) {
+func EncryptWithBuiltinKey(db gorp.SqlExecutor, projectID int64, name, content string) (string, error) {
 	existingToken, err := db.SelectStr("select token from encrypted_data where project_id = $1 and content_name = $2", projectID, name)
 	if existingToken != "" {
 		return existingToken, nil

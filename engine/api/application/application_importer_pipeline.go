@@ -2,7 +2,7 @@ package application
 
 import (
 	"github.com/go-gorp/gorp"
-	
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/pipeline"
@@ -19,7 +19,7 @@ func ImportPipelines(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, 
 	for i := range app.Pipelines {
 		//Import pipeline
 		log.Debug("application.Import> Import pipeline %s", app.Pipelines[i].Pipeline.Name)
-		if err := pipeline.Import(db, proj, &app.Pipelines[i].Pipeline, msgChan, u); err != nil {
+		if err := pipeline.Import(db, store, proj, &app.Pipelines[i].Pipeline, msgChan, u); err != nil {
 			return err
 		}
 

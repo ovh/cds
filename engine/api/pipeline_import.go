@@ -112,7 +112,7 @@ func (api *API) importPipelineHandler() Handler {
 		} else if exist {
 			globalError = pipeline.ImportUpdate(tx, proj, pip, msgChan, getUser(ctx))
 		} else {
-			globalError = pipeline.Import(tx, proj, pip, msgChan, getUser(ctx))
+			globalError = pipeline.Import(tx, api.Cache, proj, pip, msgChan, getUser(ctx))
 		}
 
 		close(msgChan)

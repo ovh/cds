@@ -237,9 +237,9 @@ func generateHash() (string, error) {
 }
 
 // DeleteBranchBuilds deletes all builds related to given branch in given applications in pipeline_build
-func DeleteBranchBuilds(db gorp.SqlExecutor, hooks []sdk.Hook, branch string) error {
+func DeleteBranchBuilds(db gorp.SqlExecutor, store cache.Store, hooks []sdk.Hook, branch string) error {
 	for i := range hooks {
-		if err := pipeline.DeleteBranchBuilds(db, hooks[i].ApplicationID, branch); err != nil {
+		if err := pipeline.DeleteBranchBuilds(db, store, hooks[i].ApplicationID, branch); err != nil {
 			return sdk.WrapError(err, "DeleteBranchBuilds> Cannot delete branch builds for branch %s in %d", branch, hooks[i].ApplicationID)
 		}
 	}

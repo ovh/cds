@@ -59,7 +59,7 @@ func (api *API) deleteParameterFromPipelineHandler() Handler {
 			return sdk.WrapError(errproj, "deleteParameterFromPipelineHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, p, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteParameterFromPipelineHandler> Cannot update pipeline last_modified date")
 		}
 
@@ -158,7 +158,7 @@ func (api *API) updateParametersInPipelineHandler() Handler {
 			}
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pip, getUser(ctx)); err != nil {
 
 			return sdk.WrapError(err, "UpdatePipelineParameters> Cannot update pipeline last_modified date")
 		}
@@ -223,7 +223,7 @@ func (api *API) updateParameterInPipelineHandler() Handler {
 			return sdk.WrapError(errproj, "updateParameterInPipelineHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, p, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateParameterInPipelineHandler: Cannot update pipeline last_modified date")
 		}
 
@@ -284,7 +284,7 @@ func (api *API) addParameterInPipelineHandler() Handler {
 			return sdk.WrapError(errproj, "addParameterInPipelineHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, p, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addParameterInPipelineHandler> Cannot update pipeline last_modified date")
 		}
 

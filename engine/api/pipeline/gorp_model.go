@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-gorp/gorp"
 
-	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database/gorpmapping"
 	"github.com/ovh/cds/sdk"
 )
@@ -19,8 +18,6 @@ type Log sdk.Log
 
 // PipelineAudit is a gorp wrapper around sdk.PipelineAudit
 type PipelineAudit sdk.PipelineAudit
-
-var Store cache.Store
 
 //PostInsert is a DB Hook on PipelineBuildJob to store jobs and params as JSON in DB
 func (p *PipelineBuildJob) PostInsert(s gorp.SqlExecutor) error {
@@ -82,11 +79,6 @@ func (p *PipelineBuildJob) PostUpdate(s gorp.SqlExecutor) error {
 
 //PostGet is a DB Hook on PipelineBuildJob to get jobs and params as from JSON in DB
 func (p *PipelineBuildJob) PostGet(s gorp.SqlExecutor) error {
-	h := sdk.Hatchery{}
-	if Store.Get(keyBookJob(p.ID), &h) {
-		p.BookedBy = h
-	}
-
 	query := "SELECT job, parameters, spawninfos, exec_groups FROM pipeline_build_job WHERE id = $1"
 	var params, job, spawn, execGroups []byte
 	if err := s.QueryRow(query, p.ID).Scan(&job, &params, &spawn, &execGroups); err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+//Audit constants
 const (
 	AuditAddJob         = "addJob"
 	AuditUpdateJob      = "updateJob"

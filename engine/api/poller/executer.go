@@ -119,7 +119,7 @@ func executerRun(db *gorp.DbMap, store cache.Store, e *sdk.RepositoryPollerExecu
 	for _, pb := range pbs {
 		//Update pipeline build commits
 		log.Debug("poller.ExecuterRun> get commits for pipeline build %d: %#v", pb.ID, pb)
-		if commits, err := pipeline.UpdatePipelineBuildCommits(db, proj, pip, app, &sdk.DefaultEnv, &pb); err != nil {
+		if commits, err := pipeline.UpdatePipelineBuildCommits(db, store, proj, pip, app, &sdk.DefaultEnv, &pb); err != nil {
 			log.Warning("poller.ExecuterRun> Unable to update pipeline build commits")
 		} else {
 			log.Debug("poller.ExecuterRun> %d commits for pipeline build %d", len(commits), pb.ID)
@@ -214,7 +214,7 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 
 	var pbs []sdk.PipelineBuild
 	for _, event := range e.PushEvents {
-		pb, err := triggerPipeline(tx, poller, event, proj, false)
+		pb, err := triggerPipeline(tx, store, poller, event, proj, false)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Polling.triggerPipelines> cannot trigger pipeline %d", poller.Pipeline.ID)
 		}
@@ -227,7 +227,7 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 	}
 
 	for _, event := range e.PullRequestEvents {
-		pb, err := triggerPipeline(tx, poller, event.Head, proj, true)
+		pb, err := triggerPipeline(tx, store, poller, event.Head, proj, true)
 		if err != nil {
 			log.Error("Polling.triggerPipelines> cannot trigger pipeline %d: %s\n", poller.Pipeline.ID, err)
 			return nil, err
@@ -241,7 +241,7 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 	}
 
 	for _, event := range e.CreateEvents {
-		pb, err := triggerPipeline(tx, poller, sdk.VCSPushEvent(event), proj, false)
+		pb, err := triggerPipeline(tx, store, poller, sdk.VCSPushEvent(event), proj, false)
 		if err != nil {
 			return nil, sdk.WrapError(err, "Polling.triggerPipelines> cannot trigger pipeline %d", poller.Pipeline.ID)
 		}
@@ -254,7 +254,7 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 	}
 
 	for _, e := range e.DeleteEvents {
-		if err := pipeline.DeleteBranchBuilds(tx, poller.Application.ID, e.Branch.DisplayID); err != nil {
+		if err := pipeline.DeleteBranchBuilds(tx, store, poller.Application.ID, e.Branch.DisplayID); err != nil {
 			if err != sql.ErrNoRows {
 				return nil, sdk.WrapError(err, "Polling.triggerPipelines> cannot delete pipeline build for branch %s", e.Branch.DisplayID)
 			}
@@ -266,7 +266,7 @@ func triggerPipelines(tx gorp.SqlExecutor, store cache.Store, projectKey string,
 	return pbs, nil
 }
 
-func triggerPipeline(tx gorp.SqlExecutor, poller *sdk.RepositoryPoller, e sdk.VCSPushEvent, proj *sdk.Project, fork bool) (*sdk.PipelineBuild, error) {
+func triggerPipeline(tx gorp.SqlExecutor, store cache.Store, poller *sdk.RepositoryPoller, e sdk.VCSPushEvent, proj *sdk.Project, fork bool) (*sdk.PipelineBuild, error) {
 	// Create pipeline args
 	var params []sdk.Parameter
 
@@ -313,7 +313,7 @@ func triggerPipeline(tx gorp.SqlExecutor, poller *sdk.RepositoryPoller, e sdk.VC
 		return nil, nil
 	}
 	//Insert the build
-	pb, err := pipeline.InsertPipelineBuild(tx, proj, &poller.Pipeline, &poller.Application, applicationPipelineArgs, params, &sdk.DefaultEnv, 0, trigger)
+	pb, err := pipeline.InsertPipelineBuild(tx, store, proj, &poller.Pipeline, &poller.Application, applicationPipelineArgs, params, &sdk.DefaultEnv, 0, trigger)
 	if err != nil {
 		return nil, err
 	}

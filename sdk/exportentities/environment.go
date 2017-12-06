@@ -1,20 +1,19 @@
 package exportentities
 
 import (
-	"text/template"
-
 	"github.com/ovh/cds/sdk"
 )
 
 // Environment is a struct to export sdk.Environment
 type Environment struct {
 	Name        string                   `json:"name" yaml:"name"`
-	Values      map[string]VariableValue `json:"values" yaml:"values"`
-	Permissions map[string]int           `json:"permissions" yaml:"permissions"`
+	Values      map[string]VariableValue `json:"values,omitempty" yaml:"values,omitempty"`
+	Keys        map[string]VariableValue `json:"keys,omitempty" yaml:"keys,omitempty"`
+	Permissions map[string]int           `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 }
 
 //NewEnvironment returns an Environment from an sdk.Environment pointer
-func NewEnvironment(e *sdk.Environment) (env *Environment) {
+func NewEnvironment(e *sdk.Environment, withPermissions bool, keys []EncryptedKey) (env *Environment) {
 	if e == nil {
 		return
 	}
@@ -27,38 +26,20 @@ func NewEnvironment(e *sdk.Environment) (env *Environment) {
 			Value: v.Value,
 		}
 	}
-	env.Permissions = make(map[string]int, len(e.EnvironmentGroups))
-	for _, p := range e.EnvironmentGroups {
-		env.Permissions[p.Group.Name] = p.Permission
+	if withPermissions {
+		env.Permissions = make(map[string]int, len(e.EnvironmentGroups))
+		for _, p := range e.EnvironmentGroups {
+			env.Permissions[p.Group.Name] = p.Permission
+		}
+	}
+	env.Keys = make(map[string]VariableValue, len(keys))
+	for _, k := range keys {
+		env.Keys[k.Name] = VariableValue{
+			Type:  k.Type,
+			Value: k.Content,
+		}
 	}
 	return
-}
-
-//HCLTemplate returns text/template
-func (e *Environment) HCLTemplate() (*template.Template, error) {
-	tmpl := `name = "{{.Name}}"
-
-permissions = { {{ range $key, $value := .Permissions }}
-	"{{$key}}" = {{$value}}{{ end }}
-}
-
-values = { 
-{{ range $key, $value := .Values }}
-	"{{ $key }}" {
-		{{if eq $value.Type "text" -}} 
-		type = "{{$value.Type}}"
-		value = <<EOV
-{{$value.Value}}
-EOV
-		{{- else -}}
-		type = "{{$value.Type}}"
-		value = "{{$value.Value}}"
-		{{- end}}
-	} 
-{{ end }}
-}`
-	t := template.New("t")
-	return t.Parse(tmpl)
 }
 
 //Environment returns a sdk.Environment entity

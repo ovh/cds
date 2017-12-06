@@ -40,7 +40,7 @@ func Test_getProjectNotificationsHandler(t *testing.T) {
 		Type:      "build",
 		ProjectID: p.ID,
 	}
-	err = pipeline.InsertPipeline(api.mustDB(), p, pip, nil)
+	err = pipeline.InsertPipeline(api.mustDB(), api.Cache, p, pip, nil)
 	test.NoError(t, err)
 	test.NoError(t, group.InsertGroupInPipeline(api.mustDB(), pip.ID, p.ProjectGroups[0].Group.ID, 7))
 

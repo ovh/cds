@@ -19,7 +19,7 @@ type structarg struct {
 }
 
 // UpdatePipelineLastModified Update last_modified date on pipeline
-func UpdatePipelineLastModified(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
+func UpdatePipelineLastModified(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
 	query := "UPDATE pipeline SET last_modified = current_timestamp WHERE id = $1 RETURNING last_modified"
 	var lastModified time.Time
 	err := db.QueryRow(query, p.ID).Scan(&lastModified)
@@ -30,7 +30,7 @@ func UpdatePipelineLastModified(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.P
 	t := time.Now()
 
 	if u != nil {
-		Store.SetWithTTL(cache.Key("lastModified", proj.Key, "pipeline", p.Name), sdk.LastModification{
+		store.SetWithTTL(cache.Key("lastModified", proj.Key, "pipeline", p.Name), sdk.LastModification{
 			Name:         p.Name,
 			Username:     u.Username,
 			LastModified: t.Unix(),
@@ -45,7 +45,7 @@ func UpdatePipelineLastModified(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.P
 		}
 		b, errP := json.Marshal(updates)
 		if errP == nil {
-			Store.Publish("lastUpdates", string(b))
+			store.Publish("lastUpdates", string(b))
 		}
 	}
 
@@ -429,7 +429,7 @@ func UpdatePipeline(db gorp.SqlExecutor, p *sdk.Pipeline) error {
 }
 
 // InsertPipeline inserts pipeline informations in database
-func InsertPipeline(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
+func InsertPipeline(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p *sdk.Pipeline, u *sdk.User) error {
 	query := `INSERT INTO pipeline (name, project_id, type, last_modified) VALUES ($1,$2,$3, current_timestamp) RETURNING id`
 
 	rx := sdk.NamePatternRegex
@@ -455,7 +455,7 @@ func InsertPipeline(db gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline, u *
 		}
 	}
 
-	return UpdatePipelineLastModified(db, proj, p, u)
+	return UpdatePipelineLastModified(db, store, proj, p, u)
 }
 
 // ExistPipeline Check if the given pipeline exist in database

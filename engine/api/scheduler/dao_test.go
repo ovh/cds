@@ -39,7 +39,7 @@ func TestInsert(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(db, cache, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -106,7 +106,7 @@ func TestUpdate(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(db, cache, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -190,7 +190,7 @@ func TestGetByApplication(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(db, cache, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -253,7 +253,7 @@ func TestGetByPipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(db, cache, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -316,7 +316,7 @@ func TestGetByApplicationPipeline(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(db, cache, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 
@@ -379,7 +379,7 @@ func TestGetByApplicationPipelineEnv(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	if err := pipeline.InsertPipeline(db, proj, pip, nil); err != nil {
+	if err := pipeline.InsertPipeline(db, cache, proj, pip, nil); err != nil {
 		t.Fatal(err)
 	}
 

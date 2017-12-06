@@ -167,7 +167,6 @@ func (api *API) InitRouter() {
 
 	// Pipeline
 	r.Handle("/project/{permProjectKey}/pipeline", r.GET(api.getPipelinesHandler), r.POST(api.addPipelineHandler))
-	r.Handle("/project/{permProjectKey}/import/pipeline", r.POST(api.importPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/application", r.GET(api.getApplicationUsingPipelineHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group", r.POST(api.addGroupInPipelineHandler), r.PUT(api.updateGroupsOnPipelineHandler, DEPRECATED))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/group/import", r.POST(api.importGroupsInPipelineHandler))
@@ -181,6 +180,11 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}", r.GET(api.getStageHandler), r.PUT(api.updateStageHandler), r.DELETE(api.deleteStageHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job", r.POST(api.addJobToStageHandler))
 	r.Handle("/project/{key}/pipeline/{permPipelineKey}/stage/{stageID}/job/{jobID}", r.PUT(api.updateJobHandler), r.DELETE(api.deleteJobHandler))
+
+	// Import pipeline
+	r.Handle("/project/{permProjectKey}/import/pipeline", r.POST(api.importPipelineHandler))
+	// Export pipeline
+	r.Handle("/project/{key}/export/pipeline/{permPipelineKey}", r.GET(api.getPipelineExportHandler))
 
 	// Workflows
 	r.Handle("/workflow/artifact/{hash}", r.GET(api.downloadworkflowArtifactDirectHandler, Auth(false)))
@@ -245,6 +249,11 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable", r.GET(api.getVariablesInEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}", r.GET(api.getVariableInEnvironmentHandler), r.POST(api.addVariableInEnvironmentHandler), r.PUT(api.updateVariableInEnvironmentHandler), r.DELETE(api.deleteVariableFromEnvironmentHandler))
 	r.Handle("/project/{key}/environment/{permEnvironmentName}/variable/{name}/audit", r.GET(api.getVariableAuditInEnvironmentHandler))
+
+	// Import Environment
+	r.Handle("/project/{permProjectKey}/import/environment", r.POST(api.postEnvironmentImportHandler))
+	// Export Environment
+	r.Handle("/project/{key}/export/environment/{permEnvironmentName}", r.GET(api.getEnvironmentExportHandler))
 
 	// Artifacts
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/artifact/{tag}", r.GET(api.listArtifactsHandler))

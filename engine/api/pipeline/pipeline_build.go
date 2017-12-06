@@ -12,6 +12,7 @@ import (
 	"github.com/lib/pq"
 
 	"github.com/ovh/cds/engine/api/artifact"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/event"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/stats"
@@ -19,8 +20,8 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// PipelineBuildDbResult Gorp result when select a pipeline build
-type PipelineBuildDbResult struct {
+// pipelineBuildDbResult Gorp result when select a pipeline build
+type pipelineBuildDbResult struct {
 	ID                    int64          `db:"id"`
 	ApplicationID         int64          `db:"appID"`
 	PipelineID            int64          `db:"pipID"`
@@ -118,7 +119,7 @@ func LoadPipelineBuildByApplicationAndBranch(db gorp.SqlExecutor, appID int64, b
 	`
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
 
-	var rows []PipelineBuildDbResult
+	var rows []pipelineBuildDbResult
 	if _, err := db.Select(&rows, query, appID, branch); err != nil {
 		return nil, err
 	}
@@ -161,7 +162,7 @@ func LoadRecentPipelineBuild(db gorp.SqlExecutor, args ...FuncArg) ([]sdk.Pipeli
 		ORDER by pb.id ASC
 	`
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-	var rows []PipelineBuildDbResult
+	var rows []pipelineBuildDbResult
 	_, err := db.Select(&rows, query, sdk.StatusBuilding.String())
 	if err != nil {
 		return nil, err
@@ -189,7 +190,7 @@ func LoadUserRecentPipelineBuild(db gorp.SqlExecutor, userID int64) ([]sdk.Pipel
 		ORDER by pb.id ASC`
 
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-	var rows []PipelineBuildDbResult
+	var rows []pipelineBuildDbResult
 	_, err := db.Select(&rows, query, sdk.StatusBuilding.String(), userID)
 	if err != nil {
 		return nil, err
@@ -213,7 +214,7 @@ func LoadPipelineBuildByApplicationPipelineEnvVersion(db gorp.SqlExecutor, appli
 `
 
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-	var rows []PipelineBuildDbResult
+	var rows []pipelineBuildDbResult
 	_, err := db.Select(&rows, query, applicationID, pipelineID, environmentID, version)
 	if err != nil {
 		return nil, err
@@ -240,7 +241,7 @@ func LoadPipelineBuildByApplicationPipelineEnvBuildNumber(db gorp.SqlExecutor, a
 `
 
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-	var row PipelineBuildDbResult
+	var row pipelineBuildDbResult
 	if err := db.SelectOne(&row, query, applicationID, pipelineID, environmentID, buildNumber); err != nil {
 		return nil, err
 	}
@@ -260,7 +261,7 @@ func LoadPipelineBuildByHash(db gorp.SqlExecutor, hash string) ([]sdk.PipelineBu
 		WHERE pb.vcs_changes_hash = $1
 `
 
-	var rows []PipelineBuildDbResult
+	var rows []pipelineBuildDbResult
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
 	if _, errQuery := db.Select(&rows, query, hash); errQuery != nil {
 		return nil, errQuery
@@ -355,7 +356,7 @@ func LoadPipelineBuildsByApplicationAndPipeline(db gorp.SqlExecutor, application
 	args = append(args, limit)
 	query += fmt.Sprintf(" ORDER BY pb.id DESC, pb.version DESC LIMIT $%d", nbArgs)
 
-	var rows []PipelineBuildDbResult
+	var rows []pipelineBuildDbResult
 	if _, errQuery := db.Select(&rows, query, args...); errQuery != nil {
 		return nil, errQuery
 	}
@@ -380,7 +381,7 @@ func LoadPipelineBuildByID(db gorp.SqlExecutor, id int64) (*sdk.PipelineBuild, e
 	`
 
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-	var row PipelineBuildDbResult
+	var row pipelineBuildDbResult
 	if err := db.SelectOne(&row, query, id); err != nil {
 		return nil, err
 	}
@@ -395,7 +396,7 @@ func LoadPipelineBuildByBuildNumber(db gorp.SqlExecutor, buildNumber, pipID, app
 
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
 
-	var row PipelineBuildDbResult
+	var row pipelineBuildDbResult
 	if err := db.SelectOne(&row, query, buildNumber, pipID, appID, envID); err != nil {
 		return nil, err
 	}
@@ -418,7 +419,7 @@ func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicatio
 		WHERE pb.parent_pipeline_build_id = $1
 	`
 	query := fmt.Sprintf("%s %s", selectPipelineBuild, whereCondition)
-	var rows []PipelineBuildDbResult
+	var rows []pipelineBuildDbResult
 	_, err := db.Select(&rows, query, pbID)
 	if err != nil {
 		return nil, err
@@ -434,7 +435,7 @@ func LoadPipelineBuildChildren(db gorp.SqlExecutor, pipelineID int64, applicatio
 	return pbs, nil
 }
 
-func scanPipelineBuild(pbResult PipelineBuildDbResult) (*sdk.PipelineBuild, error) {
+func scanPipelineBuild(pbResult pipelineBuildDbResult) (*sdk.PipelineBuild, error) {
 	pb := sdk.PipelineBuild{
 		ID: pbResult.ID,
 		Application: sdk.Application{
@@ -628,7 +629,7 @@ func GetLastBuildNumber(db gorp.SqlExecutor, pipID, appID, envID int64) (int64, 
 }
 
 // InsertBuildVariable adds a variable exported in user scripts and forwarded by building worker
-func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error {
+func InsertBuildVariable(db gorp.SqlExecutor, store cache.Store, pbID int64, v sdk.Variable) error {
 
 	if strings.Contains(v.Value, "{{.") {
 		return sdk.ErrWrongRequest
@@ -678,7 +679,7 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 	}
 
 	// now load all related action build
-	pbJobs, errJobs := GetPipelineBuildJobByPipelineBuildID(db, pbID)
+	pbJobs, errJobs := GetPipelineBuildJobByPipelineBuildID(db, store, pbID)
 	if errJobs != nil {
 		return errJobs
 	}
@@ -699,7 +700,7 @@ func InsertBuildVariable(db gorp.SqlExecutor, pbID int64, v sdk.Variable) error 
 }
 
 // UpdatePipelineBuildCommits gets and update commit for given pipeline build
-func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, pb *sdk.PipelineBuild) ([]sdk.VCSCommit, error) {
+func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Project, pip *sdk.Pipeline, app *sdk.Application, env *sdk.Environment, pb *sdk.PipelineBuild) ([]sdk.VCSCommit, error) {
 	if app.VCSServer == "" {
 		return nil, nil
 	}
@@ -711,7 +712,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 
 	res := []sdk.VCSCommit{}
 	//Get the RepositoriesManager Client
-	client, errclient := repositoriesmanager.AuthorizedClient(db, Store, vcsServer)
+	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
 	if errclient != nil {
 		return nil, sdk.WrapError(errclient, "UpdatePipelineBuildCommits> Cannot get client")
 	}
@@ -780,7 +781,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, p *sdk.Project, pip *sdk.Pipelin
 }
 
 // InsertPipelineBuild insert build informations in database so Scheduler can pick it up
-func InsertPipelineBuild(tx gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline, app *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (*sdk.PipelineBuild, error) {
+func InsertPipelineBuild(tx gorp.SqlExecutor, store cache.Store, proj *sdk.Project, p *sdk.Pipeline, app *sdk.Application, applicationPipelineArgs []sdk.Parameter, params []sdk.Parameter, env *sdk.Environment, version int64, trigger sdk.PipelineBuildTrigger) (*sdk.PipelineBuild, error) {
 	var buildNumber int64
 	var pb sdk.PipelineBuild
 	var client sdk.VCSAuthorizedClient
@@ -793,7 +794,7 @@ func InsertPipelineBuild(tx gorp.SqlExecutor, proj *sdk.Project, p *sdk.Pipeline
 		}
 
 		//We don't need to pass apiURL and uiURL because they are not usefull for commit
-		client, _ = repositoriesmanager.AuthorizedClient(tx, Store, vcsServer)
+		client, _ = repositoriesmanager.AuthorizedClient(tx, store, vcsServer)
 	}
 
 	// Load last finished build
@@ -1397,7 +1398,7 @@ func GetAllLastBuildByApplication(db gorp.SqlExecutor, applicationID int64, remo
 		query = query + whereCondition + fmt.Sprintf(" AND vcs_remote = $%d", len(args))
 	}
 
-	var rows []PipelineBuildDbResult
+	var rows []pipelineBuildDbResult
 	if _, err := db.Select(&rows, query, args...); err != nil {
 		return nil, err
 	}
@@ -1563,8 +1564,8 @@ func CurrentAndPreviousPipelineBuildVCSInfos(db gorp.SqlExecutor, buildNumber, p
 }
 
 // StopPipelineBuild fails all currently building actions
-func StopPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
-	if err := StopBuildingPipelineBuildJob(db, pb); err != nil {
+func StopPipelineBuild(db gorp.SqlExecutor, store cache.Store, pb *sdk.PipelineBuild) error {
+	if err := StopBuildingPipelineBuildJob(db, store, pb); err != nil {
 		return err
 	}
 
@@ -1645,15 +1646,11 @@ func RestartPipelineBuild(db gorp.SqlExecutor, pb *sdk.PipelineBuild) error {
 		pb.Done = time.Time{}
 	}
 
-	if err := UpdatePipelineBuildStatusAndStage(db, pb, sdk.StatusBuilding); err != nil {
-		return err
-	}
-
-	return nil
+	return UpdatePipelineBuildStatusAndStage(db, pb, sdk.StatusBuilding)
 }
 
 //DeleteBranchBuilds deletes all pipelines build for a given branch
-func DeleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
+func DeleteBranchBuilds(db gorp.SqlExecutor, store cache.Store, appID int64, branch string) error {
 	log.Debug("DeleteBranchBuilds> appID=%d branch=%s", appID, branch)
 
 	pbs, errPB := LoadPipelineBuildByApplicationAndBranch(db, appID, branch)
@@ -1668,7 +1665,7 @@ func DeleteBranchBuilds(db gorp.SqlExecutor, appID int64, branch string) error {
 		}
 
 		// Stop building pipeline
-		if err := StopPipelineBuild(db, &pb); err != nil {
+		if err := StopPipelineBuild(db, store, &pb); err != nil {
 			log.Error("deleteBranchBuilds> Cannot stop pipeline")
 			continue
 		}
