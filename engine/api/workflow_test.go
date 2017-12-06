@@ -86,7 +86,7 @@ func Test_getWorkflowHandler_withUsage(t *testing.T) {
 		Type:       sdk.BuildPipeline,
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, api.Cache, proj, &pip, u))
 
 	proj, _ = project.LoadByID(db, api.Cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
 
@@ -155,7 +155,7 @@ func Test_postWorkflowHandlerWithRootShouldSuccess(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{
@@ -197,7 +197,7 @@ func Test_putWorkflowHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{
@@ -267,7 +267,7 @@ func Test_deleteWorkflowHandler(t *testing.T) {
 		ProjectID: proj.ID,
 		Type:      sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, nil))
 
 	//Prepare request
 	vars := map[string]string{

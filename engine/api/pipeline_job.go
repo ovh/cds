@@ -80,7 +80,7 @@ func (api *API) addJobToStageHandler() Handler {
 			return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pip, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addJobToStageHandler> Cannot update pipeline last modified date")
 		}
 
@@ -181,7 +181,7 @@ func (api *API) updateJobHandler() Handler {
 			return sdk.WrapError(errproj, "addJobToStageHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateJobHandler> Cannot update pipeline last_modified")
 		}
 
@@ -255,7 +255,7 @@ func (api *API) deleteJobHandler() Handler {
 			return sdk.WrapError(errproj, "deleteJobHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteJobHandler> Cannot update pipeline last_modified")
 		}
 

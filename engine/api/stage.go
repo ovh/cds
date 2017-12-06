@@ -53,7 +53,7 @@ func (api *API) addStageHandler() Handler {
 			return sdk.WrapError(errproj, "addStageHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "addStageHandler> Cannot update pipeline last modified date")
 		}
 
@@ -156,7 +156,7 @@ func (api *API) moveStageHandler() Handler {
 			return sdk.WrapError(errproj, "moveStageHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "moveStageHandler> Cannot update project last modified date")
 		}
 
@@ -220,7 +220,7 @@ func (api *API) updateStageHandler() Handler {
 			return sdk.WrapError(errproj, "updateStageHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateStageHandler> Cannot update pipeline last_modified")
 		}
 
@@ -281,7 +281,7 @@ func (api *API) deleteStageHandler() Handler {
 			return sdk.WrapError(errproj, "deleteStageHandler> unable to load project")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteStageHandler> Cannot Update pipeline last_modified")
 		}
 

@@ -58,14 +58,14 @@ func RunPipeline(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlExecut
 		env = &sdk.DefaultEnv
 	}
 
-	pb, err := pipeline.InsertPipelineBuild(db, projectData, p, app, applicationPipelineParams, params, env, version, trigger)
+	pb, err := pipeline.InsertPipelineBuild(db, store, projectData, p, app, applicationPipelineParams, params, env, version, trigger)
 	if err != nil {
 		return nil, sdk.WrapError(err, "queue.Run> Cannot start pipeline %s", pipelineName)
 	}
 
 	go func() {
 		db := DBFunc()
-		if _, err := pipeline.UpdatePipelineBuildCommits(db, projectData, p, app, env, pb); err != nil {
+		if _, err := pipeline.UpdatePipelineBuildCommits(db, store, projectData, p, app, env, pb); err != nil {
 			log.Warning("queue.Run> Unable to update pipeline build commits : %s", err)
 		}
 	}()

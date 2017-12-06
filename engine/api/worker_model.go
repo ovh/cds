@@ -232,7 +232,7 @@ func (api *API) updateWorkerModelHandler() Handler {
 					return sdk.WrapError(errproj, "updateWorkerModel> unable to load project")
 				}
 
-				if err := pipeline.UpdatePipelineLastModified(tx, proj, &sdk.Pipeline{ID: id}, getUser(ctx)); err != nil {
+				if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, &sdk.Pipeline{ID: id}, getUser(ctx)); err != nil {
 					return sdk.WrapError(err, "updateWorkerModel> cannot update pipeline")
 				}
 			}

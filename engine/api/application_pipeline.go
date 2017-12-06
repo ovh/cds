@@ -94,7 +94,7 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 			})
 
 			projTmp := &sdk.Project{Key: key}
-			if err := pipeline.UpdatePipelineLastModified(tx, projTmp, pip, getUser(ctx)); err != nil {
+			if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, projTmp, pip, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "attachPipelinesToApplicationHandler> Cannot update pipeline last modified date")
 			}
 		}
@@ -251,7 +251,7 @@ func (api *API) removePipelineFromApplicationHandler() Handler {
 		}
 
 		projTmp := &sdk.Project{Key: key}
-		if err := pipeline.UpdatePipelineLastModified(tx, projTmp, &a.Pipelines[indexPipeline].Pipeline, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, projTmp, &a.Pipelines[indexPipeline].Pipeline, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "removePipelineFromApplicationHandler> Cannot update pipeline last modified date")
 		}
 

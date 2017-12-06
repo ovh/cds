@@ -23,32 +23,17 @@ func (api *API) getWorkflowExportHandler() Handler {
 		}
 		withPermissions := FormBool(r, "withPermissions")
 
-		wf, errload := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
-		if errload != nil {
-			return sdk.WrapError(errload, "permWogetWorkflowExportHandlerrkflowName> Cannot load workflow %s", name)
-		}
-
-		e, err := exportentities.NewWorkflow(*wf, withPermissions)
-		if err != nil {
-			return err
-		}
-
-		// Export
 		f, err := exportentities.GetFormat(format)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowExportHandler> Format invalid")
 		}
 
-		// Marshal to the desired format
-		b, err := exportentities.Marshal(e, f)
-		if err != nil {
+		if err := workflow.Export(api.mustDB(), api.Cache, key, name, f, withPermissions, getUser(ctx), w); err != nil {
 			return sdk.WrapError(err, "getWorkflowExportHandler>")
 		}
 
 		w.Header().Add("Content-Type", exportentities.GetContentType(f))
 		w.WriteHeader(http.StatusOK)
-		w.Write(b)
-
 		return nil
 	}
 }

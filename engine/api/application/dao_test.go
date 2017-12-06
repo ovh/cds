@@ -173,7 +173,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 		Type:       sdk.BuildPipeline,
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
 	w := sdk.Workflow{
 		Name:       "test_1",

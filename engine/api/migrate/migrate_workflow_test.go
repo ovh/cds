@@ -48,8 +48,8 @@ func Test_MigrateToWorkflow(t *testing.T) {
 		},
 		ProjectID: proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip1, u))
-	test.NoError(t, pipeline.InsertPipeline(db, proj, pip2, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, pip2, u))
 
 	env1 := &sdk.Environment{
 		Name:      "env1",

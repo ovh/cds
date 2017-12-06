@@ -144,6 +144,7 @@ func LoadStages(db gorp.SqlExecutor, pipelineID int64) ([]sdk.Stage, error) {
 	return stages, nil
 }
 
+// LoadPipelineStage loads pipeline stage
 func LoadPipelineStage(db gorp.SqlExecutor, p *sdk.Pipeline, args ...FuncArg) error {
 	p.Stages = []sdk.Stage{}
 	c := structarg{}
@@ -314,10 +315,7 @@ func UpdateStage(db gorp.SqlExecutor, s *sdk.Stage) error {
 	}
 
 	//Insert all prequisites
-	if err := InsertStagePrequisites(db, s); err != nil {
-		return err
-	}
-	return nil
+	return InsertStagePrequisites(db, s)
 }
 
 // DeleteStageByID Delete stage with associated pipeline action
@@ -433,10 +431,7 @@ func MoveStage(db gorp.SqlExecutor, stageToMove *sdk.Stage, newBuildOrder int, p
 	}
 
 	stageToMove.BuildOrder = newBuildOrder
-	if err := UpdateStage(db, stageToMove); err != nil {
-		return err
-	}
-	return nil
+	return UpdateStage(db, stageToMove)
 }
 
 func moveUpStages(db gorp.SqlExecutor, pipelineID int64, oldPosition, newPosition int) error {

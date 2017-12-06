@@ -101,7 +101,7 @@ func testApplicationPipelineNotifBoilerPlate(t *testing.T, f func(*testing.T, *A
 		ProjectID:  proj.ID,
 	}
 	t.Logf("Insert Pipeline %s for Project %s", pip.Name, proj.Name)
-	err := pipeline.InsertPipeline(api.mustDB(), proj, pip, u)
+	err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u)
 	test.NoError(t, err)
 
 	//Insert Application
@@ -548,7 +548,7 @@ func Test_SendPipeline(t *testing.T) {
 		params := []sdk.Parameter{}
 		trigger := sdk.PipelineBuildTrigger{}
 
-		pb, err := pipeline.InsertPipelineBuild(tx, proj, pip, app, params, params, env, -1, trigger)
+		pb, err := pipeline.InsertPipelineBuild(tx, api.Cache, proj, pip, app, params, params, env, -1, trigger)
 		test.NoError(t, err)
 
 		err = tx.Commit()
@@ -585,7 +585,7 @@ func Test_addNotificationsHandler(t *testing.T) {
 		Type:      "build",
 		ProjectID: p.ID,
 	}
-	err = pipeline.InsertPipeline(api.mustDB(), p, pip, u)
+	err = pipeline.InsertPipeline(api.mustDB(), api.Cache, p, pip, u)
 	test.NoError(t, err)
 
 	_, err = application.AttachPipeline(api.mustDB(), app.ID, pip.ID)

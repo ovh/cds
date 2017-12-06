@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -18,7 +19,7 @@ type awolPipelineBuildJob struct {
 // AWOLPipelineKiller will search in database for actions :
 // - Having building status
 // - Without any logs output in the last 15 minutes
-func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap) {
+func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap, store cache.Store) {
 	tick := time.NewTicker(1 * time.Minute).C
 	for {
 		select {
@@ -36,7 +37,7 @@ func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap) {
 				}
 
 				for _, data := range pbJobDatas {
-					err = killAWOLPipelineBuildJob(db, data)
+					err = killAWOLPipelineBuildJob(db, store, data)
 					if err != nil {
 						log.Warning("AWOLPipelineKiller> Cannot kill action build %d: %s\n", data.pipelineBuildJobID, err)
 					}
@@ -46,7 +47,7 @@ func AWOLPipelineKiller(c context.Context, DBFunc func() *gorp.DbMap) {
 	}
 }
 
-func killAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) error {
+func killAWOLPipelineBuildJob(db *gorp.DbMap, store cache.Store, pbJobData awolPipelineBuildJob) error {
 	log.Warning("killAWOLPipelineBuildJob> Killing pipeline_job_build %d\n", pbJobData.pipelineBuildJobID)
 
 	tx, errb := db.Begin()
@@ -55,7 +56,7 @@ func killAWOLPipelineBuildJob(db *gorp.DbMap, pbJobData awolPipelineBuildJob) er
 	}
 	defer tx.Rollback()
 
-	pbJob, errJob := GetPipelineBuildJob(tx, pbJobData.pipelineBuildJobID)
+	pbJob, errJob := GetPipelineBuildJob(tx, store, pbJobData.pipelineBuildJobID)
 	if errJob != nil {
 		return errJob
 	}

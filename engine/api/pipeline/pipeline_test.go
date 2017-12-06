@@ -62,7 +62,7 @@ func TestInsertPipeline(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		if err := pipeline.InsertPipeline(db, &p, tt.p, nil); (err != nil) != tt.wantErr {
+		if err := pipeline.InsertPipeline(db, cache, &p, tt.p, nil); (err != nil) != tt.wantErr {
 			t.Errorf("%q. InsertPipeline() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 		}
 	}
@@ -98,7 +98,7 @@ func TestInsertPipelineWithParemeters(t *testing.T) {
 		},
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, &p, pip, nil))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, &p, pip, nil))
 
 	pip1, err := pipeline.LoadPipeline(db, p.Key, "Name", true)
 	test.NoError(t, err)
@@ -134,7 +134,7 @@ func TestInsertPipelineWithWithWrongParemeters(t *testing.T) {
 			},
 		},
 	}
-	assert.Error(t, pipeline.InsertPipeline(db, &p, pip, nil))
+	assert.Error(t, pipeline.InsertPipeline(db, cache, &p, pip, nil))
 }
 
 func TestLoadByWorkflowID(t *testing.T) {
@@ -157,7 +157,7 @@ func TestLoadByWorkflowID(t *testing.T) {
 		Type:       sdk.BuildPipeline,
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 
 	w := sdk.Workflow{
 		Name:       "test_1",

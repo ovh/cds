@@ -112,7 +112,7 @@ func (api *API) rollbackPipelineHandler() Handler {
 		}
 
 		go func() {
-			if _, err := pipeline.UpdatePipelineBuildCommits(api.mustDB(), proj, pip, app, env, newPb); err != nil {
+			if _, err := pipeline.UpdatePipelineBuildCommits(api.mustDB(), api.Cache, proj, pip, app, env, newPb); err != nil {
 				log.Warning("scheduler.Run> Unable to update pipeline build commits : %s", err)
 			}
 		}()
@@ -356,7 +356,7 @@ func (api *API) runPipelineHandlerFunc(ctx context.Context, w http.ResponseWrite
 	}
 
 	go func() {
-		if _, err := pipeline.UpdatePipelineBuildCommits(api.mustDB(), proj, pip, app, env, pb); err != nil {
+		if _, err := pipeline.UpdatePipelineBuildCommits(api.mustDB(), api.Cache, proj, pip, app, env, pb); err != nil {
 			log.Warning("runPipelineHandler> Unable to update pipeline build commits : %s", err)
 		}
 	}()
@@ -419,7 +419,7 @@ func (api *API) updatePipelineActionHandler() Handler {
 			return sdk.WrapError(errproj, "updatePipelineActionHandler> Unable to load project %s", key)
 		}
 
-		err = pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx))
+		err = pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "updatePipelineActionHandler> Cannot update pipeline last_modified")
 		}
@@ -470,7 +470,7 @@ func (api *API) deletePipelineActionHandler() Handler {
 			return sdk.WrapError(errproj, "updatePipelineActionHandler> Unable to load project %s", key)
 		}
 
-		err = pipeline.UpdatePipelineLastModified(tx, proj, pipelineData, getUser(ctx))
+		err = pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineData, getUser(ctx))
 		if err != nil {
 			return sdk.WrapError(err, "deletePipelineActionHandler> Cannot update pipeline last_modified")
 		}
@@ -529,7 +529,7 @@ func (api *API) updatePipelineHandler() Handler {
 			return sdk.WrapError(err, "updatePipelineHandler> cannot update pipeline %s", name)
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pipelineDB, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pipelineDB, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updatePipelineHandler> Cannot update pipeline last modified date")
 		}
 
@@ -615,7 +615,7 @@ func (api *API) addPipelineHandler() Handler {
 		defer tx.Rollback()
 
 		p.ProjectID = proj.ID
-		if err := pipeline.InsertPipeline(tx, proj, &p, getUser(ctx)); err != nil {
+		if err := pipeline.InsertPipeline(tx, api.Cache, proj, &p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert pipeline")
 		}
 
@@ -1012,7 +1012,7 @@ func (api *API) updateJoinedActionHandler() Handler {
 			return sdk.WrapError(err, "updateJoinedAction> cannot update action")
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pip, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "updateJoinedAction> cannot update pipeline last_modified date")
 		}
 
@@ -1071,7 +1071,7 @@ func (api *API) deleteJoinedActionHandler() Handler {
 			return sdk.WrapError(errproj, "deleteJoinedAction> Unable to load project %s", projectKey)
 		}
 
-		if err := pipeline.UpdatePipelineLastModified(tx, proj, pip, getUser(ctx)); err != nil {
+		if err := pipeline.UpdatePipelineLastModified(tx, api.Cache, proj, pip, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "deleteJoinedAction> cannot update pipeline last_modified date")
 		}
 
@@ -1215,7 +1215,7 @@ func (api *API) stopPipelineBuildHandler() Handler {
 			return sdk.WrapError(errFinal, "stopPipelineBuildHandler> Cannot load pipeline Build")
 		}
 
-		if err := pipeline.StopPipelineBuild(api.mustDB(), pb); err != nil {
+		if err := pipeline.StopPipelineBuild(api.mustDB(), api.Cache, pb); err != nil {
 			return sdk.WrapError(err, "stopPipelineBuildHandler> Cannot stop pipeline build")
 		}
 
@@ -1469,7 +1469,7 @@ func (api *API) getPipelineBuildCommitsHandler() Handler {
 			return sdk.ErrNoReposManagerClientAuth
 		}
 
-		cm, err := pipeline.UpdatePipelineBuildCommits(api.mustDB(), proj, pip, app, env, pb)
+		cm, err := pipeline.UpdatePipelineBuildCommits(api.mustDB(), api.Cache, proj, pip, app, env, pb)
 		if err != nil {
 			return sdk.WrapError(err, "getPipelineBuildCommitsHandler> UpdatePipelineBuildCommits failed")
 		}

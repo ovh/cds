@@ -63,8 +63,8 @@ type PipelineBuild struct {
 	PreviousPipelineBuild *PipelineBuild       `json:"previous_pipeline_build"`
 }
 
-// PipelineBuildDbResult Gorp result when select a pipeline build
-type PipelineBuildDbResult struct {
+// pipelineBuildDbResult Gorp result when select a pipeline build
+type pipelineBuildDbResult struct {
 	ID                    int64          `db:"id"`
 	ApplicationID         int64          `db:"appID"`
 	PipelineID            int64          `db:"pipID"`

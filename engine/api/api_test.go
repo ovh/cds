@@ -10,7 +10,6 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/bootstrap"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/engine/api/test"
 )
@@ -26,7 +25,6 @@ func newTestAPI(t *testing.T, bootstrapFunc ...test.Bootstrapf) (*API, *gorp.DbM
 		Config:              Configuration{},
 		Cache:               cache,
 	}
-	pipeline.Store = api.Cache
 	event.Cache = api.Cache
 	api.InitRouter()
 	return api, db, router
