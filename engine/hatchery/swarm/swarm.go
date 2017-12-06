@@ -300,6 +300,7 @@ func (h *HatcherySwarm) SpawnWorker(spawnArgs hatchery.SpawnArguments) (string, 
 	var registerCmd string
 	if spawnArgs.RegisterOnly {
 		registerCmd = " register"
+		memory = hatchery.MemoryRegisterContainer
 	}
 
 	//cmd is the command to start the worker (we need curl to download current version of the worker binary)
