@@ -31,5 +31,5 @@ To enhance even more your daily routine, you can create a git alias:
 ```bash
 $ cat ~/.gitconfig
 [alias]
-  track = !cds track $(git rev-parse HEAD)
+  track = !cds -w track $(git rev-parse HEAD)
 ```
