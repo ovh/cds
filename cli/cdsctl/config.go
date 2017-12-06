@@ -25,7 +25,7 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 	var verbose = os.Getenv("CDS_VERBOSE") == "true"
 
 	c := &config{}
-	c.Host = os.Getenv("CDS_API")
+	c.Host = os.Getenv("CDS_API_URL")
 	c.user = os.Getenv("CDS_USER")
 	c.token = os.Getenv("CDS_TOKEN")
 	c.InsecureSkipVerifyTLS, _ = strconv.ParseBool(os.Getenv("CDS_INSECURE"))
