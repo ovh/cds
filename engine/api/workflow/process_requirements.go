@@ -42,14 +42,14 @@ func prepareRequirementsToNodeJobRunParameters(reqs []sdk.Requirement) []sdk.Par
 	params := []sdk.Parameter{}
 	for _, r := range reqs {
 		if r.Type == sdk.ServiceRequirement {
-			k := fmt.Sprintf("cds.requirement.%s.%s", strings.ToLower(r.Type), strings.ToLower(r.Name))
+			k := fmt.Sprintf("job.requirement.%s.%s", strings.ToLower(r.Type), strings.ToLower(r.Name))
 			values := strings.Split(r.Value, " ")
 			if len(values) > 1 {
 				sdk.AddParameter(&params, k+".image", sdk.StringParameter, values[0])
 				sdk.AddParameter(&params, k+".options", sdk.StringParameter, strings.Join(values[1:], " "))
 			}
 		}
-		k := fmt.Sprintf("cds.requirement.%s.%s", strings.ToLower(r.Type), strings.ToLower(r.Name))
+		k := fmt.Sprintf("job.requirement.%s.%s", strings.ToLower(r.Type), strings.ToLower(r.Name))
 		sdk.AddParameter(&params, k, sdk.StringParameter, r.Value)
 	}
 	return params

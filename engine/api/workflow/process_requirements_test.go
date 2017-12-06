@@ -19,15 +19,15 @@ func Test_prepareRequirementsToNodeJobRunParameters(t *testing.T) {
 		{
 			name: "test add reqs to params",
 			args: args{reqs: []sdk.Requirement{{Name: "git", Type: sdk.BinaryRequirement, Value: "git"}}},
-			want: []sdk.Parameter{{Name: "cds.requirement.binary.git", Type: "string", Value: "git"}},
+			want: []sdk.Parameter{{Name: "job.requirement.binary.git", Type: "string", Value: "git"}},
 		},
 		{
 			name: "test add reqs to params with service",
 			args: args{reqs: []sdk.Requirement{{Name: "mypg", Type: sdk.ServiceRequirement, Value: "postgres:9.2 user=aa password=bb"}}},
 			want: []sdk.Parameter{
-				{Name: "cds.requirement.service.mypg.image", Type: "string", Value: "postgres:9.2"},
-				{Name: "cds.requirement.service.mypg.options", Type: "string", Value: "user=aa password=bb"},
-				{Name: "cds.requirement.service.mypg", Type: "string", Value: "postgres:9.2 user=aa password=bb"},
+				{Name: "job.requirement.service.mypg.image", Type: "string", Value: "postgres:9.2"},
+				{Name: "job.requirement.service.mypg.options", Type: "string", Value: "user=aa password=bb"},
+				{Name: "job.requirement.service.mypg", Type: "string", Value: "postgres:9.2 user=aa password=bb"},
 			},
 		},
 	}
