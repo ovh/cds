@@ -52,14 +52,8 @@ func BenchmarkInterpolate(b *testing.B) {
 			test.args.vars[fmt.Sprint("%d", i)] = fmt.Sprintf(">>%d<<", i)
 		}
 
-		got, err := Interpolate(test.args.input, test.args.vars)
-		if (err != nil) != test.wantErr {
-			b.Errorf("Interpolate() error = %v, wantErr %v", err, test.wantErr)
-			return
-		}
-		if got != test.want {
-			b.Errorf("Interpolate() = %v, want %v", got, test.want)
-		}
+		Interpolate(test.args.input, test.args.vars)
+
 	}
 }
 
