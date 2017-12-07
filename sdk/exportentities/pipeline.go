@@ -12,6 +12,16 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// PipelineV1 represents exported sdk.Pipeline
+type PipelineV1 struct {
+	Version     string                    `json:"version,omitempty" yaml:"version,omitempty"`
+	Name        string                    `json:"name,omitempty" yaml:"name,omitempty"`
+	Parameters  map[string]ParameterValue `json:"parameters,omitempty" yaml:"parameters,omitempty"`
+	Stages      []Stage                   `json:"stages,omitempty" yaml:"stages,omitempty"` //Here Stage.Jobs will NEVER be set
+	Jobs        map[string]Job            `json:"jobs,omitempty" yaml:"jobs,omitempty"`
+	Permissions map[string]int            `json:"permissions,omitempty" yaml:"permissions,omitempty"`
+}
+
 // Pipeline represents exported sdk.Pipeline
 type Pipeline struct {
 	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
@@ -33,6 +43,7 @@ type Stage struct {
 
 // Job represents exported sdk.Job
 type Job struct {
+	Stage          string        `json:"stage,omitempty" yaml:"stage,omitempty"` //This will ONLY be set with Pipelinev1
 	Description    string        `json:"description,omitempty" yaml:"description,omitempty"`
 	Enabled        *bool         `json:"enabled,omitempty" yaml:"enabled,omitempty"`
 	Steps          []Step        `json:"steps,omitempty" yaml:"steps,omitempty" hcl:"step,omitempty"`
@@ -321,6 +332,29 @@ type ServiceRequirement struct {
 }
 
 //NewPipeline creates an exportable pipeline from a sdk.Pipeline
+func NewPipelineV1(pip sdk.Pipeline, withPermission bool) (p PipelineV1) {
+	if withPermission {
+		p.Permissions = make(map[string]int, len(pip.GroupPermission))
+		for _, perm := range pip.GroupPermission {
+			p.Permissions[perm.Group.Name] = perm.Permission
+		}
+	}
+
+	p.Parameters = make(map[string]ParameterValue, len(pip.Parameter))
+	for _, v := range pip.Parameter {
+		p.Parameters[v.Name] = ParameterValue{
+			Type:         string(v.Type),
+			DefaultValue: v.Value,
+		}
+	}
+
+	p.Stages = newStages(pip.Stages, false)
+
+	return
+}
+
+//NewPipeline creates an exportable pipeline from a sdk.Pipeline
+//DEPRECATED
 func NewPipeline(pip sdk.Pipeline, withPermission bool) (p *Pipeline) {
 	p = &Pipeline{}
 
@@ -368,15 +402,15 @@ func NewPipeline(pip sdk.Pipeline, withPermission bool) (p *Pipeline) {
 			}
 			return
 		}
-		p.Stages = newStages(pip.Stages)
+		p.Stages = newStages(pip.Stages, true)
 	default:
-		p.Stages = newStages(pip.Stages)
+		p.Stages = newStages(pip.Stages, true)
 	}
 
 	return
 }
 
-func newStages(stages []sdk.Stage) map[string]Stage {
+func newStages(stages []sdk.Stage, withJobs bool) map[string]Stage {
 	res := map[string]Stage{}
 	var order int
 	for i := range stages {
