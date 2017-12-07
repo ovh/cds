@@ -280,11 +280,11 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 componentRef.instance.readonly = true;
             }
 
-            componentRef.instance.selectEvent.subscribe(j => {
-                if (this.linkWithJoin && this.nodeToLink) {
-                    this.addSrcToJoinEvent.emit({source: this.nodeToLink, target: j});
-                }
-            });
+            // componentRef.instance.selectEvent.subscribe(j => {
+            //     if (this.linkWithJoin && this.nodeToLink) {
+            //         this.addSrcToJoinEvent.emit({source: this.nodeToLink, target: j});
+            //     }
+            // });
             this.joinsComponent.set(join.id, componentRef);
         }
 

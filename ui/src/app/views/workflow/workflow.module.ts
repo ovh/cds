@@ -14,6 +14,8 @@ import {WorkflowStepLogComponent} from './run/node/pipeline/step/step.log.compon
 import {WorkflowComponent} from './workflow.compoment';
 import {WorkflowSidebarRunComponent} from './sidebar/run/workflow.sidebar.run.component';
 import {WorkflowSidebarEditComponent} from './sidebar/edit/workflow.sidebar.edit.component';
+import {WorkflowSidebarEditJoinComponent} from './sidebar/edit/join/workflow.sidebar.edit.join.component';
+import {WorkflowSidebarEditNodeComponent} from './sidebar/edit/node/workflow.sidebar.edit.node.component';
 import {WorkflowRunArtifactListComponent} from './run/node/artifact/artifact.list.component';
 import {WorkflowRunTestsResultComponent} from './run/node/test/tests.component';
 import {WorkflowRunTestTableComponent} from './run/node/test/table/test.table.component';
@@ -40,6 +42,8 @@ import {SidebarService} from 'ng2-semantic-ui/dist';
         WorkflowRunTestTableComponent,
         WorkflowRunSummaryComponent,
         WorkflowSidebarEditComponent,
+        WorkflowSidebarEditNodeComponent,
+        WorkflowSidebarEditJoinComponent,
         WorkflowNodeRunHistoryComponent,
         WorkflowSidebarRunComponent,
         WorkflowShowComponent,

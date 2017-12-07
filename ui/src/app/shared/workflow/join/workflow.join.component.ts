@@ -1,5 +1,5 @@
-import {AfterViewInit, Component, ElementRef, EventEmitter, Input, NgZone, Output, ViewChild, OnInit} from '@angular/core';
-import {Router} from '@angular/router';
+import {AfterViewInit, Component, ElementRef, Input, NgZone, ViewChild, OnInit} from '@angular/core';
+import {Router, ActivatedRoute} from '@angular/router';
 import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../model/workflow.model';
 import {WorkflowRun, WorkflowRunRequest, WorkflowNodeRunManual} from '../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../model/pipeline.model';
@@ -38,8 +38,6 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     @ViewChild('workflowJoinTrigger')
     workflowJoinTrigger: WorkflowTriggerJoinComponent;
 
-    @Output() selectEvent = new EventEmitter<WorkflowNodeJoin>();
-
     newTrigger = new WorkflowNodeJoinTrigger();
     pipelineStatusEnum = PipelineStatus;
 
@@ -48,10 +46,11 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
 
     workflowCoreSub: Subscription;
     currentWorkflowRun: WorkflowRun;
+    selectedJoinId: number;
 
     constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _toast: ToastService,
         private _translate: TranslateService, private _workflowRunService: WorkflowRunService,
-        private _workflowCoreService: WorkflowCoreService, private _router: Router) {
+        private _workflowCoreService: WorkflowCoreService, private _router: Router, private _route: ActivatedRoute) {
         this.zone = new NgZone({enableLongStackTrace: false});
         this.options = {
             'fullTextSearch': true,
@@ -61,6 +60,14 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
                 });
             }
         };
+
+        this._route.queryParams.subscribe((qp) => {
+            if (qp['selectedJoinId']) {
+                this.selectedJoinId = parseInt(qp['selectedJoinId'], 10);
+            } else {
+                this.selectedJoinId = null;
+            }
+        });
     }
 
     ngAfterViewInit() {
@@ -74,62 +81,20 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
         });
     }
 
-    displayDropdown(): void {
-        this.elementRef.nativeElement.style.zIndex = 50;
-    }
+    selectJoinToLink(): void {
 
-    openDeleteJoinModal(): void {
-        if (this.workflowDeleteJoin) {
-            this.workflowDeleteJoin.show();
-        }
-    }
-
-    openTriggerJoinModal(): void {
-        this.newTrigger = new WorkflowNodeJoinTrigger();
-        if (this.workflowJoinTrigger) {
-            this.workflowJoinTrigger.show();
-        }
-    }
-
-    deleteJoin(b: boolean): void {
-        if (b) {
-            let clonedWorkflow: Workflow = cloneDeep(this.workflow);
-            clonedWorkflow.joins = clonedWorkflow.joins.filter(j => j.id !== this.join.id);
-            Workflow.removeOldRef(clonedWorkflow);
-            this.updateWorkflow(clonedWorkflow, this.workflowDeleteJoin.modal);
-        }
-    }
-
-    updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
-        this.loading = true;
-        this._workflowStore.updateWorkflow(this.project.key, w).subscribe(() => {
-            this.loading = false;
-            this._toast.success('', this._translate.instant('workflow_updated'));
-            if (modal) {
-                modal.approve(true);
-            }
-        }, () => {
-            this.loading = false;
-        });
-    }
-
-    saveTrigger(): void {
-        let clonedWorkflow: Workflow = cloneDeep(this.workflow);
-        let currentJoin: WorkflowNodeJoin = clonedWorkflow.joins.find(j => j.id === this.join.id);
-        if (!currentJoin) {
-            return;
-        }
-
-        if (!currentJoin.triggers) {
-            currentJoin.triggers = new Array<WorkflowNodeJoinTrigger>();
-        }
-        currentJoin.triggers.push(cloneDeep(this.newTrigger));
-        this.updateWorkflow(clonedWorkflow, this.workflowJoinTrigger.modal);
     }
 
     selectJoin(): void {
-        this.selectEvent.emit(this.join);
+        let qps = cloneDeep(this._route.snapshot.queryParams);
+        qps['selectedNodeId'] = null;
+        this._router.navigate([
+            '/project', this.project.key,
+            'workflow', this.workflow.name
+        ], { queryParams: Object.assign({}, qps, {selectedJoinId: this.join.id })});
     }
+
+
 
     canBeLaunched() {
         if (!this.currentWorkflowRun || !this.currentWorkflowRun.nodes) {

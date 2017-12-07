@@ -125,10 +125,12 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
     goToNodeRun(): void {
         if (!this.currentNodeRun) {
+            let qps = cloneDeep(this._route.snapshot.queryParams);
+            qps['selectedJoinId'] = null;
             this._router.navigate([
                 '/project', this.project.key,
                 'workflow', this.workflow.name
-            ], { queryParams: Object.assign({}, this._route.snapshot.queryParams, {selectedNodeId: this.node.id })});
+            ], { queryParams: Object.assign({}, qps, {selectedNodeId: this.node.id })});
             return;
         }
         let pip = Workflow.getNodeByID(this.currentNodeRun.workflow_node_id, this.workflow).pipeline.name;

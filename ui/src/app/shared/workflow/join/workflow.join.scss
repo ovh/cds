@@ -1,11 +1,11 @@
+@import '../../../../common';
 .workflowJoin {
   width: 40px;
   height: 40px;
 
-  sm-dropdown {
-    position: absolute;
-    top: 10px;
-    left: 10px;
+  &.active {
+    border: 2px solid $cds_color_teal;
+    border-radius: 20px;
   }
 
   .iconPosition {

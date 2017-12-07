@@ -1,23 +1,11 @@
-<div class="workflowJoin">
-    <div [hidden]="disabled || readonly">
-        <sm-dropdown class="nocaret" icon="settings" (click)="displayDropdown()" [options]="options">
-            <sm-item (click)="openTriggerJoinModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
-            <sm-item (click)="openDeleteJoinModal()">{{ 'workflow_join_delete' | translate }}</sm-item>
-        </sm-dropdown>
-    </div>
+<div class="workflowJoin" [class.active]="join.id === selectedJoinId" [class.pointing]="!readonly" (click)="!readonly && selectJoin()">
     <div [hidden]="!readonly
         || loading || currentWorkflowRun?.status === pipelineStatusEnum.WAITING
         || currentWorkflowRun?.status === pipelineStatusEnum.BUILDING || !canBeLaunched()"
         [class.disabled]="loading" class="playIconPosition" (click)="!loading && playJoin()">
         <i class="play icon"></i>
     </div>
-    <div [hidden]="!disabled" class="iconPosition" (click)="selectJoin()">
+    <div [hidden]="!disabled" class="iconPosition" (click)="selectJoinToLink()">
         <i class="selected radio icon"></i>
     </div>
 </div>
-<ng-container *ngIf="join">
-    <app-workflow-join-delete [join]="join" [loading]="loading" (deleteEvent)="deleteJoin($event)" #workflowDeleteJoin></app-workflow-join-delete>
-</ng-container>
-<ng-container *ngIf="project && join">
-    <app-workflow-trigger-join [project]="project" [workflow]="workflow" [join]="join" [loading]="loading" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowJoinTrigger></app-workflow-trigger-join>
-</ng-container>

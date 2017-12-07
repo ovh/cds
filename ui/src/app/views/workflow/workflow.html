@@ -3,16 +3,16 @@
 </div>
 <aside class="sidebar" [class.expanded]="sidebarOpen">
     <div class="floated right">
-        <button class="ui large icon button transparent close-button" (click)="closeEditSidebar()" *ngIf="selectedNode">
+        <button class="ui large icon button transparent close-button" (click)="closeEditSidebar()" *ngIf="selectedNode || selectedJoin">
             <i class="black close icon"></i>
         </button>
     </div>
     <div class="sidebar-toggle">
-        <ng-container *ngIf="project != null && workflow != null && !selectedNode">
+        <ng-container *ngIf="project != null && workflow != null && !selectedNode && !selectedJoin">
             <app-workflow-sidebar-run [project]="project" [workflow]="workflow" [open]="sidebarOpen"></app-workflow-sidebar-run>
         </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && selectedNode">
-            <app-workflow-sidebar-edit [project]="project" [workflow]="workflow" [node]="selectedNode" [open]="sidebarOpen"></app-workflow-sidebar-edit>
+        <ng-container *ngIf="project != null && workflow != null && (selectedNode || selectedJoin)">
+            <app-workflow-sidebar-edit [project]="project" [workflow]="workflow" [node]="selectedNode" [join]="selectedJoin" [open]="sidebarOpen"></app-workflow-sidebar-edit>
         </ng-container>
     </div>
 </aside>

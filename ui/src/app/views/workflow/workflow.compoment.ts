@@ -28,6 +28,8 @@ export class WorkflowComponent {
     currentNodeName: string;
     selectedNodeId: number;
     selectedNode: WorkflowNode;
+    selectedJoinId: number;
+    selectedJoin: WorkflowNodeJoin;
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
@@ -59,6 +61,8 @@ export class WorkflowComponent {
 
                             if (this.selectedNodeId) {
                                 this.selectedNode = this.findNode(this.workflow.root, this.workflow.joins);
+                            } else if (this.selectedJoinId) {
+                                this.selectedJoin = this.findJoin(this.workflow.joins);
                             }
                         }
                         this.loading = false;
@@ -82,15 +86,27 @@ export class WorkflowComponent {
 
         this._activatedRoute.queryParams.subscribe((queryp) => {
             if (queryp['selectedNodeId']) {
+                this.selectedJoinId = null;
+                this.selectedJoin = null;
                 this.selectedNodeId = Number.isNaN(queryp['selectedNodeId']) ? null : parseInt(queryp['selectedNodeId'], 10);
             } else {
                 this.selectedNodeId = null;
                 this.selectedNode = null;
-                return;
+            }
+
+            if (queryp['selectedJoinId']) {
+                this.selectedNodeId = null;
+                this.selectedNode = null;
+                this.selectedJoinId = Number.isNaN(queryp['selectedJoinId']) ? null : parseInt(queryp['selectedJoinId'], 10);
+            } else {
+                this.selectedJoinId = null;
+                this.selectedJoin = null;
             }
 
             if (this.selectedNodeId && !this.loading && this.workflow) {
                 this.selectedNode = this.findNode(this.workflow.root, this.workflow.joins);
+            } else if (this.selectedJoinId && !this.loading && this.workflow) {
+                this.selectedJoin = this.findJoin(this.workflow.joins);
             }
         })
 
@@ -106,6 +122,8 @@ export class WorkflowComponent {
 
                 if (this.selectedNodeId && !this.loading) {
                     this.selectedNode = this.findNode(this.workflow.root, this.workflow.joins);
+                } else if (this.selectedNodeId && !this.loading) {
+                    this.selectedJoin = this.findJoin(this.workflow.joins);
                 }
             }
         });
@@ -147,6 +165,13 @@ export class WorkflowComponent {
         return nodeFound;
     }
 
+    findJoin(joins: WorkflowNodeJoin[]): WorkflowNodeJoin {
+        if (!Array.isArray(joins)) {
+            return null;
+        }
+        return joins.find((join) => join.id === this.selectedJoinId);
+    }
+
     toggleSidebar(): void {
         this._workflowCore.moveSideBar(!this.sidebarOpen);
     }
@@ -154,8 +179,11 @@ export class WorkflowComponent {
     closeEditSidebar(): void {
         let qps = cloneDeep(this._activatedRoute.snapshot.queryParams);
         qps['selectedNodeId'] = null;
+        qps['selectedJoinId'] = null;
         this.selectedNode = null;
         this.selectedNodeId = null;
+        this.selectedJoin = null;
+        this.selectedJoinId = null;
         this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name], {queryParams: qps});
     }
 }
