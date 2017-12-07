@@ -137,6 +137,9 @@ $boxWidth: 155px;
     background-color: $cds_color_light_grey;
     border: 2px solid grey;
   }
+  .nodePipeline.active {
+    border: 2px solid $cds_color_teal;
+  }
   .nodePipeline.building {
     background-color: $cds_color_light_teal;
     border: 2px solid $cds_color_teal;

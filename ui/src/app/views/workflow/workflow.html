@@ -2,15 +2,24 @@
     <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name" [run]="number" [nodeName]="currentNodeName"></app-worflow-breadcrumb>
 </div>
 <aside class="sidebar" [class.expanded]="sidebarOpen">
+    <div class="floated right">
+        <button class="ui large icon button transparent close-button" (click)="closeEditSidebar()" *ngIf="selectedNode">
+            <i class="black close icon"></i>
+        </button>
+    </div>
     <div class="sidebar-toggle">
-        <ng-container *ngIf="project != null && workflow != null">
-            <app-workflow-sidebar [project]="project" [workflow]="workflow" [open]="sidebarOpen"></app-workflow-sidebar>
+        <ng-container *ngIf="project != null && workflow != null && !selectedNode">
+            <app-workflow-sidebar-run [project]="project" [workflow]="workflow" [open]="sidebarOpen"></app-workflow-sidebar-run>
         </ng-container>
-
+        <ng-container *ngIf="project != null && workflow != null && selectedNode">
+            <app-workflow-sidebar-edit [project]="project" [workflow]="workflow" [node]="selectedNode" [open]="sidebarOpen"></app-workflow-sidebar-edit>
+        </ng-container>
     </div>
 </aside>
 <section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!loading && workflow != null">
-    <button class="ui small icon blue open button" (click)="toggleSidebar()"><i class="content icon"></i></button>
+    <button class="ui small icon blue open button" (click)="toggleSidebar()" *ngIf="!selectedNode">
+        <i class="content icon"></i>
+    </button>
     <router-outlet></router-outlet>
 </section>
 <section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="loading">
