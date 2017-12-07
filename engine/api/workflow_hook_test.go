@@ -35,7 +35,7 @@ func Test_getWorkflowHookModelsHandlerAsLambdaUser(t *testing.T) {
 		Type:       sdk.BuildPipeline,
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
 	test.NoError(t, group.InsertGroupInPipeline(db, pip.ID, proj.ProjectGroups[0].Group.ID, 7))
 
 	loadUserPermissions(db, cache, u)
@@ -90,7 +90,7 @@ func Test_getWorkflowHookModelsHandlerAsAdminUser(t *testing.T) {
 		Type:       sdk.BuildPipeline,
 	}
 
-	test.NoError(t, pipeline.InsertPipeline(db, proj, &pip, admin))
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, admin))
 
 	app := sdk.Application{
 		Name:               sdk.RandomString(10),

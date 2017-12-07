@@ -15,7 +15,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/database"
 	"github.com/ovh/cds/engine/api/event"
-	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -87,7 +86,6 @@ func SetupPG(t *testing.T, bootstrapFunc ...Bootstrapf) (*gorp.DbMap, cache.Stor
 		t.Fatalf("Unable to connect to redis: %v", err)
 	}
 	event.Cache = store
-	pipeline.Store = store
 
 	return DBConnectionFactory.GetDBMap(), store
 }

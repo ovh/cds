@@ -31,7 +31,7 @@ func Test_postWorkflowGroupHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -88,7 +88,7 @@ func Test_putWorkflowGroupHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),
@@ -161,7 +161,7 @@ func Test_deleteWorkflowGroupHandler(t *testing.T) {
 		Name:       "pip1",
 		Type:       sdk.BuildPipeline,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, &pip, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, &pip, u))
 
 	w := sdk.Workflow{
 		Name: sdk.RandomString(10),

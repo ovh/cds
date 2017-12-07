@@ -17,9 +17,9 @@ var signupCmd = cli.Command{
 	Short: "Signup on CDS",
 	Flags: []cli.Flag{
 		{
-			Name:      "host",
+			Name:      "api-url",
 			ShortHand: "H",
-			Usage:     "CDS API Url",
+			Usage:     "CDS API URL",
 			IsValid: func(s string) bool {
 				match, _ := regexp.MatchString(`http[s]?:\/\/(.*)`, s)
 				return match
@@ -42,12 +42,12 @@ var signupCmd = cli.Command{
 }
 
 func signupRun(v cli.Values) error {
-	url := v.GetString("host")
+	url := v.GetString("api-url")
 	username := v.GetString("username")
 	fullname := v.GetString("fullname")
 	email := v.GetString("email")
 
-	fmt.Println("CDS API Url:", url)
+	fmt.Println("CDS API URL:", url)
 
 	//Take the user from flags or ask for on command line
 	if username == "" {

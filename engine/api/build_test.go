@@ -40,7 +40,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -57,7 +57,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pb, err := pipeline.InsertPipelineBuild(api.mustDB(), proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
+	pb, err := pipeline.InsertPipelineBuild(api.mustDB(), api.Cache, proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -93,7 +93,7 @@ func Test_updateStepStatusHandler(t *testing.T) {
 	tester.AddCall("Test_updateStepStatusHandler", "POST", route, request).Headers(headers).Checkers(iffy.ExpectStatus(204), iffy.DumpResponse(t))
 	tester.Run()
 
-	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), pbJob.ID)
+	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), api.Cache, pbJob.ID)
 	if errC != nil {
 		t.Fatal(errC)
 	}
@@ -133,7 +133,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -150,7 +150,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pb, erri := pipeline.InsertPipelineBuild(api.mustDB(), proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
+	pb, erri := pipeline.InsertPipelineBuild(api.mustDB(), api.Cache, proj, pip, app, []sdk.Parameter{}, []sdk.Parameter{}, &sdk.DefaultEnv, 0, sdk.PipelineBuildTrigger{})
 	if erri != nil {
 		t.Fatal(erri)
 	}
@@ -206,7 +206,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	tester.AddCall("Test_addSpawnInfosPipelineBuildJobHandler", "POST", route, request).Headers(h).Checkers(iffy.ExpectStatus(200), iffy.DumpResponse(t))
 	tester.Run()
 
-	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), pbJob.ID)
+	pbJobCheck, errC := pipeline.GetPipelineBuildJob(api.mustDB(), api.Cache, pbJob.ID)
 	if errC != nil {
 		t.Fatal(errC)
 	}

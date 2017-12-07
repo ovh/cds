@@ -21,19 +21,13 @@ func Interpolate(input string, vars map[string]string) (string, error) {
 	for k, v := range vars {
 		kb := strings.Replace(k, ".", "__", -1)
 		data[kb] = v
+
 		defaults["."+kb] = k
 		if v == "" {
 			empty[k] = k
 		}
-		re := regexp.MustCompile("{{." + k + "(.*)}}")
-		for i := 0; i < 10; i++ {
-			sm := re.FindStringSubmatch(input)
-			if len(sm) > 0 {
-				input = strings.Replace(input, sm[0], "{{."+kb+sm[1]+"}}", -1)
-			} else {
-				break
-			}
-		}
+
+		input = strings.Replace(input, k, kb, -1)
 	}
 
 	// in input, replace {{.cds.foo.bar}} with {{ default "{{.cds.foo.bar}}" .cds.foo.bar}}

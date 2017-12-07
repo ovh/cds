@@ -321,7 +321,7 @@ type ServiceRequirement struct {
 }
 
 //NewPipeline creates an exportable pipeline from a sdk.Pipeline
-func NewPipeline(pip *sdk.Pipeline) (p *Pipeline) {
+func NewPipeline(pip *sdk.Pipeline, withPermission bool) (p *Pipeline) {
 	p = &Pipeline{}
 
 	// Default name is like the type
@@ -334,7 +334,7 @@ func NewPipeline(pip *sdk.Pipeline) (p *Pipeline) {
 		p.Type = pip.Type
 	}
 
-	if len(pip.GroupPermission) > 0 {
+	if len(pip.GroupPermission) > 0 && withPermission {
 		p.Permissions = make(map[string]int, len(pip.GroupPermission))
 		for _, perm := range pip.GroupPermission {
 			p.Permissions[perm.Group.Name] = perm.Permission

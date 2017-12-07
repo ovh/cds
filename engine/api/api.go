@@ -420,9 +420,6 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 	a.InitRouter()
 
-	//Init pipeline package
-	pipeline.Store = a.Cache
-
 	//Init events package
 	event.Cache = a.Cache
 
@@ -480,7 +477,7 @@ func (a *API) Serve(ctx context.Context) error {
 	}
 
 	go queue.Pipelines(ctx, a.Cache, a.DBConnectionFactory.GetDBMap)
-	go pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap)
+	go pipeline.AWOLPipelineKiller(ctx, a.DBConnectionFactory.GetDBMap, a.Cache)
 	go hatchery.Heartbeat(ctx, a.DBConnectionFactory.GetDBMap)
 	go auditCleanerRoutine(ctx, a.DBConnectionFactory.GetDBMap)
 	go metrics.Initialize(ctx, a.DBConnectionFactory.GetDBMap, a.Config.Name)

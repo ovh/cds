@@ -67,17 +67,7 @@ export class WorkflowNodeRunComponent implements OnDestroy {
                     this.workflowRun = wr;
                 });
 
-                // Start web worker
-                this.nodeRunWorker = new CDSWorker('./assets/worker/web/noderun.js');
-                this.nodeRunWorker.start({
-                    'user': this._authStore.getUser(),
-                    'session': this._authStore.getSessionToken(),
-                    'api': environment.apiURL,
-                    key: this.project.key,
-                    workflowName: this.workflowName,
-                    number: number,
-                    nodeRunId: nodeRunId
-                });
+                this.startWorker(number, nodeRunId);
                 this.runSubscription = this.nodeRunWorker.response().subscribe(wrString => {
                     if (!wrString) {
                         return;
@@ -114,6 +104,22 @@ export class WorkflowNodeRunComponent implements OnDestroy {
         }
     }
 
+    startWorker(number: number, nodeRunId: number) {
+      if (this.nodeRunWorker) {
+        this.nodeRunWorker.stop();
+      }
+      // Start web worker
+      this.nodeRunWorker = new CDSWorker('./assets/worker/web/noderun.js');
+      this.nodeRunWorker.start({
+          'user': this._authStore.getUser(),
+          'session': this._authStore.getSessionToken(),
+          'api': environment.apiURL,
+          key: this.project.key,
+          workflowName: this.workflowName,
+          number: number,
+          nodeRunId: nodeRunId
+      });
+    }
 
     showTab(tab: string): void {
         this._router.navigateByUrl('/project/' + this.project.key +

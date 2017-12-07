@@ -34,7 +34,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -46,7 +46,7 @@ func Test_attachPipelinesToApplicationHandler(t *testing.T) {
 		ProjectID:  proj.ID,
 	}
 
-	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip2, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip2, u); err != nil {
 		t.Fatal(err)
 	}
 

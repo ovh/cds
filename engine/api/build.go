@@ -32,7 +32,7 @@ func (api *API) updateStepStatusHandler() Handler {
 			return sdk.WrapError(errr, "updateStepStatusHandler> Invalid id")
 		}
 
-		pbJob, errJob := pipeline.GetPipelineBuildJob(api.mustDB(), buildID)
+		pbJob, errJob := pipeline.GetPipelineBuildJob(api.mustDB(), api.Cache, buildID)
 		if errJob != nil {
 			return sdk.WrapError(errJob, "updateStepStatusHandler> Cannot get pipeline build job %d", buildID)
 		}
@@ -256,7 +256,7 @@ func (api *API) addQueueResultHandler() Handler {
 		}
 
 		// Load Build
-		pbJob, errJob := pipeline.GetPipelineBuildJob(api.mustDB(), id)
+		pbJob, errJob := pipeline.GetPipelineBuildJob(api.mustDB(), api.Cache, id)
 		if errJob != nil {
 			return sdk.WrapError(sdk.ErrNotFound, "addQueueResultHandler> Cannot load queue (%d) from db: %s", id, errJob)
 		}
@@ -295,7 +295,7 @@ func (api *API) addQueueResultHandler() Handler {
 			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerEnd.ID, Args: []interface{}{getWorker(ctx).Name, res.Duration}},
 		}}
 
-		if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, pbJob.ID, infos); err != nil {
+		if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, api.Cache, pbJob.ID, infos); err != nil {
 			log.Error("addQueueResultHandler> Cannot save spawn info job %d: %s", pbJob.ID, err)
 			return err
 		}
@@ -315,7 +315,7 @@ func (api *API) getPipelineBuildJobHandler() Handler {
 			return sdk.WrapError(errc, "getPipelineBuildJobHandler> invalid id")
 		}
 
-		j, err := pipeline.GetPipelineBuildJob(api.mustDB(), id)
+		j, err := pipeline.GetPipelineBuildJob(api.mustDB(), api.Cache, id)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				err = sdk.ErrPipelineBuildNotFound
@@ -371,7 +371,7 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 			})
 		}
 
-		pbJob, errTake := pipeline.TakePipelineBuildJob(tx, id, workerModel, caller.Name, infos)
+		pbJob, errTake := pipeline.TakePipelineBuildJob(tx, api.Cache, id, workerModel, caller.Name, infos)
 		if errTake != nil {
 			return sdk.WrapError(errTake, "takePipelineBuildJobHandler> Cannot take job %d", id)
 		}
@@ -407,7 +407,7 @@ func (api *API) bookPipelineBuildJobHandler() Handler {
 			return sdk.WrapError(errc, "bookPipelineBuildJobHandler> invalid id")
 		}
 
-		if _, err := pipeline.BookPipelineBuildJob(id, getHatchery(ctx)); err != nil {
+		if _, err := pipeline.BookPipelineBuildJob(api.Cache, id, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "bookPipelineBuildJobHandler> job already booked")
 		}
 		return WriteJSON(w, r, nil, http.StatusOK)
@@ -431,7 +431,7 @@ func (api *API) addSpawnInfosPipelineBuildJobHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, pbJobID, s); err != nil {
+		if _, err := pipeline.AddSpawnInfosPipelineBuildJob(tx, api.Cache, pbJobID, s); err != nil {
 			return sdk.WrapError(err, "addSpawnInfosPipelineBuildJobHandler> Cannot save job %d", pbJobID)
 		}
 
@@ -599,11 +599,11 @@ func (api *API) getQueueHandler() Handler {
 		var errQ error
 		switch getAgent(r) {
 		case sdk.HatcheryAgent:
-			queue, errQ = pipeline.LoadGroupWaitingQueue(api.mustDB(), getHatchery(ctx).GroupID)
+			queue, errQ = pipeline.LoadGroupWaitingQueue(api.mustDB(), api.Cache, getHatchery(ctx).GroupID)
 		case sdk.WorkerAgent:
-			queue, errQ = pipeline.LoadGroupWaitingQueue(api.mustDB(), getWorker(ctx).GroupID)
+			queue, errQ = pipeline.LoadGroupWaitingQueue(api.mustDB(), api.Cache, getWorker(ctx).GroupID)
 		default:
-			queue, errQ = pipeline.LoadUserWaitingQueue(api.mustDB(), getUser(ctx))
+			queue, errQ = pipeline.LoadUserWaitingQueue(api.mustDB(), api.Cache, getUser(ctx))
 		}
 
 		lang := r.Header.Get("Accept-Language")
@@ -677,7 +677,7 @@ func (api *API) addBuildVariableHandler() Handler {
 		}
 		defer tx.Rollback()
 
-		if err := pipeline.InsertBuildVariable(tx, pbID, v); err != nil {
+		if err := pipeline.InsertBuildVariable(tx, api.Cache, pbID, v); err != nil {
 			return sdk.WrapError(err, "addBuildVariableHandler> Cannot add build variable")
 		}
 

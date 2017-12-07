@@ -113,7 +113,7 @@ func runPipeline(DBFunc func() *gorp.DbMap, store cache.Store, pbID int64) {
 		}
 
 		if stage.Status == sdk.StatusBuilding {
-			end, errSync := syncPipelineBuildJob(tx, stage)
+			end, errSync := syncPipelineBuildJob(tx, store, stage)
 			if errSync != nil {
 				log.Warning("queue.RunActions> Cannot sync building jobs on stage %s(%d) of pipeline %s(%d): %s", stage.Name, stage.ID, pb.Pipeline.Name, pb.ID, errSync)
 				return
@@ -208,7 +208,7 @@ func addJobsToQueue(tx gorp.SqlExecutor, stage *sdk.Stage, pb *sdk.PipelineBuild
 	return nil
 }
 
-func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
+func syncPipelineBuildJob(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, error) {
 	stageEnd := true
 	finalStatus := sdk.StatusBuilding
 
@@ -217,7 +217,7 @@ func syncPipelineBuildJob(db gorp.SqlExecutor, stage *sdk.Stage) (bool, error) {
 		pbJob := &stage.PipelineBuildJobs[indexJob]
 		// If job is runnning, sync it
 		if pbJob.Status == sdk.StatusBuilding.String() || pbJob.Status == sdk.StatusWaiting.String() {
-			pbJobDB, errJob := pipeline.GetPipelineBuildJob(db, pbJob.ID)
+			pbJobDB, errJob := pipeline.GetPipelineBuildJob(db, store, pbJob.ID)
 			if errJob != nil {
 				return stageEnd, errJob
 			}

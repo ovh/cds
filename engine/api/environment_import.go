@@ -18,6 +18,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+func (api *API) postEnvironmentImportHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		return nil
+	}
+}
+
 func (api *API) importNewEnvironmentHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		// Get project name in URL

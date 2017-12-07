@@ -93,11 +93,14 @@ func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 
 // LoadEnvironmentByID load the given environment
 func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error) {
+	if ID == sdk.DefaultEnv.ID {
+		return &sdk.DefaultEnv, nil
+	}
 	var env sdk.Environment
-	query := `SELECT environment.id, environment.name
+	query := `SELECT environment.id, environment.name, environment.project_id
 		  	FROM environment
 		 	WHERE id = $1`
-	if err := db.QueryRow(query, ID).Scan(&env.ID, &env.Name); err != nil {
+	if err := db.QueryRow(query, ID).Scan(&env.ID, &env.Name, &env.ProjectID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoEnvironment
 		}
@@ -113,11 +116,11 @@ func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sd
 	}
 
 	var env sdk.Environment
-	query := `SELECT environment.id, environment.name
+	query := `SELECT environment.id, environment.name,  environment.project_id
 		  FROM environment
 		  JOIN project ON project.id = environment.project_id
 		  WHERE project.projectKey = $1 AND environment.name = $2`
-	if err := db.QueryRow(query, projectKey, envName).Scan(&env.ID, &env.Name); err != nil {
+	if err := db.QueryRow(query, projectKey, envName).Scan(&env.ID, &env.Name, &env.ProjectID); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrNoEnvironment
 		}

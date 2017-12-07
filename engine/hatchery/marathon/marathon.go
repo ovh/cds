@@ -197,12 +197,14 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	var logJob string
 
 	// Estimate needed memory, we will set 110% of required memory
-	memory := h.Config.DefaultMemory
+	memory := int64(h.Config.DefaultMemory)
 
 	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
 	if spawnArgs.RegisterOnly {
 		cmd += " register"
+		memory = hatchery.MemoryRegisterContainer
 	}
+
 	instance := 1
 	workerName := fmt.Sprintf("%s-%s", strings.ToLower(spawnArgs.Model.Name), strings.Replace(namesgenerator.GetRandomName(0), "_", "-", -1))
 	if spawnArgs.RegisterOnly {
@@ -252,7 +254,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 		for _, r := range spawnArgs.Requirements {
 			if r.Type == sdk.MemoryRequirement {
 				var err error
-				memory, err = strconv.Atoi(r.Value)
+				memory, err = strconv.ParseInt(r.Value, 10, 64)
 				if err != nil {
 					log.Warning("spawnMarathonDockerWorker> %s unable to parse memory requirement %s:%s", logJob, memory, err)
 					return "", err

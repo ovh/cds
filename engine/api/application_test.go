@@ -35,7 +35,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip1, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip1, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -47,7 +47,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip2, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip2, u); err != nil {
 		t.Fatal(err)
 	}
 
@@ -59,7 +59,7 @@ func TestGetApplicationWithTriggersHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	if err := pipeline.InsertPipeline(api.mustDB(), proj, pip3, u); err != nil {
+	if err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip3, u); err != nil {
 		t.Fatal(err)
 	}
 	// 6. Create application

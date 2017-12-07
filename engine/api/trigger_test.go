@@ -36,7 +36,7 @@ func TestAddTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), proj, pip1, u))
+	test.NoError(t, pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip1, u))
 
 	//4. Create Pipeline 2
 	pipelineKey2 := sdk.RandomString(10)
@@ -46,7 +46,7 @@ func TestAddTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err := pipeline.InsertPipeline(api.mustDB(), proj, pip2, u)
+	err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip2, u)
 	test.NoError(t, err)
 
 	//5. Create Application
@@ -120,7 +120,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err := pipeline.InsertPipeline(api.mustDB(), proj, pip1, u)
+	err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip1, u)
 	test.NoError(t, err)
 
 	//4. Create Pipeline 2
@@ -131,7 +131,7 @@ func TestUpdateTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(api.mustDB(), proj, pip2, u)
+	err = pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip2, u)
 	test.NoError(t, err)
 
 	//5. Create Application
@@ -212,7 +212,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err := pipeline.InsertPipeline(api.mustDB(), proj, pip1, u)
+	err := pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip1, u)
 	test.NoError(t, err)
 
 	//4. Create Pipeline 2
@@ -223,7 +223,7 @@ func TestRemoveTriggerHandler(t *testing.T) {
 		ProjectKey: proj.Key,
 		ProjectID:  proj.ID,
 	}
-	err = pipeline.InsertPipeline(api.mustDB(), proj, pip2, u)
+	err = pipeline.InsertPipeline(api.mustDB(), api.Cache, proj, pip2, u)
 	test.NoError(t, err)
 
 	//5. Create Application

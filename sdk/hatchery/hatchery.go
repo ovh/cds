@@ -96,6 +96,10 @@ var (
 	Client sdk.HTTPClient
 )
 
+// MemoryRegisterContainer is the RAM used for spawning
+// a docker container for register a worker model. 128 Mo
+const MemoryRegisterContainer int64 = 128
+
 // CheckRequirement checks binary requirement in path
 func CheckRequirement(r sdk.Requirement) (bool, error) {
 	switch r.Type {

@@ -310,7 +310,7 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 	// If branch is DELETE'd, remove all builds related to this branch
 	if h.Message == "DELETE" {
 		log.Warning("processHook> Removing builds in %s/%s on branch %s\n", h.ProjectKey, h.Repository, h.Branch)
-		return hook.DeleteBranchBuilds(db, hooks, h.Branch)
+		return hook.DeleteBranchBuilds(db, store, hooks, h.Branch)
 	}
 
 	log.Debug("Executing %d hooks for %s/%s on branch %s\n", len(hooks), h.ProjectKey, h.Repository, h.Branch)
@@ -374,7 +374,7 @@ func processHook(DBFunc func() *gorp.DbMap, store cache.Store, h hook.ReceivedHo
 				log.Warning("processHook> Unable to load application %s", errapp)
 			}
 
-			if _, err := pipeline.UpdatePipelineBuildCommits(DBFunc(), projectData, p, app, &sdk.DefaultEnv, pb); err != nil {
+			if _, err := pipeline.UpdatePipelineBuildCommits(DBFunc(), store, projectData, p, app, &sdk.DefaultEnv, pb); err != nil {
 				log.Warning("processHook> Unable to update pipeline build commits: %s", err)
 			}
 		}(&hooks[i])

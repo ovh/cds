@@ -50,4 +50,3 @@ export class WorkflowNodeRunHistoryComponent extends Table {
         }
     }
 }
-
