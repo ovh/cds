@@ -93,6 +93,9 @@ func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 
 // LoadEnvironmentByID load the given environment
 func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error) {
+	if ID == sdk.DefaultEnv.ID {
+		return &sdk.DefaultEnv, nil
+	}
 	var env sdk.Environment
 	query := `SELECT environment.id, environment.name, environment.project_id
 		  	FROM environment

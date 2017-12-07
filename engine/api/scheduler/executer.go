@@ -97,25 +97,25 @@ func executerProcess(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlEx
 	//Load the scheduler
 	s, err := Load(db, e.PipelineSchedulerID)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "executerProcess> Cannot load pipeline scheduler")
 	}
 
 	//Load application
 	app, err := application.LoadByID(db, store, s.ApplicationID, nil, application.LoadOptions.WithVariablesWithClearPassword)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "executerProcess> Cannot load application")
 	}
 
 	//Load pipeline
 	pip, err := pipeline.LoadPipelineByID(db, s.PipelineID, true)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "executerProcess> Cannot load pipeline")
 	}
 
 	//Load environnement
 	env, err := environment.LoadEnvironmentByID(db, s.EnvironmentID)
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "executerProcess> Cannot load environment")
 	}
 
 	//Create a new pipeline build
@@ -125,7 +125,7 @@ func executerProcess(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlEx
 	}, nil)
 
 	if err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "executerProcess> Cannot run pipeline")
 	}
 
 	//References pipeline build version in execution
@@ -136,7 +136,7 @@ func executerProcess(DBFunc func() *gorp.DbMap, store cache.Store, db gorp.SqlEx
 
 	//Update execution in database
 	if err := UpdateExecution(db, e); err != nil {
-		return nil, err
+		return nil, sdk.WrapError(err, "executerProcess> Cannot update execution")
 	}
 
 	return pb, nil
