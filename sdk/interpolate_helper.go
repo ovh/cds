@@ -2,7 +2,7 @@ package sdk
 
 // This functions come from https://github.com/Masterminds/sprig
 // Copyright (C) 2013 Masterminds
-// Masterminds/sprig is licensed under theMIT License
+// Masterminds/sprig is licensed under the MIT License
 
 import (
 	"encoding/base64"
