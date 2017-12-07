@@ -1,6 +1,8 @@
 package cdsclient
 
 import (
+	"archive/tar"
+	"bytes"
 	"fmt"
 
 	"github.com/ovh/cds/sdk/exportentities"
@@ -52,4 +54,19 @@ func (c *client) WorkflowExport(projectKey, name string, exportWithPermissions b
 		return nil, err
 	}
 	return body, nil
+}
+
+func (c *client) WorkflowPull(projectKey, name string, exportWithPermissions bool) (*tar.Reader, error) {
+	path := fmt.Sprintf("/project/%s/pull/workflows/%s", projectKey, name)
+	if exportWithPermissions {
+		path += "?withPermissions=true"
+	}
+	body, _, err := c.Request("GET", path, nil)
+	if err != nil {
+		return nil, err
+	}
+	// Open the tar archive for reading.
+	r := bytes.NewReader(body)
+	tr := tar.NewReader(r)
+	return tr, nil
 }
