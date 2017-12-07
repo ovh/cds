@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"archive/tar"
 	"context"
 	"io"
 	"time"
@@ -16,6 +17,7 @@ type ExportImportInterface interface {
 	ApplicationExport(projectKey, name string, exportWithPermissions bool, format string) ([]byte, error)
 	ApplicationImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
 	WorkflowExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
+	WorkflowPull(projectKey, name string, exportWithPermissions bool) (*tar.Reader, error)
 }
 
 // ApplicationClient exposes application related functions

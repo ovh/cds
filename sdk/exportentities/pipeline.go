@@ -321,7 +321,7 @@ type ServiceRequirement struct {
 }
 
 //NewPipeline creates an exportable pipeline from a sdk.Pipeline
-func NewPipeline(pip *sdk.Pipeline, withPermission bool) (p *Pipeline) {
+func NewPipeline(pip sdk.Pipeline, withPermission bool) (p *Pipeline) {
 	p = &Pipeline{}
 
 	// Default name is like the type
