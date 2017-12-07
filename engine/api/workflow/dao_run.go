@@ -359,7 +359,7 @@ ORDER BY tags.tag;
 	return rmap, nil
 }
 
-// LoadCurrentRunNum
+// LoadCurrentRunNum load the current num from workflow_sequences table
 func LoadCurrentRunNum(db gorp.SqlExecutor, projectkey, workflowname string) (int64, error) {
 	query := `SELECT COALESCE(workflow_sequences.current_val, 0)  as run_num
 			FROM workflow

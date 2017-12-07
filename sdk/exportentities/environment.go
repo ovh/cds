@@ -13,10 +13,7 @@ type Environment struct {
 }
 
 //NewEnvironment returns an Environment from an sdk.Environment pointer
-func NewEnvironment(e *sdk.Environment, withPermissions bool, keys []EncryptedKey) (env *Environment) {
-	if e == nil {
-		return
-	}
+func NewEnvironment(e sdk.Environment, withPermissions bool, keys []EncryptedKey) (env *Environment) {
 	env = new(Environment)
 	env.Name = e.Name
 	env.Values = make(map[string]VariableValue, len(e.Variable))
