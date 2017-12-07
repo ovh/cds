@@ -237,7 +237,7 @@ func workerRegister(h Interface, models []sdk.Model, nRegister *int64) error {
 				if _, errSpawn := h.SpawnWorker(SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
 					log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, errSpawn)
 					if err := h.Client().WorkerModelSpawnError(m.ID, fmt.Sprintf("workerRegister> cannot spawn worker for register: %s", errSpawn)); err != nil {
-						log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, errSpawn)
+						log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
 					}
 				}
 				atomic.AddInt64(nRegister, -1)
