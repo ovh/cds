@@ -83,6 +83,10 @@ export class WorkflowComponent {
         this._activatedRoute.queryParams.subscribe((queryp) => {
             if (queryp['selectedNodeId']) {
                 this.selectedNodeId = Number.isNaN(queryp['selectedNodeId']) ? null : parseInt(queryp['selectedNodeId'], 10);
+            } else {
+                this.selectedNodeId = null;
+                this.selectedNode = null;
+                return;
             }
 
             if (this.selectedNodeId && !this.loading && this.workflow) {

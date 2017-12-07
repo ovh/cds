@@ -283,7 +283,7 @@ export class WorkflowSidebarEditComponent {
     }
 
     linkJoin(): void {
-        this.linkJoinEvent.emit(this.node);
+        this._workflowCoreService.linkJoinEvent(this.node);
     }
 
     addHook(he: HookEvent): void {

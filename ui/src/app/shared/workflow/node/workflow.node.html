@@ -4,14 +4,53 @@
          [class.success]="currentNodeRun?.status === pipelineStatus.SUCCESS"
          [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL || currentNodeRun?.status === pipelineStatus.STOPPED"
          [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED"
-         [class.pointing]="currentNodeRun"
+         [class.pointing]="currentNodeRun || !workflowRun"
          [class.active]="node.id === selectedNodeId"
          (click)="goToNodeRun()">
 
         <!-- Node name + pipeline name -->
         <div class="pipeline">
-            <p class="ellipsis">
+            <div class="ellipsis">
                 <span *ngIf="workflowRun && workflowRun.status && !loadingStop &&
+                    workflowRun.status !== pipelineStatus.BUILDING &&
+                    workflowRun.status !== pipelineStatus.WAITING &&
+                    currentNodeRun?.status !== pipelineStatus.BUILDING &&
+                    currentNodeRun?.status !== pipelineStatus.WAITING"
+                    class="pointing">
+                    <i class="video play outline icon run" (click)="openRunNode($event)"></i>
+                </span>
+                <ng-container *ngIf="currentNodeRun && (currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING)">
+                    <div class="ui active inline blue loader mr5 pointing"  (click)="stopNodeRun($event)">
+                        <i class="black stop icon build" *ngIf="!loadingStop"></i>
+                    </div>
+                </ng-container>
+                <b>{{node.name}}</b>
+                <!-- <div class="ui wide column fieldcol">
+                    <span *ngIf="workflowRun && workflowRun.status && !loadingStop &&
+                        workflowRun.status !== pipelineStatus.BUILDING &&
+                        workflowRun.status !== pipelineStatus.WAITING &&
+                        currentNodeRun?.status !== pipelineStatus.BUILDING &&
+                        currentNodeRun?.status !== pipelineStatus.WAITING"
+                        class="pointing">
+                        <i class="video play outline icon run" (click)="openRunNode($event)"></i>
+                    </span>
+                    <ng-container *ngIf="currentNodeRun && (currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING)">
+                        <div class="ui active inline blue loader mr5 pointing"  (click)="stopNodeRun($event)">
+                            <i class="black stop icon build" *ngIf="!loadingStop"></i>
+                        </div>
+                    </ng-container>
+                    <div class="wide column inline">
+                        <b>{{node.name}}</b>
+                    </div>
+                </div>
+                <div class="ui wide column fieldcol">
+                    COUCOU
+                </div>
+                <div class="floated right bottom">
+                    LOL
+                </div> -->
+
+                <!-- <span *ngIf="workflowRun && workflowRun.status && !loadingStop &&
                     workflowRun.status !== pipelineStatus.BUILDING &&
                     workflowRun.status !== pipelineStatus.WAITING &&
                     currentNodeRun?.status !== pipelineStatus.BUILDING &&
@@ -24,22 +63,28 @@
                         <i class="black stop icon build" *ngIf="!loadingStop"></i>
                     </div>
                 </ng-container>
-                <span class="ui black circular label mr5" *ngIf="currentNodeRun">
-                    {{ currentNodeRun?.subnumber }}
-                </span>
-                <span>
+                <span [class.node-name]="!workflowRun">
                     <b>{{node.name}}</b>
-                </span>
-            </p>
+                </span> -->
+            <!-- </div> -->
         </div>
 
-        <!-- area to display application name -->
-        <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0 && !displayInputName">
-            <p class="ellipsis">{{node.context.application.name}}</p>
+        <!-- version on a semantic ui ribbon -->
+        <div class="ui ribbon label top left" *ngIf="currentNodeRun">
+            <i class="tag icon"></i>{{ currentNodeRun?.subnumber }}
         </div>
+
+        <!-- application name on a semantic ui ribbon -->
+        <a class="ui ribbon label bottom left" [routerLink]="['/project', project.key, 'application', node.context.application?.name]" *ngIf="node.context.application_id && node.context.application_id > 0">
+            <i class="rocket icon"></i>{{node.context.application?.name}}
+        </a>
 
         <!-- environment name on a semantic ui ribbon -->
-        <a class="ui white ribbon label" *ngIf="node.context.environment_id && node.context.environment_id > 0">{{node.context.environment?.name}}</a>
+        <a class="ui ribbon label top right" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: node.context.environment?.name}" *ngIf="node.context.environment_id && node.context.environment_id > 0">
+            <i class="tree icon"></i>{{node.context.environment?.name}}
+        </a>
+
+
     </div>
 
 </div>

@@ -56,8 +56,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     @Input() workflow: Workflow;
     @Input() project: Project;
 
-    @Output() linkJoinEvent = new EventEmitter<WorkflowNode>();
-
     @ViewChild('workflowRunNode')
     workflowRunNode: WorkflowNodeRunParamComponent;
 

@@ -24,6 +24,7 @@ import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook
 import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
+import {Subscription} from 'rxjs/subscription';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -101,6 +102,9 @@ export class WorkflowGraphComponent implements AfterViewInit {
     joinsComponent = new Map<number, ComponentRef<WorkflowJoinComponent>>();
     hooksComponent = new Map<number, ComponentRef<WorkflowNodeHookComponent>>();
 
+    sideBarSubscription: Subscription;
+    linkJoinSubscription: Subscription;
+
     nodeWidth: number;
     nodeHeight: number;
 
@@ -111,6 +115,12 @@ export class WorkflowGraphComponent implements AfterViewInit {
             if (this.ready) {
                 this.changeDisplay();
                 window.dispatchEvent(new Event('resize'));
+            }
+        });
+        this._workflowCore.getLinkJoinEvent().subscribe(n => {
+            if (n) {
+                this.nodeToLink = n;
+                this.toggleLinkJoin(true);
             }
         });
     }
@@ -162,7 +172,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     initWorkflow() {
         // https://github.com/cpettitt/dagre/wiki#configuring-the-layout
-        this.g = new dagreD3.graphlib.Graph().setGraph(<any>{align: 'UL', rankdir: this.direction});
+        this.g = new dagreD3.graphlib.Graph().setGraph({align: 'UL', rankdir: this.direction, nodesep: 10});
 
         // Create all nodes
         if (this.workflow.root) {
@@ -246,8 +256,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
         }
 
         this.nodeWidth = Math.floor(windowsWidth * .75 / nbofNodes);
-        if (this.nodeWidth < 155) {
-            this.nodeWidth = 155;
+        if (this.nodeWidth < 200) {
+            this.nodeWidth = 200;
         }
     }
 
@@ -443,10 +453,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
         componentRef.instance.workflow = this.workflow;
         componentRef.instance.project = this.project;
         componentRef.instance.disabled = this.linkWithJoin;
-        componentRef.instance.linkJoinEvent.subscribe(n => {
-            this.nodeToLink = n;
-            this.toggleLinkJoin(true);
-        });
 
         return componentRef;
     }
