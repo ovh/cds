@@ -488,7 +488,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		}
 
 		var wf *sdk.Workflow
-		if lastRun != nil && opts.Number != nil && *opts.Number > 0 {
+		if lastRun != nil {
 			wf = &lastRun.Workflow
 		} else {
 			var errl error
