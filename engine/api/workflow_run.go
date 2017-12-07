@@ -478,17 +478,23 @@ func (api *API) postWorkflowRunHandler() Handler {
 			return err
 		}
 
-		wf, errl := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
-		if errl != nil {
-			return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow")
-		}
-
 		var lastRun *sdk.WorkflowRun
 		if opts.Number != nil {
 			var errlr error
 			lastRun, errlr = workflow.LoadRun(api.mustDB(), key, name, *opts.Number, false)
 			if errlr != nil {
 				return sdk.WrapError(errlr, "postWorkflowRunHandler> Unable to load workflow run")
+			}
+		}
+
+		var wf *sdk.Workflow
+		if lastRun != nil {
+			wf = &lastRun.Workflow
+		} else {
+			var errl error
+			wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+			if errl != nil {
+				return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow")
 			}
 		}
 
