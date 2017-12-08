@@ -342,7 +342,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		if pushEvent.Deleted {
 			return nil, nil
 		}
-		payload["git.author"] = pushEvent.Pusher.Name
+		payload["git.author"] = fmt.Sprintf("%s/%s", pushEvent.Pusher.Name, pushEvent.HeadCommit.Author.Username)
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
@@ -364,7 +364,6 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
-		payload["git.nb.commits"] = len(pushEvent.Commits)
 		payload["git.commits"] = pushEvent.GetCommits()
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message

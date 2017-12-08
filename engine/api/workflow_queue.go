@@ -71,89 +71,113 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			workerModel = wm.Name
 		}
 
-		// Start a tx
-		tx, errBegin := api.mustDB().Begin()
-		if errBegin != nil {
-			return sdk.WrapError(errBegin, "postTakeWorkflowJobHandler> Cannot start transaction")
-		}
-		defer tx.Rollback()
+		chanEvent := make(chan interface{}, 1)
+		chanError := make(chan error, 1)
 
-		//Prepare spawn infos
-		infos := []sdk.SpawnInfo{{
-			RemoteTime: takeForm.Time,
-			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{getWorker(ctx).Name}},
-		}}
-		if takeForm.BookedJobID != 0 && takeForm.BookedJobID == id {
-			infos = append(infos, sdk.SpawnInfo{
-				RemoteTime: takeForm.Time,
-				Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJob.ID, Args: []interface{}{getWorker(ctx).Name}},
-			})
-		}
+		pbji := &worker.WorkflowNodeJobRunInfo{}
+		go takeJob(ctx, chanEvent, chanError, api.mustDB(), api.Cache, p, getWorker(ctx), id, takeForm, workerModel, pbji)
 
-		//Take node job run
-		job, errTake := workflow.TakeNodeJobRun(tx, api.Cache, p, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos, nil)
-		if errTake != nil {
-			return sdk.WrapError(errTake, "postTakeWorkflowJobHandler> Cannot take job %d", id)
-		}
-
-		//Change worker status
-		if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
-			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot update worker status")
-		}
-
-		//Load the node run
-		noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, false)
-		if errn != nil {
-			return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
-		}
-
-		workflowNodeRunEvent := []sdk.WorkflowNodeRun{}
-		if noderun.Status == sdk.StatusWaiting.String() {
-			noderun.Status = sdk.StatusBuilding.String()
-			if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
-				return sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
-			}
-			workflowNodeRunEvent = append(workflowNodeRunEvent, *noderun)
-		}
-
-		//Load workflow run
-		workflowRun, err := workflow.LoadRunByID(api.mustDB(), noderun.WorkflowRunID, false)
+		workflowRuns, workflowNodeRuns, workflowNodeJobRuns, err := workflow.GetWorkflowRunEventData(chanError, chanEvent)
 		if err != nil {
-			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load workflow run")
+			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot takeJob %d", id)
 		}
-
-		//Load the secrets
-		pv, err := project.GetAllVariableInProject(api.mustDB(), p.ID, project.WithClearPassword())
-		if err != nil {
-			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot load project variable")
-		}
-
-		secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, api.Cache, job, noderun, workflowRun, pv)
-		if errSecret != nil {
-			return sdk.WrapError(errSecret, "postTakeWorkflowJobHandler> Cannot load secrets")
-		}
-
-		//Feed the worker
-		pbji := worker.WorkflowNodeJobRunInfo{}
-		pbji.NodeJobRun = *job
-		pbji.Number = noderun.Number
-		pbji.SubNumber = noderun.SubNumber
-		pbji.Secrets = secrets
-
-		params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, api.Cache, job, noderun, workflowRun, p)
-		if errK != nil {
-			return sdk.WrapError(errK, "postTakeWorkflowJobHandler> Cannot load keys")
-		}
-		pbji.Secrets = append(pbji.Secrets, secretsKeys...)
-		pbji.NodeJobRun.Parameters = append(pbji.NodeJobRun.Parameters, params...)
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot commit transaction")
-		}
-
-		workflow.SendEvent(api.mustDB(), nil, workflowNodeRunEvent, []sdk.WorkflowNodeJobRun{*job}, p.Key)
+		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		return WriteJSON(w, r, pbji, http.StatusOK)
+	}
+}
+
+func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.Worker, id int64, takeForm *worker.TakeForm, workerModel string, pbji *worker.WorkflowNodeJobRunInfo) {
+	defer close(chEvent)
+	defer close(chError)
+
+	// Start a tx
+	tx, errBegin := db.Begin()
+	if errBegin != nil {
+		chError <- sdk.WrapError(errBegin, "postTakeWorkflowJobHandler> Cannot start transaction")
+	}
+	defer tx.Rollback()
+
+	//Prepare spawn infos
+	infos := []sdk.SpawnInfo{{
+		RemoteTime: takeForm.Time,
+		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{getWorker(ctx).Name}},
+	}}
+	if takeForm.BookedJobID != 0 && takeForm.BookedJobID == id {
+		infos = append(infos, sdk.SpawnInfo{
+			RemoteTime: takeForm.Time,
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoWorkerForJob.ID, Args: []interface{}{getWorker(ctx).Name}},
+		})
+	}
+
+	//Take node job run
+	job, errTake := workflow.TakeNodeJobRun(tx, store, p, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos, chEvent)
+	if errTake != nil {
+		chError <- sdk.WrapError(errTake, "postTakeWorkflowJobHandler> Cannot take job %d", id)
+		return
+	}
+
+	//Change worker status
+	if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
+		chError <- sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot update worker status")
+		return
+	}
+
+	//Load the node run
+	noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, false)
+	if errn != nil {
+		chError <- sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
+		return
+	}
+
+	workflowNodeRunEvent := []sdk.WorkflowNodeRun{}
+	if noderun.Status == sdk.StatusWaiting.String() {
+		noderun.Status = sdk.StatusBuilding.String()
+		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
+			chError <- sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
+			return
+		}
+		workflowNodeRunEvent = append(workflowNodeRunEvent, *noderun)
+	}
+
+	//Load workflow run
+	workflowRun, err := workflow.LoadRunByID(tx, noderun.WorkflowRunID, false)
+	if err != nil {
+		chError <- sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load workflow run")
+		return
+	}
+
+	//Load the secrets
+	pv, err := project.GetAllVariableInProject(tx, p.ID, project.WithClearPassword())
+	if err != nil {
+		chError <- sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot load project variable")
+		return
+	}
+
+	secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, store, job, noderun, workflowRun, pv)
+	if errSecret != nil {
+		chError <- sdk.WrapError(errSecret, "postTakeWorkflowJobHandler> Cannot load secrets")
+		return
+	}
+
+	//Feed the worker
+
+	pbji.NodeJobRun = *job
+	pbji.Number = noderun.Number
+	pbji.SubNumber = noderun.SubNumber
+	pbji.Secrets = secrets
+
+	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, store, job, noderun, workflowRun, p)
+	if errK != nil {
+		chError <- sdk.WrapError(errK, "postTakeWorkflowJobHandler> Cannot load keys")
+		return
+	}
+	pbji.Secrets = append(pbji.Secrets, secretsKeys...)
+	pbji.NodeJobRun.Parameters = append(pbji.NodeJobRun.Parameters, params...)
+
+	if err := tx.Commit(); err != nil {
+		chError <- sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot commit transaction")
+		return
 	}
 }
 
