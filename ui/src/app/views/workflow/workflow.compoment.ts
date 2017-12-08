@@ -47,6 +47,7 @@ export class WorkflowComponent {
 
         this._activatedRoute.params.subscribe(p => {
             let workflowName = p['workflowName'];
+            this.number = p['number'];
             if (this.project.key && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
