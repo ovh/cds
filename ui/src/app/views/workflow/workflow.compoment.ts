@@ -24,6 +24,7 @@ export class WorkflowComponent {
     loading = true;
     number: number;
     workflowSubscription: Subscription;
+    sideBarSubscription: Subscription;
     sidebarOpen: boolean;
     currentNodeName: string;
     selectedNodeId: number;
@@ -40,7 +41,7 @@ export class WorkflowComponent {
             this.project = datas['project'];
         });
 
-        this._workflowCore.getSidebarStatus().subscribe(b => {
+        this.sideBarSubscription = this._workflowCore.getSidebarStatus().subscribe(b => {
             this.sidebarOpen = b;
         });
 

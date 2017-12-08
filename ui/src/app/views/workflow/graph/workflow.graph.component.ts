@@ -24,7 +24,7 @@ import {WorkflowNodeHookComponent} from '../../../shared/workflow/node/hook/hook
 import {WorkflowNodeComponent} from '../../../shared/workflow/node/workflow.node.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
-import {Subscription} from 'rxjs/subscription';
+import {Subscription} from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-workflow-graph',
@@ -110,14 +110,14 @@ export class WorkflowGraphComponent implements AfterViewInit {
 
     constructor(private componentFactoryResolver: ComponentFactoryResolver, private _cd: ChangeDetectorRef,
                 private _workflowStore: WorkflowStore, private _workflowCore: WorkflowCoreService) {
-        this._workflowCore.getSidebarStatus().subscribe(b => {
+        this.sideBarSubscription = this._workflowCore.getSidebarStatus().subscribe(b => {
             this.sidebarOpen = b;
             if (this.ready) {
                 this.changeDisplay();
                 window.dispatchEvent(new Event('resize'));
             }
         });
-        this._workflowCore.getLinkJoinEvent().subscribe(n => {
+        this.linkJoinSubscription = this._workflowCore.getLinkJoinEvent().subscribe(n => {
             if (n) {
                 this.nodeToLink = n;
                 this.toggleLinkJoin(true);
@@ -280,11 +280,11 @@ export class WorkflowGraphComponent implements AfterViewInit {
                 componentRef.instance.readonly = true;
             }
 
-            // componentRef.instance.selectEvent.subscribe(j => {
-            //     if (this.linkWithJoin && this.nodeToLink) {
-            //         this.addSrcToJoinEvent.emit({source: this.nodeToLink, target: j});
-            //     }
-            // });
+            componentRef.instance.selectEvent.subscribe(j => {
+                if (this.linkWithJoin && this.nodeToLink) {
+                    this.addSrcToJoinEvent.emit({source: this.nodeToLink, target: j});
+                }
+            });
             this.joinsComponent.set(join.id, componentRef);
         }
 

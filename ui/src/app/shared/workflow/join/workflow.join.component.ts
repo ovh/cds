@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, Input, NgZone, ViewChild, OnInit} from '@angular/core';
+import {AfterViewInit, Component, ElementRef, Input, Output, EventEmitter, NgZone, ViewChild, OnInit} from '@angular/core';
 import {Router, ActivatedRoute} from '@angular/router';
 import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../model/workflow.model';
 import {WorkflowRun, WorkflowRunRequest, WorkflowNodeRunManual} from '../../../model/workflow.run.model';
@@ -29,6 +29,7 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     @Input() workflow: Workflow;
     @Input() join: WorkflowNodeJoin;
     @Input() readonly = false;
+    @Output() selectEvent = new EventEmitter<WorkflowNodeJoin>();
 
     disabled = false;
     loading = false;
@@ -82,7 +83,7 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     }
 
     selectJoinToLink(): void {
-
+        this.selectEvent.emit(this.join);
     }
 
     selectJoin(): void {
