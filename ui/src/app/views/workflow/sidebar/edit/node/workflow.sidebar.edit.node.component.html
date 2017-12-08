@@ -20,7 +20,7 @@
             <div class="sub header">
               <span>{{ 'workflow_node_edition' | translate }}</span>
               <div class="inline pointing ml5" (click)="openWarningModal()" *ngIf="displayInputName && nameWarning &&
-              (nameWarning.hooks?.length > 0 || nameWarning.joinTriggers?.length > 0 || nameWarning.triggers?.length > 0)">
+              nameWarning.nodes?.length > 0">
                 <i class="orange warning sign icon  animated infinite tada"></i>
               </div>
             </div>
