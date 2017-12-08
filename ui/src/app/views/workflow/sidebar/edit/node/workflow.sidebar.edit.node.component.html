@@ -1,0 +1,113 @@
+<div class="sidebar-node-edit">
+    <h3 class="ui header ml5">
+        <i class="settings icon"></i>
+        <div class="content">
+            <ng-container *ngIf="!displayInputName">
+              <span>{{node.name}}</span>
+              <a class="inline pointing ml5" (click)="openRenameArea()">
+                <i class="pencil icon float"></i>
+              </a>
+            </ng-container>
+            <ng-container *ngIf="displayInputName">
+              <div class="ui fluid mini action input">
+                <input type="text" [(ngModel)]="node.name">
+                <div class="ui icon buttons">
+                  <button class="ui button" (click)="rename()"><i class="check icon"></i></button>
+                  <button class="ui button"><i class="close icon" (click)="displayInputName = false; node.name = previousNodeName"></i></button>
+                </div>
+              </div>
+            </ng-container>
+            <div class="sub header">
+              <span>{{ 'workflow_node_edition' | translate }}</span>
+              <div class="inline pointing ml5" (click)="openWarningModal()" *ngIf="displayInputName && nameWarning &&
+              nameWarning.nodes?.length > 0">
+                <i class="orange warning sign icon  animated infinite tada"></i>
+              </div>
+            </div>
+        </div>
+    </h3>
+    <div class="ui fluid vertical menu">
+      <a class="item" (click)="openEditContextModal()">
+        {{ 'workflow_node_context_edit' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openEditRunConditions()">
+        {{ 'workflow_node_condition_edit' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" [queryParams]="{workflow: workflow.name }">
+        {{ 'pipeline_label_edit' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openAddHookModal()">
+        {{ 'workflow_node_hook_add' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openAddParentModal()">
+        {{ 'workflow_node_parent' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openTriggerModal()">
+        {{ 'workflow_node_trigger_add' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="createJoin()">
+        {{ 'workflow_node_join_add' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="linkJoin()">
+        {{ 'workflow_node_join_link' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openDeleteNodeModal()">
+        {{ 'workflow_node_delete_btn' | translate }} <i class="angle right icon"></i>
+      </a>
+    </div>
+</div>
+
+<ng-container *ngIf="project && node">
+    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [triggerSrcNode]="node" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowTrigger></app-workflow-trigger>
+</ng-container>
+<ng-container *ngIf="project && node && node.id === workflow.root.id">
+    <ng-template let-context let-modal="modal" #nodeParentModal>
+        <div class="header">{{ 'workflow_node_parent' | translate }}</div>
+        <div class="content">
+            <app-workflow-node-form [project]="project" [(node)]="newParentNode"></app-workflow-node-form>
+        </div>
+        <div class="actions">
+            <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+            <button class="ui green button" [disabled]="loading" (click)="addNewParentNode($event)">{{ 'btn_save' | translate }}</button>
+        </div>
+    </ng-template>
+</ng-container>
+<ng-container *ngIf="node">
+    <app-workflow-node-delete [loading]="loading" [node]="node" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
+</ng-container>
+<ng-container *ngIf="project && node">
+    <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
+</ng-container>
+<ng-container *ngIf="project && node">
+    <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (conditionsEvent)="updateNodeConditions($event)" #workflowConditions></app-workflow-node-conditions>
+</ng-container>
+<ng-container *ngIf="project && node">
+    <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-form>
+</ng-container>
+<ng-template let-context let-modal="modal" #nodeNameWarningModal>
+    <div class="header">{{ 'workflow_node_name_warning_modal_title' | translate }}</div>
+    <div class="content">
+        <ng-container *ngIf="nameWarning && nameWarning.hooks.length > 0">
+            <h3>{{'workflow_node_name_warning_modal_hooks' | translate }}</h3>
+            <ul>
+                <li *ngFor="let h of nameWarning.hooks">
+                    {{h.model.name}}
+                </li>
+            </ul>
+        </ng-container>
+        <ng-container *ngIf="nameWarning && (nameWarning.triggers.length > 0 || nameWarning.joinTriggers.length > 0)">
+            <h3>{{'workflow_node_name_warning_modal_triggers' | translate }}</h3>
+            <ul>
+                <li *ngFor="let t of nameWarning.triggers">
+                    {{t.workflow_dest_node.name}}
+                </li>
+                <li *ngFor="let t of nameWarning.joinTriggers">
+                    {{t.workflow_dest_node.name}}
+                </li>
+            </ul>
+        </ng-container>
+    </div>
+    <div class="actions">
+        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
+    </div>
+</ng-template>

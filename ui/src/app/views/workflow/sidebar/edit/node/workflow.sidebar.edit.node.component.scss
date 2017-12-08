@@ -1,0 +1,32 @@
+.sidebar-node-edit {
+    .header {
+        margin-top: 10px;
+    }
+
+    .ml5 {
+        margin-left: 5px;
+    }
+
+    .content {
+        width: 100%;
+    }
+    .edit-menu {
+        &:hover {
+            background-color: #cacbcd;
+        }
+        .button {
+            &.transparent {
+                background-color: transparent;
+                &:hover {
+                    background-color: transparent;
+                }
+            }
+        }
+    }
+    .paddingContent {
+        padding-top: 11px;
+        padding-left: 5px;
+        vertical-align: middle !important;
+        font-size: medium;
+    }
+}

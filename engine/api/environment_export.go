@@ -30,7 +30,7 @@ func (api *API) getEnvironmentExportHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "getEnvironmentExportHandler> Format invalid")
 		}
-		if err := environment.Export(api.mustDB(), api.Cache, key, envName, f, withPermissions, getUser(ctx), project.EncryptWithBuiltinKey, w); err != nil {
+		if _, err := environment.Export(api.mustDB(), api.Cache, key, envName, f, withPermissions, getUser(ctx), project.EncryptWithBuiltinKey, w); err != nil {
 			return sdk.WrapError(err, "getEnvironmentExportHandler")
 		}
 

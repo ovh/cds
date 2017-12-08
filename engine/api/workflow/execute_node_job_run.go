@@ -107,6 +107,7 @@ func AddSpawnInfosNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 	return nil
 }
 
+// PrepareSpawnInfos helps yoi to create sdk.SpawnInfo array
 func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 	now := time.Now()
 	prepared := []sdk.SpawnInfo{}

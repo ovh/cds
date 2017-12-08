@@ -1,22 +1,22 @@
 import {Component, Input, NgZone, OnDestroy, OnInit} from '@angular/core';
-import {Project} from '../../../model/project.model';
-import {Workflow} from '../../../model/workflow.model';
-import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
-import {CDSWorker} from '../../../shared/worker/worker';
-import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {environment} from '../../../../environments/environment';
+import {Project} from '../../../../model/project.model';
+import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
+import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
+import {CDSWorker} from '../../../../shared/worker/worker';
+import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import {environment} from '../../../../../environments/environment';
 import {Subscription} from 'rxjs/Subscription';
-import {WorkflowRun, WorkflowRunTags} from '../../../model/workflow.run.model';
+import {WorkflowRun, WorkflowRunTags} from '../../../../model/workflow.run.model';
 import {cloneDeep} from 'lodash';
-import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
+import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 
 @Component({
-    selector: 'app-workflow-sidebar',
-    templateUrl: './workflow.sidebar.component.html',
-    styleUrls: ['./workflow.sidebar.component.scss']
+    selector: 'app-workflow-sidebar-run',
+    templateUrl: './workflow.sidebar.run.component.html',
+    styleUrls: ['./workflow.sidebar.run.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarComponent implements OnDestroy {
+export class WorkflowSidebarRunComponent implements OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;

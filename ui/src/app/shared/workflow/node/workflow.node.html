@@ -4,134 +4,48 @@
          [class.success]="currentNodeRun?.status === pipelineStatus.SUCCESS"
          [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL || currentNodeRun?.status === pipelineStatus.STOPPED"
          [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED"
-         [class.pointing]="currentNodeRun"
+         [class.pointing]="currentNodeRun || !workflowRun"
+         [class.active]="node.id === selectedNodeId"
          (click)="goToNodeRun()">
 
         <!-- Node name + pipeline name -->
         <div class="pipeline">
-            <p class="ellipsis">
+            <div class="ellipsis">
                 <span *ngIf="workflowRun && workflowRun.status && !loadingStop &&
                     workflowRun.status !== pipelineStatus.BUILDING &&
                     workflowRun.status !== pipelineStatus.WAITING &&
                     currentNodeRun?.status !== pipelineStatus.BUILDING &&
                     currentNodeRun?.status !== pipelineStatus.WAITING"
                     class="pointing">
-                    <i class="video play outline icon" (click)="openRunNode($event)"></i>
+                    <i class="video play outline icon run" (click)="openRunNode($event)"></i>
                 </span>
                 <ng-container *ngIf="currentNodeRun && (currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING)">
                     <div class="ui active inline blue loader mr5 pointing"  (click)="stopNodeRun($event)">
                         <i class="black stop icon build" *ngIf="!loadingStop"></i>
                     </div>
                 </ng-container>
-                <span class="ui black circular label mr5" *ngIf="currentNodeRun">
-                    v{{ currentNodeRun?.num + '.' + currentNodeRun?.subnumber }}
-                </span>
-                <span (mouseenter)="displayPencil = true" (mouseleave)="displayPencil = false" title="{{node.name}}">
-                    <a class="pointing" (click)="openRenameArea()" *ngIf="!displayInputName">
-                        <b>{{node.name}}</b>
-                        <span *ngIf="node.name !== node.pipeline.name">{{' - ' + node.pipeline.name}}</span>
-                        <i class="pencil icon" *ngIf="displayPencil && !workflowRun"></i>
-                    </a>
-                </span>
-            </p>
+                <b>{{node.name}}</b>
         </div>
 
-        <!-- area to change node name -->
-        <div class="rename" *ngIf="displayInputName">
-            <div class="full">
-                <div class="ui mini input">
-                    <input type="text" id="nodeName" [(ngModel)]="node.name">
-                </div>
-                <div class="buttonLine">
-                    <button class="ui mini icon left floated button" (click)="displayInputName = false"><i class="ban icon"></i></button>
-                    <span class="pointing" (click)="openWarningModal()" *ngIf="nameWarning &&
-                    (nameWarning.hooks?.length > 0 || nameWarning.joinTriggers?.length > 0 || nameWarning.triggers?.length > 0)">
-                        {{ 'workflow_node_name_warning'  | translate }}
-                    </span>
-                    <button class="ui mini icon right floated green button" (click)="rename()" [class.loading]="loading" [disabled]="loading"><i class="check icon"></i></button>
-                </div>
-            </div>
+        <!-- version on a semantic ui ribbon -->
+        <div class="ui ribbon label top left" *ngIf="currentNodeRun">
+            <i class="tag icon"></i>{{ currentNodeRun?.subnumber }}
         </div>
 
-        <!-- area to display application name -->
-        <div class="footer" *ngIf="node.context.application_id && node.context.application_id > 0 && !displayInputName">
-            <p class="ellipsis">{{node.context.application.name}}</p>
-        </div>
+        <!-- application name on a semantic ui ribbon -->
+        <a class="ui ribbon label bottom left" [routerLink]="['/project', project.key, 'application', node.context.application?.name]" *ngIf="node.context.application_id && node.context.application_id > 0">
+            <i class="rocket icon"></i>{{node.context.application?.name}}
+        </a>
 
         <!-- environment name on a semantic ui ribbon -->
-        <a class="ui white ribbon label" *ngIf="node.context.environment_id && node.context.environment_id > 0">{{node.context.environment?.name}}</a>
+        <a class="ui ribbon label top right" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: node.context.environment?.name}" *ngIf="node.context.environment_id && node.context.environment_id > 0">
+            <i class="tree icon"></i>{{node.context.environment?.name}}
+        </a>
 
-        <!-- drop down menu -->
-        <ng-container *ngIf="!workflowRun && !displayInputName">
-            <sm-dropdown class="nocaret right pointing link" icon="settings" [disabled]="disabled" (click)="displayDropdown()" [options]="options">
-                <a sm-item href="#" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" [queryParams]="{workflow: workflow.name }">{{ 'pipeline_label_edit' | translate }}</a>
-                <sm-item (click)="openAddHookModal()">{{'workflow_node_hook_add' | translate }}</sm-item>
-                <sm-item (click)="openAddParentModal()" *ngIf="node.id === workflow.root.id">{{ 'workflow_node_parent' | translate }}</sm-item>
-                <sm-item (click)="openTriggerModal()">{{ 'workflow_node_trigger_add' | translate }}</sm-item>
-                <sm-item (click)="createJoin()">{{ 'workflow_node_join_add' | translate }}</sm-item>
-                <sm-item (click)="linkJoin()">{{ 'workflow_node_join_link' | translate }}</sm-item>
-                <sm-item (click)="openEditContextModal()">{{ 'workflow_node_context_edit' | translate }}</sm-item>
-                <sm-item (click)="openEditRunConditions()">{{ 'workflow_node_condition_edit' | translate }}</sm-item>
-                <sm-item (click)="openDeleteNodeModal()">{{ 'workflow_node_delete_btn' | translate }}</sm-item>
-            </sm-dropdown>
-        </ng-container>
+
     </div>
 
 </div>
-<ng-container *ngIf="project && node && !workflowRun">
-    <app-workflow-trigger [loading]="loading" [project]="project" [workflow]="workflow" [triggerSrcNode]="node" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowTrigger></app-workflow-trigger>
-</ng-container>
-<ng-container *ngIf="project && node && !workflowRun && node.id === workflow.root.id">
-    <ng-template let-context let-modal="modal" #nodeParentModal>
-        <div class="header">{{ 'workflow_node_parent' | translate }}</div>
-        <div class="content">
-            <app-workflow-node-form [project]="project" [(node)]="newParentNode"></app-workflow-node-form>
-        </div>
-        <div class="actions">
-            <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-            <button class="ui green button" [disabled]="loading" (click)="addNewParentNode($event)">{{ 'btn_save' | translate }}</button>
-        </div>
-    </ng-template>
-</ng-container>
-<ng-container *ngIf="node && !workflowRun">
-    <app-workflow-node-delete [loading]="loading" [node]="node" (deleteEvent)="deleteNode($event)" #workflowDeleteNode></app-workflow-node-delete>
-</ng-container>
-<ng-container *ngIf="project && node && !workflowRun">
-    <app-workflow-node-context [loading]="loading" [node]="node" [project]="project" [workflow]="workflow" (contextEvent)="updateNode($event)" #workflowContext></app-workflow-node-context>
-</ng-container>
-<ng-container *ngIf="project && node && !workflowRun">
-    <app-workflow-node-conditions [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (conditionsEvent)="updateNodeConditions($event)" #workflowConditions></app-workflow-node-conditions>
-</ng-container>
-<ng-container *ngIf="project && node && !workflowRun">
-    <app-workflow-node-hook-form [loading]="loading" [project]="project" [workflow]="workflow" [node]="node" (hookEvent)="addHook($event)" #worklflowAddHook></app-workflow-node-hook-form>
-</ng-container>
 <ng-container *ngIf="project && node">
     <app-workflow-node-run-param [workflow]="workflow" [project]="project" [nodeRun]="currentNodeRun" [nodeToRun]="node" [num]="workflowRun?.num" #workflowRunNode></app-workflow-node-run-param>
 </ng-container>
-<ng-template let-context let-modal="modal" #nodeNameWarningModal>
-    <div class="header">{{ 'workflow_node_name_warning_modal_title' | translate }}</div>
-    <div class="content">
-        <ng-container *ngIf="nameWarning && nameWarning.hooks.length > 0">
-            <h3>{{'workflow_node_name_warning_modal_hooks' | translate }}</h3>
-            <ul>
-                <li *ngFor="let h of nameWarning.hooks">
-                    {{h.model.name}}
-                </li>
-            </ul>
-        </ng-container>
-        <ng-container *ngIf="nameWarning && (nameWarning.triggers.length > 0 || nameWarning.joinTriggers.length > 0)">
-            <h3>{{'workflow_node_name_warning_modal_triggers' | translate }}</h3>
-            <ul>
-                <li *ngFor="let t of nameWarning.triggers">
-                    {{t.workflow_dest_node.name}}
-                </li>
-                <li *ngFor="let t of nameWarning.joinTriggers">
-                    {{t.workflow_dest_node.name}}
-                </li>
-            </ul>
-        </ng-container>
-    </div>
-    <div class="actions">
-        <button class="ui grey button" [disabled]="loading" (click)="modal.approve(true)">{{ 'common_close' | translate }}</button>
-    </div>
-</ng-template>

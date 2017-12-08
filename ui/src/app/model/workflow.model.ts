@@ -178,7 +178,7 @@ export class Workflow {
         });
     }
 
-    static getNodeNameImpact(workflow: Workflow, name: string) {
+    static getNodeNameImpact(workflow: Workflow, name: string): WorkflowPipelineNameImpact {
         let varName = 'workflow.' + name;
         let warnings = new WorkflowPipelineNameImpact();
         WorkflowNode.getNodeNameImpact(workflow.root, name, warnings);
