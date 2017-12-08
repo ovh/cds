@@ -25,48 +25,6 @@
                     </div>
                 </ng-container>
                 <b>{{node.name}}</b>
-                <!-- <div class="ui wide column fieldcol">
-                    <span *ngIf="workflowRun && workflowRun.status && !loadingStop &&
-                        workflowRun.status !== pipelineStatus.BUILDING &&
-                        workflowRun.status !== pipelineStatus.WAITING &&
-                        currentNodeRun?.status !== pipelineStatus.BUILDING &&
-                        currentNodeRun?.status !== pipelineStatus.WAITING"
-                        class="pointing">
-                        <i class="video play outline icon run" (click)="openRunNode($event)"></i>
-                    </span>
-                    <ng-container *ngIf="currentNodeRun && (currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING)">
-                        <div class="ui active inline blue loader mr5 pointing"  (click)="stopNodeRun($event)">
-                            <i class="black stop icon build" *ngIf="!loadingStop"></i>
-                        </div>
-                    </ng-container>
-                    <div class="wide column inline">
-                        <b>{{node.name}}</b>
-                    </div>
-                </div>
-                <div class="ui wide column fieldcol">
-                    COUCOU
-                </div>
-                <div class="floated right bottom">
-                    LOL
-                </div> -->
-
-                <!-- <span *ngIf="workflowRun && workflowRun.status && !loadingStop &&
-                    workflowRun.status !== pipelineStatus.BUILDING &&
-                    workflowRun.status !== pipelineStatus.WAITING &&
-                    currentNodeRun?.status !== pipelineStatus.BUILDING &&
-                    currentNodeRun?.status !== pipelineStatus.WAITING"
-                    class="pointing">
-                    <i class="video play outline icon" (click)="openRunNode($event)"></i>
-                </span>
-                <ng-container *ngIf="currentNodeRun && (currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING)">
-                    <div class="ui active inline blue loader mr5 pointing"  (click)="stopNodeRun($event)">
-                        <i class="black stop icon build" *ngIf="!loadingStop"></i>
-                    </div>
-                </ng-container>
-                <span [class.node-name]="!workflowRun">
-                    <b>{{node.name}}</b>
-                </span> -->
-            <!-- </div> -->
         </div>
 
         <!-- version on a semantic ui ribbon -->
