@@ -1,6 +1,6 @@
 @import '../../../../common';
 $boxHeight: 68px;
-$boxWidth: 155px;
+$boxWidth: 200px;
 .workflowNode {
   width: 100%;
   height: 100%;
@@ -12,6 +12,20 @@ $boxWidth: 155px;
     border-radius: 5px;
     width: 100%;
     height: 100%;
+
+    .node-name {
+      margin: auto;
+    }
+
+    .application-name {
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 0px;
+    }
+
+    .fieldcol {
+      height: calc(68px / 3)
+    }
 
     .footer {
       position: absolute;
@@ -25,7 +39,7 @@ $boxWidth: 155px;
         white-space: nowrap;
         overflow: hidden;
       }
-      p.ellipsis {
+      div.ellipsis {
         text-overflow: ellipsis;
       }
     }
@@ -61,8 +75,8 @@ $boxWidth: 155px;
 
     .pipeline {
       height: 100%;
-      width: 90%;
-      p {
+      width: 100%;
+      div.ellipsis {
         width: 100%;
         margin: 0;
         padding: 0 0 0 20px;
@@ -71,10 +85,8 @@ $boxWidth: 155px;
         height:100%;
         display: flex;
         align-items: center;
-      }
-      p.ellipsis {
         text-overflow: ellipsis;
-
+        font-size: 1em;
         a {
           color: black;
 
@@ -86,8 +98,11 @@ $boxWidth: 155px;
       }
 
       i {
-        margin-top: 10px;
-        font-size: 2.2em;
+        &.run {
+          margin-top: 10px;
+          // margin-left: 5px;
+          font-size: 2.2em;
+        }
         &.icon.build {
           margin-left: 3px;
           margin-top: 7px;
@@ -96,20 +111,47 @@ $boxWidth: 155px;
       }
     }
 
-    .ribbon.label {
-      position: absolute;
-      top: -10px;
-      left: -10px;
-      font-size: 0.7em;
-      border: 1px solid black;
-      background-color: $cds_color_light_teal;
-      color: black;
-      border-radius: 2px;
-      padding-left: 10px;
-      z-index: 10;
-    }
-    .ui.ribbon.label:after {
-      content: none;
+    .ribbon {
+      &.label {
+        position: absolute;
+        &.top {
+          top: -10px;
+        }
+        &.bottom {
+          bottom: -10px;
+        }
+        &.left {
+          left: -10px;
+        }
+        &.right {
+          right: 0px;
+          left: auto;
+        }
+        &.centered {
+          left: 50%;
+          transform: translateX(-50%);
+        }
+
+        font-size: 0.7em;
+        border: 1px solid black;
+        background-color: $cds_color_light_teal;
+        color: black;
+        border-radius: 2px;
+        padding-left: 10px;
+        z-index: 10;
+        &.transparent {
+          background-color: transparent;
+          border: none;
+        }
+        &:after {
+          content: none;
+        }
+
+        i {
+          margin-right: 2px;
+        }
+
+      }
     }
 
     sm-dropdown {
@@ -136,6 +178,9 @@ $boxWidth: 155px;
   .nodePipeline.inactive {
     background-color: $cds_color_light_grey;
     border: 2px solid grey;
+  }
+  .nodePipeline.active {
+    border: 2px solid $cds_color_teal;
   }
   .nodePipeline.building {
     background-color: $cds_color_light_teal;

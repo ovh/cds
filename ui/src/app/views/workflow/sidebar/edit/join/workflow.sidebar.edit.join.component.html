@@ -1,0 +1,25 @@
+<div class="sidebar-join-edit">
+    <h3 class="ui header ml5">
+        <i class="settings icon"></i>
+        <div class="content">
+            <span>Join</span>
+            <div class="sub header">
+              <span>{{ 'workflow_node_edition' | translate }}</span>
+            </div>
+        </div>
+    </h3>
+    <div class="ui fluid vertical menu">
+      <a class="item" (click)="openTriggerJoinModal()">
+        {{ 'workflow_node_trigger_add' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openDeleteJoinModal()">
+        {{ 'workflow_join_delete' | translate }} <i class="angle right icon"></i>
+      </a>
+    </div>
+</div>
+<ng-container *ngIf="join">
+    <app-workflow-join-delete [join]="join" [loading]="loading" (deleteEvent)="deleteJoin($event)" #workflowDeleteJoin></app-workflow-join-delete>
+</ng-container>
+<ng-container *ngIf="project && join">
+    <app-workflow-trigger-join [project]="project" [workflow]="workflow" [join]="join" [loading]="loading" [(trigger)]="newTrigger" (triggerChange)="saveTrigger()" #workflowJoinTrigger></app-workflow-trigger-join>
+</ng-container>

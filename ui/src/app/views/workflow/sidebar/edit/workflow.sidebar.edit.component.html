@@ -1,0 +1,6 @@
+<ng-container *ngIf="node != null && join == null">
+  <app-workflow-sidebar-edit-node [project]="project" [open]="open" [workflow]="workflow" [node]="node"></app-workflow-sidebar-edit-node>
+</ng-container>
+<ng-container *ngIf="node == null && join != null">
+  <app-workflow-sidebar-edit-join [project]="project" [open]="open" [workflow]="workflow" [join]="join"></app-workflow-sidebar-edit-join>
+</ng-container>
