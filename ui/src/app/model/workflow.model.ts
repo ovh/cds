@@ -158,7 +158,7 @@ export class Workflow {
         return node;
     }
 
-    static removeOldRef(w: Workflow): Workflow {
+    static removeOldRef(w: Workflow) {
         if (!w.joins) {
             return;
         }
@@ -176,8 +176,6 @@ export class Workflow {
         w.joins.forEach(j => {
             j.source_node_ref = intersection(j.source_node_ref, refs);
         });
-
-        return w;
     }
 
     static getNodeNameImpact(workflow: Workflow, name: string): WorkflowPipelineNameImpact {
