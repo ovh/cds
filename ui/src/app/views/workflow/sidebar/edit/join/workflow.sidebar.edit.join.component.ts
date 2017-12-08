@@ -63,7 +63,8 @@ export class WorkflowSidebarEditJoinComponent {
         if (b) {
             let clonedWorkflow: Workflow = cloneDeep(this.workflow);
             clonedWorkflow.joins = clonedWorkflow.joins.filter(j => j.id !== this.join.id);
-            this.updateWorkflow(Workflow.removeOldRef(clonedWorkflow), this.workflowDeleteJoin.modal);
+            Workflow.removeOldRef(clonedWorkflow)
+            this.updateWorkflow(clonedWorkflow, this.workflowDeleteJoin.modal);
         }
     }
 

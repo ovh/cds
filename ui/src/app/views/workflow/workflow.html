@@ -8,16 +8,16 @@
         </button>
     </div>
     <div class="sidebar-toggle">
-        <ng-container *ngIf="project != null && workflow != null && !selectedNode && !selectedJoin">
+        <ng-container *ngIf="project != null && workflow != null && selectedNode == null && selectedJoin == null">
             <app-workflow-sidebar-run [project]="project" [workflow]="workflow" [open]="sidebarOpen"></app-workflow-sidebar-run>
         </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && (selectedNode || selectedJoin)">
+        <ng-container *ngIf="project != null && workflow != null && (selectedNode != null || selectedJoin != null)">
             <app-workflow-sidebar-edit [project]="project" [workflow]="workflow" [node]="selectedNode" [join]="selectedJoin" [open]="sidebarOpen"></app-workflow-sidebar-edit>
         </ng-container>
     </div>
 </aside>
 <section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!loading && workflow != null">
-    <button class="ui small icon blue open button" (click)="toggleSidebar()" *ngIf="!selectedNode">
+    <button class="ui small icon blue open button" (click)="toggleSidebar()" [hidden]="selectedNode != null || selectedJoin != null">
         <i class="content icon"></i>
     </button>
     <router-outlet></router-outlet>
