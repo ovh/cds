@@ -80,12 +80,11 @@ func (api *API) bookWorkerModelHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		workerModelID, errr := requestVarInt(r, "permModelID")
 		if errr != nil {
-			return sdk.WrapError(errr, "updateWorkerModel> Invalid permModelID")
+			return sdk.WrapError(errr, "bookWorkerModelHandler> Invalid permModelID")
 		}
 		if _, err := worker.BookForRegister(api.Cache, workerModelID, getHatchery(ctx)); err != nil {
-			return sdk.WrapError(err, "updateWorkerModel> worker model already booked")
+			return sdk.WrapError(err, "bookWorkerModelHandler>")
 		}
-		return WriteJSON(w, r, nil, http.StatusOK)
 	}
 }
 

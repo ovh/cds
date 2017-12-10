@@ -35,6 +35,8 @@ const columns = `
 	worker_model.date_last_spawn_err,
 	"group".name as groupname`
 
+const bookRegisterTTLInSeconds = 360
+
 type dbResultWMS struct {
 	WorkerModel
 	GroupName string `db:"groupname"`
@@ -261,7 +263,7 @@ func BookForRegister(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.
 	h := sdk.Hatchery{}
 	if !store.Get(k, &h) {
 		// worker model not already booked, book it for 6 min
-		store.SetWithTTL(k, hatchery, 360)
+		store.SetWithTTL(k, hatchery, bookRegisterTTLInSeconds)
 		return nil, nil
 	}
 	return &h, sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "BookForRegister> worker model %d already booked by %s (%d)", id, h.Name, h.ID)
