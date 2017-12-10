@@ -383,7 +383,7 @@ func workflowPullRun(c cli.Values) error {
 			return err
 		}
 		if !c.GetBool("quiet") {
-			fmt.Printf("File %s created\n", fname)
+			fmt.Println(fname)
 		}
 	}
 	return nil
