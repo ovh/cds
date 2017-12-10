@@ -438,6 +438,26 @@ func (api *API) postWorkflowJobStepStatusHandler() Handler {
 	}
 }
 
+func (api *API) countWorkflowJobQueueHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		sinceHeader := r.Header.Get("If-Modified-Since")
+		since := time.Unix(0, 0)
+		if sinceHeader != "" {
+			since, _ = time.Parse(time.RFC1123, sinceHeader)
+		}
+		groupsID := []int64{}
+		for _, g := range getUser(ctx).Groups {
+			groupsID = append(groupsID, g.ID)
+		}
+		count, err := workflow.CountNodeJobRunQueue(api.mustDB(), api.Cache, groupsID, &since)
+		if err != nil {
+			return sdk.WrapError(err, "countWorkflowJobQueueHandler> Unable to count queue")
+		}
+
+		return WriteJSON(w, r, count, http.StatusOK)
+	}
+}
+
 func (api *API) getWorkflowJobQueueHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		sinceHeader := r.Header.Get("If-Modified-Since")
