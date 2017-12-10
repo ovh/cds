@@ -85,6 +85,7 @@ func (api *API) bookWorkerModelHandler() Handler {
 		if _, err := worker.BookForRegister(api.Cache, workerModelID, getHatchery(ctx)); err != nil {
 			return sdk.WrapError(err, "bookWorkerModelHandler>")
 		}
+		return nil
 	}
 }
 
