@@ -6,6 +6,17 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+// WorkerModelBook books a worker model for register, used by hatcheries
+func (c *client) WorkerModelBook(id int64) error {
+	code, err := c.PutJSON(fmt.Sprintf("/worker/model/book/%d", id), nil, nil)
+	if code > 300 && err == nil {
+		return fmt.Errorf("WorkerModelBook> HTTP %d", code)
+	} else if err != nil {
+		return sdk.WrapError(err, "WorkerModelBook> Error")
+	}
+	return nil
+}
+
 // WorkerModelsEnabled retrieves all worker models enabled and available to user
 func (c *client) WorkerModelsEnabled() ([]sdk.Model, error) {
 	return c.workerModels(false)

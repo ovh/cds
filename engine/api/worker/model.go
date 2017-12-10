@@ -4,10 +4,12 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -247,4 +249,20 @@ func updateRegistration(db gorp.SqlExecutor, modelID int64) error {
 	}
 	log.Debug("updateRegistration> %d worker model updated", rows)
 	return nil
+}
+
+func keyBookWorkerModel(id int64) string {
+	return cache.Key("book", "workermodel", strconv.FormatInt(id, 10))
+}
+
+// BookForRegister books a worker model for register, used by hatcheries
+func BookForRegister(store cache.Store, id int64, hatchery *sdk.Hatchery) (*sdk.Hatchery, error) {
+	k := keyBookWorkerModel(id)
+	h := sdk.Hatchery{}
+	if !store.Get(k, &h) {
+		// worker model not already booked, book it for 6 min
+		store.SetWithTTL(k, hatchery, 360)
+		return nil, nil
+	}
+	return &h, sdk.WrapError(sdk.ErrWorkerModelAlreadyBooked, "BookForRegister> worker model %d already booked by %s (%d)", id, h.Name, h.ID)
 }
