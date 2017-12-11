@@ -124,6 +124,24 @@ func testRunWorkflow(t *testing.T, api *API, router *Router, db *gorp.DbMap) tes
 	}
 }
 
+func testCountGetWorkflowJob(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
+	uri := router.GetRoute("GET", api.countWorkflowJobQueueHandler, nil)
+	test.NotEmpty(t, uri)
+
+	req := assets.NewAuthentifiedRequest(t, ctx.user, ctx.password, "GET", uri, nil)
+	rec := httptest.NewRecorder()
+	router.Mux.ServeHTTP(rec, req)
+	assert.Equal(t, 200, rec.Code)
+
+	count := sdk.WorkflowNodeJobRunCount{}
+	test.NoError(t, json.Unmarshal(rec.Body.Bytes(), &count))
+	assert.Equal(t, int64(1), count.Count)
+
+	if t.Failed() {
+		t.FailNow()
+	}
+}
+
 func testGetWorkflowJob(t *testing.T, api *API, router *Router, ctx *testRunWorkflowCtx) {
 	uri := router.GetRoute("GET", api.getWorkflowJobQueueHandler, nil)
 	test.NotEmpty(t, uri)
@@ -183,6 +201,9 @@ func TestGetWorkflowJobQueueHandler(t *testing.T) {
 	ctx := testRunWorkflow(t, api, router, db)
 	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
+
+	// count job in queue
+	testCountGetWorkflowJob(t, api, router, &ctx)
 
 	// Get workflow run number
 
