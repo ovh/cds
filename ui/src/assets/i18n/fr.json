@@ -614,6 +614,7 @@
   "workflow_loading" : "Chargement du workflow...",
   "workflow_name" : "Nom du workflow",
   "workflow_node_context_edit" : "Contexte du pipeline",
+  "workflow_node_launch" : "Actions sur le pipeline",
   "workflow_node_context_pipeline_parameter" : "Paramètres du pipeline",
   "workflow_node_context_payload" : "Payload par défaut",
   "workflow_run_node_job_queued" : "Attente depuis {{time}}",

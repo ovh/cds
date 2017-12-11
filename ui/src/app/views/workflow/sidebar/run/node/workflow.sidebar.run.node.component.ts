@@ -59,9 +59,9 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     modalParentNode: ActiveModal<boolean, boolean, void>;
     newTrigger: WorkflowNodeTrigger = new WorkflowNodeTrigger();
     previousNodeName: string;
-    pipelineSubscription: Subscription;
+    currentWorkfloRunSub: Subscription;
     displayInputName = false;
-    loading = false;
+    loading = true;
     nameWarning: WorkflowPipelineNameImpact;
     currentWorkflowRun: WorkflowRun;
     currentWorkflowNodeRun: WorkflowNodeRun;
@@ -75,7 +75,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     }
 
     ngOnInit() {
-        this._workflowCoreService.getCurrentWorkflowRun()
+        this.currentWorkfloRunSub = this._workflowCoreService.getCurrentWorkflowRun()
             .subscribe((wr) => {
                 if (!wr) {
                     return;
@@ -85,12 +85,12 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
                 if (wr.nodes && wr.nodes[this.node.id] && Array.isArray(wr.nodes[this.node.id])) {
                     this.currentWorkflowNodeRun = wr.nodes[this.node.id].find((n) => n.id === this.runId && n.num === this.runNumber);
                 }
-                console.log(this.currentWorkflowNodeRun);
+                this.loading = false;
             });
     }
 
     displayLogs() {
-        let pip = Workflow.getNodeByID(this.node.id, this.workflow).pipeline.name;
+        let pip = this.node.pipeline.name;
         this._router.navigate([
             '/project', this.project.key,
             'workflow', this.workflow.name,
@@ -103,6 +103,9 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
         this._wrService.stopNodeRun(this.project.key, this.workflow.name, this.runNumber, this.runId)
             .pipe(first())
             .subscribe(() => {
+                this.currentWorkflowNodeRun.status = PipelineStatus.STOPPED;
+                this.currentWorkflowRun.status = PipelineStatus.STOPPED;
+                this._workflowCoreService.setCurrentWorkflowRun(this.currentWorkflowRun);
                 this._router.navigate([
                     '/project', this.project.key,
                     'workflow', this.workflow.name,

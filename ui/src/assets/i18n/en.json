@@ -614,6 +614,7 @@
   "workflow_loading" : "Loading workflow...",
   "workflow_name" : "Workflow name",
   "workflow_node_context_edit" : "Edit the pipeline context",
+  "workflow_node_launch" : "Pipeline actions",
   "workflow_node_context_pipeline_parameter" : "Pipeline parameters",
   "workflow_node_context_payload" : "Default payload",
   "workflow_run_node_job_queued" : "Queued {{time}} ago",

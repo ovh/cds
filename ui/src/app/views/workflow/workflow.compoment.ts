@@ -49,7 +49,7 @@ export class WorkflowComponent {
 
         this._activatedRoute.params.subscribe(p => {
             let workflowName = p['workflowName'];
-            this.number = p['number'];
+            this.number = p['number'] ? parseInt(p['number'], 10) : null;
             if (this.project.key && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
@@ -81,7 +81,7 @@ export class WorkflowComponent {
 
         let snapshotparams = this._routerService.getRouteSnapshotParams({}, this._activatedRoute.snapshot);
         if (snapshotparams) {
-            this.number = snapshotparams['number'];
+            this.number = snapshotparams['number'] ? parseInt(snapshotparams['number'], 10) : null;
         }
         let qp = this._routerService.getRouteSnapshotQueryParams({}, this._activatedRoute.snapshot);
         if (qp) {
@@ -129,7 +129,7 @@ export class WorkflowComponent {
                 let params = this._routerService.getRouteSnapshotParams({}, p.state.root);
                 let queryParams = this._routerService.getRouteSnapshotQueryParams({}, p.state.root);
                 this.currentNodeName = queryParams['name'];
-                this.number = params['number'];
+                this.number = params['number'] ? parseInt(params['number'], 10) : null;
                 if (qp['selectedNodeId']) {
                     this.selectedNodeId = Number.isNaN(qp['selectedNodeId']) ? null : parseInt(qp['selectedNodeId'], 10);
                 }
@@ -192,12 +192,29 @@ export class WorkflowComponent {
 
     closeEditSidebar(): void {
         let qps = cloneDeep(this._activatedRoute.snapshot.queryParams);
+        let snapshotparams = this._routerService.getRouteSnapshotParams({}, this._activatedRoute.snapshot);
         qps['selectedNodeId'] = null;
         qps['selectedJoinId'] = null;
+        qps['selectedNodeRunNum'] = null;
+        qps['selectedNodeRunId'] = null;
         this.selectedNode = null;
         this.selectedNodeId = null;
         this.selectedJoin = null;
         this.selectedJoinId = null;
-        this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name], {queryParams: qps});
+        this.selectedNodeRunNum = null;
+        this.selectedNodeRunId = null;
+
+        if (snapshotparams['number']) {
+          this._router.navigate([
+            '/project',
+            this.project.key,
+            'workflow',
+            this.workflow.name,
+            'run',
+            snapshotparams['number']
+          ], {queryParams: qps});
+        } else {
+          this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name], {queryParams: qps});
+        }
     }
 }

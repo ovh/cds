@@ -127,7 +127,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         let qps = cloneDeep(this._route.snapshot.queryParams);
         qps['selectedJoinId'] = null;
 
-        if (!this.currentNodeRun) {
+        if (!this._route.snapshot.params['number']) {
             qps['selectedNodeRunId'] = null;
             qps['selectedNodeRunNum'] = null;
 
@@ -136,17 +136,16 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                 'workflow', this.workflow.name
             ], { queryParams: Object.assign({}, qps, {selectedNodeId: this.node.id })});
         } else {
-            let pip = Workflow.getNodeByID(this.currentNodeRun.workflow_node_id, this.workflow).pipeline.name;
             qps['selectedJoinId'] = null;
             qps['selectedNodeId'] = null;
 
             this._router.navigate([
                 '/project', this.project.key,
                 'workflow', this.workflow.name,
-                'run', this.currentNodeRun.num], {
+                'run', this.currentNodeRun ? this.currentNodeRun.num : this._route.snapshot.params['number']], {
                     queryParams: Object.assign({}, qps, {
-                        selectedNodeRunId: this.currentNodeRun.id,
-                        selectedNodeRunNum: this.currentNodeRun.num,
+                        selectedNodeRunId: this.currentNodeRun ? this.currentNodeRun.id : -1,
+                        selectedNodeRunNum: this.currentNodeRun ? this.currentNodeRun.num : 0,
                         selectedNodeId: this.node.id
                     })
                 });

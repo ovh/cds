@@ -135,7 +135,7 @@ export class WorkflowNodeRunParamComponent {
         if (this.nodeRun) {
             request.from_nodes = [this.nodeRun.workflow_node_id];
             request.number = this.nodeRun.num;
-        } else if (this.nodeToRun && this.num) {
+        } else if (this.nodeToRun && this.num != null) {
             request.from_nodes = [this.nodeToRun.id];
             request.number = this.num;
         }
