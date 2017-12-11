@@ -7,7 +7,7 @@ import {VariableEvent} from '../../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {EnvironmentPermissionEvent, PermissionEvent} from '../../../../shared/permission/permission.event.model';
 import {Environment} from '../../../../model/environment.model';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {finalize} from 'rxjs/operators';
 
 @Component({

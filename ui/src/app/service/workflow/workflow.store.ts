@@ -1,11 +1,12 @@
 import {ProjectStore} from '../project/project.store';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
-import {Workflow, WorkflowNode, WorkflowTriggerConditionCache} from '../../model/workflow.model';
+import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 import {Injectable} from '@angular/core';
 import {List, Map} from 'immutable';
 import {Observable} from 'rxjs/Observable';
 import {WorkflowService} from './workflow.service';
 import {GroupPermission} from '../../model/group.model';
+import 'rxjs/add/observable/of';
 
 @Injectable()
 export class WorkflowStore {

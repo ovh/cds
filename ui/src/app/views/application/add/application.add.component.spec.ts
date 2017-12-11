@@ -16,7 +16,7 @@ import {ProjectStore} from '../../../service/project/project.store';
 import {ProjectService} from '../../../service/project/project.service';
 import {ApplicationModule} from '../application.module';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {Project} from '../../../model/project.model';
 import {ApplicationAddComponent} from './application.add.component';
 import {ApplicationTemplateService} from '../../../service/application/application.template.service';
@@ -26,7 +26,7 @@ import {Application} from '../../../model/application.model';
 import {Variable} from '../../../model/variable.model';
 import {VariableService} from '../../../service/variable/variable.service';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
-
+import 'rxjs/add/observable/of';
 describe('CDS: Application Add Component', () => {
 
     let injector: Injector;

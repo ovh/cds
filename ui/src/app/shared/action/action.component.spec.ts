@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {fakeAsync, TestBed, tick} from '@angular/core/testing';
-import {TranslateLoader, TranslateParser, TranslateService} from 'ng2-translate';
+import {TranslateLoader, TranslateParser, TranslateService} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';

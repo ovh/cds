@@ -7,7 +7,7 @@ import {RequirementEvent} from '../requirement.event.model';
 import {WorkerModelService} from '../../../service/worker-model/worker-model.service';
 import {WorkerModel} from '../../../model/worker-model.model';
 import {finalize, first} from 'rxjs/operators';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 
 @Component({

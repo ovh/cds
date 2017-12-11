@@ -23,7 +23,7 @@ import {WorkflowRunSummaryComponent} from './run/summary/workflow.run.summary.co
 import {WorkflowNodeRunHistoryComponent} from './run/node/history/history.component';
 import {WorkflowNodeRunSummaryComponent} from './run/node/summary/run.summary.component';
 import {WorkflowAdminComponent} from './show/admin/workflow.admin.component';
-import {SidebarService} from 'ng2-semantic-ui/dist';
+import {WorkflowNotificationComponent} from './show/notification/workflow.notification.component';
 
 @NgModule({
     declarations: [
@@ -33,6 +33,7 @@ import {SidebarService} from 'ng2-semantic-ui/dist';
         WorkflowBreadCrumbComponent,
         WorkflowGraphComponent,
         WorkflowRunComponent,
+        WorkflowNotificationComponent,
         WorkflowNodeRunComponent,
         WorkflowRunJobVariableComponent,
         WorkflowRunJobSpawnInfoComponent,

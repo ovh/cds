@@ -17,7 +17,7 @@ import {WorkflowDeleteNodeComponent} from '../../../../../shared/workflow/node/d
 import {WorkflowNodeContextComponent} from '../../../../../shared/workflow/node/context/workflow.node.context.component';
 import {PipelineStore} from '../../../../../service/pipeline/pipeline.store';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowNodeHookFormComponent} from '../../../../../shared/workflow/node/hook/form/node.hook.component';

@@ -1,12 +1,12 @@
 /* tslint:disable:no-unused-variable */
 import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
+import {TranslateService, TranslateLoader} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
-import {TranslateParser} from 'ng2-translate';
+import {TranslateParser} from '@ngx-translate/core';
 import {ProjectStore} from '../../../service/project/project.store';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 import {ProjectService} from '../../../service/project/project.service';
@@ -20,11 +20,10 @@ import {Observable} from 'rxjs/Observable';
 import {ProjectAddComponent} from './project.add.component';
 import {GroupService} from '../../../service/group/group.service';
 import {GroupPermission, Group} from '../../../model/group.model';
-import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
-
+import 'rxjs/add/observable/of';
 describe('CDS: Project Show Component', () => {
 
     let injector: Injector;

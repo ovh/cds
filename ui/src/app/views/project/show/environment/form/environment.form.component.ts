@@ -3,7 +3,7 @@ import {Environment} from '../../../../../model/environment.model';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {Project} from '../../../../../model/project.model';
 import {ToastService} from '../../../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 
 @Component({
     selector: 'app-environment-form',

@@ -4,7 +4,7 @@ import {PermissionService} from '../../../shared/permission/permission.service';
 import {Group, GroupPermission} from '../../../model/group.model';
 import {ProjectStore} from '../../../service/project/project.store';
 import {ToastService} from '../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {Router} from '@angular/router';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {GroupService} from '../../../service/group/group.service';

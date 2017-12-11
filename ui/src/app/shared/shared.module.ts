@@ -1,7 +1,7 @@
 import {NgModule, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {VariableComponent} from './variable/list/variable.component';
 import {FormsModule, ReactiveFormsModule} from '@angular/forms';
-import {TranslateModule} from 'ng2-translate';
+import {TranslateModule} from '@ngx-translate/core';
 import {NgSemanticModule} from 'ng-semantic/ng-semantic';
 import {NgForNumber} from './pipes/ngfor.number.pipe';
 import {VariableValueComponent} from './variable/value/variable.value.component';

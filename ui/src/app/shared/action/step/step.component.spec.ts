@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, fakeAsync, tick, getTestBed} from '@angular/core/testing';
-import {TranslateService, TranslateParser, TranslateLoader} from 'ng2-translate';
+import {TranslateService, TranslateParser, TranslateLoader} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Injector} from '@angular/core';
 import {SharedService} from '../../shared.service';

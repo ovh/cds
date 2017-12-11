@@ -429,3 +429,12 @@ export class WorkflowTriggerConditionCache {
     operators: Array<string>;
     names: Array<string>;
 }
+
+export class WorkflowNotification {
+    source_node_ref: Array<string>;
+    notifications: any;
+
+    constructor() {
+        this.notifications = {};
+    }
+}

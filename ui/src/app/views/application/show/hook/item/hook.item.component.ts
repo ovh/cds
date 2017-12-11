@@ -7,7 +7,7 @@ import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {HookEvent} from '../hook.event';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {ToastService} from '../../../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 
 @Component({

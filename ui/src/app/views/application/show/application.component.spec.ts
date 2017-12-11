@@ -1,8 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, fakeAsync, getTestBed} from '@angular/core/testing';
-import {MockBackend} from '@angular/http/testing';
-import {Response, ResponseOptions, ResponseType} from '@angular/http';
 import {Router, ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {ApplicationShowComponent} from './application.component';
 import {ApplicationStore} from '../../../service/application/application.store';
@@ -20,7 +18,7 @@ import {PipelineService} from '../../../service/pipeline/pipeline.service';
 import {VariableService} from '../../../service/variable/variable.service';
 import {ApplicationModule} from '../application.module';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {Variable} from '../../../model/variable.model';
 import {Application} from '../../../model/application.model';
@@ -35,6 +33,7 @@ import {Pipeline} from '../../../model/pipeline.model';
 import {Environment} from '../../../model/environment.model';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
+import 'rxjs/add/observable/of';
 
 describe('CDS: Application', () => {
 
