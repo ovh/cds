@@ -30,6 +30,7 @@ export class WorkflowRunNodePipelineComponent {
     mapStepStatus: Map<string, StepStatus> = new Map<string, StepStatus>();
 
     previousStatus: string;
+    manual = false;
 
     constructor(private _durationService: DurationService) { }
 
@@ -45,6 +46,7 @@ export class WorkflowRunNodePipelineComponent {
     }
 
     refreshNodeRun(data: WorkflowNodeRun): void {
+        let previousRun = this.nodeRun;
         this.nodeRun = data;
 
         if (this.nodeRun) {
@@ -56,6 +58,11 @@ export class WorkflowRunNodePipelineComponent {
         // Set selected job if needed or refresh step_status
         if (this.nodeRun.stages) {
             this.nodeRun.stages.forEach((s, sIndex) => {
+                if (!this.manual && previousRun && (!previousRun.stages[sIndex].status ||
+                    previousRun.stages[sIndex].status === PipelineStatus.NEVER_BUILT) &&
+                    (s.status === PipelineStatus.WAITING || s.status === PipelineStatus.BUILDING)) {
+                  this.selectedJob(s.jobs[0]);
+                }
                 if (s.run_jobs) {
                     s.run_jobs.forEach((rj, rjIndex) => {
                         // Update job status
