@@ -64,7 +64,9 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 		entry.DependsOn = ancestors
 		entry.PipelineName = n.Pipeline.Name
-		entry.Conditions = &n.Context.Conditions
+		if len(n.Context.Conditions.PlainConditions) > 0 || n.Context.Conditions.LuaScript != "" {
+			entry.Conditions = &n.Context.Conditions
+		}
 
 		if n.Context.Application != nil {
 			entry.ApplicationName = n.Context.Application.Name
