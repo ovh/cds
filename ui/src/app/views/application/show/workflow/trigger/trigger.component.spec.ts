@@ -4,7 +4,7 @@ import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Injector} from '@angular/core';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {XHRBackend} from '@angular/http';
 import {MockBackend} from '@angular/http/testing';
 
@@ -28,6 +28,7 @@ import {Parameter} from '../../../../../model/parameter.model';
 import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
 import {Prerequisite} from '../../../../../model/prerequisite.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
+import 'rxjs/add/observable/of';
 
 describe('CDS: Application Workflow', () => {
 

@@ -2,10 +2,8 @@
 
 import {TestBed, fakeAsync, getTestBed, tick, inject} from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
-import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
 import {Injector, NO_ERRORS_SCHEMA, Component} from '@angular/core';
-import {TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
+import {TranslateService, TranslateLoader} from '@ngx-translate/core';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {ApplicationRepositoryComponent} from './application.repo.component';
 import {ApplicationService} from '../../../../../service/application/application.service';
@@ -20,10 +18,11 @@ import {Project} from '../../../../../model/project.model';
 import {RepositoriesManager} from '../../../../../model/repositories.model';
 import {Observable} from 'rxjs/Observable';
 import {ApplicationModule} from '../../../application.module';
-import {TranslateParser} from 'ng2-translate';
+import {TranslateParser} from '@ngx-translate/core';
 import {ProjectModule} from '../../../../project/project.module';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
+import 'rxjs/add/observable/of';
 
 @Component({
     template: ''

@@ -10,6 +10,8 @@ import {VariableService} from '../variable/variable.service';
 import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
+import 'rxjs/add/observable/of';
+
 
 @Injectable()
 export class ProjectStore {

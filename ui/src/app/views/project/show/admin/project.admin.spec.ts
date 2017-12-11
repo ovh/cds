@@ -1,13 +1,13 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
-import { TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
+import { TranslateService, TranslateLoader} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
-import {TranslateParser} from 'ng2-translate';
+import {TranslateParser} from '@ngx-translate/core';
 import {Observable} from 'rxjs/Observable';
 
 import {ProjectAdminComponent} from './project.admin.component';
@@ -24,6 +24,7 @@ import {ServicesModule} from '../../../../service/services.module';
 import {Project} from '../../../../model/project.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
+import 'rxjs/add/observable/of';
 
 describe('CDS: Project Admin Component', () => {
 

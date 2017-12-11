@@ -1,7 +1,7 @@
 import {Input, ViewChild, OnInit, Component} from '@angular/core';
 import {Project} from '../../../../model/project.model';
 import {ProjectStore} from '../../../../service/project/project.store';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
 import {Router} from '@angular/router';

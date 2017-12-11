@@ -5,7 +5,7 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {Injector} from '@angular/core';
-import {TranslateService, TranslateParser, TranslateLoader} from 'ng2-translate';
+import {TranslateService, TranslateParser, TranslateLoader} from '@ngx-translate/core';
 import {ApplicationPipelineBuildComponent} from './pipeline.build.component';
 import {ApplicationRunModule} from './application.run.module';
 import {SharedModule} from '../../shared/shared.module';
@@ -18,7 +18,7 @@ import {ApplicationPipelineService} from '../../service/application/pipeline/app
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {RouterService} from '../../service/router/router.service';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
-
+import 'rxjs/add/observable/of';
 describe('CDS: Application Run Component', () => {
 
     let injector: Injector;

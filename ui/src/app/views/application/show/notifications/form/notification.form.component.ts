@@ -12,7 +12,7 @@ import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {FormControl} from '@angular/forms';
 import {Environment} from '../../../../../model/environment.model';
 import {NotificationEvent} from '../notification.event';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {DeleteButtonComponent} from '../../../../../shared/button/delete/delete.button';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {ProjectService} from '../../../../../service/project/project.service';

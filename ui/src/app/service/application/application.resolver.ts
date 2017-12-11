@@ -3,6 +3,7 @@ import {Resolve, ActivatedRouteSnapshot, RouterStateSnapshot} from '@angular/rou
 import {Observable} from 'rxjs/Observable';
 import {Application} from '../../model/application.model';
 import {ApplicationStore} from './application.store';
+import 'rxjs/add/observable/of';
 
 @Injectable()
 export class ApplicationResolver implements Resolve<Application> {

@@ -24,6 +24,7 @@ import {Pipeline} from './model/pipeline.model';
 import {Application} from './model/application.model';
 import {Project} from './model/project.model';
 import {first} from 'rxjs/operators';
+import 'rxjs/add/observable/of';
 
 describe('App: CDS', () => {
 

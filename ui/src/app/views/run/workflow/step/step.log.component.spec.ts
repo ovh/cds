@@ -5,7 +5,7 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {Injector} from '@angular/core';
-import {TranslateService, TranslateParser, TranslateLoader} from 'ng2-translate';
+import {TranslateService, TranslateParser, TranslateLoader} from '@ngx-translate/core';
 import {ApplicationPipelineService} from '../../../../service/application/pipeline/application.pipeline.service';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {ApplicationRunModule} from '../../application.run.module';

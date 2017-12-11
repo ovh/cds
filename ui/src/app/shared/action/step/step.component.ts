@@ -15,7 +15,7 @@ export class ActionStepComponent {
     @Input() edit: boolean;
     @Input() suggest: Array<string>;
     @Input('publicActions')
-    set publicActions(data: Array<Action>){
+    set publicActions(data: Array<Action>) {
         if (data) {
             let originalAction = data.find(a => a.name === this.step.name);
             if (originalAction && originalAction.parameters) {

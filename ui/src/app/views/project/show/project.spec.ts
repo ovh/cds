@@ -1,13 +1,13 @@
 /* tslint:disable:no-unused-variable */
 import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
+import {TranslateService, TranslateLoader} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
 import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
-import {TranslateParser} from 'ng2-translate';
+import {TranslateParser} from '@ngx-translate/core';
 import {ProjectStore} from '../../../service/project/project.store';
 import {RepoManagerService} from '../../../service/repomanager/project.repomanager.service';
 import {ProjectService} from '../../../service/project/project.service';
@@ -23,13 +23,11 @@ import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {Observable} from 'rxjs/Observable';
 import {Project} from '../../../model/project.model';
 import {Map} from 'immutable';
-import {Variable} from '../../../model/variable.model';
-import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {GroupPermission} from '../../../model/group.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {User} from '../../../model/user.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
-
+import 'rxjs/add/observable/of';
 describe('CDS: Project Show Component', () => {
 
     let injector: Injector;

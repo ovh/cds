@@ -10,7 +10,7 @@ import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {Subscription} from 'rxjs/Subscription';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {TranslateService} from 'ng2-translate/ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
 import {Application} from '../../../model/application.model';
