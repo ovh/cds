@@ -124,21 +124,33 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     goToNodeRun(): void {
+        let qps = cloneDeep(this._route.snapshot.queryParams);
+        qps['selectedJoinId'] = null;
+
         if (!this.currentNodeRun) {
-            let qps = cloneDeep(this._route.snapshot.queryParams);
-            qps['selectedJoinId'] = null;
+            qps['selectedNodeRunId'] = null;
+            qps['selectedNodeRunNum'] = null;
+
             this._router.navigate([
                 '/project', this.project.key,
                 'workflow', this.workflow.name
             ], { queryParams: Object.assign({}, qps, {selectedNodeId: this.node.id })});
-            return;
+        } else {
+            let pip = Workflow.getNodeByID(this.currentNodeRun.workflow_node_id, this.workflow).pipeline.name;
+            qps['selectedJoinId'] = null;
+            qps['selectedNodeId'] = null;
+
+            this._router.navigate([
+                '/project', this.project.key,
+                'workflow', this.workflow.name,
+                'run', this.currentNodeRun.num], {
+                    queryParams: Object.assign({}, qps, {
+                        selectedNodeRunId: this.currentNodeRun.id,
+                        selectedNodeRunNum: this.currentNodeRun.num,
+                        selectedNodeId: this.node.id
+                    })
+                });
         }
-        let pip = Workflow.getNodeByID(this.currentNodeRun.workflow_node_id, this.workflow).pipeline.name;
-        this._router.navigate([
-            '/project', this.project.key,
-            'workflow', this.workflow.name,
-            'run', this.currentNodeRun.num,
-            'node', this.currentNodeRun.id], {queryParams: {name: pip}});
     }
 
     displayDropdown(): void {
@@ -148,19 +160,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
         this.elementRef.nativeElement.style.top = 0;
-    }
-
-    stopNodeRun($event): void {
-        $event.stopPropagation();
-        this.loadingStop = true;
-        this._wrService.stopNodeRun(this.project.key, this.workflow.name, this.currentNodeRun.num, this.currentNodeRun.id)
-            .pipe(first())
-            .subscribe(() => {
-                this.currentNodeRun.status = this.pipelineStatus.STOPPED;
-                this._changeDetectorRef.detach();
-                setTimeout(() => this._changeDetectorRef.reattach(), 2000);
-                this._toast.success('', this._translate.instant('pipeline_stop'));
-            });
     }
 
     openRunNode($event): void {

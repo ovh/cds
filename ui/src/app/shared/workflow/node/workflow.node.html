@@ -11,7 +11,7 @@
         <!-- Node name + pipeline name -->
         <div class="pipeline">
             <div class="ellipsis">
-                <span *ngIf="workflowRun && workflowRun.status && !loadingStop &&
+                <!-- <span *ngIf="workflowRun && workflowRun.status && !loadingStop &&
                     workflowRun.status !== pipelineStatus.BUILDING &&
                     workflowRun.status !== pipelineStatus.WAITING &&
                     currentNodeRun?.status !== pipelineStatus.BUILDING &&
@@ -23,7 +23,7 @@
                     <div class="ui active inline blue loader mr5 pointing"  (click)="stopNodeRun($event)">
                         <i class="black stop icon build" *ngIf="!loadingStop"></i>
                     </div>
-                </ng-container>
+                </ng-container> -->
                 <b>{{node.name}}</b>
         </div>
 
@@ -41,11 +41,5 @@
         <a class="ui ribbon label top right" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: node.context.environment?.name}" *ngIf="node.context.environment_id && node.context.environment_id > 0">
             <i class="tree icon"></i>{{node.context.environment?.name}}
         </a>
-
-
     </div>
-
 </div>
-<ng-container *ngIf="project && node">
-    <app-workflow-node-run-param [workflow]="workflow" [project]="project" [nodeRun]="currentNodeRun" [nodeToRun]="node" [num]="workflowRun?.num" #workflowRunNode></app-workflow-node-run-param>
-</ng-container>

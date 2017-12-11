@@ -117,6 +117,7 @@
   "btn_resync_repo" : "Resynchroniser",
   "btn_rename" : "Renommer",
   "btn_run" : "Lancer le pipeline",
+  "btn_logs" : "Afficher les logs",
   "btn_run_workflow" : "Lancer le workflow",
   "btn_run_custom_worklow" : "Lancer le workflow avec des paramètres",
   "btn_validate" : "Valider",

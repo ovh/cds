@@ -31,6 +31,8 @@ export class WorkflowComponent {
     selectedNode: WorkflowNode;
     selectedJoinId: number;
     selectedJoin: WorkflowNodeJoin;
+    selectedNodeRunId: number;
+    selectedNodeRunNum: number;
 
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
@@ -103,6 +105,16 @@ export class WorkflowComponent {
             } else {
                 this.selectedJoinId = null;
                 this.selectedJoin = null;
+            }
+
+            if (queryp['selectedNodeRunId'] || queryp['selectedNodeRunNum']) {
+                this.selectedJoinId = null;
+                this.selectedJoin = null;
+                this.selectedNodeRunId = Number.isNaN(queryp['selectedNodeRunId']) ? null : parseInt(queryp['selectedNodeRunId'], 10);
+                this.selectedNodeRunNum = Number.isNaN(queryp['selectedNodeRunNum']) ? null : parseInt(queryp['selectedNodeRunNum'], 10);
+            } else {
+                this.selectedNodeRunId = null;
+                this.selectedNodeRunNum = null;
             }
 
             if (this.selectedNodeId && !this.loading && this.workflow) {

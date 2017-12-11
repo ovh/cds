@@ -114,6 +114,7 @@
   "btn_detach" : "Unlink pipeline",
   "btn_link" : "Connect",
   "btn_or" : "or",
+  "btn_logs" : "Display logs",
   "btn_rename" : "Rename",
   "btn_resync_repo" : "Resynchronize",
   "btn_run" : "Run pipeline",

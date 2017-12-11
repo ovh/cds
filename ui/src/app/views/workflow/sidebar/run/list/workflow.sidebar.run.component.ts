@@ -1,26 +1,26 @@
 import {Component, Input, NgZone, OnDestroy, OnInit, ElementRef, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {Project} from '../../../../model/project.model';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {CDSWorker} from '../../../../shared/worker/worker';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {environment} from '../../../../../environments/environment';
+import {Project} from '../../../../../model/project.model';
+import {PipelineStatus} from '../../../../../model/pipeline.model';
+import {Workflow, WorkflowNode} from '../../../../../model/workflow.model';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {CDSWorker} from '../../../../../shared/worker/worker';
+import {AuthentificationStore} from '../../../../../service/auth/authentification.store';
+import {environment} from '../../../../../../environments/environment';
 import {Subscription} from 'rxjs/Subscription';
-import {WorkflowRun, WorkflowRunTags} from '../../../../model/workflow.run.model';
+import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.model';
 import {cloneDeep, uniqBy} from 'lodash';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {DurationService} from '../../../../shared/duration/duration.service';
-import {RouterService} from '../../../../service/router/router.service';
+import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
+import {DurationService} from '../../../../../shared/duration/duration.service';
+import {RouterService} from '../../../../../service/router/router.service';
 
 @Component({
-    selector: 'app-workflow-sidebar-run',
+    selector: 'app-workflow-sidebar-run-list',
     templateUrl: './workflow.sidebar.run.component.html',
     styleUrls: ['./workflow.sidebar.run.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunComponent implements OnInit, OnDestroy {
+export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;

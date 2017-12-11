@@ -1,0 +1,61 @@
+<div class="sidebar-node-edit">
+    <h3 class="ui header ml5">
+        <i class="settings icon"></i>
+        <div class="content">
+            <span>{{node.name}}</span>
+            <div class="sub header">
+              <span>{{ 'workflow_node_launch' | translate }}</span>
+            </div>
+        </div>
+    </h3>
+    <div class="ui fluid buttons" *ngIf="currentWorkflowRun">
+      <button class="ui positive icon button" [title]="'btn_run' | translate" (click)="openRunNode()"
+          *ngIf="currentWorkflowRun && currentWorkflowRun.status && !loading &&
+              currentWorkflowRun.status !== pipelineStatusEnum.BUILDING &&
+              currentWorkflowRun.status !== pipelineStatusEnum.WAITING &&
+              currentWorkflowNodeRun?.status !== pipelineStatusEnum.BUILDING &&
+              currentWorkflowNodeRun?.status !== pipelineStatusEnum.WAITING">
+          <i class="play icon"></i>
+      </button>
+      <button class="ui danger icon button" [title]="'btn_run' | translate" (click)="stopNodeRun()"
+          *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
+          <i class="stop icon"></i>
+      </button>
+      <div class="or" data-text="{{'btn_or' | translate}}"></div>
+      <button class="ui icon button" [title]="'btn_logs' | translate" (click)="displayLogs()">
+          <i class="newspaper icon"></i>
+      </button>
+    </div>
+    <!-- <div class="ui fluid vertical menu">
+      <a class="item" (click)="openEditContextModal()">
+        {{ 'workflow_node_context_edit' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openEditRunConditions()">
+        {{ 'workflow_node_condition_edit' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" [queryParams]="{workflow: workflow.name }">
+        {{ 'pipeline_label_edit' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openAddHookModal()">
+        {{ 'workflow_node_hook_add' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openAddParentModal()">
+        {{ 'workflow_node_parent' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openTriggerModal()">
+        {{ 'workflow_node_trigger_add' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="createJoin()">
+        {{ 'workflow_node_join_add' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="linkJoin()">
+        {{ 'workflow_node_join_link' | translate }} <i class="angle right icon"></i>
+      </a>
+      <a class="item" (click)="openDeleteNodeModal()">
+        {{ 'workflow_node_delete_btn' | translate }} <i class="angle right icon"></i>
+      </a>
+    </div> -->
+</div>
+<ng-container *ngIf="project && node">
+    <app-workflow-node-run-param [workflow]="workflow" [project]="project" [nodeRun]="currentWorkflowNodeRun" [nodeToRun]="node" [num]="runNumber" #workflowRunNode></app-workflow-node-run-param>
+</ng-container>

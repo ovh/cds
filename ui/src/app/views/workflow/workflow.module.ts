@@ -12,7 +12,8 @@ import {WorkflowRunJobVariableComponent} from './run/node/pipeline/variables/job
 import {WorkflowRunJobSpawnInfoComponent} from './run/node/pipeline/spawninfo/spawninfo.component';
 import {WorkflowStepLogComponent} from './run/node/pipeline/step/step.log.component';
 import {WorkflowComponent} from './workflow.compoment';
-import {WorkflowSidebarRunComponent} from './sidebar/run/workflow.sidebar.run.component';
+import {WorkflowSidebarRunListComponent} from './sidebar/run/list/workflow.sidebar.run.component';
+import {WorkflowSidebarRunNodeComponent} from './sidebar/run/node/workflow.sidebar.run.node.component';
 import {WorkflowSidebarEditComponent} from './sidebar/edit/workflow.sidebar.edit.component';
 import {WorkflowSidebarEditJoinComponent} from './sidebar/edit/join/workflow.sidebar.edit.join.component';
 import {WorkflowSidebarEditNodeComponent} from './sidebar/edit/node/workflow.sidebar.edit.node.component';
@@ -46,7 +47,8 @@ import {WorkflowNotificationComponent} from './show/notification/workflow.notifi
         WorkflowSidebarEditNodeComponent,
         WorkflowSidebarEditJoinComponent,
         WorkflowNodeRunHistoryComponent,
-        WorkflowSidebarRunComponent,
+        WorkflowSidebarRunListComponent,
+        WorkflowSidebarRunNodeComponent,
         WorkflowShowComponent,
         WorkflowStepLogComponent,
         WorkflowNodeRunSummaryComponent
