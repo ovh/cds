@@ -168,7 +168,7 @@ var (
 
 		for i := range proj.Environments {
 			env := &proj.Environments[i]
-			env.Permission = permission.EnvironmentPermission(env.ID, u)
+			env.Permission = permission.EnvironmentPermission(proj.Key, env.Name, u)
 		}
 
 		return nil

@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ovh/cds/engine/api/permission"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -95,46 +97,33 @@ func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, s
 			b.mutex.Lock()
 			for _, i := range b.clients {
 				if err := loadUserPermissions(DBFunc(), store, i.User); err != nil {
-					log.Warning("lastUpdate.CacheSubscribe> Cannot load auser permission: %s", err)
+					log.Warning("lastUpdate.CacheSubscribe> Cannot load user permission: %s", err)
 					continue
 				}
 
-				hasPermission := false
 				if i.User.Admin {
-					hasPermission = true
-				} else {
-				groups:
-					for _, g := range i.User.Groups {
-						hasPermission = false
-						switch lastModif.Type {
-						case sdk.ProjectLastModificationType:
-							for _, pg := range g.ProjectGroups {
-								if pg.Project.Key == lastModif.Key {
-									hasPermission = true
-									break groups
-								}
-							}
-						case sdk.ApplicationLastModificationType:
-							for _, ag := range g.ApplicationGroups {
-								if ag.Application.Name == lastModif.Name && ag.Application.ProjectKey == lastModif.Key {
-									hasPermission = true
-									break groups
-								}
-							}
-						case sdk.PipelineLastModificationType:
-							for _, pg := range g.PipelineGroups {
-								if pg.Pipeline.Name == lastModif.Name && pg.Pipeline.ProjectKey == lastModif.Key {
-									hasPermission = true
-									break groups
-								}
-							}
-						}
+					i.Queue <- msg
+					continue
+				}
+
+				switch lastModif.Type {
+				case sdk.ProjectLastModificationType:
+					if permission.ProjectPermission(lastModif.Key, i.User) >= permission.PermissionRead {
+						i.Queue <- msg
+						continue
+					}
+				case sdk.ApplicationLastModificationType:
+					if permission.ApplicationPermission(lastModif.Key, lastModif.Name, i.User) >= permission.PermissionRead {
+						i.Queue <- msg
+						continue
+					}
+				case sdk.PipelineLastModificationType:
+					if permission.PipelinePermission(lastModif.Key, lastModif.Name, i.User) >= permission.PermissionRead {
+						i.Queue <- msg
+						continue
 					}
 				}
 
-				if hasPermission {
-					i.Queue <- msg
-				}
 			}
 			b.mutex.Unlock()
 		}

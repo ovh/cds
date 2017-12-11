@@ -256,14 +256,11 @@ func TestLoadUserWithGroup(t *testing.T) {
 		t.Fatalf("cannot load user group and project: %s", err)
 	}
 
-	if len(u.Groups) != 1 {
-		t.Fatalf("Missing/TooMuch group on user, need 1, got %d", len(u.Groups))
+	if len(u.Permissions.ProjectsPerm) != 2 {
+		t.Fatalf("Missing/TooMuch project on u.Permissions.ProjectsPerm 2, got %d", len(u.Permissions.ProjectsPerm))
 	}
-	if len(u.Groups[0].ProjectGroups) != 2 {
-		t.Fatalf("Missing/TooMuch project on group.Need 2, got %d", len(u.Groups[0].ProjectGroups))
-	}
-	if len(u.Groups[0].PipelineGroups) != 1 {
-		t.Fatalf("Missing/TooMuch pipeline on group.Need 1, got %d", len(u.Groups[0].PipelineGroups))
+	if len(u.Permissions.PipelinesPerm) != 1 {
+		t.Fatalf("Missing/TooMuch pipeline on u.Permissions.PipelinesPerm 1, got %d", len(u.Permissions.PipelinesPerm))
 	}
 }
 

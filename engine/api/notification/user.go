@@ -217,7 +217,7 @@ func LoadAllUserNotificationSettingsByProject(db gorp.SqlExecutor, projectKey st
 	var args []interface{}
 	//Handler admin
 	if u == nil || u.Admin {
-		query = `SELECT 	application_pipeline_id, environment_id, settings, pipeline.id, pipeline.name, environment.name
+		query = `SELECT 	application_pipeline_id, environment_id, project.projectkey, settings, pipeline.id, pipeline.name, environment.name
 		FROM  	application_pipeline_notif
 		JOIN 	application_pipeline ON application_pipeline.id = application_pipeline_notif.application_pipeline_id
 		JOIN 	pipeline ON pipeline.id = application_pipeline.pipeline_id
@@ -228,7 +228,7 @@ func LoadAllUserNotificationSettingsByProject(db gorp.SqlExecutor, projectKey st
 		args = []interface{}{projectKey}
 	} else {
 		query = `
-		SELECT 	application_pipeline_id, environment_id, settings, pipeline.id, pipeline.name, environment.name
+		SELECT 	application_pipeline_id, environment_id, project.projectkey, settings, pipeline.id, pipeline.name, environment.name
 		FROM  	application_pipeline_notif
 		JOIN 	application_pipeline ON application_pipeline.id = application_pipeline_notif.application_pipeline_id
 		JOIN 	pipeline ON pipeline.id = application_pipeline.pipeline_id
@@ -251,7 +251,7 @@ func LoadAllUserNotificationSettingsByProject(db gorp.SqlExecutor, projectKey st
 	for rows.Next() {
 		var un sdk.UserNotification
 		var settings string
-		if err := rows.Scan(&un.ApplicationPipelineID, &un.Environment.ID, &settings, &un.Pipeline.ID, &un.Pipeline.Name, &un.Environment.Name); err != nil {
+		if err := rows.Scan(&un.ApplicationPipelineID, &un.Environment.ID, &un.Environment.ProjectKey, &settings, &un.Pipeline.ID, &un.Pipeline.Name, &un.Environment.Name); err != nil {
 			return nil, err
 		}
 		var err error
@@ -261,7 +261,7 @@ func LoadAllUserNotificationSettingsByProject(db gorp.SqlExecutor, projectKey st
 		}
 
 		if u != nil {
-			if !permission.AccessToEnvironment(un.Environment.ID, u, permission.PermissionRead) {
+			if !permission.AccessToEnvironment(un.Environment.ProjectKey, un.Environment.Name, u, permission.PermissionRead) {
 				continue
 			}
 		}

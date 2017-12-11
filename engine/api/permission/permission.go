@@ -25,147 +25,98 @@ var (
 )
 
 // ApplicationPermission  Get the permission for the given application
-func ApplicationPermission(applicationID int64, user *sdk.User) int {
-	if user.Admin {
+func ApplicationPermission(key string, appName string, u *sdk.User) int {
+	if u.Admin {
 		return PermissionReadWriteExecute
 	}
-	max := 0
-	for _, g := range user.Groups {
-		for _, ag := range g.ApplicationGroups {
-			if ag.Application.ID == applicationID && ag.Permission > max {
-				max = ag.Permission
-			}
-		}
-	}
-	return max
+
+	return u.Permissions.ApplicationsPerm[sdk.UserPermissionKey{Key: key, Name: appName}]
 }
 
 // ProjectPermission  Get the permission for the given project
-func ProjectPermission(projectKey string, user *sdk.User) int {
-	if user.Admin || user == nil {
+func ProjectPermission(projectKey string, u *sdk.User) int {
+	if u.Admin || u == nil {
 		return PermissionReadWriteExecute
 	}
-	max := 0
-	for _, g := range user.Groups {
-		for _, pg := range g.ProjectGroups {
-			if pg.Project.Key == projectKey && pg.Permission > max {
-				max = pg.Permission
-			}
-		}
-	}
-	return max
+
+	return u.Permissions.ProjectsPerm[projectKey]
 }
 
 // WorkflowPermission  Get the permission for the given workflow
-func WorkflowPermission(workflowID int64, user *sdk.User) int {
-	if user.Admin {
+func WorkflowPermission(key string, name string, u *sdk.User) int {
+	if u.Admin {
 		return PermissionReadWriteExecute
 	}
-	max := 0
-	for _, g := range user.Groups {
-		for _, wg := range g.WorkflowGroups {
-			if wg.Workflow.ID == workflowID && wg.Permission > max {
-				max = wg.Permission
-			}
-		}
-	}
-	return max
+
+	return u.Permissions.WorkflowsPerm[sdk.UserPermissionKey{Key: key, Name: name}]
 }
 
 // PipelinePermission  Get the permission for the given pipeline
-func PipelinePermission(pipelineID int64, user *sdk.User) int {
-	if user.Admin {
+func PipelinePermission(key string, name string, u *sdk.User) int {
+	if u.Admin {
 		return PermissionReadWriteExecute
 	}
-	max := 0
-	for _, g := range user.Groups {
-		for _, pg := range g.PipelineGroups {
-			if pg.Pipeline.ID == pipelineID && pg.Permission > max {
-				max = pg.Permission
-			}
-		}
-	}
-	return max
+
+	return u.Permissions.PipelinesPerm[sdk.UserPermissionKey{Key: key, Name: name}]
 }
 
 // EnvironmentPermission  Get the permission for the given environment
-func EnvironmentPermission(envID int64, user *sdk.User) int {
-	if user.Admin {
+func EnvironmentPermission(key string, name string, u *sdk.User) int {
+	if u.Admin {
 		return PermissionReadWriteExecute
 	}
-	max := 0
-	for _, g := range user.Groups {
-		for _, eg := range g.EnvironmentGroups {
-			if eg.Environment.ID == envID && eg.Permission > max {
-				max = eg.Permission
-			}
-		}
-	}
-	return max
+
+	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: key, Name: name}]
 }
 
 // AccessToApplication check if we can modify the given application
-func AccessToApplication(applicationID int64, user *sdk.User, access int) bool {
-	if user.Admin {
+func AccessToApplication(key string, name string, u *sdk.User, access int) bool {
+	if u.Admin {
 		return true
 	}
 
-	for _, g := range user.Groups {
-		if g.ID == SharedInfraGroupID {
-			return true
-		}
-		for _, ag := range g.ApplicationGroups {
-			if ag.Application.ID == applicationID && ag.Permission >= access {
-				return true
-			}
-		}
-	}
-	return false
+	return u.Permissions.ApplicationsPerm[sdk.UserPermissionKey{Key: key, Name: name}] >= access
 }
 
 // AccessToPipeline check if we can modify the given pipeline
-func AccessToPipeline(environmentID, pipelineID int64, user *sdk.User, access int) bool {
-	if user.Admin {
+func AccessToPipeline(key string, env, pip string, u *sdk.User, access int) bool {
+	if u.Admin {
 		return true
 	}
 
-	for _, g := range user.Groups {
+	for _, g := range u.Groups {
 		if g.ID == SharedInfraGroupID {
 			return true
 		}
-		for _, pg := range g.PipelineGroups {
-			if pg.Pipeline.ID == pipelineID && pg.Permission >= access {
-				if environmentID != sdk.DefaultEnv.ID {
-					return AccessToEnvironment(environmentID, user, access)
-				}
-				return true
-			}
-		}
 	}
+
+	if u.Permissions.PipelinesPerm[sdk.UserPermissionKey{Key: key, Name: pip}] >= access {
+		if env != sdk.DefaultEnv.Name {
+			return AccessToEnvironment(key, env, u, access)
+		}
+		return true
+	}
+
 	return false
 }
 
 // AccessToEnvironment check if we can modify the given environment
-func AccessToEnvironment(envID int64, user *sdk.User, access int) bool {
-	if envID == sdk.DefaultEnv.ID {
+func AccessToEnvironment(key, env string, u *sdk.User, access int) bool {
+	if env != sdk.DefaultEnv.Name {
 		return true
 	}
 
-	if user.Admin {
+	if u.Admin {
 		return true
 	}
 
-	for _, g := range user.Groups {
+	for _, g := range u.Groups {
 		if g.ID == SharedInfraGroupID {
 			return true
 		}
-		for _, eg := range g.EnvironmentGroups {
-			if eg.Environment.ID == envID && eg.Permission >= access {
-				return true
-			}
-		}
 	}
-	return false
+
+	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: key, Name: env}] >= access
 }
 
 // ApplicationPipelineEnvironmentUsers returns users list with expected access to application/pipeline/environment

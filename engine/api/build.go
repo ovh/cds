@@ -140,7 +140,7 @@ func (api *API) deleteBuildHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "deleteBuildHandler> No enought right on this environment %s", envName)
 		}
 
@@ -200,7 +200,7 @@ func (api *API) getBuildStateHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getBuildStateHandler> No enought right on this environment %s: ", envName)
 		}
 
@@ -643,7 +643,7 @@ func (api *API) addBuildVariableHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addBuildVariableHandler> No enought right on this environment %s", envName)
 		}
 
@@ -713,7 +713,7 @@ func (api *API) addBuildTestResultsHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addBuildTestResultsHandler> No enought right on this environment %s: ", envName)
 		}
 
@@ -800,7 +800,7 @@ func (api *API) getBuildTestResultsHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getBuildTestResultsHandler> No enought right on this environment %s: ", envName)
 		}
 

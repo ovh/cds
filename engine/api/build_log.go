@@ -48,7 +48,7 @@ func (api *API) getStepBuildLogsHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getStepBuildLogsHandler> No enought right on this environment %s", envName)
 		}
 
@@ -123,7 +123,7 @@ func (api *API) getBuildLogsHandler() Handler {
 
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getBuildLogsHandler> No enought right on this environment %s", envName)
 
 		}
@@ -221,7 +221,7 @@ func (api *API) getPipelineBuildJobLogsHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getPipelineBuildJobLogsHandler> No enought right on this environment %s", envName)
 		}
 

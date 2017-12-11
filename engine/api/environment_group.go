@@ -88,7 +88,7 @@ func (api *API) updateGroupRoleOnEnvironmentHandler() Handler {
 		if errE != nil {
 			return sdk.WrapError(errE, "updateGroupRoleOnEnvironmentHandler> Cannot load updated environment")
 		}
-		envUpdated.Permission = permission.EnvironmentPermission(envUpdated.ID, getUser(ctx))
+		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, getUser(ctx))
 		envUpdated.ProjectKey = key
 
 		return WriteJSON(w, r, envUpdated, http.StatusOK)
@@ -168,7 +168,7 @@ func (api *API) addGroupsInEnvironmentHandler() Handler {
 		if errL != nil {
 			return sdk.WrapError(errL, "addGroupsInEnvironmentHandler: Cannot load updated environment")
 		}
-		envUpdated.Permission = permission.EnvironmentPermission(envUpdated.ID, getUser(ctx))
+		envUpdated.Permission = permission.EnvironmentPermission(key, envUpdated.Name, getUser(ctx))
 		envUpdated.ProjectKey = key
 
 		return WriteJSON(w, r, envUpdated, http.StatusOK)

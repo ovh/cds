@@ -57,8 +57,7 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, use
 		if err != nil {
 			return envs, err
 		}
-		env.Permission = permission.EnvironmentPermission(env.ID, user)
-
+		env.Permission = permission.EnvironmentPermission(projectKey, env.Name, user)
 		envs = append(envs, env)
 	}
 	rows.Close()
@@ -417,19 +416,20 @@ func loadGroupByEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) e
 }
 
 // LoadEnvironmentByGroup loads all environments where group has access
-func LoadEnvironmentByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
+func LoadEnvironmentByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.EnvironmentGroup, error) {
+	res := []sdk.EnvironmentGroup{}
 	query := `SELECT project.projectKey,
-			 environment.id,
-	                 environment.name,
-	                 environment_group.role
+			 	environment.id,
+	        	environment.name,
+	    		environment_group.role
 	          FROM environment
 	          JOIN environment_group ON environment_group.environment_id = environment.id
 	 	  JOIN project ON environment.project_id = project.id
 	 	  WHERE environment_group.group_id = $1
 	 	  ORDER BY environment.name ASC`
-	rows, err := db.Query(query, group.ID)
+	rows, err := db.Query(query, groupID)
 	if err != nil {
-		return err
+		return res, err
 	}
 	defer rows.Close()
 
@@ -438,14 +438,14 @@ func LoadEnvironmentByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 		var perm int
 		err = rows.Scan(&environment.ProjectKey, &environment.ID, &environment.Name, &perm)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		group.EnvironmentGroups = append(group.EnvironmentGroups, sdk.EnvironmentGroup{
+		res = append(res, sdk.EnvironmentGroup{
 			Environment: environment,
 			Permission:  perm,
 		})
 	}
-	return nil
+	return res, nil
 }
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables

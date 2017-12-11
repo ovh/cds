@@ -51,7 +51,8 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, u *sdk.User, opts ...LoadOp
 }
 
 // LoadPermissions loads all projects where group has access
-func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
+func LoadPermissions(db gorp.SqlExecutor, groupID int64) ([]sdk.ProjectGroup, error) {
+	res := []sdk.ProjectGroup{}
 	query := `
 		SELECT project.projectKey, project.name, project.last_modified, project_group.role
 		FROM project
@@ -59,9 +60,9 @@ func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
 	 	WHERE project_group.group_id = $1
 		ORDER BY project.name ASC`
 
-	rows, err := db.Query(query, group.ID)
+	rows, err := db.Query(query, groupID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -70,9 +71,9 @@ func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
 		var perm int
 		var lastModified time.Time
 		if err := rows.Scan(&projectKey, &projectName, &lastModified, &perm); err != nil {
-			return err
+			return nil, err
 		}
-		group.ProjectGroups = append(group.ProjectGroups, sdk.ProjectGroup{
+		res = append(res, sdk.ProjectGroup{
 			Project: sdk.Project{
 				Key:          projectKey,
 				Name:         projectName,
@@ -81,7 +82,7 @@ func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
 			Permission: perm,
 		})
 	}
-	return nil
+	return res, nil
 }
 
 // Exist checks whether a project exists or not

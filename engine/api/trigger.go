@@ -19,7 +19,7 @@ import (
 func (api *API) addTriggerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		project := vars["key"]
+		key := vars["key"]
 
 		// Unmarshal args
 		var t sdk.PipelineTrigger
@@ -29,30 +29,30 @@ func (api *API) addTriggerHandler() Handler {
 
 		// load source ids
 		if t.SrcApplication.ID == 0 {
-			a, errSrcApp := application.LoadByName(api.mustDB(), api.Cache, project, t.SrcApplication.Name, getUser(ctx))
+			a, errSrcApp := application.LoadByName(api.mustDB(), api.Cache, key, t.SrcApplication.Name, getUser(ctx))
 			if errSrcApp != nil {
 				return sdk.WrapError(errSrcApp, "addTriggersHandler> cannot load src application")
 			}
 			t.SrcApplication.ID = a.ID
 		}
-		if !permission.AccessToApplication(t.SrcApplication.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToApplication(key, t.SrcApplication.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> You don't have enought right on this application %s", t.SrcApplication.Name)
 		}
 
 		if t.SrcPipeline.ID == 0 {
-			p, errSrcPip := pipeline.LoadPipeline(api.mustDB(), project, t.SrcPipeline.Name, false)
+			p, errSrcPip := pipeline.LoadPipeline(api.mustDB(), key, t.SrcPipeline.Name, false)
 			if errSrcPip != nil {
 				return sdk.WrapError(errSrcPip, "addTriggersHandler> cannot load src pipeline")
 			}
 			t.SrcPipeline.ID = p.ID
 		}
-		if !permission.AccessToPipeline(sdk.DefaultEnv.ID, t.SrcPipeline.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToPipeline(key, sdk.DefaultEnv.Name, t.SrcPipeline.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> You don't have enought right on this pipeline %s", t.SrcPipeline.Name)
 
 		}
 
 		if t.SrcEnvironment.ID == 0 && t.SrcEnvironment.Name != "" && t.SrcEnvironment.Name != sdk.DefaultEnv.Name {
-			e, errSrcEnv := environment.LoadEnvironmentByName(api.mustDB(), project, t.SrcEnvironment.Name)
+			e, errSrcEnv := environment.LoadEnvironmentByName(api.mustDB(), key, t.SrcEnvironment.Name)
 			if errSrcEnv != nil {
 				return sdk.WrapError(errSrcEnv, "addTriggersHandler> cannot load src environment")
 			}
@@ -60,37 +60,37 @@ func (api *API) addTriggerHandler() Handler {
 		} else if t.SrcEnvironment.ID == 0 {
 			t.SrcEnvironment = sdk.DefaultEnv
 		}
-		if !permission.AccessToEnvironment(t.SrcEnvironment.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToEnvironment(key, t.SrcEnvironment.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> No enought right on this environment %s: ", t.SrcEnvironment.Name)
 
 		}
 
 		// load destination ids
 		if t.DestApplication.ID == 0 {
-			a, errDestApp := application.LoadByName(api.mustDB(), api.Cache, project, t.DestApplication.Name, getUser(ctx))
+			a, errDestApp := application.LoadByName(api.mustDB(), api.Cache, key, t.DestApplication.Name, getUser(ctx))
 			if errDestApp != nil {
 				return sdk.WrapError(errDestApp, "addTriggersHandler> cannot load dst application")
 			}
 			t.DestApplication.ID = a.ID
 		}
-		if !permission.AccessToApplication(t.DestApplication.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToApplication(key, t.DestApplication.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> You don't have enought right on this application %s", t.DestApplication.Name)
 		}
 
 		if t.DestPipeline.ID == 0 {
-			p, errDestPip := pipeline.LoadPipeline(api.mustDB(), project, t.DestPipeline.Name, false)
+			p, errDestPip := pipeline.LoadPipeline(api.mustDB(), key, t.DestPipeline.Name, false)
 			if errDestPip != nil {
 				return sdk.WrapError(errDestPip, "addTriggersHandler> cannot load dst pipeline")
 			}
 			t.DestPipeline.ID = p.ID
 		}
-		if !permission.AccessToPipeline(sdk.DefaultEnv.ID, t.DestPipeline.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToPipeline(key, sdk.DefaultEnv.Name, t.DestPipeline.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> You don't have enought right on this pipeline %s", t.DestPipeline.Name)
 
 		}
 
 		if t.DestEnvironment.ID == 0 && t.DestEnvironment.Name != "" && t.DestEnvironment.Name != sdk.DefaultEnv.Name {
-			e, errDestEnv := environment.LoadEnvironmentByName(api.mustDB(), project, t.DestEnvironment.Name)
+			e, errDestEnv := environment.LoadEnvironmentByName(api.mustDB(), key, t.DestEnvironment.Name)
 			if errDestEnv != nil {
 				return sdk.WrapError(errDestEnv, "addTriggersHandler> cannot load dst environment")
 			}
@@ -99,7 +99,7 @@ func (api *API) addTriggerHandler() Handler {
 			t.DestEnvironment = sdk.DefaultEnv
 		}
 
-		if !permission.AccessToEnvironment(t.DestEnvironment.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToEnvironment(key, t.DestEnvironment.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addTriggersHandler> No enought right on this environment %s: ", t.DestEnvironment.Name)
 
 		}
@@ -126,7 +126,7 @@ func (api *API) addTriggerHandler() Handler {
 		}
 
 		var errWorkflow error
-		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, project, t.SrcApplication.Name, getUser(ctx), "", "", 0)
+		t.SrcApplication.Workflows, errWorkflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, key, t.SrcApplication.Name, getUser(ctx), "", "", 0)
 		if errWorkflow != nil {
 			return sdk.WrapError(errWorkflow, "addTriggerHandler> cannot load updated workflow")
 		}
@@ -157,7 +157,7 @@ func (api *API) getTriggerHandler() Handler {
 func (api *API) getTriggersHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		project := vars["key"]
+		key := vars["key"]
 		app := vars["permApplicationName"]
 		pip := vars["permPipelineKey"]
 
@@ -167,25 +167,25 @@ func (api *API) getTriggersHandler() Handler {
 		}
 		env := r.Form.Get("env")
 
-		a, errApp := application.LoadByName(api.mustDB(), api.Cache, project, app, getUser(ctx))
+		a, errApp := application.LoadByName(api.mustDB(), api.Cache, key, app, getUser(ctx))
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getTriggersHandler> cannot load application")
 		}
 
-		p, errPip := pipeline.LoadPipeline(api.mustDB(), project, pip, false)
+		p, errPip := pipeline.LoadPipeline(api.mustDB(), key, pip, false)
 		if errPip != nil {
 			return sdk.WrapError(errPip, "getTriggersHandler> cannot load pipeline")
 		}
 
 		var envID int64
 		if env != "" && env != sdk.DefaultEnv.Name {
-			e, errEnv := environment.LoadEnvironmentByName(api.mustDB(), project, env)
+			e, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, env)
 			if errEnv != nil {
 				return sdk.WrapError(errEnv, "getTriggersHandler> cannot load environment")
 			}
 			envID = e.ID
 
-			if !permission.AccessToEnvironment(e.ID, getUser(ctx), permission.PermissionRead) {
+			if !permission.AccessToEnvironment(key, e.Name, getUser(ctx), permission.PermissionRead) {
 				return sdk.WrapError(sdk.ErrForbidden, "getTriggersHandler> No enought right on this environment %s: ", e.Name)
 
 			}
@@ -302,7 +302,7 @@ func (api *API) updateTriggerHandler() Handler {
 func (api *API) getTriggersAsSourceHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		project := vars["key"]
+		key := vars["key"]
 		app := vars["permApplicationName"]
 		pip := vars["permPipelineKey"]
 
@@ -311,25 +311,25 @@ func (api *API) getTriggersAsSourceHandler() Handler {
 		}
 		env := r.Form.Get("env")
 
-		a, errApp := application.LoadByName(api.mustDB(), api.Cache, project, app, getUser(ctx))
+		a, errApp := application.LoadByName(api.mustDB(), api.Cache, key, app, getUser(ctx))
 		if errApp != nil {
 			return sdk.WrapError(errApp, "getTriggersAsSourceHandler> cannot load application")
 		}
 
-		p, errPip := pipeline.LoadPipeline(api.mustDB(), project, pip, false)
+		p, errPip := pipeline.LoadPipeline(api.mustDB(), key, pip, false)
 		if errPip != nil {
 			return sdk.WrapError(errPip, "getTriggersAsSourceHandler> cannot load pipeline")
 		}
 
 		var envID int64
 		if env != "" && env != sdk.DefaultEnv.Name {
-			e, errEnv := environment.LoadEnvironmentByName(api.mustDB(), project, env)
+			e, errEnv := environment.LoadEnvironmentByName(api.mustDB(), key, env)
 			if errEnv != nil {
 				return sdk.WrapError(errEnv, "getTriggersAsSourceHandler> cannot load environment")
 			}
 			envID = e.ID
 
-			if !permission.AccessToEnvironment(e.ID, getUser(ctx), permission.PermissionRead) {
+			if !permission.AccessToEnvironment(key, e.Name, getUser(ctx), permission.PermissionRead) {
 				return sdk.WrapError(sdk.ErrForbidden, "getTriggersAsSourceHandler> No enought right on this environment %s: ", e.Name)
 			}
 		}

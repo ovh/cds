@@ -27,100 +27,6 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func (api *API) rollbackPipelineHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		// Get pipeline and action name in URL
-		vars := mux.Vars(r)
-		projectKey := vars["key"]
-		pipelineName := vars["permPipelineKey"]
-		appName := vars["permApplicationName"]
-
-		var request sdk.RunRequest
-		if err := UnmarshalBody(r, &request); err != nil {
-			return err
-		}
-
-		//Load the project
-		proj, errproj := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx))
-		if errproj != nil {
-			return sdk.WrapError(errproj, "rollbackPipelineHandler> Unable to load project %s", projectKey)
-		}
-
-		// Load application
-		app, err := application.LoadByName(api.mustDB(), api.Cache, projectKey, appName, getUser(ctx), application.LoadOptions.WithTriggers, application.LoadOptions.WithVariablesWithClearPassword)
-		if err != nil {
-			if err != sdk.ErrApplicationNotFound {
-				log.Warning("rollbackPipelineHandler> Cannot load application %s: %s\n", appName, err)
-			}
-			return err
-		}
-
-		// Load pipeline
-		pip, err := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
-		if err != nil {
-			if err != sdk.ErrPipelineNotFound {
-				log.Warning("rollbackPipelineHandler> Cannot load pipeline %s; %s\n", pipelineName, err)
-			}
-			return err
-		}
-
-		// Load Env
-		var env *sdk.Environment
-		if request.Env.Name != "" && request.Env.Name != sdk.DefaultEnv.Name {
-			env, err = environment.LoadEnvironmentByName(api.mustDB(), projectKey, request.Env.Name)
-			if err != nil {
-				return sdk.WrapError(sdk.ErrNoEnvironment, "rollbackPipelineHandler> Cannot load environment %s; %s", request.Env.Name, err)
-			}
-
-			if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
-				return sdk.WrapError(sdk.ErrForbidden, "rollbackPipelineHandler> No enought right on this environment %s: ", request.Env.Name)
-			}
-		} else {
-			env = &sdk.DefaultEnv
-		}
-
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
-			return sdk.WrapError(sdk.ErrNoEnvExecution, "rollbackPipelineHandler> You do not have Execution Right on this environment %s", env.Name)
-		}
-
-		pbs, err := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), app.ID, pip.ID, env.ID, 2,
-			pipeline.LoadPipelineBuildOpts.WithStatus(string(sdk.StatusSuccess)))
-		if err != nil {
-			return sdk.WrapError(sdk.ErrNoPipelineBuild, "rollbackPipelineHandler> Cannot load pipeline build history %s", err)
-		}
-
-		if len(pbs) != 2 {
-			return sdk.WrapError(sdk.ErrNoPreviousSuccess, "rollbackPipelineHandler> There is no previous success for app %s(%d), pip %s(%d), env %s(%d): %d", app.Name, app.ID, pip.Name, pip.ID, env.Name, env.ID, len(pbs))
-		}
-
-		tx, err := api.mustDB().Begin()
-		if err != nil {
-			return sdk.WrapError(err, "rollbackPipelineHandler> Cannot start tx")
-		}
-		defer tx.Rollback()
-
-		trigger := pbs[1].Trigger
-		trigger.TriggeredBy = getUser(ctx)
-
-		newPb, err := queue.RunPipeline(api.mustDB, api.Cache, tx, projectKey, app, pipelineName, env.Name, pbs[1].Parameters, pbs[1].Version, trigger, getUser(ctx))
-		if err != nil {
-			return sdk.WrapError(err, "rollbackPipelineHandler> Cannot run pipeline")
-		}
-
-		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "rollbackPipelineHandler> Cannot commit tx")
-		}
-
-		go func() {
-			if _, err := pipeline.UpdatePipelineBuildCommits(api.mustDB(), api.Cache, proj, pip, app, env, newPb); err != nil {
-				log.Warning("scheduler.Run> Unable to update pipeline build commits : %s", err)
-			}
-		}()
-
-		return WriteJSON(w, r, newPb, http.StatusOK)
-	}
-}
-
 func loadDestEnvFromRunRequest(ctx context.Context, db *gorp.DbMap, request *sdk.RunRequest, projectKey string) (*sdk.Environment, error) {
 	var envDest = &sdk.DefaultEnv
 	var err error
@@ -131,7 +37,7 @@ func loadDestEnvFromRunRequest(ctx context.Context, db *gorp.DbMap, request *sdk
 			return nil, sdk.ErrNoEnvironment
 		}
 	}
-	if !permission.AccessToEnvironment(envDest.ID, getUser(ctx), permission.PermissionReadExecute) {
+	if !permission.AccessToEnvironment(projectKey, envDest.Name, getUser(ctx), permission.PermissionReadExecute) {
 		log.Warning("loadDestEnvFromRunRequest> You do not have Execution Right on this environment\n")
 		return nil, sdk.ErrForbidden
 	}
@@ -685,7 +591,7 @@ func (api *API) getPipelineHandler() Handler {
 			return sdk.WrapError(err, "getPipelineHandler> Cannot load pipeline %s", pipelineName)
 		}
 
-		p.Permission = permission.PipelinePermission(p.ID, getUser(ctx))
+		p.Permission = permission.PipelinePermission(projectKey, p.Name, getUser(ctx))
 
 		if withApp || withWorkflows || withEnvironments {
 			p.Usage = &sdk.Usage{}
@@ -807,7 +713,7 @@ func (api *API) getPipelineHistoryHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getPipelineHistoryHandler> No enought right on this environment %s", envName)
 		}
 
@@ -1202,7 +1108,7 @@ func (api *API) stopPipelineBuildHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "stopPipelineBuildHandler> You do not have Execution Right on this environment %s", env.Name)
 		}
 
@@ -1272,7 +1178,7 @@ func (api *API) restartPipelineBuildHandler() Handler {
 
 			}
 
-			if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+			if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 				return sdk.WrapError(sdk.ErrForbidden, "restartPipelineBuildHandler> No enought right on this environment %s: ", envName)
 
 			}
@@ -1287,7 +1193,7 @@ func (api *API) restartPipelineBuildHandler() Handler {
 			return sdk.WrapError(errFinal, "restartPipelineBuildHandler> Cannot load pipeline Build")
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrNoEnvExecution, "restartPipelineBuildHandler> You do not have Execution Right on this environment %s", env.Name)
 		}
 
@@ -1349,7 +1255,7 @@ func (api *API) getPipelineCommitsHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getPipelineCommitsHandler> No enought right on this environment %s (user=%s)", envName, getUser(ctx).Username)
 		}
 
@@ -1448,7 +1354,7 @@ func (api *API) getPipelineBuildCommitsHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getPipelineHistoryHandler> No enought right on this environment %s: ", envName)
 		}
 
