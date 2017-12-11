@@ -1,10 +1,11 @@
 package hooks
 
 import (
+	"testing"
+
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_doWebHookExecutionStash(t *testing.T) {
@@ -45,7 +46,6 @@ func Test_doWebHookExecutionGithub(t *testing.T) {
 	assert.Equal(t, "baxterthehacker", h.Payload["git.author"])
 	assert.Equal(t, "Update README.md", h.Payload["git.message"])
 	assert.Equal(t, "0d1a26e67d8f5eaf1f6ba5c57fc3c7d91ac0fd1c", h.Payload["git.hash"])
-	assert.Equal(t, "1", h.Payload["git.nb.commits"])
 }
 
 func Test_doWebHookExecutionGitlab(t *testing.T) {
@@ -68,7 +68,6 @@ func Test_doWebHookExecutionGitlab(t *testing.T) {
 	assert.Equal(t, "jsmith", h.Payload["git.author"])
 	assert.Equal(t, "Update Catalan translation to e38cb41.", h.Payload["git.message"])
 	assert.Equal(t, "da1560886d4f094c3e6c9ef40349f7d38b5d27d7", h.Payload["git.hash"])
-	assert.Equal(t, "2", h.Payload["git.nb.commits"])
 }
 
 func Test_doWebHookExecutionBitbucket(t *testing.T) {
