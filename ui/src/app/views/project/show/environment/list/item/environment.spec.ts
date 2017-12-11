@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, getTestBed, fakeAsync, tick} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
@@ -26,7 +26,7 @@ import {ProjectAuditService} from '../../../../../../service/project/project.aud
 import {EnvironmentAuditService} from '../../../../../../service/environment/environment.audit.service';
 import {ApplicationAuditService} from '../../../../../../service/application/application.audit.service';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
-
+import 'rxjs/add/observable/of';
 describe('CDS: Environment Component', () => {
 
     beforeEach(() => {

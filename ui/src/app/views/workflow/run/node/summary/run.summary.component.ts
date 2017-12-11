@@ -5,7 +5,7 @@ import {Project} from '../../../../../model/project.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Workflow, WorkflowNode} from '../../../../../model/workflow.model';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
 import {finalize, first} from 'rxjs/operators';

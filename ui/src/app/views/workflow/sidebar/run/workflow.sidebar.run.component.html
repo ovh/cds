@@ -9,16 +9,43 @@
                            [value]="option">
         </sui-select-option>
     </sui-multi-select>
-    <ul>
-        <li *ngFor="let r of filteredWorkflowRuns">
-            <app-status-icon [status]="r.status"></app-status-icon>
-            <a href="#" [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', r.num]">Run {{r.num}}</a>
-            <ng-container *ngFor="let t of r.tags">
-              <div class="ui label" *ngIf="canDisplayTag(t)">{{t.value}}</div>
-            </ng-container>
-        </li>
-        <li *ngIf="ready && (!workflowRuns || workflowRuns.length === 0)">{{ 'workflow_run_never' | translate }}</li>
-    </ul>
-
+    <div class="ui list divided no-mrt" #tagsList>
+      <div class="item padding pointing"
+          *ngFor="let r of filteredWorkflowRuns"
+          (click)="runNumber=r.num"
+          [class.active]="runNumber === r.num"
+          [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', r.num]">
+          <div class="floated right mr" *ngIf="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING">
+              <app-status-icon [status]="r.status"></app-status-icon>
+          </div>
+        <i class="icon ribbon-state"
+            [class.success]="r.status === pipelineStatusEnum.SUCCESS"
+            [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
+            [class.success]="r.status === pipelineStatusEnum.SUCCESS"
+            [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED">
+        </i>
+        <div class="content">
+          <a class="header"
+              [class.success]="r.status === pipelineStatusEnum.SUCCESS"
+              [class.waiting]="r.status === pipelineStatusEnum.BUILDING || r.status === pipelineStatusEnum.WAITING"
+              [class.success]="r.status === pipelineStatusEnum.SUCCESS"
+              [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED">
+              <i class="tag icon"></i> {{r.num}}
+          </a>
+          <div class="mt" [smDirTooltip]="getFilteredTagsString(getFilteredTags(r.tags))" smDirPosition="top left">
+              <i class="find icon"></i>
+              <ng-container *ngFor="let t of getFilteredTags(r.tags); let i = index; let last = last">
+                  <span class="tiny" *ngIf="i <= 1"> {{t.value}} </span><span class="tiny" *ngIf="!last && i <= 1">,</span><span *ngIf="i === 1 && !last"> ...</span>
+              </ng-container>
+          </div>
+          <div class="mt">
+              <i class="clock icon"></i> {{getDuration(r.status, r.start, r.last_execution)}}
+          </div>
+          <div class="mt">
+              <i class="calendar icon"></i> {{r.start | date:'short' }}
+          </div>
+        </div>
+      </div>
+    </div>
 </div>
 <div class="ui text active loader" *ngIf="!ready && open">{{ 'workflow_run_loading' | translate }}</div>

@@ -10,6 +10,7 @@ import {Stage} from '../../model/stage.model';
 import {Job} from '../../model/job.model';
 import {GroupPermission} from '../../model/group.model';
 import {Parameter} from '../../model/parameter.model';
+import 'rxjs/add/observable/of';
 
 
 @Injectable()

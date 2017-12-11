@@ -7,7 +7,7 @@ import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {finalize} from 'rxjs/operators';
 
 @Component({

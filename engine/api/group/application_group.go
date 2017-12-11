@@ -89,8 +89,8 @@ func InsertGroupInApplication(db gorp.SqlExecutor, applicationID, groupID int64,
 func UpdateGroupRoleInApplication(db gorp.SqlExecutor, appID, groupID int64, role int) error {
 	query := `UPDATE application_group
 	          SET role=$1
-			  WHERE application_id = $1
-			  AND group_id = $2`
+			  WHERE application_id = $2
+			  AND group_id = $3`
 	_, err := db.Exec(query, role, appID, groupID)
 
 	ok, err := checkAtLeastOneGroupWithWriteRoleOnApplication(db, appID)

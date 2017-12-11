@@ -1,10 +1,10 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
-import { TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
+import { TranslateService, TranslateLoader} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
-import {XHRBackend, Response, ResponseOptions} from '@angular/http';
+import {XHRBackend} from '@angular/http';
 import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {RepoManagerService} from '../../../../../../service/repomanager/project.repomanager.service';
 import {ProjectStore} from '../../../../../../service/project/project.store';
@@ -15,14 +15,14 @@ import {VariableService} from '../../../../../../service/variable/variable.servi
 import {SharedModule} from '../../../../../../shared/shared.module';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
 import {Project} from '../../../../../../model/project.model';
-import {TranslateParser} from 'ng2-translate';
+import {TranslateParser} from '@ngx-translate/core';
 import {ProjectModule} from '../../../../project.module';
 import {ProjectRepoManagerComponent} from './project.repomanager.list.component';
 import {RepositoriesManager} from '../../../../../../model/repositories.model';
 import {Observable} from 'rxjs/Observable';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
-
+import 'rxjs/add/observable/of';
 describe('CDS: Project RepoManager List Component', () => {
 
     let injector: Injector;

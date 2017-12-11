@@ -15,7 +15,7 @@ import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.ser
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {cloneDeep} from 'lodash';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 
 @Component({
     selector: 'app-workflow-run',

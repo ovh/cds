@@ -1,9 +1,9 @@
 /* tslint:disable:no-unused-variable */
-import {TestBed, fakeAsync,  inject} from '@angular/core/testing';
+import {TestBed, fakeAsync} from '@angular/core/testing';
 import {ActivatedRoute, ActivatedRouteSnapshot} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Observable} from 'rxjs/Observable';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {ProjectService} from '../../../service/project/project.service';
 import {ProjectStore} from '../../../service/project/project.store';
 import {PipelineService} from '../../../service/pipeline/pipeline.service';
@@ -22,7 +22,7 @@ import {ApplicationPipelineService} from '../../../service/application/pipeline/
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
-
+import 'rxjs/add/observable/of';
 describe('CDS: Pipeline Show', () => {
 
     beforeEach(() => {

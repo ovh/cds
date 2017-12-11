@@ -7,7 +7,7 @@ import {WorkerModelService} from '../../../../service/worker-model/worker-model.
 import {GroupService} from '../../../../service/group/group.service';
 import {SharedService} from '../../../../shared/shared.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {User} from '../../../../model/user.model';
 
 @Component({

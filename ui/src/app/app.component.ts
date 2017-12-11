@@ -1,7 +1,7 @@
 import { registerLocaleData } from '@angular/common';
 import { RouterService } from './service/router/router.service';
 import {Component, OnInit, NgZone} from '@angular/core';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
 import {environment} from '../environments/environment';
 import {WarningStore} from './service/warning/warning.store';

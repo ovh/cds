@@ -9,7 +9,7 @@ import {ApplicationStore} from '../../../../service/application/application.stor
 import {ApplicationAdminComponent} from './application.admin.component';
 import {ApplicationService} from '../../../../service/application/application.service';
 import {SharedModule} from '../../../../shared/shared.module';
-import {TranslateLoader, TranslateService} from 'ng2-translate/ng2-translate';
+import {TranslateLoader, TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {Project} from '../../../../model/project.model';
 import {RepoManagerService} from '../../../../service/repomanager/project.repomanager.service';
@@ -21,7 +21,7 @@ import {ProjectService} from '../../../../service/project/project.service';
 import {PipelineService} from '../../../../service/pipeline/pipeline.service';
 import {EnvironmentService} from '../../../../service/environment/environment.service';
 import {VariableService} from '../../../../service/variable/variable.service';
-import {TranslateParser} from 'ng2-translate';
+import {TranslateParser} from '@ngx-translate/core';
 import {RepositoriesManager} from '../../../../model/repositories.model';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';

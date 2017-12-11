@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TestBed, getTestBed, fakeAsync} from '@angular/core/testing';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
 import {XHRBackend} from '@angular/http';
@@ -20,6 +20,7 @@ import {Observable} from 'rxjs/Observable';
 import {SharedModule} from '../../../../../shared/shared.module';
 import {Environment} from '../../../../../model/environment.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
+import 'rxjs/add/observable/of';
 
 describe('CDS: Environment From Component', () => {
 

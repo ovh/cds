@@ -1,7 +1,7 @@
 <div class="CDSbreadcrumb">
     <app-worflow-breadcrumb [project]="project" [workflowName]="workflow?.name" [run]="number" [nodeName]="currentNodeName"></app-worflow-breadcrumb>
 </div>
-<aside class="sidebar" [class.expanded]="sidebarOpen">
+<aside class="sidebar scrollable" [class.expanded]="sidebarOpen">
     <div class="floated right">
         <button class="ui large icon button transparent close-button" (click)="closeEditSidebar()" *ngIf="selectedNode || selectedJoin">
             <i class="black close icon"></i>
