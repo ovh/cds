@@ -13,6 +13,10 @@ $sidebarWidth: 255px;
   background: #FFFFFF;
   height: calc( 100% - #{2*$navbarHeight});
 
+  &.scrollable {
+    overflow-y: scroll;
+  }
+
   &.expanded {
     width: $sidebarWidth;
     position: fixed;

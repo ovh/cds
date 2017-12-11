@@ -1,4 +1,4 @@
-import {Component, Input, NgZone, OnDestroy, OnInit} from '@angular/core';
+import {Component, Input, NgZone, OnDestroy, OnInit, ElementRef, ViewChild} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../../model/project.model';
 import {PipelineStatus} from '../../../../model/pipeline.model';
@@ -11,6 +11,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {WorkflowRun, WorkflowRunTags} from '../../../../model/workflow.run.model';
 import {cloneDeep, uniqBy} from 'lodash';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {DurationService} from '../../../../shared/duration/duration.service';
 import {RouterService} from '../../../../service/router/router.service';
 
 @Component({
@@ -44,6 +45,8 @@ export class WorkflowSidebarRunComponent implements OnInit, OnDestroy {
     // Flag indicate if sidebar is open
     @Input() open: boolean;
 
+    @ViewChild('tagsList') tagsList: ElementRef;
+
     // List of workflow run, updated by  webworker
     workflowRuns: Array<WorkflowRun>;
     filteredWorkflowRuns: Array<WorkflowRun>;
@@ -63,10 +66,12 @@ export class WorkflowSidebarRunComponent implements OnInit, OnDestroy {
     runNumber: number;
     ready = false;
 
-    constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService,
-        private _route: ActivatedRoute, private _routerService: RouterService) {
-        this.zone = new NgZone({enableLongStackTrace: false});
+    private readonly MAX_TAGS_TO_DISPLAY = 2;
 
+    constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService,
+        private _route: ActivatedRoute, private _routerService: RouterService, private _duration: DurationService,
+        private _elementRef: ElementRef) {
+        this.zone = new NgZone({enableLongStackTrace: false});
     }
 
     ngOnInit() {
@@ -137,6 +142,32 @@ export class WorkflowSidebarRunComponent implements OnInit, OnDestroy {
             return [];
         }
         return tags.filter((tg) => this.tagToDisplay.indexOf(tg.tag) !== -1);
+    }
+
+    getFilteredTagsString(tags: WorkflowRunTags[]): string {
+        if (!Array.isArray(tags) || !this.tagToDisplay) {
+            return '';
+        }
+        let tagsFormatted = '';
+        for (let i = 0; i < tags.length; i++) {
+            if (i === 0) {
+                tagsFormatted += tags[i].tag;
+            } else {
+                tagsFormatted += (' , ' + tags[i].tag);
+            }
+        }
+
+        return tagsFormatted;
+    }
+
+    getDuration(status: string, start: string, done: string) {
+        if (status === PipelineStatus.BUILDING || status === PipelineStatus.WAITING) {
+            return this._duration.duration(new Date(start), new Date());
+        }
+        if (!done) {
+            done = new Date().toString();
+        }
+        return this._duration.duration(new Date(start), new Date(done));
     }
 
     refreshRun(): void {

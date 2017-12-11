@@ -9,7 +9,7 @@
                            [value]="option">
         </sui-select-option>
     </sui-multi-select>
-    <div class="ui list divided no-mrt">
+    <div class="ui list divided no-mrt" #tagsList>
       <div class="item padding pointing"
           *ngFor="let r of filteredWorkflowRuns"
           (click)="runNumber=r.num"
@@ -32,17 +32,17 @@
               [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED">
               <i class="tag icon"></i> {{r.num}}
           </a>
-          <div class="mt">
+          <div class="mt" [smDirTooltip]="getFilteredTagsString(getFilteredTags(r.tags))" smDirPosition="top left">
               <i class="find icon"></i>
               <ng-container *ngFor="let t of getFilteredTags(r.tags); let i = index; let last = last">
-                  <span class="tiny" *ngIf="i <= 1"> {{t.value}} </span><span class="tiny" *ngIf="!last || i <= 1">,</span><span *ngIf="i === 1"> ...</span>
+                  <span class="tiny" *ngIf="i <= 1"> {{t.value}} </span><span class="tiny" *ngIf="!last && i <= 1">,</span><span *ngIf="i === 1 && !last"> ...</span>
               </ng-container>
           </div>
           <div class="mt">
-              <i class="clock icon"></i> 33 min 46 sec
+              <i class="clock icon"></i> {{getDuration(r.status, r.start, r.last_execution)}}
           </div>
           <div class="mt">
-              <i class="calendar icon"></i> an hour ago
+              <i class="calendar icon"></i> {{r.start | date:'short' }}
           </div>
         </div>
       </div>
