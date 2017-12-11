@@ -92,7 +92,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		exportedWorkflow.PipelineName = entry.PipelineName
 		exportedWorkflow.EnvironmentName = entry.EnvironmentName
 		exportedWorkflow.DependsOn = entry.DependsOn
-		if len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "" {
+		if entry.Conditions != nil && len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "" {
 			exportedWorkflow.Conditions = entry.Conditions
 		}
 		for _, h := range hooks {
