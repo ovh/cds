@@ -327,6 +327,12 @@ var workflowPullCmd = cli.Command{
 			Usage:   "Force, may override files",
 			Default: "false",
 		},
+		{
+			Kind:    reflect.Bool,
+			Name:    "quiet",
+			Usage:   "If true, do not output filename created",
+			Default: "false",
+		},
 	},
 }
 
@@ -355,9 +361,9 @@ func workflowPullRun(c cli.Values) error {
 		}
 
 		fname := filepath.Join(dir, hdr.Name)
-		if _, err := os.Stat(fname); os.IsExist(err) {
+		if _, err = os.Stat(fname); err == nil || os.IsExist(err) {
 			if !c.GetBool("force") {
-				if !cli.AskForConfirmation(fmt.Sprintf("This will override %s. Do you want to continue ?", fname)) {
+				if !cli.AskForConfirmation(fmt.Sprintf("This will override %s. Do you want to continue?", fname)) {
 					os.Exit(0)
 				}
 			}
@@ -375,6 +381,9 @@ func workflowPullRun(c cli.Values) error {
 		}
 		if err := fi.Close(); err != nil {
 			return err
+		}
+		if !c.GetBool("quiet") {
+			fmt.Println(fname)
 		}
 	}
 	return nil
