@@ -94,7 +94,7 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 	// Start a tx
 	tx, errBegin := db.Begin()
 	if errBegin != nil {
-		chError <- sdk.WrapError(errBegin, "postTakeWorkflowJobHandler> Cannot start transaction")
+		chError <- sdk.WrapError(errBegin, "takeJob> Cannot start transaction")
 	}
 	defer tx.Rollback()
 
@@ -113,20 +113,20 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 	//Take node job run
 	job, errTake := workflow.TakeNodeJobRun(tx, store, p, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos, chEvent)
 	if errTake != nil {
-		chError <- sdk.WrapError(errTake, "postTakeWorkflowJobHandler> Cannot take job %d", id)
+		chError <- sdk.WrapError(errTake, "takeJob> Cannot take job %d", id)
 		return
 	}
 
 	//Change worker status
 	if err := worker.SetToBuilding(tx, getWorker(ctx).ID, job.ID, sdk.JobTypeWorkflowNode); err != nil {
-		chError <- sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot update worker status")
+		chError <- sdk.WrapError(err, "takeJob> Cannot update worker status")
 		return
 	}
 
 	//Load the node run
 	noderun, errn := workflow.LoadNodeRunByID(tx, job.WorkflowNodeRunID, false)
 	if errn != nil {
-		chError <- sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
+		chError <- sdk.WrapError(errn, "takeJob> Cannot get node run")
 		return
 	}
 
@@ -134,7 +134,7 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 	if noderun.Status == sdk.StatusWaiting.String() {
 		noderun.Status = sdk.StatusBuilding.String()
 		if err := workflow.UpdateNodeRun(tx, noderun); err != nil {
-			chError <- sdk.WrapError(errn, "postTakeWorkflowJobHandler> Cannot get node run")
+			chError <- sdk.WrapError(err, "takeJob> Cannot get node run")
 			return
 		}
 		workflowNodeRunEvent = append(workflowNodeRunEvent, *noderun)
@@ -143,20 +143,20 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 	//Load workflow run
 	workflowRun, err := workflow.LoadRunByID(tx, noderun.WorkflowRunID, false)
 	if err != nil {
-		chError <- sdk.WrapError(err, "postTakeWorkflowJobHandler> Unable to load workflow run")
+		chError <- sdk.WrapError(err, "takeJob> Unable to load workflow run")
 		return
 	}
 
 	//Load the secrets
 	pv, err := project.GetAllVariableInProject(tx, p.ID, project.WithClearPassword())
 	if err != nil {
-		chError <- sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot load project variable")
+		chError <- sdk.WrapError(err, "takeJob> Cannot load project variable")
 		return
 	}
 
 	secrets, errSecret := workflow.LoadNodeJobRunSecrets(tx, store, job, noderun, workflowRun, pv)
 	if errSecret != nil {
-		chError <- sdk.WrapError(errSecret, "postTakeWorkflowJobHandler> Cannot load secrets")
+		chError <- sdk.WrapError(errSecret, "takeJob> Cannot load secrets")
 		return
 	}
 
@@ -169,14 +169,14 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 
 	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, store, job, noderun, workflowRun, p)
 	if errK != nil {
-		chError <- sdk.WrapError(errK, "postTakeWorkflowJobHandler> Cannot load keys")
+		chError <- sdk.WrapError(errK, "takeJob> Cannot load keys")
 		return
 	}
 	pbji.Secrets = append(pbji.Secrets, secretsKeys...)
 	pbji.NodeJobRun.Parameters = append(pbji.NodeJobRun.Parameters, params...)
 
 	if err := tx.Commit(); err != nil {
-		chError <- sdk.WrapError(err, "postTakeWorkflowJobHandler> Cannot commit transaction")
+		chError <- sdk.WrapError(err, "takeJob> Cannot commit transaction")
 		return
 	}
 }
