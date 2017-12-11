@@ -236,6 +236,8 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
             case 'add':
                 this.createTriggerModal.hide();
                 this.triggerInModal.parameters = Parameter.formatForAPI(this.triggerInModal.parameters);
+                this.triggerInModal.src_pipeline.parameters = null;
+                this.triggerInModal.dest_pipeline.parameters = null;
                 this._appStore.addTrigger(
                     this.project.key,
                     this.workflowItem.application.name,
