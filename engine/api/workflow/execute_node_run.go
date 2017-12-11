@@ -53,7 +53,7 @@ func syncTakeJobInNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.Wo
 	if n.Status == sdk.StatusWaiting.String() {
 		n.Status = sdk.StatusBuilding.String()
 		if chanEvent != nil {
-			chanEvent <- n
+			chanEvent <- *n
 		}
 	}
 
@@ -132,6 +132,11 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 					newStatus = sdk.StatusFail.String()
 					break
 				}
+				if stage.Status == sdk.StatusStopped {
+					n.Done = time.Now()
+					newStatus = sdk.StatusStopped.String()
+					break
+				}
 				if stageIndex == len(n.Stages)-1 {
 					n.Done = time.Now()
 					newStatus = sdk.StatusSuccess.String()
@@ -160,13 +165,16 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 
 	// If pipeline build succeed, reprocess the workflow (in the same transaction)
 	//Delete jobs only when node is over
-	if n.Status == sdk.StatusSuccess.String() || n.Status == sdk.StatusFail.String() {
+	if sdk.StatusIsTerminated(n.Status) {
 		// push node run event
 		if chanEvent != nil {
 			chanEvent <- *n
 		}
-		if _, err := processWorkflowRun(db, store, p, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
-			return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
+
+		if n.Status != sdk.StatusStopped.String() {
+			if _, err := processWorkflowRun(db, store, p, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
+				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
+			}
 		}
 
 		//Delete the line in workflow_node_run_job
@@ -174,7 +182,6 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 			return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
 		}
 	}
-
 	return nil
 }
 
@@ -266,7 +273,6 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	stageEnd := true
 	finalStatus := sdk.StatusBuilding
 
-	log.Debug("syncStage> work on stage %s", stage.Name)
 	// browse all running jobs
 	for indexJob := range stage.RunJobs {
 		runJob := &stage.RunJobs[indexJob]
@@ -321,6 +327,10 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 			case sdk.StatusSuccess.String():
 				if finalStatus != sdk.StatusFail {
 					finalStatus = sdk.StatusSuccess
+				}
+			case sdk.StatusStopped.String():
+				if finalStatus != sdk.StatusFail {
+					finalStatus = sdk.StatusStopped
 				}
 			}
 		}

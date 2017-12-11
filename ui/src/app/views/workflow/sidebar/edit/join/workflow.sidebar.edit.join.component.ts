@@ -8,7 +8,7 @@ import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {Project} from '../../../../../model/project.model';
 import {ToastService} from '../../../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {WorkflowTriggerJoinComponent} from '../../../../../shared/workflow/join/trigger/trigger.join.component';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';

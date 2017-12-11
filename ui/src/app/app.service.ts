@@ -5,7 +5,7 @@ import {ActivatedRoute} from '@angular/router';
 import {ApplicationStore} from './service/application/application.store';
 import {NotificationService} from './service/notification/notification.service';
 import {AuthentificationStore} from './service/auth/authentification.store';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {LoadOpts} from './model/project.model';
 import {PipelineStore} from './service/pipeline/pipeline.store';
 import {WorkflowStore} from './service/workflow/workflow.store';

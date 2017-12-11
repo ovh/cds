@@ -2,7 +2,7 @@ import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/c
 import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
 import {WorkflowService} from '../../../../service/workflow/workflow.service';
 import {ToastService} from '../../../toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {WorkflowNodeHookFormComponent} from './form/node.hook.component';
 import {Project} from '../../../../model/project.model';
 import {HookEvent} from './hook.event';

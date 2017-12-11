@@ -360,6 +360,7 @@ func (api *API) InitRouter() {
 
 	// Worker models
 	r.Handle("/worker/model", r.POST(api.addWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
+	r.Handle("/worker/model/book/{permModelID}", r.PUT(api.bookWorkerModelHandler, NeedHatchery()))
 	r.Handle("/worker/model/error/{permModelID}", r.PUT(api.spawnErrorWorkerModelHandler, NeedHatchery()))
 	r.Handle("/worker/model/enabled", r.GET(api.getWorkerModelsEnabledHandler))
 	r.Handle("/worker/model/type", r.GET(api.getWorkerModelTypesHandler))

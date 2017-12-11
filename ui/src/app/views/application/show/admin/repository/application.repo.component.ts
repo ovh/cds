@@ -5,7 +5,7 @@ import {Repository} from '../../../../../model/repositories.model';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {Project} from '../../../../../model/project.model';
 import {ToastService} from '../../../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
 import {first} from 'rxjs/operators';
 

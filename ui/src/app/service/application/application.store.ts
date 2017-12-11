@@ -14,6 +14,7 @@ import {Trigger} from '../../model/trigger.model';
 import {ApplyTemplateRequest} from '../../model/template.model';
 import {Notification} from '../../model/notification.model';
 import {Scheduler} from '../../model/scheduler.model';
+import 'rxjs/add/observable/of';
 
 
 @Injectable()

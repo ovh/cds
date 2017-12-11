@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/ovh/cds/sdk/exportentities"
 )
@@ -49,7 +50,13 @@ func (c *client) WorkflowExport(projectKey, name string, exportWithPermissions b
 	if exportWithPermissions {
 		path += "&withPermissions=true"
 	}
-	body, _, err := c.Request("GET", path, nil)
+	bodyReader, _, err := c.Stream("GET", path, nil, true)
+	if err != nil {
+		return nil, err
+	}
+	defer bodyReader.Close()
+
+	body, err := ioutil.ReadAll(bodyReader)
 	if err != nil {
 		return nil, err
 	}

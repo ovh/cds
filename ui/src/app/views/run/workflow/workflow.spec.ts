@@ -2,7 +2,7 @@
 import {TestBed, fakeAsync, getTestBed, tick} from '@angular/core/testing';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Injector} from '@angular/core';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {SharedModule} from '../../../shared/shared.module';
 import {Observable} from 'rxjs/Observable';
 import {CDSWorker} from '../../../shared/worker/worker';

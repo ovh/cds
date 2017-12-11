@@ -43,11 +43,12 @@ func updateWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 }
 
 //UpdateWorkflowRunStatus update status of a workflow run
-func UpdateWorkflowRunStatus(db gorp.SqlExecutor, wrID int64, status string) error {
+func UpdateWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
+	wr.LastModified = time.Now()
 	//Update workflow run status
 	query := "UPDATE workflow_run SET status = $1, last_modified = $2 WHERE id = $3"
-	if _, err := db.Exec(query, status, time.Now(), wrID); err != nil {
-		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", wrID, status)
+	if _, err := db.Exec(query, wr.Status, wr.LastModified, wr.ID); err != nil {
+		return sdk.WrapError(err, "updateWorkflowRunStatus> Unable to set  workflow_run id %d with status %s", wr.ID, wr.Status)
 	}
 	return nil
 }

@@ -21,7 +21,7 @@ import {
 import {Project} from '../../../model/project.model';
 import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../toast/ToastService';
 import {WorkflowDeleteNodeComponent} from './delete/workflow.node.delete.component';
 import {WorkflowNodeContextComponent} from './context/workflow.node.context.component';

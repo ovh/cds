@@ -6,6 +6,9 @@
                 <a sm-item [class.active]="selectedTab === 'workflows'" id="WorkflowGraphTabs" (click)="showTab('workflows')">
                     <i class="share alternate icon"></i>
                     {{'common_workflows' | translate }}</a>
+                <a sm-item [class.active]="selectedTab === 'notifications'" id="WorkflowNotificationTabs" (click)="showTab('notifications')">
+                    <i class="share alternate icon"></i>
+                    {{'common_notifications' | translate }}</a>
                 <a sm-item [class.active]="selectedTab === 'permissions'" id="WorkflowPermissionsTabs" (click)="showTab('permissions')">
                     <i class="users icon"></i>
                     {{'common_permissions' | translate }}</a>
@@ -77,6 +80,9 @@
                                 </div>
                             </ng-container>
                         </div>
+                    </div>
+                    <div *ngSwitchCase="'notifications'">
+                        <app-workflow-notification [workflow]="detailedWorkflow"></app-workflow-notification>
                     </div>
                     <div *ngSwitchCase="'permissions'" class="padded">
                         <h3>{{ 'workflow_permission_list_title' | translate }}</h3>

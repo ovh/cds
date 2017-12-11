@@ -73,8 +73,9 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 			return fmt.Errorf("repositoriesmanager>processEvent> AuthorizedClient (%s, %s) > err:%s", eventpb.ProjectKey, eventpb.RepositoryManagerName, errC)
 		}
 
-	} else if event.EventType != fmt.Sprintf("%T", sdk.EventWorkflowNodeRun{}) {
+	} else if event.EventType == fmt.Sprintf("%T", sdk.EventWorkflowNodeRun{}) {
 		var eventWNR sdk.EventWorkflowNodeRun
+
 		if err := mapstructure.Decode(event.Payload, &eventWNR); err != nil {
 			log.Error("Error during consumption: %s", err)
 			return err
@@ -94,8 +95,6 @@ func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
 	} else {
 		return nil
 	}
-
-	log.Debug("repositoriesmanager>processEvent> event:%+v", event)
 
 	if err := c.SetStatus(event); err != nil {
 		retryEvent(&event, err, store)

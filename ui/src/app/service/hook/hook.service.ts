@@ -4,6 +4,7 @@ import {HttpClient} from '@angular/common/http';
 import {WorkflowHookModel} from '../../model/workflow.hook.model';
 import {Workflow, WorkflowNode} from '../../model/workflow.model';
 import {Project} from '../../model/project.model';
+import 'rxjs/add/observable/of';
 
 @Injectable()
 export class HookService {

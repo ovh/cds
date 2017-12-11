@@ -2,7 +2,7 @@
 
 import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
 import {VariableService} from '../../../service/variable/variable.service';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {SharedService} from '../../shared.service';
 import {RouterTestingModule} from '@angular/router/testing';
 import {MockBackend} from '@angular/http/testing';
