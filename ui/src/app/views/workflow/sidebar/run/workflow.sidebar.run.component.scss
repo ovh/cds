@@ -1,4 +1,69 @@
+@import '../../../../../common';
 #WorkflowSidebar {
+  .mt {
+    margin-top: 10px;
+  }
+  .mr {
+    margin-right: 10px;
+  }
+  .no-mrt {
+    margin-top: 0px;
+  }
+  .padding {
+    padding-bottom: 4px;
+    padding-top: 4px;
+  }
+
+  .item {
+    &.active {
+      background-color: $cds_color_light_grey;
+    }
+    &:focus{
+      outline: none;
+    }
+    &:hover {
+      background-color: $cds_color_light_grey;
+    }
+    .tiny {
+      font-size: 0.75em;
+    }
+  }
+
+  i {
+    &.ribbon-state {
+      width: 5px;
+      &.success {
+        background-color: $cds_color_green;
+      }
+      &.success {
+        background-color: $cds_color_green;
+      }
+      &.running {
+        background-color: $cds_color_teal;
+      }
+      &.fail {
+        background-color: $cds_color_red;
+      }
+      &.waiting {
+        background-color: $cds_color_teal;
+      }
+    }
+  }
+  .success {
+    color: $cds_color_green !important;
+  }
+  .running {
+    color: $cds_color_teal !important;
+  }
+  .fail {
+    color: $cds_color_red !important;
+  }
+  .active {
+    background-color: grey;
+  }
+  .waiting {
+    color: $cds_color_teal !important;
+  }
   ul {
     list-style: none;
     padding: 0;
