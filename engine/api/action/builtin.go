@@ -47,16 +47,19 @@ Parse given file to extract Unit Test results.`
 Clone a repository into a new directory.`
 
 	gitclone.Parameter(sdk.Parameter{
-		Name:        "url",
-		Description: "URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.",
-		Value:       "{{.git.http_url}}",
-		Type:        sdk.StringParameter,
+		Name: "url",
+		Description: `URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.
+If your application is linked to a repository, you can use {{.git.url}} (clone over ssh) or {{.git.http_url}} (clone over https)`,
+		Value: "{{.git.url}}",
+		Type:  sdk.StringParameter,
 	})
 	gitclone.Parameter(sdk.Parameter{
-		Name:        "privateKey",
-		Value:       "{{.cds.app.key}}",
-		Description: "Set the private key to be able to git clone from ssh",
-		Type:        sdk.KeyParameter,
+		Name:  "privateKey",
+		Value: "{{.cds.app.key}}",
+		Description: `Set the private key to be able to git clone from ssh.
+You can create an application variable named 'key' of type 'key' and use it as {{.cds.app.key}} in this action.
+The public key have to be granted on your repository`,
+		Type: sdk.KeyParameter,
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:        "user",
