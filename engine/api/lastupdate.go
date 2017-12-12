@@ -8,11 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ovh/cds/engine/api/permission"
-
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/sessionstore"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
