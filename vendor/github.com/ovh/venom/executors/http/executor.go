@@ -79,27 +79,27 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	}()
 
 	// transform step to Executor Instance
-	var t Executor
-	if err := mapstructure.Decode(step, &t); err != nil {
+	var e Executor
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 
 	// dirty: mapstructure doesn't like decoding map[interface{}]interface{}, let's force manually
-	t.MultipartForm = step["multipart_form"]
+	e.MultipartForm = step["multipart_form"]
 
-	r := Result{Executor: t}
+	r := Result{Executor: e}
 
-	req, err := t.getRequest()
+	req, err := e.getRequest()
 	if err != nil {
 		return nil, err
 	}
 
-	for k, v := range t.Headers {
+	for k, v := range e.Headers {
 		req.Header.Set(k, v)
 	}
 
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: t.IgnoreVerifySSL},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: e.IgnoreVerifySSL},
 	}
 	client := &http.Client{Transport: tr}
 
@@ -118,7 +118,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	if resp.Body != nil {
 		defer resp.Body.Close()
 
-		if !t.SkipBody {
+		if !e.SkipBody {
 			var errr error
 			bb, errr = ioutil.ReadAll(resp.Body)
 			if errr != nil {
@@ -138,7 +138,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		}
 	}
 
-	if !t.SkipHeaders {
+	if !e.SkipHeaders {
 		r.Headers = make(map[string]string)
 		for k, v := range resp.Header {
 			r.Headers[k] = v[0]

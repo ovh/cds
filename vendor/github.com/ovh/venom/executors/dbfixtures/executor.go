@@ -84,6 +84,12 @@ func (e Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, ste
 	return executors.Dump(r)
 }
 
+// ZeroValueResult return an empty implemtation of this executor result
+func (Executor) ZeroValueResult() venom.ExecutorResult {
+	r, _ := executors.Dump(Result{})
+	return r
+}
+
 // GetDefaultAssertions return the default assertions of the executor.
 func (e Executor) GetDefaultAssertions() venom.StepAssertions {
 	return venom.StepAssertions{Assertions: []string{}}

@@ -5,7 +5,7 @@ It can also output xUnit results files.
 
 <img src="./venom.gif" alt="Venom Demonstration" width="80%">
 
-## Commmand Line
+## Command Line
 
 Install with:
 ```bash
@@ -160,6 +160,7 @@ venom run  --details=low --format=xml --output-dir="."
 
 ## Executors
 
+* **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 * **exec**: https://github.com/ovh/venom/tree/master/executors/exec `exec` is the default type for a step
 * **http**: https://github.com/ovh/venom/tree/master/executors/http
 * **imap**: https://github.com/ovh/venom/tree/master/executors/imap
@@ -167,7 +168,6 @@ venom run  --details=low --format=xml --output-dir="."
 * **smtp**: https://github.com/ovh/venom/tree/master/executors/smtp
 * **ssh**: https://github.com/ovh/venom/tree/master/executors/ssh
 * **web**: https://github.com/ovh/venom/tree/master/executors/web
-* **dbfixtures**: https://github.com/ovh/venom/tree/master/executors/dbfixtures
 
 
 ## Assertion
@@ -262,7 +262,7 @@ type Result struct {
 	Command     string `json:"command,omitempty" yaml:"command,omitempty"`
 	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"` // put in testcase.Systemout by venom if present
 	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"` // put in testcase.Systemerr by venom if present
-	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`  
+	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
 }
 
 // GetDefaultAssertions return default assertions for this executor
@@ -275,12 +275,12 @@ func (Executor) GetDefaultAssertions() venom.StepAssertions {
 func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 
 	// transform step to Executor Instance
-	var t Executor
-	if err := mapstructure.Decode(step, &t); err != nil {
+	var e Executor
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 
-	// to something with t.Command here...
+	// to something with e.Command here...
 	//...
 
 	systemout := "foo"
@@ -289,9 +289,9 @@ func (Executor) Run(ctx context.Context, l venom.Logger, step venom.TestStep) (v
 	// prepare result
 	r := Result{
 		Code:    ouputCode, // return Output Code
-		Command: t.Command, // return Command executed
+		Command: e.Command, // return Command executed
 		Systemout:  systemout,    // return Output string
-		Executor: t, // return executor, usefull for display Executor context in failure
+		Executor: e, // return executor, useful for display Executor context in failure
 	}
 
 	return dump.ToMap(r)
@@ -306,7 +306,7 @@ Feel free to open a Pull Request with your executors.
 
 TestCase Context allows you to inject datas in all Steps.
 
-Define a context is optional, but can be usefull to keep data between teststeps on a testcase.
+Define a context is optional, but can be useful to keep data between teststeps on a testcase.
 
 ### Write your TestCase Context
 

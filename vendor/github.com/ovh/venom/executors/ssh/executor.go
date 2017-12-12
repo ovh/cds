@@ -57,19 +57,19 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 
 // Run execute TestStep of type exec
 func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
-	var t Executor
-	if err := mapstructure.Decode(step, &t); err != nil {
+	var e Executor
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 
-	if t.Command == "" {
+	if e.Command == "" {
 		return nil, fmt.Errorf("Invalid command")
 	}
 
 	start := time.Now()
-	result := Result{Executor: t}
+	result := Result{Executor: e}
 
-	client, session, err := connectToHost(t.User, t.Password, t.PrivateKey, t.Host)
+	client, session, err := connectToHost(e.User, e.Password, e.PrivateKey, e.Host)
 	if err != nil {
 		result.Err = err.Error()
 	} else {
@@ -79,7 +79,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 		session.Stderr = stderr
 		session.Stdout = stdout
-		if err := session.Run(t.Command); err != nil {
+		if err := session.Run(e.Command); err != nil {
 			if exiterr, ok := err.(*ssh.ExitError); ok {
 				status := exiterr.ExitStatus()
 				result.Code = strconv.Itoa(status)
