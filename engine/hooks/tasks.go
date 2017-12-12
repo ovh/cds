@@ -385,7 +385,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		payload["git.repository"] = fmt.Sprintf("%s/%s", pushEvent.Repository.Project.Key, pushEvent.Repository.Name)
 
 	default:
-		log.Warning("Repository manager not found. Cannotread %s", string(t.WebHook.RequestBody))
+		log.Warning("executeRepositoryWebHook>Repository manager not found. Cannotread %s", string(t.WebHook.RequestBody))
 		return nil, nil
 	}
 
