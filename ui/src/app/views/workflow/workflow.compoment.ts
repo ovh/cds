@@ -70,9 +70,9 @@ export class WorkflowComponent {
                             }
 
                             if (this.selectedNodeId) {
-                                this.selectedNode = this._wfService.findNode(this.selectedNodeId, this.workflow.root, this.workflow.joins);
+                                this.selectedNode = Workflow.getNodeByID(this.selectedNodeId, this.workflow);
                             } else if (this.selectedJoinId) {
-                                this.selectedJoin = this._wfService.findJoinInWorkflowById(this.selectedJoinId, this.workflow);
+                                this.selectedJoin = Workflow.getJoinById(this.selectedJoinId, this.workflow);
                             }
                         }
                         this.loading = false;
@@ -106,9 +106,9 @@ export class WorkflowComponent {
                 }
 
                 if (this.selectedNodeId && !this.loading) {
-                    this.selectedNode = this._wfService.findNode(this.selectedNodeId, this.workflow.root, this.workflow.joins);
+                    this.selectedNode = Workflow.getNodeByID(this.selectedNodeId, this.workflow);
                 } else if (this.selectedJoinId && !this.loading) {
-                    this.selectedJoin = this._wfService.findJoinInWorkflowById(this.selectedJoinId, this.workflow);
+                    this.selectedJoin = Workflow.getJoinById(this.selectedJoinId, this.workflow);
                 }
             }
         });
@@ -145,9 +145,9 @@ export class WorkflowComponent {
           }
 
           if (this.selectedNodeId && !this.loading && this.workflow) {
-              this.selectedNode = this._wfService.findNode(this.selectedNodeId, this.workflow.root, this.workflow.joins);
+              this.selectedNode = Workflow.getNodeByID(this.selectedNodeId, this.workflow);
           } else if (this.selectedJoinId && !this.loading && this.workflow) {
-              this.selectedJoin = this._wfService.findJoinInWorkflowById(this.selectedJoinId, this.workflow);
+              this.selectedJoin = Workflow.getJoinById(this.selectedJoinId, this.workflow);
           }
       });
     }

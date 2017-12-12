@@ -63,6 +63,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     tagToDisplay: Array<string>;
     pipelineStatusEnum = PipelineStatus;
     ready = false;
+    filteredTags: {[key: number]: WorkflowRunTags[]} = {};
 
     private readonly MAX_TAGS_TO_DISPLAY = 2;
 
@@ -162,20 +163,22 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     refreshRun(): void {
         if (this.workflowRuns) {
+            this.filteredTags = {};
             this.filteredWorkflowRuns = cloneDeep(this.workflowRuns);
-            if (!this.selectedTags) {
-                return;
+
+            if (this.selectedTags) {
+              this.selectedTags.forEach(t => {
+                  let splitted = t.split(':');
+                  let key = splitted.shift();
+                  let value = splitted.join(':');
+                  this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
+                      return r.tags.find(tag => {
+                          return tag.tag === key && tag.value.indexOf(value) !== -1;
+                      });
+                  });
+              });
             }
-            this.selectedTags.forEach(t => {
-                let splitted = t.split(':');
-                let key = splitted.shift();
-                let value = splitted.join(':');
-                this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
-                    return r.tags.find(tag => {
-                        return tag.tag === key && tag.value.indexOf(value) !== -1;
-                    });
-                });
-            });
+            this.filteredWorkflowRuns.forEach((r) => this.filteredTags[r.id] = this.getFilteredTags(r.tags));
         }
     }
 

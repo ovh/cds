@@ -194,6 +194,13 @@ export class Workflow {
         return warnings;
     }
 
+    static getJoinById(id: number, workflow: Workflow): WorkflowNodeJoin {
+        if (!workflow || !Array.isArray(workflow.joins)) {
+            return null;
+        }
+        return workflow.joins.find((join) => join.id === id);
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }
