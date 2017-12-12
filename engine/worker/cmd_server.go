@@ -16,7 +16,6 @@ import (
 )
 
 // WorkerServerPort is name of environment variable set to local worker HTTP server port
-// Used only to export build variables for now
 const WorkerServerPort = "CDS_EXPORT_PORT"
 
 // This handler is started by the worker instance waiting for action
@@ -38,6 +37,7 @@ func (w *currentWorker) serve(c context.Context) (int, error) {
 	r.HandleFunc("/upload", w.uploadHandler)
 	r.HandleFunc("/tmpl", w.tmplHandler)
 	r.HandleFunc("/tag", w.tagHandler)
+	r.HandleFunc("/log", w.logHandler)
 	r.HandleFunc("/exit", w.exitHandler)
 
 	srv := &http.Server{

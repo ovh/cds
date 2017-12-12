@@ -153,6 +153,7 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 			OrderStep:          stepOrder,
 			Args:               pluginArgs,
 			Secrts:             pluginSecrets,
+			HTTPPortWorker:     w.exportPort,
 		}
 		if w.currentJob.wJob != nil && w.currentJob.wJob.WorkflowNodeRunID > 0 {
 			pluginAction.IDWorkflowNodeRun = w.currentJob.wJob.WorkflowNodeRunID

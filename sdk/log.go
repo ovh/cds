@@ -7,11 +7,11 @@ import (
 )
 
 // NewLog returns a log struct
-func NewLog(pipJobID int64, value string, pipelineBuildID int64, stepOrder int) *Log {
+func NewLog(pbJobID int64, value string, pipelineBuildID int64, stepOrder int) *Log {
 	//There cant be any error since we are using time.Now which is obviously a real and valid timestamp
 	now, _ := ptypes.TimestampProto(time.Now())
 	l := &Log{
-		PipelineBuildJobID: pipJobID,
+		PipelineBuildJobID: pbJobID,
 		PipelineBuildID:    pipelineBuildID,
 		Start:              now,
 		StepOrder:          int64(stepOrder),
