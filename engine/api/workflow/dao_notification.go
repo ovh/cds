@@ -1,0 +1,136 @@
+package workflow
+
+import (
+	"encoding/json"
+
+	"github.com/go-gorp/gorp"
+
+	"database/sql"
+	"fmt"
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
+)
+
+func deleteNotifications(db gorp.SqlExecutor, workflowID int64) error {
+	_, err := db.Exec("DELETE FROM workflow_notification where workflow_id = $1", workflowID)
+	if err != nil {
+		return sdk.WrapError(err, "deleteNotification> Cannot delete notifications on workflow %d", workflowID)
+	}
+	return nil
+}
+
+func loadNotifications(db gorp.SqlExecutor, w *sdk.Workflow) ([]sdk.WorkflowNotification, error) {
+	notifIDs := []int64{}
+	_, err := db.Select(&notifIDs, "select id from workflow_notification where workflow_id = $1", w.ID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "loadNotification> Unable to load notification IDs on workflow %d", w.ID)
+	}
+
+	notifications := make([]sdk.WorkflowNotification, len(notifIDs))
+	for index, id := range notifIDs {
+		n, errJ := loadNotification(db, w, id)
+		if errJ != nil {
+			return nil, sdk.WrapError(errJ, "loadNotification> Unable to load notification %d on workflow %d", id, w.ID)
+		}
+		notifications[index] = *n
+	}
+
+	return notifications, nil
+}
+
+func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (*sdk.WorkflowNotification, error) {
+	dbnotif := Notification{}
+	//Load the notification
+	if err := db.SelectOne(&dbnotif, "select * from workflow_notification where id = $1", id); err != nil {
+		return nil, sdk.WrapError(err, "loadNotification> Unable to load notification %d", id)
+	}
+	dbnotif.WorkflowID = w.ID
+
+	//Load sources
+	if _, err := db.Select(&dbnotif.SourceNodeIDs, "select workflow_node_id from workflow_notification_source where workflow_notification_id = $1", id); err != nil {
+		return nil, sdk.WrapError(err, "loadNotification> Unable to load notification %d sources", id)
+	}
+	n := sdk.WorkflowNotification(dbnotif)
+
+	for _, id := range n.SourceNodeIDs {
+		n.SourceNodeRefs = append(n.SourceNodeRefs, fmt.Sprintf("%d", id))
+	}
+
+	return &n, nil
+}
+
+func insertNotification(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNotification, nodes []sdk.WorkflowNode, u *sdk.User) error {
+	log.Debug("insertNotification> %#v", n)
+	n.WorkflowID = w.ID
+	n.ID = 0
+	n.SourceNodeIDs = nil
+	dbNotif := Notification(*n)
+
+	//Check references to sources
+	if len(n.SourceNodeRefs) == 0 {
+		return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertNotification> No notification references")
+	}
+
+	for _, s := range n.SourceNodeRefs {
+		//Search references
+		var foundRef = findNodeByRef(s, nodes)
+		if foundRef == nil {
+			return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertNotification> Invalid notification references")
+		}
+		log.Debug("insertNotification> Found reference %s : %d on %s", s, foundRef.ID, foundRef.Pipeline.Name)
+		if foundRef.ID == 0 {
+			log.Debug("insertNotification> insert or update reference node (%s) %d on %s", s, foundRef.ID, foundRef.Pipeline.Name)
+			if err := insertNode(db, store, w, foundRef, u, true); err != nil {
+				return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertNotification> Unable to insert or update source node")
+			}
+		}
+		n.SourceNodeIDs = append(n.SourceNodeIDs, foundRef.ID)
+	}
+
+	//Insert the notification
+	if err := db.Insert(&dbNotif); err != nil {
+		return sdk.WrapError(err, "insertNotification> Unable to insert workflow notification")
+	}
+	n.ID = dbNotif.ID
+
+	//Insert associations with sources
+	query := "insert into workflow_notification_source(workflow_node_id, workflow_notification_id) values ($1, $2)"
+	for _, source := range n.SourceNodeIDs {
+		if _, err := db.Exec(query, source, n.ID); err != nil {
+			return sdk.WrapError(err, "insertNotification> Unable to insert associations between node %d and notification %d", source, n.ID)
+		}
+	}
+
+	return nil
+}
+
+// PostUpdate is a db hook
+func (no *Notification) PostInsert(db gorp.SqlExecutor) error {
+	b, err := json.Marshal(no.Notifications)
+	if err != nil {
+		return err
+	}
+	if _, err := db.Exec("update workflow_notification set notifications = $1 where id = $2", b, no.ID); err != nil {
+		return err
+	}
+	return nil
+}
+
+// PostGet is a db hook
+func (no *Notification) PostGet(db gorp.SqlExecutor) error {
+	var res = struct {
+		Notifications string `db:"notifications"`
+	}{}
+
+	if err := db.SelectOne(&res, "SELECT notifications FROM workflow_notification WHERE id = $1", no.ID); err != nil {
+		return sdk.WrapError(err, "PostGet> Unable to load marshalled workflow notification")
+	}
+
+	var errN error
+	no.Notifications, errN = sdk.ParseUserNotificationSettings([]byte(res.Notifications))
+	return sdk.WrapError(errN, "Notification.PostGet > Cannot parse user notification")
+}

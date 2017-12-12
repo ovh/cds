@@ -100,41 +100,16 @@ func loadJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, no
 	return &t, nil
 }
 
-func findNodeByRefInWorkflow(ref string, w *sdk.Workflow) *sdk.WorkflowNode {
-	r := findNodeByRef(ref, w.Root)
-	if r != nil {
-		return r
-	}
-
-	for i := range w.Joins {
-		j := &w.Joins[i]
-		for ti := range j.Triggers {
-			t := &j.Triggers[ti]
-			r := findNodeByRef(ref, &t.WorkflowDestNode)
-			if r != nil {
-				return r
-			}
-		}
-	}
-
-	return nil
-}
-
-func findNodeByRef(ref string, n *sdk.WorkflowNode) *sdk.WorkflowNode {
-	log.Debug("findNodeByRef> finding node %s in node %d (%s) on %s", ref, n.ID, n.Ref, n.Pipeline.Name)
-	if n.Ref == ref {
-		return n
-	}
-	for _, t := range n.Triggers {
-		n1 := findNodeByRef(ref, &t.WorkflowDestNode)
-		if n1 != nil {
-			return n1
+func findNodeByRef(ref string, nodes []sdk.WorkflowNode) *sdk.WorkflowNode {
+	for _, n := range nodes {
+		if n.Ref == ref {
+			return &n
 		}
 	}
 	return nil
 }
 
-func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, u *sdk.User) error {
+func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNodeJoin, nodes []sdk.WorkflowNode, u *sdk.User) error {
 	log.Debug("insertOrUpdateJoin> %#v", n)
 	n.WorkflowID = w.ID
 	n.ID = 0
@@ -142,26 +117,24 @@ func insertJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	dbJoin := Join(*n)
 
 	//Check references to sources
-	if len(n.SourceNodeIDs) == 0 {
-		if len(n.SourceNodeRefs) == 0 {
+	if len(n.SourceNodeRefs) == 0 {
+		return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertOrUpdateJoin> Invalid joins references")
+	}
+
+	for _, s := range n.SourceNodeRefs {
+		//Search references
+		var foundRef = findNodeByRef(s, nodes)
+		if foundRef == nil {
 			return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertOrUpdateJoin> Invalid joins references")
 		}
-
-		for _, s := range n.SourceNodeRefs {
-			//Search references
-			var foundRef = findNodeByRefInWorkflow(s, w)
-			if foundRef == nil {
-				return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertOrUpdateJoin> Invalid joins references")
+		log.Debug("insertOrUpdateJoin> Found reference %s : %d on %s", s, foundRef.ID, foundRef.Pipeline.Name)
+		if foundRef.ID == 0 {
+			log.Debug("insertOrUpdateJoin> insert or update reference node (%s) %d on %s", s, foundRef.ID, foundRef.Pipeline.Name)
+			if err := insertNode(db, store, w, foundRef, u, true); err != nil {
+				return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertOrUpdateJoin> Unable to insert or update source node")
 			}
-			log.Debug("insertOrUpdateJoin> Found reference %s : %d on %s", s, foundRef.ID, foundRef.Pipeline.Name)
-			if foundRef.ID == 0 {
-				log.Debug("insertOrUpdateJoin> insert or update reference node (%s) %d on %s", s, foundRef.ID, foundRef.Pipeline.Name)
-				if err := insertNode(db, store, w, foundRef, u, true); err != nil {
-					return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertOrUpdateJoin> Unable to insert or update source node")
-				}
-			}
-			n.SourceNodeIDs = append(n.SourceNodeIDs, foundRef.ID)
 		}
+		n.SourceNodeIDs = append(n.SourceNodeIDs, foundRef.ID)
 	}
 
 	//Insert the join

@@ -27,6 +27,8 @@ type Join sdk.WorkflowNodeJoin
 // JoinTrigger  is a gorp wrapper around sdk.WorkflowNodeJoinTrigger
 type JoinTrigger sdk.WorkflowNodeJoinTrigger
 
+type Notification sdk.WorkflowNotification
+
 // Run is a gorp wrapper around sdk.WorkflowRun
 type Run sdk.WorkflowRun
 
@@ -83,4 +85,5 @@ func init() {
 	gorpmapping.Register(gorpmapping.New(NodeRunArtifact{}, "workflow_node_run_artifacts", true, "id"))
 	gorpmapping.Register(gorpmapping.New(RunTag{}, "workflow_run_tag", false, "workflow_run_id", "tag"))
 	gorpmapping.Register(gorpmapping.New(NodeHookModel{}, "workflow_hook_model", true, "id"))
+	gorpmapping.Register(gorpmapping.New(Notification{}, "workflow_notification", true, "id"))
 }

@@ -675,6 +675,16 @@
   "workflow_orientation_horizontal" : "Horizontale",
   "workflow_orientation_vertical" : "Verticale",
   "workflow_last_execution" : "Date de dernière exécution",
-  "workflow_first_execution" : "Date de première exécution"
+  "workflow_first_execution" : "Date de première exécution",
 
+  "workflow_notification_type" : "Type de notification",
+  "workflow_notification_pipeline" : "Pipelines",
+  "workflow_notification_on_success" : "Envoyer en cas de succès",
+  "workflow_notification_on_failure" : "Envoyer en cas d'erreur",
+  "workflow_notification_on_start" : "Envoyer au lancement",
+  "workflow_notification_title" : "Titre",
+  "workflow_notification_body" : "Message",
+  "workflow_notification_to_group" : "Envoyer au groupe",
+  "workflow_notification_to_initiator" : "Envoyer à l'initiateur",
+  "workflow_notification_node_error" : "Vous devez selectionner au moins 1 pipeline"
 }

@@ -40,7 +40,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	exportedWorkflow.Version = WorkflowVersion1
 	exportedWorkflow.Workflow = map[string]WorkflowEntry{}
 	exportedWorkflow.Hooks = map[string][]HookEntry{}
-	nodeIDs := w.Nodes()
+	nodes := w.Nodes(false)
 
 	if withPermission {
 		exportedWorkflow.Permissions = make(map[string]int, len(w.Groups))
@@ -79,8 +79,8 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 	hooks := w.GetHooks()
 
-	if len(nodeIDs) == 0 {
-		n := w.GetNode(w.Root.ID)
+	if len(nodes) == 0 {
+		n := w.Root
 		if n == nil {
 			return exportedWorkflow, sdk.ErrWorkflowNodeNotFound
 		}
@@ -105,9 +105,9 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			})
 		}
 	} else {
-		nodeIDs = append(nodeIDs, w.Root.ID)
-		for _, id := range nodeIDs {
-			n := w.GetNode(id)
+		nodes = append(nodes, *w.Root)
+		for i := range nodes {
+			n := &nodes[i]
 			if n == nil {
 				return exportedWorkflow, sdk.ErrWorkflowNodeNotFound
 			}

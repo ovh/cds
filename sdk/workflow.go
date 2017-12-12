@@ -8,21 +8,73 @@ import (
 
 //Workflow represents a pipeline based workflow
 type Workflow struct {
-	ID            int64              `json:"id" db:"id" cli:"-"`
-	Name          string             `json:"name" db:"name" cli:"name,key"`
-	Description   string             `json:"description,omitempty" db:"description" cli:"description"`
-	LastModified  time.Time          `json:"last_modified" db:"last_modified"`
-	ProjectID     int64              `json:"project_id,omitempty" db:"project_id" cli:"-"`
-	ProjectKey    string             `json:"project_key" db:"-" cli:"-"`
-	RootID        int64              `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
-	Root          *WorkflowNode      `json:"root" db:"-" cli:"-"`
-	Joins         []WorkflowNodeJoin `json:"joins,omitempty" db:"-" cli:"-"`
-	Groups        []GroupPermission  `json:"groups,omitempty" db:"-" cli:"-"`
-	Permission    int                `json:"permission,omitempty" db:"-" cli:"-"`
-	Metadata      Metadata           `json:"metadata" yaml:"metadata" db:"-"`
-	Usage         *Usage             `json:"usage,omitempty" db:"-" cli:"-"`
-	HistoryLength int64              `json:"history_length" db:"history_length" cli:"-"`
-	PurgeTags     []string           `json:"purge_tags,omitempty" db:"-" cli:"-"`
+	ID            int64                  `json:"id" db:"id" cli:"-"`
+	Name          string                 `json:"name" db:"name" cli:"name,key"`
+	Description   string                 `json:"description,omitempty" db:"description" cli:"description"`
+	LastModified  time.Time              `json:"last_modified" db:"last_modified"`
+	ProjectID     int64                  `json:"project_id,omitempty" db:"project_id" cli:"-"`
+	ProjectKey    string                 `json:"project_key" db:"-" cli:"-"`
+	RootID        int64                  `json:"root_id,omitempty" db:"root_node_id" cli:"-"`
+	Root          *WorkflowNode          `json:"root" db:"-" cli:"-"`
+	Joins         []WorkflowNodeJoin     `json:"joins,omitempty" db:"-" cli:"-"`
+	Groups        []GroupPermission      `json:"groups,omitempty" db:"-" cli:"-"`
+	Permission    int                    `json:"permission,omitempty" db:"-" cli:"-"`
+	Metadata      Metadata               `json:"metadata" yaml:"metadata" db:"-"`
+	Usage         *Usage                 `json:"usage,omitempty" db:"-" cli:"-"`
+	HistoryLength int64                  `json:"history_length" db:"history_length" cli:"-"`
+	PurgeTags     []string               `json:"purge_tags,omitempty" db:"-" cli:"-"`
+	Notifications []WorkflowNotification `json:"notifications,omitempty" db:"-" cli:"-"`
+}
+
+// WorkflowNotifications represents notifications on a workflow
+type WorkflowNotification struct {
+	ID             int64                                                     `json:"id,omitempty" db:"id"`
+	WorkflowID     int64                                                     `json:"workflow_id,omitempty" db:"workflow_id"`
+	SourceNodeRefs []string                                                  `json:"source_node_ref,omitempty" db:"-"`
+	SourceNodeIDs  []int64                                                   `json:"source_node_id,omitempty" db:"-"`
+	Notifications  map[UserNotificationSettingsType]UserNotificationSettings `json:"notifications" db:"-"`
+}
+
+//UnmarshalJSON parses the JSON-encoded data and stores the result in n
+func (n *WorkflowNotification) UnmarshalJSON(b []byte) error {
+	notif, err := parseWorkflowNotification(b)
+	if err != nil {
+		return err
+	}
+	*n = *notif
+	return nil
+}
+
+//workflowNotificationInput is a way to parse notification
+type workflowNotificationInput struct {
+	Notifications  map[string]interface{} `json:"notifications"`
+	ID             int64                  `json:"id,omitempty"`
+	WorkflowID     int64                  `json:"workflow_id,omitempty"`
+	SourceNodeRefs []string               `json:"source_node_ref,omitempty"`
+	SourceNodeIDs  []int64
+}
+
+//parseWorkflowNotification transform jsons to UserNotificationSettings map
+func parseWorkflowNotification(body []byte) (*WorkflowNotification, error) {
+	var input = &workflowNotificationInput{}
+	if err := json.Unmarshal(body, &input); err != nil {
+		return nil, err
+	}
+	settingsBody, err := json.Marshal(input.Notifications)
+	if err != nil {
+		return nil, err
+	}
+
+	var notif1 = &WorkflowNotification{
+		ID:             input.ID,
+		SourceNodeIDs:  input.SourceNodeIDs,
+		SourceNodeRefs: input.SourceNodeRefs,
+		WorkflowID:     input.WorkflowID,
+	}
+
+	var errParse error
+	notif1.Notifications, errParse = ParseUserNotificationSettings(settingsBody)
+	return notif1, errParse
 }
 
 //JoinsID returns joins ID
@@ -35,14 +87,18 @@ func (w *Workflow) JoinsID() []int64 {
 }
 
 //Nodes returns nodes IDs excluding the root ID
-func (w *Workflow) Nodes() []int64 {
+func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 	if w.Root == nil {
 		return nil
 	}
 
-	res := []int64{}
-	for _, t := range w.Root.Triggers {
-		res = append(res, t.WorkflowDestNode.Nodes()...)
+	res := []WorkflowNode{}
+	if withRoot {
+		res = append(res, w.Root.Nodes()...)
+	} else {
+		for _, t := range w.Root.Triggers {
+			res = append(res, t.WorkflowDestNode.Nodes()...)
+		}
 	}
 
 	for _, j := range w.Joins {
@@ -346,8 +402,8 @@ func (n *WorkflowNode) GetNode(id int64) *WorkflowNode {
 }
 
 //Nodes returns a slice with all node IDs
-func (n *WorkflowNode) Nodes() []int64 {
-	res := []int64{n.ID}
+func (n *WorkflowNode) Nodes() []WorkflowNode {
+	res := []WorkflowNode{*n}
 	for _, t := range n.Triggers {
 		res = append(res, t.WorkflowDestNode.Nodes()...)
 	}

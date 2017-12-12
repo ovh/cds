@@ -1,6 +1,7 @@
 import { Component, Input } from '@angular/core';
-import {Workflow} from '../../../../model/workflow.model';
+import {Workflow, WorkflowNotification} from '../../../../model/workflow.model';
 import {cloneDeep} from 'lodash';
+import {Project} from '../../../../model/project.model';
 
 @Component({
     selector: 'app-workflow-notifications',
@@ -11,12 +12,13 @@ export class WorkflowNotificationComponent {
 
     _workflow: Workflow;
     @Input('workflow')
-    set (data: Workflow) {
+    set workflow (data: Workflow) {
         this._workflow = cloneDeep(data);
     }
-    get() {
+    get workflow() {
         return this._workflow;
     }
+    @Input() project: Project;
 
     constructor() { }
 }
