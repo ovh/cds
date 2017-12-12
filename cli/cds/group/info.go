@@ -41,19 +41,4 @@ func infoGroup(cmd *cobra.Command, args []string) {
 			fmt.Printf(" - %s\n", u.Username)
 		}
 	}
-
-	if group.ProjectGroups != nil {
-		fmt.Printf("Projects:\n")
-		for _, prj := range group.ProjectGroups {
-			fmt.Printf(" - %s : %d\n", prj.Project.Name, prj.Permission)
-		}
-	}
-
-	if group.PipelineGroups != nil {
-		fmt.Printf("Pipelines:\n")
-		for _, pip := range group.PipelineGroups {
-			fmt.Printf(" - %s : %d\n", pip.Pipeline.Name, pip.Permission)
-		}
-	}
-
 }

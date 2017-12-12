@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/group"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
@@ -285,8 +284,6 @@ func (api *API) getApplicationHandler() Handler {
 			}
 			app.Usage = &usage
 		}
-
-		app.Permission = permission.ApplicationPermission(app.ID, getUser(ctx))
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}

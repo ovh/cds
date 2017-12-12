@@ -319,7 +319,7 @@ func (api *API) getUserNotificationApplicationPipelineHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getUserNotificationApplicationPipelineHandler> Cannot access to this environment")
 		}
 
@@ -374,7 +374,7 @@ func (api *API) deleteUserNotificationApplicationPipelineHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "deleteUserNotificationApplicationPipelineHandler> Cannot access to this environment")
 		}
 
@@ -445,7 +445,7 @@ func (api *API) addNotificationsHandler() Handler {
 				n.Environment = sdk.DefaultEnv
 			}
 
-			if !permission.AccessToEnvironment(n.Environment.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+			if !permission.AccessToEnvironment(key, n.Environment.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 				return sdk.WrapError(sdk.ErrForbidden, "addNotificationsHandler > Cannot access to this environment")
 			}
 
@@ -506,7 +506,7 @@ func (api *API) updateUserNotificationApplicationPipelineHandler() Handler {
 			notifs.Environment = sdk.DefaultEnv
 		}
 
-		if !permission.AccessToEnvironment(notifs.Environment.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToEnvironment(key, notifs.Environment.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "updateUserNotificationApplicationPipelineHandler> Cannot access to this environment")
 		}
 

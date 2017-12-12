@@ -10,15 +10,10 @@ const SharedInfraGroupName = "shared.infra"
 
 // Group represent a group of user.
 type Group struct {
-	ID                int64              `json:"id" yaml:"-"`
-	Name              string             `json:"name" yaml:"name" cli:"name"`
-	Admins            []User             `json:"admins,omitempty" yaml:"admin,omitempty"`
-	Users             []User             `json:"users,omitempty" yaml:"users,omitempty"`
-	ProjectGroups     []ProjectGroup     `json:"projects,omitempty" yaml:"-"`
-	PipelineGroups    []PipelineGroup    `json:"pipelines,omitempty" yaml:"-"`
-	ApplicationGroups []ApplicationGroup `json:"applications,omitempty" yaml:"-"`
-	EnvironmentGroups []EnvironmentGroup `json:"environments,omitempty" yaml:"-"`
-	WorkflowGroups    []WorkflowGroup    `json:"workflows,omitempty" yaml:"-"`
+	ID     int64  `json:"id" yaml:"-"`
+	Name   string `json:"name" yaml:"name" cli:"name"`
+	Admins []User `json:"admins,omitempty" yaml:"admin,omitempty"`
+	Users  []User `json:"users,omitempty" yaml:"users,omitempty"`
 }
 
 // GroupPermission represent a group and his role in the project

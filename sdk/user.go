@@ -3,18 +3,65 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // User represent a CDS user.
 type User struct {
-	ID       int64   `json:"id" yaml:"-" cli:"-"`
-	Username string  `json:"username" yaml:"username" cli:"username,key"`
-	Fullname string  `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
-	Email    string  `json:"email" yaml:"email,omitempty" cli:"-"`
-	Admin    bool    `json:"admin" yaml:"admin,omitempty" cli:"-"`
-	Auth     Auth    `json:"-" yaml:"-" cli:"-"`
-	Groups   []Group `json:"groups,omitempty" yaml:"-" cli:"-"`
-	Origin   string  `json:"origin" yaml:"origin,omitempty"`
+	ID          int64           `json:"id" yaml:"-" cli:"-"`
+	Username    string          `json:"username" yaml:"username" cli:"username,key"`
+	Fullname    string          `json:"fullname" yaml:"fullname,omitempty" cli:"fullname"`
+	Email       string          `json:"email" yaml:"email,omitempty" cli:"-"`
+	Admin       bool            `json:"admin" yaml:"admin,omitempty" cli:"-"`
+	Auth        Auth            `json:"-" yaml:"-" cli:"-"`
+	Groups      []Group         `json:"groups,omitempty" yaml:"-" cli:"-"`
+	Origin      string          `json:"origin" yaml:"origin,omitempty"`
+	Permissions UserPermissions `json:"permissions,omitempty" yaml:"-" cli:"-"`
+}
+
+type UserPermissions struct {
+	Groups           []string
+	GroupsAdmin      []string
+	ProjectsPerm     map[string]int
+	ApplicationsPerm UserPermissionsMap
+	WorkflowsPerm    UserPermissionsMap
+	PipelinesPerm    UserPermissionsMap
+	EnvironmentsPerm UserPermissionsMap
+}
+
+type UserPermissionsMap map[UserPermissionKey]int
+
+type UserPermissionKey struct {
+	Key  string
+	Name string
+}
+
+//MarshalJSON is the json.Marshaller implementation usefull to serialize UserPermissionsMap
+func (m UserPermissionsMap) MarshalJSON() ([]byte, error) {
+	var data = make(map[string]int, len(m))
+	for k, v := range m {
+		data[k.Key+"/"+k.Name] = v
+	}
+	return json.Marshal(data)
+}
+
+//UnmarshalJSON is the json.Unmarshaller implementation usefull to deserialize UserPermissionsMap
+func (m *UserPermissionsMap) UnmarshalJSON(b []byte) error {
+	data := map[string]int{}
+	if err := json.Unmarshal(b, &data); err != nil {
+		return err
+	}
+
+	*m = make(map[UserPermissionKey]int)
+
+	for k, v := range data {
+		t := strings.SplitN(k, "/", 2)
+		if len(t) != 2 {
+			return fmt.Errorf("json: unable to unmarshal permissions")
+		}
+		(*m)[UserPermissionKey{Key: t[0], Name: t[1]}] = v
+	}
+	return nil
 }
 
 // UserAPIRequest  request for rest API

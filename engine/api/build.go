@@ -140,7 +140,7 @@ func (api *API) deleteBuildHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "deleteBuildHandler> No enought right on this environment %s", envName)
 		}
 
@@ -200,7 +200,7 @@ func (api *API) getBuildStateHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getBuildStateHandler> No enought right on this environment %s: ", envName)
 		}
 
@@ -599,8 +599,10 @@ func (api *API) getQueueHandler() Handler {
 		var errQ error
 		switch getAgent(r) {
 		case sdk.HatcheryAgent:
+			log.Debug("getQueueHandler> Loading hatchery queue for group %d", getHatchery(ctx).GroupID)
 			queue, errQ = pipeline.LoadGroupWaitingQueue(api.mustDB(), api.Cache, getHatchery(ctx).GroupID)
 		case sdk.WorkerAgent:
+			log.Debug("getQueueHandler> Loading worker queue for group %d", getWorker(ctx).GroupID)
 			queue, errQ = pipeline.LoadGroupWaitingQueue(api.mustDB(), api.Cache, getWorker(ctx).GroupID)
 		default:
 			queue, errQ = pipeline.LoadUserWaitingQueue(api.mustDB(), api.Cache, getUser(ctx))
@@ -643,7 +645,7 @@ func (api *API) addBuildVariableHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addBuildVariableHandler> No enought right on this environment %s", envName)
 		}
 
@@ -713,7 +715,7 @@ func (api *API) addBuildTestResultsHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addBuildTestResultsHandler> No enought right on this environment %s: ", envName)
 		}
 
@@ -800,7 +802,7 @@ func (api *API) getBuildTestResultsHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(projectKey, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "getBuildTestResultsHandler> No enought right on this environment %s: ", envName)
 		}
 

@@ -116,7 +116,7 @@ func (api *API) addSchedulerApplicationPipelineHandler() Handler {
 		}
 
 		if env != nil {
-			if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+			if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 				return sdk.WrapError(sdk.ErrForbidden, "getSchedulerApplicationPipelineHandler> Cannot access to this environment")
 			}
 		}
@@ -246,9 +246,8 @@ func (api *API) updateSchedulerApplicationPipelineHandler() Handler {
 				return sdk.WrapError(err, "updateSchedulerApplicationPipelineHandler> ")
 			}
 
-			if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+			if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 				return sdk.WrapError(sdk.ErrForbidden, "updateSchedulerApplicationPipelineHandler> Cannot access to this environment")
-
 			}
 		}
 

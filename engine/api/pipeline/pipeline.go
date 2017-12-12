@@ -352,30 +352,30 @@ func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.U
 }
 
 // LoadPipelineByGroup loads all pipelines where group has access
-func LoadPipelineByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
+func LoadPipelineByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.PipelineGroup, error) {
+	res := []sdk.PipelineGroup{}
 	query := `SELECT project.projectKey, pipeline.id, pipeline.name,pipeline_group.role FROM pipeline
 	 		  JOIN pipeline_group ON pipeline_group.pipeline_id = pipeline.id
 	 		  JOIN project ON pipeline.project_id = project.id
 	 		  WHERE pipeline_group.group_id = $1 ORDER BY pipeline.name ASC`
-	rows, err := db.Query(query, group.ID)
+	rows, err := db.Query(query, groupID)
 	if err != nil {
-		return err
+		return res, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var pipeline sdk.Pipeline
 		var perm int
-		err = rows.Scan(&pipeline.ProjectKey, &pipeline.ID, &pipeline.Name, &perm)
-		if err != nil {
-			return err
+		if err = rows.Scan(&pipeline.ProjectKey, &pipeline.ID, &pipeline.Name, &perm); err != nil {
+			return res, err
 		}
-		group.PipelineGroups = append(group.PipelineGroups, sdk.PipelineGroup{
+		res = append(res, sdk.PipelineGroup{
 			Pipeline:   pipeline,
 			Permission: perm,
 		})
 	}
-	return nil
+	return res, nil
 }
 
 func updateParamInList(params []sdk.Parameter, paramAction sdk.Parameter) (bool, []sdk.Parameter) {
