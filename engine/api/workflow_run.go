@@ -326,12 +326,16 @@ func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.
 		}
 	}
 
-	if errU := workflow.UpdateWorkflowRunStatus(tx, run.ID, sdk.StatusStopped.String()); errU != nil {
+	run.Status = sdk.StatusStopped.String()
+	if errU := workflow.UpdateWorkflowRunStatus(tx, run); errU != nil {
 		chError <- sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run status %d", run.ID)
+		return
 	}
+	chEvent <- *run
 
 	if err := tx.Commit(); err != nil {
 		chError <- sdk.WrapError(err, "stopWorkflowRunHandler> Cannot commit transaction")
+		return
 	}
 }
 
@@ -624,7 +628,7 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 
 		// Check Env Permission
 		if fromNode.Context.Environment != nil {
-			if !permission.AccessToEnvironment(fromNode.Context.Environment.ID, u, permission.PermissionReadExecute) {
+			if !permission.AccessToEnvironment(p.Key, fromNode.Context.Environment.Name, u, permission.PermissionReadExecute) {
 				workerOptions.chanError <- sdk.WrapError(sdk.ErrNoEnvExecution, "runFromNode> Not enough right to run on environment %s", fromNode.Context.Environment.Name)
 				tx.Rollback()
 				workerOptions.wg.Done()

@@ -5,7 +5,7 @@ import {ActionEvent} from '../../../../shared/action/action.event.model';
 import {ActionService} from '../../../../service/action/action.service';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 
 @Component({
     selector: 'app-action-add',

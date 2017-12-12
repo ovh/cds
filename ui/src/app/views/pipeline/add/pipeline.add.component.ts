@@ -1,7 +1,7 @@
 import {Component} from '@angular/core';
 import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {Pipeline} from '../../../model/pipeline.model';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';

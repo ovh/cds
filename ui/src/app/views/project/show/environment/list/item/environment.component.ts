@@ -11,7 +11,7 @@ import {ProjectStore} from '../../../../../../service/project/project.store';
 import {AuthentificationStore} from '../../../../../../service/auth/authentification.store';
 import {EnvironmentService} from '../../../../../../service/environment/environment.service';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {cloneDeep} from 'lodash';
 import {finalize} from 'rxjs/operators';
 

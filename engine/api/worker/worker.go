@@ -54,17 +54,9 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 		return nil
 	}
 
-	if st == sdk.StatusBuilding.String() {
+	if st == sdk.StatusBuilding.String() && jobID.Valid && jobType.Valid {
 		// Worker is awol while building !
 		// We need to restart this action
-		if jobID.Valid == false {
-			return fmt.Errorf("DeleteWorker> Worker %s crashed while building but action_build_id is NULL!", name)
-		}
-
-		if !jobType.Valid {
-			return fmt.Errorf("DeleteWorker> Worker %s crashed while building but job_type is NULL!", name)
-		}
-
 		switch jobType.String {
 		case sdk.JobTypePipeline:
 			if err := pipeline.RestartPipelineBuildJob(tx, jobID.Int64); err != nil {
@@ -125,31 +117,6 @@ func LoadWorker(db gorp.SqlExecutor, id string) (*sdk.Worker, error) {
 
 	if pbJobID.Valid {
 		w.ActionBuildID = pbJobID.Int64
-	}
-
-	return w, nil
-}
-
-// LoadWorkersByPipelineJobID load all workers in db by pipeline job id
-func LoadWorkersByPipelineJobID(db gorp.SqlExecutor, pipJobID int64) ([]sdk.Worker, error) {
-	w := []sdk.Worker{}
-	var statusS string
-	query := `SELECT id, name, last_beat, group_id, model, status, hatchery_id, hatchery_name FROM worker WHERE action_build_id = $1 ORDER BY name ASC`
-
-	rows, err := db.Query(query, pipJobID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var worker sdk.Worker
-		err = rows.Scan(&worker.ID, &worker.Name, &worker.LastBeat, &worker.GroupID, &worker.ModelID, &statusS, &worker.HatcheryID, &worker.HatcheryName)
-		if err != nil {
-			return nil, err
-		}
-		worker.Status = sdk.StatusFromString(statusS)
-		w = append(w, worker)
 	}
 
 	return w, nil

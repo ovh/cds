@@ -154,6 +154,66 @@ func (w *Workflow) InvolvedPipelines() []int64 {
 	return res
 }
 
+//GetApplications returns all applications used in the workflow
+func (w *Workflow) GetApplications() []Application {
+	if w.Root == nil {
+		return nil
+	}
+
+	res := w.Root.GetApplications()
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.GetApplications()...)
+		}
+	}
+
+	withoutDuplicates := []Application{}
+	for _, a := range res {
+		var found bool
+		for _, d := range withoutDuplicates {
+			if a.Name == d.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			withoutDuplicates = append(withoutDuplicates, a)
+		}
+	}
+
+	return withoutDuplicates
+}
+
+//GetEnvironments returns all environments used in the workflow
+func (w *Workflow) GetEnvironments() []Environment {
+	if w.Root == nil {
+		return nil
+	}
+
+	res := w.Root.GetEnvironments()
+	for _, j := range w.Joins {
+		for _, t := range j.Triggers {
+			res = append(res, t.WorkflowDestNode.GetEnvironments()...)
+		}
+	}
+
+	withoutDuplicates := []Environment{}
+	for _, a := range res {
+		var found bool
+		for _, d := range withoutDuplicates {
+			if a.Name == d.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			withoutDuplicates = append(withoutDuplicates, a)
+		}
+	}
+
+	return withoutDuplicates
+}
+
 //GetPipelines returns all pipelines used in the workflow
 func (w *Workflow) GetPipelines() []Pipeline {
 	if w.Root == nil {
@@ -166,7 +226,22 @@ func (w *Workflow) GetPipelines() []Pipeline {
 			res = append(res, t.WorkflowDestNode.GetPipelines()...)
 		}
 	}
-	return res
+
+	withoutDuplicates := []Pipeline{}
+	for _, a := range res {
+		var found bool
+		for _, d := range withoutDuplicates {
+			if a.Name == d.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			withoutDuplicates = append(withoutDuplicates, a)
+		}
+	}
+
+	return withoutDuplicates
 }
 
 //InvolvedEnvironments returns all environments used in the workflow
@@ -417,6 +492,30 @@ func (n *WorkflowNode) GetPipelines() []Pipeline {
 	return res
 }
 
+//GetApplications returns all applications used in the workflow
+func (n *WorkflowNode) GetApplications() []Application {
+	res := []Application{}
+	if n.Context != nil && n.Context.Application != nil {
+		res = append(res, *n.Context.Application)
+	}
+	for _, t := range n.Triggers {
+		res = append(res, t.WorkflowDestNode.GetApplications()...)
+	}
+	return res
+}
+
+//GetEnvironments returns all Environments used in the workflow
+func (n *WorkflowNode) GetEnvironments() []Environment {
+	res := []Environment{}
+	if n.Context != nil && n.Context.Environment != nil {
+		res = append(res, *n.Context.Environment)
+	}
+	for _, t := range n.Triggers {
+		res = append(res, t.WorkflowDestNode.GetEnvironments()...)
+	}
+	return res
+}
+
 //InvolvedEnvironments returns all environments used in the workflow
 func (n *WorkflowNode) InvolvedEnvironments() []int64 {
 	res := []int64{}
@@ -505,4 +604,10 @@ func WorkflowDelete(projectkey, name string) error {
 	path := fmt.Sprintf("/project/%s/workflows/%s", projectkey, name)
 	_, _, err := Request("DELETE", path, nil)
 	return err
+}
+
+// WorkflowNodeJobRunCount return nb workflow run job since 'since'
+type WorkflowNodeJobRunCount struct {
+	Count int64     `json:"version"`
+	Since time.Time `json:"since"`
 }

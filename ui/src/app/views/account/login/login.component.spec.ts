@@ -1,6 +1,6 @@
 /* tslint:disable:no-unused-variable */
 
-import {TestBed,  tick, fakeAsync, inject} from '@angular/core/testing';
+import {TestBed,  tick, fakeAsync} from '@angular/core/testing';
 import {APP_BASE_HREF} from '@angular/common';
 import {RouterTestingModule} from '@angular/router/testing';
 import {LoginComponent} from './login.component';
@@ -8,13 +8,13 @@ import {LoginComponent} from './login.component';
 import {UserService} from '../../../service/user/user.service';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {AppModule} from '../../../app.module';
-import {User} from '../../../model/user.model';
 import {Router, ActivatedRoute} from '@angular/router';
 import {AccountModule} from '../account.module';
 
 import {Observable} from 'rxjs/Observable';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {HttpRequest} from '@angular/common/http';
+import 'rxjs/add/observable/of';
 
 describe('CDS: LoginComponent', () => {
 

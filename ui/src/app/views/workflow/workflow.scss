@@ -13,11 +13,21 @@ $sidebarWidth: 255px;
   background: #FFFFFF;
   height: calc( 100% - #{2*$navbarHeight});
 
+  &.scrollable {
+    overflow-y: scroll;
+  }
+
   &.expanded {
     width: $sidebarWidth;
     position: fixed;
     z-index: 4;
     border-right: 1px rgba(34, 36, 38, 0.15) solid;
+  }
+  .close-button {
+    padding: 0;
+  }
+  .transparent {
+    background-color: transparent;
   }
 }
 

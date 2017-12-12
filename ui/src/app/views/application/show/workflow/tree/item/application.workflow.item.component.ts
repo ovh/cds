@@ -15,7 +15,7 @@ import {Trigger} from '../../../../../../model/trigger.model';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {AutoUnsubscribe} from '../../../../../../shared/decorator/autoUnsubscribe';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {Scheduler} from '../../../../../../model/scheduler.model';
 import {Hook} from '../../../../../../model/hook.model';
 import {RepositoryPoller} from '../../../../../../model/polling.model';
@@ -236,6 +236,8 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
             case 'add':
                 this.createTriggerModal.hide();
                 this.triggerInModal.parameters = Parameter.formatForAPI(this.triggerInModal.parameters);
+                this.triggerInModal.src_pipeline.parameters = null;
+                this.triggerInModal.dest_pipeline.parameters = null;
                 this._appStore.addTrigger(
                     this.project.key,
                     this.workflowItem.application.name,

@@ -267,17 +267,17 @@ func LoadCDTree(db gorp.SqlExecutor, store cache.Store, projectkey, appName stri
 
 		if lastTree == nil || lastTree.Application.ID != root.Application.ID ||
 			lastTree.Pipeline.ID != root.Pipeline.ID || lastTree.Environment.ID != root.Environment.ID {
-			if permission.AccessToPipeline(root.Environment.ID, root.Pipeline.ID, user, permission.PermissionRead) {
+			if permission.AccessToPipeline(projectkey, root.Environment.Name, root.Pipeline.Name, user, permission.PermissionRead) {
 				if hasChild {
 					if err := getChild(db, &root, user, branchName, remote, version); err != nil {
 						return nil, sdk.WrapError(err, "LoadCDTree> Cannot get child")
 					}
 				}
 				root.Project.Key = projectkey
-				root.Application.Permission = permission.ApplicationPermission(root.Application.ID, user)
-				root.Pipeline.Permission = permission.PipelinePermission(root.Pipeline.ID, user)
+				root.Application.Permission = permission.ApplicationPermission(projectkey, root.Application.Name, user)
+				root.Pipeline.Permission = permission.PipelinePermission(projectkey, root.Pipeline.Name, user)
 				if root.Environment.ID != sdk.DefaultEnv.ID {
-					root.Environment.Permission = permission.EnvironmentPermission(root.Environment.ID, user)
+					root.Environment.Permission = permission.EnvironmentPermission(projectkey, root.Environment.Name, user)
 				}
 
 				pipParams, errP := pipeline.GetAllParametersInPipeline(db, root.Pipeline.ID)
@@ -477,7 +477,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 			return sdk.WrapError(err, "getChild> Cannot scan child for root: %d-%d-%d", parent.Application.ID, parent.Pipeline.ID, parent.Environment.ID)
 		}
 
-		if permission.AccessToPipeline(child.Trigger.DestEnvironment.ID, child.Trigger.DestPipeline.ID, user, permission.PermissionRead) {
+		if permission.AccessToPipeline(child.Project.Key, child.Trigger.DestEnvironment.Name, child.Trigger.DestPipeline.Name, user, permission.PermissionRead) {
 			child.Trigger.SrcPipeline.Type = srcType
 			child.Trigger.DestPipeline.Type = destType
 
@@ -519,10 +519,10 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 			}
 
 			// Calculate permission
-			child.Application.Permission = permission.ApplicationPermission(child.Application.ID, user)
+			child.Application.Permission = permission.ApplicationPermission(child.Project.Key, child.Application.Name, user)
 			child.Project.Permission = permission.ProjectPermission(child.Project.Key, user)
-			child.Pipeline.Permission = permission.PipelinePermission(child.Pipeline.ID, user)
-			child.Environment.Permission = permission.EnvironmentPermission(child.Environment.ID, user)
+			child.Pipeline.Permission = permission.PipelinePermission(child.Project.Key, child.Pipeline.Name, user)
+			child.Environment.Permission = permission.EnvironmentPermission(child.Project.Key, child.Pipeline.Name, user)
 
 			if err := json.Unmarshal([]byte(params), &child.Trigger.Parameters); err != nil {
 				return sdk.WrapError(err, "getChild> Cannot unmarshal trigger params")
@@ -562,10 +562,10 @@ func buildTreeOrder(parent *sdk.CDPipeline, listChild []sdk.CDPipeline, user *sd
 			child.Trigger.SrcPipeline.ID == parent.Pipeline.ID &&
 			child.Trigger.SrcEnvironment.ID == parent.Environment.ID {
 
-			child.Application.Permission = permission.ApplicationPermission(child.Application.ID, user)
-			child.Pipeline.Permission = permission.PipelinePermission(child.Pipeline.ID, user)
+			child.Application.Permission = permission.ApplicationPermission(child.Project.Key, child.Application.Name, user)
+			child.Pipeline.Permission = permission.PipelinePermission(child.Project.Key, child.Pipeline.Name, user)
 			if child.Environment.ID != sdk.DefaultEnv.ID {
-				child.Environment.Permission = permission.EnvironmentPermission(child.Environment.ID, user)
+				child.Environment.Permission = permission.EnvironmentPermission(child.Project.Key, child.Environment.Name, user)
 			}
 			parent.SubPipelines = append(parent.SubPipelines, buildTreeOrder(&child, listChild, user))
 		}

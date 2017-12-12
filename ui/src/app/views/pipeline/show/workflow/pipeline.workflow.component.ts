@@ -4,7 +4,7 @@ import {Project} from '../../../../model/project.model';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {Stage} from '../../../../model/stage.model';
 import {ToastService} from '../../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {VariableService} from '../../../../service/variable/variable.service';
 import {cloneDeep} from 'lodash';

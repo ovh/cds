@@ -3,7 +3,12 @@ package sdk
 import (
 	"reflect"
 	"regexp"
+
+	"github.com/go-gorp/gorp"
 )
+
+//EncryptFunc  is a common type
+type EncryptFunc func(gorp.SqlExecutor, int64, string, string) (string, error)
 
 // NamePattern  Pattern for project/application/pipeline/group name
 const NamePattern = "^[a-zA-Z0-9._-]{1,}$"

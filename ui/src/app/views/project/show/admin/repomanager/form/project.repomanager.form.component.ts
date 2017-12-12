@@ -1,7 +1,7 @@
 import {Component, ViewChild, Input} from '@angular/core';
 import {RepoManagerService} from '../../../../../../service/repomanager/project.repomanager.service';
 import {ProjectStore} from '../../../../../../service/project/project.store';
-import {TranslateService} from 'ng2-translate/ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {Project} from '../../../../../../model/project.model';
 import {WarningModalComponent} from '../../../../../../shared/modal/warning/warning.component';

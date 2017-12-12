@@ -240,7 +240,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 		}
 
 		for _, app := range applications {
-			if permission.AccessToApplication(app.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+			if permission.AccessToApplication(key, app.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 				inApp, err := group.CheckGroupInApplication(tx, app.ID, g.ID)
 				if err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the application %s", g.Name, app.Name)
@@ -262,7 +262,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 		}
 
 		for _, pip := range pipelines {
-			if permission.AccessToPipeline(sdk.DefaultEnv.ID, pip.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+			if permission.AccessToPipeline(key, sdk.DefaultEnv.Name, pip.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 				inPip, err := group.CheckGroupInPipeline(tx, pip.ID, g.ID)
 				if err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the pipeline %s", g.Name, pip.Name)
@@ -284,7 +284,7 @@ func (api *API) addGroupInProjectHandler() Handler {
 		}
 
 		for _, env := range envs {
-			if permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+			if permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 				inEnv, err := group.IsInEnvironment(tx, env.ID, g.ID)
 				if err != nil {
 					return sdk.WrapError(err, "AddGroupInProject: Cannot check if group %s is already in the environment %s", g.Name, env.Name)

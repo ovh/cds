@@ -1,5 +1,5 @@
 import {Component, Input, OnDestroy} from '@angular/core';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {Subscription} from 'rxjs/Subscription';
 import {Pipeline, PipelineBuild, PipelineBuildJob, PipelineStatus} from '../../../model/pipeline.model';
 import {Stage} from '../../../model/stage.model';
@@ -46,6 +46,7 @@ export class PipelineRunWorkflowComponent {
     mapJobStatus: { [key: number]: string };
     mapJobProgression: { [key: number]: number };
     mapJobDuration: { [key: number]: string };
+    manual = false;
 
     nextBuilds: Array<PipelineBuild>;
 
@@ -65,6 +66,7 @@ export class PipelineRunWorkflowComponent {
     }
 
     refreshBuild(data: PipelineBuild): void {
+        let previousBuild = this.currentBuild;
         this.currentBuild = data;
 
         if (this.previousStatus && this.currentBuild && this.previousStatus === PipelineStatus.BUILDING &&
@@ -82,7 +84,11 @@ export class PipelineRunWorkflowComponent {
         // Set selected job if needed or refresh step_status
         if (this.currentBuild.stages) {
             this.currentBuild.stages.forEach((s, sIndex) => {
-
+                if (!this.manual && previousBuild && (!previousBuild.stages[sIndex].status ||
+                    previousBuild.stages[sIndex].status === PipelineStatus.NEVER_BUILT) &&
+                    (s.status === PipelineStatus.WAITING || s.status === PipelineStatus.BUILDING)) {
+                  this.selectedJob(s.jobs[0], s);
+                }
                 if (s.builds) {
                     s.builds.forEach((pipJob, pjIndex) => {
                         // Update percent progression

@@ -3,7 +3,7 @@
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
 import {Router} from '@angular/router';
 import {RouterTestingModule} from '@angular/router/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {SharedService} from '../shared.service';
 import {SharedModule} from '../shared.module';
 import {UsageComponent} from './usage.component';

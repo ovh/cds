@@ -18,11 +18,11 @@ type Workflow struct {
 }
 
 type WorkflowEntry struct {
-	DependsOn       []string                   `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
-	Conditions      sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
-	PipelineName    string                     `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
-	ApplicationName string                     `json:"application,omitempty" yaml:"application,omitempty"`
-	EnvironmentName string                     `json:"environment,omitempty" yaml:"environment,omitempty"`
+	DependsOn       []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
+	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	PipelineName    string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
+	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
+	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
 }
 
 type HookEntry struct {
@@ -36,17 +36,16 @@ const WorkflowVersion1 = "v1.0"
 
 //NewWorkflow creates a new exportable workflow
 func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
-	e := Workflow{}
-	e.Version = WorkflowVersion1
-	e.Version = string(WorkflowVersion1)
-	e.Workflow = map[string]WorkflowEntry{}
-	e.Hooks = map[string][]HookEntry{}
+	exportedWorkflow := Workflow{}
+	exportedWorkflow.Version = WorkflowVersion1
+	exportedWorkflow.Workflow = map[string]WorkflowEntry{}
+	exportedWorkflow.Hooks = map[string][]HookEntry{}
 	nodeIDs := w.Nodes()
 
 	if withPermission {
-		e.Permissions = make(map[string]int, len(w.Groups))
+		exportedWorkflow.Permissions = make(map[string]int, len(w.Groups))
 		for _, p := range w.Groups {
-			e.Permissions[p.Group.Name] = p.Permission
+			exportedWorkflow.Permissions[p.Group.Name] = p.Permission
 		}
 	}
 
@@ -65,7 +64,9 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 		entry.DependsOn = ancestors
 		entry.PipelineName = n.Pipeline.Name
-		entry.Conditions = n.Context.Conditions
+		if len(n.Context.Conditions.PlainConditions) > 0 || n.Context.Conditions.LuaScript != "" {
+			entry.Conditions = &n.Context.Conditions
+		}
 
 		if n.Context.Application != nil {
 			entry.ApplicationName = n.Context.Application.Name
@@ -81,24 +82,24 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	if len(nodeIDs) == 0 {
 		n := w.GetNode(w.Root.ID)
 		if n == nil {
-			return e, sdk.ErrWorkflowNodeNotFound
+			return exportedWorkflow, sdk.ErrWorkflowNodeNotFound
 		}
 		entry, err := craftWorkflowEntry(n)
 		if err != nil {
-			return e, err
+			return exportedWorkflow, err
 		}
-		e.ApplicationName = entry.ApplicationName
-		e.PipelineName = entry.PipelineName
-		e.EnvironmentName = entry.EnvironmentName
-		e.DependsOn = entry.DependsOn
-		if len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "" {
-			e.Conditions = &entry.Conditions
+		exportedWorkflow.ApplicationName = entry.ApplicationName
+		exportedWorkflow.PipelineName = entry.PipelineName
+		exportedWorkflow.EnvironmentName = entry.EnvironmentName
+		exportedWorkflow.DependsOn = entry.DependsOn
+		if entry.Conditions != nil && (len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "") {
+			exportedWorkflow.Conditions = entry.Conditions
 		}
 		for _, h := range hooks {
-			if e.Hooks == nil {
-				e.Hooks = make(map[string][]HookEntry)
+			if exportedWorkflow.Hooks == nil {
+				exportedWorkflow.Hooks = make(map[string][]HookEntry)
 			}
-			e.PipelineHooks = append(e.PipelineHooks, HookEntry{
+			exportedWorkflow.PipelineHooks = append(exportedWorkflow.PipelineHooks, HookEntry{
 				Model:  h.WorkflowHookModel.Name,
 				Config: h.Config.Values(),
 			})
@@ -108,28 +109,26 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		for _, id := range nodeIDs {
 			n := w.GetNode(id)
 			if n == nil {
-				return e, sdk.ErrWorkflowNodeNotFound
+				return exportedWorkflow, sdk.ErrWorkflowNodeNotFound
 			}
 			entry, err := craftWorkflowEntry(n)
 			if err != nil {
-				return e, err
+				return exportedWorkflow, err
 			}
-			e.Workflow[n.Name] = entry
-			if len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "" {
-				e.Conditions = &entry.Conditions
-			}
+			exportedWorkflow.Workflow[n.Name] = entry
+
 		}
 
 		for _, h := range hooks {
-			if e.Hooks == nil {
-				e.Hooks = make(map[string][]HookEntry)
+			if exportedWorkflow.Hooks == nil {
+				exportedWorkflow.Hooks = make(map[string][]HookEntry)
 			}
-			e.Hooks[w.GetNode(h.WorkflowNodeID).Name] = append(e.Hooks[w.GetNode(h.WorkflowNodeID).Name], HookEntry{
+			exportedWorkflow.Hooks[w.GetNode(h.WorkflowNodeID).Name] = append(exportedWorkflow.Hooks[w.GetNode(h.WorkflowNodeID).Name], HookEntry{
 				Model:  h.WorkflowHookModel.Name,
 				Config: h.Config.Values(),
 			})
 		}
 	}
 
-	return e, nil
+	return exportedWorkflow, nil
 }

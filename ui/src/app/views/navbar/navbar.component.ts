@@ -6,7 +6,7 @@ import {ApplicationStore} from '../../service/application/application.store';
 import {Application} from '../../model/application.model';
 import {User} from '../../model/user.model';
 import {NavigationEnd, Router} from '@angular/router';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {List} from 'immutable';
 import {LanguageStore} from '../../service/language/language.store';
 import {Subscription} from 'rxjs/Subscription';

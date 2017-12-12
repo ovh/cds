@@ -3,7 +3,7 @@ import {Table} from '../table/table';
 import {PipelineBuild} from '../../model/pipeline.model';
 import {Project} from '../../model/project.model';
 import {ApplicationPipelineService} from '../../service/application/pipeline/application.pipeline.service';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../toast/ToastService';
 
 @Component({

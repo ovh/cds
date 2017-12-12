@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, tick, fakeAsync} from '@angular/core/testing';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {SharedService} from '../../shared.service';
 import {PermissionListComponent} from './permission.list.component';
 import {GroupPermission} from '../../../model/group.model';

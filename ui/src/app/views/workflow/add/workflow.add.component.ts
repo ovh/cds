@@ -3,7 +3,7 @@ import {Workflow} from '../../../model/workflow.model';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Project} from '../../../model/project.model';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {first} from 'rxjs/operators';
 

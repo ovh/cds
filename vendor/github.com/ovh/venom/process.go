@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -131,20 +132,37 @@ func (v *Venom) Process(path []string, exclude []string) (*Tests, error) {
 		defer endBars(v.OutputDetails, pool)
 	}
 
+	chanEnd := make(chan *TestSuite, 1)
+	parallels := make(chan *TestSuite, v.Parallel) //Run testsuite in parrallel
+	wg := sync.WaitGroup{}
+	testsResult := &Tests{}
+
+	wg.Add(len(filesPath))
+	chanToRun := make(chan *TestSuite, len(filesPath)+1)
+
+	go v.computeStats(testsResult, chanEnd, &wg)
+	go func() {
+		for ts := range chanToRun {
+			parallels <- ts
+			go func(ts *TestSuite) {
+				v.runTestSuite(ts)
+				chanEnd <- ts
+				<-parallels
+			}(ts)
+		}
+	}()
+
 	for i := range v.testsuites {
-		ts := &v.testsuites[i]
-		v.runTestSuite(ts)
+		chanToRun <- &v.testsuites[i]
 	}
 
-	testsResult := &Tests{}
-	v.computeStats(testsResult)
+	wg.Wait()
 
 	return testsResult, nil
 }
 
-func (v *Venom) computeStats(testsResult *Tests) {
-	for i := range v.testsuites {
-		t := &v.testsuites[i]
+func (v *Venom) computeStats(testsResult *Tests, chanEnd <-chan *TestSuite, wg *sync.WaitGroup) {
+	for t := range chanEnd {
 		testsResult.TestSuites = append(testsResult.TestSuites, *t)
 		if t.Failures > 0 {
 			testsResult.TotalKO += t.Failures
@@ -156,6 +174,7 @@ func (v *Venom) computeStats(testsResult *Tests) {
 		}
 
 		testsResult.Total = testsResult.TotalKO + testsResult.TotalOK + testsResult.TotalSkipped
+		wg.Done()
 	}
 }
 

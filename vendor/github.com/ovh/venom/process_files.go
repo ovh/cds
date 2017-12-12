@@ -29,7 +29,7 @@ func getFilesPath(path []string, exclude []string) ([]string, error) {
 
 	for _, p := range path {
 		p = strings.TrimSpace(p)
-		
+
 		// no need to check err on os.stat.
 		// if we put ./test/*.yml, it will fail and it's normal
 		fileInfo, _ := os.Stat(p)

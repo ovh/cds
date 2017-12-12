@@ -25,7 +25,7 @@ import (
 func (api *API) uploadArtifactHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		project := vars["key"]
+		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 		appName := vars["permApplicationName"]
 		tag := vars["tag"]
@@ -56,14 +56,14 @@ func (api *API) uploadArtifactHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "uploadArtifactHandler> %s header is not set", sdk.ArtifactFileName)
 		}
 
-		p, errP := pipeline.LoadPipeline(api.mustDB(), project, pipelineName, false)
+		p, errP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if errP != nil {
-			return sdk.WrapError(errP, "uploadArtifactHandler> cannot load pipeline %s-%s", project, pipelineName)
+			return sdk.WrapError(errP, "uploadArtifactHandler> cannot load pipeline %s-%s", key, pipelineName)
 		}
 
-		a, errA := application.LoadByName(api.mustDB(), api.Cache, project, appName, getUser(ctx))
+		a, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
-			return sdk.WrapError(errA, "uploadArtifactHandler> cannot load application %s-%s", project, appName)
+			return sdk.WrapError(errA, "uploadArtifactHandler> cannot load application %s-%s", key, appName)
 		}
 
 		var env *sdk.Environment
@@ -71,13 +71,13 @@ func (api *API) uploadArtifactHandler() Handler {
 			env = &sdk.DefaultEnv
 		} else {
 			var errE error
-			env, errE = environment.LoadEnvironmentByName(api.mustDB(), project, envName)
+			env, errE = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if errE != nil {
 				return sdk.WrapError(errE, "uploadArtifactHandler> Cannot load environment %s", envName)
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "uploadArtifactHandler> No enought right on this environment %s")
 		}
 
@@ -104,7 +104,7 @@ func (api *API) uploadArtifactHandler() Handler {
 
 		art := sdk.Artifact{
 			Name:         fileName,
-			Project:      project,
+			Project:      key,
 			Pipeline:     pipelineName,
 			Application:  a.Name,
 			Tag:          tag,
@@ -169,20 +169,20 @@ func (api *API) downloadArtifactHandler() Handler {
 func (api *API) listArtifactsBuildHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		project := vars["key"]
+		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 		appName := vars["permApplicationName"]
 		buildNumberString := vars["buildNumber"]
 		envName := r.FormValue("envName")
 
 		// Load pipeline
-		p, errP := pipeline.LoadPipeline(api.mustDB(), project, pipelineName, false)
+		p, errP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if errP != nil {
 			return sdk.WrapError(errP, "listArtifactsBuildHandler> Cannot load pipeline %s", pipelineName)
 		}
 
 		// Load application
-		a, errA := application.LoadByName(api.mustDB(), api.Cache, project, appName, getUser(ctx))
+		a, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "listArtifactsBuildHandler> Cannot load application %s", appName)
 		}
@@ -192,13 +192,13 @@ func (api *API) listArtifactsBuildHandler() Handler {
 			env = &sdk.DefaultEnv
 		} else {
 			var errE error
-			env, errE = environment.LoadEnvironmentByName(api.mustDB(), project, envName)
+			env, errE = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if errE != nil {
 				return sdk.WrapError(errE, "listArtifactsBuildHandler> Cannot load environment %s", envName)
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "listArtifactsBuildHandler> No enought right on this environment %s", envName)
 		}
 
@@ -219,20 +219,20 @@ func (api *API) listArtifactsBuildHandler() Handler {
 func (api *API) listArtifactsHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
-		project := vars["key"]
+		key := vars["key"]
 		pipelineName := vars["permPipelineKey"]
 		appName := vars["permApplicationName"]
 		tag := vars["tag"]
 		envName := r.FormValue("envName")
 
 		// Load pipeline
-		p, errP := pipeline.LoadPipeline(api.mustDB(), project, pipelineName, false)
+		p, errP := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, false)
 		if errP != nil {
 			return sdk.WrapError(errP, "listArtifactsHandler> Cannot load pipeline %s", pipelineName)
 		}
 
 		// Load application
-		a, errA := application.LoadByName(api.mustDB(), api.Cache, project, appName, getUser(ctx))
+		a, errA := application.LoadByName(api.mustDB(), api.Cache, key, appName, getUser(ctx))
 		if errA != nil {
 			return sdk.WrapError(errA, "listArtifactsHandler> Cannot load application %s", appName)
 		}
@@ -242,13 +242,13 @@ func (api *API) listArtifactsHandler() Handler {
 			env = &sdk.DefaultEnv
 		} else {
 			var errE error
-			env, errE = environment.LoadEnvironmentByName(api.mustDB(), project, envName)
+			env, errE = environment.LoadEnvironmentByName(api.mustDB(), key, envName)
 			if errE != nil {
 				return sdk.WrapError(errE, "listArtifactsHandler> Cannot load environment %s", envName)
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionRead) {
+		if !permission.AccessToEnvironment(key, env.Name, getUser(ctx), permission.PermissionRead) {
 			return sdk.WrapError(sdk.ErrForbidden, "listArtifactsHandler> No enought right on this environment %s", envName)
 		}
 
@@ -258,7 +258,7 @@ func (api *API) listArtifactsHandler() Handler {
 		}
 
 		if len(art) == 0 {
-			return sdk.WrapError(sdk.ErrNotFound, "listArtifactHandler> %s-%s-%s-%s/%s: not found", project, appName, env.Name, pipelineName, tag)
+			return sdk.WrapError(sdk.ErrNotFound, "listArtifactHandler> %s-%s-%s-%s/%s: not found", key, appName, env.Name, pipelineName, tag)
 		}
 
 		return WriteJSON(w, r, art, http.StatusOK)
@@ -333,7 +333,7 @@ func (api *API) postArtifactWithTempURLHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(proj, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLHandler> No enought right on this environment %s")
 		}
 
@@ -413,7 +413,7 @@ func (api *API) postArtifactWithTempURLCallbackHandler() Handler {
 			}
 		}
 
-		if !permission.AccessToEnvironment(env.ID, getUser(ctx), permission.PermissionReadExecute) {
+		if !permission.AccessToEnvironment(projKey, env.Name, getUser(ctx), permission.PermissionReadExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "postArtifactWithTempURLCallbackHandler> No enought right on this environment %s")
 		}
 

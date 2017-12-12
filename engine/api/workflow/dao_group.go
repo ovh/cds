@@ -9,7 +9,8 @@ import (
 )
 
 // LoadWorkflowByGroup loads all workflows where group has access
-func LoadWorkflowByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
+func LoadWorkflowByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.WorkflowGroup, error) {
+	res := []sdk.WorkflowGroup{}
 	query := `SELECT project.projectKey,
 			 		 workflow.id,
 	                 workflow.name,
@@ -19,25 +20,24 @@ func LoadWorkflowByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	 	  JOIN project ON workflow.project_id = project.id
 	 	  WHERE workflow_group.group_id = $1
 	 	  ORDER BY workflow.name ASC`
-	rows, err := db.Query(query, group.ID)
+	rows, err := db.Query(query, groupID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var w sdk.Workflow
 		var perm int
-		err = rows.Scan(&w.ProjectKey, &w.ID, &w.Name, &perm)
-		if err != nil {
-			return err
+		if err := rows.Scan(&w.ProjectKey, &w.ID, &w.Name, &perm); err != nil {
+			return nil, err
 		}
-		group.WorkflowGroups = append(group.WorkflowGroups, sdk.WorkflowGroup{
+		res = append(res, sdk.WorkflowGroup{
 			Workflow:   w,
 			Permission: perm,
 		})
 	}
-	return nil
+	return res, nil
 }
 
 // AddGroup Add permission on the given workflow for the given group

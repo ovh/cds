@@ -136,12 +136,14 @@ func NewAuthentifiedRequestFromWorker(t *testing.T, w *sdk.Worker, method, uri s
 	if i != nil {
 		btes, err = json.Marshal(i)
 		if err != nil {
+			t.Error(err)
 			t.FailNow()
 		}
 	}
 
 	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
 	if err != nil {
+		t.Error(err)
 		t.FailNow()
 	}
 
@@ -235,12 +237,14 @@ func NewAuthentifiedRequest(t *testing.T, u *sdk.User, pass, method, uri string,
 	if i != nil {
 		btes, err = json.Marshal(i)
 		if err != nil {
+			t.Error(err)
 			t.FailNow()
 		}
 	}
 
 	req, err := http.NewRequest(method, uri, bytes.NewBuffer(btes))
 	if err != nil {
+		t.Error(err)
 		t.FailNow()
 	}
 	AuthentifyRequest(t, req, u, pass)

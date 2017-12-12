@@ -13,6 +13,7 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -24,6 +25,9 @@ var (
 			return sdk.WrapError(err, "application.loadDefault")
 		}
 		if err := loadApplicationPipelines(db, store, proj, u); err != nil {
+			return sdk.WrapError(err, "application.loadDefault")
+		}
+		if err := loadPermission(db, store, proj, u); err != nil {
 			return sdk.WrapError(err, "application.loadDefault")
 		}
 		return nil
@@ -168,7 +172,7 @@ var (
 
 		for i := range proj.Environments {
 			env := &proj.Environments[i]
-			env.Permission = permission.EnvironmentPermission(env.ID, u)
+			env.Permission = permission.EnvironmentPermission(proj.Key, env.Name, u)
 		}
 
 		return nil
@@ -183,6 +187,7 @@ var (
 
 	loadPermission = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		proj.Permission = permission.ProjectPermission(proj.Key, u)
+		log.Debug(">>Project permission: %s %d", u.Username, proj.Permission)
 		return nil
 	}
 )

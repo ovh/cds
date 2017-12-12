@@ -5,12 +5,13 @@ import {RouterTestingModule} from '@angular/router/testing';
 import {Observable} from 'rxjs/Observable';
 
 import {PipelineStageFormComponent} from './pipeline.stage.form.component';
-import {TranslateLoader, TranslateParser, TranslateService} from 'ng2-translate';
+import {TranslateLoader, TranslateParser, TranslateService} from '@ngx-translate/core';
 import {PipelineModule} from '../../../../pipeline.module';
 import {SharedModule} from '../../../../../../shared/shared.module';
 import {Stage} from '../../../../../../model/stage.model';
 import {Prerequisite} from '../../../../../../model/prerequisite.model';
 import {PrerequisiteEvent} from '../../../../../../shared/prerequisites/prerequisite.event.model';
+import 'rxjs/add/observable/of';
 
 describe('CDS: Stage From component', () => {
 

@@ -12,33 +12,32 @@ import (
 	"github.com/ovh/cds/engine/api/artifact"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
-	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/sdk"
 )
 
 // LoadEnvironments load all environment from the given project
-func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, user *sdk.User) ([]sdk.Environment, error) {
+func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *sdk.User) ([]sdk.Environment, error) {
 	envs := []sdk.Environment{}
 
 	var rows *sql.Rows
 	var err error
-	if user.Admin {
-		query := `SELECT environment.id, environment.name, environment.last_modified
+	if u.Admin {
+		query := `SELECT environment.id, environment.name, environment.last_modified, 7 as "perm"
 		  FROM environment
 		  JOIN project ON project.id = environment.project_id
 		  WHERE project.projectKey = $1
 		  ORDER by environment.name`
 		rows, err = db.Query(query, projectKey)
 	} else {
-		query := `SELECT distinct(environment.id), environment.name, environment.last_modified
+		query := `SELECT distinct(environment.id), environment.name, environment.last_modified, environment_group.role as "perm"
 			  FROM environment
 			  JOIN environment_group ON environment.id = environment_group.environment_id
 			  JOIN group_user ON environment_group.group_id = group_user.group_id
 			  JOIN project ON project.id = environment.project_id
 			  WHERE group_user.user_id = $1
-			  	AND project.projectKey = $2
+			  AND project.projectKey = $2
 			  ORDER by environment.name`
-		rows, err = db.Query(query, user.ID, projectKey)
+		rows, err = db.Query(query, u.ID, projectKey)
 	}
 
 	if err != nil {
@@ -52,13 +51,11 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, use
 	for rows.Next() {
 		var env sdk.Environment
 		var lastModified time.Time
-		err = rows.Scan(&env.ID, &env.Name, &lastModified)
+		err = rows.Scan(&env.ID, &env.Name, &lastModified, &env.Permission)
 		env.LastModified = lastModified.Unix()
 		if err != nil {
 			return envs, err
 		}
-		env.Permission = permission.EnvironmentPermission(env.ID, user)
-
 		envs = append(envs, env)
 	}
 	rows.Close()
@@ -93,6 +90,9 @@ func Lock(db gorp.SqlExecutor, projectKey, envName string) error {
 
 // LoadEnvironmentByID load the given environment
 func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error) {
+	if ID == sdk.DefaultEnv.ID {
+		return &sdk.DefaultEnv, nil
+	}
 	var env sdk.Environment
 	query := `SELECT environment.id, environment.name, environment.project_id
 		  	FROM environment
@@ -108,7 +108,7 @@ func LoadEnvironmentByID(db gorp.SqlExecutor, ID int64) (*sdk.Environment, error
 
 // LoadEnvironmentByName load the given environment
 func LoadEnvironmentByName(db gorp.SqlExecutor, projectKey, envName string) (*sdk.Environment, error) {
-	if envName == sdk.DefaultEnv.Name {
+	if envName == "" || envName == sdk.DefaultEnv.Name {
 		return &sdk.DefaultEnv, nil
 	}
 
@@ -414,19 +414,20 @@ func loadGroupByEnvironment(db gorp.SqlExecutor, environment *sdk.Environment) e
 }
 
 // LoadEnvironmentByGroup loads all environments where group has access
-func LoadEnvironmentByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
+func LoadEnvironmentByGroup(db gorp.SqlExecutor, groupID int64) ([]sdk.EnvironmentGroup, error) {
+	res := []sdk.EnvironmentGroup{}
 	query := `SELECT project.projectKey,
-			 environment.id,
-	                 environment.name,
-	                 environment_group.role
+			 	environment.id,
+	        	environment.name,
+	    		environment_group.role
 	          FROM environment
 	          JOIN environment_group ON environment_group.environment_id = environment.id
 	 	  JOIN project ON environment.project_id = project.id
 	 	  WHERE environment_group.group_id = $1
 	 	  ORDER BY environment.name ASC`
-	rows, err := db.Query(query, group.ID)
+	rows, err := db.Query(query, groupID)
 	if err != nil {
-		return err
+		return res, err
 	}
 	defer rows.Close()
 
@@ -435,14 +436,14 @@ func LoadEnvironmentByGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 		var perm int
 		err = rows.Scan(&environment.ProjectKey, &environment.ID, &environment.Name, &perm)
 		if err != nil {
-			return err
+			return nil, err
 		}
-		group.EnvironmentGroups = append(group.EnvironmentGroups, sdk.EnvironmentGroup{
+		res = append(res, sdk.EnvironmentGroup{
 			Environment: environment,
 			Permission:  perm,
 		})
 	}
-	return nil
+	return res, nil
 }
 
 // AddKeyPairToEnvironment generate a ssh key pair and add them as env variables

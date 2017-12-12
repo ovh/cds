@@ -132,38 +132,38 @@ func fromDBNodeRun(rr NodeRun) (*sdk.WorkflowNodeRun, error) {
 		}
 	}
 	if err := gorpmapping.JSONNullString(rr.SourceNodeRuns, &r.SourceNodeRuns); err != nil {
-		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d", r.ID)
+		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d : SourceNodeRuns", r.ID)
 	}
 	if err := gorpmapping.JSONNullString(rr.Commits, &r.Commits); err != nil {
-		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d", r.ID)
+		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Commits", r.ID)
 	}
 	if rr.HookEvent.Valid {
 		r.HookEvent = new(sdk.WorkflowNodeRunHookEvent)
 		if err := gorpmapping.JSONNullString(rr.HookEvent, r.HookEvent); err != nil {
-			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d", r.ID)
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: HookEvent", r.ID)
 		}
 	}
 	if rr.Manual.Valid {
 		r.Manual = new(sdk.WorkflowNodeRunManual)
 		if err := gorpmapping.JSONNullString(rr.Manual, r.Manual); err != nil {
-			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d", r.ID)
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Manual", r.ID)
 		}
 	}
 	if err := gorpmapping.JSONNullString(rr.Payload, &r.Payload); err != nil {
-		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d", r.ID)
+		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Payload", r.ID)
 	}
 	if err := gorpmapping.JSONNullString(rr.BuildParameters, &r.BuildParameters); err != nil {
-		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d", r.ID)
+		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: BuildParameters", r.ID)
 	}
 	if rr.PipelineParameters.Valid {
-		if err := gorpmapping.JSONNullString(rr.PipelineParameters, r.PipelineParameters); err != nil {
-			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d", r.ID)
+		if err := gorpmapping.JSONNullString(rr.PipelineParameters, &r.PipelineParameters); err != nil {
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: PipelineParameters", r.ID)
 		}
 	}
 	if rr.Tests.Valid {
 		r.Tests = new(venom.Tests)
 		if err := gorpmapping.JSONNullString(rr.Tests, r.Tests); err != nil {
-			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d", r.ID)
+			return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run %d: Tests", r.ID)
 		}
 	}
 

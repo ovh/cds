@@ -12,7 +12,7 @@ import {PipelineService} from '../../../../service/pipeline/pipeline.service';
 import {EnvironmentService} from '../../../../service/environment/environment.service';
 import {VariableService} from '../../../../service/variable/variable.service';
 import {Injector} from '@angular/core';
-import {TranslateService, TranslateLoader, TranslateParser} from 'ng2-translate';
+import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {Project} from '../../../../model/project.model';
 import {Application, ApplicationFilter} from '../../../../model/application.model';
 import {XHRBackend} from '@angular/http';
@@ -23,6 +23,7 @@ import {PipelineBuild, Pipeline} from '../../../../model/pipeline.model';
 import {Environment} from '../../../../model/environment.model';
 import {Scheduler, SchedulerExecution} from '../../../../model/scheduler.model';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
+import 'rxjs/add/observable/of';
 
 describe('CDS: Application Workflow', () => {
 

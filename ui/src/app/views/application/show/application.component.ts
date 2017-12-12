@@ -13,7 +13,7 @@ import {AuthentificationStore} from '../../../service/auth/authentification.stor
 import {ApplicationWorkflowComponent} from './workflow/application.workflow.component';
 import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../shared/toast/ToastService';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
 import {Subscription} from 'rxjs/Subscription';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';

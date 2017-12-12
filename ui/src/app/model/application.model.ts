@@ -3,7 +3,6 @@ import {PipelineBuild, Pipeline} from './pipeline.model';
 import {Notification} from './notification.model';
 import {Variable} from './variable.model';
 import {Parameter} from './parameter.model';
-import {RepositoriesManager} from './repositories.model';
 import {RepositoryPoller} from './polling.model';
 import {Hook} from './hook.model';
 import {Usage} from './usage.model';
@@ -49,4 +48,4 @@ export interface ApplicationFilter {
     remote: string;
     branch: string;
     version: string;
-};
+}

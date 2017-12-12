@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -51,6 +52,7 @@ func (s VenomPlugin) Parameters() plugin.Parameters {
 	params.Add("path", plugin.StringParameter, "Path containers yml venom files. Format: adirectory/, ./*aTest.yml, ./foo/b*/**/z*.yml", ".")
 	params.Add("exclude", plugin.TextParameter, "Exclude some files, one file per line", "")
 	params.Add("output", plugin.StringParameter, "Directory where output xunit result file", ".")
+	params.Add("parallel", plugin.StringParameter, "Launch Test Suites in parallel. Enter here number of routines", "1")
 	params.Add("details", plugin.StringParameter, "Output Details Level: low, medium, high", "low")
 	params.Add("loglevel", plugin.StringParameter, "Log Level: debug, info, warn or error", "error")
 	params.Add("vars", plugin.StringParameter, "Empty: all {{.cds...}} vars will be rewrited. Otherwise, you can limit rewrite to some variables. Example, enter cds.app.yourvar,cds.build.foo,myvar=foo to rewrite {{.cds.app.yourvar}}, {{.cds.build.foo}} and {{.foo}}. Default: Empty", "")
@@ -72,12 +74,19 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	path := a.Arguments().Get("path")
 	exclude := a.Arguments().Get("exclude")
 	output := a.Arguments().Get("output")
+	parallelS := a.Arguments().Get("parallel")
 	loglevel := a.Arguments().Get("loglevel")
 	vars := a.Arguments().Get("vars")
 	varsFromFile := a.Arguments().Get("vars-from-file")
 
 	if path == "" {
 		path = "."
+	}
+
+	parallel, err := strconv.Atoi(parallelS)
+	if err != nil {
+		plugin.SendLog(a, "VENOM - parallel arg must be an integer\n")
+		return plugin.Fail
 	}
 
 	v := venom.New()
@@ -164,6 +173,7 @@ func (s VenomPlugin) Run(a plugin.IJob) plugin.Result {
 	v.LogOutput = w
 	v.OutputFormat = "xml"
 	v.OutputDir = output
+	v.Parallel = parallel
 
 	filepath := strings.Split(path, ",")
 	filepathExcluded := strings.Split(exclude, ",")

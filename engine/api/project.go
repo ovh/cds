@@ -2,11 +2,9 @@ package api
 
 import (
 	"context"
-	"database/sql"
 	"net/http"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/gorilla/mux"
 
@@ -285,30 +283,5 @@ func (api *API) deleteProjectHandler() Handler {
 		log.Info("Project %s deleted.", p.Name)
 
 		return nil
-	}
-}
-
-func (api *API) getUserLastUpdatesHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		sinceHeader := r.Header.Get("If-Modified-Since")
-		since := time.Unix(0, 0)
-		if sinceHeader != "" {
-			since, _ = time.Parse(time.RFC1123, sinceHeader)
-		}
-
-		lastUpdates, errUp := project.LastUpdates(api.mustDB(), api.Cache, getUser(ctx), since)
-		if errUp != nil {
-			if errUp == sql.ErrNoRows {
-				w.WriteHeader(http.StatusNotModified)
-				return nil
-			}
-			return errUp
-		}
-		if len(lastUpdates) == 0 {
-			w.WriteHeader(http.StatusNotModified)
-			return nil
-		}
-
-		return WriteJSON(w, r, lastUpdates, http.StatusOK)
 	}
 }

@@ -1,6 +1,7 @@
 package cdsclient
 
 import (
+	"archive/tar"
 	"context"
 	"io"
 	"time"
@@ -16,6 +17,7 @@ type ExportImportInterface interface {
 	ApplicationExport(projectKey, name string, exportWithPermissions bool, format string) ([]byte, error)
 	ApplicationImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
 	WorkflowExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
+	WorkflowPull(projectKey, name string, exportWithPermissions bool) (*tar.Reader, error)
 }
 
 // ApplicationClient exposes application related functions
@@ -137,6 +139,7 @@ type ProjectVariablesClient interface {
 // QueueClient exposes queue related functions
 type QueueClient interface {
 	QueueWorkflowNodeJobRun() ([]sdk.WorkflowNodeJobRun, error)
+	QueueCountWorkflowNodeJobRun() (sdk.WorkflowNodeJobRunCount, error)
 	QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error)
 	QueuePolling(context.Context, chan<- sdk.WorkflowNodeJobRun, chan<- sdk.PipelineBuildJob, chan<- error, time.Duration, int) error
 	QueueTakeJob(sdk.WorkflowNodeJobRun, bool) (*worker.WorkflowNodeJobRunInfo, error)
@@ -150,24 +153,25 @@ type QueueClient interface {
 
 // TemplateClient exposes queue related functions
 type TemplateClient interface {
+	TemplateApplicationCreate(projectKey, name string, template *sdk.Template) error
 	TemplateList() ([]sdk.Template, error)
 	TemplateGet(name string) (*sdk.Template, error)
-	TemplateApplicationCreate(projectKey, name string, template *sdk.Template) error
 }
 
 // UserClient exposes users functions
 type UserClient interface {
-	UserLogin(username, password string) (bool, string, error)
+	UserConfirm(username, token string) (bool, string, error)
 	UserList() ([]sdk.User, error)
-	UserSignup(username, fullname, email, callback string) error
 	UserGet(username string) (*sdk.User, error)
 	UserGetGroups(username string) (map[string][]sdk.Group, error)
+	UserLogin(username, password string) (bool, string, error)
 	UserReset(username, email, callback string) error
-	UserConfirm(username, token string) (bool, string, error)
+	UserSignup(username, fullname, email, callback string) error
 }
 
 // WorkerClient exposes workers functions
 type WorkerClient interface {
+	WorkerModelBook(id int64) error
 	WorkerList() ([]sdk.Worker, error)
 	WorkerModelSpawnError(id int64, info string) error
 	WorkerModelsEnabled() ([]sdk.Model, error)

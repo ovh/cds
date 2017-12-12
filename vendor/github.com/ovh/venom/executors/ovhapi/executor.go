@@ -67,8 +67,8 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	}
 
 	// transform step to Executor Instance
-	var t Executor
-	if err := mapstructure.Decode(step, &t); err != nil {
+	var e Executor
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 
@@ -78,7 +78,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	if endpoint, err = ctx.GetString("endpoint"); err != nil {
 		return nil, err
 	}
-	if !t.NoAuth {
+	if !e.NoAuth {
 		if applicationKey, err = ctx.GetString("applicationKey"); err != nil {
 			return nil, err
 		}
@@ -91,12 +91,12 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	}
 
 	// set default values
-	if t.Method == "" {
-		t.Method = "GET"
+	if e.Method == "" {
+		e.Method = "GET"
 	}
 
 	// init result
-	r := Result{Executor: t}
+	r := Result{Executor: e}
 
 	start := time.Now()
 	// prepare ovh api client
@@ -111,7 +111,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	}
 
 	// get request body from file or from field
-	requestBody, err := t.getRequestBody()
+	requestBody, err := e.getRequestBody()
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +119,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	// do api call
 	resp := new(interface{})
 
-	if err = client.CallAPI(t.Method, t.Path, requestBody, resp, !t.NoAuth); err != nil {
+	if err = client.CallAPI(e.Method, e.Path, requestBody, resp, !e.NoAuth); err != nil {
 		apiError, ok := err.(*ovh.APIError)
 		if !ok {
 			return nil, err

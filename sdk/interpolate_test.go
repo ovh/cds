@@ -13,12 +13,8 @@ func BenchmarkInterpolate(b *testing.B) {
 			vars  map[string]string
 		}
 		test := struct {
-			name    string
-			args    args
-			want    string
-			wantErr bool
+			args args
 		}{
-			name: "config",
 			args: args{
 				input: `
 				{
@@ -34,32 +30,42 @@ func BenchmarkInterpolate(b *testing.B) {
 				}`,
 				vars: map[string]string{"cds.env.name": "", "cds.env.token": "aValidTokenString", "cds.env.addr": "", "cds.env.vAppKey": "aValue"},
 			},
-			want: `
-				{
-				"env": {
-				"KEYA":"aValue",
-				"KEYB": "{{.cds.env.vAppKeyHatchery}}",
-				"ADDR":""
-				},
-				"labels": {
-				"TOKEN": "aValidTokenString",
-				"HOST": "cds-hatchery-marathon-.{{.cds.env.vHost}}",
-				}
-				}`,
 		}
 
 		for i := 0; i < 60; i++ {
-			test.args.vars[fmt.Sprint("%d", i)] = fmt.Sprintf(">>%d<<", i)
+			test.args.vars[fmt.Sprintf("%d", i)] = fmt.Sprintf(">>%d<<", i)
 		}
 
-		got, err := Interpolate(test.args.input, test.args.vars)
-		if (err != nil) != test.wantErr {
-			b.Errorf("Interpolate() error = %v, wantErr %v", err, test.wantErr)
-			return
+		Interpolate(test.args.input, test.args.vars)
+	}
+}
+
+func BenchmarkInterpolateNothing(b *testing.B) {
+	for n := 0; n < b.N; n++ {
+
+		type args struct {
+			input string
+			vars  map[string]string
 		}
-		if got != test.want {
-			b.Errorf("Interpolate() = %v, want %v", got, test.want)
+		test := struct {
+			args args
+		}{
+			args: args{
+				input: `
+				Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam felis nulla, vulputate ac eros vel, placerat dignissim turpis. Sed et ex lectus. Donec viverra nisi vel dictum rhoncus. Sed dictum tempus quam, ut efficitur arcu viverra vitae. Suspendisse aliquam venenatis scelerisque. Praesent et mattis enim. In efficitur imperdiet nulla a sagittis. Maecenas aliquet magna in sollicitudin ornare.
+				
+				Suspendisse viverra enim nec ante blandit tempus. Sed ut erat suscipit, semper ex eu, eleifend neque. Sed orci justo, bibendum laoreet libero cursus, venenatis fringilla dui. Curabitur tristique odio ut neque sollicitudin ultrices. Integer metus nibh, dignissim non pellentesque et, volutpat vel ante. Pellentesque ultrices ante vel mauris aliquam porttitor. Nunc nec sem facilisis, ullamcorper ex sed, elementum elit. Nulla risus magna, tempor et ultricies id, vehicula ac massa. Mauris venenatis libero libero, id lobortis mi semper aliquam. Aenean neque turpis, feugiat vel rutrum vitae, auctor quis nisl. Donec placerat nec mauris vitae malesuada. Proin quis gravida nulla. Pellentesque in pellentesque metus, in finibus dui. Sed rutrum, libero sit amet cursus scelerisque, sem orci condimentum nunc, quis egestas tellus orci ac nisl. Mauris viverra tincidunt diam ac sollicitudin. Nunc venenatis, nibh at laoreet pellentesque, lacus tellus molestie lorem, et sollicitudin nunc neque ut turpis.
+				`,
+				vars: map[string]string{"cds.env.name": "", "cds.env.token": "aValidTokenString", "cds.env.addr": "", "cds.env.vAppKey": "aValue"},
+			},
 		}
+
+		for i := 0; i < 60; i++ {
+			test.args.vars[fmt.Sprintf("%d", i)] = fmt.Sprintf(">>%d<<", i)
+		}
+
+		Interpolate(test.args.input, test.args.vars)
+
 	}
 }
 

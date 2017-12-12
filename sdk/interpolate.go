@@ -3,20 +3,22 @@ package sdk
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"regexp"
 	"strings"
-
-	"github.com/Masterminds/sprig"
+	"text/template"
 )
 
 var interpolateRegex = regexp.MustCompile("({{\\.[a-zA-Z0-9._|\\s]+}})")
 
 // Interpolate returns interpolated input with vars
 func Interpolate(input string, vars map[string]string) (string, error) {
-	data := map[string]string{}
-	defaults := map[string]string{}
-	empty := map[string]string{}
+	if !strings.Contains(input, "{{") {
+		return input, nil
+	}
+
+	data := make(map[string]string, len(vars))
+	defaults := make(map[string]string, len(vars))
+	empty := make(map[string]string, len(vars))
 
 	for k, v := range vars {
 		kb := strings.Replace(k, ".", "__", -1)
@@ -61,7 +63,7 @@ func Interpolate(input string, vars map[string]string) (string, error) {
 		}
 	}
 
-	t, err := template.New("input").Funcs(sprig.FuncMap()).Parse(input)
+	t, err := template.New("input").Funcs(interpolateHelperFuncs).Parse(input)
 	if err != nil {
 		return "", fmt.Errorf("Invalid template format: %s", err.Error())
 	}

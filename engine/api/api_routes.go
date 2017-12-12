@@ -90,7 +90,6 @@ func (api *API) InitRouter() {
 	r.Handle("/mon/building", r.GET(api.getBuildingPipelinesHandler))
 	r.Handle("/mon/building/{hash}", r.GET(api.getPipelineBuildingCommitHandler))
 	r.Handle("/mon/warning", r.GET(api.getUserWarningsHandler))
-	r.Handle("/mon/lastupdates", r.GET(api.getUserLastUpdatesHandler))
 	r.Handle("/mon/metrics", r.GET(api.getMetricsHandler, Auth(false)))
 
 	// Specific web ui routes
@@ -163,7 +162,6 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/commits", r.GET(api.getPipelineCommitsHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/run", r.POSTEXECUTE(api.runPipelineHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/runwithlastparent", r.POSTEXECUTE(api.runPipelineWithLastParentHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/pipeline/{permPipelineKey}/rollback", r.POSTEXECUTE(api.rollbackPipelineHandler))
 
 	// Pipeline
 	r.Handle("/project/{permProjectKey}/pipeline", r.GET(api.getPipelinesHandler), r.POST(api.addPipelineHandler))
@@ -199,6 +197,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/import/workflows", r.POST(api.postWorkflowImportHandler))
 	// Export workflows
 	r.Handle("/project/{key}/export/workflows/{permWorkflowName}", r.GET(api.getWorkflowExportHandler))
+	// Pull workflows
+	r.Handle("/project/{key}/pull/workflows/{permWorkflowName}", r.GET(api.getWorkflowPullHandler))
 
 	// Workflows run
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true)))
@@ -286,6 +286,7 @@ func (api *API) InitRouter() {
 
 	//Workflow queue
 	r.Handle("/queue/workflows", r.GET(api.getWorkflowJobQueueHandler))
+	r.Handle("/queue/workflows/count", r.GET(api.countWorkflowJobQueueHandler))
 	r.Handle("/queue/workflows/requirements/errors", r.POST(api.postWorkflowJobRequirementsErrorHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{id}/take", r.POST(api.postTakeWorkflowJobHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{id}/book", r.POST(api.postBookWorkflowJobHandler, NeedHatchery()))
@@ -358,6 +359,7 @@ func (api *API) InitRouter() {
 
 	// Worker models
 	r.Handle("/worker/model", r.POST(api.addWorkerModelHandler), r.GET(api.getWorkerModelsHandler))
+	r.Handle("/worker/model/book/{permModelID}", r.PUT(api.bookWorkerModelHandler, NeedHatchery()))
 	r.Handle("/worker/model/error/{permModelID}", r.PUT(api.spawnErrorWorkerModelHandler, NeedHatchery()))
 	r.Handle("/worker/model/enabled", r.GET(api.getWorkerModelsEnabledHandler))
 	r.Handle("/worker/model/type", r.GET(api.getWorkerModelTypesHandler))

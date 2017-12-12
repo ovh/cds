@@ -11,7 +11,7 @@ import {Router} from '@angular/router';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {finalize} from 'rxjs/operators';
-import {TranslateService} from 'ng2-translate';
+import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../toast/ToastService';
 
 @Component({

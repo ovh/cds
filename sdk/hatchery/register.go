@@ -54,7 +54,7 @@ func Create(h Interface) {
 	pbjobs := make(chan sdk.PipelineBuildJob, 1)
 	wjobs := make(chan sdk.WorkflowNodeJobRun, 1)
 	errs := make(chan error, 1)
-	var nRoutines, workersStarted int64
+	var nRoutines, workersStarted, nRegister int64
 
 	go func(ctx context.Context) {
 		if err := h.Client().QueuePolling(ctx, wjobs, pbjobs, errs, 2*time.Second, h.Configuration().Provision.GraceTimeQueued); err != nil {
@@ -136,7 +136,7 @@ func Create(h Interface) {
 		case <-tickerProvision.C:
 			provisioning(h, h.Configuration().Provision.Disabled, models)
 		case <-tickerRegister.C:
-			if err := workerRegister(h, models); err != nil {
+			if err := workerRegister(h, models, &nRegister); err != nil {
 				log.Warning("Error on workerRegister: %s", err)
 			}
 		}
@@ -199,41 +199,55 @@ func checkFailures(maxFailures, nb int) {
 	}
 }
 
-func workerRegister(h Interface, models []sdk.Model) error {
+// workerRegister is called by a ticker.
+// the hatchery checks each worker model, and if a worker model needs to
+// be registered, the hatchery calls SpawnWorker().
+// each ticker can trigger 5 worker models (maximum)
+// and 5 worker models can be spawned in same time, in the case of a spawn takes longer
+// than a tick.
+func workerRegister(h Interface, models []sdk.Model, nRegister *int64) error {
 	if len(models) == 0 {
 		return fmt.Errorf("workerRegister> No model returned by GetWorkerModels")
 	}
 	log.Debug("workerRegister> models received: %d", len(models))
 
-	var nRegistered int
-	for _, m := range models {
-		if m.Type != h.ModelType() {
+	// currentRegister contains the register spawned in this ticker
+	var currentRegister int64
+
+	for k := range models {
+		if *nRegister > 5 || currentRegister > 5 {
+			return nil
+		}
+
+		if models[k].Type != h.ModelType() {
 			continue
 		}
 
-		// limit to 5 registration per ticker
-		if nRegistered > 5 {
-			break
-		}
 		// if current hatchery is in same group than worker model -> do not avoid spawn, even if worker model is in error
-		if m.NbSpawnErr > 5 && h.Hatchery().GroupID != m.ID {
-			log.Warning("workerRegister> Too many errors on spawn with model %s, please check this worker model", m.Name)
+		if models[k].NbSpawnErr > 5 && h.Hatchery().GroupID != models[k].ID {
+			log.Warning("workerRegister> Too many errors on spawn with model %s, please check this worker model", models[k].Name)
 			continue
 		}
 
-		if h.NeedRegistration(&m) {
-			log.Info("workerRegister> spawn a worker for register worker model %s (%d)", m.Name, m.ID)
-			if _, errSpawn := h.SpawnWorker(SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
-				log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, errSpawn)
-				if err := h.Client().WorkerModelSpawnError(m.ID, fmt.Sprintf("workerRegister> cannot spawn worker for register: %s", errSpawn)); err != nil {
-					log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, errSpawn)
-				}
-				continue
+		if h.NeedRegistration(&models[k]) {
+			if err := h.Client().WorkerModelBook(models[k].ID); err != nil {
+				log.Error("workerRegister> WorkerModelBook on model %s err: %s", models[k].Name, err)
+			} else {
+				log.Info("workerRegister> spawning model %s (%d)", models[k].Name, models[k].ID)
+				atomic.AddInt64(nRegister, 1)
+				currentRegister++
+				go func(m sdk.Model) {
+					if _, errSpawn := h.SpawnWorker(SpawnArguments{Model: m, IsWorkflowJob: false, JobID: 0, Requirements: nil, RegisterOnly: true, LogInfo: "spawn for register"}); errSpawn != nil {
+						log.Warning("workerRegister> cannot spawn worker for register: %s", m.Name, errSpawn)
+						if err := h.Client().WorkerModelSpawnError(m.ID, fmt.Sprintf("workerRegister> cannot spawn worker for register: %s", errSpawn)); err != nil {
+							log.Error("workerRegister> error on call client.WorkerModelSpawnError on worker model %s for register: %s", m.Name, err)
+						}
+					}
+					atomic.AddInt64(nRegister, -1)
+				}(models[k])
 			}
-			nRegistered++
 		} else {
-			log.Debug("workerRegister> no need to register worker model %s (%d)", m.Name, m.ID)
-			continue
+			log.Debug("workerRegister> no need to register worker model %s (%d)", models[k].Name, models[k].ID)
 		}
 	}
 	return nil

@@ -70,15 +70,15 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 
 // Run execute TestStep of type exec
 func (Executor) Run(ctx venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
-	var t Executor
-	if err := mapstructure.Decode(step, &t); err != nil {
+	var e Executor
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 
 	start := time.Now()
 
-	result := Result{Executor: t}
-	find, errs := t.getMail(l)
+	result := Result{Executor: e}
+	find, errs := e.getMail(l)
 	if errs != nil {
 		result.Err = errs.Error()
 	}

@@ -27,7 +27,7 @@ type EncryptedKey struct {
 }
 
 // NewApplication instanciance an exportable application from an sdk.Application
-func NewApplication(app *sdk.Application, withPermissions bool, keys []EncryptedKey) (a Application, err error) {
+func NewApplication(app sdk.Application, withPermissions bool, keys []EncryptedKey) (a Application, err error) {
 	a.Version = ApplicationVersion1
 	a.Name = app.Name
 

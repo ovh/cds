@@ -128,6 +128,7 @@ var (
 	ErrWorkflowNodeRunJobNotFound            = Error{ID: 112, Status: http.StatusNotFound}
 	ErrBuiltinKeyNotFound                    = Error{ID: 113, Status: http.StatusInternalServerError}
 	ErrStepNotFound                          = Error{ID: 114, Status: http.StatusNotFound}
+	ErrWorkerModelAlreadyBooked              = Error{ID: 115, Status: http.StatusConflict}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -244,6 +245,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrWorkflowNodeRunJobNotFound.ID:            "Job not found",
 	ErrBuiltinKeyNotFound.ID:                    "Encryption Key not found",
 	ErrStepNotFound.ID:                          "Step not found",
+	ErrWorkerModelAlreadyBooked.ID:              "Worker Model already booked",
 }
 
 var errorsFrench = map[int]string{
@@ -360,6 +362,7 @@ var errorsFrench = map[int]string{
 	ErrWorkflowNodeRunJobNotFound.ID:            "Job non trouvé",
 	ErrBuiltinKeyNotFound.ID:                    "Clé de chiffrage introuvable",
 	ErrStepNotFound.ID:                          "Step introuvable",
+	ErrWorkerModelAlreadyBooked.ID:              "Le modèle de worker est déjà réservé",
 }
 
 var errorsLanguages = []map[int]string{

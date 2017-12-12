@@ -12,7 +12,10 @@ import {WorkflowRunJobVariableComponent} from './run/node/pipeline/variables/job
 import {WorkflowRunJobSpawnInfoComponent} from './run/node/pipeline/spawninfo/spawninfo.component';
 import {WorkflowStepLogComponent} from './run/node/pipeline/step/step.log.component';
 import {WorkflowComponent} from './workflow.compoment';
-import {WorkflowSidebarComponent} from './sidebar/workflow.sidebar.component';
+import {WorkflowSidebarRunComponent} from './sidebar/run/workflow.sidebar.run.component';
+import {WorkflowSidebarEditComponent} from './sidebar/edit/workflow.sidebar.edit.component';
+import {WorkflowSidebarEditJoinComponent} from './sidebar/edit/join/workflow.sidebar.edit.join.component';
+import {WorkflowSidebarEditNodeComponent} from './sidebar/edit/node/workflow.sidebar.edit.node.component';
 import {WorkflowRunArtifactListComponent} from './run/node/artifact/artifact.list.component';
 import {WorkflowRunTestsResultComponent} from './run/node/test/tests.component';
 import {WorkflowRunTestTableComponent} from './run/node/test/table/test.table.component';
@@ -20,7 +23,7 @@ import {WorkflowRunSummaryComponent} from './run/summary/workflow.run.summary.co
 import {WorkflowNodeRunHistoryComponent} from './run/node/history/history.component';
 import {WorkflowNodeRunSummaryComponent} from './run/node/summary/run.summary.component';
 import {WorkflowAdminComponent} from './show/admin/workflow.admin.component';
-import {SidebarService} from 'ng2-semantic-ui/dist';
+import {WorkflowNotificationComponent} from './show/notification/workflow.notification.component';
 
 @NgModule({
     declarations: [
@@ -30,6 +33,7 @@ import {SidebarService} from 'ng2-semantic-ui/dist';
         WorkflowBreadCrumbComponent,
         WorkflowGraphComponent,
         WorkflowRunComponent,
+        WorkflowNotificationComponent,
         WorkflowNodeRunComponent,
         WorkflowRunJobVariableComponent,
         WorkflowRunJobSpawnInfoComponent,
@@ -38,8 +42,11 @@ import {SidebarService} from 'ng2-semantic-ui/dist';
         WorkflowRunTestsResultComponent,
         WorkflowRunTestTableComponent,
         WorkflowRunSummaryComponent,
+        WorkflowSidebarEditComponent,
+        WorkflowSidebarEditNodeComponent,
+        WorkflowSidebarEditJoinComponent,
         WorkflowNodeRunHistoryComponent,
-        WorkflowSidebarComponent,
+        WorkflowSidebarRunComponent,
         WorkflowShowComponent,
         WorkflowStepLogComponent,
         WorkflowNodeRunSummaryComponent

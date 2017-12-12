@@ -1,7 +1,7 @@
 /* tslint:disable:no-unused-variable */
 
 import {TestBed, getTestBed, tick, fakeAsync} from '@angular/core/testing';
-import { TranslateService, TranslateLoader} from 'ng2-translate/ng2-translate';
+import { TranslateService, TranslateLoader} from '@ngx-translate/core';
 import {RouterTestingModule} from '@angular/router/testing';
 import {Injector, CUSTOM_ELEMENTS_SCHEMA} from '@angular/core';
 import {ProjectRepoManagerFormComponent} from './project.repomanager.form.component';
@@ -14,7 +14,7 @@ import {VariableService} from '../../../../../../service/variable/variable.servi
 import {SharedModule} from '../../../../../../shared/shared.module';
 import {ToasterService} from 'angular2-toaster/angular2-toaster';
 import {Project} from '../../../../../../model/project.model';
-import {TranslateParser} from 'ng2-translate';
+import {TranslateParser} from '@ngx-translate/core';
 import {HttpClientTestingModule, HttpTestingController} from '@angular/common/http/testing';
 import {RepositoriesManager} from '../../../../../../model/repositories.model';
 import {HttpRequest} from '@angular/common/http';

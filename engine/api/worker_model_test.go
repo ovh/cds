@@ -224,7 +224,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 
 	//Prepare request
 	uri := router.GetRoute("POST", api.addWorkerModelHandler, nil)
-	test.NotEmpty(t, uri)
+	test.NotEmpty(t, uri, "Route route found")
 
 	req := assets.NewAuthentifiedRequest(t, u, pass, "POST", uri, model)
 
@@ -232,7 +232,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
-	assert.Equal(t, 403, w.Code)
+	assert.Equal(t, 403, w.Code, "Status code should be 403")
 
 	t.Logf("Body: %s", w.Body.String())
 }
@@ -250,10 +250,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	u, pass := assets.InsertLambdaUser(api.mustDB(), g)
 	assert.NotZero(t, u)
 	assert.NotZero(t, pass)
-
-	if err := group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID); err != nil {
-		t.Fatal(err)
-	}
+	test.NoError(t, group.SetUserGroupAdmin(api.mustDB(), g.ID, u.ID))
 
 	model := sdk.Model{
 		Name:    "Test1",
@@ -279,7 +276,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 	w := httptest.NewRecorder()
 	router.Mux.ServeHTTP(w, req)
 
-	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, 200, w.Code, "Status code should equal 200")
 
 	t.Logf("Body: %s", w.Body.String())
 }

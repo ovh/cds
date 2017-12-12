@@ -268,7 +268,7 @@ func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, query string, arg
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
 	}
 
-	res.Permission = permission.WorkflowPermission(res.ID, u)
+	res.Permission = permission.WorkflowPermission(res.ProjectKey, res.Name, u)
 
 	// Load groups
 	gps, err := loadWorkflowGroups(db, res)

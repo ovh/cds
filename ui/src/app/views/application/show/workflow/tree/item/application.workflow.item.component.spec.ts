@@ -17,13 +17,12 @@ import {Observable} from 'rxjs/Observable';
 import {PipelineBuild, Pipeline, PipelineRunRequest, PipelineBuildTrigger} from '../../../../../../model/pipeline.model';
 import {Project} from '../../../../../../model/project.model';
 import {Application} from '../../../../../../model/application.model';
-import {TranslateParser, TranslateService, TranslateLoader} from 'ng2-translate';
+import {TranslateParser, TranslateService, TranslateLoader} from '@ngx-translate/core';
 import {PipelineStore} from '../../../../../../service/pipeline/pipeline.store';
 import {PipelineService} from '../../../../../../service/pipeline/pipeline.service';
 import {EnvironmentService} from '../../../../../../service/environment/environment.service';
 import {VariableService} from '../../../../../../service/variable/variable.service';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {Map} from 'immutable';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
 import {ApplicationService} from '../../../../../../service/application/application.service';
 import {ProjectStore} from '../../../../../../service/project/project.store';
@@ -32,6 +31,7 @@ import {ToastService} from '../../../../../../shared/toast/ToastService';
 import {Scheduler} from '../../../../../../model/scheduler.model';
 import {NotificationService} from '../../../../../../service/notification/notification.service';
 import {HttpClientTestingModule} from '@angular/common/http/testing';
+import 'rxjs/add/observable/of';
 
 describe('CDS: Application Workflow Item', () => {
 

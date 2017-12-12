@@ -178,7 +178,7 @@ export class Workflow {
         });
     }
 
-    static getNodeNameImpact(workflow: Workflow, name: string) {
+    static getNodeNameImpact(workflow: Workflow, name: string): WorkflowPipelineNameImpact {
         let varName = 'workflow.' + name;
         let warnings = new WorkflowPipelineNameImpact();
         WorkflowNode.getNodeNameImpact(workflow.root, name, warnings);
@@ -428,4 +428,13 @@ export class WorkflowNodeCondition {
 export class WorkflowTriggerConditionCache {
     operators: Array<string>;
     names: Array<string>;
+}
+
+export class WorkflowNotification {
+    source_node_ref: Array<string>;
+    notifications: any;
+
+    constructor() {
+        this.notifications = {};
+    }
 }

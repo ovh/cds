@@ -46,19 +46,23 @@ func (api *API) deleteGroupHandler() Handler {
 			return sdk.WrapError(errl, "deleteGroupHandler: Cannot load %s", name)
 		}
 
-		if err := project.LoadPermissions(api.mustDB(), g); err != nil {
+		projPerms, err := project.LoadPermissions(api.mustDB(), g.ID)
+		if err != nil {
 			return sdk.WrapError(err, "deleteGroupHandler: Cannot load projects for group")
 		}
 
-		if err := application.LoadPermissions(api.mustDB(), g); err != nil {
+		appPerms, err := application.LoadPermissions(api.mustDB(), g.ID)
+		if err != nil {
 			return sdk.WrapError(err, "deleteGroupHandler: Cannot load application for group")
 		}
 
-		if err := pipeline.LoadPipelineByGroup(api.mustDB(), g); err != nil {
+		pipPerms, err := pipeline.LoadPipelineByGroup(api.mustDB(), g.ID)
+		if err != nil {
 			return sdk.WrapError(err, "deleteGroupHandler: Cannot load pipeline for group")
 		}
 
-		if err := environment.LoadEnvironmentByGroup(api.mustDB(), g); err != nil {
+		envPerms, err := environment.LoadEnvironmentByGroup(api.mustDB(), g.ID)
+		if err != nil {
 			return sdk.WrapError(err, "deleteGroupHandler: Cannot load environment for group")
 		}
 
@@ -72,19 +76,19 @@ func (api *API) deleteGroupHandler() Handler {
 			return sdk.WrapError(err, "deleteGroupHandler> cannot delete group")
 		}
 
-		for _, pg := range g.ProjectGroups {
+		for _, pg := range projPerms {
 			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), &pg.Project, sdk.ProjectLastModificationType); err != nil {
 				return sdk.WrapError(err, "deleteGroupHandler> Cannot update project last modified date")
 			}
 		}
 
-		for _, pg := range g.ApplicationGroups {
+		for _, pg := range appPerms {
 			if err := application.UpdateLastModified(tx, api.Cache, &pg.Application, getUser(ctx)); err != nil {
 				return sdk.WrapError(err, "deleteGroupHandler> Cannot update application last modified date")
 			}
 		}
 
-		for _, pg := range g.PipelineGroups {
+		for _, pg := range pipPerms {
 			p := &sdk.Project{
 				Key: pg.Pipeline.ProjectKey,
 			}
@@ -93,7 +97,7 @@ func (api *API) deleteGroupHandler() Handler {
 			}
 		}
 
-		for _, pg := range g.EnvironmentGroups {
+		for _, pg := range envPerms {
 			if err := environment.UpdateLastModified(tx, api.Cache, getUser(ctx), &pg.Environment); err != nil {
 				return sdk.WrapError(err, "deleteGroupHandler> Cannot update environment last modified date")
 			}
