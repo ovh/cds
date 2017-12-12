@@ -1,12 +1,12 @@
 package workflow
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
 
 	"github.com/go-gorp/gorp"
 
-	"database/sql"
-	"fmt"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"

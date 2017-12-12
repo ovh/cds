@@ -41,7 +41,6 @@ export class WorkflowNotificationListComponent {
                 }
             });
         }
-        console.log(this.mapNodesNotif);
     }
 
     constructor() {

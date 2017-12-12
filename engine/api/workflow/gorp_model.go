@@ -27,6 +27,7 @@ type Join sdk.WorkflowNodeJoin
 // JoinTrigger  is a gorp wrapper around sdk.WorkflowNodeJoinTrigger
 type JoinTrigger sdk.WorkflowNodeJoinTrigger
 
+// Notification is a gorp wrapper around sdk.WorkflowNotification
 type Notification sdk.WorkflowNotification
 
 // Run is a gorp wrapper around sdk.WorkflowRun
