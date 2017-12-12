@@ -138,7 +138,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         } else {
             qps['selectedJoinId'] = null;
             qps['selectedNodeId'] = null;
-
             this._router.navigate([
                 '/project', this.project.key,
                 'workflow', this.workflow.name,
@@ -146,7 +145,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                     queryParams: Object.assign({}, qps, {
                         selectedNodeRunId: this.currentNodeRun ? this.currentNodeRun.id : -1,
                         selectedNodeRunNum: this.currentNodeRun ? this.currentNodeRun.num : 0,
-                        selectedNodeId: this.node.id
+                        selectedNodeId: this.currentNodeRun ? this.currentNodeRun.workflow_node_id : this.node.id
                     })
                 });
         }

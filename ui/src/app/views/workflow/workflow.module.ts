@@ -14,6 +14,9 @@ import {WorkflowStepLogComponent} from './run/node/pipeline/step/step.log.compon
 import {WorkflowComponent} from './workflow.compoment';
 import {WorkflowSidebarRunListComponent} from './sidebar/run/list/workflow.sidebar.run.component';
 import {WorkflowSidebarRunNodeComponent} from './sidebar/run/node/workflow.sidebar.run.node.component';
+import {StageStepSummaryComponent} from './sidebar/run/node/stage/stage.summary.component';
+import {JobStepSummaryComponent} from './sidebar/run/node/stage/job/job.summary.component';
+import {ActionStepSummaryComponent} from './sidebar/run/node/stage/job/action/action.summary.component';
 import {WorkflowSidebarEditComponent} from './sidebar/edit/workflow.sidebar.edit.component';
 import {WorkflowSidebarEditJoinComponent} from './sidebar/edit/join/workflow.sidebar.edit.join.component';
 import {WorkflowSidebarEditNodeComponent} from './sidebar/edit/node/workflow.sidebar.edit.node.component';
@@ -49,6 +52,9 @@ import {WorkflowNotificationComponent} from './show/notification/workflow.notifi
         WorkflowNodeRunHistoryComponent,
         WorkflowSidebarRunListComponent,
         WorkflowSidebarRunNodeComponent,
+        StageStepSummaryComponent,
+        JobStepSummaryComponent,
+        ActionStepSummaryComponent,
         WorkflowShowComponent,
         WorkflowStepLogComponent,
         WorkflowNodeRunSummaryComponent

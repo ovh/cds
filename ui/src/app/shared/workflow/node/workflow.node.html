@@ -1,10 +1,9 @@
 <div class="workflowNode">
-    <div class="nodePipeline" [class.running]="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"
+    <div class="nodePipeline pointing" [class.running]="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"
          [class.building]="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"
          [class.success]="currentNodeRun?.status === pipelineStatus.SUCCESS"
          [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL || currentNodeRun?.status === pipelineStatus.STOPPED"
          [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED"
-         [class.pointing]="currentNodeRun || !workflowRun"
          [class.active]="node.id === selectedNodeId"
          (click)="goToNodeRun()">
 

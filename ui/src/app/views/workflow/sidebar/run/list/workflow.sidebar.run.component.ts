@@ -1,5 +1,4 @@
-import {Component, Input, NgZone, OnDestroy, OnInit, ElementRef, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {Component, Input, NgZone, OnDestroy, ElementRef, ViewChild} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Workflow, WorkflowNode} from '../../../../../model/workflow.model';
@@ -9,10 +8,9 @@ import {AuthentificationStore} from '../../../../../service/auth/authentificatio
 import {environment} from '../../../../../../environments/environment';
 import {Subscription} from 'rxjs/Subscription';
 import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.model';
-import {cloneDeep, uniqBy} from 'lodash';
+import {cloneDeep} from 'lodash';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {DurationService} from '../../../../../shared/duration/duration.service';
-import {RouterService} from '../../../../../service/router/router.service';
 
 @Component({
     selector: 'app-workflow-sidebar-run-list',
@@ -20,10 +18,11 @@ import {RouterService} from '../../../../../service/router/router.service';
     styleUrls: ['./workflow.sidebar.run.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
+export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;
+    @Input() runNumber: number;
 
     // Workflow
     _workflow: Workflow;
@@ -63,22 +62,13 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
     tagsSelectable: Array<string>;
     tagToDisplay: Array<string>;
     pipelineStatusEnum = PipelineStatus;
-    runNumber: number;
     ready = false;
 
     private readonly MAX_TAGS_TO_DISPLAY = 2;
 
     constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService,
-        private _route: ActivatedRoute, private _routerService: RouterService, private _duration: DurationService,
-        private _elementRef: ElementRef) {
+      private _duration: DurationService) {
         this.zone = new NgZone({enableLongStackTrace: false});
-    }
-
-    ngOnInit() {
-        let params = this._routerService.getRouteSnapshotParams({}, this._route.snapshot);
-        if (params['number']) {
-            this.runNumber = parseInt(params['number'], 10);
-        }
     }
 
     startWorker(): void {
@@ -151,9 +141,9 @@ export class WorkflowSidebarRunListComponent implements OnInit, OnDestroy {
         let tagsFormatted = '';
         for (let i = 0; i < tags.length; i++) {
             if (i === 0) {
-                tagsFormatted += tags[i].tag;
+                tagsFormatted += tags[i].value;
             } else {
-                tagsFormatted += (' , ' + tags[i].tag);
+                tagsFormatted += (' , ' + tags[i].value);
             }
         }
 

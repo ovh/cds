@@ -3,32 +3,33 @@
 </div>
 <aside class="sidebar scrollable" [class.expanded]="sidebarOpen">
     <div class="floated right">
-        <button class="ui large icon button transparent close-button" (click)="closeEditSidebar()" *ngIf="selectedNode || selectedJoin">
+        <button class="ui large icon button transparent close-button" (click)="closeEditSidebar()" *ngIf="selectedNodeId || selectedJoinId">
             <i class="black close icon"></i>
         </button>
     </div>
     <div class="sidebar-toggle">
-        <ng-container *ngIf="project != null && workflow != null && selectedNode == null && selectedJoin == null">
-            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow" [open]="sidebarOpen"></app-workflow-sidebar-run-list>
+        <ng-container *ngIf="project != null && workflow != null && selectedNodeId == null && selectedJoinId == null">
+            <app-workflow-sidebar-run-list [project]="project" [workflow]="workflow" [open]="sidebarOpen" [runNumber]="number"></app-workflow-sidebar-run-list>
         </ng-container>
         <ng-container *ngIf="project != null && workflow != null && (selectedNode != null || selectedJoin != null) && number == null">
             <app-workflow-sidebar-edit [project]="project" [workflow]="workflow" [node]="selectedNode" [join]="selectedJoin" [open]="sidebarOpen"></app-workflow-sidebar-edit>
         </ng-container>
-        <ng-container *ngIf="project != null && workflow != null && selectedNode != null && selectedNodeRunId != null && selectedNodeRunNum != null && number != null">
+        <ng-container *ngIf="project != null && workflow != null && selectedNodeId != null && selectedNodeRunId != null && selectedNodeRunNum != null && number != null">
             <app-workflow-sidebar-run-node
                 [project]="project"
                 [workflow]="workflow"
                 [runId]="selectedNodeRunId"
                 [runNumber]="selectedNodeRunNum"
                 [number]="number"
-                [node]="selectedNode"
+                [nodeId]="selectedNodeId"
                 [open]="sidebarOpen">
             </app-workflow-sidebar-run-node>
         </ng-container>
     </div>
 </aside>
 <section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!loading && workflow != null">
-    <button class="ui small icon blue open button" (click)="toggleSidebar()" [hidden]="selectedNode != null || selectedJoin != null">
+    <button class="ui small icon blue open button" (click)="toggleSidebar()"
+      *ngIf="selectedNode == null && selectedJoin == null && selectedNodeRunId == null && selectedNodeRunNum == null && selectedJoinRunId == null">
         <i class="content icon"></i>
     </button>
     <router-outlet></router-outlet>

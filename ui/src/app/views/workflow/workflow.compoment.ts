@@ -6,6 +6,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
+import {WorkflowService} from '../../service/workflow/workflow.service';
 import {RouterService} from '../../service/router/router.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
 import {finalize} from 'rxjs/operators';
@@ -38,7 +39,7 @@ export class WorkflowComponent {
     sidebar: SemanticSidebarComponent;
 
     constructor(private _activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _routerService: RouterService, private _workflowCore: WorkflowCoreService) {
+                private _routerService: RouterService, private _workflowCore: WorkflowCoreService, private _wfService: WorkflowService) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -49,7 +50,12 @@ export class WorkflowComponent {
 
         this._activatedRoute.params.subscribe(p => {
             let workflowName = p['workflowName'];
-            this.number = p['number'] ? parseInt(p['number'], 10) : null;
+
+            let snapshotparams = this._routerService.getRouteSnapshotParams({}, this._activatedRoute.snapshot);
+            if (snapshotparams) {
+                this.number = snapshotparams['number'] ? parseInt(snapshotparams['number'], 10) : null;
+            }
+
             if (this.project.key && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
@@ -64,9 +70,9 @@ export class WorkflowComponent {
                             }
 
                             if (this.selectedNodeId) {
-                                this.selectedNode = this.findNode(this.workflow.root, this.workflow.joins);
+                                this.selectedNode = this._wfService.findNode(this.selectedNodeId, this.workflow.root, this.workflow.joins);
                             } else if (this.selectedJoinId) {
-                                this.selectedJoin = this.findJoin(this.workflow.joins);
+                                this.selectedJoin = this._wfService.findJoinInWorkflowById(this.selectedJoinId, this.workflow);
                             }
                         }
                         this.loading = false;
@@ -79,50 +85,12 @@ export class WorkflowComponent {
 
         });
 
-        let snapshotparams = this._routerService.getRouteSnapshotParams({}, this._activatedRoute.snapshot);
-        if (snapshotparams) {
-            this.number = snapshotparams['number'] ? parseInt(snapshotparams['number'], 10) : null;
-        }
         let qp = this._routerService.getRouteSnapshotQueryParams({}, this._activatedRoute.snapshot);
         if (qp) {
             this.currentNodeName = qp['name'];
         }
 
-        this._activatedRoute.queryParams.subscribe((queryp) => {
-            if (queryp['selectedNodeId']) {
-                this.selectedJoinId = null;
-                this.selectedJoin = null;
-                this.selectedNodeId = Number.isNaN(queryp['selectedNodeId']) ? null : parseInt(queryp['selectedNodeId'], 10);
-            } else {
-                this.selectedNodeId = null;
-                this.selectedNode = null;
-            }
-
-            if (queryp['selectedJoinId']) {
-                this.selectedNodeId = null;
-                this.selectedNode = null;
-                this.selectedJoinId = Number.isNaN(queryp['selectedJoinId']) ? null : parseInt(queryp['selectedJoinId'], 10);
-            } else {
-                this.selectedJoinId = null;
-                this.selectedJoin = null;
-            }
-
-            if (queryp['selectedNodeRunId'] || queryp['selectedNodeRunNum']) {
-                this.selectedJoinId = null;
-                this.selectedJoin = null;
-                this.selectedNodeRunId = Number.isNaN(queryp['selectedNodeRunId']) ? null : parseInt(queryp['selectedNodeRunId'], 10);
-                this.selectedNodeRunNum = Number.isNaN(queryp['selectedNodeRunNum']) ? null : parseInt(queryp['selectedNodeRunNum'], 10);
-            } else {
-                this.selectedNodeRunId = null;
-                this.selectedNodeRunNum = null;
-            }
-
-            if (this.selectedNodeId && !this.loading && this.workflow) {
-                this.selectedNode = this.findNode(this.workflow.root, this.workflow.joins);
-            } else if (this.selectedJoinId && !this.loading && this.workflow) {
-                this.selectedJoin = this.findJoin(this.workflow.joins);
-            }
-        })
+        this.listenQueryParams();
 
         this._router.events.subscribe(p => {
             if (p instanceof ResolveEnd) {
@@ -130,60 +98,58 @@ export class WorkflowComponent {
                 let queryParams = this._routerService.getRouteSnapshotQueryParams({}, p.state.root);
                 this.currentNodeName = queryParams['name'];
                 this.number = params['number'] ? parseInt(params['number'], 10) : null;
-                if (qp['selectedNodeId']) {
-                    this.selectedNodeId = Number.isNaN(qp['selectedNodeId']) ? null : parseInt(qp['selectedNodeId'], 10);
+                if (queryParams['selectedNodeId']) {
+                    this.selectedNodeId = Number.isNaN(queryParams['selectedNodeId']) ? null : parseInt(queryParams['selectedNodeId'], 10);
+                }
+                if (queryParams['selectedJoinId']) {
+                    this.selectedJoinId = Number.isNaN(queryParams['selectedJoinId']) ? null : parseInt(queryParams['selectedJoinId'], 10);
                 }
 
                 if (this.selectedNodeId && !this.loading) {
-                    this.selectedNode = this.findNode(this.workflow.root, this.workflow.joins);
-                } else if (this.selectedNodeId && !this.loading) {
-                    this.selectedJoin = this.findJoin(this.workflow.joins);
+                    this.selectedNode = this._wfService.findNode(this.selectedNodeId, this.workflow.root, this.workflow.joins);
+                } else if (this.selectedJoinId && !this.loading) {
+                    this.selectedJoin = this._wfService.findJoinInWorkflowById(this.selectedJoinId, this.workflow);
                 }
             }
         });
     }
 
-    findNode(node: WorkflowNode, joins: WorkflowNodeJoin[]): WorkflowNode {
-        let nodeFound;
-        if (!node) {
-            return;
-        }
+    listenQueryParams() {
+      this._activatedRoute.queryParams.subscribe((queryp) => {
+          if (queryp['selectedNodeId']) {
+              this.selectedJoinId = null;
+              this.selectedJoin = null;
+              this.selectedNodeId = Number.isNaN(queryp['selectedNodeId']) ? null : parseInt(queryp['selectedNodeId'], 10);
+          } else {
+              this.selectedNodeId = null;
+              this.selectedNode = null;
+          }
 
-        if (this.selectedNodeId === node.id) {
-            return node;
-        }
+          if (queryp['selectedJoinId']) {
+              this.selectedNodeId = null;
+              this.selectedNode = null;
+              this.selectedJoinId = Number.isNaN(queryp['selectedJoinId']) ? null : parseInt(queryp['selectedJoinId'], 10);
+          } else {
+              this.selectedJoinId = null;
+              this.selectedJoin = null;
+          }
 
-        if (Array.isArray(node.triggers) && node.triggers.length) {
-            for (let n of node.triggers) {
-                nodeFound = this.findNode(n.workflow_dest_node, joins);
-                if (nodeFound) {
-                    return nodeFound;
-                }
-            }
-        }
+          if (queryp['selectedNodeRunId'] || queryp['selectedNodeRunNum']) {
+              this.selectedJoinId = null;
+              this.selectedJoin = null;
+              this.selectedNodeRunId = Number.isNaN(queryp['selectedNodeRunId']) ? null : parseInt(queryp['selectedNodeRunId'], 10);
+              this.selectedNodeRunNum = Number.isNaN(queryp['selectedNodeRunNum']) ? null : parseInt(queryp['selectedNodeRunNum'], 10);
+          } else {
+              this.selectedNodeRunId = null;
+              this.selectedNodeRunNum = null;
+          }
 
-        if (!nodeFound && Array.isArray(joins) && joins.length) {
-            for (let join of joins) {
-                if (!Array.isArray(join.triggers) || !join.triggers.length) {
-                    continue;
-                }
-                for (let tr of join.triggers) {
-                    nodeFound = this.findNode(tr.workflow_dest_node, []);
-                    if (nodeFound) {
-                        return nodeFound;
-                    }
-                }
-            }
-        }
-
-        return nodeFound;
-    }
-
-    findJoin(joins: WorkflowNodeJoin[]): WorkflowNodeJoin {
-        if (!Array.isArray(joins)) {
-            return null;
-        }
-        return joins.find((join) => join.id === this.selectedJoinId);
+          if (this.selectedNodeId && !this.loading && this.workflow) {
+              this.selectedNode = this._wfService.findNode(this.selectedNodeId, this.workflow.root, this.workflow.joins);
+          } else if (this.selectedJoinId && !this.loading && this.workflow) {
+              this.selectedJoin = this._wfService.findJoinInWorkflowById(this.selectedJoinId, this.workflow);
+          }
+      });
     }
 
     toggleSidebar(): void {
