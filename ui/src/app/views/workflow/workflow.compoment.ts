@@ -170,6 +170,8 @@ export class WorkflowComponent {
         this.selectedNodeRunNum = null;
         this.selectedNodeRunId = null;
 
+        this._workflowCore.linkJoinEvent(null);
+
         if (snapshotparams['number']) {
           this._router.navigate([
             '/project',

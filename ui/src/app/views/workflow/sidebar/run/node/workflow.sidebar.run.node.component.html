@@ -4,6 +4,7 @@
         <div class="content">
             <span>{{node.name}}</span>
             <a class="inline pointing ml5"
+              *ngIf="displayEditOption"
               [routerLink]="['/project', project.key, 'workflow', workflow.name]" [queryParams]="{selectedNodeId: node.id}">
               <i class="pencil icon float"></i>
             </a>
@@ -41,7 +42,7 @@
     <h4 class="ui header ml5">
         <i class="unhide icon"></i>
         <div class="content">
-            <span>Résumé du run</span>
+            <span>{{'workflow_run_summary' | translate}}</span>
         </div>
     </h4>
     <div class="padding">

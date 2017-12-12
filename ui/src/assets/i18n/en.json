@@ -599,6 +599,7 @@
   "worker_model_warning": "This worker model is in error. Please check it",
 
   "workflow_added" : "Workflow added",
+  "workflow_run_summary" : "Run summary",
   "workflow_context_invalid" : "Invalid JSON",
   "workflow_create" : "Create a workflow",
   "workflow_deleted" : "Workflow deleted",

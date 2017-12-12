@@ -45,6 +45,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     loading = true;
     currentWorkflowRun: WorkflowRun;
     currentWorkflowNodeRun: WorkflowNodeRun;
+    displayEditOption = false;
     pipelineStatusEnum = PipelineStatus;
 
     constructor(private _wrService: WorkflowRunService, private _wfService: WorkflowService, private _router: Router,
@@ -67,6 +68,8 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
           if (this.node && wr.nodes && wr.nodes[this.node.id] && Array.isArray(wr.nodes[this.node.id])) {
               this.currentWorkflowNodeRun = wr.nodes[this.node.id].find((n) => n.id === this.runId && n.num === this.runNumber);
           }
+
+          this.displayEditOption = this._wfService.findNodeInWorkflowById(this.nodeId, this.workflow) != null;
         });
 
         this.currentWorkflowRunSub = this._workflowCoreService.getCurrentWorkflowRun().subscribe((wr) => {
@@ -79,6 +82,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
                 this.currentWorkflowNodeRun = wr.nodes[this.node.id].find((n) => n.id === this.runId && n.num === this.runNumber);
             }
             this.loading = false;
+            this.displayEditOption = this._wfService.findNodeInWorkflowById(this.nodeId, this.workflow) != null;
           }
         );
 
