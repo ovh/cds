@@ -200,7 +200,7 @@ func request(method string, path string, args []byte) ([]byte, int, error) {
 
 // Log struct holds a single line of build log
 type Log struct {
-	ID                 int64                `json:"id"`
+	BuildID            int64                `json:"builID"`
 	PipelineBuildJobID int64                `json:"pipelineBuildJobID"`
 	PipelineBuildID    int64                `json:"pipelineBuildID"`
 	Start              *timestamp.Timestamp `json:"start"`
@@ -229,6 +229,7 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 
 	now, _ := ptypes.TimestampProto(time.Now())
 	l := Log{
+		BuildID:            j.ID(),
 		PipelineBuildJobID: j.ID(),
 		PipelineBuildID:    j.PipelineBuildID(),
 		Start:              now,
@@ -243,15 +244,19 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 		return err
 	}
 
-	var path string
-	if j.WorkflowNodeRunID() > 0 {
-		path = fmt.Sprintf("/queue/workflows/%d/log", j.ID())
-	} else {
-		path = fmt.Sprintf("/build/%d/log", j.ID())
+	req, err := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/log", j.WorkerHTTPPort()), bytes.NewReader(data))
+	if err != nil {
+		return fmt.Errorf("send log to worker /log: %s", err)
 	}
 
-	if _, _, err := request("POST", path, data); err != nil {
-		return err
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("cannot send log to worker /log: %s", err)
 	}
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("cannot send log to worker /log: HTTP %d", resp.StatusCode)
+	}
+
 	return nil
 }
