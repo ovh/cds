@@ -346,8 +346,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
-		payload["git.nb.commits"] = len(pushEvent.Commits)
-		payload["git.commits"] = pushEvent.GetCommits()
+		payload["git.repository"] = pushEvent.Repository.FullName
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
@@ -364,7 +363,8 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
-		payload["git.commits"] = pushEvent.GetCommits()
+		payload["git.repository"] = pushEvent.Repository.Name
+
 		if len(pushEvent.Commits) > 0 {
 			payload["git.message"] = pushEvent.Commits[0].Message
 		}
@@ -382,16 +382,11 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Changes[0].RefID, "refs/heads/")
 		payload["git.hash.before"] = pushEvent.Changes[0].FromHash
 		payload["git.hash"] = pushEvent.Changes[0].ToHash
+		payload["git.repository"] = fmt.Sprintf("%s/%s", pushEvent.Repository.Project.Key, pushEvent.Repository.Name)
 
 	default:
-		values, err := url.ParseQuery(t.WebHook.RequestURL)
-		if err != nil {
-			return nil, sdk.WrapError(err, "Hooks> Unable to parse query url %s", t.WebHook.RequestURL)
-		}
-		payload["git.author"] = values.Get("author")
-		payload["git.branch"] = values.Get("branch")
-		payload["git.message"] = values.Get("message")
-		payload["git.hash"] = values.Get("hash")
+		log.Warning("executeRepositoryWebHook> Repository manager not found. Cannot read %s", string(t.WebHook.RequestBody))
+		return nil, nil
 	}
 
 	d := dump.NewDefaultEncoder(&bytes.Buffer{})
