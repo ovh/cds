@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/auth"
+	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/worker"
@@ -205,12 +206,19 @@ func (api *API) checkWorkerPermission(ctx context.Context, db gorp.SqlExecutor, 
 
 	//IF it is POSTEXECUTE, it means that the job is must be taken by the worker
 	if rc.Options["isExecution"] == "true" {
+		k := cache.Key("workers", getWorker(ctx).ID, "perm", idS)
+		if api.Cache.Get(k, &ok) {
+			return ok
+		}
+
 		node, err := workflow.LoadNodeJobRun(db, api.Cache, id)
 		if err != nil {
 			log.Error("checkWorkerPermission> Unable to load job %d", id)
 			return false
 		}
-		return node.Job.WorkerName == getWorker(ctx).Name && node.Job.WorkerID == getWorker(ctx).ID
+		ok = node.Job.WorkerName == getWorker(ctx).Name && node.Job.WorkerID == getWorker(ctx).ID
+		api.Cache.SetWithTTL(k, ok, 60*15)
+		return ok
 	}
 	return true
 }

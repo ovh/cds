@@ -24,7 +24,9 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 		u.Permissions.ProjectsPerm = make(map[string]int, len(permProj))
 	}
 	for _, p := range permProj {
-		u.Permissions.ProjectsPerm[p.Project.Key] = p.Permission
+		if u.Permissions.ProjectsPerm[p.Project.Key] < p.Permission {
+			u.Permissions.ProjectsPerm[p.Project.Key] = p.Permission
+		}
 	}
 
 	permPip, err := pipeline.LoadPipelineByGroup(db, groupID)
@@ -35,7 +37,10 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 		u.Permissions.PipelinesPerm = make(map[sdk.UserPermissionKey]int, len(permPip))
 	}
 	for _, p := range permPip {
-		u.Permissions.PipelinesPerm[sdk.UserPermissionKey{Key: p.Pipeline.ProjectKey, Name: p.Pipeline.Name}] = p.Permission
+		k := sdk.UserPermissionKey{Key: p.Pipeline.ProjectKey, Name: p.Pipeline.Name}
+		if u.Permissions.PipelinesPerm[k] < p.Permission {
+			u.Permissions.PipelinesPerm[k] = p.Permission
+		}
 	}
 
 	permApp, err := application.LoadPermissions(db, groupID)
@@ -46,7 +51,10 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 		u.Permissions.ApplicationsPerm = make(map[sdk.UserPermissionKey]int, len(permApp))
 	}
 	for _, p := range permApp {
-		u.Permissions.ApplicationsPerm[sdk.UserPermissionKey{Key: p.Application.ProjectKey, Name: p.Application.Name}] = p.Permission
+		k := sdk.UserPermissionKey{Key: p.Application.ProjectKey, Name: p.Application.Name}
+		if u.Permissions.ApplicationsPerm[k] < p.Permission {
+			u.Permissions.ApplicationsPerm[k] = p.Permission
+		}
 	}
 
 	permEnv, err := environment.LoadEnvironmentByGroup(db, groupID)
@@ -57,7 +65,10 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 		u.Permissions.EnvironmentsPerm = make(map[sdk.UserPermissionKey]int, len(permEnv))
 	}
 	for _, p := range permEnv {
-		u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: p.Environment.ProjectKey, Name: p.Environment.Name}] = p.Permission
+		k := sdk.UserPermissionKey{Key: p.Environment.ProjectKey, Name: p.Environment.Name}
+		if u.Permissions.EnvironmentsPerm[k] < p.Permission {
+			u.Permissions.EnvironmentsPerm[k] = p.Permission
+		}
 	}
 
 	permWorkflow, err := workflow.LoadWorkflowByGroup(db, groupID)
@@ -68,17 +79,22 @@ func loadGroupPermissionInUser(db gorp.SqlExecutor, groupID int64, u *sdk.User) 
 		u.Permissions.WorkflowsPerm = make(map[sdk.UserPermissionKey]int, len(permEnv))
 	}
 	for _, p := range permWorkflow {
-		u.Permissions.WorkflowsPerm[sdk.UserPermissionKey{Key: p.Workflow.ProjectKey, Name: p.Workflow.Name}] = p.Permission
+		k := sdk.UserPermissionKey{Key: p.Workflow.ProjectKey, Name: p.Workflow.Name}
+		if u.Permissions.WorkflowsPerm[k] < p.Permission {
+			u.Permissions.WorkflowsPerm[k] = p.Permission
+		}
 	}
-
 	return nil
 }
 
 // loadUserPermissions retrieves all group memberships
 func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) error {
 	u.Groups = nil
-	k := cache.Key("users", u.Username, "perms")
-	if !store.Get(k, &u.Permissions) {
+	kp := cache.Key("users", u.Username, "perms")
+	kg := cache.Key("users", u.Username, "groups")
+	okp := store.Get(kp, &u.Permissions)
+	okg := store.Get(kg, &u.Groups)
+	if !okp || !okg {
 		query := `
 			SELECT "group".id, "group".name, "group_user".group_admin 
 			FROM "group"
@@ -109,7 +125,9 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) er
 			}
 			u.Groups = append(u.Groups, group)
 		}
-		store.SetWithTTL(k, u.Groups, 30)
+		store.SetWithTTL(kp, u.Permissions, 120)
+		store.SetWithTTL(kg, u.Groups, 120)
+
 	}
 	return nil
 }
@@ -117,7 +135,9 @@ func loadUserPermissions(db gorp.SqlExecutor, store cache.Store, u *sdk.User) er
 // loadGroupPermissions retrieves all group memberships
 func loadPermissionsByGroupID(db gorp.SqlExecutor, store cache.Store, groupID int64) (sdk.Group, sdk.UserPermissions, error) {
 	u := sdk.User{}
-	g := sdk.Group{}
+	g := sdk.Group{
+		ID: groupID,
+	}
 	kg := cache.Key("groups", strconv.Itoa(int(groupID)))
 	ku := cache.Key("groups", strconv.Itoa(int(groupID)), "perms")
 	if !store.Get(kg, &g) {
@@ -125,14 +145,14 @@ func loadPermissionsByGroupID(db gorp.SqlExecutor, store cache.Store, groupID in
 		if err := db.QueryRow(query, groupID).Scan(&g.Name); err != nil {
 			return g, sdk.UserPermissions{}, fmt.Errorf("no group with id %d: %s", groupID, err)
 		}
-		store.SetWithTTL(kg, g, 30)
+		store.SetWithTTL(kg, g, 120)
 	}
 
 	if !store.Get(ku, &u.Permissions) {
 		if err := loadGroupPermissionInUser(db, groupID, &u); err != nil {
 			return g, sdk.UserPermissions{}, sdk.WrapError(err, "loadPermissionsByGroupID")
 		}
-		store.SetWithTTL(ku, u.Permissions, 30)
+		store.SetWithTTL(ku, u.Permissions, 120)
 	}
 
 	return g, u.Permissions, nil

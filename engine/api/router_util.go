@@ -18,8 +18,10 @@ import (
 
 func deleteUserPermissionCache(ctx context.Context, store cache.Store) {
 	if getUser(ctx) != nil {
-		k := cache.Key("users", getUser(ctx).Username, "perms")
-		store.Delete(k)
+		kp := cache.Key("users", getUser(ctx).Username, "perms")
+		kg := cache.Key("users", getUser(ctx).Username, "groups")
+		store.Delete(kp)
+		store.Delete(kg)
 	}
 }
 

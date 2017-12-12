@@ -65,7 +65,6 @@ func EnvironmentPermission(key string, name string, u *sdk.User) int {
 	if u.Admin {
 		return PermissionReadWriteExecute
 	}
-
 	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: key, Name: name}]
 }
 
@@ -102,7 +101,7 @@ func AccessToPipeline(key string, env, pip string, u *sdk.User, access int) bool
 
 // AccessToEnvironment check if we can modify the given environment
 func AccessToEnvironment(key, env string, u *sdk.User, access int) bool {
-	if env != sdk.DefaultEnv.Name {
+	if env == "" || env == sdk.DefaultEnv.Name {
 		return true
 	}
 

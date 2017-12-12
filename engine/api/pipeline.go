@@ -33,12 +33,12 @@ func loadDestEnvFromRunRequest(ctx context.Context, db *gorp.DbMap, request *sdk
 	if request.Env.Name != "" && request.Env.Name != sdk.DefaultEnv.Name {
 		envDest, err = environment.LoadEnvironmentByName(db, projectKey, request.Env.Name)
 		if err != nil {
-			log.Warning("loadDestEnvFromRunRequest> Cannot load destination environment: %s", err)
+			log.Warning("loadDestEnvFromRunRequest> Cannot load destination environmens %s: %v", request.Env.Name, err)
 			return nil, sdk.ErrNoEnvironment
 		}
 	}
 	if !permission.AccessToEnvironment(projectKey, envDest.Name, getUser(ctx), permission.PermissionReadExecute) {
-		log.Warning("loadDestEnvFromRunRequest> You do not have Execution Right on this environment\n")
+		log.Warning("loadDestEnvFromRunRequest> You do not have Execution Right on this environment %s", envDest.Name)
 		return nil, sdk.ErrForbidden
 	}
 	return envDest, nil
