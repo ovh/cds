@@ -167,7 +167,7 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 	return params, nil
 }
 
-func getNodeRunBuildParameters(db gorp.SqlExecutor, proj *sdk.Project, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
+func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
 	//Load workflow run
 	w, err := LoadRunByID(db, run.WorkflowRunID, false)
 	if err != nil {
@@ -182,7 +182,7 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, proj *sdk.Project, run *sdk.
 
 	//Get node build parameters
 	errm := &sdk.MultiError{}
-	params, errparam := GetNodeBuildParameters(proj, &w.Workflow, n, run.PipelineParameters, run.Payload)
+	params, errparam := GetNodeBuildParameters(db, store, proj, &w.Workflow, n, run.PipelineParameters, run.Payload)
 	if errparam != nil {
 		err, ok := errparam.(*sdk.MultiError)
 		if ok {

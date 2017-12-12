@@ -413,7 +413,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	)
 
 	// Process parameters for the jobs
-	jobParams, errParam := getNodeRunBuildParameters(db, p, run)
+	jobParams, errParam := getNodeRunBuildParameters(db, store, p, run)
 	if errParam != nil {
 		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
