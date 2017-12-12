@@ -59,35 +59,35 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 }
 
 func outputTapFormat(tests Tests) ([]byte, error) {
-	t := tap.New()
+	tapValue := tap.New()
 	buf := new(bytes.Buffer)
-	t.Writer = buf
-	t.Header(tests.Total)
+	tapValue.Writer = buf
+	tapValue.Header(tests.Total)
 	for _, ts := range tests.TestSuites {
 		for _, tc := range ts.TestCases {
 			name := ts.Name + " / " + tc.Name
 			if len(tc.Skipped) > 0 {
-				t.Skip(1, name)
+				tapValue.Skip(1, name)
 				continue
 			}
 
 			if len(tc.Errors) > 0 {
-				t.Fail(name)
+				tapValue.Fail(name)
 				for _, e := range tc.Errors {
-					t.Diagnosticf("Error: %s", e.Value)
+					tapValue.Diagnosticf("Error: %s", e.Value)
 				}
 				continue
 			}
 
 			if len(tc.Failures) > 0 {
-				t.Fail(name)
+				tapValue.Fail(name)
 				for _, e := range tc.Failures {
-					t.Diagnosticf("Failure: %s", e.Value)
+					tapValue.Diagnosticf("Failure: %s", e.Value)
 				}
 				continue
 			}
 
-			t.Pass(name)
+			tapValue.Pass(name)
 		}
 	}
 

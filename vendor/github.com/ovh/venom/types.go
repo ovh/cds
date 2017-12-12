@@ -49,13 +49,13 @@ type CommonTestCaseContext struct {
 }
 
 // SetTestCase set testcase in context
-func (t *CommonTestCaseContext) SetTestCase(tc TestCase) {
-	t.TestCase = tc
+func (tcc *CommonTestCaseContext) SetTestCase(tc TestCase) {
+	tcc.TestCase = tc
 }
 
 // GetName Get the context name
-func (t *CommonTestCaseContext) GetName() string {
-	return t.Name
+func (tcc *CommonTestCaseContext) GetName() string {
+	return tcc.Name
 }
 
 // ExecutorWrap contains an executor implementation and some attributes
@@ -149,7 +149,7 @@ type InnerResult struct {
 	Value string `xml:",cdata" json:"value" yaml:"value"`
 }
 
-//Logger is basicaly an interface for logrus.Entry
+//Logger is basically an interface for logrus.Entry
 type Logger interface {
 	Debugf(format string, args ...interface{})
 	Infof(format string, args ...interface{})

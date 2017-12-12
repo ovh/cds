@@ -41,6 +41,7 @@ type Venom struct {
 	testsuites      []TestSuite
 	variables       map[string]string
 	IgnoreVariables []string
+	Parallel        int
 
 	OutputDetails        string
 	outputProgressBar    map[string]*pb.ProgressBar
