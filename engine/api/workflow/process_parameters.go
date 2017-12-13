@@ -8,6 +8,8 @@ import (
 	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
+	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -36,7 +38,7 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 }
 
 // GetNodeBuildParameters returns build parameters with default values for cds.version, cds.run, cds.run.number, cds.run.subnumber
-func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowNode, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
+func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowNode, pipelineParameters []sdk.Parameter, payload interface{}) ([]sdk.Parameter, error) {
 	vars := map[string]string{}
 	tmpProj := sdk.ParametersFromProjectVariables(proj)
 	for k, v := range tmpProj {
@@ -49,6 +51,21 @@ func GetNodeBuildParameters(proj *sdk.Project, w *sdk.Workflow, n *sdk.WorkflowN
 		tmp := sdk.ParametersFromApplicationVariables(n.Context.Application)
 		for k, v := range tmp {
 			vars[k] = v
+		}
+
+		// Get GitUrl
+		projectVCSServer := repositoriesmanager.GetProjectVCSServer(proj, n.Context.Application.VCSServer)
+		if projectVCSServer != nil {
+			client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
+			if errclient != nil {
+				return nil, sdk.WrapError(errclient, "GetNodeBuildParameters> Cannot connect get repository manager client")
+			}
+			r, errR := client.RepoByFullname(n.Context.Application.RepositoryFullname)
+			if errR != nil {
+				return nil, sdk.WrapError(errR, "GetNodeBuildParameters> Cannot get git.url")
+			}
+			vars["git.url"] = r.SSHCloneURL
+			vars["git.http_url"] = r.HTTPCloneURL
 		}
 	}
 
@@ -150,7 +167,7 @@ func getParentParameters(db gorp.SqlExecutor, run *sdk.WorkflowNodeRun, nodeRunI
 	return params, nil
 }
 
-func getNodeRunBuildParameters(db gorp.SqlExecutor, proj *sdk.Project, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
+func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, run *sdk.WorkflowNodeRun) ([]sdk.Parameter, error) {
 	//Load workflow run
 	w, err := LoadRunByID(db, run.WorkflowRunID, false)
 	if err != nil {
@@ -165,7 +182,7 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, proj *sdk.Project, run *sdk.
 
 	//Get node build parameters
 	errm := &sdk.MultiError{}
-	params, errparam := GetNodeBuildParameters(proj, &w.Workflow, n, run.PipelineParameters, run.Payload)
+	params, errparam := GetNodeBuildParameters(db, store, proj, &w.Workflow, n, run.PipelineParameters, run.Payload)
 	if errparam != nil {
 		err, ok := errparam.(*sdk.MultiError)
 		if ok {

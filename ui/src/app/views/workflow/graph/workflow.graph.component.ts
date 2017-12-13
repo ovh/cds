@@ -121,6 +121,8 @@ export class WorkflowGraphComponent implements AfterViewInit {
             if (n) {
                 this.nodeToLink = n;
                 this.toggleLinkJoin(true);
+            } else {
+              this.toggleLinkJoin(false);
             }
         });
     }

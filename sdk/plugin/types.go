@@ -30,6 +30,7 @@ type IJob interface {
 	WorkflowNodeRunID() int64
 	PipelineBuildID() int64
 	StepOrder() int
+	WorkerHTTPPort() int
 	Arguments() Arguments
 	Secrets() Secrets
 }
@@ -42,6 +43,7 @@ type Job struct {
 	Args               Arguments
 	Secrts             Secrets
 	OrderStep          int
+	HTTPPortWorker     int
 }
 
 func (j Job) ID() int64                { return j.IDPipelineJobBuild }
@@ -50,6 +52,7 @@ func (j Job) Secrets() Secrets         { return j.Secrts }
 func (j Job) PipelineBuildID() int64   { return j.IDPipelineBuild }
 func (j Job) WorkflowNodeRunID() int64 { return j.IDWorkflowNodeRun }
 func (j Job) StepOrder() int           { return j.OrderStep }
+func (j Job) WorkerHTTPPort() int      { return j.HTTPPortWorker }
 
 //IOptions is
 type IOptions interface {

@@ -1,0 +1,21 @@
+app-status-icon {
+  &.job {
+    font-size: 1.5em;
+    line-height: 1;
+  }
+}
+
+.step {
+  .title{
+    &.job {
+      font-size: 1em !important;
+    }
+  }
+}
+
+.forceRight {
+  right: 0px;
+  position: absolute;
+  font-size: 1.5em;
+  line-height: 1;
+}

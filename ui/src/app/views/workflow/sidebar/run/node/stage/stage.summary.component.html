@@ -1,0 +1,14 @@
+<a class="step stage" (click)="open = !open">
+  <div>
+    <app-status-icon [status]="stage.status" class="stage"></app-status-icon>
+  </div>
+  <div>
+    <div class="title">{{stage.name}}</div>
+  </div>
+  <div class="forceRight" *ngIf="stage.run_jobs && stage.run_jobs.length">
+    <i class="caret icon" [class.right]="!open" [class.down]="open"></i>
+  </div>
+</a>
+<ng-container *ngIf="open">
+  <app-job-step-summary *ngFor="let job of stage.run_jobs" [job]="job"></app-job-step-summary>
+</ng-container>

@@ -114,6 +114,7 @@
   "btn_detach" : "Unlink pipeline",
   "btn_link" : "Connect",
   "btn_or" : "or",
+  "btn_logs" : "Display logs",
   "btn_rename" : "Rename",
   "btn_resync_repo" : "Resynchronize",
   "btn_run" : "Run pipeline",
@@ -598,6 +599,7 @@
   "worker_model_warning": "This worker model is in error. Please check it",
 
   "workflow_added" : "Workflow added",
+  "workflow_run_summary" : "Run summary",
   "workflow_context_invalid" : "Invalid JSON",
   "workflow_create" : "Create a workflow",
   "workflow_deleted" : "Workflow deleted",
@@ -613,6 +615,7 @@
   "workflow_loading" : "Loading workflow...",
   "workflow_name" : "Workflow name",
   "workflow_node_context_edit" : "Edit the pipeline context",
+  "workflow_node_launch" : "Pipeline actions",
   "workflow_node_context_pipeline_parameter" : "Pipeline parameters",
   "workflow_node_context_payload" : "Default payload",
   "workflow_run_node_job_queued" : "Queued {{time}} ago",

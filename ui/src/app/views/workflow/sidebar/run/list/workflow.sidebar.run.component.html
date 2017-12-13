@@ -32,9 +32,9 @@
               [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED">
               <i class="tag icon"></i> {{r.num}}
           </a>
-          <div class="mt" [smDirTooltip]="getFilteredTagsString(getFilteredTags(r.tags))" smDirPosition="top left">
+          <div class="mt" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" [smDirTooltip]="getFilteredTagsString(filteredTags[r.id])" smDirPosition="top left">
               <i class="find icon"></i>
-              <ng-container *ngFor="let t of getFilteredTags(r.tags); let i = index; let last = last">
+              <ng-container *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
                   <span class="tiny" *ngIf="i <= 1"> {{t.value}} </span><span class="tiny" *ngIf="!last && i <= 1">,</span><span *ngIf="i === 1 && !last"> ...</span>
               </ng-container>
           </div>

@@ -49,7 +49,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 		}
 
 		if wr != nil {
-			params, errp := workflow.NodeBuildParameters(proj, wf, wr, id, getUser(ctx))
+			params, errp := workflow.NodeBuildParameters(api.mustDB(), api.Cache, proj, wf, wr, id, getUser(ctx))
 			if errp != nil {
 				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters")
 			}
@@ -145,7 +145,7 @@ func (api *API) getWorkflowTriggerJoinConditionHandler() Handler {
 		//First we merge all build parameters from all source nodes
 		allparams := map[string]string{}
 		for _, i := range j.SourceNodeIDs {
-			params, errp := workflow.NodeBuildParameters(proj, wf, wr, i, getUser(ctx))
+			params, errp := workflow.NodeBuildParameters(api.mustDB(), api.Cache, proj, wf, wr, i, getUser(ctx))
 			if errp != nil {
 				return sdk.WrapError(errr, "getWorkflowTriggerJoinConditionHandler> Unable to load build parameters")
 			}
