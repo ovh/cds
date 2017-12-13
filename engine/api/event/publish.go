@@ -119,14 +119,30 @@ func PublishWorkflowNodeRun(nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, projectK
 	node := wr.Workflow.GetNode(nr.WorkflowNodeID)
 	if node != nil {
 		e.PipelineName = node.Pipeline.Name
+		e.NodeName = node.Name
 	}
 	if node.Context != nil {
 		if node.Context.Application != nil {
 			e.ApplicationName = node.Context.Application.Name
 			e.RepositoryManagerName = node.Context.Application.VCSServer
+			e.RepositoryFullName = node.Context.Application.RepositoryFullname
 		}
 		if node.Context.Environment != nil {
 			e.EnvironmentName = node.Context.Environment.Name
+		}
+	}
+
+	// looking for git.hash && git.branch
+	for _, param := range nr.BuildParameters {
+		if param.Name == "git.hash" {
+			e.Hash = param.Value
+		}
+		if param.Name == "git.branch" {
+			e.BranchName = param.Value
+		}
+
+		if e.Hash != "" && e.BranchName != "" {
+			break
 		}
 	}
 
