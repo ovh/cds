@@ -36,7 +36,7 @@
       <a class="item" [routerLink]="['/project', project.key, 'pipeline', node.pipeline.name]" [queryParams]="{workflow: workflow.name }">
         {{ 'pipeline_label_edit' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item" (click)="openAddHookModal()">
+      <a class="item" (click)="openAddHookModal()" *ngIf="workflow && workflow.root.id === node.id">
         {{ 'workflow_node_hook_add' | translate }} <i class="angle right icon"></i>
       </a>
       <a class="item" (click)="openAddParentModal()">

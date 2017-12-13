@@ -95,7 +95,9 @@ export class WorkflowSidebarEditNodeComponent {
     openTriggerModal(): void {
         this.newTrigger = new WorkflowNodeTrigger();
         this.newTrigger.workflow_node_id = this.node.id;
-        this.workflowTrigger.show();
+        if (this.workflowTrigger) {
+          this.workflowTrigger.show();
+        }
     }
 
     openAddParentModal(): void {

@@ -3,7 +3,7 @@
     <app-status-icon [status]="stage.status" class="stage"></app-status-icon>
   </div>
   <div>
-    <div class="title">{{stage.name}}</div>
+    <div class="title stage">{{stage.name}}</div>
   </div>
   <div class="forceRight" *ngIf="stage.run_jobs && stage.run_jobs.length">
     <i class="caret icon" [class.right]="!open" [class.down]="open"></i>

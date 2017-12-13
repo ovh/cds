@@ -46,6 +46,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     currentWorkflowRun: WorkflowRun;
     currentWorkflowNodeRun: WorkflowNodeRun;
     displayEditOption = false;
+    displaySummary = true;
     pipelineStatusEnum = PipelineStatus;
 
     constructor(private _wrService: WorkflowRunService, private _wfService: WorkflowService, private _router: Router,
@@ -58,6 +59,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
           this.runId = Number.isNaN(queryparams['selectedNodeRunId']) ? null : parseInt(queryparams['selectedNodeRunId'], 10);
           this.runNumber = Number.isNaN(queryparams['selectedNodeRunNum']) ? null : parseInt(queryparams['selectedNodeRunNum'], 10);
           this.nodeId = Number.isNaN(queryparams['selectedNodeId']) ? null : parseInt(queryparams['selectedNodeId'], 10);
+          this.displaySummary = this.runId !== -1;
 
           if (!this.currentWorkflowRun) {
             return;

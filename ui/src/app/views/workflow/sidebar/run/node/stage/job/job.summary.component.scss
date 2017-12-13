@@ -1,6 +1,6 @@
 app-status-icon {
   &.job {
-    font-size: 1.5em;
+    font-size: 1.2em;
     line-height: 1;
   }
 }
@@ -8,8 +8,12 @@ app-status-icon {
 .step {
   .title{
     &.job {
-      font-size: 1em !important;
+      font-size: 0.9em !important;
     }
+  }
+  &.job {
+    padding-left: 25px !important;
+    padding-right: 10px !important;
   }
 }
 
