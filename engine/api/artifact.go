@@ -281,6 +281,9 @@ func (api *API) downloadArtifactDirectHandler() Handler {
 			return sdk.WrapError(err, "downloadArtifactDirectHandler> Could not load artifact with hash %s", hash)
 		}
 
+		w.Header().Add("Content-Type", "application/octet-stream")
+		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
+
 		log.Debug("downloadArtifactDirectHandler: Serving %+v", art)
 		f, err := objectstore.FetchArtifact(art)
 		if err != nil {
@@ -295,9 +298,6 @@ func (api *API) downloadArtifactDirectHandler() Handler {
 		if err := f.Close(); err != nil {
 			return sdk.WrapError(err, "downloadArtifactDirectHandler> Cannot close artifact")
 		}
-
-		w.Header().Add("Content-Type", "application/octet-stream")
-		w.Header().Add("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", art.Name))
 
 		return nil
 	}
