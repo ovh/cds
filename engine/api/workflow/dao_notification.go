@@ -36,23 +36,23 @@ func loadNotifications(db gorp.SqlExecutor, w *sdk.Workflow) ([]sdk.WorkflowNoti
 		if errJ != nil {
 			return nil, sdk.WrapError(errJ, "loadNotification> Unable to load notification %d on workflow %d", id, w.ID)
 		}
-		notifications[index] = *n
+		notifications[index] = n
 	}
 
 	return notifications, nil
 }
 
-func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (*sdk.WorkflowNotification, error) {
+func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (sdk.WorkflowNotification, error) {
 	dbnotif := Notification{}
 	//Load the notification
 	if err := db.SelectOne(&dbnotif, "select * from workflow_notification where id = $1", id); err != nil {
-		return nil, sdk.WrapError(err, "loadNotification> Unable to load notification %d", id)
+		return sdk.WorkflowNotification{}, sdk.WrapError(err, "loadNotification> Unable to load notification %d", id)
 	}
 	dbnotif.WorkflowID = w.ID
 
 	//Load sources
 	if _, err := db.Select(&dbnotif.SourceNodeIDs, "select workflow_node_id from workflow_notification_source where workflow_notification_id = $1", id); err != nil {
-		return nil, sdk.WrapError(err, "loadNotification> Unable to load notification %d sources", id)
+		return sdk.WorkflowNotification{}, sdk.WrapError(err, "loadNotification> Unable to load notification %d sources", id)
 	}
 	n := sdk.WorkflowNotification(dbnotif)
 
@@ -60,7 +60,7 @@ func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (*sdk.Work
 		n.SourceNodeRefs = append(n.SourceNodeRefs, fmt.Sprintf("%d", id))
 	}
 
-	return &n, nil
+	return n, nil
 }
 
 func insertNotification(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNotification, nodes []sdk.WorkflowNode, u *sdk.User) error {
