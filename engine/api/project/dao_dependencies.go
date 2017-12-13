@@ -168,13 +168,7 @@ var (
 		if errEnv != nil && errEnv != sql.ErrNoRows && errEnv != sdk.ErrNoEnvironment {
 			return sdk.WrapError(errEnv, "application.loadEnvironments")
 		}
-		proj.Environments = append(proj.Environments, envs...)
-
-		for i := range proj.Environments {
-			env := &proj.Environments[i]
-			env.Permission = permission.EnvironmentPermission(proj.Key, env.Name, u)
-		}
-
+		proj.Environments = envs
 		return nil
 	}
 
