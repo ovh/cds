@@ -110,11 +110,11 @@ func insertNotification(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 
 // PostUpdate is a db hook
 func (no *Notification) PostInsert(db gorp.SqlExecutor) error {
-	b, err := json.Marshal(no.Notifications)
+	b, err := json.Marshal(no.Settings)
 	if err != nil {
 		return err
 	}
-	if _, err := db.Exec("update workflow_notification set notifications = $1 where id = $2", b, no.ID); err != nil {
+	if _, err := db.Exec("update workflow_notification set settings = $1 where id = $2", b, no.ID); err != nil {
 		return err
 	}
 	return nil
@@ -123,14 +123,14 @@ func (no *Notification) PostInsert(db gorp.SqlExecutor) error {
 // PostGet is a db hook
 func (no *Notification) PostGet(db gorp.SqlExecutor) error {
 	var res = struct {
-		Notifications string `db:"notifications"`
+		Notification string `db:"settings"`
 	}{}
 
-	if err := db.SelectOne(&res, "SELECT notifications FROM workflow_notification WHERE id = $1", no.ID); err != nil {
+	if err := db.SelectOne(&res, "SELECT settings FROM workflow_notification WHERE id = $1", no.ID); err != nil {
 		return sdk.WrapError(err, "PostGet> Unable to load marshalled workflow notification")
 	}
 
 	var errN error
-	no.Notifications, errN = sdk.ParseUserNotificationSettings([]byte(res.Notifications))
+	no.Settings, errN = sdk.ParseWorkflowUserNotificationSettings(no.Type, []byte(res.Notification))
 	return sdk.WrapError(errN, "Notification.PostGet > Cannot parse user notification")
 }

@@ -504,10 +504,11 @@ export class WorkflowNotification {
     id: number;
     source_node_id: Array<number>;
     source_node_ref: Array<string>;
-    notifications: {};
+    type: string;
+    settings: {};
 
     constructor() {
-        this.notifications = {};
+        this.settings = {};
         this.source_node_ref = new Array<string>();
         this.source_node_id = new Array<number>();
     }

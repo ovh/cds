@@ -1,27 +1,27 @@
-<div class="ui two column grid">
+<div class="ui two column grid" *ngIf="workflow.notifications && workflow.notifications.length > 0">
     <div class="four wide column">
         <div class="ui fluid vertical steps">
             <ng-container *ngFor="let n of workflow.notifications">
-                <ng-container *ngFor="let k of n.notifications | keys">
                     <div class="step">
                         <div class="content">
                             <div class="title">
-                                {{k}}
+                                {{n.type}}
                             </div>
                             <div class="description">
-                                <ng-container *ngFor="let node of mapNodesNotif.get(n.id+'-'+k); let i = index">
+                                <ng-container *ngFor="let node of mapNodesNotif.get(n.id); let i = index">
                                     <span *ngIf="i > 0">{{'/'}}</span>
                                     {{ node }}
                                 </ng-container>
                             </div>
                         </div>
                     </div>
-                </ng-container>
-
             </ng-container>
         </div>
     </div>
     <div class="twelve wide column">
-        TODO
+        {{workflow.notifications[0].settings | json}}
     </div>
+</div>
+<div class="ui info message" *ngIf="!workflow.notifications || workflow.notifications.length === 0">
+    {{ 'workflow_no_notifications' | translate }}
 </div>

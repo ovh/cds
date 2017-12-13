@@ -77,7 +77,8 @@ export class WorkflowNotificationFormComponent implements OnInit {
             this.userNotification.recipients = this.selectedUsers.split(',');
         }
         this.userNotification.template = this.notificationTemplate;
-        notification.notifications[this.selectedType] = this.userNotification;
+        notification.type = this.selectedType;
+        notification.settings = this.userNotification;
 
         this.selectedNodes.forEach(sn => {
             notification.source_node_ref.push(sn.id.toString());

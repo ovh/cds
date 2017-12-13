@@ -680,6 +680,7 @@
   "workflow_last_execution" : "Last execution date",
   "workflow_first_execution" : "First execution date",
 
+  "workflow_no_notifications" : "No notifications",
   "workflow_notification_type" : "Notification type",
   "workflow_notification_pipeline" : "Pipelines",
   "workflow_notification_on_success" : "Send on success",

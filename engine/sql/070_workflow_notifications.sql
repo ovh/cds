@@ -2,7 +2,8 @@
 CREATE TABLE IF NOT EXISTS "workflow_notification" (
     id BIGSERIAL PRIMARY KEY,
     workflow_id BIGINT NOT NULL,
-    notifications JSONB
+    type VARCHAR(50),
+    settings JSONB
 );
 
 CREATE TABLE IF NOT EXISTS "workflow_notification_source" (
@@ -17,3 +18,4 @@ SELECT create_foreign_key_idx_cascade('FK_WORKFLOW_NOTIFICATION_SOURCE', 'workfl
 
 -- +migrate Down
 DROP TABLE workflow_notification CASCADE;
+DROP TABLE workflow_notification_source CASCADE;
