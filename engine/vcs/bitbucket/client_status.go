@@ -42,10 +42,6 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 		return sdk.WrapError(err, "bitbucketClient.SetStatus: Cannot process Event")
 	}
 
-	if b.consumer.disabledStatusDetail {
-		statusData.url = ""
-	}
-
 	status := Status{
 		Key:   statusData.key,
 		Name:  fmt.Sprintf("%s%d", statusData.key, statusData.buildNumber),
@@ -59,6 +55,7 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 	if err != nil {
 		return sdk.WrapError(err, "bitbucketClient.SetStatus> Unable to marshall status")
 	}
+	log.Debug("SetStatus> Values: %+v", values)
 	return b.do("POST", "build-status", fmt.Sprintf("/commits/%s", statusData.hash), nil, values, nil)
 }
 

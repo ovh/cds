@@ -163,7 +163,7 @@ func (c *bitbucketClient) do(method, api, path string, params url.Values, values
 	case 401:
 		return ErrNotAuthorized
 	case 400:
-		return ErrBadRequest
+		return sdk.WrapError(ErrBadRequest, "bitbucketClient.do> %s", string(body))
 	}
 
 	// Unmarshall the JSON response
