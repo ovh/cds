@@ -1,0 +1,18 @@
+app-status-icon {
+  &.action {
+    font-size: 1.2em;
+    line-height: 1;
+  }
+}
+.step {
+  &.action {
+    padding-left: 40px !important;
+    padding-right: 0px !important;
+  }
+  .title{
+    &.action {
+      font-size: 0.9em !important;
+      font-weight: initial !important;
+    }
+  }
+}
