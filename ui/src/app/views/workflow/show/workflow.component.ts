@@ -192,10 +192,10 @@ export class WorkflowShowComponent {
     updateWorkflow(w: Workflow, modal?: ActiveModal<boolean, boolean, void>): void {
         this.loading = true;
         this._workflowStore.updateWorkflow(this.project.key, w).pipe(
-            finalize(() => {
-            this.loading = false;
-            }),
-            first()).subscribe(() => {
+            finalize(() => this.loading = false),
+            first()
+          )
+          .subscribe(() => {
             this._toast.success('', this._translate.instant('workflow_updated'));
             if (modal) {
                 modal.approve(true);
