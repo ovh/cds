@@ -39,15 +39,14 @@ func monitoringRun(v cli.Values) (interface{}, error) {
 
 // Termui wrapper designed for dashboard creation
 type Termui struct {
-	header, times *termui.Par
-	msg           string
+	header, times, workers *termui.Par
+	msg                    string
 
 	current  string
 	selected string
 
 	// monitoring
 	queue                   *cli.ScrollableList
-	statusWorkerList        *cli.ScrollableList
 	statusHatcheriesWorkers *cli.ScrollableList
 	statusWorkerModels      *cli.ScrollableList
 	status                  *cli.ScrollableList
@@ -58,7 +57,6 @@ type Termui struct {
 const (
 	QueueSelected             = "queue"
 	BuildingSelected          = "building"
-	WorkersListSelected       = "workersList"
 	WorkerModelsSelected      = "workerModels"
 	HatcheriesWorkersSelected = "hatcheriesWorkers"
 	StatusSelected            = "status"
@@ -101,6 +99,7 @@ func (ui *Termui) init() {
 
 	ui.initHeader()
 	ui.initTimes()
+	ui.initWorkers()
 	go ui.showMonitoring()
 }
 
@@ -111,7 +110,7 @@ func (ui *Termui) draw(i int) {
 	success, successColor := statusShort(sdk.StatusSuccess.String())
 	fail, failColor := statusShort(sdk.StatusFail.String())
 	disabled, disabledColor := statusShort(sdk.StatusDisabled.String())
-	ui.header.Text = fmt.Sprintf(" [CDS | (q)uit | Legend: ](fg-cyan) [Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s)",
+	ui.header.Text = fmt.Sprintf("[CDS | (q)uit | Legend: ](fg-cyan) [Checking:%s](%s)  [Waiting:%s](%s)  [Building:%s](%s)  [Success:%s](%s)  [Fail:%s](%s)  [Disabled:%s](%s)",
 		checking, checkingColor,
 		waiting, waitingColor,
 		building, buildingColor,
@@ -143,6 +142,16 @@ func (ui *Termui) initTimes() {
 	ui.times = p
 }
 
+func (ui *Termui) initWorkers() {
+	p := termui.NewPar("")
+	p.Height = 1
+	p.TextFgColor = termui.ColorWhite
+	p.BorderLabel = ""
+	p.BorderFg = termui.ColorCyan
+	p.Border = false
+	ui.workers = p
+}
+
 ////////////
 
 func (ui *Termui) showMonitoring() {
@@ -152,7 +161,7 @@ func (ui *Termui) showMonitoring() {
 	ui.queue.ItemFgColor = termui.ColorWhite
 	ui.queue.ItemBgColor = termui.ColorBlack
 
-	heightBottom := 19
+	heightBottom := 25
 	heightQueue := (termui.TermHeight() - heightBottom)
 	if heightQueue <= 0 {
 		heightQueue = 4
@@ -166,16 +175,6 @@ func (ui *Termui) showMonitoring() {
 	ui.queue.BorderRight = false
 
 	ui.selected = QueueSelected
-
-	ui.statusWorkerList = cli.NewScrollableList()
-	ui.statusWorkerList.ItemFgColor = termui.ColorWhite
-	ui.statusWorkerList.ItemBgColor = termui.ColorBlack
-
-	ui.statusWorkerList.BorderLabel = " Workers "
-	ui.statusWorkerList.Height = heightBottom
-	ui.statusWorkerList.Items = []string{"[select a job](fg-cyan,bg-default)"}
-	ui.statusWorkerList.BorderBottom = false
-	ui.statusWorkerList.BorderLeft = false
 
 	ui.statusWorkerModels = cli.NewScrollableList()
 	ui.statusWorkerModels.BorderLabel = " Worker Models "
@@ -207,6 +206,9 @@ func (ui *Termui) showMonitoring() {
 		termui.NewRow(
 			termui.NewCol(12, 0, ui.times),
 		),
+		termui.NewRow(
+			termui.NewCol(12, 0, ui.workers),
+		),
 	)
 
 	termui.Body.AddRows(
@@ -214,9 +216,8 @@ func (ui *Termui) showMonitoring() {
 	)
 	termui.Body.AddRows(
 		termui.NewRow(
-			termui.NewCol(4, 0, ui.statusWorkerList),
-			termui.NewCol(2, 0, ui.statusWorkerModels),
-			termui.NewCol(3, 0, ui.statusHatcheriesWorkers),
+			termui.NewCol(4, 0, ui.statusWorkerModels),
+			termui.NewCol(5, 0, ui.statusHatcheriesWorkers),
 			termui.NewCol(3, 0, ui.status),
 		),
 	)
@@ -253,8 +254,6 @@ func (ui *Termui) monitoringCursorDown() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.CursorDown()
-	case WorkersListSelected:
-		ui.statusWorkerList.CursorDown()
 	case WorkerModelsSelected:
 		ui.statusWorkerModels.CursorDown()
 	case HatcheriesWorkersSelected:
@@ -268,8 +267,6 @@ func (ui *Termui) monitoringCursorUp() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.CursorUp()
-	case WorkersListSelected:
-		ui.statusWorkerList.CursorUp()
 	case WorkerModelsSelected:
 		ui.statusWorkerModels.CursorUp()
 	case HatcheriesWorkersSelected:
@@ -285,9 +282,6 @@ func (ui *Termui) monitoringSelectNext() {
 	case QueueSelected:
 		ui.selected = BuildingSelected
 		ui.queue.Cursor = 0
-	case WorkersListSelected:
-		ui.selected = WorkerModelsSelected
-		ui.statusWorkerList.Cursor = 0
 	case WorkerModelsSelected:
 		ui.selected = HatcheriesWorkersSelected
 		ui.statusWorkerModels.Cursor = 0
@@ -303,7 +297,6 @@ func (ui *Termui) monitoringSelectNext() {
 
 func (ui *Termui) monitoringColorSelected() {
 	ui.queue.BorderFg = termui.ColorDefault
-	ui.statusWorkerList.BorderFg = termui.ColorDefault
 	ui.statusWorkerModels.BorderFg = termui.ColorDefault
 	ui.statusHatcheriesWorkers.BorderFg = termui.ColorDefault
 	ui.status.BorderFg = termui.ColorDefault
@@ -311,8 +304,6 @@ func (ui *Termui) monitoringColorSelected() {
 	switch ui.selected {
 	case QueueSelected:
 		ui.queue.BorderFg = termui.ColorRed
-	case WorkersListSelected:
-		ui.statusWorkerList.BorderFg = termui.ColorRed
 	case WorkerModelsSelected:
 		ui.statusWorkerModels.BorderFg = termui.ColorRed
 	case HatcheriesWorkersSelected:
@@ -321,7 +312,6 @@ func (ui *Termui) monitoringColorSelected() {
 		ui.status.BorderFg = termui.ColorRed
 	}
 	termui.Render(ui.queue,
-		ui.statusWorkerList,
 		ui.statusWorkerModels,
 		ui.statusHatcheriesWorkers,
 		ui.status)
@@ -405,8 +395,8 @@ func (ui *Termui) updateQueueWorkers() string {
 
 	ui.computeStatusHatcheriesWorkers(workers)
 
-	msga, wmodels := ui.computeStatusWorkerModels(workers)
-	ui.computeStatusWorkersList(workers, wmodels)
+	msga, wModels := ui.computeStatusWorkerModels(workers)
+	ui.computeStatusWorkersList(workers, wModels)
 	return msg + msga
 }
 
@@ -466,41 +456,25 @@ func (ui *Termui) computeStatusHatcheriesWorkers(workers []sdk.Worker) {
 }
 
 func (ui *Termui) computeStatusWorkersList(workers []sdk.Worker, wModels map[int64]sdk.Model) {
-	titles, items := []string{}, []string{}
-	values := map[string]sdk.Worker{}
-	selected := ",bg-default"
 	statusTitle := []string{}
 	status := make(map[string]int)
-	if ui.selected == WorkersListSelected {
-		selected = ""
-	}
 	for _, w := range workers {
-		n := wModels[w.ModelID].Type + " " + wModels[w.ModelID].Name + " " + w.Name
-		titles = append(titles, n)
-		values[n] = w
 		if _, ok := status[w.Status.String()]; !ok {
 			statusTitle = append(statusTitle, w.Status.String())
 		}
 		status[w.Status.String()] = status[w.Status.String()] + 1
-	}
-	sort.Strings(titles)
-	for _, t := range titles {
-		w := values[t]
-		icon, color := statusShort(w.Status.String())
-		items = append(items, fmt.Sprintf("[%s ](%s%s)[ %s](%s)", icon, color, selected, pad(t, 70), selected))
 	}
 	var s string
 	if len(workers) > 1 {
 		s = "s"
 	}
 	sort.Strings(statusTitle)
-	title := fmt.Sprintf(" %d Worker%s ", len(workers), s)
+	workersResume := fmt.Sprintf("[%d worker%s](fg-cyan,bg-default) ", len(workers), s)
 	for _, s := range statusTitle {
 		icon, color := statusShort(s)
-		title += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
+		workersResume += fmt.Sprintf("[%d %s](%s) ", status[s], icon, color)
 	}
-	ui.statusWorkerList.BorderLabel = title
-	ui.statusWorkerList.Items = items
+	ui.workers.Text = workersResume
 }
 
 func (ui *Termui) computeStatusWorkerModels(workers []sdk.Worker) (string, map[int64]sdk.Model) {
