@@ -54,17 +54,9 @@ func DeleteWorker(db *gorp.DbMap, id string) error {
 		return nil
 	}
 
-	if st == sdk.StatusBuilding.String() {
+	if st == sdk.StatusBuilding.String() && jobID.Valid && jobType.Valid {
 		// Worker is awol while building !
 		// We need to restart this action
-		if jobID.Valid == false {
-			return fmt.Errorf("DeleteWorker> Worker %s crashed while building but action_build_id is NULL!", name)
-		}
-
-		if !jobType.Valid {
-			return fmt.Errorf("DeleteWorker> Worker %s crashed while building but job_type is NULL!", name)
-		}
-
 		switch jobType.String {
 		case sdk.JobTypePipeline:
 			if err := pipeline.RestartPipelineBuildJob(tx, jobID.Int64); err != nil {

@@ -102,6 +102,12 @@ func (c *client) QueueWorkflowNodeJobRun() ([]sdk.WorkflowNodeJobRun, error) {
 	return wJobs, nil
 }
 
+func (c *client) QueueCountWorkflowNodeJobRun() (sdk.WorkflowNodeJobRunCount, error) {
+	countWJobs := sdk.WorkflowNodeJobRunCount{}
+	_, err := c.GetJSON("/queue/workflows/count", &countWJobs)
+	return countWJobs, err
+}
+
 func (c *client) QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error) {
 	pbJobs := []sdk.PipelineBuildJob{}
 	if _, err := c.GetJSON("/queue?status=all", &pbJobs); err != nil {

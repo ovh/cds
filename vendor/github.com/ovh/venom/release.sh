@@ -24,7 +24,7 @@ fi
 # Check there is no pending changes --> branch is clean
 if [ -n "`git status --porcelain`" ]
 then
-    echo "There are pending/uncommited changes in current branch."
+    echo "There are pending/uncommitted changes in current branch."
     echo "Please commit or stash them."
     exit 1
 fi

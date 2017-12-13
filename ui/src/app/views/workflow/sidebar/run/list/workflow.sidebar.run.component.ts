@@ -1,29 +1,28 @@
-import {Component, Input, NgZone, OnDestroy, OnInit, ElementRef, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
-import {Project} from '../../../../model/project.model';
-import {PipelineStatus} from '../../../../model/pipeline.model';
-import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
-import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
-import {CDSWorker} from '../../../../shared/worker/worker';
-import {AuthentificationStore} from '../../../../service/auth/authentification.store';
-import {environment} from '../../../../../environments/environment';
+import {Component, Input, NgZone, OnDestroy, ElementRef, ViewChild} from '@angular/core';
+import {Project} from '../../../../../model/project.model';
+import {PipelineStatus} from '../../../../../model/pipeline.model';
+import {Workflow, WorkflowNode} from '../../../../../model/workflow.model';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
+import {CDSWorker} from '../../../../../shared/worker/worker';
+import {AuthentificationStore} from '../../../../../service/auth/authentification.store';
+import {environment} from '../../../../../../environments/environment';
 import {Subscription} from 'rxjs/Subscription';
-import {WorkflowRun, WorkflowRunTags} from '../../../../model/workflow.run.model';
-import {cloneDeep, uniqBy} from 'lodash';
-import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
-import {DurationService} from '../../../../shared/duration/duration.service';
-import {RouterService} from '../../../../service/router/router.service';
+import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.model';
+import {cloneDeep} from 'lodash';
+import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
+import {DurationService} from '../../../../../shared/duration/duration.service';
 
 @Component({
-    selector: 'app-workflow-sidebar-run',
+    selector: 'app-workflow-sidebar-run-list',
     templateUrl: './workflow.sidebar.run.component.html',
     styleUrls: ['./workflow.sidebar.run.component.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowSidebarRunComponent implements OnInit, OnDestroy {
+export class WorkflowSidebarRunListComponent implements OnDestroy {
 
     // Project that contains the workflow
     @Input() project: Project;
+    @Input() runNumber: number;
 
     // Workflow
     _workflow: Workflow;
@@ -63,22 +62,14 @@ export class WorkflowSidebarRunComponent implements OnInit, OnDestroy {
     tagsSelectable: Array<string>;
     tagToDisplay: Array<string>;
     pipelineStatusEnum = PipelineStatus;
-    runNumber: number;
     ready = false;
+    filteredTags: {[key: number]: WorkflowRunTags[]} = {};
 
     private readonly MAX_TAGS_TO_DISPLAY = 2;
 
     constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService,
-        private _route: ActivatedRoute, private _routerService: RouterService, private _duration: DurationService,
-        private _elementRef: ElementRef) {
+      private _duration: DurationService) {
         this.zone = new NgZone({enableLongStackTrace: false});
-    }
-
-    ngOnInit() {
-        let params = this._routerService.getRouteSnapshotParams({}, this._route.snapshot);
-        if (params['number']) {
-            this.runNumber = parseInt(params['number'], 10);
-        }
     }
 
     startWorker(): void {
@@ -151,9 +142,9 @@ export class WorkflowSidebarRunComponent implements OnInit, OnDestroy {
         let tagsFormatted = '';
         for (let i = 0; i < tags.length; i++) {
             if (i === 0) {
-                tagsFormatted += tags[i].tag;
+                tagsFormatted += tags[i].value;
             } else {
-                tagsFormatted += (' , ' + tags[i].tag);
+                tagsFormatted += (' , ' + tags[i].value);
             }
         }
 
@@ -172,20 +163,22 @@ export class WorkflowSidebarRunComponent implements OnInit, OnDestroy {
 
     refreshRun(): void {
         if (this.workflowRuns) {
+            this.filteredTags = {};
             this.filteredWorkflowRuns = cloneDeep(this.workflowRuns);
-            if (!this.selectedTags) {
-                return;
+
+            if (this.selectedTags) {
+              this.selectedTags.forEach(t => {
+                  let splitted = t.split(':');
+                  let key = splitted.shift();
+                  let value = splitted.join(':');
+                  this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
+                      return r.tags.find(tag => {
+                          return tag.tag === key && tag.value.indexOf(value) !== -1;
+                      });
+                  });
+              });
             }
-            this.selectedTags.forEach(t => {
-                let splitted = t.split(':');
-                let key = splitted.shift();
-                let value = splitted.join(':');
-                this.filteredWorkflowRuns = this.filteredWorkflowRuns.filter(r => {
-                    return r.tags.find(tag => {
-                        return tag.tag === key && tag.value.indexOf(value) !== -1;
-                    });
-                });
-            });
+            this.filteredWorkflowRuns.forEach((r) => this.filteredTags[r.id] = this.getFilteredTags(r.tags));
         }
     }
 

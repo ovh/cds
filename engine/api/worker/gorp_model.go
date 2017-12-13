@@ -14,6 +14,9 @@ type WorkerModel sdk.Model
 
 //PostInsert is a DB Hook on WorkerModel
 func (m *WorkerModel) PostInsert(s gorp.SqlExecutor) error {
+	m.CreatedBy.Groups = nil
+	m.CreatedBy.Permissions = sdk.UserPermissions{}
+	m.CreatedBy.Auth = sdk.Auth{}
 	btes, err := json.Marshal(m.CreatedBy)
 	if err != nil {
 		return err
@@ -66,12 +69,13 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 		return err
 	}
 
-	for _, c := range capabilities {
-		m.Capabilities = append(m.Capabilities, sdk.Requirement{
+	m.Capabilities = make([]sdk.Requirement, len(capabilities))
+	for i, c := range capabilities {
+		m.Capabilities[i] = sdk.Requirement{
 			Name:  c.Name,
 			Type:  c.Type,
 			Value: c.Value,
-		})
+		}
 	}
 
 	//Load created_by
@@ -87,7 +91,9 @@ func (m *WorkerModel) PostSelect(s gorp.SqlExecutor) error {
 	if err := json.Unmarshal([]byte(str.String), &m.CreatedBy); err != nil {
 		return err
 	}
-
+	m.CreatedBy.Groups = nil
+	m.CreatedBy.Permissions = sdk.UserPermissions{}
+	m.CreatedBy.Auth = sdk.Auth{}
 	return nil
 }
 

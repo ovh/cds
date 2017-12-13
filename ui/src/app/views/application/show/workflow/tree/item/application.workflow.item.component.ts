@@ -236,6 +236,8 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
             case 'add':
                 this.createTriggerModal.hide();
                 this.triggerInModal.parameters = Parameter.formatForAPI(this.triggerInModal.parameters);
+                this.triggerInModal.src_pipeline.parameters = null;
+                this.triggerInModal.dest_pipeline.parameters = null;
                 this._appStore.addTrigger(
                     this.project.key,
                     this.workflowItem.application.name,
@@ -247,6 +249,8 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
             case 'update':
                 this.editTriggerModal.hide();
                 this.triggerInModal.parameters = Parameter.formatForAPI(this.triggerInModal.parameters);
+                this.triggerInModal.src_pipeline.parameters = null;
+                this.triggerInModal.dest_pipeline.parameters = null;
                 this._appStore.updateTrigger(
                     this.project.key,
                     this.workflowItem.application.name,
@@ -296,6 +300,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
     }
 
     createScheduler(scheduler: Scheduler): void {
+        scheduler.args = Parameter.formatForAPI(scheduler.args);
         this._appStore.addScheduler(this.project.key, this.application.name, this.workflowItem.pipeline.name, scheduler)
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('scheduler_added'));
@@ -312,7 +317,9 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         }
         let hook = new Hook();
         hook.pipeline = this.workflowItem.pipeline;
+        hook.pipeline.parameters = null;
         hook.enabled = true;
+
         this._appStore.addHook(this.project, this.application, hook)
             .subscribe(() => {
                 this._toast.success('', this._translate.instant('hook_added'));
@@ -327,6 +334,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
         let poller = new RepositoryPoller();
         poller.enabled = true;
         poller.pipeline = this.workflowItem.pipeline;
+        poller.pipeline.parameters = null;
         poller.application = this.workflowItem.application;
         this._appStore.addPoller(this.project.key, this.workflowItem.application.name, this.workflowItem.pipeline.name, poller)
             .subscribe(() => {

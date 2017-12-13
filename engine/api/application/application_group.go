@@ -39,9 +39,9 @@ func LoadGroupByApplication(db gorp.SqlExecutor, app *sdk.Application) error {
 }
 
 // LoadPermissions loads all applications where group has access
-func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
-	query := `
-		  SELECT project.projectKey,
+func LoadPermissions(db gorp.SqlExecutor, groupID int64) ([]sdk.ApplicationGroup, error) {
+	res := []sdk.ApplicationGroup{}
+	query := `SELECT project.projectKey,
 	                 application.name,
 	                 application.id,
 					 application_group.role, application.last_modified
@@ -50,9 +50,9 @@ func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
 	 	  JOIN project ON application.project_id = project.id
 	 	  WHERE application_group.group_id = $1
 	 	  ORDER BY application.name ASC`
-	rows, err := db.Query(query, group.ID)
+	rows, err := db.Query(query, groupID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -61,14 +61,14 @@ func LoadPermissions(db gorp.SqlExecutor, group *sdk.Group) error {
 		var perm int
 		err = rows.Scan(&application.ProjectKey, &application.Name, &application.ID, &perm, &application.LastModified)
 		if err != nil {
-			return sdk.WrapError(err, "LoadPermission %s (%d)", group.Name, group.ID)
+			return nil, sdk.WrapError(err, "LoadPermission  (%d)", groupID)
 		}
-		group.ApplicationGroups = append(group.ApplicationGroups, sdk.ApplicationGroup{
+		res = append(res, sdk.ApplicationGroup{
 			Application: application,
 			Permission:  perm,
 		})
 	}
-	return nil
+	return res, nil
 }
 
 // AddGroup Link the given groups and the given application

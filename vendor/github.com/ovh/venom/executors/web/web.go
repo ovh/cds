@@ -57,26 +57,26 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	start := time.Now()
 
 	// transform step to Executor Instance
-	var t Executor
-	if err := mapstructure.Decode(step, &t); err != nil {
+	var e Executor
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
-	r := &Result{Executor: t}
+	r := &Result{Executor: e}
 
 	// Check action to realise
-	if t.Action.Click != nil {
-		s, err := find(ctx.Page, t.Action.Click.Find, r)
+	if e.Action.Click != nil {
+		s, err := find(ctx.Page, e.Action.Click.Find, r)
 		if err != nil {
 			return nil, err
 		}
 		if err := s.Click(); err != nil {
 			return nil, err
 		}
-		if t.Action.Click.Wait != 0 {
-			time.Sleep(time.Duration(t.Action.Click.Wait) * time.Second)
+		if e.Action.Click.Wait != 0 {
+			time.Sleep(time.Duration(e.Action.Click.Wait) * time.Second)
 		}
-	} else if t.Action.Fill != nil {
-		for _, f := range t.Action.Fill {
+	} else if e.Action.Fill != nil {
+		for _, f := range e.Action.Fill {
 			s, err := findOne(ctx.Page, f.Find, r)
 			if err != nil {
 				return nil, err
@@ -91,30 +91,30 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 			}
 		}
 
-	} else if t.Action.Find != "" {
-		_, err := find(ctx.Page, t.Action.Find, r)
+	} else if e.Action.Find != "" {
+		_, err := find(ctx.Page, e.Action.Find, r)
 		if err != nil {
 			return nil, err
 		}
-	} else if t.Action.Navigate != nil {
-		if err := ctx.Page.Navigate(t.Action.Navigate.Url); err != nil {
+	} else if e.Action.Navigate != nil {
+		if err := ctx.Page.Navigate(e.Action.Navigate.Url); err != nil {
 			return nil, err
 		}
-		if t.Action.Navigate.Reset {
+		if e.Action.Navigate.Reset {
 			if err := ctx.Page.Reset(); err != nil {
 				return nil, err
 			}
-			if err := ctx.Page.Navigate(t.Action.Navigate.Url); err != nil {
+			if err := ctx.Page.Navigate(e.Action.Navigate.Url); err != nil {
 				return nil, err
 			}
 		}
-	} else if t.Action.Wait != 0 {
-		time.Sleep(time.Duration(t.Action.Wait) * time.Second)
+	} else if e.Action.Wait != 0 {
+		time.Sleep(time.Duration(e.Action.Wait) * time.Second)
 	}
 
 	// take a screenshot
-	if t.Screenshot != "" {
-		if err := ctx.Page.Screenshot(t.Screenshot); err != nil {
+	if e.Screenshot != "" {
+		if err := ctx.Page.Screenshot(e.Screenshot); err != nil {
 			return nil, err
 		}
 	}

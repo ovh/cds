@@ -117,6 +117,7 @@
   "btn_resync_repo" : "Resynchroniser",
   "btn_rename" : "Renommer",
   "btn_run" : "Lancer le pipeline",
+  "btn_logs" : "Afficher les logs",
   "btn_run_workflow" : "Lancer le workflow",
   "btn_run_custom_worklow" : "Lancer le workflow avec des paramètres",
   "btn_validate" : "Valider",
@@ -598,6 +599,7 @@
   "worker_model_warning": "Merci de vérifier ce modèle, il y a des erreurs dessus",
 
   "workflow_added" : "Workflow créé",
+  "workflow_run_summary" : "Résumé du run",
   "workflow_context_invalid" : "JSON invalide",
   "workflow_create" : "Création d'un workflow",
   "workflow_deleted" : "Workflow supprimé",
@@ -613,6 +615,7 @@
   "workflow_loading" : "Chargement du workflow...",
   "workflow_name" : "Nom du workflow",
   "workflow_node_context_edit" : "Contexte du pipeline",
+  "workflow_node_launch" : "Actions sur le pipeline",
   "workflow_node_context_pipeline_parameter" : "Paramètres du pipeline",
   "workflow_node_context_payload" : "Payload par défaut",
   "workflow_run_node_job_queued" : "Attente depuis {{time}}",

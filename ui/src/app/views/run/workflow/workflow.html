@@ -21,7 +21,7 @@
                                          [class.inactive]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.DISABLED || mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.SKIPPED"
                                          [class.fail]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.FAIL || mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.STOPPED"
                                          [class.building]="mapJobStatus[j.pipeline_action_id] === pipelineStatusEnum.BUILDING"
-                                         (click)="selectedJob(j, stage)">
+                                         (click)="manual = true; selectedJob(j, stage)">
                                         <div class="warningPip"
                                             *ngIf=" j.warnings && j.warnings.length"
                                             [smDirTooltip]="'warning_build_title' | translate: {nb: j.warnings.length}">

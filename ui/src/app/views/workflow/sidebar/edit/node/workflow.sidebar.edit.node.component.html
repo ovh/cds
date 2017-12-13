@@ -12,8 +12,8 @@
               <div class="ui fluid mini action input">
                 <input type="text" [(ngModel)]="node.name">
                 <div class="ui icon buttons">
-                  <button class="ui button" (click)="rename()"><i class="check icon"></i></button>
-                  <button class="ui button"><i class="close icon" (click)="displayInputName = false; node.name = previousNodeName"></i></button>
+                  <button class="ui green button" (click)="rename()"><i class="check icon"></i></button>
+                  <button class="ui blue button"><i class="close icon" (click)="displayInputName = false; node.name = previousNodeName"></i></button>
                 </div>
               </div>
             </ng-container>

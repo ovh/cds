@@ -15,6 +15,61 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+const loadNodeJobRun = `from workflow_node_run_job
+join workflow_node_run on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
+join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
+join workflow on workflow.id = workflow_run.workflow_id
+join project on project.id = workflow.project_id
+join project_group on project_group.project_id = project.id
+where (
+	project_group.group_id = ANY(string_to_array($1, ',')::int[])
+	or
+	true = $4
+)
+and workflow_node_run_job.queued >= $2
+and workflow_node_run_job.status = ANY(string_to_array($3, ','))`
+
+// loadPrepareGroup returns true if groupsID contains shareInfraGroup
+// and list of groups, comma separated
+func loadPrepareGroup(groupsID []int64) (bool, string) {
+	var groupsIDString string
+	var isSharedInfraGroup bool
+	for i, g := range groupsID {
+		if i == 0 {
+			groupsIDString = fmt.Sprintf("%d", g)
+		} else {
+			groupsIDString += "," + fmt.Sprintf("%d", g)
+		}
+		if g == group.SharedInfraGroup.ID {
+			isSharedInfraGroup = true
+			break
+		}
+	}
+	return isSharedInfraGroup, groupsIDString
+}
+
+// CountNodeJobRunQueue count all workflow_node_run_job accessible
+func CountNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int64, since *time.Time, statuses ...string) (sdk.WorkflowNodeJobRunCount, error) {
+	if since == nil {
+		since = new(time.Time)
+	}
+
+	if len(statuses) == 0 {
+		statuses = []string{sdk.StatusWaiting.String()}
+	}
+
+	query := "select count(1) " + loadNodeJobRun
+	c := sdk.WorkflowNodeJobRunCount{}
+	isSharedInfraGroup, groupsIDString := loadPrepareGroup(groupsID)
+	count, err := db.SelectInt(query, groupsIDString, since, strings.Join(statuses, ","), isSharedInfraGroup)
+	if err != nil {
+		return c, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (Select)")
+	}
+	c.Count = count
+	c.Since = *since
+	return c, nil
+}
+
 // LoadNodeJobRunQueue load all workflow_node_run_job accessible
 func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int64, since *time.Time, statuses ...string) ([]sdk.WorkflowNodeJobRun, error) {
 	if since == nil {
@@ -25,37 +80,11 @@ func LoadNodeJobRunQueue(db gorp.SqlExecutor, store cache.Store, groupsID []int6
 		statuses = []string{sdk.StatusWaiting.String()}
 	}
 
-	query := `select distinct workflow_node_run_job.*
-	from workflow_node_run_job
-	join workflow_node_run on workflow_node_run.id = workflow_node_run_job.workflow_node_run_id
-	join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
-	join workflow on workflow.id = workflow_run.workflow_id
-	join project on project.id = workflow.project_id
-	join project_group on project_group.project_id = project.id
-	where (
-		project_group.group_id = ANY(string_to_array($1, ',')::int[])
-		or
-		true = $4
-	)
-	and workflow_node_run_job.queued >= $2
-	and workflow_node_run_job.status = ANY(string_to_array($3, ','))`
-
-	var groupID string
-	var isSharedInfraGroup bool
-	for i, g := range groupsID {
-		if i == 0 {
-			groupID = fmt.Sprintf("%d", g)
-		} else {
-			groupID += "," + fmt.Sprintf("%d", g)
-		}
-		if g == group.SharedInfraGroup.ID {
-			isSharedInfraGroup = true
-			break
-		}
-	}
+	query := "select distinct workflow_node_run_job.* " + loadNodeJobRun
+	isSharedInfraGroup, groupsIDString := loadPrepareGroup(groupsID)
 
 	sqlJobs := []JobRun{}
-	if _, err := db.Select(&sqlJobs, query, groupID, *since, strings.Join(statuses, ","), isSharedInfraGroup); err != nil {
+	if _, err := db.Select(&sqlJobs, query, groupsIDString, *since, strings.Join(statuses, ","), isSharedInfraGroup); err != nil {
 		return nil, sdk.WrapError(err, "workflow.LoadNodeJobRun> Unable to load job runs (Select)")
 	}
 
@@ -199,18 +228,16 @@ func (j *JobRun) PostGet(s gorp.SqlExecutor) error {
 	query := "SELECT job, variables FROM workflow_node_run_job WHERE id = $1"
 	var params, job []byte
 	if err := s.QueryRow(query, j.ID).Scan(&job, &params); err != nil {
-		return err
+		return sdk.WrapError(err, "PostGet> s.QueryRow id:%d", j.ID)
 	}
-
 	if err := json.Unmarshal(job, &j.Job); err != nil {
-		return err
+		return sdk.WrapError(err, "PostGet> json.Unmarshal job")
 	}
 	if err := json.Unmarshal(params, &j.Parameters); err != nil {
-		return err
+		return sdk.WrapError(err, "PostGet> json.Unmarshal params")
 	}
 
 	j.QueuedSeconds = time.Now().Unix() - j.Queued.Unix()
-
 	return nil
 }
 

@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 
@@ -13,20 +15,21 @@ import (
 	"github.com/ovh/cds/engine/api/grpc"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
+	"github.com/ovh/cds/sdk/plugin"
 )
 
 var logsecrets []sdk.Variable
 
-func (w *currentWorker) sendLog(buildID int64, value string, stepOrder int, final bool) error {
+func (wk *currentWorker) sendLog(buildID int64, value string, stepOrder int, final bool) error {
 	for i := range logsecrets {
 		if len(logsecrets[i].Value) >= 6 {
 			value = strings.Replace(value, logsecrets[i].Value, "**"+logsecrets[i].Name+"**", -1)
 		}
 	}
 
-	var id = w.currentJob.pbJob.PipelineBuildID
-	if w.currentJob.wJob != nil {
-		id = w.currentJob.wJob.WorkflowNodeRunID
+	var id = wk.currentJob.pbJob.PipelineBuildID
+	if wk.currentJob.wJob != nil {
+		id = wk.currentJob.wJob.WorkflowNodeRunID
 	}
 
 	l := sdk.NewLog(buildID, value, id, stepOrder)
@@ -35,44 +38,44 @@ func (w *currentWorker) sendLog(buildID int64, value string, stepOrder int, fina
 	} else {
 		l.Done, _ = ptypes.TimestampProto(time.Time{})
 	}
-	w.logger.logChan <- *l
+	wk.logger.logChan <- *l
 	return nil
 }
 
-func (w *currentWorker) logProcessor(ctx context.Context) error {
-	if w.grpc.conn != nil {
-		if err := w.grpcLogger(ctx, w.logger.logChan); err != nil {
+func (wk *currentWorker) logProcessor(ctx context.Context) error {
+	if wk.grpc.conn != nil {
+		if err := wk.grpcLogger(ctx, wk.logger.logChan); err != nil {
 			log.Error("GPPC logger : %s", err)
 		} else {
 			return nil
 		}
 	} else {
-		w.logger.llist = list.New()
+		wk.logger.llist = list.New()
 		for {
 			select {
-			case l, ok := <-w.logger.logChan:
+			case l, ok := <-wk.logger.logChan:
 				if ok {
-					w.logger.llist.PushBack(l)
+					wk.logger.llist.PushBack(l)
 				}
 				break
 			case <-time.After(250 * time.Millisecond):
 				var logs []*sdk.Log
 				var currentStepLog *sdk.Log
 				// While list is not empty
-				for w.logger.llist.Len() > 0 {
+				for wk.logger.llist.Len() > 0 {
 					// get older log line
-					l := w.logger.llist.Front().Value.(sdk.Log)
-					w.logger.llist.Remove(w.logger.llist.Front())
+					l := wk.logger.llist.Front().Value.(sdk.Log)
+					wk.logger.llist.Remove(wk.logger.llist.Front())
 
 					// then count how many lines are exactly the same
 					count := 1
-					for w.logger.llist.Len() > 0 {
-						n := w.logger.llist.Front().Value.(sdk.Log)
+					for wk.logger.llist.Len() > 0 {
+						n := wk.logger.llist.Front().Value.(sdk.Log)
 						if string(n.Val) != string(l.Val) {
 							break
 						}
 						count++
-						w.logger.llist.Remove(w.logger.llist.Front())
+						wk.logger.llist.Remove(wk.logger.llist.Front())
 					}
 
 					// and if count > 1, then add it at the beginning of the log
@@ -116,8 +119,8 @@ func (w *currentWorker) logProcessor(ctx context.Context) error {
 					}
 
 					var path string
-					if w.currentJob.wJob != nil {
-						path = fmt.Sprintf("/queue/workflows/%d/log", w.currentJob.wJob.ID)
+					if wk.currentJob.wJob != nil {
+						path = fmt.Sprintf("/queue/workflows/%d/log", wk.currentJob.wJob.ID)
 					} else {
 						path = fmt.Sprintf("/build/%d/log", l.PipelineBuildJobID)
 					}
@@ -133,15 +136,15 @@ func (w *currentWorker) logProcessor(ctx context.Context) error {
 	return nil
 }
 
-func (w *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) error {
+func (wk *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) error {
 	log.Info("Logging through grpc")
 
-	stream, err := grpc.NewBuildLogClient(w.grpc.conn).AddBuildLog(ctx)
+	stream, err := grpc.NewBuildLogClient(wk.grpc.conn).AddBuildLog(ctx)
 	if err != nil {
 		return err
 	}
 
-	streamWorkflow, err := grpc.NewWorkflowQueueClient(w.grpc.conn).SendLog(ctx)
+	streamWorkflow, err := grpc.NewWorkflowQueueClient(wk.grpc.conn).SendLog(ctx)
 	if err != nil {
 		return err
 	}
@@ -152,7 +155,7 @@ func (w *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) 
 
 			log.Debug("LOG: %v", l.Val)
 			var errSend error
-			if w.currentJob.wJob == nil {
+			if wk.currentJob.wJob == nil {
 				errSend = stream.Send(&l)
 			} else {
 				errSend = streamWorkflow.Send(&l)
@@ -163,8 +166,8 @@ func (w *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) 
 				//Close all
 				stream.CloseSend()
 				streamWorkflow.CloseSend()
-				w.grpc.conn.Close()
-				w.grpc.conn = nil
+				wk.grpc.conn.Close()
+				wk.grpc.conn = nil
 				//Reinject log
 				inputChan <- l
 				return nil
@@ -176,12 +179,29 @@ func (w *currentWorker) grpcLogger(ctx context.Context, inputChan chan sdk.Log) 
 	}
 }
 
-func (w *currentWorker) drainLogsAndCloseLogger(c context.Context) error {
+func (wk *currentWorker) drainLogsAndCloseLogger(c context.Context) error {
 	var i int
-	for (len(w.logger.logChan) > 0 || (w.logger.llist != nil && w.logger.llist.Len() > 0)) && i < 60 {
+	for (len(wk.logger.logChan) > 0 || (wk.logger.llist != nil && wk.logger.llist.Len() > 0)) && i < 60 {
 		log.Debug("Draining logs...")
 		i++
 		time.Sleep(1 * time.Second)
 	}
 	return c.Err()
+}
+
+func (wk *currentWorker) logHandler(w http.ResponseWriter, r *http.Request) {
+	data, errRead := ioutil.ReadAll(r.Body)
+	if errRead != nil {
+		newError := sdk.NewError(sdk.ErrWrongRequest, errRead)
+		writeError(w, r, newError)
+		return
+	}
+
+	var pluginLog plugin.Log
+	if err := json.Unmarshal(data, &pluginLog); err != nil {
+		newError := sdk.NewError(sdk.ErrWrongRequest, err)
+		writeError(w, r, newError)
+		return
+	}
+	wk.sendLog(pluginLog.BuildID, pluginLog.Value, pluginLog.StepOrder, false)
 }

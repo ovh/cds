@@ -57,16 +57,16 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 // Run execute TestStep of type exec
 func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 
-	var t Executor
-	if err := mapstructure.Decode(step, &t); err != nil {
+	var e Executor
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 
-	if t.Script == "" {
+	if e.Script == "" {
 		return nil, fmt.Errorf("Invalid command")
 	}
 
-	scriptContent := t.Script
+	scriptContent := e.Script
 
 	// Default shell is sh
 	shell := "/bin/sh"
@@ -145,7 +145,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 	stdoutreader := bufio.NewReader(stdout)
 	stderrreader := bufio.NewReader(stderr)
 
-	result := Result{Executor: t}
+	result := Result{Executor: e}
 	outchan := make(chan bool)
 	go func() {
 		for {
@@ -178,7 +178,7 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 		result.Err = err.Error()
 		result.Code = "127"
 		l.Debugf(err.Error())
-		return dump.ToMap(t, nil, dump.WithDefaultLowerCaseFormatter())
+		return dump.ToMap(e, nil, dump.WithDefaultLowerCaseFormatter())
 	}
 
 	_ = <-outchan

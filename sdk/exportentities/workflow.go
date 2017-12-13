@@ -10,6 +10,7 @@ type Workflow struct {
 	// This will be filled for simple workflows
 	DependsOn       []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
 	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	When            []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
 	PipelineName    string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
 	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
@@ -20,6 +21,7 @@ type Workflow struct {
 type WorkflowEntry struct {
 	DependsOn       []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
 	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
+	When            []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
 	PipelineName    string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
 	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
@@ -64,8 +66,26 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 		entry.DependsOn = ancestors
 		entry.PipelineName = n.Pipeline.Name
-		if len(n.Context.Conditions.PlainConditions) > 0 || n.Context.Conditions.LuaScript != "" {
-			entry.Conditions = &n.Context.Conditions
+		conditions := []sdk.WorkflowNodeCondition{}
+		for _, c := range n.Context.Conditions.PlainConditions {
+			if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
+				c.Value == "Success" &&
+				c.Variable == "cds.status" {
+				entry.When = append(entry.When, "success")
+			} else if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
+				c.Value == "true" &&
+				c.Variable == "cds.manual" {
+				entry.When = append(entry.When, "manual")
+			} else {
+				conditions = append(conditions, c)
+			}
+		}
+
+		if len(conditions) > 0 || n.Context.Conditions.LuaScript != "" {
+			entry.Conditions = &sdk.WorkflowNodeConditions{
+				PlainConditions: conditions,
+				LuaScript:       n.Context.Conditions.LuaScript,
+			}
 		}
 
 		if n.Context.Application != nil {
@@ -92,7 +112,8 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		exportedWorkflow.PipelineName = entry.PipelineName
 		exportedWorkflow.EnvironmentName = entry.EnvironmentName
 		exportedWorkflow.DependsOn = entry.DependsOn
-		if len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "" {
+		if entry.Conditions != nil && (len(entry.Conditions.PlainConditions) > 0 || entry.Conditions.LuaScript != "") {
+			exportedWorkflow.When = entry.When
 			exportedWorkflow.Conditions = entry.Conditions
 		}
 		for _, h := range hooks {

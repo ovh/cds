@@ -600,6 +600,15 @@ func (ui *Termui) updateQueue(baseURL string) string {
 		items = append(items, item)
 		idx++
 	}
+	start = time.Now()
+	nWJobs, errw := client.QueueCountWorkflowNodeJobRun()
+	elapsed = time.Since(start)
+	if errw != nil {
+		ui.msg = fmt.Sprintf("[%s](bg-red)", errw.Error())
+		return ""
+	}
+	msg = fmt.Sprintf("[count queue wf %s](fg-cyan,bg-default) | %s", sdk.Round(elapsed, time.Millisecond).String(), msg)
+
 	for _, job := range wJobs {
 		item, maxQueued = ui.updateQueueJob(idx, booked, maxQueued, job.ID, true, job.Parameters, job.Job.Action.Requirements, job.Queued, job.BookedBy, baseURL)
 		items = append(items, item)
@@ -607,7 +616,7 @@ func (ui *Termui) updateQueue(baseURL string) string {
 	}
 	ui.queue.Items = items
 
-	t := fmt.Sprintf(" Queue:%d Max Waiting:%s ", len(pbJobs), sdk.Round(maxQueued, time.Second).String())
+	t := fmt.Sprintf("Queue - wf:%d - pb:%d - Max Waiting:%s ", nWJobs.Count, len(pbJobs), sdk.Round(maxQueued, time.Second).String())
 	for name, total := range booked {
 		t += fmt.Sprintf("%s:%d ", name, total)
 	}

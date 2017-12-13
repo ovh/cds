@@ -519,7 +519,7 @@ func (api *API) addHookOnRepositoriesManagerHandler() Handler {
 			return sdk.ErrPipelineNotFound
 		}
 
-		if !permission.AccessToPipeline(sdk.DefaultEnv.ID, pipeline.ID, getUser(ctx), permission.PermissionReadWriteExecute) {
+		if !permission.AccessToPipeline(projectKey, sdk.DefaultEnv.Name, pipeline.Name, getUser(ctx), permission.PermissionReadWriteExecute) {
 			return sdk.WrapError(sdk.ErrForbidden, "addHookOnRepositoriesManagerHandler> You don't have enought right on this pipeline %s", pipeline.Name)
 		}
 

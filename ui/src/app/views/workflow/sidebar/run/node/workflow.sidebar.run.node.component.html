@@ -1,0 +1,58 @@
+<div class="sidebar-node-run" *ngIf="!loading">
+    <h3 class="ui header ml5">
+        <i class="cubes icon"></i>
+        <div class="content">
+            <span>{{node.name}}</span>
+            <a class="inline pointing ml5"
+              *ngIf="displayEditOption"
+              [routerLink]="['/project', project.key, 'workflow', workflow.name]" [queryParams]="{selectedNodeId: node.id}">
+              <i class="pencil icon float"></i>
+            </a>
+            <div class="sub header">
+              <span>{{ 'workflow_node_launch' | translate }}</span>
+            </div>
+        </div>
+    </h3>
+    <div class="padding">
+      <div class="ui fluid buttons" *ngIf="currentWorkflowRun">
+        <button class="ui positive icon button"
+            [class.loading]="loading"
+            [disabled]="loading || !currentWorkflowRun || !currentWorkflowRun.status ||
+            currentWorkflowRun.status === pipelineStatusEnum.BUILDING ||
+            currentWorkflowRun.status === pipelineStatusEnum.WAITING"
+            [title]="'btn_run' | translate" (click)="openRunNode()"
+            *ngIf="currentWorkflowNodeRun?.status !== pipelineStatusEnum.BUILDING &&
+                currentWorkflowNodeRun?.status !== pipelineStatusEnum.WAITING">
+            <i class="play icon"></i>
+        </button>
+        <button class="ui red icon button"
+            [class.loading]="loading"
+            [disabled]="loading"
+            [title]="'btn_run' | translate"
+            (click)="stopNodeRun()"
+            *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
+            <i class="stop icon"></i>
+        </button>
+        <button class="ui icon button" [title]="'btn_logs' | translate" (click)="displayLogs()">
+            <i class="newspaper icon"></i>
+        </button>
+      </div>
+    </div>
+    <h4 class="ui header ml5">
+        <i class="unhide icon"></i>
+        <div class="content">
+            <span>{{'workflow_run_summary' | translate}}</span>
+        </div>
+    </h4>
+    <div class="padding">
+      <ng-container *ngIf="currentWorkflowNodeRun">
+        <div class="ui vertical fluid steps">
+          <app-stage-step-summary *ngFor="let stage of currentWorkflowNodeRun.stages" [stage]="stage"></app-stage-step-summary>
+        </div>
+      </ng-container>
+    </div>
+</div>
+<div class="ui text active loader" *ngIf="loading && open">{{ 'common_loading' | translate }}</div>
+<ng-container *ngIf="project && node">
+    <app-workflow-node-run-param [workflow]="workflow" [project]="project" [nodeRun]="currentWorkflowNodeRun" [nodeToRun]="node" [num]="number" #workflowRunNode></app-workflow-node-run-param>
+</ng-container>

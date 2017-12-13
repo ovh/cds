@@ -54,7 +54,7 @@ func (api *API) getVariablesHandler() Handler {
 				return sdk.WrapError(err, "getPipelineTypeHandler> Cannot Load application")
 			}
 
-			if !permission.AccessToApplication(app.ID, getUser(ctx), permission.PermissionRead) {
+			if !permission.AccessToApplication(projectKey, app.Name, getUser(ctx), permission.PermissionRead) {
 				return sdk.WrapError(sdk.ErrForbidden, "getVariablesHandler> Not allow to access to this application: %s", appName)
 			}
 

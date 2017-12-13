@@ -89,7 +89,7 @@ func (api *API) getEnvironmentHandler() Handler {
 			env.Usage.Pipelines = pips
 		}
 
-		env.Permission = permission.EnvironmentPermission(env.ID, getUser(ctx))
+		env.Permission = permission.EnvironmentPermission(projectKey, env.Name, getUser(ctx))
 
 		return WriteJSON(w, r, env, http.StatusOK)
 	}

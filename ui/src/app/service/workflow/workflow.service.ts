@@ -1,6 +1,6 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
-import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
+import {Workflow, WorkflowTriggerConditionCache, WorkflowNode, WorkflowNodeJoin} from '../../model/workflow.model';
 import {HttpClient, HttpParams} from '@angular/common/http';
 import {GroupPermission} from '../../model/group.model';
 

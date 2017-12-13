@@ -59,18 +59,18 @@ func (Executor) GetDefaultAssertions() *venom.StepAssertions {
 // Run execute TestStep of type exec
 func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step venom.TestStep) (venom.ExecutorResult, error) {
 
-	var t Executor
-	if err := mapstructure.Decode(step, &t); err != nil {
+	var e Executor
+	if err := mapstructure.Decode(step, &e); err != nil {
 		return nil, err
 	}
 
-	if t.Path == "" {
+	if e.Path == "" {
 		return nil, fmt.Errorf("Invalid path")
 	}
 
 	start := time.Now()
 
-	result, errr := t.readfile(t.Path)
+	result, errr := e.readfile(e.Path)
 	if errr != nil {
 		result.Err = errr.Error()
 	}

@@ -76,7 +76,6 @@ func LoadPipelineBuildJobLogs(db gorp.SqlExecutor, pipelineBuild *sdk.PipelineBu
 				break
 			}
 		}
-
 	}
 
 	if currentPbJob == nil {

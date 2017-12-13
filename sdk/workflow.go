@@ -605,3 +605,9 @@ func WorkflowDelete(projectkey, name string) error {
 	_, _, err := Request("DELETE", path, nil)
 	return err
 }
+
+// WorkflowNodeJobRunCount return nb workflow run job since 'since'
+type WorkflowNodeJobRunCount struct {
+	Count int64     `json:"version"`
+	Since time.Time `json:"since"`
+}

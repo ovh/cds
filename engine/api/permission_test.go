@@ -141,9 +141,9 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups: []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
 						},
 					},
 				},
@@ -158,9 +158,9 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups: []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
 						},
 					},
 				},
@@ -175,10 +175,12 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups:  []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
-							WorkflowGroups: []sdk.WorkflowGroup{{Permission: 7, Workflow: sdk.Workflow{ProjectKey: "key1", Name: "workflow1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
+						},
+						WorkflowsPerm: sdk.UserPermissionsMap{
+							sdk.UserPermissionKey{Key: "key1", Name: "workflow1"}: 7,
 						},
 					},
 				},
@@ -193,10 +195,12 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups:  []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
-							WorkflowGroups: []sdk.WorkflowGroup{{Permission: 7, Workflow: sdk.Workflow{ProjectKey: "key2", Name: "workflow1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
+						},
+						WorkflowsPerm: sdk.UserPermissionsMap{
+							sdk.UserPermissionKey{Key: "key2", Name: "workflow1"}: 7,
 						},
 					},
 				},
@@ -211,10 +215,12 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups:  []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
-							WorkflowGroups: []sdk.WorkflowGroup{{Permission: 7, Workflow: sdk.Workflow{ProjectKey: "key1", Name: "workflow2"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
+						},
+						WorkflowsPerm: sdk.UserPermissionsMap{
+							sdk.UserPermissionKey{Key: "key2", Name: "workflow1"}: 7,
 						},
 					},
 				},
@@ -229,10 +235,12 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups:  []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
-							WorkflowGroups: []sdk.WorkflowGroup{{Permission: 5, Workflow: sdk.Workflow{ProjectKey: "key1", Name: "workflow1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
+						},
+						WorkflowsPerm: sdk.UserPermissionsMap{
+							sdk.UserPermissionKey{Key: "key1", Name: "workflow1"}: 5,
 						},
 					},
 				},
@@ -247,10 +255,12 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups:  []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
-							WorkflowGroups: []sdk.WorkflowGroup{{Permission: 5, Workflow: sdk.Workflow{ProjectKey: "key1", Name: "workflow1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
+						},
+						WorkflowsPerm: sdk.UserPermissionsMap{
+							sdk.UserPermissionKey{Key: "key1", Name: "workflow1"}: 5,
 						},
 					},
 				},
@@ -265,10 +275,12 @@ func Test_checkWorkflowPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups:  []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
-							WorkflowGroups: []sdk.WorkflowGroup{{Permission: 4, Workflow: sdk.Workflow{ProjectKey: "key1", Name: "workflow1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
+						},
+						WorkflowsPerm: sdk.UserPermissionsMap{
+							sdk.UserPermissionKey{Key: "key1", Name: "workflow1"}: 4,
 						},
 					},
 				},
@@ -309,9 +321,9 @@ func Test_checkApplicationPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups: []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
 						},
 					},
 				},
@@ -326,9 +338,9 @@ func Test_checkApplicationPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups: []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
 						},
 					},
 				},
@@ -369,9 +381,9 @@ func Test_checkPipelinePermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups: []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
 						},
 					},
 				},
@@ -386,9 +398,9 @@ func Test_checkPipelinePermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups: []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
 						},
 					},
 				},
@@ -429,9 +441,9 @@ func Test_checkEnvironmentPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups: []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
 						},
 					},
 				},
@@ -446,9 +458,9 @@ func Test_checkEnvironmentPermissionsByUser(t *testing.T) {
 			args: args{
 				u: &sdk.User{
 					Admin: false,
-					Groups: []sdk.Group{
-						{
-							ProjectGroups: []sdk.ProjectGroup{{Permission: 4, Project: sdk.Project{Key: "key1"}}},
+					Permissions: sdk.UserPermissions{
+						ProjectsPerm: map[string]int{
+							"key1": 4,
 						},
 					},
 				},
