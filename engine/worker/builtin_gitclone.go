@@ -22,6 +22,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		user := sdk.ParameterFind(a.Parameters, "user")
 		password := sdk.ParameterFind(a.Parameters, "password")
 		branch := sdk.ParameterFind(a.Parameters, "branch")
+		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
 		commit := sdk.ParameterFind(a.Parameters, "commit")
 		directory := sdk.ParameterFind(a.Parameters, "directory")
 		cdsVersion := sdk.ParameterFind(*params, "cds.version")
@@ -98,6 +99,13 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			clone.Branch = branch.Value
 		} else {
 			clone.SingleBranch = true
+		}
+
+		// if there is no branch, check if there a defaultBranch
+		if (clone.Branch == "" || clone.Branch == "{{.git.branch}}") && defaultBranch != "" {
+			clone.Branch = defaultBranch
+			clone.SingleBranch = false
+			sendLog(fmt.Sprintf("branch is empty, using the default branch %s", defaultBranch))
 		}
 
 		r, _ := regexp.Compile("{{.*}}")
