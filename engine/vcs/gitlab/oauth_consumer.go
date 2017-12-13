@@ -137,8 +137,10 @@ func (g *gitlabConsumer) GetAuthorizedClient(accessToken, accessTokenSecret stri
 	c, ok := instancesAuthorizedClient[accessToken]
 	if !ok {
 		c = &gitlabClient{
-			client: gitlab.NewOAuthClient(nil, accessToken),
-			uiURL:  g.uiURL,
+			client:              gitlab.NewOAuthClient(nil, accessToken),
+			uiURL:               g.uiURL,
+			disableStatus:       g.disableStatus,
+			disableStatusDetail: g.disableStatusDetail,
 		}
 		c.client.SetBaseURL(g.URL + "/api/v4")
 		instancesAuthorizedClient[accessToken] = c

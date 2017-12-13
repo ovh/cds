@@ -47,6 +47,11 @@ func getGitlabStateFromStatus(s string) gitlab.BuildState {
 
 //SetStatus set build status on Gitlab
 func (c *gitlabClient) SetStatus(event sdk.Event) error {
+	if c.disableStatus {
+		log.Warning("disableStatus.SetStatus>  ⚠ Gitlab statuses are disabled")
+		return nil
+	}
+
 	var data statusData
 	var err error
 	switch event.EventType {
@@ -61,6 +66,10 @@ func (c *gitlabClient) SetStatus(event sdk.Event) error {
 
 	if err != nil {
 		return sdk.WrapError(err, "gitlabClient.SetStatus> Cannot process event %s", event)
+	}
+
+	if c.disableStatusDetail {
+		data.url = ""
 	}
 
 	cds := "CDS"

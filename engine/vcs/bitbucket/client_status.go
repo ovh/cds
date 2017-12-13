@@ -22,6 +22,11 @@ type statusData struct {
 func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 	log.Info("bitbucketClient.SetStatus> receive: type:%s all: %+v", event.EventType, event)
 
+	if b.consumer.disableStatus {
+		log.Warning("bitbucketClient.SetStatus>  ⚠ Bitbucket statuses are disabled")
+		return nil
+	}
+
 	var statusData statusData
 	var err error
 	switch event.EventType {
@@ -35,6 +40,10 @@ func (b *bitbucketClient) SetStatus(event sdk.Event) error {
 
 	if err != nil {
 		return sdk.WrapError(err, "bitbucketClient.SetStatus: Cannot process Event")
+	}
+
+	if b.consumer.disabledStatusDetail {
+		statusData.url = ""
 	}
 
 	status := Status{
