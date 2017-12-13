@@ -18,8 +18,8 @@ func GetWorkflowRunEventData(cError <-chan error, cEvent <-chan interface{}) ([]
 	for {
 		select {
 		case e, has := <-cError:
+			err = sdk.WrapError(e, "GetWorkflowRunEventData> Error received")
 			if !has {
-				err = sdk.WrapError(e, "GetWorkflowRunEventData> Error received")
 				return wrs, wnrs, wnjrs, err
 			}
 		case w, has := <-cEvent:
