@@ -9,11 +9,13 @@ import (
 
 // GitlabClient implements RepositoriesManagerClient interface
 type gitlabClient struct {
-	client *gitlab.Client
-	uiURL  string
+	client              *gitlab.Client
+	uiURL               string
+	disableStatus       bool
+	disableStatusDetail bool
 }
 
-//bitbucketConsumer implements vcs.Server and it's used to instanciate a githubClient
+//gitlabConsumer implements vcs.Server and it's used to instanciate a githubClient
 type gitlabConsumer struct {
 	URL                      string `json:"url"`
 	appID                    string
@@ -21,15 +23,19 @@ type gitlabConsumer struct {
 	cache                    cache.Store
 	AuthorizationCallbackURL string
 	uiURL                    string
+	disableStatus            bool
+	disableStatusDetail      bool
 }
 
-func New(appID string, clientSecret string, URL string, callbackURL string, uiURL string, store cache.Store) sdk.VCSServer {
+func New(appID string, clientSecret string, URL string, callbackURL string, uiURL string, store cache.Store, disableStatus bool, disableStatusDetail bool) sdk.VCSServer {
 	return &gitlabConsumer{
 		URL:    URL,
 		secret: clientSecret,
 		cache:  store,
 		appID:  appID,
 		AuthorizationCallbackURL: callbackURL,
-		uiURL: uiURL,
+		uiURL:               uiURL,
+		disableStatus:       disableStatus,
+		disableStatusDetail: disableStatusDetail,
 	}
 }

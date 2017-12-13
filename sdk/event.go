@@ -52,6 +52,10 @@ type EventWorkflowNodeRun struct {
 	SourceNodeRuns        []int64                   `json:"manual"`
 	WorkflowRunID         int64                     `json:"workflow_run_id"`
 	RepositoryManagerName string                    `json:"repository_manager_name"`
+	RepositoryFullName    string                    `json:"repository_full_name"`
+	Hash                  string                    `json:"hash"`
+	BranchName            string                    `json:"branch_name"`
+	NodeName              string                    `json:"node_name"`
 }
 
 // EventWorkflowRun contains event data for a workflow run
