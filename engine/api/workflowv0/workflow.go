@@ -477,6 +477,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 			return sdk.WrapError(err, "getChild> Cannot scan child for root: %d-%d-%d", parent.Application.ID, parent.Pipeline.ID, parent.Environment.ID)
 		}
 
+		child.Project.Key = child.Trigger.SrcProject.Key
 		if permission.AccessToPipeline(child.Project.Key, child.Trigger.DestEnvironment.Name, child.Trigger.DestPipeline.Name, user, permission.PermissionRead) {
 			child.Trigger.SrcPipeline.Type = srcType
 			child.Trigger.DestPipeline.Type = destType
