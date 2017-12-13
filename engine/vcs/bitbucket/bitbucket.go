@@ -17,35 +17,33 @@ type bitbucketClient struct {
 
 //bitbucketConsumer implements vcs.Server and it's used to instanciate a githubClient
 type bitbucketConsumer struct {
-	ConsumerKey          string `json:"consumer_key"`
-	PrivateKey           []byte `json:"-"`
-	URL                  string `json:"url"`
-	cache                cache.Store
-	requestTokenURL      string
-	authorizationURL     string
-	accessTokenURL       string
-	callbackURL          string
-	apiURL               string
-	uiURL                string
-	disableStatus        bool
-	disabledStatusDetail bool
+	ConsumerKey      string `json:"consumer_key"`
+	PrivateKey       []byte `json:"-"`
+	URL              string `json:"url"`
+	cache            cache.Store
+	requestTokenURL  string
+	authorizationURL string
+	accessTokenURL   string
+	callbackURL      string
+	apiURL           string
+	uiURL            string
+	disableStatus    bool
 }
 
 //New creates a new bitbucketConsumer
-func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL string, store cache.Store, disableStatus bool, disableStatusDetail bool) sdk.VCSServer {
+func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL string, store cache.Store, disableStatus bool) sdk.VCSServer {
 	return &bitbucketConsumer{
-		ConsumerKey:          consumerKey,
-		PrivateKey:           privateKey,
-		URL:                  URL,
-		apiURL:               apiURL,
-		uiURL:                uiURL,
-		cache:                store,
-		requestTokenURL:      URL + "/plugins/servlet/oauth/request-token",
-		authorizationURL:     URL + "/plugins/servlet/oauth/authorize",
-		accessTokenURL:       URL + "/plugins/servlet/oauth/access-token",
-		callbackURL:          oauth1OOB,
-		disabledStatusDetail: disableStatusDetail,
-		disableStatus:        disableStatus,
+		ConsumerKey:      consumerKey,
+		PrivateKey:       privateKey,
+		URL:              URL,
+		apiURL:           apiURL,
+		uiURL:            uiURL,
+		cache:            store,
+		requestTokenURL:  URL + "/plugins/servlet/oauth/request-token",
+		authorizationURL: URL + "/plugins/servlet/oauth/authorize",
+		accessTokenURL:   URL + "/plugins/servlet/oauth/access-token",
+		callbackURL:      oauth1OOB,
+		disableStatus:    disableStatus,
 	}
 }
 

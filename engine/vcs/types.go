@@ -108,8 +108,7 @@ type BitbucketServerConfiguration struct {
 	ConsumerKey string `toml:"consumerKey" json:"-"`
 	PrivateKey  string `toml:"privateKey" json:"-"`
 	Status      struct {
-		Disable    bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
-		ShowDetail bool `toml:"showDetail" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push CDS URL in statuses on the VCS server" json:"show_detail"`
+		Disable bool `toml:"disable" default:"false" commented:"true" comment:"Set to true if you don't want CDS to push statuses on the VCS server" json:"disable"`
 	}
 	DisableWebHooks bool `toml:"disableWebHooks" comment:"Does webhooks are supported by VCS Server" json:"disable_web_hook"`
 	DisablePolling  bool `toml:"disablePolling" comment:"Does polling is supported by VCS Server" json:"disable_polling"`
