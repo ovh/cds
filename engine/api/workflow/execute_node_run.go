@@ -413,13 +413,19 @@ func StopWorkflowNodeRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project, n
 		stag := &nodeRun.Stages[iS]
 		for iR := range stag.RunJobs {
 			runj := &stag.RunJobs[iR]
-			runj.Status = sdk.StatusStopped.String()
+			if !sdk.StatusIsTerminated(runj.Status) {
+				runj.Status = sdk.StatusStopped.String()
+			}
 			for iStep := range runj.Job.StepStatus {
 				stepStat := &runj.Job.StepStatus[iStep]
-				stepStat.Status = sdk.StatusStopped.String()
+				if !sdk.StatusIsTerminated(stepStat.Status) {
+					stepStat.Status = sdk.StatusStopped.String()
+				}
 			}
 		}
-		stag.Status = sdk.StatusStopped
+		if !sdk.StatusIsTerminated(stag.Status.String()) {
+			stag.Status = sdk.StatusStopped
+		}
 	}
 
 	nodeRun.Status = sdk.StatusStopped.String()
