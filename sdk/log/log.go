@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"regexp"
+	"strings"
 
 	loghook "github.com/ovh/logrus-ovh-hook"
 	log "github.com/sirupsen/logrus"
@@ -24,8 +24,7 @@ type Conf struct {
 }
 
 var (
-	logger        Logger
-	regexpNewLine = regexp.MustCompile("\\n")
+	logger Logger
 )
 
 // Logger defines the logs levels used
@@ -91,7 +90,7 @@ func Initialize(conf *Conf) {
 
 // Debug prints debug log
 func Debug(format string, values ...interface{}) {
-	input := regexpNewLine.ReplaceAllString(fmt.Sprintf(format, values...), " ")
+	input := strings.Replace(fmt.Sprintf(format, values...), "\\n", " ", -1)
 	if logger != nil {
 		logger.Logf("[DEBUG]    " + input)
 	} else {
@@ -101,7 +100,7 @@ func Debug(format string, values ...interface{}) {
 
 // Info prints information log
 func Info(format string, values ...interface{}) {
-	input := regexpNewLine.ReplaceAllString(fmt.Sprintf(format, values...), " ")
+	input := strings.Replace(fmt.Sprintf(format, values...), "\\n", " ", -1)
 	if logger != nil {
 		logger.Logf("[INFO]    " + input)
 	} else {
@@ -111,7 +110,7 @@ func Info(format string, values ...interface{}) {
 
 // Warning prints warnings for user
 func Warning(format string, values ...interface{}) {
-	input := regexpNewLine.ReplaceAllString(fmt.Sprintf(format, values...), " ")
+	input := strings.Replace(fmt.Sprintf(format, values...), "\\n", " ", -1)
 	if logger != nil {
 		logger.Logf("[WARN]    " + input)
 	} else {
@@ -121,7 +120,7 @@ func Warning(format string, values ...interface{}) {
 
 // Error prints error informations
 func Error(format string, values ...interface{}) {
-	input := regexpNewLine.ReplaceAllString(fmt.Sprintf(format, values...), " ")
+	input := strings.Replace(fmt.Sprintf(format, values...), "\\n", " ", -1)
 	if logger != nil {
 		logger.Logf("[ERROR]    " + input)
 	} else {
@@ -131,7 +130,7 @@ func Error(format string, values ...interface{}) {
 
 // Fatalf prints fatal informations, then os.Exit(1)
 func Fatalf(format string, values ...interface{}) {
-	input := regexpNewLine.ReplaceAllString(fmt.Sprintf(format, values...), " ")
+	input := strings.Replace(fmt.Sprintf(format, values...), "\\n", " ", -1)
 	if logger != nil {
 		logger.Logf("[FATAL]    " + input)
 	} else {
