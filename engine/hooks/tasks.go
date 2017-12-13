@@ -407,6 +407,7 @@ func executeWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 	// Prepare a struct to send to CDS API
 	h := sdk.WorkflowNodeRunHookEvent{
 		WorkflowNodeHookUUID: t.UUID,
+		Payload:              map[string]string{},
 	}
 
 	// Compute the payload, from the header, the body and the url
@@ -472,31 +473,18 @@ func executeWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, error) {
 	}
 
 	//Prepare the payload
-	payloadValues := map[string]string{}
 	for k, v := range t.Config {
 		switch k {
 		case "project", "workflow", "method":
 		default:
-			payloadValues[k] = v.Value
+			h.Payload[k] = v.Value
 		}
 	}
 
 	//try to find some specific values
 	for k := range values {
-		switch k {
-		case "branch", "ref":
-			payloadValues["git.branch"] = values.Get(k)
-		case "hash", "checkout_sha":
-			payloadValues["git.hash"] = values.Get(k)
-		case "message", "object_kind":
-			payloadValues["git.message"] = values.Get(k)
-		case "author", "user_name":
-			payloadValues["git.author"] = values.Get(k)
-		default:
-			payloadValues[k] = values.Get(k)
-		}
+		h.Payload[k] = values.Get(k)
 	}
-
 	return &h, nil
 }
 
