@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {Trigger} from '../../../../../model/trigger.model';
 import {Project} from '../../../../../model/project.model';
 import {Pipeline} from '../../../../../model/pipeline.model';
@@ -15,7 +15,7 @@ import {finalize, first} from 'rxjs/operators';
     templateUrl: './trigger.html',
     styleUrls: ['./trigger.scss']
 })
-export class ApplicationTriggerComponent {
+export class ApplicationTriggerComponent implements OnInit {
 
     // Trigger to edit
     @Input() trigger: Trigger;
@@ -36,8 +36,13 @@ export class ApplicationTriggerComponent {
     loading = true;
 
     constructor(private _appStore: ApplicationStore) {
-        this.refPrerequisites = new Array<Prerequisite>();
-        this.refPrerequisites.push(this.getGitPrerequisite());
+        this.refPrerequisites = this.getGitPrerequisite();
+    }
+
+    ngOnInit() {
+        if (this.mode === 'edit') {
+            this.updatePipelineList();
+        }
     }
 
     /**
@@ -54,6 +59,9 @@ export class ApplicationTriggerComponent {
                 if (apps.get(appKey)) {
                     this.appPipelines = apps.get(appKey).pipelines;
                 }
+                if (this.mode === 'edit') {
+                    this.updateDestPipeline();
+                }
             });
     }
 
@@ -62,8 +70,8 @@ export class ApplicationTriggerComponent {
      */
     updateDestPipeline(): void {
         this.selectedDestPipeline = this.appPipelines.filter(p => p.pipeline.name === this.trigger.dest_pipeline.name)[0].pipeline;
-        this.refPrerequisites = new Array<Prerequisite>();
-        this.refPrerequisites.push(this.getGitPrerequisite());
+        this.refPrerequisites = this.getGitPrerequisite();
+
         if (this.selectedDestPipeline.parameters) {
             this.trigger.parameters = cloneDeep(this.selectedDestPipeline.parameters);
             this.selectedDestPipeline.parameters.forEach(p => {
@@ -79,11 +87,14 @@ export class ApplicationTriggerComponent {
      * Return git branch prerequisite
      * @returns {Prerequisite}
      */
-    getGitPrerequisite(): Prerequisite {
-        let p = new Prerequisite();
-        p.parameter = 'git.branch';
-        p.expected_value = '';
-        return p;
+    getGitPrerequisite(): Prerequisite[] {
+        return ['git.branch', 'git.message', 'git.author', 'git.repository'].map((paramName) => {
+          let p = new Prerequisite();
+          p.parameter = paramName;
+          p.expected_value = '';
+
+          return p;
+        });
     }
 
     /**
