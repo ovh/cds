@@ -1,6 +1,6 @@
 app-status-icon {
   &.action {
-    font-size: 1.2em;
+    font-size: 1em;
     line-height: 1;
   }
 }
@@ -8,10 +8,11 @@ app-status-icon {
   &.action {
     padding-left: 40px !important;
     padding-right: 0px !important;
+    cursor: auto !important;
   }
   .title{
     &.action {
-      font-size: 0.9em !important;
+      font-size: 0.8em !important;
       font-weight: initial !important;
     }
   }

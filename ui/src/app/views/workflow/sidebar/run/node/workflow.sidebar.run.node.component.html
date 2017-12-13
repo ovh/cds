@@ -33,24 +33,26 @@
             *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
             <i class="stop icon"></i>
         </button>
-        <button class="ui icon button" [title]="'btn_logs' | translate" (click)="displayLogs()">
-            <i class="newspaper icon"></i>
+        <button class="ui icon blue button" [title]="'btn_logs' | translate" (click)="displayLogs()">
+            <i class="file text icon"></i>
         </button>
       </div>
     </div>
-    <h4 class="ui header ml5">
-        <i class="unhide icon"></i>
-        <div class="content">
-            <span>{{'workflow_run_summary' | translate}}</span>
+    <ng-container *ngIf="displaySummary">
+        <h4 class="ui header ml5" (click)="displayLogs()">
+            <i class="pointing unhide icon"></i>
+            <div class="content">
+                <span>{{'workflow_run_summary' | translate}}</span>
+            </div>
+        </h4>
+        <div class="padding">
+          <ng-container *ngIf="currentWorkflowNodeRun">
+            <div class="ui vertical fluid steps">
+              <app-stage-step-summary *ngFor="let stage of currentWorkflowNodeRun.stages" [stage]="stage"></app-stage-step-summary>
+            </div>
+          </ng-container>
         </div>
-    </h4>
-    <div class="padding">
-      <ng-container *ngIf="currentWorkflowNodeRun">
-        <div class="ui vertical fluid steps">
-          <app-stage-step-summary *ngFor="let stage of currentWorkflowNodeRun.stages" [stage]="stage"></app-stage-step-summary>
-        </div>
-      </ng-container>
-    </div>
+    </ng-container>
 </div>
 <div class="ui text active loader" *ngIf="loading && open">{{ 'common_loading' | translate }}</div>
 <ng-container *ngIf="project && node">
