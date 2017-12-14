@@ -62,6 +62,21 @@ func StorePlugin(art sdk.ActionPlugin, data io.ReadCloser) (string, error) {
 	return "", fmt.Errorf("store not initialized")
 }
 
+//FetchTempURL returns a temp URL
+func FetchTempURL(o Object) (string, error) {
+	if storage == nil {
+		return "", fmt.Errorf("store not initialized")
+	}
+
+	s, ok := storage.(DriverWithRedirect)
+	if !ok {
+		return "", fmt.Errorf("temp URL not supported")
+	}
+
+	url, _, err := s.FetchURL(o)
+	return url, err
+}
+
 //FetchPlugin call Fetch on the common driver
 func FetchPlugin(art sdk.ActionPlugin) (io.ReadCloser, error) {
 	if storage != nil {
@@ -113,8 +128,10 @@ type Driver interface {
 }
 
 type DriverWithRedirect interface {
-	StoreURL(o Object) (string, string, error)
-	FetchURL(o Object) (string, string, error)
+	// StoreURL returns a temporary url and a secret key to store an object
+	StoreURL(o Object) (url string, key string, err error)
+	// FetchURL returns a temporary url and a secret key to fetch an object
+	FetchURL(o Object) (url string, key string, err error)
 }
 
 // Initialize setup wanted ObjectStore driver
