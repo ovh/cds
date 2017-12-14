@@ -6,15 +6,17 @@ import {ApplicationStore} from '../../../../../service/application/application.s
 import {ApplicationPipeline} from '../../../../../model/application.model';
 import {Prerequisite} from '../../../../../model/prerequisite.model';
 import {PrerequisiteEvent} from '../../../../../shared/prerequisites/prerequisite.event.model';
+import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {cloneDeep} from 'lodash';
 import {Parameter} from '../../../../../model/parameter.model';
-import {finalize, first} from 'rxjs/operators';
+import {Subscription} from 'rxjs/Subscription';
 
 @Component({
     selector: 'app-application-trigger',
     templateUrl: './trigger.html',
     styleUrls: ['./trigger.scss']
 })
+@AutoUnsubscribe()
 export class ApplicationTriggerComponent implements OnInit {
 
     // Trigger to edit
@@ -31,6 +33,7 @@ export class ApplicationTriggerComponent implements OnInit {
 
     appPipelines: Array<ApplicationPipeline>;
     selectedDestPipeline: Pipeline;
+    applicationSubscription: Subscription;
 
     refPrerequisites: Array<Prerequisite>;
     loading = true;
@@ -49,27 +52,30 @@ export class ApplicationTriggerComponent implements OnInit {
      * Refresh available pipeline for the selected application.
      */
     updatePipelineList(): void {
-        this._appStore.getApplications(this.project.key, this.trigger.dest_application.name)
-            .pipe(
-                first(),
-                finalize(() => this.loading = false)
-            )
+        this.applicationSubscription = this._appStore.getApplications(this.project.key, this.trigger.dest_application.name)
             .subscribe(apps => {
                 let appKey = this.project.key + '-' + this.trigger.dest_application.name;
                 if (apps.get(appKey)) {
                     this.appPipelines = apps.get(appKey).pipelines;
+                    if (this.mode === 'edit') {
+                        this.updateDestPipeline();
+                    }
                 }
-                if (this.mode === 'edit') {
-                    this.updateDestPipeline();
-                }
-            });
+                this.loading = false
+            }, () => this.loading = false);
     }
 
     /**
      * Update selected dest pipeline + list of prerequisite
      */
     updateDestPipeline(): void {
-        this.selectedDestPipeline = this.appPipelines.filter(p => p.pipeline.name === this.trigger.dest_pipeline.name)[0].pipeline;
+        let selectedAppPipelines = this.appPipelines.filter(p => p.pipeline.name === this.trigger.dest_pipeline.name);
+        if (!selectedAppPipelines.length) {
+            this.trigger.parameters = [];
+            this.refPrerequisites = this.getGitPrerequisite();
+            return;
+        }
+        this.selectedDestPipeline = selectedAppPipelines[0].pipeline;
         this.refPrerequisites = this.getGitPrerequisite();
 
         if (this.selectedDestPipeline.parameters) {

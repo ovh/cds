@@ -43,6 +43,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
 
     // Subscription
     applicationSubscription: Subscription;
+    projectSubscription: Subscription;
     workerSubscription: Subscription;
     worker: CDSWorker;
 
@@ -167,6 +168,14 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 this.selectedTab = tab;
             }
         });
+
+        this.projectSubscription = this._projectStore.getProjects(this.project.key)
+          .subscribe((proj) => {
+            if (!this.project || !proj || !proj.get(this.project.key)) {
+              return;
+            }
+            this.project = proj.get(this.project.key);
+          });
     }
 
     stopWorker(): void {

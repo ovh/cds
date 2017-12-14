@@ -1,4 +1,4 @@
-import {Component, ViewChild} from '@angular/core';
+import {Component, ViewChild, OnInit} from '@angular/core';
 import {SemanticSidebarComponent} from 'ng-semantic/ng-semantic';
 import {ActivatedRoute, ResolveEnd, Router} from '@angular/router';
 import {Project} from '../../model/project.model';
@@ -6,6 +6,7 @@ import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
+import {ProjectStore} from '../../service/project/project.store';
 import {WorkflowService} from '../../service/workflow/workflow.service';
 import {RouterService} from '../../service/router/router.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
@@ -18,7 +19,7 @@ import {cloneDeep} from 'lodash';
     styleUrls: ['./workflow.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowComponent {
+export class WorkflowComponent implements OnInit {
 
     project: Project;
     workflow: Workflow;
@@ -26,6 +27,7 @@ export class WorkflowComponent {
     number: number;
     workflowSubscription: Subscription;
     sideBarSubscription: Subscription;
+    projectSubscription: Subscription;
     sidebarOpen: boolean;
     currentNodeName: string;
     selectedNodeId: number;
@@ -38,8 +40,12 @@ export class WorkflowComponent {
     @ViewChild('invertedSidebar')
     sidebar: SemanticSidebarComponent;
 
-    constructor(private _activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
-                private _routerService: RouterService, private _workflowCore: WorkflowCoreService, private _wfService: WorkflowService) {
+    constructor(private _activatedRoute: ActivatedRoute,
+                private _workflowStore: WorkflowStore,
+                private _router: Router,
+                private _routerService: RouterService,
+                private _projectStore: ProjectStore,
+                private _workflowCore: WorkflowCoreService, private _wfService: WorkflowService) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });
@@ -114,6 +120,16 @@ export class WorkflowComponent {
         });
     }
 
+    ngOnInit() {
+        this.projectSubscription = this._projectStore.getProjects(this.project.key)
+          .subscribe((proj) => {
+            if (!this.project || !proj || !proj.get(this.project.key)) {
+              return;
+            }
+            this.project = proj.get(this.project.key);
+          });
+    }
+
     listenQueryParams() {
       this._activatedRoute.queryParams.subscribe((queryp) => {
           if (queryp['selectedNodeId']) {
@@ -184,5 +200,10 @@ export class WorkflowComponent {
         } else {
           this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name], {queryParams: qps});
         }
+    }
+
+    displayToggleButton(): boolean {
+        return this.selectedNode == null && this.selectedJoin == null &&
+            this.selectedNodeRunId == null && this.selectedNodeRunNum == null;
     }
 }
