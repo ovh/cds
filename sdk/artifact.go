@@ -364,7 +364,7 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 		}
 	}
 
-	return true, time.Since(t0), err
+	return true, time.Since(t0), globalErr
 }
 
 func uploadArtifact(project string, pipeline string, application string, tag string, body io.Reader, name string, contentType string, buildNumber int, env string) error {
