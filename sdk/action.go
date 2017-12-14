@@ -140,16 +140,11 @@ func AddAction(name string, params []Parameter, requirements []Requirement) erro
 		return err
 	}
 
-	if e := DecodeError(data); e != nil {
-		return e
-	}
-
-	return nil
+	return DecodeError(data)
 }
 
 // AddActionStep add a new step of type Action to given action
 func AddActionStep(actionName string, child Action) error {
-
 	a, err := GetAction(actionName)
 	if err != nil {
 		return err
