@@ -33,7 +33,7 @@
             *ngIf="currentWorkflowNodeRun && (currentWorkflowNodeRun?.status === pipelineStatusEnum.BUILDING || currentWorkflowNodeRun?.status === pipelineStatusEnum.WAITING)">
             <i class="stop icon"></i>
         </button>
-        <button class="ui icon blue button" [title]="'btn_logs' | translate" (click)="displayLogs()">
+        <button class="ui icon blue button" [class.disabled]="!displaySummary" [title]="'btn_logs' | translate" (click)="displayLogs()">
             <i class="file text icon"></i>
         </button>
       </div>
