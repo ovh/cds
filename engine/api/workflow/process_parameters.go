@@ -66,6 +66,17 @@ func GetNodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Pr
 			}
 			vars["git.url"] = r.SSHCloneURL
 			vars["git.http_url"] = r.HTTPCloneURL
+
+			branches, errB := client.Branches(r.Fullname)
+			if errB != nil {
+				return nil, sdk.WrapError(errB, "GetNodeBuildParameters> Cannot get branches on %s, app:%s", r.SSHCloneURL, n.Context.Application.Name)
+			}
+			for _, b := range branches {
+				if b.Default {
+					vars["git.default_branch"] = b.DisplayID
+					break
+				}
+			}
 		}
 	}
 
