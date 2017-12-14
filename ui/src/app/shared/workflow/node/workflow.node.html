@@ -5,7 +5,8 @@
          [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL || currentNodeRun?.status === pipelineStatus.STOPPED"
          [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED"
          [class.active]="node.id === selectedNodeId"
-         (click)="goToNodeRun()">
+         (click)="goToNodeRun()"
+         (dblclick)="goToLogs()">
 
         <!-- Node name + pipeline name -->
         <div class="pipeline">

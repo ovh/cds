@@ -19,7 +19,14 @@ import {ApplicationAuditService} from '../../../service/application/application.
 })
 export class VariableComponent extends Table {
 
-    @Input() variables: Variable[];
+    @Input('variables')
+    set variables(data: Variable[]) {
+        this._variables = data;
+        this.goTopage(1);
+    }
+    get variables() {
+      return this._variables;
+    }
     @Input('maxPerPage')
     set maxPerPage(data: number) {
         this.nbElementsByPage = data;
@@ -41,6 +48,7 @@ export class VariableComponent extends Table {
     public ready = false;
     public variableTypes: string[];
     public currentVariableAudits: Array<VariableAudit>;
+    private _variables: Variable[];
     filter: string;
 
     constructor(private _variableService: VariableService, private _sharedService: SharedService, private _projAudit: ProjectAuditService,

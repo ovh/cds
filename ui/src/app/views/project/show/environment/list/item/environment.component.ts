@@ -113,6 +113,11 @@ export class ProjectEnvironmentComponent implements OnChanges {
                 this._projectStore.addEnvironmentVariable(this.project.key, this.editableEnvironment.name, event.variable)
                     .pipe(finalize(() => this.addVarLoading = false))
                     .subscribe(() => {
+                        if (this.environment.variables) {
+                            this.environment.variables.push(event.variable);
+                        } else {
+                            this.environment.variables = [event.variable];
+                        }
                         this._toast.success('', this._translate.instant('variable_added'));
                     });
                 break;

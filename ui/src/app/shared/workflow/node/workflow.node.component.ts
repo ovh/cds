@@ -151,6 +151,18 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         }
     }
 
+    goToLogs() {
+        console.log('db click');
+        if (this.currentNodeRun) {
+            let pip = this.node.pipeline.name;
+            this._router.navigate([
+                '/project', this.project.key,
+                'workflow', this.workflow.name,
+                'run', this.currentNodeRun.num,
+                'node', this.currentNodeRun.id], {queryParams: {name: pip}});
+        }
+    }
+
     displayDropdown(): void {
         this.elementRef.nativeElement.style.zIndex = 50;
     }
