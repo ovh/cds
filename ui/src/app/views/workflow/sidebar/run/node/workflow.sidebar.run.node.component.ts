@@ -69,6 +69,8 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
           let wr = this.currentWorkflowRun;
           if (this.node && wr.nodes && wr.nodes[this.node.id] && Array.isArray(wr.nodes[this.node.id])) {
               this.currentWorkflowNodeRun = wr.nodes[this.node.id].find((n) => n.id === this.runId && n.num === this.runNumber);
+          } else {
+              this.currentWorkflowNodeRun = null;
           }
 
           this.displayEditOption = Workflow.getNodeByID(this.nodeId, this.workflow) != null;
@@ -82,6 +84,8 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
             this.node = Workflow.getNodeByID(this.nodeId, this.currentWorkflowRun.workflow);
             if (this.node && wr.nodes && wr.nodes[this.node.id] && Array.isArray(wr.nodes[this.node.id])) {
                 this.currentWorkflowNodeRun = wr.nodes[this.node.id].find((n) => n.id === this.runId && n.num === this.runNumber);
+            } else {
+                this.currentWorkflowNodeRun = null;
             }
             this.loading = false;
             this.displayEditOption = Workflow.getNodeByID(this.nodeId, this.workflow) != null;
@@ -97,6 +101,8 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
                 this.node = Workflow.getNodeByID(this.nodeId, this.currentWorkflowRun.workflow);
                 if (this.node && wr.nodes && wr.nodes[this.node.id] && Array.isArray(wr.nodes[this.node.id])) {
                     this.currentWorkflowNodeRun = wr.nodes[this.node.id].find((n) => n.id === this.runId && n.num === this.runNumber);
+                } else {
+                    this.currentWorkflowNodeRun = null;
                 }
                 this.loading = false;
             });
