@@ -85,6 +85,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
 
                     if (!this.applicationFilter.branch) {
                       this.setDefaultBranchFilter();
+                      this.changeWorkerEvent.emit(true);
                     }
 
                     this.loadVersions(this.project.key, this.application.name).subscribe();
