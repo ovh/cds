@@ -262,7 +262,21 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 
 		// if everything is fine, return body
 		if err == nil && resp.StatusCode < 500 {
-			return resp.Body, resp.StatusCode, nil
+			//Manage redirect
+			if resp.StatusCode == http.StatusTemporaryRedirect || resp.StatusCode == http.StatusMovedPermanently {
+				url := resp.Header.Get("Location")
+				req, errreq := http.NewRequest("GET", url, nil)
+				if errreq != nil {
+					return nil, 0, errreq
+				}
+
+				resp, err = client.Do(req)
+				if err == nil && resp.StatusCode < 500 {
+					return resp.Body, resp.StatusCode, nil
+				}
+			} else {
+				return resp.Body, resp.StatusCode, nil
+			}
 		}
 
 		// if no request error by status > 500, check CDS error

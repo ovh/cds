@@ -14,7 +14,7 @@ import (
 func DownloadPlugin(name string, destdir string) error {
 	var lasterr error
 	for retry := 5; retry >= 0; retry-- {
-		uri := fmt.Sprintf("/plugin/download/%s", name)
+		uri := fmt.Sprintf("/plugin/download/%s?accept-redirect=true", name)
 		reader, code, err := Stream("GET", uri, nil)
 		if err != nil {
 			lasterr = err
