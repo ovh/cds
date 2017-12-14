@@ -38,7 +38,7 @@ func (v *Venom) OutputResult(tests Tests, elapsed time.Duration) error {
 		if errm != nil {
 			log.Fatalf("Error: cannot format xml output: %s", errm)
 		}
-		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>\n`), dataxml...)
+		data = append([]byte(`<?xml version="1.0" encoding="utf-8"?>`), dataxml...)
 	}
 
 	if v.OutputDetails == "high" {
