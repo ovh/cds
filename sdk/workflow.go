@@ -48,7 +48,7 @@ func (n *WorkflowNotification) UnmarshalJSON(b []byte) error {
 
 //workflowNotificationInput is a way to parse notification
 type workflowNotificationInput struct {
-	Notification   interface{}                  `json:"notification"`
+	Notification   interface{}                  `json:"settings"`
 	ID             int64                        `json:"id,omitempty"`
 	WorkflowID     int64                        `json:"workflow_id,omitempty"`
 	SourceNodeRefs []string                     `json:"source_node_ref,omitempty"`

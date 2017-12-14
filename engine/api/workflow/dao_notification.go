@@ -64,7 +64,6 @@ func loadNotification(db gorp.SqlExecutor, w *sdk.Workflow, id int64) (sdk.Workf
 }
 
 func insertNotification(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNotification, nodes []sdk.WorkflowNode, u *sdk.User) error {
-	log.Debug("insertNotification> %#v", n)
 	n.WorkflowID = w.ID
 	n.ID = 0
 	n.SourceNodeIDs = nil

@@ -1,17 +1,7 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {
-    notificationOnFailure,
-    notificationOnSuccess,
-    notificationTypes,
-    UserNotificationSettings,
-    UserNotificationTemplate
-} from '../../../../../model/notification.model';
-import {TranslateService} from '@ngx-translate/core'
+import {Component, EventEmitter, Input, Output} from '@angular/core';
+import {notificationOnFailure, notificationOnSuccess, notificationTypes} from '../../../../../model/notification.model';
 import {Workflow, WorkflowNode, WorkflowNotification} from '../../../../../model/workflow.model';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {Project} from '../../../../../model/project.model';
-import {ToastService} from '../../../../../shared/toast/ToastService';
-import {finalize} from 'rxjs/operators'
 import {cloneDeep} from 'lodash';
 
 @Component({
@@ -19,19 +9,30 @@ import {cloneDeep} from 'lodash';
     templateUrl: './workflow.notifications.form.html',
     styleUrls: ['./workflow.notifications.form.scss']
 })
-export class WorkflowNotificationFormComponent implements OnInit {
+export class WorkflowNotificationFormComponent {
+
+    _notification: WorkflowNotification;
+    @Input('notification')
+    set notification(data: WorkflowNotification) {
+        if (data) {
+            this._notification = cloneDeep(data);
+            if (this._notification.settings.recipients) {
+                this.selectedUsers = this._notification.settings.recipients.join(',');
+            }
+
+            this.initNotif();
+        }
+    }
+
+    get notification() {
+        return this._notification;
+    }
 
     types: Array<string>;
     notifOnSuccess: Array<string>;
     notifOnFailure: Array<string>;
-    selectedType: string;
     selectedUsers: string;
-    loading = false;
-    userNotification: UserNotificationSettings;
-    notificationTemplate: UserNotificationTemplate;
-    selectedNodes: Array<WorkflowNode>;
     nodeError = false;
-    ready = false;
 
     nodes: Array<WorkflowNode>;
     _workflow: Workflow;
@@ -40,58 +41,59 @@ export class WorkflowNotificationFormComponent implements OnInit {
         if (data) {
             this._workflow = data;
             this.nodes = Workflow.getAllNodes(data);
+            this.nodes.map(node => {
+                let n = node;
+                n.ref = n.id.toString();
+            });
+            this.initNotif()
         }
     }
-
     get workflow() {
         return this._workflow;
     }
 
-    @Input() project: Project;
+    @Output() updatedNotification = new EventEmitter<WorkflowNotification>();
+    @Output() deleteNotificationEvent = new EventEmitter<WorkflowNotification>();
 
-    constructor(private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService) {
-        this.userNotification = new UserNotificationSettings();
-        this.notificationTemplate = new UserNotificationTemplate();
+    @Input() loading: boolean;
+    @Input() project: Project;
+    @Input() canDelete: boolean;
+
+    constructor() {
         this.notifOnSuccess = notificationOnSuccess;
         this.notifOnFailure = notificationOnFailure;
-        this.selectedType = notificationTypes[0];
         this.types = notificationTypes;
     }
 
-    ngOnInit(): void {
-        this.selectedNodes = cloneDeep(this.nodes);
-        this.ready = true;
+    initNotif(): void {
+        if (this.nodes && this.notification && !this.notification.id) {
+            this.notification.source_node_ref = this.nodes.map(n => {
+                return n.id.toString();
+            });
+        }
+
+    }
+
+    formatNode(): void {
+        this.notification.source_node_ref = this.notification.source_node_ref.map(id => id.toString());
+    }
+
+    deleteNotification(): void {
+        this.deleteNotificationEvent.emit(this.notification);
     }
 
     createNotification(): void {
-        if (!this.selectedNodes || this.selectedNodes.length === 0) {
+        if (!this.notification.source_node_ref || this.notification.source_node_ref.length === 0) {
             this.nodeError = true;
             return;
         }
         this.nodeError = false;
 
         this.loading = true;
-        let notification = new WorkflowNotification();
 
         if (this.selectedUsers) {
-            this.userNotification.recipients = this.selectedUsers.split(',');
+            this.notification.settings.recipients = this.selectedUsers.split(',');
         }
-        this.userNotification.template = this.notificationTemplate;
-        notification.type = this.selectedType;
-        notification.settings = this.userNotification;
-
-        this.selectedNodes.forEach(sn => {
-            notification.source_node_ref.push(sn.id.toString());
-        });
-
-        if (!this.workflow.notifications) {
-            this.workflow.notifications = new Array<WorkflowNotification>();
-        }
-        this.workflow.notifications.push(notification);
-        this._workflowStore.updateWorkflow(this.project.key, this.workflow).pipe(finalize(() => {
-            this.loading = false;
-        })).subscribe(() => {
-            this._toast.success('', this._translate.instant('workflow_updated'));
-        });
+        this.updatedNotification.emit(this.notification);
     }
 }

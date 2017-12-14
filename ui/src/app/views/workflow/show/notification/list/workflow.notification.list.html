@@ -1,27 +1,41 @@
-<div class="ui two column grid" *ngIf="workflow.notifications && workflow.notifications.length > 0">
-    <div class="four wide column">
-        <div class="ui fluid vertical steps">
-            <ng-container *ngFor="let n of workflow.notifications">
-                    <div class="step">
-                        <div class="content">
-                            <div class="title">
-                                {{n.type}}
-                            </div>
-                            <div class="description">
-                                <ng-container *ngFor="let node of mapNodesNotif.get(n.id); let i = index">
-                                    <span *ngIf="i > 0">{{'/'}}</span>
-                                    {{ node }}
-                                </ng-container>
+<div class="Notifications">
+    <div class="ui two column grid">
+        <div class="four wide column">
+            <div class="ui fluid vertical steps">
+                <div class="step pointing" [class.active]="newNotification" (click)="openNewNotifArea()">
+                    <div class="title">
+                        {{'workflow_notification_form' | translate }}
+                    </div>
+                </div>
+                <ng-container *ngFor="let n of workflow.notifications; let i = index">
+                        <div class="step pointing" [class.active]="selectedNotification === i" (click)="openEditionArea(i)">
+                            <div class="content">
+                                <div class="title">
+                                    {{n.type}}
+                                    <div class="ui right floated">
+                                        <i class="copy icon pointing" title="{{ 'workflow_notification_copy' | translate}}" (click)="copy(i)"></i>
+                                    </div>
+                                </div>
+                                <div class="description">
+                                    <ng-container *ngFor="let node of mapNodesNotif.get(n.id); let i = index">
+                                        <span *ngIf="i > 0">{{'/'}}</span>
+                                        {{ node }}
+                                    </ng-container>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                </ng-container>
+            </div>
+        </div>
+        <div class="twelve wide column">
+            <ng-container *ngIf="selectedNotification != null">
+                <app-workflow-notifications-form [project]="project" [workflow]="workflow" [notification]="workflow.notifications[selectedNotification]"
+                 [loading]="loading" (updatedNotification)="updateNotification($event)" (deleteNotificationEvent)="deleteNotification($event)" [canDelete]="true"></app-workflow-notifications-form>
+            </ng-container>
+            <ng-container *ngIf="newNotification">
+                <app-workflow-notifications-form [project]="project" [workflow]="workflow" [loading]="loading" [canDelete]="false" [notification]="newNotification"
+                 (updatedNotification)="createNotification($event)"></app-workflow-notifications-form>
             </ng-container>
         </div>
     </div>
-    <div class="twelve wide column">
-        {{workflow.notifications[0].settings | json}}
-    </div>
-</div>
-<div class="ui info message" *ngIf="!workflow.notifications || workflow.notifications.length === 0">
-    {{ 'workflow_no_notifications' | translate }}
 </div>

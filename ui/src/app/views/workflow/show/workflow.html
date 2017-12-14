@@ -82,7 +82,7 @@
                         </div>
                     </div>
                     <div *ngSwitchCase="'notifications'">
-                        <app-workflow-notifications [project]="project" [workflow]="detailedWorkflow"></app-workflow-notifications>
+                        <app-workflow-notification-list [project]="project" [workflow]="detailedWorkflow"></app-workflow-notification-list>
                     </div>
                     <div *ngSwitchCase="'permissions'" class="padded">
                         <h3>{{ 'workflow_permission_list_title' | translate }}</h3>

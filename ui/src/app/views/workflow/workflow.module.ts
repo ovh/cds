@@ -27,7 +27,6 @@ import {WorkflowRunSummaryComponent} from './run/summary/workflow.run.summary.co
 import {WorkflowNodeRunHistoryComponent} from './run/node/history/history.component';
 import {WorkflowNodeRunSummaryComponent} from './run/node/summary/run.summary.component';
 import {WorkflowAdminComponent} from './show/admin/workflow.admin.component';
-import {WorkflowNotificationComponent} from './show/notification/workflow.notification.component';
 import {WorkflowNotificationFormComponent} from './show/notification/form/workflow.notification.form.component';
 import {WorkflowNotificationListComponent} from './show/notification/list/workflow.notification.list.component';
 
@@ -39,7 +38,6 @@ import {WorkflowNotificationListComponent} from './show/notification/list/workfl
         WorkflowBreadCrumbComponent,
         WorkflowGraphComponent,
         WorkflowRunComponent,
-        WorkflowNotificationComponent,
         WorkflowNodeRunComponent,
         WorkflowRunJobVariableComponent,
         WorkflowRunJobSpawnInfoComponent,

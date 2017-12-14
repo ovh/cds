@@ -690,5 +690,10 @@
   "workflow_notification_body" : "Message",
   "workflow_notification_to_group" : "Envoyer au groupe",
   "workflow_notification_to_initiator" : "Envoyer à l'initiateur",
-  "workflow_notification_node_error" : "Vous devez selectionner au moins 1 pipeline"
+  "workflow_notification_node_error" : "Vous devez selectionner au moins 1 pipeline",
+  "workflow_notification_jabber_user" : "Utilisateurs jabber",
+  "workflow_notification_email_user" : "Emails",
+  "workflow_notification_list" : "Liste des notifications",
+  "workflow_notification_form" : "Ajouter une notification",
+  "workflow_notification_copy" : "Copié"
 }

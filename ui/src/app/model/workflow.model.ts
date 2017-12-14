@@ -6,6 +6,7 @@ import {Parameter} from './parameter.model';
 import {WorkflowHookModel} from './workflow.hook.model';
 import {GroupPermission} from './group.model';
 import {Usage} from './usage.model';
+import {notificationTypes, UserNotificationSettings} from 'app/model/notification.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -505,10 +506,11 @@ export class WorkflowNotification {
     source_node_id: Array<number>;
     source_node_ref: Array<string>;
     type: string;
-    settings: {};
+    settings: UserNotificationSettings;
 
     constructor() {
-        this.settings = {};
+        this.type = notificationTypes[0];
+        this.settings = new UserNotificationSettings();
         this.source_node_ref = new Array<string>();
         this.source_node_id = new Array<number>();
     }
