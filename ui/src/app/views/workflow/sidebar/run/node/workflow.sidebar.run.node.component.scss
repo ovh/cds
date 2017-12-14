@@ -7,12 +7,21 @@
         margin-left: 5px;
     }
 
+    .status {
+        margin-left: 3.5px;
+        margin-right: 0px;
+    }
+
+    .no-mrr {
+        margin-right: 0px;
+    }
+
     .padding {
         padding-bottom: 4px;
         padding-top: 4px;
     }
 
-    .no-mrt {
+    .listmrt {
         margin-top: 0px;
         margin-bottom: 0px;
     }
@@ -42,5 +51,9 @@
 
     .padding {
       padding: 5px;
+    }
+
+    .steps {
+        border: none;
     }
 }

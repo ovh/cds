@@ -152,14 +152,18 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     }
 
     goToLogs() {
-        console.log('db click');
+        let pip = this.node.pipeline.name;
         if (this.currentNodeRun) {
-            let pip = this.node.pipeline.name;
             this._router.navigate([
                 '/project', this.project.key,
                 'workflow', this.workflow.name,
                 'run', this.currentNodeRun.num,
                 'node', this.currentNodeRun.id], {queryParams: {name: pip}});
+        } else {
+          this._router.navigate([
+              '/project', this.project.key,
+              'pipeline', pip
+          ]);
         }
     }
 

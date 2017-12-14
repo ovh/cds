@@ -11,9 +11,10 @@ app-status-icon {
     }
   }
   &.stage {
-    padding-left: 10px !important;
-    padding-right: 10px !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
   }
+  border: none !important;
 }
 
 .forceRight {
