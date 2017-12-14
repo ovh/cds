@@ -28,18 +28,23 @@
                                 </div>
                             </div>
                             <div class="row" *ngIf="node && node.context && (node.context.application || node.context.environment)">
-                                <div class="five wide column" *ngIf="node.context.application" title="{{'common_application' | translate}}">
-                                    <a href="#" [routerLink]="['/project', project.key, 'application', node.context.application.name]"
-                                        [queryParams]="{ workflow: workflow.name, run: nodeRun.num, node: nodeRun.id, wpipeline: node.pipeline.name }">
-                                        <i class="rocket icon"></i> {{node.context.application.name}}
-                                    </a>
+                                <div class="five wide column" title="{{'common_application' | translate}}">
+                                    <ng-container *ngIf="node.context.application">
+                                      <a href="#" [routerLink]="['/project', project.key, 'application', node.context.application.name]"
+                                          [queryParams]="{ workflow: workflow.name, run: nodeRun.num, node: nodeRun.id, wpipeline: node.pipeline.name }">
+                                          <i class="rocket icon"></i> {{node.context.application.name}}
+                                      </a>
+                                    </ng-container>
                                 </div>
-                                <div class="five wide column" *ngIf="node.context.environment" title="{{ 'common_environment' | translate }}">
-                                    <a href="#" [routerLink]="['/project', project.key]"
-                                        [queryParams]="{ tab: 'environments', envName: node.context.environment.name,workflow: workflow.name, run: nodeRun.num, node: nodeRun.id, wpipeline: node.pipeline.name }">
-                                        <i class="tree icon"></i> {{node.context.environment.name}}
-                                    </a>
+                                <div class="five wide column centered" title="{{ 'common_environment' | translate }}">
+                                    <ng-container *ngIf="node.context.environment">
+                                      <a href="#" [routerLink]="['/project', project.key]"
+                                          [queryParams]="{ tab: 'environments', envName: node.context.environment.name,workflow: workflow.name, run: nodeRun.num, node: nodeRun.id, wpipeline: node.pipeline.name }">
+                                          <i class="tree icon"></i> {{node.context.environment.name}}
+                                      </a>
+                                    </ng-container>
                                 </div>
+                                <div class="five wide column"></div>
                             </div>
                             <div class="row">
                                 <div class="right aligned column">

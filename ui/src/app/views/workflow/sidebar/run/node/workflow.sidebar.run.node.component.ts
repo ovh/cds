@@ -14,6 +14,7 @@ import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {WorkflowService} from '../../../../../service/workflow/workflow.service';
 import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
+import {DurationService} from '../../../../../shared/duration/duration.service';
 import {Subscription} from 'rxjs/Subscription';
 import {Observable} from 'rxjs/Observable';
 import {first} from 'rxjs/operators';
@@ -50,7 +51,8 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     pipelineStatusEnum = PipelineStatus;
 
     constructor(private _wrService: WorkflowRunService, private _wfService: WorkflowService, private _router: Router,
-      private _workflowCoreService: WorkflowCoreService, private _activatedRoute: ActivatedRoute) {
+      private _workflowCoreService: WorkflowCoreService, private _activatedRoute: ActivatedRoute,
+      private _durationService: DurationService) {
 
     }
 
@@ -115,6 +117,10 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
             'workflow', this.workflow.name,
             'run', this.runNumber,
             'node', this.runId], {queryParams: {name: pip}});
+    }
+
+    getDuration() {
+        return this._durationService.duration(new Date(this.currentWorkflowNodeRun.start), new Date(this.currentWorkflowNodeRun.done));
     }
 
     stopNodeRun(): void {

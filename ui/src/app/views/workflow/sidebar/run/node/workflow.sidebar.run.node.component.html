@@ -45,6 +45,22 @@
                 <span>{{'workflow_run_summary' | translate}}</span>
             </div>
         </h4>
+        <div class="ui list ml5 no-mrt">
+            <div class="item padding" *ngIf="currentWorkflowNodeRun.artifacts">
+                <div class="content">
+                    <div>
+                        <i class="cloud upload icon"></i> {{currentWorkflowNodeRun.artifacts.length}}
+                        <span *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.artifacts && currentWorkflowNodeRun.artifacts.length > 1">{{ 'common_artifacts' | translate }}</span>
+                        <span *ngIf="!currentWorkflowNodeRun || !currentWorkflowNodeRun.artifacts || currentWorkflowNodeRun.artifacts.length < 2">{{ 'common_artifact' | translate }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="item padding">
+                <div class="content">
+                    <div><i class="clock icon"></i> {{getDuration()}}</div>
+                </div>
+            </div>
+        </div>
         <div class="padding">
           <ng-container *ngIf="currentWorkflowNodeRun">
             <div class="ui vertical fluid steps">
