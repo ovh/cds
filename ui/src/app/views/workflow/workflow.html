@@ -28,8 +28,8 @@
     </div>
 </aside>
 <section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!loading && workflow != null">
-    <button class="ui small icon blue open button" (click)="toggleSidebar()"
-      *ngIf="selectedNode == null && selectedJoin == null && selectedNodeRunId == null && selectedNodeRunNum == null && selectedJoinRunId == null">
+    <button class="ui small icon blue" [class.open]="displayToggleButton()" [class.button]="displayToggleButton()" (click)="toggleSidebar()"
+      [hidden]="!displayToggleButton()">
         <i class="content icon"></i>
     </button>
     <router-outlet></router-outlet>

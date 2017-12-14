@@ -39,7 +39,7 @@
       <a class="item" (click)="openAddHookModal()" *ngIf="workflow && workflow.root.id === node.id">
         {{ 'workflow_node_hook_add' | translate }} <i class="angle right icon"></i>
       </a>
-      <a class="item" (click)="openAddParentModal()">
+      <a class="item" (click)="openAddParentModal()" *ngIf="workflow && workflow.root.id === node.id">
         {{ 'workflow_node_parent' | translate }} <i class="angle right icon"></i>
       </a>
       <a class="item" (click)="openTriggerModal()">
