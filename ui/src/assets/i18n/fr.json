@@ -217,6 +217,7 @@
   "filter": "Filtrer",
 
   "group_added" : "Groupe ajouté",
+  "group_deleted" : "Groupe supprimé",
   "group_create_title" : "Création d'un groupe",
   "group_name" : "Nom du groupe",
   "group_permission" : "Permission du groupe",
