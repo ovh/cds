@@ -213,26 +213,26 @@ func ListArtifacts(project string, application string, pipeline string, tag stri
 }
 
 // UploadArtifact read file at filePath and upload it in projet-pipeline-tag starage directory
-func UploadArtifact(project string, pipeline string, application string, tag string, filePath string, buildNumber int, env string) error {
-
+func UploadArtifact(project string, pipeline string, application string, tag string, filePath string, buildNumber int, env string) (bool, time.Duration, error) {
+	t0 := time.Now()
 	tag = url.QueryEscape(tag)
 	tag = strings.Replace(tag, "/", "-", -1)
 
 	fileForMD5, errop := os.Open(filePath)
 	if errop != nil {
-		return errop
+		return false, 0, errop
 	}
 
 	//File stat
 	stat, errst := fileForMD5.Stat()
 	if errst != nil {
-		return errst
+		return false, 0, errst
 	}
 
 	//Compute md5sum
 	hash := md5.New()
 	if _, errcopy := io.Copy(hash, fileForMD5); errcopy != nil {
-		return errcopy
+		return false, 0, errcopy
 	}
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
@@ -241,7 +241,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	//Reopen the file because we already read it for md5
 	fileReopen, erro := os.Open(filePath)
 	if erro != nil {
-		return erro
+		return false, 0, erro
 	}
 	defer fileReopen.Close()
 	_, name := filepath.Split(filePath)
@@ -252,7 +252,10 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		_ = json.Unmarshal(bodyRes, store)
 
 		if store.TemporaryURLSupported {
-			return uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileReopen, stat, md5sumStr)
+			tempURL, dur, err := uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileReopen, stat, md5sumStr)
+			if err == nil {
+				return tempURL, dur, err
+			}
 		}
 	}
 
@@ -260,11 +263,11 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
 	if errc != nil {
-		return errc
+		return false, 0, errc
 	}
 
 	if _, err := io.Copy(part, fileReopen); err != nil {
-		return err
+		return false, 0, err
 	}
 
 	writer.WriteField("env", env)
@@ -273,7 +276,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	writer.WriteField("md5sum", md5sumStr)
 
 	if err := writer.Close(); err != nil {
-		return err
+		return false, 0, err
 	}
 
 	var bodyReader io.Reader
@@ -285,16 +288,17 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		tee := io.TeeReader(bodyReader, buf)
 		err = uploadArtifact(project, pipeline, application, tag, tee, name, writer.FormDataContentType(), buildNumber, env)
 		if err == nil {
-			return nil
+			return false, time.Since(t0), nil
 		}
 		time.Sleep(3 * time.Second)
 		bodyReader = buf
 	}
 
-	return fmt.Errorf("x10: %s", err)
+	return false, 0, fmt.Errorf("x10: %s", err)
 }
 
-func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, file io.Reader, stat os.FileInfo, md5sum string) error {
+func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, file io.Reader, stat os.FileInfo, md5sum string) (bool, time.Duration, error) {
+	t0 := time.Now()
 	art := Artifact{
 		Name:   filename,
 		MD5sum: md5sum,
@@ -304,17 +308,17 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 
 	b, err := json.Marshal(art)
 	if err != nil {
-		return err
+		return true, 0, err
 	}
 
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s/url?envName=%s", project, application, pipeline, buildNumber, tag, url.QueryEscape(env))
 	body, _, err := Request("POST", path, b)
 	if err != nil {
-		return err
+		return true, 0, err
 	}
 
 	if err := json.Unmarshal(body, &art); err != nil {
-		return err
+		return true, 0, err
 	}
 
 	if verbose {
@@ -324,36 +328,43 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 	//Post the file to the temporary URL
 	req, errRequest := http.NewRequest("PUT", art.TempURL, file)
 	if errRequest != nil {
-		return errRequest
+		return true, 0, errRequest
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return true, 0, err
 	}
 
 	defer resp.Body.Close()
 
 	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return true, 0, err
 	}
 
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("Unable to upload artifact: (HTTP %d) %s", resp.StatusCode, string(body))
+		return true, 0, fmt.Errorf("Unable to upload artifact: (HTTP %d) %s", resp.StatusCode, string(body))
 	}
 
 	//Call the API back to store the artifact in DB
 	b, err = json.Marshal(art)
 	if err != nil {
-		return err
-	}
-	path = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s/url/callback", project, application, pipeline, buildNumber, tag)
-	if _, _, err := Request("POST", path, b); err != nil {
-		return err
+		return true, 0, err
 	}
 
-	return nil
+	//Try 50 times to make the callback
+	const retry = 50
+	var globalErr error
+	for i := 0; i < retry; i++ {
+		path = fmt.Sprintf("/project/%s/application/%s/pipeline/%s/%d/artifact/%s/url/callback?envName=%s", project, application, pipeline, buildNumber, tag, url.QueryEscape(env))
+		_, _, globalErr = Request("POST", path, b)
+		if globalErr == nil {
+			return true, time.Since(t0), nil
+		}
+	}
+
+	return true, time.Since(t0), globalErr
 }
 
 func uploadArtifact(project string, pipeline string, application string, tag string, body io.Reader, name string, contentType string, buildNumber int, env string) error {

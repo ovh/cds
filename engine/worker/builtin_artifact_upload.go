@@ -56,17 +56,22 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			buildNumber, errBN := strconv.Atoi(buildNumberString)
 			if errBN != nil {
 				res.Status = sdk.StatusFail.String()
-				res.Reason = fmt.Sprintf("BuilNumber is not an integer %s\n", errBN)
+				res.Reason = fmt.Sprintf("BuilNumber is not an integer %s", errBN)
 				sendLog(res.Reason)
 				return res
 			}
 
 			for _, filePath := range filesPath {
 				filename := filepath.Base(filePath)
-				sendLog(fmt.Sprintf("Uploading '%s'", filename))
-				if err := sdk.UploadArtifact(project, pipeline, application, tag.Value, filePath, buildNumber, environment); err != nil {
+				throughTempURL, duration, err := sdk.UploadArtifact(project, pipeline, application, tag.Value, filePath, buildNumber, environment)
+				if throughTempURL {
+					sendLog(fmt.Sprintf("File '%s' uploaded in %.2fs to object store", filename, duration.Seconds()))
+				} else {
+					sendLog(fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", filename, duration.Seconds()))
+				}
+				if err != nil {
 					res.Status = sdk.StatusFail.String()
-					res.Reason = fmt.Sprintf("Error while uploading artefact: %v\n", err)
+					res.Reason = fmt.Sprintf("Error while uploading artifact '%s': %v", filename, err)
 					sendLog(res.Reason)
 					return res
 				}
