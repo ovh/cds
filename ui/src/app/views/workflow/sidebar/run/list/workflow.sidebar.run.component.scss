@@ -1,7 +1,8 @@
 @import '../../../../../../common';
 #WorkflowSidebar {
-  .mt {
+  .infoLine {
     margin-top: 10px;
+    font-size: 0.85em;
   }
   .mr {
     margin-right: 10px;
@@ -25,7 +26,7 @@
       background-color: $cds_color_light_grey;
     }
     .tiny {
-      font-size: 0.75em;
+      font-size: 0.90em;
     }
   }
 

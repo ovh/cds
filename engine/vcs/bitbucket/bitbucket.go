@@ -27,10 +27,11 @@ type bitbucketConsumer struct {
 	callbackURL      string
 	apiURL           string
 	uiURL            string
+	disableStatus    bool
 }
 
 //New creates a new bitbucketConsumer
-func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL string, store cache.Store) sdk.VCSServer {
+func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL string, store cache.Store, disableStatus bool) sdk.VCSServer {
 	return &bitbucketConsumer{
 		ConsumerKey:      consumerKey,
 		PrivateKey:       privateKey,
@@ -42,6 +43,7 @@ func New(consumerKey string, privateKey []byte, URL, apiURL, uiURL string, store
 		authorizationURL: URL + "/plugins/servlet/oauth/authorize",
 		accessTokenURL:   URL + "/plugins/servlet/oauth/access-token",
 		callbackURL:      oauth1OOB,
+		disableStatus:    disableStatus,
 	}
 }
 

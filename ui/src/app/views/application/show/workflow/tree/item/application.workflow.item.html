@@ -159,7 +159,7 @@
         env: (workflowItem.trigger?.src_environment.name !== 'NoEnv')?' / ' + workflowItem.trigger?.src_environment.name:''}
         }}" class="fluid" #editTriggerModal>
     <modal-content>
-        <app-application-trigger [project]="project" [trigger]="triggerInModal" [paramsRef]="parameterRefModal" mode="edit"></app-application-trigger>
+        <app-application-trigger *ngIf="triggerInModal != null" [project]="project" [trigger]="triggerInModal" [paramsRef]="parameterRefModal" mode="edit"></app-application-trigger>
     </modal-content>
     <modal-actions>
         <button class="ui grey button" (click)="editTriggerModal.hide()">{{ 'btn_cancel' | translate }}</button>

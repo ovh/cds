@@ -557,7 +557,9 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			opts.Manual = &sdk.WorkflowNodeRunManual{}
 		}
 		opts.Manual.User = *u
+		//Copy the user but empty groups and permissions
 		opts.Manual.User.Groups = nil
+		opts.Manual.User.Permissions = sdk.UserPermissions{}
 
 		fromNodes := []*sdk.WorkflowNode{}
 		if len(opts.FromNodeIDs) > 0 {

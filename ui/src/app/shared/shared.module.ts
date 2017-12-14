@@ -194,6 +194,7 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         WorkflowNodeConditionsComponent,
         WorkflowNodeRunParamComponent,
         WorkflowNodeHookComponent,
+        WorkflowNodeHookFormComponent,
         WorkflowTriggerComponent,
         WorkflowTriggerJoinComponent,
         ZoneComponent,

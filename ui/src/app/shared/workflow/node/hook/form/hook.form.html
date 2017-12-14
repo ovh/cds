@@ -1,7 +1,7 @@
 <ng-template let-context let-modal="modal" #nodeHookFormModal>
     <div class="header">
         {{ 'workflow_node_hook_modal_title' | translate }}
-        <div class="deleteButton">
+        <div class="deleteButton" *ngIf="canDelete">
             <app-delete-button [loading]="loading" [disabled]="loading" (event)="deleteHook()"></app-delete-button>
         </div>
     </div>

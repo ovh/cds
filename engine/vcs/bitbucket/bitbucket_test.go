@@ -36,7 +36,7 @@ func getNewConsumer(t *testing.T) sdk.VCSServer {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	ghConsummer := New(consumerKey, []byte(consumerPrivateKey), url, "", "", cache)
+	ghConsummer := New(consumerKey, []byte(consumerPrivateKey), url, "", "", cache, true)
 	return ghConsummer
 }
 
@@ -62,7 +62,7 @@ func newAuthorizedClient(t *testing.T) (string, string) {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	ghConsummer := New(consumerKey, []byte(privateKey), url, "", "", cache)
+	ghConsummer := New(consumerKey, []byte(privateKey), url, "", "", cache, true)
 	token, secret, err := ghConsummer.AuthorizeToken(accessToken, accessTokenSecret)
 	test.NoError(t, err)
 
@@ -93,7 +93,7 @@ func getAuthorizedClient(t *testing.T) sdk.VCSAuthorizedClient {
 		t.Fatalf("Unable to init cache (%s): %v", redisHost, err)
 	}
 
-	consumer := New(consumerKey, []byte(privateKey), url, "", "", cache)
+	consumer := New(consumerKey, []byte(privateKey), url, "", "", cache, true)
 	cli, err := consumer.GetAuthorizedClient(token, secret)
 	test.NoError(t, err)
 	return cli

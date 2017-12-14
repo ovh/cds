@@ -63,10 +63,10 @@ func (s *Service) getConsumer(name string) (sdk.VCSServer, error) {
 		return github.New(serverCfg.Github.ClientID, serverCfg.Github.ClientSecret, s.Cfg.UI.HTTP.URL, s.Cache, serverCfg.Github.Status.Disable, !serverCfg.Github.Status.ShowDetail), nil
 	}
 	if serverCfg.Bitbucket != nil {
-		return bitbucket.New(serverCfg.Bitbucket.ConsumerKey, []byte(serverCfg.Bitbucket.PrivateKey), serverCfg.URL, s.Cfg.API.HTTP.URL, s.Cfg.UI.HTTP.URL, s.Cache), nil
+		return bitbucket.New(serverCfg.Bitbucket.ConsumerKey, []byte(serverCfg.Bitbucket.PrivateKey), serverCfg.URL, s.Cfg.API.HTTP.URL, s.Cfg.UI.HTTP.URL, s.Cache, serverCfg.Bitbucket.Status.Disable), nil
 	}
 	if serverCfg.Gitlab != nil {
-		return gitlab.New(serverCfg.Gitlab.AppID, serverCfg.Gitlab.Secret, serverCfg.URL, s.Cfg.API.HTTP.URL+"/repositories_manager/oauth2/callback", s.Cfg.UI.HTTP.URL, s.Cache), nil
+		return gitlab.New(serverCfg.Gitlab.AppID, serverCfg.Gitlab.Secret, serverCfg.URL, s.Cfg.API.HTTP.URL+"/repositories_manager/oauth2/callback", s.Cfg.UI.HTTP.URL, s.Cache, serverCfg.Gitlab.Status.Disable, serverCfg.Gitlab.Status.ShowDetail), nil
 	}
 	return nil, sdk.ErrNotFound
 }

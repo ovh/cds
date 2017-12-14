@@ -29,13 +29,14 @@ func LoadEnvironments(db gorp.SqlExecutor, projectKey string, loadDeps bool, u *
 		  ORDER by environment.name`
 		rows, err = db.Query(query, projectKey)
 	} else {
-		query := `SELECT distinct(environment.id), environment.name, environment.last_modified, environment_group.role as "perm"
+		query := `SELECT environment.id, environment.name, environment.last_modified, max(environment_group.role) as "perm"
 			  FROM environment
 			  JOIN environment_group ON environment.id = environment_group.environment_id
 			  JOIN group_user ON environment_group.group_id = group_user.group_id
 			  JOIN project ON project.id = environment.project_id
 			  WHERE group_user.user_id = $1
 			  AND project.projectKey = $2
+			  GROUP BY environment.id, environment.name, environment.last_modified
 			  ORDER by environment.name`
 		rows, err = db.Query(query, u.ID, projectKey)
 	}

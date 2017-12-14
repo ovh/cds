@@ -1,4 +1,4 @@
-<div class="workflowJoin" [class.active]="join.id === selectedJoinId" [class.pointing]="!readonly" (click)="!readonly && selectJoin()">
+<div class="workflowJoin" [class.active]="join.id === selectedJoinId" [class.pointing]="!readonly" (click)="!readonly && !disabled && selectJoin()">
     <div [hidden]="!readonly
         || loading || currentWorkflowRun?.status === pipelineStatusEnum.WAITING
         || currentWorkflowRun?.status === pipelineStatusEnum.BUILDING || !canBeLaunched()"
