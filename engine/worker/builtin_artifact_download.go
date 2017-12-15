@@ -137,7 +137,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 				return res
 			}
 			sendLog(fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
-			if err := w.client.WorkflowNodeRunArtifactDownload(project, workflow, a.ID, f); err != nil {
+			if err := w.client.WorkflowNodeRunArtifactDownload(project, workflow, a, f); err != nil {
 				res.Status = sdk.StatusFail.String()
 				res.Reason = err.Error()
 				log.Warning("Cannot download artifact %s: %s", destFile, err)

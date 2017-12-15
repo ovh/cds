@@ -137,8 +137,24 @@ func (c *client) Request(method string, path string, body io.Reader, mods ...Req
 func (c *client) Stream(method string, path string, body io.Reader, noTimeout bool, mods ...RequestModifier) (io.ReadCloser, int, error) {
 	var savederror error
 
+	var bodyContent []byte
+	var err error
+	if body != nil {
+		bodyContent, err = ioutil.ReadAll(body)
+		if err != nil {
+			return nil, 0, err
+		}
+	}
+
+	url := c.config.Host + path
+	if strings.HasPrefix(path, "http") {
+		url = path
+	}
+
+	fmt.Println(url)
+
 	for i := 0; i <= c.config.Retry; i++ {
-		req, requestError := http.NewRequest(method, c.config.Host+path, body)
+		req, requestError := http.NewRequest(method, url, bytes.NewBuffer(bodyContent))
 		if requestError != nil {
 			savederror = requestError
 			continue

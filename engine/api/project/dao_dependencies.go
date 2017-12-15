@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 var (
@@ -181,7 +180,6 @@ var (
 
 	loadPermission = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		proj.Permission = permission.ProjectPermission(proj.Key, u)
-		log.Debug(">>Project permission: %s %d", u.Username, proj.Permission)
 		return nil
 	}
 )

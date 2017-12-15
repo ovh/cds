@@ -722,6 +722,15 @@ func (api *API) getWorkflowNodeRunArtifactsHandler() Handler {
 			return sdk.WrapError(errR, "getWorkflowJobArtifactsHandler> Cannot load node run")
 		}
 
+		//Fetch artifacts
+		for i := range nodeRun.Artifacts {
+			a := &nodeRun.Artifacts[i]
+			url, _ := objectstore.FetchTempURL(a)
+			if url != "" {
+				a.TempURL = url
+			}
+		}
+
 		return WriteJSON(w, r, nodeRun.Artifacts, http.StatusOK)
 	}
 }
@@ -793,6 +802,14 @@ func (api *API) getWorkflowRunArtifactsHandler() Handler {
 			sort.Slice(runs, func(i, j int) bool {
 				return runs[i].SubNumber > runs[j].SubNumber
 			})
+
+			for i := range runs[0].Artifacts {
+				a := &runs[0].Artifacts[i]
+				url, _ := objectstore.FetchTempURL(a)
+				if url != "" {
+					a.TempURL = url
+				}
+			}
 
 			arts = append(arts, runs[0].Artifacts...)
 		}

@@ -40,9 +40,9 @@ func (c *client) WorkflowDelete(projectKey string, workflowName string) error {
 	return err
 }
 
-func (c *client) WorkflowRunArtifacts(projectKey string, workflowName string, number int64) ([]sdk.Artifact, error) {
+func (c *client) WorkflowRunArtifacts(projectKey string, workflowName string, number int64) ([]sdk.WorkflowNodeRunArtifact, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/artifacts", projectKey, workflowName, number)
-	arts := []sdk.Artifact{}
+	arts := []sdk.WorkflowNodeRunArtifact{}
 	if _, err := c.GetJSON(url, &arts); err != nil {
 		return nil, err
 	}
@@ -67,26 +67,32 @@ func (c *client) WorkflowNodeRunJobStep(projectKey string, workflowName string, 
 	return &buildState, nil
 }
 
-func (c *client) WorkflowNodeRunArtifacts(projectKey string, workflowName string, number int64, nodeRunID int64) ([]sdk.Artifact, error) {
+func (c *client) WorkflowNodeRunArtifacts(projectKey string, workflowName string, number int64, nodeRunID int64) ([]sdk.WorkflowNodeRunArtifact, error) {
 	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/artifacts", projectKey, workflowName, number, nodeRunID)
-	arts := []sdk.Artifact{}
+	arts := []sdk.WorkflowNodeRunArtifact{}
 	if _, err := c.GetJSON(url, &arts); err != nil {
 		return nil, err
 	}
 	return arts, nil
 }
 
-func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, artifactID int64, w io.Writer) error {
-	url := fmt.Sprintf("/project/%s/workflows/%s/artifact/%d", projectKey, workflowName, artifactID)
-	reader, _, err := c.Stream("GET", url, nil, true)
+func (c *client) WorkflowNodeRunArtifactDownload(projectKey string, workflowName string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error {
+	var url = fmt.Sprintf("/project/%s/workflows/%s/artifact/%d", projectKey, workflowName, a.ID)
+	var reader io.ReadCloser
+	var err error
+
+	if a.TempURL != "" {
+		url = a.TempURL
+	}
+
+	reader, _, err = c.Stream("GET", url, nil, true)
 	if err != nil {
 		return err
 	}
 	defer reader.Close()
-	if _, err := io.Copy(w, reader); err != nil {
-		return err
-	}
-	return nil
+
+	_, err = io.Copy(w, reader)
+	return err
 }
 
 func (c *client) WorkflowNodeRunRelease(projectKey string, workflowName string, runNumber int64, nodeRunID int64, release sdk.WorkflowNodeRunRelease) error {
