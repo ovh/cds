@@ -93,7 +93,7 @@ func download(project, app, pip string, a Artifact, destdir string) error {
 	var reader io.ReadCloser
 	var doRequest func() (io.ReadCloser, int, error)
 
-	if a.TempURL != "" && a.TempURLSecretKey != "" {
+	if a.TempURL != "" {
 		if verbose {
 			fmt.Printf(">>> downloading artifact %s from %s\n", a.Name, a.TempURL)
 		}
