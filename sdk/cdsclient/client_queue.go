@@ -7,7 +7,9 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -170,30 +172,133 @@ func (c *client) QueueSendResult(id int64, res sdk.Result) error {
 	return err
 }
 
-func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
-	fileForMD5, errop := os.Open(filePath)
+func (c *client) QueueArtifactUpload(id int64, tag, filePath string) (bool, time.Duration, error) {
+	t0 := time.Now()
+	store := new(sdk.ArtifactsStore)
+	_, _ = c.GetJSON("/artifact/store", store)
+	if store.TemporaryURLSupported {
+		return true, time.Since(t0), c.queueIndirectArtifactUpload(id, tag, filePath)
+	}
+	return false, time.Since(t0), c.queueDirectArtifactUpload(id, tag, filePath)
+}
+
+func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) error {
+	f, errop := os.Open(filePath)
 	if errop != nil {
 		return errop
 	}
 	//File stat
-	stat, errst := fileForMD5.Stat()
+	stat, errst := f.Stat()
 	if errst != nil {
 		return errst
 	}
+
+	//Read the file once
+	fileContent, errFileContent := ioutil.ReadAll(f)
+	if errFileContent != nil {
+		return errFileContent
+	}
+
 	//Compute md5sum
 	hash := md5.New()
-	if _, errcopy := io.Copy(hash, fileForMD5); errcopy != nil {
+	if _, errcopy := io.Copy(hash, bytes.NewBuffer(fileContent)); errcopy != nil {
 		return errcopy
 	}
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
-	fileForMD5.Close()
-	//Reopen the file because we already read it for md5
-	fileReopen, erro := os.Open(filePath)
-	if erro != nil {
-		return erro
+	_, name := filepath.Split(filePath)
+
+	art := sdk.WorkflowNodeRunArtifact{
+		Name:    name,
+		Tag:     tag,
+		Size:    stat.Size(),
+		Perm:    uint32(stat.Mode().Perm()),
+		MD5sum:  md5sumStr,
+		Created: time.Now(),
 	}
-	defer fileReopen.Close()
+
+	uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url", id, tag)
+	if _, err := c.PostJSON(uri, &art, &art); err != nil {
+		return err
+	}
+
+	if c.config.Verbose {
+		fmt.Printf("Uploading %s with to %s\n", art.Name, art.TempURL)
+	}
+
+	req, errRequest := http.NewRequest("PUT", art.TempURL, bytes.NewBuffer(fileContent))
+	if errRequest != nil {
+		return errRequest
+	}
+
+	//Post the file to the temporary URL
+	var retry = 10
+	var globalErr error
+	var body []byte
+	for i := 0; i < retry; i++ {
+		var resp *http.Response
+		resp, globalErr = http.DefaultClient.Do(req)
+		if globalErr == nil {
+			defer resp.Body.Close()
+
+			var err error
+			body, err = ioutil.ReadAll(resp.Body)
+			if err != nil {
+				globalErr = err
+				continue
+			}
+
+			if resp.StatusCode >= 300 {
+				globalErr = fmt.Errorf("[%d] Unable to upload artifact: (HTTP %d) %s", i, resp.StatusCode, string(body))
+				continue
+			}
+
+			break
+		}
+	}
+
+	if globalErr != nil {
+		return globalErr
+	}
+
+	//Try 50 times to make the callback
+	var callbackErr error
+	retry = 50
+	for i := 0; i < retry; i++ {
+		uri := fmt.Sprintf("/queue/workflows/%d/artifact/%s/url/callback", id, tag)
+		_, callbackErr = c.PostJSON(uri, &art, nil)
+		if callbackErr == nil {
+			return nil
+		}
+	}
+
+	return globalErr
+}
+
+func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error {
+	f, errop := os.Open(filePath)
+	if errop != nil {
+		return errop
+	}
+	//File stat
+	stat, errst := f.Stat()
+	if errst != nil {
+		return errst
+	}
+
+	//Read the file once
+	fileContent, errFileContent := ioutil.ReadAll(f)
+	if errFileContent != nil {
+		return errFileContent
+	}
+
+	//Compute md5sum
+	hash := md5.New()
+	if _, errcopy := io.Copy(hash, bytes.NewBuffer(fileContent)); errcopy != nil {
+		return errcopy
+	}
+	hashInBytes := hash.Sum(nil)[:16]
+	md5sumStr := hex.EncodeToString(hashInBytes)
 	_, name := filepath.Split(filePath)
 
 	body := &bytes.Buffer{}
@@ -203,7 +308,7 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) error {
 		return errc
 	}
 
-	if _, err := io.Copy(part, fileReopen); err != nil {
+	if _, err := io.Copy(part, bytes.NewBuffer(fileContent)); err != nil {
 		return err
 	}
 

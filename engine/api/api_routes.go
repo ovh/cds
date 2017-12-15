@@ -299,6 +299,8 @@ func (api *API) InitRouter() {
 	r.Handle("/queue/workflows/{permID}/variable", r.POSTEXECUTE(api.postWorkflowJobVariableHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{permID}/step", r.POSTEXECUTE(api.postWorkflowJobStepStatusHandler, NeedWorker()))
 	r.Handle("/queue/workflows/{permID}/artifact/{tag}", r.POSTEXECUTE(api.postWorkflowJobArtifactHandler, NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/artifact/{tag}/url", r.POSTEXECUTE(api.postWorkflowJobArtifacWithTempURLtHandler, NeedWorker()))
+	r.Handle("/queue/workflows/{permID}/artifact/{tag}/url/callback", r.POSTEXECUTE(api.postWorkflowJobArtifactWithTempURLCallbackHandler, NeedWorker()))
 
 	r.Handle("/variable/type", r.GET(api.getVariableTypeHandler))
 	r.Handle("/parameter/type", r.GET(api.getParameterTypeHandler))
