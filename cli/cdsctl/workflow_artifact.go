@@ -82,7 +82,7 @@ func workflowArtifactDownloadRun(v cli.Values) error {
 			return err
 		}
 		fmt.Printf("Downloading %s...\n", a.Name)
-		if err := client.WorkflowNodeRunArtifactDownload(v["project-key"], v["workflow"], a.ID, f); err != nil {
+		if err := client.WorkflowNodeRunArtifactDownload(v["project-key"], v["workflow"], a, f); err != nil {
 			return err
 		}
 		if err := f.Close(); err != nil {
