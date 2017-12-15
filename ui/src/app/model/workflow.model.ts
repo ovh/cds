@@ -291,7 +291,7 @@ export class WorkflowNode {
         if (trigger.workflow_dest_node.triggers) {
             for (let i = 0; i < trigger.workflow_dest_node.triggers.length; i++) {
                 let t = trigger.workflow_dest_node.triggers[i];
-                let p = WorkflowNode.removeNodeWithoutChild(t.workflow_dest_node, t, id, i);
+                let p = WorkflowNode.removeNodeWithoutChild(trigger.workflow_dest_node, t, id, i);
                 if (p) {
                     return p;
                 }
@@ -316,7 +316,7 @@ export class WorkflowNode {
         if (trigger.workflow_dest_node.triggers) {
             for (let i = 0; i < trigger.workflow_dest_node.triggers.length; i++) {
                 let t = trigger.workflow_dest_node.triggers[i];
-                let p = WorkflowNode.removeNodeWithoutChild(t.workflow_dest_node, t, id, i);
+                let p = WorkflowNode.removeNodeWithoutChild(trigger.workflow_dest_node, t, id, i);
                 if (p) {
                     return;
                 }
