@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/url"
+	"strings"
 
 	"github.com/ovh/cds/sdk"
 )
@@ -112,6 +114,7 @@ type Driver interface {
 	Delete(o Object) error
 }
 
+// DriverWithRedirect has to be implemented if your storage backend supports temp url
 type DriverWithRedirect interface {
 	StoreURL(o Object) (string, string, error)
 	FetchURL(o Object) (string, string, error)
@@ -169,19 +172,7 @@ type ConfigOptionsFilesystem struct {
 // New initialise a new ArtifactStorage
 func New(c context.Context, cfg Config) (Driver, error) {
 	switch cfg.Kind {
-	case Openstack:
-		instance = sdk.ArtifactsStore{
-			Name:                  "Openstack",
-			Private:               false,
-			TemporaryURLSupported: false,
-		}
-		return NewOpenstackStore(c, cfg.Options.Openstack.Address,
-			cfg.Options.Openstack.Username,
-			cfg.Options.Openstack.Password,
-			cfg.Options.Openstack.Tenant,
-			cfg.Options.Openstack.Region,
-			cfg.Options.Openstack.ContainerPrefix)
-	case Swift:
+	case Openstack, Swift:
 		instance = sdk.ArtifactsStore{
 			Name:                  "Swift",
 			Private:               false,
@@ -203,4 +194,12 @@ func New(c context.Context, cfg Config) (Driver, error) {
 	default:
 		return nil, fmt.Errorf("Invalid flag --artifact-mode")
 	}
+}
+
+func escape(container, object string) (string, string) {
+	container = url.QueryEscape(container)
+	container = strings.Replace(container, "/", "-", -1)
+	object = url.QueryEscape(object)
+	object = strings.Replace(object, "/", "-", -1)
+	return container, object
 }
