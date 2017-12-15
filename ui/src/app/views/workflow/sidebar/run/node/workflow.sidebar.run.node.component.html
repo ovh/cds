@@ -39,13 +39,19 @@
       </div>
     </div>
     <ng-container *ngIf="displaySummary">
-        <h4 class="ui header ml5" (click)="displayLogs()">
-            <i class="pointing unhide icon"></i>
-            <div class="content">
-                <span>{{'workflow_run_summary' | translate}}</span>
+        <div class="ui list ml5 listmrt">
+            <div class="item padding" *ngIf="currentWorkflowNodeRun.tests">
+                <div class="content">
+                    <div>
+                        <i class="bug icon"></i> {{currentWorkflowNodeRun.tests.total}}
+                        <span *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.tests && currentWorkflowNodeRun.tests.total > 1">{{ 'common_tests' | translate }}</span>
+                        <span *ngIf="!currentWorkflowNodeRun || !currentWorkflowNodeRun.tests || currentWorkflowNodeRun.tests.total < 2">{{ 'common_test' | translate }}</span>
+                        <ng-container *ngIf="currentWorkflowRun && currentWorkflowNodeRun.tests && currentWorkflowNodeRun.tests.total > 0">
+                            (<i class="green check icon no-mrr"></i>{{currentWorkflowNodeRun.tests.ok}} <i class="red remove icon status"></i>{{currentWorkflowNodeRun.tests.ko}} <i class="grey ban icon status"></i>{{currentWorkflowNodeRun.tests.skipped}})
+                        </ng-container>
+                    </div>
+                </div>
             </div>
-        </h4>
-        <div class="ui list ml5 no-mrt">
             <div class="item padding" *ngIf="currentWorkflowNodeRun.artifacts">
                 <div class="content">
                     <div>
@@ -56,12 +62,17 @@
                 </div>
             </div>
             <div class="item padding">
-                <div class="content">
+                <div class="content" [title]="'common_duration_title' | translate">
                     <div><i class="clock icon"></i> {{getDuration()}}</div>
                 </div>
             </div>
+            <div class="item padding">
+                <div class="content" [title]="'common_pipeline_start_title' | translate">
+                    <div><i class="calendar icon"></i> {{currentWorkflowNodeRun.start | date:'short' }}</div>
+                </div>
+            </div>
         </div>
-        <div class="padding">
+        <div>
           <ng-container *ngIf="currentWorkflowNodeRun">
             <div class="ui vertical fluid steps">
               <app-stage-step-summary *ngFor="let stage of currentWorkflowNodeRun.stages" [stage]="stage"></app-stage-step-summary>
