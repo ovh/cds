@@ -139,6 +139,8 @@ type WorkflowNodeRunArtifact struct {
 	MD5sum            string    `json:"md5sum,omitempty" db:"md5sum"`
 	ObjectPath        string    `json:"object_path,omitempty" db:"object_path"`
 	Created           time.Time `json:"created,omitempty" db:"created"`
+	TempURL           string    `json:"temp_url,omitempty" db:"-"`
+	TempURLSecretKey  string    `json:"-" db:"-"`
 }
 
 //WorkflowNodeJobRun represents an job to be run

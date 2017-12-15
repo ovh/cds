@@ -7,8 +7,11 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 func runArtifactUpload(w *currentWorker) BuiltInAction {
@@ -115,15 +118,45 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		for _, filePath := range filesPath {
-			filename := filepath.Base(filePath)
-			sendLog(fmt.Sprintf("Uploading '%s'\n", filename))
-			if err := w.client.QueueArtifactUpload(buildID, tag.Value, filePath); err != nil {
-				res.Status = sdk.StatusFail.String()
-				res.Reason = fmt.Sprintf("Error while uploading artefact: %s\n", err)
-				sendLog(res.Reason)
-				return res
+		var globalError = &sdk.MultiError{}
+		var chanError = make(chan error)
+		var wg = new(sync.WaitGroup)
+
+		go func() {
+			for err := range chanError {
+				sendLog(err.Error())
+				globalError.Append(err)
 			}
+		}()
+
+		wg.Add(len(filesPath))
+		for _, p := range filesPath {
+			filename := filepath.Base(p)
+			go func(path string) {
+				log.Debug("Uploading %s", path)
+				defer wg.Done()
+				throughTempURL, duration, err := w.client.QueueArtifactUpload(buildID, tag.Value, path)
+				if err != nil {
+					chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
+				}
+				if throughTempURL {
+					sendLog(fmt.Sprintf("File '%s' uploaded in %.2fs to object store", filename, duration.Seconds()))
+				} else {
+					sendLog(fmt.Sprintf("File '%s' uploaded in %.2fs to CDS API", filename, duration.Seconds()))
+				}
+			}(p)
+			if len(filesPath) > 1 {
+				//Wait 3 second to et the object storage to set up all the things
+				time.Sleep(3 * time.Second)
+			}
+		}
+		wg.Wait()
+		close(chanError)
+
+		if !globalError.IsEmpty() {
+			res.Status = sdk.StatusFail.String()
+			res.Reason = fmt.Sprintf("Error: %v", globalError.Error())
+			return res
 		}
 
 		return res

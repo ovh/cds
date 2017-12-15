@@ -27,7 +27,8 @@ import {WorkflowRunSummaryComponent} from './run/summary/workflow.run.summary.co
 import {WorkflowNodeRunHistoryComponent} from './run/node/history/history.component';
 import {WorkflowNodeRunSummaryComponent} from './run/node/summary/run.summary.component';
 import {WorkflowAdminComponent} from './show/admin/workflow.admin.component';
-import {WorkflowNotificationComponent} from './show/notification/workflow.notification.component';
+import {WorkflowNotificationFormComponent} from './show/notification/form/workflow.notification.form.component';
+import {WorkflowNotificationListComponent} from './show/notification/list/workflow.notification.list.component';
 
 @NgModule({
     declarations: [
@@ -37,7 +38,6 @@ import {WorkflowNotificationComponent} from './show/notification/workflow.notifi
         WorkflowBreadCrumbComponent,
         WorkflowGraphComponent,
         WorkflowRunComponent,
-        WorkflowNotificationComponent,
         WorkflowNodeRunComponent,
         WorkflowRunJobVariableComponent,
         WorkflowRunJobSpawnInfoComponent,
@@ -57,7 +57,9 @@ import {WorkflowNotificationComponent} from './show/notification/workflow.notifi
         ActionStepSummaryComponent,
         WorkflowShowComponent,
         WorkflowStepLogComponent,
-        WorkflowNodeRunSummaryComponent
+        WorkflowNodeRunSummaryComponent,
+        WorkflowNotificationFormComponent,
+        WorkflowNotificationListComponent
     ],
     imports: [
         SharedModule,

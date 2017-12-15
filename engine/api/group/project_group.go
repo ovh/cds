@@ -67,14 +67,13 @@ func DeleteAllGroupFromProject(db gorp.SqlExecutor, projectID int64) error {
 // UpdateGroupRoleInProject Update group role for the given project
 func UpdateGroupRoleInProject(db gorp.SqlExecutor, projectID, groupID int64, role int) error {
 	query := `UPDATE project_group SET role=$1 WHERE project_id=$2 AND group_id=$3`
-	_, err := db.Exec(query, role, projectID, groupID)
-	if _, err := db.Exec(query, projectID, groupID); err != nil {
+	if _, err := db.Exec(query, role, projectID, groupID); err != nil {
 		return sdk.WrapError(err, "UpdateGroupRoleInProject")
 	}
 
 	ok, err := checkAtLeastOneGroupWithWriteRoleOnProject(db, projectID)
 	if err != nil {
-		return sdk.WrapError(err, "UpdateGroupRoleInProject")
+		return sdk.WrapError(err, "UpdateGroupRoleInProject (checkAtLeastOneGroupWithWriteRoleOnProject)")
 	}
 	if !ok {
 		return sdk.WrapError(sdk.ErrLastGroupWithWriteRole, "UpdateGroupRoleInProject")

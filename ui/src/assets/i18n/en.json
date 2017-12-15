@@ -680,5 +680,21 @@
   "workflow_orientation_tree" : "Tree",
   "workflow_last_execution" : "Last execution date",
   "workflow_first_execution" : "First execution date",
-  "workflow_runnumber_title": "Current run number"
+  "workflow_runnumber_title": "Current run number",
+  "workflow_no_notifications" : "No notifications",
+  "workflow_notification_type" : "Notification type",
+  "workflow_notification_pipeline" : "Pipelines",
+  "workflow_notification_on_success" : "Send on success",
+  "workflow_notification_on_failure" : "Send on error",
+  "workflow_notification_on_start" : "Send on start",
+  "workflow_notification_title" : "Title",
+  "workflow_notification_body" : "Message",
+  "workflow_notification_to_group" : "Send to group",
+  "workflow_notification_to_initiator" : "Send to initiator",
+  "workflow_notification_node_error" : "You must select at least 1 pipeline",
+  "workflow_notification_jabber_user" : "Jabber users",
+  "workflow_notification_email_user" : "Mails",
+  "workflow_notification_list" : "Notifications list",
+  "workflow_notification_form" : "Add a notification",
+  "workflow_notification_copy" : "Copy"
 }

@@ -86,6 +86,6 @@ describe('CDS: Application pipeline link', () => {
         fixture.componentInstance.application = a;
 
         expect(fixture.componentInstance.getLinkablePipelines().length).toBe(1);
-        expect(fixture.componentInstance.getLinkablePipelines()[0].name).toBe('pip2');
+        expect(fixture.componentInstance.getLinkablePipelines()[0]).toBe('pip2');
     }));
 });

@@ -204,6 +204,9 @@ export class WorkflowSidebarEditNodeComponent {
                 });
                 if (clonedWorkflow.joins) {
                     clonedWorkflow.joins.forEach(j => {
+                        j.source_node_ref = j.source_node_ref.filter(id => {
+                           return id !== this.node.id.toString();
+                        });
                         if (j.triggers) {
                             j.triggers.forEach((t, i) => {
                                 this.removeNodeFromJoin(this.node.id, t.workflow_dest_node, j, i);

@@ -863,6 +863,23 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 				},
 			},
 		},
+		Notifications: []sdk.WorkflowNotification{
+			sdk.WorkflowNotification{
+				Type:           "jabber",
+				SourceNodeRefs: []string{"pip6", "pip5"},
+				Settings: &sdk.JabberEmailUserNotificationSettings{
+					OnFailure:    sdk.UserNotificationAlways,
+					OnStart:      true,
+					OnSuccess:    sdk.UserNotificationAlways,
+					SendToAuthor: true,
+					SendToGroups: true,
+					Template: sdk.UserNotificationTemplate{
+						Body:    "body",
+						Subject: "title",
+					},
+				},
+			},
+		},
 	}
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))

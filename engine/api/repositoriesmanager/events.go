@@ -49,7 +49,7 @@ func retryEvent(e *sdk.Event, err error, store cache.Store) {
 }
 
 func processEvent(db *gorp.DbMap, event sdk.Event, store cache.Store) error {
-	log.Debug("repositoriesmanager>processEvent> receive: type:%s all: %+v", event.EventType, event)
+	log.Debug("repositoriesmanager>processEvent> receive: type:%s", event.EventType)
 
 	var c sdk.VCSAuthorizedClient
 	var errC error
