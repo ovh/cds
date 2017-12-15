@@ -402,7 +402,7 @@ var (
 
 func TestExportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipeline(&tc.arg)
+		p := NewPipeline(tc.arg, false)
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
@@ -416,7 +416,7 @@ func TestExportPipeline_YAML(t *testing.T) {
 
 func TestExportPipeline_JSON(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipeline(&tc.arg)
+		p := NewPipeline(tc.arg, false)
 		b, err := Marshal(p, FormatJSON)
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
@@ -430,7 +430,7 @@ func TestExportPipeline_JSON(t *testing.T) {
 
 func TestExportAndImportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
-		p := NewPipeline(&tc.arg)
+		p := NewPipeline(tc.arg, true)
 
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
@@ -590,4 +590,32 @@ func Test_IsFlagged(t *testing.T) {
 		assert.Equal(t, tc.expected, resp, fmt.Sprintf("Flag %s have bad value in this step", tc.flag))
 	}
 
+}
+
+func TestExportPipelineV1_YAML(t *testing.T) {
+	for _, tc := range testcases {
+		p := NewPipelineV1(tc.arg, false)
+		b, err := Marshal(p, FormatYAML)
+		test.NoError(t, err)
+		t.Log("\n" + string(b))
+
+		p1 := Pipeline{}
+		test.NoError(t, yaml.Unmarshal(b, &p1))
+
+		test.Equal(t, p, p1)
+	}
+}
+
+func TestExportPipelineV1_JSON(t *testing.T) {
+	for _, tc := range testcases {
+		p := NewPipelineV1(tc.arg, false)
+		b, err := Marshal(p, FormatJSON)
+		test.NoError(t, err)
+		t.Log("\n" + string(b))
+
+		p1 := Pipeline{}
+		test.NoError(t, json.Unmarshal(b, &p1))
+
+		test.Equal(t, p, p1)
+	}
 }
