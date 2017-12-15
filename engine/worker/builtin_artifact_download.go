@@ -9,6 +9,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -72,7 +74,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 	}
 
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		res := sdk.Result{Status: sdk.StatusSuccess.String()}
+		res := &sdk.Result{Status: sdk.StatusSuccess.String()}
 
 		project := sdk.ParameterValue(*params, "cds.project")
 		workflow := sdk.ParameterValue(*params, "cds.workflow")
@@ -89,14 +91,14 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 
 		if !enabled {
 			sendLog("Artifact Download is disabled.")
-			return res
+			return *res
 		}
 
 		if err := os.MkdirAll(destPath, os.FileMode(0744)); err != nil {
 			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("Unable to create %s: %v", destPath, err)
 			sendLog(res.Reason)
-			return res
+			return *res
 		}
 
 		if tag != "" {
@@ -110,7 +112,7 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			res.Status = sdk.StatusFail.String()
 			res.Reason = fmt.Sprintf("cds.run.number variable is not valid. aborting")
 			sendLog(res.Reason)
-			return res
+			return *res
 		}
 		artifacts, err := w.client.WorkflowRunArtifacts(project, workflow, n)
 		if err != nil {
@@ -118,41 +120,53 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 			res.Reason = err.Error()
 			log.Warning("Cannot download artifacts: %s", err)
 			sendLog(res.Reason)
-			return res
+			return *res
 		}
 
 		regexp := regexp.MustCompile(pattern)
-		for _, a := range artifacts {
-			if pattern != "" && !regexp.MatchString(a.Name) {
-				sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
-				continue
-			}
-			destFile := path.Join(destPath, a.Name)
-			f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
-			if err != nil {
-				res.Status = sdk.StatusFail.String()
-				res.Reason = err.Error()
-				log.Warning("Cannot download artifact (OpenFile) %s: %s", destFile, err)
-				sendLog(res.Reason)
-				return res
-			}
-			sendLog(fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
-			if err := w.client.WorkflowNodeRunArtifactDownload(project, workflow, a, f); err != nil {
-				res.Status = sdk.StatusFail.String()
-				res.Reason = err.Error()
-				log.Warning("Cannot download artifact %s: %s", destFile, err)
-				sendLog(res.Reason)
-				return res
-			}
-			if err := f.Close(); err != nil {
-				res.Status = sdk.StatusFail.String()
-				res.Reason = err.Error()
-				log.Warning("Cannot download artifact %s: %s", destFile, err)
-				sendLog(res.Reason)
-				return res
+		wg := new(sync.WaitGroup)
+		wg.Add(len(artifacts))
+
+		for i := range artifacts {
+			a := &artifacts[i]
+			go func(a *sdk.WorkflowNodeRunArtifact) {
+				defer wg.Done()
+
+				if pattern != "" && !regexp.MatchString(a.Name) {
+					sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
+					return
+				}
+				destFile := path.Join(destPath, a.Name)
+				f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
+				if err != nil {
+					res.Status = sdk.StatusFail.String()
+					res.Reason = err.Error()
+					log.Warning("Cannot download artifact (OpenFile) %s: %s", destFile, err)
+					sendLog(res.Reason)
+					return
+				}
+				sendLog(fmt.Sprintf("downloading artifact %s from workflow %s/%s on run %d...", destFile, project, workflow, n))
+				if err := w.client.WorkflowNodeRunArtifactDownload(project, workflow, *a, f); err != nil {
+					res.Status = sdk.StatusFail.String()
+					res.Reason = err.Error()
+					log.Warning("Cannot download artifact %s: %s", destFile, err)
+					sendLog(res.Reason)
+					return
+				}
+				if err := f.Close(); err != nil {
+					res.Status = sdk.StatusFail.String()
+					res.Reason = err.Error()
+					log.Warning("Cannot download artifact %s: %s", destFile, err)
+					sendLog(res.Reason)
+					return
+				}
+			}(a)
+			if len(artifacts) > 1 {
+				time.Sleep(3 * time.Second)
 			}
 		}
 
-		return res
+		wg.Wait()
+		return *res
 	}
 }
