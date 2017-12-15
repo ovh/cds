@@ -151,8 +151,6 @@ func (c *client) Stream(method string, path string, body io.Reader, noTimeout bo
 		url = path
 	}
 
-	fmt.Println(url)
-
 	for i := 0; i <= c.config.Retry; i++ {
 		req, requestError := http.NewRequest(method, url, bytes.NewBuffer(bodyContent))
 		if requestError != nil {
