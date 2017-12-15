@@ -272,7 +272,7 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 		}
 	}
 
-	return globalErr
+	return callbackErr
 }
 
 func (c *client) queueDirectArtifactUpload(id int64, tag, filePath string) error {

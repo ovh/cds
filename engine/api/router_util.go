@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -25,6 +26,16 @@ func deleteUserPermissionCache(ctx context.Context, store cache.Store) {
 	}
 }
 
+// Accepted is a helper function used by asynchronous handlers
+func Accepted(w http.ResponseWriter, r *http.Request) error {
+	const msg = "request accepted"
+	w.Header().Add("Content-Type", "text/plain")
+	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(msg)))
+	w.WriteHeader(http.StatusAccepted)
+	w.Write([]byte(msg))
+	return nil
+}
+
 // WriteJSON is a helper function to marshal json, handle errors and set Content-Type for the best
 func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status int) error {
 	b, e := json.Marshal(data)
@@ -33,6 +44,7 @@ func WriteJSON(w http.ResponseWriter, r *http.Request, data interface{}, status 
 	}
 
 	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Content-Length", fmt.Sprintf("%d", len(b)))
 	w.WriteHeader(status)
 	w.Write(b)
 	return nil
