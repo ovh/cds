@@ -60,6 +60,9 @@ func writeNoContentPostMiddleware(ctx context.Context, w http.ResponseWriter, re
 		if headerName == "Content-Type" {
 			return ctx, nil
 		}
+		if headerName == "Location" {
+			return ctx, nil
+		}
 	}
 	w.WriteHeader(http.StatusNoContent)
 	return ctx, nil

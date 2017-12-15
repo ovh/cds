@@ -44,7 +44,6 @@ func DownloadPlugin(name string, destdir string) error {
 			return nil
 		}
 	}
-
 	return fmt.Errorf("x5: %s", lasterr)
 }
 

@@ -263,8 +263,8 @@ func Stream(method string, path string, args []byte, mods ...RequestModifier) (i
 		// if everything is fine, return body
 		if err == nil && resp.StatusCode < 500 {
 			//Manage redirect
-			if resp.StatusCode == http.StatusTemporaryRedirect || resp.StatusCode == http.StatusMovedPermanently {
-				url := resp.Header.Get("Location")
+			url := resp.Header.Get("Location")
+			if url != "" {
 				req, errreq := http.NewRequest("GET", url, nil)
 				if errreq != nil {
 					return nil, 0, errreq
