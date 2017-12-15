@@ -595,6 +595,9 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 			select {
 			case <-workerOptions.chanNodeRun:
 			case err := <-workerOptions.chanError:
+				if err == nil {
+					continue
+				}
 				if chError != nil {
 					chError <- err
 				} else {

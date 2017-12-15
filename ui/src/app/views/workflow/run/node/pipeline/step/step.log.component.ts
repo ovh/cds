@@ -103,7 +103,7 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     }
 
     copyRawLog() {
-      this.logsElt.nativeElement.value = this.getLogs();
+      this.logsElt.nativeElement.value = this.logs.val;
       this.logsElt.nativeElement.select();
       document.execCommand('copy');
     }
