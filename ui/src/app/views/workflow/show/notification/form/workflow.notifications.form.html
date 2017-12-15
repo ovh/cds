@@ -1,0 +1,104 @@
+<div class="WorkflowNotification" *ngIf="notification">
+    <form class="ui form">
+        <div class="two fields">
+            <div class="six wide field">
+                <label> {{ 'workflow_notification_type' | translate}} </label>
+                <ng-container *ngIf="types && notification.type">
+                    <sui-select class="selection"
+                                name="type"
+                                [(ngModel)]="notification.type"
+                                (ngModelChange)="formatNode()"
+                                [options]="types"
+                                [isSearchable]="true">
+                        <sui-select-option *ngFor="let notifType of types"
+                                           [value]="notifType">
+                        </sui-select-option>
+                    </sui-select>
+                </ng-container>
+            </div>
+            <div class="ten wide field">
+                <label>{{ 'workflow_notification_pipeline' | translate }}</label>
+                <sui-multi-select class="selection"
+                                  name="nodes"
+                                  [(ngModel)]="notification.source_node_ref"
+                                  [options]="nodes"
+                                  labelField="name"
+                                  valueField="ref"
+                                  [isSearchable]="true" #select>
+                    <sui-select-option *ngFor="let n of select.filteredOptions"
+                                       [value]="n">
+                    </sui-select-option>
+                </sui-multi-select>
+                <div class="ui error message" *ngIf="nodeError">
+                    {{ 'workflow_notification_node_error' | translate }}
+                </div>
+            </div>
+        </div>
+        <div class="three fields">
+            <div class="six wide field">
+                <label>{{ 'workflow_notification_on_success' | translate}}</label>
+                <ng-container *ngIf="notification && notification.settings && notification.settings.on_success && notifOnSuccess">
+                    <sui-select class="selection"
+                                name="onsuccess"
+                                [(ngModel)]="notification.settings.on_success"
+                                [options]="notifOnSuccess"
+                                [isSearchable]="true">
+                        <sui-select-option *ngFor="let n of notifOnSuccess"
+                                           [value]="n">
+                        </sui-select-option>
+                    </sui-select>
+                </ng-container>
+
+            </div>
+            <div class="six wide field">
+                <label>{{ 'workflow_notification_on_failure' | translate}}</label>
+                <sui-select class="selection"
+                            name="onfailure"
+                            [(ngModel)]="notification.settings.on_failure"
+                            [options]="notifOnFailure"
+                            [isSearchable]="true">
+                    <sui-select-option *ngFor="let n of notifOnFailure"
+                                       [value]="n">
+                    </sui-select-option>
+                </sui-select>
+            </div>
+            <div class="four wide centered field">
+                <sui-checkbox class="toggle" name="onStart" [(ngModel)]="notification.settings.on_start">
+                    {{ 'workflow_notification_on_start' | translate}}
+                </sui-checkbox>
+            </div>
+        </div>
+        <div class="three fields">
+            <div class="eight wide field">
+                <label *ngIf="notification.type === 'jabber'">{{ 'workflow_notification_jabber_user' | translate}}</label>
+                <label *ngIf="notification.type === 'email'">{{ 'workflow_notification_email_user' | translate}}</label>
+                <input type="text" name="users" [(ngModel)]="selectedUsers">
+            </div>
+            <div class="four wide centered field">
+                <sui-checkbox class="toggle" name="toGroup" [(ngModel)]="notification.settings.send_to_groups">
+                    {{ 'workflow_notification_to_group' | translate}}
+                </sui-checkbox>
+            </div>
+            <div class="four wide centered field">
+                <sui-checkbox class="toggle" name="toInitiator" [(ngModel)]="notification.settings.send_to_author">
+                    {{ 'workflow_notification_to_initiator' | translate}}
+                </sui-checkbox>
+            </div>
+        </div>
+        <div class="field">
+            <label>{{ 'workflow_notification_title' | translate }}</label>
+            <input type="text" name="title" [(ngModel)]="notification.settings.template.subject">
+        </div>
+        <div class="field">
+            <label>{{ 'workflow_notification_body' | translate }}</label>
+            <textarea type="text" class="ui input" [(ngModel)]="notification.settings.template.body" name="body"></textarea>
+        </div>
+        <ng-container *ngIf="canDelete">
+            <app-delete-button [loading]="loading" (event)="deleteNotification()"></app-delete-button>
+        </ng-container>
+        <div class="ui right floated green button" name="save" (click)="createNotification()">
+            <span *ngIf="canDelete">{{'btn_save' | translate}}</span>
+            <span *ngIf="!canDelete">{{'btn_add' | translate}}</span>
+        </div>
+    </form>
+</div>

@@ -6,6 +6,7 @@ import {Parameter} from './parameter.model';
 import {WorkflowHookModel} from './workflow.hook.model';
 import {GroupPermission} from './group.model';
 import {Usage} from './usage.model';
+import {notificationTypes, UserNotificationSettings} from 'app/model/notification.model';
 
 // Workflow represents a pipeline based workflow
 export class Workflow {
@@ -24,6 +25,7 @@ export class Workflow {
     usage: Usage;
     history_length: number;
     purge_tags: Array<string>;
+    notifications: Array<WorkflowNotification>;
 
     // UI params
     externalChange: boolean;
@@ -31,7 +33,7 @@ export class Workflow {
     // Do not remove root node
     static removeNodeWithoutChild(workflow: Workflow, node: WorkflowNode): boolean {
         if (node.id === workflow.root.id) {
-            if ( (workflow.root.triggers && workflow.root.triggers.length > 1) || (workflow.joins && workflow.joins.length > 1)) {
+            if ((workflow.root.triggers && workflow.root.triggers.length > 1) || (workflow.joins && workflow.joins.length > 1)) {
                 return false;
             }
             if (workflow.root.triggers) {
@@ -192,6 +194,39 @@ export class Workflow {
             });
         }
         return warnings;
+    }
+
+    static getMapNodes(data: Workflow): Map<number, WorkflowNode> {
+        let nodes = new Map<number, WorkflowNode>();
+        nodes = WorkflowNode.getMapNodes(nodes, data.root);
+
+        if (data.joins) {
+            data.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        nodes = WorkflowNode.getMapNodes(nodes, t.workflow_dest_node);
+                    });
+                }
+            });
+        }
+        return nodes;
+    }
+
+    static getAllNodes(data: Workflow): Array<WorkflowNode> {
+        let nodes = new Array<WorkflowNode>();
+
+        nodes.push(...WorkflowNode.getAllNodes(data.root));
+
+        if (data.joins) {
+            data.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        nodes.push(...WorkflowNode.getAllNodes(t.workflow_dest_node));
+                    });
+                }
+            });
+        }
+        return nodes;
     }
 
     static getJoinById(id: number, workflow: Workflow): WorkflowNodeJoin {
@@ -370,11 +405,40 @@ export class WorkflowNode {
         }
     }
 
+    static getMapNodes(map: Map<number, WorkflowNode>, n: WorkflowNode): Map<number, WorkflowNode> {
+        let smallNode = new WorkflowNode();
+        smallNode.id = n.id;
+        smallNode.name = n.name;
+        map.set(n.id, smallNode);
+
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                map = WorkflowNode.getMapNodes(map, t.workflow_dest_node);
+            });
+        }
+
+        return map;
+    }
+
+    static getAllNodes(n: WorkflowNode): Array<WorkflowNode> {
+        let nodes = new Array<WorkflowNode>();
+
+        let smallNode = new WorkflowNode();
+        smallNode.id = n.id;
+        smallNode.name = n.name;
+        nodes.push(smallNode);
+
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                nodes.push(...WorkflowNode.getAllNodes(t.workflow_dest_node));
+            });
+        }
+        return nodes;
+    }
+
     constructor() {
         this.context = new WorkflowNodeContext();
     }
-
-
 }
 
 export class WorkflowPipelineNameImpact {
@@ -438,10 +502,16 @@ export class WorkflowTriggerConditionCache {
 }
 
 export class WorkflowNotification {
+    id: number;
+    source_node_id: Array<number>;
     source_node_ref: Array<string>;
-    notifications: any;
+    type: string;
+    settings: UserNotificationSettings;
 
     constructor() {
-        this.notifications = {};
+        this.type = notificationTypes[0];
+        this.settings = new UserNotificationSettings();
+        this.source_node_ref = new Array<string>();
+        this.source_node_id = new Array<number>();
     }
 }

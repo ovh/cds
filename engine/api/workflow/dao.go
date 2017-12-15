@@ -282,8 +282,13 @@ func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, query string, arg
 	if errJ != nil {
 		return nil, sdk.WrapError(errJ, "Load> Unable to load workflow joins")
 	}
-
 	res.Joins = joins
+
+	notifs, errN := loadNotifications(db, &res)
+	if errN != nil {
+		return nil, sdk.WrapError(errN, "Load> Unable to load workflow notification")
+	}
+	res.Notifications = notifs
 
 	delta := time.Since(t0).Seconds()
 
@@ -333,12 +338,23 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 		return sdk.WrapError(err, "Insert> Unable to insert workflow (%#v, %d)", w.Root, w.ID)
 	}
 
+	nodes := w.Nodes(true)
 	for i := range w.Joins {
 		j := &w.Joins[i]
-		if err := insertJoin(db, store, w, j, u); err != nil {
+		var err error
+		nodes, err = insertJoin(db, store, w, j, nodes, u)
+		if err != nil {
 			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
+
+	for i := range w.Notifications {
+		n := &w.Notifications[i]
+		if err := insertNotification(db, store, w, n, nodes, u); err != nil {
+			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) notification (%#v)", w.ID, n)
+		}
+	}
+
 	return updateLastModified(db, store, w, u)
 }
 
@@ -443,6 +459,10 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		}
 	}
 
+	if err := deleteNotifications(db, oldWorkflow.ID); err != nil {
+		return sdk.WrapError(err, "Update> unable to delete all notifications on workflow(%d)", w.ID)
+	}
+
 	// Delete old Root Node
 	if oldWorkflow.Root != nil {
 		if _, err := db.Exec("update workflow set root_node_id = null where id = $1", w.ID); err != nil {
@@ -459,12 +479,22 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	}
 
 	w.RootID = w.Root.ID
+	nodes := w.Nodes(true)
 
 	// Insert new JOIN
 	for i := range w.Joins {
 		j := &w.Joins[i]
-		if err := insertJoin(db, store, w, j, u); err != nil {
-			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
+		var err error
+		nodes, err = insertJoin(db, store, w, j, nodes, u)
+		if err != nil {
+			return sdk.WrapError(err, "Update> Unable to update workflow(%d) join (%#v)", w.ID, j)
+		}
+	}
+
+	for i := range w.Notifications {
+		n := &w.Notifications[i]
+		if err := insertNotification(db, store, w, n, nodes, u); err != nil {
+			return sdk.WrapError(err, "Update> Unable to update workflow(%d) notification (%#v)", w.ID, n)
 		}
 	}
 
