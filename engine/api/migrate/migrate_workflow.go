@@ -55,6 +55,12 @@ func MigrateToWorkflow(db gorp.SqlExecutor, store cache.Store, cdTree []sdk.CDPi
 		if errW := workflow.Insert(db, store, &newW, proj, u); errW != nil {
 			return sdk.WrapError(errW, "MigrateToWorkflow")
 		}
+
+		for _, g := range newW.Groups {
+			if err := workflow.AddGroup(db, &newW, g); err != nil {
+				return sdk.WrapError(err, "MigrateToWorkflow> Cannot add group")
+			}
+		}
 	}
 	return nil
 }
