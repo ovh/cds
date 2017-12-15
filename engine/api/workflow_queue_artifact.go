@@ -101,11 +101,13 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 		if len(files) == 1 {
 			file, err := files[0].Open()
 			if err != nil {
+				file.Close()
 				return sdk.WrapError(err, "postWorkflowJobArtifactHandler> cannot open file")
 
 			}
 
 			if err := artifact.SaveWorkflowFile(&art, file); err != nil {
+				file.Close()
 				return sdk.WrapError(err, "postWorkflowJobArtifactHandler> Cannot save artifact in store")
 			}
 			file.Close()
@@ -120,21 +122,21 @@ func (api *API) postWorkflowJobArtifactHandler() Handler {
 	}
 }
 
-func (api *API) postWorkflowJobArtifacWithTempURLtHandler() Handler {
+func (api *API) postWorkflowJobArtifacWithTempURLHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		if !objectstore.Instance().TemporaryURLSupported {
-			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLtHandler")
+			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler")
 		}
 
 		store, ok := objectstore.Storage().(objectstore.DriverWithRedirect)
 		if !ok {
-			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLtHandler > cast error")
+			return sdk.WrapError(sdk.ErrForbidden, "postWorkflowJobArtifacWithTempURLHandler > cast error")
 		}
 
 		// Load  Existing workflow Run Job
 		id, errI := requestVarInt(r, "permID")
 		if errI != nil {
-			return sdk.WrapError(sdk.ErrInvalidID, "postWorkflowJobArtifacWithTempURLtHandler> Invalid node job run ID")
+			return sdk.WrapError(errI, "postWorkflowJobArtifacWithTempURLHandler> Invalid node job run ID")
 		}
 
 		vars := mux.Vars(r)
@@ -142,12 +144,12 @@ func (api *API) postWorkflowJobArtifacWithTempURLtHandler() Handler {
 
 		hash, errG := generateHash()
 		if errG != nil {
-			return sdk.WrapError(errG, "postWorkflowJobArtifacWithTempURLtHandler> Could not generate hash")
+			return sdk.WrapError(errG, "postWorkflowJobArtifacWithTempURLHandler> Could not generate hash")
 		}
 
 		art := sdk.WorkflowNodeRunArtifact{}
 		if err := UnmarshalBody(r, &art); err != nil {
-			return err
+			return sdk.WrapError(err, "postWorkflowJobArtifacWithTempURLHandler")
 		}
 
 		nodeJobRun, errJ := workflow.LoadNodeJobRun(api.mustDB(), api.Cache, id)
@@ -167,7 +169,7 @@ func (api *API) postWorkflowJobArtifacWithTempURLtHandler() Handler {
 
 		url, key, err := store.StoreURL(&art)
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowJobArtifacWithTempURLtHandler> Could not generate hash")
+			return sdk.WrapError(err, "postWorkflowJobArtifacWithTempURLHandler> Could not generate hash")
 		}
 
 		art.TempURL = url
