@@ -147,7 +147,7 @@ type QueueClient interface {
 	QueueJobInfo(id int64) (*sdk.WorkflowNodeJobRun, error)
 	QueueJobSendSpawnInfo(isWorkflowJob bool, id int64, in []sdk.SpawnInfo) error
 	QueueSendResult(int64, sdk.Result) error
-	QueueArtifactUpload(id int64, tag, filePath string) error
+	QueueArtifactUpload(id int64, tag, filePath string) (bool, time.Duration, error)
 	QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error
 }
 

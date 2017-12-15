@@ -320,8 +320,7 @@ func (r *Router) Asynchronous(handler AsynchronousHandlerFunc, retry int) Handle
 			}
 			log.Debug("Router> Asynchronous call of %s", r.URL.String())
 			chanRequest <- async
-			w.WriteHeader(http.StatusAccepted)
-			return nil
+			return Accepted(w, r)
 		}
 	}
 }
