@@ -679,6 +679,6 @@
   "workflow_orientation_vertical" : "Vertical",
   "workflow_orientation_tree" : "Tree",
   "workflow_last_execution" : "Last execution date",
-  "workflow_first_execution" : "First execution date"
-
+  "workflow_first_execution" : "First execution date",
+  "workflow_runnumber_title": "First run number of workflow"
 }

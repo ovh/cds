@@ -129,6 +129,7 @@ var (
 	ErrBuiltinKeyNotFound                    = Error{ID: 113, Status: http.StatusInternalServerError}
 	ErrStepNotFound                          = Error{ID: 114, Status: http.StatusNotFound}
 	ErrWorkerModelAlreadyBooked              = Error{ID: 115, Status: http.StatusConflict}
+	ErrConditionsNotOk                       = Error{ID: 116, Status: http.StatusBadRequest}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -246,6 +247,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrBuiltinKeyNotFound.ID:                    "Encryption Key not found",
 	ErrStepNotFound.ID:                          "Step not found",
 	ErrWorkerModelAlreadyBooked.ID:              "Worker Model already booked",
+	ErrConditionsNotOk.ID:                       "Cannot run this pipeline because launch conditions aren't ok",
 }
 
 var errorsFrench = map[int]string{
@@ -363,6 +365,7 @@ var errorsFrench = map[int]string{
 	ErrBuiltinKeyNotFound.ID:                    "Clé de chiffrage introuvable",
 	ErrStepNotFound.ID:                          "Step introuvable",
 	ErrWorkerModelAlreadyBooked.ID:              "Le modèle de worker est déjà réservé",
+	ErrConditionsNotOk.ID:                       "Impossible de démarrer ce pipeline car les conditions de lancement ne sont pas respectées",
 }
 
 var errorsLanguages = []map[int]string{

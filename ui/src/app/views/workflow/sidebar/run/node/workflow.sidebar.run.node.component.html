@@ -61,9 +61,9 @@
                     </div>
                 </div>
             </div>
-            <div class="item padding">
+            <div class="item padding" *ngIf="duration">
                 <div class="content" [title]="'common_duration_title' | translate">
-                    <div><i class="clock icon"></i> {{getDuration()}}</div>
+                    <div><i class="clock icon"></i> {{duration}}</div>
                 </div>
             </div>
             <div class="item padding">

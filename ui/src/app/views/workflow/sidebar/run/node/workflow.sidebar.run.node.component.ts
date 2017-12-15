@@ -48,6 +48,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     currentWorkflowNodeRun: WorkflowNodeRun;
     displayEditOption = false;
     displaySummary = true;
+    duration: string;
     pipelineStatusEnum = PipelineStatus;
 
     constructor(private _wrService: WorkflowRunService, private _wfService: WorkflowService, private _router: Router,
@@ -86,6 +87,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
             this.node = Workflow.getNodeByID(this.nodeId, this.currentWorkflowRun.workflow);
             if (this.node && wr.nodes && wr.nodes[this.node.id] && Array.isArray(wr.nodes[this.node.id])) {
                 this.currentWorkflowNodeRun = wr.nodes[this.node.id].find((n) => n.id === this.runId && n.num === this.runNumber);
+                this.duration = this.getDuration();
             } else {
                 this.currentWorkflowNodeRun = null;
             }
@@ -103,6 +105,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
                 this.node = Workflow.getNodeByID(this.nodeId, this.currentWorkflowRun.workflow);
                 if (this.node && wr.nodes && wr.nodes[this.node.id] && Array.isArray(wr.nodes[this.node.id])) {
                     this.currentWorkflowNodeRun = wr.nodes[this.node.id].find((n) => n.id === this.runId && n.num === this.runNumber);
+                    this.duration = this.getDuration();
                 } else {
                     this.currentWorkflowNodeRun = null;
                 }
@@ -120,7 +123,15 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     }
 
     getDuration() {
-        return this._durationService.duration(new Date(this.currentWorkflowNodeRun.start), new Date(this.currentWorkflowNodeRun.done));
+        if (!this.currentWorkflowNodeRun) {
+            return;
+        }
+        let done = new Date(this.currentWorkflowNodeRun.done);
+        if (PipelineStatus.isActive(this.currentWorkflowNodeRun.status)) {
+            done = new Date();
+        }
+
+        return this._durationService.duration(new Date(this.currentWorkflowNodeRun.start), done);
     }
 
     stopNodeRun(): void {

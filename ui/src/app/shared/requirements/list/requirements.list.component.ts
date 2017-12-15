@@ -45,6 +45,7 @@ export class RequirementsListComponent extends Table {
 
     constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
         super();
+        this.nbElementsByPage = 5;
         this._requirementStore.getAvailableRequirements()
             .subscribe(r => {
                 this.availableRequirements = new Array<string>();

@@ -101,8 +101,13 @@ func ManualRunFromNode(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w
 	}
 	lastWorkflowRun.Tag(tagTriggeredBy, e.User.Username)
 
-	if _, err := processWorkflowRun(db, store, p, lastWorkflowRun, nil, e, &nodeID, chanEvent); err != nil {
+	condOk, err := processWorkflowRun(db, store, p, lastWorkflowRun, nil, e, &nodeID, chanEvent)
+	if err != nil {
 		return nil, sdk.WrapError(err, "ManualRunFromNode> Unable to process workflow run")
+	}
+
+	if !condOk {
+		return nil, sdk.WrapError(sdk.ErrConditionsNotOk, "ManualRunFromNode> Conditions aren't ok")
 	}
 
 	var errLoadRunByID error
