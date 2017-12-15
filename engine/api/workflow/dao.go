@@ -339,10 +339,11 @@ func Insert(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, p *sdk.Proj
 	}
 
 	nodes := w.Nodes(true)
-
 	for i := range w.Joins {
 		j := &w.Joins[i]
-		if err := insertJoin(db, store, w, j, nodes, u); err != nil {
+		var err error
+		nodes, err = insertJoin(db, store, w, j, nodes, u)
+		if err != nil {
 			return sdk.WrapError(err, "Insert> Unable to insert update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
@@ -478,13 +479,14 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 	}
 
 	w.RootID = w.Root.ID
-
 	nodes := w.Nodes(true)
 
 	// Insert new JOIN
 	for i := range w.Joins {
 		j := &w.Joins[i]
-		if err := insertJoin(db, store, w, j, nodes, u); err != nil {
+		var err error
+		nodes, err = insertJoin(db, store, w, j, nodes, u)
+		if err != nil {
 			return sdk.WrapError(err, "Update> Unable to update workflow(%d) join (%#v)", w.ID, j)
 		}
 	}
