@@ -250,7 +250,6 @@ func (api *API) downloadPluginHandler() Handler {
 		p := sdk.ActionPlugin{Name: name}
 
 		acceptRedirect := FormBool(r, "accept-redirect")
-
 		if acceptRedirect {
 			url, err := objectstore.FetchTempURL(&p)
 			if err == nil {
