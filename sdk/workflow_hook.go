@@ -6,7 +6,7 @@ const (
 	BitbucketIcon = "Bitbucket"
 )
 
-// FilterHooksConfig filter all hooks configuration and remove somme configuration key
+// FilterHooksConfig filter all hooks configuration and remove some configuration key
 func (w *Workflow) FilterHooksConfig(s ...string) {
 	if w.Root == nil {
 		return

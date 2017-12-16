@@ -275,14 +275,14 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 	//Unmarshal payload
 	if sqlContext.DefaultPayload.Valid {
 		if err := json.Unmarshal([]byte(sqlContext.DefaultPayload.String), &ctx.DefaultPayload); err != nil {
-			return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d default payload %d", ctx.ID)
+			return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d default payload", ctx.ID)
 		}
 	}
 
 	//Unmarshal pipeline parameters
 	if sqlContext.DefaultPipelineParameters.Valid {
 		if err := json.Unmarshal([]byte(sqlContext.DefaultPipelineParameters.String), &ctx.DefaultPipelineParameters); err != nil {
-			return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d default pipeline parameters %d", ctx.ID)
+			return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d default pipeline parameters", ctx.ID)
 		}
 	}
 

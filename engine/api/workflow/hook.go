@@ -13,7 +13,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// HookRegistration ensures hooks registration on Hoohs micro service
+// HookRegistration ensures hooks registration on Hook µService
 func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow, wf sdk.Workflow, p *sdk.Project) error {
 	var hookToUpdate map[string]sdk.WorkflowNodeHook
 	var hookToDelete map[string]sdk.WorkflowNodeHook

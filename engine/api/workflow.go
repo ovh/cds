@@ -214,7 +214,7 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 		wf1.Usage = &usage
 
-		//We filter project and workflow configurtaion key, because they are always set on insertHooks
+		//We filter project and workflow configuration key, because they are always set on insertHooks
 		wf1.FilterHooksConfig("project", "workflow")
 
 		return WriteJSON(w, r, wf1, http.StatusOK)
