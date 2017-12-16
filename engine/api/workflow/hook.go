@@ -63,7 +63,7 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 					return nil, sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
 				}
 
-				defaultPayload = &sdk.WorkflowNodeContextDefaultPayloadVCS{GitBranch: "TODO-Branch-VCS", GitHash: "TODO-Hash-VCS"}
+				defaultPayload = &sdk.WorkflowNodeContextDefaultPayloadVCS{}
 			}
 			if err := UpdateHook(db, &h); err != nil {
 				return nil, sdk.WrapError(err, "HookRegistration> Cannot update hook")
