@@ -314,7 +314,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 			sendLog(fmt.Sprintf("git.message: %s", message))
 		}
 
-		if message == "" {
+		if author == "" {
 			gitAuthor := sdk.Variable{
 				Name:  "git.author",
 				Type:  sdk.StringVariable,
