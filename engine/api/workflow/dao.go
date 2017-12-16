@@ -473,7 +473,7 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		}
 	}
 
-	// Inser new Root Node
+	// Insert new Root Node
 	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
 		return sdk.WrapError(err, "Update> unable to update root node on workflow(%d)", w.ID)
 	}

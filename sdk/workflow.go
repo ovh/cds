@@ -640,6 +640,11 @@ type WorkflowNodeContext struct {
 	Conditions                WorkflowNodeConditions `json:"conditions,omitempty" db:"-"`
 }
 
+type WorkflowNodeContextDefaultPayloadVCS struct {
+	GitBranch string `json:"git.branch" db:"-"`
+	GitHash   string `json:"git.hash" db:"-"`
+}
+
 //WorkflowList return the list of the workflows for a project
 func WorkflowList(projectkey string) ([]Workflow, error) {
 	path := fmt.Sprintf("/project/%s/workflows", projectkey)

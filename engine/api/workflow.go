@@ -1,9 +1,11 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 
+	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 	"github.com/gorilla/mux"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // getWorkflowsHandler returns ID and name of workflows for a given project/user
@@ -107,6 +110,14 @@ func (api *API) postWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		defaultPayload, errHr := workflow.HookRegistration(tx, api.Cache, nil, wf, p)
+		if errHr != nil {
+			return sdk.WrapError(errHr, "postWorkflowHandler")
+		}
+		if defaultPayload != nil && isDefaultPayloadIsEmpty(wf) {
+			wf.Root.Context.DefaultPayload = *defaultPayload
+		}
+
 		if err := workflow.Insert(tx, api.Cache, &wf, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "Cannot insert workflow")
 		}
@@ -122,10 +133,6 @@ func (api *API) postWorkflowHandler() Handler {
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
 			return sdk.WrapError(err, "Cannot update project last modified date")
-		}
-
-		if err := workflow.HookRegistration(tx, api.Cache, nil, wf, p); err != nil {
-			return sdk.WrapError(err, "postWorkflowHandler")
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
@@ -181,6 +188,15 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		defaultPayload, errHr := workflow.HookRegistration(tx, api.Cache, oldW, wf, p)
+		if errHr != nil {
+			return sdk.WrapError(errHr, "putWorkflowHandler")
+		}
+
+		if defaultPayload != nil && isDefaultPayloadIsEmpty(wf) {
+			wf.Root.Context.DefaultPayload = *defaultPayload
+		}
+
 		if err := workflow.Update(tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")
 		}
@@ -193,10 +209,6 @@ func (api *API) putWorkflowHandler() Handler {
 			if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectWorkflowLastModificationType); err != nil {
 				return sdk.WrapError(err, "putWorkflowHandler> Cannot update project last modified date")
 			}
-		}
-
-		if err := workflow.HookRegistration(tx, api.Cache, oldW, wf, p); err != nil {
-			return sdk.WrapError(err, "putWorkflowHandler")
 		}
 
 		if err := tx.Commit(); err != nil {
@@ -219,6 +231,20 @@ func (api *API) putWorkflowHandler() Handler {
 
 		return WriteJSON(w, r, wf1, http.StatusOK)
 	}
+}
+
+func isDefaultPayloadIsEmpty(wf sdk.Workflow) bool {
+	e := dump.NewDefaultEncoder(new(bytes.Buffer))
+	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+	e.ExtraFields.DetailedMap = false
+	e.ExtraFields.DetailedStruct = false
+	e.ExtraFields.Len = false
+	e.ExtraFields.Type = false
+	m, err := e.ToStringMap(wf.Root.Context.DefaultPayload)
+	if err != nil {
+		log.Warning("isDefaultPayloadIsEmpty>error while dump wf.Root.Context.DefaultPayload")
+	}
+	return len(m) == 0 // if empty, return true
 }
 
 // putWorkflowHandler deletes a workflow
