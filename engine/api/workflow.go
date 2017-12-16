@@ -114,7 +114,7 @@ func (api *API) postWorkflowHandler() Handler {
 		if errHr != nil {
 			return sdk.WrapError(errHr, "postWorkflowHandler")
 		}
-		if defaultPayload != nil && isDefaultPayloadIsEmpty(wf) {
+		if defaultPayload != nil && isDefaultPayloadEmpty(wf) {
 			wf.Root.Context.DefaultPayload = *defaultPayload
 		}
 
@@ -193,7 +193,7 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(errHr, "putWorkflowHandler")
 		}
 
-		if defaultPayload != nil && isDefaultPayloadIsEmpty(wf) {
+		if defaultPayload != nil && isDefaultPayloadEmpty(wf) {
 			wf.Root.Context.DefaultPayload = *defaultPayload
 		}
 
@@ -233,7 +233,7 @@ func (api *API) putWorkflowHandler() Handler {
 	}
 }
 
-func isDefaultPayloadIsEmpty(wf sdk.Workflow) bool {
+func isDefaultPayloadEmpty(wf sdk.Workflow) bool {
 	e := dump.NewDefaultEncoder(new(bytes.Buffer))
 	e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
 	e.ExtraFields.DetailedMap = false
@@ -242,7 +242,7 @@ func isDefaultPayloadIsEmpty(wf sdk.Workflow) bool {
 	e.ExtraFields.Type = false
 	m, err := e.ToStringMap(wf.Root.Context.DefaultPayload)
 	if err != nil {
-		log.Warning("isDefaultPayloadIsEmpty>error while dump wf.Root.Context.DefaultPayload")
+		log.Warning("isDefaultPayloadEmpty>error while dump wf.Root.Context.DefaultPayload")
 	}
 	return len(m) == 0 // if empty, return true
 }
