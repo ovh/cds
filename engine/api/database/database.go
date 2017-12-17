@@ -144,7 +144,7 @@ func (f *DBConnectionFactory) Status() sdk.MonitoringStatusLine {
 		return sdk.MonitoringStatusLine{Component: "Database", Value: "No Ping", Status: sdk.MonitoringStatusAlert}
 	}
 
-	return sdk.MonitoringStatusLine{Component: "Database", Value: fmt.Sprintf("(%d conns)", f.db.Stats().OpenConnections), Status: sdk.MonitoringStatusOK}
+	return sdk.MonitoringStatusLine{Component: "Database", Value: fmt.Sprintf("%d conns", f.db.Stats().OpenConnections), Status: sdk.MonitoringStatusOK}
 }
 
 // Close closes the database, releasing any open resources.
