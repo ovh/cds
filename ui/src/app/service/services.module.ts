@@ -19,6 +19,7 @@ import {ApplicationWorkflowService} from './application/application.workflow.ser
 import {RequirementService} from './worker-model/requirement/requirement.service';
 import {RequirementStore} from './worker-model/requirement/requirement.store';
 import {ParameterService} from './parameter/parameter.service';
+import {MonitoringService} from './monitoring/monitoring.service';
 import {ActionService} from './action/action.service';
 import {ActionStore} from './action/action.store';
 import {PipelineResolver} from './pipeline/pipeline.resolver';
@@ -82,6 +83,7 @@ export class ServicesModule {
                 NavbarService,
                 NotificationService,
                 ParameterService,
+                MonitoringService,
                 PipelineResolver,
                 PipelineService,
                 PipelineAuditService,
@@ -143,6 +145,7 @@ export {
     LanguageStore,
     LastUpdateService,
     ParameterService,
+    MonitoringService,
     PipelineResolver,
     PipelineStore,
     PipelineAuditService,

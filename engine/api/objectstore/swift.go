@@ -36,12 +36,16 @@ func NewSwiftStore(authURL, user, password, region, tenant, containerprefix stri
 }
 
 // Status returns the status of swift account
-func (s *SwiftStore) Status() string {
+func (s *SwiftStore) Status() sdk.MonitoringStatusLine {
 	info, _, err := s.Account()
 	if err != nil {
-		return "Swift KO: " + err.Error()
+		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Swift KO" + err.Error(), Status: sdk.MonitoringStatusAlert}
 	}
-	return fmt.Sprintf("Swift OK (%d containers, %d objects, %d bytes used", info.Containers, info.Containers, info.BytesUsed)
+	return sdk.MonitoringStatusLine{
+		Component: "Object-Store",
+		Value:     fmt.Sprintf("Swift OK (%d containers, %d objects, %d bytes used", info.Containers, info.Containers, info.BytesUsed),
+		Status:    sdk.MonitoringStatusOK,
+	}
 }
 
 // Store stores in swift

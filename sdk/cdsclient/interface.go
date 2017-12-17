@@ -199,7 +199,7 @@ type WorkflowClient interface {
 
 // MonitoringClient exposes monitoring functions
 type MonitoringClient interface {
-	MonStatus() ([]string, error)
+	MonStatus() (*sdk.MonitoringStatus, error)
 	MonDBTimes() (*sdk.MonDBTimes, error)
 	MonDBMigrate() ([]sdk.MonDBMigrate, error)
 }

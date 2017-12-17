@@ -44,11 +44,11 @@ func Init(user, password, from, host, port string, tls, disable bool) {
 }
 
 // Status verification of smtp configuration, returns OK or KO
-func Status() string {
+func Status() sdk.MonitoringStatusLine {
 	if _, err := smtpClient(); err != nil {
-		return fmt.Sprintf("KO (%s)", err)
+		return sdk.MonitoringStatusLine{Component: "SMTP", Value: "KO: " + err.Error(), Status: sdk.MonitoringStatusAlert}
 	}
-	return "OK"
+	return sdk.MonitoringStatusLine{Component: "SMTP", Value: "Connect OK", Status: sdk.MonitoringStatusOK}
 }
 
 func smtpClient() (*smtp.Client, error) {

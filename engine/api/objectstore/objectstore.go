@@ -14,11 +14,10 @@ var storage Driver
 var instance sdk.ArtifactsStore
 
 //Status is for status handler
-func Status() string {
+func Status() sdk.MonitoringStatusLine {
 	if storage == nil {
-		return "KO : Store not initialized"
+		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Store not initialized", Status: sdk.MonitoringStatusAlert}
 	}
-
 	return storage.Status()
 }
 
@@ -123,7 +122,7 @@ func DeleteTemplateExtension(tmpl sdk.TemplateExtension) error {
 // - Openstack / Swift
 // - Filesystem
 type Driver interface {
-	Status() string
+	Status() sdk.MonitoringStatusLine
 	Store(o Object, data io.ReadCloser) (string, error)
 	Fetch(o Object) (io.ReadCloser, error)
 	Delete(o Object) error

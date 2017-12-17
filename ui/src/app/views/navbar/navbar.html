@@ -34,6 +34,7 @@
         </sm-dropdown>
         <sm-dropdown icon="student" *ngIf="currentUser && currentUser.admin">
             <a sm-item href="#" [routerLink]="['admin', 'migration']">{{ 'navbar_admin_migration' | translate }}</a>
+            <a sm-item href="#" [routerLink]="['admin', 'status']">{{ 'navbar_admin_status' | translate }}</a>
         </sm-dropdown>
         <sm-dropdown icon="help circle outline">
             <a sm-item href="https://github.com/ovh/cds/releases/latest">{{ 'navbar_download' | translate }}</a>

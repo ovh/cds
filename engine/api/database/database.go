@@ -8,6 +8,7 @@ import (
 	"github.com/go-gorp/gorp"
 	_ "github.com/lib/pq"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -134,16 +135,16 @@ func Init(user, password, name, host string, port int, sslmode string, connectTi
 }
 
 // Status returns database driver and status in a printable string
-func (f *DBConnectionFactory) Status() string {
+func (f *DBConnectionFactory) Status() sdk.MonitoringStatusLine {
 	if f.db == nil {
-		return fmt.Sprintf("Database: %s KO (no connection)", f.dbDriver)
+		return sdk.MonitoringStatusLine{Component: "Database", Value: "No Connection", Status: sdk.MonitoringStatusAlert}
 	}
 
 	if err := f.db.Ping(); err != nil {
-		return fmt.Sprintf("Database: %s KO (%s)", f.dbDriver, err)
+		return sdk.MonitoringStatusLine{Component: "Database", Value: "No Ping", Status: sdk.MonitoringStatusAlert}
 	}
 
-	return fmt.Sprintf("Database: %s OK (%d conns)", f.dbDriver, f.db.Stats().OpenConnections)
+	return sdk.MonitoringStatusLine{Component: "Database", Value: fmt.Sprintf("(%d conns)", f.db.Stats().OpenConnections), Status: sdk.MonitoringStatusOK}
 }
 
 // Close closes the database, releasing any open resources.
