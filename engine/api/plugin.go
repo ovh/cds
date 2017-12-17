@@ -252,11 +252,13 @@ func (api *API) downloadPluginHandler() Handler {
 		acceptRedirect := FormBool(r, "accept-redirect")
 		if acceptRedirect {
 			url, err := objectstore.FetchTempURL(&p)
-			if err == nil {
+			if url != "" {
 				http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 				return nil
 			}
-			log.Warning("downloadPluginHandler> Unable to get temp url: %v", err)
+			if err != nil {
+				log.Warning("downloadPluginHandler> Unable to get temp url: %v", err)
+			}
 		}
 
 		f, err := objectstore.FetchPlugin(p)
