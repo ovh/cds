@@ -106,7 +106,6 @@ pre {
   }
 
   tbody tr td {
-    border: none;
     overflow: visible;
     padding-top: 4px;
     padding-bottom: 4px;
@@ -121,6 +120,12 @@ pre {
     input, select, textarea, .ui.dropdown {
       border-color: transparent;
     }
+  }
+}
+
+.table.borderless {
+  tbody tr td {
+    border: none;
   }
 }
 

@@ -4,7 +4,7 @@
         <i class="icon plus"></i>
     </button>
     <app-notification-form-modal [project]="project" [application]="application" [loading]="loading" [notification]="selectedNotification" (event)="send($event)" #notifForm></app-notification-form-modal>
-    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+    <table class="ui fixed celled borderless table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
             <th class="three wide">{{ 'common_pipeline' | translate }}</th>
