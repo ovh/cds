@@ -247,8 +247,21 @@ func (api *API) downloadPluginHandler() Handler {
 		if name == "" {
 			return sdk.ErrWrongRequest
 		}
+		p := sdk.ActionPlugin{Name: name}
 
-		f, err := objectstore.FetchPlugin(sdk.ActionPlugin{Name: name})
+		acceptRedirect := FormBool(r, "accept-redirect")
+		if acceptRedirect {
+			url, err := objectstore.FetchTempURL(&p)
+			if url != "" {
+				http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+				return nil
+			}
+			if err != nil {
+				log.Warning("downloadPluginHandler> Unable to get temp url: %v", err)
+			}
+		}
+
+		f, err := objectstore.FetchPlugin(p)
 		if err != nil {
 			return sdk.WrapError(err, "downloadPluginHandler> Error while fetching plugin", name)
 		}

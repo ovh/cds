@@ -131,8 +131,10 @@ type Driver interface {
 
 // DriverWithRedirect has to be implemented if your storage backend supports temp url
 type DriverWithRedirect interface {
-	StoreURL(o Object) (string, string, error)
-	FetchURL(o Object) (string, string, error)
+	// StoreURL returns a temporary url and a secret key to store an object
+	StoreURL(o Object) (url string, key string, err error)
+	// FetchURL returns a temporary url and a secret key to fetch an object
+	FetchURL(o Object) (url string, key string, err error)
 }
 
 // Initialize setup wanted ObjectStore driver
