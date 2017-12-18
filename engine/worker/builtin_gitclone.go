@@ -249,6 +249,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 
 func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, commit string, sendLog LoggerFunc) error {
 	author := sdk.ParameterValue(*params, "git.author")
+	authorEmail := sdk.ParameterValue(*params, "git.author.email")
 	message := sdk.ParameterValue(*params, "git.message")
 
 	info, errInfo := git.ExtractInfo(dir)
@@ -329,16 +330,20 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 			sendLog(fmt.Sprintf("git.author: %s", author))
 		}
 
-		gitAuthorEmail := sdk.Variable{
-			Name:  "git.author.email",
-			Type:  sdk.StringVariable,
-			Value: info.AuthorEmail,
-		}
+		if authorEmail == "" {
+			gitAuthorEmail := sdk.Variable{
+				Name:  "git.author.email",
+				Type:  sdk.StringVariable,
+				Value: info.AuthorEmail,
+			}
 
-		if _, err := w.addVariableInPipelineBuild(gitAuthorEmail, params); err != nil {
-			return fmt.Errorf("Error on addVariableInPipelineBuild (authorEmail): %s", err)
+			if _, err := w.addVariableInPipelineBuild(gitAuthorEmail, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (authorEmail): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.author.email: %s", info.AuthorEmail))
+		} else {
+			sendLog(fmt.Sprintf("git.author.email: %s", authorEmail))
 		}
-		sendLog(fmt.Sprintf("git.author.email: %s", info.AuthorEmail))
 	}
 
 	return nil
