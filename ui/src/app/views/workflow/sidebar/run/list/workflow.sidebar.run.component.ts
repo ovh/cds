@@ -132,7 +132,9 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         if (!Array.isArray(tags) || !this.tagToDisplay) {
             return [];
         }
-        return tags.filter((tg) => this.tagToDisplay.indexOf(tg.tag) !== -1);
+        return tags
+          .filter((tg) => this.tagToDisplay.indexOf(tg.tag) !== -1)
+          .sort((tga, tgb) => this.tagToDisplay.indexOf(tga.tag) - this.tagToDisplay.indexOf(tgb.tag));
     }
 
     getFilteredTagsString(tags: WorkflowRunTags[]): string {

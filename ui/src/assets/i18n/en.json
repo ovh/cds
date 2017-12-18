@@ -670,7 +670,7 @@
   "workflow_run_never" : "This workflow has never been run",
   "workflow_run_resync_done" : "Resynchronized",
   "workflow_run_with_parameters" : "Run workflow",
-  "workflow_sidebar_tag_zone" : "Tags to display in the sidebar",
+  "workflow_sidebar_tag_zone" : "Tags to display in the sidebar (order by priority)",
   "workflow_updated" : "Workflow updated",
   "workflow_resync" : "Resynchronize workflow",
   "workflow_stopped" : "Workflow stopped",
