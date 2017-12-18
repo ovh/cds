@@ -123,7 +123,6 @@
   "btn_run" : "Lancer le pipeline",
   "btn_logs" : "Afficher les logs",
   "btn_run_workflow" : "Lancer le workflow",
-  "btn_run_custom_worklow" : "Lancer le workflow avec des paramètres",
   "btn_validate" : "Valider",
   "btn_save" : "Sauvegarder",
   "btn_edit" : "Éditer",
