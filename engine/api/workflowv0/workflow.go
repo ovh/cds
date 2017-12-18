@@ -418,7 +418,7 @@ func getChild(db gorp.SqlExecutor, parent *sdk.CDPipeline, user *sdk.User, branc
 			JOIN project as destProj ON destProj.id = destApp.project_id
 			LEFT JOIN pipeline_trigger_parameter AS ptp ON ptp.pipeline_trigger_id = pt.id
 			LEFT JOIN pipeline_trigger_prerequisite pre ON pre.pipeline_trigger_id = pt.id
-			WHERE pt.src_pipeline_id = pr.dest_pipeline_id AND COALESCE(pt.src_environment_id,1) = COALESCE(pr.dest_environment_id,1)
+			WHERE pt.src_application_id = pr.dest_application_id AND pt.src_pipeline_id = pr.dest_pipeline_id AND COALESCE(pt.src_environment_id,1) = COALESCE(pr.dest_environment_id,1)
 	)
 	SELECT  parent.id,
 		src_application_id, dest_application_id,
