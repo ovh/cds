@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fsamin/go-dump"
 	"github.com/go-gorp/gorp"
 
-	"github.com/fsamin/go-dump"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -342,6 +342,7 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	return stageEnd, nil
 }
 
+// NodeBuildParametersFromRun return build parameters from previous workflow run
 func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, error) {
 	params := []sdk.Parameter{}
 
@@ -357,7 +358,7 @@ func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, 
 	return params, nil
 }
 
-//NodeBuildParameters returns build_parameters for a node given its id
+//NodeBuildParametersFromWorkflow returns build_parameters for a node given its id
 func NodeBuildParametersFromWorkflow(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.WorkflowNode, ancestorsIds []int64) ([]sdk.Parameter, error) {
 
 	res := []sdk.Parameter{}
