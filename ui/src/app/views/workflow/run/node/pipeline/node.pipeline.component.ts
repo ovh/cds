@@ -36,7 +36,9 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
     constructor(private _durationService: DurationService, private _route: ActivatedRoute, private _router: Router) { }
 
     ngOnInit() {
-      if (this._route.snapshot.queryParams['actionId']) {
+      if (!this._route.snapshot.queryParams['actionId'] && this._route.snapshot.queryParams['stageId']) {
+        this.selectedStage(parseInt(this._route.snapshot.queryParams['stageId'], 10));
+      } else if (this._route.snapshot.queryParams['actionId']) {
         let job = new Job();
         job.pipeline_action_id = parseInt(this._route.snapshot.queryParams['actionId'], 10);
         this.manual = true;
@@ -54,6 +56,14 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
 
       this._router.navigate(['.'], { relativeTo: this._route, queryParams, fragment: null });
       this.selectedJob(j);
+    }
+
+    selectedStage(stageId: number) {
+      let stage = this.nodeRun.stages.find((st) => st.id === stageId);
+
+      if (stage && Array.isArray(stage.run_jobs) && stage.run_jobs.length) {
+        this.selectedRunJob = stage.run_jobs[0];
+      }
     }
 
     selectedJob(j: Job): void {
