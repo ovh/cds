@@ -77,7 +77,7 @@ func processWorkflowNodeRunEvent(event sdk.Event, uiURL string) (statusData, err
 		eventNR.WorkflowName,
 		eventNR.NodeName,
 	)
-	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%s",
+	data.url = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
 		uiURL,
 		eventNR.ProjectKey,
 		eventNR.WorkflowName,

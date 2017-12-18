@@ -114,6 +114,7 @@ func PublishWorkflowNodeRun(nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, projectK
 		HookEvent:      nr.HookEvent,
 		Payload:        nr.Payload,
 		SourceNodeRuns: nr.SourceNodeRuns,
+		WorkflowName:   wr.Workflow.Name,
 	}
 
 	node := wr.Workflow.GetNode(nr.WorkflowNodeID)
@@ -152,7 +153,7 @@ func PublishWorkflowNodeRun(nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, projectK
 	Publish(e)
 }
 
-// EventWorkflowNodeJobRun publish event on a workflow node job run
+// PublishWorkflowNodeJobRun publish event on a workflow node job run
 func PublishWorkflowNodeJobRun(njr sdk.WorkflowNodeJobRun) {
 	e := sdk.EventWorkflowNodeJobRun{
 		ID:                njr.ID,

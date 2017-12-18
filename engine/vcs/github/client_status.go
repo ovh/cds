@@ -124,7 +124,7 @@ func processEventWorkflowNodeRun(event sdk.Event, githubURL string, disabledStat
 	data.repoFullName = eventNR.RepositoryFullName
 	data.pipName = eventNR.NodeName
 
-	data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%s",
+	data.urlPipeline = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d",
 		githubURL,
 		eventNR.ProjectKey,
 		eventNR.WorkflowName,
