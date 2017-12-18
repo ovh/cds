@@ -7,6 +7,8 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"bytes"
+	"github.com/fsamin/go-dump"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -340,36 +342,56 @@ func syncStage(db gorp.SqlExecutor, store cache.Store, stage *sdk.Stage) (bool, 
 	return stageEnd, nil
 }
 
-//NodeBuildParameters returns build_parameters for a node given its id
-func NodeBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, wr *sdk.WorkflowRun, id int64, u *sdk.User) ([]sdk.Parameter, error) {
-	refNode := wf.GetNode(id)
-	if refNode == nil {
-		return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to load workflow node")
+func NodeBuildParametersFromRun(wr sdk.WorkflowRun, id int64) ([]sdk.Parameter, error) {
+	params := []sdk.Parameter{}
+
+	nodesRun, ok := wr.WorkflowNodeRuns[id]
+	if !ok || len(nodesRun) == 0 {
+		return params, nil
 	}
+
+	for _, p := range nodesRun[0].BuildParameters {
+		sdk.AddParameter(&params, p.Name, p.Type, p.Value)
+	}
+
+	return params, nil
+}
+
+//NodeBuildParameters returns build_parameters for a node given its id
+func NodeBuildParametersFromWorkflow(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, wf *sdk.Workflow, refNode *sdk.WorkflowNode, ancestorsIds []int64) ([]sdk.Parameter, error) {
 
 	res := []sdk.Parameter{}
-
-	if wr != nil {
-		for nodeID, nodeRuns := range wr.WorkflowNodeRuns {
-			oldNode := wr.Workflow.GetNode(nodeID)
-			if oldNode == nil {
-				log.Warning("getWorkflowTriggerConditionHandler> Unable to find last run")
-				break
-			}
-			if oldNode.EqualsTo(refNode) {
-				for _, p := range nodeRuns[0].BuildParameters {
-					sdk.AddParameter(&res, p.Name, p.Type, p.Value)
-				}
-				break
-			}
-		}
-	}
-
 	if len(res) == 0 {
 		var err error
 		res, err = GetNodeBuildParameters(db, store, proj, wf, refNode, refNode.Context.DefaultPipelineParameters, refNode.Context.DefaultPayload)
 		if err != nil {
 			return nil, sdk.WrapError(sdk.ErrWorkflowNodeNotFound, "getWorkflowTriggerConditionHandler> Unable to get workflow node parameters: %v", err)
+		}
+	}
+
+	// Process ancestor
+	for _, aID := range ancestorsIds {
+		ancestor := wf.GetNode(aID)
+		if ancestor == nil {
+			continue
+		}
+		sdk.AddParameter(&res, "workflow."+ancestor.Name+".status", "string", "")
+	}
+
+	// Add payload from root
+	if wf.Root.Context.DefaultPayload != nil {
+		e := dump.NewDefaultEncoder(new(bytes.Buffer))
+		e.Formatters = []dump.KeyFormatterFunc{dump.WithDefaultLowerCaseFormatter()}
+		e.ExtraFields.DetailedMap = false
+		e.ExtraFields.DetailedStruct = false
+		e.ExtraFields.Len = false
+		e.ExtraFields.Type = false
+
+		tempParams := sdk.ParametersToMap(res)
+		m1, errm1 := e.ToStringMap(wf.Root.Context.DefaultPayload)
+		if errm1 == nil {
+			mergedParameters := sdk.ParametersMapMerge(tempParams, m1)
+			res = sdk.ParametersFromMap(mergedParameters)
 		}
 	}
 
