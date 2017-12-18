@@ -43,6 +43,11 @@ $squareSize: 32px;
   color: white;
   clear: both;
   padding: 10px $squareSize 10px $squareSize;
+  padding-left: 0px;
+
+  .yellow {
+    color: #FFFF91;
+  }
 
   .fakeInput {
     display: block;
@@ -58,5 +63,28 @@ $squareSize: 32px;
     font-size: 0.8em;
     line-height: 1.1em;
     overflow-y: auto;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    table {
+      color: white;
+      tr {
+        &:hover {
+          background-color: #444;
+        }
+        &.active {
+          background-color: #444 !important;
+          color: inherit !important;
+        }
+      }
+      td {
+        &.number {
+            width: 40px;
+        }
+        &.active {
+          background-color: #444 !important;
+          color: inherit !important;
+        }
+      }
+    }
   }
 }

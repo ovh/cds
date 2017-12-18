@@ -1,4 +1,5 @@
 import {Component, Input, OnInit, NgZone, ViewChild, ElementRef, OnDestroy} from '@angular/core';
+import {Router, ActivatedRoute} from '@angular/router';
 import {Subscription} from 'rxjs/Subscription';
 import {Action} from '../../../../../../model/action.model';
 import {Project} from '../../../../../../model/project.model';
@@ -68,10 +69,12 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
 
     worker: CDSWorker;
     workerSubscription: Subscription;
+    queryParamsSubscription: Subscription;
     loading = true;
     startExec: Date;
     doneExec: Date;
     duration: string;
+    selectedLine: number;
 
     zone: NgZone;
     _showLog = false;
@@ -80,7 +83,13 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
     pipelineBuildStatusEnum = PipelineStatus;
     @ViewChild('logsContent') logsElt: ElementRef;
 
-    constructor(private _authStore: AuthentificationStore, private _durationService: DurationService) { }
+    constructor(
+        private _authStore: AuthentificationStore,
+        private _durationService: DurationService,
+        private _router: Router,
+        private _route: ActivatedRoute,
+        private _hostElement: ElementRef
+      ) { }
 
     ngOnInit(): void {
         let nodeRunDone = this.nodeRun.status !== this.pipelineBuildStatusEnum.BUILDING &&
@@ -93,6 +102,18 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             (nodeRunDone && isLastStep && !PipelineStatus.neverRun(this.currentStatus))) {
           this.showLog = true;
         }
+
+        this.queryParamsSubscription = this._route.queryParams.subscribe((qps) => {
+          let activeStep = parseInt(qps['stageId'], 10) === this.job.pipeline_stage_id &&
+            parseInt(qps['actionId'], 10) === this.job.pipeline_action_id && parseInt(qps['stepOrder'], 10) === this.stepOrder;
+
+          if (activeStep) {
+            this.showLog = true;
+            this.selectedLine = parseInt(qps['line'], 10);
+          } else {
+            this.selectedLine = null;
+          }
+        });
     }
 
     ngOnDestroy(): void {
@@ -136,11 +157,24 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
                         }
                         if (this.loading) {
                             this.loading = false;
+                            this.focusToLine();
                         }
                     });
                 }
             });
         }
+    }
+
+    focusToLine() {
+      if (this._route.snapshot.fragment) {
+        setTimeout(() => {
+          const element = this._hostElement.nativeElement.querySelector('#' + this._route.snapshot.fragment);
+          if (element) {
+            element.scrollIntoView(true);
+            this._force = true;
+          }
+        });
+      }
     }
 
     computeDuration() {
@@ -174,5 +208,29 @@ export class WorkflowStepLogComponent implements OnInit, OnDestroy {
             return ansi_up.ansi_to_html(this.logs.val);
         }
         return '';
+    }
+
+    getLogsSplitted() {
+      return this.getLogs().split('\n');
+    }
+
+    generateLink(lineNumber: number) {
+      let qps = Object.assign({}, this._route.snapshot.queryParams, {
+        stageId: this.job.pipeline_stage_id,
+        actionId: this.job.pipeline_action_id,
+        stepOrder: this.stepOrder,
+        line: lineNumber
+      });
+      let fragment = 'L' + this.job.pipeline_stage_id + '-' + this.job.pipeline_action_id + '-' + this.stepOrder + '-' + lineNumber;
+      this._router.navigate([
+        'project',
+        this.project.key,
+        'workflow',
+        this.workflowName,
+        'run',
+        this.nodeRun.num,
+        'node',
+        this.nodeRun.id
+      ], {queryParams: qps, fragment});
     }
 }

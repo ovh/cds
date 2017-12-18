@@ -1,17 +1,18 @@
-import {Component, Input} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
+import {ActivatedRoute, Router} from '@angular/router';
 import {WorkflowNodeJobRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {Project} from '../../../../../model/project.model';
 import {Job, StepStatus} from '../../../../../model/job.model';
 import {DurationService} from '../../../../../shared/duration/duration.service';
-
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-node-run-pipeline',
     templateUrl: './pipeline.html',
     styleUrls: ['./pipeline.scss']
 })
-export class WorkflowRunNodePipelineComponent {
+export class WorkflowRunNodePipelineComponent implements OnInit {
 
     nodeRun: WorkflowNodeRun;
     jobTime: Map<number, string>;
@@ -32,7 +33,28 @@ export class WorkflowRunNodePipelineComponent {
     previousStatus: string;
     manual = false;
 
-    constructor(private _durationService: DurationService) { }
+    constructor(private _durationService: DurationService, private _route: ActivatedRoute, private _router: Router) { }
+
+    ngOnInit() {
+      if (this._route.snapshot.queryParams['actionId']) {
+        let job = new Job();
+        job.pipeline_action_id = parseInt(this._route.snapshot.queryParams['actionId'], 10);
+        this.manual = true;
+        this.selectedJob(job);
+      }
+    }
+
+    selectedJobManual(j: Job) {
+      let queryParams = cloneDeep(this._route.snapshot.queryParams);
+      queryParams['stageId'] = null;
+      queryParams['actionId'] = null;
+      queryParams['stepOrder'] = null;
+      queryParams['line'] = null;
+      this.manual = true;
+
+      this._router.navigate(['.'], { relativeTo: this._route, queryParams, fragment: null });
+      this.selectedJob(j);
+    }
 
     selectedJob(j: Job): void {
         this.nodeRun.stages.forEach(s => {

@@ -21,7 +21,7 @@
                                          [class.inactive]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.DISABLED || mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.SKIPPED"
                                          [class.fail]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.FAIL"
                                          [class.building]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.BUILDING || mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.WAITING"
-                                         (click)="manual = true; selectedJob(j)">
+                                         (click)="selectedJobManual(j)">
                                         <div class="truncate">
                                             <app-status-icon [status]="mapJobStatus.get(j.pipeline_action_id)" [value]="99"></app-status-icon>
                                             {{j.action.name}}

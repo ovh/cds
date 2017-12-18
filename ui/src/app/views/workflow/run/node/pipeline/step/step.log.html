@@ -16,8 +16,20 @@
             <i class="copy icon"></i>
           </button>
         </div>
-        <pre [innerHTML]="getLogs()" *ngIf="!loading">
-        </pre>
+        <!-- Pay attention ! Don't write any spaces, tabs or line between <pre> and <table> -->
+        <pre *ngIf="!loading"><table class="ui very basic table">
+            <tbody>
+              <ng-container *ngFor="let logLine of getLogsSplitted(); let index = index; let last = last;">
+                <tr
+                  [class.active]="selectedLine === index + 1"
+                  id="L{{job.pipeline_stage_id}}-{{job.pipeline_action_id}}-{{stepOrder}}-{{index + 1}}"
+                  *ngIf="!last && logLine">
+                  <td class="number yellow right aligned pointing" (click)="generateLink(index + 1)">{{index + 1}}</td>
+                  <td [innerHTML]="logLine"></td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table></pre>
         <textarea class="fakeInput" name="fakeInput" #logsContent></textarea>
         <div class="ui active centered inline loader" *ngIf="loading"></div>
     </div>
