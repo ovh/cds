@@ -206,17 +206,6 @@ export class WorkflowShowComponent {
         });
     }
 
-    runWorkflow(): void {
-        this.loading = true;
-        let request = new WorkflowRunRequest();
-        this._workflowRun.runWorkflow(this.project.key, this.detailedWorkflow.name, request).pipe(first()).subscribe(wr => {
-            this.loading = false;
-            this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name, 'run', wr.num]);
-        }, () => {
-            this.loading = false;
-        });
-    }
-
     runWithParameter(): void {
         if (this.runWithParamComponent) {
             this.runWithParamComponent.show();
