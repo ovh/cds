@@ -63,7 +63,7 @@
   "application_migration_regenerate" : "Re-generate a workflow",
   "application_workflow_migration" : "Migration to workflow",
   "application_workflow_migration_modal_title" : "Deletion of old application workflow",
-  "application_workflow_migration_modal_content" : "Be careful, this will delete your previous application workflow. There is no going back.  <ul><li>All pipelines will be detached from your application</li><li>All triggers will be deleted</li><li>Your history will be deleted</li><li>All your artifacts will be deleted</li></ul>",
+  "application_workflow_migration_modal_content" : "Be careful, this will delete your previous application workflow. There is no going back.  <ul><li>All pipelines will be detached from your application</li><li>All triggers will be deleted</li><li>Your history will be deleted</li><li>All your artifacts will be deleted</li></ul>In case of a cleaning following a migration to workflow, this \"old application workflow\" to delete only matches what was in place before the migration.",
   "application_notifications_form_title_add" : "Add a notification",
   "application_notifications_form_title_edit" : "Edit notification",
   "application_notifications_list_title": "List of notifications",
