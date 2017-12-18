@@ -59,12 +59,11 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 		for i := range hooksUpdated {
 			h := hooksUpdated[i]
 			if h.Config["vcsServer"].Value != "" {
-				repoFullname, errCreateVCS := createVCSConfiguration(db, store, p, &h)
-				if errCreateVCS != nil {
-					return nil, sdk.WrapError(errCreateVCS, "HookRegistration> Cannot update vcs configuration")
+				if err := createVCSConfiguration(db, store, p, &h); err != nil {
+					return nil, sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
 				}
 				defaultPayload = &sdk.WorkflowNodeContextDefaultPayloadVCS{
-					GitRepository: repoFullname,
+					GitRepository: h.Config["repoFullName"].Value,
 				}
 			}
 			if err := UpdateHook(db, &h); err != nil {
@@ -124,23 +123,23 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 	return nil
 }
 
-func createVCSConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, h *sdk.WorkflowNodeHook) (string, error) {
+func createVCSConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, h *sdk.WorkflowNodeHook) error {
 	// Call VCS to know if repository allows webhook and get the configuration fields
 	projectVCSServer := repositoriesmanager.GetProjectVCSServer(p, h.Config["vcsServer"].Value)
 	if projectVCSServer == nil {
-		return "", nil
+		return nil
 	}
 
 	client, errclient := repositoriesmanager.AuthorizedClient(db, store, projectVCSServer)
 	if errclient != nil {
-		return "", sdk.WrapError(errclient, "createVCSConfiguration> Cannot get vcs client")
+		return sdk.WrapError(errclient, "createVCSConfiguration> Cannot get vcs client")
 	}
 	webHookInfo, errWH := repositoriesmanager.GetWebhooksInfos(client)
 	if errWH != nil {
-		return "", sdk.WrapError(errWH, "createVCSConfiguration> Cannot get vcs web hook info")
+		return sdk.WrapError(errWH, "createVCSConfiguration> Cannot get vcs web hook info")
 	}
 	if !webHookInfo.WebhooksSupported || webHookInfo.WebhooksDisabled {
-		return "", sdk.WrapError(sdk.ErrForbidden, "createVCSConfiguration> hook creation are forbidden")
+		return sdk.WrapError(sdk.ErrForbidden, "createVCSConfiguration> hook creation are forbidden")
 	}
 	vcsHook := sdk.VCSHook{
 		Method:   "POST",
@@ -148,14 +147,14 @@ func createVCSConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		Workflow: true,
 	}
 	if err := client.CreateHook(h.Config["repoFullName"].Value, &vcsHook); err != nil {
-		return "", sdk.WrapError(err, "createVCSConfiguration> Cannot create hook on repository: %+v", vcsHook)
+		return sdk.WrapError(err, "createVCSConfiguration> Cannot create hook on repository: %+v", vcsHook)
 	}
 	h.Config["webHookID"] = sdk.WorkflowNodeHookConfigValue{
 		Value:        vcsHook.ID,
 		Configurable: false,
 	}
 
-	return client.RepoByFullname, nil
+	return nil
 }
 
 func diffHook(oldHooks map[string]sdk.WorkflowNodeHook, newHooks map[string]sdk.WorkflowNodeHook) (hookToUpdate map[string]sdk.WorkflowNodeHook, hookToDelete map[string]sdk.WorkflowNodeHook) {
