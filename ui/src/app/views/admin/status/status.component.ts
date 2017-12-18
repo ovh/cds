@@ -1,4 +1,4 @@
-import {Component, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
 import {MonitoringService} from '../../../service/monitoring/monitoring.service';
 import { forEach } from '@angular/router/src/utils/collection';
 import { MonitoringStatus } from 'app/model/monitoring.model';
@@ -8,17 +8,17 @@ import { MonitoringStatus } from 'app/model/monitoring.model';
     templateUrl: './status.html',
     styleUrls: ['./status.scss']
 })
-export class StatusComponent implements OnInit {
+export class StatusComponent {
 
     status: MonitoringStatus;
+    loading = false;
 
     constructor(private _monitoringService: MonitoringService) {
+        this.loading = true;
         this._monitoringService.getStatus()
             .subscribe(r => {
                 this.status = r;
+                this.loading = false;
             });
-    }
-
-    ngOnInit() {
     }
 }
