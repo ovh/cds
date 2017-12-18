@@ -1,13 +1,13 @@
 package workflow
 
 import (
+	"bytes"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/go-gorp/gorp"
 
-	"bytes"
 	"github.com/fsamin/go-dump"
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
