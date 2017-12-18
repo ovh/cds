@@ -343,6 +343,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 			return nil, nil
 		}
 		payload["git.author"] = pushEvent.HeadCommit.Author.Username
+		payload["git.author.email"] = pushEvent.HeadCommit.Author.Email
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
@@ -360,6 +361,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 			return nil, nil
 		}
 		payload["git.author"] = pushEvent.UserUsername
+		payload["git.author.email"] = pushEvent.UserEmail
 		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
@@ -374,6 +376,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 			return nil, sdk.WrapError(err, "Hook> webhookHandler> unable ro read bitbucket request: %s", string(t.WebHook.RequestBody))
 		}
 		payload["git.author"] = pushEvent.Actor.Name
+		payload["git.author.email"] = pushEvent.Actor.EmailAddress
 
 		if len(pushEvent.Changes) == 0 || pushEvent.Changes[0].Type == "DELETE" {
 			return nil, nil
