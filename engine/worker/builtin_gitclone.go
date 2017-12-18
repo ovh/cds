@@ -150,12 +150,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 		}
 
 		if err := extractInfo(w, dir, params, clone.Branch, commit.Value, sendLog); err != nil {
-			res := sdk.Result{
-				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Unable to extract git information: %s", err),
-			}
-			sendLog(res.Reason)
-			return res
+			sendLog(fmt.Sprintf("Unable to extract git information: %s", err))
 		}
 
 		stdTaglistErr := new(bytes.Buffer)
@@ -254,7 +249,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 
 	info, errInfo := git.ExtractInfo(dir)
 	if errInfo != nil {
-		return fmt.Errorf("Error on ExtractInfo")
+		return fmt.Errorf("Error on ExtractInfo %s", errInfo.Error())
 	}
 
 	if info.GitDescribe != "" {
