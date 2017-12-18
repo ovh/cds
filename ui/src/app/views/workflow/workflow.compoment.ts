@@ -86,9 +86,7 @@ export class WorkflowComponent implements OnInit {
                         this.loading = false;
                         this._router.navigate(['/project', this.project.key]);
                     });
-
             }
-
         });
 
         let qp = this._routerService.getRouteSnapshotQueryParams({}, this._activatedRoute.snapshot);
