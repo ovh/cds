@@ -189,8 +189,16 @@ func (api *API) postWorkflowRunNumHandler() Handler {
 		if errW != nil {
 			return sdk.WrapError(errW, "postWorkflowRunNumHandler > Cannot load workflow")
 		}
-		if err := workflow.UpdateRunNum(api.mustDB(), wf, m.Num); err != nil {
-			return sdk.WrapError(err, "postWorkflowRunNumHandler> ")
+
+		var errDb error
+		if num == 0 {
+			errDb = workflow.InsertRunNum(api.mustDB(), wf, m.Num)
+		} else {
+			errDb = workflow.UpdateRunNum(api.mustDB(), wf, m.Num)
+		}
+
+		if errDb != nil {
+			return sdk.WrapError(errDb, "postWorkflowRunNumHandler> ")
 		}
 
 		return WriteJSON(w, r, m, http.StatusOK)

@@ -362,18 +362,28 @@ ORDER BY tags.tag;
 
 // LoadCurrentRunNum load the current num from workflow_sequences table
 func LoadCurrentRunNum(db gorp.SqlExecutor, projectkey, workflowname string) (int64, error) {
-	query := `SELECT COALESCE(workflow_sequences.current_val, 0)  as run_num
+	query := `SELECT COALESCE(workflow_sequences.current_val, 0) as run_num
 			FROM workflow
 			LEFT JOIN workflow_sequences ON workflow.id = workflow_sequences.workflow_id
 			JOIN project ON project.id = workflow.project_id
-			WHERE project.projectkey = $1 AND workflow.name = $2;
-
+			WHERE project.projectkey = $1 AND workflow.name = $2
     `
 	i, err := db.SelectInt(query, projectkey, workflowname)
 	if err != nil {
 		return 0, sdk.WrapError(err, "LoadCurrentRunNum> Cannot load workflow run current num")
 	}
 	return int64(i), nil
+}
+
+// InsertRunNum Insert run number for the given workflow
+func InsertRunNum(db gorp.SqlExecutor, w *sdk.Workflow, num int64) error {
+	query := `
+		INSERT INTO workflow_sequences (workflow_id, current_val) VALUES ($1, $2)
+	`
+	if _, err := db.Exec(query, w.ID, num); err != nil {
+		return sdk.WrapError(err, "InsertRunNum> Cannot insert run number")
+	}
+	return nil
 }
 
 // UpdateRunNum Update run number for the given workflow
