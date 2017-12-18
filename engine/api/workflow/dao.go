@@ -473,6 +473,14 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 		}
 	}
 
+	var result int64
+	if rows := db.QueryRow("select count(*) from workflow_node where workflow_id = $1", oldWorkflow.ID); rows != nil {
+		if err := rows.Scan(&result); err != nil {
+			log.Warning(">>>>>>>>>>>>>>>>>>>>>>%s", err)
+		}
+		log.Warning("OLD WORKFLOW NODE NUMBER: %d", result)
+	}
+
 	// Insert new Root Node
 	if err := insertNode(db, store, w, w.Root, u, false); err != nil {
 		return sdk.WrapError(err, "Update> unable to update root node on workflow(%d)", w.ID)
@@ -480,6 +488,9 @@ func Update(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, oldWorkflow
 
 	w.RootID = w.Root.ID
 	nodes := w.Nodes(true)
+	for _, nn := range nodes {
+		log.Warning(">> %s <<", nn.Name)
+	}
 
 	// Insert new JOIN
 	for i := range w.Joins {
