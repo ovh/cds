@@ -40,6 +40,10 @@
   "admin_migration_done" : "Done",
   "admin_migration_title" : "Status of application migration to workflow",
 
+  "admin_status_title" : "Status of CDS Engine",
+  
+  "admin_sidebar_status" : "Status",
+
   "application_create" : "Create a new application",
   "application_created" : "Application created",
   "application_deleted" : "Application deleted",
@@ -258,6 +262,7 @@
 
   "navbar_actions" : "Actions",
   "navbar_admin_migration" : "Migrate to workflows",
+  "navbar_admin_status" : "CDS Engine Status",
   "navbar_documentation" : "Documentation",
   "navbar_download" : "Download",
   "navbar_groups" : "Groups",

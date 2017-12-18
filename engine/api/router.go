@@ -462,3 +462,14 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 	}()
 	WriteError(w, req, sdk.ErrNotFound)
 }
+
+// StatusPanic returns router status. If nbPanic > 30 -> Alert, if nbPanic > 0 -> Warn
+func (r *Router) StatusPanic() sdk.MonitoringStatusLine {
+	statusPanic := sdk.MonitoringStatusOK
+	if r.nbPanic > 30 {
+		statusPanic = sdk.MonitoringStatusAlert
+	} else if r.nbPanic > 0 {
+		statusPanic = sdk.MonitoringStatusWarn
+	}
+	return sdk.MonitoringStatusLine{Component: "Nb of Panics", Value: fmt.Sprintf("%d", r.nbPanic), Status: statusPanic}
+}

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -26,11 +27,11 @@ func NewFilesystemStore(basedir string) (*FilesystemStore, error) {
 }
 
 //Status return filesystem storage status
-func (fss *FilesystemStore) Status() string {
+func (fss *FilesystemStore) Status() sdk.MonitoringStatusLine {
 	if _, err := os.Stat(fss.basedir); os.IsNotExist(err) {
-		return "Filesystem Storage KO (" + err.Error() + ")"
+		return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Filesystem Storage KO (" + err.Error() + ")", Status: sdk.MonitoringStatusAlert}
 	}
-	return "Filesystem Storage OK"
+	return sdk.MonitoringStatusLine{Component: "Object-Store", Value: "Filesystem Storage", Status: sdk.MonitoringStatusOK}
 }
 
 // Store store a object on disk
