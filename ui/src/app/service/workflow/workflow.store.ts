@@ -12,7 +12,7 @@ import 'rxjs/add/observable/of';
 @Injectable()
 export class WorkflowStore {
 
-    static RECENT_WORKFLOW_KEY = 'CDS-RECENT-WORKFLOW';
+    static RECENT_WORKFLOWS_KEY = 'CDS-RECENT-WORKFLOWS';
     WORKFLOW_ORIENTATION_KEY = 'CDS-WORKFLOW-ORIENTATION';
 
     // List of all workflows.
@@ -26,7 +26,7 @@ export class WorkflowStore {
     }
 
     loadRecentWorkflows(): void {
-        let arrayWorkflows = JSON.parse(localStorage.getItem(WorkflowStore.RECENT_WORKFLOW_KEY));
+        let arrayWorkflows = JSON.parse(localStorage.getItem(WorkflowStore.RECENT_WORKFLOWS_KEY));
         this._recentWorkflows.next(List.of(...arrayWorkflows));
     }
 
@@ -47,7 +47,7 @@ export class WorkflowStore {
         let navbarRecentData = new NavbarRecentData();
         navbarRecentData.project_key = key;
         navbarRecentData.name = workflow.name;
-        let currentRecentWorkflows: Array<NavbarRecentData> = JSON.parse(localStorage.getItem(WorkflowStore.RECENT_WORKFLOW_KEY));
+        let currentRecentWorkflows: Array<NavbarRecentData> = JSON.parse(localStorage.getItem(WorkflowStore.RECENT_WORKFLOWS_KEY));
         if (currentRecentWorkflows) {
             let index: number = currentRecentWorkflows.findIndex(w =>
                 w.name === navbarRecentData.name && w.project_key === navbarRecentData.project_key
@@ -60,7 +60,7 @@ export class WorkflowStore {
         }
         currentRecentWorkflows.splice(0, 0, navbarRecentData);
         currentRecentWorkflows = currentRecentWorkflows.splice(0, 15);
-        localStorage.setItem(WorkflowStore.RECENT_WORKFLOW_KEY, JSON.stringify(currentRecentWorkflows));
+        localStorage.setItem(WorkflowStore.RECENT_WORKFLOWS_KEY, JSON.stringify(currentRecentWorkflows));
         this._recentWorkflows.next(List(currentRecentWorkflows));
     }
 

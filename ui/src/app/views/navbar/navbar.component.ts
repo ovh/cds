@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, OnInit, ChangeDetectorRef} from '@angular/core';
 import {ProjectStore} from '../../service/project/project.store';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {NavbarService} from '../../service/navbar/navbar.service';
@@ -59,7 +59,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 private _workflowStore: WorkflowStore,
                 private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
                 private _translate: TranslateService, private _warningStore: WarningStore,
-                private _authentificationStore: AuthentificationStore, private _warningService: WarningService) {
+                private _authentificationStore: AuthentificationStore, private _warningService: WarningService,
+                private _cd: ChangeDetectorRef) {
         this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
             this.currentUser = u;
         });
@@ -112,6 +113,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             if (workflows) {
                 this.navRecentWorkflows = workflows;
                 this.listWorkflows = workflows;
+                this._cd.detectChanges();
             }
         });
     }
@@ -126,6 +128,7 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 this.searchItems = new Array<string>();
 
                 this.navProjects.projects.forEach(p => {
+                    this.searchItems.push(p.name);
                     if (p.application_names && p.application_names.length > 0) {
                         p.application_names.forEach(a => {
                             this.searchItems.push(p.name + '/' + a);
@@ -136,7 +139,6 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                             this.searchItems.push(p.name + '/' + w);
                         })
                     }
-                    this.searchItems.push(p.name);
                 });
             }
         });
