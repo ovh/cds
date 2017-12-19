@@ -201,7 +201,7 @@ func (api *API) putWorkflowHandler() Handler {
 		if defaultPayload != nil && isDefaultPayloadEmpty(wf) {
 			wf.Root.Context.DefaultPayload = *defaultPayload
 			if err := workflow.UpdateNodeContext(tx, wf.Root.Context); err != nil {
-				return sdk.WrapError(errHr, "putWorkflowHandler> updateNodeContext")
+				return sdk.WrapError(err, "putWorkflowHandler> updateNodeContext")
 			}
 		}
 
