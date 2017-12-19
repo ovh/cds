@@ -236,9 +236,24 @@ export class Workflow {
         return workflow.joins.find((join) => join.id === id);
     }
 
+    static reinitID(workflow: Workflow) {
+        WorkflowNode.reinitID(workflow.root);
+        if (workflow.joins) {
+            workflow.joins.forEach(j => {
+                if (j.triggers) {
+                    j.triggers.forEach(t => {
+                        WorkflowNode.reinitID(t.workflow_dest_node);
+                    });
+                }
+            });
+        }
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }
+
+
 }
 
 export class WorkflowNodeJoin {
@@ -434,6 +449,15 @@ export class WorkflowNode {
             });
         }
         return nodes;
+    }
+
+    static reinitID(n: WorkflowNode) {
+        n.id = 0;
+        if (n.triggers) {
+            n.triggers.forEach(t => {
+                WorkflowNode.reinitID(t.workflow_dest_node);
+            });
+        }
     }
 
     constructor() {

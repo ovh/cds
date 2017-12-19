@@ -36,11 +36,11 @@ func updateWorkflowTriggerJoinSrc(db gorp.SqlExecutor, n *sdk.WorkflowNode) erro
 	return nil
 }
 
-func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, skipDependencies bool) error {
-	log.Debug("insertNode> insert or update node %d (%s) on %s(%#v)", n.ID, n.Ref, n.Pipeline.Name, n.Context)
+func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.WorkflowNode, u *sdk.User, nodes []sdk.WorkflowNode, skipDependencies bool) ([]sdk.WorkflowNode, error) {
+	log.Debug("insertNode> insert or update node %s %d (%s) on %s(%#v)", n.Name, n.ID, n.Ref, n.Pipeline.Name, n.Context)
 
 	if !nodeNamePattern.MatchString(n.Name) {
-		return sdk.WrapError(sdk.ErrInvalidNodeNamePattern, "insertNode> node has a wrong name %s", n.Name)
+		return nodes, sdk.WrapError(sdk.ErrInvalidNodeNamePattern, "insertNode> node has a wrong name %s", n.Name)
 	}
 
 	n.WorkflowID = w.ID
@@ -66,18 +66,18 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 	//Insert new node
 	dbwn := Node(*n)
 	if err := db.Insert(&dbwn); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node")
+		return nodes, sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node")
 	}
 	n.ID = dbwn.ID
-
+	nodes = syncNodesArray(nodes, *n)
 	if skipDependencies {
-		return nil
+		return nodes, nil
 	}
 
 	//Insert context
 	n.Context.WorkflowNodeID = n.ID
 	if err := insertNodeContext(db, n.Context); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node %d context", n.ID)
+		return nodes, sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node %d context", n.ID)
 	}
 
 	//Insert hooks
@@ -98,13 +98,13 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 			if n.Context.Application == nil {
 				app, errA := application.LoadByID(db, store, n.Context.ApplicationID, u)
 				if errA != nil {
-					return sdk.WrapError(errA, "InsertOrUpdateNode> Cannot load application %d", n.Context.ApplicationID)
+					return nodes, sdk.WrapError(errA, "InsertOrUpdateNode> Cannot load application %d", n.Context.ApplicationID)
 				}
 				n.Context.Application = app
 			}
 
 			if n.Context.Application == nil || n.Context.Application.RepositoryFullname == "" || n.Context.Application.VCSServer == "" {
-				return sdk.WrapError(sdk.ErrForbidden, "InsertOrUpdateNode> Cannot create an repository webhook on an application without a repository")
+				return nodes, sdk.WrapError(sdk.ErrForbidden, "InsertOrUpdateNode> Cannot create an repository webhook on an application without a repository")
 			}
 			h.Config["vcsServer"] = sdk.WorkflowNodeHookConfigValue{
 				Value:        n.Context.Application.VCSServer,
@@ -118,19 +118,30 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 
 		//Insert the hook
 		if err := insertHook(db, n, h); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node hook")
+			return nodes, sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node hook")
 		}
 	}
 
 	//Insert triggers
 	for i := range n.Triggers {
 		t := &n.Triggers[i]
-		if err := insertTrigger(db, store, w, n, t, u); err != nil {
-			return sdk.WrapError(err, "InsertOrUpdateNode> Unable to insert workflow node trigger")
+		var errT error
+		nodes, errT = insertTrigger(db, store, w, n, t, nodes, u)
+		if errT != nil {
+			return nodes, sdk.WrapError(errT, "InsertOrUpdateNode> Unable to insert workflow node trigger")
 		}
 	}
+	return nodes, nil
+}
 
-	return nil
+func syncNodesArray(nodes []sdk.WorkflowNode, n sdk.WorkflowNode) []sdk.WorkflowNode {
+	for i := range nodes {
+		if nodes[i].Name == n.Name {
+			nodes[i].ID = n.ID
+			break
+		}
+	}
+	return nodes
 }
 
 type sqlContext struct {

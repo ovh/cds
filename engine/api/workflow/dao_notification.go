@@ -9,7 +9,6 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func deleteNotifications(db gorp.SqlExecutor, workflowID int64) error {
@@ -77,15 +76,8 @@ func insertNotification(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 	for _, s := range n.SourceNodeRefs {
 		//Search references
 		var foundRef = findNodeByRef(s, nodes)
-		if foundRef == nil {
-			return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertNotification> Invalid notification references")
-		}
-		log.Debug("insertNotification> Found reference %s : %d on %s", s, foundRef.ID, foundRef.Pipeline.Name)
-		if foundRef.ID == 0 {
-			log.Debug("insertNotification> insert or update reference node (%s) %d on %s", s, foundRef.ID, foundRef.Pipeline.Name)
-			if err := insertNode(db, store, w, foundRef, u, true); err != nil {
-				return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertNotification> Unable to insert or update source node")
-			}
+		if foundRef == nil || foundRef.ID == 0 {
+			return sdk.WrapError(sdk.ErrWorkflowNodeRef, "insertNotification> Invalid notification references %s", s)
 		}
 		n.SourceNodeIDs = append(n.SourceNodeIDs, foundRef.ID)
 	}

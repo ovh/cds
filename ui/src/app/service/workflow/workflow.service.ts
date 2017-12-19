@@ -37,6 +37,8 @@ export class WorkflowService {
      * @param workflow Workflow to update
      */
     updateWorkflow(key: string, name: string, workflow: Workflow): Observable<Workflow> {
+        // reinit node id
+        Workflow.reinitID(workflow);
         return this._http.put<Workflow>('/project/' + key + '/workflows/' + name, workflow);
     }
 
