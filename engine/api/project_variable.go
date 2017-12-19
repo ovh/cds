@@ -8,10 +8,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getVariablesAuditInProjectnHandler() Handler {
@@ -85,12 +83,6 @@ func (api *API) restoreProjectVariableAuditHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "restoreProjectVariableAuditHandler: Cannot commit transaction")
 		}
-
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("restoreProjectVariableAuditHandler: Cannot check warnings: %s", err)
-			}
-		}()
 
 		return nil
 	}
@@ -242,12 +234,6 @@ func (api *API) updateVariablesInProjectHandler() Handler {
 			return sdk.WrapError(err, "updateVariablesInProjectHandler> Cannot commit transaction")
 		}
 
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("updateVariablesInApplicationHandler> Cannot check warnings: %s")
-			}
-		}()
-
 		return nil
 	}
 }
@@ -293,12 +279,6 @@ func (api *API) updateVariableInProjectHandler() Handler {
 			return sdk.WrapError(err, "updateVariableInProject: cannot commit transaction")
 
 		}
-
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("updateVariableInProject: Cannot check warnings: %s", err)
-			}
-		}()
 
 		return WriteJSON(w, r, newVar, http.StatusOK)
 	}
@@ -384,12 +364,6 @@ func (api *API) addVariableInProjectHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "addVariableInProjectHandler: cannot commit tx")
 		}
-
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, p); err != nil {
-				log.Warning("AddVariableInProject: Cannot check warnings: %s", err)
-			}
-		}()
 
 		p.Variable, err = project.GetAllVariableInProject(api.mustDB(), p.ID)
 		if err != nil {

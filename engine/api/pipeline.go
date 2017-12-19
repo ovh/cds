@@ -19,7 +19,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/queue"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -822,11 +821,6 @@ func (api *API) addJobToPipelineHandler() Handler {
 			return err
 		}
 
-		proj, errP := project.Load(api.mustDB(), api.Cache, projectKey, getUser(ctx), project.LoadOptions.Default)
-		if errP != nil {
-			return sdk.WrapError(errP, "addJoinedActionToPipelineHandler> Cannot load project %s", projectKey)
-		}
-
 		pip, errPip := pipeline.LoadPipeline(api.mustDB(), projectKey, pipelineName, false)
 		if errPip != nil {
 			return sdk.WrapError(errPip, "addJoinedActionToPipelineHandler> Cannot load pipeline %s for project %s", pipelineName, projectKey)
@@ -847,15 +841,6 @@ func (api *API) addJobToPipelineHandler() Handler {
 		job.Action.Enabled = true
 		if err := pipeline.InsertJob(tx, &job, stageID, pip); err != nil {
 			return sdk.WrapError(err, "addJoinedActionToPipelineHandler> Cannot insert job")
-		}
-
-		warnings, errC := sanity.CheckAction(tx, api.Cache, proj, pip, job.Action.ID)
-		if errC != nil {
-			return sdk.WrapError(errC, "addActionToPipelineHandler> Cannot check action %d requirements", job.Action.ID)
-		}
-
-		if err := sanity.InsertActionWarnings(tx, proj.ID, pip.ID, job.Action.ID, warnings); err != nil {
-			return sdk.WrapError(err, "addActionToPipelineHandler> Cannot insert warning for action %d", job.Action.ID)
 		}
 
 		if err := worker.ComputeRegistrationNeeds(tx, reqs, job.Action.Requirements); err != nil {
@@ -928,14 +913,6 @@ func (api *API) updateJoinedActionHandler() Handler {
 		}
 
 		log.Debug("updateJoinedAction> CheckAction %d", a.ID)
-		warnings, errc := sanity.CheckAction(tx, api.Cache, proj, pip, a.ID)
-		if errc != nil {
-			return sdk.WrapError(errc, "updateJoinedAction> Cannot check action %d requirements", a.ID)
-		}
-
-		if err := sanity.InsertActionWarnings(tx, proj.ID, pip.ID, a.ID, warnings); err != nil {
-			return sdk.WrapError(err, "updateJoinedAction> Cannot insert warning for action %d", a.ID)
-		}
 
 		if err := worker.ComputeRegistrationNeeds(tx, reqs, a.Requirements); err != nil {
 			return sdk.WrapError(err, "updateJoinedAction> Cannot compute registration needs")

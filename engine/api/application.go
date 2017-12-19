@@ -17,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/poller"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/scheduler"
 	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/workflow"
@@ -665,10 +664,6 @@ func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project,
 		return err
 	}
 
-	if err := sanity.CheckApplication(db, proj, newApp); err != nil {
-		return sdk.WrapError(err, "cloneApplication> Cannot check application sanity")
-	}
-
 	return nil
 }
 
@@ -731,12 +726,6 @@ func (api *API) updateApplicationHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateApplicationHandler> Cannot commit transaction")
 		}
-
-		go func() {
-			if err := sanity.CheckApplication(api.mustDB(), p, app); err != nil {
-				log.Warning("updateApplicationHandler: Cannot check application sanity: %s", err)
-			}
-		}()
 
 		return WriteJSON(w, r, app, http.StatusOK)
 
