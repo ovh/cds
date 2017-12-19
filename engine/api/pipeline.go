@@ -673,6 +673,7 @@ func (api *API) getPipelineHistoryHandler() Handler {
 		status := r.Form.Get("status")
 		branchName := r.Form.Get("branchName")
 		remote := r.Form.Get("remote")
+		buildNumber := r.Form.Get("buildNumber")
 
 		var limit int
 		if limitString != "" {
@@ -728,6 +729,10 @@ func (api *API) getPipelineHistoryHandler() Handler {
 			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithEmptyRemote(remote))
 		} else {
 			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithRemoteName(remote))
+		}
+
+		if buildNumber != "" {
+			opts = append(opts, pipeline.LoadPipelineBuildOpts.WithBuildNumber(buildNumber))
 		}
 
 		pbs, errl := pipeline.LoadPipelineBuildsByApplicationAndPipeline(api.mustDB(), a.ID, p.ID, env.ID, limit, opts...)
