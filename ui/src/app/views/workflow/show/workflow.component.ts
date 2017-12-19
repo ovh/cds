@@ -95,6 +95,7 @@ export class WorkflowShowComponent {
                             this.detailedWorkflow = updatedWorkflow;
 
                             this.direction = this._workflowStore.getDirection(this.project.key, this.detailedWorkflow.name);
+                            this._workflowStore.updateRecentWorkflow(this.project.key, updatedWorkflow);
 
                             if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
                                 return;

@@ -1,8 +1,9 @@
-import {AfterViewInit, Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, OnInit, ChangeDetectorRef} from '@angular/core';
 import {ProjectStore} from '../../service/project/project.store';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {NavbarService} from '../../service/navbar/navbar.service';
 import {ApplicationStore} from '../../service/application/application.store';
+import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {Application} from '../../model/application.model';
 import {User} from '../../model/user.model';
 import {NavigationEnd, Router} from '@angular/router';
@@ -13,10 +14,12 @@ import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {RouterService} from '../../service/router/router.service';
 import {WarningStore} from '../../service/warning/warning.store';
+import {NavbarRecentData} from '../../model/navbar.model';
 import {WarningUI} from '../../model/warning.model';
 import {WarningService} from '../../service/warning/warning.service';
 import {filter} from 'rxjs/operators';
 import {NavbarData, NavbarProjectData} from 'app/model/navbar.model';
+import {Workflow} from 'app/model/workflow.model';
 
 @Component({
     selector: 'app-navbar',
@@ -32,9 +35,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     // List of projects in the nav bar
     navProjects: NavbarData;
     navRecentApp: List<Application>;
+    navRecentWorkflows: List<NavbarRecentData>;
     searchItems: Array<string>;
 
     listApplications: List<Application>;
+    listWorkflows: List<NavbarRecentData>;
 
     currentCountry: string;
     langSubscrition: Subscription;
@@ -51,9 +56,11 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     constructor(private _navbarService: NavbarService,
                 private _authStore: AuthentificationStore,
                 private _appStore: ApplicationStore,
+                private _workflowStore: WorkflowStore,
                 private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
                 private _translate: TranslateService, private _warningStore: WarningStore,
-                private _authentificationStore: AuthentificationStore, private _warningService: WarningService) {
+                private _authentificationStore: AuthentificationStore, private _warningService: WarningService,
+                private _cd: ChangeDetectorRef) {
         this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
             this.currentUser = u;
         });
@@ -100,6 +107,15 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 this.listApplications = apps;
             }
         });
+
+        // Listen change on recent workflows viewed
+        this._workflowStore.getRecentWorkflows().subscribe(workflows => {
+            if (workflows) {
+                this.navRecentWorkflows = workflows;
+                this.listWorkflows = workflows;
+                this._cd.detectChanges();
+            }
+        });
     }
 
     /**
@@ -112,9 +128,15 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 this.searchItems = new Array<string>();
 
                 this.navProjects.projects.forEach(p => {
+                    this.searchItems.push(p.name);
                     if (p.application_names && p.application_names.length > 0) {
                         p.application_names.forEach(a => {
                             this.searchItems.push(p.name + '/' + a);
+                        })
+                    }
+                    if (p.workflow_names && p.workflow_names.length > 0) {
+                        p.workflow_names.forEach(w => {
+                            this.searchItems.push(p.name + '/' + w);
                         })
                     }
                 });

@@ -6,18 +6,19 @@ import {List, Map} from 'immutable';
 import {Observable} from 'rxjs/Observable';
 import {WorkflowService} from './workflow.service';
 import {GroupPermission} from '../../model/group.model';
+import {NavbarRecentData} from '../../model/navbar.model';
 import 'rxjs/add/observable/of';
 
 @Injectable()
 export class WorkflowStore {
 
-    static RECENT_WORKFLOW_KEY = 'CDS-RECENT-WORKFLOW';
+    static RECENT_WORKFLOWS_KEY = 'CDS-RECENT-WORKFLOWS';
     WORKFLOW_ORIENTATION_KEY = 'CDS-WORKFLOW-ORIENTATION';
 
     // List of all workflows.
     private _workflows: BehaviorSubject<Map<string, Workflow>> = new BehaviorSubject(Map<string, Workflow>());
 
-    private _recentWorkflows: BehaviorSubject<List<Workflow>> = new BehaviorSubject(List<Workflow>());
+    private _recentWorkflows: BehaviorSubject<List<NavbarRecentData>> = new BehaviorSubject(List<NavbarRecentData>());
 
 
     constructor(private _projectStore: ProjectStore, private _workflowService: WorkflowService) {
@@ -25,7 +26,7 @@ export class WorkflowStore {
     }
 
     loadRecentWorkflows(): void {
-        let arrayWorkflows = JSON.parse(localStorage.getItem(WorkflowStore.RECENT_WORKFLOW_KEY));
+        let arrayWorkflows = JSON.parse(localStorage.getItem(WorkflowStore.RECENT_WORKFLOWS_KEY));
         this._recentWorkflows.next(List.of(...arrayWorkflows));
     }
 
@@ -33,8 +34,34 @@ export class WorkflowStore {
      * Get recent workflow.
      * @returns {Observable<List<Workflow>>}
      */
-    getRecentWorkflows(): Observable<List<Workflow>> {
-        return new Observable<List<Workflow>>(fn => this._recentWorkflows.subscribe(fn));
+    getRecentWorkflows(): Observable<List<NavbarRecentData>> {
+        return new Observable<List<NavbarRecentData>>(fn => this._recentWorkflows.subscribe(fn));
+    }
+
+    /**
+     * Update recent workflow viewed.
+     * @param key Project unique key
+     * @param workflow Workflow to add
+     */
+    updateRecentWorkflow(key: string, workflow: Workflow): void {
+        let navbarRecentData = new NavbarRecentData();
+        navbarRecentData.project_key = key;
+        navbarRecentData.name = workflow.name;
+        let currentRecentWorkflows: Array<NavbarRecentData> = JSON.parse(localStorage.getItem(WorkflowStore.RECENT_WORKFLOWS_KEY));
+        if (currentRecentWorkflows) {
+            let index: number = currentRecentWorkflows.findIndex(w =>
+                w.name === navbarRecentData.name && w.project_key === navbarRecentData.project_key
+            );
+            if (index >= 0) {
+                currentRecentWorkflows.splice(index, 1);
+            }
+        } else {
+            currentRecentWorkflows = new Array<NavbarRecentData>();
+        }
+        currentRecentWorkflows.splice(0, 0, navbarRecentData);
+        currentRecentWorkflows = currentRecentWorkflows.splice(0, 15);
+        localStorage.setItem(WorkflowStore.RECENT_WORKFLOWS_KEY, JSON.stringify(currentRecentWorkflows));
+        this._recentWorkflows.next(List(currentRecentWorkflows));
     }
 
     /**
