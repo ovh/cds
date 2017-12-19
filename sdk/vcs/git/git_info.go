@@ -17,7 +17,8 @@ type Info struct {
 }
 
 // ExtractInfo returns an info, containing git information (git.Hash, describe)
-func ExtractInfo(dir string) (Info, error) {
+// ignore error if a command fails (example: for empty repository)
+func ExtractInfo(dir string) Info {
 	info := Info{}
 	cmdHash := []cmd{{dir: dir, cmd: "git", args: []string{"rev-parse", "HEAD"}}}
 	cmdDescribe := []cmd{{dir: dir, cmd: "git", args: []string{"describe", "--tags"}}}
@@ -26,26 +27,25 @@ func ExtractInfo(dir string) (Info, error) {
 	cmdAuthorEmail := []cmd{{dir: dir, cmd: "git", args: []string{"log", "--format=%ae", "-1"}}}
 	cmdCurrentBranch := []cmd{{dir: dir, cmd: "git", args: []string{"rev-parse", "--abbrev-ref", "HEAD"}}}
 
-	var err error
-	if info.Hash, err = gitRawCommandString(cmdHash); err != nil {
-		return info, err
-	}
-	if info.GitDescribe, err = gitRawCommandString(cmdDescribe); err != nil {
-		return info, err
-	}
-	if info.Message, err = gitRawCommandString(cmdMessage); err != nil {
-		return info, err
-	}
-	if info.Author, err = gitRawCommandString(cmdAuthor); err != nil {
-		return info, err
-	}
-	if info.AuthorEmail, err = gitRawCommandString(cmdAuthorEmail); err != nil {
-		return info, err
-	}
-	if info.Branch, err = gitRawCommandString(cmdCurrentBranch); err != nil {
-		return info, err
-	}
-	return info, nil
+	// git rev-parse HEAD can fail with
+	// "fatal: ambiguous argument 'HEAD': unknown revision or path not in the working tree."
+	// ignore err
+	info.Hash, _ = gitRawCommandString(cmdHash)
+
+	// git log --format=... can fail with
+	// "fatal: your current branch 'master' does not have any commits yet"
+	// ignore err
+	info.Message, _ = gitRawCommandString(cmdMessage)
+
+	info.Author, _ = gitRawCommandString(cmdAuthor)
+	info.AuthorEmail, _ = gitRawCommandString(cmdAuthorEmail)
+	info.Branch, _ = gitRawCommandString(cmdCurrentBranch)
+
+	// git describe can fail with
+	// "fatal: No names found, cannot describe anything."
+	// ignore err
+	info.GitDescribe, _ = gitRawCommandString(cmdDescribe)
+	return info
 }
 
 func gitRawCommandString(c cmds) (string, error) {

@@ -149,9 +149,7 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			return res
 		}
 
-		if err := extractInfo(w, dir, params, clone.Branch, commit.Value, sendLog); err != nil {
-			sendLog(fmt.Sprintf("Unable to extract git information: %s", err))
-		}
+		extractInfo(w, dir, params, clone.Branch, commit.Value, sendLog)
 
 		stdTaglistErr := new(bytes.Buffer)
 		stdTagListOut := new(bytes.Buffer)
@@ -247,10 +245,7 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 	authorEmail := sdk.ParameterValue(*params, "git.author.email")
 	message := sdk.ParameterValue(*params, "git.message")
 
-	info, errInfo := git.ExtractInfo(dir)
-	if errInfo != nil {
-		return fmt.Errorf("Error on ExtractInfo %s", errInfo.Error())
-	}
+	info := git.ExtractInfo(dir)
 
 	if info.GitDescribe != "" {
 		gitDescribe := sdk.Variable{
@@ -262,10 +257,11 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 		if _, err := w.addVariableInPipelineBuild(gitDescribe, params); err != nil {
 			return fmt.Errorf("Error on addVariableInPipelineBuild (describe): %s", err)
 		}
-
 		sendLog(fmt.Sprintf("git.describe: %s", info.GitDescribe))
+	}
 
-		if branch == "" || branch == "{{.git.branch}}" {
+	if branch == "" || branch == "{{.git.branch}}" {
+		if info.Branch != "" {
 			gitBranch := sdk.Variable{
 				Name:  "git.branch",
 				Type:  sdk.StringVariable,
@@ -277,10 +273,14 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 			}
 			sendLog(fmt.Sprintf("git.branch: %s", info.Branch))
 		} else {
-			sendLog(fmt.Sprintf("git.branch: %s", branch))
+			sendLog("git.branch: [empty]")
 		}
+	} else {
+		sendLog(fmt.Sprintf("git.branch: %s", branch))
+	}
 
-		if commit == "" || commit == "{{.git.hash}}" {
+	if commit == "" || commit == "{{.git.hash}}" {
+		if info.Hash != "" {
 			gitHash := sdk.Variable{
 				Name:  "git.hash",
 				Type:  sdk.StringVariable,
@@ -292,10 +292,14 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 			}
 			sendLog(fmt.Sprintf("git.hash: %s", info.Hash))
 		} else {
-			sendLog(fmt.Sprintf("git.hash: %s", commit))
+			sendLog("git.hash: [empty]")
 		}
+	} else {
+		sendLog(fmt.Sprintf("git.hash: %s", commit))
+	}
 
-		if message == "" {
+	if message == "" {
+		if info.Message != "" {
 			gitMessage := sdk.Variable{
 				Name:  "git.message",
 				Type:  sdk.StringVariable,
@@ -307,10 +311,14 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 			}
 			sendLog(fmt.Sprintf("git.message: %s", info.Message))
 		} else {
-			sendLog(fmt.Sprintf("git.message: %s", message))
+			sendLog("git.message: [empty]")
 		}
+	} else {
+		sendLog(fmt.Sprintf("git.message: %s", message))
+	}
 
-		if author == "" {
+	if author == "" {
+		if info.Author != "" {
 			gitAuthor := sdk.Variable{
 				Name:  "git.author",
 				Type:  sdk.StringVariable,
@@ -322,10 +330,14 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 			}
 			sendLog(fmt.Sprintf("git.author: %s", info.Author))
 		} else {
-			sendLog(fmt.Sprintf("git.author: %s", author))
+			sendLog("git.author: [empty]")
 		}
+	} else {
+		sendLog(fmt.Sprintf("git.author: %s", author))
+	}
 
-		if authorEmail == "" {
+	if authorEmail == "" {
+		if info.AuthorEmail != "" {
 			gitAuthorEmail := sdk.Variable{
 				Name:  "git.author.email",
 				Type:  sdk.StringVariable,
@@ -337,9 +349,10 @@ func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, 
 			}
 			sendLog(fmt.Sprintf("git.author.email: %s", info.AuthorEmail))
 		} else {
-			sendLog(fmt.Sprintf("git.author.email: %s", authorEmail))
+			sendLog("git.author.email: [empty]")
 		}
+	} else {
+		sendLog(fmt.Sprintf("git.author.email: %s", authorEmail))
 	}
-
 	return nil
 }
