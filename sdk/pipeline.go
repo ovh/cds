@@ -320,12 +320,17 @@ func RunPipeline(key, appName, name, env string, stream bool, request RunRequest
 }
 
 // GetPipelineBuildHistory retrieves recent build history for given pipeline
-func GetPipelineBuildHistory(key, appName, name, env string) ([]PipelineBuild, error) {
+func GetPipelineBuildHistory(key, appName, name, env, buildNumber string) ([]PipelineBuild, error) {
 	var res []PipelineBuild
 
 	path := fmt.Sprintf("/project/%s/application/%s/pipeline/%s/history", key, appName, name)
+	sep := "?"
 	if env != "" {
-		path = fmt.Sprintf("%s?envName=%s", path, url.QueryEscape(env))
+		path = fmt.Sprintf("%s%senvName=%s", path, sep, url.QueryEscape(env))
+		sep = "&"
+	}
+	if buildNumber != "" {
+		path = fmt.Sprintf("%s%sbuildNumber=%s", path, sep, url.QueryEscape(buildNumber))
 	}
 	data, _, err := Request("GET", path, nil)
 	if err != nil {

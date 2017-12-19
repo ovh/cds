@@ -285,11 +285,13 @@ var LoadPipelineBuildOpts = struct {
 	WithRemoteName  LoadOptionFunc
 	WithEmptyRemote LoadOptionFunc
 	WithStatus      LoadOptionFunc
+	WithBuildNumber LoadOptionFunc
 }{
 	WithBranchName:  withBranchName,
 	WithRemoteName:  withRemoteName,
 	WithStatus:      withStatus,
 	WithEmptyRemote: withEmptyRemote,
+	WithBuildNumber: withBuildNumber,
 }
 
 func withBranchName(branchName string) ExecOptionFunc {
@@ -322,8 +324,16 @@ func withStatus(status string) ExecOptionFunc {
 		if status == "" {
 			return "", "", nbArg
 		}
-
 		return fmt.Sprintf(" AND pb.status = $%d", nbArg), status, nbArg + 1
+	}
+}
+
+func withBuildNumber(buildNumber string) ExecOptionFunc {
+	return func(nbArg int) (string, string, int) {
+		if buildNumber == "" {
+			return "", "", nbArg
+		}
+		return fmt.Sprintf(" AND pb.build_number = $%d", nbArg), buildNumber, nbArg + 1
 	}
 }
 
