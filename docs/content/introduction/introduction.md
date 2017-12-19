@@ -41,13 +41,13 @@ An application is composed of one or multiple pipelines, that can be triggered:
 
 ### Packaging
 
-  * Declaration of worker models (specific hosts, docker image, openstack recipe)
-  * Conditional build path depending of build parameters (ie: git branch)
+  * Declaration of worker models (specific hosts, docker image, OpenStack recipe)
+  * Conditional build path depending on build parameters (ie: git branch)
 
 ### Deployment
 
   * Completely cross platform workers (built in Go) without any dependency
-  * Support for deployment environments (different sets of variable for the same deployment pipeline)
+  * Support for deployment environments (different sets of variables for the same deployment pipeline)
 
 
 ## Basic principles

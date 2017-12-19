@@ -19,4 +19,3 @@ This is a plugin to download file from URL
 ## More
 
 More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-download/README.md)
-

@@ -32,19 +32,19 @@ Pipeline hello-pip created.
 
 ```bash
 $ cds application add TEST hello-world
-Aplication hello-world created.
+Application hello-world created.
 ```
 
 ### Configure your pipeline
 
-We will add a script action in pipeline saying "Hello World !"
+You can add a script step in the pipeline that simply echoes "Hello World !"
 
 ```bash
 * cds pipeline job add DEMO hello-pip myJob1
 $ cds pipeline job append DEMO hello-pip myJob1 Script -p script="echo Hello World! "
 ```
 
-Last step, attach the pipeline to the application
+Finally, you need to attach the pipeline to the application
 
 ```bash
 $ cds application pipeline add DEMO hello-world hello-pip

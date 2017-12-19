@@ -17,7 +17,7 @@ Go Build: compile a go program
 * **cgoDisabled**: if true (checked) -> export CGO_ENABLED=0 before go build
 * **detectRaceCondition**: Enable data race detection. It's flag -race
 * **flags**: flags for go build. Put -ldflags "-X main.xyz=abc" for go build -ldflags "-X main.xyz=abc"
-* **gopath**: set a $GOPATH. If empty, this action try to get env $GOPATH. If $GOPATH is empty, action will set it to $HOME/go
+* **gopath**: set a $GOPATH. If empty, this action tries to get env $GOPATH. If $GOPATH is empty, the action will set it to $HOME/go
 * **os**: GOOS
 * **package**: go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar
 * **preRun**: Pre-command. Example: export CGO_ENABLED=0
@@ -31,5 +31,3 @@ Go Build: compile a go program
 
 
 More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-go-build.hcl)
-
-

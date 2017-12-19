@@ -10,7 +10,7 @@ identifier = "script"
 
 **Script** is a builtin action, you can't modify it.
 
-This action execute a script, written in script attribute
+This action executes a given script with a given interpreter.
 
 ## Parameters
 
@@ -26,9 +26,9 @@ This action execute a script, written in script attribute
 #!/bin/perl
 ```
 
- at first line.
+ at first line. This will define the interpreter.
 
-Make sure that the binary used is in the pre-requisites of action.
+Make sure that the binary used is in the pre-requisites of the action.
 
 If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails.
 
@@ -37,18 +37,18 @@ If you want to control command's exit code, you have to add
 set +e
 ```
 
-Example of step, CDS will exit at the first line, as `which a-unknown-binary will return an error` :
+Below is an example of a step that will fail at the first line:
 
 ```bash
 which a-unknown-binary # Step will fail here, lines below won't be executed
 if [ $? -ne 0 ]; then
-  echo "binary a-unknown-binary does not exists";
+  echo "binary a-unknown-binary does not exists"; # this won't be displayed
   exit 1
 fi;
 exit 0
 ```
 
-Example of step, CDS will execute all lines:
+If you want to display an error message before exiting, you should rather use:
 
 ```bash
 set +e
@@ -61,7 +61,7 @@ exit 0
 ```
 
 
-#### Variable
+#### Using CDS variables in a script
 
 You can use [CDS Variables]({{< relref "building-pipelines.variables.md" >}}) in a step script.
 

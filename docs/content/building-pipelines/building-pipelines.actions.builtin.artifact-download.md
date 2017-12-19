@@ -11,9 +11,9 @@ identifier = "builtin-artifact-download"
 
 **Artifact Download Action** is a builtin action, you can't modify it.
 
-This action can be used to get artifact uploaded by the [Artifact Upload]({{< relref "building-pipelines.actions.builtin.artifact-upload.md" >}}) action
+This action can be used to retrieve an artifact previously uploaded by an [Artifact Upload]({{< relref "building-pipelines.actions.builtin.artifact-upload.md" >}}) action.
 
-## Action Parameter
+## Parameters
 * application: Application from where artifacts will be downloaded
 * pipeline: Pipeline from where artifacts will be downloaded
 * tag: Tag set in the Artifact Upload action
