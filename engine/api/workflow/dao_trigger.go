@@ -11,7 +11,7 @@ import (
 )
 
 // insertTrigger inserts a trigger
-func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, trigger *sdk.WorkflowNodeTrigger, u *sdk.User) error {
+func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, trigger *sdk.WorkflowNodeTrigger, nodes []sdk.WorkflowNode, u *sdk.User) ([]sdk.WorkflowNode, error) {
 	defer func() {
 		log.Debug("insertTrigger> insert or update node %d (%s) on %s trigger %d", node.ID, node.Ref, node.Pipeline.Name, trigger.ID)
 	}()
@@ -20,25 +20,27 @@ func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node
 	trigger.WorkflowDestNodeID = 0
 
 	//Setup destination node
-	if err := insertNode(db, store, w, &trigger.WorkflowDestNode, u, false); err != nil {
-		return sdk.WrapError(err, "insertTrigger> Unable to setup destination node %d on trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
+	var errN error
+	nodes, errN = insertNode(db, store, w, &trigger.WorkflowDestNode, u, nodes, false)
+	if errN != nil {
+		return nodes, sdk.WrapError(errN, "insertTrigger> Unable to setup destination node %d on trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 	trigger.WorkflowDestNodeID = trigger.WorkflowDestNode.ID
 
 	//Insert trigger
 	dbt := NodeTrigger(*trigger)
 	if err := db.Insert(&dbt); err != nil {
-		return sdk.WrapError(err, "insertTrigger> Unable to insert trigger")
+		return nodes, sdk.WrapError(err, "insertTrigger> Unable to insert trigger")
 	}
 	trigger.ID = dbt.ID
 	trigger.WorkflowDestNode.TriggerSrcID = trigger.ID
 
 	// Update node trigger ID
 	if err := updateWorkflowTriggerSrc(db, &trigger.WorkflowDestNode); err != nil {
-		return sdk.WrapError(err, "insertTrigger> Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
+		return nodes, sdk.WrapError(err, "insertTrigger> Unable to update node %d for trigger %d", trigger.WorkflowDestNode.ID, trigger.ID)
 	}
 
-	return nil
+	return nodes, nil
 }
 
 // LoadTriggers loads trigger from a node
