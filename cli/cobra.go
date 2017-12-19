@@ -295,7 +295,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 
 			force, _ := cmd.Flags().GetBool("force")
 
-			if !force && !AskForConfirmation("Are you sure to delete ?") {
+			if !force && !AskForConfirmation("Are you sure to delete?") {
 				fmt.Println("Deletion aborted")
 				os.Exit(0)
 			}
