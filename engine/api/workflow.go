@@ -188,6 +188,11 @@ func (api *API) putWorkflowHandler() Handler {
 		}
 		defer tx.Rollback()
 
+		if err := workflow.Update(tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
+			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")
+		}
+
+		// HookRegistration after workflow.Update.  It needs hooks to be created on DB
 		defaultPayload, errHr := workflow.HookRegistration(tx, api.Cache, oldW, wf, p)
 		if errHr != nil {
 			return sdk.WrapError(errHr, "putWorkflowHandler")
@@ -195,10 +200,9 @@ func (api *API) putWorkflowHandler() Handler {
 
 		if defaultPayload != nil && isDefaultPayloadEmpty(wf) {
 			wf.Root.Context.DefaultPayload = *defaultPayload
-		}
-
-		if err := workflow.Update(tx, api.Cache, &wf, oldW, p, getUser(ctx)); err != nil {
-			return sdk.WrapError(err, "putWorkflowHandler> Cannot update workflow")
+			if err := workflow.UpdateNodeContext(tx, wf.Root.Context); err != nil {
+				return sdk.WrapError(err, "putWorkflowHandler> updateNodeContext")
+			}
 		}
 
 		if err := workflow.UpdateLastModifiedDate(tx, api.Cache, getUser(ctx), p.Key, oldW); err != nil {

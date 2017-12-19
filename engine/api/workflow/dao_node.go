@@ -154,11 +154,7 @@ type sqlContext struct {
 	Conditions                sql.NullString `db:"conditions"`
 }
 
-func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
-	if err := db.QueryRow("INSERT INTO workflow_node_context (workflow_node_id) VALUES ($1) RETURNING id", c.WorkflowNodeID).Scan(&c.ID); err != nil {
-		return sdk.WrapError(err, "insertNodeContext> Unable to insert workflow node context")
-	}
-
+func UpdateNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	var sqlContext = sqlContext{}
 	sqlContext.ID = c.ID
 	sqlContext.WorkflowNodeID = c.WorkflowNodeID
@@ -177,7 +173,7 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	if c.DefaultPayload != nil {
 		b, errM := json.Marshal(c.DefaultPayload)
 		if errM != nil {
-			return sdk.WrapError(errM, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) default payload", c.ID)
+			return sdk.WrapError(errM, "updateNodeContext> Unable to marshall workflow node context(%d) default payload", c.ID)
 		}
 		sqlContext.DefaultPayload = sql.NullString{String: string(b), Valid: true}
 	}
@@ -186,7 +182,7 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	if c.DefaultPipelineParameters != nil {
 		b, errM := json.Marshal(c.DefaultPipelineParameters)
 		if errM != nil {
-			return sdk.WrapError(errM, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) default pipeline parameters", c.ID)
+			return sdk.WrapError(errM, "updateNodeContext> Unable to marshall workflow node context(%d) default pipeline parameters", c.ID)
 		}
 		sqlContext.DefaultPipelineParameters = sql.NullString{String: string(b), Valid: true}
 	}
@@ -194,14 +190,21 @@ func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	var errC error
 	sqlContext.Conditions, errC = gorpmapping.JSONToNullString(c.Conditions)
 	if errC != nil {
-		return sdk.WrapError(errC, "InsertOrUpdateNode> Unable to marshall workflow node context(%d) conditions", c.ID)
+		return sdk.WrapError(errC, "updateNodeContext> Unable to marshall workflow node context(%d) conditions", c.ID)
 	}
 
 	if _, err := db.Update(&sqlContext); err != nil {
-		return sdk.WrapError(err, "InsertOrUpdateNode> Unable to update workflow node context(%d)", c.ID)
+		return sdk.WrapError(err, "updateNodeContext> Unable to update workflow node context(%d)", c.ID)
+	}
+	return nil
+}
+
+func insertNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
+	if err := db.QueryRow("INSERT INTO workflow_node_context (workflow_node_id) VALUES ($1) RETURNING id", c.WorkflowNodeID).Scan(&c.ID); err != nil {
+		return sdk.WrapError(err, "insertNodeContext> Unable to insert workflow node context")
 	}
 
-	return nil
+	return UpdateNodeContext(db, c)
 }
 
 // CountPipeline Count the number of workflow that use the given pipeline
