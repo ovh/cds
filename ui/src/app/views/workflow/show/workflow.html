@@ -36,7 +36,7 @@
                                             <div class="content">
                                                 <div class="ui grid">
                                                     <div class="row">
-                                                        <div class="five wide column" title="{{'workflow_first_execution' | translate}}">
+                                                        <div class="five wide column" title="{{'common_orientation' | translate}}">
                                                             <button class="ui icon button"
                                                                     *ngIf="direction === 'TB'"
                                                                     (click)="changeDirection()">
@@ -51,15 +51,11 @@
                                                         <div class="six wide column centered" title="{{'common_version' | translate}}">
 
                                                         </div>
-                                                        <div class="right aligned five wide column" title="{{'workflow_last_execution' | translate}}">
+                                                        <div class="right aligned five wide column" title="{{'btn_run_custom_worklow' | translate}}">
                                                             <div class="ui green buttons">
-                                                                <div class="ui button" (click)="runWorkflow()" [class.loading]="loading">{{
+                                                                <div class="ui button" (click)="runWithParameter()" [class.loading]="loading">{{
                                                                     'btn_run_workflow' | translate }}
                                                                 </div>
-                                                                <sm-dropdown class="icon button">
-                                                                    <a sm-item (click)="runWithParameter()">{{ 'btn_run_custom_worklow' |
-                                                                        translate }}</a>
-                                                                </sm-dropdown>
                                                             </div>
                                                         </div>
                                                     </div>

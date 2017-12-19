@@ -10,8 +10,11 @@
     </sm-dropdown>
 
     <sm-dropdown icon="clock" *ngIf="currentUser">
+        <ng-container *ngFor="let w of listWorkflows">
+            <a sm-item href="#" [routerLink]="['project', w.project_key, 'workflow', w.name]"><i class="share alternate icon"></i> {{ w.project_key + '/' + w.name}}</a>
+        </ng-container>
         <ng-container *ngFor="let app of listApplications">
-            <a sm-item href="#" [routerLink]="['project', app.project_key, 'application', app.name]">{{ app.project_key + '/' + app.name}}</a>
+            <a sm-item href="#" [routerLink]="['project', app.project_key, 'application', app.name]"><i class="rocket icon"></i> {{ app.project_key + '/' + app.name}}</a>
         </ng-container>
     </sm-dropdown>
 
@@ -34,6 +37,7 @@
         </sm-dropdown>
         <sm-dropdown icon="student" *ngIf="currentUser && currentUser.admin">
             <a sm-item href="#" [routerLink]="['admin', 'migration']">{{ 'navbar_admin_migration' | translate }}</a>
+            <a sm-item href="#" [routerLink]="['admin', 'status']">{{ 'navbar_admin_status' | translate }}</a>
         </sm-dropdown>
         <sm-dropdown icon="help circle outline">
             <a sm-item href="https://github.com/ovh/cds/releases/latest">{{ 'navbar_download' | translate }}</a>

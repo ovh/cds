@@ -1,0 +1,21 @@
+<div class="status ui segment">
+    <h3>{{'admin_status_title' | translate }}</h3>
+
+    <div *ngIf="loading" class="ui active text loader">{{ 'common_loading' | translate }}</div>
+
+    <table class="ui definition table" *ngIf="status && !loading">
+        <tbody>
+        <tr *ngFor="let line of status.lines" [ngClass]="{'error': line.status=='AL', 'warning': line.status=='WARN', 'positive': line.status=='WARN'}">
+            <td>
+                    {{line.component}}
+            </td>
+            <td>
+                    {{line.status}}
+            </td>
+            <td>
+                    {{line.value}}
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

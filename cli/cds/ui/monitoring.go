@@ -239,25 +239,14 @@ func (ui *Termui) updateStatus() string {
 	}
 
 	items := []string{}
-	for _, l := range status {
-		if strings.HasPrefix(l, "Version") ||
-			strings.HasPrefix(l, "Uptime") ||
-			strings.HasPrefix(l, "Time") ||
-			strings.HasPrefix(l, "Hostname") ||
-			strings.HasPrefix(l, "CDSName") ||
-			strings.HasPrefix(l, "Nb of Panics: 0") ||
-			strings.HasPrefix(l, "Internal Events Queue: 0") ||
-			strings.HasPrefix(l, "Secret Backend") ||
-			strings.HasPrefix(l, "Cache: local") ||
-			strings.HasPrefix(l, "Session-Store: In Memory") ||
-			strings.HasPrefix(l, "LastUpdate Connected") ||
-			strings.HasPrefix(l, "Worker Model Errors: 0") ||
-			strings.Contains(l, "OK") {
-			items = append(items, fmt.Sprintf("[%s](%s)", l, selected))
-		} else {
+	for _, l := range status.Lines {
+		if l.Status != sdk.MonitoringStatusOK {
 			items = append(items, fmt.Sprintf("[%s](bg-red)", l))
+		} else {
+			items = append(items, fmt.Sprintf("[%s](%s)", l, selected))
 		}
 	}
+
 	ui.status.Items = items
 	return msg
 }

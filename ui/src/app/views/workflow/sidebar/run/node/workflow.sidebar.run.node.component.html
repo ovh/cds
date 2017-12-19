@@ -53,7 +53,7 @@
                 </div>
             </div>
             <div class="item padding" *ngIf="currentWorkflowNodeRun.artifacts">
-                <div class="content">
+                <div class="content" [title]="'common_artifacts' | translate">
                     <div>
                         <i class="cloud upload icon"></i> {{currentWorkflowNodeRun.artifacts.length}}
                         <span *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.artifacts && currentWorkflowNodeRun.artifacts.length > 1">{{ 'common_artifacts' | translate }}</span>
@@ -75,7 +75,11 @@
         <div>
           <ng-container *ngIf="currentWorkflowNodeRun">
             <div class="ui vertical fluid steps">
-              <app-stage-step-summary *ngFor="let stage of currentWorkflowNodeRun.stages" [stage]="stage"></app-stage-step-summary>
+              <app-stage-step-summary *ngFor="let stage of currentWorkflowNodeRun.stages"
+                [stage]="stage"
+                [workflowRun]="currentWorkflowRun"
+                [workflowNodeRun]="currentWorkflowNodeRun">
+              </app-stage-step-summary>
             </div>
           </ng-container>
         </div>

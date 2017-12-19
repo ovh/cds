@@ -12,6 +12,7 @@ import {GroupPermission} from '../../model/group.model';
 import {ProjectStore} from '../project/project.store';
 import {Trigger} from '../../model/trigger.model';
 import {ApplyTemplateRequest} from '../../model/template.model';
+import {NavbarRecentData} from '../../model/navbar.model';
 import {Notification} from '../../model/notification.model';
 import {Scheduler} from '../../model/scheduler.model';
 import 'rxjs/add/observable/of';
@@ -20,12 +21,12 @@ import 'rxjs/add/observable/of';
 @Injectable()
 export class ApplicationStore {
 
-    static RECENT_APPLICATION_KEY = 'CDS-RECENT-APPLICATION';
+    static RECENT_APPLICATIONS_KEY = 'CDS-RECENT-APPLICATIONS';
 
     // List of all applications.
     private _application: BehaviorSubject<Map<string, Application>> = new BehaviorSubject(Map<string, Application>());
 
-    private _recentApplications: BehaviorSubject<List<Application>> = new BehaviorSubject(List<Application>());
+    private _recentApplications: BehaviorSubject<List<NavbarRecentData>> = new BehaviorSubject(List<NavbarRecentData>());
 
 
     constructor(private _applicationService: ApplicationService, private _projectStore: ProjectStore) {
@@ -34,7 +35,7 @@ export class ApplicationStore {
     }
 
     loadRecentApplication(): void {
-        let arrayApp = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATION_KEY));
+        let arrayApp = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATIONS_KEY));
         this._recentApplications.next(List.of(...arrayApp));
     }
 
@@ -72,19 +73,23 @@ export class ApplicationStore {
      * @param application Application to add
      */
     updateRecentApplication(key: string, application: Application): void {
-        application.project_key = key;
-        let currentRecentApps: Array<Application> = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATION_KEY));
+        let navbarRecentData = new NavbarRecentData();
+        navbarRecentData.project_key = key;
+        navbarRecentData.name = application.name;
+        let currentRecentApps: Array<NavbarRecentData> = JSON.parse(localStorage.getItem(ApplicationStore.RECENT_APPLICATIONS_KEY));
         if (currentRecentApps) {
-            let index: number = currentRecentApps.findIndex(app => app.name === application.name && app.project_key === key);
+            let index: number = currentRecentApps.findIndex(app =>
+                app.name === navbarRecentData.name && app.project_key === navbarRecentData.project_key
+            );
             if (index >= 0) {
                 currentRecentApps.splice(index, 1);
             }
         } else {
-            currentRecentApps = new Array<Application>();
+            currentRecentApps = new Array<NavbarRecentData>();
         }
-        currentRecentApps.splice(0, 0, application);
+        currentRecentApps.splice(0, 0, navbarRecentData);
         currentRecentApps = currentRecentApps.splice(0, 15);
-        localStorage.setItem(ApplicationStore.RECENT_APPLICATION_KEY, JSON.stringify(currentRecentApps));
+        localStorage.setItem(ApplicationStore.RECENT_APPLICATIONS_KEY, JSON.stringify(currentRecentApps));
         this._recentApplications.next(List(currentRecentApps));
     }
 

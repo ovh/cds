@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -31,7 +32,7 @@ type Store interface {
 	Publish(queueName string, value interface{})
 	Subscribe(queueName string) PubSub
 	GetMessageFromSubscription(c context.Context, pb PubSub) (string, error)
-	Status() string
+	Status() sdk.MonitoringStatusLine
 	SetAdd(rootKey string, memberKey string, member interface{})
 	SetRemove(rootKey string, memberKey string, member interface{})
 	SetCard(key string) int

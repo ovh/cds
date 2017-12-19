@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/moby/moby/pkg/namesgenerator"
 
@@ -89,15 +90,24 @@ func Close() {
 }
 
 // Status returns Event status
-func Status() string {
-	o := ""
+func Status() sdk.MonitoringStatusLine {
+	var o string
+	var isAlert bool
 	for _, b := range brokers {
-		o += b.status() + " "
+		s := b.status()
+		if !strings.Contains(s, "OK") {
+			isAlert = true
+		}
+		o += s + " "
 	}
 
 	if o == "" {
 		o = "⚠ "
 	}
+	status := sdk.MonitoringStatusOK
+	if isAlert {
+		status = sdk.MonitoringStatusAlert
+	}
 
-	return o
+	return sdk.MonitoringStatusLine{Component: "Event", Value: o, Status: status}
 }

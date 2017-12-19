@@ -4,13 +4,12 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-func (c *client) MonStatus() ([]string, error) {
-	res := []string{}
-	if _, err := c.GetJSON("/mon/status", &res); err != nil {
+func (c *client) MonStatus() (*sdk.MonitoringStatus, error) {
+	monStatus := sdk.MonitoringStatus{}
+	if _, err := c.GetJSON("/mon/status", &monStatus); err != nil {
 		return nil, err
 	}
-
-	return res, nil
+	return &monStatus, nil
 }
 
 func (c *client) MonDBMigrate() ([]sdk.MonDBMigrate, error) {

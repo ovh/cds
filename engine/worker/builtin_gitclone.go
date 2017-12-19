@@ -149,6 +149,8 @@ func runGitClone(w *currentWorker) BuiltInAction {
 			return res
 		}
 
+		extractInfo(w, dir, params, clone.Branch, commit.Value, sendLog)
+
 		stdTaglistErr := new(bytes.Buffer)
 		stdTagListOut := new(bytes.Buffer)
 		outputGitTag := &git.OutputOpts{
@@ -236,4 +238,121 @@ func runGitClone(w *currentWorker) BuiltInAction {
 
 		return sdk.Result{Status: sdk.StatusSuccess.String()}
 	}
+}
+
+func extractInfo(w *currentWorker, dir string, params *[]sdk.Parameter, branch, commit string, sendLog LoggerFunc) error {
+	author := sdk.ParameterValue(*params, "git.author")
+	authorEmail := sdk.ParameterValue(*params, "git.author.email")
+	message := sdk.ParameterValue(*params, "git.message")
+
+	info := git.ExtractInfo(dir)
+
+	if info.GitDescribe != "" {
+		gitDescribe := sdk.Variable{
+			Name:  "git.describe",
+			Type:  sdk.StringVariable,
+			Value: info.GitDescribe,
+		}
+
+		if _, err := w.addVariableInPipelineBuild(gitDescribe, params); err != nil {
+			return fmt.Errorf("Error on addVariableInPipelineBuild (describe): %s", err)
+		}
+		sendLog(fmt.Sprintf("git.describe: %s", info.GitDescribe))
+	}
+
+	if branch == "" || branch == "{{.git.branch}}" {
+		if info.Branch != "" {
+			gitBranch := sdk.Variable{
+				Name:  "git.branch",
+				Type:  sdk.StringVariable,
+				Value: info.Branch,
+			}
+
+			if _, err := w.addVariableInPipelineBuild(gitBranch, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (branch): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.branch: %s", info.Branch))
+		} else {
+			sendLog("git.branch: [empty]")
+		}
+	} else {
+		sendLog(fmt.Sprintf("git.branch: %s", branch))
+	}
+
+	if commit == "" || commit == "{{.git.hash}}" {
+		if info.Hash != "" {
+			gitHash := sdk.Variable{
+				Name:  "git.hash",
+				Type:  sdk.StringVariable,
+				Value: info.Hash,
+			}
+
+			if _, err := w.addVariableInPipelineBuild(gitHash, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (hash): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.hash: %s", info.Hash))
+		} else {
+			sendLog("git.hash: [empty]")
+		}
+	} else {
+		sendLog(fmt.Sprintf("git.hash: %s", commit))
+	}
+
+	if message == "" {
+		if info.Message != "" {
+			gitMessage := sdk.Variable{
+				Name:  "git.message",
+				Type:  sdk.StringVariable,
+				Value: info.Message,
+			}
+
+			if _, err := w.addVariableInPipelineBuild(gitMessage, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (message): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.message: %s", info.Message))
+		} else {
+			sendLog("git.message: [empty]")
+		}
+	} else {
+		sendLog(fmt.Sprintf("git.message: %s", message))
+	}
+
+	if author == "" {
+		if info.Author != "" {
+			gitAuthor := sdk.Variable{
+				Name:  "git.author",
+				Type:  sdk.StringVariable,
+				Value: info.Author,
+			}
+
+			if _, err := w.addVariableInPipelineBuild(gitAuthor, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (author): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.author: %s", info.Author))
+		} else {
+			sendLog("git.author: [empty]")
+		}
+	} else {
+		sendLog(fmt.Sprintf("git.author: %s", author))
+	}
+
+	if authorEmail == "" {
+		if info.AuthorEmail != "" {
+			gitAuthorEmail := sdk.Variable{
+				Name:  "git.author.email",
+				Type:  sdk.StringVariable,
+				Value: info.AuthorEmail,
+			}
+
+			if _, err := w.addVariableInPipelineBuild(gitAuthorEmail, params); err != nil {
+				return fmt.Errorf("Error on addVariableInPipelineBuild (authorEmail): %s", err)
+			}
+			sendLog(fmt.Sprintf("git.author.email: %s", info.AuthorEmail))
+		} else {
+			sendLog("git.author.email: [empty]")
+		}
+	} else {
+		sendLog(fmt.Sprintf("git.author.email: %s", authorEmail))
+	}
+	return nil
 }

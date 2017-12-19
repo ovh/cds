@@ -1,4 +1,4 @@
-<a class="step job animated fadeIn" (click)="open = !open">
+<a class="step job animated fadeIn" (click)="open = !open" (dblclick)="goToJobLogs()">
   <div>
     <app-status-icon [status]="job.status" class="job"></app-status-icon>
   </div>
@@ -13,6 +13,9 @@
   <ng-container *ngFor="let action_status of job.job?.step_status; let index = index;">
     <app-action-step-summary
       [action]="job.job.action.actions[index]"
+      [workflowRun]="workflowRun"
+      [stage]="stage"
+      [job]="job"
       [actionStatus]="action_status">
     </app-action-step-summary>
   </ng-container>

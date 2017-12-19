@@ -95,6 +95,7 @@ export class WorkflowShowComponent {
                             this.detailedWorkflow = updatedWorkflow;
 
                             this.direction = this._workflowStore.getDirection(this.project.key, this.detailedWorkflow.name);
+                            this._workflowStore.updateRecentWorkflow(this.project.key, updatedWorkflow);
 
                             if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
                                 return;
@@ -203,17 +204,6 @@ export class WorkflowShowComponent {
             if (this.workflowGraph) {
                 this.workflowGraph.toggleLinkJoin(false);
             }
-        });
-    }
-
-    runWorkflow(): void {
-        this.loading = true;
-        let request = new WorkflowRunRequest();
-        this._workflowRun.runWorkflow(this.project.key, this.detailedWorkflow.name, request).pipe(first()).subscribe(wr => {
-            this.loading = false;
-            this._router.navigate(['/project', this.project.key, 'workflow', this.detailedWorkflow.name, 'run', wr.num]);
-        }, () => {
-            this.loading = false;
         });
     }
 

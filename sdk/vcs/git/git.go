@@ -152,7 +152,7 @@ func runGitCommandRaw(cmds cmds, output *OutputOpts, envs ...string) error {
 					if verbose {
 						LogFunc("Command status code %d", status.ExitStatus())
 					}
-					return fmt.Errorf("Command fail : %d", status.ExitStatus())
+					return fmt.Errorf("Command fail: %d", status.ExitStatus())
 				}
 				return exiterr
 			}

@@ -620,7 +620,7 @@ type WorkflowNodeConditions struct {
 	LuaScript       string                  `json:"lua_script,omitempty" yaml:"script,omitempty"`
 }
 
-//WorkflowTriggerCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
+//WorkflowNodeCondition represents a condition to trigger ot not a pipeline in a workflow. Operator can be =, !=, regex
 type WorkflowNodeCondition struct {
 	Variable string `json:"variable"`
 	Operator string `json:"operator"`
@@ -638,6 +638,16 @@ type WorkflowNodeContext struct {
 	DefaultPayload            interface{}            `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters,omitempty" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions,omitempty" db:"-"`
+}
+
+//WorkflowNodeContextDefaultPayloadVCS represents a default payload when a workflow is attached to a repository Webhook
+type WorkflowNodeContextDefaultPayloadVCS struct {
+	GitBranch     string `json:"git.branch" db:"-"`
+	GitHash       string `json:"git.hash" db:"-"`
+	GitAuthor     string `json:"git.author" db:"-"`
+	GitHashBefore string `json:"git.hash.before" db:"-"`
+	GitRepository string `json:"git.repository" db:"-"`
+	GitMessage    string `json:"git.message" db:"-"`
 }
 
 //WorkflowList return the list of the workflows for a project

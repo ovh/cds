@@ -245,8 +245,12 @@ func (api *API) getApplicationHandler() Handler {
 		}
 
 		if withWorkflow {
+			brName := branchName
+			if brName == "" {
+				brName = "master"
+			}
 			var errWorflow error
-			app.Workflows, errWorflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), branchName, remote, 0)
+			app.Workflows, errWorflow = workflowv0.LoadCDTree(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), brName, remote, 0)
 			if errWorflow != nil {
 				return sdk.WrapError(errWorflow, "getApplicationHandler> Cannot load CD Tree for applications %s", app.Name)
 			}

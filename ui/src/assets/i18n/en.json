@@ -40,6 +40,10 @@
   "admin_migration_done" : "Done",
   "admin_migration_title" : "Status of application migration to workflow",
 
+  "admin_status_title" : "Status of CDS Engine",
+  
+  "admin_sidebar_status" : "Status",
+
   "application_create" : "Create a new application",
   "application_created" : "Application created",
   "application_deleted" : "Application deleted",
@@ -59,7 +63,7 @@
   "application_migration_regenerate" : "Re-generate a workflow",
   "application_workflow_migration" : "Migration to workflow",
   "application_workflow_migration_modal_title" : "Deletion of old application workflow",
-  "application_workflow_migration_modal_content" : "Be careful, this will delete your previous application workflow. There is no going back.  <ul><li>All pipelines will be detached from your application</li><li>All triggers will be deleted</li><li>Your history will be deleted</li><li>All your artifacts will be deleted</li></ul>",
+  "application_workflow_migration_modal_content" : "Be careful, this will delete your previous application workflow. There is no going back.  <ul><li>All pipelines will be detached from your application</li><li>All triggers will be deleted</li><li>Your history will be deleted</li><li>All your artifacts will be deleted</li></ul>In case of a cleaning following a migration to workflow, this \"old application workflow\" to delete only matches what was in place before the migration.",
   "application_notifications_form_title_add" : "Add a notification",
   "application_notifications_form_title_edit" : "Edit notification",
   "application_notifications_list_title": "List of notifications",
@@ -119,7 +123,6 @@
   "btn_resync_repo" : "Resynchronize",
   "btn_run" : "Run pipeline",
   "btn_run_workflow" : "Run workflow",
-  "btn_run_custom_worklow" : "Run workflow with parameters",
   "btn_validate" : "Validate",
   "btn_save" : "Save",
   "btn_edit" : "Edit",
@@ -258,6 +261,7 @@
 
   "navbar_actions" : "Actions",
   "navbar_admin_migration" : "Migrate to workflows",
+  "navbar_admin_status" : "CDS Engine Status",
   "navbar_documentation" : "Documentation",
   "navbar_download" : "Download",
   "navbar_groups" : "Groups",

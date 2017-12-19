@@ -274,11 +274,11 @@ func (s *RedisStore) GetMessageFromSubscription(c context.Context, pb PubSub) (s
 }
 
 // Status returns the status of the local cache
-func (s *RedisStore) Status() string {
+func (s *RedisStore) Status() sdk.MonitoringStatusLine {
 	if s.Client.Ping().Err() == nil {
-		return "OK (redis)"
+		return sdk.MonitoringStatusLine{Component: "Cache", Value: "Ping OK", Status: sdk.MonitoringStatusOK}
 	}
-	return "KO (redis"
+	return sdk.MonitoringStatusLine{Component: "Cache", Value: "No Ping", Status: sdk.MonitoringStatusAlert}
 }
 
 // SetAdd add a member (identified by a key) in the cached set

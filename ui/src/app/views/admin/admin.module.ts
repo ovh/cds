@@ -5,6 +5,7 @@ import {AdminRouting} from './admin.routing';
 import {AdminComponent} from './admin.component';
 import {MigrationOverviewComponent} from './migration/migration.overview.component';
 import {MigrationProjectComponent} from './migration/project/migration.project.component';
+import {StatusComponent} from './status/status.component';
 import {AdminSidebarComponent} from './sidebar/admin.sidebar.component';
 
 @NgModule({
@@ -13,6 +14,7 @@ import {AdminSidebarComponent} from './sidebar/admin.sidebar.component';
         AdminSidebarComponent,
         MigrationOverviewComponent,
         MigrationProjectComponent,
+        StatusComponent,
     ],
     imports: [
       SharedModule,
