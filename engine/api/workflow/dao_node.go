@@ -94,7 +94,6 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 			Configurable: false,
 		}
 
-		log.Warning(">%s< - >%s<", h.WorkflowHookModel.Name, RepositoryWebHookModel.Name)
 		if h.WorkflowHookModel.Name == RepositoryWebHookModel.Name {
 			if n.Context.Application == nil {
 				app, errA := application.LoadByID(db, store, n.Context.ApplicationID, u)
@@ -104,7 +103,6 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 				n.Context.Application = app
 			}
 
-			log.Warning(">%+v", n.Context.Application)
 			if n.Context.Application == nil || n.Context.Application.RepositoryFullname == "" || n.Context.Application.VCSServer == "" {
 				return nodes, sdk.WrapError(sdk.ErrForbidden, "InsertOrUpdateNode> Cannot create an repository webhook on an application without a repository")
 			}
