@@ -12,10 +12,8 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) importPipelineHandler() Handler {
@@ -135,12 +133,6 @@ func (api *API) importPipelineHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "importPipelineHandler> Cannot commit transaction")
 		}
-
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-				log.Error("importPipelineHandler> Cannot check warnings: %s", err)
-			}
-		}()
 
 		return WriteJSON(w, r, msgListString, http.StatusOK)
 	}

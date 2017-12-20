@@ -9,7 +9,6 @@ import (
 	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -254,18 +253,6 @@ func (api *API) updateWorkerModelHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateWorkerModel> unable to commit transaction")
 		}
-
-		// Recompute warnings
-		go func() {
-			warnings, err := sanity.LoadAllWarnings(api.mustDB(), "")
-			if err != nil {
-				log.Warning("updateWorkerModel> cannot load warnings: %s", err)
-			}
-
-			for _, warning := range warnings {
-				sanity.CheckPipeline(api.mustDB(), api.Cache, &warning.Project, &warning.Pipeline)
-			}
-		}()
 
 		return WriteJSON(w, r, model, http.StatusOK)
 	}
