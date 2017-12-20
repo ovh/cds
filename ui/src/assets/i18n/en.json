@@ -251,7 +251,7 @@
   "hook_workflow_label" : "Hook: ",
 
   "home_documentation" : "Documentation",
-  "home_title" : "Welcome on CDS",
+  "home_title" : "Welcome to CDS",
 
   "job_add_step" : "Add a step",
   "job_add_step_final" : "Add a final step",

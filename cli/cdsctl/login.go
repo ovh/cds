@@ -151,6 +151,6 @@ func doLogin(url, username, password string, env bool) error {
 		return err
 	}
 
-	fmt.Println("Login successfull")
+	fmt.Println("Login successful")
 	return nil
 }

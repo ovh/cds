@@ -462,7 +462,7 @@ type ClientConn struct {
 
 // lbWatcher watches the Notify channel of the balancer in cc and manages
 // connections accordingly.  If doneChan is not nil, it is closed after the
-// first successfull connection is made.
+// first successful connection is made.
 func (cc *ClientConn) lbWatcher(doneChan chan struct{}) {
 	for addrs := range cc.dopts.balancer.Notify() {
 		var (
