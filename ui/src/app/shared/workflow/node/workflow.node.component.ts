@@ -1,46 +1,25 @@
 import {
     AfterViewInit,
-    ChangeDetectorRef,
     Component,
     ElementRef,
-    EventEmitter,
     Input,
     NgZone,
     OnInit,
-    Output,
     ViewChild
 } from '@angular/core';
 import {
     Workflow,
-    WorkflowNode,
-    WorkflowNodeHook,
-    WorkflowNodeJoin,
-    WorkflowNodeTrigger,
-    WorkflowPipelineNameImpact
+    WorkflowNode
 } from '../../../model/workflow.model';
 import {Project} from '../../../model/project.model';
-import {WorkflowTriggerComponent} from '../trigger/workflow.trigger.component';
-import {WorkflowStore} from '../../../service/workflow/workflow.store';
-import {TranslateService} from '@ngx-translate/core';
-import {ToastService} from '../../toast/ToastService';
-import {WorkflowDeleteNodeComponent} from './delete/workflow.node.delete.component';
-import {WorkflowNodeContextComponent} from './context/workflow.node.context.component';
 import {cloneDeep} from 'lodash';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
-import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {WorkflowNodeRun, WorkflowRun} from '../../../model/workflow.run.model';
 import {Router, ActivatedRoute} from '@angular/router';
 import {PipelineStatus} from '../../../model/pipeline.model';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {WorkflowNodeHookFormComponent} from './hook/form/node.hook.component';
-import {HookEvent} from './hook/hook.event';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
-import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
-import {WorkflowNodeConditionsComponent} from './conditions/node.conditions.component';
-import {first} from 'rxjs/operators';
 
 declare var _: any;
 
@@ -60,10 +39,6 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     workflowRunNode: WorkflowNodeRunParamComponent;
 
     workflowRun: WorkflowRun;
-    workflowRunStatus: string;
-    workflowRunNum: number;
-
-    pipelineSubscription: Subscription;
 
     zone: NgZone;
     currentNodeRun: WorkflowNodeRun;
@@ -73,18 +48,12 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     loading = false;
     options: {};
     disabled = false;
-    loadingStop = false;
-    displayInputName = false;
-    displayPencil = false;
-    nameWarning: WorkflowPipelineNameImpact;
     selectedNodeId: number;
 
     workflowCoreSub: Subscription;
 
-    constructor(private elementRef: ElementRef, private _changeDetectorRef: ChangeDetectorRef,
-                private _workflowStore: WorkflowStore, private _translate: TranslateService, private _toast: ToastService,
-                private _wrService: WorkflowRunService, private _pipelineStore: PipelineStore, private _router: Router,
-                private _modalService: SuiModalService, private _workflowCoreService: WorkflowCoreService,
+    constructor(private elementRef: ElementRef, private _router: Router,
+                private _workflowCoreService: WorkflowCoreService,
                 private _route: ActivatedRoute) {
         this._route.queryParams.subscribe((qp) => {
             if (qp['selectedNodeId']) {
@@ -167,17 +136,8 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         }
     }
 
-    displayDropdown(): void {
-        this.elementRef.nativeElement.style.zIndex = 50;
-    }
-
     ngAfterViewInit() {
         this.elementRef.nativeElement.style.position = 'fixed';
         this.elementRef.nativeElement.style.top = 0;
-    }
-
-    openRunNode($event): void {
-        $event.stopPropagation();
-        this.workflowRunNode.show();
     }
 }
