@@ -8,7 +8,7 @@ identifier = "actions-builtin"
 
 +++
 
-Built-in actions are integred in CDS. You can’t modify it.
+Built-in actions are integrated in CDS. You can’t modify them.
 
 Built-in actions :
 

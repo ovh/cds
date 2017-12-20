@@ -40,7 +40,7 @@ You must have a CDS Running. See [Installation]({{< relref "installation.md" >}}
 
 ## 5 - Run Pipeline
 
-* Click on "Play button"
+* Click on the "Play" button
 
 ![img](/images/building-pipelines.first-pipeline-ui-9-view-workflow.png)
 

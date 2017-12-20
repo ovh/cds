@@ -10,9 +10,9 @@ identifier = "builtin-artifact-upload"
 
 **Artifact Upload Action** is a builtin action, you can't modify it.
 
-This action can be used to upload artifact in CDS. This is the good way to share files between pipelines or stages.
+This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
 
-## Action Parameter
+## Parameters
 * path: Path of file to upload
 * tag: Tag to apply to your file.
 

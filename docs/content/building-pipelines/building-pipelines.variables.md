@@ -49,22 +49,22 @@ Here is the list of builtin variables, generated for every build:
 - `{{.cds.stage}}` The name of the current stage
 - `{{.cds.job}}` The name of the current job
 - `{{.cds.workspace}}` Current job's workspace. It's a directory. In a step script, `{{.cds.workspace}}` == $HOME
-- `{{.cds.version}}` The number of the current version
+- `{{.cds.version}}` The current version number
 - `{{.cds.parent.application}}` The name of the application that triggered the current build
 - `{{.cds.parent.pipeline}}` The name of the pipeline that triggered the current build
-- `{{.cds.triggered_by.email}}` Email of the user that run the current build
-- `{{.cds.triggered_by.fullname}}` Full name of the user that run the current build
-- `{{.cds.triggered_by.username}}` User that run the current build
+- `{{.cds.triggered_by.email}}` Email of the user who launched the current build
+- `{{.cds.triggered_by.fullname}}` Full name of the user who launched the current build
+- `{{.cds.triggered_by.username}}` Username of the user who launched the current build
 
 ## The .version variable
 
 `{{.cds.version}}`
 
-CDS version is a builtin variable equals to the buildNumber of the last pipeline of type “build”. This variable is transmitted through triggers with the same value to testing and deployment pipelines.
+CDS version is a builtin variable set to the buildNumber of the last pipeline of type “build”. This variable is transmitted through triggers with the same value to both testing and deployment pipelines.
 
 ## Export a variable inside a step
 
-In a step of type `script`, you can export variable as:
+In a step of type `script`, you can export a variable as the following:
 
 ```bash
 $ worker export varname thevalue
@@ -74,7 +74,7 @@ You can now use `{{.cds.build.varname}}` in further steps and stages.
 
 ## Shell Environment Variable
 
-All CDS variables, except `password type` can be used as plain environment variable.
+All CDS variables, except `password type`, can be used as plain environment variables.
 
 Theses lines will have the same output
 
