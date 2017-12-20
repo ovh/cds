@@ -12,18 +12,18 @@ import (
 //WorkflowRun is an execution instance of a run
 type WorkflowRun struct {
 	ID               int64                            `json:"id" db:"id"`
-	Number           int64                            `json:"num" db:"num"`
+	Number           int64                            `json:"num" db:"num" cli:"num"`
 	ProjectID        int64                            `json:"project_id,omitempty" db:"project_id"`
 	WorkflowID       int64                            `json:"workflow_id" db:"workflow_id"`
-	Status           string                           `json:"status" db:"status"`
+	Status           string                           `json:"status" db:"status" cli:"status"`
 	Workflow         Workflow                         `json:"workflow" db:"-"`
-	Start            time.Time                        `json:"start" db:"start"`
+	Start            time.Time                        `json:"start" db:"start" cli:"start"`
 	LastModified     time.Time                        `json:"last_modified" db:"last_modified"`
 	WorkflowNodeRuns map[int64][]WorkflowNodeRun      `json:"nodes" db:"-"`
 	Infos            []WorkflowRunInfo                `json:"infos" db:"-"`
-	Tags             []WorkflowRunTag                 `json:"tags" db:"-"`
+	Tags             []WorkflowRunTag                 `json:"tags" db:"-" cli:"tags"`
 	LastSubNumber    int64                            `json:"last_subnumber" db:"last_sub_num"`
-	LastExecution    time.Time                        `json:"last_execution" db:"last_execution"`
+	LastExecution    time.Time                        `json:"last_execution" db:"last_execution" cli:"last_execution"`
 	ToDelete         bool                             `json:"to_delete" db:"to_delete" cli:"-"`
 	JoinTriggersRun  map[int64]WorkflowNodeTriggerRun `json:"join_triggers_run,omitempty" db:"-"`
 }
@@ -83,8 +83,8 @@ type WorkflowRunInfo struct {
 //WorkflowRunTag is a tag on workflow run
 type WorkflowRunTag struct {
 	WorkflowRunID int64  `json:"-" db:"workflow_run_id"`
-	Tag           string `json:"tag" db:"tag"`
-	Value         string `json:"value" db:"value"`
+	Tag           string `json:"tag" db:"tag" cli:"tag"`
+	Value         string `json:"value" db:"value" cli:"value"`
 }
 
 //WorkflowNodeRun is as execution instance of a node. This type is duplicated for database persistence in the engine/api/workflow package
