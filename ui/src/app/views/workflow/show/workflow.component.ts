@@ -199,6 +199,7 @@ export class WorkflowShowComponent {
             if (this.workflowGraph) {
                 this.workflowGraph.toggleLinkJoin(false);
             }
+            this._router.navigate(['/project', this.project.key, 'workflow', w.name]);
         });
     }
 
