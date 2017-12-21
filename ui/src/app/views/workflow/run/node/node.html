@@ -8,20 +8,22 @@
                 <i class="sitemap icon"></i>
                 {{ 'common_pipeline' | translate }}
             </a>
-            <a sm-item [class.active]="selectedTab === 'commit'">
-                Commit
+            <a sm-item [class.active]="selectedTab === 'commit'" [class.disabled]="!nodeRun || !nodeRun.commits || nodeRun.commits.length === 0" (click)="nodeRun.commits && nodeRun.commits.length !== 0 && showTab('commit')">
+                <span *ngIf="nodeRun.commits">{{ nodeRun.commits.length + ' '}}</span>
+                <span *ngIf="nodeRun.commits && nodeRun.commits.length > 1">{{ 'common_commits' | translate }}</span>
+                <span *ngIf="!nodeRun.commits || (nodeRun.commits && nodeRun.commits.length < 2)">{{ 'common_commit' | translate }}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'test'" (click)="showTab('test')" [class.disabled]="!nodeRun || !nodeRun.tests || nodeRun.tests.total === 0">
+            <a sm-item [class.active]="selectedTab === 'test'" (click)="nodeRun.tests && nodeRun.tests.total !== 0 && showTab('test')" [class.disabled]="!nodeRun || !nodeRun.tests || nodeRun.tests.total === 0">
                 <span *ngIf="nodeRun && nodeRun.tests && nodeRun.tests.total > 1">{{ 'common_tests' | translate }}</span>
                 <span *ngIf="!nodeRun || !nodeRun.tests || nodeRun.tests.total < 2">{{ 'common_test' | translate }}</span>
                 <span *ngIf="nodeRun && nodeRun.tests ">{{ ' (' +nodeRun.tests.total + ')'}}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'artifact'" (click)="showTab('artifact')" [class.disabled]="!nodeRun || !nodeRun.artifacts || nodeRun.artifacts.length === 0">
+            <a sm-item [class.active]="selectedTab === 'artifact'" (click)="nodeRun.artifacts && nodeRun.artifacts.length !== 0 && showTab('artifact')" [class.disabled]="!nodeRun || !nodeRun.artifacts || nodeRun.artifacts.length === 0">
                 <span *ngIf="nodeRun && nodeRun.artifacts && nodeRun.artifacts.length > 1">{{ 'common_artifacts' | translate }}</span>
                 <span *ngIf="!nodeRun || !nodeRun.artifacts || nodeRun.artifacts.length < 2">{{ 'common_artifact' | translate }}</span>
                 <span *ngIf="nodeRun && nodeRun.artifacts ">{{ ' (' +nodeRun.artifacts.length + ')'}}</span>
             </a>
-            <a sm-item [class.active]="selectedTab === 'history'" (click)="showTab('history')" [class.disabled]="nodeRunsHistory.length === 0">
+            <a sm-item [class.active]="selectedTab === 'history'" (click)="nodeRunsHistory.length !== 0 && showTab('history')" [class.disabled]="nodeRunsHistory.length === 0">
                 {{ 'common_history' | translate }}
                 {{ ' (' + nodeRunsHistory.length + ')'}}
             </a>
@@ -35,6 +37,9 @@
                 </div>
                 <div *ngSwitchCase="'artifact'">
                     <app-workflow-artifact-list [artifacts]="nodeRun.artifacts"></app-workflow-artifact-list>
+                </div>
+                <div *ngSwitchCase="'commit'">
+                    <app-commit-list [commits]="nodeRun.commits"></app-commit-list>
                 </div>
                 <div *ngSwitchCase="'test'">
                     <app-workflow-tests-result [tests]="nodeRun.tests"></app-workflow-tests-result>

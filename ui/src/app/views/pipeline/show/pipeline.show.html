@@ -62,7 +62,7 @@
                         <app-warning-modal [title]="_translate.instant('warning_modal_title')" [msg]="_translate.instant('warning_modal_body')" (event)="groupEvent($event, true)" #permWarning></app-warning-modal>
                     </div>
                     <div *ngSwitchCase="'usage'">
-                        <app-usage [project]="project" [applications]="applications" [workflows]="workflows" [environments]="environments" [currentUser]="currentUser"></app-usage>
+                        <app-usage [project]="project" [applications]="applications" [workflows]="workflows" [environments]="environments"></app-usage>
                     </div>
                     <div *ngSwitchCase="'advanced'">
                         <app-pipeline-admin [project]="project" [pipeline]="pipeline"></app-pipeline-admin>

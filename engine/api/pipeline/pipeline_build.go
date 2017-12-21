@@ -1480,19 +1480,10 @@ func GetRemotes(db gorp.SqlExecutor, app *sdk.Application) ([]sdk.VCSRemote, err
 	return remotes, nil
 }
 
-//BuildNumberAndHash represents BuildNumber, Commit Hash and Branch for a Pipeline Build
-type BuildNumberAndHash struct {
-	BuildNumber int64
-	Hash        string
-	Branch      string
-	Remote      string
-	RemoteURL   string
-}
-
 //CurrentAndPreviousPipelineBuildVCSInfos returns a struct with BuildNumber, Commit Hash, Branch, Remote, Remote_url
 //for the current pipeline build and the previous one on the same branch.
 //Returned pointers may be null if pipeline build are not found
-func CurrentAndPreviousPipelineBuildVCSInfos(db gorp.SqlExecutor, buildNumber, pipelineID, applicationID, environmentID int64) (*BuildNumberAndHash, *BuildNumberAndHash, error) {
+func CurrentAndPreviousPipelineBuildVCSInfos(db gorp.SqlExecutor, buildNumber, pipelineID, applicationID, environmentID int64) (*sdk.BuildNumberAndHash, *sdk.BuildNumberAndHash, error) {
 	query := `
 			SELECT
 				current_pipeline.build_number, current_pipeline.vcs_changes_hash, current_pipeline.vcs_changes_branch, current_pipeline.vcs_remote, current_pipeline.vcs_remote_url,
@@ -1534,7 +1525,7 @@ func CurrentAndPreviousPipelineBuildVCSInfos(db gorp.SqlExecutor, buildNumber, p
 		return nil, nil, err
 	}
 
-	cur := &BuildNumberAndHash{}
+	cur := &sdk.BuildNumberAndHash{}
 	if curBuildNumber.Valid {
 		cur.BuildNumber = curBuildNumber.Int64
 	}
@@ -1551,7 +1542,7 @@ func CurrentAndPreviousPipelineBuildVCSInfos(db gorp.SqlExecutor, buildNumber, p
 		cur.RemoteURL = curRemoteURL.String
 	}
 
-	prev := &BuildNumberAndHash{}
+	prev := &sdk.BuildNumberAndHash{}
 	if prevBuildNumber.Valid {
 		prev.BuildNumber = prevBuildNumber.Int64
 	} else {

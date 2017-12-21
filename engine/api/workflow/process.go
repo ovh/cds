@@ -463,10 +463,12 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 	}
 
+	gitValues := map[string]string{}
 	for _, p := range jobParams {
 		switch p.Name {
 		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor:
 			w.Tag(p.Name, p.Value)
+			gitValues[p.Name] = p.Value
 		}
 	}
 
@@ -495,6 +497,23 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
 	w.LastSubNumber = MaxSubNumber(w.WorkflowNodeRuns)
+
+	if n.Context != nil && n.Context.Application != nil {
+		commits, curVCSInfos, err := GetNodeRunBuildCommits(db, store, p, n, run, w, n.Context.Application, n.Context.Environment)
+		if err != nil {
+			log.Warning("processWorkflowNodeRun> cannot update build commits on a node run %v", err)
+		} else {
+			run.Commits = commits
+		}
+
+		if gitValues[tagGitBranch] == "" && curVCSInfos.Branch != "" {
+			w.Tag(tagGitBranch, curVCSInfos.Branch)
+		}
+		if gitValues[tagGitHash] == "" && curVCSInfos.Hash != "" {
+			w.Tag(tagGitHash, curVCSInfos.Hash)
+		}
+	}
+
 	if err := updateWorkflowRun(db, w); err != nil {
 		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
 	}

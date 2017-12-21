@@ -18,8 +18,6 @@ export class UsageComponent {
     @Input() applications: Array<Application>;
     @Input() pipelines: Array<Pipeline>;
     @Input() environments: Array<Environment>;
-    // TODO: Delete when workflows will be public
-    @Input() currentUser: User;
 
     constructor() { }
 }

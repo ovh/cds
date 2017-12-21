@@ -58,15 +58,10 @@ export class WorkflowShowComponent {
     loading = false;
     // For usage
     usageCount = 0;
-    currentUser: User;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
                 private _translate: TranslateService, private _toast: ToastService, private _workflowRun: WorkflowRunService,
                 private _workflowCoreService: WorkflowCoreService) {
-        // TODO: DELETE THIS WHEN WORKFLOW IS PUBLIC
-        this.currentUser = new User();
-        this.currentUser.admin = true;
-
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
