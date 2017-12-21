@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"math/rand"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
@@ -143,9 +144,21 @@ func (bot *botClient) sendPresencesOnConfs() error {
 
 func (bot *botClient) sendToXMPP() {
 	for {
-		cdsbot.XMPPClient.SendHtml(<-bot.chats)
+		chat := <-bot.chats
+		if isXML(chat.Text) {
+			cdsbot.XMPPClient.SendHtml(chat)
+		} else {
+			cdsbot.XMPPClient.Send(chat)
+		}
 		time.Sleep(time.Duration(viper.GetInt("xmpp_delay")) * time.Second)
 	}
+}
+
+// XML is detected if presence of tags like </foo> or <foo/>
+// This means that <br> is not detected as XML, but <br/> is
+func isXML(text string) bool {
+	xmlRegexp := regexp.MustCompile(`<\/[\w\-][^><]*>|<[\w\-][^><]*\/>`)
+	return len(xmlRegexp.FindAllString(text, -1)) > 0
 }
 
 func (bot *botClient) receive() {
