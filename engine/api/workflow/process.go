@@ -499,7 +499,7 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	w.LastSubNumber = MaxSubNumber(w.WorkflowNodeRuns)
 
 	if n.Context != nil && n.Context.Application != nil {
-		commits, curVCSInfos, err := GetNodeRunBuildCommits(db, store, p, n, run, w, n.Context.Application, n.Context.Environment)
+		commits, curVCSInfos, err := GetNodeRunBuildCommits(db, store, p, n, w, n.Context.Application, n.Context.Environment)
 		if err != nil {
 			log.Warning("processWorkflowNodeRun> cannot update build commits on a node run %v", err)
 		} else {

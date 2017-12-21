@@ -374,6 +374,48 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 	}
 }
 
+func (api *API) getWorkflowCommitsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+		nodeID, err := requestVarInt(r, "nodeID")
+		if err != nil {
+			return err
+		}
+
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "getWorkflowCommitsHandler> Unable to load project")
+		}
+
+		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, false)
+		if errW != nil {
+			return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow run")
+		}
+
+		wNode := wfRun.Workflow.GetNode(nodeID)
+		if wNode == nil {
+			return fmt.Errorf("getWorkflowCommitsHandler> Unable to get workflow node run")
+		}
+
+		if wNode.Context == nil || wNode.Context.Application == nil {
+			return WriteJSON(w, r, []sdk.VCSCommit{}, http.StatusOK)
+		}
+
+		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, wNode, wfRun, wNode.Context.Application, wNode.Context.Environment)
+		if errC != nil {
+			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits")
+		}
+
+		return WriteJSON(w, r, commits, http.StatusOK)
+	}
+}
+
 func (api *API) stopWorkflowNodeRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

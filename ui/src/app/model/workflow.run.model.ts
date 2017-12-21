@@ -33,6 +33,7 @@ export class WorkflowRun {
     nodes: { [key: string]: Array<WorkflowNodeRun>; };
     tags: Array<WorkflowRunTags>;
     join_triggers_run: Map<number, TriggerRun>;
+    commits: Array<Commit>;
 }
 
 export class WorkflowRunTags {

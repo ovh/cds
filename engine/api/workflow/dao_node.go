@@ -239,7 +239,7 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	//TODO: Check user permission
 
 	//Load context
-	ctx, errCtx := loadNodeContext(db, store, &wn, u)
+	ctx, errCtx := LoadNodeContext(db, store, wn.ID)
 	if errCtx != nil {
 		return nil, sdk.WrapError(errCtx, "LoadNode> Unable to load context of %d", id)
 	}
@@ -266,13 +266,14 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	return &wn, nil
 }
 
-func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNode, u *sdk.User) (*sdk.WorkflowNodeContext, error) {
+// LoadNodeContext load the context for a given node id and user
+func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
-	if err := db.SelectOne(&dbnc, "select id from workflow_node_context where workflow_node_id = $1", wn.ID); err != nil {
-		return nil, sdk.WrapError(err, "loadNodeContext> Unable to load node context %d", wn.ID)
+	if err := db.SelectOne(&dbnc, "select id from workflow_node_context where workflow_node_id = $1", nodeID); err != nil {
+		return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load node context %d", nodeID)
 	}
 	ctx := sdk.WorkflowNodeContext(dbnc)
-	ctx.WorkflowNodeID = wn.ID
+	ctx.WorkflowNodeID = nodeID
 
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
@@ -289,14 +290,14 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 	//Unmarshal payload
 	if sqlContext.DefaultPayload.Valid {
 		if err := json.Unmarshal([]byte(sqlContext.DefaultPayload.String), &ctx.DefaultPayload); err != nil {
-			return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d default payload", ctx.ID)
+			return nil, sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d default payload", ctx.ID)
 		}
 	}
 
 	//Unmarshal pipeline parameters
 	if sqlContext.DefaultPipelineParameters.Valid {
 		if err := json.Unmarshal([]byte(sqlContext.DefaultPipelineParameters.String), &ctx.DefaultPipelineParameters); err != nil {
-			return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d default pipeline parameters", ctx.ID)
+			return nil, sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d default pipeline parameters", ctx.ID)
 		}
 	}
 
@@ -304,7 +305,7 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 	if ctx.ApplicationID != 0 {
 		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables)
 		if err != nil {
-			return nil, sdk.WrapError(err, "loadNodeContext> Unable to load application %d", ctx.ApplicationID)
+			return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load application %d", ctx.ApplicationID)
 		}
 		ctx.Application = app
 	}
@@ -313,13 +314,13 @@ func loadNodeContext(db gorp.SqlExecutor, store cache.Store, wn *sdk.WorkflowNod
 	if ctx.EnvironmentID != 0 {
 		env, err := environment.LoadEnvironmentByID(db, ctx.EnvironmentID)
 		if err != nil {
-			return nil, sdk.WrapError(err, "loadNodeContext> Unable to load env %d", ctx.EnvironmentID)
+			return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load env %d", ctx.EnvironmentID)
 		}
 		ctx.Environment = env
 	}
 
 	if err := gorpmapping.JSONNullString(sqlContext.Conditions, &ctx.Conditions); err != nil {
-		return nil, sdk.WrapError(err, "loadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
+		return nil, sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
 	}
 
 	return &ctx, nil

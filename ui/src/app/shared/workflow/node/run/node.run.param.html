@@ -26,6 +26,22 @@
                 </div>
             </ng-container>
         </div>
+        <div class="ui wide" *ngIf="nodeToRun.context.application">
+            <h3 *ngIf="!loadingCommits">{{ 'pipeline_parent_commit_to_deploy' | translate}}</h3>
+            <ng-container *ngIf="!loadingCommits">
+                <app-commit-list [commits]="commits"></app-commit-list>
+            </ng-container>
+            <ng-container *ngIf="!loadingCommits && (commits == null || commits.length === 0)">
+                <div class="ui info message">
+                    {{ 'pipeline_commit_no' | translate }}
+                </div>
+            </ng-container>
+            <ng-container *ngIf="loadingCommits">
+                <div class="ui info message">
+                    {{ 'pipeline_commits_loading' | translate }}
+                </div>
+            </ng-container>
+        </div>
     </div>
     <div class="actions">
         <button class="ui red button" [disabled]="loading" (click)="modal.approve(false)">Cancel</button>

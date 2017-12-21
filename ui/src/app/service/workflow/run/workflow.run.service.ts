@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {Workflow} from '../../../model/workflow.model';
+import {Commit} from '../../../model/repositories.model';
 import {RunNumber, WorkflowNodeRun, WorkflowRun, WorkflowRunRequest} from '../../../model/workflow.run.model';
 import {HttpClient} from '@angular/common/http';
 
@@ -86,6 +87,18 @@ export class WorkflowRunService {
     resync(key: string, workflow: Workflow, workflow_run_id: number): Observable<WorkflowRun> {
         return this._http.post<WorkflowRun>(
             '/project/' + key + '/workflows/' + workflow.name + '/runs/' + workflow_run_id + '/resync', null);
+    }
+
+    /**
+     * Get commits linked to a workflow run
+     * @param {string} key Project unique key
+     * @param {string} workflowName Workflow name
+     * @param {number} workflowNumber Workflow number
+     * @param {number} workflowNodeId Workflow node id
+     */
+    getCommits(key: string, workflowName: string, workflowNumber: number, workflowNodeId: number): Observable<Array<Commit>> {
+        return this._http.get<Array<Commit>>(
+            `/project/${key}/workflows/${workflowName}/runs/${workflowNumber}/${workflowNodeId}/commits`);
     }
 
     /**

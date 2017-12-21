@@ -5,6 +5,7 @@ import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/wor
 import {Project} from '../../../../model/project.model';
 import {cloneDeep} from 'lodash';
 import {Pipeline} from '../../../../model/pipeline.model';
+import {Commit} from '../../../../model/repositories.model';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {Router} from '@angular/router';
@@ -51,10 +52,12 @@ export class WorkflowNodeRunParamComponent {
     _nodeToRun: WorkflowNode;
 
     codeMirrorConfig: {};
+    commits: Commit[] = [];
     payloadString: string;
     invalidJSON: boolean;
     isSync = false;
     loading = false;
+    loadingCommits = false;
 
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
                 private _workflowCoreService: WorkflowCoreService, private _translate: TranslateService, private _toast: ToastService) {
@@ -80,6 +83,13 @@ export class WorkflowNodeRunParamComponent {
     show(): void {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.runWithParamModal);
         this.modal = this._modalService.open(config);
+
+        this.loadingCommits = true;
+        this._workflowRunService.getCommits(this.project.key, this.workflow.name, this.num, this.nodeToRun.id)
+          .pipe(
+            finalize(() => this.loadingCommits = false)
+          )
+          .subscribe((commits) => this.commits = commits);
     }
 
     reindent(): void {
