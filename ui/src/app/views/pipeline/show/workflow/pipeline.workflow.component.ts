@@ -1,4 +1,4 @@
-import {Component, DoCheck, Input, OnInit, OnDestroy, ViewChild} from '@angular/core';
+import {Component, Input, OnInit, OnDestroy, ViewChild} from '@angular/core';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Project} from '../../../../model/project.model';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';

@@ -14,7 +14,6 @@ import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {ParameterEvent} from '../../../shared/parameter/parameter.event.model';
 import {Application} from '../../../model/application.model';
-import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
 import {finalize} from 'rxjs/operators';
 
 @Component({
@@ -58,7 +57,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
 
     constructor(private _routeActivated: ActivatedRoute, private _pipStore: PipelineStore,
         private _router: Router, private _toast: ToastService, public _translate: TranslateService,
-        private _appPipService: ApplicationPipelineService, private _authentificationStore: AuthentificationStore) {
+        private _authentificationStore: AuthentificationStore) {
         this.currentUser = this._authentificationStore.getUser();
         this.project = this._routeActivated.snapshot.data['project'];
         this.application = this._routeActivated.snapshot.data['application'];

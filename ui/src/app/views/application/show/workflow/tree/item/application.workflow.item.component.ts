@@ -9,7 +9,6 @@ import {PipelineRunRequest, PipelineBuild, Pipeline, PipelineStatus} from '../..
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Project} from '../../../../../../model/project.model';
 import {Parameter} from '../../../../../../model/parameter.model';
-import {PipelineStore} from '../../../../../../service/pipeline/pipeline.store';
 import {Environment} from '../../../../../../model/environment.model';
 import {Trigger} from '../../../../../../model/trigger.model';
 import {ApplicationStore} from '../../../../../../service/application/application.store';
@@ -72,7 +71,7 @@ export class ApplicationWorkflowItemComponent implements DoCheck {
 
     notificationSubscription: Subscription;
 
-    constructor(private _router: Router, private _appPipService: ApplicationPipelineService, private _pipStore: PipelineStore,
+    constructor(private _router: Router, private _appPipService: ApplicationPipelineService,
                 private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService,
                 private _notification: NotificationService, private _changeDetectorRef: ChangeDetectorRef) {
 

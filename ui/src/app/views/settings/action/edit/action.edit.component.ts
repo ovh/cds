@@ -18,9 +18,6 @@ export class ActionEditComponent implements OnInit {
     isAdmin: boolean;
     pipelinesUsingAction: Array<PipelineUsingAction>;
 
-    private namePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
-    private actionPatternError = false;
-
     constructor(private _actionService: ActionService,
                 private _toast: ToastService, private _translate: TranslateService,
                 private _route: ActivatedRoute, private _router: Router,

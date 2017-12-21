@@ -1,18 +1,14 @@
 import {AfterViewInit, Component, ElementRef, Input, Output, EventEmitter, NgZone, ViewChild, OnInit} from '@angular/core';
 import {Router, ActivatedRoute} from '@angular/router';
-import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../model/workflow.model';
+import {Workflow, WorkflowNodeJoin} from '../../../model/workflow.model';
 import {WorkflowRun, WorkflowRunRequest, WorkflowNodeRunManual} from '../../../model/workflow.run.model';
 import {PipelineStatus} from '../../../model/pipeline.model';
 import {cloneDeep} from 'lodash';
 import {AutoUnsubscribe} from '../../decorator/autoUnsubscribe';
 import {WorkflowDeleteJoinComponent} from './delete/workflow.join.delete.component';
-import {WorkflowStore} from '../../../service/workflow/workflow.store';
 import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {Project} from '../../../model/project.model';
-import {ToastService} from '../../toast/ToastService';
-import {TranslateService} from '@ngx-translate/core';
 import {WorkflowTriggerJoinComponent} from './trigger/trigger.join.component';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {Subscription} from 'rxjs/Subscription';
 import {finalize} from 'rxjs/operators';
@@ -39,7 +35,6 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     @ViewChild('workflowJoinTrigger')
     workflowJoinTrigger: WorkflowTriggerJoinComponent;
 
-    newTrigger = new WorkflowNodeJoinTrigger();
     pipelineStatusEnum = PipelineStatus;
 
     zone: NgZone;
@@ -49,8 +44,7 @@ export class WorkflowJoinComponent implements AfterViewInit, OnInit {
     currentWorkflowRun: WorkflowRun;
     selectedJoinId: number;
 
-    constructor(private elementRef: ElementRef, private _workflowStore: WorkflowStore, private _toast: ToastService,
-        private _translate: TranslateService, private _workflowRunService: WorkflowRunService,
+    constructor(private elementRef: ElementRef, private _workflowRunService: WorkflowRunService,
         private _workflowCoreService: WorkflowCoreService, private _router: Router, private _route: ActivatedRoute) {
         this.zone = new NgZone({enableLongStackTrace: false});
         this.options = {

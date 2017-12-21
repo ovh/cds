@@ -1,5 +1,5 @@
-import {Component, OnInit} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {Component} from '@angular/core';
+import {Router} from '@angular/router';
 import {Action} from '../../../../model/action.model';
 import {ActionEvent} from '../../../../shared/action/action.event.model';
 import {ActionService} from '../../../../service/action/action.service';
@@ -15,9 +15,6 @@ import {TranslateService} from '@ngx-translate/core';
 export class ActionAddComponent {
     action: Action;
     isAdmin: boolean;
-
-    private namePattern: RegExp = new RegExp('^[a-zA-Z0-9._-]{1,}$');
-    private actionPatternError = false;
 
     constructor(private _actionService: ActionService,
                 private _toast: ToastService, private _translate: TranslateService,

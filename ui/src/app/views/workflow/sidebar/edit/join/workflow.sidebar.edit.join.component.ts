@@ -1,19 +1,14 @@
-import {Component, EventEmitter, Input, ViewChild} from '@angular/core';
-import {Router} from '@angular/router';
+import {Component, Input, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNodeJoin, WorkflowNodeJoinTrigger} from '../../../../../model/workflow.model';
 import {cloneDeep} from 'lodash';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {WorkflowDeleteJoinComponent} from '../../../../../shared/workflow/join/delete/workflow.join.delete.component';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
-import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {Project} from '../../../../../model/project.model';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {WorkflowTriggerJoinComponent} from '../../../../../shared/workflow/join/trigger/trigger.join.component';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
-import {Subscription} from 'rxjs/Subscription';
-import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-sidebar-edit-join',
@@ -38,11 +33,7 @@ export class WorkflowSidebarEditJoinComponent {
 
     newTrigger = new WorkflowNodeJoinTrigger();
 
-    workflowCoreSub: Subscription;
-
-    constructor(private _workflowStore: WorkflowStore, private _toast: ToastService,
-        private _translate: TranslateService, private _workflowRunService: WorkflowRunService,
-        private _workflowCoreService: WorkflowCoreService, private _router: Router) {
+    constructor(private _workflowStore: WorkflowStore, private _toast: ToastService, private _translate: TranslateService) {
 
     }
 
@@ -63,7 +54,7 @@ export class WorkflowSidebarEditJoinComponent {
         if (b) {
             let clonedWorkflow: Workflow = cloneDeep(this.workflow);
             clonedWorkflow.joins = clonedWorkflow.joins.filter(j => j.id !== this.join.id);
-            Workflow.removeOldRef(clonedWorkflow)
+            Workflow.removeOldRef(clonedWorkflow);
             this.updateWorkflow(clonedWorkflow, this.workflowDeleteJoin.modal);
         }
     }

@@ -21,8 +21,6 @@ import {PipelineStatus} from '../../../model/pipeline.model';
 import {WorkflowNodeRunParamComponent} from './run/node.run.param.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 
-declare var _: any;
-
 @Component({
     selector: 'app-workflow-node',
     templateUrl: './workflow.node.html',

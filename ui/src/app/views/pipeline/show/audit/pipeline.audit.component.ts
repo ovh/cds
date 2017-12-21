@@ -1,12 +1,10 @@
-import {Component, Input, OnInit, ViewChild} from '@angular/core';
+import {Component, Input, OnInit} from '@angular/core';
 import {Project} from '../../../../model/project.model';
 import {Pipeline, PipelineAudit, PipelineAuditDiff} from '../../../../model/pipeline.model';
 import {PipelineAuditService} from '../../../../service/pipeline/pipeline.audit.service';
 import {Table} from '../../../../shared/table/table';
 import {compare} from 'fast-json-patch'
-import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
-import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {cloneDeep, omit} from 'lodash';
+import {cloneDeep} from 'lodash';
 import {Stage} from '../../../../model/stage.model';
 import {Job} from '../../../../model/job.model';
 import {Action} from '../../../../model/action.model';
@@ -26,14 +24,10 @@ export class PipelineAuditComponent extends Table implements OnInit {
 
     currentCompare: Array<PipelineAuditDiff>;
 
-    @ViewChild('auditModal')
-    public auditModalTmpl: ModalTemplate<boolean, boolean, void>;
-    modal: ActiveModal<boolean, boolean, void>;
-    modalConfig: TemplateModalConfig<boolean, boolean, void>;
     indexSelected: number;
     codeMirrorConfig: any;
 
-    constructor(private _auditService: PipelineAuditService, private _modalService: SuiModalService) {
+    constructor(private _auditService: PipelineAuditService) {
         super();
         this.codeMirrorConfig = {
             matchBrackets: true,

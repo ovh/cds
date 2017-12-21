@@ -1,6 +1,5 @@
 import {Component} from '@angular/core';
 import {MonitoringService} from '../../../service/monitoring/monitoring.service';
-import { forEach } from '@angular/router/src/utils/collection';
 import { MonitoringStatus } from 'app/model/monitoring.model';
 
 @Component({

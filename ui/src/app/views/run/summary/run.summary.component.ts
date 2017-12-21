@@ -5,7 +5,6 @@ import {Router} from '@angular/router';
 import {Application} from '../../../model/application.model';
 import {WorkflowItem} from '../../../model/application.workflow.model';
 import {Parameter} from '../../../model/parameter.model';
-import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {Project} from '../../../model/project.model';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
@@ -28,7 +27,7 @@ export class RunSummaryComponent implements OnInit {
 
     loading = false;
 
-    constructor(private _appPipService: ApplicationPipelineService, private _router: Router, private _pipStore: PipelineStore,
+    constructor(private _appPipService: ApplicationPipelineService, private _router: Router,
                 private _toastSerivce: ToastService, private _translate: TranslateService) {
     }
 
