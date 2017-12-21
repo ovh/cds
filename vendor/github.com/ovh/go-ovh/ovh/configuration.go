@@ -88,13 +88,13 @@ func (c *Client) loadConfig(endpointName string) error {
 
 	// If we still have no valid endpoint, AppKey or AppSecret, return an error
 	if c.endpoint == "" {
-		return fmt.Errorf("Unknown endpoint '%s'. Consider checking 'Endpoints' list of using an URL.", endpointName)
+		return fmt.Errorf("unknown endpoint '%s', consider checking 'Endpoints' list of using an URL", endpointName)
 	}
 	if c.AppKey == "" {
-		return fmt.Errorf("Missing application key. Please check your configuration or consult the documentation to create one.")
+		return fmt.Errorf("missing application key, please check your configuration or consult the documentation to create one")
 	}
 	if c.AppSecret == "" {
-		return fmt.Errorf("Missing application secret. Please check your configuration or consult the documentation to create one.")
+		return fmt.Errorf("missing application secret, please check your configuration or consult the documentation to create one")
 	}
 
 	return nil
