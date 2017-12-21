@@ -35,6 +35,22 @@ func (c *client) WorkflowRunGet(projectKey string, workflowName string, number i
 	return &run, nil
 }
 
+func (c *client) WorkflowRunList(projectKey string, workflowName string, offset, limit int64) ([]sdk.WorkflowRun, error) {
+	if offset < 0 {
+		offset = 0
+	}
+	if limit == 0 {
+		limit = 50
+	}
+
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs?offset=%d&limit=%d", projectKey, workflowName, offset, limit)
+	runs := []sdk.WorkflowRun{}
+	if _, err := c.GetJSON(url, &runs); err != nil {
+		return nil, err
+	}
+	return runs, nil
+}
+
 func (c *client) WorkflowDelete(projectKey string, workflowName string) error {
 	_, err := c.DeleteJSON(fmt.Sprintf("/project/%s/workflows/%s", projectKey, workflowName), nil)
 	return err

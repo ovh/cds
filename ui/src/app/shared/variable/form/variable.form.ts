@@ -1,10 +1,8 @@
 import {Component, Output, EventEmitter, Input} from '@angular/core';
 import {Variable} from '../../../model/variable.model';
-import {SharedService} from '../../shared.service';
 import {VariableService} from '../../../service/variable/variable.service';
 import {VariableEvent} from '../variable.event.model';
 
-declare var jQuery: any;
 @Component({
     selector: 'app-variable-form',
     templateUrl: './variable.form.html',
@@ -19,7 +17,7 @@ export class VariableFormComponent {
     @Input() loading = false;
     @Output() createVariableEvent = new EventEmitter<VariableEvent>();
 
-    constructor(private _variableService: VariableService, private _sharedService: SharedService) {
+    constructor(private _variableService: VariableService) {
         this.variableTypes = this._variableService.getTypesFromCache();
         if (!this.variableTypes) {
             this._variableService.getTypesFromAPI().subscribe(types => this.variableTypes = types);

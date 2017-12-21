@@ -1,6 +1,6 @@
 import {WorkflowNode} from '../../../model/workflow.model';
 import {Component, NgZone, OnDestroy, OnInit, ViewChild} from '@angular/core';
-import {ActivatedRoute, Router} from '@angular/router';
+import {ActivatedRoute} from '@angular/router';
 import {NotificationService} from '../../../service/notification/notification.service';
 import {Project} from '../../../model/project.model';
 import {CDSWorker} from '../../../shared/worker/worker';
@@ -11,7 +11,6 @@ import {AuthentificationStore} from '../../../service/auth/authentification.stor
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
 import {WorkflowStore} from '../../../service/workflow/workflow.store';
-import {WorkflowRunService} from '../../../service/workflow/run/workflow.run.service';
 import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/node.run.param.component';
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {cloneDeep} from 'lodash';
@@ -45,7 +44,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     workflowCoreSub: Subscription;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
-                private _router: Router, private _workflowStore: WorkflowStore, private _workflowRunService: WorkflowRunService,
+                private _workflowStore: WorkflowStore,
                 private _workflowCoreService: WorkflowCoreService, private _notification: NotificationService,
                 private _translate: TranslateService) {
         this.zone = new NgZone({enableLongStackTrace: false});

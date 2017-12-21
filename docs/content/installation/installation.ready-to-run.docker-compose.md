@@ -79,7 +79,7 @@ We will spawn a container with a hatchery in `local` mode. Workers will be spawn
 $ docker-compose up cds-hatchery-local
 ```
 
-*Running a hatchery "local" in a container is not recommended. Use this way only for test purpose*.
+*Running a hatchery "local" in a container is not recommended. Use this way only for testing purpose*.
 
 After running this Hatchery, a worker will be spawned. Your pipeline will be in "Building", then "Success" status.
 

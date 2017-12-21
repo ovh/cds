@@ -29,10 +29,14 @@ testcases:
     applicationKey: 'APPLICATION_KEY'
     applicationSecret: 'APPLICATION_SECRET'
     consumerKey: 'CONSUMER_KEY'
+    insecureTLS: true #default false
   steps:
   - type: ovhapi
     method: GET
     path: /me
+    headers:
+      header1: value1
+      header2: value2
     retry: 3
     delay: 2
     assertions:

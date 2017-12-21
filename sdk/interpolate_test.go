@@ -153,6 +153,14 @@ func TestInterpolate(t *testing.T) {
 			want: "a valueKey and another key value valueKeyAnother",
 		},
 		{
+			name: "tiret",
+			args: args{
+				input: `"METRICS_WRITE_TOKEN": "{{.cds.env.metrics-exposer.write.token}}"`,
+				vars:  map[string]string{"cds.env.metrics-exposer.write.token": "valueKey"},
+			},
+			want: `"METRICS_WRITE_TOKEN": "valueKey"`,
+		},
+		{
 			name: "config",
 			args: args{
 				input: `

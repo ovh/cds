@@ -1,4 +1,4 @@
-import {Component, Input, Output, EventEmitter, OnInit, OnChanges} from '@angular/core';
+import {Component, Input, Output, EventEmitter, OnChanges} from '@angular/core';
 import {Router} from '@angular/router';
 import {Environment} from '../../../../../../model/environment.model';
 import {Application} from '../../../../../../model/application.model';

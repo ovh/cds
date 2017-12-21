@@ -1,7 +1,7 @@
 import {Component, Input, NgZone, OnDestroy, ElementRef, ViewChild} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
-import {Workflow, WorkflowNode} from '../../../../../model/workflow.model';
+import {Workflow} from '../../../../../model/workflow.model';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
 import {CDSWorker} from '../../../../../shared/worker/worker';
 import {AuthentificationStore} from '../../../../../service/auth/authentification.store';
@@ -64,8 +64,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     pipelineStatusEnum = PipelineStatus;
     ready = false;
     filteredTags: {[key: number]: WorkflowRunTags[]} = {};
-
-    private readonly MAX_TAGS_TO_DISPLAY = 2;
 
     constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService,
       private _duration: DurationService) {

@@ -1,6 +1,5 @@
 import {Component, Input, EventEmitter, Output, ViewChild} from '@angular/core';
 import {Variable, VariableAudit} from '../../../model/variable.model';
-import {SharedService} from '../../shared.service';
 import {Table} from '../../table/table';
 import {VariableService} from '../../../service/variable/variable.service';
 import {VariableEvent} from '../variable.event.model';
@@ -51,7 +50,7 @@ export class VariableComponent extends Table {
     private _variables: Variable[];
     filter: string;
 
-    constructor(private _variableService: VariableService, private _sharedService: SharedService, private _projAudit: ProjectAuditService,
+    constructor(private _variableService: VariableService, private _projAudit: ProjectAuditService,
         private _envAudit: EnvironmentAuditService, private _appAudit: ApplicationAuditService) {
         super();
         this.variableTypes = this._variableService.getTypesFromCache();

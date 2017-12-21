@@ -1,4 +1,4 @@
-import {Component, Input, EventEmitter, OnInit, ViewChild, Output, ChangeDetectorRef} from '@angular/core';
+import {Component, Input, EventEmitter, OnInit, ViewChild, Output} from '@angular/core';
 import {SharedService} from '../../shared.service';
 import {Project} from '../../../model/project.model';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';

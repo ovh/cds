@@ -3,7 +3,6 @@ import {WarningModalComponent} from '../../../../shared/modal/warning/warning.co
 import {Project} from '../../../../model/project.model';
 import {PermissionValue} from '../../../../model/permission.model';
 import {ProjectStore} from '../../../../service/project/project.store';
-import {VariableEvent} from '../../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {EnvironmentPermissionEvent, PermissionEvent} from '../../../../shared/permission/permission.event.model';
 import {Environment} from '../../../../model/environment.model';

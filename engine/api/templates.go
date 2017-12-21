@@ -17,7 +17,6 @@ import (
 	"github.com/ovh/cds/engine/api/auth"
 	"github.com/ovh/cds/engine/api/objectstore"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/template"
 	"github.com/ovh/cds/engine/api/templateextension"
 	"github.com/ovh/cds/sdk"
@@ -294,21 +293,9 @@ func (api *API) applyTemplateHandler() Handler {
 			return sdk.WrapError(errapply, "applyTemplateHandler> Error while applyTemplate")
 		}
 
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-				log.Error("applyTemplatesHandler> Cannot check warnings: %s", err)
-			}
-		}()
-
 		proj, errPrj := project.Load(api.mustDB(), api.Cache, proj.Key, getUser(ctx), project.LoadOptions.Default, project.LoadOptions.WithPipelines)
 		if errPrj != nil {
 			return sdk.WrapError(errPrj, "applyTemplatesHandler> Cannot load project")
-		}
-
-		for _, a := range proj.Applications {
-			if err := sanity.CheckApplication(api.mustDB(), proj, &a); err != nil {
-				return sdk.WrapError(err, "applyTemplatesHandler> Cannot check application sanity")
-			}
 		}
 
 		return WriteJSON(w, r, proj, http.StatusOK)
@@ -352,13 +339,6 @@ func (api *API) applyTemplateOnApplicationHandler() Handler {
 		}
 
 		msgList := translate(r, msg)
-
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-				log.Error("applyTemplatesHandler> Cannot check warnings: %s", err)
-			}
-		}()
-
 		return WriteJSON(w, r, msgList, http.StatusOK)
 	}
 }

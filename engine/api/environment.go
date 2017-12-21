@@ -14,7 +14,6 @@ import (
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -282,12 +281,6 @@ func (api *API) updateEnvironmentsHandler() Handler {
 		if err := tx.Commit(); err != nil {
 			return sdk.WrapError(err, "updateEnvironmentsHandler> Cannot commit transaction")
 		}
-
-		go func() {
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, proj); err != nil {
-				log.Warning("updateVariablesInApplicationHandler> Cannot check warnings: %s", err)
-			}
-		}()
 
 		return WriteJSON(w, r, proj, http.StatusOK)
 	}

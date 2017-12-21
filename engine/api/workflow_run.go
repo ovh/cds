@@ -260,7 +260,7 @@ func (api *API) getWorkflowRunHandler() Handler {
 		}
 		run, err := workflow.LoadRun(api.mustDB(), key, name, number, true)
 		if err != nil {
-			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load last workflow run")
+			return sdk.WrapError(err, "getWorkflowRunHandler> Unable to load workflow %s run number %d", name, number)
 		}
 		run.Translate(r.Header.Get("Accept-Language"))
 		return WriteJSON(w, r, run, http.StatusOK)

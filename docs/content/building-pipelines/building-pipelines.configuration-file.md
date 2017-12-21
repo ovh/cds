@@ -9,11 +9,11 @@ identifier = "first-pipeline-configuration-file"
 +++
 
 
-You can define a pipeline both in json format or in yaml format. Default is yaml format.
+You can define a pipeline in the json format but also in the yaml format. The default is the yaml format.
 
 ### Basic configuration
 
-If you have a pretty simple *build* pipeline with one stage and one job. You can write such a configuration file
+If you have a pretty basic *build* pipeline with a single stage and a single job. You may write such a configuration file:
 
 ```yaml
 steps:
@@ -21,9 +21,9 @@ steps:
 - script: echo I'm the second step
 ```
 
-This defines a pipeline of type `build` (it's the default type), named `Build` (the default name for a build Pipeline). It will have a Stage named **Build** (the default stage name for a one stage pipeline is the name of the pipeline), with a job **Build** (the default job name for a one job stage is the name of the stage) composed of thow steps using script actions.
+This defines a pipeline of type `build` (it's the default type), named `Build` (the default name for a build Pipeline). It will have a Stage named **Build** (the default stage name for a one stage pipeline is the name of the pipeline), with a job **Build** (the default job name for a one job stage is the name of the stage) composed of two steps using script actions.
 
-It is basically equivalent as :
+It is basically equivalent to :
 
 ```yaml
 name: Build
@@ -37,7 +37,7 @@ stages:
         - script: echo I'm the second step
 ```
 
-A bit more complex example with two jobs, with requirements and other kind of steps :
+Here is a slightly more complex example with two jobs, with requirements and other kinds of steps :
 
 ```yaml
 name: maven-build
@@ -71,7 +71,7 @@ jobs:
 
 ### Advanced usage
 
-Same use case as above, but we add a stage to build the package only on branch master and release
+Here is a config file with the same use case as above, but it adds a stage to build the package only on `master` and `release` branches.
 
 ```yaml
 name: maven-build
@@ -131,7 +131,7 @@ stages:
 
 ## Pipeline configuration export
 
-You can exported full configuration of your pipeline with the CDS CLI :
+You can export a full configuration of your pipeline with the CDS CLI using the `export` subcommand:
 
 ```bash
 cds pipeline export PROJECT_KEY pipeline_name
@@ -159,7 +159,7 @@ Global Flags:
 
 ## Pipeline configuration import
 
-You can import full configuration of your pipeline with the CDS CLI :
+You can import a full configuration of your pipeline with the CDS CLI using the `import` subcommand:
 
 ```bash
 cds pipeline import PROJECT_KEY pipelinefile

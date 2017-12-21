@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -19,6 +20,15 @@ type Flag struct {
 
 // Values represents commands flags and args values accessible with their name
 type Values map[string]string
+
+// GetInt64 returns a int64
+func (v *Values) GetInt64(s string) (int64, error) {
+	n, err := strconv.ParseInt((*v)[s], 10, 64)
+	if err != nil {
+		return -1, fmt.Errorf("%s invalid: not a integer", s)
+	}
+	return n, nil
+}
 
 // GetString returns a string
 func (v *Values) GetString(s string) string {

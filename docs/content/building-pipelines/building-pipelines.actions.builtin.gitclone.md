@@ -10,15 +10,15 @@ identifier = "gitclone"
 
 **GitClone** is a builtin action, you can't modify it.
 
-This action clone a repository into a new directory.
+This action clones a repository into a new directory.
 
-Git Clone will be done with a `depth` of 1.
+This will retrieve a shallow git clone (`depth==1`).
 
-You can use a privateKey, this is usually a project or application variable of type `key`. `{{.cds.app.a-key.pub}}`
+You may want to use a privateKey to clone from an SSH repository. To do so, you will need to add a project or an application variable of type `key`. `{{.cds.app.a-key.pub}}`
 
 ## Parameters
 
-* url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.
+* url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository.
 * privateKey - optional - the private key to be able to git clone from ssh
 * user - optional - the user to be able to git clone from https with authentication
 * password - optional - the password to be able to git clone from https with authentication

@@ -9,24 +9,36 @@
          (dblclick)="goToLogs()">
 
         <!-- Node name + pipeline name -->
-        <div class="pipeline">
+        <div class="node pipeline">
             <div class="ellipsis">
                 <b>{{node.name}}</b>
+            </div>
+
+            <div class="node context"
+                 [class.building]="currentNodeRun?.status === pipelineStatus.BUILDING || currentNodeRun?.status === pipelineStatus.WAITING"
+                 [class.success]="currentNodeRun?.status === pipelineStatus.SUCCESS"
+                 [class.fail]="currentNodeRun?.status === pipelineStatus.FAIL || currentNodeRun?.status === pipelineStatus.STOPPED"
+                 [class.inactive]="currentNodeRun?.status === pipelineStatus.DISABLED || currentNodeRun?.status === pipelineStatus.SKIPPED"
+
+                 *ngIf="(node.context.application_id && node.context.application_id > 0) || (node.context.environment_id && node.context.environment_id > 0)">
+                <!-- application name on a semantic ui ribbon -->
+                <div class="node application" [class.all]="!node.context.environment_id" *ngIf="node.context.application_id && node.context.application_id > 0">
+                    <a class="link"  [routerLink]="['/project', project.key, 'application', node.context.application?.name]" title="{{node.context.application?.name}}">
+                        <i class="rocket icon"></i>{{node.context.application?.name}}
+                    </a>
+                </div>
+
+                <!-- environment name on a semantic ui ribbon -->
+                <div class="node environment" [class.all]="!node.context.application_id" *ngIf="node.context.environment_id && node.context.environment_id > 0">
+                    <a class="link"  [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: node.context.environment?.name}"
+                        title="{{node.context.environment?.name}}">
+                        <i class="tree icon"></i>{{node.context.environment?.name}}
+                    </a>
+                </div>
+            </div>
+            <div class="node subnumber" *ngIf="currentNodeRun">
+                <i class="tag icon"></i>{{ currentNodeRun?.subnumber }}
+            </div>
         </div>
-
-        <!-- version on a semantic ui ribbon -->
-        <div class="ui ribbon label top left" *ngIf="currentNodeRun">
-            <i class="tag icon"></i>{{ currentNodeRun?.subnumber }}
-        </div>
-
-        <!-- application name on a semantic ui ribbon -->
-        <a class="ui ribbon label bottom left" [routerLink]="['/project', project.key, 'application', node.context.application?.name]" *ngIf="node.context.application_id && node.context.application_id > 0">
-            <i class="rocket icon"></i>{{node.context.application?.name}}
-        </a>
-
-        <!-- environment name on a semantic ui ribbon -->
-        <a class="ui ribbon label top right" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: node.context.environment?.name}" *ngIf="node.context.environment_id && node.context.environment_id > 0">
-            <i class="tree icon"></i>{{node.context.environment?.name}}
-        </a>
     </div>
 </div>

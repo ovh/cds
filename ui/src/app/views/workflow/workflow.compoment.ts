@@ -7,10 +7,8 @@ import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {Workflow, WorkflowNode, WorkflowNodeJoin} from '../../model/workflow.model';
 import {WorkflowStore} from '../../service/workflow/workflow.store';
 import {ProjectStore} from '../../service/project/project.store';
-import {WorkflowService} from '../../service/workflow/workflow.service';
 import {RouterService} from '../../service/router/router.service';
 import {WorkflowCoreService} from '../../service/workflow/workflow.core.service';
-import {finalize} from 'rxjs/operators';
 import {cloneDeep} from 'lodash';
 
 @Component({
@@ -45,7 +43,7 @@ export class WorkflowComponent implements OnInit {
                 private _router: Router,
                 private _routerService: RouterService,
                 private _projectStore: ProjectStore,
-                private _workflowCore: WorkflowCoreService, private _wfService: WorkflowService) {
+                private _workflowCore: WorkflowCoreService) {
         this._activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
         });

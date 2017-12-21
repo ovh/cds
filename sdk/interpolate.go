@@ -22,6 +22,8 @@ func Interpolate(input string, vars map[string]string) (string, error) {
 
 	for k, v := range vars {
 		kb := strings.Replace(k, ".", "__", -1)
+		// "-"" are not a valid char in go template var name
+		kb = strings.Replace(kb, "-", "µµµ", -1)
 		data[kb] = v
 
 		defaults["."+kb] = k
@@ -47,6 +49,7 @@ func Interpolate(input string, vars map[string]string) (string, error) {
 						// replace {{.cds.foo.bar}} with {{ default "{{.cds.foo.bar}}" .cds.foo.bar}}
 						// with cds.foo.bar unknown from vars
 						nameWithDot := strings.Replace(e, "__", ".", -1)
+						nameWithDot = strings.Replace(nameWithDot, "µµµ", "-", -1)
 						input = strings.Replace(input, sm[i][1], "{{ default \"{{"+nameWithDot+"}}\" "+e+" }}", -1)
 					} else if _, ok := empty[e]; !ok {
 						// replace {{.cds.foo.bar}} with {{ default "" .cds.foo.bar}}

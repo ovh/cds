@@ -1,4 +1,4 @@
-import {Component, Input, OnInit, ViewChild, ChangeDetectorRef, EventEmitter} from '@angular/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {Router, ActivatedRoute} from '@angular/router';
 import {Project} from '../../../../../model/project.model';
 import {
@@ -7,19 +7,14 @@ import {
 } from '../../../../../model/workflow.model';
 import {WorkflowRun, WorkflowNodeRun} from '../../../../../model/workflow.run.model';
 import {AutoUnsubscribe} from '../../../../../shared/decorator/autoUnsubscribe';
-import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
-import {PipelineStore} from '../../../../../service/pipeline/pipeline.store';
 import {PipelineStatus} from '../../../../../model/pipeline.model';
 import {WorkflowNodeRunParamComponent} from '../../../../../shared/workflow/node/run/node.run.param.component';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
-import {WorkflowService} from '../../../../../service/workflow/workflow.service';
 import {WorkflowCoreService} from '../../../../../service/workflow/workflow.core.service';
 import {DurationService} from '../../../../../shared/duration/duration.service';
 import {Subscription} from 'rxjs/Subscription';
-import {Observable} from 'rxjs/Observable';
 import {first} from 'rxjs/operators';
 import 'rxjs/add/observable/zip';
-import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-workflow-sidebar-run-node',
@@ -51,7 +46,7 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
     duration: string;
     pipelineStatusEnum = PipelineStatus;
 
-    constructor(private _wrService: WorkflowRunService, private _wfService: WorkflowService, private _router: Router,
+    constructor(private _wrService: WorkflowRunService, private _router: Router,
       private _workflowCoreService: WorkflowCoreService, private _activatedRoute: ActivatedRoute,
       private _durationService: DurationService) {
 

@@ -102,7 +102,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				computeNodesRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped)
 			}
 
-			//Trigger only if the node is over (successfull or not)
+			//Trigger only if the node is over (successful or not)
 			if nodeRun.Status == sdk.StatusSuccess.String() || nodeRun.Status == sdk.StatusFail.String() {
 				//Find the node in the workflow
 				node := w.Workflow.GetNode(nodeRun.WorkflowNodeID)

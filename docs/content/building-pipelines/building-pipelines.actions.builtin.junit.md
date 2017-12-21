@@ -10,12 +10,12 @@ identifier = "junit"
 
 **JUnit** is a builtin action, you can't modify it.
 
-This action parse given file to extract Unit Test results.
+This action parses a given Junit formatted XML file to extract its test results.
 
 
 ## Parameters
 
-* path: Path to junit xml file
+* path: Path to a junit xml file
 
 
 ### Example

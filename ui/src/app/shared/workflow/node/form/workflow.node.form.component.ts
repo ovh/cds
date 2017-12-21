@@ -2,7 +2,7 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Project} from '../../../../model/project.model';
 import {Application} from '../../../../model/application.model';
 import {Environment} from '../../../../model/environment.model';
-import {WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
+import {WorkflowNode} from '../../../../model/workflow.model';
 import {cloneDeep} from 'lodash';
 
 @Component({

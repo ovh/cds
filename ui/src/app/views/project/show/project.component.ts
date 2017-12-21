@@ -1,13 +1,11 @@
-import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
+import {Component, OnInit, OnDestroy} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {ProjectStore} from '../../../service/project/project.store';
 import {Project, LoadOpts} from '../../../model/project.model';
-import {VariableEvent} from '../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {Subscription} from 'rxjs/Subscription';
-import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {PermissionValue} from '../../../model/permission.model';
 import {User} from '../../../model/user.model';
 

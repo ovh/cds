@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, Input} from '@angular/core';
 import {AutoUnsubscribe} from '../../../../shared/decorator/autoUnsubscribe';
 import {Project} from '../../../../model/project.model';
 import {

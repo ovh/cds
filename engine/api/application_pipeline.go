@@ -12,11 +12,8 @@ import (
 	"github.com/ovh/cds/engine/api/notification"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/engine/api/project"
-	"github.com/ovh/cds/engine/api/sanity"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 // Deprecated
@@ -26,11 +23,6 @@ func (api *API) attachPipelineToApplicationHandler() Handler {
 		key := vars["key"]
 		appName := vars["permApplicationName"]
 		pipelineName := vars["permPipelineKey"]
-
-		proj, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
-		if err != nil {
-			return sdk.WrapError(err, "addPipelineInApplicationHandler> Cannot load project: %s", key)
-		}
 
 		pipeline, err := pipeline.LoadPipeline(api.mustDB(), key, pipelineName, true)
 		if err != nil {
@@ -45,13 +37,6 @@ func (api *API) attachPipelineToApplicationHandler() Handler {
 		if _, err := application.AttachPipeline(api.mustDB(), app.ID, pipeline.ID); err != nil {
 			return sdk.WrapError(err, "addPipelineInApplicationHandler> Cannot attach pipeline %s to application %s", pipelineName, appName)
 		}
-
-		go func() {
-			if err := sanity.CheckPipeline(api.mustDB(), api.Cache, proj, pipeline); err != nil {
-				log.Error("addPipelineInApplicationHandler> Cannot check pipeline sanity: %s", err)
-			}
-		}()
-
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
 }
@@ -112,18 +97,6 @@ func (api *API) attachPipelinesToApplicationHandler() Handler {
 		if errW != nil {
 			return sdk.WrapError(errW, "attachPipelinesToApplicationHandler: Cannot load application workflow")
 		}
-
-		go func() {
-			project, err := project.Load(api.mustDB(), api.Cache, key, getUser(ctx), project.LoadOptions.Default)
-			if err != nil {
-				log.Error("attachPipelinesToApplicationHandler: Cannot load project: %s, err:%s", key, err)
-				return
-			}
-
-			if err := sanity.CheckProjectPipelines(api.mustDB(), api.Cache, project); err != nil {
-				log.Error("attachPipelinesToApplicationHandler: Cannot check project sanity: %s", err)
-			}
-		}()
 
 		return WriteJSON(w, r, app, http.StatusOK)
 	}
