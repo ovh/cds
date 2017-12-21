@@ -96,14 +96,14 @@ bigloop:
 
 		for _, j := range s.Jobs {
 			for _, r := range j.Action.Requirements {
-				if strings.Contains(r.Value, "cds.app") {
+				if strings.Contains(r.Value, "cds.app") || strings.Contains(r.Value, "git.") {
 					foundApp = true
 					break bigloop
 				}
 			}
 			for _, step := range j.Action.Actions {
 				for _, param := range step.Parameters {
-					if strings.Contains(param.Value, "cds.app") {
+					if strings.Contains(param.Value, "cds.app") || strings.Contains(param.Value, "git.") {
 						foundApp = true
 						break bigloop
 					}
