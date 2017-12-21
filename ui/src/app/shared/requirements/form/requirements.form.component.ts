@@ -1,4 +1,4 @@
-import {Component, Input, Output, OnInit, EventEmitter, ViewChild} from '@angular/core';
+import {Component, Input, Output, OnInit, EventEmitter} from '@angular/core';
 import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
 import {Requirement} from '../../../model/requirement.model';
 import {GroupPermission, adminGroupName} from '../../../model/group.model';

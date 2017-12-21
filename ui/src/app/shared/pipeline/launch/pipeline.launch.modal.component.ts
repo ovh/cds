@@ -3,7 +3,6 @@ import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 import {Parameter} from '../../../model/parameter.model';
 import {Pipeline, PipelineBuild, PipelineRunRequest} from '../../../model/pipeline.model';
 import {Application} from '../../../model/application.model';
-import {PipelineStore} from '../../../service/pipeline/pipeline.store';
 import {Project} from '../../../model/project.model';
 import {WorkflowItem} from '../../../model/application.workflow.model';
 import {ApplicationPipelineService} from '../../../service/application/pipeline/application.pipeline.service';
@@ -38,7 +37,7 @@ export class PipelineLaunchModalComponent {
     currentHash: string;
     loadingCommits = false;
 
-    constructor(private _pipStore: PipelineStore, private _appPipService: ApplicationPipelineService) {
+    constructor(private _appPipService: ApplicationPipelineService) {
     }
 
     show(data?: {}): void {

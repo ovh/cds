@@ -9,8 +9,6 @@ import {Subscription} from 'rxjs/Subscription';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 
-declare var CodeMirror: any;
-
 @Component({
     selector: 'app-workflow-node-context',
     templateUrl: './node.context.html',

@@ -1,5 +1,4 @@
 import {AfterViewInit, Component, OnInit, ChangeDetectorRef} from '@angular/core';
-import {ProjectStore} from '../../service/project/project.store';
 import {AuthentificationStore} from '../../service/auth/authentification.store';
 import {NavbarService} from '../../service/navbar/navbar.service';
 import {ApplicationStore} from '../../service/application/application.store';
@@ -18,8 +17,7 @@ import {NavbarRecentData} from '../../model/navbar.model';
 import {WarningUI} from '../../model/warning.model';
 import {WarningService} from '../../service/warning/warning.service';
 import {filter} from 'rxjs/operators';
-import {NavbarData, NavbarProjectData} from 'app/model/navbar.model';
-import {Workflow} from 'app/model/workflow.model';
+import {NavbarData} from 'app/model/navbar.model';
 
 @Component({
     selector: 'app-navbar',

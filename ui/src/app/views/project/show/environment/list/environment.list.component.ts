@@ -1,7 +1,6 @@
 import {Component, DoCheck, Input, OnDestroy, OnInit} from '@angular/core';
 import {Project} from '../../../../../model/project.model';
 import {Environment} from '../../../../../model/environment.model';
-import {EnvironmentService} from '../../../../../service/environment/environment.service';
 import {ProjectStore} from '../../../../../service/project/project.store';
 import {ActivatedRoute, Router} from '@angular/router';
 import {Subscription} from 'rxjs/Subscription';
@@ -21,10 +20,8 @@ export class ProjectEnvironmentListComponent implements OnInit, DoCheck, OnDestr
     loading: boolean;
 
     routerSubscription: Subscription;
-    envSub: Subscription;
 
-    constructor(private _routerActivatedRoute: ActivatedRoute, private _router: Router,
-      private _environmentService: EnvironmentService, private _projectStore: ProjectStore) {
+    constructor(private _routerActivatedRoute: ActivatedRoute, private _router: Router, private _projectStore: ProjectStore) {
         this.loading = true;
     }
 

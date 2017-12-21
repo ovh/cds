@@ -1,6 +1,6 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {Project} from '../../../../model/project.model';
-import {WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
+import {WorkflowNode} from '../../../../model/workflow.model';
 
 @Component({
     selector: 'app-workflow-node-form',

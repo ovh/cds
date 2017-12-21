@@ -1,4 +1,3 @@
-import {ProjectStore} from '../project/project.store';
 import {BehaviorSubject} from 'rxjs/BehaviorSubject';
 import {Workflow, WorkflowTriggerConditionCache} from '../../model/workflow.model';
 import {Injectable} from '@angular/core';
@@ -21,7 +20,7 @@ export class WorkflowStore {
     private _recentWorkflows: BehaviorSubject<List<NavbarRecentData>> = new BehaviorSubject(List<NavbarRecentData>());
 
 
-    constructor(private _projectStore: ProjectStore, private _workflowService: WorkflowService) {
+    constructor(private _workflowService: WorkflowService) {
         this.loadRecentWorkflows();
     }
 

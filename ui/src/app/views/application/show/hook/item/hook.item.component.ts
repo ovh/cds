@@ -1,10 +1,9 @@
-import {Component, Input, ViewChild, EventEmitter, Output} from '@angular/core';
+import {Component, Input, ViewChild} from '@angular/core';
 import {Hook} from '../../../../../model/hook.model';
 import {Project} from '../../../../../model/project.model';
 import {Application} from '../../../../../model/application.model';
 import {Pipeline} from '../../../../../model/pipeline.model';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
-import {HookEvent} from '../hook.event';
 import {ApplicationStore} from '../../../../../service/application/application.store';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';

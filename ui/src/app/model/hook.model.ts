@@ -1,5 +1,4 @@
 import {Pipeline} from './pipeline.model';
-import {Project} from './project.model';
 
 export class Hook {
     id: number;

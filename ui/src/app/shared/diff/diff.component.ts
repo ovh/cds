@@ -22,8 +22,7 @@ export class DiffComponent implements OnInit {
       if (original === 'null') {
         original = '';
       }
-      let diff = JsDiff.diffWordsWithSpace(original, this.updated)
-      let fragment = document.createDocumentFragment();
+      let diff = JsDiff.diffWordsWithSpace(original, this.updated);
 
       if (!Array.isArray(diff)) {
         return;

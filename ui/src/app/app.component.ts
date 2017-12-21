@@ -1,5 +1,4 @@
 import { registerLocaleData } from '@angular/common';
-import { RouterService } from './service/router/router.service';
 import {Component, OnInit, NgZone} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
@@ -40,7 +39,7 @@ export class AppComponent  implements OnInit {
 
     displayResolver = false;
 
-    constructor(private _translate: TranslateService, private _language: LanguageStore, private _routerService: RouterService,
+    constructor(_translate: TranslateService, private _language: LanguageStore,
                 private _authStore: AuthentificationStore, private _warnStore: WarningStore, private _router: Router,
                 private _notification: NotificationService, private _appService: AppService, private _last: LastUpdateService) {
         this.zone = new NgZone({enableLongStackTrace: false});

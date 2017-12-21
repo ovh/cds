@@ -1,4 +1,3 @@
-import {Pipeline} from './pipeline.model';
 import {Parameter} from './parameter.model';
 
 export class Scheduler {

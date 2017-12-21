@@ -1,5 +1,3 @@
-
-import {Variable} from './variable.model';
 import {Parameter} from './parameter.model';
 export class Template {
     id: number;

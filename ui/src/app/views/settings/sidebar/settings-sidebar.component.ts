@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component} from '@angular/core';
 import {AuthentificationStore} from '../../../service/auth/authentification.store';
 import {User} from '../../../model/user.model';
 

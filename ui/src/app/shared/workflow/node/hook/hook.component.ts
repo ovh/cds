@@ -1,6 +1,5 @@
 import {AfterViewInit, Component, ElementRef, Input, ViewChild} from '@angular/core';
 import {Workflow, WorkflowNode, WorkflowNodeHook, WorkflowNodeHookConfigValue} from '../../../../model/workflow.model';
-import {WorkflowService} from '../../../../service/workflow/workflow.service';
 import {ToastService} from '../../../toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {WorkflowNodeHookFormComponent} from './form/node.hook.component';

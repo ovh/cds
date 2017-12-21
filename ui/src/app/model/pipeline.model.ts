@@ -3,7 +3,6 @@ import {Stage} from './stage.model';
 import {GroupPermission} from './group.model';
 import {User} from './user.model';
 import {Application} from './application.model';
-import {Workflow} from './workflow.model';
 import {Environment} from './environment.model';
 import {Artifact} from './artifact.model';
 import {ActionWarning} from './action.model';

@@ -151,7 +151,6 @@ export class WorkflowGraphComponent implements AfterViewInit {
             } else {
                 this.svgWidth = window.innerWidth;
             }
-            let svgWidth = +svg.attr('width');
         }
 
         this.svgHeight = this.g.graph().height + 40;
