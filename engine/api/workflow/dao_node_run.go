@@ -336,15 +336,13 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 	}
 
-	opts := []VCSInfosOptsExecFunc{
-		VCSInfosOpts.WithApplicationID(app.ID),
-	}
+	var envID int64
 	if env != nil {
-		opts = append(opts, VCSInfosOpts.WithEnvironmentID(env.ID))
+		envID = env.ID
 	}
+
 	//Get the commit hash for the node run number and the hash for the previous node run for the same branch and same remote
-	//buildNumber, pipelineID, applicationID, environmentID
-	prev, errcurr := PreviousNodeRunVCSInfos(db, wNode.ID, wNodeRun.ID, cur, VCSInfosOpts.WithApplicationID(app.ID), withEnvironmentID(env.ID))
+	prev, errcurr := PreviousNodeRunVCSInfos(db, wNode.ID, wNodeRun.ID, cur, app.ID, envID)
 	if errcurr != nil {
 		return nil, cur, sdk.WrapError(errcurr, "UpdateNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeID=%d, applicationID=%d, envID=%d)", wNodeRun.Number, wNode.ID, app.ID, env.ID)
 	}
@@ -409,33 +407,11 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	return res, cur, nil
 }
 
-type VCSInfosOptsExecFunc func(argNum int) (queryOpts string, arg int64)
-type VCSInfosOptsFunc func(int64) VCSInfosOptsExecFunc
-
-var VCSInfosOpts = struct {
-	WithApplicationID VCSInfosOptsFunc
-	WithEnvironmentID VCSInfosOptsFunc
-}{
-	WithApplicationID: withApplicationID,
-	WithEnvironmentID: withEnvironmentID,
-}
-
-func withApplicationID(appID int64) VCSInfosOptsExecFunc {
-	return func(argNum int) (string, int64) {
-		return fmt.Sprintf(" AND workflow_node_context.application_id = $%d", argNum), appID
-	}
-}
-
-func withEnvironmentID(envID int64) VCSInfosOptsExecFunc {
-	return func(argNum int) (string, int64) {
-		return fmt.Sprintf(" AND workflow_node_context.environment_id = $%d", argNum), envID
-	}
-}
-
 //PreviousNodeRunVCSInfos returns a struct with BuildNumber, Commit Hash, Branch, Remote, Remote_url
 //for the current node run and the previous one on the same branch.
 //Returned value may be zero if node run are not found
-func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, nodeID, nodeRunID int64, current sdk.BuildNumberAndHash, opts ...VCSInfosOptsExecFunc) (sdk.BuildNumberAndHash, error) {
+//If you don't have environment linked set envID to 0 or -1
+func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, nodeID, nodeRunID int64, current sdk.BuildNumberAndHash, appID int64, envID int64) (sdk.BuildNumberAndHash, error) {
 	var previous sdk.BuildNumberAndHash
 	var prevHash, prevBranch sql.NullString
 	var previousBuildNumber sql.NullInt64
@@ -450,14 +426,15 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, nodeID, nodeRunID int64, curre
 		AND workflow_node_run.status = 'Success'
 		AND workflow_node_run.workflow_node_id = $1
 		AND workflow_node_run.num < $2
+		AND workflow_node_context.application_id = $3
 	`
-	argPrevious := []interface{}{nodeID, current.BuildNumber}
-	for i, opt := range opts {
-		q, arg := opt(i + 3)
-		queryPrevious += q
-		argPrevious = append(argPrevious, arg)
+	argPrevious := []interface{}{nodeID, current.BuildNumber, appID}
+	if envID > 0 {
+		argPrevious = append(argPrevious, envID)
+		queryPrevious += "AND workflow_node_context.environment_id = $4"
 	}
 	queryPrevious += fmt.Sprintf(" ORDER BY workflow_node_run.num DESC LIMIT 1")
+
 	errPrev := db.QueryRow(queryPrevious, argPrevious...).Scan(&prevBranch, &prevHash, &previousBuildNumber)
 	if errPrev == sql.ErrNoRows {
 		log.Warning("PreviousNodeRunVCSInfos> no result with previous %d %d", current.BuildNumber, nodeID)

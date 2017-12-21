@@ -41,7 +41,7 @@
   "admin_migration_title" : "Status of application migration to workflow",
 
   "admin_status_title" : "Status of CDS Engine",
-  
+
   "admin_sidebar_status" : "Status",
 
   "application_create" : "Create a new application",
@@ -635,6 +635,7 @@
   "workflow_node_delete_alert_soft" : "Remove only this one",
   "workflow_node_form_title" : "Triggered pipeline",
   "workflow_node_hook_add" : "Add a hook",
+  "workflow_node_hook_select" : "Select a hook type",
   "workflow_node_hook_modal_title" : "Hook edition",
   "workflow_node_hook_condition_form" : "Add a run condition",
   "workflow_node_hook_condition_list" : "Run conditions",

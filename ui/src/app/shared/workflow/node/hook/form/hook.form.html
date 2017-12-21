@@ -8,13 +8,18 @@
     <div class="content">
         <div class="ui form">
             <h3>{{ 'workflow_node_hook_form_title' | translate }}</h3>
-            <ng-container *ngIf="hooksModel">
-                <sui-select class="selection" [(ngModel)]="selectedHookModel" (ngModelChange)="updateHook()" [options]="hooksModel" [isSearchable]="true" labelField="name" #select>
+            <ng-container *ngIf="!loadingModels">
+                <sui-select class="selection" placeholder="{{'workflow_node_hook_select' | translate}}" [(ngModel)]="selectedHookModel" (ngModelChange)="updateHook()" [options]="hooksModel" [isSearchable]="true" labelField="name" #select>
                     <sui-select-option *ngFor="let option of select.filteredOptions" [value]="option">{{option.name}}
                     </sui-select-option>
                 </sui-select>
             </ng-container>
-            <ng-container *ngIf="_hook.model">
+            <ng-container *ngIf="loadingModels">
+                <sui-select class="selection" placeholder="{{'common_loading' | translate}}">
+                    <sui-select-option value="">{{'common_loading' | translate}}</sui-select-option>
+                </sui-select>
+            </ng-container>
+            <ng-container *ngIf="_hook.model && displayConfig">
                 <h3>{{ 'workflow_node_hook_form_config' | translate }}</h3>
                 <ng-container *ngIf="_hook.config">
                     <div class="inline fields" *ngFor="let k of hook.config | keys">
