@@ -84,6 +84,6 @@ var mainCmd = cli.Command{
 }
 
 func mainRun(vals cli.Values) error {
-	fmt.Println("Welcome on CDS")
+	fmt.Println("Welcome to CDS")
 	return nil
 }

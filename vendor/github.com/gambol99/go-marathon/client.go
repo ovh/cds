@@ -325,7 +325,7 @@ func (r *marathonClient) apiCall(method, path string, body, result interface{}) 
 			r.debugLog.Printf("apiCall(): %v %v returned %v %s\n", request.Method, request.URL.String(), response.Status, oneLogLine(respBody))
 		}
 
-		// step: check for a successfull response
+		// step: check for a successful response
 		if response.StatusCode >= 200 && response.StatusCode <= 299 {
 			if result != nil {
 				if err := json.Unmarshal(respBody, result); err != nil {
