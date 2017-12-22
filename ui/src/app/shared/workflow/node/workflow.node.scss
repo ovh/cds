@@ -100,10 +100,12 @@ $boxWidth: 200px;
         overflow: hidden;
         text-overflow: ellipsis;
         text-decoration: none;
-        color: black;
-      }
-      .link:hover {
-        color: $cds_color_teal;
+        .content-link {
+          color: black;
+          &:hover {
+            color: $cds_color_teal;
+          }
+        }
       }
 
       .node.application {

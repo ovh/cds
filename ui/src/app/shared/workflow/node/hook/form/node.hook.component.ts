@@ -10,7 +10,7 @@ import {cloneDeep} from 'lodash';
 import {Project} from '../../../../../model/project.model';
 import {WorkflowStore} from '../../../../../service/workflow/workflow.store';
 import {HookEvent} from '../hook.event';
-import {first} from 'rxjs/operators';
+import {first, finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-hook-form',
@@ -46,6 +46,8 @@ export class WorkflowNodeHookFormComponent {
     selectedHookModel: WorkflowHookModel;
     operators: {};
     conditionNames: Array<string>;
+    loadingModels = true;
+    displayConfig = false;
 
     // Ng semantic modal
     @ViewChild('nodeHookFormModal')
@@ -59,15 +61,22 @@ export class WorkflowNodeHookFormComponent {
     updateHook(): void {
         this.hook.model = this.selectedHookModel;
         this.hook.config = cloneDeep(this.selectedHookModel.default_config);
+        this.displayConfig = Object.keys(this.hook.config).length !== 0;
     }
 
     show(): void {
-        this._hookService.getHookModel(this.project, this.workflow, this.node).pipe(first()).subscribe(hms => {
-            this.hooksModel = hms;
-            if (this._hook && this._hook.model) {
-                this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
-            }
-        });
+        this.loadingModels = true;
+        this._hookService.getHookModel(this.project, this.workflow, this.node)
+          .pipe(
+            first(),
+            finalize(() => this.loadingModels = false)
+          )
+          .subscribe(hms => {
+              this.hooksModel = hms;
+              if (this._hook && this._hook.model) {
+                  this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
+              }
+          });
         this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).pipe(first()).subscribe( wtc => {
             this.operators = wtc.operators;
             this.conditionNames = wtc.names;

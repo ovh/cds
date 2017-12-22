@@ -4,7 +4,6 @@ import {Application} from '../../model/application.model';
 import {Pipeline} from '../../model/pipeline.model';
 import {Environment} from '../../model/environment.model';
 import {Project} from '../../model/project.model';
-import {User} from '../../model/user.model';
 
 @Component({
     selector: 'app-usage',
@@ -18,8 +17,6 @@ export class UsageComponent {
     @Input() applications: Array<Application>;
     @Input() pipelines: Array<Pipeline>;
     @Input() environments: Array<Environment>;
-    // TODO: Delete when workflows will be public
-    @Input() currentUser: User;
 
     constructor() { }
 }

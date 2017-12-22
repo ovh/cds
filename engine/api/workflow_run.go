@@ -374,6 +374,65 @@ func (api *API) getWorkflowNodeRunHistoryHandler() Handler {
 	}
 }
 
+func (api *API) getWorkflowCommitsHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["key"]
+		name := vars["permWorkflowName"]
+		branch := FormString(r, "branch")
+		number, err := requestVarInt(r, "number")
+		if err != nil {
+			return err
+		}
+		nodeID, err := requestVarInt(r, "nodeID")
+		if err != nil {
+			return err
+		}
+
+		proj, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "getWorkflowCommitsHandler> Unable to load project")
+		}
+
+		var errCtx error
+		var nodeCtx *sdk.WorkflowNodeContext
+		var wNode *sdk.WorkflowNode
+		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, false)
+		if errW == nil {
+			wNode = wfRun.Workflow.GetNode(nodeID)
+		}
+
+		if wNode == nil || errW != nil {
+			nodeCtx, errCtx = workflow.LoadNodeContext(api.mustDB(), api.Cache, nodeID)
+			if errCtx != nil {
+				return sdk.WrapError(errCtx, "getWorkflowCommitsHandler> Unable to load workflow node context")
+			}
+		} else if wNode != nil {
+			nodeCtx = wNode.Context
+		} else {
+			return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow node run")
+		}
+
+		if nodeCtx == nil || nodeCtx.Application == nil {
+			return WriteJSON(w, r, []sdk.VCSCommit{}, http.StatusOK)
+		}
+
+		if wfRun == nil {
+			wfRun = &sdk.WorkflowRun{Number: number}
+		}
+		if branch != "" {
+			wfRun.Tag("git.branch", branch)
+		}
+
+		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, nodeID, wfRun, nodeCtx.Application, nodeCtx.Environment)
+		if errC != nil {
+			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits")
+		}
+
+		return WriteJSON(w, r, commits, http.StatusOK)
+	}
+}
+
 func (api *API) stopWorkflowNodeRunHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
@@ -555,7 +614,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 	//Run from hook
 	if opts.Hook != nil {
 		var errfh error
-		_, errfh = workflow.RunFromHook(tx, store, p, wf, opts.Hook, chEvent)
+		_, errfh = workflow.RunFromHook(db, tx, store, p, wf, opts.Hook, chEvent)
 		if errfh != nil {
 			chError <- sdk.WrapError(errfh, "postWorkflowRunHandler> Unable to run workflow from hook")
 		}
@@ -617,7 +676,7 @@ func startWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp
 
 		if lastRun == nil {
 			var errmr error
-			_, errmr = workflow.ManualRun(tx, store, p, wf, opts.Manual, chEvent)
+			_, errmr = workflow.ManualRun(db, tx, store, p, wf, opts.Manual, chEvent)
 			if errmr != nil {
 				chError <- sdk.WrapError(errmr, "postWorkflowRunHandler> Unable to run workflow")
 			}
@@ -662,7 +721,7 @@ func runFromNode(db *gorp.DbMap, store cache.Store, opts sdk.WorkflowRunPostHand
 
 		//Manual run
 		if lastRun != nil {
-			_, errmr := workflow.ManualRunFromNode(tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID, workerOptions.chanEvent)
+			_, errmr := workflow.ManualRunFromNode(db, tx, store, p, wf, lastRun.Number, opts.Manual, fromNode.ID, workerOptions.chanEvent)
 			if errmr != nil {
 				workerOptions.chanError <- sdk.WrapError(errmr, "runFromNode> Unable to run workflow from node")
 				tx.Rollback()

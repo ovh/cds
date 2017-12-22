@@ -5,6 +5,15 @@ import (
 	"time"
 )
 
+//BuildNumberAndHash represents BuildNumber, Commit Hash and Branch for a Pipeline Build or Node Run
+type BuildNumberAndHash struct {
+	BuildNumber int64
+	Hash        string
+	Branch      string
+	Remote      string
+	RemoteURL   string
+}
+
 type VCSServer interface {
 	AuthorizeRedirect() (string, string, error)
 	AuthorizeToken(string, string) (string, string, error)

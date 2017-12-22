@@ -194,7 +194,7 @@ const data = `
       "repos_url": "https://api.github.com/users/fsamin/repos",
       "events_url": "https://api.github.com/users/fsamin/events{/privacy}",
       "received_events_url": "https://api.github.com/users/fsamin/received_events",
-      "type": "User", 
+      "type": "User",
       "site_admin": false
     },
     "committer": {

@@ -66,7 +66,7 @@ func syncTakeJobInNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun, j *sdk.Wo
 	return nil
 }
 
-func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun, chanEvent chan<- interface{}) (errExecute error) {
+func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.WorkflowNodeRun, chanEvent chan<- interface{}) (errExecute error) {
 	t0 := time.Now()
 	log.Debug("workflow.execute> Begin [#%d.%d] runID=%d (%s)", n.Number, n.SubNumber, n.WorkflowRunID, n.Status)
 	defer func() {
@@ -174,7 +174,7 @@ func execute(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, n *sdk.Work
 		}
 
 		if n.Status != sdk.StatusStopped.String() {
-			if _, err := processWorkflowRun(db, store, p, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
+			if _, err := processWorkflowRun(dbCopy, db, store, p, updatedWorkflowRun, nil, nil, nil, chanEvent); err != nil {
 				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow !")
 			}
 		}
@@ -484,7 +484,7 @@ func stopWorkflowNodeJobRun(db *gorp.DbMap, store cache.Store, proj *sdk.Project
 		}
 
 		njr.SpawnInfos = append(njr.SpawnInfos, stopInfos)
-		if err := UpdateNodeJobRunStatus(tx, store, proj, njr, sdk.StatusStopped, chanNodeJobRun); err != nil {
+		if err := UpdateNodeJobRunStatus(db, tx, store, proj, njr, sdk.StatusStopped, chanNodeJobRun); err != nil {
 			chanErr <- sdk.WrapError(err, "StopWorkflowNodeRun> Cannot update node job run")
 			tx.Rollback()
 			wg.Done()

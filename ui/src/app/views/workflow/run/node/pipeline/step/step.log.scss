@@ -77,6 +77,8 @@ $squareSize: 32px;
         }
       }
       td {
+        padding-top: 1px;
+        padding-bottom: 1px;
         &.number {
             width: 40px;
         }

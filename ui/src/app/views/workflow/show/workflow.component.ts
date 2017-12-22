@@ -15,7 +15,6 @@ import {WorkflowNodeRunParamComponent} from '../../../shared/workflow/node/run/n
 import {WorkflowCoreService} from '../../../service/workflow/workflow.core.service';
 import {PermissionValue} from '../../../model/permission.model';
 import {PermissionEvent} from '../../../shared/permission/permission.event.model';
-import {User} from '../../../model/user.model';
 import {WarningModalComponent} from '../../../shared/modal/warning/warning.component';
 import {finalize, first} from 'rxjs/operators';
 
@@ -52,15 +51,10 @@ export class WorkflowShowComponent {
     loading = false;
     // For usage
     usageCount = 0;
-    currentUser: User;
 
     constructor(private activatedRoute: ActivatedRoute, private _workflowStore: WorkflowStore, private _router: Router,
                 private _translate: TranslateService, private _toast: ToastService,
                 private _workflowCoreService: WorkflowCoreService) {
-        // TODO: DELETE THIS WHEN WORKFLOW IS PUBLIC
-        this.currentUser = new User();
-        this.currentUser.admin = true;
-
         // Update data if route change
         this.activatedRoute.data.subscribe(datas => {
             this.project = datas['project'];
@@ -198,6 +192,7 @@ export class WorkflowShowComponent {
             if (this.workflowGraph) {
                 this.workflowGraph.toggleLinkJoin(false);
             }
+            this._router.navigate(['/project', this.project.key, 'workflow', w.name]);
         });
     }
 

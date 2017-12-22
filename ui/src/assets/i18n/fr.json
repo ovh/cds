@@ -635,6 +635,7 @@
   "workflow_node_delete_alert_soft" : "Enlever uniquement ce pipeline",
   "workflow_node_form_title" : "Pipeline à déclencher",
   "workflow_node_hook_add" : "Ajouter un hook",
+  "workflow_node_hook_select" : "Sélectionner un type de hook",
   "workflow_node_hook_modal_title" : "Edition du hook",
   "workflow_node_hook_condition_form" : "Ajouter une condition de lancement",
   "workflow_node_hook_condition_list" : "Conditions de lancement",

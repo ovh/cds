@@ -17,7 +17,7 @@ import (
 )
 
 // UpdateNodeJobRunStatus Update status of an workflow_node_run_job
-func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
+func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, job *sdk.WorkflowNodeJobRun, status sdk.Status, chanEvent chan<- interface{}) error {
 	log.Debug("UpdateNodeJobRunStatus> job.ID=%d status=%s", job.ID, status.String())
 
 	defer func(j *sdk.WorkflowNodeJobRun, chanE chan<- interface{}) {
@@ -92,7 +92,7 @@ func UpdateNodeJobRunStatus(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 		return syncTakeJobInNodeRun(db, nodeRun, job, stageIndex, chanEvent)
 	}
-	return execute(db, store, p, node, chanEvent)
+	return execute(dbCopy, db, store, p, node, chanEvent)
 }
 
 // AddSpawnInfosNodeJobRun saves spawn info before starting worker
@@ -122,7 +122,7 @@ func PrepareSpawnInfos(infos []sdk.SpawnInfo) []sdk.SpawnInfo {
 }
 
 // TakeNodeJobRun Take an a job run for update
-func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo, chanEvent chan<- interface{}) (*sdk.WorkflowNodeJobRun, error) {
+func TakeNodeJobRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobID int64, workerModel string, workerName string, workerID string, infos []sdk.SpawnInfo, chanEvent chan<- interface{}) (*sdk.WorkflowNodeJobRun, error) {
 	// first load without FOR UPDATE WAIT to quick check status
 	currentStatus, errS := db.SelectStr(`SELECT status FROM workflow_node_run_job WHERE id = $1`, jobID)
 	if errS != nil {
@@ -154,7 +154,7 @@ func TakeNodeJobRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, jobI
 		return nil, sdk.WrapError(err, "TakeNodeJobRun> Cannot save spawn info on node job run %d", jobID)
 	}
 
-	if err := UpdateNodeJobRunStatus(db, store, p, job, sdk.StatusBuilding, chanEvent); err != nil {
+	if err := UpdateNodeJobRunStatus(dbCopy, db, store, p, job, sdk.StatusBuilding, chanEvent); err != nil {
 		log.Debug("TakeNodeJobRun> call UpdateNodeJobRunStatus on job %d set status from %s to %s", job.ID, job.Status, sdk.StatusBuilding)
 		return nil, sdk.WrapError(err, "TakeNodeJobRun>Cannot update node job run %d", jobID)
 	}

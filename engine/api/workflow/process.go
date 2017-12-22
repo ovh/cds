@@ -16,7 +16,7 @@ import (
 
 // processWorkflowRun triggers workflow node for every workflow.
 // It contains all the logic for triggers and joins processing.
-func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64, chanEvent chan<- interface{}) (bool, error) {
+func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64, chanEvent chan<- interface{}) (bool, error) {
 	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess int
 	t0 := time.Now()
 	log.Debug("processWorkflowRun> Begin [#%d]%s", w.Number, w.Workflow.Name)
@@ -59,7 +59,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 				return false, sdk.ErrWorkflowNodeParentNotRun
 			}
 		}
-		conditionOK, errP := processWorkflowNodeRun(db, store, p, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual, chanEvent)
+		conditionOK, errP := processWorkflowNodeRun(dbCopy, db, store, p, w, start, int(nextSubNumber), sourceNodesRunID, hookEvent, manual, chanEvent)
 		if errP != nil {
 			return false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -80,7 +80,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 			},
 		})
 
-		conditionOK, errP := processWorkflowNodeRun(db, store, p, w, w.Workflow.Root, 0, nil, hookEvent, manual, chanEvent)
+		conditionOK, errP := processWorkflowNodeRun(dbCopy, db, store, p, w, w.Workflow.Root, 0, nil, hookEvent, manual, chanEvent)
 		if errP != nil {
 			return false, sdk.WrapError(errP, "processWorkflowRun> Unable to process workflow node run")
 		}
@@ -127,7 +127,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 					if !abortTrigger {
 
 						//Keep the subnumber of the previous node in the graph
-						conditionOk, errPwnr := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil, chanEvent)
+						conditionOk, errPwnr := processWorkflowNodeRun(dbCopy, db, store, p, w, &t.WorkflowDestNode, int(nodeRun.SubNumber), []int64{nodeRun.ID}, nil, nil, chanEvent)
 						if errPwnr != nil {
 							log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, errPwnr)
 							AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
@@ -248,7 +248,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 
 				if !abortTrigger {
 					//Keep the subnumber of the previous node in the graph
-					conditionOK, err := processWorkflowNodeRun(db, store, p, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil, chanEvent)
+					conditionOK, err := processWorkflowNodeRun(dbCopy, db, store, p, w, &t.WorkflowDestNode, int(maxsn), nodeRunIDs, nil, nil, chanEvent)
 					if err != nil {
 						AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 							ID:   sdk.MsgWorkflowError.ID,
@@ -295,7 +295,7 @@ func processWorkflowRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, 
 }
 
 //processWorkflowNodeRun triggers execution of a node run
-func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}) (bool, error) {
+func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, n *sdk.WorkflowNode, subnumber int, sourceNodeRuns []int64, h *sdk.WorkflowNodeRunHookEvent, m *sdk.WorkflowNodeRunManual, chanEvent chan<- interface{}) (bool, error) {
 	t0 := time.Now()
 	log.Debug("processWorkflowNodeRun> Begin [#%d.%d]%s.%d", w.Number, subnumber, w.Workflow.Name, n.ID)
 	defer func() {
@@ -463,10 +463,12 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 	}
 
+	gitValues := map[string]string{}
 	for _, p := range jobParams {
 		switch p.Name {
 		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor:
 			w.Tag(p.Name, p.Value)
+			gitValues[p.Name] = p.Value
 		}
 	}
 
@@ -495,12 +497,46 @@ func processWorkflowNodeRun(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
 	w.LastSubNumber = MaxSubNumber(w.WorkflowNodeRuns)
+
+	if n.Context != nil && n.Context.Application != nil {
+		go func() {
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(dbCopy, store, p, n.ID, w, n.Context.Application, n.Context.Environment)
+			if err != nil {
+				log.Warning("processWorkflowNodeRun> cannot get build commits on a node run %v", err)
+			} else {
+				run.Commits = commits
+			}
+
+			if commits != nil {
+				if err := updateNodeRunCommits(dbCopy, run.ID, commits); err != nil {
+					log.Warning("processWorkflowNodeRun> Unable to update node run commits %v", err)
+				}
+			}
+
+			tagsUpdated := false
+			if gitValues[tagGitBranch] == "" && curVCSInfos.Branch != "" {
+				w.Tag(tagGitBranch, curVCSInfos.Branch)
+				tagsUpdated = true
+			}
+			if gitValues[tagGitHash] == "" && curVCSInfos.Hash != "" {
+				w.Tag(tagGitHash, curVCSInfos.Hash)
+				tagsUpdated = true
+			}
+
+			if tagsUpdated {
+				if err := UpdateWorkflowRunTags(dbCopy, w); err != nil {
+					log.Warning("processWorkflowNodeRun> Unable to update workflow run tags %v", err)
+				}
+			}
+		}()
+	}
+
 	if err := updateWorkflowRun(db, w); err != nil {
 		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
 	}
 
 	//Execute the node run !
-	if err := execute(db, store, p, run, chanEvent); err != nil {
+	if err := execute(dbCopy, db, store, p, run, chanEvent); err != nil {
 		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to execute workflow run")
 	}
 
