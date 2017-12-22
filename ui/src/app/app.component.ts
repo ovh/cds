@@ -1,10 +1,8 @@
-import { registerLocaleData } from '@angular/common';
+import {registerLocaleData} from '@angular/common';
 import {Component, OnInit, NgZone} from '@angular/core';
 import {TranslateService} from '@ngx-translate/core';
 import {AuthentificationStore} from './service/auth/authentification.store';
-import {environment} from '../environments/environment';
-import {WarningStore} from './service/warning/warning.store';
-import { ResolveEnd, ResolveStart, Router } from '@angular/router';
+import {ResolveEnd, ResolveStart, Router} from '@angular/router';
 import {CDSWorker} from './shared/worker/worker';
 import {Subscription} from 'rxjs/Subscription';
 import {LanguageStore} from './service/language/language.store';
@@ -40,7 +38,7 @@ export class AppComponent  implements OnInit {
     displayResolver = false;
 
     constructor(_translate: TranslateService, private _language: LanguageStore,
-                private _authStore: AuthentificationStore, private _warnStore: WarningStore, private _router: Router,
+                private _authStore: AuthentificationStore, private _router: Router,
                 private _notification: NotificationService, private _appService: AppService, private _last: LastUpdateService) {
         this.zone = new NgZone({enableLongStackTrace: false});
         _translate.addLangs(['en', 'fr']);
@@ -68,7 +66,6 @@ export class AppComponent  implements OnInit {
             } else {
                 this.isConnected = true;
                 this.startLastUpdateSSE();
-                this.startWarningWorker();
             }
             this.startVersionWorker();
         });
@@ -102,26 +99,6 @@ export class AppComponent  implements OnInit {
         });
     }
 
-    /**
-     * Start worker to pull warnings.
-     * WebWorker for Safari and EDGE
-     * SharedWorker for the others  (worker shared between tabs)
-     */
-    startWarningWorker(): void {
-        this.stopWorker(this.warningWorker, this.warningWorkerSubscription);
-        this.warningWorker = new CDSWorker('./assets/worker/web/warning.js');
-        this.warningWorker.start({
-            'user': this._authStore.getUser(),
-            'session': this._authStore.getSessionToken(),
-            'api': environment.apiURL});
-        this.warningWorker.response().subscribe( msg => {
-            if (msg) {
-                this.zone.run(() => {
-                    this._warnStore.updateWarnings(JSON.parse(msg));
-                });
-            }
-        });
-    }
 
     startVersionWorker(): void {
         this.stopWorker(this.versionWorker, this.versionWorkerSubscription);

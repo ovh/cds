@@ -12,10 +12,7 @@ import {LanguageStore} from '../../service/language/language.store';
 import {Subscription} from 'rxjs/Subscription';
 import {AutoUnsubscribe} from '../../shared/decorator/autoUnsubscribe';
 import {RouterService} from '../../service/router/router.service';
-import {WarningStore} from '../../service/warning/warning.store';
 import {NavbarRecentData} from '../../model/navbar.model';
-import {WarningUI} from '../../model/warning.model';
-import {WarningService} from '../../service/warning/warning.service';
 import {filter} from 'rxjs/operators';
 import {NavbarData} from 'app/model/navbar.model';
 
@@ -42,12 +39,9 @@ export class NavbarComponent implements OnInit, AfterViewInit {
     currentCountry: string;
     langSubscrition: Subscription;
 
-    warnings: Map<string, WarningUI>;
-    warningsCount: number;
     currentRoute: {};
 
     userSubscription: Subscription;
-    warningSubscription: Subscription;
 
     public currentUser: User;
 
@@ -56,8 +50,8 @@ export class NavbarComponent implements OnInit, AfterViewInit {
                 private _appStore: ApplicationStore,
                 private _workflowStore: WorkflowStore,
                 private _router: Router, private _language: LanguageStore, private _routerService: RouterService,
-                private _translate: TranslateService, private _warningStore: WarningStore,
-                private _authentificationStore: AuthentificationStore, private _warningService: WarningService,
+                private _translate: TranslateService,
+                private _authentificationStore: AuthentificationStore,
                 private _cd: ChangeDetectorRef) {
         this.userSubscription = this._authentificationStore.getUserlst().subscribe(u => {
             this.currentUser = u;
@@ -67,16 +61,10 @@ export class NavbarComponent implements OnInit, AfterViewInit {
             this.currentCountry = l;
         });
 
-        this.warningSubscription = this._warningStore.getWarnings().subscribe(ws => {
-            this.warnings = ws;
-            this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
-        });
-
         this._router.events.pipe(
             filter(e => e instanceof NavigationEnd),
         ).forEach(() => {
             this.currentRoute = this._routerService.getRouteParams({}, this._router.routerState.root);
-            this.warningsCount = this._warningService.calculateWarningCountForCurrentRoute(this.currentRoute, this.warnings);
         });
     }
 
