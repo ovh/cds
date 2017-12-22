@@ -22,12 +22,6 @@
         <div class="item link" *ngIf="currentUser">
             <a id="createProjectURL" href="#" [routerLink]="['/project']"><i class="plus circle icon"></i>{{ 'project_create' | translate }}</a>
         </div>
-        <div class="item link" *ngIf="currentUser">
-            <a href="#" [routerLink]="['/warnings/show']" [queryParams]="getWarningParams()">
-                <i class="alarm outline icon"></i>
-                <div class="ui red circular label" *ngIf="warningsCount > 0">{{warningsCount}}</div>
-            </a>
-        </div>
         <sm-dropdown icon="settings" *ngIf="currentUser">
             <a sm-item href="#" [routerLink]="['settings', 'user', currentUser.username]">{{ 'navbar_profile' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'action']">{{ 'navbar_actions' | translate }}</a>

@@ -6,7 +6,6 @@ import {AuthentificationStore} from './auth/authentification.store';
 import {UserService} from './user/user.service';
 import {CanActivateAuthRoute} from './auth/authenRouteActivate';
 import {CanActivateAuthAdminRoute} from './auth/authenAdminRouteActivate';
-import {WarningStore} from './warning/warning.store';
 import {PipelineStore} from './pipeline/pipeline.store';
 import {PipelineService} from './pipeline/pipeline.service';
 import {ApplicationService} from './application/application.service';
@@ -42,7 +41,6 @@ import {WorkflowStore} from './workflow/workflow.store';
 import {WorkflowRunService} from './workflow/run/workflow.run.service';
 import {WorkflowCoreService} from './workflow/workflow.core.service';
 import {RouterService} from './router/router.service';
-import {WarningService} from './warning/warning.service';
 import {LastUpdateService} from './sse/lastupdate.sservice';
 import {HTTP_INTERCEPTORS} from '@angular/common/http';
 import {AuthentificationInterceptor} from './auth.interceptor.service';
@@ -101,8 +99,6 @@ export class ServicesModule {
                 RouterService,
                 UserService,
                 VariableService,
-                WarningService,
-                WarningStore,
                 WorkerModelService,
                 WorkflowService, WorkflowStore, WorkflowRunService, WorkflowCoreService,
                 {
@@ -160,8 +156,6 @@ export {
     RouterService,
     UserService,
     VariableService,
-    WarningStore,
-    WarningService,
     WorkerModelService,
     WorkflowStore,
     WorkflowRunService,
