@@ -572,16 +572,16 @@
 
 <p><strong>GitClone</strong> is a builtin action, you can&rsquo;t modify it.</p>
 
-<p>This action clone a repository into a new directory.</p>
+<p>This action clones a repository into a new directory.</p>
 
-<p>Git Clone will be done with a <code>depth</code> of 1.</p>
+<p>This will retrieve a shallow git clone (<code>depth==1</code>).</p>
 
-<p>You can use a privateKey, this is usually a project or application variable of type <code>key</code>. <code>{{.cds.app.a-key.pub}}</code></p>
+<p>You may want to use a privateKey to clone from an SSH repository. To do so, you will need to add a project or an application variable of type <code>key</code>. <code>{{.cds.app.a-key.pub}}</code></p>
 
 <h2 id="parameters">Parameters</h2>
 
 <ul>
-<li>url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.</li>
+<li>url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository.</li>
 <li>privateKey - optional - the private key to be able to git clone from ssh</li>
 <li>user - optional - the user to be able to git clone from https with authentication</li>
 <li>password - optional - the password to be able to git clone from https with authentication</li>

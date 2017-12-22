@@ -376,7 +376,6 @@
 <ul>
 <li>
 <ul>
-<li><a href="#screenshot">Screenshot</a></li>
 <li><a href="#note-on-service-requirement">Note on Service Requirement</a>
 <ul>
 <li><a href="#how-to">How to</a>
@@ -416,9 +415,9 @@
 
 <p>A <a href="https://ovh.github.io/cds/introduction/introduction.concepts.job/">Job</a> will be executed by a <strong>worker</strong>.</p>
 
-<p>CDS will choose and provision a worker for dependending of the <strong>requirements</strong> you define on your job.</p>
+<p>CDS will choose and provision a worker for dependending on the <strong>requirements</strong> you define on your job.</p>
 
-<p>You can set as many requirements as you want, following those rules :</p>
+<p>You can set as many requirements as you want, following these rules:</p>
 
 <ul>
 <li>Only one model can be set as requirement</li>
@@ -426,19 +425,13 @@
 <li>Memory and Services requirements are availabe only on Docker models</li>
 </ul>
 
-<h2 id="screenshot">Screenshot</h2>
-
-<p>Here a job with two requirements, Memory and Model:</p>
-
-<p><a href="https://ovh.github.io/cds/images/building-pipelines.requirements-show.png">img</a></p>
-
 <h2 id="note-on-service-requirement">Note on Service Requirement</h2>
 
 <p>A Service in CDS is a docker container which is linked with your base image. To summarize, if you add mysql as service requirement to your pipeline job, the required image will then be used to create a container that is linked to the build container.</p>
 
 <h3 id="how-to">How to</h3>
 
-<p>When editing a pipeline job, choose your model as usual. Then add a new  <strong>service</strong> requirement, the name you set will be the service&rsquo;s hostname, set the docker image for the service as the value.</p>
+<p>When editing a pipeline job, choose your model as usual, then add a new  <strong>service</strong> requirement, the name you set will be the service&rsquo;s hostname, set the docker image for the service as the value.</p>
 
 <p>When the pipeline will be triggered, a worker defined by the model will be spawned with a <a href="https://docs.docker.com/engine/userguide/networking/default_network/dockerlinks/">docker link</a> to the service you defined as requirement.</p>
 

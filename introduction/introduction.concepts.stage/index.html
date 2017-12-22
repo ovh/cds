@@ -379,9 +379,9 @@
 <li><strong>Packaging stage</strong> : Build the final package, Virtual Machine Image or Docker Image.</li>
 </ul>
 
-<p>In CDS, stages are executed sequentially if the previous stage is successfull.</p>
+<p>In CDS, stages are executed sequentially if the previous stage is successful.</p>
 
-<p>You can define trigger conditions on a stage, to enable it on certain conditions. For instance, you want to run the <em>Compile Stage</em> and <em>Analysis &amp; Unit Tests stage</em> on all branches but the <em>Packaging Stage</em> on branches master and develop only.</p>
+<p>You can define trigger conditions on a stage, to enable/disable it under given conditions. For instance, you may want to run the <em>Compile Stage</em> and <em>Analysis &amp; Unit Tests stage</em> on all branches but dedicate the <em>Packaging Stage</em> run on <code>master</code> and <code>develop</code> branches only.</p>
 
 <p>A <strong>Stage</strong> is a set of jobs which will be run in parallel.</p>
 

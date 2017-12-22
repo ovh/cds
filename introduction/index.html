@@ -261,8 +261,8 @@
     </header>
     <section class="post-excerpt">
         <p>Usually in CDS a build pipeline is structured of the following stages :
- Compile stage : Build the binaries Analysis &amp; Unit Tests stage : Run all unit tests and analyse code quality Packaging stage : Build the final package, Virtual Machine Image or Docker Image.  In CDS, stages are executed sequentially if the previous stage is successfull.
-You can define trigger conditions on a stage, to enable it on certain conditions. <a class="read-more" href="https://ovh.github.io/cds/introduction/introduction.concepts.stage/">&raquo;</a></p>
+ Compile stage : Build the binaries Analysis &amp; Unit Tests stage : Run all unit tests and analyse code quality Packaging stage : Build the final package, Virtual Machine Image or Docker Image.  In CDS, stages are executed sequentially if the previous stage is successful.
+You can define trigger conditions on a stage, to enable/disable it under given conditions. <a class="read-more" href="https://ovh.github.io/cds/introduction/introduction.concepts.stage/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -307,9 +307,9 @@ What does CDS do? Basically, CDS allows users to create building and delivery pi
         <h2 class="post-title"><a href="https://ovh.github.io/cds/introduction/introduction.concepts.pipeline/">Pipeline</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>A pipeline describes how things need to be executed in order to achieve wanted result. In CDS, a pipeline a defined on a project and can be used on several applications inside the same project.
+        <p>A pipeline describes how things need to be executed in order to obtain the expected result. In CDS, a pipeline belongs to a single project and can be used with the applications of that project.
 A pipeline is structured in sequential stages containing one or multiple concurrent jobs.
-In CDS there is several types of pipeline : build, testing and deployment. In Pipeline configuration file, default type is build. <a class="read-more" href="https://ovh.github.io/cds/introduction/introduction.concepts.pipeline/">&raquo;</a></p>
+In CDS there are several types of pipelines : build, testing and deployment. In Pipeline configuration file, default type is build. <a class="read-more" href="https://ovh.github.io/cds/introduction/introduction.concepts.pipeline/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -354,8 +354,8 @@ At creation, a project has to have at least one group with edition permissions o
         <h2 class="post-title"><a href="https://ovh.github.io/cds/introduction/introduction.concepts.job/">Job</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>The Job is more important concept in CDS. It will be composed of steps which will be run sequencially. A Job will be executed is a dedicated workspace and each new run of a job will have a new dedicated workspace. It means that you cannot share a workspace between jobs or between two runs of a job.
-A Job will be executed by a worker. CDS will choose and provision a worker for dependending of the Requirements you define on your job. <a class="read-more" href="https://ovh.github.io/cds/introduction/introduction.concepts.job/">&raquo;</a></p>
+        <p>A Job is an important concept in CDS. A job is composed of steps which will be run sequentially. A Job is executed in a dedicated workspace and each new run of a job will have a new dedicated workspace. This means that you cannot share a workspace between jobs or between two runs of the same job.
+A Job is executed by a worker. CDS will select or provision a worker for the job dependending on the Requirements the job&rsquo;s requirements. <a class="read-more" href="https://ovh.github.io/cds/introduction/introduction.concepts.job/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -376,8 +376,8 @@ A Job will be executed by a worker. CDS will choose and provision a worker for d
         <h2 class="post-title"><a href="https://ovh.github.io/cds/introduction/introduction.concepts.step/">Step</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>The steps of a job is the list of the different operation performed by the CDS worker. Each step is based on an Action which is defined by CDS. The list of all actions is defined on *&lt;your cds url ui&gt;/#/action*. On the very first step failed, the job is marked as Failed and execution is stopped.
-You can define a Step as final. It mean that even if the job is failed, the step will be executed. <a class="read-more" href="https://ovh.github.io/cds/introduction/introduction.concepts.step/">&raquo;</a></p>
+        <p>The steps of a job is the list of the different operations performed by the CDS worker. Each step is based on an Action pre-defined by CDS. The list of all actions is defined on *&lt;your cds url ui&gt;/#/action*. When a step fails, its parent job is stopped and marked as failed.
+You can define a Step as final. It mean that even if the job fails before reaching it, the step will be executed anyway. <a class="read-more" href="https://ovh.github.io/cds/introduction/introduction.concepts.step/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          

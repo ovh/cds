@@ -263,8 +263,8 @@
     </header>
     <section class="post-excerpt">
         <p>Artifact Download Action is a builtin action, you can&rsquo;t modify it.
-This action can be used to get artifact uploaded by the Artifact Upload action
-Action Parameter  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/">&raquo;</a></p>
+This action can be used to retrieve an artifact previously uploaded by an Artifact Upload action.
+Parameters  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -286,8 +286,8 @@ Action Parameter  application: Application from where artifacts will be download
     </header>
     <section class="post-excerpt">
         <p> Artifact Upload Action is a builtin action, you can&rsquo;t modify it.
-This action can be used to upload artifact in CDS. This is the good way to share files between pipelines or stages.
-Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact   <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/">&raquo;</a></p>
+This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
+Parameters  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact   <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -309,10 +309,10 @@ Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  
     </header>
     <section class="post-excerpt">
         <p>GitClone is a builtin action, you can&rsquo;t modify it.
-This action clone a repository into a new directory.
-Git Clone will be done with a depth of 1.
-You can use a privateKey, this is usually a project or application variable of type key. {{.cds.app.a-key.pub}}
-Parameters  url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.gitclone/">&raquo;</a></p>
+This action clones a repository into a new directory.
+This will retrieve a shallow git clone (depth==1).
+You may want to use a privateKey to clone from an SSH repository. To do so, you will need to add a project or an application variable of type key. {{.cds.app.a-key.pub}}
+Parameters  url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.gitclone/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -334,8 +334,8 @@ Parameters  url - mandatory - URL must contain information about the transport p
     </header>
     <section class="post-excerpt">
         <p> JUnit is a builtin action, you can&rsquo;t modify it.
-This action parse given file to extract Unit Test results.
-Parameters  path: Path to junit xml file  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:   <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.junit/">&raquo;</a></p>
+This action parses a given Junit formatted XML file to extract its test results.
+Parameters  path: Path to a junit xml file  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:   <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.junit/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -357,10 +357,10 @@ Parameters  path: Path to junit xml file  Example  Job Configuration.   Launch p
     </header>
     <section class="post-excerpt">
         <p>Script is a builtin action, you can&rsquo;t modify it.
-This action execute a script, written in script attribute
+This action executes a given script with a given interpreter.
 Parameters  script: Content of your script. You can put  #!/bin/bash  or
-#!/bin/perl  at first line.
-Make sure that the binary used is in the pre-requisites of action.
+#!/bin/perl  at first line. This will define the interpreter.
+Make sure that the binary used is in the pre-requisites of the action.
 If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.script/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
@@ -382,8 +382,8 @@ If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your ste
         <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-docker-package/">cds-docker-package</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>Build image and push it to docker repository
-Parameters  dockerOpts: Docker options, Enter &ndash;no-cache &ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag dockerfileDirectory: Directory which contains your Dockerfile. imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-docker-package/">&raquo;</a></p>
+        <p>Build a Docker image and push it to a docker repository
+Parameters  dockerOpts: Docker options, you can add --no-cache --pull for example dockerRegistry: The Docker registry to push the image to. dockerfileDirectory: Directory which contains your Dockerfile. imageName: Name of your docker image, without tag. imageTag: The Docker image tag. {{.cds.version}} can be a good tag value. You can use multiple tags. E.g., firstTag,SecondTag,{{.cds.version}},latest  Requirements  bash: type: binary Value: bash docker: type: binary Value: docker  More documentation on Github <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-docker-package/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -405,7 +405,7 @@ Parameters  dockerOpts: Docker options, Enter &ndash;no-cache &ndash;pull if you
     </header>
     <section class="post-excerpt">
         <p>Go Build: compile a go program
-Parameters  architecture: GOOS artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: if true (checked) -&gt; export CGO_ENABLED=0 before go build detectRaceCondition: Enable data race detection. It&rsquo;s flag -race flags: flags for go build. Put -ldflags &ldquo;-X main.xyz=abc&rdquo; for go build -ldflags &ldquo;-X main.xyz=abc&rdquo; gopath: set a $GOPATH. If empty, this action try to get env $GOPATH. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-go-build/">&raquo;</a></p>
+Parameters  architecture: GOOS artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: if true (checked) -&gt; export CGO_ENABLED=0 before go build detectRaceCondition: Enable data race detection. It&rsquo;s flag -race flags: flags for go build. Put -ldflags &ldquo;-X main.xyz=abc&rdquo; for go build -ldflags &ldquo;-X main.xyz=abc&rdquo; gopath: set a $GOPATH. If empty, this action tries to get env $GOPATH. <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-go-build/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          

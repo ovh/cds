@@ -447,23 +447,23 @@
 <li><code>{{.cds.stage}}</code> The name of the current stage</li>
 <li><code>{{.cds.job}}</code> The name of the current job</li>
 <li><code>{{.cds.workspace}}</code> Current job&rsquo;s workspace. It&rsquo;s a directory. In a step script, <code>{{.cds.workspace}}</code> == $HOME</li>
-<li><code>{{.cds.version}}</code> The number of the current version</li>
+<li><code>{{.cds.version}}</code> The current version number</li>
 <li><code>{{.cds.parent.application}}</code> The name of the application that triggered the current build</li>
 <li><code>{{.cds.parent.pipeline}}</code> The name of the pipeline that triggered the current build</li>
-<li><code>{{.cds.triggered_by.email}}</code> Email of the user that run the current build</li>
-<li><code>{{.cds.triggered_by.fullname}}</code> Full name of the user that run the current build</li>
-<li><code>{{.cds.triggered_by.username}}</code> User that run the current build</li>
+<li><code>{{.cds.triggered_by.email}}</code> Email of the user who launched the current build</li>
+<li><code>{{.cds.triggered_by.fullname}}</code> Full name of the user who launched the current build</li>
+<li><code>{{.cds.triggered_by.username}}</code> Username of the user who launched the current build</li>
 </ul>
 
 <h2 id="the-version-variable">The .version variable</h2>
 
 <p><code>{{.cds.version}}</code></p>
 
-<p>CDS version is a builtin variable equals to the buildNumber of the last pipeline of type “build”. This variable is transmitted through triggers with the same value to testing and deployment pipelines.</p>
+<p>CDS version is a builtin variable set to the buildNumber of the last pipeline of type “build”. This variable is transmitted through triggers with the same value to both testing and deployment pipelines.</p>
 
 <h2 id="export-a-variable-inside-a-step">Export a variable inside a step</h2>
 
-<p>In a step of type <code>script</code>, you can export variable as:</p>
+<p>In a step of type <code>script</code>, you can export a variable as the following:</p>
 
 <pre><code class="language-bash">$ worker export varname thevalue
 </code></pre>
@@ -472,7 +472,7 @@
 
 <h2 id="shell-environment-variable">Shell Environment Variable</h2>
 
-<p>All CDS variables, except <code>password type</code> can be used as plain environment variable.</p>
+<p>All CDS variables, except <code>password type</code>, can be used as plain environment variables.</p>
 
 <p>Theses lines will have the same output</p>
 

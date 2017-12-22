@@ -371,13 +371,13 @@
               <h1>Job</h1>
               
 
-<p>The Job is more important concept in CDS. It will be composed of <strong>steps</strong> which will be run sequencially. A Job will be executed is a dedicated workspace and each new run of a job will have a new dedicated workspace. It means that you cannot share a workspace between jobs or between two runs of a job.</p>
+<p>A Job is an important concept in CDS. A job is composed of <strong>steps</strong> which will be run sequentially. A Job is executed in a dedicated workspace and each new run of a job will have a new dedicated workspace. This means that you cannot share a workspace between jobs or between two runs of the same job.</p>
 
 <p><img src="https://ovh.github.io/cds/images/concepts_job.png" alt="Job" /></p>
 
-<p>A Job will be executed by a <strong>worker</strong>. CDS will choose and provision a worker for dependending of the <a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/">Requirements</a> you define on your job.</p>
+<p>A Job is executed by a <strong>worker</strong>. CDS will select or provision a worker for the job dependending on the <a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/">Requirements</a> the job&rsquo;s requirements.</p>
 
-<p>If you want to share files or artifact between jobs, stages or pipelines you have to use <em>Artifact upload</em> and <em>Artifact download</em>. You can also share variable between stages, see <a href="variables.md">variables tutorial</a> for more details.</p>
+<p>If you want to share files or artifacts between jobs, stages or pipelines you have to use the <em>Artifact upload</em> and <em>Artifact download</em> steps. You can also share variables between stages, see <a href="variables.md">variables tutorial</a> for more details.</p>
 
 <p><img src="https://ovh.github.io/cds/images/concepts_job_example.png" alt="Job Examples" /></p>
 

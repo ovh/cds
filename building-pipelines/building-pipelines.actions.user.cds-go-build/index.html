@@ -579,7 +579,7 @@
 <li><strong>cgoDisabled</strong>: if true (checked) -&gt; export CGO_ENABLED=0 before go build</li>
 <li><strong>detectRaceCondition</strong>: Enable data race detection. It&rsquo;s flag -race</li>
 <li><strong>flags</strong>: flags for go build. Put -ldflags &ldquo;-X main.xyz=abc&rdquo; for go build -ldflags &ldquo;-X main.xyz=abc&rdquo;</li>
-<li><strong>gopath</strong>: set a $GOPATH. If empty, this action try to get env $GOPATH. If $GOPATH is empty, action will set it to $HOME/go</li>
+<li><strong>gopath</strong>: set a $GOPATH. If empty, this action tries to get env $GOPATH. If $GOPATH is empty, the action will set it to $HOME/go</li>
 <li><strong>os</strong>: GOOS</li>
 <li><strong>package</strong>: go package to compile. Put host.ext/foo/bar for go build host.ext/foo/bar</li>
 <li><strong>preRun</strong>: Pre-command. Example: export CGO_ENABLED=0</li>

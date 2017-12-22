@@ -310,7 +310,7 @@ Parameters  details: Output Details Level: low, medium, high exclude: Exclude so
         <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin/">Built-in Actions</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>Built-in actions are integred in CDS. You can’t modify it.
+        <p>Built-in actions are integrated in CDS. You can’t modify them.
 Built-in actions :
 Artifact Download Artifact Upload GitClone JUnit Script  <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin/">&raquo;</a></p>
     </section>
@@ -333,10 +333,10 @@ Artifact Download Artifact Upload GitClone JUnit Script  <a class="read-more" hr
         <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/">User Actions</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>CDS User Actions are developed in CDS. There are available on all CDS Installation. They use built-in action(s) and / or other existing action(s).
-There can be created by CLI and / or Web UI.
-User actions from CDS Contributions :
-cds-docker-package cds-go-build cds-nexus-upload cds-perl-test cds-publish-ovh-metrics  <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/">&raquo;</a></p>
+        <p>A user action is a combination of built-in or plugin actions. A user can import user actions using the Web UI or the CLI:
+Import an action using the CLI With a local file :
+$ cds action add --url $GOPATH/src/github.com/ovh/cds/contrib/actions/actions/cds-docker-package.hcl  With a remote file :
+$ cds action add --url https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.hcl  CDS&rsquo;s source code bundles a few user-actions that you may use directly or as a starting point for your own user-actions: <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -359,7 +359,7 @@ cds-docker-package cds-go-build cds-nexus-upload cds-perl-test cds-publish-ovh-m
     <section class="post-excerpt">
         <p>Create a project The first step is to create your own Project. A project contains applications, pipelines and environments.
 You can use either the CLI or the UI to create your project.
-$ cds project add TEST &quot;My test project&quot; test-team OK  Create a simple pipeline $ cds pipeline add TEST hello-pip Pipeline hello-pip created.  Create an application $ cds application add TEST hello-world Aplication hello-world created.  Configure your pipeline We will add a script action in pipeline saying &ldquo;Hello World ! <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.first-pipeline-cli/">&raquo;</a></p>
+$ cds project add TEST &quot;My test project&quot; test-team OK  Create a simple pipeline $ cds pipeline add TEST hello-pip Pipeline hello-pip created.  Create an application $ cds application add TEST hello-world Application hello-world created.  Configure your pipeline You can add a script step in the pipeline that simply echoes &ldquo;Hello World ! <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.first-pipeline-cli/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
          
@@ -425,8 +425,8 @@ plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ss
         <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.configuration-file/">Use Configuration File</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>You can define a pipeline both in json format or in yaml format. Default is yaml format.
-Basic configuration If you have a pretty simple build pipeline with one stage and one job. You can write such a configuration file
+        <p>You can define a pipeline in the json format but also in the yaml format. The default is the yaml format.
+Basic configuration If you have a pretty basic build pipeline with a single stage and a single job. You may write such a configuration file:
 steps: - script: echo I'm the firt step - script: echo I'm the second step  This defines a pipeline of type build (it&rsquo;s the default type), named Build (the default name for a build Pipeline). <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.configuration-file/">&raquo;</a></p>
     </section>
     <footer class=" footline" >
@@ -448,8 +448,8 @@ steps: - script: echo I'm the firt step - script: echo I'm the second step  This
         <h2 class="post-title"><a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions/">Actions</a></h2>
     </header>
     <section class="post-excerpt">
-        <p>Inside a Job, each steps is based on an action.
-Types of actions :
+        <p>Within a Job, each step is based on an action.
+There are three types of actions:
  Built-in actions, available on each CDS Installation User actions, added by CDS Administrators for now Plugins actions, added by CDS Administrators   <a class="read-more" href="https://ovh.github.io/cds/building-pipelines/building-pipelines.actions/">&raquo;</a></p>
     </section>
     <footer class=" footline" >

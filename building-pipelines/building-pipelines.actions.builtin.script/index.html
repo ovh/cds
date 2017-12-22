@@ -554,7 +554,7 @@
 <ul>
 <li>
 <ul>
-<li><a href="#variable">Variable</a></li>
+<li><a href="#using-cds-variables-in-a-script">Using CDS variables in a script</a></li>
 </ul></li>
 <li><a href="#example">Example</a></li>
 </ul></li>
@@ -576,7 +576,7 @@
 
 <p><strong>Script</strong> is a builtin action, you can&rsquo;t modify it.</p>
 
-<p>This action execute a script, written in script attribute</p>
+<p>This action executes a given script with a given interpreter.</p>
 
 <h2 id="parameters">Parameters</h2>
 
@@ -592,9 +592,9 @@
 <pre><code class="language-bash">#!/bin/perl
 </code></pre>
 
-<p>at first line.</p>
+<p>at first line. This will define the interpreter.</p>
 
-<p>Make sure that the binary used is in the pre-requisites of action.</p>
+<p>Make sure that the binary used is in the pre-requisites of the action.</p>
 
 <p>If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails.</p>
 
@@ -603,17 +603,17 @@
 <pre><code class="language-bash">set +e
 </code></pre>
 
-<p>Example of step, CDS will exit at the first line, as <code>which a-unknown-binary will return an error</code> :</p>
+<p>Below is an example of a step that will fail at the first line:</p>
 
 <pre><code class="language-bash">which a-unknown-binary # Step will fail here, lines below won't be executed
 if [ $? -ne 0 ]; then
-  echo &quot;binary a-unknown-binary does not exists&quot;;
+  echo &quot;binary a-unknown-binary does not exists&quot;; # this won't be displayed
   exit 1
 fi;
 exit 0
 </code></pre>
 
-<p>Example of step, CDS will execute all lines:</p>
+<p>If you want to display an error message before exiting, you should rather use:</p>
 
 <pre><code class="language-bash">set +e
 which a-unknown-binary
@@ -624,7 +624,7 @@ fi;
 exit 0
 </code></pre>
 
-<h4 id="variable">Variable</h4>
+<h4 id="using-cds-variables-in-a-script">Using CDS variables in a script</h4>
 
 <p>You can use <a href="https://ovh.github.io/cds/building-pipelines/building-pipelines.variables/">CDS Variables</a> in a step script.</p>
 

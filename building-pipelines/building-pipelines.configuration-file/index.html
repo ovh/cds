@@ -399,20 +399,20 @@
 
 
 
-<p>You can define a pipeline both in json format or in yaml format. Default is yaml format.</p>
+<p>You can define a pipeline in the json format but also in the yaml format. The default is the yaml format.</p>
 
 <h3 id="basic-configuration">Basic configuration</h3>
 
-<p>If you have a pretty simple <em>build</em> pipeline with one stage and one job. You can write such a configuration file</p>
+<p>If you have a pretty basic <em>build</em> pipeline with a single stage and a single job. You may write such a configuration file:</p>
 
 <pre><code class="language-yaml">steps:
 - script: echo I'm the firt step
 - script: echo I'm the second step
 </code></pre>
 
-<p>This defines a pipeline of type <code>build</code> (it&rsquo;s the default type), named <code>Build</code> (the default name for a build Pipeline). It will have a Stage named <strong>Build</strong> (the default stage name for a one stage pipeline is the name of the pipeline), with a job <strong>Build</strong> (the default job name for a one job stage is the name of the stage) composed of thow steps using script actions.</p>
+<p>This defines a pipeline of type <code>build</code> (it&rsquo;s the default type), named <code>Build</code> (the default name for a build Pipeline). It will have a Stage named <strong>Build</strong> (the default stage name for a one stage pipeline is the name of the pipeline), with a job <strong>Build</strong> (the default job name for a one job stage is the name of the stage) composed of two steps using script actions.</p>
 
-<p>It is basically equivalent as :</p>
+<p>It is basically equivalent to :</p>
 
 <pre><code class="language-yaml">name: Build
 type: build
@@ -425,7 +425,7 @@ stages:
         - script: echo I'm the second step
 </code></pre>
 
-<p>A bit more complex example with two jobs, with requirements and other kind of steps :</p>
+<p>Here is a slightly more complex example with two jobs, with requirements and other kinds of steps :</p>
 
 <pre><code class="language-yaml">name: maven-build
 jobs:
@@ -458,7 +458,7 @@ jobs:
 
 <h3 id="advanced-usage">Advanced usage</h3>
 
-<p>Same use case as above, but we add a stage to build the package only on branch master and release</p>
+<p>Here is a config file with the same use case as above, but it adds a stage to build the package only on <code>master</code> and <code>release</code> branches.</p>
 
 <pre><code class="language-yaml">name: maven-build
 
@@ -517,7 +517,7 @@ stages:
 
 <h2 id="pipeline-configuration-export">Pipeline configuration export</h2>
 
-<p>You can exported full configuration of your pipeline with the CDS CLI :</p>
+<p>You can export a full configuration of your pipeline with the CDS CLI using the <code>export</code> subcommand:</p>
 
 <pre><code class="language-bash">cds pipeline export PROJECT_KEY pipeline_name
 </code></pre>
@@ -543,7 +543,7 @@ Global Flags:
 
 <h2 id="pipeline-configuration-import">Pipeline configuration import</h2>
 
-<p>You can import full configuration of your pipeline with the CDS CLI :</p>
+<p>You can import a full configuration of your pipeline with the CDS CLI using the <code>import</code> subcommand:</p>
 
 <pre><code class="language-bash">cds pipeline import PROJECT_KEY pipelinefile
 </code></pre>

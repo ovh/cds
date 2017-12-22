@@ -371,16 +371,16 @@
               <h1>Step</h1>
               
 
-<p>The steps of a job is the list of the different operation performed by the CDS worker. Each step is based on an <strong>Action</strong> which is defined by CDS. The list of all actions is defined on <code>*&lt;your cds url ui&gt;/#/action*</code>. On the very first step failed, the job is marked as Failed and execution is stopped.</p>
+<p>The steps of a job is the list of the different operations performed by the CDS worker. Each step is based on an <strong>Action</strong> pre-defined by CDS. The list of all actions is defined on <code>*&lt;your cds url ui&gt;/#/action*</code>. When a step fails, its parent job is stopped and marked as <code>failed</code>.</p>
 
-<p>You can define a Step as final. It mean that even if the job is failed, the step will be executed. The <em>final</em> steps are executed after all other steps.</p>
+<p>You can define a Step as final. It mean that even if the job fails before reaching it, the step will be executed anyway. The <em>final</em> steps are executed after all other steps.</p>
 
-<p>Here is an example of steps creation in CDS.
+<p>You can find below an example of steps creation in CDS.
 You have 2 configuration flags:</p>
 
 <ul>
-<li>Optional : with this flag checked, even if this step fails, the stage execution will continue.</li>
-<li>Always executed : with this flag checked, this step will be executed even if previous steps fail. For example, if you make tests in your previous step and the tests fail you want to upload the report but not deploy, here is a use case.</li>
+<li>Optional : The failure of the step does not cause the failure of the whole job.</li>
+<li>Always executed : with this flag checked, this step will be executed even if previous steps fail. This can be helpful, for example, if you run tests in a step and you would like to upload the tests report even if the tests fail.</li>
 </ul>
 
 <p><img src="https://ovh.github.io/cds/images/concepts_step_example.png" alt="Steps Examples" /></p>

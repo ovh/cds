@@ -420,18 +420,18 @@ Pipeline hello-pip created.
 <h3 id="create-an-application">Create an application</h3>
 
 <pre><code class="language-bash">$ cds application add TEST hello-world
-Aplication hello-world created.
+Application hello-world created.
 </code></pre>
 
 <h3 id="configure-your-pipeline">Configure your pipeline</h3>
 
-<p>We will add a script action in pipeline saying &ldquo;Hello World !&rdquo;</p>
+<p>You can add a script step in the pipeline that simply echoes &ldquo;Hello World !&rdquo;</p>
 
 <pre><code class="language-bash">* cds pipeline job add DEMO hello-pip myJob1
 $ cds pipeline job append DEMO hello-pip myJob1 Script -p script=&quot;echo Hello World! &quot;
 </code></pre>
 
-<p>Last step, attach the pipeline to the application</p>
+<p>Finally, you need to attach the pipeline to the application</p>
 
 <pre><code class="language-bash">$ cds application pipeline add DEMO hello-world hello-pip
 OK

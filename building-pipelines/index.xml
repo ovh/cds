@@ -17,8 +17,8 @@
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/</guid>
       <description>Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it.
-This action can be used to get artifact uploaded by the Artifact Upload action
-Action Parameter  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.</description>
+This action can be used to retrieve an artifact previously uploaded by an Artifact Upload action.
+Parameters  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.</description>
     </item>
     
     <item>
@@ -28,8 +28,8 @@ Action Parameter  application: Application from where artifacts will be download
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/</guid>
       <description> Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
-This action can be used to upload artifact in CDS. This is the good way to share files between pipelines or stages.
-Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  </description>
+This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
+Parameters  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  </description>
     </item>
     
     <item>
@@ -39,10 +39,10 @@ Action Parameter  path: Path of file to upload tag: Tag to apply to your file.  
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.gitclone/</guid>
       <description>GitClone is a builtin action, you can&amp;rsquo;t modify it.
-This action clone a repository into a new directory.
-Git Clone will be done with a depth of 1.
-You can use a privateKey, this is usually a project or application variable of type key. {{.cds.app.a-key.pub}}
-Parameters  url - mandatory - URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.</description>
+This action clones a repository into a new directory.
+This will retrieve a shallow git clone (depth==1).
+You may want to use a privateKey to clone from an SSH repository. To do so, you will need to add a project or an application variable of type key. {{.cds.app.a-key.pub}}
+Parameters  url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository.</description>
     </item>
     
     <item>
@@ -52,8 +52,8 @@ Parameters  url - mandatory - URL must contain information about the transport p
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.junit/</guid>
       <description> JUnit is a builtin action, you can&amp;rsquo;t modify it.
-This action parse given file to extract Unit Test results.
-Parameters  path: Path to junit xml file  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
+This action parses a given Junit formatted XML file to extract its test results.
+Parameters  path: Path to a junit xml file  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
     </item>
     
     <item>
@@ -63,10 +63,10 @@ Parameters  path: Path to junit xml file  Example  Job Configuration.   Launch p
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.script/</guid>
       <description>Script is a builtin action, you can&amp;rsquo;t modify it.
-This action execute a script, written in script attribute
+This action executes a given script with a given interpreter.
 Parameters  script: Content of your script. You can put  #!/bin/bash  or
-#!/bin/perl  at first line.
-Make sure that the binary used is in the pre-requisites of action.
+#!/bin/perl  at first line. This will define the interpreter.
+Make sure that the binary used is in the pre-requisites of the action.
 If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails.</description>
     </item>
     
@@ -76,8 +76,8 @@ If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your ste
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-docker-package/</guid>
-      <description>Build image and push it to docker repository
-Parameters  dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pull if you want for example dockerRegistry: Docker Registry. Enter myregistry for build image myregistry/myimage:mytag dockerfileDirectory: Directory which contains your Dockerfile. imageName: Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag imageTag: Tag of your docker image. Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS. You can use many tags: firstTag,SecondTag Example : {{.</description>
+      <description>Build a Docker image and push it to a docker repository
+Parameters  dockerOpts: Docker options, you can add --no-cache --pull for example dockerRegistry: The Docker registry to push the image to. dockerfileDirectory: Directory which contains your Dockerfile. imageName: Name of your docker image, without tag. imageTag: The Docker image tag. {{.cds.version}} can be a good tag value. You can use multiple tags. E.g., firstTag,SecondTag,{{.cds.version}},latest  Requirements  bash: type: binary Value: bash docker: type: binary Value: docker  More documentation on Github</description>
     </item>
     
     <item>
@@ -87,7 +87,7 @@ Parameters  dockerOpts: Docker options, Enter &amp;ndash;no-cache &amp;ndash;pul
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-go-build/</guid>
       <description>Go Build: compile a go program
-Parameters  architecture: GOOS artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: if true (checked) -&amp;gt; export CGO_ENABLED=0 before go build detectRaceCondition: Enable data race detection. It&amp;rsquo;s flag -race flags: flags for go build. Put -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; for go build -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; gopath: set a $GOPATH. If empty, this action try to get env $GOPATH.</description>
+Parameters  architecture: GOOS artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: if true (checked) -&amp;gt; export CGO_ENABLED=0 before go build detectRaceCondition: Enable data race detection. It&amp;rsquo;s flag -race flags: flags for go build. Put -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; for go build -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; gopath: set a $GOPATH. If empty, this action tries to get env $GOPATH.</description>
     </item>
     
     <item>
@@ -259,7 +259,7 @@ Parameters  details: Output Details Level: low, medium, high exclude: Exclude so
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin/</guid>
-      <description>Built-in actions are integred in CDS. You can’t modify it.
+      <description>Built-in actions are integrated in CDS. You can’t modify them.
 Built-in actions :
 Artifact Download Artifact Upload GitClone JUnit Script </description>
     </item>
@@ -270,10 +270,10 @@ Artifact Download Artifact Upload GitClone JUnit Script </description>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/</guid>
-      <description>CDS User Actions are developed in CDS. There are available on all CDS Installation. They use built-in action(s) and / or other existing action(s).
-There can be created by CLI and / or Web UI.
-User actions from CDS Contributions :
-cds-docker-package cds-go-build cds-nexus-upload cds-perl-test cds-publish-ovh-metrics </description>
+      <description>A user action is a combination of built-in or plugin actions. A user can import user actions using the Web UI or the CLI:
+Import an action using the CLI With a local file :
+$ cds action add --url $GOPATH/src/github.com/ovh/cds/contrib/actions/actions/cds-docker-package.hcl  With a remote file :
+$ cds action add --url https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.hcl  CDS&amp;rsquo;s source code bundles a few user-actions that you may use directly or as a starting point for your own user-actions:</description>
     </item>
     
     <item>
@@ -284,7 +284,7 @@ cds-docker-package cds-go-build cds-nexus-upload cds-perl-test cds-publish-ovh-m
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.first-pipeline-cli/</guid>
       <description>Create a project The first step is to create your own Project. A project contains applications, pipelines and environments.
 You can use either the CLI or the UI to create your project.
-$ cds project add TEST &amp;quot;My test project&amp;quot; test-team OK  Create a simple pipeline $ cds pipeline add TEST hello-pip Pipeline hello-pip created.  Create an application $ cds application add TEST hello-world Aplication hello-world created.  Configure your pipeline We will add a script action in pipeline saying &amp;ldquo;Hello World !</description>
+$ cds project add TEST &amp;quot;My test project&amp;quot; test-team OK  Create a simple pipeline $ cds pipeline add TEST hello-pip Pipeline hello-pip created.  Create an application $ cds application add TEST hello-world Application hello-world created.  Configure your pipeline You can add a script step in the pipeline that simply echoes &amp;ldquo;Hello World !</description>
     </item>
     
     <item>
@@ -314,8 +314,8 @@ plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ss
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.configuration-file/</guid>
-      <description>You can define a pipeline both in json format or in yaml format. Default is yaml format.
-Basic configuration If you have a pretty simple build pipeline with one stage and one job. You can write such a configuration file
+      <description>You can define a pipeline in the json format but also in the yaml format. The default is the yaml format.
+Basic configuration If you have a pretty basic build pipeline with a single stage and a single job. You may write such a configuration file:
 steps: - script: echo I&#39;m the firt step - script: echo I&#39;m the second step  This defines a pipeline of type build (it&amp;rsquo;s the default type), named Build (the default name for a build Pipeline).</description>
     </item>
     
@@ -325,8 +325,8 @@ steps: - script: echo I&#39;m the firt step - script: echo I&#39;m the second st
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions/</guid>
-      <description>Inside a Job, each steps is based on an action.
-Types of actions :
+      <description>Within a Job, each step is based on an action.
+There are three types of actions:
  Built-in actions, available on each CDS Installation User actions, added by CDS Administrators for now Plugins actions, added by CDS Administrators  </description>
     </item>
     
@@ -361,9 +361,9 @@ cds-template-cds-plugin cds-template-cds-template cds-template-deploy-marathon-a
       <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.requirements/</guid>
       <description>Type of requirements:
  Binary Model Hostname Network Service Memory OS (Not yet implemented) Architecture (Not yet implemented)  A Job will be executed by a worker.
-CDS will choose and provision a worker for dependending of the requirements you define on your job.
-You can set as many requirements as you want, following those rules :
- Only one model can be set as requirement Only one hostname can be set as requirement Memory and Services requirements are availabe only on Docker models  Screenshot Here a job with two requirements, Memory and Model:</description>
+CDS will choose and provision a worker for dependending on the requirements you define on your job.
+You can set as many requirements as you want, following these rules:
+ Only one model can be set as requirement Only one hostname can be set as requirement Memory and Services requirements are availabe only on Docker models  Note on Service Requirement A Service in CDS is a docker container which is linked with your base image.</description>
     </item>
     
   </channel>
