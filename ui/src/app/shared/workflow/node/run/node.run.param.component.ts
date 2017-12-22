@@ -141,8 +141,12 @@ export class WorkflowNodeRunParamComponent {
     }
 
     resync(): void {
+        let num = this.num;
+        if (this.nodeRun) {
+            num = this.nodeRun.num;
+        }
         this.loading = true;
-        this._workflowRunService.resync(this.project.key, this.workflow, this.nodeRun.num)
+        this._workflowRunService.resync(this.project.key, this.workflow, num)
         .pipe(finalize(() => {
             this.loading = false;
         })).subscribe(wr => {
