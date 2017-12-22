@@ -161,7 +161,13 @@ func ParametersMapMerge(params map[string]string, otherParams map[string]string)
 	for k, v := range otherParams {
 		if val, ok := params[k]; ok {
 			if val != v {
-				params[k] = fmt.Sprintf("%s,%s", val, v)
+				if val == "" { // val empty, take v, even if v is empty
+					params[k] = fmt.Sprintf("%s", v)
+				} else if v == "" { // v empty, take val
+					params[k] = fmt.Sprintf("%s", val)
+				} else {
+					params[k] = fmt.Sprintf("%s,%s", val, v)
+				}
 				continue
 			}
 			continue
