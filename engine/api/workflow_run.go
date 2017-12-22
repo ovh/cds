@@ -814,14 +814,18 @@ func (api *API) getWorkflowRunArtifactsHandler() Handler {
 				return runs[i].SubNumber > runs[j].SubNumber
 			})
 
+			wg := &sync.WaitGroup{}
 			for i := range runs[0].Artifacts {
-				a := &runs[0].Artifacts[i]
-				url, _ := objectstore.FetchTempURL(a)
-				if url != "" {
-					a.TempURL = url
-				}
+				wg.Add(1)
+				go func(a *sdk.WorkflowNodeRunArtifact) {
+					defer wg.Done()
+					url, _ := objectstore.FetchTempURL(a)
+					if url != "" {
+						a.TempURL = url
+					}
+				}(&runs[0].Artifacts[i])
 			}
-
+			wg.Wait()
 			arts = append(arts, runs[0].Artifacts...)
 		}
 
