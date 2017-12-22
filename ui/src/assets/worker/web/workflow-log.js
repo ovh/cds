@@ -22,7 +22,7 @@ onmessage = function (e) {
 
 function loadLog (user, session, api) {
     loop(2, function () {
-        var url = '/project/' + key + '/workflows/' + workflowName + '/runs/' + number+ '/nodes/' + nodeRunId + '/job/' + runJobId + '/step/' + stepOrder;
+        var url = '/project/' + key + '/workflows/' + workflowName + '/runs/' + number + '/nodes/' + nodeRunId + '/job/' + runJobId + '/step/' + stepOrder;
 
         var xhr = httpCall(url, api, user, session);
         if (xhr.status >= 400) {
