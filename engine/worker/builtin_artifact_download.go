@@ -125,18 +125,19 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 
 		for i := range artifacts {
 			a := &artifacts[i]
+
+			if pattern != "" && !regexp.MatchString(a.Name) {
+				sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
+				continue
+			}
+
+			if tag != "" && a.Tag != tag {
+				sendLog(fmt.Sprintf("%s does not match tag %s - skipped", a.Name, tag))
+				continue
+			}
+
 			go func(a *sdk.WorkflowNodeRunArtifact) {
 				defer wg.Done()
-
-				if pattern != "" && !regexp.MatchString(a.Name) {
-					sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
-					return
-				}
-
-				if tag != "" && a.Tag != tag {
-					sendLog(fmt.Sprintf("%s does not match tag %s - skipped", a.Name, tag))
-					return
-				}
 
 				destFile := path.Join(destPath, a.Name)
 				f, err := os.OpenFile(destFile, os.O_RDWR|os.O_CREATE, os.FileMode(a.Perm))
