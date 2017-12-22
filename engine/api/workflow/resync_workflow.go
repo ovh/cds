@@ -59,7 +59,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun, chEvent c
 	for _, wnrs := range wr.WorkflowNodeRuns {
 		for _, wnr := range wnrs {
 			if wr.LastSubNumber == wnr.SubNumber {
-				computeNodesRunStatus(wnr.Status, &success, &building, &failed, &stopped)
+				computeRunStatus(wnr.Status, &success, &building, &failed, &stopped)
 			}
 		}
 	}
@@ -74,7 +74,7 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun, chEvent c
 	}
 
 	if !isInError {
-		newStatus = getWorkflowRunStatus(success, building, failed, stopped)
+		newStatus = getRunStatus(success, building, failed, stopped)
 	}
 
 	if newStatus != wr.Status {

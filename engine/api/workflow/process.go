@@ -99,7 +99,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 			log.Debug("last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 			// Only the last subversion
 			if lastCurrentSn == nodeRun.SubNumber {
-				computeNodesRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped)
+				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped)
 			}
 
 			//Trigger only if the node is over (successful or not)
@@ -286,7 +286,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 		}
 	}
 
-	w.Status = getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped)
+	w.Status = getRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped)
 	if err := updateWorkflowRun(db, w); err != nil {
 		return false, sdk.WrapError(err, "processWorkflowRun>")
 	}
@@ -586,8 +586,8 @@ func AddWorkflowRunInfo(run *sdk.WorkflowRun, isError bool, infos ...sdk.SpawnMs
 	}
 }
 
-// getWorkflowRunStatus return the status depending on number of workflowNodeRuns in success, building, stopped and fail
-func getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped int) string {
+// getRunStatus return the status depending on number of runs in success, building, stopped and fail
+func getRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped int) string {
 	switch {
 	case nodesRunBuilding > 0:
 		return string(sdk.StatusBuilding)
@@ -602,8 +602,8 @@ func getWorkflowRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nod
 	}
 }
 
-// updateNodesRunStatus is useful to compute number of nodeRun in success, building and fail
-func computeNodesRunStatus(status string, success, building, fail, stop *int) {
+// computeRunStatus is useful to compute number of runs in success, building and fail
+func computeRunStatus(status string, success, building, fail, stop *int) {
 	switch status {
 	case string(sdk.StatusSuccess):
 		*success++
