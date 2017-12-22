@@ -128,13 +128,13 @@ func runArtifactDownload(w *currentWorker) BuiltInAction {
 
 			if pattern != "" && !regexp.MatchString(a.Name) {
 				sendLog(fmt.Sprintf("%s does not match pattern %s - skipped", a.Name, pattern))
-				defer wg.Done()
+				wg.Done()
 				continue
 			}
 
 			if tag != "" && a.Tag != tag {
 				sendLog(fmt.Sprintf("%s does not match tag %s - skipped", a.Name, tag))
-				defer wg.Done()
+				wg.Done()
 				continue
 			}
 
