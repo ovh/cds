@@ -106,7 +106,7 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 	}
 
 	//Take node job run
-	job, errTake := workflow.TakeNodeJobRun(tx, store, p, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos, chEvent)
+	job, errTake := workflow.TakeNodeJobRun(db, tx, store, p, id, workerModel, getWorker(ctx).Name, getWorker(ctx).ID, infos, chEvent)
 	if errTake != nil {
 		chError <- sdk.WrapError(errTake, "takeJob> Cannot take job %d", id)
 		return
@@ -313,7 +313,7 @@ func postJobResult(chEvent chan<- interface{}, chError chan<- error, db *gorp.Db
 
 	// Update action status
 	log.Debug("postJobResult> Updating %d to %s in queue", job.ID, res.Status)
-	if err := workflow.UpdateNodeJobRunStatus(tx, store, p, job, sdk.Status(res.Status), chEvent); err != nil {
+	if err := workflow.UpdateNodeJobRunStatus(db, tx, store, p, job, sdk.Status(res.Status), chEvent); err != nil {
 		log.Info("postJobResult> Cannot update NodeJobRun %d status", job.ID)
 		chError <- sdk.WrapError(err, "postJobResult> Cannot update NodeJobRun %d status", job.ID)
 		return

@@ -3,7 +3,7 @@ import {Observable} from 'rxjs/Observable';
 import {Workflow} from '../../../model/workflow.model';
 import {Commit} from '../../../model/repositories.model';
 import {RunNumber, WorkflowNodeRun, WorkflowRun, WorkflowRunRequest} from '../../../model/workflow.run.model';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 
 @Injectable()
 export class WorkflowRunService {
@@ -96,9 +96,13 @@ export class WorkflowRunService {
      * @param {number} workflowNumber Workflow number
      * @param {number} workflowNodeId Workflow node id
      */
-    getCommits(key: string, workflowName: string, workflowNumber: number, workflowNodeId: number): Observable<Array<Commit>> {
-        return this._http.get<Array<Commit>>(
-            `/project/${key}/workflows/${workflowName}/runs/${workflowNumber}/${workflowNodeId}/commits`);
+    getCommits(key: string, workflowName: string, workflowNumber: number, workflowNodeId: number, branch?: string): Observable<Commit[]> {
+        let params = new HttpParams();
+        if (branch) {
+            params = params.append('branch', branch);
+        }
+        return this._http.get<Commit[]>(
+            `/project/${key}/workflows/${workflowName}/runs/${workflowNumber}/${workflowNodeId}/commits`, {params});
     }
 
     /**

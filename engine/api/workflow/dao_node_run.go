@@ -286,7 +286,7 @@ func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 }
 
 // GetNodeRunBuildCommits gets commits for given node run and return current vcs info
-func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wNode *sdk.WorkflowNode, wfRun *sdk.WorkflowRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
+func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wNodeID int64, wfRun *sdk.WorkflowRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
 	var cur sdk.BuildNumberAndHash
 	if app == nil {
 		return nil, cur, nil
@@ -341,21 +341,44 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		envID = env.ID
 	}
 
+	repo := app.RepositoryFullname
+	if cur.Remote != "" {
+		repo = cur.Remote
+	}
+
+	var lastCommit sdk.VCSCommit
+	if cur.Hash == "" {
+		//If we only have the current branch, search for the branch
+		br, err := client.Branch(repo, cur.Branch)
+		if err != nil {
+			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get branch %s", cur.Branch)
+		}
+		if br != nil {
+			if br.LatestCommit == "" {
+				return nil, cur, sdk.WrapError(sdk.ErrNoBranch, "GetNodeRunBuildCommits> Branch or lastest commit not found")
+			}
+
+			//and return the last commit of the branch
+			log.Debug("get the last commit : %s", br.LatestCommit)
+			cm, errcm := client.Commit(repo, br.LatestCommit)
+			if errcm != nil {
+				return nil, cur, sdk.WrapError(errcm, "GetNodeRunBuildCommits> Cannot get commits")
+			}
+			lastCommit = cm
+			cur.Hash = cm.Hash
+		}
+	}
+
 	//Get the commit hash for the node run number and the hash for the previous node run for the same branch and same remote
-	prev, errcurr := PreviousNodeRunVCSInfos(db, wNode.ID, cur, app.ID, envID)
+	prev, errcurr := PreviousNodeRunVCSInfos(db, wNodeID, cur, app.ID, envID)
 	if errcurr != nil {
-		return nil, cur, sdk.WrapError(errcurr, "GetNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeID=%d, applicationID=%d, envID=%d)", wfRun.Number, wNode.ID, app.ID, env.ID)
+		return nil, cur, sdk.WrapError(errcurr, "GetNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeID=%d, applicationID=%d, envID=%d)", wfRun.Number, wNodeID, app.ID, env.ID)
 	}
 
 	if prev.Hash == "" {
 		log.Debug("GetNodeRunBuildCommits> No previous build was found for branch %s", cur.Branch)
 	} else {
 		log.Debug("GetNodeRunBuildCommits> Current Build number: %d - Current Hash: %s - Previous Build number: %d - Previous Hash: %s", cur.BuildNumber, cur.Hash, prev.BuildNumber, prev.Hash)
-	}
-
-	repo := app.RepositoryFullname
-	if cur.Remote != "" {
-		repo = cur.Remote
 	}
 
 	if prev.Hash != "" && cur.Hash == prev.Hash {
@@ -374,7 +397,11 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
 		}
 		res = commits
-	} else if cur.Hash != "" {
+	} else if prev.Hash == "" {
+		if lastCommit.Hash != "" {
+			res = []sdk.VCSCommit{lastCommit}
+		}
+	} else {
 		//If we only get current node run hash
 		log.Info("GetNodeRunBuildCommits>  Looking for every commit until %s ", cur.Hash)
 		c, err := client.Commits(repo, cur.Branch, "", cur.Hash)
@@ -382,26 +409,6 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
 		}
 		res = c
-	} else {
-		//If we only have the current branch, search for the branch
-		br, err := client.Branch(repo, cur.Branch)
-		if err != nil {
-			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get branch %s", cur.Branch)
-		}
-		if br != nil {
-			if br.LatestCommit == "" {
-				return nil, cur, sdk.WrapError(sdk.ErrNoBranch, "GetNodeRunBuildCommits> Branch or lastest commit not found")
-			}
-
-			//and return the last commit of the branch
-			log.Debug("get the last commit : %s", br.LatestCommit)
-			cm, errcm := client.Commit(repo, br.LatestCommit)
-			if errcm != nil {
-				return nil, cur, sdk.WrapError(errcm, "GetNodeRunBuildCommits> Cannot get commits")
-			}
-			res = []sdk.VCSCommit{cm}
-			cur.Hash = cm.Hash
-		}
 	}
 
 	return res, cur, nil

@@ -11,7 +11,7 @@ import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../
 import {Router} from '@angular/router';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {finalize} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../toast/ToastService';
 
@@ -43,8 +43,7 @@ export class WorkflowNodeRunParamComponent {
             }
             this.getPipeline();
         }
-    };
-
+    }
     get nodeToRun(): WorkflowNode {
         return this._nodeToRun;
     }
@@ -84,8 +83,30 @@ export class WorkflowNodeRunParamComponent {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.runWithParamModal);
         this.modal = this._modalService.open(config);
 
+
+        if (!this.nodeToRun.context.application) {
+            return;
+        }
+
+        if (this.num == null) {
+            this.loadingCommits = true;
+            this._workflowRunService.getRunNumber(this.project.key, this.workflow)
+                .pipe(first())
+                .subscribe(n => {
+                    this.getCommits(n.num + 1);
+                });
+            return;
+        }
+        this.getCommits(this.num);
+    }
+
+    getCommits(num: number) {
+        let branch;
+        if (this.nodeToRun.context && this.nodeToRun.context.default_payload) {
+            branch = this.nodeToRun.context.default_payload['git.branch'];
+        }
         this.loadingCommits = true;
-        this._workflowRunService.getCommits(this.project.key, this.workflow.name, this.num, this.nodeToRun.id)
+        this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.id, branch)
           .pipe(
             finalize(() => this.loadingCommits = false)
           )
