@@ -68,7 +68,7 @@ var (
 	builtinModels = []*sdk.WorkflowHookModel{
 		WebHookModel,
 		RepositoryWebHookModel,
-		GitPollerModel,
+		// GitPollerModel, TODO enable this line when GitPoller will be developed
 		SchedulerModel,
 	}
 )
