@@ -28,9 +28,9 @@
         </div>
         <div class="ui wide" *ngIf="nodeToRun.context.application">
             <h3 *ngIf="!loadingCommits">{{ 'pipeline_parent_commit_to_deploy' | translate}}</h3>
-            <ng-container *ngIf="!loadingCommits">
+            <div class="scrollable" *ngIf="!loadingCommits && commits != null && commits.length !== 0">
                 <app-commit-list [commits]="commits"></app-commit-list>
-            </ng-container>
+            </div>
             <ng-container *ngIf="!loadingCommits && (commits == null || commits.length === 0)">
                 <div class="ui info message">
                     {{ 'pipeline_commit_no' | translate }}
