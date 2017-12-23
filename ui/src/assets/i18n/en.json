@@ -556,7 +556,7 @@
 
   "worker_model_type": "Type",
   "worker_model_official": "Verified worker model (added by an administrator)",
-  "worker_model_official": "Unverified worker model (added by a user)",
+  "worker_model_unofficial": "Unverified worker model (added by a user)",
   "worker_model_capabilities": "Executable binaries in the directories named by the PATH environment variable",
   "worker_model_capabilities_up_to_date": "Binaries list is up to date",
   "worker_model_capabilities_need_refresh": "Binaries list need to be refresh by CDS. Last Registration:",
@@ -603,6 +603,9 @@
   "worker_model_title": "Worker Models",
   "worker_model_warning": "This worker model is in error. Please check it",
 
+  "workflow_app_info_new_wf": "This project is allowed to use the new CDS Workflows.",
+  "workflow_app_info_new_wf_have_pipeline": "This application have an old Workflow, you can migrate it to a new CDS Worklow, see advanced section.",
+  "workflow_app_info_new_wf_link_pipeline": "WARNING. This action is deprecated. You should use the new CDS Workflow (Project -> Worflow) to create and manage your worklow.",
   "workflow_added" : "Workflow added",
   "workflow_run_summary" : "Run summary",
   "workflow_context_invalid" : "Invalid JSON",

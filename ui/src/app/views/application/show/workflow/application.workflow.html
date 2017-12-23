@@ -1,4 +1,15 @@
 <div class="ui filter form">
+
+    <div *ngIf="project.workflow_migration !== 'NOT_BEGUN'" class="ui ignored bottom attached warning message">
+        <b>CDS Workflows</b> 
+        <p>
+            {{ 'workflow_app_info_new_wf' | translate }}
+        </p>
+        <p *ngIf="application.workflows">
+            {{ 'workflow_app_info_new_wf_have_pipeline' | translate}}
+        </p>
+    </div>
+
     <div class="filter ui stackable grid">
         <div class="two wide column">
             <sm-select class="search" [(model)]="workflowOrientation">
