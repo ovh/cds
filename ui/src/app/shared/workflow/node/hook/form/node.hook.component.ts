@@ -34,6 +34,7 @@ export class WorkflowNodeHookFormComponent {
             if (this.hooksModel) {
                 this.selectedHookModel = this.hooksModel.find(hm => hm.id === this._hook.model.id);
             }
+            this.displayConfig = Object.keys(this._hook.config).length !== 0;
         }
     }
     get hook() {
