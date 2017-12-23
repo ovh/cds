@@ -1,6 +1,6 @@
 
 name = "CDS_DockerPackage"
-description = "Build image and push it to docker repository"
+description = "Build a Docker image and push it to a docker repository"
 
 // Requirements
 requirements = {
@@ -23,11 +23,11 @@ parameters = {
 	"dockerOpts" = {
 		type = "string"
 		value = ""
-		description = "Docker options, Enter --no-cache --pull if you want for example"
+		description = "Docker options, you can add `--no-cache --pull` for example"
 	}
 	"dockerRegistry" = {
 		type = "string"
-		description = "Docker Registry Url. Enter myregistry url for build image myregistry/myimage:mytag"
+		description = "The Docker registry to push the image to."
 	}
 	"dockerRegistryUsername" = {
 		type = "string"
@@ -39,14 +39,11 @@ parameters = {
 	}
 	"imageName" = {
 		type = "string"
-		description = "Name of your docker image, without tag. Enter myimage for build image myregistry/myimage:mytag"
+		description = "Name of your docker image, without tag."
 	}
 	"imageTag" = {
 		type = "string"
-		description = "Tag of your docker image.
-Enter mytag for build image myregistry/myimage:mytag. {{.cds.version}} is a good tag from CDS.
-You can use many tags: firstTag,SecondTag
-Example : {{.cds.version}},latest"
+		description = "The Docker image tag. {{.cds.version}} can be a good tag value. You can use multiple tags. E.g., firsttag,secondtag,{{.cds.version}},latest"
 		value = "{{.cds.version}}"
 	}
 }
