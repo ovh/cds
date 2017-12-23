@@ -7,7 +7,7 @@
             <ng-container *ngIf="pipParamsReady && editableNode.context.default_pipeline_parameters && editableNode.context.default_pipeline_parameters.length > 0">
                 <h3>{{ 'workflow_node_context_pipeline_parameter' | translate}}</h3>
                 <app-parameter-list [project]="project" [parameters]="editableNode.context.default_pipeline_parameters" mode="launcher"
-                                    [suggest]="[]"></app-parameter-list>
+                                    [suggest]="suggest"></app-parameter-list>
             </ng-container>
             <ng-container *ngIf="(node.hooks && node.hooks.length > 0) || (node.id === workflow.root.id)">
                 <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
