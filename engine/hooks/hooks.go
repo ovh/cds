@@ -91,9 +91,12 @@ func (s *Service) Serve(c context.Context) error {
 
 	//Start all the tasks
 	go func() {
-		if err := s.runTasks(ctx); err != nil {
-			log.Error("%v", err)
-			cancel()
+		for {
+			if err := s.runTasks(ctx); err != nil {
+				log.Error("%v", err)
+				cancel()
+			}
+			time.Sleep(30 * time.Second)
 		}
 	}()
 
