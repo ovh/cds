@@ -27,7 +27,7 @@
     "@angular/platform-browser": "~5.1.0",
     "@angular/platform-browser-dynamic": "~5.1.0",
     "@angular/router": "~5.1.0",
-    "@ngui/auto-complete": "https://github.com/bnjjj/auto-complete",
+    "@ngui/auto-complete": "^0.16.1",
     "@ngx-translate/core": "^9.0.1",
     "@ngx-translate/http-loader": "^2.0.0",
     "@types/dagre-d3": "^0.4.36",
