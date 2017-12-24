@@ -47,7 +47,8 @@ func (s *Service) runTasks(ctx context.Context) error {
 		log.Error("Hook> Exit running tasks: %v", err)
 		return err
 	}
-	return nil
+	<-ctx.Done()
+	return ctx.Err()
 }
 
 func (s *Service) synchronizeTasks() error {

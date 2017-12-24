@@ -87,7 +87,7 @@ func loadWorkflowUsage(db gorp.SqlExecutor, workflowID int64) (sdk.Usage, error)
 	return usage, nil
 }
 
-// postWorkflowHandler create a new workflow
+// postWorkflowHandler creates a new workflow
 func (api *API) postWorkflowHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

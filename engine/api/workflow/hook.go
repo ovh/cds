@@ -107,7 +107,6 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 				}
 			}
 		}
-		return nil
 	}
 
 	//Push the hook to hooks µService
@@ -119,7 +118,7 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 	}
 	code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, fmt.Sprintf("/task/bulk"), hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
-		log.Warning("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
+		return fmt.Errorf("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
 }
