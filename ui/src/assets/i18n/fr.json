@@ -198,10 +198,10 @@
   "common_orientation" : "Orientation",
   "common_copy_clipboard" : "Copier dans le presse papier",
 
-  "usage_application_list" : "Applications liées",
-  "usage_workflow_list" : "Workflows liés",
-  "usage_pipeline_list" : "Pipelines liés",
-  "usage_environment_list" : "Environnements liés",
+  "usage_application_list" : "Applications utilisées",
+  "usage_workflow_list" : "Workflows utilisés",
+  "usage_pipeline_list" : "Pipelines utilisés",
+  "usage_environment_list" : "Environnements utilisés",
 
   "danger_zone" : "Zone dangereuse",
 

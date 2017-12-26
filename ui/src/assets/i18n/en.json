@@ -198,10 +198,10 @@
   "common_orientation" : "Orientation",
   "common_copy_clipboard" : "Copy to clipboad",
 
-  "usage_application_list" : "Applications linked",
-  "usage_workflow_list" : "Workflows linked",
-  "usage_pipeline_list" : "Pipelines linked",
-  "usage_environment_list" : "Environments linked",
+  "usage_application_list" : "Applications used",
+  "usage_workflow_list" : "Workflows used",
+  "usage_pipeline_list" : "Pipelines used",
+  "usage_environment_list" : "Environments used",
 
   "danger_zone" : "Danger Zone",
 
