@@ -94,6 +94,8 @@ type ServiceRequirement struct {
 
 //NewPipelineV1 creates an exportable pipeline from a sdk.Pipeline
 func NewPipelineV1(pip sdk.Pipeline, withPermission bool) (p PipelineV1) {
+	p.Name = pip.Name
+
 	if withPermission {
 		p.Permissions = make(map[string]int, len(pip.GroupPermission))
 		for _, perm := range pip.GroupPermission {
@@ -538,4 +540,84 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 	job.Action.Actions = children
 
 	return &job, nil
+}
+
+//Pipeline returns a sdk.Pipeline entity
+func (p PipelineV1) Pipeline() (pip sdk.Pipeline, err error) {
+	pip.Name = p.Name
+	pip.Type = sdk.BuildPipeline
+
+	//Compute permissions
+	for g, p := range p.Permissions {
+		perm := sdk.GroupPermission{
+			Group:      sdk.Group{Name: g},
+			Permission: p,
+		}
+		pip.GroupPermission = append(pip.GroupPermission, perm)
+	}
+
+	//Compute parameters
+	for p, v := range p.Parameters {
+		param := sdk.Parameter{
+			Name:  p,
+			Type:  v.Type,
+			Value: v.DefaultValue,
+		}
+		pip.Parameter = append(pip.Parameter, param)
+	}
+
+	//Compute stage
+	mapStages := map[string]*sdk.Stage{}
+	for i, s := range p.Stages {
+		mapStages[s] = &sdk.Stage{
+			Name:       s,
+			BuildOrder: i + 1, //Yes, buildOrder start at 1
+			Enabled:    true,
+		}
+	}
+
+	for s, opt := range p.StageOptions {
+		if opt.Enabled != nil {
+			mapStages[s].Enabled = *opt.Enabled
+		} else {
+			mapStages[s].Enabled = true
+		}
+
+		//Compute stage Prerequisites
+		for n, c := range opt.Conditions {
+			mapStages[s].Prerequisites = append(mapStages[s].Prerequisites, sdk.Prerequisite{
+				Parameter:     n,
+				ExpectedValue: c,
+			})
+		}
+	}
+
+	//Compute Jobs
+	for _, j := range p.Jobs {
+		s := mapStages[j.Stage]
+		if s == nil { //If the stage is not found; it's only if there is one stage
+			mapStages[j.Stage] = &sdk.Stage{
+				Name:       j.Stage,
+				BuildOrder: len(mapStages) + 1,
+				Enabled:    true,
+			}
+			s = mapStages[j.Stage]
+		}
+
+		job, err := computeJob(j.Name, j)
+		if err != nil {
+			return pip, err
+		}
+		s.Jobs = append(s.Jobs, *job)
+	}
+
+	for _, s := range mapStages {
+		pip.Stages = append(pip.Stages, *s)
+	}
+
+	sort.Slice(pip.Stages, func(i, j int) bool {
+		return pip.Stages[i].BuildOrder < pip.Stages[j].BuildOrder
+	})
+
+	return pip, nil
 }

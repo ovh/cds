@@ -627,3 +627,71 @@ func TestExportPipelineV1_JSON(t *testing.T) {
 		test.Equal(t, p, p1)
 	}
 }
+
+func TestExportAndImportPipelineV1_YAML(t *testing.T) {
+	for _, tc := range testcases {
+		t.Log(tc.name)
+		p := NewPipelineV1(tc.arg, true)
+
+		b, err := Marshal(p, FormatYAML)
+		test.NoError(t, err)
+
+		importedP := PipelineV1{}
+
+		test.NoError(t, yaml.Unmarshal(b, &importedP))
+		transformedP, err := importedP.Pipeline()
+
+		test.NoError(t, err)
+
+		t.Log(string(b))
+
+		assert.Equal(t, tc.arg.Name, transformedP.Name)
+		assert.Equal(t, tc.arg.Type, transformedP.Type)
+		test.EqualValuesWithoutOrder(t, tc.arg.GroupPermission, transformedP.GroupPermission)
+		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
+		for _, stage := range tc.arg.Stages {
+			var stageFound bool
+
+			for _, s1 := range transformedP.Stages {
+				if stage.Name != s1.Name {
+					continue
+				}
+
+				stageFound = true
+
+				assert.Equal(t, stage.BuildOrder, s1.BuildOrder, "Build order does not match")
+				assert.Equal(t, stage.Enabled, s1.Enabled, "Enabled does not match")
+				test.EqualValuesWithoutOrder(t, stage.Prerequisites, s1.Prerequisites)
+
+				for _, j := range stage.Jobs {
+					var jobFound bool
+					for _, j1 := range s1.Jobs {
+						if j.Action.Name != j1.Action.Name {
+							continue
+						}
+						jobFound = true
+
+						assert.Equal(t, j.Enabled, j1.Enabled)
+						assert.Equal(t, j.Action.Name, j1.Action.Name)
+						assert.Equal(t, j.Enabled, j1.Action.Enabled)
+						assert.Equal(t, j.Action.AlwaysExecuted, j1.Action.AlwaysExecuted)
+						assert.Equal(t, j.Action.Optional, j1.Action.Optional)
+
+						for i, s := range j.Action.Actions {
+							s1 := j1.Action.Actions[i]
+							if s.Name == s1.Name {
+								assert.Equal(t, s.Enabled, s1.Enabled, s.Name, j1.Action.Name+"/"+s1.Name)
+								assert.Equal(t, s.AlwaysExecuted, s1.AlwaysExecuted, j1.Action.Name+"/"+s1.Name)
+								assert.Equal(t, s.Optional, s1.Optional, j1.Action.Name+"/"+s1.Name)
+								test.EqualValuesWithoutOrder(t, s.Parameters, s1.Parameters)
+							}
+						}
+					}
+					assert.True(t, jobFound, "Job not found")
+				}
+
+			}
+			assert.True(t, stageFound, "Stage not found")
+		}
+	}
+}
