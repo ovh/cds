@@ -25,13 +25,13 @@ export class WorkflowNodeFormComponent implements OnInit {
         let voidEnv = new Environment();
         voidEnv.id = 0;
         voidEnv.name = ' ';
-        this.environments = cloneDeep(this.project.environments);
+        this.environments = cloneDeep(this.project.environments) || [];
         this.environments.unshift(voidEnv);
 
         let voidApp = new Application();
         voidApp.id = 0;
         voidApp.name = ' ';
-        this.applications = cloneDeep(this.project.applications);
+        this.applications = cloneDeep(this.project.applications) || [];
         this.applications.unshift(voidApp);
     }
 
