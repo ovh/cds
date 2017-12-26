@@ -1,5 +1,16 @@
 <sm-modal title="{{ 'application_workflow_pipeline_add' | translate }}" class="" #linkPipelineModal>
     <modal-content>
+
+            <div *ngIf="project.workflow_migration !== 'NOT_BEGUN'" class="ui ignored bottom attached warning message">
+                    <b>CDS Workflows</b> 
+                    <p>
+                        {{ 'workflow_app_info_new_wf' | translate }}
+                    </p>
+                    <p>
+                        {{ 'workflow_app_info_new_wf_link_pipeline' | translate}}
+                    </p>
+                </div>
+
         <div class="ui two column very relaxed grid">
             <div class="column">
                 <div class="ui form">

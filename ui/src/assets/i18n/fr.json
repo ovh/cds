@@ -603,6 +603,9 @@
   "worker_model_title": "Modèles de worker",
   "worker_model_warning": "Merci de vérifier ce modèle, il y a des erreurs dessus",
 
+  "workflow_app_info_new_wf": "Ce projet est autorisé à utiliser les nouveaux Workflows CDS.",
+  "workflow_app_info_new_wf_have_pipeline": "Cette application a un ancien workflow, vous pouvez le migrer automatiquement dans l'onglet Administration de l'application.",
+  "workflow_app_info_new_wf_link_pipeline": "ATTENTION. Cette action est obsolète. Vous devriez utiliser les nouveaux Workflows CDS (Projet -> Worflow) pour créer et gérer vos workflows.",
   "workflow_added" : "Workflow créé",
   "workflow_run_summary" : "Résumé du run",
   "workflow_context_invalid" : "JSON invalide",
