@@ -44,8 +44,10 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this._route.queryParams.subscribe((params) => {
+            let goToDefaultTab = true;
             if (params['tab']) {
                 this.selectedTab = params['tab'];
+                goToDefaultTab = false;
             }
             this._route.params.subscribe(routeParams => {
                 const key = routeParams['key'];
@@ -54,7 +56,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
                         this.project = undefined;
                     }
                     if (!this.project) {
-                        this.refreshDatas(key);
+                        this.refreshDatas(key, goToDefaultTab);
                     }
                 }
             });
@@ -68,7 +70,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
         }
     }
 
-    refreshDatas(key: string): void {
+    refreshDatas(key: string, goToDefaultTab: boolean): void {
         if (this.projectSubscriber) {
             this.projectSubscriber.unsubscribe();
         }
@@ -90,6 +92,13 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
             if (proj) {
                 if (!proj.externalChange) {
                     this.project = proj;
+                    if (goToDefaultTab) {
+                        if (this.project.workflow_migration !== 'NOT_BEGUN') {
+                            this.selectedTab = 'workflows';
+                        } else {
+                            this.selectedTab = 'applications';
+                        }
+                    }
                 } else if (proj && proj.externalChange) {
                     if (this.project.externalChange) {
                         this._toast.info('', this._translate.instant('warning_project'));
