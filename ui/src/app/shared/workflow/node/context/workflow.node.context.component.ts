@@ -4,6 +4,7 @@ import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {cloneDeep} from 'lodash';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
+import {VariableService} from '../../../../service/variable/variable.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {Subscription} from 'rxjs/Subscription';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
@@ -31,6 +32,7 @@ export class WorkflowNodeContextComponent {
 
     editableNode: WorkflowNode;
 
+    suggest: string[] = [];
     payloadString: string;
     codeMirrorConfig: {};
     invalidJSON = false;
@@ -38,7 +40,11 @@ export class WorkflowNodeContextComponent {
     pipParamsReady = false;
     pipelineSubscription: Subscription;
 
-    constructor(private _pipelineStore: PipelineStore, private _modalService: SuiModalService) {
+    constructor(
+      private _pipelineStore: PipelineStore,
+      private _variableService: VariableService,
+      private _modalService: SuiModalService
+    ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -50,6 +56,10 @@ export class WorkflowNodeContextComponent {
 
     show(): void {
         if (this.nodeContextModal) {
+            this.suggest = [];
+            this._variableService.getContextVariable(this.project.key, this.node.pipeline_id)
+              .subscribe((suggest) => this.suggest = suggest);
+
             this.editableNode = cloneDeep(this.node);
             if (!this.editableNode.context.default_payload) {
                 this.editableNode.context.default_payload = {};
