@@ -33,7 +33,7 @@ parameters = {
 	}
 	"gopath" = {
 		type = "string"
-		description = "set a $GOPATH. If empty, this action try to get env $GOPATH. If $GOPATH is empty, action will set it to $HOME/go"
+		description = "set a $GOPATH. If empty, this action tries to get env $GOPATH. If $GOPATH is empty, the action will set it to $HOME/go"
 		value = "$HOME/go"
 	}
 	"os" = {
