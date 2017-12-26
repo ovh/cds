@@ -10,6 +10,7 @@ import (
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/services"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // HookRegistration ensures hooks registration on Hook µService
@@ -117,7 +118,9 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 	}
 	code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, fmt.Sprintf("/task/bulk"), hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
-		return fmt.Errorf("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
+		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
+		// so, it's just a warn log
+		log.Warning("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
 }
