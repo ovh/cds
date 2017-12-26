@@ -37,23 +37,22 @@ var (
 								Actions: []sdk.Action{
 									{
 
-										Type:           sdk.BuiltinAction,
-										Name:           sdk.ScriptAction,
-										Enabled:        true,
-										AlwaysExecuted: true,
-										Optional:       false,
+										Type:    sdk.BuiltinAction,
+										Name:    sdk.ScriptAction,
+										Enabled: true,
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "script",
 												Type:  sdk.TextParameter,
-												Value: "echo lol",
+												Value: "echo lol\n#This is a script",
 											},
 										},
 									},
 									{
 
-										Type: sdk.BuiltinAction,
-										Name: sdk.ScriptAction,
+										Type:    sdk.BuiltinAction,
+										Name:    sdk.ScriptAction,
+										Enabled: true,
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "script",
@@ -65,6 +64,7 @@ var (
 									{
 										Type:           sdk.BuiltinAction,
 										Name:           sdk.JUnitAction,
+										Enabled:        true,
 										AlwaysExecuted: true,
 										Optional:       false,
 										Parameters: []sdk.Parameter{
@@ -76,8 +76,9 @@ var (
 										},
 									},
 									{
-										Type: sdk.BuiltinAction,
-										Name: sdk.ArtifactDownload,
+										Type:    sdk.BuiltinAction,
+										Name:    sdk.ArtifactDownload,
+										Enabled: true,
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "path",
@@ -93,8 +94,9 @@ var (
 									},
 									{
 
-										Type: sdk.BuiltinAction,
-										Name: sdk.ArtifactUpload,
+										Type:    sdk.BuiltinAction,
+										Name:    sdk.ArtifactUpload,
+										Enabled: true,
 										Parameters: []sdk.Parameter{
 											{
 												Name:  "path",
@@ -430,16 +432,20 @@ func TestExportPipeline_JSON(t *testing.T) {
 
 func TestExportAndImportPipeline_YAML(t *testing.T) {
 	for _, tc := range testcases {
+		t.Log(tc.name)
 		p := NewPipeline(tc.arg, true)
 
 		b, err := Marshal(p, FormatYAML)
 		test.NoError(t, err)
 
 		importedP := Pipeline{}
+
 		test.NoError(t, yaml.Unmarshal(b, &importedP))
 		transformedP, err := importedP.Pipeline()
 
 		test.NoError(t, err)
+
+		t.Log(string(b))
 
 		assert.Equal(t, tc.arg.Name, transformedP.Name)
 		assert.Equal(t, tc.arg.Type, transformedP.Type)
@@ -447,10 +453,12 @@ func TestExportAndImportPipeline_YAML(t *testing.T) {
 		test.EqualValuesWithoutOrder(t, tc.arg.Parameter, transformedP.Parameter)
 		for _, stage := range tc.arg.Stages {
 			var stageFound bool
+
 			for _, s1 := range transformedP.Stages {
 				if stage.Name != s1.Name {
 					continue
 				}
+
 				stageFound = true
 
 				assert.Equal(t, stage.BuildOrder, s1.BuildOrder, "Build order does not match")
@@ -599,7 +607,7 @@ func TestExportPipelineV1_YAML(t *testing.T) {
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
 
-		p1 := Pipeline{}
+		p1 := PipelineV1{}
 		test.NoError(t, yaml.Unmarshal(b, &p1))
 
 		test.Equal(t, p, p1)
@@ -613,7 +621,7 @@ func TestExportPipelineV1_JSON(t *testing.T) {
 		test.NoError(t, err)
 		t.Log("\n" + string(b))
 
-		p1 := Pipeline{}
+		p1 := PipelineV1{}
 		test.NoError(t, json.Unmarshal(b, &p1))
 
 		test.Equal(t, p, p1)
