@@ -106,7 +106,7 @@ export class WorkflowNodeRunParamComponent {
             branch = this.nodeToRun.context.default_payload['git.branch'];
         }
         this.loadingCommits = true;
-        this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.id, branch)
+        this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch)
           .pipe(
             finalize(() => this.loadingCommits = false)
           )

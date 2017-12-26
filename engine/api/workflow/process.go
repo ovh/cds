@@ -500,7 +500,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 
 	if n.Context != nil && n.Context.Application != nil {
 		go func() {
-			commits, curVCSInfos, err := GetNodeRunBuildCommits(dbCopy, store, p, n.ID, w, n.Context.Application, n.Context.Environment)
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(dbCopy, store, p, w.Workflow.Name, n.Name, w, n.Context.Application, n.Context.Environment)
 			if err != nil {
 				log.Warning("processWorkflowNodeRun> cannot get build commits on a node run %v", err)
 			} else {
