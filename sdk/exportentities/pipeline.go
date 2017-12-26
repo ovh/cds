@@ -20,6 +20,10 @@ type PipelineV1 struct {
 	Permissions  map[string]int            `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 }
 
+type PipelineVersion string
+
+const PipelineVersion1 = "v1.0"
+
 // Pipeline represents exported sdk.Pipeline
 type Pipeline struct {
 	Name         string                    `json:"name,omitempty" yaml:"name,omitempty"`
@@ -95,7 +99,7 @@ type ServiceRequirement struct {
 //NewPipelineV1 creates an exportable pipeline from a sdk.Pipeline
 func NewPipelineV1(pip sdk.Pipeline, withPermission bool) (p PipelineV1) {
 	p.Name = pip.Name
-
+	p.Version = PipelineVersion1
 	if withPermission {
 		p.Permissions = make(map[string]int, len(pip.GroupPermission))
 		for _, perm := range pip.GroupPermission {
@@ -543,7 +547,8 @@ func computeJob(name string, j Job) (*sdk.Job, error) {
 }
 
 //Pipeline returns a sdk.Pipeline entity
-func (p PipelineV1) Pipeline() (pip sdk.Pipeline, err error) {
+func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
+	pip = new(sdk.Pipeline)
 	pip.Name = p.Name
 	pip.Type = sdk.BuildPipeline
 

@@ -45,9 +45,44 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Unable to get format : %s", errF)
 		}
 
-		// Parse the pipeline
-		payload := &exportentities.Pipeline{}
+		rawPayload := map[string]interface{}{}
 		var errorParse error
+		switch f {
+		case exportentities.FormatJSON:
+			errorParse = json.Unmarshal(data, &rawPayload)
+		case exportentities.FormatYAML:
+			errorParse = yaml.Unmarshal(data, &rawPayload)
+		}
+
+		if errorParse != nil {
+			return sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Cannot parse: %s", errorParse)
+		}
+
+		if _, ok := rawPayload["name"].(string); ok {
+			return sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Cannot parse: name not found", errorParse)
+		}
+
+		//Parse the data once to retrieve the version
+		var pipelineV1Format bool
+		if v, ok := rawPayload["version"]; ok {
+			if v.(string) == exportentities.PipelineVersion1 {
+				pipelineV1Format = true
+			}
+		}
+
+		//Depending on the version, we will use different struct
+		type pipeliner interface {
+			Pipeline() (*sdk.Pipeline, error)
+		}
+
+		var payload pipeliner
+		// Parse the pipeline
+		if pipelineV1Format {
+			payload = exportentities.PipelineV1{}
+		} else {
+			payload = &exportentities.Pipeline{}
+		}
+
 		switch f {
 		case exportentities.FormatJSON:
 			errorParse = json.Unmarshal(data, payload)
@@ -56,19 +91,19 @@ func (api *API) importPipelineHandler() Handler {
 		}
 
 		if errorParse != nil {
-			return sdk.WrapError(sdk.ErrWrongRequest, "importNewEnvironmentHandler> Cannot parsing: %s", errorParse)
+			return sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Cannot parsing: %s", errorParse)
 		}
 
 		// Check if pipeline exists
-		exist, errE := pipeline.ExistPipeline(api.mustDB(), proj.ID, payload.Name)
+		exist, errE := pipeline.ExistPipeline(api.mustDB(), proj.ID, rawPayload["name"].(string))
 		if errE != nil {
-			return sdk.WrapError(errE, "importPipelineHandler> Unable to check if pipeline %s exists", payload.Name)
+			return sdk.WrapError(errE, "importPipelineHandler> Unable to check if pipeline %v exists", rawPayload["name"])
 		}
 
 		//Transform payload to a sdk.Pipeline
 		pip, errP := payload.Pipeline()
 		if errP != nil {
-			return sdk.WrapError(errP, "importPipelineHandler> Unable to parse pipeline %s", payload.Name)
+			return sdk.WrapError(errP, "importPipelineHandler> Unable to parse pipeline %v", rawPayload["name"])
 		}
 
 		// Load group in permission
