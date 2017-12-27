@@ -4,7 +4,7 @@ VERSION := $(if ${CDS_SEMVER},${CDS_SEMVER},snapshot)
 
 TARGET_DIR = ./dist
 TARGET_BINARY = cdsctl
-TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION)"
+TARGET_LDFLAGS = -ldflags "-X github.com/ovh/cds/sdk.VERSION=$(VERSION) -X github.com/ovh/cds/sdk.OS=$$GOOS -X github.com/ovh/cds/sdk.ARCH=$$GOARCH"
 TARGET_OS = $(if ${OS},${OS},windows darwin linux freebsd)
 TARGET_ARCH = $(if ${ARCH},${ARCH},amd64 arm 386)
 

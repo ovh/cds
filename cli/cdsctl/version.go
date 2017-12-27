@@ -13,7 +13,7 @@ var versionCmd = cli.Command{
 }
 
 func versionRun(v cli.Values) error {
-	fmt.Printf("CDS cdsctl version: %s\n", sdk.VERSION)
+	fmt.Printf("CDS cdsctl version: %s os:%s architecture:%s\n", sdk.VERSION, sdk.OS, sdk.ARCH)
 	version, err := client.Version()
 	if err != nil {
 		return err
