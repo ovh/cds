@@ -286,7 +286,7 @@ func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 }
 
 // GetNodeRunBuildCommits gets commits for given node run and return current vcs info
-func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wNodeID int64, wfRun *sdk.WorkflowRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
+func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wfName, wNodeName string, wfRun *sdk.WorkflowRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
 	var cur sdk.BuildNumberAndHash
 	if app == nil {
 		return nil, cur, nil
@@ -370,9 +370,9 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 
 	//Get the commit hash for the node run number and the hash for the previous node run for the same branch and same remote
-	prev, errcurr := PreviousNodeRunVCSInfos(db, wNodeID, cur, app.ID, envID)
+	prev, errcurr := PreviousNodeRunVCSInfos(db, p.Key, wfName, wNodeName, cur, app.ID, envID)
 	if errcurr != nil {
-		return nil, cur, sdk.WrapError(errcurr, "GetNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeID=%d, applicationID=%d, envID=%d)", wfRun.Number, wNodeID, app.ID, env.ID)
+		return nil, cur, sdk.WrapError(errcurr, "GetNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeName=%s, applicationID=%d, envID=%d)", wfRun.Number, wNodeName, app.ID, env.ID)
 	}
 
 	if prev.Hash == "" {
@@ -418,33 +418,51 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 //for the current node run and the previous one on the same branch.
 //Returned value may be zero if node run are not found
 //If you don't have environment linked set envID to 0 or -1
-func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, nodeID int64, current sdk.BuildNumberAndHash, appID int64, envID int64) (sdk.BuildNumberAndHash, error) {
+func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey, workflowName, nodeName string, current sdk.BuildNumberAndHash, appID int64, envID int64) (sdk.BuildNumberAndHash, error) {
 	var previous sdk.BuildNumberAndHash
 	var prevHash, prevBranch sql.NullString
 	var previousBuildNumber sql.NullInt64
 
+	// Récupérer le workflow
+	// Checher le node en fonction de son name
+	// Si on le trouve on a son id et on fait la même requête qu'avant
+	// Sinon on return previous, nil
+	lastRun, errL := LoadLastRun(db, projectKey, workflowName, false)
+	if errL != nil {
+		return previous, sdk.WrapError(errL, "PreviousNodeRunVCSInfos> Unable to load last run")
+	}
+
+	node := lastRun.Workflow.GetNodeByName(nodeName)
+	if node == nil {
+		return previous, nil
+	}
+
 	queryPrevious := `
 		SELECT wrt1.value AS branch, wrt2.value AS hash, workflow_node_run.num AS num
-		FROM workflow_run_tag AS wrt1
-		LEFT JOIN workflow_run_tag as wrt2 ON wrt2.workflow_run_id = wrt1.workflow_run_id AND wrt2.tag = 'git.hash'
-		JOIN workflow_node_run ON workflow_node_run.workflow_run_id = wrt1.workflow_run_id
-		JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node_run.workflow_node_id
-		WHERE wrt1.tag = 'git.branch'
-		AND workflow_node_run.status = 'Success'
-		AND workflow_node_run.workflow_node_id = $1
-		AND workflow_node_run.num < $2
-		AND workflow_node_context.application_id = $3
+    FROM workflow_run_tag AS wrt1
+    LEFT JOIN workflow_run_tag as wrt2 ON wrt2.workflow_run_id = wrt1.workflow_run_id AND wrt2.tag = 'git.hash'
+    JOIN workflow_node_run ON workflow_node_run.workflow_run_id = wrt1.workflow_run_id
+    JOIN workflow_run ON workflow_run.id = wrt1.workflow_run_id
+    JOIN workflow ON workflow.id = workflow_run.workflow_id
+    JOIN workflow_node ON workflow_node.name = $1
+    JOIN workflow_node_context ON workflow_node_context.workflow_node_id = workflow_node.id
+    WHERE wrt1.tag = 'git.branch'
+    AND wrt2.value IS NOT NULL
+    AND workflow_node_run.status = 'Success'
+    AND workflow_node_run.workflow_node_id = $2
+    AND workflow_node_run.num < $3
+    AND workflow_node_context.application_id = $4
 	`
-	argPrevious := []interface{}{nodeID, current.BuildNumber, appID}
+	argPrevious := []interface{}{nodeName, node.ID, current.BuildNumber, appID}
 	if envID > 0 {
 		argPrevious = append(argPrevious, envID)
-		queryPrevious += "AND workflow_node_context.environment_id = $4"
+		queryPrevious += "AND workflow_node_context.environment_id = $5"
 	}
 	queryPrevious += fmt.Sprintf(" ORDER BY workflow_node_run.num DESC LIMIT 1")
 
 	errPrev := db.QueryRow(queryPrevious, argPrevious...).Scan(&prevBranch, &prevHash, &previousBuildNumber)
 	if errPrev == sql.ErrNoRows {
-		log.Warning("PreviousNodeRunVCSInfos> no result with previous %d %d", current.BuildNumber, nodeID)
+		log.Warning("PreviousNodeRunVCSInfos> no result with previous %d %s", current.BuildNumber, nodeName)
 		return previous, nil
 	}
 	if errPrev != nil {
