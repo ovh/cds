@@ -107,7 +107,6 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 				}
 			}
 		}
-		return nil
 	}
 
 	//Push the hook to hooks µService
@@ -119,6 +118,8 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 	}
 	code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
+		// if we return an error, transaction will be rollbacked => hook will in database be not anymore on gitlab/bitbucket/github.
+		// so, it's just a warn log
 		log.Warning("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
 	}
 	return nil
