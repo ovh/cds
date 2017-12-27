@@ -81,7 +81,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Display CDS version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Printf("CDS API version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+		fmt.Printf("CDS Engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 	},
 }
 
