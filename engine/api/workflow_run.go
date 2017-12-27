@@ -379,12 +379,9 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["key"]
 		name := vars["permWorkflowName"]
+		nodeName := vars["nodeName"]
 		branch := FormString(r, "branch")
 		number, err := requestVarInt(r, "number")
-		if err != nil {
-			return err
-		}
-		nodeID, err := requestVarInt(r, "nodeID")
 		if err != nil {
 			return err
 		}
@@ -399,11 +396,11 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		var wNode *sdk.WorkflowNode
 		wfRun, errW := workflow.LoadRun(api.mustDB(), key, name, number, false)
 		if errW == nil {
-			wNode = wfRun.Workflow.GetNode(nodeID)
+			wNode = wfRun.Workflow.GetNodeByName(nodeName)
 		}
 
 		if wNode == nil || errW != nil {
-			nodeCtx, errCtx = workflow.LoadNodeContext(api.mustDB(), api.Cache, nodeID)
+			nodeCtx, errCtx = workflow.LoadNodeContextByNodeName(api.mustDB(), api.Cache, nodeName)
 			if errCtx != nil {
 				return sdk.WrapError(errCtx, "getWorkflowCommitsHandler> Unable to load workflow node context")
 			}
@@ -425,7 +422,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 			wfNodeRun.VCSBranch = branch
 		}
 
-		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, nodeID, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
+		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, name, nodeName, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
 		if errC != nil {
 			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits")
 		}

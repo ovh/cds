@@ -266,6 +266,26 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	return &wn, nil
 }
 
+// LoadNodeContextByNodeName load the context for a given node name and user
+func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, nodeName string) (*sdk.WorkflowNodeContext, error) {
+	dbnc := NodeContext{}
+	query := `
+		SELECT workflow_node_context.id, workflow_node_context.workflow_node_id FROM workflow_node_context
+		JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
+		WHERE workflow_node.name = $1
+	`
+	if err := db.SelectOne(&dbnc, query, nodeName); err != nil {
+		return nil, sdk.WrapError(err, "LoadNodeContextByNodeName> Unable to load node context %s", nodeName)
+	}
+	ctx := sdk.WorkflowNodeContext(dbnc)
+
+	if err := postLoadNodeContext(db, store, &ctx); err != nil {
+		return nil, sdk.WrapError(err, "LoadNodeContextByNodeName> Unable to load node context dependencies")
+	}
+
+	return &ctx, nil
+}
+
 // LoadNodeContext load the context for a given node id and user
 func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
@@ -275,10 +295,18 @@ func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64) (*sdk
 	ctx := sdk.WorkflowNodeContext(dbnc)
 	ctx.WorkflowNodeID = nodeID
 
+	if err := postLoadNodeContext(db, store, &ctx); err != nil {
+		return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load node context dependencies")
+	}
+
+	return &ctx, nil
+}
+
+func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, ctx *sdk.WorkflowNodeContext) error {
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
 		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions from workflow_node_context where id = $1", ctx.ID); err != nil {
-		return nil, err
+		return err
 	}
 	if sqlContext.AppID.Valid {
 		ctx.ApplicationID = sqlContext.AppID.Int64
@@ -288,24 +316,20 @@ func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64) (*sdk
 	}
 
 	//Unmarshal payload
-	if sqlContext.DefaultPayload.Valid {
-		if err := json.Unmarshal([]byte(sqlContext.DefaultPayload.String), &ctx.DefaultPayload); err != nil {
-			return nil, sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d default payload", ctx.ID)
-		}
+	if err := gorpmapping.JSONNullString(sqlContext.DefaultPayload, &ctx.DefaultPayload); err != nil {
+		return sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d default payload", ctx.ID)
 	}
 
 	//Unmarshal pipeline parameters
-	if sqlContext.DefaultPipelineParameters.Valid {
-		if err := json.Unmarshal([]byte(sqlContext.DefaultPipelineParameters.String), &ctx.DefaultPipelineParameters); err != nil {
-			return nil, sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d default pipeline parameters", ctx.ID)
-		}
+	if err := gorpmapping.JSONNullString(sqlContext.DefaultPipelineParameters, &ctx.DefaultPipelineParameters); err != nil {
+		return sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d default pipeline parameters", ctx.ID)
 	}
 
 	//Load the application in the context
 	if ctx.ApplicationID != 0 {
 		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables)
 		if err != nil {
-			return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load application %d", ctx.ApplicationID)
+			return sdk.WrapError(err, "LoadNodeContext> Unable to load application %d", ctx.ApplicationID)
 		}
 		ctx.Application = app
 	}
@@ -314,16 +338,16 @@ func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64) (*sdk
 	if ctx.EnvironmentID != 0 {
 		env, err := environment.LoadEnvironmentByID(db, ctx.EnvironmentID)
 		if err != nil {
-			return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load env %d", ctx.EnvironmentID)
+			return sdk.WrapError(err, "LoadNodeContext> Unable to load env %d", ctx.EnvironmentID)
 		}
 		ctx.Environment = env
 	}
 
 	if err := gorpmapping.JSONNullString(sqlContext.Conditions, &ctx.Conditions); err != nil {
-		return nil, sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
+		return sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
 	}
 
-	return &ctx, nil
+	return nil
 }
 
 //deleteNode deletes nodes and all its children
