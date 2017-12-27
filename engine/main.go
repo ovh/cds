@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"sort"
 	"strings"
 	"syscall"
@@ -80,7 +81,7 @@ var versionCmd = &cobra.Command{
 	Use:   "version",
 	Short: "Display CDS version",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(sdk.VERSION)
+		fmt.Printf("CDS API version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 	},
 }
 

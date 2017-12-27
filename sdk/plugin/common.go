@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"runtime"
 	"sort"
 	"strings"
 	"time"
@@ -109,7 +110,7 @@ func Main(p CDSAction) {
 		Use:   "version",
 		Short: "Print plugin version",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Print(sdk.VERSION)
+			fmt.Printf("CDS Plugin version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 		},
 	}
 
