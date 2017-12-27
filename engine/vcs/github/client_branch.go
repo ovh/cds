@@ -21,9 +21,21 @@ func (g *githubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 		return nil, err
 	}
 
+	var noEtag bool
+	var attempt int
+
 	for {
 		if nextPage != "" {
-			status, body, headers, err := g.get(nextPage)
+
+			var opt getArgFunc
+			if noEtag {
+				opt = withoutETag
+			} else {
+				opt = withETag
+			}
+
+			attempt++
+			status, body, headers, err := g.get(nextPage, opt)
 			if err != nil {
 				log.Warning("githubClient.Branches> Error %s", err)
 				return nil, err
@@ -37,7 +49,13 @@ func (g *githubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			if status == http.StatusNotModified {
 				//If repos aren't updated, lets get them from cache
 				g.Cache.Get(cache.Key("vcs", "github", "branches", g.OAuthToken, "/repos/"+fullname+"/branches"), &branches)
-				break
+				if len(branches) != 0 || attempt > 5 {
+					//We found branches, let's exit the loop
+					break
+				}
+				//If we did not found any branch in cache, let's retry (same nextPage) without etag
+				noEtag = true
+				continue
 			} else {
 				if err := json.Unmarshal(body, &nextBranches); err != nil {
 					log.Warning("githubClient.Branches> Unable to parse github branches: %s", err)
@@ -46,7 +64,6 @@ func (g *githubClient) Branches(fullname string) ([]sdk.VCSBranch, error) {
 			}
 
 			branches = append(branches, nextBranches...)
-
 			nextPage = getNextPage(headers)
 		} else {
 			break
