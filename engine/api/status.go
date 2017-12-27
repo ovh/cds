@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/ovh/cds/engine/api/event"
@@ -23,8 +24,8 @@ func VersionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		s := sdk.Version{
 			Version:      sdk.VERSION,
-			Architecture: sdk.ARCH,
-			OS:           sdk.OS,
+			Architecture: runtime.GOARCH,
+			OS:           runtime.GOOS,
 		}
 		return WriteJSON(w, r, s, http.StatusOK)
 	}

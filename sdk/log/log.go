@@ -73,6 +73,9 @@ func Initialize(conf *Conf) {
 			extra["CDSVersion"] = conf.GraylogFieldCDSVersion
 		}
 
+		extra["CDSOS"] = runtime.GOOS
+		extra["CDSArch"] = runtime.GOARCH
+
 		// no need to check error here
 		hostname, _ := os.Hostname()
 		extra["CDSHostname"] = hostname
