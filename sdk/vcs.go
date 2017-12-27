@@ -27,7 +27,7 @@ type VCSAuthorizedClient interface {
 
 	//Branches
 	Branches(string) ([]VCSBranch, error)
-	Branch(string, string) (*VCSBranch, error)
+	Branch(repo string, branch string) (*VCSBranch, error)
 
 	//Commits
 	Commits(repo, branch, since, until string) ([]VCSCommit, error)
@@ -55,4 +55,14 @@ type VCSAuthorizedClient interface {
 	// Release
 	Release(repo, tagName, releaseTitle, releaseDescription string) (*VCSRelease, error)
 	UploadReleaseFile(repo string, releaseName string, uploadURL string, artifactName string, r io.ReadCloser) error
+}
+
+// GetDefaultBranch return the default branch
+func GetDefaultBranch(branches []VCSBranch) VCSBranch {
+	for _, branch := range branches {
+		if branch.Default {
+			return branch
+		}
+	}
+	return VCSBranch{}
 }

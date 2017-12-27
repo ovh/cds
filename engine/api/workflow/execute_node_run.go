@@ -10,6 +10,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -547,4 +548,46 @@ func SyncNodeRunRunJob(db gorp.SqlExecutor, nodeRun *sdk.WorkflowNodeRun, nodeJo
 	}
 
 	return found, nil
+}
+
+func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValues map[string]string, node *sdk.WorkflowNode, nodeRun *sdk.WorkflowNodeRun) (repository string, branch string, hash string, err error) {
+	repository = gitValues[tagGitRepository]
+	branch = gitValues[tagGitBranch]
+	hash = gitValues[tagGitHash]
+
+	// Set default values
+	if repository == "" {
+		repository = node.Context.Application.RepositoryFullname
+	}
+
+	vcsServer := repositoriesmanager.GetProjectVCSServer(p, node.Context.Application.VCSServer)
+	if vcsServer == nil {
+		return repository, branch, hash, nil
+	}
+
+	//Get the RepositoriesManager Client
+	client, errclient := repositoriesmanager.AuthorizedClient(db, store, vcsServer)
+	if errclient != nil {
+		return repository, branch, hash, sdk.WrapError(errclient, "computeVCSInfos> Cannot get client")
+	}
+
+	if branch == "" {
+		branches, errR := client.Branches(repository)
+		if errR != nil {
+			return repository, branch, hash, sdk.WrapError(errR, "computeVCSInfos> cannot get branches infos for %s", repository)
+		}
+		branch = sdk.GetDefaultBranch(branches).DisplayID
+	}
+
+	if hash != "" {
+		return repository, branch, hash, nil
+	}
+
+	branchInfos, errBr := client.Branch(repository, branch)
+	if errBr != nil {
+		return repository, branch, hash, sdk.WrapError(errBr, "computeVCSInfos> cannot get branch infos for %s and branch %s", repository, branch)
+	}
+	hash = branchInfos.LatestCommit
+
+	return repository, branch, hash, nil
 }

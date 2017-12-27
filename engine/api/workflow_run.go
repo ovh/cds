@@ -420,11 +420,12 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		if wfRun == nil {
 			wfRun = &sdk.WorkflowRun{Number: number}
 		}
+		wfNodeRun := &sdk.WorkflowNodeRun{}
 		if branch != "" {
-			wfRun.Tag("git.branch", branch)
+			wfNodeRun.VCSBranch = branch
 		}
 
-		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, nodeID, wfRun, nodeCtx.Application, nodeCtx.Environment)
+		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, nodeID, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
 		if errC != nil {
 			return sdk.WrapError(errC, "getWorkflowCommitsHandler> Unable to load commits")
 		}

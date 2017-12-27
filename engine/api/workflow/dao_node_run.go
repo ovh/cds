@@ -119,7 +119,16 @@ func fromDBNodeRun(rr NodeRun) (*sdk.WorkflowNodeRun, error) {
 	r.Start = rr.Start
 	r.Done = rr.Done
 	r.LastModified = rr.LastModified
-	//r.Done              = rr. <<---- WHERE ?
+
+	if rr.VCSHash.Valid {
+		r.VCSHash = rr.VCSHash.String
+	}
+	if rr.VCSRepository.Valid {
+		r.VCSRepository = rr.VCSRepository.String
+	}
+	if rr.VCSBranch.Valid {
+		r.VCSBranch = rr.VCSBranch.String
+	}
 
 	if err := gorpmapping.JSONNullString(rr.TriggersRun, &r.TriggersRun); err != nil {
 		return nil, sdk.WrapError(err, "fromDBNodeRun>Error loading node run trigger %d", r.ID)
@@ -186,6 +195,13 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB.Start = n.Start
 	nodeRunDB.Done = n.Done
 	nodeRunDB.LastModified = n.LastModified
+
+	nodeRunDB.VCSHash.Valid = true
+	nodeRunDB.VCSHash.String = n.VCSHash
+	nodeRunDB.VCSBranch.Valid = true
+	nodeRunDB.VCSBranch.String = n.VCSBranch
+	nodeRunDB.VCSRepository.Valid = true
+	nodeRunDB.VCSRepository.String = n.VCSRepository
 
 	if n.TriggersRun != nil {
 		s, err := gorpmapping.JSONToNullString(n.TriggersRun)
@@ -286,7 +302,7 @@ func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 }
 
 // GetNodeRunBuildCommits gets commits for given node run and return current vcs info
-func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wNodeID int64, wfRun *sdk.WorkflowRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
+func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, wNodeID, number int64, nodeRun *sdk.WorkflowNodeRun, app *sdk.Application, env *sdk.Environment) ([]sdk.VCSCommit, sdk.BuildNumberAndHash, error) {
 	var cur sdk.BuildNumberAndHash
 	if app == nil {
 		return nil, cur, nil
@@ -295,7 +311,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	if app.VCSServer == "" {
 		return nil, cur, nil
 	}
-	cur.BuildNumber = wfRun.Number
+	cur.BuildNumber = number
 
 	vcsServer := repositoriesmanager.GetProjectVCSServer(p, app.VCSServer)
 	if vcsServer == nil {
@@ -309,19 +325,14 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		return nil, cur, sdk.WrapError(errclient, "GetNodeRunBuildCommits> Cannot get client")
 	}
 
-	for _, tag := range wfRun.Tags {
-		switch tag.Tag {
-		case tagGitBranch:
-			cur.Branch = tag.Value
-		case tagGitHash:
-			cur.Hash = tag.Value
-		}
-	}
+	cur.Remote = nodeRun.VCSRepository
+	cur.Branch = nodeRun.VCSBranch
+	cur.Hash = nodeRun.VCSHash
 
 	if cur.Branch == "" {
-		branches, errBr := client.Branches(app.RepositoryFullname)
+		branches, errBr := client.Branches(cur.Remote)
 		if errBr != nil {
-			return nil, cur, sdk.WrapError(errBr, "GetNodeRunBuildCommits> Cannot load branches from vcs api")
+			return nil, cur, sdk.WrapError(errBr, "GetNodeRunBuildCommits> Cannot load branches from vcs api remote %s", cur.Remote)
 		}
 		found := false
 		for _, br := range branches {
@@ -372,7 +383,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	//Get the commit hash for the node run number and the hash for the previous node run for the same branch and same remote
 	prev, errcurr := PreviousNodeRunVCSInfos(db, wNodeID, cur, app.ID, envID)
 	if errcurr != nil {
-		return nil, cur, sdk.WrapError(errcurr, "GetNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeID=%d, applicationID=%d, envID=%d)", wfRun.Number, wNodeID, app.ID, env.ID)
+		return nil, cur, sdk.WrapError(errcurr, "GetNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeID=%d, applicationID=%d, envID=%d)", number, wNodeID, app.ID, env.ID)
 	}
 
 	if prev.Hash == "" {
@@ -423,6 +434,7 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, nodeID int64, current sdk.Buil
 	var prevHash, prevBranch sql.NullString
 	var previousBuildNumber sql.NullInt64
 
+	//TODO: Don't refer to a tag
 	queryPrevious := `
 		SELECT wrt1.value AS branch, wrt2.value AS hash, workflow_node_run.num AS num
 		FROM workflow_run_tag AS wrt1
