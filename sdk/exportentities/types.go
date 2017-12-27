@@ -26,6 +26,7 @@ const (
 	FormatJSON Format = iota
 	FormatYAML
 	FormatTOML
+	FormatHCL
 	UnknownFormat
 )
 
