@@ -117,7 +117,7 @@ func deleteHookConfiguration(db gorp.SqlExecutor, store cache.Store, p *sdk.Proj
 	if err != nil {
 		return sdk.WrapError(err, "HookRegistration> Unable to get services dao")
 	}
-	code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, fmt.Sprintf("/task/bulk"), hookToDelete, nil)
+	code, errHooks := services.DoJSONRequest(srvs, http.MethodDelete, "/task/bulk", hookToDelete, nil)
 	if errHooks != nil || code >= 400 {
 		log.Warning("HookRegistration> Unable to delete old hooks [%d]: %s", code, errHooks)
 	}
