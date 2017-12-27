@@ -16,7 +16,7 @@ import (
 
 func (api *API) registerWorkerHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		params := &worker.RegistrationForm{}
+		params := &sdk.WorkerRegistrationForm{}
 		if err := UnmarshalBody(r, params); err != nil {
 			return sdk.WrapError(err, "registerWorkerHandler> Unable to parse registration form")
 		}

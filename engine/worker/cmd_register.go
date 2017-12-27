@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/engine/api/worker"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -22,7 +22,7 @@ func cmdRegister(w *currentWorker) *cobra.Command {
 func cmdRegisterRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		initViper(w)
-		form := worker.RegistrationForm{
+		form := sdk.WorkerRegistrationForm{
 			Name:         w.status.Name,
 			Token:        w.token,
 			Hatchery:     w.hatchery.id,

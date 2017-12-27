@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -119,7 +120,12 @@ func (c *client) QueuePipelineBuildJob() ([]sdk.PipelineBuildJob, error) {
 }
 
 func (c *client) QueueTakeJob(job sdk.WorkflowNodeJobRun, isBooked bool) (*worker.WorkflowNodeJobRunInfo, error) {
-	in := worker.TakeForm{Time: time.Now()}
+	in := sdk.WorkerTakeForm{
+		Time:    time.Now(),
+		Version: sdk.VERSION,
+		OS:      runtime.GOOS,
+		Arch:    runtime.GOARCH,
+	}
 	if isBooked {
 		in.BookedJobID = job.ID
 	}

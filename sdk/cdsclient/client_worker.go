@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 )
 
@@ -16,7 +15,7 @@ func (c *client) WorkerList() ([]sdk.Worker, error) {
 	return p, nil
 }
 
-func (c *client) WorkerRegister(r worker.RegistrationForm) (*sdk.Worker, bool, error) {
+func (c *client) WorkerRegister(r sdk.WorkerRegistrationForm) (*sdk.Worker, bool, error) {
 	var w sdk.Worker
 	code, err := c.PostJSON("/worker", r, &w)
 	if code == http.StatusUnauthorized {

@@ -22,6 +22,28 @@ type Worker struct {
 	Uptodate      bool      `json:"up_to_date" cli:"-"`
 }
 
+// WorkerRegistrationForm represents the arguments needed to register a worker
+type WorkerRegistrationForm struct {
+	Name               string
+	Token              string
+	ModelID            int64
+	Hatchery           int64
+	HatcheryName       string
+	BinaryCapabilities []string
+	Version            string
+	OS                 string
+	Arch               string
+}
+
+// WorkerTakeForm contains booked JobID if exists
+type WorkerTakeForm struct {
+	BookedJobID int64
+	Time        time.Time
+	OS          string
+	Arch        string
+	Version     string
+}
+
 // Existing worker type
 const (
 	Docker      = "docker"
