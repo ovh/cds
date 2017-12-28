@@ -78,8 +78,8 @@ func (c *githubClient) setETag(path string, headers http.Header) {
 	}
 
 	if etag != "" {
-		//Put etag for this path in cache for 59 minutes
-		c.Cache.SetWithTTL(cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 59*60)
+		//Put etag for this path in cache for 15 minutes
+		c.Cache.SetWithTTL(cache.Key("vcs", "github", "etag", c.OAuthToken, strings.Replace(path, "https://", "", -1)), etag, 15*60)
 	}
 }
 
