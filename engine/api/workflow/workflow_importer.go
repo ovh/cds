@@ -3,16 +3,14 @@ package workflow
 import (
 	"fmt"
 
-	"github.com/ovh/cds/engine/api/environment"
+	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/application"
-
-	"github.com/ovh/cds/engine/api/pipeline"
-	"github.com/ovh/cds/sdk/log"
-
-	"github.com/go-gorp/gorp"
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/environment"
+	"github.com/ovh/cds/engine/api/pipeline"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 //Import is able to create a new workflow and all its components
