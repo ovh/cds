@@ -10,8 +10,8 @@ type Workflow struct {
 	Name    string `json:"name" yaml:"name"`
 	Version string `json:"version,omitempty" yaml:"version,omitempty"`
 	// This will be filled for complex workflows
-	Workflow map[string]WorkflowEntry `json:"workflow,omitempty" yaml:"workflow,omitempty"`
-	Hooks    map[string][]HookEntry   `json:"hooks,omitempty" yaml:"hooks,omitempty"`
+	Workflow map[string]NodeEntry   `json:"workflow,omitempty" yaml:"workflow,omitempty"`
+	Hooks    map[string][]HookEntry `json:"hooks,omitempty" yaml:"hooks,omitempty"`
 	// This will be filled for simple workflows
 	DependsOn       []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
 	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
@@ -23,7 +23,7 @@ type Workflow struct {
 	Permissions     map[string]int              `json:"permissions,omitempty" yaml:"permissions,omitempty"`
 }
 
-type WorkflowEntry struct {
+type NodeEntry struct {
 	DependsOn       []string                    `json:"depends_on,omitempty" yaml:"depends_on,omitempty"`
 	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	When            []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
@@ -46,7 +46,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	exportedWorkflow := Workflow{}
 	exportedWorkflow.Name = w.Name
 	exportedWorkflow.Version = WorkflowVersion1
-	exportedWorkflow.Workflow = map[string]WorkflowEntry{}
+	exportedWorkflow.Workflow = map[string]NodeEntry{}
 	exportedWorkflow.Hooks = map[string][]HookEntry{}
 	nodes := w.Nodes(false)
 
@@ -57,8 +57,8 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		}
 	}
 
-	var craftWorkflowEntry = func(n *sdk.WorkflowNode) (WorkflowEntry, error) {
-		entry := WorkflowEntry{}
+	var craftNodeEntry = func(n *sdk.WorkflowNode) (NodeEntry, error) {
+		entry := NodeEntry{}
 
 		ancestorIDs := n.Ancestors(&w, false)
 		ancestors := []string{}
@@ -110,7 +110,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		if n == nil {
 			return exportedWorkflow, sdk.ErrWorkflowNodeNotFound
 		}
-		entry, err := craftWorkflowEntry(n)
+		entry, err := craftNodeEntry(n)
 		if err != nil {
 			return exportedWorkflow, err
 		}
@@ -138,7 +138,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			if n == nil {
 				return exportedWorkflow, sdk.ErrWorkflowNodeNotFound
 			}
-			entry, err := craftWorkflowEntry(n)
+			entry, err := craftNodeEntry(n)
 			if err != nil {
 				return exportedWorkflow, err
 			}
@@ -161,12 +161,12 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 }
 
 // Entries returns the map of all workflow entries
-func (w Workflow) Entries() map[string]WorkflowEntry {
+func (w Workflow) Entries() map[string]NodeEntry {
 	if len(w.Workflow) != 0 {
 		return w.Workflow
 	}
 
-	singleEntry := WorkflowEntry{
+	singleEntry := NodeEntry{
 		ApplicationName: w.ApplicationName,
 		EnvironmentName: w.EnvironmentName,
 		PipelineName:    w.PipelineName,
@@ -174,13 +174,13 @@ func (w Workflow) Entries() map[string]WorkflowEntry {
 		DependsOn:       w.DependsOn,
 		When:            w.When,
 	}
-	return map[string]WorkflowEntry{
+	return map[string]NodeEntry{
 		w.PipelineName: singleEntry,
 	}
 
 }
 
-func (e WorkflowEntry) checkValidity() error {
+func (e NodeEntry) checkValidity() error {
 	return nil
 }
 
@@ -209,6 +209,16 @@ func (w Workflow) checkValidity() error {
 		if len(w.PipelineHooks) != 0 {
 			mError.Append(fmt.Errorf("Error: wrong usage: pipeline_hooks not allowed here"))
 		}
+	} else {
+		if len(w.Hooks) > 0 {
+			mError.Append(fmt.Errorf("Error: wrong usage: hooks not allowed here"))
+		}
+	}
+
+	for name := range w.Hooks {
+		if _, ok := w.Workflow[name]; !ok {
+			mError.Append(fmt.Errorf("Error: wrong usage: invalid hook on %s", name))
+		}
 	}
 
 	if mError.IsEmpty() {
@@ -231,7 +241,7 @@ func (w Workflow) checkDependencies() error {
 	return mError
 }
 
-func (e WorkflowEntry) checkDependencies(w Workflow) error {
+func (e NodeEntry) checkDependencies(w Workflow) error {
 	mError := new(sdk.MultiError)
 nextDep:
 	for _, d := range e.DependsOn {
@@ -276,10 +286,14 @@ func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	if len(entries) > 0 {
 		return nil, fmt.Errorf("Unable to process %+v", entries)
 	}
+
+	//Process hooks
+	wf.Visit(w.processHooks)
+
 	return wf, nil
 }
 
-func (e *WorkflowEntry) getNode(name string) (*sdk.WorkflowNode, error) {
+func (e *NodeEntry) getNode(name string) (*sdk.WorkflowNode, error) {
 	node := &sdk.WorkflowNode{
 		Name: name,
 		Ref:  name,
@@ -338,7 +352,35 @@ func (e *WorkflowEntry) getNode(name string) (*sdk.WorkflowNode, error) {
 	return node, nil
 }
 
-func (e *WorkflowEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
+func (w *Workflow) processHooks(n *sdk.WorkflowNode) {
+	var addHooks = func(hooks []HookEntry) {
+		for _, h := range hooks {
+			cfg := make(sdk.WorkflowNodeHookConfig, len(h.Config))
+			for k, v := range h.Config {
+				cfg[k] = sdk.WorkflowNodeHookConfigValue{
+					Value:        v,
+					Configurable: true,
+				}
+			}
+			n.Hooks = append(n.Hooks, sdk.WorkflowNodeHook{
+				WorkflowHookModel: sdk.WorkflowHookModel{
+					Name: h.Model,
+				},
+				Config: cfg,
+			})
+		}
+	}
+
+	if len(w.PipelineHooks) > 0 {
+		//Only one node workflow
+		addHooks(w.PipelineHooks)
+		return
+	}
+
+	addHooks(w.Hooks[n.Name])
+}
+
+func (e *NodeEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
 	if err := e.checkValidity(); err != nil {
 		return false, err
 	}

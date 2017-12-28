@@ -13,7 +13,7 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 	type fields struct {
 		Name            string
 		Version         string
-		Workflow        map[string]WorkflowEntry
+		Workflow        map[string]NodeEntry
 		Hooks           map[string][]HookEntry
 		DependsOn       []string
 		Conditions      *sdk.WorkflowNodeConditions
@@ -47,11 +47,11 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		{
 			name: "Complex Workflow with a dependency should not raise an error",
 			fields: fields{
-				Workflow: map[string]WorkflowEntry{
-					"root": WorkflowEntry{
+				Workflow: map[string]NodeEntry{
+					"root": NodeEntry{
 						PipelineName: "pipeline",
 					},
-					"child": WorkflowEntry{
+					"child": NodeEntry{
 						PipelineName: "pipeline",
 						DependsOn:    []string{"root"},
 					},
@@ -62,19 +62,19 @@ func TestWorkflow_checkDependencies(t *testing.T) {
 		{
 			name: "Complex Workflow with a dependencies and a join should not raise an error",
 			fields: fields{
-				Workflow: map[string]WorkflowEntry{
-					"root": WorkflowEntry{
+				Workflow: map[string]NodeEntry{
+					"root": NodeEntry{
 						PipelineName: "pipeline",
 					},
-					"first-child": WorkflowEntry{
-						PipelineName: "pipeline",
-						DependsOn:    []string{"root"},
-					},
-					"second-child": WorkflowEntry{
+					"first-child": NodeEntry{
 						PipelineName: "pipeline",
 						DependsOn:    []string{"root"},
 					},
-					"third-child": WorkflowEntry{
+					"second-child": NodeEntry{
+						PipelineName: "pipeline",
+						DependsOn:    []string{"root"},
+					},
+					"third-child": NodeEntry{
 						PipelineName: "pipeline",
 						DependsOn:    []string{"first-child", "second-child"},
 					},
@@ -110,7 +110,7 @@ func TestWorkflow_checkValidity(t *testing.T) {
 	type fields struct {
 		Name            string
 		Version         string
-		Workflow        map[string]WorkflowEntry
+		Workflow        map[string]NodeEntry
 		Hooks           map[string][]HookEntry
 		DependsOn       []string
 		Conditions      *sdk.WorkflowNodeConditions
@@ -130,11 +130,11 @@ func TestWorkflow_checkValidity(t *testing.T) {
 			name: "Should raise an error",
 			fields: fields{
 				PipelineName: "pipeline",
-				Workflow: map[string]WorkflowEntry{
-					"root": WorkflowEntry{
+				Workflow: map[string]NodeEntry{
+					"root": NodeEntry{
 						PipelineName: "pipeline",
 					},
-					"child": WorkflowEntry{
+					"child": NodeEntry{
 						PipelineName: "pipeline",
 						DependsOn:    []string{"root"},
 					},
@@ -145,11 +145,11 @@ func TestWorkflow_checkValidity(t *testing.T) {
 		{
 			name: "Should not raise an error",
 			fields: fields{
-				Workflow: map[string]WorkflowEntry{
-					"root": WorkflowEntry{
+				Workflow: map[string]NodeEntry{
+					"root": NodeEntry{
 						PipelineName: "pipeline",
 					},
-					"child": WorkflowEntry{
+					"child": NodeEntry{
 						PipelineName: "pipeline",
 						DependsOn:    []string{"root"},
 					},
@@ -192,7 +192,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 	type fields struct {
 		Name            string
 		Version         string
-		Workflow        map[string]WorkflowEntry
+		Workflow        map[string]NodeEntry
 		Hooks           map[string][]HookEntry
 		DependsOn       []string
 		Conditions      *sdk.WorkflowNodeConditions
@@ -214,6 +214,14 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 			name: "Simple workflow should not raise an error",
 			fields: fields{
 				PipelineName: "pipeline",
+				PipelineHooks: []HookEntry{
+					{
+						Model: "scheduler",
+						Config: map[string]string{
+							"crontab": "* * * * *",
+						},
+					},
+				},
 			},
 			wantErr: false,
 			want: sdk.Workflow{
@@ -223,6 +231,19 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					Pipeline: sdk.Pipeline{
 						Name: "pipeline",
 					},
+					Hooks: []sdk.WorkflowNodeHook{
+						{
+							WorkflowHookModel: sdk.WorkflowHookModel{
+								Name: "scheduler",
+							},
+							Config: sdk.WorkflowNodeHookConfig{
+								"crontab": sdk.WorkflowNodeHookConfigValue{
+									Value:        "* * * * *",
+									Configurable: true,
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -230,11 +251,11 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		{
 			name: "Complexe workflow without joins should not raise an error",
 			fields: fields{
-				Workflow: map[string]WorkflowEntry{
-					"root": WorkflowEntry{
+				Workflow: map[string]NodeEntry{
+					"root": NodeEntry{
 						PipelineName: "pipeline-root",
 					},
-					"child": WorkflowEntry{
+					"child": NodeEntry{
 						PipelineName: "pipeline-child",
 						DependsOn:    []string{"root"},
 					},
@@ -266,12 +287,12 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		{
 			name: "Complexe workflow unordered without joins should not raise an error",
 			fields: fields{
-				Workflow: map[string]WorkflowEntry{
-					"child": WorkflowEntry{
+				Workflow: map[string]NodeEntry{
+					"child": NodeEntry{
 						PipelineName: "pipeline-child",
 						DependsOn:    []string{"root"},
 					},
-					"root": WorkflowEntry{
+					"root": NodeEntry{
 						PipelineName: "pipeline-root",
 					},
 				},
@@ -302,15 +323,15 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 		{
 			name: "Complexe workflow without joins should not raise an error",
 			fields: fields{
-				Workflow: map[string]WorkflowEntry{
-					"root": WorkflowEntry{
+				Workflow: map[string]NodeEntry{
+					"root": NodeEntry{
 						PipelineName: "pipeline-root",
 					},
-					"first": WorkflowEntry{
+					"first": NodeEntry{
 						PipelineName: "pipeline-child",
 						DependsOn:    []string{"root"},
 					},
-					"second": WorkflowEntry{
+					"second": NodeEntry{
 						PipelineName: "pipeline-child",
 						DependsOn:    []string{"first"},
 					},
@@ -349,39 +370,49 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 				},
 			},
 		},
-		// A(pipeline) -> B(pipeline) -> join -> D(pipeline) -> join -> G(pipeline)
-		//             -> C(pipeline) /       -> E(pipeline) /
-		//                                    -> F(pipeline)
+		// A(pipeline)(*) -> B(pipeline) -> join -> D(pipeline) -> join -> G(pipeline)
+		//                -> C(pipeline) /       -> E(pipeline) /
+		//                                       -> F(pipeline)
 		{
 			name: "Complexe workflow with joins should not raise an error",
 			fields: fields{
-				Workflow: map[string]WorkflowEntry{
-					"A": WorkflowEntry{
+				Workflow: map[string]NodeEntry{
+					"A": NodeEntry{
 						PipelineName: "pipeline",
 					},
-					"B": WorkflowEntry{
-						PipelineName: "pipeline",
-						DependsOn:    []string{"A"},
-					},
-					"C": WorkflowEntry{
+					"B": NodeEntry{
 						PipelineName: "pipeline",
 						DependsOn:    []string{"A"},
 					},
-					"D": WorkflowEntry{
+					"C": NodeEntry{
+						PipelineName: "pipeline",
+						DependsOn:    []string{"A"},
+					},
+					"D": NodeEntry{
 						PipelineName: "pipeline",
 						DependsOn:    []string{"B", "C"},
 					},
-					"E": WorkflowEntry{
+					"E": NodeEntry{
 						PipelineName: "pipeline",
 						DependsOn:    []string{"B", "C"},
 					},
-					"F": WorkflowEntry{
+					"F": NodeEntry{
 						PipelineName: "pipeline",
 						DependsOn:    []string{"B", "C"},
 					},
-					"G": WorkflowEntry{
+					"G": NodeEntry{
 						PipelineName: "pipeline",
 						DependsOn:    []string{"D", "E"},
+					},
+				},
+				Hooks: map[string][]HookEntry{
+					"A": []HookEntry{
+						{
+							Model: "scheduler",
+							Config: map[string]string{
+								"crontab": "* * * * *",
+							},
+						},
 					},
 				},
 			},
@@ -409,6 +440,19 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 								Ref:  "C",
 								Pipeline: sdk.Pipeline{
 									Name: "pipeline",
+								},
+							},
+						},
+					},
+					Hooks: []sdk.WorkflowNodeHook{
+						{
+							WorkflowHookModel: sdk.WorkflowHookModel{
+								Name: "scheduler",
+							},
+							Config: sdk.WorkflowNodeHookConfig{
+								"crontab": sdk.WorkflowNodeHookConfigValue{
+									Value:        "* * * * *",
+									Configurable: true,
 								},
 							},
 						},
