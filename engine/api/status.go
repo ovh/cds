@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/ovh/cds/engine/api/event"
@@ -21,7 +22,11 @@ import (
 // VersionHandler returns version of current uservice
 func VersionHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		s := sdk.Version{Version: sdk.VERSION}
+		s := sdk.Version{
+			Version:      sdk.VERSION,
+			Architecture: runtime.GOARCH,
+			OS:           runtime.GOOS,
+		}
 		return WriteJSON(w, r, s, http.StatusOK)
 	}
 }

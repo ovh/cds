@@ -62,6 +62,7 @@ var (
 	MsgSpawnInfoHatcheryStartsSuccessfully = &Message{"MsgSpawnInfoHatcheryStartsSuccessfully", trad{FR: "La Hatchery %s (%s) a démarré le worker %s avec succès en %s", EN: "Hatchery %s (%s) spawn worker %s successfully in %s"}, nil}
 	MsgSpawnInfoWorkerEnd                  = &Message{"MsgSpawnInfoWorkerEnd", trad{FR: "Le worker %s a terminé et a passé %s à travailler sur les étapes", EN: "Worker %s finished working on this job and took %s to work on the steps"}, nil}
 	MsgSpawnInfoJobTaken                   = &Message{"MsgSpawnInfoJobTaken", trad{FR: "Le job a été pris par le worker %s", EN: "Job was taken by worker %s"}, nil}
+	MsgSpawnInfoJobTakenWorkerVersion      = &Message{"MsgSpawnInfoJobTakenWorkerVersion", trad{FR: "Worker %s version:%s os:%s arch:%s", EN: "Worker %s version:%s os:%s arch:%s"}, nil}
 	MsgSpawnInfoWorkerForJob               = &Message{"MsgSpawnInfoWorkerForJob", trad{FR: "Ce worker %s a été créé pour lancer ce job", EN: "This worker %s was created to take this action"}, nil}
 	MsgSpawnInfoWorkerForJobError          = &Message{"MsgSpawnInfoWorkerForJobError", trad{FR: "Ce worker %s a été créé pour lancer ce job, mais ne possède pas tous les pré-requis. Vérifiez que les prérequis suivants:%s", EN: "This worker %s was created to take this action, but does not have all prerequisites. Please verify the following prerequisites:%s"}, nil}
 	MsgSpawnInfoJobError                   = &Message{"MsgSpawnInfoJobError", trad{FR: "Impossible de lancer ce job : %s", EN: "Unable to run this job: %s"}, nil}
@@ -113,6 +114,7 @@ var Messages = map[string]*Message{
 	MsgSpawnInfoHatcheryStartsSuccessfully.ID: MsgSpawnInfoHatcheryStartsSuccessfully,
 	MsgSpawnInfoWorkerEnd.ID:                  MsgSpawnInfoWorkerEnd,
 	MsgSpawnInfoJobTaken.ID:                   MsgSpawnInfoJobTaken,
+	MsgSpawnInfoJobTakenWorkerVersion.ID:      MsgSpawnInfoJobTakenWorkerVersion,
 	MsgSpawnInfoWorkerForJob.ID:               MsgSpawnInfoWorkerForJob,
 	MsgSpawnInfoWorkerForJobError.ID:          MsgSpawnInfoWorkerForJobError,
 	MsgSpawnInfoJobError.ID:                   MsgSpawnInfoJobError,

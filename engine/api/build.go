@@ -333,7 +333,7 @@ func (api *API) takePipelineBuildJobHandler() Handler {
 			return sdk.WrapError(errc, "takePipelineBuildJobHandler> invalid id")
 		}
 
-		takeForm := &worker.TakeForm{}
+		takeForm := &sdk.WorkerTakeForm{}
 		if err := UnmarshalBody(r, takeForm); err != nil {
 			return sdk.WrapError(err, "takePipelineBuildJobHandler> cannot unmarshal request")
 		}

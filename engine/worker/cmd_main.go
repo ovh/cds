@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
@@ -27,7 +26,7 @@ func cmdMain(w *currentWorker) *cobra.Command {
 
 	pflags := mainCmd.PersistentFlags()
 
-	pflags.String("log-level", "notice", "Log Level : debug, info, notice, warning, critical")
+	pflags.String("log-level", "notice", "Log Level: debug, info, notice, warning, critical")
 	viper.BindPFlag("log_level", pflags.Lookup("log-level"))
 
 	pflags.String("api", "", "URL of CDS API")
@@ -391,7 +390,7 @@ func (w *currentWorker) doRegister() error {
 			info = fmt.Sprintf(", I was born to work on workflow node job %d", w.bookedWJobID)
 		}
 		log.Info("Registering on CDS engine%s Version:%s", info, sdk.VERSION)
-		form := worker.RegistrationForm{
+		form := sdk.WorkerRegistrationForm{
 			Name:         w.status.Name,
 			Token:        w.token,
 			Hatchery:     w.hatchery.id,

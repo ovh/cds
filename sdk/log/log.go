@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 
 	loghook "github.com/ovh/logrus-ovh-hook"
@@ -72,6 +73,9 @@ func Initialize(conf *Conf) {
 		if conf.GraylogFieldCDSVersion != "" {
 			extra["CDSVersion"] = conf.GraylogFieldCDSVersion
 		}
+
+		extra["CDSOS"] = runtime.GOOS
+		extra["CDSArch"] = runtime.GOARCH
 
 		// no need to check error here
 		hostname, _ := os.Hostname()

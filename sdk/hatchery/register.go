@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -158,7 +159,7 @@ func Register(h Interface) error {
 	log.Info("Register> Hatchery %s registered with id:%d", h.Hatchery().Name, h.Hatchery().ID)
 
 	if !uptodate {
-		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version:%s -=-=-=-=-", sdk.VERSION)
+		log.Warning("-=-=-=-=- Please update your hatchery binary - Hatchery Version:%s %s %s -=-=-=-=-", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 	}
 	return nil
 }

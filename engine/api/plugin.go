@@ -86,7 +86,7 @@ func (api *API) addPluginHandler() Handler {
 		// Check that action does not already exists
 		conflict, err := action.Exists(api.mustDB(), ap.Name)
 		if err != nil {
-			return sdk.WrapError(err, "updatePluginHandler>%T", err)
+			return sdk.WrapError(err, "addPluginHandler>%T", err)
 		}
 		if conflict {
 			return sdk.ErrConflict

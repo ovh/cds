@@ -46,7 +46,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(errc, "postTakeWorkflowJobHandler> invalid id")
 		}
 
-		takeForm := &worker.TakeForm{}
+		takeForm := &sdk.WorkerTakeForm{}
 		if err := UnmarshalBody(r, takeForm); err != nil {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot unmarshal request")
 		}
@@ -82,7 +82,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 	}
 }
 
-func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.Worker, id int64, takeForm *worker.TakeForm, workerModel string, pbji *worker.WorkflowNodeJobRunInfo) {
+func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- error, db *gorp.DbMap, store cache.Store, p *sdk.Project, wr *sdk.Worker, id int64, takeForm *sdk.WorkerTakeForm, workerModel string, wnjri *worker.WorkflowNodeJobRunInfo) {
 	defer close(chEvent)
 	defer close(chError)
 
@@ -94,10 +94,16 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 	defer tx.Rollback()
 
 	//Prepare spawn infos
-	infos := []sdk.SpawnInfo{{
-		RemoteTime: takeForm.Time,
-		Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{getWorker(ctx).Name}},
-	}}
+	infos := []sdk.SpawnInfo{
+		{
+			RemoteTime: takeForm.Time,
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTaken.ID, Args: []interface{}{getWorker(ctx).Name}},
+		},
+		{
+			RemoteTime: takeForm.Time,
+			Message:    sdk.SpawnMsg{ID: sdk.MsgSpawnInfoJobTakenWorkerVersion.ID, Args: []interface{}{getWorker(ctx).Name, takeForm.Version, takeForm.OS, takeForm.Arch}},
+		},
+	}
 	if takeForm.BookedJobID != 0 && takeForm.BookedJobID == id {
 		infos = append(infos, sdk.SpawnInfo{
 			RemoteTime: takeForm.Time,
@@ -157,18 +163,18 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 
 	//Feed the worker
 
-	pbji.NodeJobRun = *job
-	pbji.Number = noderun.Number
-	pbji.SubNumber = noderun.SubNumber
-	pbji.Secrets = secrets
+	wnjri.NodeJobRun = *job
+	wnjri.Number = noderun.Number
+	wnjri.SubNumber = noderun.SubNumber
+	wnjri.Secrets = secrets
 
 	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, store, job, noderun, workflowRun, p)
 	if errK != nil {
 		chError <- sdk.WrapError(errK, "takeJob> Cannot load keys")
 		return
 	}
-	pbji.Secrets = append(pbji.Secrets, secretsKeys...)
-	pbji.NodeJobRun.Parameters = append(pbji.NodeJobRun.Parameters, params...)
+	wnjri.Secrets = append(wnjri.Secrets, secretsKeys...)
+	wnjri.NodeJobRun.Parameters = append(wnjri.NodeJobRun.Parameters, params...)
 
 	if err := tx.Commit(); err != nil {
 		chError <- sdk.WrapError(err, "takeJob> Cannot commit transaction")

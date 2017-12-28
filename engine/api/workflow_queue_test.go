@@ -170,7 +170,7 @@ func testRegisterWorker(t *testing.T, api *API, router *Router, ctx *testRunWork
 	//Insert token
 	test.NoError(t, token.InsertToken(api.mustDB(), ctx.user.Groups[0].ID, ctx.workerToken, sdk.Persistent))
 	//Register the worker
-	params := &worker.RegistrationForm{
+	params := &sdk.WorkerRegistrationForm{
 		Name:  sdk.RandomString(10),
 		Token: ctx.workerToken,
 	}
@@ -277,7 +277,7 @@ func Test_postTakeWorkflowJobHandler(t *testing.T) {
 	testGetWorkflowJob(t, api, router, &ctx)
 	assert.NotNil(t, ctx.job)
 
-	takeForm := worker.TakeForm{
+	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
 		Time:        time.Now(),
 	}
@@ -359,7 +359,7 @@ func Test_postWorkflowJobResultHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := worker.TakeForm{
+	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
 		Time:        time.Now(),
 	}
@@ -438,7 +438,7 @@ func Test_postWorkflowJobTestsResultsHandler(t *testing.T) {
 	uri = router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := worker.TakeForm{
+	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
 		Time:        time.Now(),
 	}
@@ -539,7 +539,7 @@ func Test_postWorkflowJobVariableHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := worker.TakeForm{
+	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
 		Time:        time.Now(),
 	}
@@ -603,7 +603,7 @@ func Test_postWorkflowJobArtifactHandler(t *testing.T) {
 	uri := router.GetRoute("POST", api.postTakeWorkflowJobHandler, vars)
 	test.NotEmpty(t, uri)
 
-	takeForm := worker.TakeForm{
+	takeForm := sdk.WorkerTakeForm{
 		BookedJobID: ctx.job.ID,
 		Time:        time.Now(),
 	}

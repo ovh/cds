@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/ovh/cds/engine/api/worker"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
 )
 
 // Workers need to register to main api so they can run actions
-func (w *currentWorker) register(form worker.RegistrationForm) error {
+func (w *currentWorker) register(form sdk.WorkerRegistrationForm) error {
 	log.Info("Registering %s on %s", form.Name, w.apiEndpoint)
 	sdk.InitEndpoint(w.apiEndpoint)
 	sdk.Authorization("")
@@ -25,7 +24,7 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 	form.BinaryCapabilities = LoopPath(w, requirements)
 	form.Version = sdk.VERSION
 	form.OS = runtime.GOOS
-	form.Arch = runtime.GOOS
+	form.Arch = runtime.GOARCH
 
 	worker, uptodate, err := w.client.WorkerRegister(form)
 	if err != nil {
@@ -43,7 +42,7 @@ func (w *currentWorker) register(form worker.RegistrationForm) error {
 	log.Info("%s Registered on %s", form.Name, w.apiEndpoint)
 
 	if !uptodate {
-		log.Warning("-=-=-=-=- Please update your worker binary - Worker Version %s -=-=-=-=-", sdk.VERSION)
+		log.Warning("-=-=-=-=- Please update your worker binary - Worker Version %s %s %s -=-=-=-=-", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 	}
 
 	return nil
