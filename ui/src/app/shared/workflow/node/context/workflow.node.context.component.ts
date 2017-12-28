@@ -1,14 +1,18 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {Project} from '../../../../model/project.model';
 import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {cloneDeep} from 'lodash';
 import {PipelineStore} from '../../../../service/pipeline/pipeline.store';
 import {VariableService} from '../../../../service/variable/variable.service';
+import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {Subscription} from 'rxjs/Subscription';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+import {finalize} from 'rxjs/operators';
+declare var CodeMirror: any;
 
 @Component({
     selector: 'app-workflow-node-context',
@@ -30,12 +34,17 @@ export class WorkflowNodeContextComponent {
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
+    @ViewChild('textareaCodeMirror')
+    codemirror: CodemirrorComponent;
+
     editableNode: WorkflowNode;
 
     suggest: string[] = [];
     payloadString: string;
+    branches: string[] = [];
     codeMirrorConfig: {};
     invalidJSON = false;
+    loadingBranches = false;
 
     pipParamsReady = false;
     pipelineSubscription: Subscription;
@@ -43,7 +52,8 @@ export class WorkflowNodeContextComponent {
     constructor(
       private _pipelineStore: PipelineStore,
       private _variableService: VariableService,
-      private _modalService: SuiModalService
+      private _modalService: SuiModalService,
+      private _appWorkflowService: ApplicationWorkflowService
     ) {
         this.codeMirrorConfig = {
             matchBrackets: true,
@@ -59,6 +69,13 @@ export class WorkflowNodeContextComponent {
             this.suggest = [];
             this._variableService.getContextVariable(this.project.key, this.node.pipeline_id)
               .subscribe((suggest) => this.suggest = suggest);
+
+            if (this.node.context && this.node.context.application) {
+                this.loadingBranches = true;
+                this._appWorkflowService.getBranches(this.project.key, this.node.context.application.name)
+                    .pipe(finalize(() => this.loadingBranches = false))
+                    .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
+            }
 
             this.editableNode = cloneDeep(this.node);
             if (!this.editableNode.context.default_payload) {
@@ -110,4 +127,30 @@ export class WorkflowNodeContextComponent {
         this.payloadString = JSON.stringify(newPayload, undefined, 4);
         this.editableNode.context.default_payload = JSON.parse(this.payloadString);
     }
+
+    changeCodeMirror(eventRoot: Event): void {
+        if (eventRoot.type !== 'click') {
+            this.updateValue(eventRoot);
+        }
+        if (!this.codemirror || !this.codemirror.instance) {
+            return
+        }
+        if (eventRoot.type === 'click') {
+            this.showHint(this.codemirror.instance, null);
+        }
+        this.codemirror.instance.on('keyup', (cm, event) => {
+            if (!cm.state.completionActive && event.keyCode !== 32) {
+                this.showHint(cm, event);
+            }
+        });
+    }
+
+      showHint(cm, event) {
+          CodeMirror.showHint(this.codemirror.instance, CodeMirror.hint.payload, {
+              completeSingle: true,
+              closeCharacters: / /,
+              payloadCompletionList: this.branches,
+              specialChars: ''
+          });
+      }
 }

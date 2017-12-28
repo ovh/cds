@@ -1,4 +1,5 @@
 import {Component, Input, ViewChild} from '@angular/core';
+import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
@@ -7,6 +8,7 @@ import {cloneDeep} from 'lodash';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Commit} from '../../../../model/repositories.model';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {Router} from '@angular/router';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
@@ -14,6 +16,7 @@ import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {finalize, first} from 'rxjs/operators';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../toast/ToastService';
+declare var CodeMirror: any;
 
 @Component({
     selector: 'app-workflow-node-run-param',
@@ -26,6 +29,9 @@ export class WorkflowNodeRunParamComponent {
     @ViewChild('runWithParamModal')
     runWithParamModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
+
+    @ViewChild('textareaCodeMirror')
+    codemirror: CodemirrorComponent;
 
     @Input() canResync = false;
     @Input() nodeRun: WorkflowNodeRun;
@@ -40,6 +46,9 @@ export class WorkflowNodeRunParamComponent {
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
                 this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload);
+                if (this.payloadString) {
+                    this.reindent();
+                }
             }
             this.getPipeline();
         }
@@ -52,14 +61,17 @@ export class WorkflowNodeRunParamComponent {
 
     codeMirrorConfig: {};
     commits: Commit[] = [];
+    branches: string[] = [];
     payloadString: string;
     invalidJSON: boolean;
     isSync = false;
     loading = false;
     loadingCommits = false;
+    loadingBranches = false;
 
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
-                private _workflowCoreService: WorkflowCoreService, private _translate: TranslateService, private _toast: ToastService) {
+                private _workflowCoreService: WorkflowCoreService, private _translate: TranslateService, private _toast: ToastService,
+                private _appWorkflowService: ApplicationWorkflowService) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -83,10 +95,14 @@ export class WorkflowNodeRunParamComponent {
         const config = new TemplateModalConfig<boolean, boolean, void>(this.runWithParamModal);
         this.modal = this._modalService.open(config);
 
-
         if (!this.nodeToRun.context.application) {
             return;
         }
+
+        this.loadingBranches = true;
+        this._appWorkflowService.getBranches(this.project.key, this.nodeToRun.context.application.name)
+            .pipe(finalize(() => this.loadingBranches = false))
+            .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
 
         if (this.num == null) {
             this.loadingCommits = true;
@@ -183,6 +199,29 @@ export class WorkflowNodeRunParamComponent {
             this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', wr.num],
                 {queryParams: {subnum: wr.last_subnumber}});
             this._workflowCoreService.setCurrentWorkflowRun(wr);
+        });
+    }
+
+    changeCodeMirror(eventRoot: Event): void {
+        if (!this.codemirror || !this.codemirror.instance) {
+            return
+        }
+        if (eventRoot.type === 'click') {
+            this.showHint(this.codemirror.instance, null);
+        }
+        this.codemirror.instance.on('keyup', (cm, event) => {
+            if (!cm.state.completionActive && event.keyCode !== 32) {
+                this.showHint(cm, event);
+            }
+        });
+    }
+
+    showHint(cm, event) {
+        CodeMirror.showHint(this.codemirror.instance, CodeMirror.hint.payload, {
+            completeSingle: true,
+            closeCharacters: / /,
+            payloadCompletionList: this.branches,
+            specialChars: ''
         });
     }
 }

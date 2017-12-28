@@ -26,6 +26,10 @@ $cds_trigger_color: #9a9a9a;
   word-break:  break-all;
 }
 
+.CodeMirror-hints {
+  z-index: 999999999999999 !important;
+}
+
 pre {
   .string { color: green; }
   .number { color: darkorange; }
