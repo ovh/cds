@@ -11,7 +11,14 @@
             </ng-container>
             <ng-container *ngIf="(node.hooks && node.hooks.length > 0) || (node.id === workflow.root.id)">
                 <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
-                <codemirror [class.invalid]="invalidJSON" [(ngModel)]="payloadString" [config]="codeMirrorConfig" (change)="updateValue($event)" #textareaCodeMirror></codemirror>
+                <codemirror
+                    [class.invalid]="invalidJSON"
+                    [(ngModel)]="payloadString"
+                    [config]="codeMirrorConfig"
+                    (click)="changeCodeMirror($event)"
+                    (change)="changeCodeMirror($event)"
+                    #textareaCodeMirror>
+                </codemirror>
                 <div class="extra">
                     <ng-container *ngIf="invalidJSON">
                         {{ 'workflow_context_invalid' | translate}}

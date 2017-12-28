@@ -1,4 +1,5 @@
 import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
 import {Project} from '../../../../model/project.model';
 import {Workflow, WorkflowNode} from '../../../../model/workflow.model';
 import {Pipeline} from '../../../../model/pipeline.model';
@@ -9,6 +10,7 @@ import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
 import {Subscription} from 'rxjs/Subscription';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
+declare var CodeMirror: any;
 
 @Component({
     selector: 'app-workflow-node-context',
@@ -29,6 +31,9 @@ export class WorkflowNodeContextComponent {
     public nodeContextModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
+
+    @ViewChild('textareaCodeMirror')
+    codemirror: CodemirrorComponent;
 
     editableNode: WorkflowNode;
 
@@ -110,4 +115,30 @@ export class WorkflowNodeContextComponent {
         this.payloadString = JSON.stringify(newPayload, undefined, 4);
         this.editableNode.context.default_payload = JSON.parse(this.payloadString);
     }
+
+    changeCodeMirror(eventRoot: Event): void {
+        if (eventRoot.type !== 'click') {
+            this.updateValue(eventRoot);
+        }
+        if (!this.codemirror || !this.codemirror.instance) {
+            return
+        }
+        if (eventRoot.type === 'click') {
+            this.showHint(this.codemirror.instance, null);
+        }
+        this.codemirror.instance.on('keyup', (cm, event) => {
+            if (!cm.state.completionActive && event.keyCode !== 32) {
+                this.showHint(cm, event);
+            }
+        });
+    }
+
+      showHint(cm, event) {
+          CodeMirror.showHint(this.codemirror.instance, CodeMirror.hint.payload, {
+              completeSingle: true,
+              closeCharacters: / /,
+              payloadCompletionList: ['"master"', '"mama"', '"develop"', '"feat"', '"test"'],
+              specialChars: ''
+          });
+      }
 }

@@ -47,6 +47,41 @@
             to: CodeMirror.Pos(cur.line, cur.ch)
         };
     });
+
+    CodeMirror.registerHelper("hint", "payload", function(cm, options) {
+        var branchPrefix = '"git.branch":';
+        // Suggest list
+        var payloadCompletionList = options.payloadCompletionList;
+
+        // Get cursor position
+        var cur = cm.getCursor(0);
+        var from = 0;
+
+        // Get current line
+        var text = cm.doc.children[0].lines[cur.line].text;
+
+        // Show nothing if there is no branchPrefix on the line
+        if (text.indexOf(branchPrefix) === -1) {
+            return null;
+        }
+
+        var lastIndexOfBranchPrefix = text.lastIndexOf(branchPrefix);
+        var areaBefore = text.substring(0, cur.ch);
+        var areaAfterPrefix = text.substring(lastIndexOfBranchPrefix + branchPrefix.length + 1);
+        var lastIndexOfComma = areaAfterPrefix.indexOf(',');
+
+        if (lastIndexOfComma === -1) {
+            lastIndexOfComma += text.length + 1;
+        } else if (lastIndexOfComma === 0) {
+            lastIndexOfComma += (lastIndexOfBranchPrefix + branchPrefix.length);
+        } else {
+            lastIndexOfComma += (lastIndexOfBranchPrefix + branchPrefix.length + 1);
+        }
+
+        return {
+            list: payloadCompletionList,
+            from: { line: cur.line, ch: lastIndexOfBranchPrefix + branchPrefix.length + 1},
+            to: CodeMirror.Pos(cur.line, lastIndexOfComma)
+        };
+    });
 });
-
-
