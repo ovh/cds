@@ -109,6 +109,9 @@ type WorkflowNodeRun struct {
 	Tests              *venom.Tests                     `json:"tests,omitempty"`
 	Commits            []VCSCommit                      `json:"commits,omitempty"`
 	TriggersRun        map[int64]WorkflowNodeTriggerRun `json:"triggers_run,omitempty"`
+	VCSRepository      string                           `json:"vcs_repository"`
+	VCSBranch          string                           `json:"vcs_branch"`
+	VCSHash            string                           `json:"vcs_hash"`
 }
 
 // WorkflowNodeTriggerRun Represent the state of a trigger

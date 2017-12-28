@@ -54,6 +54,9 @@ type NodeRun struct {
 	Commits            sql.NullString `db:"commits"`
 	Stages             sql.NullString `db:"stages"`
 	TriggersRun        sql.NullString `db:"triggers_run"`
+	VCSRepository      sql.NullString `db:"vcs_repository"`
+	VCSBranch          sql.NullString `db:"vcs_branch"`
+	VCSHash            sql.NullString `db:"vcs_hash"`
 }
 
 // JobRun is a gorp wrapper around sdk.WorkflowNodeJobRun

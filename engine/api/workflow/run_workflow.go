@@ -10,12 +10,13 @@ import (
 )
 
 const (
-	tagTriggeredBy = "triggered_by"
-	tagEnvironment = "environment"
-	tagGitHash     = "git.hash"
-	tagGitBranch   = "git.branch"
-	tagGitTag      = "git.tag"
-	tagGitAuthor   = "git.author"
+	tagTriggeredBy   = "triggered_by"
+	tagEnvironment   = "environment"
+	tagGitHash       = "git.hash"
+	tagGitRepository = "git.repository"
+	tagGitBranch     = "git.branch"
+	tagGitTag        = "git.tag"
+	tagGitAuthor     = "git.author"
 )
 
 //RunFromHook is the entry point to trigger a workflow from a hook

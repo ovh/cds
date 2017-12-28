@@ -466,9 +466,17 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	gitValues := map[string]string{}
 	for _, p := range jobParams {
 		switch p.Name {
-		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor:
+		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitRepository:
 			w.Tag(p.Name, p.Value)
 			gitValues[p.Name] = p.Value
+		}
+	}
+
+	if n.Context != nil && n.Context.Application != nil {
+		var errVcs error
+		run.VCSRepository, run.VCSBranch, run.VCSHash, errVcs = getVCSInfos(db, store, p, gitValues, n, run)
+		if errVcs != nil {
+			log.Error("processWorkflowNodeRun> Cannot get VCSInfos")
 		}
 	}
 
@@ -500,7 +508,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 
 	if n.Context != nil && n.Context.Application != nil {
 		go func() {
-			commits, curVCSInfos, err := GetNodeRunBuildCommits(dbCopy, store, p, n.ID, w, n.Context.Application, n.Context.Environment)
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(dbCopy, store, p, &w.Workflow, n.Name, w.Number, run, n.Context.Application, n.Context.Environment)
 			if err != nil {
 				log.Warning("processWorkflowNodeRun> cannot get build commits on a node run %v", err)
 			} else {
@@ -520,6 +528,10 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 			}
 			if gitValues[tagGitHash] == "" && curVCSInfos.Hash != "" {
 				w.Tag(tagGitHash, curVCSInfos.Hash)
+				tagsUpdated = true
+			}
+			if gitValues[tagGitRepository] == "" && curVCSInfos.Remote != "" {
+				w.Tag(tagGitRepository, curVCSInfos.Remote)
 				tagsUpdated = true
 			}
 
