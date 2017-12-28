@@ -126,6 +126,34 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 	return res
 }
 
+//AddTrigger adds a trigger to the destination node from the node found by its name
+func (w *Workflow) AddTrigger(name string, dest WorkflowNode) {
+	if w.Root == nil {
+		return
+	}
+
+	w.Root.AddTrigger(name, dest)
+	for i := range w.Joins {
+		for j := range w.Joins[i].Triggers {
+			w.Joins[i].Triggers[j].WorkflowDestNode.AddTrigger(name, dest)
+		}
+	}
+}
+
+//AddTrigger adds a trigger to the destination node from the node found by its name
+func (n *WorkflowNode) AddTrigger(name string, dest WorkflowNode) {
+	if n.Name == name {
+		n.Triggers = append(n.Triggers, WorkflowNodeTrigger{
+			WorkflowDestNode: dest,
+		})
+		return
+	}
+	for i := range n.Triggers {
+		destNode := &n.Triggers[i].WorkflowDestNode
+		destNode.AddTrigger(name, dest)
+	}
+}
+
 //GetNodeByName returns the node given its name
 func (w *Workflow) GetNodeByName(name string) *WorkflowNode {
 	n := w.Root.GetNodeByName(name)

@@ -1,8 +1,13 @@
 package exportentities
 
-import "github.com/ovh/cds/sdk"
+import (
+	"fmt"
+
+	"github.com/ovh/cds/sdk"
+)
 
 type Workflow struct {
+	Name    string `json:"name" yaml:"name"`
 	Version string `json:"version,omitempty" yaml:"version,omitempty"`
 	// This will be filled for complex workflows
 	Workflow map[string]WorkflowEntry `json:"workflow,omitempty" yaml:"workflow,omitempty"`
@@ -39,6 +44,7 @@ const WorkflowVersion1 = "v1.0"
 //NewWorkflow creates a new exportable workflow
 func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	exportedWorkflow := Workflow{}
+	exportedWorkflow.Name = w.Name
 	exportedWorkflow.Version = WorkflowVersion1
 	exportedWorkflow.Workflow = map[string]WorkflowEntry{}
 	exportedWorkflow.Hooks = map[string][]HookEntry{}
@@ -152,4 +158,272 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 	}
 
 	return exportedWorkflow, nil
+}
+
+// Entries returns the map of all workflow entries
+func (w Workflow) Entries() map[string]WorkflowEntry {
+	if len(w.Workflow) != 0 {
+		return w.Workflow
+	}
+
+	singleEntry := WorkflowEntry{
+		ApplicationName: w.ApplicationName,
+		EnvironmentName: w.EnvironmentName,
+		PipelineName:    w.PipelineName,
+		Conditions:      w.Conditions,
+		DependsOn:       w.DependsOn,
+		When:            w.When,
+	}
+	return map[string]WorkflowEntry{
+		w.PipelineName: singleEntry,
+	}
+
+}
+
+func (e WorkflowEntry) checkValidity() error {
+	return nil
+}
+
+func (w Workflow) checkValidity() error {
+	mError := new(sdk.MultiError)
+
+	if len(w.Workflow) != 0 {
+		if w.ApplicationName != "" {
+			mError.Append(fmt.Errorf("Error: wrong usage: application %s not allowed here", w.ApplicationName))
+		}
+		if w.EnvironmentName != "" {
+			mError.Append(fmt.Errorf("Error: wrong usage: environment %s not allowed here", w.EnvironmentName))
+		}
+		if w.PipelineName != "" {
+			mError.Append(fmt.Errorf("Error: wrong usage: pipeline %s not allowed here", w.PipelineName))
+		}
+		if w.Conditions != nil {
+			mError.Append(fmt.Errorf("Error: wrong usage: conditions not allowed here"))
+		}
+		if len(w.When) != 0 {
+			mError.Append(fmt.Errorf("Error: wrong usage: when not allowed here"))
+		}
+		if len(w.DependsOn) != 0 {
+			mError.Append(fmt.Errorf("Error: wrong usage: depends_on not allowed here"))
+		}
+		if len(w.PipelineHooks) != 0 {
+			mError.Append(fmt.Errorf("Error: wrong usage: pipeline_hooks not allowed here"))
+		}
+	}
+
+	if mError.IsEmpty() {
+		return nil
+	}
+	return mError
+}
+
+func (w Workflow) checkDependencies() error {
+	mError := new(sdk.MultiError)
+	for s, e := range w.Entries() {
+		if err := e.checkDependencies(w); err != nil {
+			mError.Append(fmt.Errorf("Error: %s invalid: %v", s, err))
+		}
+	}
+
+	if mError.IsEmpty() {
+		return nil
+	}
+	return mError
+}
+
+func (e WorkflowEntry) checkDependencies(w Workflow) error {
+	mError := new(sdk.MultiError)
+nextDep:
+	for _, d := range e.DependsOn {
+		for s := range w.Workflow {
+			if s == d {
+				continue nextDep
+			}
+		}
+		mError.Append(fmt.Errorf("%s not found", d))
+	}
+	if mError.IsEmpty() {
+		return nil
+	}
+	return mError
+}
+
+//GetWorkflow returns a fresh sdk.Workflow
+func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
+	var wf = new(sdk.Workflow)
+	if err := w.checkValidity(); err != nil {
+		return nil, err
+	}
+	if err := w.checkDependencies(); err != nil {
+		return nil, err
+	}
+
+	entries := w.Entries()
+	var attempt int
+	// attempt is there to avoid infinit loop, but it should not happend becase we check validty and dependencies earlier
+	for len(entries) != 0 && attempt < 1000 {
+		for name, entry := range entries {
+			ok, err := entry.processNode(name, wf)
+			if err != nil {
+				return nil, err
+			}
+			if ok {
+				delete(entries, name)
+			}
+		}
+		attempt++
+	}
+	if len(entries) > 0 {
+		return nil, fmt.Errorf("Unable to process %+v", entries)
+	}
+	return wf, nil
+}
+
+func (e *WorkflowEntry) getNode(name string) (*sdk.WorkflowNode, error) {
+	node := &sdk.WorkflowNode{
+		Name: name,
+		Ref:  name,
+		Pipeline: sdk.Pipeline{
+			Name: e.PipelineName,
+		},
+	}
+
+	if e.ApplicationName != "" {
+		node.Context = new(sdk.WorkflowNodeContext)
+		node.Context.Application = &sdk.Application{
+			Name: e.ApplicationName,
+		}
+	}
+
+	if e.EnvironmentName != "" {
+		if node.Context == nil {
+			node.Context = new(sdk.WorkflowNodeContext)
+		}
+
+		node.Context.Environment = &sdk.Environment{
+			Name: e.EnvironmentName,
+		}
+	}
+
+	if e.Conditions != nil {
+		if node.Context == nil {
+			node.Context = new(sdk.WorkflowNodeContext)
+		}
+		node.Context.Conditions = *e.Conditions
+	}
+
+	for _, w := range e.When {
+		if node.Context == nil {
+			node.Context = new(sdk.WorkflowNodeContext)
+		}
+
+		switch w {
+		case "success":
+			node.Context.Conditions.PlainConditions = append(node.Context.Conditions.PlainConditions, sdk.WorkflowNodeCondition{
+				Operator: sdk.WorkflowConditionsOperatorEquals,
+				Value:    "Success",
+				Variable: "cds.status",
+			})
+		case "manual":
+			node.Context.Conditions.PlainConditions = append(node.Context.Conditions.PlainConditions, sdk.WorkflowNodeCondition{
+				Operator: sdk.WorkflowConditionsOperatorEquals,
+				Value:    "true",
+				Variable: "cds.manual",
+			})
+		default:
+			return nil, fmt.Errorf("Unsupported when condition %s", w)
+		}
+	}
+
+	return node, nil
+}
+
+func (e *WorkflowEntry) processNode(name string, w *sdk.Workflow) (bool, error) {
+	if err := e.checkValidity(); err != nil {
+		return false, err
+	}
+
+	var ancestorsExist = true
+	var ancestors []*sdk.WorkflowNode
+
+	if len(e.DependsOn) == 1 {
+		a := e.DependsOn[0]
+		//Looking for the ancestor
+		ancestor := w.GetNodeByName(a)
+		if ancestor == nil {
+			ancestorsExist = false
+		}
+		ancestors = append(ancestors, ancestor)
+	} else {
+		for _, a := range e.DependsOn {
+			//Looking for the ancestor
+			ancestor := w.GetNodeByName(a)
+			if ancestor == nil {
+				ancestorsExist = false
+				break
+			}
+			ancestors = append(ancestors, ancestor)
+		}
+	}
+
+	if !ancestorsExist {
+		return false, nil
+	}
+
+	n, err := e.getNode(name)
+	if err != nil {
+		return false, err
+	}
+
+	switch len(ancestors) {
+	case 0:
+		w.Root = n
+		return true, nil
+	case 1:
+		w.AddTrigger(ancestors[0].Name, *n)
+		return true, nil
+	}
+
+	//Try to find an existing join with the same references
+	var join *sdk.WorkflowNodeJoin
+	for i := range w.Joins {
+		j := &w.Joins[i]
+		var joinFound = true
+
+		for _, ref := range j.SourceNodeRefs {
+			var refFound bool
+			for _, a := range e.DependsOn {
+				if ref == a {
+					refFound = true
+					break
+				}
+			}
+			if !refFound {
+				joinFound = false
+				break
+			}
+		}
+
+		if joinFound {
+			join = j
+		}
+	}
+
+	var appendJoin bool
+	if join == nil {
+		join = &sdk.WorkflowNodeJoin{
+			SourceNodeRefs: e.DependsOn,
+		}
+		appendJoin = true
+	}
+
+	join.Triggers = append(join.Triggers, sdk.WorkflowNodeJoinTrigger{
+		WorkflowDestNode: *n,
+	})
+
+	if appendJoin {
+		w.Joins = append(w.Joins, *join)
+	}
+	return true, nil
+
 }

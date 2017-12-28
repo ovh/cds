@@ -93,7 +93,8 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	assert.Equal(t, `version: v1.0
+	assert.Equal(t, `name: test_1
+version: v1.0
 workflow:
   pip1:
     pipeline: pip1
@@ -191,7 +192,8 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	assert.Equal(t, `version: v1.0
+	assert.Equal(t, `name: test_1
+version: v1.0
 workflow:
   pip1:
     pipeline: pip1
