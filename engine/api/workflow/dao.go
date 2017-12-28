@@ -18,6 +18,21 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// Exists checks if a workflow exists
+func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
+	query := `
+		select count(1)
+		from workflow
+		join project on project.id = workflow.project_id
+		where project.projectkey = $1
+		and workflow.name = $2`
+	count, err := db.SelectInt(query, key, name)
+	if err != nil {
+		return false, sdk.WrapError(err, "Exists>")
+	}
+	return count > 0, nil
+}
+
 // UpdateLastModifiedDate Update workflow last modified date
 func UpdateLastModifiedDate(db gorp.SqlExecutor, store cache.Store, u *sdk.User, projKey string, w *sdk.Workflow) error {
 	t := time.Now()

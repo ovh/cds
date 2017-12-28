@@ -261,6 +261,7 @@ nextDep:
 //GetWorkflow returns a fresh sdk.Workflow
 func (w Workflow) GetWorkflow() (*sdk.Workflow, error) {
 	var wf = new(sdk.Workflow)
+	wf.Name = w.Name
 	if err := w.checkValidity(); err != nil {
 		return nil, err
 	}
