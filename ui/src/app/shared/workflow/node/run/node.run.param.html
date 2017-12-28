@@ -14,14 +14,21 @@
                                     [suggest]="[]"></app-parameter-list>
             </ng-container>
             <h3>{{ 'workflow_node_context_payload' | translate}}</h3>
-            <codemirror
-              [class.invalid]="invalidJSON"
-              [(ngModel)]="payloadString"
-              [config]="codeMirrorConfig"
-              (click)="changeCodeMirror($event)"
-              (change)="changeCodeMirror($event)"
-              #textareaCodeMirror>
-            </codemirror>
+            <ng-container *ngIf="!loadingBranches">
+                <codemirror
+                  [class.invalid]="invalidJSON"
+                  [(ngModel)]="payloadString"
+                  [config]="codeMirrorConfig"
+                  (click)="changeCodeMirror($event)"
+                  (change)="changeCodeMirror($event)"
+                  #textareaCodeMirror>
+                </codemirror>
+            </ng-container>
+            <ng-container *ngIf="loadingBranches">
+                <div class="ui info message">
+                    {{ 'common_loading' | translate }}
+                </div>
+            </ng-container>
             <div class="extra">
                 <ng-container *ngIf="invalidJSON">
                     {{ 'workflow_context_invalid' | translate}}

@@ -8,6 +8,7 @@ import {cloneDeep} from 'lodash';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Commit} from '../../../../model/repositories.model';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
+import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
 import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../../../model/workflow.run.model';
 import {Router} from '@angular/router';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
@@ -60,14 +61,17 @@ export class WorkflowNodeRunParamComponent {
 
     codeMirrorConfig: {};
     commits: Commit[] = [];
+    branches: string[] = [];
     payloadString: string;
     invalidJSON: boolean;
     isSync = false;
     loading = false;
     loadingCommits = false;
+    loadingBranches = false;
 
     constructor(private _modalService: SuiModalService, private _workflowRunService: WorkflowRunService, private _router: Router,
-                private _workflowCoreService: WorkflowCoreService, private _translate: TranslateService, private _toast: ToastService) {
+                private _workflowCoreService: WorkflowCoreService, private _translate: TranslateService, private _toast: ToastService,
+                private _appWorkflowService: ApplicationWorkflowService) {
         this.codeMirrorConfig = {
             matchBrackets: true,
             autoCloseBrackets: true,
@@ -95,8 +99,11 @@ export class WorkflowNodeRunParamComponent {
             return;
         }
 
-        // console.log(this.codemirror);
-        // CodeMirror.signal(this.codemirror, 'change');
+        this.loadingBranches = true;
+        this._appWorkflowService.getBranches(this.project.key, this.nodeToRun.context.application.name)
+            .pipe(finalize(() => this.loadingBranches = false))
+            .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
+
         if (this.num == null) {
             this.loadingCommits = true;
             this._workflowRunService.getRunNumber(this.project.key, this.workflow)
@@ -213,7 +220,7 @@ export class WorkflowNodeRunParamComponent {
         CodeMirror.showHint(this.codemirror.instance, CodeMirror.hint.payload, {
             completeSingle: true,
             closeCharacters: / /,
-            payloadCompletionList: ['"master"', '"mama"', '"develop"', '"feat"', '"test"'],
+            payloadCompletionList: this.branches,
             specialChars: ''
         });
     }
