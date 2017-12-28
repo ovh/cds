@@ -267,15 +267,19 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 }
 
 // LoadNodeContextByNodeName load the context for a given node name and user
-func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, nodeName string) (*sdk.WorkflowNodeContext, error) {
+func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, workflowName, nodeName string) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
 	query := `
 		SELECT workflow_node_context.id, workflow_node_context.workflow_node_id FROM workflow_node_context
 		JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
+		JOIN workflow ON workflow.id = workflow_node.workflow_id
+		JOIN project ON workflow.project_id = project.id
 		WHERE workflow_node.name = $1
+		AND project.id = $2
+		AND workflow.name = $3
 	`
-	if err := db.SelectOne(&dbnc, query, nodeName); err != nil {
-		return nil, sdk.WrapError(err, "LoadNodeContextByNodeName> Unable to load node context %s", nodeName)
+	if err := db.SelectOne(&dbnc, query, nodeName, proj.ID, workflowName); err != nil {
+		return nil, sdk.WrapError(err, "LoadNodeContextByNodeName> Unable to load node context %s in workflow %s in project %s", nodeName, workflowName, proj.Name)
 	}
 	ctx := sdk.WorkflowNodeContext(dbnc)
 
