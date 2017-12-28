@@ -126,6 +126,7 @@ func (w *Workflow) Nodes(withRoot bool) []WorkflowNode {
 	return res
 }
 
+//AddTrigger adds a trigger to the destination node from the node found by its name
 func (w *Workflow) AddTrigger(name string, dest WorkflowNode) {
 	if w.Root == nil {
 		return
@@ -139,6 +140,7 @@ func (w *Workflow) AddTrigger(name string, dest WorkflowNode) {
 	}
 }
 
+//AddTrigger adds a trigger to the destination node from the node found by its name
 func (n *WorkflowNode) AddTrigger(name string, dest WorkflowNode) {
 	if n.Name == name {
 		n.Triggers = append(n.Triggers, WorkflowNodeTrigger{
