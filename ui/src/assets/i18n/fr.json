@@ -204,6 +204,8 @@
   "usage_environment_list" : "Environnements utilisés",
 
   "danger_zone" : "Zone dangereuse",
+  
+  "downloads_title" : "Téléchargements",
 
   "environment_created" : "Environnement créé",
   "environment_deleted" : "Environnement supprimé",
@@ -263,7 +265,7 @@
   "navbar_admin_migration" : "Migration vers les workflows",
   "navbar_admin_status" : "CDS Engine - Statut",
   "navbar_documentation" : "Documentation",
-  "navbar_download" : "Téléchargement",
+  "navbar_downloads" : "Téléchargements",
   "navbar_groups" : "Groupes",
   "navbar_home" : "Accueil",
   "navbar_profile" : "Votre Compte",

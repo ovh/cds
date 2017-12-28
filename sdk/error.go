@@ -130,6 +130,9 @@ var (
 	ErrStepNotFound                          = Error{ID: 114, Status: http.StatusNotFound}
 	ErrWorkerModelAlreadyBooked              = Error{ID: 115, Status: http.StatusConflict}
 	ErrConditionsNotOk                       = Error{ID: 116, Status: http.StatusBadRequest}
+	ErrDownloadInvalidOS                     = Error{ID: 117, Status: http.StatusNotFound}
+	ErrDownloadInvalidArch                   = Error{ID: 118, Status: http.StatusNotFound}
+	ErrDownloadInvalidName                   = Error{ID: 119, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -248,6 +251,9 @@ var errorsAmericanEnglish = map[int]string{
 	ErrStepNotFound.ID:                          "Step not found",
 	ErrWorkerModelAlreadyBooked.ID:              "Worker Model already booked",
 	ErrConditionsNotOk.ID:                       "Cannot run this pipeline because launch conditions aren't ok",
+	ErrDownloadInvalidOS.ID:                     "OS Invalid. Should be linux, darwin, freebsd or windows",
+	ErrDownloadInvalidArch.ID:                   "Architecture invalid. Should be 386, i386, i686, amd64, x86_64 or arm (depends on OS)",
+	ErrDownloadInvalidName.ID:                   "Invalid name",
 }
 
 var errorsFrench = map[int]string{
@@ -366,6 +372,9 @@ var errorsFrench = map[int]string{
 	ErrStepNotFound.ID:                          "Step introuvable",
 	ErrWorkerModelAlreadyBooked.ID:              "Le modèle de worker est déjà réservé",
 	ErrConditionsNotOk.ID:                       "Impossible de démarrer ce pipeline car les conditions de lancement ne sont pas respectées",
+	ErrDownloadInvalidOS.ID:                     "OS invalide. L'OS doit être linux, darwin, freebsd ou windows",
+	ErrDownloadInvalidArch.ID:                   "Architecture invalide. L'architecture doit être 386, i386, i686, amd64, x86_64 ou arm (dépendant de l'OS)",
+	ErrDownloadInvalidName.ID:                   "Nom invalide",
 }
 
 var errorsLanguages = []map[int]string{

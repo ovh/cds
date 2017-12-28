@@ -50,6 +50,7 @@ import {PipelineAuditService} from './pipeline/pipeline.audit.service';
 import {EnvironmentService} from './environment/environment.service';
 import {ApplicationMigrateService} from './application/application.migration.service';
 import {NavbarService} from './navbar/navbar.service';
+import {DownloadService} from './download/download.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -70,6 +71,7 @@ export class ServicesModule {
                 ApplicationMigrateService,
                 ApplicationStore,
                 AuthentificationStore,
+                DownloadService,
                 CanActivateAuthRoute,
                 CanActivateAuthAdminRoute,
                 EnvironmentAuditService,
@@ -135,6 +137,7 @@ export {
     AuthentificationStore,
     CanActivateAuthRoute,
     CanActivateAuthAdminRoute,
+    DownloadService,
     EnvironmentAuditService,
     GroupService,
     HookService,
