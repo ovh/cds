@@ -28,14 +28,13 @@
             <a sm-item *ngIf="currentUser.admin" href="#" [routerLink]="['settings', 'user']">{{ 'navbar_users' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'group']">{{ 'navbar_groups' | translate }}</a>
             <a sm-item href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a>
+            <div class="divider"></div>
+            <a sm-item href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
+            <a sm-item href="https://ovh.github.io/cds/">{{ 'navbar_documentation' | translate }}</a>
         </sm-dropdown>
         <sm-dropdown icon="student" *ngIf="currentUser && currentUser.admin">
             <a sm-item href="#" [routerLink]="['admin', 'migration']">{{ 'navbar_admin_migration' | translate }}</a>
             <a sm-item href="#" [routerLink]="['admin', 'status']">{{ 'navbar_admin_status' | translate }}</a>
-        </sm-dropdown>
-        <sm-dropdown icon="help circle outline">
-            <a sm-item href="https://github.com/ovh/cds/releases/latest">{{ 'navbar_download' | translate }}</a>
-            <a sm-item href="https://ovh.github.io/cds/">{{ 'navbar_documentation' | translate }}</a>
         </sm-dropdown>
         <sm-select class="languageSelect"
             [options]="{'fullTextSearch': true}"

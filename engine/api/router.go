@@ -106,6 +106,16 @@ func (r *Router) ServeAbsoluteFile(uri, path, filename string) {
 	r.Mux.HandleFunc(r.Prefix+uri, f)
 }
 
+// ServeAbsoluteFileGeneric Serve file to download
+func (r *Router) ServeAbsoluteFileGeneric(uri, path, filename string) {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment;filename=\"%s\"", filename))
+		http.ServeFile(w, r, path)
+	}
+	r.Mux.HandleFunc(r.Prefix+uri, f)
+}
+
 func (r *Router) compress(fn http.HandlerFunc) http.HandlerFunc {
 	return handlers.CompressHandlerLevel(fn, gzip.DefaultCompression).ServeHTTP
 }

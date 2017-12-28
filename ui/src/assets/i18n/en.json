@@ -205,6 +205,8 @@
 
   "danger_zone" : "Danger Zone",
 
+  "downloads_title" : "Downloads",
+
   "environment_created" : "Environment added",
   "environment_create_placeholder" : "New environment",
   "environment_cloned" : "Environment cloned without password variables",
@@ -263,7 +265,7 @@
   "navbar_admin_migration" : "Migrate to workflows",
   "navbar_admin_status" : "CDS Engine Status",
   "navbar_documentation" : "Documentation",
-  "navbar_download" : "Download",
+  "navbar_downloads" : "Downloads",
   "navbar_groups" : "Groups",
   "navbar_home" : "Home Page",
   "navbar_profile" : "Profile",
