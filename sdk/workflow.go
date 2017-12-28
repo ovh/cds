@@ -360,6 +360,26 @@ func (w *Workflow) InvolvedEnvironments() []int64 {
 	return res
 }
 
+//Visit all the workflow and apply the visitor func on all nodes
+func (w *Workflow) Visit(visitor func(*WorkflowNode)) {
+	w.Root.Visit(visitor)
+	for i := range w.Joins {
+		for j := range w.Joins[i].Triggers {
+			n := &w.Joins[i].Triggers[j].WorkflowDestNode
+			n.Visit(visitor)
+		}
+	}
+}
+
+//Visit all the workflow and apply the visitor func on the current node and the children
+func (n *WorkflowNode) Visit(visitor func(*WorkflowNode)) {
+	visitor(n)
+	for i := range n.Triggers {
+		d := &n.Triggers[i].WorkflowDestNode
+		d.Visit(visitor)
+	}
+}
+
 //WorkflowNodeJoin aims to joins multiple node into multiple triggers
 type WorkflowNodeJoin struct {
 	ID             int64                     `json:"id" db:"id"`
