@@ -375,8 +375,8 @@ func (w *Workflow) Visit(visitor func(*WorkflowNode)) {
 func (n *WorkflowNode) Visit(visitor func(*WorkflowNode)) {
 	visitor(n)
 	for i := range n.Triggers {
-		n := &n.Triggers[i].WorkflowDestNode
-		n.Visit(visitor)
+		d := &n.Triggers[i].WorkflowDestNode
+		d.Visit(visitor)
 	}
 }
 
