@@ -517,7 +517,7 @@ var workflowImportCmd = cli.Command{
 		{
 			Kind:    reflect.Bool,
 			Name:    "force",
-			Usage:   "Override application if exists",
+			Usage:   "Override workflow if exists",
 			Default: "false",
 		},
 	},
