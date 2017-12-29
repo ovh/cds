@@ -138,6 +138,7 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 				throughTempURL, duration, err := w.client.QueueArtifactUpload(buildID, tag.Value, path)
 				if err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
+					return
 				}
 				if throughTempURL {
 					sendLog(fmt.Sprintf("File '%s' uploaded in %.2fs to object store", filename, duration.Seconds()))
@@ -146,12 +147,13 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 				}
 			}(p)
 			if len(filesPath) > 1 {
-				//Wait 3 second to et the object storage to set up all the things
+				//Wait 3 second to get the object storage to set up all the things
 				time.Sleep(3 * time.Second)
 			}
 		}
 		wg.Wait()
 		close(chanError)
+		<-chanError
 
 		if !globalError.IsEmpty() {
 			res.Status = sdk.StatusFail.String()
