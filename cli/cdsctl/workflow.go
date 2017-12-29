@@ -34,6 +34,7 @@ var (
 			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil),
 			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil),
 			cli.NewCommand(workflowExportCmd, workflowExportRun, nil),
+			cli.NewCommand(workflowImportCmd, workflowImportRun, nil),
 			cli.NewCommand(workflowPullCmd, workflowPullRun, nil),
 			workflowArtifact,
 		})
@@ -502,5 +503,47 @@ func workflowPullRun(c cli.Values) error {
 			fmt.Println(fname)
 		}
 	}
+	return nil
+}
+
+var workflowImportCmd = cli.Command{
+	Name:  "import",
+	Short: "Import a workflow",
+	Args: []cli.Arg{
+		{Name: "project-key"},
+		{Name: "filename"},
+	},
+	Flags: []cli.Flag{
+		{
+			Kind:    reflect.Bool,
+			Name:    "force",
+			Usage:   "Override application if exists",
+			Default: "false",
+		},
+	},
+}
+
+func workflowImportRun(c cli.Values) error {
+	path := c.GetString("filename")
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var format = "yaml"
+	if strings.HasSuffix(path, ".json") {
+		format = "json"
+	}
+
+	msgs, err := client.WorkflowImport(c.GetString("project-key"), f, format, c.GetBool("force"))
+	if err != nil {
+		return err
+	}
+
+	for _, s := range msgs {
+		fmt.Println(s)
+	}
+
 	return nil
 }
