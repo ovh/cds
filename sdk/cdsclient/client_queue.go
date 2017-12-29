@@ -183,9 +183,11 @@ func (c *client) QueueArtifactUpload(id int64, tag, filePath string) (bool, time
 	store := new(sdk.ArtifactsStore)
 	_, _ = c.GetJSON("/artifact/store", store)
 	if store.TemporaryURLSupported {
-		return true, time.Since(t0), c.queueIndirectArtifactUpload(id, tag, filePath)
+		err := c.queueIndirectArtifactUpload(id, tag, filePath)
+		return true, time.Since(t0), err
 	}
-	return false, time.Since(t0), c.queueDirectArtifactUpload(id, tag, filePath)
+	err := c.queueDirectArtifactUpload(id, tag, filePath)
+	return false, time.Since(t0), err
 }
 
 func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) error {
@@ -232,16 +234,16 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 		fmt.Printf("Uploading %s with to %s\n", art.Name, art.TempURL)
 	}
 
-	req, errRequest := http.NewRequest("PUT", art.TempURL, bytes.NewBuffer(fileContent))
-	if errRequest != nil {
-		return errRequest
-	}
-
 	//Post the file to the temporary URL
 	var retry = 10
 	var globalErr error
 	var body []byte
 	for i := 0; i < retry; i++ {
+		req, errRequest := http.NewRequest("PUT", art.TempURL, bytes.NewBuffer(fileContent))
+		if errRequest != nil {
+			return errRequest
+		}
+
 		var resp *http.Response
 		resp, globalErr = http.DefaultClient.Do(req)
 		if globalErr == nil {
