@@ -16,7 +16,6 @@ import (
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/keychain"
 )
 
 var loginCmd = cli.Command{
@@ -147,7 +146,7 @@ func doLogin(url, username, password string, env bool) error {
 		return err
 	}
 
-	if err := keychain.StoreSecret(url, username, token); err != nil {
+	if err := storeSecret(configFile, url, username, token); err != nil {
 		return err
 	}
 

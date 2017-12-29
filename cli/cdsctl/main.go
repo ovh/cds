@@ -63,7 +63,7 @@ func main() {
 		if cfg.Host != "" && cfg.User != "" && cfg.Token != "" {
 			client = cdsclient.New(*cfg)
 		} else {
-			client, err = loadClient(cfg)
+			client, err = loadClient(configFile, cfg)
 			cli.ExitOnError(err)
 		}
 	}

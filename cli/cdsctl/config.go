@@ -11,7 +11,6 @@ import (
 	"github.com/BurntSushi/toml"
 
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/keychain"
 )
 
 type config struct {
@@ -90,8 +89,8 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 	return conf, nil
 }
 
-func loadClient(c *cdsclient.Config) (cdsclient.Interface, error) {
-	user, secret, err := keychain.GetSecret(c.Host)
+func loadClient(configFile string, c *cdsclient.Config) (cdsclient.Interface, error) {
+	user, secret, err := loadSecret(configFile, c.Host)
 	if err != nil {
 		return nil, err
 	}
