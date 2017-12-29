@@ -4,6 +4,12 @@ import (
 	"fmt"
 )
 
+// URLGithubIssues contains a link to CDS Issues
+const URLGithubIssues = "https://github.com/ovh/cds/issues"
+
+// URLGithubReleases contains a link to CDS Official Releases
+const URLGithubReleases = "https://github.com/ovh/cds/releases"
+
 // Download contains a association name of binary / arch-os available
 type Download struct {
 	Name    string   `json:"name"`

@@ -15,7 +15,6 @@ import (
 )
 
 var cmdDownloadFromGithub bool
-var urlGitubReleases = "https://github.com/ovh/cds/releases"
 
 func cmdUpdate(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
@@ -63,7 +62,7 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		defer resp.Body.Close()
 
 		if contentType := getContentType(resp); contentType != "application/octet-stream" {
-			sdk.Exit("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s\n", contentType, urlGitubReleases)
+			sdk.Exit("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s\n", contentType, sdk.URLGithubReleases)
 		}
 
 		if resp.StatusCode != 200 {
