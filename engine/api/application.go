@@ -660,11 +660,7 @@ func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project,
 	}
 
 	// Insert Permission
-	if err := application.AddGroup(db, store, proj, newApp, u, newApp.ApplicationGroups...); err != nil {
-		return err
-	}
-
-	return nil
+	return application.AddGroup(db, store, proj, newApp, u, newApp.ApplicationGroups...)
 }
 
 func (api *API) updateApplicationHandler() Handler {

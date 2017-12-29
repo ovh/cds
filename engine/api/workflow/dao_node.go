@@ -154,6 +154,7 @@ type sqlContext struct {
 	Conditions                sql.NullString `db:"conditions"`
 }
 
+// UpdateNodeContext updates the node context in database
 func UpdateNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	var sqlContext = sqlContext{}
 	sqlContext.ID = c.ID

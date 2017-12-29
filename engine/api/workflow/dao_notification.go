@@ -99,7 +99,7 @@ func insertNotification(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow,
 	return nil
 }
 
-// PostUpdate is a db hook
+// PostInsert is a db hook
 func (no *Notification) PostInsert(db gorp.SqlExecutor) error {
 	b, err := json.Marshal(no.Settings)
 	if err != nil {
