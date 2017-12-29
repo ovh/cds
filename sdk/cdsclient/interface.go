@@ -79,7 +79,7 @@ type EnvironmentVariableClient interface {
 type DownloadClient interface {
 	Download() ([]sdk.Download, error)
 	DownloadURLFromAPI(name, os, arch string) string
-	DownloadURLFromGithub(ctx context.Context, name, os, arch string) (string, error)
+	DownloadURLFromGithub(name, os, arch string) (string, error)
 }
 
 // ActionClient exposes actions related functions

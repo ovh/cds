@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"runtime"
@@ -30,8 +29,6 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		fmt.Printf("CDS Worker version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 
-		ctx := context.Background()
-
 		var urlBinary string
 
 		if !cmdDownloadFromGithub {
@@ -48,7 +45,7 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			w.client = cdsclient.NewWorker("", "download")
 
 			var errGH error
-			urlBinary, errGH = w.client.DownloadURLFromGithub(ctx, "worker", runtime.GOOS, runtime.GOARCH)
+			urlBinary, errGH = w.client.DownloadURLFromGithub("worker", runtime.GOOS, runtime.GOARCH)
 			if errGH != nil {
 				sdk.Exit("Error while getting URL from Github: %s", errGH)
 			}

@@ -23,7 +23,7 @@ func (c *client) DownloadURLFromAPI(name, os, arch string) string {
 	return fmt.Sprintf("%s/download/%s/%s/%s", c.APIURL(), name, os, arch)
 }
 
-func (c *client) DownloadURLFromGithub(ctx context.Context, name, os, arch string) (string, error) {
+func (c *client) DownloadURLFromGithub(name, os, arch string) (string, error) {
 	var httpClient = &http.Client{Timeout: 10 * time.Second}
 
 	r, err := httpClient.Get("https://api.github.com/repos/ovh/cds/releases/latest")
