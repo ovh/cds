@@ -75,6 +75,13 @@ type EnvironmentVariableClient interface {
 	EnvironmentVariableUpdate(projectKey string, envName string, variable *sdk.Variable) error
 }
 
+// DownloadClient exposes download related functions
+type DownloadClient interface {
+	Download() ([]sdk.Download, error)
+	DownloadURLFromAPI(name, os, arch string) string
+	DownloadURLFromGithub(ctx context.Context, name, os, arch string) (string, error)
+}
+
 // ActionClient exposes actions related functions
 type ActionClient interface {
 	ActionDelete(actionName string) error
@@ -211,6 +218,7 @@ type Interface interface {
 	APIURL() string
 	ApplicationClient
 	ConfigUser() (map[string]string, error)
+	DownloadClient
 	EnvironmentClient
 	ExportImportInterface
 	GroupClient
