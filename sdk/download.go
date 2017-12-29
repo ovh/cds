@@ -1,5 +1,15 @@
 package sdk
 
+import (
+	"fmt"
+)
+
+// URLGithubIssues contains a link to CDS Issues
+const URLGithubIssues = "https://github.com/ovh/cds/issues"
+
+// URLGithubReleases contains a link to CDS Official Releases
+const URLGithubReleases = "https://github.com/ovh/cds/releases"
+
 // Download contains a association name of binary / arch-os available
 type Download struct {
 	Name    string   `json:"name"`
@@ -51,6 +61,8 @@ func IsBinaryOSArchValid(name, os, arch string) (string, error) {
 	return fixedArch, ErrDownloadInvalidArch
 }
 
+// getArchName returns 386 for "386", "i386", "i686"
+// amd64 for "amd64", "x86_64" (uname -m)
 func getArchName(a string) string {
 	switch a {
 	case "386", "i386", "i686":
@@ -59,6 +71,12 @@ func getArchName(a string) string {
 		return "amd64"
 	}
 	return a
+}
+
+// GetArtifactFilename returns artifact name cds-name-os-arch
+// this name is used on Github Releases
+func GetArtifactFilename(name, os, arch string) string {
+	return fmt.Sprintf("cds-%s-%s-%s", name, os, getArchName(arch))
 }
 
 // GetStaticDownloads returns default builded CDS Binaries
