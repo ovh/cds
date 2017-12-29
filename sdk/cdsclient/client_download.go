@@ -1,7 +1,6 @@
 package cdsclient
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
