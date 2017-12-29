@@ -18,7 +18,7 @@ var cmdDownloadFromGithub bool
 func cmdUpdate(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "update",
-		Short: "Update worker from CDS API",
+		Short: "Update worker from CDS API or from CDS Release",
 		Run:   updateCmd(w),
 	}
 	c.Flags().BoolVar(&cmdDownloadFromGithub, "from-github", false, "Update binary from latest github release")
