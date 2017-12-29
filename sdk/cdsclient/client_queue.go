@@ -234,16 +234,16 @@ func (c *client) queueIndirectArtifactUpload(id int64, tag, filePath string) err
 		fmt.Printf("Uploading %s with to %s\n", art.Name, art.TempURL)
 	}
 
-	req, errRequest := http.NewRequest("PUT", art.TempURL, bytes.NewBuffer(fileContent))
-	if errRequest != nil {
-		return errRequest
-	}
-
 	//Post the file to the temporary URL
 	var retry = 10
 	var globalErr error
 	var body []byte
 	for i := 0; i < retry; i++ {
+		req, errRequest := http.NewRequest("PUT", art.TempURL, bytes.NewBuffer(fileContent))
+		if errRequest != nil {
+			return errRequest
+		}
+
 		var resp *http.Response
 		resp, globalErr = http.DefaultClient.Do(req)
 		if globalErr == nil {
