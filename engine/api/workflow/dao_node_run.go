@@ -383,7 +383,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	//Get the commit hash for the node run number and the hash for the previous node run for the same branch and same remote
 	prev, errcurr := PreviousNodeRunVCSInfos(db, p.Key, wf, wNodeName, cur, app.ID, envID)
 	if errcurr != nil {
-		return nil, cur, sdk.WrapError(errcurr, "GetNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeName=%s, applicationID=%d, envID=%d)", number, wNodeName, app.ID, env.ID)
+		return nil, cur, sdk.WrapError(errcurr, "GetNodeRunBuildCommits> Cannot get build number and hashes (buildNumber=%d, nodeName=%s, applicationID=%d)", number, wNodeName, app.ID)
 	}
 
 	if prev.Hash == "" {
@@ -433,8 +433,10 @@ func PreviousNodeRunVCSInfos(db gorp.SqlExecutor, projectKey string, wf *sdk.Wor
 	var previous sdk.BuildNumberAndHash
 	var prevHash, prevBranch, prevRepository sql.NullString
 	var previousBuildNumber sql.NullInt64
-
 	lastRun, errL := LoadLastRun(db, projectKey, wf.Name, false)
+	if errL == sql.ErrNoRows || lastRun == nil {
+		return previous, nil
+	}
 	if errL != nil {
 		return previous, sdk.WrapError(errL, "PreviousNodeRunVCSInfos> Unable to load last run")
 	}
