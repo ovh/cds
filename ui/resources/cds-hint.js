@@ -48,6 +48,31 @@
         };
     });
 
+    CodeMirror.registerHelper("hint", "condition", function(cm, options) {
+        // Suggest list
+        var cdsCompletionList = options.cdsCompletionList;
+
+        // Get cursor position
+        var cur = cm.getCursor(0);
+
+        // Get current line
+        var text = cm.doc.children[0].lines[cur.line].text;
+        // Show nothing if there is no  {{. on the line
+        if (text.indexOf('cds_') === -1) {
+            return null;
+        }
+
+        var areaBefore = text.substring(0, cur.ch);
+
+        return {
+            list: cdsCompletionList.filter(function (l) {
+                return l.indexOf(areaBefore.substring(areaBefore.lastIndexOf('cds_'))) !== -1;
+            }),
+            from: { line: cur.line, ch: areaBefore.lastIndexOf('cds_')},
+            to: CodeMirror.Pos(cur.line, cur.ch)
+        };
+    });
+
     CodeMirror.registerHelper("hint", "payload", function(cm, options) {
         var branchPrefix = '"git.branch":';
         // Suggest list

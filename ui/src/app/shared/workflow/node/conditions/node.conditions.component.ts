@@ -1,18 +1,19 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {Workflow, WorkflowNode, WorkflowNodeCondition, WorkflowNodeConditions} from '../../../../model/workflow.model';
+import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
+import {Workflow, WorkflowNode, WorkflowNodeConditions} from '../../../../model/workflow.model';
 import {Project} from '../../../../model/project.model';
 import {WorkflowStore} from '../../../../service/workflow/workflow.store';
+import {VariableService} from '../../../../service/variable/variable.service';
 import {PermissionValue} from '../../../../model/permission.model';
 import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-ui';
 import {ActiveModal} from 'ng2-semantic-ui/dist';
-import {first} from 'rxjs/operators';
+import {first, finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-workflow-node-conditions',
     templateUrl: './node.conditions.html',
     styleUrls: ['./node.conditions.scss']
 })
-export class WorkflowNodeConditionsComponent implements OnInit {
+export class WorkflowNodeConditionsComponent {
 
     @Output() conditionsEvent = new EventEmitter<WorkflowNode>();
 
@@ -37,35 +38,35 @@ export class WorkflowNodeConditionsComponent implements OnInit {
 
     operators: {};
     conditionNames: Array<string>;
+    suggest: Array<string> = [];
+    loadingConditions = false;
 
     @ViewChild('nodeConditionsModal')
     public nodeConditionModal: ModalTemplate<boolean, boolean, void>;
     modal: ActiveModal<boolean, boolean, void>;
     modalConfig: TemplateModalConfig<boolean, boolean, void>;
 
-    constructor(private _workflowStore: WorkflowStore, private _suiService: SuiModalService) { }
+    constructor(private _workflowStore: WorkflowStore, private _suiService: SuiModalService, private _variableService: VariableService) { }
 
-    ngOnInit(): void {
-    }
-
-    addCondition(condition: WorkflowNodeCondition): void {
-        if (!this.node.context.conditions) {
-            this.node.context.conditions = new WorkflowNodeConditions();
-        }
-        if (!this.node.context.conditions.plain) {
-            this.node.context.conditions.plain = new Array<WorkflowNodeCondition>();
-        }
-        let index = this.node.context.conditions.plain.findIndex(c => c.variable === condition.variable);
-        if (index === -1) {
-            this.node.context.conditions.plain.push(condition);
-        }
+    conditionsChange(conditions: WorkflowNodeConditions): void {
+        this.node.context.conditions = conditions;
     }
 
     show(): void {
-        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id).pipe(first()).subscribe(wtc => {
-            this.operators = wtc.operators;
-            this.conditionNames = wtc.names;
-        });
+        this.loadingConditions = true;
+        this.suggest = [];
+        this._variableService.getContextVariable(this.project.key, this.node.pipeline_id)
+            .subscribe((suggest) => this.suggest = suggest);
+
+        this._workflowStore.getTriggerCondition(this.project.key, this.workflow.name, this.node.id)
+            .pipe(
+                first(),
+                finalize(() => this.loadingConditions = false)
+            )
+            .subscribe(wtc => {
+                this.operators = wtc.operators;
+                this.conditionNames = wtc.names;
+            });
         if (this.nodeConditionModal) {
             this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeConditionModal);
             this.modal = this._suiService.open(this.modalConfig);

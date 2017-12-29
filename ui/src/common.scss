@@ -136,4 +136,12 @@ pre {
   text-align: center;
 }
 
+.xcentered {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.ycentered {
+  left: 50%;
+  transform: translateX(-50%);
+}
 // End table

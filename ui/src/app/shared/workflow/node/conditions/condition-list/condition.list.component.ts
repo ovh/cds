@@ -11,7 +11,7 @@ import {PermissionValue} from '../../../../../model/permission.model';
 export class WorkflowNodeConditionListComponent extends Table {
 
     @Input() conditions: WorkflowNodeConditions;
-    @Output() conditionsChange = new EventEmitter<WorkflowNodeConditions>();
+    @Output() conditionChange = new EventEmitter<WorkflowNodeCondition[]>();
     @Input() workflow: Workflow;
     @Input() operators: {};
 
@@ -34,6 +34,6 @@ export class WorkflowNodeConditionListComponent extends Table {
     removeCondition(cond: WorkflowNodeCondition): void {
         let newConditions = new WorkflowNodeConditions();
         newConditions.plain = this.conditions.plain.filter(c => c.variable !== cond.variable)
-        this.conditionsChange.emit(newConditions);
+        this.conditionChange.emit(newConditions.plain);
     }
 }

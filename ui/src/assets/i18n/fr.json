@@ -204,7 +204,7 @@
   "usage_environment_list" : "Environnements utilisés",
 
   "danger_zone" : "Zone dangereuse",
-  
+
   "downloads_title" : "Téléchargements",
 
   "environment_created" : "Environnement créé",
@@ -634,6 +634,10 @@
   "workflow_node_condition_edit" : "Conditions de lancement",
   "workflow_node_condition_list" : "Liste des conditions de lancement",
   "workflow_node_condition_form" : "Ajouter une condition de lancement",
+  "workflow_node_condition_basic" : "Basique",
+  "workflow_node_condition_advanced" : "Avancé",
+  "workflow_node_condition_lua_title" : "Script Lua",
+  "workflow_node_condition_lua_help" : "(doit retourner un booléen)",
   "workflow_node_delete_alert" : "ATTENTION, cela va supprimer le pipeline et tout ce qu'il déclenche",
   "workflow_node_delete_btn" : "Enlever",
   "workflow_node_delete_title" : "Suppression de '{{node}}'",
