@@ -69,44 +69,32 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     fetchRepositoryInfos() {
         this.remotes = null;
         this.branches = null;
-        if (this.application.repository_fullname) {
-            this.loading.remote = true;
-            this.loading.branch = true;
-            Observable.zip(
-                this._appWorkflow.getRemotes(this.project.key, this.application.name),
-                this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote),
-                (remotes, branches) => {
-                    this.remotes = remotes;
-                    this.branches = branches;
-                    if (Array.isArray(remotes) && remotes.length) {
-                        let remoteFound = remotes.find((r) => r.name === this.applicationFilter.remote);
-                        this.applicationFilter.remote = remoteFound ? remoteFound.name : remotes[0].name;
-                    }
-
-                    if (!this.applicationFilter.branch) {
-                      this.setDefaultBranchFilter();
-                      this.changeWorkerEvent.emit(true);
-                    }
-
-                    this.loadVersions(this.project.key, this.application.name).subscribe();
+        this.loading.remote = true;
+        this.loading.branch = true;
+        Observable.zip(
+            this._appWorkflow.getRemotes(this.project.key, this.application.name),
+            this._appWorkflow.getBranches(this.project.key, this.application.name, this.applicationFilter.remote),
+            (remotes, branches) => {
+                this.remotes = remotes;
+                this.branches = branches;
+                if (Array.isArray(remotes) && remotes.length) {
+                    let remoteFound = remotes.find((r) => r.name === this.applicationFilter.remote);
+                    this.applicationFilter.remote = remoteFound ? remoteFound.name : remotes[0].name;
                 }
-            ).pipe(
-                finalize(() => {
-                    this.loading.remote = false;
-                    this.loading.branch = false;
-                })
-            ).subscribe();
-        } else {
-            this.loading.branch = false;
-            this.loading.remote = false;
 
-            this.loadVersions(this.project.key, this.application.name).subscribe(() => {
-                this.applicationFilter.branch = 'master';
-                this.applicationFilter.remote = '';
-                this.remotes = [];
-                this.branches = [];
-            });
-        }
+                if (!this.applicationFilter.branch) {
+                  this.setDefaultBranchFilter();
+                  this.changeWorkerEvent.emit(true);
+                }
+
+                this.loadVersions(this.project.key, this.application.name).subscribe();
+            }
+        ).pipe(
+            finalize(() => {
+                this.loading.remote = false;
+                this.loading.branch = false;
+            })
+        ).subscribe();
     }
 
     setDefaultBranchFilter() {

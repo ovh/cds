@@ -99,10 +99,13 @@ export class WorkflowNodeRunParamComponent {
             return;
         }
 
-        this.loadingBranches = true;
-        this._appWorkflowService.getBranches(this.project.key, this.nodeToRun.context.application.name)
-            .pipe(finalize(() => this.loadingBranches = false))
-            .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
+        // TODO delete .repository_fullname condition and update handler to get history branches of node_run (issue: #1815)
+        if (this.nodeToRun.context.application.repository_fullname) {
+            this.loadingBranches = true;
+            this._appWorkflowService.getBranches(this.project.key, this.nodeToRun.context.application.name)
+                .pipe(finalize(() => this.loadingBranches = false))
+                .subscribe((branches) => this.branches = branches.map((br) => '"' + br.display_id + '"'));
+        }
 
         if (this.num == null) {
             this.loadingCommits = true;

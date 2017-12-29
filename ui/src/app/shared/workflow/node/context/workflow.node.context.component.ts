@@ -70,7 +70,8 @@ export class WorkflowNodeContextComponent {
             this._variableService.getContextVariable(this.project.key, this.node.pipeline_id)
               .subscribe((suggest) => this.suggest = suggest);
 
-            if (this.node.context && this.node.context.application) {
+            // TODO delete .repository_fullname condition and update handler to get history branches of node_run (issue: #1815)
+            if (this.node.context && this.node.context.application && this.node.context.application.repository_fullname) {
                 this.loadingBranches = true;
                 this._appWorkflowService.getBranches(this.project.key, this.node.context.application.name)
                     .pipe(finalize(() => this.loadingBranches = false))
@@ -145,12 +146,12 @@ export class WorkflowNodeContextComponent {
         });
     }
 
-      showHint(cm, event) {
-          CodeMirror.showHint(this.codemirror.instance, CodeMirror.hint.payload, {
-              completeSingle: true,
-              closeCharacters: / /,
-              payloadCompletionList: this.branches,
-              specialChars: ''
-          });
-      }
+    showHint(cm, event) {
+        CodeMirror.showHint(this.codemirror.instance, CodeMirror.hint.payload, {
+            completeSingle: true,
+            closeCharacters: / /,
+            payloadCompletionList: this.branches,
+            specialChars: ''
+        });
+    }
 }
