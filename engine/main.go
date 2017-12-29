@@ -48,6 +48,11 @@ func init() {
 	startCmd.Flags().StringVar(&vaultToken, "vault-token", "", "(optional) Vault token to fetch secrets from vault")
 	//Version  command
 	mainCmd.AddCommand(versionCmd)
+	//Update  command
+	mainCmd.AddCommand(updateCmd)
+	updateCmd.Flags().BoolVar(&updateFromGithub, "from-github", false, "Update binary from latest github release")
+	updateCmd.Flags().StringVar(&updateURLAPI, "api", "", "Update binary from a CDS Engine API")
+
 	//Database command
 	mainCmd.AddCommand(database.DBCmd)
 	//Start command
