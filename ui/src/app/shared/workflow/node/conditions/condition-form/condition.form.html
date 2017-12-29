@@ -1,28 +1,60 @@
-<div class=" ui form">
-    <div class="fields">
-        <div class="five wide field">
-            <sm-select
-                *ngIf="names"
-                class="search" [options]="{'fullTextSearch': true}"
-                [(model)]="condition.variable"
-                [options]="{'fullTextSearch': true}">
-                <option *ngFor="let n of names" [value]="n">{{n}}</option>
-            </sm-select>
-        </div>
-        <div class="four wide field">
-            <sm-select [(model)]="condition.operator" *ngIf="operators">
-                <option *ngFor="let k of operators | keys" [value]="k">{{operators[k]}}</option>
-            </sm-select>
-        </div>
-        <div class="five wide field">
-            <div class="ui input">
-                <input type="text" [(ngModel)]="condition.value" placeholder="">
+<div class="ui top attached tabular menu">
+    <div class="pointing item" [class.active]="mode === 'basic'" (click)="mode = 'basic'">{{'workflow_node_condition_basic' | translate}}</div>
+    <div class="pointing item" [class.active]="mode === 'advanced'" (click)="mode = 'advanced'">{{'workflow_node_condition_advanced' | translate}}</div>
+</div>
+<div class="ui bottom attached active tab segment">
+    <ng-container *ngIf="mode === 'basic'">
+        <h4>{{ 'workflow_node_condition_list' | translate }}</h4>
+        <app-workflow-node-condition-list
+            [workflow]="workflow"
+            [(conditions)]="conditions"
+            [operators]="operators"
+            (conditionChange)="plainConditionsChange($event)">
+        </app-workflow-node-condition-list>
+        <h4>{{ 'workflow_node_condition_form' | translate}}</h4>
+        <div class="ui form">
+            <div class="fields">
+                <div class="five wide field">
+                    <sm-select
+                        *ngIf="names"
+                        class="search" [options]="{'fullTextSearch': true}"
+                        [(model)]="condition.variable"
+                        [options]="{'fullTextSearch': true}">
+                        <option *ngFor="let n of names" [value]="n">{{n}}</option>
+                    </sm-select>
+                </div>
+                <div class="four wide field">
+                    <sm-select [(model)]="condition.operator" *ngIf="operators">
+                        <option *ngFor="let k of operators | keys" [value]="k">{{operators[k]}}</option>
+                    </sm-select>
+                </div>
+                <div class="five wide field">
+                    <div class="ui input">
+                        <input type="text" [(ngModel)]="condition.value" placeholder="">
+                    </div>
+                </div>
+                <div class="two wide field">
+                    <button class="ui blue icon button" [disabled]="!condition.variable || !condition.value || !condition.operator" type="button" (click)="send()">
+                        <i class="plus icon"></i>
+                    </button>
+                </div>
             </div>
         </div>
-        <div class="two wide field">
-            <button class="ui blue icon button" [disabled]="!condition.variable || !condition.value || !condition.operator" type="button" (click)="send()">
-                <i class="plus icon"></i>
-            </button>
+    </ng-container>
+    <div *ngIf="mode === 'advanced'">
+        <div class="mb5">
+            <h4 class="inline">{{'workflow_node_condition_lua_title' | translate}}</h4>
+            <em> {{'workflow_node_condition_lua_help' | translate}}</em>
+            <div class="right floated">
+                <i class="book icon"></i><a href="https://devhints.io/lua">Lua Cheatsheet</a>
+            </div>
         </div>
+        <codemirror
+            [(ngModel)]="conditions.lua_script"
+            [config]="codeMirrorConfig"
+            (change)="changeCodeMirror($event)"
+            #textareaCodeMirror>
+        </codemirror>
+
     </div>
 </div>

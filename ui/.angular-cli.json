@@ -45,6 +45,7 @@
         "../node_modules/codemirror/mode/python/python.js",
         "../node_modules/codemirror/addon/hint/show-hint.js",
         "../node_modules/codemirror/mode/javascript/javascript.js",
+        "../node_modules/codemirror/mode/lua/lua.js",
         "../node_modules/codemirror/addon/edit/matchbrackets.js",
         "../node_modules/codemirror/addon/display/autorefresh.js",
         "../resources/cds-hint.js",
