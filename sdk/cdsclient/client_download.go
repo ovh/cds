@@ -45,7 +45,7 @@ func (c *client) DownloadURLFromGithub(name, os, arch string) (string, error) {
 		}
 	}
 
-	text := "Invalid Artifacts on latest release. Please try again in few minutes.\n"
+	text := fmt.Sprintf("Invalid Artifacts on latest release (%s %s %s). Please try again in few minutes.\n", name, os, arch)
 	text += fmt.Sprintf("If the problem persists, please open an issue on %s\n", sdk.URLGithubIssues)
 	text += fmt.Sprintf("You can manually download binary from latest release: %s\n", sdk.URLGithubReleases)
 	return "", fmt.Errorf(text)

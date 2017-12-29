@@ -2,6 +2,7 @@ package sdk
 
 import (
 	"fmt"
+	"net/http"
 )
 
 // URLGithubIssues contains a link to CDS Issues
@@ -108,4 +109,19 @@ func GetStaticDownloads() []Download {
 	}
 
 	return downloads
+}
+
+// CheckContentTypeBinary returns an error if Content-Type is not application/octet-stream
+func CheckContentTypeBinary(resp *http.Response) error {
+	var contentType string
+	for k, v := range resp.Header {
+		if k == "Content-Type" && len(v) >= 1 {
+			contentType = v[0]
+			break
+		}
+	}
+	if contentType != "application/octet-stream" {
+		return fmt.Errorf("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s\n", contentType, URLGithubReleases)
+	}
+	return nil
 }

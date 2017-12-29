@@ -21,6 +21,7 @@ var (
 func main() {
 	login := cli.NewCommand(loginCmd, loginRun, nil, cli.CommandWithoutExtraFlags)
 	signup := cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
+	update := cli.NewCommand(updateCmd, updateRun, nil, cli.CommandWithoutExtraFlags)
 	version := cli.NewCommand(versionCmd, versionRun, nil, cli.CommandWithoutExtraFlags)
 	monitoring := cli.NewGetCommand(monitoringCmd, monitoringRun, nil, cli.CommandWithoutExtraFlags)
 
@@ -37,6 +38,7 @@ func main() {
 			project,
 			worker,
 			workflow,
+			update,
 			usr,
 			monitoring,
 			health,
@@ -64,12 +66,6 @@ func main() {
 			client, err = loadClient(cfg)
 			cli.ExitOnError(err)
 		}
-
-		//Manage warnings
-		/*		if !internal.NoWarnings && cmd != user.Cmd {
-					displayWarnings()
-				}
-		*/
 	}
 
 	if err := root.Execute(); err != nil {
