@@ -508,6 +508,12 @@
 			"revisionTime": "2017-01-19T01:47:23Z"
 		},
 		{
+			"checksumSHA1": "zmDOwyuEQ1poCkfgkFCJfP8OAK0=",
+			"path": "github.com/google/go-github/github",
+			"revision": "0c3b302de2a6de84a2511db47ea1bb2ff8146830",
+			"revisionTime": "2017-12-21T17:37:07Z"
+		},
+		{
 			"checksumSHA1": "p3IB18uJRs4dL2K5yx24MrLYE9A=",
 			"path": "github.com/google/go-querystring/query",
 			"revision": "53e6ce116135b80d037921a7fdd5138cf32d7a8a",
