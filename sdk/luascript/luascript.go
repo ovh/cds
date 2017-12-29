@@ -19,7 +19,7 @@ type Check struct {
 }
 
 // NewCheck instanciates a check
-func NewCheck() *Check {
+func NewCheck() (*Check, error) {
 	state := lua.NewState(
 		lua.Options{
 			SkipOpenLibs:  true,
@@ -27,11 +27,16 @@ func NewCheck() *Check {
 			RegistrySize:  120 * 20,
 		})
 
+	// Sandboxing lua engine
+	if err := state.DoString("coroutine=nil;debug=nil;io=nil;open=nil;os=nil"); err != nil {
+		return nil, err
+	}
+
 	c := &Check{
 		state: state,
 	}
 	c.exceptionHandlerFunction = state.NewFunction(c.exceptionHandler)
-	return c
+	return c, nil
 }
 
 func (c *Check) exceptionHandler(L *lua.LState) int {
