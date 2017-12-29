@@ -6,10 +6,10 @@ import (
 	"runtime"
 
 	"github.com/inconshreveable/go-update"
+	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/spf13/cobra"
 )
 
 var updateFromGithub bool
