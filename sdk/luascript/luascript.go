@@ -61,8 +61,8 @@ func (c *Check) Perform(script string) error {
 		return err
 	}
 
-	lv := c.state.Get(-1)  // get the value at the top of the stack
-	if !lua.LVAsBool(lv) { // lv is neither nil nor false
+	lv := c.state.Get(-1) // get the value at the top of the stack
+	if lua.LVAsBool(lv) { // lv is neither nil nor false
 		ok = true
 	}
 
