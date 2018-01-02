@@ -344,7 +344,7 @@ func executeRepositoryWebHook(t *TaskExecution) (*sdk.WorkflowNodeRunHookEvent, 
 		}
 		payload["git.author"] = pushEvent.HeadCommit.Author.Username
 		payload["git.author.email"] = pushEvent.HeadCommit.Author.Email
-		payload["git.branch"] = strings.TrimPrefix(pushEvent.Ref, "refs/heads/")
+		payload["git.branch"] = strings.TrimPrefix(strings.TrimPrefix(pushEvent.Ref, "refs/heads/"), "refs/tags/")
 		payload["git.hash.before"] = pushEvent.Before
 		payload["git.hash"] = pushEvent.After
 		payload["git.repository"] = pushEvent.Repository.FullName
