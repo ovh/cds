@@ -26,11 +26,11 @@ With this type of conditions you can add multiple comparisons with a basic opera
 
 If you want some advanced run conditions like for example make some compute over specific variables and then compare their values you have the ability to use advanced run condtions. In fact, you are free to make any compute or comparison because advanced condition is a script that you write in [Lua](http://www.lua.org/) and MUST return a boolean (`true` if you want to run the pipeline or `false` if you don't). In this case the variables syntax is in unix case (example: `cds_dest_application`) and prefixed with `cds_`, `git_` or `workflow_`. Pay attention, ***all types of variables are string***. Inside the Lua editor on CDS you have the autocompletion of your variables, you just have write `cds_`, `git_` or `workflow_` to see suggestions. Please be aware that you can't have at the same time basic conditions and advanced conditions. ***The behavior when you have both is that ONLY advanced run conditions will be effective***.
 
-For example if you want to launch the pipeline if the value of `git_branch` is `master` OR if the value of `cds_manual` is `true` you have to write :
+For example if you want to launch the pipeline if the value of `cds_status` is `Success` and `git_branch` is `master` OR if the value of `cds_manual` is `true` you have to write :
 
 ```lua
 -- Pay attention ! All variables value are string so you compare cds_manual with the string "true" and not true
-return git_branch == "master" or cds_manual == "true"
+return cds_status == "Success" and (git_branch == "master" or cds_manual == "true")
 ```
 
 ![Pipeline basic run conditions](/images/workflow_pipeline_run_conditions_advanced.png)
