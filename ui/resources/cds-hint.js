@@ -51,6 +51,7 @@
     CodeMirror.registerHelper("hint", "condition", function(cm, options) {
         var cdsPrefix = 'cds_';
         var workflowPrefix = 'workflow_';
+        var gitPrefix = 'git_';
         // Suggest list
         var cdsCompletionList = options.cdsCompletionList;
 
@@ -60,7 +61,7 @@
         // Get current line
         var text = cm.doc.children[0].lines[cur.line].text;
         // Show nothing if there is no  {{. on the line
-        if (text.indexOf(cdsPrefix) === -1 && text.indexOf(workflowPrefix) === -1) {
+        if (text.indexOf(cdsPrefix) === -1 && text.indexOf(workflowPrefix) === -1 && text.indexOf(gitPrefix) === -1) {
             return null;
         }
 
@@ -72,7 +73,8 @@
         return {
             list: cdsCompletionList.filter(function (l) {
                 return l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(cdsPrefix))) !== -1 ||
-                    l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(workflowPrefix))) !== -1;
+                    l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(workflowPrefix))) !== -1 ||
+                    l.indexOf(areaBefore.substring(areaBefore.lastIndexOf(gitPrefix))) !== -1;
             }),
             from: { line: cur.line, ch: ch},
             to: CodeMirror.Pos(cur.line, cur.ch)
