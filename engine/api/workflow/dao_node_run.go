@@ -419,14 +419,14 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 	query := `
 					SELECT workflow_node_run.* FROM workflow_node_run
 					JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
-					WHERE vcs_branch = $3 AND num <= $4
-					ORDER BY id, number, subnumber DESC
+					WHERE vcs_branch = $3 AND workflow_node_run.num <= $4 AND workflow_node_run.id != $5
+					ORDER BY workflow_node_run.num, workflow_node_run.sub_num DESC
 					LIMIT 1 
 				`
 	var nodeRun sdk.WorkflowNodeRun
 	var rr = NodeRun{}
 	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.Number); err != nil {
-		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous RUN: %s [%s %d %s %d]", query, n.Name, workflowID, nr.VCSBranch, nr.Number)
+		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous RUN: %s [%s %d %s %d]", query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.ID)
 	}
 	pNodeRun, errF := fromDBNodeRun(rr)
 	if errF != nil {
