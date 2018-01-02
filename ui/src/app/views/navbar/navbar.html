@@ -30,7 +30,7 @@
             <a sm-item href="#" [routerLink]="['settings', 'worker-model']">{{ 'navbar_worker_models' | translate }}</a>
             <div class="divider"></div>
             <a sm-item href="#" [routerLink]="['settings', 'downloads']">{{ 'navbar_downloads' | translate }}</a>
-            <a sm-item href="https://ovh.github.io/cds/">{{ 'navbar_documentation' | translate }}</a>
+            <a sm-item href="https://ovh.github.io/cds/" target="_blank">{{ 'navbar_documentation' | translate }}</a>
         </sm-dropdown>
         <sm-dropdown icon="student" *ngIf="currentUser && currentUser.admin">
             <a sm-item href="#" [routerLink]="['admin', 'migration']">{{ 'navbar_admin_migration' | translate }}</a>
