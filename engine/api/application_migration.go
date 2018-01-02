@@ -51,10 +51,10 @@ func (api *API) migrationApplicationWorkflowCleanHandler() Handler {
 				return sdk.WrapError(errA, "migrationApplicationWorkflowHandler> Cannot load app")
 			}
 
+			if err := trigger.DeleteApplicationTriggers(tx, appID); err != nil {
+				return sdk.WrapError(err, "migrationApplicationWorkflowHandler.trigger.DeleteApplicationTriggers")
+			}
 			for _, appPip := range appToClean.Pipelines {
-				if err := trigger.DeletePipelineTriggers(tx, appPip.Pipeline.ID); err != nil {
-					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
-				}
 				if err := application.DeleteAllApplicationPipeline(tx, appToClean.ID); err != nil {
 					return sdk.WrapError(err, "migrationApplicationWorkflowHandler")
 				}
