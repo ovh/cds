@@ -277,17 +277,6 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	return nodeRunDB, nil
 }
 
-//updateNodeRunStatus update status of a workflow run node
-func updateNodeRunStatus(db gorp.SqlExecutor, ID int64, status string) error {
-	//Update workflow node run status
-	query := "UPDATE workflow_node_run SET status = $1, last_modified = $2, done = $3 WHERE id = $4"
-	now := time.Now()
-	if _, err := db.Exec(query, status, now, now, ID); err != nil {
-		return sdk.WrapError(err, "UpdateNodeRunStatus> Unable to set workflow_node_run id %d with status %s", ID, status)
-	}
-	return nil
-}
-
 //UpdateNodeRun updates in table workflow_node_run
 func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	log.Debug("workflow.UpdateNodeRun> node.id=%d, status=%s", n.ID, n.Status)

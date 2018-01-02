@@ -54,7 +54,7 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 			log.Warning("SendEvent> Cannot load workflow run %d: %s", wnr.WorkflowRunID, errWR)
 			continue
 		}
-		event.PublishWorkflowNodeRun(wnr, *wr, key)
+		event.PublishWorkflowNodeRun(db, wnr, *wr, key)
 	}
 	for _, wnjr := range wnjrs {
 		event.PublishWorkflowNodeJobRun(wnjr)

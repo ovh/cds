@@ -118,6 +118,48 @@ func AccessToEnvironment(key, env string, u *sdk.User, access int) bool {
 	return u.Permissions.EnvironmentsPerm[sdk.UserPermissionKey{Key: key, Name: env}] >= access
 }
 
+// ProjectPermissionUsers Get users that access to given project
+func ProjectPermissionUsers(db gorp.SqlExecutor, projectID int64, access int) ([]sdk.User, error) {
+	var query string
+
+	query = `
+			SELECT DISTINCT "user".id, "user".username, "user".data
+			FROM "group"
+			JOIN project_group ON "group".id = project_group.group_id
+			JOIN group_user ON "group".id = group_user.group_id
+	        JOIN "user" ON group_user.user_id = "user".id
+			WHERE project_group.project_id = $1
+			AND project_group.role >=$2
+		`
+
+	rows, err := db.Query(query, projectID, access)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return []sdk.User{}, nil
+		}
+		return []sdk.User{}, err
+	}
+	defer rows.Close()
+
+	users := []sdk.User{}
+	for rows.Next() {
+		u := sdk.User{}
+		var data string
+		if err := rows.Scan(&u.ID, &u.Username, &data); err != nil {
+			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while scanning user : %s", err)
+			continue
+		}
+
+		uTemp := &sdk.User{}
+		if err := json.Unmarshal([]byte(data), uTemp); err != nil {
+			log.Warning("permission.ApplicationPipelineEnvironmentGroups> error while parsing user : %s", err)
+			continue
+		}
+		users = append(users, *uTemp)
+	}
+	return users, nil
+}
+
 // ApplicationPipelineEnvironmentUsers returns users list with expected access to application/pipeline/environment
 func ApplicationPipelineEnvironmentUsers(db gorp.SqlExecutor, appID, pipID, envID int64, access int) ([]sdk.User, error) {
 	var query string
