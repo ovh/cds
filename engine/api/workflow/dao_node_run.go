@@ -329,6 +329,10 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	cur.Branch = nodeRun.VCSBranch
 	cur.Hash = nodeRun.VCSHash
 
+	if cur.Remote == "" {
+		cur.Remote = app.RepositoryFullname
+	}
+
 	if cur.Branch == "" {
 		branches, errBr := client.Branches(cur.Remote)
 		if errBr != nil {
