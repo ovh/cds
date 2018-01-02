@@ -259,6 +259,15 @@ Types There are 2 types of worker models:
     </item>
     
     <item>
+      <title>Building Workflows</title>
+      <link>https://ovh.github.io/cds/building-workflows/building-workflows/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/building-workflows/building-workflows/</guid>
+      <description> Run conditions on pipeline  </description>
+    </item>
+    
+    <item>
       <title>Configuration</title>
       <link>https://ovh.github.io/cds/installation/installation.configuration/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -598,6 +607,16 @@ Parameters  url - mandatory - the git URL must include information about the tra
       <description> JUnit is a builtin action, you can&amp;rsquo;t modify it.
 This action parses a given Junit formatted XML file to extract its test results.
 Parameters  path: Path to a junit xml file  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
+    </item>
+    
+    <item>
+      <title>Run conditions on pipeline</title>
+      <link>https://ovh.github.io/cds/building-workflows/building-workflows.pipeline-run-conditions/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/building-workflows/building-workflows.pipeline-run-conditions/</guid>
+      <description>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
+If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditons like this :</description>
     </item>
     
     <item>

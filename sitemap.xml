@@ -90,6 +90,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/building-workflows/building-workflows/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/installation/installation.configuration/</loc>
   </url>
   
@@ -212,6 +216,11 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/building-workflows/</loc>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/categories/</loc>
     <priority>0</priority>
   </url>
@@ -241,6 +250,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.junit/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/building-workflows/building-workflows.pipeline-run-conditions/</loc>
   </url>
   
   <url>
