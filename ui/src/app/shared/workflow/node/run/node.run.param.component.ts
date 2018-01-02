@@ -13,7 +13,7 @@ import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../
 import {Router} from '@angular/router';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
-import {finalize, first} from 'rxjs/operators';
+import {finalize, first, debounceTime} from 'rxjs/operators';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../toast/ToastService';
 declare var CodeMirror: any;
@@ -59,6 +59,7 @@ export class WorkflowNodeRunParamComponent {
 
     _nodeToRun: WorkflowNode;
 
+    lastNum: number;
     codeMirrorConfig: {};
     commits: Commit[] = [];
     branches: string[] = [];
@@ -110,8 +111,11 @@ export class WorkflowNodeRunParamComponent {
         if (this.num == null) {
             this.loadingCommits = true;
             this._workflowRunService.getRunNumber(this.project.key, this.workflow)
-                .pipe(first())
+                .pipe(
+                    first()
+                )
                 .subscribe(n => {
+                    this.lastNum = n.num + 1;
                     this.getCommits(n.num + 1);
                 });
             return;
@@ -121,12 +125,26 @@ export class WorkflowNodeRunParamComponent {
 
     getCommits(num: number) {
         let branch;
+        let currentContext;
         if (this.nodeToRun.context && this.nodeToRun.context.default_payload) {
-            branch = this.nodeToRun.context.default_payload['git.branch'];
+            currentContext = this.nodeToRun.context.default_payload;
+        }
+
+        try {
+            currentContext = JSON.parse(this.payloadString);
+            this.invalidJSON = false;
+        } catch (e) {
+            this.invalidJSON = true;
+        }
+
+        branch = currentContext['git.branch'];
+        if (branch && !this.loadingBranches && this.branches.indexOf('"' + branch + '"') === -1) {
+            return;
         }
         this.loadingCommits = true;
         this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch)
           .pipe(
+            debounceTime(500),
             finalize(() => this.loadingCommits = false)
           )
           .subscribe((commits) => this.commits = commits);
@@ -206,6 +224,7 @@ export class WorkflowNodeRunParamComponent {
     }
 
     changeCodeMirror(eventRoot: Event): void {
+        let num = this.num;
         if (!this.codemirror || !this.codemirror.instance) {
             return
         }
@@ -216,6 +235,10 @@ export class WorkflowNodeRunParamComponent {
             if (!cm.state.completionActive && event.keyCode !== 32) {
                 this.showHint(cm, event);
             }
+        });
+
+        this.codemirror.instance.on('endCompletion', (cm, event) => {
+            this.getCommits(num || this.lastNum);
         });
     }
 

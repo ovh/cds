@@ -99,9 +99,13 @@
         }
 
         var lastIndexOfBranchPrefix = text.lastIndexOf(branchPrefix);
-        var areaBefore = text.substring(0, cur.ch);
         var areaAfterPrefix = text.substring(lastIndexOfBranchPrefix + branchPrefix.length + 1);
         var lastIndexOfComma = areaAfterPrefix.indexOf(',');
+        if (lastIndexOfComma !== -1 && cur.ch >= lastIndexOfComma) {
+            return null;
+        }
+
+        var areaBefore = text.substring(0, cur.ch);
 
         if (lastIndexOfComma === -1) {
             lastIndexOfComma += text.length + 1;
