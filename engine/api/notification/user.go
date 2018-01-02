@@ -137,7 +137,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 }
 
 // GetUserWorkflowEvents return events to send for the given workflow run
-func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
+func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
 	events := []sdk.EventNotif{}
 
 	//Compute notification
@@ -154,7 +154,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, nr sdk.Workf
 	}
 
 	for _, notif := range wr.Workflow.Notifications {
-		if ShouldSendUserWorkflowNotification(notif, nr) {
+		if ShouldSendUserWorkflowNotification(notif, nr, previousWR) {
 			switch notif.Type {
 			case sdk.JabberUserNotification:
 				jn, ok := notif.Settings.(*sdk.JabberEmailUserNotificationSettings)
@@ -222,7 +222,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, nr sdk.Workf
 }
 
 // ShouldSendUserWorkflowNotification test if the notificationhas to be sent for the given workflow node run
-func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun sdk.WorkflowNodeRun) bool {
+func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun sdk.WorkflowNodeRun, previousNodeRun sdk.WorkflowNodeRun) bool {
 	var check = func(s sdk.UserNotificationEventType) bool {
 		switch s {
 		case sdk.UserNotificationAlways:
@@ -230,8 +230,10 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 		case sdk.UserNotificationNever:
 			return false
 		case sdk.UserNotificationChange:
-			// TODO get previous
-			return true
+			if previousNodeRun.ID != 0 {
+				return true
+			}
+			return previousNodeRun.Status != nodeRun.Status
 		}
 		return false
 	}

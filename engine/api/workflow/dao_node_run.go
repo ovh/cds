@@ -414,6 +414,28 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	return res, cur, nil
 }
 
+// PreviousNodeRun find previous node run
+func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.WorkflowNode, workflowID int64) (sdk.WorkflowNodeRun, error) {
+	query := `
+					SELECT workflow_node_run.* FROM workflow_node_run
+					JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
+					WHERE vcs_branch = $3 AND num <= $4
+					ORDER BY id, number, subnumber DESC
+					LIMIT 1 
+				`
+	var nodeRun sdk.WorkflowNodeRun
+	var rr = NodeRun{}
+	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.Number); err != nil {
+		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous RUN: %s [%s %d %s %d]", query, n.Name, workflowID, nr.VCSBranch, nr.Number)
+	}
+	pNodeRun, errF := fromDBNodeRun(rr)
+	if errF != nil {
+		return nodeRun, sdk.WrapError(errF, "PreviousNodeRun> Cannot read node run")
+	}
+	nodeRun = *pNodeRun
+	return nodeRun, nil
+}
+
 //PreviousNodeRunVCSInfos returns a struct with BuildNumber, Commit Hash, Branch, Remote, Remote_url
 //for the current node run and the previous one on the same branch.
 //Returned value may be zero if node run are not found
