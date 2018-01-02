@@ -153,6 +153,7 @@
   "common_description" : "Description",
   "common_disabled_f" :"Disabled",
   "common_documentation" : "Documentation",
+  "common_cds_documentation" : "CDS Documentation",
   "common_download" : "Download",
   "common_duration_title" : "Duration: ",
   "common_enable" : "Enable",
@@ -631,6 +632,7 @@
   "workflow_run_node_job_queued" : "Queued {{time}} ago",
 
   "workflow_node_edition" : "Edit your configuration",
+  "workflow_node_condition_warning" : "Attention if you have basic conditions and advanced at the same time, only advanced conditions will be effective.",
   "workflow_node_condition_edit" : "Edit run conditions",
   "workflow_node_condition_list" : "Run conditions list",
   "workflow_node_condition_form" : "Add a run condition",

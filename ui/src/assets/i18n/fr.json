@@ -153,6 +153,7 @@
   "common_description" : "Description",
   "common_disabled_f" :"Désactivée",
   "common_documentation" : "Documentation",
+  "common_cds_documentation" : "Documentation CDS",
   "common_download" : "Télécharger",
   "common_duration_title" : "Durée : ",
   "common_enable" : "Actif",
@@ -631,6 +632,7 @@
   "workflow_run_node_job_queued" : "Attente depuis {{time}}",
 
   "workflow_node_edition" : "Configuration",
+  "workflow_node_condition_warning" : "Attention si vous avez des conditions basiques et avancées, seulement les conditions avancées seront éffectives.",
   "workflow_node_condition_edit" : "Conditions de lancement",
   "workflow_node_condition_list" : "Liste des conditions de lancement",
   "workflow_node_condition_form" : "Ajouter une condition de lancement",

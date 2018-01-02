@@ -42,11 +42,16 @@
         </div>
     </ng-container>
     <div *ngIf="mode === 'advanced'">
-        <div class="mb5">
+        <div class="mb">
             <h4 class="inline">{{'workflow_node_condition_lua_title' | translate}}</h4>
             <em> {{'workflow_node_condition_lua_help' | translate}}</em>
             <div class="right floated">
-                <i class="book icon"></i><a href="https://devhints.io/lua">Lua Cheatsheet</a>
+                <div>
+                    <i class="book icon"></i><a href="https://devhints.io/lua">Lua Cheatsheet</a>
+                </div>
+                <div>
+                    <i class="book icon"></i><a href="https://ovh.github.io/cds/building-workflows/building-workflows.pipeline-run-conditions/">{{'common_cds_documentation' | translate}}</a>
+                </div>
             </div>
         </div>
         <codemirror
