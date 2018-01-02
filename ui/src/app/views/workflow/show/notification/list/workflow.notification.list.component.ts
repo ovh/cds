@@ -42,6 +42,9 @@ export class WorkflowNotificationListComponent {
         if (!workflowToUpdate.notifications) {
             workflowToUpdate.notifications = new Array<WorkflowNotification>();
         }
+        if (n.settings && n.settings.recipients) {
+            n.settings.recipients = n.settings.recipients.map(r => r.trim());
+        }
         workflowToUpdate.notifications.push(n);
 
         this.updateWorkflow(workflowToUpdate);
@@ -65,6 +68,9 @@ export class WorkflowNotificationListComponent {
 
     updateNotification(n: WorkflowNotification): void {
         let workflowToUpdate = cloneDeep(this.workflow);
+        if (n.settings && n.settings.recipients) {
+            n.settings.recipients = n.settings.recipients.map(r => r.trim());
+        }
         workflowToUpdate.notifications = workflowToUpdate.notifications.map(notif => {
             if (notif.id !== n.id) {
                 return notif;
