@@ -92,6 +92,12 @@ ul {
           font-size: 0.8rem;
           font-weight: 600;
         }
+        .warningPip {
+          position: absolute;
+          right: 0px;
+          top: 2px;
+          font-size: 1rem;
+        }
       }
 
       .job.ui.segment {

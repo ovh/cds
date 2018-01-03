@@ -27,7 +27,7 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
 
     pipelineStatusEnum = PipelineStatus;
     selectedRunJob: WorkflowNodeJobRun;
-    mapJobStatus: Map<number, string> = new Map<number, string>();
+    mapJobStatus: Map<number, {status: string, warnings: number}> = new Map<number, {status: string, warnings: number}>();
     mapStepStatus: Map<string, StepStatus> = new Map<string, StepStatus>();
 
     previousStatus: string;
@@ -97,15 +97,20 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
                 }
                 if (s.run_jobs) {
                     s.run_jobs.forEach((rj, rjIndex) => {
-                        // Update job status
-                        this.mapJobStatus.set(rj.job.pipeline_action_id, rj.status);
-
+                        let warnings = 0;
                         // Update map step status
                         if (rj.job.step_status) {
                             rj.job.step_status.forEach(ss => {
                                 this.mapStepStatus[rj.job.pipeline_action_id + '-' + ss.step_order] = ss;
+                                if (ss.status === PipelineStatus.FAIL && rj.job.action.actions[ss.step_order] &&
+                                    rj.job.action.actions[ss.step_order].optional) {
+                                    warnings++;
+                                }
                             });
                         }
+
+                        // Update job status
+                        this.mapJobStatus.set(rj.job.pipeline_action_id, {status: rj.status, warnings});
 
                         // Select temp job
                         if (!this.selectedRunJob && sIndex === 0 && rjIndex === 0) {
