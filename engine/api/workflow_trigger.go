@@ -71,8 +71,8 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 				return sdk.WrapError(errp, "getWorkflowTriggerConditionHandler> Unable to load build parameters from workflow")
 			}
 			sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, "")
-			sdk.AddParameter(&params, "cds.manual", sdk.StringParameter, "")
 			sdk.AddParameter(&params, "cds.status", sdk.StringParameter, "")
+			sdk.AddParameter(&params, "cds.manual", sdk.StringParameter, "")
 
 			if refNode.Context != nil && refNode.Context.Application != nil {
 				sdk.AddParameter(&params, "cds.dest.application", sdk.StringParameter, "")
@@ -80,7 +80,6 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			if refNode.Context != nil && refNode.Context.Environment != nil {
 				sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, "")
 			}
-
 		}
 		for _, p := range params {
 			data.ConditionNames = append(data.ConditionNames, p.Name)

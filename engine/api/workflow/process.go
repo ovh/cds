@@ -398,6 +398,12 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 			Type:  sdk.StringParameter,
 			Value: "true",
 		})
+	} else {
+		run.BuildParameters = append(run.BuildParameters, sdk.Parameter{
+			Name:  "cds.manual",
+			Type:  sdk.StringParameter,
+			Value: "false",
+		})
 	}
 
 	cdsStatusParam := sdk.Parameter{
