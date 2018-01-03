@@ -378,7 +378,6 @@ func (api *API) deleteEnvironmentHandler() Handler {
 			return sdk.WrapError(err, "deleteEnvironmentHandler> Cannot commit transaction")
 		}
 
-		log.Info("Environment %s deleted.\n", environmentName)
 		var errEnvs error
 		p.Environments, errEnvs = environment.LoadEnvironments(api.mustDB(), p.Key, true, getUser(ctx))
 		if errEnvs != nil {

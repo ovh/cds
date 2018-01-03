@@ -114,6 +114,10 @@ func (s *SwiftStore) Delete(o Object) error {
 	escape(container, object)
 
 	if err := s.ObjectDelete(container, object); err != nil {
+		if err.Error() == "Object Not Found" {
+			log.Info("Delete.SwiftStore: %s/%s: %s", container, object, err)
+			return nil
+		}
 		return sdk.WrapError(err, "SwiftStore> Unable to delete object")
 	}
 	return nil

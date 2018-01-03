@@ -453,12 +453,12 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 
 		if !checkNodeRunCondition(w, *dest, params) {
-			log.Info("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
+			log.Debug("processWorkflowNodeRun> Avoid trigger workflow from hook %s", hook.UUID)
 			return false, nil
 		}
 	} else {
 		if !checkNodeRunCondition(w, *n, run.BuildParameters) {
-			log.Info("processWorkflowNodeRun> Condition failed")
+			log.Debug("processWorkflowNodeRun> Condition failed %d/%d", w.ID, n.ID)
 			return false, nil
 		}
 	}

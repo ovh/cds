@@ -13,7 +13,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/user"
 	"github.com/ovh/cds/sdk"
-	"github.com/ovh/cds/sdk/log"
 )
 
 func (api *API) getGroupHandler() Handler {
@@ -276,7 +275,6 @@ func (api *API) removeUserFromGroupHandler() Handler {
 			return sdk.WrapError(err, "removeUserFromGroupHandler: Cannot delete user %s from group %s", userName, g.Name)
 		}
 
-		log.Info("User %s removed from group %s", userName, name)
 		return nil
 	}
 }
