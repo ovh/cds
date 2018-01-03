@@ -153,6 +153,22 @@ func TestInterpolate(t *testing.T) {
 			want: "a valueKey and another key value valueKeyAnother",
 		},
 		{
+			name: "key with - and a unknown key",
+			args: args{
+				input: "a {{.cds.app.my-key}}.{{.cds.app.foo-key}} and another key value {{.cds.app.my-key}}",
+				vars:  map[string]string{"cds.app.my-key": "value-key"},
+			},
+			want: "a value-key.{{.cds.app.foo-key}} and another key value value-key",
+		},
+		{
+			name: "key with - and a empty key",
+			args: args{
+				input: "a {{.cds.app.my-key}}.{{.cds.app.foo-key}}.and another key value {{.cds.app.my-key}}",
+				vars:  map[string]string{"cds.app.my-key": "value-key", "cds.app.foo-key": ""},
+			},
+			want: "a value-key..and another key value value-key",
+		},
+		{
 			name: "tiret",
 			args: args{
 				input: `"METRICS_WRITE_TOKEN": "{{.cds.env.metrics-exposer.write.token}}"`,
@@ -164,31 +180,31 @@ func TestInterpolate(t *testing.T) {
 			name: "config",
 			args: args{
 				input: `
-{
-"env": {
-"KEYA":"{{.cds.env.vAppKey}}",
-"KEYB": "{{.cds.env.vAppKeyHatchery}}",
-"ADDR":"{{.cds.env.addr}}"
-},
-"labels": {
-"TOKEN": "{{.cds.env.token}}",
-"HOST": "cds-hatchery-marathon-{{.cds.env.name}}.{{.cds.env.vHost}}",
-}
-}`,
+		{
+		"env": {
+		"KEYA":"{{.cds.env.vAppKey}}",
+		"KEYB": "{{.cds.env.vAppKeyHatchery}}",
+		"ADDR":"{{.cds.env.addr}}"
+		},
+		"labels": {
+		"TOKEN": "{{.cds.env.token}}",
+		"HOST": "cds-hatchery-marathon-{{.cds.env.name}}.{{.cds.env.vHost}}",
+		}
+		}`,
 				vars: map[string]string{"cds.env.name": "", "cds.env.token": "aValidTokenString", "cds.env.addr": "", "cds.env.vAppKey": "aValue"},
 			},
 			want: `
-{
-"env": {
-"KEYA":"aValue",
-"KEYB": "{{.cds.env.vAppKeyHatchery}}",
-"ADDR":""
-},
-"labels": {
-"TOKEN": "aValidTokenString",
-"HOST": "cds-hatchery-marathon-.{{.cds.env.vHost}}",
-}
-}`,
+		{
+		"env": {
+		"KEYA":"aValue",
+		"KEYB": "{{.cds.env.vAppKeyHatchery}}",
+		"ADDR":""
+		},
+		"labels": {
+		"TOKEN": "aValidTokenString",
+		"HOST": "cds-hatchery-marathon-.{{.cds.env.vHost}}",
+		}
+		}`,
 		},
 	}
 	for _, tt := range tests {
