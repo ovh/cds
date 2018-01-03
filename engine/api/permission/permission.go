@@ -121,7 +121,7 @@ func AccessToEnvironment(key, env string, u *sdk.User, access int) bool {
 // ProjectPermissionUsers Get users that access to given project
 func ProjectPermissionUsers(db gorp.SqlExecutor, projectID int64, access int) ([]sdk.User, error) {
 	var query string
-
+	users := []sdk.User{}
 	query = `
 			SELECT DISTINCT "user".id, "user".username, "user".data
 			FROM "group"
@@ -135,13 +135,12 @@ func ProjectPermissionUsers(db gorp.SqlExecutor, projectID int64, access int) ([
 	rows, err := db.Query(query, projectID, access)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return []sdk.User{}, nil
+			return users, nil
 		}
-		return []sdk.User{}, err
+		return users, err
 	}
 	defer rows.Close()
 
-	users := []sdk.User{}
 	for rows.Next() {
 		u := sdk.User{}
 		var data string
@@ -164,7 +163,7 @@ func ProjectPermissionUsers(db gorp.SqlExecutor, projectID int64, access int) ([
 func ApplicationPipelineEnvironmentUsers(db gorp.SqlExecutor, appID, pipID, envID int64, access int) ([]sdk.User, error) {
 	var query string
 	var args []interface{}
-
+	users := []sdk.User{}
 	if envID == sdk.DefaultEnv.ID {
 		query = `
 			SELECT 	DISTINCT "user".id, "user".username, "user".data
@@ -201,13 +200,12 @@ func ApplicationPipelineEnvironmentUsers(db gorp.SqlExecutor, appID, pipID, envI
 	rows, err := db.Query(query, args...)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return []sdk.User{}, nil
+			return users, nil
 		}
-		return []sdk.User{}, err
+		return users, err
 	}
 	defer rows.Close()
 
-	users := []sdk.User{}
 	for rows.Next() {
 		u := sdk.User{}
 		var data string

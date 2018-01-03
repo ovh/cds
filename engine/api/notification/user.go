@@ -63,6 +63,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 				jn, ok := notif.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
 					log.Error("notification.GetUserEvents> cannot deal with %s", notif)
+					continue
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
@@ -99,6 +100,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 				jn, ok := notif.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
 					log.Error("notification.GetUserEvents> cannot deal with %s", notif)
+					continue
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
@@ -160,6 +162,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 				jn, ok := notif.Settings.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
 					log.Error("notification.GetUserWorkflowEvents[Jabber]> cannot deal with %s", notif)
+					continue
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
@@ -184,6 +187,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 				jn, ok := notif.Settings.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
 					log.Error("notification.GetUserEvents[Email]> cannot deal with %s", notif)
+					continue
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
