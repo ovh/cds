@@ -182,13 +182,6 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
         }
     }
 
-    canDisplayTag(tg: WorkflowRunTags): boolean {
-        if (this.tagToDisplay) {
-            return this.tagToDisplay.indexOf(tg.tag) !== -1;
-        }
-        return false;
-    }
-
     ngOnDestroy(): void {
         if (this.runWorker) {
             this.runWorker.stop();
