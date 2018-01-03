@@ -72,6 +72,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			}
 			sdk.AddParameter(&params, "cds.dest.pipeline", sdk.StringParameter, "")
 			sdk.AddParameter(&params, "cds.status", sdk.StringParameter, "")
+			sdk.AddParameter(&params, "cds.manual", sdk.StringParameter, "")
 
 			if refNode.Context != nil && refNode.Context.Application != nil {
 				sdk.AddParameter(&params, "cds.dest.application", sdk.StringParameter, "")
@@ -80,7 +81,6 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 				sdk.AddParameter(&params, "cds.dest.environment", sdk.StringParameter, "")
 			}
 		}
-		sdk.AddParameter(&params, "cds.manual", sdk.StringParameter, "")
 		for _, p := range params {
 			data.ConditionNames = append(data.ConditionNames, p.Name)
 		}
