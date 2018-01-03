@@ -144,6 +144,7 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 	//Run tmpl on configuration file to replace all cds variables
 	conf, err := tmplApplicationConfigFile(a, tmplConf)
 	if err != nil {
+		plugin.SendLog(a, "Templating Configuration File KO (tmplApplicationConfigFile): %s\n", err.Error())
 		return plugin.Fail
 	}
 	defer os.RemoveAll(conf)
@@ -152,6 +153,7 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 	//Validate json file and load application
 	appConfig, err := parseApplicationConfigFile(a, conf)
 	if err != nil {
+		plugin.SendLog(a, "Templating Configuration File KO (parseApplicationConfigFile): %s\n", err.Error())
 		return plugin.Fail
 	}
 	plugin.SendLog(a, "Parsing Configuration File: OK\n")
@@ -182,7 +184,7 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 	val := url.Values{"id": []string{appConfig.ID}}
 	applications, err := client.Applications(val)
 	if err != nil {
-		plugin.SendLog(a, "Failed to list applications : %s\n", err.Error())
+		plugin.SendLog(a, "Failed to list applications: %s\n", err.Error())
 		return plugin.Fail
 	}
 
