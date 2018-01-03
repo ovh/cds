@@ -32,6 +32,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
     @Input() project: Project;
+    @Input() workflowName: string;
 
     @ViewChild('workflowRunNode')
     workflowRunNode: WorkflowNodeRunParamComponent;
@@ -100,14 +101,14 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
 
             this._router.navigate([
                 '/project', this.project.key,
-                'workflow', this.workflow.name
+                'workflow', this.workflowName
             ], { queryParams: Object.assign({}, qps, {selectedNodeId: this.node.id })});
         } else {
             qps['selectedJoinId'] = null;
             qps['selectedNodeId'] = null;
             this._router.navigate([
                 '/project', this.project.key,
-                'workflow', this.workflow.name,
+                'workflow', this.workflowName,
                 'run', this.currentNodeRun ? this.currentNodeRun.num : this._route.snapshot.params['number']], {
                     queryParams: Object.assign({}, qps, {
                         selectedNodeRunId: this.currentNodeRun ? this.currentNodeRun.id : -1,
@@ -123,7 +124,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
         if (this.currentNodeRun) {
             this._router.navigate([
                 '/project', this.project.key,
-                'workflow', this.workflow.name,
+                'workflow', this.workflowName,
                 'run', this.currentNodeRun.num,
                 'node', this.currentNodeRun.id], {queryParams: {name: pip}});
         } else {
