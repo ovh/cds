@@ -83,7 +83,7 @@ func GetArtifactFilename(name, os, arch string) string {
 // GetStaticDownloads returns default builded CDS Binaries
 func GetStaticDownloads() []Download {
 	defaultArch := []OSArch{
-		{OS: "window", Archs: []string{"386", "amd64"}},
+		{OS: "windows", Archs: []string{"386", "amd64"}},
 		{OS: "linux", Archs: []string{"386", "amd64", "arm"}},
 		{OS: "darwin", Archs: []string{"amd64"}},
 		{OS: "freebsd", Archs: []string{"386", "amd64"}},
