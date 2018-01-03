@@ -62,6 +62,7 @@ func init() {
 		"toPrettyJson": toPrettyJson,
 		"b64enc":       base64encode,
 		"b64dec":       base64decode,
+		"escape":       escape,
 	}
 }
 
@@ -309,4 +310,11 @@ func substring(start, length int, s string) string {
 		return s[start:]
 	}
 	return s[start:length]
+}
+
+func escape(s string) string {
+	s1 := strings.Replace(s, "_", "-", -1)
+	s1 = strings.Replace(s1, "/", "-", -1)
+	s1 = strings.Replace(s1, ".", "-", -1)
+	return s1
 }

@@ -19,6 +19,7 @@ import (
 	"github.com/gambol99/go-marathon"
 	"github.com/xeipuuv/gojsonschema"
 
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
@@ -289,7 +290,7 @@ func tmplApplicationConfigFile(a plugin.IJob, filepath string) (string, error) {
 	}
 
 	// apply cds.var on marathon.json file
-	out, errapp := plugin.ApplyArguments(a.Arguments().Data, buff)
+	out, errapp := sdk.Interpolate(string(buff), a.Arguments().Data)
 	if errapp != nil {
 		plugin.SendLog(a, "Apply cds variables error: %s\n", errapp)
 		return "", errapp
@@ -304,7 +305,7 @@ func tmplApplicationConfigFile(a plugin.IJob, filepath string) (string, error) {
 	outPath := outfile.Name()
 
 	// write new content in new marathon.json
-	if _, errw := outfile.Write(out); errw != nil {
+	if _, errw := outfile.Write([]byte(out)); errw != nil {
 		plugin.SendLog(a, "Error writing content to file: %s\n", errw.Error())
 		return "", errw
 	}

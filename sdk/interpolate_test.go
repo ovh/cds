@@ -177,6 +177,20 @@ func TestInterpolate(t *testing.T) {
 			want: `"METRICS_WRITE_TOKEN": "valueKey"`,
 		},
 		{
+			name: "espace func",
+			args: args{
+				input: `a {{.cds.foo}} here, {{.cds.title | title}}, {{.cds.upper | upper}}, {{.cds.lower | lower}}, {{.cds.escape | escape}}`,
+				vars: map[string]string{
+					"cds.foo":    "valbar",
+					"cds.title":  "mytitle-bis",
+					"cds.upper":  "toupper",
+					"cds.lower":  "TOLOWER",
+					"cds.escape": "a/b.c_d",
+				},
+			},
+			want: `a valbar here, Mytitle-Bis, TOUPPER, tolower, a-b-c-d`,
+		},
+		{
 			name: "config",
 			args: args{
 				input: `
