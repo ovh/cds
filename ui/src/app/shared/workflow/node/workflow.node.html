@@ -12,6 +12,11 @@
         <div class="node pipeline">
             <div class="ellipsis">
                 <b>{{node.name}}</b>
+                <span *ngIf="warnings > 0"
+                    smDirPosition="right center"
+                    [smDirTooltip]="'warning_build_title' | translate: {nb: warnings}">
+                    <i class="warning sign icon orange"></i>
+                </span>
             </div>
 
             <div class="node context"

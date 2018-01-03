@@ -3,7 +3,7 @@
     <app-status-icon [status]="job.status" class="job"></app-status-icon>
   </div>
   <div>
-    <div class="title job">{{job.job.action.name}}</div>
+    <div class="title job">{{job.job.action.name}} <i class="warning sign icon orange" *ngIf="warning"></i></div>
   </div>
   <div class="forceRight" *ngIf="job.job.step_status && job.job.step_status.length">
     <i class="caret icon" [class.right]="!open" [class.down]="open"></i>

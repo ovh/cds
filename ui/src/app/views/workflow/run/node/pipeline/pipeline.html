@@ -17,20 +17,25 @@
                                 <li *ngFor="let j of stage.jobs">
                                     <div class="job ui segment pointing"
                                          [class.active]="selectedRunJob && selectedRunJob.job.pipeline_action_id === j.pipeline_action_id"
-                                         [class.success]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.SUCCESS"
-                                         [class.inactive]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.DISABLED || mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.SKIPPED"
-                                         [class.fail]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.FAIL"
-                                         [class.building]="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.BUILDING || mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.WAITING"
+                                         [class.success]="mapJobStatus.get(j.pipeline_action_id).status === pipelineStatusEnum.SUCCESS"
+                                         [class.inactive]="mapJobStatus.get(j.pipeline_action_id).status === pipelineStatusEnum.DISABLED || mapJobStatus.get(j.pipeline_action_id).status === pipelineStatusEnum.SKIPPED"
+                                         [class.fail]="mapJobStatus.get(j.pipeline_action_id).status === pipelineStatusEnum.FAIL"
+                                         [class.building]="mapJobStatus.get(j.pipeline_action_id).status === pipelineStatusEnum.BUILDING || mapJobStatus.get(j.pipeline_action_id).status === pipelineStatusEnum.WAITING"
                                          (click)="selectedJobManual(j)">
+                                         <div class="warningPip"
+                                             *ngIf="mapJobStatus.get(j.pipeline_action_id).warnings > 0"
+                                             [smDirTooltip]="'warning_build_title' | translate: {nb: mapJobStatus.get(j.pipeline_action_id).warnings}">
+                                             <i class="warning sign icon orange"></i>
+                                         </div>
                                         <div class="truncate">
-                                            <app-status-icon [status]="mapJobStatus.get(j.pipeline_action_id)" [value]="99"></app-status-icon>
+                                            <app-status-icon [status]="mapJobStatus.get(j.pipeline_action_id).status"></app-status-icon>
                                             {{j.action.name}}
                                         </div>
-                                        <div class="duration" *ngIf="mapJobStatus.get(j.pipeline_action_id) !== pipelineStatusEnum.DISABLED && mapJobStatus.get(j.pipeline_action_id) !== pipelineStatusEnum.SKIPPED">
-                                            <span *ngIf="mapJobStatus.get(j.pipeline_action_id) === pipelineStatusEnum.WAITING">
+                                        <div class="duration" *ngIf="mapJobStatus.get(j.pipeline_action_id).status !== pipelineStatusEnum.DISABLED && mapJobStatus.get(j.pipeline_action_id).status !== pipelineStatusEnum.SKIPPED">
+                                            <span *ngIf="mapJobStatus.get(j.pipeline_action_id).status === pipelineStatusEnum.WAITING">
                                                  {{ 'workflow_run_node_job_queued' | translate: {time: jobTime.get(j.pipeline_action_id)} }}
                                             </span>
-                                            <span *ngIf="mapJobStatus.get(j.pipeline_action_id) !== pipelineStatusEnum.WAITING">
+                                            <span *ngIf="mapJobStatus.get(j.pipeline_action_id).status !== pipelineStatusEnum.WAITING">
                                                 {{jobTime.get(j.pipeline_action_id)}}
                                             </span>
                                         </div>

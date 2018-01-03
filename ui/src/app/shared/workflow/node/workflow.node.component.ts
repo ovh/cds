@@ -43,6 +43,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
     pipelineStatus = PipelineStatus;
 
 
+    warnings = 0;
     loading = false;
     options: {};
     disabled = false;
@@ -77,6 +78,9 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
             } else {
                 this.workflowRun = null;
             }
+            if (this.currentNodeRun && this.currentNodeRun.status === PipelineStatus.SUCCESS) {
+                this.computeWarnings();
+            }
         });
         if (!this.workflowRun) {
             this.options = {
@@ -88,6 +92,25 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
                 }
             };
         }
+    }
+
+    computeWarnings() {
+        this.warnings = 0;
+        this.currentNodeRun.stages.forEach((stage) => {
+            if (Array.isArray(stage.run_jobs)) {
+                this.warnings += stage.run_jobs.reduce((fail, job) => {
+                    if (!job.job || !Array.isArray(job.job.step_status)) {
+                        return fail;
+                    }
+                    return fail + job.job.step_status.reduce((failStep, step) => {
+                        if (step.status === PipelineStatus.FAIL) {
+                            return failStep + 1;
+                        }
+                        return failStep;
+                    }, 0);
+                }, 0);
+            }
+        })
     }
 
     goToNodeRun(): void {
