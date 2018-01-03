@@ -230,7 +230,7 @@ func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun 
 		case sdk.UserNotificationNever:
 			return false
 		case sdk.UserNotificationChange:
-			if previousNodeRun.ID != 0 {
+			if previousNodeRun.ID == 0 {
 				return true
 			}
 			return previousNodeRun.Status != nodeRun.Status
