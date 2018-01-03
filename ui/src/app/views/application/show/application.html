@@ -7,7 +7,7 @@
         </div>
         <div class="CDSmenu">
             <sm-menu title="" class="pointing secondary">
-                <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')">
+                <a sm-item [class.active]="selectedTab === 'workflow'" (click)="showTab('workflow')" *ngIf="application.workflow_migration !== 'DONE'">
                   <i class="rocket icon"></i>{{ 'common_workflow' | translate }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'variables'" (click)="showTab('variables')">
@@ -19,7 +19,7 @@
                 <a sm-item [class.active]="selectedTab === 'notifications'" (click)="showTab('notifications')">
                   <i class="mail icon"></i>{{ 'common_notifications' | translate }}
                 </a>
-                <a sm-item [class.active]="selectedTab === 'usage'" [class.disabled]="usageCount === 0" (click)="usageCount > 0 && showTab('usage')">
+                <a sm-item [class.active]="selectedTab === 'usage'" (click)="showTab('usage')">
                     <i class="plug icon"></i>{{ 'common_usage' | translate }}{{ ' (' + usageCount + ')' }}
                 </a>
                 <a sm-item [class.active]="selectedTab === 'advanced'" (click)="showTab('advanced')" *ngIf="application.permission === 7">
@@ -62,7 +62,14 @@
                         </div>
 
                         <div *ngSwitchCase="'usage'">
-                            <app-usage [project]="project" [workflows]="workflows" [pipelines]="pipelines" [environments]="environments"></app-usage>
+                            <ng-container *ngIf="usageCount > 0">
+                                <app-usage [project]="project" [workflows]="workflows" [pipelines]="pipelines" [environments]="environments"></app-usage>
+                            </ng-container>
+                            <ng-container *ngIf="usageCount === 0">
+                                <div class="ui info message">
+                                    {{ 'application_no_usage' | translate }}
+                                </div>
+                            </ng-container>
                         </div>
 
                         <div *ngSwitchCase="'advanced'">

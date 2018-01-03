@@ -178,6 +178,8 @@ export class Workflow {
         w.joins.forEach(j => {
             j.source_node_ref = intersection(j.source_node_ref, refs);
         });
+
+        w.joins = w.joins.filter(j => j.source_node_ref.length > 0);
     }
 
     static getNodeNameImpact(workflow: Workflow, name: string): WorkflowPipelineNameImpact {

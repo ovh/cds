@@ -128,6 +128,9 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                             if (updatedApplication && !updatedApplication.externalChange) {
                                 this.readyApp = true;
                                 this.application = updatedApplication;
+                                if (this.application.workflow_migration === 'DONE' && this.selectedTab === 'workflow') {
+                                    this.selectedTab = 'usage';
+                                }
 
                                 this.workflows = updatedApplication.usage.workflows || [];
                                 this.environments = updatedApplication.usage.environments || [];
@@ -225,6 +228,10 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     }
 
     showTab(tab: string): void {
+        if (this.application.workflow_migration === 'DONE' && this.selectedTab === 'workflow') {
+            tab = 'usage';
+        }
+
         this._router.navigateByUrl('/project/' + this.project.key + '/application/' + this.application.name + '?tab=' + tab);
     }
 
