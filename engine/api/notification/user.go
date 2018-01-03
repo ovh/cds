@@ -63,6 +63,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 				jn, ok := notif.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
 					log.Error("notification.GetUserEvents> cannot deal with %s", notif)
+					continue
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
@@ -99,6 +100,7 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 				jn, ok := notif.(*sdk.JabberEmailUserNotificationSettings)
 				if !ok {
 					log.Error("notification.GetUserEvents> cannot deal with %s", notif)
+					continue
 				}
 				//Get recipents from groups
 				if jn.SendToGroups {
@@ -134,6 +136,146 @@ func GetUserEvents(db gorp.SqlExecutor, pb *sdk.PipelineBuild, previous *sdk.Pip
 		}
 	}
 	return events
+}
+
+// GetUserWorkflowEvents return events to send for the given workflow run
+func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR sdk.WorkflowNodeRun, nr sdk.WorkflowNodeRun) []sdk.EventNotif {
+	events := []sdk.EventNotif{}
+
+	//Compute notification
+	params := map[string]string{}
+	for _, p := range nr.BuildParameters {
+		params[p.Name] = p.Value
+	}
+	//Set PipelineBuild UI URL
+	params["cds.buildURL"] = fmt.Sprintf("%s/project/%s/workflow/%s/run/%d", uiURL, wr.Workflow.ProjectKey, wr.Workflow.Name, wr.Number)
+	if p, ok := params["cds.triggered_by.username"]; ok {
+		params["cds.author"] = p
+	} else if p, ok := params["git.author"]; ok {
+		params["cds.author"] = p
+	}
+
+	for _, notif := range wr.Workflow.Notifications {
+		if ShouldSendUserWorkflowNotification(notif, nr, previousWR) {
+			switch notif.Type {
+			case sdk.JabberUserNotification:
+				jn, ok := notif.Settings.(*sdk.JabberEmailUserNotificationSettings)
+				if !ok {
+					log.Error("notification.GetUserWorkflowEvents[Jabber]> cannot deal with %s", notif)
+					continue
+				}
+				//Get recipents from groups
+				if jn.SendToGroups {
+					u, errPerm := permission.ProjectPermissionUsers(db, wr.Workflow.ProjectID, permission.PermissionRead)
+					if errPerm != nil {
+						log.Error("notification[Jabber]. error while loading permission:%s", errPerm.Error())
+					}
+					for i := range u {
+						jn.Recipients = append(jn.Recipients, u[i].Username)
+					}
+				}
+				if jn.SendToAuthor {
+					if author, ok := params["cds.author"]; ok {
+						jn.Recipients = append(jn.Recipients, author)
+					}
+				}
+
+				//Finally deduplicate everyone
+				removeDuplicates(&jn.Recipients)
+				events = append(events, getWorkflowEvent(jn, params))
+			case sdk.EmailUserNotification:
+				jn, ok := notif.Settings.(*sdk.JabberEmailUserNotificationSettings)
+				if !ok {
+					log.Error("notification.GetUserEvents[Email]> cannot deal with %s", notif)
+					continue
+				}
+				//Get recipents from groups
+				if jn.SendToGroups {
+					u, errPerm := permission.ProjectPermissionUsers(db, wr.Workflow.ProjectID, permission.PermissionRead)
+					if errPerm != nil {
+						log.Error("notification[Email].SendPipelineBuild> error while loading permission:%s", errPerm.Error())
+						return nil
+					}
+					for i := range u {
+						jn.Recipients = append(jn.Recipients, u[i].Email)
+					}
+				}
+				if jn.SendToAuthor {
+					var username string
+					if jn.SendToAuthor {
+						if author, ok := params["cds.author"]; ok {
+							username = author
+						}
+					}
+					if username != "" {
+						u, err := user.LoadUserWithoutAuth(db, username)
+						if err != nil {
+							log.Warning("notification[Email].SendPipelineBuild> Cannot load author %s: %s", username, err)
+							continue
+						}
+						jn.Recipients = append(jn.Recipients, u.Email)
+					}
+				}
+				//Finally deduplicate everyone
+				removeDuplicates(&jn.Recipients)
+				go SendMailNotif(getWorkflowEvent(jn, params))
+			}
+		}
+	}
+	return events
+}
+
+// ShouldSendUserWorkflowNotification test if the notificationhas to be sent for the given workflow node run
+func ShouldSendUserWorkflowNotification(notif sdk.WorkflowNotification, nodeRun sdk.WorkflowNodeRun, previousNodeRun sdk.WorkflowNodeRun) bool {
+	var check = func(s sdk.UserNotificationEventType) bool {
+		switch s {
+		case sdk.UserNotificationAlways:
+			return true
+		case sdk.UserNotificationNever:
+			return false
+		case sdk.UserNotificationChange:
+			if previousNodeRun.ID == 0 {
+				return true
+			}
+			return previousNodeRun.Status != nodeRun.Status
+		}
+		return false
+	}
+
+	switch nodeRun.Status {
+	case sdk.StatusSuccess.String():
+		if check(notif.Settings.Success()) {
+			return true
+		}
+	case sdk.StatusFail.String():
+		if check(notif.Settings.Failure()) {
+			return true
+		}
+	case sdk.StatusWaiting.String():
+		return notif.Settings.Start()
+	}
+
+	return false
+}
+
+func getWorkflowEvent(notif *sdk.JabberEmailUserNotificationSettings, params map[string]string) sdk.EventNotif {
+	subject := notif.Template.Subject
+	body := notif.Template.Body
+	for k, value := range params {
+		key := "{{." + k + "}}"
+		subject = strings.Replace(subject, key, value, -1)
+		body = strings.Replace(body, key, value, -1)
+	}
+
+	e := sdk.EventNotif{
+		Subject: subject,
+		Body:    body,
+	}
+	for _, r := range notif.Recipients {
+		e.Recipients = append(e.Recipients, r)
+	}
+
+	return e
 }
 
 func removeDuplicates(xs *[]string) {

@@ -268,6 +268,9 @@ export class ApplicationNotificationFormModalComponent implements AfterViewInit 
         this.selected.notification.send_to_groups = this.onGroupsControl.value;
         this.selected.notification.send_to_author = this.onAuthorControl.value;
         this.selected.notification.recipients = this.selected.recipients.split(',');
+        this.selected.notification.recipients = this.selected.notification.recipients.map(r => {
+            return r.trim();
+        });
         if (this.selected.type !== 'clone') {
             n.notifications[this.selected.type] = this.selected.notification;
         } else {

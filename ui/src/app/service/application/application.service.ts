@@ -7,7 +7,7 @@ import {GroupPermission} from '../../model/group.model';
 import {Trigger} from '../../model/trigger.model';
 import {ApplyTemplateRequest} from '../../model/template.model';
 import {Project} from '../../model/project.model';
-import {Notification} from '../../model/notification.model';
+import {Notification, UserNotificationSettings} from '../../model/notification.model';
 import {Scheduler} from '../../model/scheduler.model';
 import {Hook} from '../../model/hook.model';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
@@ -321,6 +321,14 @@ export class ApplicationService {
      * @returns {Observable<Notification>}
      */
     updateNotification(key: string, appName: string, pipName: string, notification: Notification): Observable<Application> {
+        if (notification.notifications) {
+            notification.notifications.forEach((n: UserNotificationSettings) => {
+                if (n.recipients) {
+                    n.recipients = n.recipients.map(r => r.trim());
+                }
+            });
+        }
+
         let url = '/project/' + key + '/application/' + appName + '/pipeline/' + pipName + '/notification';
         return this._http.put<Application>(url, notification);
     }

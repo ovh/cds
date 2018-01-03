@@ -277,17 +277,6 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	return nodeRunDB, nil
 }
 
-//updateNodeRunStatus update status of a workflow run node
-func updateNodeRunStatus(db gorp.SqlExecutor, ID int64, status string) error {
-	//Update workflow node run status
-	query := "UPDATE workflow_node_run SET status = $1, last_modified = $2, done = $3 WHERE id = $4"
-	now := time.Now()
-	if _, err := db.Exec(query, status, now, now, ID); err != nil {
-		return sdk.WrapError(err, "UpdateNodeRunStatus> Unable to set workflow_node_run id %d with status %s", ID, status)
-	}
-	return nil
-}
-
 //UpdateNodeRun updates in table workflow_node_run
 func UpdateNodeRun(db gorp.SqlExecutor, n *sdk.WorkflowNodeRun) error {
 	log.Debug("workflow.UpdateNodeRun> node.id=%d, status=%s", n.ID, n.Status)
@@ -427,6 +416,28 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 	}
 
 	return res, cur, nil
+}
+
+// PreviousNodeRun find previous node run
+func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.WorkflowNode, workflowID int64) (sdk.WorkflowNodeRun, error) {
+	query := `
+					SELECT workflow_node_run.* FROM workflow_node_run
+					JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
+					WHERE vcs_branch = $3 AND workflow_node_run.num <= $4 AND workflow_node_run.workflow_node_id = $5 AND workflow_node_run.id != $6
+					ORDER BY workflow_node_run.num, workflow_node_run.sub_num DESC
+					LIMIT 1 
+				`
+	var nodeRun sdk.WorkflowNodeRun
+	var rr = NodeRun{}
+	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID, nr.ID); err != nil {
+		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous RUN: %s [%s %d %s %d]", query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID)
+	}
+	pNodeRun, errF := fromDBNodeRun(rr)
+	if errF != nil {
+		return nodeRun, sdk.WrapError(errF, "PreviousNodeRun> Cannot read node run")
+	}
+	nodeRun = *pNodeRun
+	return nodeRun, nil
 }
 
 //PreviousNodeRunVCSInfos returns a struct with BuildNumber, Commit Hash, Branch, Remote, Remote_url

@@ -51,10 +51,28 @@ func SendEvent(db gorp.SqlExecutor, wrs []sdk.WorkflowRun, wnrs []sdk.WorkflowNo
 	for _, wnr := range wnrs {
 		wr, errWR := LoadRunByID(db, wnr.WorkflowRunID, false)
 		if errWR != nil {
-			log.Warning("SendEvent> Cannot load workflow run %d: %s", wnr.WorkflowRunID, errWR)
+			log.Warning("SendEvent.workflow> Cannot load workflow run %d: %s", wnr.WorkflowRunID, errWR)
 			continue
 		}
-		event.PublishWorkflowNodeRun(wnr, *wr, key)
+
+		var previousNodeRun sdk.WorkflowNodeRun
+		if wnr.SubNumber > 0 {
+			previousNodeRun = wnr
+		} else {
+			// Load previous run on current node
+			node := wr.Workflow.GetNode(wnr.WorkflowNodeID)
+			if node != nil {
+				var errN error
+				previousNodeRun, errN = PreviousNodeRun(db, wnr, *node, wr.WorkflowID)
+				if errN != nil {
+					log.Warning("SendEvent.workflow> Cannot load previous node run: %s", errN)
+				}
+			} else {
+				log.Warning("SendEvent.workflow > Unable to find node %d in workflow", wnr.WorkflowNodeID)
+			}
+		}
+
+		event.PublishWorkflowNodeRun(db, wnr, *wr, previousNodeRun, key)
 	}
 	for _, wnjr := range wnjrs {
 		event.PublishWorkflowNodeJobRun(wnjr)

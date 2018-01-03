@@ -102,7 +102,12 @@ func PublishWorkflowRun(wr sdk.WorkflowRun, projectKey string) {
 }
 
 // PublishWorkflowNodeRun publish event on a workflow node run
-func PublishWorkflowNodeRun(nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, projectKey string) {
+func PublishWorkflowNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, previousWR sdk.WorkflowNodeRun, projectKey string) {
+	// get and send all user notifications
+	for _, event := range notification.GetUserWorkflowEvents(db, wr, previousWR, nr) {
+		Publish(event)
+	}
+
 	e := sdk.EventWorkflowNodeRun{
 		ID:             nr.ID,
 		Number:         nr.Number,
@@ -115,6 +120,8 @@ func PublishWorkflowNodeRun(nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, projectK
 		Payload:        nr.Payload,
 		SourceNodeRuns: nr.SourceNodeRuns,
 		WorkflowName:   wr.Workflow.Name,
+		Hash:           nr.VCSHash,
+		BranchName:     nr.VCSBranch,
 	}
 
 	node := wr.Workflow.GetNode(nr.WorkflowNodeID)
@@ -130,20 +137,6 @@ func PublishWorkflowNodeRun(nr sdk.WorkflowNodeRun, wr sdk.WorkflowRun, projectK
 		}
 		if node.Context.Environment != nil {
 			e.EnvironmentName = node.Context.Environment.Name
-		}
-	}
-
-	// looking for git.hash && git.branch
-	for _, param := range nr.BuildParameters {
-		if param.Name == "git.hash" {
-			e.Hash = param.Value
-		}
-		if param.Name == "git.branch" {
-			e.BranchName = param.Value
-		}
-
-		if e.Hash != "" && e.BranchName != "" {
-			break
 		}
 	}
 
