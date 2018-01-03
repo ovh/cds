@@ -202,7 +202,7 @@ func (m MarathonPlugin) Run(a plugin.IJob) plugin.Result {
 		plugin.SendLog(a, "Application updated %s: OK\n", appConfig.ID)
 	} else {
 		if _, err := client.CreateApplication(appConfig); err != nil {
-			plugin.SendLog(a, "Application %S creation failed :%s\n", appConfig.ID, err)
+			plugin.SendLog(a, "Application %s creation failed:%s\n", appConfig.ID, err)
 			return plugin.Fail
 		}
 		plugin.SendLog(a, "Application creation %s: OK\n", appConfig.ID)
@@ -304,8 +304,7 @@ func tmplApplicationConfigFile(a plugin.IJob, filepath string) (string, error) {
 	outPath := outfile.Name()
 
 	// write new content in new marathon.json
-	_, errw := outfile.Write(out)
-	if errw != nil {
+	if _, errw := outfile.Write(out); errw != nil {
 		plugin.SendLog(a, "Error writing content to file: %s\n", errw.Error())
 		return "", errw
 	}
@@ -361,12 +360,16 @@ func parseApplicationConfigFile(a plugin.IJob, f string) (*marathon.Application,
 		plugin.SendLog(a, "Unable to validate document %s\n", err)
 		return nil, err
 	}
+	if result == nil {
+		plugin.SendLog(a, "Unable to validate document (result validate is nil)\n")
+		return nil, fmt.Errorf("Unable to validate document (result validate is nil)")
+	}
 	if !result.Valid() {
 		plugin.SendLog(a, "The document is not valid. see following errors\n")
 		for _, desc := range result.Errors() {
 			plugin.SendLog(a, " - %s", desc.Details())
 		}
-		return nil, fmt.Errorf("IMarathonPluginnvalid json document")
+		return nil, fmt.Errorf("IMarathonPlugin invalid json document")
 	}
 
 	return appConfig, nil
