@@ -85,7 +85,7 @@ func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey,
 	if err != nil {
 		return err
 	}
-	defer partitionOffsetManager.AsyncClose()
+	defer partitionOffsetManager.Close()
 
 	// Start a consumer at next offset
 	offset, _ := partitionOffsetManager.NextOffset()
@@ -93,7 +93,7 @@ func consumeFromKafka(kafka, topic, group, user, password string, gpgPrivatekey,
 	if err != nil {
 		return err
 	}
-	defer partitionConsumer.AsyncClose()
+	defer partitionConsumer.Close()
 
 	// Asynchronously handle message
 	go consumptionHandler(partitionConsumer, topic, partitionOffsetManager, messagesChan, errorsChan)
