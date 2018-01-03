@@ -418,7 +418,7 @@ func GetNodeRunBuildCommits(db gorp.SqlExecutor, store cache.Store, p *sdk.Proje
 		}
 	} else {
 		//If we only get current node run hash
-		log.Info("GetNodeRunBuildCommits>  Looking for every commit until %s ", cur.Hash)
+		log.Debug("GetNodeRunBuildCommits>  Looking for every commit until %s ", cur.Hash)
 		c, err := client.Commits(repo, cur.Branch, "", cur.Hash)
 		if err != nil {
 			return nil, cur, sdk.WrapError(err, "GetNodeRunBuildCommits> Cannot get commits")
