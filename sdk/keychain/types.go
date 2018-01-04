@@ -1,6 +1,14 @@
 package keychain
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/docker/docker-credential-helpers/credentials"
+)
+
+func init() {
+	credentials.CredsLabel = "CDS Credentials"
+}
 
 // Errors
 var (
