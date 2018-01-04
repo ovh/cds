@@ -129,16 +129,22 @@
 			"revisionTime": "2017-05-30T18:56:52Z"
 		},
 		{
-			"checksumSHA1": "9TP1bsS5s04Bm3W3IAv6W6S147M=",
+			"checksumSHA1": "4mlh3C37GG+taAkJvxOU6ndwS4c=",
 			"path": "github.com/docker/docker-credential-helpers/osxkeychain",
-			"revision": "d8f57a18c61ade10ddf767fa080b4778359f5c66",
-			"revisionTime": "2017-05-30T18:56:52Z"
+			"revision": "d68f9aeca33f5fd3f08eeae5e9d175edf4e731d1",
+			"revisionTime": "2017-08-30T12:17:07Z"
 		},
 		{
-			"checksumSHA1": "CJGEjijnKnYUV6uCrUR8jJLfw3Y=",
+			"checksumSHA1": "taRG2UZdlWv25kaPaBt5r6oCoPw=",
 			"path": "github.com/docker/docker-credential-helpers/secretservice",
-			"revision": "80833adff5dd10aa3b3d55dbc94308fde69e2d92",
-			"revisionTime": "2016-07-20T20:55:38Z"
+			"revision": "d68f9aeca33f5fd3f08eeae5e9d175edf4e731d1",
+			"revisionTime": "2017-08-30T12:17:07Z"
+		},
+		{
+			"checksumSHA1": "B5ONPQNlMtfcTyxwCI80z1kOmmc=",
+			"path": "github.com/docker/docker-credential-helpers/wincred",
+			"revision": "d68f9aeca33f5fd3f08eeae5e9d175edf4e731d1",
+			"revisionTime": "2017-08-30T12:17:07Z"
 		},
 		{
 			"checksumSHA1": "HoN/78ovv3/DC+kDKF7IENEc40g=",
