@@ -80,24 +80,6 @@ func LoadPipeline(db gorp.SqlExecutor, projectKey, name string, deep bool) (*sdk
 	return &p, nil
 }
 
-// LoadPipelineID loads a pipeline from database
-func LoadPipelineID(db gorp.SqlExecutor, projectKey, name string) (int64, error) {
-	var pipID int64
-	query := `SELECT pipeline.id FROM pipeline
-	 		JOIN project on pipeline.project_id = project.id
-	 		WHERE pipeline.name = $1 AND project.projectKey = $2`
-
-	err := db.QueryRow(query, name, projectKey).Scan(&pipID)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return pipID, sdk.ErrPipelineNotFound
-		}
-		return pipID, err
-	}
-
-	return pipID, nil
-}
-
 // LoadPipelineByID loads a pipeline from database
 func LoadPipelineByID(db gorp.SqlExecutor, pipelineID int64, deep bool) (*sdk.Pipeline, error) {
 	var lastModified time.Time
