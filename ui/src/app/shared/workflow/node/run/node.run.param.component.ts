@@ -50,7 +50,6 @@ export class WorkflowNodeRunParamComponent {
                     this.reindent();
                 }
             }
-            this.getPipeline();
         }
     }
     get nodeToRun(): WorkflowNode {
@@ -80,16 +79,6 @@ export class WorkflowNodeRunParamComponent {
             lineWrapping: true,
             autoRefresh: true
         };
-    }
-
-    getPipeline(): void {
-        if (this.project.pipelines) {
-            this.project.pipelines.forEach(p => {
-                if (p.id === this.nodeToRun.pipeline.id && p.last_modified === this.nodeToRun.pipeline.last_modified) {
-                    this.isSync = true;
-                }
-            });
-        }
     }
 
     show(): void {

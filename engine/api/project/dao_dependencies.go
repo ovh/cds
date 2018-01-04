@@ -41,7 +41,7 @@ var (
 
 	loadApplicationNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		var err error
-		var apps []string
+		var apps []sdk.IDName
 
 		if apps, err = application.LoadAllNames(db, proj.ID, u); err != nil {
 			return sdk.WrapError(err, "application.loadApplications")
@@ -152,7 +152,7 @@ var (
 
 	loadPipelineNames = func(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.User) error {
 		var err error
-		var pips []string
+		var pips []sdk.IDName
 
 		if pips, err = pipeline.LoadAllNames(db, store, proj.ID, u); err != nil {
 			return sdk.WrapError(err, "pipeline.loadpipelinenames")

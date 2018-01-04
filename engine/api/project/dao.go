@@ -245,6 +245,7 @@ var LoadOptions = struct {
 	WithVariablesWithClearPassword LoadOptionFunc
 	WithPipelines                  LoadOptionFunc
 	WithPipelineNames              LoadOptionFunc
+	WithPipelineNamesIDs           LoadOptionFunc
 	WithEnvironments               LoadOptionFunc
 	WithGroups                     LoadOptionFunc
 	WithPermission                 LoadOptionFunc

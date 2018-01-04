@@ -10,6 +10,11 @@ import (
 //EncryptFunc  is a common type
 type EncryptFunc func(gorp.SqlExecutor, int64, string, string) (string, error)
 
+type IDName struct {
+	ID   string `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
+
 // NamePattern  Pattern for project/application/pipeline/group name
 const NamePattern = "^[a-zA-Z0-9._-]{1,}$"
 

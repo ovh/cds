@@ -12,7 +12,7 @@
                 [options]="{'fullTextSearch': true}"
                 (onChange)="change()"
                 id="WorkflowPipelineSelect">
-                <option *ngFor="let p of project.pipelines" [value]="p.id">{{ p.name}}</option>
+                <option *ngFor="let p of project.pipeline_names" [value]="p.id">{{ p.name}}</option>
             </sm-select>
         </ng-template>
     </div>

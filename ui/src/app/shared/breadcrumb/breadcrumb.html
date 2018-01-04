@@ -33,7 +33,7 @@
            [routerLink]="['/project', project.key, 'pipeline', pipeline?.name]"
            [queryParams]="getPipelineQueryParams()">{{ pipeline?.name}}</a>
         <sm-dropdown *ngIf="project && !application">
-            <a sm-item *ngFor="let pip of project.pipelines"
+            <a sm-item *ngFor="let pip of project.pipeline_names"
                      [routerLink]="['/project', project.key, 'pipeline', pip?.name]">
                 {{pip.name}}
             </a>

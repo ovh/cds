@@ -10,7 +10,7 @@
             [options]="{'fullTextSearch': true}"
             [(model)]="trigger.dest_application.name"
             (modelChange)="updatePipelineList()">
-            <option *ngFor="let appName of project.application_names" value="{{appName}}">{{appName}}</option>
+            <option *ngFor="let app of project.application_names" value="{{app.name}}">{{app.name}}</option>
         </sm-select>
     </div>
     <div class="four wide column" *ngIf="trigger.dest_application.name">
