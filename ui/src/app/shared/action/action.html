@@ -41,6 +41,7 @@
                                         (onChange)="editableAction.hasChanged = true"
                                         (event)="requirementEvent($event)"></app-requirements-list>
                                     <div class="requirementForm" *ngIf="edit && pipeline">
+                                        <h3>{{ 'requirement_add' | translate }}</h3>
                                         <app-requirements-form [groupsPermission]="pipeline.groups" [suggest]="suggest" [modal]="requirementModal" (event)="requirementEvent($event)"></app-requirements-form>
                                     </div>
                                     <div class="requirementForm" *ngIf="edit && !pipeline">

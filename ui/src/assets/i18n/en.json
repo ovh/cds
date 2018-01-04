@@ -437,6 +437,7 @@
   "repoman_modal_verif_text" : "Click on the following link to finalize the link between CDS and the repository manager: ",
   "repoman_modal_verif_title" : "Repository manager authorization",
 
+  "requirement_add" : "Add a requirement",
   "requirement_name" : "Name",
   "requirement_type" : "Type",
   "requirement_value" : "Value",
