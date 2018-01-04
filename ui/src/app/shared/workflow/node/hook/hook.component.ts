@@ -51,7 +51,7 @@ export class WorkflowNodeHookComponent implements AfterViewInit {
     }
 
     openEditHookModal(): void {
-        if (this.editHook) {
+        if (this.editHook && !this.readonly)  {
             this.editHook.show();
         }
     }
