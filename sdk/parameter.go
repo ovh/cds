@@ -163,10 +163,8 @@ func ParametersMapMerge(params map[string]string, otherParams map[string]string)
 			if val != v {
 				if val == "" { // val empty, take v, even if v is empty
 					params[k] = fmt.Sprintf("%s", v)
-				} else if v == "" { // v empty, take val
+				} else { // take val, if v is empty or not
 					params[k] = fmt.Sprintf("%s", val)
-				} else {
-					params[k] = fmt.Sprintf("%s,%s", val, v)
 				}
 				continue
 			}
