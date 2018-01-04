@@ -81,7 +81,7 @@ func TestParseAndImport(t *testing.T) {
 			}
 
 			if err == nil {
-				w, _ := workflow.Load(db, cache, proj.Key, tt.input.Name, u)
+				w, _ := workflow.Load(db, cache, proj.Key, tt.input.Name, u, workflow.LoadOptions{})
 				if w != nil {
 					b, _ := json.Marshal(w)
 					t.Logf("Workflow = \n%s", string(b))

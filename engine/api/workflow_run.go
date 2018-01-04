@@ -185,7 +185,10 @@ func (api *API) postWorkflowRunNumHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "postWorkflowRunNumHandler> Cannot num must be > %d, got %d", num, m.Num)
 		}
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		options := workflow.LoadOptions{
+			WithoutNode: true,
+		}
+		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "postWorkflowRunNumHandler > Cannot load workflow")
 		}
@@ -391,7 +394,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 			return sdk.WrapError(errP, "getWorkflowCommitsHandler> Unable to load project %s", key)
 		}
 
-		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		wf, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "getWorkflowCommitsHandler> Unable to load workflow %s", name)
 		}
@@ -566,7 +569,10 @@ func (api *API) postWorkflowRunHandler() Handler {
 			wf = &lastRun.Workflow
 		} else {
 			var errl error
-			wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+			options := workflow.LoadOptions{
+				DeepPipeline: true,
+			}
+			wf, errl = workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 			if errl != nil {
 				return sdk.WrapError(errl, "postWorkflowRunHandler> Unable to load workflow")
 			}
@@ -819,7 +825,10 @@ func (api *API) getDownloadArtifactHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidID, "getDownloadArtifactHandler> Invalid node job run ID")
 		}
 
-		work, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		options := workflow.LoadOptions{
+			WithoutNode: true,
+		}
+		work, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 		if errW != nil {
 			return sdk.WrapError(errW, "getDownloadArtifactHandler> Cannot load workflow")
 		}
@@ -918,7 +927,10 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 		}
 
 		// Check workflow is in project
-		if _, errW := workflow.Load(api.mustDB(), api.Cache, projectKey, workflowName, getUser(ctx)); errW != nil {
+		options := workflow.LoadOptions{
+			WithoutNode: true,
+		}
+		if _, errW := workflow.Load(api.mustDB(), api.Cache, projectKey, workflowName, getUser(ctx), options); errW != nil {
 			return sdk.WrapError(errW, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find workflow %s in project %s", workflowName, projectKey)
 		}
 

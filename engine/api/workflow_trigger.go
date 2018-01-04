@@ -28,7 +28,7 @@ func (api *API) getWorkflowTriggerConditionHandler() Handler {
 			return sdk.WrapError(errproj, "getWorkflowTriggerConditionHandler> Unable to load project")
 		}
 
-		wf, errw := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		wf, errw := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
 		if errw != nil {
 			return sdk.WrapError(errw, "getWorkflowTriggerConditionHandler> Unable to load workflow")
 		}

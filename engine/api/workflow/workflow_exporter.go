@@ -18,7 +18,7 @@ import (
 
 // Export a workflow
 func Export(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, withPermissions bool, u *sdk.User, w io.Writer) (int, error) {
-	wf, errload := Load(db, cache, key, name, u)
+	wf, errload := Load(db, cache, key, name, u, LoadOptions{})
 	if errload != nil {
 		return 0, sdk.WrapError(errload, "workflow.Export> Cannot load workflow %s", name)
 	}
@@ -43,7 +43,10 @@ func exportWorkflow(wf sdk.Workflow, f exportentities.Format, withPermissions bo
 
 // Pull a workflow with all it dependencies; it writes a tar buffer in the writer
 func Pull(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exportentities.Format, withPermissions bool, encryptFunc sdk.EncryptFunc, u *sdk.User, w io.Writer) error {
-	wf, errload := Load(db, cache, key, name, u)
+	options := LoadOptions{
+		DeepPipeline: true,
+	}
+	wf, errload := Load(db, cache, key, name, u, options)
 	if errload != nil {
 		return sdk.WrapError(errload, "workflow.Pull> Cannot load workflow %s", name)
 	}
