@@ -116,6 +116,12 @@
 			"revisionTime": "2015-10-26T16:03:18Z"
 		},
 		{
+			"checksumSHA1": "vvFDcA+qQlBPrJjKEYQCHVBS9xQ=",
+			"path": "github.com/danieljoos/wincred",
+			"revision": "412b574fb496839b312a75fba146bd32a89001cf",
+			"revisionTime": "2017-04-09T18:24:07Z"
+		},
+		{
 			"checksumSHA1": "5rPfda8jFccr3A6heL+JAmi9K9g=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
 			"path": "github.com/davecgh/go-spew/spew",
