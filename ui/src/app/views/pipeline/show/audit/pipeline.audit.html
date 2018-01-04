@@ -1,5 +1,5 @@
 <div class="variable" *ngIf="audits">
-    <table class="ui fixed selectable celled table" *ngIf="getDataForCurrentPage().length > 0">
+    <table class="ui fixed borderless selectable celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
             <th class="four wide">{{ 'audit_action' | translate}}</th>
@@ -42,7 +42,7 @@
     </div>
 </div>
 <div *ngIf="currentCompare" class="area">
-    <table class="ui fixed striped table">
+    <table class="ui fixed borderless striped table">
         <thead>
         <tr>
             <th class="two wide column">{{ 'audit_context' | translate }}</th>

@@ -110,10 +110,10 @@ pre {
   }
 
   tbody tr td {
-    border: none;
     overflow: visible;
     padding-top: 4px;
     padding-bottom: 4px;
+    vertical-align: top;
   }
 
   tbody tr:not(:hover) {
@@ -125,6 +125,12 @@ pre {
     input, select, textarea, .ui.dropdown {
       border-color: transparent;
     }
+  }
+}
+
+.table.borderless {
+  tbody tr td {
+    border: none;
   }
 }
 

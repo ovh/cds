@@ -1,5 +1,5 @@
 <div class="parameter" *ngIf="ready">
-    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+    <table class="ui fixed celled borderless table" *ngIf="getDataForCurrentPage().length > 0">
         <thead [hidden]="mode === 'launcher' || mode === 'job'">
         <tr>
             <th class="wide" [class.four]="mode !== 'launcher' && mode !== 'job'" [class.eight]="mode === 'launcher' || mode === 'job'">{{ 'parameter_name' | translate }}</th>
