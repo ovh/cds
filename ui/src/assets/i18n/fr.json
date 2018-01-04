@@ -437,6 +437,7 @@
   "repoman_modal_verif_text" : "Cliquez sur le lien suivant pour finaliser la connexion entre CDS et le gestionnaire de dépôt : ",
   "repoman_modal_verif_title" : "Autorisation auprès du gestionnaire de dépôt",
 
+  "requirement_add" : "Ajouter un pré-requis",
   "requirement_name" : "Nom",
   "requirement_type" : "Type",
   "requirement_value" : "Valeur",
