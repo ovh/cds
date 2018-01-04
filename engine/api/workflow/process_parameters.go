@@ -11,6 +11,7 @@ import (
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -23,7 +24,7 @@ func getNodeJobRunParameters(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNo
 	errm := &sdk.MultiError{}
 
 	for k, v := range tmp {
-		s, err := sdk.Interpolate(v, tmp)
+		s, err := interpolate.Do(v, tmp)
 		if err != nil {
 			errm.Append(err)
 			continue
@@ -212,7 +213,7 @@ func getNodeRunBuildParameters(db gorp.SqlExecutor, store cache.Store, proj *sdk
 
 	params = []sdk.Parameter{}
 	for k, v := range tmp {
-		s, err := sdk.Interpolate(v, tmp)
+		s, err := interpolate.Do(v, tmp)
 		if err != nil {
 			errm.Append(err)
 			continue
