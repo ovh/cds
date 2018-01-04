@@ -91,7 +91,7 @@ func Test_getWorkflowNodeRunHistoryHandler(t *testing.T) {
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(db, api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(db, api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	wr, errMR := workflow.ManualRun(db, db, api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
@@ -199,7 +199,7 @@ func Test_getWorkflowRunsHandler(t *testing.T) {
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
@@ -326,7 +326,7 @@ func Test_getLatestWorkflowRunHandler(t *testing.T) {
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
@@ -446,7 +446,7 @@ func Test_getWorkflowRunHandler(t *testing.T) {
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	for i := 0; i < 10; i++ {
@@ -547,7 +547,7 @@ func Test_getWorkflowNodeRunHandler(t *testing.T) {
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
@@ -634,7 +634,7 @@ func Test_resyncWorkflowRunHandler(t *testing.T) {
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(db, api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(db, api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(db, api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -754,7 +754,7 @@ func Test_postWorkflowRunHandler(t *testing.T) {
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -917,7 +917,7 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{

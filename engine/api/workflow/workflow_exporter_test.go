@@ -112,7 +112,7 @@ func TestPull(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	buff := new(bytes.Buffer)

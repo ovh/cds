@@ -18,6 +18,12 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
+// LoadOptions custom option for loading workflow
+type LoadOptions struct {
+	DeepPipeline bool
+	WithoutNode  bool
+}
+
 // Exists checks if a workflow exists
 func Exists(db gorp.SqlExecutor, key string, name string) (bool, error) {
 	query := `
@@ -154,14 +160,14 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]string, err
 }
 
 // Load loads a workflow for a given user (ie. checking permissions)
-func Load(db gorp.SqlExecutor, store cache.Store, projectKey, name string, u *sdk.User) (*sdk.Workflow, error) {
+func Load(db gorp.SqlExecutor, store cache.Store, projectKey, name string, u *sdk.User, opts LoadOptions) (*sdk.Workflow, error) {
 	query := `
 		select workflow.*
 		from workflow
 		join project on project.id = workflow.project_id
 		where project.projectkey = $1
 		and workflow.name = $2`
-	res, err := load(db, store, u, query, projectKey, name)
+	res, err := load(db, store, opts, u, query, projectKey, name)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow %s in project %s", name, projectKey)
 	}
@@ -169,12 +175,12 @@ func Load(db gorp.SqlExecutor, store cache.Store, projectKey, name string, u *sd
 }
 
 // LoadByID loads a workflow for a given user (ie. checking permissions)
-func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User) (*sdk.Workflow, error) {
+func LoadByID(db gorp.SqlExecutor, store cache.Store, id int64, u *sdk.User, opts LoadOptions) (*sdk.Workflow, error) {
 	query := `
 		select *
 		from workflow
 		where id = $1`
-	res, err := load(db, store, u, query, id)
+	res, err := load(db, store, opts, u, query, id)
 	if err != nil {
 		return nil, sdk.WrapError(err, "Load> Unable to load workflow %d", id)
 	}
@@ -267,7 +273,7 @@ func LoadByEnvName(db gorp.SqlExecutor, projectKey string, envName string) ([]sd
 	return res, nil
 }
 
-func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, query string, args ...interface{}) (*sdk.Workflow, error) {
+func load(db gorp.SqlExecutor, store cache.Store, opts LoadOptions, u *sdk.User, query string, args ...interface{}) (*sdk.Workflow, error) {
 	t0 := time.Now()
 	dbRes := Workflow{}
 	if err := db.SelectOne(&dbRes, query, args...); err != nil {
@@ -279,9 +285,6 @@ func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, query string, arg
 
 	res := sdk.Workflow(dbRes)
 	res.ProjectKey, _ = db.SelectStr("select projectkey from project where id = $1", res.ProjectID)
-	if err := loadWorkflowRoot(db, store, &res, u); err != nil {
-		return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
-	}
 
 	res.Permission = permission.WorkflowPermission(res.ProjectKey, res.Name, u)
 
@@ -292,12 +295,17 @@ func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, query string, arg
 	}
 	res.Groups = gps
 
-	// Load joins
-	joins, errJ := loadJoins(db, store, &res, u)
-	if errJ != nil {
-		return nil, sdk.WrapError(errJ, "Load> Unable to load workflow joins")
+	if !opts.WithoutNode {
+		if err := loadWorkflowRoot(db, store, &res, u, opts); err != nil {
+			return nil, sdk.WrapError(err, "Load> Unable to load workflow root")
+		}
+		// Load joins
+		joins, errJ := loadJoins(db, store, &res, u, opts)
+		if errJ != nil {
+			return nil, sdk.WrapError(errJ, "Load> Unable to load workflow joins")
+		}
+		res.Joins = joins
 	}
-	res.Joins = joins
 
 	notifs, errN := loadNotifications(db, &res)
 	if errN != nil {
@@ -313,9 +321,9 @@ func load(db gorp.SqlExecutor, store cache.Store, u *sdk.User, query string, arg
 	return w, nil
 }
 
-func loadWorkflowRoot(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.User) error {
+func loadWorkflowRoot(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.User, opts LoadOptions) error {
 	var err error
-	w.Root, err = loadNode(db, store, w, w.RootID, u)
+	w.Root, err = loadNode(db, store, w, w.RootID, u, opts)
 	if err != nil {
 		if err == sdk.ErrWorkflowNodeNotFound {
 			log.Debug("Load> Unable to load root %d for workflow %d", w.RootID, w.ID)

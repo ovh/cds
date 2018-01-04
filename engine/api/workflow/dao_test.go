@@ -62,7 +62,7 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -164,7 +164,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -284,7 +284,7 @@ func TestInsertComplexeWorkflowAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -433,10 +433,10 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
-	w1old, err := workflow.Load(db, cache, key, "test_1", u)
+	w1old, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	t.Logf("Modifying workflow... with %d instead of %d", app2.ID, app.ID)
@@ -449,7 +449,7 @@ func TestUpdateSimpleWorkflowWithApplicationEnvPipelineParametersAndPayload(t *t
 	test.NoError(t, workflow.Update(db, cache, w1, w1old, proj, u))
 
 	t.Logf("Reloading workflow...")
-	w2, err := workflow.LoadByID(db, cache, w1.ID, u)
+	w2, err := workflow.LoadByID(db, cache, w1.ID, u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w1.ID, w2.ID)
@@ -604,7 +604,7 @@ func TestInsertComplexeWorkflowWithJoinsAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)
@@ -884,7 +884,7 @@ func TestInsertComplexeWorkflowWithComplexeJoins(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	workflow.Sort(&w)
@@ -968,7 +968,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	w1old := w1
@@ -994,7 +994,7 @@ func TestUpdateWorkflowWithJoins(t *testing.T) {
 	test.NoError(t, workflow.Update(db, cache, w1, w1old, proj, u))
 
 	t.Logf("Reloading workflow...")
-	w2, err := workflow.LoadByID(db, cache, w1.ID, u)
+	w2, err := workflow.LoadByID(db, cache, w1.ID, u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	m1, _ := dump.ToMap(w1)
@@ -1086,7 +1086,7 @@ func TestInsertSimpleWorkflowWithHookAndExport(t *testing.T) {
 
 	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
 
-	w1, err := workflow.Load(db, cache, key, "test_1", u)
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.Equal(t, w.ID, w1.ID)

@@ -44,7 +44,7 @@ func insertTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node
 }
 
 // LoadTriggers loads trigger from a node
-func loadTriggers(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User) ([]sdk.WorkflowNodeTrigger, error) {
+func loadTriggers(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNode, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeTrigger, error) {
 	dbtriggers := []NodeTrigger{}
 	if _, err := db.Select(&dbtriggers, "select * from workflow_node_trigger where workflow_node_id = $1 ORDER by workflow_node_trigger.id ASC", node.ID); err != nil {
 		if err == sql.ErrNoRows {
@@ -62,7 +62,7 @@ func loadTriggers(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node 
 		t := sdk.WorkflowNodeTrigger(dbt)
 		if t.WorkflowDestNodeID != 0 {
 			//Load destination node
-			dest, err := loadNode(db, store, w, t.WorkflowDestNodeID, u)
+			dest, err := loadNode(db, store, w, t.WorkflowDestNodeID, u, opts)
 			if err != nil {
 				return nil, sdk.WrapError(err, "LoadTriggers> Unable to load destination node %d", t.WorkflowDestNodeID)
 			}

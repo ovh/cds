@@ -217,7 +217,7 @@ func CountPipeline(db gorp.SqlExecutor, pipelineID int64) (bool, error) {
 }
 
 // loadNode loads a node in a workflow
-func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64, u *sdk.User) (*sdk.WorkflowNode, error) {
+func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNode, error) {
 	dbwn := Node{}
 	if err := db.SelectOne(&dbwn, "select * from workflow_node where workflow_id = $1 and id = $2", w.ID, id); err != nil {
 		if err == sql.ErrNoRows {
@@ -231,7 +231,7 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	wn.Ref = fmt.Sprintf("%d", dbwn.ID)
 
 	//Load triggers
-	triggers, errTrig := loadTriggers(db, store, w, &wn, u)
+	triggers, errTrig := loadTriggers(db, store, w, &wn, u, opts)
 	if errTrig != nil {
 		return nil, sdk.WrapError(errTrig, "LoadNode> Unable to load triggers of %d", id)
 	}
@@ -254,7 +254,7 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	wn.Hooks = hooks
 
 	//Load pipeline
-	pip, err := pipeline.LoadPipelineByID(db, wn.PipelineID, true)
+	pip, err := pipeline.LoadPipelineByID(db, wn.PipelineID, opts.DeepPipeline)
 	if err != nil {
 		return nil, sdk.WrapError(err, "LoadNode> Unable to load pipeline of %d", id)
 	}

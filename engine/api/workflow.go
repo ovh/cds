@@ -42,7 +42,7 @@ func (api *API) getWorkflowHandler() Handler {
 		name := vars["permWorkflowName"]
 		withUsage := FormBool(r, "withUsage")
 
-		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		w1, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowHandler> Cannot load workflow %s", name)
 		}
@@ -143,7 +143,7 @@ func (api *API) postWorkflowHandler() Handler {
 			return sdk.WrapError(err, "Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, wf.ID, getUser(ctx))
+		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, wf.ID, getUser(ctx), workflow.LoadOptions{})
 		if errl != nil {
 			return sdk.WrapError(errl, "Cannot load workflow")
 		}
@@ -167,7 +167,7 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(errP, "putWorkflowHandler> Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		oldW, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "putWorkflowHandler> Cannot load Workflow %s", key)
 		}
@@ -219,7 +219,7 @@ func (api *API) putWorkflowHandler() Handler {
 			return sdk.WrapError(err, "putWorkflowHandler> Cannot commit transaction")
 		}
 
-		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, wf.ID, getUser(ctx))
+		wf1, errl := workflow.LoadByID(api.mustDB(), api.Cache, wf.ID, getUser(ctx), workflow.LoadOptions{})
 		if errl != nil {
 			return sdk.WrapError(errl, "putWorkflowHandler> Cannot load workflow")
 		}
@@ -263,7 +263,7 @@ func (api *API) deleteWorkflowHandler() Handler {
 			return sdk.WrapError(errP, "Cannot load Project %s", key)
 		}
 
-		oldW, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		oldW, errW := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), workflow.LoadOptions{})
 		if errW != nil {
 			return sdk.WrapError(errW, "Cannot load Workflow %s", key)
 		}

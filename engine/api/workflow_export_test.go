@@ -73,7 +73,7 @@ func Test_getWorkflowExportHandler(t *testing.T) {
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -172,7 +172,7 @@ func Test_getWorkflowExportHandlerWithPermissions(t *testing.T) {
 		Permission: 7,
 	})
 
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request
@@ -261,7 +261,7 @@ func Test_getWorkflowPullHandler(t *testing.T) {
 	proj, _ = project.Load(api.mustDB(), api.Cache, proj.Key, u, project.LoadOptions.WithPipelines)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u)
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	//Prepare request

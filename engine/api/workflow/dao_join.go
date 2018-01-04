@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-func loadJoins(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.User) ([]sdk.WorkflowNodeJoin, error) {
+func loadJoins(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.User, opts LoadOptions) ([]sdk.WorkflowNodeJoin, error) {
 	joinIDs := []int64{}
 	_, err := db.Select(&joinIDs, "select id from workflow_node_join where workflow_id = $1", w.ID)
 	if err != nil {
@@ -23,7 +23,7 @@ func loadJoins(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.U
 
 	joins := []sdk.WorkflowNodeJoin{}
 	for _, id := range joinIDs {
-		j, errJ := loadJoin(db, store, w, id, u)
+		j, errJ := loadJoin(db, store, w, id, u, opts)
 		if errJ != nil {
 			return nil, sdk.WrapError(errJ, "loadJoins> Unable to load join %d on workflow %d", id, w.ID)
 		}
@@ -33,7 +33,7 @@ func loadJoins(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, u *sdk.U
 	return joins, nil
 }
 
-func loadJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64, u *sdk.User) (*sdk.WorkflowNodeJoin, error) {
+func loadJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeJoin, error) {
 	dbjoin := Join{}
 	//Load the join
 	if err := db.SelectOne(&dbjoin, "select * from workflow_node_join where id = $1 and workflow_id = $2", id, w.ID); err != nil {
@@ -62,7 +62,7 @@ func loadJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 
 	//Load trigegrs
 	for _, t := range triggerIDs {
-		jt, err := loadJoinTrigger(db, store, w, &j, t, u)
+		jt, err := loadJoinTrigger(db, store, w, &j, t, u, opts)
 		if err != nil {
 			return nil, sdk.WrapError(err, "loadJoin> Unable to load join trigger %d", t)
 		}
@@ -77,7 +77,7 @@ func loadJoin(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	return &j, nil
 }
 
-func loadJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNodeJoin, id int64, u *sdk.User) (*sdk.WorkflowNodeJoinTrigger, error) {
+func loadJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, node *sdk.WorkflowNodeJoin, id int64, u *sdk.User, opts LoadOptions) (*sdk.WorkflowNodeJoinTrigger, error) {
 	dbtrigger := JoinTrigger{}
 	//Load the trigger
 	if err := db.SelectOne(&dbtrigger, "select * from workflow_node_join_trigger where workflow_node_join_id = $1 and id = $2", node.ID, id); err != nil {
@@ -90,7 +90,7 @@ func loadJoinTrigger(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, no
 	t := sdk.WorkflowNodeJoinTrigger(dbtrigger)
 	//Load node destination
 	if t.WorkflowDestNodeID != 0 {
-		dest, err := loadNode(db, store, w, t.WorkflowDestNodeID, u)
+		dest, err := loadNode(db, store, w, t.WorkflowDestNodeID, u, opts)
 		if err != nil {
 			return nil, sdk.WrapError(err, "loadJoinTrigger> Unable to load destination node %d", t.WorkflowDestNodeID)
 		}
