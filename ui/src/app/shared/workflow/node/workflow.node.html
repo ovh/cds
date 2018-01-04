@@ -31,7 +31,7 @@
                  *ngIf="(node.context.application_id && node.context.application_id > 0) || (node.context.environment_id && node.context.environment_id > 0)">
                 <!-- application name on a semantic ui ribbon -->
                 <div class="node application link" [class.all]="!node.context.environment_id" *ngIf="node.context.application_id && node.context.application_id > 0">
-                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key, 'application', node.context.application?.name]" title="{{node.context.application?.name}}">
+                    <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key, 'application', node.context.application?.name]" title="{{ 'common_application_title' | translate }}{{node.context.application?.name}}">
                         <span class="content-link">{{node.context.application?.name}}</span>
                     </a>
                 </div>
@@ -39,7 +39,7 @@
                 <!-- environment name on a semantic ui ribbon -->
                 <div class="node environment link" [class.all]="!node.context.application_id" *ngIf="node.context.environment_id && node.context.environment_id > 0">
                     <a (click)="$event.stopPropagation()" [routerLink]="['/project', project.key]" [queryParams]="{tab: 'environments', envName: node.context.environment?.name}"
-                        title="{{node.context.environment?.name}}">
+                        title="{{ 'common_environment_title' | translate}}{{node.context.environment?.name}}">
                         <span class="content-link">{{node.context.environment?.name}}</span>
                     </a>
                 </div>
