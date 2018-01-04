@@ -61,6 +61,7 @@ export class PipelineShowComponent implements OnInit, OnDestroy {
         this.currentUser = this._authentificationStore.getUser();
         this.project = this._routeActivated.snapshot.data['project'];
         this.application = this._routeActivated.snapshot.data['application'];
+        this.workflowName = this._routeActivated.snapshot.queryParams['workflow'];
 
         this.buildNumber = this.getQueryParam('buildNumber');
         this.version = this.getQueryParam('version');

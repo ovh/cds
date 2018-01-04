@@ -154,7 +154,7 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
           this._router.navigate([
               '/project', this.project.key,
               'pipeline', pip
-          ]);
+          ], {queryParams: {workflow: this.workflow.name}});
         }
     }
 
