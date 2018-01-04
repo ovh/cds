@@ -314,6 +314,7 @@ func loadRun(db gorp.SqlExecutor, withArtifacts bool, query string, args ...inte
 	return &wr, nil
 }
 
+//TODO: if no bugs are found, it could be used to refactor process.go
 // canBeRun return boolean to know if a wokrflow node run can be run or not
 func canBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun) bool {
 	if !sdk.StatusIsTerminated(workflowNodeRun.Status) {
@@ -332,16 +333,11 @@ func canBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun
 		return true
 	}
 
-	for _, nodeRuns := range workflowRun.WorkflowNodeRuns {
-		nodeRunsLen := len(nodeRuns)
-		if nodeRunsLen == 0 {
-			continue
-		}
-		for _, ancestorID := range ancestorsID {
-			if nodeRuns[nodeRunsLen-1].WorkflowNodeID == ancestorID &&
-				(!sdk.StatusIsTerminated(nodeRuns[nodeRunsLen-1].Status) || nodeRuns[nodeRunsLen-1].Status == "") {
-				return false
-			}
+	for _, ancestorID := range ancestorsID {
+		nodeRuns, ok := workflowRun.WorkflowNodeRuns[ancestorID]
+		if ok && (len(nodeRuns) == 0 || !sdk.StatusIsTerminated(nodeRuns[0].Status) ||
+			nodeRuns[0].Status == "" || nodeRuns[0].Status == sdk.StatusNeverBuilt.String()) {
+			return false
 		}
 	}
 

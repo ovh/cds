@@ -139,12 +139,12 @@ export class WorkflowSidebarRunNodeComponent implements OnInit {
             continue;
           }
           let nodeRuns = this.currentWorkflowRun.nodes[nodeRunId];
-          if (nodeRuns[nodeRuns.length - 1].workflow_node_id === parentNodeId) { // if node id is still the same
-            if (PipelineStatus.isActive(nodeRuns[nodeRuns.length - 1].status)) {
+          if (nodeRuns[0].workflow_node_id === parentNodeId) { // if node id is still the same
+            if (PipelineStatus.isActive(nodeRuns[0].status)) {
               return false;
             }
             nbNodeFound++;
-          } else if (!Workflow.getNodeByID(nodeRuns[nodeRuns.length - 1].workflow_node_id, this.workflow)) {
+          } else if (!Workflow.getNodeByID(nodeRuns[0].workflow_node_id, this.workflow)) {
             // workflow updated so prefer return true
             return true;
           }
