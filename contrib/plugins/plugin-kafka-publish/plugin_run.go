@@ -143,7 +143,7 @@ func (m KafkaPlugin) Run(j plugin.IJob) plugin.Result {
 		}
 	}
 
-	Logf("Data sent to %s : %v", topic, files)
+	Logf("Data sent to topic %s, action id: %d : %v", topic, job.ID(), files)
 
 	//Don't wait for ack
 	if waitForAckString != "true" {
