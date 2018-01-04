@@ -22,6 +22,8 @@ func (h Secretservice) Add(creds *credentials.Credentials) error {
 	if creds == nil {
 		return errors.New("missing credentials")
 	}
+	credsLabel := C.CString(credentials.CredsLabel)
+	defer C.free(unsafe.Pointer(credsLabel))
 	server := C.CString(creds.ServerURL)
 	defer C.free(unsafe.Pointer(server))
 	username := C.CString(creds.Username)
@@ -29,7 +31,7 @@ func (h Secretservice) Add(creds *credentials.Credentials) error {
 	secret := C.CString(creds.Secret)
 	defer C.free(unsafe.Pointer(secret))
 
-	if err := C.add(server, username, secret); err != nil {
+	if err := C.add(credsLabel, server, username, secret); err != nil {
 		defer C.g_error_free(err)
 		errMsg := (*C.char)(unsafe.Pointer(err.message))
 		return errors.New(C.GoString(errMsg))
@@ -79,27 +81,38 @@ func (h Secretservice) Get(serverURL string) (string, string, error) {
 	return user, pass, nil
 }
 
-func (h Secretservice) List() ([]string, []string, error) {
+// List returns the stored URLs and corresponding usernames for a given credentials label
+func (h Secretservice) List() (map[string]string, error) {
+	credsLabelC := C.CString(credentials.CredsLabel)
+	defer C.free(unsafe.Pointer(credsLabelC))
+
 	var pathsC **C.char
 	defer C.free(unsafe.Pointer(pathsC))
 	var acctsC **C.char
 	defer C.free(unsafe.Pointer(acctsC))
 	var listLenC C.uint
-	err := C.list(&pathsC, &acctsC, &listLenC)
+	err := C.list(credsLabelC, &pathsC, &acctsC, &listLenC)
 	if err != nil {
 		defer C.free(unsafe.Pointer(err))
-		return nil, nil, errors.New("Error from list function in secretservice_linux.c likely due to error in secretservice library")
+		return nil, errors.New("Error from list function in secretservice_linux.c likely due to error in secretservice library")
 	}
+	defer C.freeListData(&pathsC, listLenC)
+	defer C.freeListData(&acctsC, listLenC)
+
+	resp := make(map[string]string)
+
 	listLen := int(listLenC)
-	pathTmp := (*[1 << 30]*C.char)(unsafe.Pointer(pathsC))[:listLen:listLen]
-	acctTmp := (*[1 << 30]*C.char)(unsafe.Pointer(acctsC))[:listLen:listLen]
-	paths := make([]string, listLen)
-	accts := make([]string, listLen)
-	for i := 0; i < listLen; i++ {
-		paths[i] = C.GoString(pathTmp[i])
-		accts[i] = C.GoString(acctTmp[i])
+	if listLen == 0 {
+		return resp, nil
 	}
-	C.freeListData(&pathsC, listLenC)
-	C.freeListData(&acctsC, listLenC)
-	return paths, accts, nil
+	// The maximum capacity of the following two slices is limited to (2^29)-1 to remain compatible
+	// with 32-bit platforms. The size of a `*C.char` (a pointer) is 4 Byte on a 32-bit system
+	// and (2^29)*4 == math.MaxInt32 + 1. -- See issue golang/go#13656
+	pathTmp := (*[(1 << 29) - 1]*C.char)(unsafe.Pointer(pathsC))[:listLen:listLen]
+	acctTmp := (*[(1 << 29) - 1]*C.char)(unsafe.Pointer(acctsC))[:listLen:listLen]
+	for i := 0; i < listLen; i++ {
+		resp[C.GoString(pathTmp[i])] = C.GoString(acctTmp[i])
+	}
+
+	return resp, nil
 }
