@@ -3,15 +3,15 @@ package main
 import (
 	"io"
 
-	"github.com/BurntSushi/toml"
+	toml "github.com/pelletier/go-toml"
 
 	"github.com/ovh/cds/sdk/keychain"
 )
 
 func storeSecret(configFile io.Writer, c *config) error {
-	enc := toml.NewEncoder(configFile)
 	storedConf := *c
 	storedConf.Token = "xxxxxxxx"
+	enc := toml.NewEncoder(configFile)
 	if err := enc.Encode(&storedConf); err != nil {
 		return err
 	}
@@ -19,8 +19,8 @@ func storeSecret(configFile io.Writer, c *config) error {
 }
 
 func loadSecret(configFile io.Reader, c *config) error {
-	_, err := toml.DecodeReader(configFile, c)
-	if err != nil {
+	dec := toml.NewDecoder(configFile)
+	if err := dec.Decode(c); err != nil {
 		return err
 	}
 

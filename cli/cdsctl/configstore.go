@@ -5,7 +5,7 @@ package main
 import (
 	"io"
 
-	"github.com/BurntSushi/toml"
+	toml "github.com/pelletier/go-toml"
 )
 
 func storeSecret(configFile io.Writer, c *config) error {
@@ -14,6 +14,6 @@ func storeSecret(configFile io.Writer, c *config) error {
 }
 
 func loadSecret(configFile io.Reader, c *config) error {
-	_, err := toml.DecodeReader(configFile, c)
-	return err
+	dec := toml.NewDecoder(configFile)
+	return dec.Decode(c)
 }
