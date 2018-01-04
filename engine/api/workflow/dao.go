@@ -317,7 +317,9 @@ func load(db gorp.SqlExecutor, store cache.Store, opts LoadOptions, u *sdk.User,
 
 	log.Debug("Load> Load workflow (%s/%s)%d took %.3f seconds", res.ProjectKey, res.Name, res.ID, delta)
 	w := &res
-	Sort(w)
+	if !opts.WithoutNode {
+		Sort(w)
+	}
 	return w, nil
 }
 
