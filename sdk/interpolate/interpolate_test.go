@@ -1,11 +1,11 @@
-package sdk
+package interpolate
 
 import (
 	"fmt"
 	"testing"
 )
 
-func BenchmarkInterpolate(b *testing.B) {
+func BenchmarkDo(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 
 		type args struct {
@@ -36,11 +36,11 @@ func BenchmarkInterpolate(b *testing.B) {
 			test.args.vars[fmt.Sprintf("%d", i)] = fmt.Sprintf(">>%d<<", i)
 		}
 
-		Interpolate(test.args.input, test.args.vars)
+		Do(test.args.input, test.args.vars)
 	}
 }
 
-func BenchmarkInterpolateNothing(b *testing.B) {
+func BenchmarkDoNothing(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 
 		type args struct {
@@ -64,12 +64,12 @@ func BenchmarkInterpolateNothing(b *testing.B) {
 			test.args.vars[fmt.Sprintf("%d", i)] = fmt.Sprintf(">>%d<<", i)
 		}
 
-		Interpolate(test.args.input, test.args.vars)
+		Do(test.args.input, test.args.vars)
 
 	}
 }
 
-func TestInterpolate(t *testing.T) {
+func TestDo(t *testing.T) {
 	type args struct {
 		input string
 		vars  map[string]string
@@ -223,13 +223,13 @@ func TestInterpolate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Interpolate(tt.args.input, tt.args.vars)
+			got, err := Do(tt.args.input, tt.args.vars)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Interpolate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Do() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Interpolate() = %v, want %v", got, tt.want)
+				t.Errorf("Do() = %v, want %v", got, tt.want)
 			}
 		})
 	}

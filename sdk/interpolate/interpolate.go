@@ -1,4 +1,4 @@
-package sdk
+package interpolate
 
 import (
 	"bytes"
@@ -10,8 +10,8 @@ import (
 
 var interpolateRegex = regexp.MustCompile("({{\\.[a-zA-Z0-9._\\-µ|\\s]+}})")
 
-// Interpolate returns interpolated input with vars
-func Interpolate(input string, vars map[string]string) (string, error) {
+// Do returns interpolated input with vars
+func Do(input string, vars map[string]string) (string, error) {
 	if !strings.Contains(input, "{{") {
 		return input, nil
 	}
@@ -43,7 +43,7 @@ func Interpolate(input string, vars map[string]string) (string, error) {
 			if len(sm[i]) > 0 {
 				e := sm[i][1][2 : len(sm[i][1])-2]
 				// alreadyReplaced: check if var is already replaced.
-				// see test "two same unknown" on InterpolateTest
+				// see test "two same unknown" on DoTest
 				if _, ok := alreadyReplaced[sm[i][1]]; !ok {
 					if _, ok := defaults[e]; !ok {
 						// replace {{.cds.foo.bar}} with {{ default "{{.cds.foo.bar}}" .cds.foo.bar}}

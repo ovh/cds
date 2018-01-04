@@ -13,6 +13,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -102,7 +103,7 @@ func (wk *currentWorker) tmplHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := sdk.ParametersToMap(wk.currentJob.params)
 
-	res, err := sdk.Interpolate(string(btes), vars)
+	res, err := interpolate.Do(string(btes), vars)
 	if err != nil {
 		log.Error("Unable to interpolate: %v", err)
 		newError := sdk.NewError(sdk.ErrWrongRequest, err)

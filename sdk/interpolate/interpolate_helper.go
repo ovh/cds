@@ -1,4 +1,4 @@
-package sdk
+package interpolate
 
 // This functions come from https://github.com/Masterminds/sprig
 // Copyright (C) 2013 Masterminds

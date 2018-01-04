@@ -19,7 +19,7 @@ import (
 	"github.com/gambol99/go-marathon"
 	"github.com/xeipuuv/gojsonschema"
 
-	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/interpolate"
 	"github.com/ovh/cds/sdk/plugin"
 )
 
@@ -290,7 +290,7 @@ func tmplApplicationConfigFile(a plugin.IJob, filepath string) (string, error) {
 	}
 
 	// apply cds.var on marathon.json file
-	out, errapp := sdk.Interpolate(string(buff), a.Arguments().Data)
+	out, errapp := interpolate.Do(string(buff), a.Arguments().Data)
 	if errapp != nil {
 		plugin.SendLog(a, "Apply cds variables error: %s\n", errapp)
 		return "", errapp

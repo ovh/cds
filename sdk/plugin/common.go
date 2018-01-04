@@ -20,8 +20,6 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/spf13/cobra"
-
-	"github.com/ovh/cds/sdk"
 )
 
 //HTTP Constants
@@ -90,18 +88,10 @@ func (*Common) Version() string {
 
 // Main func call by plugin, display info only
 func Main(p CDSAction) {
-	var format string
-
 	var cmdInfo = &cobra.Command{
 		Use:   "info",
-		Short: "Print plugin Information anything to the screen: info --format <yml>",
+		Short: "info: Print plugin Information anything to the screen",
 		Run: func(cmd *cobra.Command, args []string) {
-			if format != "markdown" {
-				if err := sdk.Output(format, p, fmt.Printf); err != nil {
-					fmt.Printf("Error:%s", err)
-				}
-				return
-			}
 			fmt.Print(InfoMarkdown(p))
 		},
 	}
@@ -110,11 +100,9 @@ func Main(p CDSAction) {
 		Use:   "version",
 		Short: "Print plugin version",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("CDS Plugin version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+			fmt.Printf("CDS Plugin version:%s os:%s architecture:%s\n", VERSION, runtime.GOOS, runtime.GOARCH)
 		},
 	}
-
-	cmdInfo.Flags().StringVarP(&format, "format", "", "markdown", "--format:yaml, json, xml, markdown")
 
 	var rootCmd = &cobra.Command{
 		Run: func(cmd *cobra.Command, args []string) {
