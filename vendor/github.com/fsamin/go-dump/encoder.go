@@ -231,7 +231,9 @@ func (e *Encoder) ToStringMap(i interface{}) (res map[string]string, err error) 
 	}
 	res = map[string]string{}
 	for k, v := range ires {
-		res[k] = fmt.Sprintf("%v", v)
+		if k != "" {
+			res[k] = fmt.Sprintf("%v", v)
+		}
 	}
 	return
 }
