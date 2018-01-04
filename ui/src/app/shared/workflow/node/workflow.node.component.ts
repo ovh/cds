@@ -1,5 +1,4 @@
 import {
-    AfterViewInit,
     Component,
     ElementRef,
     Input,
@@ -27,7 +26,7 @@ import {WorkflowCoreService} from '../../../service/workflow/workflow.core.servi
     styleUrls: ['./workflow.node.scss']
 })
 @AutoUnsubscribe()
-export class WorkflowNodeComponent implements AfterViewInit, OnInit {
+export class WorkflowNodeComponent implements OnInit {
 
     @Input() node: WorkflowNode;
     @Input() workflow: Workflow;
@@ -156,10 +155,5 @@ export class WorkflowNodeComponent implements AfterViewInit, OnInit {
               'pipeline', pip
           ]);
         }
-    }
-
-    ngAfterViewInit() {
-        this.elementRef.nativeElement.style.position = 'fixed';
-        this.elementRef.nativeElement.style.top = 0;
     }
 }
