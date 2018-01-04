@@ -17,9 +17,7 @@
       <div class="ui fluid buttons" *ngIf="currentWorkflowRun">
         <button class="ui positive icon button"
             [class.loading]="loading"
-            [disabled]="loading || !currentWorkflowRun || !currentWorkflowRun.status ||
-            currentWorkflowRun.status === pipelineStatusEnum.BUILDING ||
-            currentWorkflowRun.status === pipelineStatusEnum.WAITING"
+            [disabled]="loading || !currentWorkflowRun || !canBeRun"
             [title]="'btn_run' | translate" (click)="openRunNode()"
             *ngIf="currentWorkflowNodeRun?.status !== pipelineStatusEnum.BUILDING &&
                 currentWorkflowNodeRun?.status !== pipelineStatusEnum.WAITING">

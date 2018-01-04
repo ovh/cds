@@ -250,6 +250,76 @@ export class Workflow {
         }
     }
 
+    static getParentNodeIds(workflow: Workflow, currentNodeID: number): number[] {
+      let ancestors = {};
+
+      for (let join of workflow.joins) {
+        for (let trigger of join.triggers) {
+          if (trigger.workflow_dest_node) {
+            let parentNodeInfos = this.getParentNode(workflow, trigger.workflow_dest_node, currentNodeID);
+            if (parentNodeInfos.found) {
+              if (parentNodeInfos.node) {
+                ancestors[parentNodeInfos.node.id] = true;
+              } else {
+                ancestors[workflow.root.id] = true;
+                join.source_node_id.forEach((source) => ancestors[source] = true);
+                return Object.keys(ancestors).map((ancestor) => parseInt(ancestor, 10));
+              }
+            }
+          }
+        }
+
+        for (let sourceNodeId of join.source_node_id) {
+          let nodeFound = Workflow.getNodeByID(sourceNodeId, workflow);
+          if (nodeFound) {
+            let parentNodeInfos = this.getParentNode(workflow, nodeFound, currentNodeID);
+            if (parentNodeInfos.found) {
+              if (parentNodeInfos.node) {
+                ancestors[parentNodeInfos.node.id] = true;
+              }
+            }
+          }
+        }
+      }
+
+      let parentNodeInfosFromRoot = this.getParentNode(workflow, workflow.root, currentNodeID);
+      if (parentNodeInfosFromRoot.found) {
+        if (parentNodeInfosFromRoot.node) {
+          ancestors[parentNodeInfosFromRoot.node.id] = true;
+        } else {
+          ancestors[workflow.root.id] = true;
+        }
+      }
+
+      return Object.keys(ancestors).map((id) => parseInt(id, 10));
+    }
+
+    static getParentNode(workflow: Workflow, workflowNode: WorkflowNode, currentNodeID: number): {found: boolean, node?: WorkflowNode} {
+      if (!workflowNode) {
+        return {found: false};
+      }
+      if (workflowNode.id === currentNodeID) {
+        return {found: true};
+      }
+
+      if (!Array.isArray(workflowNode.triggers)) {
+        return {found: false};
+      }
+
+      for (let trigger of workflowNode.triggers) {
+        let parentNodeInfos = this.getParentNode(workflow, trigger.workflow_dest_node, currentNodeID);
+        if (parentNodeInfos.found) {
+          if (parentNodeInfos.node) {
+            return parentNodeInfos;
+          } else {
+            return {found: true, node: workflowNode};
+          }
+        }
+      }
+
+      return {found: false};
+    }
+
     constructor() {
         this.root = new WorkflowNode();
     }

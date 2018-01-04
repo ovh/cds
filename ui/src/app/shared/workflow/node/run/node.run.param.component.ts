@@ -4,6 +4,7 @@ import {ModalTemplate, SuiModalService, TemplateModalConfig} from 'ng2-semantic-
 import {ActiveModal} from 'ng2-semantic-ui/dist';
 import {Workflow, WorkflowNode, WorkflowNodeContext} from '../../../../model/workflow.model';
 import {Project} from '../../../../model/project.model';
+import {Parameter} from '../../../../model/parameter.model';
 import {cloneDeep} from 'lodash';
 import {Pipeline} from '../../../../model/pipeline.model';
 import {Commit} from '../../../../model/repositories.model';
@@ -202,7 +203,7 @@ export class WorkflowNodeRunParamComponent {
         let request = new WorkflowRunRequest();
         request.manual = new WorkflowNodeRunManual();
         request.manual.payload = this.payloadString ? JSON.parse(this.payloadString) : null;
-        request.manual.pipeline_parameter = this.nodeToRun.context.default_pipeline_parameters;
+        request.manual.pipeline_parameter = Parameter.formatForAPI(this.nodeToRun.context.default_pipeline_parameters);
 
         if (this.nodeRun) {
             request.from_nodes = [this.nodeRun.workflow_node_id];

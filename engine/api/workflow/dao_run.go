@@ -286,6 +286,7 @@ func loadRun(db gorp.SqlExecutor, withArtifacts bool, query string, args ...inte
 		if wr.WorkflowNodeRuns == nil {
 			wr.WorkflowNodeRuns = make(map[int64][]sdk.WorkflowNodeRun)
 		}
+		wnr.CanBeRun = canBeRun(&wr, wnr)
 
 		if withArtifacts {
 			arts, errA := loadArtifactByNodeRunID(db, wnr.ID)
@@ -311,6 +312,40 @@ func loadRun(db gorp.SqlExecutor, withArtifacts bool, query string, args ...inte
 	wr.Tags = tags
 
 	return &wr, nil
+}
+
+// canBeRun return boolean to know if a wokrflow node run can be run or not
+func canBeRun(workflowRun *sdk.WorkflowRun, workflowNodeRun *sdk.WorkflowNodeRun) bool {
+	if !sdk.StatusIsTerminated(workflowNodeRun.Status) {
+		return false
+	}
+	if workflowRun == nil {
+		return false
+	}
+	node := workflowRun.Workflow.GetNode(workflowNodeRun.WorkflowNodeID)
+	if node == nil {
+		return true
+	}
+
+	ancestorsID := node.Ancestors(&workflowRun.Workflow, true)
+	if ancestorsID == nil || len(ancestorsID) == 0 {
+		return true
+	}
+
+	for _, nodeRuns := range workflowRun.WorkflowNodeRuns {
+		nodeRunsLen := len(nodeRuns)
+		if nodeRunsLen == 0 {
+			continue
+		}
+		for _, ancestorID := range ancestorsID {
+			if nodeRuns[nodeRunsLen-1].WorkflowNodeID == ancestorID &&
+				(!sdk.StatusIsTerminated(nodeRuns[nodeRunsLen-1].Status) || nodeRuns[nodeRunsLen-1].Status == "") {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 func loadTagsByRunID(db gorp.SqlExecutor, runID int64) ([]sdk.WorkflowRunTag, error) {

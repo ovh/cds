@@ -112,6 +112,7 @@ type WorkflowNodeRun struct {
 	VCSRepository      string                           `json:"vcs_repository"`
 	VCSBranch          string                           `json:"vcs_branch"`
 	VCSHash            string                           `json:"vcs_hash"`
+	CanBeRun           bool                             `json:"can_be_run"`
 }
 
 // WorkflowNodeTriggerRun Represent the state of a trigger
