@@ -917,7 +917,9 @@ func Test_getWorkflowNodeRunJobStepHandler(t *testing.T) {
 	test.NoError(t, errP)
 
 	test.NoError(t, workflow.Insert(api.mustDB(), api.Cache, &w, proj2, u))
-	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{})
+	w1, err := workflow.Load(api.mustDB(), api.Cache, key, "test_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
 	test.NoError(t, err)
 
 	_, err = workflow.ManualRun(api.mustDB(), api.mustDB(), api.Cache, proj, w1, &sdk.WorkflowNodeRunManual{
