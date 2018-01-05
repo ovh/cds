@@ -12,7 +12,7 @@ func storeSecret(configFile io.Writer, c *config) error {
 	storedConf := *c
 	storedConf.Token = "xxxxxxxx"
 	enc := toml.NewEncoder(configFile)
-	if err := enc.Encode(&storedConf); err != nil {
+	if err := enc.Encode(storedConf); err != nil {
 		return err
 	}
 	return keychain.StoreSecret(c.Host, c.User, c.Token)

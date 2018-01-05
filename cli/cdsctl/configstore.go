@@ -10,7 +10,7 @@ import (
 
 func storeSecret(configFile io.Writer, c *config) error {
 	enc := toml.NewEncoder(configFile)
-	return enc.Encode(c)
+	return enc.Encode(*c)
 }
 
 func loadSecret(configFile io.Reader, c *config) error {
