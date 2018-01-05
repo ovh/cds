@@ -206,14 +206,20 @@ func consumptionHandler(pc sarama.PartitionConsumer, topic string, po sarama.Par
 		select {
 		case msg := <-pc.Messages():
 			// Write message consumed in the sub channel
-			messagesChan <- msg.Value
-			po.MarkOffset(msg.Offset+1, topic)
+			if msg != nil {
+				messagesChan <- msg.Value
+				po.MarkOffset(msg.Offset+1, topic)
+			}
 		case err := <-pc.Errors():
-			fmt.Println(err)
-			errorsChan <- err
+			if err != nil {
+				fmt.Println(err)
+				errorsChan <- err
+			}
 		case offsetErr := <-po.Errors():
-			fmt.Println(offsetErr)
-			errorsChan <- offsetErr
+			if offsetErr != nil {
+				fmt.Println(offsetErr)
+				errorsChan <- offsetErr
+			}
 		}
 	}
 }

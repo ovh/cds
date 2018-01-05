@@ -57,7 +57,6 @@ func SetTrace(traceHandle io.Writer) {
 
 //Init is a common function for all plugins
 func (p *Common) Init(o IOptions) string {
-	SetTrace(ioutil.Discard)
 	auth = o
 
 	if auth.TLSSkipVerify() {
@@ -230,21 +229,29 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 
 	data, err := json.Marshal(l)
 	if err != nil {
-		return err
+		e := fmt.Errorf("err on Marshal:%s", err)
+		Trace.Println(e)
+		return e
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("http://127.0.0.1:%d/log", j.WorkerHTTPPort()), bytes.NewReader(data))
 	if err != nil {
-		return fmt.Errorf("send log to worker /log: %s", err)
+		e := fmt.Errorf("send log to worker /log: %s", err)
+		Trace.Println(e)
+		return e
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("cannot send log to worker /log: %s", err)
+		e := fmt.Errorf("cannot send log to worker /log: %s", err)
+		Trace.Println(e)
+		return e
 	}
 
 	if resp.StatusCode >= 300 {
-		return fmt.Errorf("cannot send log to worker /log: HTTP %d", resp.StatusCode)
+		e := fmt.Errorf("cannot send log to worker /log: HTTP %d", resp.StatusCode)
+		Trace.Println(e)
+		return e
 	}
 
 	return nil
