@@ -19,7 +19,10 @@ func (api *API) deleteWorkflowGroupHandler() Handler {
 		name := vars["permWorkflowName"]
 		groupName := vars["groupName"]
 
-		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		options := workflow.LoadOptions{
+			WithoutNode: true,
+		}
+		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "deleteWorkflowGroupHandler")
 		}
@@ -76,7 +79,10 @@ func (api *API) putWorkflowGroupHandler() Handler {
 			return sdk.WrapError(sdk.ErrInvalidName, "putWorkflowGroupHandler")
 		}
 
-		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		options := workflow.LoadOptions{
+			WithoutNode: true,
+		}
+		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "putWorkflowGroupHandler")
 		}
@@ -126,7 +132,10 @@ func (api *API) postWorkflowGroupHandler() Handler {
 			return sdk.WrapError(err, "postWorkflowGroupHandler")
 		}
 
-		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx))
+		options := workflow.LoadOptions{
+			WithoutNode: true,
+		}
+		wf, err := workflow.Load(api.mustDB(), api.Cache, key, name, getUser(ctx), options)
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowGroupHandler")
 		}

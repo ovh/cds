@@ -1,4 +1,4 @@
-package sdk
+package interpolate
 
 import (
 	"bytes"
@@ -8,10 +8,10 @@ import (
 	"text/template"
 )
 
-var interpolateRegex = regexp.MustCompile("({{\\.[a-zA-Z0-9._|\\s]+}})")
+var interpolateRegex = regexp.MustCompile("({{\\.[a-zA-Z0-9._\\-µ|\\s]+}})")
 
-// Interpolate returns interpolated input with vars
-func Interpolate(input string, vars map[string]string) (string, error) {
+// Do returns interpolated input with vars
+func Do(input string, vars map[string]string) (string, error) {
 	if !strings.Contains(input, "{{") {
 		return input, nil
 	}
@@ -43,14 +43,16 @@ func Interpolate(input string, vars map[string]string) (string, error) {
 			if len(sm[i]) > 0 {
 				e := sm[i][1][2 : len(sm[i][1])-2]
 				// alreadyReplaced: check if var is already replaced.
-				// see test "two same unknown" on InterpolateTest
+				// see test "two same unknown" on DoTest
 				if _, ok := alreadyReplaced[sm[i][1]]; !ok {
 					if _, ok := defaults[e]; !ok {
 						// replace {{.cds.foo.bar}} with {{ default "{{.cds.foo.bar}}" .cds.foo.bar}}
 						// with cds.foo.bar unknown from vars
 						nameWithDot := strings.Replace(e, "__", ".", -1)
-						nameWithDot = strings.Replace(nameWithDot, "µµµ", "-", -1)
-						input = strings.Replace(input, sm[i][1], "{{ default \"{{"+nameWithDot+"}}\" "+e+" }}", -1)
+						nameWithDot = strings.Replace(nameWithDot, "µµµ", ".", -1)
+						// "-"" are not a valid char in go template var name, as we don't know e, no pb to replace "-" with "µ"
+						eb := strings.Replace(e, "-", "µµµ", -1)
+						input = strings.Replace(input, sm[i][1], "{{ default \"{{"+nameWithDot+"}}\" "+eb+" }}", -1)
 					} else if _, ok := empty[e]; !ok {
 						// replace {{.cds.foo.bar}} with {{ default "" .cds.foo.bar}}
 						// with cds.foo.bar knowned, but with value empty string ""

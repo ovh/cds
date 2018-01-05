@@ -1,22 +1,17 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"os/user"
 	"path"
 	"reflect"
 	"regexp"
 	"runtime"
 
 	"github.com/howeyc/gopass"
-	"github.com/naoina/toml"
 
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/keychain"
 )
 
 var loginCmd = cli.Command{
@@ -119,35 +114,38 @@ func doLogin(url, username, password string, env bool) error {
 	}
 
 	if configFile == "" {
-		u, err := user.Current()
-		if err != nil {
-			return err
-		}
-		configFile = path.Join(u.HomeDir, ".cdsrc")
+		homedir := userHomeDir()
+		configFile = path.Join(homedir, ".cdsrc")
 		fmt.Printf("You didn't specify config file location; %s will be used.\n", configFile)
 	}
+
+	var errfi error
+	var fi *os.File
 
 	//Check if file exists
 	if _, err := os.Stat(configFile); err == nil {
 		if !cli.AskForConfirmation(fmt.Sprintf("File %s exists, do you want to overwrite?", configFile)) {
 			return fmt.Errorf("aborted")
 		}
+		fi, errfi = os.OpenFile(configFile, os.O_RDWR, os.FileMode(0600))
+	} else {
+		fi, errfi = os.Create(configFile)
+	}
+
+	if errfi != nil {
+		return errfi
 	}
 
 	tomlConf := config{
 		Host: url,
 		InsecureSkipVerifyTLS: insecureSkipVerifyTLS,
-	}
-	var buf = new(bytes.Buffer)
-	e := toml.NewEncoder(buf)
-	if err := e.Encode(tomlConf); err != nil {
-		return err
-	}
-	if err := ioutil.WriteFile(configFile, buf.Bytes(), os.FileMode(0644)); err != nil {
-		return err
+		User:  username,
+		Token: token,
 	}
 
-	if err := keychain.StoreSecret(url, username, token); err != nil {
+	defer fi.Close()
+
+	if err := storeSecret(fi, &tomlConf); err != nil {
 		return err
 	}
 

@@ -154,6 +154,7 @@ func GetUserWorkflowEvents(db gorp.SqlExecutor, wr sdk.WorkflowRun, previousWR s
 	} else if p, ok := params["git.author"]; ok {
 		params["cds.author"] = p
 	}
+	params["cds.status"] = nr.Status
 
 	for _, notif := range wr.Workflow.Notifications {
 		if ShouldSendUserWorkflowNotification(notif, nr, previousWR) {

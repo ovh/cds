@@ -63,7 +63,7 @@
 <ng-container *ngIf="project && node && node.id === workflow.root.id">
     <ng-template let-context let-modal="modal" #nodeParentModal>
         <div class="header">{{ 'workflow_node_parent' | translate }}</div>
-        <div class="content">
+        <div class="content ui form">
             <app-workflow-node-form [project]="project" [(node)]="newParentNode"></app-workflow-node-form>
         </div>
         <div class="actions">

@@ -114,6 +114,16 @@ pre {
     overflow: visible;
     padding-top: 4px;
     padding-bottom: 4px;
+    vertical-align: top;
+  }
+
+  tbody tr td.border {
+    border: none;
+    border-top: 1px solid rgba(34, 36, 38, 0.15);
+  }
+
+  tbody tr:first-child td.border {
+    border: none;
   }
 
   tbody tr:not(:hover) {

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"github.com/ovh/cds/sdk/interpolate"
 )
 
 // Workflow conditions operator
@@ -35,7 +37,7 @@ func WorkflowCheckConditions(conditions []WorkflowNodeCondition, params []Parame
 	mapParams := ParametersToMap(params)
 	for k, v := range mapParams {
 		var err error
-		mapParams[k], err = Interpolate(v, mapParams)
+		mapParams[k], err = interpolate.Do(v, mapParams)
 		if err != nil {
 			return false, fmt.Errorf("Unable to interpolate %s (%v)", v, err)
 		}
@@ -44,7 +46,7 @@ func WorkflowCheckConditions(conditions []WorkflowNodeCondition, params []Parame
 	var conditionsOK = true
 	for _, cond := range conditions {
 		var err error
-		cond.Value, err = Interpolate(cond.Value, mapParams)
+		cond.Value, err = interpolate.Do(cond.Value, mapParams)
 		if err != nil {
 			return false, fmt.Errorf("Unable to interpolate %s (%v)", cond.Value, err)
 		}

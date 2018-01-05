@@ -2,23 +2,29 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
-	"os/user"
 	"path"
+	"runtime"
 	"strconv"
 
-	"github.com/BurntSushi/toml"
-
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/keychain"
 )
 
 type config struct {
 	Host                  string
-	user                  string
-	token                 string
+	User                  string
+	Token                 string
 	InsecureSkipVerifyTLS bool
+}
+
+func userHomeDir() string {
+	env := "HOME"
+	if runtime.GOOS == "windows" {
+		env = "USERPROFILE"
+	} else if runtime.GOOS == "plan9" {
+		env = "home"
+	}
+	return os.Getenv(env)
 }
 
 func loadConfig(configFile string) (*cdsclient.Config, error) {
@@ -26,11 +32,11 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 
 	c := &config{}
 	c.Host = os.Getenv("CDS_API_URL")
-	c.user = os.Getenv("CDS_USER")
-	c.token = os.Getenv("CDS_TOKEN")
+	c.User = os.Getenv("CDS_USER")
+	c.Token = os.Getenv("CDS_TOKEN")
 	c.InsecureSkipVerifyTLS, _ = strconv.ParseBool(os.Getenv("CDS_INSECURE"))
 
-	if c.Host != "" && c.user != "" {
+	if c.Host != "" && c.User != "" {
 		if verbose {
 			fmt.Println("Configuration loaded from environment variables")
 		}
@@ -41,10 +47,7 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 		return nil, err
 	}
 
-	u, err := user.Current()
-	if err != nil {
-		return nil, err
-	}
+	homedir := userHomeDir()
 
 	var configFiles []string
 	if configFile != "" {
@@ -52,23 +55,29 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 	} else {
 		configFiles = []string{
 			path.Join(dir, ".cdsrc"),
-			path.Join(u.HomeDir, ".cdsrc"),
+			path.Join(homedir, ".cdsrc"),
 		}
 	}
 
 	var i int
 	for c.Host == "" && i < len(configFiles) {
 		if _, err := os.Stat(configFiles[i]); err == nil {
-			b, err := ioutil.ReadFile(configFiles[i])
+			f, err := os.Open(configFiles[i])
 			if err != nil {
 				if verbose {
 					fmt.Printf("Unable to read %s \n", configFiles[i])
 				}
 				return nil, err
 			}
-			if _, err := toml.Decode(string(b), c); err != nil {
+			defer f.Close()
+
+			if err := loadSecret(f, c); err != nil {
+				if verbose {
+					fmt.Printf("Unable to load configuration %s \n", configFiles[i])
+				}
 				return nil, err
 			}
+
 			if verbose {
 				fmt.Println("Configuration loaded from", configFiles[i])
 			}
@@ -82,20 +91,10 @@ func loadConfig(configFile string) (*cdsclient.Config, error) {
 
 	conf := &cdsclient.Config{
 		Host:    c.Host,
-		User:    c.user,
-		Token:   c.token,
+		User:    c.User,
+		Token:   c.Token,
 		Verbose: verbose,
 	}
 
 	return conf, nil
-}
-
-func loadClient(c *cdsclient.Config) (cdsclient.Interface, error) {
-	user, secret, err := keychain.GetSecret(c.Host)
-	if err != nil {
-		return nil, err
-	}
-	c.User = user
-	c.Token = secret
-	return cdsclient.New(*c), nil
 }

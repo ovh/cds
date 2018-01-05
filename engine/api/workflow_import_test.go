@@ -57,7 +57,7 @@ workflow:
 	//Check result
 	t.Logf(">>%s", rec.Body.String())
 
-	w, err := workflow.Load(db, api.Cache, proj.Key, "test_1", u)
+	w, err := workflow.Load(db, api.Cache, proj.Key, "test_1", u, workflow.LoadOptions{})
 	test.NoError(t, err)
 
 	assert.NotNil(t, w)

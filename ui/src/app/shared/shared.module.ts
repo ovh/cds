@@ -28,7 +28,7 @@ import {CutPipe} from './pipes/cut.pipe';
 import {MomentModule} from 'angular2-moment';
 import {CodemirrorModule} from 'ng2-codemirror-typescript/Codemirror';
 import {GroupFormComponent} from './group/form/group.form.component';
-import {MarkdownModule} from 'angular2-markdown';
+import {MarkdownModule} from 'ngx-md';
 import {HistoryComponent} from './history/history.component';
 import {StatusIconComponent} from './status/status.component';
 import {KeysPipe} from './pipes/keys.pipe';

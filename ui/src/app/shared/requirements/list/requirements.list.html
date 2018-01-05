@@ -9,7 +9,7 @@
         </thead>
         <tbody>
         <tr *ngFor="let r of getDataForCurrentPage()">
-            <td>
+            <td class="border">
                 <div *ngIf="edit;else rType">
                     <div class="ui form">
                         <sm-select class="search"
@@ -25,7 +25,7 @@
                     <span>{{r.type}}</span>
                 </ng-template>
             </td>
-            <td>
+            <td class="border">
                 <div  *ngIf="!loading && r.type === 'service'">
                     <div class="ui fluid" *ngIf="edit;else rName">
                         <label for="requirementname">
@@ -91,7 +91,7 @@
                 </ng-template>
                 
             </td>
-            <td class="center">
+            <td class="center border">
                 <ng-container *ngIf="edit">
                     <app-delete-button (event)="deleteEvent(r)"></app-delete-button>
                 </ng-container>
@@ -100,7 +100,7 @@
         </tbody>
         <tfoot *ngIf="getNbOfPages() > 1">
         <tr>
-            <th colspan="4">
+            <th colspan="3">
                 <div class="ui right floated pagination menu" >
                     <a class="icon item" (click)="downPage()">
                         <i class="left chevron icon"></i>

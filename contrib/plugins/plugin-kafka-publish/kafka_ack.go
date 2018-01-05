@@ -65,7 +65,7 @@ func ackFromKafka(kafka, topic, group, user, password string, timeout time.Durat
 	if err != nil {
 		return nil, err
 	}
-	defer partitionOffsetManager.AsyncClose()
+	defer partitionOffsetManager.Close()
 
 	// Start a consumer at next offset
 	offset, _ := partitionOffsetManager.NextOffset()
@@ -73,7 +73,7 @@ func ackFromKafka(kafka, topic, group, user, password string, timeout time.Durat
 	if err != nil {
 		return nil, err
 	}
-	defer partitionConsumer.AsyncClose()
+	defer partitionConsumer.Close()
 
 	// Wait for timeout
 	go func() {

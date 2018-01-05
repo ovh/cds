@@ -29,7 +29,7 @@
                                         <input type="radio" name="creation" value="clone" [(ngModel)]="typeofCreation" (change)="updateSelection('clone')">
                                         {{ 'wizard_app_clone' | translate }}
                                     </div>
-                                    <div class="field" *ngIf="templates && templates.length > 0">
+                                    <div class="field" *ngIf="project.workflow_migration === 'NOT_BEGUN' && templates && templates.length > 0">
                                         <input type="radio" name="creation" value="template" [(ngModel)]="typeofCreation"
                                                (change)="updateSelection('template')">
                                         {{ 'wizard_app_template' | translate }}

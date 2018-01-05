@@ -221,11 +221,12 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		return sdk.WrapError(sdk.ErrInvalidApplicationPattern, "Insert: Application name %s do not respect pattern %s", app.Name, sdk.NamePattern)
 	}
 
-	// TODO Remove after application migration to workflow
-	if app.WorkflowMigration == "" {
+	switch proj.WorkflowMigration {
+	case "NOT_BEGUN":
 		app.WorkflowMigration = "NOT_BEGUN"
+	default:
+		app.WorkflowMigration = "DONE"
 	}
-
 	app.ProjectID = proj.ID
 	app.ProjectKey = proj.Key
 	app.LastModified = time.Now()
@@ -325,20 +326,20 @@ func LoadAll(db gorp.SqlExecutor, store cache.Store, key string, u *sdk.User, op
 }
 
 // LoadAllNames returns all application names
-func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]string, error) {
+func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]sdk.IDName, error) {
 	var query string
 	var args []interface{}
 
 	if u == nil || u.Admin {
 		query = `
-		SELECT application.name
+		SELECT application.id, application.name
 		FROM application
 		WHERE application.project_id= $1
 		ORDER BY application.name ASC`
 		args = []interface{}{projID}
 	} else {
 		query = `
-			SELECT distinct application.name
+			SELECT distinct(application.id) AS id, application.name
 			FROM application
 			WHERE application.id IN (
 				SELECT application_group.application_id
@@ -351,7 +352,7 @@ func LoadAllNames(db gorp.SqlExecutor, projID int64, u *sdk.User) ([]string, err
 		args = []interface{}{projID, u.ID}
 	}
 
-	res := []string{}
+	res := []sdk.IDName{}
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
 			return res, nil

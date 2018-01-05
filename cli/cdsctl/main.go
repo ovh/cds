@@ -51,7 +51,7 @@ func main() {
 	root.PersistentFlags().BoolVarP(&noWarnings, "no-warnings", "w", false, "do not display warnings")
 	root.PersistentFlags().BoolVarP(&insecureSkipVerifyTLS, "insecure", "k", false, `(SSL) This option explicitly allows curl to perform "insecure" SSL connections and transfers.`)
 	root.PersistentPreRun = func(cmd *cobra.Command, args []string) {
-		//Do not load config nor display warnings on login
+		//Do not load config on login
 		if cmd == login || cmd == signup || (cmd.Run == nil && cmd.RunE == nil) {
 			return
 		}
@@ -60,12 +60,7 @@ func main() {
 		cfg, err = loadConfig(configFile)
 		cli.ExitOnError(err, login.Help)
 
-		if cfg.Host != "" && cfg.User != "" && cfg.Token != "" {
-			client = cdsclient.New(*cfg)
-		} else {
-			client, err = loadClient(cfg)
-			cli.ExitOnError(err)
-		}
+		client = cdsclient.New(*cfg)
 	}
 
 	if err := root.Execute(); err != nil {

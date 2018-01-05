@@ -18,7 +18,6 @@ import (
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/engine/api/repositoriesmanager"
 	"github.com/ovh/cds/engine/api/scheduler"
-	"github.com/ovh/cds/engine/api/trigger"
 	"github.com/ovh/cds/engine/api/workflow"
 	"github.com/ovh/cds/engine/api/workflowv0"
 	"github.com/ovh/cds/sdk"
@@ -582,7 +581,6 @@ func (api *API) cloneApplicationHandler() Handler {
 
 // cloneApplication Clone an application with all her dependencies: pipelines, permissions, triggers
 func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, newApp *sdk.Application, appToClone *sdk.Application, u *sdk.User) error {
-	newApp.Pipelines = appToClone.Pipelines
 	newApp.ApplicationGroups = appToClone.ApplicationGroups
 
 	// Create Application
@@ -617,45 +615,6 @@ func cloneApplication(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project,
 		}
 		if errVar != nil {
 			return errVar
-		}
-	}
-
-	// Attach pipeline + Set pipeline parameters
-	for _, appPip := range newApp.Pipelines {
-		if _, err := application.AttachPipeline(db, newApp.ID, appPip.Pipeline.ID); err != nil {
-			return err
-		}
-
-		if err := application.UpdatePipelineApplication(db, store, newApp, appPip.Pipeline.ID, appPip.Parameters, u); err != nil {
-			return err
-		}
-	}
-
-	// Load trigger to clone
-	triggers, err := trigger.LoadTriggerByApp(db, appToClone.ID)
-	if err != nil {
-		return err
-	}
-
-	// Clone trigger
-	for _, t := range triggers {
-		// Insert new trigger
-		if t.DestApplication.ID == appToClone.ID {
-			t.DestApplication = *newApp
-		}
-		t.SrcApplication = *newApp
-		if err := trigger.InsertTrigger(db, &t); err != nil {
-			return err
-		}
-	}
-
-	//Reload trigger
-	for i := range newApp.Pipelines {
-		appPip := &newApp.Pipelines[i]
-		var errTrig error
-		appPip.Triggers, errTrig = trigger.LoadTriggersByAppAndPipeline(db, newApp.ID, appPip.Pipeline.ID)
-		if errTrig != nil {
-			return sdk.WrapError(errTrig, "cloneApplication> Cannot load triggers")
 		}
 	}
 

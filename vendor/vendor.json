@@ -116,6 +116,12 @@
 			"revisionTime": "2015-10-26T16:03:18Z"
 		},
 		{
+			"checksumSHA1": "vvFDcA+qQlBPrJjKEYQCHVBS9xQ=",
+			"path": "github.com/danieljoos/wincred",
+			"revision": "412b574fb496839b312a75fba146bd32a89001cf",
+			"revisionTime": "2017-04-09T18:24:07Z"
+		},
+		{
 			"checksumSHA1": "5rPfda8jFccr3A6heL+JAmi9K9g=",
 			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
 			"path": "github.com/davecgh/go-spew/spew",
@@ -129,16 +135,22 @@
 			"revisionTime": "2017-05-30T18:56:52Z"
 		},
 		{
-			"checksumSHA1": "9TP1bsS5s04Bm3W3IAv6W6S147M=",
+			"checksumSHA1": "4mlh3C37GG+taAkJvxOU6ndwS4c=",
 			"path": "github.com/docker/docker-credential-helpers/osxkeychain",
-			"revision": "d8f57a18c61ade10ddf767fa080b4778359f5c66",
-			"revisionTime": "2017-05-30T18:56:52Z"
+			"revision": "d68f9aeca33f5fd3f08eeae5e9d175edf4e731d1",
+			"revisionTime": "2017-08-30T12:17:07Z"
 		},
 		{
-			"checksumSHA1": "CJGEjijnKnYUV6uCrUR8jJLfw3Y=",
+			"checksumSHA1": "taRG2UZdlWv25kaPaBt5r6oCoPw=",
 			"path": "github.com/docker/docker-credential-helpers/secretservice",
-			"revision": "80833adff5dd10aa3b3d55dbc94308fde69e2d92",
-			"revisionTime": "2016-07-20T20:55:38Z"
+			"revision": "d68f9aeca33f5fd3f08eeae5e9d175edf4e731d1",
+			"revisionTime": "2017-08-30T12:17:07Z"
+		},
+		{
+			"checksumSHA1": "B5ONPQNlMtfcTyxwCI80z1kOmmc=",
+			"path": "github.com/docker/docker-credential-helpers/wincred",
+			"revision": "d68f9aeca33f5fd3f08eeae5e9d175edf4e731d1",
+			"revisionTime": "2017-08-30T12:17:07Z"
 		},
 		{
 			"checksumSHA1": "HoN/78ovv3/DC+kDKF7IENEc40g=",
@@ -357,10 +369,10 @@
 			"revisionTime": "2017-01-03T08:10:50Z"
 		},
 		{
-			"checksumSHA1": "O56NibMsIjtMdW531necL/71Cu0=",
+			"checksumSHA1": "/PYd5R4kHFrESPi5GPr3SuGcAYI=",
 			"path": "github.com/fsamin/go-dump",
-			"revision": "6e06b7fed23aeed808b4d60e8a085f9b9c4b45af",
-			"revisionTime": "2017-10-24T13:17:29Z"
+			"revision": "b3a2116ad4889b990f825a5f62bdf9c21f34f0ab",
+			"revisionTime": "2018-01-04T22:04:42Z"
 		},
 		{
 			"checksumSHA1": "vy34LEN8AkNfhLaoOVnyScVI25c=",
@@ -1117,10 +1129,10 @@
 			"revisionTime": "2016-01-24T19:35:03Z"
 		},
 		{
-			"checksumSHA1": "zZg0J0MqvnqXVYo644QDvnUinrc=",
+			"checksumSHA1": "H5wlR62j1Ru5rKRDM9eCb6iUKLA=",
 			"path": "github.com/pelletier/go-toml",
-			"revision": "9c1b4e331f1e3d98e72600677699fbe212cd6d16",
-			"revisionTime": "2017-08-25T03:46:50Z"
+			"revision": "0131db6d737cfbbfb678f8b7d92e55e27ce46224",
+			"revisionTime": "2017-12-22T11:45:48Z"
 		},
 		{
 			"checksumSHA1": "um1W+OIBS3N+hqSxShnQBkXptrQ=",

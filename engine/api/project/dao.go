@@ -120,7 +120,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 	}
 
 	if proj.WorkflowMigration == "" {
-		proj.WorkflowMigration = "NOT_BEGUN"
+		proj.WorkflowMigration = "DONE"
 	}
 
 	proj.LastModified = time.Now()

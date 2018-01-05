@@ -12,9 +12,9 @@ export class Project {
     workflows: Array<Workflow>;
     workflow_names: Array<string>;
     pipelines: Array<Pipeline>;
-    pipeline_names: Array<string>;
+    pipeline_names: Array<IdName>;
     applications: Array<Application>;
-    application_names: Array<string>;
+    application_names: Array<IdName>;
     groups: Array<GroupPermission>;
     variables: Array<Variable>;
     environments: Array<Environment>;
@@ -31,4 +31,9 @@ export class LoadOpts {
     public queryParam: string,
     public fieldName: string
   ) { }
+}
+
+export class IdName {
+  id: number;
+  name: string;
 }

@@ -63,6 +63,7 @@ export class WorkflowNodeRun {
     tests: Tests;
     commits: Array<Commit>;
     triggers_run: Map<number, TriggerRun>
+    can_be_run: boolean
 }
 
 export class TriggerRun {

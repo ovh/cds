@@ -17,9 +17,9 @@ type Project struct {
 	Workflows         []Workflow         `json:"workflows,omitempty" yaml:"workflows,omitempty" db:"-" cli:"-"`
 	WorkflowNames     []string           `json:"workflow_names,omitempty" yaml:"workflow_names,omitempty" db:"-" cli:"-"`
 	Pipelines         []Pipeline         `json:"pipelines,omitempty" yaml:"pipelines,omitempty" db:"-"  cli:"-"`
-	PipelineNames     []string           `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
+	PipelineNames     []IDName           `json:"pipeline_names,omitempty" yaml:"pipeline_names,omitempty" db:"-"  cli:"-"`
 	Applications      []Application      `json:"applications,omitempty" yaml:"applications,omitempty" db:"-"  cli:"-"`
-	ApplicationNames  []string           `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
+	ApplicationNames  []IDName           `json:"application_names,omitempty" yaml:"application_names,omitempty" db:"-"  cli:"-"`
 	ProjectGroups     []GroupPermission  `json:"groups,omitempty" yaml:"permissions,omitempty" db:"-"  cli:"-"`
 	Variable          []Variable         `json:"variables,omitempty" yaml:"variables,omitempty" db:"-"  cli:"-"`
 	Environments      []Environment      `json:"environments,omitempty"  yaml:"environments,omitempty" db:"-"  cli:"-"`

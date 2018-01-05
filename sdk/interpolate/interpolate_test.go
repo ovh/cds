@@ -1,11 +1,11 @@
-package sdk
+package interpolate
 
 import (
 	"fmt"
 	"testing"
 )
 
-func BenchmarkInterpolate(b *testing.B) {
+func BenchmarkDo(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 
 		type args struct {
@@ -36,11 +36,11 @@ func BenchmarkInterpolate(b *testing.B) {
 			test.args.vars[fmt.Sprintf("%d", i)] = fmt.Sprintf(">>%d<<", i)
 		}
 
-		Interpolate(test.args.input, test.args.vars)
+		Do(test.args.input, test.args.vars)
 	}
 }
 
-func BenchmarkInterpolateNothing(b *testing.B) {
+func BenchmarkDoNothing(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 
 		type args struct {
@@ -64,12 +64,12 @@ func BenchmarkInterpolateNothing(b *testing.B) {
 			test.args.vars[fmt.Sprintf("%d", i)] = fmt.Sprintf(">>%d<<", i)
 		}
 
-		Interpolate(test.args.input, test.args.vars)
+		Do(test.args.input, test.args.vars)
 
 	}
 }
 
-func TestInterpolate(t *testing.T) {
+func TestDo(t *testing.T) {
 	type args struct {
 		input string
 		vars  map[string]string
@@ -153,6 +153,22 @@ func TestInterpolate(t *testing.T) {
 			want: "a valueKey and another key value valueKeyAnother",
 		},
 		{
+			name: "key with - and a unknown key",
+			args: args{
+				input: "a {{.cds.app.my-key}}.{{.cds.app.foo-key}} and another key value {{.cds.app.my-key}}",
+				vars:  map[string]string{"cds.app.my-key": "value-key"},
+			},
+			want: "a value-key.{{.cds.app.foo-key}} and another key value value-key",
+		},
+		{
+			name: "key with - and a empty key",
+			args: args{
+				input: "a {{.cds.app.my-key}}.{{.cds.app.foo-key}}.and another key value {{.cds.app.my-key}}",
+				vars:  map[string]string{"cds.app.my-key": "value-key", "cds.app.foo-key": ""},
+			},
+			want: "a value-key..and another key value value-key",
+		},
+		{
 			name: "tiret",
 			args: args{
 				input: `"METRICS_WRITE_TOKEN": "{{.cds.env.metrics-exposer.write.token}}"`,
@@ -161,45 +177,59 @@ func TestInterpolate(t *testing.T) {
 			want: `"METRICS_WRITE_TOKEN": "valueKey"`,
 		},
 		{
+			name: "espace func",
+			args: args{
+				input: `a {{.cds.foo}} here, {{.cds.title | title}}, {{.cds.upper | upper}}, {{.cds.lower | lower}}, {{.cds.escape | escape}}`,
+				vars: map[string]string{
+					"cds.foo":    "valbar",
+					"cds.title":  "mytitle-bis",
+					"cds.upper":  "toupper",
+					"cds.lower":  "TOLOWER",
+					"cds.escape": "a/b.c_d",
+				},
+			},
+			want: `a valbar here, Mytitle-Bis, TOUPPER, tolower, a-b-c-d`,
+		},
+		{
 			name: "config",
 			args: args{
 				input: `
-{
-"env": {
-"KEYA":"{{.cds.env.vAppKey}}",
-"KEYB": "{{.cds.env.vAppKeyHatchery}}",
-"ADDR":"{{.cds.env.addr}}"
-},
-"labels": {
-"TOKEN": "{{.cds.env.token}}",
-"HOST": "cds-hatchery-marathon-{{.cds.env.name}}.{{.cds.env.vHost}}",
-}
-}`,
+		{
+		"env": {
+		"KEYA":"{{.cds.env.vAppKey}}",
+		"KEYB": "{{.cds.env.vAppKeyHatchery}}",
+		"ADDR":"{{.cds.env.addr}}"
+		},
+		"labels": {
+		"TOKEN": "{{.cds.env.token}}",
+		"HOST": "cds-hatchery-marathon-{{.cds.env.name}}.{{.cds.env.vHost}}",
+		}
+		}`,
 				vars: map[string]string{"cds.env.name": "", "cds.env.token": "aValidTokenString", "cds.env.addr": "", "cds.env.vAppKey": "aValue"},
 			},
 			want: `
-{
-"env": {
-"KEYA":"aValue",
-"KEYB": "{{.cds.env.vAppKeyHatchery}}",
-"ADDR":""
-},
-"labels": {
-"TOKEN": "aValidTokenString",
-"HOST": "cds-hatchery-marathon-.{{.cds.env.vHost}}",
-}
-}`,
+		{
+		"env": {
+		"KEYA":"aValue",
+		"KEYB": "{{.cds.env.vAppKeyHatchery}}",
+		"ADDR":""
+		},
+		"labels": {
+		"TOKEN": "aValidTokenString",
+		"HOST": "cds-hatchery-marathon-.{{.cds.env.vHost}}",
+		}
+		}`,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Interpolate(tt.args.input, tt.args.vars)
+			got, err := Do(tt.args.input, tt.args.vars)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Interpolate() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Do() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if got != tt.want {
-				t.Errorf("Interpolate() = %v, want %v", got, tt.want)
+				t.Errorf("Do() = %v, want %v", got, tt.want)
 			}
 		})
 	}

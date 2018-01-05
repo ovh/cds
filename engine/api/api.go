@@ -102,7 +102,7 @@ type Configuration struct {
 		User     string `toml:"user"`
 		Password string `toml:"password"`
 		From     string `toml:"from" default:"no-reply@cds.local"`
-	} `toml:"smtp" comment:"#####################n# CDS SMTP Settings \n####################"`
+	} `toml:"smtp" comment:"#####################\n# CDS SMTP Settings \n####################"`
 	Artifact struct {
 		Mode  string `toml:"mode" default:"local" comment:"swift or local"`
 		Local struct {
