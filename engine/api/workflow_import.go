@@ -183,7 +183,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 
 		allMsg := []sdk.Message{}
 		for filename, app := range apps {
-			log.Debug("postWorkflowPullHandler> Parsing %s", filename)
+			log.Debug("postWorkflowPushHandler> Parsing %s", filename)
 			msgList, err := application.ParseAndImport(tx, api.Cache, proj, &app, true, project.DecryptWithBuiltinKey, getUser(ctx))
 			if err != nil {
 				mError.Append(err)
