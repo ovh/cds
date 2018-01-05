@@ -101,7 +101,8 @@
         var lastIndexOfBranchPrefix = text.lastIndexOf(branchPrefix);
         var areaAfterPrefix = text.substring(lastIndexOfBranchPrefix + branchPrefix.length + 1);
         var lastIndexOfComma = areaAfterPrefix.indexOf(',');
-        if (lastIndexOfComma !== -1 && cur.ch >= lastIndexOfComma) {
+        var indexOfComma = text.indexOf(',');
+        if (indexOfComma !== -1 && cur.ch >= indexOfComma) {
             return null;
         }
 

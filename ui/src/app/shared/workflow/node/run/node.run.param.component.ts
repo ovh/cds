@@ -10,7 +10,7 @@ import {Pipeline} from '../../../../model/pipeline.model';
 import {Commit} from '../../../../model/repositories.model';
 import {WorkflowRunService} from '../../../../service/workflow/run/workflow.run.service';
 import {ApplicationWorkflowService} from '../../../../service/application/application.workflow.service';
-import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest} from '../../../../model/workflow.run.model';
+import {WorkflowNodeRun, WorkflowNodeRunManual, WorkflowRunRequest, WorkflowRun} from '../../../../model/workflow.run.model';
 import {Router} from '@angular/router';
 import {WorkflowCoreService} from '../../../../service/workflow/workflow.core.service';
 import {AutoUnsubscribe} from '../../../decorator/autoUnsubscribe';
@@ -35,6 +35,7 @@ export class WorkflowNodeRunParamComponent {
     codemirror: CodemirrorComponent;
 
     @Input() canResync = false;
+    @Input() workflowRun: WorkflowRun;
     @Input() nodeRun: WorkflowNodeRun;
     @Input() project: Project;
     @Input() workflow: Workflow;
@@ -46,10 +47,7 @@ export class WorkflowNodeRunParamComponent {
             this._nodeToRun = cloneDeep(data);
             this.updateDefaultPipelineParameters();
             if (this._nodeToRun.context) {
-                this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload);
-                if (this.payloadString) {
-                    this.reindent();
-                }
+                this.payloadString = JSON.stringify(this._nodeToRun.context.default_payload, undefined, 4);
             }
         }
     }
@@ -58,6 +56,9 @@ export class WorkflowNodeRunParamComponent {
     }
 
     _nodeToRun: WorkflowNode;
+    _previousBranch: string;
+    _completionListener: any;
+    _keyUpListener: any;
 
     lastNum: number;
     codeMirrorConfig: {};
@@ -106,31 +107,44 @@ export class WorkflowNodeRunParamComponent {
                 )
                 .subscribe(n => {
                     this.lastNum = n.num + 1;
-                    this.getCommits(n.num + 1);
+                    this.getCommits(n.num + 1, false);
                 });
-            return;
         }
-        this.getCommits(this.num);
+
+        let currentPayload = this.getCurrentPayload();
+        this.payloadString = JSON.stringify(currentPayload, undefined, 4);
+        this._previousBranch = currentPayload['git.branch'];
+        if (this.num != null) {
+            this.getCommits(this.num, false);
+        }
     }
 
-    getCommits(num: number) {
+    getCommits(num: number, change: boolean) {
         let branch;
-        let currentContext;
-        if (this.nodeToRun.context && this.nodeToRun.context.default_payload) {
-            currentContext = this.nodeToRun.context.default_payload;
+        let currentContext = this.getCurrentPayload();
+
+        if (change && this.payloadString) {
+            try {
+                currentContext = JSON.parse(this.payloadString);
+                this.invalidJSON = false;
+            } catch (e) {
+                this.invalidJSON = true;
+            }
+
+            if (currentContext) {
+              branch = currentContext['git.branch'];
+            }
         }
 
-        try {
-            currentContext = JSON.parse(this.payloadString);
-            this.invalidJSON = false;
-        } catch (e) {
-            this.invalidJSON = true;
-        }
-
-        branch = currentContext['git.branch'];
         if (branch && !this.loadingBranches && this.branches.indexOf('"' + branch + '"') === -1) {
             return;
         }
+
+        if (branch === this._previousBranch) {
+            return;
+        }
+        this._previousBranch = branch;
+
         this.loadingCommits = true;
         this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch)
           .pipe(
@@ -140,12 +154,35 @@ export class WorkflowNodeRunParamComponent {
           .subscribe((commits) => this.commits = commits);
     }
 
+    getCurrentPayload(): {} {
+        let currentContext = {};
+        if (this.nodeRun && this.nodeRun.payload) {
+            currentContext = this.nodeRun.payload;
+        } else if (this.workflowRun) {
+            let rootNodeRun = this.workflowRun.nodes[this.workflow.root.id];
+            if (rootNodeRun) {
+                currentContext = rootNodeRun[0].payload;
+            }
+        } else if (this.nodeToRun.context) {
+            if (this.nodeToRun.context.default_payload && Object.keys(this.nodeToRun.context.default_payload).length > 0) {
+                currentContext = this.nodeToRun.context.default_payload;
+            } else {
+                currentContext = this.workflow.root.context.default_payload;
+            }
+        }
+
+        return currentContext;
+    }
+
     reindent(): void {
         this.updateValue(this.payloadString);
     }
 
     updateValue(payload): void {
         let newPayload: {};
+        if (!payload) {
+          return;
+        }
         try {
             newPayload = JSON.parse(payload);
             this.invalidJSON = false;
@@ -221,15 +258,20 @@ export class WorkflowNodeRunParamComponent {
         if (eventRoot.type === 'click') {
             this.showHint(this.codemirror.instance, null);
         }
-        this.codemirror.instance.on('keyup', (cm, event) => {
-            if (!cm.state.completionActive && event.keyCode !== 32) {
-                this.showHint(cm, event);
-            }
-        });
 
-        this.codemirror.instance.on('endCompletion', (cm, event) => {
-            this.getCommits(num || this.lastNum);
-        });
+        if (!this._keyUpListener) {
+            this._keyUpListener = this.codemirror.instance.on('keyup', (cm, event) => {
+                if (!cm.state.completionActive && event.keyCode !== 32) {
+                    this.showHint(cm, event);
+                }
+            });
+        }
+
+        if (!this._completionListener) {
+            this._completionListener = this.codemirror.instance.on('endCompletion', (cm, event) => {
+                this.getCommits(num || this.lastNum, true);
+            });
+        }
     }
 
     showHint(cm, event) {

@@ -82,7 +82,7 @@ export class WorkflowNodeContextComponent {
             if (!this.editableNode.context.default_payload) {
                 this.editableNode.context.default_payload = {};
             }
-            this.payloadString = JSON.stringify(this.editableNode.context.default_payload);
+            this.payloadString = JSON.stringify(this.editableNode.context.default_payload, undefined, 4);
 
             this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeContextModal);
             this.modal = this._modalService.open(this.modalConfig);
@@ -93,9 +93,14 @@ export class WorkflowNodeContextComponent {
                     this.pipParamsReady = true;
                     this.editableNode.context.default_pipeline_parameters =
                         Pipeline.mergeParams(pip.parameters, this.editableNode.context.default_pipeline_parameters);
-                    this.editableNode.context.default_payload = JSON.stringify(this.editableNode.context.default_payload, undefined, 4);
+                    try {
+                        this.editableNode.context.default_payload = JSON.parse(this.payloadString);
+                        this.invalidJSON = false;
+                    } catch (e) {
+                        this.invalidJSON = true;
+                    }
                     if (!this.editableNode.context.default_payload) {
-                        this.editableNode.context.default_payload = '{}';
+                        this.editableNode.context.default_payload = {};
                     }
                 }
                 this.pipelineSubscription.unsubscribe();
@@ -118,6 +123,10 @@ export class WorkflowNodeContextComponent {
 
     updateValue(payload): void {
         let newPayload: {};
+        if (!payload) {
+          return;
+        }
+
         try {
             newPayload = JSON.parse(payload);
             this.invalidJSON = false;
@@ -134,8 +143,9 @@ export class WorkflowNodeContextComponent {
             this.updateValue(eventRoot);
         }
         if (!this.codemirror || !this.codemirror.instance) {
-            return
+            return;
         }
+
         if (eventRoot.type === 'click') {
             this.showHint(this.codemirror.instance, null);
         }
