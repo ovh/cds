@@ -158,19 +158,13 @@ func (e *Encoder) fDumpMap(w map[string]interface{}, i interface{}, roots []stri
 	v := reflect.ValueOf(i)
 
 	keys := v.MapKeys()
-
-	if e.ExtraFields.Len {
-		nodeLen := append(roots, "__Len__")
-		nodeLenFormatted := strings.Join(sliceFormat(nodeLen, e.Formatters), ".")
-		w[nodeLenFormatted] = len(keys)
-	}
-	if e.ExtraFields.DetailedMap {
-		structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
-		w[structKey] = i
-	}
-
+	var lenKeys int64
 	for _, k := range keys {
 		key := fmt.Sprintf("%v", k.Interface())
+		if key == "" {
+			continue
+		}
+		lenKeys++
 		croots := append(roots, key)
 		value := v.MapIndex(k)
 
@@ -183,6 +177,16 @@ func (e *Encoder) fDumpMap(w map[string]interface{}, i interface{}, roots []stri
 		if err := e.fdumpInterface(w, value.Interface(), croots); err != nil {
 			return err
 		}
+	}
+
+	if e.ExtraFields.Len {
+		nodeLen := append(roots, "__Len__")
+		nodeLenFormatted := strings.Join(sliceFormat(nodeLen, e.Formatters), ".")
+		w[nodeLenFormatted] = lenKeys
+	}
+	if e.ExtraFields.DetailedMap {
+		structKey := fmt.Sprintf("%s", strings.Join(sliceFormat(roots, e.Formatters), "."))
+		w[structKey] = i
 	}
 	return nil
 }
