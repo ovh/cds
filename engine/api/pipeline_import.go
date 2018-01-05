@@ -90,43 +90,6 @@ func (api *API) importPipelineHandler() Handler {
 			return sdk.WrapError(sdk.ErrWrongRequest, "importPipelineHandler> Cannot parsing: %s", errorParse)
 		}
 
-		//Transform payload to a sdk.Pipeline
-		pip, errP := payload.Pipeline()
-		if errP != nil {
-			return sdk.WrapError(errP, "importPipelineHandler> Unable to parse pipeline")
-		}
-
-		// Check if pipeline exists
-		exist, errE := pipeline.ExistPipeline(api.mustDB(), proj.ID, pip.Name)
-		if errE != nil {
-			return sdk.WrapError(errE, "importPipelineHandler> Unable to check if pipeline %v exists", pip.Name)
-		}
-
-		// Load group in permission
-		for i := range pip.GroupPermission {
-			eg := &pip.GroupPermission[i]
-			g, errg := group.LoadGroup(api.mustDB(), eg.Group.Name)
-			if errg != nil {
-				return sdk.WrapError(errg, "importPipelineHandler> Error loading groups for permission")
-			}
-			eg.Group = *g
-		}
-
-		allMsg := []sdk.Message{}
-		msgChan := make(chan sdk.Message, 1)
-		done := make(chan bool)
-
-		go func() {
-			for {
-				msg, ok := <-msgChan
-				allMsg = append(allMsg, msg)
-				if !ok {
-					done <- true
-					return
-				}
-			}
-		}()
-
 		tx, errBegin := api.mustDB().Begin()
 		if errBegin != nil {
 			return sdk.WrapError(errBegin, "importPipelineHandler: Cannot start transaction")
@@ -134,19 +97,7 @@ func (api *API) importPipelineHandler() Handler {
 
 		defer tx.Rollback()
 
-		var globalError error
-
-		if exist && !forceUpdate {
-			return sdk.ErrPipelineAlreadyExists
-		} else if exist {
-			globalError = pipeline.ImportUpdate(tx, proj, pip, msgChan, getUser(ctx))
-		} else {
-			globalError = pipeline.Import(tx, api.Cache, proj, pip, msgChan, getUser(ctx))
-		}
-
-		close(msgChan)
-		<-done
-
+		allMsg, globalError := pipeline.ParseAndImport(tx, api.Cache, proj, payload, forceUpdate, getUser(ctx))
 		msgListString := translate(r, allMsg)
 
 		if globalError != nil {

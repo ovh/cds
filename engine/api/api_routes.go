@@ -204,6 +204,8 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{key}/export/workflows/{permWorkflowName}", r.GET(api.getWorkflowExportHandler))
 	// Pull workflows
 	r.Handle("/project/{key}/pull/workflows/{permWorkflowName}", r.GET(api.getWorkflowPullHandler))
+	// Push workflows
+	r.Handle("/project/{permProjectKey}/push/workflows", r.POST(api.postWorkflowPushHandler))
 
 	// Workflows run
 	r.Handle("/project/{key}/workflows/{permWorkflowName}/runs", r.GET(api.getWorkflowRunsHandler), r.POSTEXECUTE(api.postWorkflowRunHandler, AllowServices(true)))
