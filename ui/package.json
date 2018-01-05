@@ -31,7 +31,7 @@
     "@ngx-translate/core": "^9.0.1",
     "@ngx-translate/http-loader": "^2.0.0",
     "@types/dagre-d3": "^0.4.36",
-    "angular2-markdown": "^1.5.1",
+    "ngx-md": "3.1.0",
     "angular2-moment": "^1.0.0",
     "angular2-prettyjson": "2.0.5",
     "angular2-toaster": "^2.0.0",

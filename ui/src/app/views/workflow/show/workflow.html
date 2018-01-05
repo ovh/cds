@@ -117,5 +117,5 @@
     </div>
 </ng-template>
 <ng-template #loadingPart>
-    <div class="ui text active loader" *ngIf="!detailedWorkflow || !project">Loading workflow...</div>
+    <div class="ui text active loader">{{ 'common_loading_workflow' | translate }}</div>
 </ng-template>

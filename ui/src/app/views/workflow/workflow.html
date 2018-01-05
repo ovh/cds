@@ -34,6 +34,6 @@
     </button>
     <router-outlet></router-outlet>
 </section>
-<section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="loading">
+<section class="content-wrap" [class.expanded]="!sidebarOpen" *ngIf="!workflow">
     <div class="ui active text loader">{{ 'common_loading_workflow' | translate }}</div>
 </section>
