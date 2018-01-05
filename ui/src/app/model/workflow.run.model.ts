@@ -56,7 +56,7 @@ export class WorkflowNodeRun {
     hook_event: WorkflowNodeRunHookEvent;
     manual: WorkflowNodeRunManual;
     source_node_runs: Array<number>;
-    payload: Array<Parameter>;
+    payload: {};
     pipeline_parameters: Array<Parameter>;
     build_parameters: Array<Parameter>;
     artifacts: Array<WorkflowNodeRunArtifact>;
