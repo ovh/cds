@@ -14,6 +14,7 @@ type pipeliner interface {
 	Pipeline() (*sdk.Pipeline, error)
 }
 
+// ParseAndImport parse an exportentities.pipeline and insert or update the pipeline in database
 func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, epip pipeliner, force bool, u *sdk.User) ([]sdk.Message, error) {
 	//Transform payload to a sdk.Pipeline
 	pip, errP := epip.Pipeline()

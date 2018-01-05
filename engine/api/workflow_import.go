@@ -112,7 +112,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 			project.LoadOptions.WithPipelines,
 		)
 		if errp != nil {
-			return sdk.WrapError(errp, "postWorkflowImportHandler>> Unable load project")
+			return sdk.WrapError(errp, "postWorkflowPushHandler>> Unable load project")
 		}
 
 		if r.Body == nil {
@@ -135,15 +135,15 @@ func (api *API) postWorkflowPushHandler() Handler {
 			}
 			if err != nil {
 				err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-				return sdk.WrapError(err, "postWorkflowPullHandler>")
+				return sdk.WrapError(err, "postWorkflowPushHandler>")
 			}
 
-			log.Debug("postWorkflowPullHandler> Reading %s", hdr.Name)
+			log.Debug("postWorkflowPushHandler> Reading %s", hdr.Name)
 
 			buff := new(bytes.Buffer)
 			if _, err := io.Copy(buff, tr); err != nil {
 				err = sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("Unable to read tar file"))
-				return sdk.WrapError(err, "postWorkflowPullHandler>")
+				return sdk.WrapError(err, "postWorkflowPushHandler>")
 			}
 
 			switch {
@@ -178,7 +178,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {
-			return sdk.WrapError(err, "postWorkflowPullHandler> Unable to start tx")
+			return sdk.WrapError(err, "postWorkflowPushHandler> Unable to start tx")
 		}
 
 		allMsg := []sdk.Message{}
@@ -189,27 +189,27 @@ func (api *API) postWorkflowPushHandler() Handler {
 				mError.Append(err)
 			}
 			allMsg = append(allMsg, msgList...)
-			log.Debug("postWorkflowPullHandler> -- %s OK", filename)
+			log.Debug("postWorkflowPushHandler> -- %s OK", filename)
 		}
 
 		for filename, app := range envs {
-			log.Debug("postWorkflowPullHandler> Parsing %s", filename)
+			log.Debug("postWorkflowPushHandler> Parsing %s", filename)
 			msgList, err := environment.ParseAndImport(tx, api.Cache, proj, &app, true, project.DecryptWithBuiltinKey, getUser(ctx))
 			if err != nil {
 				mError.Append(err)
 			}
 			allMsg = append(allMsg, msgList...)
-			log.Debug("postWorkflowPullHandler> -- %s OK", filename)
+			log.Debug("postWorkflowPushHandler> -- %s OK", filename)
 		}
 
 		for filename, pip := range pips {
-			log.Debug("postWorkflowPullHandler> Parsing %s", filename)
+			log.Debug("postWorkflowPushHandler> Parsing %s", filename)
 			msgList, err := pipeline.ParseAndImport(tx, api.Cache, proj, &pip, true, getUser(ctx))
 			if err != nil {
 				mError.Append(err)
 			}
 			allMsg = append(allMsg, msgList...)
-			log.Debug("postWorkflowPullHandler> -- %s OK", filename)
+			log.Debug("postWorkflowPushHandler> -- %s OK", filename)
 		}
 
 		msgList, err := workflow.ParseAndImport(tx, api.Cache, proj, &wrkflw, force, getUser(ctx))
@@ -225,11 +225,11 @@ func (api *API) postWorkflowPushHandler() Handler {
 		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
-			return sdk.WrapError(err, "importPipelineHandler> Unable to update project")
+			return sdk.WrapError(err, "postWorkflowPushHandler> Unable to update project")
 		}
 
 		if err := tx.Commit(); err != nil {
-			return sdk.WrapError(err, "importPipelineHandler> Cannot commit transaction")
+			return sdk.WrapError(err, "postWorkflowPushHandler> Cannot commit transaction")
 		}
 
 		return WriteJSON(w, r, msgListString, http.StatusOK)
