@@ -215,6 +215,8 @@ func SendLog(j IJob, format string, i ...interface{}) error {
 		}
 	}
 
+	Trace.Println(s)
+
 	now, _ := ptypes.TimestampProto(time.Now())
 	l := Log{
 		BuildID:            j.ID(),
