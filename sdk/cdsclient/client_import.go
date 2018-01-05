@@ -113,3 +113,29 @@ func (c *client) WorkflowImport(projectKey string, content io.Reader, format str
 
 	return messages, nil
 }
+
+func (c *client) WorkflowPush(projectKey string, tarContent io.Reader) ([]string, error) {
+	url := fmt.Sprintf("/project/%s/push/workflows", projectKey)
+
+	mods := []RequestModifier{
+		func(r *http.Request) {
+			r.Header.Set("Content-Type", "application/tar")
+		},
+	}
+
+	btes, code, err := c.Request("POST", url, tarContent, mods...)
+	if err != nil {
+		return nil, err
+	}
+
+	if code >= 400 {
+		return nil, fmt.Errorf("HTTP Code %d", code)
+	}
+
+	messages := []string{}
+	if err := json.Unmarshal(btes, &messages); err != nil {
+		return nil, err
+	}
+
+	return messages, nil
+}

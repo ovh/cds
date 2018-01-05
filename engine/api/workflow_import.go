@@ -102,7 +102,6 @@ func (api *API) postWorkflowPushHandler() Handler {
 		// Get project name in URL
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
-		force := FormBool(r, "force")
 
 		//Load project
 		proj, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx),
@@ -112,15 +111,23 @@ func (api *API) postWorkflowPushHandler() Handler {
 			project.LoadOptions.WithPipelines,
 		)
 		if errp != nil {
-			return sdk.WrapError(errp, "postWorkflowPushHandler>> Unable load project")
+			return sdk.WrapError(errp, "postWorkflowPushHandler> Unable load project")
 		}
 
 		if r.Body == nil {
 			return sdk.ErrWrongRequest
 		}
 
-		tr := tar.NewReader(r.Body)
+		btes, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Error("postWorkflowPushHandler> Unable to read body: %v", err)
+			return sdk.ErrWrongRequest
+		}
 		defer r.Body.Close()
+
+		log.Debug("Read %d bytes from body", len(btes))
+
+		tr := tar.NewReader(bytes.NewReader(btes))
 
 		apps := make(map[string]exportentities.Application)
 		pips := make(map[string]exportentities.PipelineV1)
@@ -146,30 +153,31 @@ func (api *API) postWorkflowPushHandler() Handler {
 				return sdk.WrapError(err, "postWorkflowPushHandler>")
 			}
 
+			b := buff.Bytes()
 			switch {
 			case strings.Contains(hdr.Name, ".app."):
 				var app exportentities.Application
-				if err := yaml.Unmarshal(buff.Bytes(), &app); err != nil {
+				if err := yaml.Unmarshal(b, &app); err != nil {
 					mError.Append(fmt.Errorf("Unable to load application %s: %v", hdr.Name, err))
 					continue
 				}
 				apps[hdr.Name] = app
 			case strings.Contains(hdr.Name, ".pip."):
 				var pip exportentities.PipelineV1
-				if err := yaml.Unmarshal(buff.Bytes(), &pip); err != nil {
+				if err := yaml.Unmarshal(b, &pip); err != nil {
 					mError.Append(fmt.Errorf("Unable to load pipeline %s: %v", hdr.Name, err))
 					continue
 				}
 				pips[hdr.Name] = pip
 			case strings.Contains(hdr.Name, ".env."):
 				var env exportentities.Environment
-				if err := yaml.Unmarshal(buff.Bytes(), &w); err != nil {
+				if err := yaml.Unmarshal(b, &env); err != nil {
 					mError.Append(fmt.Errorf("Unable to load environment %s: %v", hdr.Name, err))
 					continue
 				}
 				envs[hdr.Name] = env
 			default:
-				if err := yaml.Unmarshal(buff.Bytes(), &wrkflw); err != nil {
+				if err := yaml.Unmarshal(b, &wrkflw); err != nil {
 					mError.Append(fmt.Errorf("Unable to load workflow %s: %v", hdr.Name, err))
 					continue
 				}
@@ -212,7 +220,18 @@ func (api *API) postWorkflowPushHandler() Handler {
 			log.Debug("postWorkflowPushHandler> -- %s OK", filename)
 		}
 
-		msgList, err := workflow.ParseAndImport(tx, api.Cache, proj, &wrkflw, force, getUser(ctx))
+		//Reload project to get apps, envs and pipelines updated
+		proj, errp = project.Load(tx, api.Cache, key, getUser(ctx),
+			project.LoadOptions.WithGroups,
+			project.LoadOptions.WithApplications,
+			project.LoadOptions.WithEnvironments,
+			project.LoadOptions.WithPipelines,
+		)
+		if errp != nil {
+			return sdk.WrapError(errp, "postWorkflowPushHandler> Unable load project")
+		}
+
+		msgList, err := workflow.ParseAndImport(tx, api.Cache, proj, &wrkflw, true, getUser(ctx))
 		if err != nil {
 			mError.Append(err)
 		}
