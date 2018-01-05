@@ -84,7 +84,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
 
                 if (!this.applicationFilter.branch) {
                   this.setDefaultBranchFilter();
-                  this.changeWorkerEvent.emit(true);
+                  this.changeWorkerEvent.emit(false);
                 }
 
                 this.loadVersions(this.project.key, this.application.name).subscribe();
@@ -245,13 +245,10 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     /**
      * Action when changing branch
      */
-    changeBranch(): void {
-        if (!this.application.repository_fullname) {
-            return;
-        }
+    changeBranch(event): void {
         // Load the versions of the new branch
         this.loadVersions(this.project.key, this.application.name)
-            .subscribe(() => this.changeVersion());
+            .subscribe(() => this.changeVersion(true));
     }
     /**
      * Action when changing remote
@@ -264,20 +261,23 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
           .subscribe(branches => {
               this.branches = branches;
 
+              let branchFound: Branch;
               if (Array.isArray(branches) && branches.length) {
-                let branchFound = branches.find((br) => br.display_id === this.applicationFilter.branch);
+                branchFound = branches.find((br) => br.display_id === this.applicationFilter.branch);
                 this.applicationFilter.branch = branchFound ? branchFound.display_id : branches[0].display_id;
               }
 
               this.loadVersions(this.project.key, this.application.name)
-                  .subscribe(() => this.changeVersion());
+                  .subscribe(() => {
+                    this.changeVersion(branchFound == null)
+                  });
           });
     }
 
     /**
      * Action when changing version
      */
-    changeVersion(version?: string): void {
+    changeVersion(branchFound: boolean, version?: string): void {
         this.applicationFilter.branch = this.applicationFilter.branch.trim();
 
         if (!version && Array.isArray(this.versions) && this.versions.length) {
@@ -296,8 +296,11 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
             remote: this.applicationFilter.remote
           }
         });
-        this.changeWorkerEvent.emit(true);
-        this.clearTree(this.application.workflows);
+
+        if (branchFound || (version && version !== ' ')) {
+            this.changeWorkerEvent.emit(true);
+            this.clearTree(this.application.workflows);
+        }
     }
 
     /**
