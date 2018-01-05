@@ -312,12 +312,14 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     }
 
     clearTree(items: Array<WorkflowItem>): void {
-        items.forEach(w => {
-            delete w.pipeline.last_pipeline_build;
-            if (w.subPipelines) {
-                this.clearTree(w.subPipelines);
-            }
-        });
+        if (items) {
+            items.forEach(w => {
+                delete w.pipeline.last_pipeline_build;
+                if (w.subPipelines) {
+                    this.clearTree(w.subPipelines);
+                }
+            });
+        }
     }
 
     openLinkPipelineModal(): void {

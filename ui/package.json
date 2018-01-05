@@ -58,7 +58,7 @@
     "ng2-semantic-ui": "^0.9.6",
     "ngx-auto-scroll": "https://github.com/NagRock/ngx-auto-scroll/tarball/master",
     "rxjs": "5.5.2",
-    "semantic-ui": "2.2.10",
+    "semantic-ui": "2.2.13",
     "ts-helpers": "^1.1.1",
     "zone.js": "0.8.12"
   },
