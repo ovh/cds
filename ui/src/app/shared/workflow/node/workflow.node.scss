@@ -6,7 +6,6 @@ $boxWidth: 200px;
   height: 100%;
 
   .nodePipeline {
-    position: relative;
     background: white;
     border: 1px solid grey;
     border-radius: 5px;
@@ -79,7 +78,6 @@ $boxWidth: 200px;
     }
 
     .node.subnumber {
-      position: absolute;
       top: 0px;
       right: 5px;
       i {
@@ -287,4 +285,7 @@ $boxWidth: 200px;
   .mr5 {
     margin-right: 5px;
   }
+}
+.fixed {
+  position: fixed;
 }
