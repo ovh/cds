@@ -756,7 +756,7 @@ func UpdatePipelineBuildCommits(db *gorp.DbMap, store cache.Store, p *sdk.Projec
 		res = commits
 	} else if cur.Hash != "" {
 		//If we only get current pipeline build hash
-		log.Info("UpdatePipelineBuildCommits>  Looking for every commit until %s ", cur.Hash)
+		log.Debug("UpdatePipelineBuildCommits>  Looking for every commit until %s ", cur.Hash)
 		c, err := client.Commits(repo, cur.Branch, "", cur.Hash)
 		if err != nil {
 			return nil, sdk.WrapError(err, "UpdatePipelineBuildCommits> Cannot get commits")
