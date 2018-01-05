@@ -118,8 +118,8 @@ func (w *currentWorker) replaceVariablesPlaceholder(a *sdk.Action, params []sdk.
 }
 
 func (w *currentWorker) runJob(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, stepOrder int, stepName string) sdk.Result {
-	log.Info("runJob> start run %d stepOrder:%d %p", buildID, stepOrder, ctx)
-	defer func() { log.Info("runJob> end run %d stepOrder:%d %p (%s)", buildID, stepOrder, ctx, ctx.Err()) }()
+	log.Info("runJob> start run %d stepOrder:%d", buildID, stepOrder)
+	defer func() { log.Info("runJob> end run %d stepOrder:%d", buildID, stepOrder) }()
 	// Replace variable placeholder that may have been added by last step
 	w.replaceVariablesPlaceholder(a, *params)
 	// Set the params
@@ -221,7 +221,11 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 				criticalStepFailed = true
 			}
 
-			w.sendLog(buildID, fmt.Sprintf("End of step %s [%s]", childName, r.Status), w.currentJob.currentStep, true)
+			if r.Reason != "" {
+				w.sendLog(buildID, fmt.Sprintf("End of step %s [%s] with reason: %s", childName, r.Status, r.Reason), w.currentJob.currentStep, true)
+			} else {
+				w.sendLog(buildID, fmt.Sprintf("End of step %s [%s]", childName, r.Status), w.currentJob.currentStep, true)
+			}
 
 			// Update step status
 			if err := w.updateStepStatus(buildID, w.currentJob.currentStep, r.Status); err != nil {
@@ -244,7 +248,7 @@ func (w *currentWorker) runSteps(ctx context.Context, steps []sdk.Action, a *sdk
 	return r, nbDisabledChildren
 }
 
-func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status string) error {
+func (w *currentWorker) updateStepStatus(buildID int64, stepOrder int, status string) error {
 	step := sdk.StepStatus{
 		StepOrder: stepOrder,
 		Status:    status,
@@ -258,22 +262,22 @@ func (w *currentWorker) updateStepStatus(pbJobID int64, stepOrder int, status st
 
 	var path string
 	if w.currentJob.wJob != nil {
-		path = fmt.Sprintf("/queue/workflows/%d/step", pbJobID)
+		path = fmt.Sprintf("/queue/workflows/%d/step", buildID)
 	} else {
-		path = fmt.Sprintf("/build/%d/step", pbJobID)
+		path = fmt.Sprintf("/build/%d/step", buildID)
 	}
 
 	for try := 1; try <= 10; try++ {
-		log.Info("updateStepStatus> Sending step status...")
+		log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d", status, buildID, stepOrder)
 		_, code, lasterr := sdk.Request("POST", path, body)
 		if lasterr == nil && code < 300 {
-			log.Info("updateStepStatus> Send step status OK")
+			log.Info("updateStepStatus> Sending step status %s buildID:%d stepOrder:%d OK", status, buildID, stepOrder)
 			return nil
 		}
-		log.Warning("updateStepStatus> Cannot send step result: HTTP %d err: %s - try: %d - new try in 5s", code, lasterr, try)
+		log.Warning("updateStepStatus> Cannot send step %d result: HTTP %d err: %s - try: %d - new try in 5s", stepOrder, code, lasterr, try)
 		time.Sleep(5 * time.Second)
 	}
-	return fmt.Errorf("updateStepStatus> Could not send built result 10 times, giving up. job: %d", pbJobID)
+	return fmt.Errorf("updateStepStatus> Could not send built result 10 times on step %d, giving up. job: %d", stepOrder, buildID)
 }
 
 // creates a working directory in $HOME/PROJECT/APP/PIP/BN
@@ -297,8 +301,7 @@ func teardownBuildDirectory(wd string) error {
 func generateWorkingDirectory() (string, error) {
 	size := 16
 	bs := make([]byte, size)
-	_, err := rand.Read(bs)
-	if err != nil {
+	if _, err := rand.Read(bs); err != nil {
 		return "", err
 	}
 	str := hex.EncodeToString(bs)
