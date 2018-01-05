@@ -71,6 +71,9 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	for _, a := range c.OptionalArgs {
 		cmd.Use = cmd.Use + " [" + strings.ToUpper(a.Name) + "]"
 	}
+	if c.VariadicArgs.Name != "" {
+		cmd.Use = cmd.Use + " " + strings.ToUpper(c.VariadicArgs.Name) + " ..."
+	}
 
 	if len(mods) == 0 {
 		mods = []CommandModifier{CommandWithExtraFlags, CommandWithExtraAliases}
@@ -95,6 +98,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 
 	definedArgs := append(c.Args, c.OptionalArgs...)
 	sort.Sort(orderArgs(definedArgs...))
+	definedArgs = append(definedArgs, c.VariadicArgs)
 
 	cmd.Short = c.Short
 	cmd.Long = c.Long
@@ -112,18 +116,31 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 			ExitOnError(ErrWrongUsage, cmd.Help)
 		}
 		//If there is no optionnal args but there more args than expected
-		if len(c.OptionalArgs) == 0 && len(args) > len(c.Args) {
+		if c.VariadicArgs.Name == "" && len(c.OptionalArgs) == 0 && len(args) > len(c.Args) {
+			ExitOnError(ErrWrongUsage, cmd.Help)
+		}
+		//If there is a variadic arg, we condider at least one arg mandatory
+		if c.VariadicArgs.Name != "" && (len(args) < len(c.Args)+1) {
 			ExitOnError(ErrWrongUsage, cmd.Help)
 		}
 
 		vals := Values{}
+		nbDefinedArgs := len(definedArgs)
+		if c.VariadicArgs.Name != "" {
+			nbDefinedArgs--
+		}
 		for i := range args {
-			s := definedArgs[i].Name
-			if definedArgs[i].IsValid != nil && !definedArgs[i].IsValid(args[i]) {
-				fmt.Printf("%s is invalid\n", s)
-				ExitOnError(ErrWrongUsage, cmd.Help)
+			if i < nbDefinedArgs {
+				s := definedArgs[i].Name
+				if definedArgs[i].IsValid != nil && !definedArgs[i].IsValid(args[i]) {
+					fmt.Printf("%s is invalid\n", s)
+					ExitOnError(ErrWrongUsage, cmd.Help)
+				}
+				vals[s] = args[i]
+			} else {
+				vals[c.VariadicArgs.Name] = strings.Join(args[i:], ",")
+				break
 			}
-			vals[s] = args[i]
 		}
 
 		for i := range c.Flags {

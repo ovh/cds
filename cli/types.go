@@ -82,6 +82,7 @@ type Command struct {
 	Name         string
 	Args         []Arg
 	OptionalArgs []Arg
+	VariadicArgs Arg
 	Short        string
 	Long         string
 	Flags        []Flag
