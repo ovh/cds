@@ -512,6 +512,8 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
 	w.LastSubNumber = MaxSubNumber(w.WorkflowNodeRuns)
 
+	fmt.Println(n.Context != nil)
+	fmt.Println(n.Context.Application != nil)
 	if n.Context != nil && n.Context.Application != nil {
 		go func() {
 			commits, curVCSInfos, err := GetNodeRunBuildCommits(dbCopy, store, p, &w.Workflow, n.Name, w.Number, run, n.Context.Application, n.Context.Environment)
@@ -521,10 +523,13 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 				run.Commits = commits
 			}
 
+			fmt.Println(commits)
 			if commits != nil {
 				if err := updateNodeRunCommits(dbCopy, run.ID, commits); err != nil {
 					log.Warning("processWorkflowNodeRun> Unable to update node run commits %v", err)
 				}
+			} else {
+				log.Warning("processWorkflowNodeRun> No update node run, there aren't commits")
 			}
 
 			tagsUpdated := false

@@ -113,7 +113,7 @@ export class WorkflowNodeRunParamComponent {
 
         let currentPayload = this.getCurrentPayload();
         this.payloadString = JSON.stringify(currentPayload, undefined, 4);
-        this._previousBranch = currentPayload['git.branch'];
+        // this._previousBranch = currentPayload['git.branch'];
         if (this.num != null) {
             this.getCommits(this.num, false);
         }
@@ -130,19 +130,19 @@ export class WorkflowNodeRunParamComponent {
             } catch (e) {
                 this.invalidJSON = true;
             }
+        }
 
-            if (currentContext) {
-              branch = currentContext['git.branch'];
-            }
+        if (currentContext) {
+          if (currentContext['git.branch'] === this._previousBranch) {
+              return;
+          }
+          branch = currentContext['git.branch'];
         }
 
         if (branch && !this.loadingBranches && this.branches.indexOf('"' + branch + '"') === -1) {
             return;
         }
 
-        if (branch === this._previousBranch) {
-            return;
-        }
         this._previousBranch = branch;
 
         this.loadingCommits = true;
