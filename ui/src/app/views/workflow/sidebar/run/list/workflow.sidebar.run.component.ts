@@ -11,6 +11,7 @@ import {WorkflowRun, WorkflowRunTags} from '../../../../../model/workflow.run.mo
 import {cloneDeep} from 'lodash';
 import {WorkflowRunService} from '../../../../../service/workflow/run/workflow.run.service';
 import {DurationService} from '../../../../../shared/duration/duration.service';
+import {Router} from '@angular/router';
 
 @Component({
     selector: 'app-workflow-sidebar-run-list',
@@ -66,7 +67,7 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
     filteredTags: {[key: number]: WorkflowRunTags[]} = {};
 
     constructor(private _authStore: AuthentificationStore, private _workflowRunService: WorkflowRunService,
-      private _duration: DurationService) {
+      private _duration: DurationService, private _router: Router) {
         this.zone = new NgZone({enableLongStackTrace: false});
     }
 
@@ -180,6 +181,11 @@ export class WorkflowSidebarRunListComponent implements OnDestroy {
             }
             this.filteredWorkflowRuns.forEach((r) => this.filteredTags[r.id] = this.getFilteredTags(r.tags));
         }
+    }
+
+    changeRun(num: number) {
+        this.runNumber = num;
+        this._router.navigate(['/project', this.project.key, 'workflow', this.workflow.name, 'run', num]);
     }
 
     ngOnDestroy(): void {
