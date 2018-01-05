@@ -55,6 +55,34 @@ func Pull(db gorp.SqlExecutor, cache cache.Store, key string, name string, f exp
 	envs := wf.GetEnvironments()
 	pips := wf.GetPipelines()
 
+	//Reload app to retrieve secrets
+	for i := range apps {
+		app := &apps[i]
+		vars, errv := application.GetAllVariable(db, key, app.Name, application.WithClearPassword())
+		if errv != nil {
+			return sdk.WrapError(errv, "workflow.Pull> Cannot load application variables %s", app.Name)
+		}
+		app.Variable = vars
+
+		if errk := application.LoadAllKeys(db, app); errk != nil {
+			return sdk.WrapError(errk, "workflow.Pull> Cannot load application keys %s", app.Name)
+		}
+	}
+
+	//Reload env to retrieve secrets
+	for i := range envs {
+		env := &envs[i]
+		vars, errv := environment.GetAllVariable(db, key, env.Name, environment.WithClearPassword())
+		if errv != nil {
+			return sdk.WrapError(errv, "workflow.Pull> Cannot load environment variables %s", env.Name)
+		}
+		env.Variable = vars
+
+		if errk := environment.LoadAllKeys(db, env); errk != nil {
+			return sdk.WrapError(errk, "workflow.Pull> Cannot load environment keys %s", env.Name)
+		}
+	}
+
 	tw := tar.NewWriter(w)
 
 	buffw := new(bytes.Buffer)
