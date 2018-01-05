@@ -312,7 +312,7 @@ func LoadPipelines(db gorp.SqlExecutor, projectID int64, loadDependencies bool, 
 }
 
 // LoadAllNames returns all pipeline names
-func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.User) ([]string, error) {
+func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.User) ([]sdk.IDName, error) {
 	var query string
 	var args []interface{}
 
@@ -323,7 +323,7 @@ func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.U
 			  ORDER BY pipeline.name`
 		args = []interface{}{projID}
 	} else {
-		query = `SELECT distinct(pipeline.id), pipeline.name
+		query = `SELECT distinct(pipeline.id) AS id, pipeline.name
 			  FROM pipeline
 			  JOIN pipeline_group ON pipeline.id = pipeline_group.pipeline_id
 			  JOIN group_user ON pipeline_group.group_id = group_user.group_id
@@ -333,22 +333,15 @@ func LoadAllNames(db gorp.SqlExecutor, store cache.Store, projID int64, u *sdk.U
 		args = []interface{}{u.ID, projID}
 	}
 
-	var res []struct {
-		ID   int64  `db:"id"`
-		Name string `db:"name"`
-	}
+	var res []sdk.IDName
 	if _, err := db.Select(&res, query, args...); err != nil {
 		if err == sql.ErrNoRows {
-			return []string{}, nil
+			return res, nil
 		}
 		return nil, sdk.WrapError(err, "application.loadpipelinenames")
 	}
-	var pipelineNames []string
-	for _, pip := range res {
-		pipelineNames = append(pipelineNames, pip.Name)
-	}
 
-	return pipelineNames, nil
+	return res, nil
 }
 
 // LoadPipelineByGroup loads all pipelines where group has access

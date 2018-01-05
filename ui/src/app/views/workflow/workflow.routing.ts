@@ -15,7 +15,6 @@ const workflowRoutes: Routes = [
         canActivate: [CanActivateAuthRoute],
         canActivateChild: [CanActivateAuthRoute],
         resolve: {
-            // TODO: improve resolver
             project: ProjectForWorkflowResolver
         }
     },
@@ -25,7 +24,6 @@ const workflowRoutes: Routes = [
         canActivate: [CanActivateAuthRoute],
         canActivateChild: [CanActivateAuthRoute],
         resolve: {
-            // TODO: improve resolver
             project: ProjectForWorkflowResolver
         },
         children: [
@@ -33,7 +31,6 @@ const workflowRoutes: Routes = [
             {
                 path: '', component: WorkflowShowComponent,
                 resolve: {
-                    // TODO: improve resolver
                     project: ProjectForWorkflowResolver
                 }
             },
@@ -46,7 +43,6 @@ const workflowRoutes: Routes = [
             {
                 path: 'run/:number/node/:nodeId', component: WorkflowNodeRunComponent,
                 resolve: {
-                    // TODO: improve resolver
                     project: ProjectForWorkflowResolver
                 }
             }

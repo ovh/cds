@@ -7,8 +7,14 @@ import (
 	"github.com/go-gorp/gorp"
 )
 
-//EncryptFunc  is a common type
+// EncryptFunc is a common type
 type EncryptFunc func(gorp.SqlExecutor, int64, string, string) (string, error)
+
+// IDName is generally used when you want to get basic informations from db
+type IDName struct {
+	ID   string `json:"id" db:"id"`
+	Name string `json:"name" db:"name"`
+}
 
 // NamePattern  Pattern for project/application/pipeline/group name
 const NamePattern = "^[a-zA-Z0-9._-]{1,}$"

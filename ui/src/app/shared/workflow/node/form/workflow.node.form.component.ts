@@ -1,5 +1,5 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Project} from '../../../../model/project.model';
+import {Project, IdName} from '../../../../model/project.model';
 import {Application} from '../../../../model/application.model';
 import {Environment} from '../../../../model/environment.model';
 import {WorkflowNode} from '../../../../model/workflow.model';
@@ -17,7 +17,7 @@ export class WorkflowNodeFormComponent implements OnInit {
     @Output() nodeChange = new EventEmitter<WorkflowNode>();
 
     environments: Environment[];
-    applications: Application[];
+    applications: IdName[];
 
     constructor() { }
 
@@ -31,7 +31,7 @@ export class WorkflowNodeFormComponent implements OnInit {
         let voidApp = new Application();
         voidApp.id = 0;
         voidApp.name = ' ';
-        this.applications = cloneDeep(this.project.applications) || [];
+        this.applications = cloneDeep(this.project.application_names) || [];
         this.applications.unshift(voidApp);
     }
 
