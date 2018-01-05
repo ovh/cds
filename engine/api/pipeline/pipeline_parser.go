@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"sync"
+
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
@@ -35,20 +37,16 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		eg.Group = *g
 	}
 
-	allMsg := []sdk.Message{}
-	msgChan := make(chan sdk.Message, 1)
-	done := make(chan bool)
-
-	go func() {
-		for {
-			msg, ok := <-msgChan
-			allMsg = append(allMsg, msg)
-			if !ok {
-				done <- true
-				return
-			}
+	done := new(sync.WaitGroup)
+	done.Add(1)
+	msgChan := make(chan sdk.Message)
+	msgList := []sdk.Message{}
+	go func(array *[]sdk.Message) {
+		defer done.Done()
+		for m := range msgChan {
+			*array = append(*array, m)
 		}
-	}()
+	}(&msgList)
 
 	var globalError error
 
@@ -61,7 +59,7 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 	}
 
 	close(msgChan)
-	<-done
+	done.Wait()
 
-	return allMsg, globalError
+	return msgList, globalError
 }
