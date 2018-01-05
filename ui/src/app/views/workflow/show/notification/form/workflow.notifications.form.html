@@ -96,7 +96,7 @@
         <ng-container *ngIf="canDelete">
             <app-delete-button [loading]="loading" (event)="deleteNotification()"></app-delete-button>
         </ng-container>
-        <div class="ui right floated green button" name="save" (click)="createNotification()">
+        <div class="ui right floated green button" name="save" [class.loading]="loading" [disabled]="loading" (click)="createNotification()">
             <span *ngIf="canDelete">{{'btn_save' | translate}}</span>
             <span *ngIf="!canDelete">{{'btn_add' | translate}}</span>
         </div>
