@@ -18,6 +18,12 @@
         </div>
     </div>
 </div>
+<div class="ui full segment" *ngIf="loadingRun && workflowRun">
+    <sui-dimmer class="inverted" [isDimmed]="true" [isClickable]="false">
+        <div class="ui text active loader">{{ 'workflow_loading' | translate }}</div>
+    </sui-dimmer>
+</div>
+
 <div class="ui text active loader" *ngIf="!workflowRun">{{ 'workflow_loading' | translate }}</div>
 <app-workflow-node-run-param
   *ngIf="workflowRun"

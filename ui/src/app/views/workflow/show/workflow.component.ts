@@ -68,22 +68,23 @@ export class WorkflowShowComponent {
 
         this.activatedRoute.params.subscribe(params => {
             let workflowName = params['workflowName'];
-            if (this.project.key && workflowName) {
+            let projkey = params['key'];
+            if (projkey && workflowName) {
                 if (this.workflowSubscription) {
                     this.workflowSubscription.unsubscribe();
                 }
 
-                this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName).subscribe(ws => {
+                this.workflowSubscription = this._workflowStore.getWorkflows(projkey, workflowName).subscribe(ws => {
                     if (ws) {
-                        let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
+                        let updatedWorkflow = ws.get(projkey + '-' + workflowName);
                         if (updatedWorkflow && !updatedWorkflow.externalChange) {
                             if (this.detailedWorkflow && this.detailedWorkflow.last_modified === updatedWorkflow.last_modified) {
                                 return;
                             }
                             this.detailedWorkflow = updatedWorkflow;
 
-                            this.direction = this._workflowStore.getDirection(this.project.key, this.detailedWorkflow.name);
-                            this._workflowStore.updateRecentWorkflow(this.project.key, updatedWorkflow);
+                            this.direction = this._workflowStore.getDirection(projkey, this.detailedWorkflow.name);
+                            this._workflowStore.updateRecentWorkflow(projkey, updatedWorkflow);
 
                             if (!this.detailedWorkflow || !this.detailedWorkflow.usage) {
                                 return;
@@ -94,8 +95,8 @@ export class WorkflowShowComponent {
                             }, 0);
                         }
                     }
-                }, (err) => {
-                    this._router.navigate(['/project', this.project.key]);
+                }, () => {
+                    this._router.navigate(['/project', projkey]);
                 });
             }
         });

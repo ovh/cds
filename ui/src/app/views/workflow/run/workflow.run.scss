@@ -13,3 +13,13 @@
     font-weight: 600;
   }
 }
+
+.ui.full.segment {
+  position: absolute;
+  top: 100px;
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  width: calc(100% - 250px);
+  border-radius: 0px;
+}
