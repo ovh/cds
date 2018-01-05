@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/go-gorp/gorp"
+
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
@@ -17,19 +18,19 @@ type decryptFunc func(gorp.SqlExecutor, int64, string) (string, error)
 
 // ParseAndImport parse an exportentities.Environment and insert or update the environment in database
 func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, eenv *exportentities.Environment, force bool, decryptFunc decryptFunc, u *sdk.User) ([]sdk.Message, error) {
-	log.Info("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, force)
+	log.Debug("ParseAndImport>> Import environment %s in project %s (force=%v)", eenv.Name, proj.Key, force)
 	log.Debug("ParseAndImport>> App: %+v", eenv)
 
 	//Check valid application name
 	rx := sdk.NamePatternRegex
 	if !rx.MatchString(eenv.Name) {
-		return nil, sdk.WrapError(sdk.ErrInvalidApplicationPattern, "ParseAndImport>> Application name %s do not respect pattern %s", eenv.Name, sdk.NamePattern)
+		return nil, sdk.WrapError(sdk.ErrInvalidName, "ParseAndImport>> Environment name %s do not respect pattern %s", eenv.Name, sdk.NamePattern)
 	}
 
-	//Check if app exist
+	//Check if env exist
 	oldEnv, errl := LoadEnvironmentByName(db, proj.Key, eenv.Name)
 	if errl != nil && sdk.ErrorIs(errl, sdk.ErrNoEnvironment) {
-		return nil, sdk.WrapError(errl, "ParseAndImport>> Unable to load application")
+		return nil, sdk.WrapError(errl, "ParseAndImport>> Unable to load environment")
 	}
 
 	//If the environment exist and we don't want to force, raise an error
