@@ -11,7 +11,7 @@ import (
 	"github.com/ovh/cds/sdk/log"
 )
 
-// ParseAndImport parse an exportentities.Application and insert or update the application in database
+// ParseAndImport parse an exportentities.workflow and insert or update the workflow in database
 func ParseAndImport(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, ew *exportentities.Workflow, force bool, u *sdk.User) ([]sdk.Message, error) {
 	log.Info("ParseAndImport>> Import workflow %s in project %s (force=%v)", ew.Name, proj.Key, force)
 	log.Debug("ParseAndImport>> Workflow: %+v", ew)
