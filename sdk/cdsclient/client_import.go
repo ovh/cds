@@ -128,7 +128,7 @@ func (c *client) WorkflowPush(projectKey string, tarContent io.Reader) ([]string
 		return nil, err
 	}
 
-	if code > 400 {
+	if code >= 400 {
 		return nil, fmt.Errorf("HTTP Code %d", code)
 	}
 

@@ -111,7 +111,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 			project.LoadOptions.WithPipelines,
 		)
 		if errp != nil {
-			return sdk.WrapError(errp, "postWorkflowPushHandler>> Unable load project")
+			return sdk.WrapError(errp, "postWorkflowPushHandler> Unable load project")
 		}
 
 		if r.Body == nil {
@@ -120,6 +120,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 
 		btes, err := ioutil.ReadAll(r.Body)
 		if err != nil {
+			log.Error("postWorkflowPushHandler> Unable to read body: %v", err)
 			return sdk.ErrWrongRequest
 		}
 		defer r.Body.Close()
@@ -170,7 +171,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 				pips[hdr.Name] = pip
 			case strings.Contains(hdr.Name, ".env."):
 				var env exportentities.Environment
-				if err := yaml.Unmarshal(b, &w); err != nil {
+				if err := yaml.Unmarshal(b, &env); err != nil {
 					mError.Append(fmt.Errorf("Unable to load environment %s: %v", hdr.Name, err))
 					continue
 				}
@@ -227,7 +228,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 			project.LoadOptions.WithPipelines,
 		)
 		if errp != nil {
-			return sdk.WrapError(errp, "postWorkflowPushHandler>> Unable load project")
+			return sdk.WrapError(errp, "postWorkflowPushHandler> Unable load project")
 		}
 
 		msgList, err := workflow.ParseAndImport(tx, api.Cache, proj, &wrkflw, true, getUser(ctx))
