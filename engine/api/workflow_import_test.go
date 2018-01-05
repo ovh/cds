@@ -68,7 +68,6 @@ workflow:
 	assert.NotNil(t, w)
 
 	m, _ := dump.ToStringMap(w)
-	dump.Dump(m)
 	assert.Equal(t, "test_1", m["Workflow.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Name"])
 	assert.Equal(t, "pip1", m["Workflow.Root.Pipeline.Name"])
