@@ -39,7 +39,9 @@
     <ng-container *ngIf="displaySummary">
         <div class="ui list ml5 listmrt">
             <div class="item padding" *ngIf="currentWorkflowNodeRun.tests">
-                <div class="content">
+                <div class="content pointing"
+                  [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
+                  [queryParams]="{tab: 'test'}">
                     <div>
                         <i class="bug icon"></i> {{currentWorkflowNodeRun.tests.total}}
                         <span *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.tests && currentWorkflowNodeRun.tests.total > 1">{{ 'common_tests' | translate }}</span>
@@ -51,7 +53,10 @@
                 </div>
             </div>
             <div class="item padding" *ngIf="currentWorkflowNodeRun.artifacts">
-                <div class="content" [title]="'common_artifacts' | translate">
+                <div class="content pointing"
+                [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
+                [queryParams]="{tab: 'artifact'}"
+                [title]="'common_artifacts' | translate">
                     <div>
                         <i class="cloud upload icon"></i> {{currentWorkflowNodeRun.artifacts.length}}
                         <span *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.artifacts && currentWorkflowNodeRun.artifacts.length > 1">{{ 'common_artifacts' | translate }}</span>

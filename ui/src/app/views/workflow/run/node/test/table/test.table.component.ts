@@ -18,6 +18,7 @@ export class WorkflowRunTestTableComponent extends Table {
     @Input('statusFilter')
     set statusFilter(status: string) {
         this.filter = status;
+        this.currentPage = 1;
         this.updateFilteredTests();
     }
 
