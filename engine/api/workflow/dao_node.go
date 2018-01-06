@@ -323,7 +323,7 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, ctx *sdk.Workfl
 		ctx.EnvironmentID = sqlContext.EnvID.Int64
 	}
 	if sqlContext.Mutex.Valid {
-		ctx.Mutex = sqlContext.Mutex.Valid
+		ctx.Mutex = sqlContext.Mutex.Bool
 	}
 
 	//Unmarshal payload

@@ -72,6 +72,8 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
 	assertEqualNode(t, w.Root, w1.Root)
 
+	assert.False(t, w1.Root.Context.Mutex)
+
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
