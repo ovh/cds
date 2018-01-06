@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"sync"
 	"time"
@@ -201,6 +202,59 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		//Delete the line in workflow_node_run_job
 		if err := DeleteNodeJobRuns(db, n.ID); err != nil {
 			return sdk.WrapError(err, "workflow.execute> Unable to delete node %d job runs ", n.ID)
+		}
+
+		node := updatedWorkflowRun.Workflow.GetNode(n.WorkflowNodeID)
+		//Do we release a mutex ?
+		//Try to find one node run of the same node from the same workflow at status Waiting
+		if node != nil && node.Context != nil && node.Context.Mutex {
+			mutexQuery := `select workflow_node_run.id
+			from workflow_node_run 
+			join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
+			join workflow on workflow.id = workflow_run.workflow_id
+			where workflow.id = $1
+			and workflow_node_run.workflow_node_name = $2
+			and workflow_node_run.status = $3
+			order by workflow_node_run.start asc
+			limit 1`
+			waitingRunID, errID := db.SelectInt(mutexQuery, updatedWorkflowRun.WorkflowID, node.Name, string(sdk.StatusWaiting))
+			if errID != nil && errID != sql.ErrNoRows {
+				log.Error("workflow.execute> Unable to load mutex-locked workflow node run ID: %v", errID)
+				return nil
+			}
+			//If not more run is found, stop the loop
+			if waitingRunID == 0 {
+				return nil
+			}
+			waitingRun, errRun := LoadNodeRunByID(db, waitingRunID, false)
+			if errRun != nil && errRun != sql.ErrNoRows {
+				log.Error("workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errRun)
+				return nil
+			}
+			//If not more run is found, stop the loop
+			if waitingRun == nil {
+				return nil
+			}
+
+			workflowRun, errWRun := LoadRunByID(db, waitingRun.WorkflowRunID, false)
+			if errWRun != nil {
+				log.Error("workflow.execute> Unable to load mutex-locked workflow rnode un: %v", errWRun)
+				return nil
+			}
+			AddWorkflowRunInfo(workflowRun, false, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowNodeMutexRelease.ID,
+				Args: []interface{}{waitingRun.WorkflowNodeName},
+			})
+
+			if err := updateWorkflowRun(db, workflowRun); err != nil {
+				return sdk.WrapError(err, "workflow.execute> Unable to update workflow run %d after mutex release", workflowRun.ID)
+			}
+
+			log.Debug("workflow.execute> process the node run %d because mutex has been released", waitingRun.ID)
+			//TODO: how to manage the chanEvent ? Need to discuss about it
+			if err := execute(dbCopy, db, store, p, waitingRun, nil); err != nil {
+				return sdk.WrapError(err, "workflow.execute> Unable to reprocess workflow")
+			}
 		}
 	}
 	return nil

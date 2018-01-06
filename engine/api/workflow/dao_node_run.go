@@ -113,6 +113,7 @@ func fromDBNodeRun(rr NodeRun) (*sdk.WorkflowNodeRun, error) {
 	r.WorkflowRunID = rr.WorkflowRunID
 	r.ID = rr.ID
 	r.WorkflowNodeID = rr.WorkflowNodeID
+	r.WorkflowNodeName = rr.WorkflowNodeName
 	r.Number = rr.Number
 	r.SubNumber = rr.SubNumber
 	r.Status = rr.Status
@@ -189,6 +190,7 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB.ID = n.ID
 	nodeRunDB.WorkflowRunID = n.WorkflowRunID
 	nodeRunDB.WorkflowNodeID = n.WorkflowNodeID
+	nodeRunDB.WorkflowNodeName = n.WorkflowNodeName
 	nodeRunDB.Number = n.Number
 	nodeRunDB.SubNumber = n.SubNumber
 	nodeRunDB.Status = n.Status
@@ -430,7 +432,7 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 	var nodeRun sdk.WorkflowNodeRun
 	var rr = NodeRun{}
 	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID, nr.ID); err != nil {
-		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous RUN: %s [%s %d %s %d]", query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID)
+		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous run: %s [%s %d %s %d %d]", query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID)
 	}
 	pNodeRun, errF := fromDBNodeRun(rr)
 	if errF != nil {
