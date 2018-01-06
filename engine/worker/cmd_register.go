@@ -30,7 +30,7 @@ func cmdRegisterRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 			ModelID:      w.model.ID,
 		}
 
-		if err := w.register(form); err != nil {
+		if err := w.register(form, viper.GetBool("auto_update")); err != nil {
 			log.Error("Unable to register worker %s: %v", w.status.Name, err)
 		}
 		if err := w.unregister(); err != nil {
