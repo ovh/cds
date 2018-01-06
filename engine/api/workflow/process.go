@@ -556,7 +556,6 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 
 	//Check the context.mutex to know if we are allowed to run it
 	if n.Context.Mutex {
-		log.Info("There is a mutex !")
 		//Check if there are builing workflownoderun with the same workflow_node_name for the same workflow
 		mutexQuery := `select count(1) 
 		from workflow_node_run 
