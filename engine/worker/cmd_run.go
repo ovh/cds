@@ -45,10 +45,13 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		hostname, errh := os.Hostname() // no check of err here
 		if errh != nil {
-			hostname = fmt.Sprintf("error compute hostname: %s", errh)
+			sdk.Exit(fmt.Sprintf("error compute hostname: %s", errh))
 		}
-		log.Info("What a good time to be alive, I'm in version %s, my hostname is %s", sdk.VERSION, hostname)
-		log.Info("Auto-update: %t", viper.GetBool("auto_update"))
+		log.Info("CDS Worker starting")
+		log.Info("version: %s", sdk.VERSION)
+		log.Info("hostname: %s", hostname)
+		log.Info("auto-update: %t", viper.GetBool("auto_update"))
+
 		w.initServer(ctx)
 
 		// Gracefully shutdown connections
