@@ -20,7 +20,8 @@ import (
 func cmdRun(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "run",
-		Short: "worker run",
+		Short: "worker run.",
+		Long:  "worker run: you should not need this command directly",
 		Run:   runCmd(w),
 	}
 
