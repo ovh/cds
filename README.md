@@ -40,7 +40,7 @@ In CDS, a hatchery is an agent which spawn workers: [read more](https://ovh.gith
 
 ### Contrib
 
-Actions, Plugins, Templates, uServices are under : [read more](contrib)
+Actions, Plugins, uServices are under : [read more](contrib)
 
 ### SDK
 

@@ -64,43 +64,5 @@ EOF
   done;
 }
 
-function generateTemplatesDocumentation {
-  for template in `ls ../contrib/templates/`; do
-
-  if [[ "${template}" != cds-template-* ]]; then
-    echo "skip ../contrib/templates/${template}"
-    continue;
-  fi
-
-  OLD=`pwd`
-  TEMPLATE_FILE="$OLD/content/building-pipelines/building-pipelines.templates.${template}.md"
-
-  cd ../contrib/templates/${template}
-
-  echo "Compile template ${template}"
-  go build
-
-  echo "generate ${TEMPLATE_FILE}"
-
-cat << EOF > ${TEMPLATE_FILE}
-+++
-title = "${template}"
-chapter = true
-
-[menu.main]
-parent = "templates"
-identifier = "${template}"
-
-+++
-EOF
-
-  ./${template} info >> $TEMPLATE_FILE
-
-  cd $OLD
-
-  done;
-}
-
 generateUserActionsDocumentation
 generatePluginsDocumentation
-generateTemplatesDocumentation

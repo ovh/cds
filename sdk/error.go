@@ -64,7 +64,6 @@ var (
 	ErrInvalidGoPath                         = Error{ID: 48, Status: http.StatusBadRequest}
 	ErrCommitsFetchFailed                    = Error{ID: 49, Status: http.StatusNotFound}
 	ErrInvalidSecretFormat                   = Error{ID: 50, Status: http.StatusInternalServerError}
-	ErrUnknownTemplate                       = Error{ID: 51, Status: http.StatusNotFound}
 	ErrNoPreviousSuccess                     = Error{ID: 52, Status: http.StatusNotFound}
 	ErrNoEnvExecution                        = Error{ID: 53, Status: http.StatusForbidden}
 	ErrSessionNotFound                       = Error{ID: 54, Status: http.StatusUnauthorized}
@@ -186,7 +185,6 @@ var errorsAmericanEnglish = map[int]string{
 	ErrCommitsFetchFailed.ID:                    "unable to retrieves commits",
 	ErrInvalidGoPath.ID:                         "invalid gopath",
 	ErrInvalidSecretFormat.ID:                   "cannot decrypt secret, invalid format",
-	ErrUnknownTemplate.ID:                       "unknown template",
 	ErrSessionNotFound.ID:                       "invalid session",
 	ErrNoPreviousSuccess.ID:                     "there is no previous success version for this pipeline",
 	ErrNoEnvExecution.ID:                        "you don't have execution right on this environment",
@@ -307,7 +305,6 @@ var errorsFrench = map[int]string{
 	ErrCommitsFetchFailed.ID:                    "impossible de retrouver les changements",
 	ErrInvalidGoPath.ID:                         "le gopath n'est pas valide",
 	ErrInvalidSecretFormat.ID:                   "impossibe de dechiffrer le secret, format invalide",
-	ErrUnknownTemplate.ID:                       "template inconnu",
 	ErrSessionNotFound.ID:                       "session invalide",
 	ErrNoPreviousSuccess.ID:                     "il n'y a aucune précédente version en succès pour ce pipeline",
 	ErrNoEnvExecution.ID:                        "vous n'avez pas les droits d'éxécution sur cet environnement",
