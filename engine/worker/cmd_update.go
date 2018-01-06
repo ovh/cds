@@ -71,7 +71,7 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if err := update.Apply(resp.Body, update.Options{}); err != nil {
 			sdk.Exit("Error while getting updating worker from CDS API: %s\n", err)
 		}
-		fmt.Printf("Update worker done. Please restart your worker\n")
+		fmt.Println("Update worker done.")
 	}
 }
 

@@ -103,7 +103,6 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 
 		if cmd.Flag("auto-update").Value.String() == "true" {
 			updateCmd(w)(cmd, args)
-			log.Info("Restart worker done") // fake msg
 		}
 		toRun := true
 		for toRun {
