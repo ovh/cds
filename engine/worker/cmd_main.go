@@ -1,8 +1,6 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
 	"os"
 	"os/exec"
 
@@ -126,55 +124,14 @@ func execWorker() {
 	args := []string{"run"}
 	args = append(args, os.Args[1:]...)
 	cmd := exec.Command(current, args...)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		sdk.Exit("Error on starting worker (StdoutPipe)", err)
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		sdk.Exit("Error on starting worker (StderrPipe)", err)
-	}
 
-	stdoutreader := bufio.NewReader(stdout)
-	stderrreader := bufio.NewReader(stderr)
-
-	outchan := make(chan bool)
-	go func() {
-		for {
-			line, errs := stdoutreader.ReadString('\n')
-			if errs != nil {
-				stdout.Close()
-				close(outchan)
-				return
-			}
-			if line != "" {
-				fmt.Printf(line)
-			}
-		}
-	}()
-
-	errchan := make(chan bool)
-	go func() {
-		for {
-			line, errs := stderrreader.ReadString('\n')
-			if errs != nil {
-				stderr.Close()
-				close(errchan)
-				return
-			}
-			if line != "" {
-				fmt.Printf(line)
-			}
-
-		}
-	}()
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
 		log.Error("start err:%s", err)
 	}
 
-	<-outchan
-	<-errchan
 	if err := cmd.Wait(); err != nil {
 		log.Error("wait err:%s", err)
 	}
