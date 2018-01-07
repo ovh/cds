@@ -3,13 +3,6 @@
 	"ignore": "test github.com/Microsoft/go-winio",
 	"package": [
 		{
-			"checksumSHA1": "io0QcIg0zE1N8lUwyH+F8duRjak=",
-			"origin": "github.com/docker/docker/vendor/archive/tar",
-			"path": "archive/tar",
-			"revision": "d4239a6e286f546f5eda507437f643b5a1548c5d",
-			"revisionTime": "2017-11-09T04:02:01Z"
-		},
-		{
 			"checksumSHA1": "9NFR6RG8H2fNyKHscGmuGLQhRm4=",
 			"origin": "github.com/docker/docker/vendor/github.com/Azure/go-ansiterm",
 			"path": "github.com/Azure/go-ansiterm",
