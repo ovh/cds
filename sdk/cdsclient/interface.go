@@ -19,6 +19,7 @@ type ExportImportInterface interface {
 	WorkflowExport(projectKey, name string, exportWithPermissions bool, exportFormat string) ([]byte, error)
 	WorkflowPull(projectKey, name string, exportWithPermissions bool) (*tar.Reader, error)
 	WorkflowImport(projectKey string, content io.Reader, format string, force bool) ([]string, error)
+	WorkflowPush(projectKey string, tarContent io.Reader) ([]string, error)
 }
 
 // ApplicationClient exposes application related functions

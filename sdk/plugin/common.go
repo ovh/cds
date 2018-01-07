@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"runtime"
 	"sort"
 	"strings"
@@ -57,6 +58,7 @@ func SetTrace(traceHandle io.Writer) {
 
 //Init is a common function for all plugins
 func (p *Common) Init(o IOptions) string {
+	SetTrace(os.Stdout)
 	auth = o
 
 	if auth.TLSSkipVerify() {

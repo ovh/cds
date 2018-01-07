@@ -42,6 +42,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     pipelineStatusEnum = PipelineStatus;
     notificationSubscription: Subscription;
     workflowCoreSub: Subscription;
+    loadingRun = false;
 
     constructor(private _activatedRoute: ActivatedRoute, private _authStore: AuthentificationStore,
                 private _workflowStore: WorkflowStore,
@@ -82,6 +83,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
     }
 
     startWorker(num: number): void {
+        this.loadingRun = true;
         // Start web worker
         if (this.runWorkflowWorker) {
             this.runWorkflowWorker.stop();
@@ -99,6 +101,7 @@ export class WorkflowRunComponent implements OnDestroy, OnInit {
         this.runSubsription = this.runWorkflowWorker.response().subscribe(wrString => {
             if (wrString) {
                 this.zone.run(() => {
+                    this.loadingRun = false;
                     this.workflowRun = <WorkflowRun>JSON.parse(wrString);
                     this._workflowCoreService.setCurrentWorkflowRun(this.workflowRun);
                     if (this.workflowRun.status === PipelineStatus.STOPPED ||

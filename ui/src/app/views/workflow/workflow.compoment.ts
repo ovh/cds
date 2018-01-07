@@ -45,6 +45,7 @@ export class WorkflowComponent implements OnInit {
                 private _projectStore: ProjectStore,
                 private _workflowCore: WorkflowCoreService) {
         this._activatedRoute.data.subscribe(datas => {
+            console.log(datas);
             this.project = datas['project'];
         });
 
@@ -54,7 +55,7 @@ export class WorkflowComponent implements OnInit {
 
         this._activatedRoute.params.subscribe(p => {
             let workflowName = p['workflowName'];
-
+            let key = p['key'];
             let snapshotparams = this._routerService.getRouteSnapshotParams({}, this._activatedRoute.snapshot);
             if (snapshotparams) {
                 this.number = snapshotparams['number'] ? parseInt(snapshotparams['number'], 10) : null;
@@ -65,10 +66,10 @@ export class WorkflowComponent implements OnInit {
                     this.workflowSubscription.unsubscribe();
                 }
                 this.loading = true;
-                this.workflowSubscription = this._workflowStore.getWorkflows(this.project.key, workflowName)
+                this.workflowSubscription = this._workflowStore.getWorkflows(key, workflowName)
                     .subscribe(ws => {
                         if (ws) {
-                            let updatedWorkflow = ws.get(this.project.key + '-' + workflowName);
+                            let updatedWorkflow = ws.get(key + '-' + workflowName);
                             if (updatedWorkflow && !updatedWorkflow.externalChange) {
                                 this.workflow = updatedWorkflow;
                             }
@@ -82,7 +83,7 @@ export class WorkflowComponent implements OnInit {
                         this.loading = false;
                     }, () => {
                         this.loading = false;
-                        this._router.navigate(['/project', this.project.key]);
+                        this._router.navigate(['/project', key]);
                     });
             }
         });
