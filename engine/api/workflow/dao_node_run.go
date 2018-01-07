@@ -511,9 +511,7 @@ func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit
 		return sdk.WrapError(errMarshal, "updateNodeRunCommits> Unable to marshal commits")
 	}
 
-	fmt.Println("update --> ", id)
 	if _, err := db.Exec("UPDATE workflow_node_run SET commits = $1 where id = $2", commitsBtes, id); err != nil {
-		fmt.Println("error ---> ", err)
 		return sdk.WrapError(err, "updateNodeRunCommits> Unable to update workflow_node_run id=%d", id)
 	}
 	return nil
