@@ -2,7 +2,7 @@
 ALTER TABLE workflow_node_context ADD COLUMN mutex BOOLEAN DEFAULT FALSE;
 UPDATE workflow_node_context SET mutex = 'false';
 
-ALTER TABLE workflow_node_run ADD COLUMN workflow_node_name text;
+ALTER TABLE workflow_node_run ADD COLUMN workflow_node_name text DEFAULT '';
 UPDATE workflow_node_run SET workflow_node_name = '';
 
 -- +migrate Down
