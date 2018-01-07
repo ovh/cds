@@ -42,7 +42,7 @@ func init() {
 		"initials":     initials,
 		"randAlphaNum": randAlphaNumeric,
 		"randAlpha":    randAlpha,
-		"randAscii":    randAscii,
+		"randASCII":    randASCII,
 		"randNumeric":  randNumeric,
 		"swapcase":     util.SwapCase,
 		"shuffle":      xstrings.Shuffle,
@@ -58,8 +58,8 @@ func init() {
 		"default":      dfault,
 		"empty":        empty,
 		"coalesce":     coalesce,
-		"toJson":       toJson,
-		"toPrettyJson": toPrettyJson,
+		"toJSON":       toJSON,
+		"toPrettyJSON": toPrettyJSON,
 		"b64enc":       base64encode,
 		"b64dec":       base64decode,
 		"escape":       escape,
@@ -93,8 +93,6 @@ func empty(given interface{}) bool {
 
 	// Basically adapted from text/template.isTrue
 	switch g.Kind() {
-	default:
-		return g.IsNil()
 	case reflect.Array, reflect.Slice, reflect.Map, reflect.String:
 		return g.Len() == 0
 	case reflect.Bool:
@@ -109,8 +107,9 @@ func empty(given interface{}) bool {
 		return g.Float() == 0
 	case reflect.Struct:
 		return false
+	default:
+		return g.IsNil()
 	}
-	return true
 }
 
 // coalesce returns the first non-empty value.
@@ -123,14 +122,14 @@ func coalesce(v ...interface{}) interface{} {
 	return nil
 }
 
-// toJson encodes an item into a JSON string
-func toJson(v interface{}) string {
+// toJSON encodes an item into a JSON string
+func toJSON(v interface{}) string {
 	output, _ := json.Marshal(v)
 	return string(output)
 }
 
-// toPrettyJson encodes an item into a pretty (indented) JSON string
-func toPrettyJson(v interface{}) string {
+// toPrettyJSON encodes an item into a pretty (indented) JSON string
+func toPrettyJSON(v interface{}) string {
 	output, _ := json.MarshalIndent(v, "", "  ")
 	return string(output)
 }
@@ -178,7 +177,7 @@ func randAlpha(count int) string {
 	return r
 }
 
-func randAscii(count int) string {
+func randASCII(count int) string {
 	r, _ := util.RandomAscii(count)
 	return r
 }

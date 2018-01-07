@@ -26,7 +26,7 @@ type Workflow struct {
 	Notifications []WorkflowNotification `json:"notifications,omitempty" db:"-" cli:"-"`
 }
 
-// WorkflowNotifications represents notifications on a workflow
+// WorkflowNotification represents notifications on a workflow
 type WorkflowNotification struct {
 	ID             int64                        `json:"id,omitempty" db:"id"`
 	WorkflowID     int64                        `json:"workflow_id,omitempty" db:"workflow_id"`
@@ -80,7 +80,7 @@ func parseWorkflowNotification(body []byte) (*WorkflowNotification, error) {
 	return notif1, errParse
 }
 
-//ParseUserNotificationSettings transforms json to UserNotificationSettings map
+//ParseWorkflowUserNotificationSettings transforms json to UserNotificationSettings map
 func ParseWorkflowUserNotificationSettings(t UserNotificationSettingsType, userNotif []byte) (UserNotificationSettings, error) {
 	switch t {
 	case EmailUserNotification, JabberUserNotification:
