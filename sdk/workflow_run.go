@@ -92,7 +92,7 @@ type WorkflowNodeRun struct {
 	WorkflowRunID      int64                            `json:"workflow_run_id"`
 	ID                 int64                            `json:"id"`
 	WorkflowNodeID     int64                            `json:"workflow_node_id"`
-	WorkflowNodeName   string                           `json:"workflow_node_string"`
+	WorkflowNodeName   string                           `json:"workflow_node_name"`
 	Number             int64                            `json:"num"`
 	SubNumber          int64                            `json:"subnumber"`
 	Status             string                           `json:"status"`
