@@ -33,17 +33,19 @@ export class WorkflowRunNodePipelineComponent implements OnInit {
     previousStatus: string;
     manual = false;
 
-    constructor(private _durationService: DurationService, private _route: ActivatedRoute, private _router: Router) { }
+    constructor(private _durationService: DurationService, private _route: ActivatedRoute, private _router: Router) {
+
+    }
 
     ngOnInit() {
-      if (!this._route.snapshot.queryParams['actionId'] && this._route.snapshot.queryParams['stageId']) {
-        this.selectedStage(parseInt(this._route.snapshot.queryParams['stageId'], 10));
-      } else if (this._route.snapshot.queryParams['actionId']) {
-        let job = new Job();
-        job.pipeline_action_id = parseInt(this._route.snapshot.queryParams['actionId'], 10);
-        this.manual = true;
-        this.selectedJob(job);
-      }
+        if (!this._route.snapshot.queryParams['actionId'] && this._route.snapshot.queryParams['stageId']) {
+          this.selectedStage(parseInt(this._route.snapshot.queryParams['stageId'], 10));
+        } else if (this._route.snapshot.queryParams['actionId']) {
+          let job = new Job();
+          job.pipeline_action_id = parseInt(this._route.snapshot.queryParams['actionId'], 10);
+          this.manual = true;
+          this.selectedJob(job);
+        }
     }
 
     selectedJobManual(j: Job) {

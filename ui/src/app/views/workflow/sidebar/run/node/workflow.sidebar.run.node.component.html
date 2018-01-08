@@ -41,7 +41,7 @@
             <div class="item padding" *ngIf="currentWorkflowNodeRun.tests">
                 <div class="content pointing"
                   [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
-                  [queryParams]="{tab: 'test'}">
+                  [queryParams]="{name: node.name, tab: 'test'}">
                     <div>
                         <i class="bug icon"></i> {{currentWorkflowNodeRun.tests.total}}
                         <span *ngIf="currentWorkflowNodeRun && currentWorkflowNodeRun.tests && currentWorkflowNodeRun.tests.total > 1">{{ 'common_tests' | translate }}</span>
@@ -55,7 +55,7 @@
             <div class="item padding" *ngIf="currentWorkflowNodeRun.artifacts">
                 <div class="content pointing"
                 [routerLink]="['/project', project.key, 'workflow', workflow.name, 'run', runNumber, 'node', currentWorkflowNodeRun.id]"
-                [queryParams]="{tab: 'artifact'}"
+                [queryParams]="{name: node.name, tab: 'artifact'}"
                 [title]="'common_artifacts' | translate">
                     <div>
                         <i class="cloud upload icon"></i> {{currentWorkflowNodeRun.artifacts.length}}
