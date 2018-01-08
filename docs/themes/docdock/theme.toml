@@ -4,12 +4,12 @@
 name = "docDock"
 license = "MIT"
 licenselink = "https://github.com/vjeantet/hugo-theme-docdock/blob/master/LICENSE.md"
-description = "Documentation theme for Hugo, based on Matcornic Learn theme"
+description = "Documentation theme for Hugo"
 homepage = "https://github.com/vjeantet/hugo-theme-docdock"
 repo = "https://github.com/vjeantet/hugo-theme-docdock"
 tags = ["documentation", "menu","slide","search"]
-features = ["documentation","menu","search","slide", "attachments"]
-min_version = 0.20
+features = ["documentation","menu","nested sections","search","slide", "attachments"]
+min_version = 0.25
 
 [author]
   name = "Valere JEANTET"

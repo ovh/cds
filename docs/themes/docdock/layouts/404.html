@@ -2,16 +2,15 @@
 <html lang="en" class="js csstransforms3d">
 
 <head>
-  <meta charset="utf-8"> {{ partial "meta.html" . }} {{ partial "favicon.html" . }} {{ .Scratch.Add "title" "" }}{{ if eq .Site.Data.titles .Title }}{{ .Scratch.Set "title" (index .Site.Data.titles .Title).title }}{{ else }}{{ .Scratch.Set "title" .Title}}{{end}}
+  <meta charset="utf-8"> {{ partial "meta.html" . }} 
+  <link rel="shortcut icon" href="{{"images/favicon.png" | relURL}}" type="image/x-icon" />
+  {{ .Scratch.Add "title" "" }}{{ if eq .Site.Data.titles .Title }}{{ .Scratch.Set "title" (index .Site.Data.titles .Title).title }}{{ else }}{{ .Scratch.Set "title" .Title}}{{end}}
   <title>{{ .Scratch.Get "title" }}</title>
-  {{ partial "style.html" . }}
   <link href="{{"css/nucleus.css" | relURL}}" rel="stylesheet">
   <link href="{{"css/font-awesome.min.css" | relURL}}" rel="stylesheet">
   <link href="{{"css/hybrid.css" | relURL}}" rel="stylesheet">
   <link href="{{"css/featherlight.min.css" | relURL}}" rel="stylesheet">
-  <link href="{{"css/perfect-scrollbar.min.css" | relURL}}" rel="stylesheet">
   <link href="{{"css/theme.css" | relURL}}" rel="stylesheet">
-  <link href="{{"css/hugo-theme.css" | relURL}}" rel="stylesheet">
   <style type="text/css">
     :root #header + #content > #left > #rlblock_left {
       display: none !important;
@@ -27,6 +26,7 @@
       list-style-type: none;
     }
   </style>
+  {{ partial "custom-head.html" . }}
 </head>
 
 <body>
@@ -37,12 +37,12 @@
       <div id="overlay"></div>
       <div id="chapter">
         <div id="body-inner">
-          <h1>Error </h1>
+          <h1>{{T "title-404"}}</h1>
           <p>
           </p>
-          <p>Woops. Looks like this page doesn't exist.</p>
+          <p>{{T "message-404"}}</p>
           <p></p>
-          <p><a href="{{.Site.BaseURL}}">Go to homepage</a></p>
+          <p><a href="{{.Site.BaseURL}}">{{T "Go-to-homepage"}}</a></p>
           <p><img src="{{"images/gopher-404.jpg" | relURL}}" style="width:50%"></img></p>
         </div>
       </div>
