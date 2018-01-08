@@ -28,13 +28,17 @@
             </td>
             <td *ngIf="mode !=='launcher' && mode !== 'job'">
                 <div class="ui form" *ngIf="mode === 'edit'">
-                    <sm-select class="search"
-                        [(model)]="p.type"
-                        [options]="{'fullTextSearch': true}"
-                        [disabled]="p.updating"
-                        (onChange)="p.hasChanged = true">
-                        <option *ngFor="let type of parameterTypes" value="{{type}}">{{type}}</option>
-                    </sm-select>
+                    <sui-select class="selection"
+                                isSearchable="true"
+                                [isDisabled]="p.updating"
+                                [(ngModel)]="p.type"
+                                (ngModelChange)="p.hasChanged = true"
+                                [options]="parameterTypes"
+                                #selectType>
+                        <sui-select-option *ngFor="let option of selectType.filteredOptions"
+                                           [value]="option">
+                        </sui-select-option>
+                    </sui-select>
                 </div>
                 <span *ngIf="mode !== 'edit'">
                     {{p.type}}

@@ -21,6 +21,7 @@ import {CDSWorker} from '../../../shared/worker/worker';
 import {NotificationEvent} from './notifications/notification.event';
 import {ApplicationNotificationListComponent} from './notifications/list/notification.list.component';
 import {AutoUnsubscribe} from '../../../shared/decorator/autoUnsubscribe';
+import {finalize} from 'rxjs/operators';
 
 @Component({
     selector: 'app-application-show',
@@ -250,20 +251,24 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
             switch (event.type) {
                 case 'add':
                     this.varFormLoading = true;
-                    this._applicationStore.addVariable(this.project.key, this.application.name, event.variable).subscribe(() => {
+                    this._applicationStore.addVariable(this.project.key, this.application.name, event.variable).pipe(finalize(() => {
+                        event.variable.updating = false;
+                        this.varFormLoading = false;
+                    })).subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_added'));
-                        this.varFormLoading = false;
-                    }, () => {
-                        this.varFormLoading = false;
                     });
                     break;
                 case 'update':
-                    this._applicationStore.updateVariable(this.project.key, this.application.name, event.variable).subscribe(() => {
+                    this._applicationStore.updateVariable(this.project.key, this.application.name, event.variable).pipe(finalize(() => {
+                        event.variable.updating = false;
+                    })).subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_updated'));
                     });
                     break;
                 case 'delete':
-                    this._applicationStore.removeVariable(this.project.key, this.application.name, event.variable).subscribe(() => {
+                    this._applicationStore.removeVariable(this.project.key, this.application.name, event.variable).pipe(finalize(() => {
+                        event.variable.updating = false;
+                    })).subscribe(() => {
                         this._toast.success('', this._translate.instant('variable_deleted'));
                     });
                     break;
