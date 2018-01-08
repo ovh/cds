@@ -58,14 +58,17 @@ export class WorkflowNodeRunComponent implements OnDestroy {
         this.workflowName = this._routerService.getRouteSnapshotParams({}, this._router.routerState.snapshot.root)['workflowName'];
 
         this._activatedRoute.params.subscribe(params => {
+            this.nodeRun = null;
             let number = params['number'];
             let nodeRunId = params['nodeId'];
 
             if (this.project && this.project.key && this.workflowName && number && nodeRunId) {
                 // Get workflow Run
-                this._workflowRunService.getWorkflowRun(this.project.key, this.workflowName, number).pipe(first()).subscribe(wr => {
-                    this.workflowRun = wr;
-                });
+                this._workflowRunService.getWorkflowRun(this.project.key, this.workflowName, number)
+                    .pipe(first())
+                    .subscribe(wr => {
+                        this.workflowRun = wr;
+                    });
 
                 this.startWorker(number, nodeRunId);
                 this.runSubscription = this.nodeRunWorker.response().subscribe(wrString => {
