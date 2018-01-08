@@ -926,14 +926,6 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 			return sdk.WrapError(errS, "getWorkflowNodeRunJobBuildLogsHandler> stepOrder: invalid number")
 		}
 
-		// Check workflow is in project
-		options := workflow.LoadOptions{
-			WithoutNode: true,
-		}
-		if _, errW := workflow.Load(api.mustDB(), api.Cache, projectKey, workflowName, getUser(ctx), options); errW != nil {
-			return sdk.WrapError(errW, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find workflow %s in project %s", workflowName, projectKey)
-		}
-
 		// Check nodeRunID is link to workflow
 		nodeRun, errNR := workflow.LoadNodeRun(api.mustDB(), projectKey, workflowName, number, nodeRunID, false)
 		if errNR != nil {
