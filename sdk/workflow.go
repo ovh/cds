@@ -686,6 +686,7 @@ type WorkflowNodeContext struct {
 	DefaultPayload            interface{}            `json:"default_payload,omitempty" db:"-"`
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters,omitempty" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions,omitempty" db:"-"`
+	Mutex                     bool                   `json:"mutex"`
 }
 
 //WorkflowNodeContextDefaultPayloadVCS represents a default payload when a workflow is attached to a repository Webhook

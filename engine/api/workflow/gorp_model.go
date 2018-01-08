@@ -38,6 +38,7 @@ type NodeRun struct {
 	WorkflowRunID      int64          `db:"workflow_run_id"`
 	ID                 int64          `db:"id"`
 	WorkflowNodeID     int64          `db:"workflow_node_id"`
+	WorkflowNodeName   string         `db:"workflow_node_name"`
 	Number             int64          `db:"num"`
 	SubNumber          int64          `db:"sub_num"`
 	Status             string         `db:"status"`

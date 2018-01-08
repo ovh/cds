@@ -197,4 +197,5 @@ func TestLoadByWorkflowID(t *testing.T) {
 	assert.Equal(t, 1, len(actuals))
 	assert.Equal(t, app.Name, actuals[0].Name)
 	assert.Equal(t, proj.ID, actuals[0].ProjectID)
+
 }

@@ -152,6 +152,7 @@ type sqlContext struct {
 	DefaultPayload            sql.NullString `db:"default_payload"`
 	DefaultPipelineParameters sql.NullString `db:"default_pipeline_parameters"`
 	Conditions                sql.NullString `db:"conditions"`
+	Mutex                     sql.NullBool   `db:"mutex"`
 }
 
 // UpdateNodeContext updates the node context in database
@@ -159,6 +160,7 @@ func UpdateNodeContext(db gorp.SqlExecutor, c *sdk.WorkflowNodeContext) error {
 	var sqlContext = sqlContext{}
 	sqlContext.ID = c.ID
 	sqlContext.WorkflowNodeID = c.WorkflowNodeID
+	sqlContext.Mutex = sql.NullBool{Bool: c.Mutex, Valid: true}
 
 	// Set ApplicationID in context
 	if c.ApplicationID != 0 {
@@ -271,7 +273,8 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, workflowName, nodeName string) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
 	query := `
-		SELECT workflow_node_context.id, workflow_node_context.workflow_node_id FROM workflow_node_context
+		SELECT workflow_node_context.id, workflow_node_context.workflow_node_id 
+		FROM workflow_node_context
 		JOIN workflow_node ON workflow_node.id = workflow_node_context.workflow_node_id
 		JOIN workflow ON workflow.id = workflow_node.workflow_id
 		JOIN project ON workflow.project_id = project.id
@@ -310,7 +313,7 @@ func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64) (*sdk
 func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, ctx *sdk.WorkflowNodeContext) error {
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
-		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions from workflow_node_context where id = $1", ctx.ID); err != nil {
+		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions, mutex from workflow_node_context where id = $1", ctx.ID); err != nil {
 		return err
 	}
 	if sqlContext.AppID.Valid {
@@ -318,6 +321,9 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, ctx *sdk.Workfl
 	}
 	if sqlContext.EnvID.Valid {
 		ctx.EnvironmentID = sqlContext.EnvID.Int64
+	}
+	if sqlContext.Mutex.Valid {
+		ctx.Mutex = sqlContext.Mutex.Bool
 	}
 
 	//Unmarshal payload
