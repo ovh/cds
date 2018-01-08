@@ -30,6 +30,7 @@ type NodeEntry struct {
 	PipelineName    string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
 	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
+	OneAtATime      *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty"`
 }
 
 type HookEntry struct {
@@ -100,6 +101,11 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 		if n.Context.Environment != nil {
 			entry.EnvironmentName = n.Context.Environment.Name
 		}
+
+		if n.Context.Mutex {
+			entry.OneAtATime = &n.Context.Mutex
+		}
+
 		return entry, nil
 	}
 
@@ -348,6 +354,13 @@ func (e *NodeEntry) getNode(name string) (*sdk.WorkflowNode, error) {
 		default:
 			return nil, fmt.Errorf("Unsupported when condition %s", w)
 		}
+	}
+
+	if e.OneAtATime != nil {
+		if node.Context == nil {
+			node.Context = &sdk.WorkflowNodeContext{}
+		}
+		node.Context.Mutex = *e.OneAtATime
 	}
 
 	return node, nil
