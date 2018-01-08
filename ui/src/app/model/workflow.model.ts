@@ -556,6 +556,7 @@ export class WorkflowNodeContext {
     default_payload: {};
     default_pipeline_parameters: Array<Parameter>;
     conditions: WorkflowNodeConditions;
+    mutex: boolean;
 }
 
 // WorkflowNodeHook represents a hook which cann trigger the workflow from a given node
