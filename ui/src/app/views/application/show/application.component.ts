@@ -193,6 +193,9 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     startWorker(key: string): void {
         this.stopWorker();
 
+        if (!this.appFilter.branch) {
+            this.appFilter.branch = 'master';
+        }
         if (this.application.workflows && this.application.workflows.length > 0) {
             let msgToSend = {
                 'user': this.currentUser,
@@ -200,7 +203,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                 'api': environment.apiURL,
                 'key': key,
                 'appName': this.application.name,
-                'branch': this.appFilter.branch || 'master',
+                'branch': this.appFilter.branch,
                 'remote': this.appFilter.remote,
                 'version': this.appFilter.version
             };
