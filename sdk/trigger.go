@@ -111,11 +111,7 @@ func AddTrigger(t *PipelineTrigger) error {
 	}
 
 	srcApp := &Application{}
-	if err := json.Unmarshal(data, srcApp); err != nil {
-		return err
-	}
-
-	return nil
+	return json.Unmarshal(data, srcApp)
 }
 
 // GetTrigger gets an existing trigger

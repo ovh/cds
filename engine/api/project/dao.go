@@ -150,7 +150,7 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 	pk.Key.Name = BuiltinGPGKey
 	pk.Key.Private = string(priv)
 	pk.Key.Public = string(pub)
-	pk.Type = sdk.KeyTypePgp
+	pk.Type = sdk.KeyTypePGP
 	pk.ProjectID = proj.ID
 	pk.Builtin = true
 

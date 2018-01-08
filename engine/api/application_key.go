@@ -94,7 +94,7 @@ func (api *API) addKeyInApplicationHandler() Handler {
 		newKey.ApplicationID = app.ID
 
 		switch newKey.Type {
-		case sdk.KeyTypeSsh:
+		case sdk.KeyTypeSSH:
 			pubR, privR, errGenerate := keys.GenerateSSHKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInApplicationHandler> Cannot generate sshKey")
@@ -110,7 +110,7 @@ func (api *API) addKeyInApplicationHandler() Handler {
 			}
 			newKey.Private = string(priv)
 			newKey.Public = string(pub)
-		case sdk.KeyTypePgp:
+		case sdk.KeyTypePGP:
 			keyID, pubR, privR, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInApplicationHandler> Cannot generate pgpKey")

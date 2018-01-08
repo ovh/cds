@@ -1,8 +1,9 @@
 package sdk
 
+// Those are types if key managed in CDS
 const (
-	KeyTypeSsh = "ssh"
-	KeyTypePgp = "pgp"
+	KeyTypeSSH = "ssh"
+	KeyTypePGP = "pgp"
 )
 
 // Key represent a key of type SSH or GPG.

@@ -1,5 +1,6 @@
 package sdk
 
+// Those are icon for hooks
 const (
 	GitlabIcon    = "Gitlab"
 	GitHubIcon    = "Github"
@@ -55,7 +56,8 @@ type WorkflowNodeHook struct {
 	Config              WorkflowNodeHookConfig `json:"config" db:"-"`
 }
 
-var WorkflowHookModelBuiltin = "builtin"
+// WorkflowHookModelBuiltin is a constant for the builtin hook models
+const WorkflowHookModelBuiltin = "builtin"
 
 //WorkflowNodeHookConfig represents the configguration for a WorkflowNodeHook
 type WorkflowNodeHookConfig map[string]WorkflowNodeHookConfigValue
