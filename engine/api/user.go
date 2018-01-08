@@ -414,6 +414,7 @@ func (api *API) loginUserHandler() Handler {
 		}
 
 		response.User.Auth = sdk.Auth{}
+		response.User.Permissions = sdk.UserPermissions{}
 		return WriteJSON(w, r, response, http.StatusOK)
 	}
 }

@@ -19,18 +19,21 @@ type User struct {
 	Permissions UserPermissions `json:"permissions,omitempty" yaml:"-" cli:"-"`
 }
 
+// UserPermissions is the set of permissions for a user
 type UserPermissions struct {
-	Groups           []string
-	GroupsAdmin      []string
-	ProjectsPerm     map[string]int
-	ApplicationsPerm UserPermissionsMap
-	WorkflowsPerm    UserPermissionsMap
-	PipelinesPerm    UserPermissionsMap
-	EnvironmentsPerm UserPermissionsMap
+	Groups           []string           `json:"Groups,omitempty"` // json key are capitalized to ensure exising data in cache are still valid
+	GroupsAdmin      []string           `json:"GroupsAdmin,omitempty"`
+	ProjectsPerm     map[string]int     `json:"ProjectsPerm,omitempty"`
+	ApplicationsPerm UserPermissionsMap `json:"ApplicationsPerm,omitempty"`
+	WorkflowsPerm    UserPermissionsMap `json:"WorkflowsPerm,omitempty"`
+	PipelinesPerm    UserPermissionsMap `json:"PipelinesPerm,omitempty"`
+	EnvironmentsPerm UserPermissionsMap `json:"EnvironmentsPerm,omitempty"`
 }
 
+// UserPermissionsMap is a type of map. The in key the key and name of the object and value is the level of permissions
 type UserPermissionsMap map[UserPermissionKey]int
 
+// UserPermissionKey is used as a key in UserPermissionsMap
 type UserPermissionKey struct {
 	Key  string
 	Name string
