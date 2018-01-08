@@ -33,25 +33,37 @@
           </sm-select>
         </div>
         <div class="four wide column">
-            <sm-select class="search"
-                placeholder="{{'application_workflow_branch_title' | translate}}"
-                *ngIf="!loading.branch && branches != null"
-                [options]="{'fullTextSearch': true}"
-                [(model)]="applicationFilter.branch"
-                (modelChange)="changeBranch()">
-                <option *ngFor="let branch of branches" value="{{branch.display_id}}">{{ branch.display_id}}</option>
-            </sm-select>
+            <sui-select class="selection"
+                        *ngIf="!loading.branch && branches != null"
+                        placeholder="{{'application_workflow_branch_title' | translate}}"
+                        labelField="display_id"
+                        valueField="display_id"
+                        [options]="branches"
+                        isSearchable="true"
+                        [(ngModel)]="applicationFilter.branch"
+                        (ngModelChange)="changeBranch($event)"
+                        #selectBranch>
+                <sui-select-option *ngFor="let option of selectBranch.filteredOptions"
+                                   [value]="option">
+                </sui-select-option>
+            </sui-select>
             <sm-select *ngIf="loading.branch"
                 [placeholder]="'common_loading' | translate">
             </sm-select>
         </div>
         <div class="four wide column">
-            <sm-select *ngIf="!loading.version && versions != null"
-                [(model)]="applicationFilter.version"
-                (modelChange)="changeVersion(applicationFilter.version)"
-                       placeholder="{{ 'application_workflow_version_title' | translate }}">
-                <option *ngFor="let v of versions" value="{{v}}">{{ v }}</option>
-            </sm-select>
+            <sui-select class="selection"
+            *ngIf="!loading.version && versions != null"
+            placeholder="{{'application_workflow_version_title' | translate}}"
+            [options]="versions"
+            isSearchable="true"
+            [(ngModel)]="applicationFilter.version"
+            (ngModelChange)="changeVersion(false, applicationFilter.version)"
+            #selectVersion>
+                <sui-select-option *ngFor="let option of selectVersion.filteredOptions"
+                                   [value]="option">
+                </sui-select-option>
+            </sui-select>
             <sm-select *ngIf="loading.version"
                 [placeholder]="'common_loading' | translate">
             </sm-select>
