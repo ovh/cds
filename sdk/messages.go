@@ -69,8 +69,8 @@ var (
 	MsgWorkflowStarting                    = &Message{"MsgWorkflowStarting", trad{FR: "Le workflow %s#%s a été démarré", EN: "Workflow %s#%s has been started"}, nil}
 	MsgWorkflowError                       = &Message{"MsgWorkflowError", trad{FR: "Une erreur est survenue: %v", EN: "An error has occured: %v"}, nil}
 	MsgWorkflowNodeStop                    = &Message{"MsgWorkflowNodeStop", trad{FR: "Le pipeline a été arrété par %s", EN: "The pipeline has been stopped by %s"}, nil}
-	MsgWorkflowNodeMutex                   = &Message{"MsgWorkflowNodeMutex", trad{FR: "Le pipeline %s est en attente de la libération du mutex", EN: "The pipeline %s is waiting for mutex release"}, nil}
-	MsgWorkflowNodeMutexRelease            = &Message{"MsgWorkflowNodeMutexRelease", trad{FR: "Le mutex a été libéré pour le pipeline %s", EN: "The mutex has been released for pipeline %s"}, nil}
+	MsgWorkflowNodeMutex                   = &Message{"MsgWorkflowNodeMutex", trad{FR: "Le pipeline %s est mis en attente tant qu'il est en cours sur un autre run", EN: "The pipeline %s is waiting while it's running on another run"}, nil}
+	MsgWorkflowNodeMutexRelease            = &Message{"MsgWorkflowNodeMutexRelease", trad{FR: "Lancement du pipeline %s", EN: "Triggering pipeline %s"}, nil}
 	MsgWorkflowImportedUpdated             = &Message{"MsgWorkflowImportedUpdated", trad{FR: "Le workflow %s a été mis à jour", EN: "Workflow %s has been updated"}, nil}
 	MsgWorkflowImportedInserted            = &Message{"MsgWorkflowImportedInserted", trad{FR: "Le workflow %s a été créé", EN: "Workflow %s has been created"}, nil}
 )
