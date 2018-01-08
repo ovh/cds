@@ -9,6 +9,8 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+var True = true
+
 func TestWorkflow_checkDependencies(t *testing.T) {
 	type fields struct {
 		Name            string
@@ -258,6 +260,7 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 					"child": NodeEntry{
 						PipelineName: "pipeline-child",
 						DependsOn:    []string{"root"},
+						OneAtATime:   &True,
 					},
 				},
 			},
@@ -276,6 +279,9 @@ func TestWorkflow_GetWorkflow(t *testing.T) {
 								Ref:  "child",
 								Pipeline: sdk.Pipeline{
 									Name: "pipeline-child",
+								},
+								Context: &sdk.WorkflowNodeContext{
+									Mutex: true,
 								},
 							},
 						},
