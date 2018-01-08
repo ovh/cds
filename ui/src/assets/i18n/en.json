@@ -689,6 +689,7 @@
   "workflow_run_loading" : "Loading runs...",
   "workflow_run_never" : "This workflow has never been run",
   "workflow_run_resync_done" : "Resynchronized",
+  "workflow_run_resync_help" : "When you resync this run, it will update the pipelines linked to this run with your last editions",
   "workflow_run_with_parameters" : "Run workflow",
   "workflow_sidebar_tag_zone" : "Tags to display in the sidebar (order by priority)",
   "workflow_updated" : "Workflow updated",

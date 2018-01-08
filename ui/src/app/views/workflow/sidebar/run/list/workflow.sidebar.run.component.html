@@ -5,8 +5,9 @@
                       [isSearchable]="true"
                       (ngModelChange)="refreshRun()"
                       #multiSelect>
-        <sui-select-option *ngFor="let option of multiSelect.filteredOptions"
-                           [value]="option">
+        <sui-select-option
+            *ngFor="let option of multiSelect.filteredOptions"
+            [value]="option">
         </sui-select-option>
     </sui-multi-select>
     <div class="ui list divided no-mrt" #tagsList>
@@ -31,7 +32,7 @@
               [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED">
               <i class="tag icon"></i> {{r.num}}
           </a>
-          <div class="infoLine" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" [smDirTooltip]="getFilteredTagsString(filteredTags[r.id])" smDirPosition="top left">
+          <div class="infoLine" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" suiPopup [popupText]="getFilteredTagsString(filteredTags[r.id])" popupPlacement="top left">
               <i class="find icon"></i>
               <ng-container *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
                   <span class="tiny" *ngIf="i <= 1"> {{t.value}} </span><span class="tiny" *ngIf="!last && i <= 1">,</span><span *ngIf="i === 1 && !last"> ...</span>
