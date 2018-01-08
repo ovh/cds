@@ -59,6 +59,7 @@ export class WorkflowNodeRunParamComponent {
     _previousBranch: string;
     _completionListener: any;
     _keyUpListener: any;
+    _firstCommitLoad = false;
 
     lastNum: number;
     codeMirrorConfig: {};
@@ -84,6 +85,8 @@ export class WorkflowNodeRunParamComponent {
     }
 
     show(): void {
+        this._firstCommitLoad = false;
+        this._previousBranch = null;
         const config = new TemplateModalConfig<boolean, boolean, void>(this.runWithParamModal);
         this.modal = this._modalService.open(config);
 
@@ -113,7 +116,6 @@ export class WorkflowNodeRunParamComponent {
 
         let currentPayload = this.getCurrentPayload();
         this.payloadString = JSON.stringify(currentPayload, undefined, 4);
-        this._previousBranch = currentPayload['git.branch'];
         if (this.num != null) {
             this.getCommits(this.num, false);
         }
@@ -129,22 +131,24 @@ export class WorkflowNodeRunParamComponent {
                 this.invalidJSON = false;
             } catch (e) {
                 this.invalidJSON = true;
-            }
-
-            if (currentContext) {
-              branch = currentContext['git.branch'];
+                return;
             }
         }
 
-        if (branch && !this.loadingBranches && this.branches.indexOf('"' + branch + '"') === -1) {
+        if (currentContext) {
+          branch = currentContext['git.branch'];
+        }
+
+        if (this._firstCommitLoad && branch === this._previousBranch) {
             return;
         }
 
-        if (branch === this._previousBranch) {
+        if (this._firstCommitLoad && branch && !this.loadingBranches && this.branches.indexOf('"' + branch + '"') === -1) {
             return;
         }
+
+        this._firstCommitLoad = true;
         this._previousBranch = branch;
-
         this.loadingCommits = true;
         this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch)
           .pipe(

@@ -513,43 +513,6 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
 	w.LastSubNumber = MaxSubNumber(w.WorkflowNodeRuns)
 
-	if n.Context != nil && n.Context.Application != nil {
-		go func() {
-			commits, curVCSInfos, err := GetNodeRunBuildCommits(dbCopy, store, p, &w.Workflow, n.Name, w.Number, run, n.Context.Application, n.Context.Environment)
-			if err != nil {
-				log.Warning("processWorkflowNodeRun> cannot get build commits on a node run %v", err)
-			} else {
-				run.Commits = commits
-			}
-
-			if commits != nil {
-				if err := updateNodeRunCommits(dbCopy, run.ID, commits); err != nil {
-					log.Warning("processWorkflowNodeRun> Unable to update node run commits %v", err)
-				}
-			}
-
-			tagsUpdated := false
-			if gitValues[tagGitBranch] == "" && curVCSInfos.Branch != "" {
-				w.Tag(tagGitBranch, curVCSInfos.Branch)
-				tagsUpdated = true
-			}
-			if gitValues[tagGitHash] == "" && curVCSInfos.Hash != "" {
-				w.Tag(tagGitHash, curVCSInfos.Hash)
-				tagsUpdated = true
-			}
-			if gitValues[tagGitRepository] == "" && curVCSInfos.Remote != "" {
-				w.Tag(tagGitRepository, curVCSInfos.Remote)
-				tagsUpdated = true
-			}
-
-			if tagsUpdated {
-				if err := UpdateWorkflowRunTags(dbCopy, w); err != nil {
-					log.Warning("processWorkflowNodeRun> Unable to update workflow run tags %v", err)
-				}
-			}
-		}()
-	}
-
 	if err := updateWorkflowRun(db, w); err != nil {
 		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
 	}

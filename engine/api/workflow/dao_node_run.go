@@ -427,7 +427,7 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 					JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
 					WHERE vcs_branch = $3 AND workflow_node_run.num <= $4 AND workflow_node_run.workflow_node_id = $5 AND workflow_node_run.id != $6
 					ORDER BY workflow_node_run.num, workflow_node_run.sub_num DESC
-					LIMIT 1 
+					LIMIT 1
 				`
 	var nodeRun sdk.WorkflowNodeRun
 	var rr = NodeRun{}
@@ -514,7 +514,7 @@ func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit
 	}
 
 	if _, err := db.Exec("UPDATE workflow_node_run SET commits = $1 where id = $2", commitsBtes, id); err != nil {
-		return sdk.WrapError(errMarshal, "updateNodeRunCommits> Unable to update workflow_node_run id=%d", id)
+		return sdk.WrapError(err, "updateNodeRunCommits> Unable to update workflow_node_run id=%d", id)
 	}
 	return nil
 }

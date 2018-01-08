@@ -52,10 +52,10 @@ func (r *WorkflowRun) Translate(lang string) {
 	}
 }
 
-// Tag push a new Tag in WorkflowRunTag
-func (r *WorkflowRun) Tag(tag, value string) {
+// Tag push a new Tag in WorkflowRunTag and return if a tag was added or no
+func (r *WorkflowRun) Tag(tag, value string) bool {
 	if value == "" {
-		return
+		return false
 	}
 	var found bool
 	for i := range r.Tags {
@@ -68,7 +68,10 @@ func (r *WorkflowRun) Tag(tag, value string) {
 	}
 	if !found {
 		r.Tags = append(r.Tags, WorkflowRunTag{Tag: tag, Value: value})
+		return true
 	}
+
+	return false
 }
 
 //WorkflowRunInfo is an info on workflow run
