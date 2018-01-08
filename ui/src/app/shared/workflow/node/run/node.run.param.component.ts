@@ -88,6 +88,7 @@ export class WorkflowNodeRunParamComponent {
         this._firstCommitLoad = false;
         this._previousBranch = null;
         const config = new TemplateModalConfig<boolean, boolean, void>(this.runWithParamModal);
+        config.mustScroll = true;
         this.modal = this._modalService.open(config);
 
         if (!this.nodeToRun.context.application) {
