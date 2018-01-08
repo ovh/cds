@@ -74,7 +74,7 @@ func (api *API) importPipelineHandler() Handler {
 		var payload pipeliner
 		// Parse the pipeline
 		if pipelineV1Format {
-			payload = exportentities.PipelineV1{}
+			payload = &exportentities.PipelineV1{}
 		} else {
 			payload = &exportentities.Pipeline{}
 		}
