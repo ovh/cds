@@ -15,7 +15,7 @@ func (c *client) PipelineExport(projectKey, name string, exportWithPermissions b
 		return nil, err
 	}
 
-	p := exportentities.NewPipeline(*pip, exportWithPermissions)
+	p := exportentities.NewPipelineV1(*pip, exportWithPermissions)
 
 	if !exportWithPermissions {
 		p.Permissions = nil
