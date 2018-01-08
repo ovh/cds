@@ -1,4 +1,4 @@
-<ng-container [ngSwitch]="type">
+<ng-container [ngSwitch]="type" *ngIf="value">
     <!-- Number -->
     <div *ngSwitchCase="'number'" class="ui fluid input">
         <input type="number" [(ngModel)]="value" (change)="valueChanged()" (keydown)="sendValueChanged()" [disabled]="disabled" name="value">
