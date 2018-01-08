@@ -45,7 +45,6 @@ export class WorkflowComponent implements OnInit {
                 private _projectStore: ProjectStore,
                 private _workflowCore: WorkflowCoreService) {
         this._activatedRoute.data.subscribe(datas => {
-            console.log(datas);
             this.project = datas['project'];
         });
 

@@ -24,6 +24,8 @@ pre {
 
 .commits {
   td {
-    vertical-align: middle;
+    &.middle {
+      vertical-align: middle !important;      
+    }
   }
 }

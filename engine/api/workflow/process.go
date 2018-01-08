@@ -484,23 +484,6 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		if errVcs != nil {
 			log.Error("processWorkflowNodeRun> Cannot get VCSInfos")
 		}
-
-		commits, curVCSInfos, err := GetNodeRunBuildCommits(dbCopy, store, p, &w.Workflow, n.Name, w.Number, run, n.Context.Application, n.Context.Environment)
-		if err != nil {
-			log.Warning("processWorkflowNodeRun> cannot get build commits on a node run %v", err)
-		} else {
-			run.Commits = commits
-		}
-
-		if gitValues[tagGitBranch] == "" && curVCSInfos.Branch != "" {
-			w.Tag(tagGitBranch, curVCSInfos.Branch)
-		}
-		if gitValues[tagGitHash] == "" && curVCSInfos.Hash != "" {
-			w.Tag(tagGitHash, curVCSInfos.Hash)
-		}
-		if gitValues[tagGitRepository] == "" && curVCSInfos.Remote != "" {
-			w.Tag(tagGitRepository, curVCSInfos.Remote)
-		}
 	}
 
 	// Add env tag

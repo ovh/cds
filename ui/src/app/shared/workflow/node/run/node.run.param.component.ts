@@ -85,6 +85,8 @@ export class WorkflowNodeRunParamComponent {
     }
 
     show(): void {
+        this._firstCommitLoad = false;
+        this._previousBranch = null;
         const config = new TemplateModalConfig<boolean, boolean, void>(this.runWithParamModal);
         this.modal = this._modalService.open(config);
 

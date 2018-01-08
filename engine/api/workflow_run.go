@@ -587,6 +587,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		if err != nil {
 			return err
 		}
+		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		// Purge workflow run
