@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-//BuildNumberAndHash represents BuildNumber, Commit Hash and Branch for a Pipeline Build or Node Run
+// BuildNumberAndHash represents BuildNumber, Commit Hash and Branch for a Pipeline Build or Node Run
 type BuildNumberAndHash struct {
 	BuildNumber int64
 	Hash        string
@@ -14,12 +14,14 @@ type BuildNumberAndHash struct {
 	RemoteURL   string
 }
 
+// VCSServer is an interce for a OAuth VCS Server. The goal of this interface is to return a VCSAuthorizedClient
 type VCSServer interface {
 	AuthorizeRedirect() (string, string, error)
 	AuthorizeToken(string, string) (string, string, error)
 	GetAuthorizedClient(string, string) (VCSAuthorizedClient, error)
 }
 
+// VCSAuthorizedClient is an interface for a connected client on a VCS Server.
 type VCSAuthorizedClient interface {
 	//Repos
 	Repos() ([]VCSRepo, error)

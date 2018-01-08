@@ -46,7 +46,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 	k := &sdk.ApplicationKey{
 		Key: sdk.Key{
 			Name: "mykey",
-			Type: sdk.KeyTypePgp,
+			Type: sdk.KeyTypePGP,
 		},
 		ApplicationID: app.ID,
 	}
@@ -63,7 +63,7 @@ func Test_getApplicationExportHandler(t *testing.T) {
 	k2 := &sdk.ApplicationKey{
 		Key: sdk.Key{
 			Name: "mykey-ssh",
-			Type: sdk.KeyTypeSsh,
+			Type: sdk.KeyTypeSSH,
 		},
 		ApplicationID: app.ID,
 	}

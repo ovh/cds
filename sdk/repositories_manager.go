@@ -349,6 +349,7 @@ type VCSPullRequestEvent struct {
 	Branch VCSBranch    `json:"branch"`
 }
 
+// VCSHook represents a hook on a VCS repository
 type VCSHook struct {
 	ID          string   `json:"id"`
 	Name        string   `json:"name"`

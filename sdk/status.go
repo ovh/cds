@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// This constants deals with Monitoring statuses
 const (
 	MonitoringStatusAlert = "AL"
 	MonitoringStatusWarn  = "WARN"

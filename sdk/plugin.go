@@ -85,7 +85,7 @@ func UploadPlugin(filePath string, update bool) ([]byte, error) {
 	}
 
 	if code >= 300 {
-		return nil, fmt.Errorf("HTTP Error %d\n", code)
+		return nil, fmt.Errorf("HTTP Error %d", code)
 	}
 
 	return btes, nil

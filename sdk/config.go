@@ -11,6 +11,7 @@ type DefaultValues struct {
 	SharedInfraToken string
 }
 
+// ConfigURLUIKey is the configuration key for UI URL
 var ConfigURLUIKey = "url.ui"
 
 // GetConfigUser retrieve 'common' configuration CDS

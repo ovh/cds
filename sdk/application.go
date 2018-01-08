@@ -512,9 +512,5 @@ func DeletePipelineScheduler(projectKey, appName, pipelineName string, s *Pipeli
 		return err
 	}
 
-	if err := DecodeError(data); err != nil {
-		return err
-	}
-
-	return nil
+	return DecodeError(data)
 }

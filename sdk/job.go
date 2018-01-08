@@ -1,5 +1,6 @@
 package sdk
 
+// This constant are the types of the kind of job of CDS: legacy and workflow
 const (
 	JobTypePipeline     = "pipeline_build_job"
 	JobTypeWorkflowNode = "workflow_node_run_job"

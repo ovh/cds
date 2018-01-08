@@ -44,7 +44,7 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 	k := &sdk.EnvironmentKey{
 		Key: sdk.Key{
 			Name: "mykey",
-			Type: sdk.KeyTypePgp,
+			Type: sdk.KeyTypePGP,
 		},
 		EnvironmentID: env.ID,
 	}
@@ -61,7 +61,7 @@ func Test_getEnvironmentExportHandler(t *testing.T) {
 	k2 := &sdk.EnvironmentKey{
 		Key: sdk.Key{
 			Name: "mykey-ssh",
-			Type: sdk.KeyTypeSsh,
+			Type: sdk.KeyTypeSSH,
 		},
 		EnvironmentID: env.ID,
 	}

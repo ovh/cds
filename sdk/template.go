@@ -222,7 +222,7 @@ func UploadTemplate(filePath string, update bool, name string) ([]byte, error) {
 	}
 
 	if code >= 300 {
-		return nil, fmt.Errorf("HTTP Error %d\n", code)
+		return nil, fmt.Errorf("HTTP Error %d", code)
 	}
 
 	return btes, nil
@@ -265,7 +265,7 @@ func ListTemplates() ([]TemplateExtension, error) {
 		return nil, err
 	}
 	if code >= 300 {
-		return nil, fmt.Errorf("HTTP Error %d\n", code)
+		return nil, fmt.Errorf("HTTP Error %d", code)
 	}
 	if err := json.Unmarshal(body, &tmpls); err != nil {
 		return nil, err
