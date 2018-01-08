@@ -32,4 +32,27 @@
     border: 2px solid $cds_color_teal;
     border-top: none;
   }
+  .info.content {
+    .ui.grid {
+      background-color: #e5e5e5;
+      padding-top: 0;
+
+      .row {
+        padding-top: 0;
+        .spawn {
+          font-size: 0.9em;
+          .spawnInfos {
+            color: black;
+            pre {
+              padding: 0px 3px;
+              white-space: normal;
+            }
+          }
+        }
+      }
+
+    }
+  }
+
+
 }

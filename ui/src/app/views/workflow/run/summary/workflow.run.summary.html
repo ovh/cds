@@ -77,6 +77,27 @@
                             </div>
                         </div>
                     </div>
+                    <div class="info content" *ngIf="showInfos">
+                        <div class="ui grid">
+                            <div class="row">
+                                <div class="spawn">
+                                    <div class="spawnInfos">
+                                        <pre [innerHTML]="getSpawnInfos()"></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="row">
+                            <div class="five wide column"></div>
+                            <div class="six wide column centered">
+                                <i class="pointing arrow circle down icon" (click)="showInfos = true" *ngIf="!showInfos"></i>
+                                <i class="pointing arrow circle up icon" (click)="showInfos = false" *ngIf="showInfos"></i>
+                            </div>
+                            <div class="five wide column"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="four wide column"></div>
