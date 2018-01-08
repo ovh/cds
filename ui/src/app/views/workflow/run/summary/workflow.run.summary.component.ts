@@ -8,6 +8,8 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {finalize} from 'rxjs/operators';
 
+declare var ansi_up: any;
+
 @Component({
     selector: 'app-workflow-run-summary',
     templateUrl: './workflow.run.summary.html',
@@ -32,6 +34,7 @@ export class WorkflowRunSummaryComponent implements OnInit {
     _direction: string;
     author: string;
     loadingAction = false;
+    showInfos = false;
 
     pipelineStatusEnum = PipelineStatus;
 
@@ -46,6 +49,19 @@ export class WorkflowRunSummaryComponent implements OnInit {
         if (tagTriggeredBy) {
             this.author = tagTriggeredBy.value;
         }
+    }
+
+    getSpawnInfos() {
+        let msg = '';
+        if (this.workflowRun.infos) {
+            this.workflowRun.infos.forEach( s => {
+                msg += '[' + s.api_time.toString().substr(0, 19) + '] ' + s.user_message + '\n';
+            });
+        }
+        if (msg !== '') {
+            return ansi_up.ansi_to_html(msg);
+        }
+        return '';
     }
 
     changeDirection() {
