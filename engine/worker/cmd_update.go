@@ -29,12 +29,14 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 	return func(cmd *cobra.Command, args []string) {
 		fmt.Printf("CDS Worker version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 
-		var urlBinary string
+		viper.SetEnvPrefix("cds")
+		viper.AutomaticEnv()
 
+		var urlBinary string
 		if !cmdDownloadFromGithub {
 			w.apiEndpoint = viper.GetString("api")
 			if w.apiEndpoint == "" {
-				sdk.Exit("--api not provided, aborting.")
+				sdk.Exit("--api not provided, aborting update.")
 			}
 			w.client = cdsclient.NewWorker(w.apiEndpoint, "download")
 
@@ -69,7 +71,7 @@ func updateCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		if err := update.Apply(resp.Body, update.Options{}); err != nil {
 			sdk.Exit("Error while getting updating worker from CDS API: %s\n", err)
 		}
-		fmt.Printf("Update worker done. Please restart your worker\n")
+		fmt.Println("Update worker done.")
 	}
 }
 
