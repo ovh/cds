@@ -123,7 +123,7 @@ export class WorkflowNodeRunParamComponent {
     }
 
     getCommits(num: number, change: boolean) {
-        let branch;
+        let branch, hash;
         let currentContext = this.getCurrentPayload();
 
         if (change && this.payloadString) {
@@ -138,6 +138,7 @@ export class WorkflowNodeRunParamComponent {
 
         if (currentContext) {
           branch = currentContext['git.branch'];
+          hash = currentContext['git.hash'];
         }
 
         if (this._firstCommitLoad && branch === this._previousBranch) {
@@ -151,7 +152,7 @@ export class WorkflowNodeRunParamComponent {
         this._firstCommitLoad = true;
         this._previousBranch = branch;
         this.loadingCommits = true;
-        this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch)
+        this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch, hash)
           .pipe(
             debounceTime(500),
             finalize(() => this.loadingCommits = false)
