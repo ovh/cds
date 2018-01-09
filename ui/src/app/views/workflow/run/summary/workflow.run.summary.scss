@@ -61,4 +61,10 @@
       border-color: $cds_color_teal;
     }
   }
+
+  .spawninfo {
+    pre {
+      white-space: normal;
+    }
+  }
 }
