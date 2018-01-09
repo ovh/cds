@@ -20,7 +20,7 @@
                 'common_variables' | translate }}</a>
             <a sm-item [class.active]="selectedTab === 'permissions'" id="ProjectPermissionTab" (click)="showTab('permissions')"><i class="users icon"></i>{{
                 'common_permissions' | translate }}</a>
-            <a sm-item [class.active]="selectedTab === 'keys'" id="ProjectKeysTab" (click)="showTab('keys')"><i class="privacy icon"></i>
+            <a sm-item [class.active]="selectedTab === 'keys'" id="ProjectKeysTab" (click)="showTab('keys')" *ngIf="currentUser.admin"><i class="privacy icon"></i>
                 {{ 'common_keys' | translate }}
             </a>
             <a sm-item [class.active]="selectedTab === 'advanced'" id="ProjectAdvancedTab" (click)="showTab('advanced')" *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE"><i class="graduation icon"></i>{{
