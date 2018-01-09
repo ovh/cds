@@ -1,0 +1,28 @@
+name: Create a simple workflow (ITSCWRKFLW1) and pull it
+testcases:
+- name: assert filepath, your current directory must be at the root of this project
+  steps:
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW1/pipeline.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW1/workflow.yml ]'
+
+- name: prepare test
+  steps:
+  - script: "{{.cds.build.cdsctl}} project remove --force ITSCWRKFLW1"
+  - script: "{{.cds.build.cdsctl}} group remove --force ITSCWRKFLW1 "
+  - script: "{{.cds.build.cdsctl}} project add ITSCWRKFLW1 ITSCWRKFLW1"
+  - script: "{{.cds.build.cdsctl}} application add ITSCWRKFLW1 ITSCWRKFLW1-APPLICATION"
+
+- name: import pipeline
+  steps:
+  - script: {{.cds.build.cdsctl}} pipeline import --force ITSCWRKFLW1 ./tests/fixtures/ITSCWRKFLW1/pipeline.yml
+
+- name: import workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow import --force ITSCWRKFLW1 ./tests/fixtures/ITSCWRKFLW1/workflow.yml
+
+- name: pull workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow pull --force ITSCWRKFLW1 ITSCWRKFLW1-WORKFLOW --output-dir ./tests/fixtures/ITSCWRKFLW1/output
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW1/output/ITSCWRKFLW1-PIPELINE.pip.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW1/output/ITSCWRKFLW1-APPLICATION.app.yml ]'
+  - script: '[ -f ./tests/fixtures/ITSCWRKFLW1/output/ITSCWRKFLW1-WORKFLOW.yml ]'
