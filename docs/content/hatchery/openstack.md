@@ -3,7 +3,7 @@ title = "Hatchery Openstack"
 weight = 3
 
 [menu.main]
-parent = "hatcheries"
+parent = "hatchery"
 identifier = "hatchery.openstack"
 
 +++
@@ -19,7 +19,7 @@ $ cds generate  token -g shared.infra -e persistent
 fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 ```
 
-Edit the CDS [configuration]({{< relref "hosting.configuration.md">}}) or set the dedicated environment variables. To enable the hactchery, just set the API HTTP and GRPC URL, the token freshly generated and the openstack variables.
+Edit the CDS [configuration]({{< relref "hosting/configuration.md">}}) or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the openstack variables.
 
 Then start hatchery:
 

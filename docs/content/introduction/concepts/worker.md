@@ -34,6 +34,6 @@ There are several cases where one would need to setup his own worker:
 
 ### How does this work ?
 
-Workers authenticate on CDS with a [token]({{< relref "concepts.worker.token.md" >}}) and have the same permissions as the user who generated it.
+Workers authenticate on CDS with a [token]({{< relref "/introduction/cli/token.md" >}}) and have the same permissions as the user who generated it.
 
 Bottom line: if you can access the application, your worker will too.

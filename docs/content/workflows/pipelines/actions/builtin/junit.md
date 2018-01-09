@@ -22,13 +22,13 @@ This action parses a given Junit formatted XML file to extract its test results.
 
 * Job Configuration.
 
-![img](/images/building-pipelines.actions.builtin.junit-job.png)
+![img](/images/workflows.pipelines.actions.builtin.junit-job.png)
 
 
 * Launch pipeline, check XUnit Result
 
-![img](/images/building-pipelines.actions.builtin.junit-view.png)
+![img](/images/workflows.pipelines.actions.builtin.junit-view.png)
 
 * And view details:
 
-![img](/images/building-pipelines.actions.builtin.junit-view-details.png)
+![img](/images/workflows.pipelines.actions.builtin.junit-view-details.png)

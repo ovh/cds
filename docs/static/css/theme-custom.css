@@ -35,7 +35,7 @@ a:hover {
     background: var(--SIDE-MAIN-color);
     color: var(--BF-color);
     border-color: var(--SIDE-FOCUS-BACK-color);
-    height: 210px;
+    height: 225px;
 }
 
 #sidebar #header img {

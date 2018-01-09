@@ -48,7 +48,7 @@ Here is the list of builtin variables, generated for every build:
 - `{{.cds.pipeline}}` The name of the current pipeline
 - `{{.cds.stage}}` The name of the current stage
 - `{{.cds.job}}` The name of the current job
-- `{{.cds.workspace}}` Current job's workspace. It's a directory. In a step script, `{{.cds.workspace}}` == $HOME
+- `{{.cds.workspace}}` Current job's workspace. It's a directory. In a step [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}), `{{.cds.workspace}}` == $HOME
 - `{{.cds.version}}` The current version number
 - `{{.cds.parent.application}}` The name of the application that triggered the current build
 - `{{.cds.parent.pipeline}}` The name of the pipeline that triggered the current build

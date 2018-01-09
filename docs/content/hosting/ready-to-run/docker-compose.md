@@ -55,7 +55,7 @@ On UI http://localhost:2015:
 - Create an application, with a void pipeline
 - Create a pipeline, attached to application
 - On Pipeline, add a stage and a job
-- Inside job, add a step of type "script"
+- Inside job, add a step of type "[script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}})"
 - In script content, add theses lines:
 
 ```bash
@@ -136,7 +136,6 @@ $ cds admin templates add ./cds-template-plain-linux-amd64
 
 # Go further
 
-- First pipeline with CDS CLI [read more]({{< relref "getting-started.first-pipeline-ui.md" >}})
-- How to use Openstack infrastructure to spawn CDS container [read more]({{< relref "advanced.hatcheries.openstack.md" >}})
-- Link CDS to a repository manager, as Github or Bitbucket [read more]({{< relref "advanced.repositories_manager.md" >}})
-- Learn more about CDS variables [read more]({{< relref "building-pipelines.variables.md" >}})
+- How to use Openstack infrastructure to spawn CDS container [read more]({{< relref "hatchery/openstack.md" >}})
+- Link CDS to a repository manager, as Github or Bitbucket [read more]({{< relref "hosting/repositories_manager/_index.md" >}})
+- Learn more about CDS variables [read more]({{< relref "workflows/pipelines/variables.md" >}})

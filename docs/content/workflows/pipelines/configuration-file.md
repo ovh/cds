@@ -21,7 +21,7 @@ steps:
 - script: echo I'm the second step
 ```
 
-This defines a pipeline of type `build` (it's the default type), named `Build` (the default name for a build Pipeline). It will have a Stage named **Build** (the default stage name for a one stage pipeline is the name of the pipeline), with a job **Build** (the default job name for a one job stage is the name of the stage) composed of two steps using script actions.
+This defines a pipeline of type `build` (it's the default type), named `Build` (the default name for a build Pipeline). It will have a Stage named **Build** (the default stage name for a one stage pipeline is the name of the pipeline), with a job **Build** (the default job name for a one job stage is the name of the stage) composed of two steps using [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}) actions.
 
 It is basically equivalent to :
 

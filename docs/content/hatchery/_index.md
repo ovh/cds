@@ -8,11 +8,13 @@ identifier = "hatchery"
 
 +++
 
+![Hatchery](/images/hatchery.png)
+
 Hatchery is a service dedicated to spawn and kill worker in accordance with build queue needs.
 
 An hatchery is started with permissions to build all pipelines accessible from a given group, using token.
 
-There are 6 modes for hatcheries:
+There are 5 modes for hatcheries:
 
  * Local (Start local workers on a single host)
  * Marathon (Start worker model instances on a mesos cluster with marathon framework)

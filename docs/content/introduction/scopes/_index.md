@@ -1,5 +1,5 @@
 +++
-title = "Scopes"
+title = "Scopes & ACLs"
 weight = 1
 
 [menu.main]

@@ -63,16 +63,16 @@ exit 0
 
 #### Using CDS variables in a script
 
-You can use [CDS Variables]({{< relref "building-pipelines.variables.md" >}}) in a step script.
+You can use [CDS Variables]({{< relref "workflows/pipelines/variables.md" >}}) in a step script.
 
-![img](/images/building-pipelines.actions.builtin.script-bash.png)
+![img](/images/workflows.pipelines.actions.builtin.script-bash.png)
 
 ### Example
 
 * Job Configuration, a step with perl, another with bash
 
-![img](/images/building-pipelines.actions.builtin.script-job.png)
+![img](/images/workflows.pipelines.actions.builtin.script-job.png)
 
 * Launch pipeline, check logs
 
-![img](/images/building-pipelines.actions.builtin.script-logs.png)
+![img](/images/workflows.pipelines.actions.builtin.script-logs.png)

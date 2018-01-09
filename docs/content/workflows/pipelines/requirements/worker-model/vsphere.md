@@ -51,4 +51,4 @@ Last step, define worker model in cds:
 $ cds worker model add debian8-docker vsphere --image="debian8" --userdata="./yourscript.sh"
 ```
 
-`--image` is the name of your virtual machine that you have created before on your host to clone (See [Advanced]({{< relref "advanced.hatcheries.vsphere.md" >}}))
+`--image` is the name of your virtual machine that you have created before on your host to clone (See [Advanced]({{< relref "hatchery/vsphere.md" >}}))

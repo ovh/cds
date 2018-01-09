@@ -20,7 +20,7 @@ Type of requirements:
 - OS (Not yet implemented)
 - Architecture (Not yet implemented)
 
-A [Job]({{< relref "introduction.concepts.job.md" >}}) will be executed by a **worker**.
+A [Job]({{< relref "introduction/concepts/job.md" >}}) will be executed by a **worker**.
 
 CDS will choose and provision a worker for dependending on the **requirements** you define on your job.
 
@@ -49,5 +49,5 @@ You can defined environment variables of the service by setting requirement valu
 
 ### Tutorials
 
-* [Tutorial - Service Link Requirement Nginx]({{< relref "tutorials.service-link-requirement-nginx.md" >}})
-* [Tutorial - Service Link Requirement PostgreSQL]({{< relref "tutorials.service-link-requirement-pg.md" >}})
+* [Tutorial - Service Link Requirement Nginx]({{< relref "workflows/pipelines/requirements/service/example-nginx.md" >}})
+* [Tutorial - Service Link Requirement PostgreSQL]({{< relref "workflows/pipelines/requirements/service/example-pg.md" >}})

@@ -3,7 +3,7 @@ title = "Hatchery Swarm"
 weight = 2
 
 [menu.main]
-parent = "hatcheries"
+parent = "hatchery"
 identifier = "hatchery.swarm"
 
 +++
@@ -19,7 +19,7 @@ $ cds generate  token -g shared.infra -e persistent
 fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92
 ```
 
-Edit the CDS [configuration]({{< relref "hosting.configuration.md">}}) or set the dedicated environment variables. To enable the hactchery, just set the API HTTP and GRPC URL, the token freshly generated.
+Edit the CDS [configuration]({{< relref "hosting/configuration.md">}}) or set the dedicated environment variables. To enable the hactchery, just set the API HTTP and GRPC URL, the token freshly generated.
 
 This hatchery use the standard docker environment variables to connect to a docker host.
 
@@ -34,4 +34,4 @@ This hatchery will now start worker of model 'docker' on you docker installation
 
 ## Setup a worker model
 
-See [Tutorial]({{< relref "tutorials.worker-model-docker-simple.md" >}})
+See [Tutorial]({{< relref "workflows/pipelines/requirements/worker-model/docker-simple.md" >}})

@@ -12,8 +12,8 @@ A CDS worker executes job, and job is composed of steps.
 
 A step is :
 
-* a builtin action, as GitClone, etc... [read more]({{< relref "building-pipelines.actions.builtin.md" >}})
-* a user action [read more]({{< relref "building-pipelines.actions.user-actions.md" >}})
+* a builtin action, as GitClone, etc... [read more]({{< relref "workflows/pipelines/actions/builtin/_index.md" >}})
+* a user action [read more]({{< relref "workflows/pipelines/actions/user-actions/_index.md" >}})
 * a Plugin Action
 
 A Plugin is a Golang Binary.

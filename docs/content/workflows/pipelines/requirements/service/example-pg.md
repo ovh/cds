@@ -16,7 +16,7 @@ Requirement Service
 * Type: `service`
 * Value: `postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword`. This is the name of docker image to link to current job
 
-And a requirement model which allow you to execute `apt-get install -y postgresql-client`, see [HowTo]({{< relref "tutorials.worker-model-docker-simple.md" >}})
+And a requirement model which allow you to execute `apt-get install -y postgresql-client`, see [HowTo]({{< relref "workflows/pipelines/requirements/worker-model/docker-simple.md" >}})
 
 
 ![Requirement](/images/tutorials_service_link_pg_requirements.png)

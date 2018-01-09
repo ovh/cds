@@ -11,7 +11,7 @@ identifier = "builtin-artifact-download"
 
 **Artifact Download Action** is a builtin action, you can't modify it.
 
-This action can be used to retrieve an artifact previously uploaded by an [Artifact Upload]({{< relref "building-pipelines.actions.builtin.artifact-upload.md" >}}) action.
+This action can be used to retrieve an artifact previously uploaded by an [Artifact Upload]({{< relref "workflows/pipelines/actions/builtin/artifact-upload.md" >}}) action.
 
 ## Parameters
 * application: Application from where artifacts will be downloaded
@@ -23,12 +23,12 @@ This action can be used to retrieve an artifact previously uploaded by an [Artif
 
 * Workflow Configuration: a pipeline doing an `upload artifact` and another doing a `download artifact`.
 
-![img](/images/building-pipelines.actions.builtin.artifact-download-workflow.png)
+![img](/images/workflows.pipelines.actions.builtin.artifact-download-workflow.png)
 
 * Job Configuration: download artifact from pipeline `parent`
 
-![img](/images/building-pipelines.actions.builtin.artifact-download-job.png)
+![img](/images/workflows.pipelines.actions.builtin.artifact-download-job.png)
 
 * Run pipeline, check logs
 
-![img](/images/building-pipelines.actions.builtin.artifact-download-logs.png)
+![img](/images/workflows.pipelines.actions.builtin.artifact-download-logs.png)

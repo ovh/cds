@@ -31,17 +31,17 @@ You may want to use a privateKey to clone from an SSH repository. To do so, you 
 
 * Add repository manager on your application. We can use CDS Variables `{{.git...}}` in Job Configuration
 
-![img](/images/building-pipelines.actions.builtin.gitclone-repo-manager.png)
+![img](/images/workflows.pipelines.actions.builtin.gitclone-repo-manager.png)
 
 * Job Configuration.
 
-![img](/images/building-pipelines.actions.builtin.gitclone-job.png)
+![img](/images/workflows.pipelines.actions.builtin.gitclone-job.png)
 
 
 * Launch pipeline, check logs
 
-![img](/images/building-pipelines.actions.builtin.gitclone-logs.png)
+![img](/images/workflows.pipelines.actions.builtin.gitclone-logs.png)
 
 * View artifact
 
-![img](/images/building-pipelines.actions.builtin.artifact-upload-view-artifact.png)
+![img](/images/workflows.pipelines.actions.builtin.artifact-upload-view-artifact.png)

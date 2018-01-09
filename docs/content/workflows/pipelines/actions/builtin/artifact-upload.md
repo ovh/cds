@@ -20,13 +20,13 @@ This action can be used to upload artifacts in CDS. This is the recommended way 
 
 * Create a file `myFile` and upload it.
 
-![img](/images/building-pipelines.actions.builtin.artifact-upload-job.png)
+![img](/images/workflows.pipelines.actions.builtin.artifact-upload-job.png)
 
 
 * Launch pipeline, check logs
 
-![img](/images/building-pipelines.actions.builtin.artifact-upload-logs.png)
+![img](/images/workflows.pipelines.actions.builtin.artifact-upload-logs.png)
 
 * View artifact
 
-![img](/images/building-pipelines.actions.builtin.artifact-upload-view-artifact.png)
+![img](/images/workflows.pipelines.actions.builtin.artifact-upload-view-artifact.png)
