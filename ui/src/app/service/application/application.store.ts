@@ -16,6 +16,7 @@ import {NavbarRecentData} from '../../model/navbar.model';
 import {Notification} from '../../model/notification.model';
 import {Scheduler} from '../../model/scheduler.model';
 import 'rxjs/add/observable/of';
+import {Key} from '../../model/keys.model';
 
 
 @Injectable()
@@ -604,6 +605,52 @@ export class ApplicationStore {
     detachPipeline(key: string, appName: string, pipName: string): Observable<Application> {
         return this._applicationService.detachPipelines(key, appName, pipName).map( app => {
             return this.refreshApplicationPipelineCache(key, appName, app);
+        });
+    }
+
+    /**
+     * Add a key on the application
+     * @param key Project unique key
+     * @param appName Application name
+     * @param k Key to add
+     * @returns {OperatorFunction<Key>}
+     */
+    addKey(key: string, appName: string, k: Key): Observable<Key> {
+        return this._applicationService.addKey(key, appName, k).map( () => {
+            let cache = this._application.getValue();
+            let appKey = key + '-' + appName;
+            let appToUpdate = cache.get(appKey);
+            if (appToUpdate) {
+                if (!appToUpdate.keys) {
+                    appToUpdate.keys = new Array<Key>();
+                }
+                appToUpdate.keys.push(k);
+                this._application.next(cache.set(appKey, appToUpdate));
+            }
+            return k;
+        });
+    }
+
+    /**
+     * Remove a key from the application
+     * @param key Project unique key
+     * @param appName Application name
+     * @param k Key to remove
+     * @returns {OperatorFunction<boolean>}
+     */
+    removeKey(key: string, appName: string, k: Key): Observable<boolean> {
+        return this._applicationService.removeKey(key, appName, k.name).map( () => {
+            let cache = this._application.getValue();
+            let appKey = key + '-' + appName;
+            let appToUpdate = cache.get(appKey);
+            if (appToUpdate) {
+                let i = appToUpdate.keys.findIndex(kkey => kkey.name === k.name);
+                if (i > -1) {
+                    appToUpdate.keys.splice(i, 1);
+                }
+                this._application.next(cache.set(appKey, appToUpdate));
+            }
+            return true;
         });
     }
 

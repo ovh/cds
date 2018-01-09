@@ -5,7 +5,6 @@ import {BehaviorSubject} from 'rxjs/BehaviorSubject'
 import {Project, LoadOpts} from '../../model/project.model';
 import {ProjectService} from './project.service';
 import {EnvironmentService} from '../environment/environment.service';
-import {PipelineService} from '../pipeline/pipeline.service';
 import {VariableService} from '../variable/variable.service';
 import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
@@ -26,7 +25,6 @@ export class ProjectStore {
     constructor(
         private _projectService: ProjectService,
         private _environmentService: EnvironmentService,
-        private _pipelineService: PipelineService,
         private _variableService: VariableService
       ) {
 
@@ -89,7 +87,6 @@ export class ProjectStore {
             } else {
                 proj = res;
             }
-
             this._projectCache.next(store.set(key, proj));
             return proj;
         });
@@ -154,38 +151,6 @@ export class ProjectStore {
               let store = this._projectCache.getValue();
               let proj = store.get(key);
               proj.applications = res;
-              this._projectCache.next(store.set(key, proj));
-              return proj;
-          });
-    }
-
-    /**
-     * Use by router to preload project
-     * @param key
-     * @returns {Observable<Project>}
-     */
-    getProjectPipelinesResolver(key: string): Observable<Project> {
-        let store = this._projectCache.getValue();
-        let missingEnv = store.size === 0 || !store.get(key) || !store.get(key).pipelines || !store.get(key).pipelines.length;
-
-        if (missingEnv) {
-            return this.resyncPipelines(key);
-        } else {
-            return Observable.of(store.get(key));
-        }
-    }
-
-    /**
-     * Get project from API and store result
-     * @param key
-     * @returns {Observable<R>}
-     */
-    resyncPipelines(key: string): Observable<Project> {
-        return this._pipelineService.getPipelines(key)
-          .map((res) => {
-              let store = this._projectCache.getValue();
-              let proj = store.get(key);
-              proj.pipelines = res;
               this._projectCache.next(store.set(key, proj));
               return proj;
           });

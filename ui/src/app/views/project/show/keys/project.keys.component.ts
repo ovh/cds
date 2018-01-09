@@ -2,9 +2,10 @@ import {Component, Input, OnInit} from '@angular/core';
 import {Project} from '../../../../model/project.model';
 import {KeyEvent} from '../../../../shared/keys/key.event';
 import {ProjectStore} from '../../../../service/project/project.store';
-import {finalize} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
+import {Key} from '../../../../model/keys.model';
 
 @Component({
     selector: 'app-project-keys',
@@ -13,7 +14,20 @@ import {TranslateService} from '@ngx-translate/core';
 })
 export class ProjectKeysComponent implements OnInit {
 
-    @Input() project: Project;
+    _project: Project;
+    @Input('project')
+    set project(data: Project) {
+        if (data) {
+            this._project = data;
+            this.keys = data.keys;
+        }
+    }
+
+    get project() {
+        return this._project;
+    }
+
+    keys: Array<Key>;
 
     loading = false;
     ready = false;
@@ -22,8 +36,12 @@ export class ProjectKeysComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        if (this.project.keys) {
+            this.ready = true;
+            return;
+        }
         this._projectStore.getProjectKeysResolver(this.project.key)
-            .pipe(finalize(() => this.ready = true))
+            .pipe(first(), finalize(() => this.ready = true))
             .subscribe((proj) => {
                 this.project = proj;
             });
@@ -33,13 +51,13 @@ export class ProjectKeysComponent implements OnInit {
         switch (event.type) {
             case 'add':
                 this.loading = true;
-                this._projectStore.addKey(this.project.key, event.key).pipe(finalize(() => {
+                this._projectStore.addKey(this.project.key, event.key).pipe(first(), finalize(() => {
                     this.loading = false;
                 })).subscribe(() => this._toast.success('', this._translate.instant('keys_added')));
                 break;
             case 'delete':
                 this.loading = true;
-                this._projectStore.removeKey(this.project.key, event.key.name).pipe(finalize(() => {
+                this._projectStore.removeKey(this.project.key, event.key.name).pipe(first(), finalize(() => {
                     this.loading = false;
                 })).subscribe(() => this._toast.success('', this._translate.instant('keys_removed')))
         }

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
 import {Project} from '../../../../model/project.model';
 import {PermissionValue} from '../../../../model/permission.model';
@@ -7,7 +7,7 @@ import {ToastService} from '../../../../shared/toast/ToastService';
 import {EnvironmentPermissionEvent, PermissionEvent} from '../../../../shared/permission/permission.event.model';
 import {Environment} from '../../../../model/environment.model';
 import {TranslateService} from '@ngx-translate/core';
-import {finalize} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-project-permissions',
@@ -27,21 +27,24 @@ export class ProjectPermissionsComponent implements OnInit {
     permissionEnum = PermissionValue;
     loading = true;
     permFormLoading = false;
-    permEnvFormLoading = false
+    permEnvFormLoading = false;
 
-    constructor(
-      private _projectStore: ProjectStore,
-      public _translate: TranslateService,
-      private _toast: ToastService) {
+    constructor(private _projectStore: ProjectStore,
+                public _translate: TranslateService,
+                private _toast: ToastService) {
 
     }
 
     ngOnInit() {
-      this._projectStore.getProjectEnvironmentsResolver(this.project.key)
-        .pipe(finalize(() => this.loading = false))
-        .subscribe((proj) => {
-          this.project = proj;
-        });
+        if (this.project.environments) {
+            this.loading = false;
+            return
+        }
+        this._projectStore.getProjectEnvironmentsResolver(this.project.key)
+            .pipe(first(), finalize(() => this.loading = false))
+            .subscribe((proj) => {
+                this.project = proj;
+            });
     }
 
     addEnvPermEvent(event: EnvironmentPermissionEvent, skip?: boolean): void {

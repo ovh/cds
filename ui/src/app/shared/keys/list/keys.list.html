@@ -1,12 +1,12 @@
 
-<div class="keys" *ngIf="project.keys">
+<div class="keys" *ngIf="keys">
     <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
         <thead>
         <tr>
             <th class="two wide">{{ 'keys_name' | translate }}</th>
             <th class="two wide">{{ 'keys_type' | translate }}</th>
             <th class="ten wide">{{ 'keys_public' | translate }}</th>
-            <th class="two wide" *ngIf="project.permission === permission.READ_WRITE_EXECUTE"></th>
+            <th class="two wide" *ngIf="edit === permission.READ_WRITE_EXECUTE"></th>
         </tr>
         </thead>
         <tbody>
@@ -22,7 +22,7 @@
                 {{ k.public }}
                     </pre>
             </td>
-            <td *ngIf="project.permission === permission.READ_WRITE_EXECUTE">
+            <td *ngIf="edit === permission.READ_WRITE_EXECUTE">
                 <app-delete-button [loading]="loading" (event)="deleteKey(k)"></app-delete-button>
             </td>
         </tr>

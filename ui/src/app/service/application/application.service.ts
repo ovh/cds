@@ -11,6 +11,7 @@ import {Notification, UserNotificationSettings} from '../../model/notification.m
 import {Scheduler} from '../../model/scheduler.model';
 import {Hook} from '../../model/hook.model';
 import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
+import {Key} from '../../model/keys.model';
 
 @Injectable()
 export class ApplicationService {
@@ -30,6 +31,7 @@ export class ApplicationService {
         params = params.append('withWorkflow', 'true');
         params = params.append('withNotifs', 'true');
         params = params.append('withUsage', 'true');
+        params = params.append('withKeys', 'true');
 
         if (filter) {
             if (filter.branch) {
@@ -365,6 +367,26 @@ export class ApplicationService {
      */
     detachPipelines(key: string, appName: string, pipName: string): Observable<Application> {
         return this._http.delete<Application>('/project/' + key + '/application/' + appName + '/pipeline/' + pipName);
+    }
+
+    /**
+     * Add a key
+     * @param key Project unique key
+     * @param appName Application name
+     * @param k Key to add
+     */
+    addKey(key: string, appName: string, k: Key): Observable<Key> {
+        return this._http.post<Key>('/project/' + key + '/application/' + appName + '/keys', k);
+    }
+
+    /**
+     * Remove a key
+     * @param key Project unique key
+     * @param appName Application name
+     * @param kName Key to remove
+     */
+    removeKey(key: string, appName: string, kName: string): Observable<any> {
+        return this._http.delete('/project/' + key + '/application/' + appName + '/keys/' + kName);
     }
 
 
