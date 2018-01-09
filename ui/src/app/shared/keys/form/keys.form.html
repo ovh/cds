@@ -1,0 +1,26 @@
+<div class="KeyForm">
+    <div class="ui form">
+        <div class="fields">
+            <div class="seven wide field">
+                <label>{{ 'keys_name' | translate}}</label>
+                <input type="text" name="name" [(ngModel)]="newKey.name">
+            </div>
+            <div class="seven wide field">
+                <label>{{ 'keys_type' | translate }}</label>
+                <sui-select class="selection"
+                            name="type"
+                            [(ngModel)]="newKey.type"
+                            [options]="keyTypes"
+                            [isSearchable]="true"
+                            #selectKeyType>
+                    <sui-select-option *ngFor="let t of selectKeyType.filteredOptions"
+                                       [value]="t">
+                    </sui-select-option>
+                </sui-select>
+            </div>
+            <div class="two wide right aligned field">
+                <button class="ui green button" type="button" [class.loading]="loading" [disabled]="loading || newKey.name === ''" (click)="addKey()">{{ 'btn_add' | translate }}</button>
+            </div>
+        </div>
+    </div>
+</div>

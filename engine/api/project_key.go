@@ -51,7 +51,7 @@ func (api *API) deleteKeyInProjectHandler() Handler {
 				if err := project.DeleteProjectKey(tx, p.ID, keyName); err != nil {
 					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot delete key %s", k.Name)
 				}
-				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
+				if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectKeysLastModificationType); err != nil {
 					return sdk.WrapError(err, "deleteKeyInProjectHandler> Cannot update project last modified date")
 				}
 			}
@@ -135,7 +135,7 @@ func (api *API) addKeyInProjectHandler() Handler {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot insert project key")
 		}
 
-		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectLastModificationType); err != nil {
+		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), p, sdk.ProjectKeysLastModificationType); err != nil {
 			return sdk.WrapError(err, "addKeyInProjectHandler> Cannot update project last modified date")
 		}
 

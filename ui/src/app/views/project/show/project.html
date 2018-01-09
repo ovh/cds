@@ -20,6 +20,9 @@
                 'common_variables' | translate }}</a>
             <a sm-item [class.active]="selectedTab === 'permissions'" id="ProjectPermissionTab" (click)="showTab('permissions')"><i class="users icon"></i>{{
                 'common_permissions' | translate }}</a>
+            <a sm-item [class.active]="selectedTab === 'keys'" id="ProjectKeysTab" (click)="showTab('keys')"><i class="privacy icon"></i>
+                {{ 'common_keys' | translate }}
+            </a>
             <a sm-item [class.active]="selectedTab === 'advanced'" id="ProjectAdvancedTab" (click)="showTab('advanced')" *ngIf="project.permission === permissionEnum.READ_WRITE_EXECUTE"><i class="graduation icon"></i>{{
                 'common_advanced' | translate }}</a>
         </sm-menu>
@@ -48,6 +51,9 @@
 
                 <div *ngSwitchCase="'permissions'">
                   <app-project-permissions [project]="project"></app-project-permissions>
+                </div>
+                <div *ngSwitchCase="'keys'">
+                    <app-project-keys [project]="project"></app-project-keys>
                 </div>
                 <div *ngSwitchCase="'advanced'">
                     <h3>{{ 'project_advanced_title' | translate }}</h3>

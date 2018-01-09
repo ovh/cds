@@ -81,6 +81,8 @@ const (
 	ProjectWorkflowLastModificationType = "project.workflow"
 	// ProjectVariableLastModificationType represent key for last update event about project.variable (rename, delete or add a variable)
 	ProjectVariableLastModificationType = "project.variable"
+	// ProjectKeysLastModificationType represent key for last update event about project.keys (add, delete a key)
+	ProjectKeysLastModificationType = "project.keys"
 )
 
 //ProjectLastUpdates update times of project, application and pipelines

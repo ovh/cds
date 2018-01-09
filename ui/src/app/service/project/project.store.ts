@@ -11,6 +11,7 @@ import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {Environment} from '../../model/environment.model';
 import 'rxjs/add/observable/of';
+import {Key} from '../../model/keys.model';
 
 
 @Injectable()
@@ -190,6 +191,16 @@ export class ProjectStore {
           });
     }
 
+    getProjectKeysResolver(key: string): Observable<Project> {
+        let store = this._projectCache.getValue();
+        let missingKeys = store.size === 0 || !store.get(key) || !store.get(key).keys || !store.get(key).keys.length;
+        if (missingKeys) {
+            return this.resyncKeys(key);
+        } else {
+            return Observable.of(store.get(key));
+        }
+    }
+
     /**
      * Use by router to preload project
      * @param key
@@ -204,6 +215,17 @@ export class ProjectStore {
         } else {
             return Observable.of(store.get(key));
         }
+    }
+
+    resyncKeys(key: string): Observable<Project> {
+        return this._projectService.getKeys(key)
+            .map((res) => {
+                let store = this._projectCache.getValue();
+                let proj = store.get(key);
+                proj.keys = res;
+                this._projectCache.next(store.set(key, proj));
+                return proj;
+            });
     }
 
     /**
@@ -698,6 +720,47 @@ export class ProjectStore {
         });
     }
 
+    /**
+     * Ad a key on the project
+     * @param projKey Project unique key
+     * @param key SSH/PGP key to add
+     * @returns {Observable<Key>}
+     */
+    addKey(projKey: string, key: Key): Observable<Key> {
+        return this._projectService.addKey(projKey, key).map(res => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(projKey);
+            if (projectUpdate) {
+                if (!projectUpdate.keys) {
+                    projectUpdate.keys = new Array<Key>();
+                }
+                projectUpdate.keys.push(res);
+                this._projectCache.next(cache.set(projKey, projectUpdate));
+            }
+            return res;
+        });
+    }
+
+    /**
+     * Remove a key from project (api + cache)
+     * @param key project unique key
+     * @param name key name to delete
+     * @returns {Observable<boolean>}
+     */
+    removeKey(key: string, name: string): Observable<boolean> {
+        return this._projectService.removeKey(key, name).map(() => {
+            let cache = this._projectCache.getValue();
+            let projectUpdate = cache.get(key);
+            if (projectUpdate && projectUpdate.keys) {
+                let i = projectUpdate.keys.findIndex(kkey => kkey.name === name);
+                if (i > -1) {
+                    projectUpdate.keys.splice(i, 1);
+                }
+                this._projectCache.next(cache.set(key, projectUpdate));
+            }
+            return true;
+        });
+    }
 
     externalModification(key: string) {
         let cache = this._projectCache.getValue();

@@ -201,6 +201,15 @@
   "common_orientation" : "Orientation",
   "common_copy_clipboard" : "Copy to clipboad",
 
+  "keys_added" : "Key added",
+  "keys_add_title" : "Add a key",
+  "keys_name" : "Key name",
+  "keys_list_title" : "Keys list",
+  "keys_loading" : "Loading keys...",
+  "keys_public" : "Public key",
+  "keys_removed" : "Key has been removed",
+  "keys_type" : "Key type",
+
   "usage_application_list" : "Applications used",
   "usage_workflow_list" : "Workflows used",
   "usage_pipeline_list" : "Pipelines used",

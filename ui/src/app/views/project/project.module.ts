@@ -15,6 +15,7 @@ import {ProjectVariablesComponent} from './show/variable/variable.list.component
 import {ProjectPermissionsComponent} from './show/permission/permission.component';
 import {ProjectApplicationListComponent} from './show/application/application.list.component';
 import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.component';
+import {ProjectKeysComponent} from './show/keys/project.keys.component';
 
 @NgModule({
     declarations: [
@@ -24,6 +25,7 @@ import {ProjectWorkflowListComponent} from './show/workflow/workflow.list.compon
         ProjectEnvironmentFormComponent,
         ProjectEnvironmentListComponent,
         ProjectEnvironmentComponent,
+        ProjectKeysComponent,
         ProjectPipelinesComponent,
         ProjectVariablesComponent,
         ProjectPermissionsComponent,
