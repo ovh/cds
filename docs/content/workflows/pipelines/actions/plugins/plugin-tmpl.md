@@ -2,7 +2,7 @@
 title = "plugin-tmpl"
 
 [menu.main]
-parent = "plugins"
+parent = "actions-plugins"
 identifier = "plugin-tmpl"
 
 +++

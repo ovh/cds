@@ -8,6 +8,8 @@ identifier = "hatchery.openstack"
 
 +++
 
+![Hatchery Openstack](/images/hatchery.openstack.png)
+
 CDS build using Openstack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
 
 ## Start Opentack hatchery

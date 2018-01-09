@@ -31,3 +31,5 @@ Go Build: compile a go program
 
 
 More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/actions/cds-go-build.hcl)
+
+

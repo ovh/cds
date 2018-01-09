@@ -1,6 +1,6 @@
 +++
 title = "Hatchery"
-weight = 5
+weight = 1
 
 [menu.main]
 parent = ""

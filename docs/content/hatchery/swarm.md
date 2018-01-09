@@ -1,6 +1,6 @@
 +++
 title = "Hatchery Swarm"
-weight = 2
+weight = 4
 
 [menu.main]
 parent = "hatchery"

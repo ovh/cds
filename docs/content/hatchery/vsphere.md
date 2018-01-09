@@ -1,6 +1,6 @@
 +++
 title = "Hatchery Vsphere"
-weight = 3
+weight = 5
 
 [menu.main]
 parent = "hatchery"

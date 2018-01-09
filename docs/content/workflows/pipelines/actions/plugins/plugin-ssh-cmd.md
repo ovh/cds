@@ -2,7 +2,7 @@
 title = "plugin-ssh-cmd"
 
 [menu.main]
-parent = "plugins"
+parent = "actions-plugins"
 identifier = "plugin-ssh-cmd"
 
 +++

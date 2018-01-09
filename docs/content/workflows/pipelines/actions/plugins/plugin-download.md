@@ -2,7 +2,7 @@
 title = "plugin-download"
 
 [menu.main]
-parent = "plugins"
+parent = "actions-plugins"
 identifier = "plugin-download"
 
 +++
@@ -19,3 +19,4 @@ This is a plugin to download file from URL
 ## More
 
 More documentation on [Github](https://github.com/ovh/cds/tree/master/contrib/plugins/plugin-download/README.md)
+

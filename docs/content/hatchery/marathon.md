@@ -1,14 +1,14 @@
 +++
-title = "Hatchery Local"
+title = "Hatchery Marathon"
 weight = 2
 
 [menu.main]
 parent = "hatchery"
-identifier = "hatchery.local"
+identifier = "hatchery.marathon"
 
 +++
 
-
+![Hatchery Marathon](/images/hatchery.marathon.png)
 
 ## Start Marathon hatchery
 

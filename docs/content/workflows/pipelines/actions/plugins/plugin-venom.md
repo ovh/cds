@@ -2,7 +2,7 @@
 title = "plugin-venom"
 
 [menu.main]
-parent = "plugins"
+parent = "actions-plugins"
 identifier = "plugin-venom"
 
 +++

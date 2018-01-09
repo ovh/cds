@@ -1,6 +1,6 @@
 +++
 title = "Hatchery Local"
-weight = 2
+weight = 1
 
 [menu.main]
 parent = "hatchery"

@@ -2,7 +2,7 @@
 title = "plugin-kafka-publish"
 
 [menu.main]
-parent = "plugins"
+parent = "actions-plugins"
 identifier = "plugin-kafka-publish"
 
 +++

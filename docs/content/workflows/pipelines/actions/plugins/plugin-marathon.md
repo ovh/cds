@@ -2,14 +2,14 @@
 title = "plugin-marathon"
 
 [menu.main]
-parent = "plugins"
+parent = "actions-plugins"
 identifier = "plugin-marathon"
 
 +++
 
 This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
 
-Your marathon.json file can be templated with cds variables "{{.cds.variables}}". Enable "waitForDeployment" option to ensure deployment is successfull.
+Your marathon.json file can be templated with cds variables "{{.cds.variables}}". Enable "waitForDeployment" option to ensure deployment is successful.
 
 ## Parameters
 

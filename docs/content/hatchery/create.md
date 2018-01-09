@@ -1,6 +1,6 @@
 +++
 title = "Write your own hatchery"
-weight = 5
+weight = 7
 
 [menu.main]
 parent = "hatchery"
