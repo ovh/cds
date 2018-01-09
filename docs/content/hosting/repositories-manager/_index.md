@@ -1,6 +1,6 @@
 +++
 title = "Repositories Manager"
-weight = 3
+weight = 7
 
 [menu.main]
 parent = "hosting"

@@ -1,6 +1,6 @@
 +++
 title = "Ready to RUN"
-weight = 5
+weight = 4
 
 [menu.main]
 parent = "hosting"

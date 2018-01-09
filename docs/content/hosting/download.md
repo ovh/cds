@@ -1,6 +1,6 @@
 +++
 title = "Download"
-weight = 2
+weight = 3
 
 [menu.main]
 parent = "hosting"

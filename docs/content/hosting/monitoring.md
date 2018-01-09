@@ -1,6 +1,6 @@
 +++
 title = "Monitoring"
-weight = 6
+weight = 8
 
 [menu.main]
 parent = "hosting"

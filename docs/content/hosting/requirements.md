@@ -1,6 +1,6 @@
 +++
 title = "Requirements"
-weight = 1
+weight = 2
 
 [menu.main]
 parent = "hosting"

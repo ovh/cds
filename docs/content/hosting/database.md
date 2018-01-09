@@ -1,6 +1,6 @@
 +++
 title = "Database Management"
-weight = 4
+weight = 6
 
 [menu.main]
 parent = "hosting"

@@ -15,7 +15,7 @@ This section will help you to undestand how to start all the differents componen
 
 ## Pre-requisites
 
-You need :
+You need:
 
 - to download the latest release
 - a properly formatted [configuration file]({{< relref "configuration.md">}}),
