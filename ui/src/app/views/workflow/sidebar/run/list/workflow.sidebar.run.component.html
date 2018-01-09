@@ -32,7 +32,16 @@
               [class.fail]="r.status === pipelineStatusEnum.FAIL || r.status === pipelineStatusEnum.STOPPED">
               <i class="tag icon"></i> {{r.num}}
           </a>
-          <div class="infoLine" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" suiPopup [popupText]="getFilteredTagsString(filteredTags[r.id])" popupPlacement="top left">
+          <ng-template let-popup #popupTemplate>
+              <div class="content">
+                <div class="ui bulleted list">
+                    <div class="item" *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
+                        <b>{{t.tag}} : </b> {{t.value}}
+                    </div>
+                </div>
+              </div>
+          </ng-template>
+          <div class="infoLine" *ngIf="filteredTags[r.id] && filteredTags[r.id].length" suiPopup [popupTemplate]="popupTemplate" popupPlacement="right">
               <i class="find icon"></i>
               <ng-container *ngFor="let t of filteredTags[r.id]; let i = index; let last = last">
                   <span class="tiny" *ngIf="i <= 1"> {{t.value}} </span><span class="tiny" *ngIf="!last && i <= 1">,</span><span *ngIf="i === 1 && !last"> ...</span>
