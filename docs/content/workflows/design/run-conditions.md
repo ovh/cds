@@ -1,9 +1,9 @@
 +++
 title = "Run conditions on pipeline"
-weight = 3
+weight = 5
 
 [menu.main]
-parent = "workflows"
+parent = "design"
 identifier = "design.run-conditions"
 
 +++

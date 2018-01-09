@@ -1,6 +1,6 @@
 +++
 title = "Pipeline Context"
-weight = 2
+weight = 3
 
 [menu.main]
 parent = "design"

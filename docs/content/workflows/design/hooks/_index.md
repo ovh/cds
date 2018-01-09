@@ -1,6 +1,6 @@
 +++
 title = "Hooks"
-weight = 1
+weight = 4
 
 [menu.main]
 parent = "design"

@@ -1,6 +1,6 @@
 +++
 title = "Workflows Advanced"
-weight = 1
+weight = 7
 
 [menu.main]
 parent = "design"
