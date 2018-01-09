@@ -14,7 +14,7 @@ GO_COV_MERGE = ${GOPATH}/bin/gocovmerge
 GO_GOVERALLS = ${GOPATH}/bin/goveralls
 GO_GO2XUNIT = ${GOPATH}/bin/go2xunit
 
-TEST_PKGS = $(shell go list ../... | grep -v vendor)
+TEST_PKGS = $(shell go list ../... | grep -v vendor | grep -v github.com/ovh/cds/cli/cds | grep -v github.com/ovh/cds/contrib)
 TEST_DB_HOST = $(if ${CDS_API_DATABASE_HOST},${CDS_API_DATABASE_HOST},localhost)
 TEST_DB_PORT = $(if ${CDS_API_DATABASE_PORT},${CDS_API_DATABASE_PORT},5432)
 TEST_DB_USER = $(if ${CDS_API_DATABASE_USER},${CDS_API_DATABASE_USER},cds)
