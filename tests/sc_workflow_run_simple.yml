@@ -38,3 +38,4 @@ testcases:
         result.systemout.num ShouldEqual 1
         result.systemout.status ShouldEqual Building
         result.systemout.tags ShouldContains triggered_by
+        
