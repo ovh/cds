@@ -287,7 +287,6 @@ func InsertVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 
 // UpdateVariable Update a variable in the given application
 func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application, variable *sdk.Variable, u *sdk.User) error {
-	varValue := variable.Value
 	variableBefore, err := LoadVariableByID(db, app.ID, variable.ID, WithClearPassword())
 	if err != nil {
 		return sdk.WrapError(err, "UpdateVariable> cannot load variable %d", variable.ID)
@@ -299,15 +298,15 @@ func UpdateVariable(db gorp.SqlExecutor, store cache.Store, app *sdk.Application
 	}
 
 	if sdk.NeedPlaceholder(variable.Type) && variable.Value == sdk.PasswordPlaceholder {
-		varValue = variableBefore.Value
+		variable.Value = variableBefore.Value
 	}
-	clear, cipher, err := secret.EncryptS(variable.Type, varValue)
+	clear, cipher, err := secret.EncryptS(variable.Type, variable.Value)
 	if err != nil {
 		return sdk.WrapError(err, "UpdateVariable> Cannot encrypt secret %s", variable.Name)
 	}
 
-	query := `UPDATE application_variable SET var_name= $1, var_value=$2, cipher_value=$3 WHERE id = $4`
-	result, err := db.Exec(query, variable.Name, clear, cipher, variable.ID)
+	query := `UPDATE application_variable SET var_name= $1, var_value=$2, cipher_value=$3, var_type = $5 WHERE id = $4`
+	result, err := db.Exec(query, variable.Name, clear, cipher, variable.ID, variable.Type)
 	if err != nil {
 		return sdk.WrapError(err, "Cannot update variable %s", variable.Name)
 	}

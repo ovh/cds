@@ -59,6 +59,7 @@ export class WorkflowNodeRunParamComponent {
     _previousBranch: string;
     _completionListener: any;
     _keyUpListener: any;
+    _firstCommitLoad = false;
 
     lastNum: number;
     codeMirrorConfig: {};
@@ -84,7 +85,10 @@ export class WorkflowNodeRunParamComponent {
     }
 
     show(): void {
+        this._firstCommitLoad = false;
+        this._previousBranch = null;
         const config = new TemplateModalConfig<boolean, boolean, void>(this.runWithParamModal);
+        config.mustScroll = true;
         this.modal = this._modalService.open(config);
 
         if (!this.nodeToRun.context.application) {
@@ -113,14 +117,13 @@ export class WorkflowNodeRunParamComponent {
 
         let currentPayload = this.getCurrentPayload();
         this.payloadString = JSON.stringify(currentPayload, undefined, 4);
-        this._previousBranch = currentPayload['git.branch'];
         if (this.num != null) {
             this.getCommits(this.num, false);
         }
     }
 
     getCommits(num: number, change: boolean) {
-        let branch;
+        let branch, hash;
         let currentContext = this.getCurrentPayload();
 
         if (change && this.payloadString) {
@@ -129,24 +132,27 @@ export class WorkflowNodeRunParamComponent {
                 this.invalidJSON = false;
             } catch (e) {
                 this.invalidJSON = true;
-            }
-
-            if (currentContext) {
-              branch = currentContext['git.branch'];
+                return;
             }
         }
 
-        if (branch && !this.loadingBranches && this.branches.indexOf('"' + branch + '"') === -1) {
+        if (currentContext) {
+          branch = currentContext['git.branch'];
+          hash = currentContext['git.hash'];
+        }
+
+        if (this._firstCommitLoad && branch === this._previousBranch) {
             return;
         }
 
-        if (branch === this._previousBranch) {
+        if (this._firstCommitLoad && branch && !this.loadingBranches && this.branches.indexOf('"' + branch + '"') === -1) {
             return;
         }
+
+        this._firstCommitLoad = true;
         this._previousBranch = branch;
-
         this.loadingCommits = true;
-        this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch)
+        this._workflowRunService.getCommits(this.project.key, this.workflow.name, num, this.nodeToRun.name, branch, hash)
           .pipe(
             debounceTime(500),
             finalize(() => this.loadingCommits = false)

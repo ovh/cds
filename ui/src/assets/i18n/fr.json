@@ -87,7 +87,6 @@
     "application_repoman_cant": "Vous devez d'abord connecter un gestionnaire de dépôt à votre projet : ",
     "application_repoman_cant_link": "ici",
     "application_repo_title": "Lier l'application à un repository : ",
-
     "application_update_name_error": "Le nom de l'application est obligatoire et doit être au format alphanumérique + .-_ ([a-zA-Z0-9._-]*)",
     "application_update_ok": "L'application a été mise à jour",
     "application_variable_list_title": "Liste des variables de l'application : ",
@@ -555,6 +554,10 @@
     "warning_pipeline": "Un autre utilisateur vient de modifier le pipeline.",
     "warning_build_title": "Le build est en succès mais il y a {{nb}} étape(s) optionnelle(s) en erreur",
 
+    "wizard_app_clone": "Cloner une application",
+    "wizard_app_empty": "Application vide",
+    "wizard_ssh_key_name": "Nom de la clé ssh",
+
     "worker_model_type": "Type",
     "worker_model_official": "Modèle de worker vérifié (ajouté par un administrateur)",
     "worker_model_unofficial": "Modèle de worker non vérifié (ajouté par un utilisateur)",
@@ -679,10 +682,12 @@
     "workflow_history_length": "Nombre de builds",
     "workflow_root_context_application": "Application (facultatif)",
     "workflow_root_context_environment": "Environnement (facultatif)",
+    "workflow_root_context_mutex": "Limiter à une execution à la fois",
     "workflow_root_context_pipeline": "Pipeline",
     "workflow_run_loading": "Chargement des exécutions",
     "workflow_run_never": "Ce workflow n'a jamais été lancé",
     "workflow_run_resync_done": "Resynchronisé",
+    "workflow_run_resync_help": "Resynchronisez ce run par rapport aux derniers changements sur vos pipelines",
     "workflow_run_with_parameters": "Lancer le workflow",
     "workflow_sidebar_tag_zone": "Tags à afficher dans la sidebar (ordonnés par priorité)",
     "workflow_updated": "Workflow mis à jour",

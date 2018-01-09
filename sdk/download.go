@@ -121,7 +121,7 @@ func CheckContentTypeBinary(resp *http.Response) error {
 		}
 	}
 	if contentType != "application/octet-stream" {
-		return fmt.Errorf("Invalid Binary (Content-Type: %s). Please try again or download it manually from %s\n", contentType, URLGithubReleases)
+		return fmt.Errorf("invalid Binary (Content-Type: %s). Please try again or download it manually from %s", contentType, URLGithubReleases)
 	}
 	return nil
 }

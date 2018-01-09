@@ -69,6 +69,7 @@ export class WorkflowNodeConditionsComponent {
             });
         if (this.nodeConditionModal) {
             this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeConditionModal);
+            this.modalConfig.mustScroll = true;
             this.modal = this._suiService.open(this.modalConfig);
         }
     }

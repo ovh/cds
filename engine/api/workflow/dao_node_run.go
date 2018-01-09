@@ -113,6 +113,7 @@ func fromDBNodeRun(rr NodeRun) (*sdk.WorkflowNodeRun, error) {
 	r.WorkflowRunID = rr.WorkflowRunID
 	r.ID = rr.ID
 	r.WorkflowNodeID = rr.WorkflowNodeID
+	r.WorkflowNodeName = rr.WorkflowNodeName
 	r.Number = rr.Number
 	r.SubNumber = rr.SubNumber
 	r.Status = rr.Status
@@ -189,6 +190,7 @@ func makeDBNodeRun(n sdk.WorkflowNodeRun) (*NodeRun, error) {
 	nodeRunDB.ID = n.ID
 	nodeRunDB.WorkflowRunID = n.WorkflowRunID
 	nodeRunDB.WorkflowNodeID = n.WorkflowNodeID
+	nodeRunDB.WorkflowNodeName = n.WorkflowNodeName
 	nodeRunDB.Number = n.Number
 	nodeRunDB.SubNumber = n.SubNumber
 	nodeRunDB.Status = n.Status
@@ -425,12 +427,12 @@ func PreviousNodeRun(db gorp.SqlExecutor, nr sdk.WorkflowNodeRun, n sdk.Workflow
 					JOIN workflow_node ON workflow_node.name = $1 AND workflow_node.workflow_id = $2
 					WHERE vcs_branch = $3 AND workflow_node_run.num <= $4 AND workflow_node_run.workflow_node_id = $5 AND workflow_node_run.id != $6
 					ORDER BY workflow_node_run.num, workflow_node_run.sub_num DESC
-					LIMIT 1 
+					LIMIT 1
 				`
 	var nodeRun sdk.WorkflowNodeRun
 	var rr = NodeRun{}
 	if err := db.SelectOne(&rr, query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID, nr.ID); err != nil {
-		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous RUN: %s [%s %d %s %d]", query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID)
+		return nodeRun, sdk.WrapError(err, "PreviousNodeRun> Cannot load previous run: %s [%s %d %s %d %d]", query, n.Name, workflowID, nr.VCSBranch, nr.Number, nr.WorkflowNodeID)
 	}
 	pNodeRun, errF := fromDBNodeRun(rr)
 	if errF != nil {
@@ -512,7 +514,7 @@ func updateNodeRunCommits(db gorp.SqlExecutor, id int64, commits []sdk.VCSCommit
 	}
 
 	if _, err := db.Exec("UPDATE workflow_node_run SET commits = $1 where id = $2", commitsBtes, id); err != nil {
-		return sdk.WrapError(errMarshal, "updateNodeRunCommits> Unable to update workflow_node_run id=%d", id)
+		return sdk.WrapError(err, "updateNodeRunCommits> Unable to update workflow_node_run id=%d", id)
 	}
 	return nil
 }

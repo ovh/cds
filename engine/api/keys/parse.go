@@ -25,7 +25,7 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 
 		switch k.Type {
 		//Compute PGP Keys
-		case sdk.KeyTypePgp:
+		case sdk.KeyTypePGP:
 			pgpEntity, errPGPEntity := GetOpenPGPEntity(strings.NewReader(k.Private))
 			if errPGPEntity != nil {
 				return nil, sdk.WrapError(errPGPEntity, "keys.Parse> Unable to read PGP Entity from private key")
@@ -41,7 +41,7 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 			k.Public = string(pubBytes)
 			k.KeyID = pgpEntity.PrimaryKey.KeyIdShortString()
 		//Compute SSH Keys
-		case sdk.KeyTypeSsh:
+		case sdk.KeyTypeSSH:
 			privKey, errPrivKey := GetSSHPrivateKey(strings.NewReader(privateKey))
 			if errPrivKey != nil {
 				return nil, sdk.WrapError(errPrivKey, "keys.Parse> Unable to read RSA private key")
@@ -61,7 +61,7 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 	} else {
 		switch k.Type {
 		//Compute PGP Keys
-		case sdk.KeyTypePgp:
+		case sdk.KeyTypePGP:
 			id, pubR, privR, err := GeneratePGPKeyPair(kname)
 			if err != nil {
 				return nil, sdk.WrapError(err, "keys.Parse> Unable to generate PGP key pair")
@@ -79,7 +79,7 @@ func Parse(db gorp.SqlExecutor, projID int64, kname string, kval exportentities.
 			k.Private = string(priv)
 			k.Public = string(pub)
 		//Compute SSH Keys
-		case sdk.KeyTypeSsh:
+		case sdk.KeyTypeSSH:
 			pubR, privR, err := GenerateSSHKeyPair(kname)
 			if err != nil {
 				return nil, sdk.WrapError(err, "keys.Parse> Unable to generate SSH key pair")

@@ -8,7 +8,7 @@
   .cardinfo {
     border-radius: 0 0 0.28571429rem 0.28571429rem;
   }
-  
+
   .running {
     border: none;
   }
@@ -31,5 +31,40 @@
     background-color: $cds_color_light_teal;
     border: 2px solid $cds_color_teal;
     border-top: none;
+  }
+
+  .semicircle {
+    width: 3em;
+    position: absolute;
+    height: 3em;
+    border: 2px solid black;
+    border-radius: 50% !important;
+    margin: 0 auto 0em auto;
+    bottom: -1.5em;
+    left: calc(50% - 1.5em);
+    z-index: -1;
+    .icon {
+      position: absolute;
+      bottom: 0;
+      left: 20%;
+    }
+    &.success {
+      border-color: $cds_color_green;
+    }
+    &.fail {
+      border-color: $cds_color_red;
+    }
+    &.inactive {
+      border-color: grey;
+    }
+    &.building {
+      border-color: $cds_color_teal;
+    }
+  }
+
+  .spawninfo {
+    pre {
+      white-space: normal;
+    }
   }
 }

@@ -85,6 +85,7 @@ export class WorkflowNodeContextComponent {
             this.payloadString = JSON.stringify(this.editableNode.context.default_payload, undefined, 4);
 
             this.modalConfig = new TemplateModalConfig<boolean, boolean, void>(this.nodeContextModal);
+            this.modalConfig.mustScroll = true;
             this.modal = this._modalService.open(this.modalConfig);
 
             this.pipelineSubscription = this._pipelineStore.getPipelines(this.project.key, this.node.pipeline.name).subscribe(pips => {

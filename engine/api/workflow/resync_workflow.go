@@ -5,6 +5,7 @@ import (
 
 	"github.com/ovh/cds/engine/api/cache"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/log"
 )
 
 // Resync a workflow in the given workflow run
@@ -87,4 +88,61 @@ func ResyncWorkflowRunStatus(db gorp.SqlExecutor, wr *sdk.WorkflowRun, chEvent c
 	}
 
 	return nil
+}
+
+// ResyncNodeRunsWithCommits load commits build in this node run and save it into node run
+func ResyncNodeRunsWithCommits(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, nodeRuns []sdk.WorkflowNodeRun) {
+	for _, nodeRun := range nodeRuns {
+		if len(nodeRun.Commits) > 0 {
+			continue
+		}
+		go func(nr sdk.WorkflowNodeRun) {
+			wr, errL := LoadRunByID(db, nr.WorkflowRunID, false)
+			if errL != nil {
+				log.Error("ResyncNodeRuns> Unable to load workflowRun by id %d", nr.WorkflowRunID)
+				return
+			}
+
+			n := wr.Workflow.GetNode(nr.WorkflowNodeID)
+			if n == nil {
+				log.Error("ResyncNodeRuns> Unable to find node by id %d in a workflow run id %d", nr.WorkflowNodeID, nr.WorkflowRunID)
+				return
+			}
+
+			if n.Context == nil || n.Context.Application == nil {
+				log.Debug("ResyncNodeRuns> no application linked")
+				return
+			}
+
+			commits, curVCSInfos, err := GetNodeRunBuildCommits(db, store, proj, &wr.Workflow, n.Name, wr.Number, &nr, n.Context.Application, n.Context.Environment)
+			if err != nil {
+				log.Error("ResyncNodeRuns> cannot get build commits on a node run %v", err)
+			} else {
+				nr.Commits = commits
+			}
+
+			if len(commits) > 0 {
+				if err := updateNodeRunCommits(db, nr.ID, commits); err != nil {
+					log.Error("ResyncNodeRuns> Unable to update node run commits %v", err)
+				}
+			}
+
+			tagsUpdated := false
+			if curVCSInfos.Branch != "" {
+				tagsUpdated = wr.Tag(tagGitBranch, curVCSInfos.Branch)
+			}
+			if curVCSInfos.Hash != "" {
+				tagsUpdated = wr.Tag(tagGitHash, curVCSInfos.Hash)
+			}
+			if curVCSInfos.Remote != "" {
+				tagsUpdated = wr.Tag(tagGitRepository, curVCSInfos.Remote)
+			}
+
+			if tagsUpdated {
+				if err := UpdateWorkflowRunTags(db, wr); err != nil {
+					log.Error("ResyncNodeRuns> Unable to update workflow run tags %v", err)
+				}
+			}
+		}(nodeRun)
+	}
 }

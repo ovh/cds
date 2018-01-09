@@ -191,7 +191,7 @@ func RemoveGroupFromProject(projectKey, groupname string) error {
 // UpdateGroupInProject  call api to update group permission on project
 func UpdateGroupInProject(projectKey, groupname string, permission int) error {
 	if permission < 4 || permission > 7 {
-		return fmt.Errorf("Permission should be between 4-7 \n")
+		return fmt.Errorf("permission should be between 4-7")
 	}
 
 	groupProject := GroupPermission{
@@ -218,7 +218,7 @@ func UpdateGroupInProject(projectKey, groupname string, permission int) error {
 // AddGroupInProject  add a group in a project
 func AddGroupInProject(projectKey, groupname string, permission int) error {
 	if permission < 4 || permission > 7 {
-		return fmt.Errorf("Permission should be between 4-7 \n")
+		return fmt.Errorf("permission should be between 4-7")
 	}
 
 	groupProject := GroupPermission{

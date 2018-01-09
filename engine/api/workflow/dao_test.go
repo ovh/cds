@@ -72,6 +72,8 @@ func TestInsertSimpleWorkflowAndExport(t *testing.T) {
 	assert.Equal(t, w.Root.Pipeline.Name, w1.Root.Pipeline.Name)
 	assertEqualNode(t, w.Root, w1.Root)
 
+	assert.False(t, w1.Root.Context.Mutex)
+
 	ws, err := workflow.LoadAll(db, proj.Key)
 	test.NoError(t, err)
 	assert.Equal(t, 1, len(ws))
@@ -158,6 +160,7 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 			Context: &sdk.WorkflowNodeContext{
 				Application: &app,
 				Environment: &env,
+				Mutex:       true,
 			},
 		},
 	}
@@ -170,6 +173,8 @@ func TestInsertSimpleWorkflowWithApplicationAndEnv(t *testing.T) {
 	assert.Equal(t, w.ID, w1.ID)
 	assert.Equal(t, w.Root.Context.ApplicationID, w1.Root.Context.ApplicationID)
 	assert.Equal(t, w.Root.Context.EnvironmentID, w1.Root.Context.EnvironmentID)
+	assert.Equal(t, w.Root.Context.Mutex, w1.Root.Context.Mutex)
+
 }
 
 func TestInsertComplexeWorkflowAndExport(t *testing.T) {

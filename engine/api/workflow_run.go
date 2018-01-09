@@ -384,6 +384,7 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		name := vars["permWorkflowName"]
 		nodeName := vars["nodeName"]
 		branch := FormString(r, "branch")
+		hash := FormString(r, "hash")
 		number, err := requestVarInt(r, "number")
 		if err != nil {
 			return err
@@ -428,6 +429,19 @@ func (api *API) getWorkflowCommitsHandler() Handler {
 		wfNodeRun := &sdk.WorkflowNodeRun{}
 		if branch != "" {
 			wfNodeRun.VCSBranch = branch
+		}
+		if hash != "" {
+			wfNodeRun.VCSHash = hash
+		} else if wNode != nil && errW == nil {
+			// Find hash and branch of ancestor node run
+			nodeIDsAncestors := wNode.Ancestors(&wfRun.Workflow, false)
+			for _, ancestorID := range nodeIDsAncestors {
+				if wfRun.WorkflowNodeRuns[ancestorID][0].VCSRepository == nodeCtx.Application.RepositoryFullname {
+					wfNodeRun.VCSHash = wfRun.WorkflowNodeRuns[ancestorID][0].VCSHash
+					wfNodeRun.VCSBranch = wfRun.WorkflowNodeRuns[ancestorID][0].VCSBranch
+					break
+				}
+			}
 		}
 
 		commits, _, errC := workflow.GetNodeRunBuildCommits(api.mustDB(), api.Cache, proj, wf, nodeName, wfRun.Number, wfNodeRun, nodeCtx.Application, nodeCtx.Environment)
@@ -587,6 +601,7 @@ func (api *API) postWorkflowRunHandler() Handler {
 		if err != nil {
 			return err
 		}
+		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
 		// Purge workflow run
@@ -924,14 +939,6 @@ func (api *API) getWorkflowNodeRunJobStepHandler() Handler {
 		stepOrder, errS := requestVarInt(r, "stepOrder")
 		if errS != nil {
 			return sdk.WrapError(errS, "getWorkflowNodeRunJobBuildLogsHandler> stepOrder: invalid number")
-		}
-
-		// Check workflow is in project
-		options := workflow.LoadOptions{
-			WithoutNode: true,
-		}
-		if _, errW := workflow.Load(api.mustDB(), api.Cache, projectKey, workflowName, getUser(ctx), options); errW != nil {
-			return sdk.WrapError(errW, "getWorkflowNodeRunJobBuildLogsHandler> Cannot find workflow %s in project %s", workflowName, projectKey)
 		}
 
 		// Check nodeRunID is link to workflow

@@ -103,7 +103,7 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 		newKey.EnvironmentID = env.ID
 
 		switch newKey.Type {
-		case sdk.KeyTypeSsh:
+		case sdk.KeyTypeSSH:
 			pubR, privR, errGenerate := keys.GenerateSSHKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInEnvironmentHandler> Cannot generate sshKey")
@@ -119,7 +119,7 @@ func (api *API) addKeyInEnvironmentHandler() Handler {
 			}
 			newKey.Private = string(priv)
 			newKey.Public = string(pub)
-		case sdk.KeyTypePgp:
+		case sdk.KeyTypePGP:
 			kid, pubR, privR, errGenerate := keys.GeneratePGPKeyPair(newKey.Name)
 			if errGenerate != nil {
 				return sdk.WrapError(errGenerate, "addKeyInEnvironmentHandler> Cannot generate pgpKey")

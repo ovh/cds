@@ -307,14 +307,15 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	copy(stages, n.Pipeline.Stages)
 
 	run := &sdk.WorkflowNodeRun{
-		LastModified:   time.Now(),
-		Start:          time.Now(),
-		Number:         w.Number,
-		SubNumber:      int64(subnumber),
-		WorkflowRunID:  w.ID,
-		WorkflowNodeID: n.ID,
-		Status:         string(sdk.StatusWaiting),
-		Stages:         stages,
+		LastModified:     time.Now(),
+		Start:            time.Now(),
+		Number:           w.Number,
+		SubNumber:        int64(subnumber),
+		WorkflowRunID:    w.ID,
+		WorkflowNodeID:   n.ID,
+		WorkflowNodeName: n.Name,
+		Status:           string(sdk.StatusWaiting),
+		Stages:           stages,
 	}
 
 	runPayload := map[string]string{}
@@ -512,45 +513,40 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
 	w.LastSubNumber = MaxSubNumber(w.WorkflowNodeRuns)
 
-	if n.Context != nil && n.Context.Application != nil {
-		go func() {
-			commits, curVCSInfos, err := GetNodeRunBuildCommits(dbCopy, store, p, &w.Workflow, n.Name, w.Number, run, n.Context.Application, n.Context.Environment)
-			if err != nil {
-				log.Warning("processWorkflowNodeRun> cannot get build commits on a node run %v", err)
-			} else {
-				run.Commits = commits
-			}
-
-			if commits != nil {
-				if err := updateNodeRunCommits(dbCopy, run.ID, commits); err != nil {
-					log.Warning("processWorkflowNodeRun> Unable to update node run commits %v", err)
-				}
-			}
-
-			tagsUpdated := false
-			if gitValues[tagGitBranch] == "" && curVCSInfos.Branch != "" {
-				w.Tag(tagGitBranch, curVCSInfos.Branch)
-				tagsUpdated = true
-			}
-			if gitValues[tagGitHash] == "" && curVCSInfos.Hash != "" {
-				w.Tag(tagGitHash, curVCSInfos.Hash)
-				tagsUpdated = true
-			}
-			if gitValues[tagGitRepository] == "" && curVCSInfos.Remote != "" {
-				w.Tag(tagGitRepository, curVCSInfos.Remote)
-				tagsUpdated = true
-			}
-
-			if tagsUpdated {
-				if err := UpdateWorkflowRunTags(dbCopy, w); err != nil {
-					log.Warning("processWorkflowNodeRun> Unable to update workflow run tags %v", err)
-				}
-			}
-		}()
-	}
-
 	if err := updateWorkflowRun(db, w); err != nil {
 		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
+	}
+
+	//Check the context.mutex to know if we are allowed to run it
+	if n.Context.Mutex {
+		//Check if there are builing workflownoderun with the same workflow_node_name for the same workflow
+		mutexQuery := `select count(1) 
+		from workflow_node_run 
+		join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
+		join workflow on workflow.id = workflow_run.workflow_id
+		where workflow.id = $1
+		and workflow_node_run.id <> $2
+		and workflow_node_run.workflow_node_name = $3 
+		and workflow_node_run.status = $4`
+		nbMutex, err := db.SelectInt(mutexQuery, n.WorkflowID, run.ID, n.Name, string(sdk.StatusBuilding))
+		if err != nil {
+			return false, sdk.WrapError(err, "processWorkflowNodeRun> unable to check mutexes")
+		}
+		if nbMutex > 0 {
+			log.Debug("processWorkflowNodeRun> Noderun %s processed but not executed because of mutex", n.Name)
+			AddWorkflowRunInfo(w, false, sdk.SpawnMsg{
+				ID:   sdk.MsgWorkflowNodeMutex.ID,
+				Args: []interface{}{n.Name},
+			})
+
+			if err := updateWorkflowRun(db, w); err != nil {
+				return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
+			}
+
+			//Mutex is locked. exit without error
+			return true, nil
+		}
+		//Mutex is free, continue
 	}
 
 	//Execute the node run !

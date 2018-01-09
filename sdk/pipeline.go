@@ -110,11 +110,12 @@ type PipelineBuildWarning struct {
 	Action Action `json:"action"`
 }
 
+// This constant deals with pipelines
 const (
 	// Different types of Pipeline
-	BuildPipeline      = "build"
-	DeploymentPipeline = "deployment"
-	TestingPipeline    = "testing"
+	BuildPipeline      = "build"      // DEPRECATED with workflows
+	DeploymentPipeline = "deployment" // DEPRECATED with workflows
+	TestingPipeline    = "testing"    // DEPRECATED with workflows
 	// Different types of warning for PipelineBuild
 	OptionalStepFailed = "optional_step_failed"
 )
@@ -496,7 +497,7 @@ func RemoveGroupFromPipeline(projectKey, pipelineName, groupName string) error {
 // UpdateGroupInPipeline  call api to update group permission on pipeline
 func UpdateGroupInPipeline(projectKey, pipelineName, groupName string, permission int) error {
 	if permission < 4 || permission > 7 {
-		return fmt.Errorf("Permission should be between 4-7 \n")
+		return fmt.Errorf("permission should be between 4-7")
 	}
 
 	groupPipeline := GroupPermission{
@@ -523,7 +524,7 @@ func UpdateGroupInPipeline(projectKey, pipelineName, groupName string, permissio
 // AddGroupInPipeline  add a group in a pipeline
 func AddGroupInPipeline(projectKey, pipelineName, groupName string, permission int) error {
 	if permission < 4 || permission > 7 {
-		return fmt.Errorf("Permission should be between 4-7 \n")
+		return fmt.Errorf("permission should be between 4-7")
 	}
 
 	groupPipeline := GroupPermission{

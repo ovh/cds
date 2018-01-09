@@ -58,6 +58,7 @@ func main() {
 	cmd.AddCommand(cmdUpload(w))
 	cmd.AddCommand(cmdTmpl(w))
 	cmd.AddCommand(cmdTag(w))
+	cmd.AddCommand(cmdRun(w))
 	cmd.AddCommand(cmdUpdate(w))
 	cmd.AddCommand(cmdExit(w))
 	cmd.AddCommand(cmdVersion)
