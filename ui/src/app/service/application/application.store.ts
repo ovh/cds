@@ -11,7 +11,6 @@ import {Variable} from '../../model/variable.model';
 import {GroupPermission} from '../../model/group.model';
 import {ProjectStore} from '../project/project.store';
 import {Trigger} from '../../model/trigger.model';
-import {ApplyTemplateRequest} from '../../model/template.model';
 import {NavbarRecentData} from '../../model/navbar.model';
 import {Notification} from '../../model/notification.model';
 import {Scheduler} from '../../model/scheduler.model';
@@ -137,16 +136,13 @@ export class ApplicationStore {
     }
 
     /**
-     * Application template to create an application.
+     * Create application
      * @param key Project unique key
-     * @param request Request
-     * @returns {Observable<Project>}
+     * @param app New application data
+     * @returns Observable<Application>
      */
-    applyTemplate(key: string, request: ApplyTemplateRequest): Observable<Project> {
-        return this._applicationService.applyTemplate(key, request).map(p => {
-            this._projectStore.updateApplicationsAndPipelines(key, p);
-            return p;
-        });
+    createApplication(key: string, app: Application): Observable<Application> {
+        return this._applicationService.createApplication(key, app).map(appResult => appResult);
     }
 
     /**

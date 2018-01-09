@@ -106,7 +106,7 @@ $ docker-compose up cds-hatchery-swarm
 A `swarm hatchery` spawns CDS Workers inside dedicated containers.
 This ensures isolation of the workspaces and resources.
 
-## Next with Actions, Plugins and Templates
+## Next with Actions, Plugins
 
 - You can download CDS CLI from https://github.com/ovh/cds/releases
 - Run:
@@ -126,12 +126,6 @@ $ cds action add --url https://raw.githubusercontent.com/ovh/cds/master/contrib/
 ```bash
 # download plugin-download-linux-amd64 from  https://github.com/ovh/cds/releases
 $ cds admin plugin add ./plugin-download-linux-amd64
-```
-
-- Import templates, example:
-```bash
-# download cds-template-plain-linux-amd64 from  https://github.com/ovh/cds/releases
-$ cds admin templates add ./cds-template-plain-linux-amd64
 ```
 
 # Go further
