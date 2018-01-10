@@ -6,8 +6,11 @@
 	{{.Page.TableOfContents}}
 	<div><strong>Pages liées</strong></div>
 	<ul>
-		{{ range (index .Page.Menus "main").Children }}
-			<li><a href="{{.URL}}" >{{ .Name }}</a></li>
+		{{ range sort .Page.Sections }}
+			<li><a href="{{.URL}}" >{{ .Title }}</a></li>
+		{{ end }}
+		{{ range sort .Page.Pages }}
+			<li><a href="{{.URL}}" >{{ .Title }}</a></li>
 		{{ end }}
 	</ul>
 </div>

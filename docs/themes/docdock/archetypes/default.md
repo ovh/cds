@@ -1,19 +1,9 @@
 +++
-title = "Create Page"
+title= "{{ replace .TranslationBaseName "-" " " | title }}"
+date= {{ .Date }}
 description = ""
-
-creatordisplayname = "Valere JEANTET"
-creatoremail = "valere.jeantet@gmail.com"
-lastmodifierdisplayname = "Valere JEANTET"
-lastmodifieremail = "valere.jeantet@gmail.com"
-
-tags = ["tag1","tag2"]
-
-[menu.main]
-parent = ""
-identifier = "XXX"
-weight = 20
-
+draft= true
 +++
 
-Lorem Ipsum
+Lorem Ipsum.
+Notice `draft` is set to true.

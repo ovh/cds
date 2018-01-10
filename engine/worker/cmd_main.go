@@ -99,18 +99,22 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		viper.SetEnvPrefix("cds")
 		viper.AutomaticEnv()
 
+		// Do not use viper.Get... in this func
+		// this will not work, as flags are defined on a sub-command too
+
 		if cmd.Flag("auto-update").Value.String() == "true" {
 			updateCmd(w)(cmd, args)
 		}
-		toRun := true
-		for toRun {
+		for {
 			execWorker()
-			if viper.GetBool("single_use") {
-				toRun = false
+			if cmd.Flag("single-use").Value.String() == "true" {
+				log.Info("single-use false, worker will be shutdown...")
+				break
 			} else {
 				log.Info("Restarting worker...")
 			}
 		}
+		log.Info("Stopping worker...")
 	}
 }
 

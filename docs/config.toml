@@ -6,8 +6,9 @@ canonifyurls = true
 
 [params]
 editURL = "https://github.com/ovh/cds/edit/master/docs/content/"
-noSearch = true
 noHomeIcon = true
+themeVariant = "custom"
+
 
 [[menu.shortcuts]]
 pre = "<h3></h3>"
