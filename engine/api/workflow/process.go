@@ -132,7 +132,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 							log.Error("processWorkflowRun> Unable to process node ID=%d: %s", t.WorkflowDestNode.ID, errPwnr)
 							AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 								ID:   sdk.MsgWorkflowError.ID,
-								Args: []interface{}{errPwnr},
+								Args: []interface{}{errPwnr.Error()},
 							})
 						}
 						if conditionOk {
@@ -252,7 +252,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 					if err != nil {
 						AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 							ID:   sdk.MsgWorkflowError.ID,
-							Args: []interface{}{err},
+							Args: []interface{}{err.Error()},
 						})
 						log.Error("processWorkflowRun> Unable to process node ID=%d: %v", t.WorkflowDestNode.ID, err)
 					}
@@ -350,7 +350,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 			if errm1 != nil {
 				AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 					ID:   sdk.MsgWorkflowError.ID,
-					Args: []interface{}{errm1},
+					Args: []interface{}{errm1.Error()},
 				})
 				log.Error("processWorkflowNodeRun> Unable to compute hook payload: %v", errm1)
 			}
@@ -424,7 +424,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	if errParam != nil {
 		AddWorkflowRunInfo(w, true, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errParam},
+			Args: []interface{}{errParam.Error()},
 		})
 		// if there an error -> display it in workflowRunInfo and not stop the launch
 		log.Error("processWorkflowNodeRun> getNodeRunBuildParameters failed. Project:%s Begin [#%d.%d]%s.%d err:%s", p.Name, w.Number, subnumber, w.Workflow.Name, n.ID, errParam)
@@ -520,13 +520,13 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	//Check the context.mutex to know if we are allowed to run it
 	if n.Context.Mutex {
 		//Check if there are builing workflownoderun with the same workflow_node_name for the same workflow
-		mutexQuery := `select count(1) 
-		from workflow_node_run 
+		mutexQuery := `select count(1)
+		from workflow_node_run
 		join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
 		join workflow on workflow.id = workflow_run.workflow_id
 		where workflow.id = $1
 		and workflow_node_run.id <> $2
-		and workflow_node_run.workflow_node_name = $3 
+		and workflow_node_run.workflow_node_name = $3
 		and workflow_node_run.status = $4`
 		nbMutex, err := db.SelectInt(mutexQuery, n.WorkflowID, run.ID, n.Name, string(sdk.StatusBuilding))
 		if err != nil {
@@ -578,7 +578,7 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 			log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
 			AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 				ID:   sdk.MsgWorkflowError.ID,
-				Args: []interface{}{err},
+				Args: []interface{}{err.Error()},
 			})
 		}
 		luacheck.SetVariables(sdk.ParametersToMap(params))
@@ -589,7 +589,7 @@ func checkNodeRunCondition(wr *sdk.WorkflowRun, node sdk.WorkflowNode, params []
 		log.Warning("processWorkflowNodeRun> WorkflowCheckConditions error: %s", errc)
 		AddWorkflowRunInfo(wr, true, sdk.SpawnMsg{
 			ID:   sdk.MsgWorkflowError.ID,
-			Args: []interface{}{errc},
+			Args: []interface{}{errc.Error()},
 		})
 		return false
 	}
