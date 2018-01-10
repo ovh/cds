@@ -88,7 +88,7 @@ export class ProjectShowComponent implements OnInit, OnDestroy {
             opts.push(new LoadOpts('withEnvironments', 'environments'));
         }
 
-        this.projectSubscriber = this._projectStore.getProjects(key).subscribe(prjs => {
+        this.projectSubscriber = this._projectStore.getProjects(key, opts).subscribe(prjs => {
             let proj = prjs.get(key);
             if (proj) {
                 if (!proj.externalChange) {
