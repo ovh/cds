@@ -1,10 +1,6 @@
 +++
 title = "plugin-venom"
 
-[menu.main]
-parent = "actions-plugins"
-identifier = "plugin-venom"
-
 +++
 
 This plugin helps you to run venom. Venom: https://github.com/ovh/venom.

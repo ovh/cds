@@ -2,10 +2,6 @@
 title = "Actions"
 weight = 2
 
-[menu.main]
-parent = "pipelines"
-identifier = "actions"
-
 +++
 
 

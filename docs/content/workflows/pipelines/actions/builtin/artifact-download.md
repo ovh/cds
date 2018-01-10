@@ -2,10 +2,6 @@
 title = "Artifact Download"
 chapter = true
 
-[menu.main]
-parent = "actions-builtin"
-identifier = "builtin-artifact-download"
-
 +++
 
 

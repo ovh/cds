@@ -1,10 +1,6 @@
 +++
 title = "plugin-download"
 
-[menu.main]
-parent = "actions-plugins"
-identifier = "plugin-download"
-
 +++
 
 This is a plugin to download file from URL

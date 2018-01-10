@@ -1,10 +1,6 @@
 +++
 title = "plugin-marathon"
 
-[menu.main]
-parent = "actions-plugins"
-identifier = "plugin-marathon"
-
 +++
 
 This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.

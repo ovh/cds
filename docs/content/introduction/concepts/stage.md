@@ -2,10 +2,6 @@
 title = "Stage"
 weight = 2
 
-[menu.main]
-parent = "concepts"
-identifier = "concepts.stage"
-
 +++
 
 

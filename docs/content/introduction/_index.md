@@ -3,9 +3,6 @@ title = "Introduction"
 weight = 2
 chapter = true
 
-[menu.main]
-identifier = "introduction"
-
 +++
 
 ## What is CDS?

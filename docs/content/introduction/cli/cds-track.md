@@ -2,10 +2,6 @@
 title = "Track CDS Pipeline"
 weight = 7
 
-[menu.main]
-parent = "cli"
-identifier = "cli-git-track"
-
 +++
 
 ### Introduction

@@ -2,10 +2,6 @@
 title = "Environment"
 weight = 4
 
-[menu.main]
-parent = "scopes"
-identifier = "scopes.environment"
-
 +++
 
 ## Environment

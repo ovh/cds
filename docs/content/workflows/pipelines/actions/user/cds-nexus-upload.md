@@ -1,10 +1,6 @@
 +++
 title = "cds-nexus-upload"
 
-[menu.main]
-parent = "actions-user"
-identifier = "cds-nexus-upload"
-
 +++
 
 Upload file on Nexus

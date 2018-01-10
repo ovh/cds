@@ -2,10 +2,6 @@
 title = "Worker"
 weight = 2
 
-[menu.main]
-parent = "concepts"
-identifier = "concepts.worker"
-
 +++
 
 A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.

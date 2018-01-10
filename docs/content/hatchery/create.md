@@ -2,10 +2,6 @@
 title = "Write your own hatchery"
 weight = 7
 
-[menu.main]
-parent = "hatchery"
-identifier = "hatchery.create"
-
 +++
 
 ### Example with a creation of a VSphere hatchery

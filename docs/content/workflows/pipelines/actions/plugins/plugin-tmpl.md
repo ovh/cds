@@ -1,10 +1,6 @@
 +++
 title = "plugin-tmpl"
 
-[menu.main]
-parent = "actions-plugins"
-identifier = "plugin-tmpl"
-
 +++
 
 This action helps you generates a file using a template file and text/template golang package.

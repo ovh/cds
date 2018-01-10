@@ -2,10 +2,6 @@
 title = "Database Management"
 weight = 6
 
-[menu.main]
-parent = "hosting"
-identifier = "hosting.database"
-
 +++
 
 

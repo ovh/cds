@@ -1,10 +1,6 @@
 +++
 title = "cds-docker-package"
 
-[menu.main]
-parent = "actions-user"
-identifier = "cds-docker-package"
-
 +++
 
 Build a Docker image and push it to a docker repository

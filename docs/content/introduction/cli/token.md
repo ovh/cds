@@ -2,10 +2,6 @@
 title = "Generate a Token"
 weight = 2
 
-[menu.main]
-parent = "cli"
-identifier = "cli-token"
-
 +++
 
 ### Purpose

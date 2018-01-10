@@ -2,10 +2,6 @@
 title = "Worker"
 weight = 4
 
-[menu.main]
-parent = ""
-identifier = "worker"
-
 +++
 
 
