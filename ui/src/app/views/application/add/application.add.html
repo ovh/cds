@@ -1,60 +1,56 @@
-<ng-template #addApplication>
-    <div>
-        <div class="scrollingContent">
-            <div class="paddingContent">
-                <div class="viewContent">
-                    <form class="ui form" (ngSubmit)="createApplication()">
-                        <h2>{{ 'application_create' | translate }}</h2>
-                        <div class="ui grid">
-                            <div class="one wide column">
+<div id="AddApplication" class="scrollingContent">
+    <div class="paddingContent">
+        <div class="viewContent">
+            <form class="ui form" (ngSubmit)="createApplication()">
+                <h2>{{ 'application_create' | translate }}</h2>
+                <div class="ui grid">
+                    <div class="one wide column">
 
-                            </div>
-                            <div class="fourteen wide column">
-                                <div class="field">
-                                    <label>{{'application_name' | translate}}</label>
-                                    <input type="text" name="appname" [(ngModel)]="selectedName">
-                                    <div class="ui error message" *ngIf="appPatternError">
-                                        {{ 'application_name_error' | translate }}
-                                    </div>
-                                </div>
-
-                                <div class="grouped fields">
-                                    <label>{{ 'application_new_title' | translate }}</label>
-                                    <div class="field">
-                                        <input type="radio" name="creation" value="empty" [(ngModel)]="typeofCreation"> {{ 'wizard_app_empty' | translate }}
-                                    </div>
-                                    <div class="field" *ngIf="project.applications && project.applications.length > 0">
-                                        <input type="radio" name="creation" value="clone" [(ngModel)]="typeofCreation"> {{ 'wizard_app_clone' | translate }}
-                                    </div>
-                                </div>
-
-                                <div class="ui grid">
-                                    <div class="wide column sixteen">
-
-                                        <div class="field" *ngIf="typeofCreation === 'clone'">
-                                            <sm-select [options]="{'fullTextSearch': true}" [model]="selectedApplicationName">
-                                                <option *ngFor="let app of project.applications" [value]="app.name">{{app.name}}</option>
-                                            </sm-select>
-                                        </div>
-
-                                        <div class="field" *ngIf="variables && variables.length > 0">
-                                            <app-variable [variables]="variables" mode="launcher"></app-variable>
-                                        </div>
-                                        <div class="field">
-                                            <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'applications'}">{{ 'btn_cancel' | translate }}</a>
-                                            <button class="ui green right floated button" [class.loading]="loadingCreate" [class.disabled]="!selectedName || selectedName === ''">{{ 'btn_create' | translate }}
-                                            </button>
-                                        </div>
-                                    </div>
-
-
-
-                                </div>
+                    </div>
+                    <div class="fourteen wide column">
+                        <div class="field">
+                            <label>{{'application_name' | translate}}</label>
+                            <input type="text" name="appname" [(ngModel)]="selectedName">
+                            <div class="ui error message" *ngIf="appPatternError">
+                                {{ 'application_name_error' | translate }}
                             </div>
                         </div>
-                    </form>
+
+                        <div class="grouped fields">
+                            <label>{{ 'application_new_title' | translate }}</label>
+                            <div class="field">
+                                <input type="radio" name="creation" value="empty" [(ngModel)]="typeofCreation" (change)="updateSelection('empty')"> {{ 'wizard_app_empty' | translate }}
+                            </div>
+                            <div class="field" *ngIf="project.applications && project.applications.length > 0">
+                                <input type="radio" name="creation" value="clone" [(ngModel)]="typeofCreation" (change)="updateSelection('clone')"> {{ 'wizard_app_clone' | translate }}
+                            </div>
+                        </div>
+
+                        <div class="ui grid">
+                            <div class="wide column sixteen">
+
+                                <div class="field" *ngIf="typeofCreation === 'clone'">
+                                    <sm-select [options]="{'fullTextSearch': true}" [model]="selectedApplicationName" (modelChange)="updateSelectedApplicationToClone($event)">
+                                        <option *ngFor="let app of project.applications" [value]="app.name">{{app.name}}</option>
+                                    </sm-select>
+                                </div>
+
+                                <div class="field" *ngIf="variables && variables.length > 0">
+                                    <app-variable [variables]="variables" mode="launcher"></app-variable>
+                                </div>
+                                <div class="field">
+                                    <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'applications'}">{{ 'btn_cancel' | translate }}</a>
+                                    <button class="ui green right floated button" [class.loading]="loadingCreate" [class.disabled]="!selectedName || selectedName === ''">{{ 'btn_create' | translate }}
+                                    </button>
+                                </div>
+                            </div>
+
+
+
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
-</ng-template>
+</div>

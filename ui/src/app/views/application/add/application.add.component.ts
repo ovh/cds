@@ -4,6 +4,7 @@ import {Project} from '../../../model/project.model';
 import {Application} from '../../../model/application.model';
 import {Variable} from '../../../model/variable.model';
 import {ApplicationStore} from '../../../service/application/application.store';
+import {ProjectStore} from '../../../service/project/project.store';
 import {TranslateService} from '@ngx-translate/core';
 import {ToastService} from '../../../shared/toast/ToastService';
 import {VariableService} from '../../../service/variable/variable.service';
@@ -33,7 +34,7 @@ export class ApplicationAddComponent implements OnInit {
 
     suggestion: Array<string>;
 
-    constructor(private _activatedRoute: ActivatedRoute,
+    constructor(private _activatedRoute: ActivatedRoute, private _projectStore: ProjectStore,
                 private _appStore: ApplicationStore, private _toast: ToastService, private _translate: TranslateService,
                 private _router: Router, private _varService: VariableService) {
         this._activatedRoute.data.subscribe( datas => {
@@ -45,6 +46,11 @@ export class ApplicationAddComponent implements OnInit {
         this._varService.getContextVariable(this.project.key).pipe(first()).subscribe( s => {
             this.suggestion = s;
         });
+        if (!this.project.applications) {
+            this._projectStore.getProjectApplicationsResolver(this.project.key).pipe(first()).subscribe(proj => {
+                this.project = proj;
+            });
+        }
     }
 
     updateSelection(type): void {
