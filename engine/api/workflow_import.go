@@ -111,6 +111,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 			project.LoadOptions.WithPipelines,
 		)
 		if errp != nil {
+			log.Error("postWorkflowPushHandler> Unable to load project %s: %v", key, errp)
 			return sdk.WrapError(errp, "postWorkflowPushHandler> Unable load project")
 		}
 
@@ -158,27 +159,31 @@ func (api *API) postWorkflowPushHandler() Handler {
 			case strings.Contains(hdr.Name, ".app."):
 				var app exportentities.Application
 				if err := yaml.Unmarshal(b, &app); err != nil {
-					mError.Append(fmt.Errorf("Unable to load application %s: %v", hdr.Name, err))
+					log.Error("postWorkflowPushHandler> Unable to unmarshal application %s: %v", hdr.Name, err)
+					mError.Append(fmt.Errorf("Unable to unmarshal application %s: %v", hdr.Name, err))
 					continue
 				}
 				apps[hdr.Name] = app
 			case strings.Contains(hdr.Name, ".pip."):
 				var pip exportentities.PipelineV1
 				if err := yaml.Unmarshal(b, &pip); err != nil {
-					mError.Append(fmt.Errorf("Unable to load pipeline %s: %v", hdr.Name, err))
+					log.Error("postWorkflowPushHandler> Unable to unmarshal pipeline %s: %v", hdr.Name, err)
+					mError.Append(fmt.Errorf("Unable to unmarshal pipeline %s: %v", hdr.Name, err))
 					continue
 				}
 				pips[hdr.Name] = pip
 			case strings.Contains(hdr.Name, ".env."):
 				var env exportentities.Environment
 				if err := yaml.Unmarshal(b, &env); err != nil {
-					mError.Append(fmt.Errorf("Unable to load environment %s: %v", hdr.Name, err))
+					log.Error("postWorkflowPushHandler> Unable to unmarshal environment %s: %v", hdr.Name, err)
+					mError.Append(fmt.Errorf("Unable to unmarshal environment %s: %v", hdr.Name, err))
 					continue
 				}
 				envs[hdr.Name] = env
 			default:
 				if err := yaml.Unmarshal(b, &wrkflw); err != nil {
-					mError.Append(fmt.Errorf("Unable to load workflow %s: %v", hdr.Name, err))
+					log.Error("postWorkflowPushHandler> Unable to unmarshal workflow %s: %v", hdr.Name, err)
+					mError.Append(fmt.Errorf("Unable to unmarshal workflow %s: %v", hdr.Name, err))
 					continue
 				}
 			}
@@ -194,16 +199,18 @@ func (api *API) postWorkflowPushHandler() Handler {
 			log.Debug("postWorkflowPushHandler> Parsing %s", filename)
 			msgList, err := application.ParseAndImport(tx, api.Cache, proj, &app, true, project.DecryptWithBuiltinKey, getUser(ctx))
 			if err != nil {
+				log.Error("postWorkflowPushHandler> Unable to parse&import application %s: %v", app.Name, err)
 				mError.Append(err)
 			}
 			allMsg = append(allMsg, msgList...)
 			log.Debug("postWorkflowPushHandler> -- %s OK", filename)
 		}
 
-		for filename, app := range envs {
+		for filename, env := range envs {
 			log.Debug("postWorkflowPushHandler> Parsing %s", filename)
-			msgList, err := environment.ParseAndImport(tx, api.Cache, proj, &app, true, project.DecryptWithBuiltinKey, getUser(ctx))
+			msgList, err := environment.ParseAndImport(tx, api.Cache, proj, &env, true, project.DecryptWithBuiltinKey, getUser(ctx))
 			if err != nil {
+				log.Error("postWorkflowPushHandler> Unable to parse&import environment %s: %v", env.Name, err)
 				mError.Append(err)
 			}
 			allMsg = append(allMsg, msgList...)
@@ -214,10 +221,15 @@ func (api *API) postWorkflowPushHandler() Handler {
 			log.Debug("postWorkflowPushHandler> Parsing %s", filename)
 			msgList, err := pipeline.ParseAndImport(tx, api.Cache, proj, &pip, true, getUser(ctx))
 			if err != nil {
+				log.Error("postWorkflowPushHandler> Unable to parse&import pipeline %s: %v", pip.Name, err)
 				mError.Append(err)
 			}
 			allMsg = append(allMsg, msgList...)
 			log.Debug("postWorkflowPushHandler> -- %s OK", filename)
+		}
+
+		if !mError.IsEmpty() {
+			return mError
 		}
 
 		//Reload project to get apps, envs and pipelines updated
@@ -228,20 +240,18 @@ func (api *API) postWorkflowPushHandler() Handler {
 			project.LoadOptions.WithPipelines,
 		)
 		if errp != nil {
+			log.Error("postWorkflowPushHandler> Unable to reload project %s: %v", proj.Name, errp)
 			return sdk.WrapError(errp, "postWorkflowPushHandler> Unable load project")
 		}
 
 		msgList, err := workflow.ParseAndImport(tx, api.Cache, proj, &wrkflw, true, getUser(ctx))
 		if err != nil {
-			mError.Append(err)
+			log.Error("postWorkflowPushHandler> Unable to parse&import workflow %s: %v", wrkflw.Name, err)
+			return sdk.WrapError(err, "postWorkflowPushHandler> Unable to parse&import workflow")
 		}
+
 		allMsg = append(allMsg, msgList...)
-
 		msgListString := translate(r, allMsg)
-
-		if !mError.IsEmpty() {
-			return mError
-		}
 
 		if err := project.UpdateLastModified(tx, api.Cache, getUser(ctx), proj, sdk.ProjectPipelineLastModificationType); err != nil {
 			return sdk.WrapError(err, "postWorkflowPushHandler> Unable to update project")
