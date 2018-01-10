@@ -5,6 +5,7 @@ import {Variable} from './variable.model';
 import {Environment} from './environment.model';
 import {RepositoriesManager} from './repositories.model';
 import {Workflow} from './workflow.model';
+import {Key} from './keys.model';
 
 export class Project {
     key: string;
@@ -22,6 +23,7 @@ export class Project {
     last_modified: string;
     workflow_migration: string;
     vcs_servers: Array<RepositoriesManager>;
+    keys: Array<Key>;
     // true if someone has updated the project ( used for warnings )
     externalChange: boolean;
 }

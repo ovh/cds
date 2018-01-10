@@ -19,6 +19,7 @@ import {ApplicationPollerItemComponent} from './show/poller/item/poller.item.com
 import {ApplicationHookItemFormComponent} from './show/hook/edit/item.form.component';
 import {ApplicationPollerFormComponent} from './show/poller/edit/poller.edit.component';
 import {ApplicationPipelineDetachComponent} from './show/workflow/pipeline/detach/pipeline.detach.component';
+import {ApplicationKeysComponent} from './show/keys/appplication.keys.component';
 
 @NgModule({
     declarations: [
@@ -39,7 +40,8 @@ import {ApplicationPipelineDetachComponent} from './show/workflow/pipeline/detac
         ApplicationTreeWorkflowComponent,
         ApplicationTriggerComponent,
         ApplicationWorkflowComponent,
-        ApplicationWorkflowItemComponent
+        ApplicationWorkflowItemComponent,
+        ApplicationKeysComponent
     ],
     imports: [
         SharedModule,

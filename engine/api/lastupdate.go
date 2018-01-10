@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -105,24 +106,23 @@ func (b *lastUpdateBroker) Start(c context.Context, DBFunc func() *gorp.DbMap, s
 					continue
 				}
 
-				switch lastModif.Type {
-				case sdk.ProjectLastModificationType:
+				switch strings.Split(lastModif.Type, ".")[0] {
+				case "project":
 					if permission.ProjectPermission(lastModif.Key, i.User) >= permission.PermissionRead {
 						i.Queue <- msg
 						continue
 					}
-				case sdk.ApplicationLastModificationType:
+				case "application":
 					if permission.ApplicationPermission(lastModif.Key, lastModif.Name, i.User) >= permission.PermissionRead {
 						i.Queue <- msg
 						continue
 					}
-				case sdk.PipelineLastModificationType:
+				case "pipeline":
 					if permission.PipelinePermission(lastModif.Key, lastModif.Name, i.User) >= permission.PermissionRead {
 						i.Queue <- msg
 						continue
 					}
 				}
-
 			}
 			b.mutex.Unlock()
 		}
