@@ -8,7 +8,8 @@ function generateUserActionsDocumentation {
   filename=$(basename "$action")
   actionName=${filename/.hcl/}
 
-  ACTION_FILE="content/building-pipelines/building-pipelines.actions.user.${actionName}.md"
+  mkdir -p content/workflows/pipelines/actions/user
+  ACTION_FILE="content/workflows/pipelines/actions/user/${actionName}.md"
 
   echo "generate ${ACTION_FILE}"
 
@@ -36,8 +37,9 @@ function generatePluginsDocumentation {
     continue;
   fi
 
+  mkdir -p content/workflows/pipelines/actions/plugins
   OLD=`pwd`
-  PLUGIN_FILE="$OLD/content/building-pipelines/building-pipelines.actions.plugins.${plugin}.md"
+  PLUGIN_FILE="$OLD/content/workflows/pipelines/actions/plugins/${plugin}.md"
 
   cd ../contrib/plugins/${plugin}
 

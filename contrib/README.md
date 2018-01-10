@@ -13,15 +13,11 @@ See [CDS documentation](https://github.com/ovh/cds) for more details.
 
 ## Actions
 
-[See User Actions Documentation](https://ovh.github.io/cds/building-pipelines/building-pipelines.actions/)
+[See User Actions Documentation](https://ovh.github.io/cds/workflows/pipelines/pipelines.actions/)
 
 ## Plugins
 
-[See Plugins Documentation](https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/)
-
-## Secret Backends
-
-- [Vault Secret Backend](https://github.com/ovh/cds/tree/master/contrib/secret-backends/secret-backend-vault)
+[See Plugins Documentation](https://ovh.github.io/cds/workflows/pipelines/pipelines.actions.user-actions/)
 
 ## µServices
 
