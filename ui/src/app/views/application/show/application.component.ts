@@ -100,7 +100,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
                version: queryParams['version'] || ' '
            };
 
-           if (this.project && this.application) {
+           if (this.project && this.application && this.application.workflow_migration !== 'DONE') {
                this.startWorker(this.project.key);
            }
         });
@@ -232,7 +232,7 @@ export class ApplicationShowComponent implements OnInit, OnDestroy {
     }
 
     showTab(tab: string): void {
-        if (this.application.workflow_migration === 'DONE' && this.selectedTab === 'workflow') {
+        if (this.application.workflow_migration === 'DONE' && tab === 'workflow') {
             tab = 'usage';
         }
 

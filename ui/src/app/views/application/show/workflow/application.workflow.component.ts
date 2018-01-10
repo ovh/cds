@@ -23,6 +23,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
     @Input() project: Project;
     @Input() application: Application;
     @Input() applicationFilter: any;
+    @Input() tab: string;
     @Output() changeWorkerEvent = new EventEmitter<boolean>();
 
     // Allow angular update from work started outside angular context
@@ -290,7 +291,7 @@ export class ApplicationWorkflowComponent implements OnInit, OnDestroy {
 
         this._router.navigate(['/project/', this.project.key, 'application', this.application.name], {
           queryParams: {
-            tab: 'workflow',
+            tab: this.tab,
             branch: this.applicationFilter.branch,
             version: this.applicationFilter.version,
             remote: this.applicationFilter.remote
