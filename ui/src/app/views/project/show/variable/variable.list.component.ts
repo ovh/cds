@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import {Component, Input, OnInit, ViewChild} from '@angular/core';
 import {WarningModalComponent} from '../../../../shared/modal/warning/warning.component';
 import {Project} from '../../../../model/project.model';
 import {PermissionValue} from '../../../../model/permission.model';
@@ -6,7 +6,7 @@ import {ProjectStore} from '../../../../service/project/project.store';
 import {VariableEvent} from '../../../../shared/variable/variable.event.model';
 import {ToastService} from '../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
-import {finalize} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
 
 @Component({
     selector: 'app-project-variables',
@@ -24,19 +24,22 @@ export class ProjectVariablesComponent implements OnInit {
     loading = true;
     varFormLoading = false;
 
-    constructor(
-      private _projectStore: ProjectStore,
-      private _translate: TranslateService,
-      private _toast: ToastService) {
+    constructor(private _projectStore: ProjectStore,
+                private _translate: TranslateService,
+                private _toast: ToastService) {
 
     }
 
     ngOnInit() {
-      this._projectStore.getProjectVariablesResolver(this.project.key)
-        .pipe(finalize(() => this.loading = false))
-        .subscribe((proj) => {
-          this.project = proj;
-        });
+        if (this.project.variables) {
+            this.loading = false;
+            return;
+        }
+        this._projectStore.getProjectVariablesResolver(this.project.key)
+            .pipe(first(), finalize(() => this.loading = false))
+            .subscribe((proj) => {
+                this.project = proj;
+            });
     }
 
     variableEvent(event: VariableEvent, skip?: boolean): void {

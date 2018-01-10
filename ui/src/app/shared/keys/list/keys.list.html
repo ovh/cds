@@ -1,0 +1,46 @@
+
+<div class="keys" *ngIf="keys">
+    <table class="ui fixed celled table" *ngIf="getDataForCurrentPage().length > 0">
+        <thead>
+        <tr>
+            <th class="two wide">{{ 'keys_name' | translate }}</th>
+            <th class="two wide">{{ 'keys_type' | translate }}</th>
+            <th class="ten wide">{{ 'keys_public' | translate }}</th>
+            <th class="two wide" *ngIf="edit === permission.READ_WRITE_EXECUTE"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let k of getDataForCurrentPage()">
+            <td>
+                {{ k.name }}
+            </td>
+            <td>
+                {{ k.type }}
+            </td>
+            <td>
+                <pre>
+                {{ k.public }}
+                    </pre>
+            </td>
+            <td *ngIf="edit === permission.READ_WRITE_EXECUTE">
+                <app-delete-button [loading]="loading" (event)="deleteKey(k)"></app-delete-button>
+            </td>
+        </tr>
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="4">
+                <div class="ui right floated pagination menu" >
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+</div>

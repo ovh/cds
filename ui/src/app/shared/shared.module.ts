@@ -71,6 +71,8 @@ import {WorkflowNodeConditionListComponent} from './workflow/node/conditions/con
 import {WorkflowNodeConditionsComponent} from './workflow/node/conditions/node.conditions.component';
 import {DiffComponent} from './diff/diff.component';
 import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
+import {KeysFormComponent} from './keys/form/keys.form.component';
+import {KeysListComponent} from './keys/list/keys.list.component';
 
 @NgModule({
     imports: [ CommonModule, NgSemanticModule, FormsModule, TranslateModule, DragulaModule, MomentModule,
@@ -87,6 +89,8 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         GroupFormComponent,
         HistoryComponent,
         KeysPipe,
+        KeysFormComponent,
+        KeysListComponent,
         NgForNumber,
         NgxAutoScroll,
         ParameterDescriptionComponent,
@@ -158,6 +162,8 @@ import {SpanColoredComponent} from './diff/span-colored/span-colored.component';
         GroupFormComponent,
         HistoryComponent,
         KeysPipe,
+        KeysFormComponent,
+        KeysListComponent,
         MarkdownModule,
         MomentModule,
         NgForNumber,

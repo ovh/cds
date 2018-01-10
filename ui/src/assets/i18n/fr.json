@@ -163,6 +163,7 @@
   "common_environment" : "Environnement",
   "common_environment_title" : "Environnement : ",
   "common_environments" : "Environnements",
+  "common_keys" : "Clés",
   "common_history" : "Historique",
   "common_loading" : "Chargement...",
   "common_loading_project" : "Chargement du projet...",
@@ -200,6 +201,15 @@
   "common_usage" : "Usage",
   "common_orientation" : "Orientation",
   "common_copy_clipboard" : "Copier dans le presse papier",
+
+  "keys_added" : "La clé a été ajoutée",
+  "keys_add_title" : "Ajouter une clé",
+  "keys_name" : "Nom de la clé",
+  "keys_list_title" : "Liste des clés",
+  "keys_loading" : "Chargement des clés...",
+  "keys_public" : "Clé publique",
+  "keys_removed" : "La clé a été supprimée",
+  "keys_type" : "Type de clé",
 
   "usage_application_list" : "Applications utilisées",
   "usage_workflow_list" : "Workflows utilisés",

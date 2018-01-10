@@ -8,6 +8,7 @@ import {Hook} from './hook.model';
 import {Usage} from './usage.model';
 import {WorkflowItem} from './application.workflow.model';
 import {Scheduler} from './scheduler.model';
+import {Key} from './keys.model';
 
 export class Application {
     id: number;
@@ -27,6 +28,7 @@ export class Application {
     schedulers: Array<Scheduler>;
     workflow_migration: string;
     usage: Usage;
+    keys: Array<Key>;
 
     project_key: string; // project unique key
 
