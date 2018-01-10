@@ -25,11 +25,6 @@ function getScrollBarWidth() {
     return (w1 - w2);
 };
 
-function setMenuHeight() {
-    $('#sidebar .highlightable').height($('#sidebar').innerHeight() - $('#header-wrapper').height() - 40);
-    $('#sidebar .highlightable').perfectScrollbar('update');
-}
-
 function fallbackMessage(action) {
     var actionMsg = '';
     var actionKey = (action === 'cut' ? 'X' : 'C');
@@ -49,7 +44,6 @@ function fallbackMessage(action) {
 
 // for the window resize
 $(window).resize(function() {
-    setMenuHeight();
 });
 
 // debouncing function from John Hann
@@ -83,10 +77,13 @@ $(window).resize(function() {
 
 
 jQuery(document).ready(function() {
+    jQuery('#sidebar .category-icon').on('click', function() {
+        $( this ).toggleClass("fa-angle-down fa-angle-right") ;
+        $( this ).parent().parent().children('ul').toggle() ;
+        return false;
+    });
+
     var sidebarStatus = searchStatus = 'open';
-    $('#sidebar .highlightable').perfectScrollbar();
-    // set the menu height
-    setMenuHeight();
 
     jQuery('#overlay').on('click', function() {
         jQuery(document.body).toggleClass('sidebar-hidden');
@@ -139,7 +136,7 @@ jQuery(document).ready(function() {
         $(".highlightable").unhighlight({ element: 'mark' }).highlight(value, { element: 'mark' });
 
         if (ajax && ajax.abort) ajax.abort();
-        
+
         jQuery('[data-search-clear]').on('click', function() {
             jQuery('[data-search-input]').val('').trigger('input');
             sessionStorage.removeItem('search-input');
@@ -147,10 +144,19 @@ jQuery(document).ready(function() {
         });
     });
 
+    $.expr[":"].contains = $.expr.createPseudo(function(arg) {
+        return function( elem ) {
+            return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
+        };
+    });
+
     if (sessionStorage.getItem('search-value')) {
-        jQuery(document.body).removeClass('searchbox-hidden');
-        jQuery('[data-search-input]').val(sessionStorage.getItem('search-value'));
-        jQuery('[data-search-input]').trigger('input');
+        var searchValue = sessionStorage.getItem('search-value')
+        $(document.body).removeClass('searchbox-hidden');
+        $('[data-search-input]').val(searchValue);
+        $('[data-search-input]').trigger('input');
+        var searchedElem = $('#body-inner').find(':contains(' + searchValue + ')').get(0);
+        searchedElem && searchedElem.scrollIntoView();
     }
 
     // clipboard
@@ -186,7 +192,7 @@ jQuery(document).ready(function() {
                 clipInit = true;
             }
 
-            code.after('<span class="copy-to-clipboard" title="Copy to clipboard" />');
+            code.after('<span class="copy-to-clipboard" title="Copy to clipboard"><object class="clippy-icon" type="image/svg+xml" data="'+baseurl+'/images/clippy.svg"/></span>');
             code.next('.copy-to-clipboard').on('mouseleave', function() {
                 $(this).attr('aria-label', null).removeClass('tooltipped tooltipped-s tooltipped-w');
             });
@@ -218,13 +224,25 @@ jQuery(document).ready(function() {
     $('#top-bar a:not(:has(img)):not(.btn)').addClass('highlight');
     $('#body-inner a:not(:has(img)):not(.btn)').addClass('highlight');
 
-    $('#toc-menu').hover(function() {
-        $('.progress').stop(true, false, true).fadeToggle(100);
-    });
+    var touchsupport = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0)
+    if (!touchsupport){ // browser doesn't support touch
+        $('#toc-menu').hover(function() {
+            $('.progress').stop(true, false, true).fadeToggle(100);
+        });
 
-    $('.progress').hover(function() {
-        $('.progress').stop(true, false, true).fadeToggle(100);
-    });
+        $('.progress').hover(function() {
+            $('.progress').stop(true, false, true).fadeToggle(100);
+        });
+    }
+    if (touchsupport){ // browser does support touch
+        $('#toc-menu').click(function() {
+            $('.progress').stop(true, false, true).fadeToggle(100);
+        });
+        $('.progress').click(function() {
+            $('.progress').stop(true, false, true).fadeToggle(100);
+        });
+    }
+
 });
 
 jQuery(window).on('load', function() {
