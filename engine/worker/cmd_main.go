@@ -103,19 +103,29 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		// this will not work, as flags are defined on a sub-command too
 
 		var autoUpdate, singleUse bool
-		if cmd.Flag("auto-update").Value.String() == "true" || os.Getenv("CDS_AUTO_UPDATE") == "true" || os.Getenv("CDS_AUTO_UPDATE") == "1" {
+		if os.Getenv("CDS_AUTO_UPDATE") != "" {
+			if os.Getenv("CDS_AUTO_UPDATE") == "true" || os.Getenv("CDS_AUTO_UPDATE") == "1" {
+				autoUpdate = true
+			}
+		} else if cmd.Flag("auto-update").Value.String() == "true" {
 			autoUpdate = true
 		}
 
 		// default false for single use
 		singleUse = true
-		if cmd.Flag("single-use").Value.String() == "false" || os.Getenv("CDS_SINGLE_USE") == "false" || os.Getenv("CDS_SINGLE_USE") == "0" {
+		if os.Getenv("CDS_SINGLE_USE") != "" {
+			if os.Getenv("CDS_SINGLE_USE") == "false" || os.Getenv("CDS_SINGLE_USE") == "0" {
+				singleUse = false
+			}
+		} else if cmd.Flag("single-use").Value.String() == "false" {
 			singleUse = false
 		}
 
 		if autoUpdate {
 			updateCmd(w)(cmd, args)
 		}
+
+		log.Info("running worker CDS_SINGLE_USE:%t...", singleUse)
 		for {
 			execWorker()
 			if singleUse {
