@@ -1,5 +1,5 @@
 +++
-title = "Setup Docker Worker Model with your own image"
+title = "Worker Model with your own image"
 weight = 3
 
 +++

@@ -1,5 +1,5 @@
 +++
-title = "Setup VSphere Worker Model"
+title = "VSphere Worker Model"
 weight = 4
 
 +++

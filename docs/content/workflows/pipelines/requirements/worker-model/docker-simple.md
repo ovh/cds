@@ -1,5 +1,5 @@
 +++
-title = "Setup Worker Model From Docker Hub"
+title = "Worker Model From Docker Hub"
 weight = 2
 
 +++
