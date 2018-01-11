@@ -56,6 +56,14 @@ func (api *API) getWorkflowRunsHandler() Handler {
 			limit = defaultLimit
 		}
 
+		//Parse all form values
+		mapFilters := map[string]string{}
+		for k := range r.Form {
+			if k != "offset" && k != "limit" {
+				mapFilters[k] = r.FormValue(k)
+			}
+		}
+
 		//Maximim range is set to 50
 		w.Header().Add("Accept-Range", "run 50")
 		if limit-offset > rangeMax {
@@ -64,7 +72,7 @@ func (api *API) getWorkflowRunsHandler() Handler {
 
 		key := vars["key"]
 		name := vars["permWorkflowName"]
-		runs, offset, limit, count, err := workflow.LoadRuns(api.mustDB(), key, name, offset, limit)
+		runs, offset, limit, count, err := workflow.LoadRuns(api.mustDB(), key, name, offset, limit, mapFilters)
 		if err != nil {
 			return sdk.WrapError(err, "getWorkflowRunsHandler> Unable to load workflow runs")
 		}

@@ -168,7 +168,7 @@ func TestManualRun1(t *testing.T) {
 	}
 
 	//TestLoadRuns
-	runs, offset, limit, count, err := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 50)
+	runs, offset, limit, count, err := workflow.LoadRuns(db, proj.Key, w1.Name, 0, 50, nil)
 	test.NoError(t, err)
 	assert.Equal(t, 0, offset)
 	assert.Equal(t, 50, limit)
