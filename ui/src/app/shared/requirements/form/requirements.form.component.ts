@@ -10,6 +10,8 @@ import {finalize, first} from 'rxjs/operators';
 import {TranslateService} from '@ngx-translate/core';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
 
+export const OSArchitecture = 'os-architecture';
+
 @Component({
     selector: 'app-requirements-form',
     templateUrl: './requirements.form.html',
@@ -97,7 +99,7 @@ export class RequirementsFormComponent implements OnInit {
                 }
             });
 
-        this._requirementStore.getRequirementsTypeValues('os-architecture').pipe(first()).subscribe(values => {
+        this._requirementStore.getRequirementsTypeValues(OSArchitecture).pipe(first()).subscribe(values => {
             this._suggestWithOsArch = values.concat(this._suggest);
         });
     }
@@ -128,8 +130,8 @@ export class RequirementsFormComponent implements OnInit {
             case 'volume':
                 this.newRequirement.name = this.getVolumeName();
                 break;
-            case 'os-architecture':
-                this.newRequirement.name = 'os-architecture';
+            case OSArchitecture:
+                this.newRequirement.name = OSArchitecture;
                 break;
             default:
                 // else, name is the value of the requirement
