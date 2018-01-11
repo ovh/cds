@@ -17,7 +17,7 @@ import (
 // processWorkflowRun triggers workflow node for every workflow.
 // It contains all the logic for triggers and joins processing.
 func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.Project, w *sdk.WorkflowRun, hookEvent *sdk.WorkflowNodeRunHookEvent, manual *sdk.WorkflowNodeRunManual, startingFromNode *int64, chanEvent chan<- interface{}) (bool, error) {
-	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess int
+	var nodesRunFailed, nodesRunStopped, nodesRunBuilding, nodesRunSuccess, nodesRunSkipped, nodesRunDisabled int
 	t0 := time.Now()
 	log.Debug("processWorkflowRun> Begin [#%d]%s", w.Number, w.Workflow.Name)
 	defer func() {
@@ -99,11 +99,11 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 			log.Debug("last current sub number %v nodeRun version %v.%v and status %v", lastCurrentSn, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 			// Only the last subversion
 			if lastCurrentSn == nodeRun.SubNumber {
-				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped)
+				computeRunStatus(nodeRun.Status, &nodesRunSuccess, &nodesRunBuilding, &nodesRunFailed, &nodesRunStopped, &nodesRunSkipped, &nodesRunDisabled)
 			}
 
 			//Trigger only if the node is over (successful or not)
-			if nodeRun.Status == sdk.StatusSuccess.String() || nodeRun.Status == sdk.StatusFail.String() {
+			if sdk.StatusIsTerminated(nodeRun.Status) && nodeRun.Status != sdk.StatusNeverBuilt.String() {
 				//Find the node in the workflow
 				node := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
 				if node == nil {
@@ -286,7 +286,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 		}
 	}
 
-	w.Status = getRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped)
+	w.Status = getRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped, nodesRunSkipped, nodesRunDisabled)
 	if err := updateWorkflowRun(db, w); err != nil {
 		return false, sdk.WrapError(err, "processWorkflowRun>")
 	}
@@ -608,32 +608,40 @@ func AddWorkflowRunInfo(run *sdk.WorkflowRun, isError bool, infos ...sdk.SpawnMs
 }
 
 // getRunStatus return the status depending on number of runs in success, building, stopped and fail
-func getRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped int) string {
+func getRunStatus(successStatus, buildingStatus, failStatus, stoppedStatus, skippedStatus, disabledStatus int) string {
 	switch {
-	case nodesRunBuilding > 0:
-		return string(sdk.StatusBuilding)
-	case nodesRunFailed > 0:
-		return string(sdk.StatusFail)
-	case nodesRunStopped > 0:
-		return string(sdk.StatusStopped)
-	case nodesRunSuccess > 0:
-		return string(sdk.StatusSuccess)
+	case buildingStatus > 0:
+		return sdk.StatusBuilding.String()
+	case failStatus > 0:
+		return sdk.StatusFail.String()
+	case stoppedStatus > 0:
+		return sdk.StatusStopped.String()
+	case successStatus > 0:
+		return sdk.StatusSuccess.String()
+	case skippedStatus > 0:
+		return sdk.StatusSkipped.String()
+	case disabledStatus > 0:
+		return sdk.StatusDisabled.String()
 	default:
-		return string(sdk.StatusNeverBuilt)
+		return sdk.StatusNeverBuilt.String()
 	}
 }
 
 // computeRunStatus is useful to compute number of runs in success, building and fail
-func computeRunStatus(status string, success, building, fail, stop *int) {
+func computeRunStatus(status string, success, building, fail, stop, skipped, disabled *int) {
 	switch status {
-	case string(sdk.StatusSuccess):
+	case sdk.StatusSuccess.String():
 		*success++
-	case string(sdk.StatusBuilding), string(sdk.StatusWaiting):
+	case sdk.StatusBuilding.String(), sdk.StatusWaiting.String():
 		*building++
-	case string(sdk.StatusFail):
+	case sdk.StatusFail.String():
 		*fail++
-	case string(sdk.StatusStopped):
+	case sdk.StatusStopped.String():
 		*stop++
+	case sdk.StatusSkipped.String():
+		*skipped++
+	case sdk.StatusDisabled.String():
+		*disabled++
 	}
 }
 

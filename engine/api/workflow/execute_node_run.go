@@ -113,7 +113,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 			if err := addJobsToQueue(db, stage, n, chanEvent); err != nil {
 				return err
 			}
-			if stage.Status == sdk.StatusSkipped || stage.Status == sdk.StatusDisabled {
+			if sdk.StatusIsTerminated(stage.Status.String()) {
 				stagesTerminated++
 				continue
 			}
@@ -144,16 +144,24 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 				if stage.Status == sdk.StatusFail {
 					n.Done = time.Now()
 					newStatus = sdk.StatusFail.String()
+					stagesTerminated++
 					break
 				}
 				if stage.Status == sdk.StatusStopped {
 					n.Done = time.Now()
 					newStatus = sdk.StatusStopped.String()
+					stagesTerminated++
 					break
 				}
+
+				if sdk.StatusIsTerminated(stage.Status.String()) {
+					n.Done = time.Now()
+				}
+
 				if stageIndex == len(n.Stages)-1 {
 					n.Done = time.Now()
 					newStatus = sdk.StatusSuccess.String()
+					stagesTerminated++
 					break
 				}
 				if stageIndex != len(n.Stages)-1 {
@@ -163,12 +171,12 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		}
 	}
 
-	if stagesTerminated == len(n.Stages)-1 {
-		var success, building, fail, stop int
+	if stagesTerminated >= len(n.Stages) || (stagesTerminated >= len(n.Stages)-1 && (n.Stages[len(n.Stages)-1].Status == sdk.StatusDisabled || n.Stages[len(n.Stages)-1].Status == sdk.StatusSkipped)) {
+		var success, building, fail, stop, skipped, disabled int
 		for _, stage := range n.Stages {
-			computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop)
+			computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop, &skipped, &disabled)
 		}
-		newStatus = getRunStatus(success, building, fail, stop)
+		newStatus = getRunStatus(success, building, fail, stop, skipped, disabled)
 	}
 
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
@@ -209,7 +217,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		//Try to find one node run of the same node from the same workflow at status Waiting
 		if node != nil && node.Context != nil && node.Context.Mutex {
 			mutexQuery := `select workflow_node_run.id
-			from workflow_node_run 
+			from workflow_node_run
 			join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
 			join workflow on workflow.id = workflow_run.workflow_id
 			where workflow.id = $1
