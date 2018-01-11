@@ -610,6 +610,10 @@ func getVCSInfos(db gorp.SqlExecutor, store cache.Store, p *sdk.Project, gitValu
 	hash = gitValues[tagGitHash]
 	author = gitValues[tagGitAuthor]
 
+	if node.Context == nil || node.Context.Application == nil || node.Context.Application.VCSServer == "" {
+		return repository, branch, hash, author, nil
+	}
+
 	// Set default values
 	if repository == "" {
 		repository = node.Context.Application.RepositoryFullname

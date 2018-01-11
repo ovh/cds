@@ -479,14 +479,11 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 	}
 
-	//Get VCS infos from the VCS server
 	var vcsAuthor string
-	if n.Context != nil && n.Context.Application != nil {
-		var errVcs error
-		run.VCSRepository, run.VCSBranch, run.VCSHash, vcsAuthor, errVcs = getVCSInfos(db, store, p, gitValues, n, run)
-		if errVcs != nil {
-			log.Error("processWorkflowNodeRun> Cannot get VCSInfos")
-		}
+	var errVcs error
+	run.VCSRepository, run.VCSBranch, run.VCSHash, vcsAuthor, errVcs = getVCSInfos(db, store, p, gitValues, n, run)
+	if errVcs != nil {
+		log.Error("processWorkflowNodeRun> Cannot get VCSInfos")
 	}
 
 	//If git values doesn't exist in jobparams, they doesn't exist in gitValues; inject them from VCSInfos in run.BuildParameters
@@ -508,6 +505,8 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	w.Tag(tagGitBranch, run.VCSBranch)
 	if len(run.VCSHash) >= 7 {
 		w.Tag(tagGitHash, run.VCSHash[:7])
+	} else {
+		w.Tag(tagGitHash, run.VCSHash)
 	}
 	w.Tag(tagGitAuthor, vcsAuthor)
 
