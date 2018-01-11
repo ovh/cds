@@ -2,10 +2,6 @@
 title = "Use Configuration File"
 weight = 4
 
-[menu.main]
-parent = "pipelines"
-identifier = "first-pipeline-configuration-file"
-
 +++
 
 

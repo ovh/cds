@@ -2,10 +2,6 @@
 title = "Pipeline"
 weight = 1
 
-[menu.main]
-parent = "concepts"
-identifier = "concepts.pipeline"
-
 +++
 
 ![Pipeline](/images/concepts_pipeline.png)

@@ -2,10 +2,6 @@
 title = "GitClone"
 chapter = true
 
-[menu.main]
-parent = "actions-builtin"
-identifier = "gitclone"
-
 +++
 
 **GitClone** is a builtin action, you can't modify it.

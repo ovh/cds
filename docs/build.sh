@@ -17,10 +17,6 @@ cat << EOF > ${ACTION_FILE}
 +++
 title = "${actionName}"
 
-[menu.main]
-parent = "actions-user"
-identifier = "${actionName}"
-
 +++
 EOF
 
@@ -51,10 +47,6 @@ function generatePluginsDocumentation {
 cat << EOF > ${PLUGIN_FILE}
 +++
 title = "${plugin}"
-
-[menu.main]
-parent = "actions-plugins"
-identifier = "${plugin}"
 
 +++
 EOF

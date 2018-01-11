@@ -2,10 +2,6 @@
 title = "Upgrade your CDS Instance"
 weight = 9
 
-[menu.main]
-parent = "hosting"
-identifier = "hosting.upgrade"
-
 +++
 
 

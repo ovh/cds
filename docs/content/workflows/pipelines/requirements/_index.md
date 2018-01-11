@@ -2,10 +2,6 @@
 title = "Job's Requirements"
 weight = 3
 
-[menu.main]
-parent = "pipelines"
-identifier = "pipelines.requirements"
-
 +++
 
 

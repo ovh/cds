@@ -1,10 +1,6 @@
 +++
 title = "cds-python-pylint"
 
-[menu.main]
-parent = "actions-user"
-identifier = "cds-python-pylint"
-
 +++
 
 Run pylint.

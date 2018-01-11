@@ -2,10 +2,6 @@
 title = "Mutex"
 weight = 7
 
-[menu.main]
-parent = "design"
-identifier = "design.mutex"
-
 +++
 
 By default, the same pipeline can run at the same time on multiple runs.

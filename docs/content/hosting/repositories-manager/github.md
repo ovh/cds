@@ -2,10 +2,6 @@
 title = "Github"
 weight = 1
 
-[menu.main]
-parent = "repositories-manager"
-identifier = "repositories-manager.github"
-
 +++
 
 ## Authorize CDS on Github

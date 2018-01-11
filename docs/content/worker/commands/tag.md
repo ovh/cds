@@ -2,10 +2,6 @@
 title = "Worker Tag"
 weight = 3
 
-[menu.main]
-parent = "commands"
-identifier = "worker.tag"
-
 +++
 
 On the workflow view, the sidebar on the left displays a select box to filter on CDS Tags.

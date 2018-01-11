@@ -2,10 +2,6 @@
 title = "Setup Docker Worker Model with your own image"
 weight = 3
 
-[menu.main]
-parent = "worker-model"
-identifier = "worker-model.docker-customized"
-
 +++
 
 A worker model of type `docker` can be spawned by a Hatchery Docker Swarm

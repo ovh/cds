@@ -2,10 +2,6 @@
 title = "Setup Worker Model From Docker Hub"
 weight = 2
 
-[menu.main]
-parent = "worker-model"
-identifier = "worker-model.docker-simple"
-
 +++
 
 A worker model of type `docker` can be spawned by a Hatchery Docker Swarm.

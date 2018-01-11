@@ -2,10 +2,6 @@
 title = "Gitlab"
 weight = 2
 
-[menu.main]
-parent = "repositories-manager"
-identifier = "repositories-manager.gitlab"
-
 +++
 
 ## Authorize CDS on your Gitlab instance

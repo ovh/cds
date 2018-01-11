@@ -1,10 +1,6 @@
 +++
 title = "plugin-ssh-cmd"
 
-[menu.main]
-parent = "actions-plugins"
-identifier = "plugin-ssh-cmd"
-
 +++
 
 This plugin helps you to run cmd on remote server over ssh.

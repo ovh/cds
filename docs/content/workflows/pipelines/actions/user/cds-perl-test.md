@@ -1,10 +1,6 @@
 +++
 title = "cds-perl-test"
 
-[menu.main]
-parent = "actions-user"
-identifier = "cds-perl-test"
-
 +++
 
 Test with prove on perl source code

@@ -2,10 +2,6 @@
 title = "Worker Upload"
 weight = 5
 
-[menu.main]
-parent = "commands"
-identifier = "worker.upload"
-
 +++
 
 Inside a job, there are two ways to upload an artifact:

@@ -2,10 +2,6 @@
 title = "Update your hatchery"
 weight = 6
 
-[menu.main]
-parent = "hatchery"
-identifier = "hatchery.update"
-
 +++
 
 ### Manual Update

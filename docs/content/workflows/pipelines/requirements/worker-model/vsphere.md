@@ -2,10 +2,6 @@
 title = "Setup VSphere Worker Model"
 weight = 4
 
-[menu.main]
-parent = "worker-model"
-identifier = "worker-model.vsphere"
-
 +++
 
 CDS build using VSphere infrastructure

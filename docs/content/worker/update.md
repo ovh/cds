@@ -2,10 +2,6 @@
 title = "Update your worker"
 weight = 1
 
-[menu.main]
-parent = "worker"
-identifier = "worker.update"
-
 +++
 
 ### Manual Update

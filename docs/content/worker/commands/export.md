@@ -2,10 +2,6 @@
 title = "Worker Export"
 weight = 2
 
-[menu.main]
-parent = "commands"
-identifier = "worker.export"
-
 +++
 
 Inside a step [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}), you can create a build variable with the worker command:

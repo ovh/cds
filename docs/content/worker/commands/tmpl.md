@@ -2,10 +2,6 @@
 title = "Worker Tmpl"
 weight = 4
 
-[menu.main]
-parent = "commands"
-identifier = "worker.tmpl"
-
 +++
 
 Inside a step [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}), you can add a replace CDS variables with the real value into a file:

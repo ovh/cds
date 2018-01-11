@@ -2,10 +2,6 @@
 title = "Service Requirement PostgreSQL"
 weight = 6
 
-[menu.main]
-parent = "service"
-identifier = "example-pg"
-
 +++
 
 #### Add the service requirement

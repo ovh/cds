@@ -2,10 +2,6 @@
 title = "Worker Model"
 weight = 1
 
-[menu.main]
-parent = "requirements"
-identifier = "worker-model"
-
 +++
 
 ### Purpose

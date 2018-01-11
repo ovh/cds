@@ -2,10 +2,6 @@
 title = "JUnit"
 chapter = true
 
-[menu.main]
-parent = "actions-builtin"
-identifier = "junit"
-
 +++
 
 **JUnit** is a builtin action, you can't modify it.

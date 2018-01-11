@@ -2,10 +2,6 @@
 title = "User Actions"
 weight = 1
 
-[menu.main]
-parent = "actions"
-identifier = "actions-user"
-
 +++
 
 A user action is a combination of built-in or plugin actions. A user can import user actions using the Web UI or the CLI:
