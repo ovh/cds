@@ -3,12 +3,19 @@ package hooks
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/ovh/cds/engine/api/test"
 	"github.com/ovh/cds/sdk"
-	"github.com/stretchr/testify/assert"
+	"github.com/ovh/cds/sdk/log"
 )
 
+func init() {
+	log.Initialize(&log.Conf{Level: "debug"})
+}
+
 func Test_doWebHookExecution(t *testing.T) {
+	log.SetLogger(t)
 	s := Service{}
 	task := &TaskExecution{
 		UUID: sdk.RandomString(10),
@@ -27,6 +34,7 @@ func Test_doWebHookExecution(t *testing.T) {
 	assert.Equal(t, "123456789", h.Payload["hash"])
 }
 func Test_doWebHookExecutionGithub(t *testing.T) {
+	log.SetLogger(t)
 	s := Service{}
 	task := &TaskExecution{
 		UUID: sdk.RandomString(10),
@@ -49,6 +57,7 @@ func Test_doWebHookExecutionGithub(t *testing.T) {
 }
 
 func Test_doWebHookExecutionTagGithub(t *testing.T) {
+	log.SetLogger(t)
 	s := Service{}
 	task := &TaskExecution{
 		UUID: sdk.RandomString(10),
@@ -71,6 +80,7 @@ func Test_doWebHookExecutionTagGithub(t *testing.T) {
 }
 
 func Test_doWebHookExecutionGitlab(t *testing.T) {
+	log.SetLogger(t)
 	s := Service{}
 	task := &TaskExecution{
 		UUID: sdk.RandomString(10),
@@ -93,6 +103,7 @@ func Test_doWebHookExecutionGitlab(t *testing.T) {
 }
 
 func Test_doWebHookExecutionBitbucket(t *testing.T) {
+	log.SetLogger(t)
 	s := Service{}
 	task := &TaskExecution{
 		UUID: sdk.RandomString(10),
