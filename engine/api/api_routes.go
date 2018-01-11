@@ -345,6 +345,10 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/template", r.POST(api.applyTemplateHandler))
 	r.Handle("/project/{key}/application/{permApplicationName}/template", r.POST(api.applyTemplateOnApplicationHandler))
 
+	//Requirements
+	r.Handle("/requirement/types", r.GET(api.getRequirementTypesHandler))
+	r.Handle("/requirement/types/{type}", r.GET(api.getRequirementTypeValuesHandler))
+
 	// UI
 	r.Handle("/config/user", r.GET(api.ConfigUserHandler, Auth(true)))
 
@@ -374,7 +378,7 @@ func (api *API) InitRouter() {
 	r.Handle("/worker/model/type", r.GET(api.getWorkerModelTypesHandler))
 	r.Handle("/worker/model/communication", r.GET(api.getWorkerModelCommunicationsHandler))
 	r.Handle("/worker/model/{permModelID}", r.PUT(api.updateWorkerModelHandler), r.DELETE(api.deleteWorkerModelHandler))
-	r.Handle("/worker/model/capability/type", r.GET(api.getWorkerModelCapaTypesHandler))
+	r.Handle("/worker/model/capability/type", r.GET(api.getRequirementTypesHandler))
 
 	// Workflows
 	r.Handle("/workflow/hook", r.GET(api.getWorkflowHooksHandler, NeedService()))

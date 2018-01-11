@@ -341,9 +341,3 @@ func (api *API) getWorkerModelCommunicationsHandler() Handler {
 		return WriteJSON(w, r, sdk.AvailableWorkerModelCommunication, http.StatusOK)
 	}
 }
-
-func (api *API) getWorkerModelCapaTypesHandler() Handler {
-	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
-		return WriteJSON(w, r, sdk.AvailableRequirementsType, http.StatusOK)
-	}
-}

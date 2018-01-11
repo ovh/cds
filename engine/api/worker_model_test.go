@@ -65,7 +65,7 @@ func Test_addWorkerModelAsAdmin(t *testing.T) {
 		GroupID: g.ID,
 		Type:    sdk.Docker,
 		Image:   "buildpack-deps:jessie",
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -108,7 +108,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 		Name:    "Test1",
 		Image:   "buildpack-deps:jessie",
 		GroupID: g.ID,
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -135,7 +135,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 	model = sdk.Model{
 		GroupID: g.ID,
 		Type:    sdk.Docker,
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -160,7 +160,7 @@ func Test_addWorkerModelWithWrongRequest(t *testing.T) {
 		Name:  "Test1",
 		Type:  sdk.Docker,
 		Image: "buildpack-deps:jessie",
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -213,7 +213,7 @@ func Test_addWorkerModelAsAGroupMember(t *testing.T) {
 		GroupID: g.ID,
 		Type:    sdk.Docker,
 		Image:   "buildpack-deps:jessie",
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -257,7 +257,7 @@ func Test_addWorkerModelAsAGroupAdmin(t *testing.T) {
 		GroupID: g.ID,
 		Type:    sdk.Docker,
 		Image:   "buildpack-deps:jessie",
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -313,7 +313,7 @@ func Test_addWorkerModelAsAWrongGroupMember(t *testing.T) {
 		GroupID: g1.ID,
 		Type:    sdk.Docker,
 		Image:   "buildpack-deps:jessie",
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -360,7 +360,7 @@ func Test_updateWorkerModel(t *testing.T) {
 		GroupID: g.ID,
 		Type:    sdk.Docker,
 		Image:   "buildpack-deps:jessie",
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -387,7 +387,7 @@ func Test_updateWorkerModel(t *testing.T) {
 
 	model2 := sdk.Model{
 		Name: "Test1bis",
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -443,7 +443,7 @@ func Test_deleteWorkerModel(t *testing.T) {
 		GroupID: g.ID,
 		Type:    sdk.Docker,
 		Image:   "buildpack-deps:jessie",
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -506,7 +506,7 @@ func Test_getWorkerModel(t *testing.T) {
 		GroupID: g.ID,
 		Type:    sdk.Docker,
 		Image:   "buildpack-deps:jessie",
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
@@ -564,7 +564,7 @@ func Test_getWorkerModels(t *testing.T) {
 		GroupID: g.ID,
 		Type:    sdk.Docker,
 		Image:   "buildpack-deps:jessie",
-		Capabilities: []sdk.Requirement{
+		Capabilities: sdk.RequirementList{
 			{
 				Name:  "capa1",
 				Type:  sdk.BinaryRequirement,
