@@ -20,6 +20,6 @@ Tags are useful to add indication on the sidebar about the context of a Run.
 
 You can select the tags displayed on the sidebar Workflow → Advanced → "Tags to display in the sidebar".
 
-![Webhook](/images/workflows.sidebar.png)
+![Webhook](/images/workflows.design.sidebar.png)
 
 
