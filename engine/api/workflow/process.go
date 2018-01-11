@@ -470,22 +470,46 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 	}
 
+	//Parse job params to get the VCS infos
 	gitValues := map[string]string{}
-	for _, p := range jobParams {
-		switch p.Name {
+	for _, param := range jobParams {
+		switch param.Name {
 		case tagGitHash, tagGitBranch, tagGitTag, tagGitAuthor, tagGitRepository:
-			w.Tag(p.Name, p.Value)
-			gitValues[p.Name] = p.Value
+			gitValues[param.Name] = param.Value
 		}
 	}
 
+	//Get VCS infos from the VCS server
+	var vcsAuthor string
 	if n.Context != nil && n.Context.Application != nil {
 		var errVcs error
-		run.VCSRepository, run.VCSBranch, run.VCSHash, errVcs = getVCSInfos(db, store, p, gitValues, n, run)
+		run.VCSRepository, run.VCSBranch, run.VCSHash, vcsAuthor, errVcs = getVCSInfos(db, store, p, gitValues, n, run)
 		if errVcs != nil {
 			log.Error("processWorkflowNodeRun> Cannot get VCSInfos")
 		}
 	}
+
+	//If git values doesn't exist in jobparams, they doesn't exist in gitValues; inject them from VCSInfos in run.BuildParameters
+	if v := gitValues[tagGitRepository]; v == "" {
+		sdk.AddParameter(&run.BuildParameters, tagGitRepository, sdk.StringParameter, run.VCSRepository)
+	}
+	if v := gitValues[tagGitBranch]; v == "" {
+		sdk.AddParameter(&run.BuildParameters, tagGitBranch, sdk.StringParameter, run.VCSBranch)
+	}
+	if v := gitValues[tagGitHash]; v == "" {
+		sdk.AddParameter(&run.BuildParameters, tagGitHash, sdk.StringParameter, run.VCSHash)
+	}
+	if v := gitValues[tagGitAuthor]; v == "" {
+		sdk.AddParameter(&run.BuildParameters, tagGitAuthor, sdk.StringParameter, vcsAuthor)
+	}
+
+	//Tag VCS infos
+	w.Tag(tagGitRepository, run.VCSRepository)
+	w.Tag(tagGitBranch, run.VCSBranch)
+	if len(run.VCSHash) >= 7 {
+		w.Tag(tagGitHash, run.VCSHash[:7])
+	}
+	w.Tag(tagGitAuthor, vcsAuthor)
 
 	// Add env tag
 	if n.Context != nil && n.Context.Environment != nil {
