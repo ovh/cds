@@ -1,5 +1,5 @@
 import {Component, Input, Output, OnInit, EventEmitter} from '@angular/core';
-import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
+import {RequirementStore} from '../../../service/requirement/requirement.store';
 import {Requirement} from '../../../model/requirement.model';
 import {GroupPermission, adminGroupName} from '../../../model/group.model';
 import {PermissionValue} from '../../../model/permission.model';
@@ -30,6 +30,10 @@ export class RequirementsFormComponent implements OnInit {
         return this._suggest;
     }
 
+    get suggestWithOsArch() {
+        return this._suggestWithOsArch;
+    }
+
     get suggestWithWorkerModel() {
         return this._suggestWithWorkerModel;
     }
@@ -44,6 +48,7 @@ export class RequirementsFormComponent implements OnInit {
     workerModels: Array<WorkerModel>;
     _suggest: Array<string> = [];
     _suggestWithWorkerModel: Array<string> = [];
+    _suggestWithOsArch:  Array<string> = [];
     loading = true;
     workerModelLinked: WorkerModel;
     isFormValid = false;
@@ -92,6 +97,9 @@ export class RequirementsFormComponent implements OnInit {
                 }
             });
 
+        this._requirementStore.getRequirementsTypeValues('os-architecture').pipe(first()).subscribe(values => {
+            this._suggestWithOsArch = values.concat(this._suggest);
+        });
     }
 
     computeFormValid(form): void {
@@ -119,6 +127,9 @@ export class RequirementsFormComponent implements OnInit {
                 break
             case 'volume':
                 this.newRequirement.name = this.getVolumeName();
+                break;
+            case 'os-architecture':
+                this.newRequirement.name = 'os-architecture';
                 break;
             default:
                 // else, name is the value of the requirement
