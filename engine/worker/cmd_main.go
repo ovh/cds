@@ -102,13 +102,24 @@ func mainCommandRun(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		// Do not use viper.Get... in this func
 		// this will not work, as flags are defined on a sub-command too
 
-		if cmd.Flag("auto-update").Value.String() == "true" {
+		var autoUpdate, singleUse bool
+		if cmd.Flag("auto-update").Value.String() == "true" || os.Getenv("CDS_AUTO_UPDATE") == "true" || os.Getenv("CDS_AUTO_UPDATE") == "1" {
+			autoUpdate = true
+		}
+
+		// default false for single use
+		singleUse = true
+		if cmd.Flag("single-use").Value.String() == "false" || os.Getenv("CDS_SINGLE_USE") == "false" || os.Getenv("CDS_SINGLE_USE") == "0" {
+			singleUse = false
+		}
+
+		if autoUpdate {
 			updateCmd(w)(cmd, args)
 		}
 		for {
 			execWorker()
-			if cmd.Flag("single-use").Value.String() == "true" {
-				log.Info("single-use false, worker will be shutdown...")
+			if singleUse {
+				log.Info("single-use true, worker will be shutdown...")
 				break
 			} else {
 				log.Info("Restarting worker...")
