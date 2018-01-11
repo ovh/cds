@@ -163,12 +163,12 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		}
 	}
 
-	if stagesTerminated == len(n.Stages)-1 {
-		var success, building, fail, stop int
+	if stagesTerminated == len(n.Stages) {
+		var success, building, fail, stop, skipped, disabled int
 		for _, stage := range n.Stages {
-			computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop)
+			computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop, &skipped, &disabled)
 		}
-		newStatus = getRunStatus(success, building, fail, stop)
+		newStatus = getRunStatus(success, building, fail, stop, skipped, disabled)
 	}
 
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
@@ -209,7 +209,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		//Try to find one node run of the same node from the same workflow at status Waiting
 		if node != nil && node.Context != nil && node.Context.Mutex {
 			mutexQuery := `select workflow_node_run.id
-			from workflow_node_run 
+			from workflow_node_run
 			join workflow_run on workflow_run.id = workflow_node_run.workflow_run_id
 			join workflow on workflow.id = workflow_run.workflow_id
 			where workflow.id = $1
