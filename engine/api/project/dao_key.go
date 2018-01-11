@@ -27,6 +27,24 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.ProjectKey) error {
 	return nil
 }
 
+// LoadAllKeysByID Load all project key for the given project
+func LoadAllKeysByID(db gorp.SqlExecutor, ID int64) ([]sdk.ProjectKey, error) {
+	var res []dbProjectKey
+	if _, err := db.Select(&res, "SELECT * FROM project_key WHERE project_id = $1 and builtin = false", ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+	}
+
+	keys := make([]sdk.ProjectKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.ProjectKey(p)
+	}
+	return keys, nil
+}
+
 // LoadAllKeys load all keys for the given project
 func LoadAllKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 	var res []dbProjectKey

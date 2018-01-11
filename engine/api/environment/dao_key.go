@@ -27,6 +27,30 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.EnvironmentKey) error {
 	return nil
 }
 
+// LoadAllEnvironmentKeysByProject Load all environment key for the given project
+func LoadAllEnvironmentKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.EnvironmentKey, error) {
+	var res []dbEnvironmentKey
+	query := `
+	SELECT DISTINCT ON (environment_key.name, environment_key.type) environment_key.name as d, environment_key.* FROM environment_key
+	JOIN environment ON environment.id = environment_key.environment_id
+	JOIN project ON project.id = environment.project_id
+	WHERE project.id = $1;
+	`
+	if _, err := db.Select(&res, query, projID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+	}
+
+	keys := make([]sdk.EnvironmentKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.EnvironmentKey(p)
+	}
+	return keys, nil
+}
+
 // LoadAllKeys load all keys for the given environment
 func LoadAllKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 	var res []dbEnvironmentKey

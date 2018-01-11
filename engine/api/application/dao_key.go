@@ -27,6 +27,30 @@ func InsertKey(db gorp.SqlExecutor, key *sdk.ApplicationKey) error {
 	return nil
 }
 
+// LoadAllApplicationKeys load all keys for the given application
+func LoadAllApplicationKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.ApplicationKey, error) {
+	var res []dbApplicationKey
+	query := `
+	SELECT DISTINCT ON (application_key.name, application_key.type) application_key.name as d, application_key.* FROM application_key
+	JOIN application ON application.id = application_key.application_id
+	JOIN project ON project.id = application.project_id
+	WHERE project.id = $1;
+	`
+	if _, err := db.Select(&res, query, projID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+	}
+
+	keys := make([]sdk.ApplicationKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.ApplicationKey(p)
+	}
+	return keys, nil
+}
+
 // LoadAllKeys load all keys for the given application
 func LoadAllKeys(db gorp.SqlExecutor, app *sdk.Application) error {
 	var res []dbApplicationKey

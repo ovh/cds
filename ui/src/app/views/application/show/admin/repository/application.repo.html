@@ -50,6 +50,10 @@
                 </div>
             </div>
         </form>
+        <div *ngIf="application.repository_fullname">
+            <h4>{{ 'application_repo_strat_title' | translate }}</h4>
+            <app-vcs-strategy [project]="project"></app-vcs-strategy>
+        </div>
     </div>
 </div>
 <div [hidden]="project.vcs_servers && project.vcs_servers.length > 0">

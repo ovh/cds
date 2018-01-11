@@ -1,0 +1,30 @@
+<div class="ui form">
+    <div class="inline fields">
+        <label>{{ 'vcs_connection' | translate }}</label>
+        <div class="field" *ngFor="let c of connectionType.values()">
+            <div class="ui radio checkbox">
+                <input type="radio" name="connection" [value]="c" [(ngModel)]="strategy.connectionType">
+                <label>{{c}}</label>
+            </div>
+        </div>
+    </div>
+    <div class="field">
+        <div [ngSwitch]="strategy.connectionType">
+            <div *ngSwitchCase="connectionType.SSH">
+                <div class="inline fields">
+                    <div class="sixteen wide field">
+                        <label>{{ 'vcs_ssh_key' | translate }}</label>
+                        <div class="ssh">
+                            <app-parameter-value [editList]="false" [edit]="true" [type]="'key'" [ref]="keys" [value]="strategy.sshKey"></app-parameter-value>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+            <div *ngSwitchCase="connectionType.HTTPS">
+                HTTPS
+            </div>
+        </div>
+    </div>
+</div>

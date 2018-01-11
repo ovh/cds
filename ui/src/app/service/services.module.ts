@@ -51,6 +51,7 @@ import {EnvironmentService} from './environment/environment.service';
 import {ApplicationMigrateService} from './application/application.migration.service';
 import {NavbarService} from './navbar/navbar.service';
 import {DownloadService} from './download/download.service';
+import {KeyService} from './keys/keys.service';
 
 @NgModule({})
 export class ServicesModule {
@@ -78,6 +79,7 @@ export class ServicesModule {
                 EnvironmentService,
                 GroupService,
                 HookService,
+                KeyService,
                 LanguageStore,
                 LastUpdateService,
                 NavbarService,
@@ -141,6 +143,7 @@ export {
     EnvironmentAuditService,
     GroupService,
     HookService,
+    KeyService,
     LanguageStore,
     LastUpdateService,
     ParameterService,

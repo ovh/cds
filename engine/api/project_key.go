@@ -7,10 +7,49 @@ import (
 
 	"github.com/gorilla/mux"
 
+	"github.com/ovh/cds/engine/api/application"
+	"github.com/ovh/cds/engine/api/environment"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
 )
+
+func (api *API) getAllKeysProjectHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+
+		allkeys := struct {
+			ProjectKeys     []sdk.ProjectKey     `json:"project_key"`
+			ApplicationKeys []sdk.ApplicationKey `json:"application_key"`
+			EnvironmentKeys []sdk.EnvironmentKey `json:"environment_key"`
+		}{}
+
+		p, errP := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errP != nil {
+			return sdk.WrapError(errP, "getAllKeysProjectHandler> Cannot load project")
+		}
+		projectKeys, errK := project.LoadAllKeysByID(api.mustDB(), p.ID)
+		if errK != nil {
+			return sdk.WrapError(errK, "getAllKeysProjectHandler> Cannot load project keys")
+		}
+		allkeys.ProjectKeys = projectKeys
+
+		appKeys, errA := application.LoadAllApplicationKeysByProject(api.mustDB(), p.ID)
+		if errA != nil {
+			return sdk.WrapError(errK, "getAllKeysProjectHandler> Cannot load application keys")
+		}
+		allkeys.ApplicationKeys = appKeys
+
+		envKeys, errP := environment.LoadAllEnvironmentKeysByProject(api.mustDB(), p.ID)
+		if errP != nil {
+			return sdk.WrapError(errP, "getAllKeysProjectHandler> Cannot load environemnt keys")
+		}
+		allkeys.EnvironmentKeys = envKeys
+
+		return WriteJSON(w, r, allkeys, http.StatusOK)
+	}
+}
 
 func (api *API) getKeysInProjectHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
