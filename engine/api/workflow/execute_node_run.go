@@ -113,7 +113,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 			if err := addJobsToQueue(db, stage, n, chanEvent); err != nil {
 				return err
 			}
-			if stage.Status == sdk.StatusSkipped || stage.Status == sdk.StatusDisabled {
+			if sdk.StatusIsTerminated(stage.Status.String()) {
 				stagesTerminated++
 				continue
 			}
@@ -144,16 +144,19 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 				if stage.Status == sdk.StatusFail {
 					n.Done = time.Now()
 					newStatus = sdk.StatusFail.String()
+					stagesTerminated++
 					break
 				}
 				if stage.Status == sdk.StatusStopped {
 					n.Done = time.Now()
 					newStatus = sdk.StatusStopped.String()
+					stagesTerminated++
 					break
 				}
 				if stageIndex == len(n.Stages)-1 {
 					n.Done = time.Now()
 					newStatus = sdk.StatusSuccess.String()
+					stagesTerminated++
 					break
 				}
 				if stageIndex != len(n.Stages)-1 {
@@ -163,7 +166,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		}
 	}
 
-	if stagesTerminated == len(n.Stages) {
+	if stagesTerminated >= len(n.Stages) || (stagesTerminated >= len(n.Stages)-1 && (n.Stages[len(n.Stages)-1].Status == sdk.StatusDisabled || n.Stages[len(n.Stages)-1].Status == sdk.StatusSkipped)) {
 		var success, building, fail, stop, skipped, disabled int
 		for _, stage := range n.Stages {
 			computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop, &skipped, &disabled)
