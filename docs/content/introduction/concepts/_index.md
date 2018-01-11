@@ -31,7 +31,7 @@ A stage is composed of several jobs. [See pipeline concept]({{< relref "pipeline
 
 ### A Workflow
 
-A stage is composed of several pipelines. [See Workflow concept]({{< relref "workflow.md" >}}).
+A stage is composed of several pipelines. [See Workflow documentation]({{< relref "workflows/design/_index.md" >}}).
 
 ![Workflow](/images/introduction.concept.workflow.png)
 
