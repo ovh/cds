@@ -1,7 +1,9 @@
 +++
 title = "Webhook"
-weight = 3
+weight = 2
 
 +++
 
-TODO
+On a Root Pipeline, you can add a "Webhook". Click on the created icon to get the WebHook URL.
+
+![Webhook](/images/workflows.design.hooks.webhook.gif)

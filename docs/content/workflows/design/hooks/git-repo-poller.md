@@ -1,6 +1,6 @@
 +++
 title = "Git Repository Poller"
-weight = 2
+weight = 3
 
 +++
 
