@@ -51,6 +51,7 @@ func runCmd(w *currentWorker) func(cmd *cobra.Command, args []string) {
 		log.Info("version: %s", sdk.VERSION)
 		log.Info("hostname: %s", hostname)
 		log.Info("auto-update: %t", viper.GetBool("auto_update"))
+		log.Info("single-use: %t", viper.GetBool("single_use"))
 
 		w.initServer(ctx)
 
