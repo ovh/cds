@@ -46,7 +46,7 @@
     .icon {
       position: absolute;
       bottom: 0;
-      left: 20%;
+      left: 17%;
     }
     &.success {
       border-color: $cds_color_green;
@@ -65,6 +65,7 @@
   .spawninfo {
     pre {
       white-space: normal;
+      font-size: 0.85em;
     }
   }
 }
