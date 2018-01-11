@@ -1,4 +1,4 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {VCSConnections, VCSStrategy} from '../../model/vcs.model';
 import {Project} from '../../model/project.model';
 import {KeyService} from '../../service/keys/keys.service';
@@ -23,8 +23,11 @@ export class VCSStrategyComponent implements OnInit {
         return this._strategy;
     }
 
+    @Output() strategyChange = new EventEmitter<VCSStrategy>();
     keys: Array<string>;
     connectionType = VCSConnections;
+    displayVCSStrategy = false;
+
 
     constructor(private _keyService: KeyService) { }
 
@@ -35,5 +38,17 @@ export class VCSStrategyComponent implements OnInit {
         this._keyService.getAllKeys(this.project.key).subscribe(k => {
             this.keys = k;
         })
+    }
+
+    changeConnection(event: string) {
+        if (event === this.connectionType.SSH) {
+            this.strategy.url = '{{.git.url}}';
+        } else {
+            this.strategy.url = '{{.git.http_url}}';
+        }
+    }
+
+    saveStrategy() {
+        this.strategyChange.emit(this.strategy);
     }
 }

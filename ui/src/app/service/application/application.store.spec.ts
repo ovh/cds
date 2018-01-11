@@ -108,7 +108,7 @@ describe('CDS: application Store', () => {
 
         // Update
         p.name = 'myApplicationUpdate1';
-        applicationStore.renameApplication(projectKey, 'myApplication', p.name).subscribe(() => {
+        applicationStore.updateApplication(projectKey, 'myApplication', applicationU).subscribe(() => {
         });
         http.expectOne(((req: HttpRequest<any>) => {
             return req.url === 'foo.bar/project/key1/application/myApplication'

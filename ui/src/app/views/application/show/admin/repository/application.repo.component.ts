@@ -7,7 +7,8 @@ import {Project} from '../../../../../model/project.model';
 import {ToastService} from '../../../../../shared/toast/ToastService';
 import {TranslateService} from '@ngx-translate/core';
 import {WarningModalComponent} from '../../../../../shared/modal/warning/warning.component';
-import {first} from 'rxjs/operators';
+import {finalize, first} from 'rxjs/operators';
+import {VCSStrategy} from '../../../../../model/vcs.model';
 
 @Component({
     selector: 'app-application-repo',
@@ -99,5 +100,14 @@ export class ApplicationRepositoryComponent implements OnInit {
                     this.loadingBtn = false;
                 });
         }
+    }
+
+    saveVCSConfiguration(conf: VCSStrategy): void {
+        this.loadingBtn = true;
+        this._appStore.updateApplication(this.project.key, this.application.name, this.application).pipe(first(), finalize(() => {
+            this.loadingBtn = false;
+        })).subscribe(() => {
+            this._toast.success('', this._translate.instant('application_updated'));
+        });
     }
 }

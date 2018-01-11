@@ -50,9 +50,15 @@
                 </div>
             </div>
         </form>
-        <div *ngIf="application.repository_fullname">
-            <h4>{{ 'application_repo_strat_title' | translate }}</h4>
-            <app-vcs-strategy [project]="project"></app-vcs-strategy>
+        <div *ngIf="application.repository_fullname" class="strategy">
+            <h4 class="pointing" (click)="displayVCSStrategy = !displayVCSStrategy">
+                <i class="right caret icon" *ngIf="!displayVCSStrategy"></i>
+                <i class="down caret icon" *ngIf="displayVCSStrategy"></i>
+                {{ 'application_repo_strat_title' | translate }}
+            </h4>
+            <div class="detail" [class.active]="displayVCSStrategy">
+                <app-vcs-strategy [project]="project" class="detail" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()"></app-vcs-strategy>
+            </div>
         </div>
     </div>
 </div>

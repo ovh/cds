@@ -157,8 +157,8 @@ export class ApplicationStore {
      * @param application Application to update
      * @returns {Observable<Application>}
      */
-    renameApplication(key: string, oldName: string, newName: string): Observable<Application> {
-        return this._applicationService.renameApplication(key, oldName, newName).map(app => {
+    updateApplication(key: string, oldName: string, appli: Application): Observable<Application> {
+        return this._applicationService.updateApplication(key, oldName, appli).map(app => {
             let cache = this._application.getValue();
             let appKey = key + '-' + oldName;
             if (cache.get(appKey)) {
@@ -167,9 +167,9 @@ export class ApplicationStore {
                 pToUpdate.name = app.name;
                 this._application.next(cache.set(key + '-' + app.name, pToUpdate).remove(appKey));
             }
-
-            this._projectStore.updateApplicationName(key, oldName, newName);
-
+            if (oldName !== appli.name) {
+                this._projectStore.updateApplicationName(key, oldName, appli.name);
+            }
             return app;
         });
     }
