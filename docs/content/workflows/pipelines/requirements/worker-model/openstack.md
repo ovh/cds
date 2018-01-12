@@ -1,5 +1,5 @@
 +++
-title = "Setup Openstack Worker Model"
+title = "Openstack Worker Model"
 weight = 4
 
 +++

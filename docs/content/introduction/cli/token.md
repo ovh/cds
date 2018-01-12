@@ -1,6 +1,6 @@
 +++
 title = "Generate a Token"
-weight = 2
+weight = 3
 
 +++
 

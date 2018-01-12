@@ -4,12 +4,11 @@ weight = 7
 
 +++
 
-
 CDS can be linked to following repositories manager :
 
- - **Atlassian Stash / Bitbucket**
- - **Github**
- - **Gitlab**
+ - **[Bitbucket Server]({{< relref "bitbucket.md" >}})**
+ - **[Github]({{<relref "github.md" >}})**
+ - **[Gitlab]({{<relref "gitlab.md" >}})**
 
 It allows you to enable some CDS features such as :
 
