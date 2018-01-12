@@ -1,8 +1,8 @@
-// Copyright 2012 SocialCode. All rights reserved.
 // Use of this source code is governed by the MIT
 // license that can be found in the LICENSE file.
+// inspired from github.com/gemnasium/logrus-graylog-hook
 
-package logrus_ovh
+package hook
 
 import (
 	"bytes"
