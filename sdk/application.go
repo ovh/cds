@@ -31,6 +31,7 @@ type Application struct {
 	VCSServer          string                `json:"vcs_server,omitempty" db:"vcs_server"`
 	RepositoryFullname string                `json:"repository_fullname,omitempty" db:"repo_fullname"`
 	RepositoryPollers  []RepositoryPoller    `json:"pollers,omitempty" db:"-"`
+	RepositoryStrategy RepositoryStrategy    `json:"vcs_strategy,omitempty" db:"-"`
 	Hooks              []Hook                `json:"hooks,omitempty" db:"-"`
 	Workflows          []CDPipeline          `json:"workflows,omitempty" db:"-"`
 	Schedulers         []PipelineScheduler   `json:"schedulers,omitempty" db:"-"`
@@ -38,6 +39,18 @@ type Application struct {
 	WorkflowMigration  string                `json:"workflow_migration" yaml:"workflow_migration" db:"workflow_migration"`
 	Keys               []ApplicationKey      `json:"keys" yaml:"keys" db:"-"`
 	Usage              *Usage                `json:"usage,omitempty" db:"-" cli:"-"`
+}
+
+// RepositoryStrategy represent the way to use the repository
+type RepositoryStrategy struct {
+	ConnectionType string `json:"connection_type"`
+	SSHKey         string `json:"ssh_key"`
+	User           string `json:"user"`
+	Password       string `json:"password"`
+	URL            string `json:"url"`
+	Branch         string `json:"branch"`
+	DefaultBranch  string `json:"default_branch"`
+	PGPKey         string `json:"pgp_key"`
 }
 
 // ApplicationVariableAudit represents an audit on an application variable

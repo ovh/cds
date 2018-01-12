@@ -1,22 +1,18 @@
 export class VCSStrategy {
-    repoType: string;
-    connectionType: string;
+    connection_type: string;
     user: string;
     password: string;
-    defaultBranch: string;
+    default_branch: string;
     branch: string;
-    sshKey: string;
-    pgpKey: string;
+    ssh_key: string;
+    pgp_key: string;
     url: string;
-    defaultDirectory: string;
 
     constructor() {
-        this.repoType = 'git';
-        this.connectionType = VCSConnections.HTTPS;
-        this.defaultBranch = 'master';
+        this.connection_type = VCSConnections.HTTPS;
+        this.default_branch = 'master';
         this.branch = '{{.git.branch}}';
         this.url = '{{git.http_url}}';
-        this.defaultDirectory = '{{.cds.workspace}}';
     }
 }
 

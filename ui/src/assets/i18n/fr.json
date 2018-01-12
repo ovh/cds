@@ -558,6 +558,7 @@
   "vcs_url" : "URL : ",
   "vcs_branch" : "Branche : ",
   "vcs_default_branch" : "Branche par defaut : ",
+  "vcs_ssh_key" : "Clé SSH",
 
   "warning_goto_application_variables": "variables de l'application",
   "warning_goto_job": "job",

@@ -633,11 +633,6 @@ func (api *API) updateApplicationHandler() Handler {
 		if errload != nil {
 			return sdk.WrapError(errload, "updateApplicationHandler> Cannot load project %s", projectKey)
 		}
-		envs, errloadenv := environment.LoadEnvironments(api.mustDB(), projectKey, true, getUser(ctx))
-		if errloadenv != nil {
-			return sdk.WrapError(errloadenv, "updateApplicationHandler> Cannot load environments %s", projectKey)
-		}
-		p.Environments = envs
 
 		app, errloadbyname := application.LoadByName(api.mustDB(), api.Cache, projectKey, applicationName, getUser(ctx), application.LoadOptions.Default)
 		if errloadbyname != nil {
@@ -658,6 +653,7 @@ func (api *API) updateApplicationHandler() Handler {
 		//Update name and Metadata
 		app.Name = appPost.Name
 		app.Metadata = appPost.Metadata
+		app.RepositoryStrategy = appPost.RepositoryStrategy
 
 		tx, err := api.mustDB().Begin()
 		if err != nil {

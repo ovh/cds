@@ -89,6 +89,9 @@ func (w *currentWorker) runPlugin(ctx context.Context, a *sdk.Action, buildID in
 		//set up environment variables from pipeline build job parameters
 		for _, p := range params {
 			// avoid put private key in environment var as it's a binary value
+			if (p.Type == sdk.KeyPGPParameter || p.Type == sdk.KeySSHParameter) && strings.HasSuffix(p.Name, ".priv") {
+				continue
+			}
 			if p.Type == sdk.KeyParameter && !strings.HasSuffix(p.Name, ".pub") {
 				continue
 			}

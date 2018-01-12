@@ -24,7 +24,8 @@ export class VCSStrategyComponent implements OnInit {
     }
 
     @Output() strategyChange = new EventEmitter<VCSStrategy>();
-    keys: Array<string>;
+    sshKeys: Array<string>;
+    pgpKeys: Array<string>;
     connectionType = VCSConnections;
     displayVCSStrategy = false;
 
@@ -36,7 +37,8 @@ export class VCSStrategyComponent implements OnInit {
             this.strategy = new VCSStrategy();
         }
         this._keyService.getAllKeys(this.project.key).subscribe(k => {
-            this.keys = k;
+            this.sshKeys = k.ssh;
+            this.pgpKeys = k.pgp;
         })
     }
 

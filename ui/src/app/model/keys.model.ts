@@ -3,24 +3,31 @@ export class Keys {
     application_key: Array<Key>;
     environment_key: Array<Key>;
 
-    static formatForSelect(keys: any): Array<string> {
-        let k = new Array<string>();
+    static formatForSelect(keys: any): AllKeys {
+        let k = new AllKeys();
         if (keys.project_key) {
-            k.push(...keys.project_key.map(key => {
-                return 'proj-' + key.name;
-            }));
+            k.ssh.push(...keys.project_key.filter(key => key.type === KeyType.SSH).map(key => 'proj-' + key.name ));
+            k.pgp.push(...keys.project_key.filter(key => key.type === KeyType.PGP).map(key => 'proj-' + key.name ));
         }
         if (keys.application_key) {
-            k.push(...keys.application_key.map(key => {
-                return 'app-' + key.name;
-            }));
+            k.ssh.push(...keys.application_key.filter(key => key.type === KeyType.SSH).map(key => 'app-' + key.name ));
+            k.pgp.push(...keys.application_key.filter(key => key.type === KeyType.PGP).map(key => 'app-' + key.name ));
         }
         if (keys.environment_key) {
-            k.push(...keys.environment_key.map(key => {
-                return 'env-' + key.name;
-            }));
+            k.ssh.push(...keys.environment_key.filter(key => key.type === KeyType.SSH).map(key => 'env-' + key.name ));
+            k.pgp.push(...keys.environment_key.filter(key => key.type === KeyType.PGP).map(key => 'env-' + key.name ));
         }
         return k;
+    }
+}
+
+export class AllKeys {
+    ssh: Array<string>;
+    pgp: Array<string>;
+
+    constructor() {
+        this.ssh = new Array<string>();
+        this.pgp = new Array<string>();
     }
 }
 

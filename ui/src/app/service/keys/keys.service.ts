@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs/Observable';
-import {Keys} from '../../model/keys.model';
+import {AllKeys, Keys} from '../../model/keys.model';
 
 @Injectable()
 export class KeyService {
@@ -14,7 +14,7 @@ export class KeyService {
      * @param key Project unique key
      * @returns {Observable<Keys>}
      */
-    getAllKeys(key: string): Observable<Array<string>> {
+    getAllKeys(key: string): Observable<AllKeys> {
         return this._http.get<Keys>('/project/' + key + '/all/keys').map(keys => {
             return Keys.formatForSelect(keys);
         });

@@ -59,7 +59,7 @@ If your application is linked to a repository, you can use {{.git.url}} (clone o
 		Description: `Set the private key to be able to git clone from ssh.
 You can create an application variable named 'key' of type 'key' and use it as {{.cds.app.key}} in this action.
 The public key have to be granted on your repository`,
-		Type: sdk.KeyParameter,
+		Type: sdk.StringParameter,
 	})
 	gitclone.Parameter(sdk.Parameter{
 		Name:        "user",
@@ -108,10 +108,10 @@ Tag the current branch and push it.`
 		Type:        sdk.StringParameter,
 	})
 	gittag.Parameter(sdk.Parameter{
-		Name:        "authPrivateKey",
+		Name:        "ssh-key",
 		Value:       "",
 		Description: "Set the private key to be able to git push to the remote",
-		Type:        sdk.KeyParameter,
+		Type:        sdk.KeySSHParameter,
 	})
 	gittag.Parameter(sdk.Parameter{
 		Name:        "user",
@@ -124,10 +124,10 @@ Tag the current branch and push it.`
 		Type:        sdk.StringParameter,
 	})
 	gittag.Parameter(sdk.Parameter{
-		Name:        "signKey",
+		Name:        "pgp-key",
 		Value:       "",
 		Description: "Set the key to be able to sign the tag",
-		Type:        sdk.KeyParameter,
+		Type:        sdk.KeyPGPParameter,
 	})
 	gittag.Parameter(sdk.Parameter{
 		Name:        "tagName",
