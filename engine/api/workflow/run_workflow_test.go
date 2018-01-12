@@ -463,3 +463,112 @@ func TestManualRun3(t *testing.T) {
 		assert.Equal(t, "job20", jobs[0].Job.Job.Action.Name)
 	}
 }
+
+func TestNoStage(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
+	test.NoError(t, err)
+
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	test.NoError(t, err)
+
+	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
+	test.NoError(t, err)
+
+	//TestLoadNodeRun
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, true)
+	test.NoError(t, err)
+
+	assert.Equal(t, sdk.StatusSuccess.String(), nodeRun.Status)
+}
+
+func TestNoJob(t *testing.T) {
+	db, cache := test.SetupPG(t, bootstrap.InitiliazeDB)
+	u, _ := assets.InsertAdminUser(db)
+	key := sdk.RandomString(10)
+	proj := assets.InsertTestProject(t, db, cache, key, key, u)
+
+	//First pipeline
+	pip := sdk.Pipeline{
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Name:       "pip1",
+		Type:       sdk.BuildPipeline,
+	}
+	test.NoError(t, pipeline.InsertPipeline(db, cache, proj, &pip, u))
+
+	s := sdk.NewStage("stage 1")
+	s.Enabled = true
+	s.PipelineID = pip.ID
+	test.NoError(t, pipeline.InsertStage(db, s))
+
+	proj, _ = project.LoadByID(db, cache, proj.ID, u, project.LoadOptions.WithApplications, project.LoadOptions.WithPipelines, project.LoadOptions.WithEnvironments, project.LoadOptions.WithGroups)
+
+	w := sdk.Workflow{
+		Name:       "test_1",
+		ProjectID:  proj.ID,
+		ProjectKey: proj.Key,
+		Root: &sdk.WorkflowNode{
+			Pipeline: pip,
+			Triggers: []sdk.WorkflowNodeTrigger{
+				sdk.WorkflowNodeTrigger{
+					WorkflowDestNode: sdk.WorkflowNode{
+						Pipeline: pip,
+					},
+				},
+			},
+		},
+	}
+
+	test.NoError(t, workflow.Insert(db, cache, &w, proj, u))
+	w1, err := workflow.Load(db, cache, key, "test_1", u, workflow.LoadOptions{
+		DeepPipeline: true,
+	})
+	test.NoError(t, err)
+
+	_, err = workflow.ManualRun(db, db, cache, proj, w1, &sdk.WorkflowNodeRunManual{User: *u}, nil)
+	test.NoError(t, err)
+
+	lastrun, err := workflow.LoadLastRun(db, proj.Key, "test_1", false)
+	test.NoError(t, err)
+
+	//TestLoadNodeRun
+	nodeRun, err := workflow.LoadNodeRun(db, proj.Key, "test_1", 1, lastrun.WorkflowNodeRuns[w1.RootID][0].ID, true)
+	test.NoError(t, err)
+
+	assert.Equal(t, sdk.StatusSuccess.String(), nodeRun.Status)
+}

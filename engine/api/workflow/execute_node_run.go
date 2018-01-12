@@ -97,6 +97,8 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 		log.Debug("workflow.execute> checking stage %s (status=%s)", stage.Name, stage.Status)
 		//Initialize stage status at waiting
 		if stage.Status.String() == "" {
+			stage.Status = sdk.StatusWaiting
+
 			if stageIndex == 0 {
 				newStatus = sdk.StatusWaiting.String()
 			}
@@ -104,15 +106,15 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 			if len(stage.Jobs) == 0 {
 				newStatus = sdk.StatusSuccess.String()
 				stage.Status = sdk.StatusSuccess
+			} else {
+				//Add job to Queue
+				//Insert data in workflow_node_run_job
+				log.Debug("workflow.execute> stage %s call addJobsToQueue", stage.Name)
+				if err := addJobsToQueue(db, stage, n, chanEvent); err != nil {
+					return err
+				}
 			}
 
-			stage.Status = sdk.StatusWaiting
-			//Add job to Queue
-			//Insert data in workflow_node_run_job
-			log.Debug("workflow.execute> stage %s call addJobsToQueue", stage.Name)
-			if err := addJobsToQueue(db, stage, n, chanEvent); err != nil {
-				return err
-			}
 			if sdk.StatusIsTerminated(stage.Status.String()) {
 				stagesTerminated++
 				continue
@@ -173,10 +175,12 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 
 	if stagesTerminated >= len(n.Stages) || (stagesTerminated >= len(n.Stages)-1 && (n.Stages[len(n.Stages)-1].Status == sdk.StatusDisabled || n.Stages[len(n.Stages)-1].Status == sdk.StatusSkipped)) {
 		var success, building, fail, stop, skipped, disabled int
-		for _, stage := range n.Stages {
-			computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop, &skipped, &disabled)
+		if len(n.Stages) > 0 {
+			for _, stage := range n.Stages {
+				computeRunStatus(stage.Status.String(), &success, &building, &fail, &stop, &skipped, &disabled)
+			}
+			newStatus = getRunStatus(success, building, fail, stop, skipped, disabled)
 		}
-		newStatus = getRunStatus(success, building, fail, stop, skipped, disabled)
 	}
 
 	log.Debug("workflow.execute> status from %s to %s", n.Status, newStatus)
