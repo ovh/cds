@@ -52,15 +52,15 @@ export class RequirementsListComponent extends Table  implements OnInit {
     constructor(private _requirementStore: RequirementStore, private _workerModelService: WorkerModelService) {
         super();
         this.nbElementsByPage = 5;
-    }
 
-    ngOnInit() {
         this._requirementStore.getAvailableRequirements()
         .subscribe(r => {
             this.availableRequirements = new Array<string>();
             this.availableRequirements.push(...r.toArray());
         });
+    }
 
+    ngOnInit() {
         this._workerModelService.getWorkerModels()
         .pipe(finalize(() => this.loading = false), first())
         .subscribe(wms => {
