@@ -393,6 +393,16 @@ func WrapError(err error, format string, args ...interface{}) error {
 	return errors.Wrap(err, fmt.Sprintf(format, args...))
 }
 
+// SetError completes an error
+func SetError(err error, format string, args ...interface{}) error {
+	msg := fmt.Errorf("%s: %v", fmt.Sprintf(format, args...), err)
+	cdsErr, ok := err.(Error)
+	if !ok {
+		return NewError(cdsErr, msg)
+	}
+	return msg
+}
+
 // ProcessError tries to recognize given error and return error message in a language matching Accepted-Language
 func ProcessError(target error, al string) (string, Error) {
 	// will recursively retrieve the topmost error which does not implement causer, which is assumed to be the original cause
