@@ -559,6 +559,7 @@
   "vcs_branch" : "Branche : ",
   "vcs_default_branch" : "Branche par defaut : ",
   "vcs_ssh_key" : "Clé SSH",
+  "vcs_pgp_key" : "Clé PGP",
 
   "warning_goto_application_variables": "variables de l'application",
   "warning_goto_job": "job",

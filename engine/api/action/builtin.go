@@ -95,6 +95,24 @@ The public key have to be granted on your repository`,
 		return err
 	}
 
+	// ----------------------------------- Checkout Application    -----------------------
+	checkoutApplication := sdk.NewAction(sdk.CheckoutApplication)
+	checkoutApplication.Type = sdk.BuiltinAction
+	checkoutApplication.Description = `CDS Builtin Action.
+Clone a repository into a new directory.`
+
+	checkoutApplication.Parameter(sdk.Parameter{
+		Name:        "directory",
+		Description: "The name of a directory to clone into.",
+		Value:       "{{.cds.workspace}}",
+		Type:        sdk.StringParameter,
+	})
+	checkoutApplication.Requirement("git", sdk.BinaryRequirement, "git")
+
+	if err := checkBuiltinAction(db, checkoutApplication); err != nil {
+		return err
+	}
+
 	// ----------------------------------- Git tag    -----------------------
 	gittag := sdk.NewAction(sdk.GitTagAction)
 	gittag.Type = sdk.BuiltinAction

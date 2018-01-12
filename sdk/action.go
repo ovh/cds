@@ -66,11 +66,12 @@ const (
 
 // Builtin Action
 const (
-	ScriptAction   = "Script"
-	JUnitAction    = "JUnit"
-	GitCloneAction = "GitClone"
-	GitTagAction   = "GitTag"
-	ReleaseAction  = "Release"
+	ScriptAction        = "Script"
+	JUnitAction         = "JUnit"
+	GitCloneAction      = "GitClone"
+	GitTagAction        = "GitTag"
+	ReleaseAction       = "Release"
+	CheckoutApplication = "CheckoutApplication"
 )
 
 // NewAction instanciate a new Action
