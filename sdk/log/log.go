@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	loghook "github.com/ovh/logrus-ovh-hook"
+	loghook "github.com/ovh/cds/sdk/log/hook"
 	log "github.com/sirupsen/logrus"
 )
 

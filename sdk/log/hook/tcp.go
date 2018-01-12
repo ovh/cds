@@ -1,4 +1,8 @@
-package logrus_ovh
+// Use of this source code is governed by the MIT
+// license that can be found in the LICENSE file.
+// inspired from github.com/gemnasium/logrus-graylog-hook
+
+package hook
 
 import (
 	"bytes"

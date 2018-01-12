@@ -972,12 +972,6 @@
 			"revisionTime": "2017-12-19T16:21:11Z"
 		},
 		{
-			"checksumSHA1": "RyZVPXHMl03jL1O4q93AhVMA2JE=",
-			"path": "github.com/ovh/logrus-ovh-hook",
-			"revision": "f70db37f6f7c7cc9d5a772f0749e3d5389a2afb5",
-			"revisionTime": "2017-04-04T20:09:27Z"
-		},
-		{
 			"checksumSHA1": "BGY2jbzYUHUdxy3d58QUZ7FrUmY=",
 			"path": "github.com/ovh/tat",
 			"revision": "43966f33245defc6b16e7904c5558448e365fe3e",
