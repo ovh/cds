@@ -10,8 +10,8 @@ import (
 	"github.com/ovh/cds/sdk/interpolate"
 )
 
-func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun) ([]sdk.Requirement, *sdk.MultiError) {
-	requirements := []sdk.Requirement{}
+func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.WorkflowNodeRun) (sdk.RequirementList, *sdk.MultiError) {
+	requirements := sdk.RequirementList{}
 	tmp := map[string]string{}
 	errm := &sdk.MultiError{}
 
@@ -39,7 +39,7 @@ func getNodeJobRunRequirements(db gorp.SqlExecutor, j sdk.Job, run *sdk.Workflow
 	return requirements, errm
 }
 
-func prepareRequirementsToNodeJobRunParameters(reqs []sdk.Requirement) []sdk.Parameter {
+func prepareRequirementsToNodeJobRunParameters(reqs sdk.RequirementList) []sdk.Parameter {
 	params := []sdk.Parameter{}
 	for _, r := range reqs {
 		if r.Type == sdk.ServiceRequirement {

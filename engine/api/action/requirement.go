@@ -8,8 +8,8 @@ import (
 
 // LoadAllBinaryRequirements retrieves all requirements in database
 // Used by worker to automatically declare most capabilities
-func LoadAllBinaryRequirements(db gorp.SqlExecutor) ([]sdk.Requirement, error) {
-	var req []sdk.Requirement
+func LoadAllBinaryRequirements(db gorp.SqlExecutor) (sdk.RequirementList, error) {
+	var req sdk.RequirementList
 
 	query := `SELECT distinct value FROM action_requirement where type = 'binary'`
 	rows, errQ := db.Query(query)
@@ -37,8 +37,8 @@ func LoadAllBinaryRequirements(db gorp.SqlExecutor) ([]sdk.Requirement, error) {
 }
 
 // LoadActionRequirements retrieves given action requirements in database
-func LoadActionRequirements(db gorp.SqlExecutor, actionID int64) ([]sdk.Requirement, error) {
-	var req []sdk.Requirement
+func LoadActionRequirements(db gorp.SqlExecutor, actionID int64) (sdk.RequirementList, error) {
+	var req sdk.RequirementList
 
 	query := `SELECT name, type, value FROM action_requirement WHERE action_id = $1 ORDER BY name`
 	rows, errQ := db.Query(query, actionID)

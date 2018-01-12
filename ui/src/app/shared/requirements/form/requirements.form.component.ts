@@ -1,5 +1,5 @@
 import {Component, Input, Output, OnInit, EventEmitter} from '@angular/core';
-import {RequirementStore} from '../../../service/worker-model/requirement/requirement.store';
+import {RequirementStore} from '../../../service/requirement/requirement.store';
 import {Requirement} from '../../../model/requirement.model';
 import {GroupPermission, adminGroupName} from '../../../model/group.model';
 import {PermissionValue} from '../../../model/permission.model';
@@ -9,6 +9,8 @@ import {WorkerModel} from '../../../model/worker-model.model';
 import {finalize, first} from 'rxjs/operators';
 import {TranslateService} from '@ngx-translate/core';
 import {SemanticModalComponent} from 'ng-semantic/ng-semantic';
+
+export const OSArchitecture = 'os-architecture';
 
 @Component({
     selector: 'app-requirements-form',
@@ -30,6 +32,10 @@ export class RequirementsFormComponent implements OnInit {
         return this._suggest;
     }
 
+    get suggestWithOsArch() {
+        return this._suggestWithOsArch;
+    }
+
     get suggestWithWorkerModel() {
         return this._suggestWithWorkerModel;
     }
@@ -44,6 +50,7 @@ export class RequirementsFormComponent implements OnInit {
     workerModels: Array<WorkerModel>;
     _suggest: Array<string> = [];
     _suggestWithWorkerModel: Array<string> = [];
+    _suggestWithOsArch:  Array<string> = [];
     loading = true;
     workerModelLinked: WorkerModel;
     isFormValid = false;
@@ -92,6 +99,9 @@ export class RequirementsFormComponent implements OnInit {
                 }
             });
 
+        this._requirementStore.getRequirementsTypeValues(OSArchitecture).pipe(first()).subscribe(values => {
+            this._suggestWithOsArch = values.concat(this._suggest);
+        });
     }
 
     computeFormValid(form): void {
@@ -119,6 +129,9 @@ export class RequirementsFormComponent implements OnInit {
                 break
             case 'volume':
                 this.newRequirement.name = this.getVolumeName();
+                break;
+            case OSArchitecture:
+                this.newRequirement.name = OSArchitecture;
                 break;
             default:
                 // else, name is the value of the requirement
