@@ -64,7 +64,8 @@ func HookRegistration(db gorp.SqlExecutor, store cache.Store, oldW *sdk.Workflow
 
 		for i := range hooksUpdated {
 			h := hooksUpdated[i]
-			if h.Config["vcsServer"].Value != "" {
+			v, ok := h.Config["webHookID"]
+			if h.Config["vcsServer"].Value != "" && (!ok || v.Value == "") {
 				if err := createVCSConfiguration(db, store, p, &h); err != nil {
 					return nil, sdk.WrapError(err, "HookRegistration> Cannot update vcs configuration")
 				}
