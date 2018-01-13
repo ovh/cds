@@ -37,12 +37,6 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 				sendLog(res.Reason)
 				return res
 			}
-			if strings.Contains(tag.Value, "{") || strings.Contains(tag.Value, "}") || strings.Contains(tag.Value, " ") {
-				res.Status = sdk.StatusFail.String()
-				res.Reason = fmt.Sprintf("tag variable invalid: %s", tag.Value)
-				sendLog(res.Reason)
-				return res
-			}
 			tag.Value = strings.Replace(tag.Value, "/", "-", -1)
 			tag.Value = url.QueryEscape(tag.Value)
 
