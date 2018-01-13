@@ -1,8 +1,15 @@
 +++
-title = "Authentication"
-weight = 2
+title = "Command Line"
+weight = 6
 
 +++
+
+## Download
+
+You'll find last release of `cdsctl` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+
+
+## Authentication
 
 Per default, the command line `cdsctl` uses your keychain on your os:
 

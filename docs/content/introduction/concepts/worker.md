@@ -30,6 +30,12 @@ There are several cases where one would need to setup his own worker:
 
 ### How does this work ?
 
-Workers authenticate on CDS with a [token]({{< relref "/introduction/cli/token.md" >}}) and have the same permissions as the user who generated it.
+Workers authenticate on CDS with a token and have the same permissions as the user who generated it.
 
 Bottom line: if you can access the application, your worker will too.
+
+To generate a token, run the following command, replace yourgroup with your group
+
+```bash
+$ cdsctl generate token -g yourgroup -e persistent
+```

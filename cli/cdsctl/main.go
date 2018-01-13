@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
+	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
 )
 
@@ -63,10 +65,20 @@ func main() {
 		client = cdsclient.New(*cfg)
 	}
 
+	// hidden command, generateDocumentation, only used to generate hugo documentation
+	// run with ./cdsctl generateDocumentation
+	// souhld be
+	args := os.Args[1:]
+	if len(args) == 1 && args[0] == "generateDocumentation" {
+		if err := generateDocumentation(root); err != nil {
+			sdk.Exit(err.Error())
+		}
+		os.Exit(0)
+	}
+
 	if err := root.Execute(); err != nil {
 		cli.ExitOnError(err)
 	}
-
 }
 
 var mainCmd = cli.Command{
