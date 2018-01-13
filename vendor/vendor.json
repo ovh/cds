@@ -91,6 +91,12 @@
 			"revisionTime": "2015-10-26T16:03:18Z"
 		},
 		{
+			"checksumSHA1": "Lw2q7vP1ClxZiE97TLt8bvI/FsE=",
+			"path": "github.com/cpuguy83/go-md2man/md2man",
+			"revision": "8d868be6e9bf9d5350910bab97a050e49887600f",
+			"revisionTime": "2017-12-23T16:05:37Z"
+		},
+		{
 			"checksumSHA1": "vvFDcA+qQlBPrJjKEYQCHVBS9xQ=",
 			"path": "github.com/danieljoos/wincred",
 			"revision": "412b574fb496839b312a75fba146bd32a89001cf",
