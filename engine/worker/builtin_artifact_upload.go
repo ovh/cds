@@ -37,6 +37,12 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 				sendLog(res.Reason)
 				return res
 			}
+			if strings.Contains(tag.Value, "{") || strings.Contains(tag.Value, "}") || strings.Contains(tag.Value, " ") {
+				res.Status = sdk.StatusFail.String()
+				res.Reason = fmt.Sprintf("tag variable invalid: %s", tag.Value)
+				sendLog(res.Reason)
+				return res
+			}
 			tag.Value = strings.Replace(tag.Value, "/", "-", -1)
 			tag.Value = url.QueryEscape(tag.Value)
 
@@ -121,11 +127,13 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 		var globalError = &sdk.MultiError{}
 		var chanError = make(chan error)
 		var wg = new(sync.WaitGroup)
+		var wgErrors = new(sync.WaitGroup)
 
 		go func() {
 			for err := range chanError {
 				sendLog(err.Error())
 				globalError.Append(err)
+				wgErrors.Done()
 			}
 		}()
 
@@ -138,6 +146,7 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 				throughTempURL, duration, err := w.client.QueueArtifactUpload(buildID, tag.Value, path)
 				if err != nil {
 					chanError <- sdk.WrapError(err, "Error while uploading artifact %s", path)
+					wgErrors.Add(1)
 					return
 				}
 				if throughTempURL {
@@ -154,6 +163,7 @@ func runArtifactUpload(w *currentWorker) BuiltInAction {
 		wg.Wait()
 		close(chanError)
 		<-chanError
+		wgErrors.Wait()
 
 		if !globalError.IsEmpty() {
 			res.Status = sdk.StatusFail.String()
