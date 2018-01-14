@@ -86,12 +86,17 @@ var mainCmd = &cobra.Command{
 	Short: "CDS Engine",
 	Long: `
 CDS
+
 Continuous Delivery Service
+
 Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform
+
 https://ovh.github.io/cds/
 
-Copyright (c) 2013-2018, OVH SAS.
-All rights reserved.`,
+## Download
+
+You'll find last release of CDS ` + "`engine`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+`,
 }
 
 var versionCmd = &cobra.Command{
@@ -236,6 +241,7 @@ Start CDS Engine Services
 #### API
 
 This is the core component of CDS.
+
 	
 #### Hatcheries
 
