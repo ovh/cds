@@ -21,15 +21,15 @@ var cmdUploadTag string
 func cmdUpload(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "upload",
-		Short: "worker upload --tag=<tag> <path>",
+		Short: "worker upload --tag=tagValue {{.cds.workspace}}/fileToUpload",
 		Long: `
 Inside a job, there are two ways to upload an artifact:
 
 * with a step using action Upload Artifacts
-* with a step [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}), using the worker command: ` + "`worker upload --tag=<tag> <path>`" + `
+* with a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), using the worker command: ` + "`worker upload --tag=<tag> <path>`" + `
 
 	# worker upload --tag=<tag> <path>
-	worker export --tag={{.cds.version}} files*.yml
+	worker upload --tag={{.cds.version}} {{.cds.workspace}}/files*.yml
 
 		`,
 		Run: uploadCmd(w),

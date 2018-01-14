@@ -18,7 +18,7 @@ import (
 func cmdTag(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "tag",
-		Short: "worker tag <key>=<value> <key>=<value>",
+		Short: "worker tag key=value key=value",
 		Long: `
 On the workflow view, the sidebar on the left displays a select box to filter on CDS Tags.
 
