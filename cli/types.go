@@ -87,6 +87,7 @@ type Command struct {
 	Long         string
 	Flags        []Flag
 	Aliases      []string
+	Hidden       bool
 }
 
 // CommandModifier is a function type to extend a command

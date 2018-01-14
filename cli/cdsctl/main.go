@@ -2,14 +2,11 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
 	"github.com/ovh/cds/cli"
-	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
-	"github.com/ovh/cds/sdk/doc"
 )
 
 var (
@@ -19,6 +16,7 @@ var (
 	noWarnings            bool
 	insecureSkipVerifyTLS bool
 	client                cdsclient.Interface
+	root                  *cobra.Command
 )
 
 func main() {
@@ -26,10 +24,12 @@ func main() {
 	signup := cli.NewCommand(signupCmd, signupRun, nil, cli.CommandWithoutExtraFlags)
 	update := cli.NewCommand(updateCmd, updateRun, nil, cli.CommandWithoutExtraFlags)
 	version := cli.NewCommand(versionCmd, versionRun, nil, cli.CommandWithoutExtraFlags)
+	doc := cli.NewCommand(docCmd, docRun, nil, cli.CommandWithoutExtraFlags)
 	monitoring := cli.NewGetCommand(monitoringCmd, monitoringRun, nil, cli.CommandWithoutExtraFlags)
 
-	root := cli.NewCommand(mainCmd, mainRun,
+	root = cli.NewCommand(mainCmd, mainRun,
 		[]*cobra.Command{
+			doc, // hidden command
 			action,
 			login,
 			signup,
@@ -64,17 +64,6 @@ func main() {
 		cli.ExitOnError(err, login.Help)
 
 		client = cdsclient.New(*cfg)
-	}
-
-	// hidden command, generateDocumentation, only used to generate hugo documentation
-	// run with ./cdsctl generateDocumentation
-	// souhld be
-	args := os.Args[1:]
-	if len(args) == 1 && args[0] == "generateDocumentation" {
-		if err := doc.GenerateDocumentation(root); err != nil {
-			sdk.Exit(err.Error())
-		}
-		os.Exit(0)
 	}
 
 	if err := root.Execute(); err != nil {

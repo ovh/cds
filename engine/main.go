@@ -64,6 +64,9 @@ func init() {
 
 	configCmd.AddCommand(configNewCmd)
 	configCmd.AddCommand(configCheckCmd)
+
+	// doc command (hidden command)
+	mainCmd.AddCommand(docCmd)
 }
 
 func main() {
@@ -103,6 +106,17 @@ var versionCmd = &cobra.Command{
 	Short: "Display CDS version",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("CDS Engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
+	},
+}
+
+var docCmd = &cobra.Command{
+	Use:    "doc",
+	Short:  "generate hugo doc for building http://ovh.github.com/cds",
+	Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
+		if err := doc.GenerateDocumentation(mainCmd); err != nil {
+			sdk.Exit(err.Error())
+		}
 	},
 }
 
