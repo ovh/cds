@@ -2,11 +2,13 @@ package main
 
 import (
 	"container/list"
+	"os"
 
 	"google.golang.org/grpc"
 
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/doc"
 )
 
 type currentWorker struct {
@@ -63,5 +65,16 @@ func main() {
 	cmd.AddCommand(cmdExit(w))
 	cmd.AddCommand(cmdVersion)
 	cmd.AddCommand(cmdRegister(w))
+
+	// hidden command, generateDocumentation, only used to generate hugo documentation
+	// run with ./engine generateDocumentation
+	osArgs := os.Args[1:]
+	if len(osArgs) == 1 && osArgs[0] == "generateDocumentation" {
+		if err := doc.GenerateDocumentation(cmd); err != nil {
+			sdk.Exit(err.Error())
+		}
+		os.Exit(0)
+	}
+
 	cmd.Execute()
 }

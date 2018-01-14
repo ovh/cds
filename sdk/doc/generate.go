@@ -33,6 +33,10 @@ title = "%s"
 		return fmt.Sprintf("/cli/%s/%s/", rootName, strings.Replace(strings.ToLower(base), "_", "/", -1))
 	}
 
+	if err := os.MkdirAll(rootName, os.ModePerm); err != nil {
+		return err
+	}
+
 	return genMarkdownTreeCustom(root, "./"+rootName, filePrepender, linkHandler)
 }
 
@@ -61,7 +65,9 @@ func genMarkdownTreeCustom(cmd *cobra.Command, rootdir string, filePrepender, li
 			dir := strings.Join(withoutBinary[:len(a)-2], "/")
 			if dir != "" {
 				fmt.Printf("create directory %s/%s\n", rootdir, dir)
-				os.MkdirAll(rootdir+"/"+dir, os.ModePerm)
+				if err := os.MkdirAll(rootdir+"/"+dir, os.ModePerm); err != nil {
+					return err
+				}
 			}
 		}
 

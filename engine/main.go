@@ -68,8 +68,7 @@ func init() {
 
 func main() {
 	// hidden command, generateDocumentation, only used to generate hugo documentation
-	// run with ./cdsctl generateDocumentation
-	// souhld be
+	// run with ./engine generateDocumentation
 	osArgs := os.Args[1:]
 	if len(osArgs) == 1 && osArgs[0] == "generateDocumentation" {
 		if err := doc.GenerateDocumentation(mainCmd); err != nil {
