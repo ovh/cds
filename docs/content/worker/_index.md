@@ -39,42 +39,6 @@ or download from https://github.com/ovh/cds/releases
 
 #### Startup the worker
 
-```bash
-$ worker --help
-CDS Worker
-
-Usage:
-  worker [flags]
-  worker [command]
-
-Available Commands:
-  export      worker export <varname> <value>
-  upload      worker upload --tag=<tag> <path>
-  version     Print the version number
-  register    worker register
-
-Flags:
-      --api string                   URL of CDS API
-      --basedir string               Worker working directory
-      --booked-job-id int            Booked job id
-      --graylog-extra-key string     Ex: --graylog-extra-key=xxxx-yyyy
-      --graylog-extra-value string   Ex: --graylog-extra-value=xxxx-yyyy
-      --graylog-host string          Ex: --graylog-host=xxxx-yyyy
-      --graylog-port string          Ex: --graylog-port=12202
-      --graylog-protocol string      Ex: --graylog-protocol=xxxx-yyyy
-      --grpc-api string              CDS GRPC tcp address
-      --grpc-insecure                Disable GRPC TLS encryption
-      --hatchery int                 Hatchery spawing worker
-      --token string                 CDS Token
-      --log-level string             Log Level : debug, info, notice, warning, critical (default "notice")
-      --model int                    Model of worker
-      --name string                  Name of worker
-      --single-use                   Exit after executing an action
-      --ttl int                      Worker time to live (minutes) (default 30)
-
-Use "worker [command] --help" for more information about a command.
-```
-
 Mandatory parameters are **--api** and **--token**.
 
 The most basic way to start a worker is as following:

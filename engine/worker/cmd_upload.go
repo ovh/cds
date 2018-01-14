@@ -22,7 +22,17 @@ func cmdUpload(w *currentWorker) *cobra.Command {
 	c := &cobra.Command{
 		Use:   "upload",
 		Short: "worker upload --tag=<tag> <path>",
-		Run:   uploadCmd(w),
+		Long: `
+Inside a job, there are two ways to upload an artifact:
+
+* with a step using action Upload Artifacts
+* with a step [script]({{< relref "workflows/pipelines/actions/builtin/script.md" >}}), using the worker command: ` + "`worker upload --tag=<tag> <path>`" + `
+
+	# worker upload --tag=<tag> <path>
+	worker export --tag={{.cds.version}} files*.yml
+
+		`,
+		Run: uploadCmd(w),
 	}
 	c.Flags().StringVar(&cmdUploadTag, "tag", "", "Tag for artifact Upload. Tag is mandatory")
 	return c
