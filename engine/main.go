@@ -27,6 +27,7 @@ import (
 	"github.com/ovh/cds/engine/hooks"
 	"github.com/ovh/cds/engine/vcs"
 	"github.com/ovh/cds/sdk"
+	"github.com/ovh/cds/sdk/doc"
 	"github.com/ovh/cds/sdk/log"
 )
 
@@ -66,6 +67,17 @@ func init() {
 }
 
 func main() {
+	// hidden command, generateDocumentation, only used to generate hugo documentation
+	// run with ./cdsctl generateDocumentation
+	// souhld be
+	osArgs := os.Args[1:]
+	if len(osArgs) == 1 && osArgs[0] == "generateDocumentation" {
+		if err := doc.GenerateDocumentation(mainCmd); err != nil {
+			sdk.Exit(err.Error())
+		}
+		os.Exit(0)
+	}
+
 	mainCmd.Execute()
 }
 
@@ -78,7 +90,7 @@ Continuous Delivery Service
 Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform
 https://ovh.github.io/cds/
 
-Copyright (c) 2013-2017, OVH SAS.
+Copyright (c) 2013-2018, OVH SAS.
 All rights reserved.`,
 }
 
@@ -219,25 +231,36 @@ var startCmd = &cobra.Command{
 	Use:   "start",
 	Short: "Start CDS",
 	Long: `
-Start CDS Engine Services:
- * API:
- 	This is the core component of CDS.
- * Hatcheries:
-	They are the components responsible for spawning workers. Supported platforms/orchestrators are:
-	 * Local machine
-	 * Openstack
-	 * Docker Swarm
-	 * Openstack
-	 * Vsphere
- * Hooks:
- 	This component operates CDS workflow hooks
- * VCS:
- 	This component operates CDS VCS connectivity
+Start CDS Engine Services
+
+#### API
+
+This is the core component of CDS.
+	
+#### Hatcheries
+
+They are the components responsible for spawning workers. Supported platforms/orchestrators are:
+
+* Local machine
+* Openstack
+* Docker Swarm
+* Openstack
+* Vsphere
+
+#### Hooks
+This component operates CDS workflow hooks
+
+#### VCS
+This component operates CDS VCS connectivity
 
 Start all of this with a single command:
+
 	$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]
+
 All the services are using the same configuration file format.
+
 You have to specify where the toml configuration is. It can be a local file, provided by consul or vault.
+
 You can also use or override toml file with environment variable.
 
 See $ engine config command for more details.

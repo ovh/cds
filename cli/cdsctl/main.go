@@ -9,6 +9,7 @@ import (
 	"github.com/ovh/cds/cli"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/cdsclient"
+	"github.com/ovh/cds/sdk/doc"
 )
 
 var (
@@ -70,7 +71,7 @@ func main() {
 	// souhld be
 	args := os.Args[1:]
 	if len(args) == 1 && args[0] == "generateDocumentation" {
-		if err := generateDocumentation(root); err != nil {
+		if err := doc.GenerateDocumentation(root); err != nil {
 			sdk.Exit(err.Error())
 		}
 		os.Exit(0)
@@ -84,6 +85,36 @@ func main() {
 var mainCmd = cli.Command{
 	Name:  "cdsctl",
 	Short: "CDS Command line utility",
+	Long: `
+
+## Download
+
+You'll find last release of ` + "`cdsctl`" + ` on [Github Releases](https://github.com/ovh/cds/releases/latest).
+
+
+## Authentication
+
+Per default, the command line ` + "`cdsctl`" + ` uses your keychain on your os:
+
+* OSX: Keychain Access
+* Linux System: Secret-tool (libsecret) 
+* Windows: Windows Credentials service
+
+You can bypass keychain tools by using environment variables:
+
+	CDS_API_URL="https://instance.cds.api"  CDS_USER="username" CDS_TOKEN="yourtoken" cdsctl [command]
+
+
+Want to debug something? You can use ` + "`CDS_VERBOSE`" + ` environment variable.
+
+	CDS_VERBOSE=true cdsctl [command]
+
+
+If you're using a self-signed certificate on CDS API, you probably want to use ` + "`CDS_INSECURE`" + ` variable.
+
+	CDS_INSECURE=true cdsctl [command]
+
+`,
 }
 
 func mainRun(vals cli.Values) error {

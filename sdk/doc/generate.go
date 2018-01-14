@@ -1,4 +1,4 @@
-package main
+package doc
 
 import (
 	"fmt"
@@ -12,46 +12,35 @@ import (
 	"github.com/spf13/cobra/doc"
 )
 
-func generateDocumentation(root *cobra.Command) error {
+// GenerateDocumentation generates hugo documentation for a command line
+func GenerateDocumentation(root *cobra.Command) error {
 	const fmTemplate = `+++
 title = "%s"
 +++
 `
 
+	rootName := root.Name()
 	filePrepender := func(filename string) string {
 		name := filepath.Base(filename)
 		base := strings.TrimSuffix(name, path.Ext(name))
-		base = strings.Replace(base, "cdsctl_", "", 1)
+		base = strings.Replace(base, rootName+"_", "", 1)
 		return fmt.Sprintf(fmTemplate, strings.Replace(base, "_", " ", -1))
 	}
 
 	linkHandler := func(name string) string {
 		base := strings.TrimSuffix(name, path.Ext(name))
-		base = strings.Replace(base, "cdsctl_", "", 1)
-		return "/cli/commands/" + strings.Replace(strings.ToLower(base), "_", "/", -1) + "/"
+		base = strings.Replace(base, rootName+"_", "", 1)
+		return fmt.Sprintf("/cli/%s/%s/", rootName, strings.Replace(strings.ToLower(base), "_", "/", -1))
 	}
 
-	return genMarkdownTreeCustom(root, "./commands", filePrepender, linkHandler)
-	// 	return err
-	// }
-
-	// f, err := os.Create("./commands/_index.md")
-	// if err != nil {
-	// 	return err
-	// }
-	// defer f.Close()
-	// fmt.Println("create file ./commands/_index.md")
-	// if _, err := io.WriteString(f, filePrepender("cdsctl")); err != nil {
-	// 	return err
-	// }
-	// root.DisableAutoGenTag = true
-	// return doc.GenMarkdownCustom(root, f, linkHandler)
+	return genMarkdownTreeCustom(root, "./"+rootName, filePrepender, linkHandler)
 }
 
 // genMarkdownTreeCustom is the the same as GenMarkdownTree, but
 // with custom filePrepender and linkHandler.
 // this func is inspired from https://github.com/spf13/cobra/blob/master/doc/md_docs.go
 func genMarkdownTreeCustom(cmd *cobra.Command, rootdir string, filePrepender, linkHandler func(string) string) error {
+	cmdName := cmd.Name()
 	for _, c := range cmd.Commands() {
 		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
 			continue
@@ -63,7 +52,7 @@ func genMarkdownTreeCustom(cmd *cobra.Command, rootdir string, filePrepender, li
 
 	var basename, basenameTitle string
 	a := strings.Split(cmd.CommandPath(), " ")
-	withoutBinary := a[1:] // remove 'cdsctl'
+	withoutBinary := a[1:] // remove cmdName. ex:'cdsctl'
 	if len(withoutBinary) > 0 {
 		basename = strings.Join(withoutBinary, "/")
 
@@ -83,7 +72,7 @@ func genMarkdownTreeCustom(cmd *cobra.Command, rootdir string, filePrepender, li
 			basename += "/_index"
 		}
 	} else { // root cmd
-		basenameTitle = "cdsctl commands"
+		basenameTitle = cmdName
 		basename += "_index"
 	}
 	basename += ".md"
