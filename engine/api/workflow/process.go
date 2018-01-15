@@ -320,6 +320,11 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 
 	runPayload := map[string]string{}
 
+	//If the pipeline has parameter but none are defined on context, use the defaults
+	if len(n.Pipeline.Parameter) > 0 && len(n.Context.DefaultPipelineParameters) == 0 {
+		n.Context.DefaultPipelineParameters = n.Pipeline.Parameter
+	}
+
 	parentStatus := sdk.StatusSuccess.String()
 	run.SourceNodeRuns = sourceNodeRuns
 	if sourceNodeRuns != nil {
