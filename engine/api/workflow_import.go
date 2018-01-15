@@ -200,6 +200,7 @@ func (api *API) postWorkflowPushHandler() Handler {
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowPushHandler> Unable to start tx")
 		}
+		defer tx.Rollback()
 
 		allMsg := []sdk.Message{}
 		for filename, app := range apps {
