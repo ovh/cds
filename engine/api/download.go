@@ -24,13 +24,13 @@ func (api *API) downloadHandler() Handler {
 		name := vars["name"]
 		os := vars["os"]
 
-		arch, err := sdk.IsBinaryOSArchValid(api.Config.Directories.Download, name, os, vars["arch"])
+		arch, extension, err := sdk.IsBinaryOSArchValid(api.Config.Directories.Download, name, os, vars["arch"])
 		if err != nil {
 			return err
 		}
 
 		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment;filename="%s"`, name))
+		w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment;filename="%s%s"`, name, extension))
 
 		path := path.Join(api.Config.Directories.Download, fmt.Sprintf("cds-%s-%s-%s", name, os, arch))
 
