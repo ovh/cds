@@ -43,7 +43,7 @@ a:hover {
 }
 
 #sidebar #sidebar-body {
-    height: calc(100% - 290px);
+    height: calc(100% - 325px);
     overflow-y: auto;
 }
 
