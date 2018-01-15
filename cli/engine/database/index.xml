@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>database on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/cli/engine/database/</link>
+    <description>Recent content in database on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/cli/engine/database/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>downgrade</title>
+      <link>https://ovh.github.io/cds/cli/engine/database/downgrade/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/database/downgrade/</guid>
+      <description>engine database downgrade Downgrade schema
+Synopsis Undo a database migration.
+engine database downgrade [flags]  Options  --db-connect-timeout int Maximum wait for connection, in seconds (default 10) --db-host string DB Host (default &amp;quot;localhost&amp;quot;) --db-maxconn int DB Max connection (default 20) --db-name string DB Name (default &amp;quot;cds&amp;quot;) --db-password string DB Password --db-port int DB Port (default 5432) --db-sslmode string DB SSL Mode: require (default), verify-full, or disable (default &amp;quot;require&amp;quot;) --db-timeout int Statement timeout value in milliseconds (default 3000) --db-user string DB User (default &amp;quot;cds&amp;quot;) --dry-run Dry run downgrade -h, --help help for downgrade --limit int Max number of migrations to apply (0 = unlimited) (default 1) --migrate-dir string CDS SQL Migration directory (default &amp;quot;.</description>
+    </item>
+    
+    <item>
+      <title>status</title>
+      <link>https://ovh.github.io/cds/cli/engine/database/status/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/database/status/</guid>
+      <description>engine database status Show current migration status
+Synopsis Show current migration status
+engine database status [flags]  Options  --db-connect-timeout int Maximum wait for connection, in seconds (default 10) --db-host string DB Host (default &amp;quot;localhost&amp;quot;) --db-maxconn int DB Max connection (default 20) --db-name string DB Name (default &amp;quot;cds&amp;quot;) --db-password string DB Password --db-port int DB Port (default 5432) --db-sslmode string DB SSL Mode: require (default), verify-full, or disable (default &amp;quot;require&amp;quot;) --db-timeout int Statement timeout value in milliseconds (default 3000) --db-user string DB User (default &amp;quot;cds&amp;quot;) -h, --help help for status --migrate-dir string CDS SQL Migration directory (default &amp;quot;.</description>
+    </item>
+    
+    <item>
+      <title>upgrade</title>
+      <link>https://ovh.github.io/cds/cli/engine/database/upgrade/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/database/upgrade/</guid>
+      <description>engine database upgrade Upgrade schema
+Synopsis Migrates the database to the most recent version available.
+engine database upgrade [flags]  Options  --db-connect-timeout int Maximum wait for connection, in seconds (default 10) --db-host string DB Host (default &amp;quot;localhost&amp;quot;) --db-maxconn int DB Max connection (default 20) --db-name string DB Name (default &amp;quot;cds&amp;quot;) --db-password string DB Password --db-port int DB Port (default 5432) --db-sslmode string DB SSL Mode: require (default), verify-full, or disable (default &amp;quot;require&amp;quot;) --db-timeout int Statement timeout value in milliseconds (default 3000) --db-user string DB User (default &amp;quot;cds&amp;quot;) --dry-run Dry run upgrade -h, --help help for upgrade --limit int Max number of migrations to apply (0 = unlimited) --migrate-dir string CDS SQL Migration directory (default &amp;quot;.</description>
+    </item>
+    
+  </channel>
+</rss>

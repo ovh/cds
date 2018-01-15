@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Built-in Actions on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/</link>
+    <description>Recent content in Built-in Actions on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/workflows/pipelines/actions/builtin/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Artifact Download</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-download/</guid>
+      <description>Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it.
+This action can be used to retrieve an artifact previously uploaded by an Artifact Upload action.
+Parameters  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.</description>
+    </item>
+    
+    <item>
+      <title>Artifact Upload</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-upload/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-upload/</guid>
+      <description> Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
+This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
+Parameters  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  </description>
+    </item>
+    
+    <item>
+      <title>GitClone</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/gitclone/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/gitclone/</guid>
+      <description>GitClone is a builtin action, you can&amp;rsquo;t modify it.
+This action clones a repository into a new directory.
+This will retrieve a shallow git clone (depth==1).
+You may want to use a privateKey to clone from an SSH repository. To do so, you will need to add a project or an application variable of type key. {{.cds.app.a-key.pub}}
+Parameters  url - mandatory - the git URL must include information about the transport protocol, the address of the remote server, and the path to the repository.</description>
+    </item>
+    
+    <item>
+      <title>JUnit</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/junit/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/junit/</guid>
+      <description> JUnit is a builtin action, you can&amp;rsquo;t modify it.
+This action parses a given Junit formatted XML file to extract its test results.
+Parameters  path: Path to a junit xml file  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
+    </item>
+    
+    <item>
+      <title>Script</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</guid>
+      <description>Script is a builtin action, you can&amp;rsquo;t modify it.
+This action executes a given script with a given interpreter.
+Parameters  script: Content of your script. You can put  #!/bin/bash  or
+#!/bin/perl  at first line. This will define the interpreter.
+Make sure that the binary used is in the pre-requisites of the action.
+If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your step if an executed command fails.</description>
+    </item>
+    
+  </channel>
+</rss>

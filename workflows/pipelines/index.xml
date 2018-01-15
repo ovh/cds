@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Building Pipelines on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/workflows/pipelines/</link>
+    <description>Recent content in Building Pipelines on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/workflows/pipelines/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Variables</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/variables/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/variables/</guid>
+      <description>In CDS, it is possible to define variables at different levels:
+ Project Environment Application  Variable types Existing variable types:
+ String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
+ Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{.</description>
+    </item>
+    
+    <item>
+      <title>Use Configuration File</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/configuration-file/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/configuration-file/</guid>
+      <description>You can define a pipeline in the json format but also in the yaml format. The default is the yaml format.
+Basic configuration If you have a pretty basic build pipeline with a single stage and a single job. You may write such a configuration file:
+steps: - script: echo I&#39;m the firt step - script: echo I&#39;m the second step  This defines a pipeline of type build (it&amp;rsquo;s the default type), named Build (the default name for a build Pipeline).</description>
+    </item>
+    
+  </channel>
+</rss>

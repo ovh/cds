@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>pipeline on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/</link>
+    <description>Recent content in pipeline on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/cli/cdsctl/pipeline/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>create</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/create/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/create/</guid>
+      <description> cdsctl pipeline create Create a CDS pipeline
+Synopsis Create a CDS pipeline
+cdsctl pipeline create PROJECT-KEY PIPELINE-NAME [flags]  Options  -h, --help help for create --type string Pipeline type {build,deployment,testing} (default &amp;quot;build&amp;quot;) (default &amp;quot;build&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl pipeline - Manage CDS pipeline  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/delete/</guid>
+      <description> cdsctl pipeline delete Delete a CDS pipeline
+Synopsis Delete a CDS pipeline
+cdsctl pipeline delete PROJECT-KEY PIPELINE-NAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl pipeline - Manage CDS pipeline  </description>
+    </item>
+    
+    <item>
+      <title>export</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/export/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/export/</guid>
+      <description> cdsctl pipeline export Export CDS pipeline
+Synopsis Export CDS pipeline
+cdsctl pipeline export PROJECT-KEY PIPELINE-NAME [flags]  Options  --format string yml or json (default &amp;quot;yml&amp;quot;) -h, --help help for export --with-permission true or false  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl pipeline - Manage CDS pipeline  </description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/import/</guid>
+      <description> cdsctl pipeline import Import CDS pipeline
+Synopsis PATH: Path or URL of pipeline to import
+cdsctl pipeline import PROJECT-KEY PATH [flags]  Options  --force Use force flag to update your pipeline -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl pipeline - Manage CDS pipeline  </description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/list/</guid>
+      <description>cdsctl pipeline list List CDS pipelines
+Synopsis List CDS pipelines
+cdsctl pipeline list PROJECT-KEY [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+  </channel>
+</rss>

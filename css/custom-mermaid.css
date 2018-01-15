@@ -1,0 +1,456 @@
+#body-inner .cluster text {
+    fill: rgba(51, 51, 51, 0.8);
+}
+
+#body-inner .node rect, #body-inner .node circle, #body-inner .node ellipse, #body-inner .node polygon {
+    fill: white;
+    stroke: black;
+    stroke-width: 2px;
+}
+
+#body-inner .path {
+    stroke-width: 2px;
+}
+
+#body-inner .cluster rect {
+    stroke: rgba(0,0,0,0.5) !important;
+    stroke-width: 1px !important;
+}
+
+#body-inner .edgeLabel:not(:empty) {
+    background-color: white;
+    padding: .25em .5em .5em .5em;
+    line-height: 1em;
+    border-radius: 5px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.25);
+}
+
+.actor {
+    stroke: rgba(0,0,0,0.25) !important;
+    fill: #344860 !important;
+}
+
+text.actor {
+    fill: white !important;
+    stroke: none !important;
+}
+
+#subGraph0.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph1.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph2.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph3.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph4.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph5.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph6.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph7.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph8.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph9.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph10.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph11.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph12.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph13.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph14.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph15.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph16.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph17.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph18.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph19.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph20.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph21.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph22.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph23.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph24.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph25.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph26.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph27.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph28.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph29.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph30.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph31.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph32.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph33.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph34.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph35.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph36.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph37.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph38.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph39.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph40.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph41.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph42.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph43.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph44.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph45.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph46.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph47.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph48.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph49.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph50.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph51.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph52.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph53.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph54.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph55.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph56.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph57.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph58.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph59.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph60.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph61.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph62.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph63.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph64.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph65.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph66.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph67.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph68.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph69.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph70.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph71.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph72.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph73.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph74.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph75.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph76.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph77.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph78.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph79.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph80.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph81.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph82.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph83.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph84.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph85.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph86.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph87.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph88.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph89.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph90.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph91.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph92.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+#subGraph93.cluster rect {
+    fill: rgba(224, 102, 224, 0.5) !important;
+}
+
+#subGraph94.cluster rect {
+    fill: rgba(224, 164, 102, 0.5) !important;
+}
+
+#subGraph95.cluster rect {
+    fill: rgba(164, 224, 102, 0.5) !important;
+}
+
+#subGraph96.cluster rect {
+    fill: rgba(224, 102, 102, 0.5) !important;
+}
+
+#subGraph97.cluster rect {
+    fill: rgba(224, 224, 102, 0.5) !important;
+}
+
+#subGraph98.cluster rect {
+    fill: rgba(102, 224, 102, 0.5) !important;
+}
+
+#subGraph99.cluster rect {
+    fill: rgba(102, 224, 224, 0.5) !important;
+}
+
+#subGraph100.cluster rect {
+    fill: rgba(102, 102, 224, 0.5) !important;
+}
+
+.mermaid .node.clickable:hover {
+    cursor: pointer;
+}
+
+.mermaid .node.clickable:hover .label {
+    color: #95a7dc !important;
+    text-decoration: underline;
+}
+
+.mermaid .node.clickable .label {
+    color: #0056c7 !important;
+    text-decoration: underline;
+}
+
+

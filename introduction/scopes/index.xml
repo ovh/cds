@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Scopes &amp; ACLs on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/introduction/scopes/</link>
+    <description>Recent content in Scopes &amp; ACLs on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/introduction/scopes/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Project</title>
+      <link>https://ovh.github.io/cds/introduction/scopes/project/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/scopes/project/</guid>
+      <description>Project A project contains applications, pipelines and environments.
+A project is the first level of permissions management. Any CDS application has to be created inside a project.
+The project key has to be unique among all projects in CDS.
+At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one.</description>
+    </item>
+    
+    <item>
+      <title>Application</title>
+      <link>https://ovh.github.io/cds/introduction/scopes/application/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/scopes/application/</guid>
+      <description>Application An application represents a real world production unit. An application lives inside a project, has variables and can be attached to a CDS Workflow.</description>
+    </item>
+    
+    <item>
+      <title>Environment</title>
+      <link>https://ovh.github.io/cds/introduction/scopes/environment/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/scopes/environment/</guid>
+      <description>Environment An environment is created inside a project and can be used by all the applications of that project.</description>
+    </item>
+    
+  </channel>
+</rss>

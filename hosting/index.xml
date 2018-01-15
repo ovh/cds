@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Hosting your own instance on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/hosting/</link>
+    <description>Recent content in Hosting your own instance on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/hosting/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Requirements</title>
+      <link>https://ovh.github.io/cds/hosting/requirements/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/requirements/</guid>
+      <description>CDS API is the core component of CDS. To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
+There is are two ways to set up CDS:
+ as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4 and Redis &amp;gt;= 3.2. But for serious usage your may need :</description>
+    </item>
+    
+    <item>
+      <title>Download</title>
+      <link>https://ovh.github.io/cds/hosting/download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/download/</guid>
+      <description>You&amp;rsquo;ll find last release of CDS on Github Releases</description>
+    </item>
+    
+    <item>
+      <title>Configuration</title>
+      <link>https://ovh.github.io/cds/hosting/configuration/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/configuration/</guid>
+      <description>The toml configuration can be provided by a file, via consul k/v store or via vault.
+Start CDS with local configuration file You can also generate a configuration file template with the following command.
+$ $PATH_TO_CDS/engine config new &amp;gt; my_conf_file.toml  Edit this file.
+Check your configuration file with
+$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
+$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Run CDS</description>
+    </item>
+    
+    <item>
+      <title>Database Management</title>
+      <link>https://ovh.github.io/cds/hosting/database/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/database/</guid>
+      <description>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the engine binary.
+The migration files are available to download on Github Releases and the archive is named sql.tar.gz. You have to download it and untar (tar xvzf sql.tar.gz).
+Creation On a brand new database run the following command:
+$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Upgrade On an existing database, run the following command on each CDS update:</description>
+    </item>
+    
+    <item>
+      <title>Monitoring</title>
+      <link>https://ovh.github.io/cds/hosting/monitoring/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/monitoring/</guid>
+      <description>Status Handler on API https://your.cds.instance/mon/status returns the status of CDS Engine.
+If status != OK, something is wrong on your CDS Instance.
+Example:
+{ &amp;quot;now&amp;quot;: &amp;quot;2018-01-09T20:24:20.481193492Z&amp;quot;, &amp;quot;lines&amp;quot;: [ { &amp;quot;status&amp;quot;: &amp;quot;OK&amp;quot;, &amp;quot;component&amp;quot;: &amp;quot;Version&amp;quot;, &amp;quot;value&amp;quot;: &amp;quot;0.25.1-snapshot+1455.cds&amp;quot; }, ... { &amp;quot;status&amp;quot;: &amp;quot;OK&amp;quot;, &amp;quot;component&amp;quot;: &amp;quot;Database&amp;quot;, &amp;quot;value&amp;quot;: &amp;quot;20 conns&amp;quot; }, { &amp;quot;status&amp;quot;: &amp;quot;OK&amp;quot;, &amp;quot;component&amp;quot;: &amp;quot;LastUpdate Connected&amp;quot;, &amp;quot;value&amp;quot;: &amp;quot;14&amp;quot; }, { &amp;quot;status&amp;quot;: &amp;quot;OK&amp;quot;, &amp;quot;component&amp;quot;: &amp;quot;Worker Model Errors&amp;quot;, &amp;quot;value&amp;quot;: &amp;quot;0&amp;quot; } ... }  Monitoring with Command Line .</description>
+    </item>
+    
+    <item>
+      <title>Upgrade your CDS Instance</title>
+      <link>https://ovh.github.io/cds/hosting/upgrade/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/upgrade/</guid>
+      <description> Upgrade Binary Update your CDS Engine binary from latest Release from Github:
+./engine update --from-github  Database Migration # get the file sql.tar.gz from latest release from https://github.com/ovh/cds/releases # unzip sql.tar.gz inside a sql/ directory, then run this command: ./engine database upgrade --db-password=cds --db-sslmode=disable --db-name=cds --migrate-dir=sql --db-connect-timeout=20  Restart your CDS API ./engine start api ...  </description>
+    </item>
+    
+  </channel>
+</rss>

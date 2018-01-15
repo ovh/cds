@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>config on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/cli/engine/config/</link>
+    <description>Recent content in config on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/cli/engine/config/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>check</title>
+      <link>https://ovh.github.io/cds/cli/engine/config/check/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/config/check/</guid>
+      <description> engine config check Check CDS configuration file
+Synopsis $ engine config check 
+engine config check [flags]  Options  -h, --help help for check  SEE ALSO  engine config - Manage CDS Configuration  </description>
+    </item>
+    
+    <item>
+      <title>new</title>
+      <link>https://ovh.github.io/cds/cli/engine/config/new/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/config/new/</guid>
+      <description> engine config new CDS configuration file assistant
+Synopsis Comming soon&amp;hellip;
+engine config new [flags]  Options  --env Print configuration as environment variable -h, --help help for new  SEE ALSO  engine config - Manage CDS Configuration  </description>
+    </item>
+    
+  </channel>
+</rss>

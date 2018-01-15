@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ready to RUN on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/hosting/ready-to-run/</link>
+    <description>Recent content in Ready to RUN on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/hosting/ready-to-run/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Docker Compose</title>
+      <link>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</guid>
+      <description>Run with Docker-Compose The docker-compose.yml contains:
+ cds-db service with a postgresql cds-cache service with a redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
+How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &amp;quot;LOG: database system is ready to accept connections&amp;quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &amp;quot;cds_cds-migrate_1 exited with code 0&amp;quot; # run API and UI $ docker-compose up cds-api cds-ui  Open a browser on http://localhost:2015, then register a new user.</description>
+    </item>
+    
+  </channel>
+</rss>

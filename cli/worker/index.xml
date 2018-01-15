@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>worker on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/cli/worker/</link>
+    <description>Recent content in worker on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/cli/worker/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>exit</title>
+      <link>https://ovh.github.io/cds/cli/worker/exit/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/exit/</guid>
+      <description> worker exit worker exit
+Synopsis worker exit command lets job finish current step and disabled all further steps
+worker exit [flags]  Options  -h, --help help for exit  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>export</title>
+      <link>https://ovh.github.io/cds/cli/worker/export/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/export/</guid>
+      <description> worker export worker export  
+Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can create a build variable with the worker command:
+# worker export &amp;lt;varname&amp;gt; &amp;lt;value&amp;gt; worker export foo bar  then, you can use new build variable:
+echo &amp;quot;{{.cds.build.foo}}&amp;quot;  Scope You can use the build variable in :
+ the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your worklow   worker export [flags]  Options  -h, --help help for export  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>register</title>
+      <link>https://ovh.github.io/cds/cli/worker/register/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/register/</guid>
+      <description> worker register worker register
+Synopsis worker register
+worker register [flags]  Options  -h, --help help for register  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>tag</title>
+      <link>https://ovh.github.io/cds/cli/worker/tag/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/tag/</guid>
+      <description>worker tag worker tag key=value key=value
+Synopsis On the workflow view, the sidebar on the left displays a select box to filter on CDS Tags.
+So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment.
+Inside a job, you can add a Tag with the worker command:
+# worker tag &amp;lt;key&amp;gt;=&amp;lt;value&amp;gt; &amp;lt;key&amp;gt;=&amp;lt;value&amp;gt; worker tag tagKey=tagValue anotherTagKey=anotherTagValue  Tags are useful to add indication on the sidebar about the context of a Run.</description>
+    </item>
+    
+    <item>
+      <title>tmpl</title>
+      <link>https://ovh.github.io/cds/cli/worker/tmpl/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/tmpl/</guid>
+      <description>worker tmpl worker tmpl inputFile outputFile
+Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add a replace CDS variables with the real value into a file:
+# create a file cat &amp;lt;&amp;lt; EOF &amp;gt; myFile this a a line in the file, with a CDS variable {{.cds.version}} EOF # worker tmpl &amp;lt;input file&amp;gt; &amp;lt;output file&amp;gt; worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile  The file outputFile will contain the string:
+this a a line in the file, with a CDS variable 2  if it&amp;rsquo;s the RUN n°2 of the current workflow.</description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>https://ovh.github.io/cds/cli/worker/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/update/</guid>
+      <description> worker update Update worker from CDS API or from CDS Release
+Synopsis Update worker from CDS API or from CDS Release
+worker update [flags]  Options  --from-github Update binary from latest github release -h, --help help for update  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>upload</title>
+      <link>https://ovh.github.io/cds/cli/worker/upload/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/upload/</guid>
+      <description> worker upload worker upload &amp;ndash;tag=tagValue {{.cds.workspace}}/fileToUpload
+Synopsis Inside a job, there are two ways to upload an artifact:
+ with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), using the worker command: worker upload --tag=&amp;lt;tag&amp;gt; &amp;lt;path&amp;gt;
+worker upload &amp;ndash;tag=  worker upload &amp;ndash;tag={{.cds.version}} {{.cds.workspace}}/files*.yml
+  worker upload [flags]  Options  -h, --help help for upload --tag string Tag for artifact Upload. Tag is mandatory  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>version</title>
+      <link>https://ovh.github.io/cds/cli/worker/version/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/version/</guid>
+      <description> worker version Print the version of the worker binary
+Synopsis Print the version of the worker binary
+worker version [flags]  Options  -h, --help help for version  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+  </channel>
+</rss>

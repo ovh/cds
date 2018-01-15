@@ -58,31 +58,34 @@ function search(query) {
 // Let's get started
 initLunr();
 $( document ).ready(function() {
-    var horseyList = horsey($("#search-by").get(0), {
-        suggestions: function (value, done) {
-            var query = $("#search-by").val();
-            var results = search(query);
-            done(results);
+    var searchList = new autoComplete({
+        /* selector for the search box element */
+        selector: $("#search-by").get(0),
+        /* source is the callback to perform the search */
+        source: function(term, response) {
+            response(search(term));
         },
-        filter: function (q, suggestion) {
-            return true;
+        /* renderItem displays individual search results */
+        renderItem: function(item, term) {
+            var numContextWords = 2;
+            var text = item.content.match(
+                "(?:\\s?(?:[\\w]+)\\s?){0,"+numContextWords+"}" +
+                    term+"(?:\\s?(?:[\\w]+)\\s?){0,"+numContextWords+"}");
+            item.context = text;
+            return '<div class="autocomplete-suggestion" ' +
+                'data-term="' + term + '" ' +
+                'data-title="' + item.title + '" ' +
+                'data-uri="'+ item.uri + '" ' +
+                'data-context="' + item.context + '">' +
+                '» ' + item.title +
+                '<div class="context">' +
+                (item.context || '') +'</div>' +
+                '</div>';
         },
-        set: function (value) {
-            location.href=value.href;
-        },
-        render: function (li, suggestion) {
-            var uri = suggestion.uri.substring(1,suggestion.uri.length);
-
-            suggestion.href = baseurl + uri;
-
-            var query = $("#search-by").val();
-            var numWords = 2;
-            var text = suggestion.content.match("(?:\\s?(?:[\\w]+)\\s?){0,"+numWords+"}"+query+"(?:\\s?(?:[\\w]+)\\s?){0,"+numWords+"}");
-            suggestion.context = text;
-            var image = '<div>' + '» ' + suggestion.title + '</div><div style="font-size:12px">' + (suggestion.context || '') +'</div>';
-            li.innerHTML = image;
-        },
-        limit: 10
+        /* onSelect callback fires when a search suggestion is chosen */
+        onSelect: function(e, term, item) {
+            console.log(item.getAttribute('data-val'));
+            location.href = item.getAttribute('data-uri');
+        }
     });
-    horseyList.refreshPosition();
 });

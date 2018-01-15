@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>variable on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/cli/cdsctl/application/variable/</link>
+    <description>Recent content in variable on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/cli/cdsctl/application/variable/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>add</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/variable/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/variable/add/</guid>
+      <description>cdsctl application variable add Add a new variable on application. variable type can be one of password, text, string, key, boolean, number, repository
+Synopsis Add a new variable on application. variable type can be one of password, text, string, key, boolean, number, repository
+cdsctl application variable add PROJECT-KEY APP-NAME VARIABLE-NAME VARIABLE-TYPE VARIABLE-VALUE [flags]  Options  -h, --help help for add  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/variable/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/variable/delete/</guid>
+      <description> cdsctl application variable delete Delete CDS application variable
+Synopsis Delete CDS application variable
+cdsctl application variable delete PROJECT-KEY APP-NAME VARIABLE-NAME [flags]  Options  -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl application variable - Manage CDS application variables  </description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/variable/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/variable/list/</guid>
+      <description>cdsctl application variable list List CDS application variables
+Synopsis List CDS application variables
+cdsctl application variable list PROJECT-KEY APP-NAME [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/variable/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/variable/update/</guid>
+      <description> cdsctl application variable update Update CDS application variable value
+Synopsis Update CDS application variable value
+cdsctl application variable update PROJECT-KEY APP-NAME VARIABLE-OLDNAME VARIABLE-NAME VARIABLE-TYPE VARIABLE-VALUE [flags]  Options  -h, --help help for update  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl application variable - Manage CDS application variables  </description>
+    </item>
+    
+  </channel>
+</rss>

@@ -11,33 +11,22 @@
     
     
     <item>
-      <title>Built-in Actions</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin/</link>
+      <title>Docker Compose</title>
+      <link>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin/</guid>
-      <description>Built-in actions are integrated in CDS. You can’t modify them.
-Built-in actions :
-Artifact Download Artifact Upload GitClone JUnit Script </description>
-    </item>
-    
-    <item>
-      <title>Generate a Token</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.worker.token/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/advanced/advanced.worker.token/</guid>
-      <description> Purpose In order to start a worker or a Hatchery, you need to provide a token to be able to register on CDS API.
-CLI Run the following command, replace yourgroup with your group
-$ cds generate token -g yourgroup -e persistent  </description>
+      <guid>https://ovh.github.io/cds/hosting/ready-to-run/docker-compose/</guid>
+      <description>Run with Docker-Compose The docker-compose.yml contains:
+ cds-db service with a postgresql cds-cache service with a redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
+How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &amp;quot;LOG: database system is ready to accept connections&amp;quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &amp;quot;cds_cds-migrate_1 exited with code 0&amp;quot; # run API and UI $ docker-compose up cds-api cds-ui  Open a browser on http://localhost:2015, then register a new user.</description>
     </item>
     
     <item>
       <title>Github</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.repositories_manager.github/</link>
+      <link>https://ovh.github.io/cds/hosting/repositories-manager/github/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/advanced/advanced.repositories_manager.github/</guid>
+      <guid>https://ovh.github.io/cds/hosting/repositories-manager/github/</guid>
       <description>Authorize CDS on Github Create a CDS application on Github Go to https://github.com/settings/developers and Register a new application: set an application name, the url and a description. Authorization callback URL: http(s)://&amp;lt;your-cds-api&amp;gt;/repositories_manager/oauth2/callback
 On the next page Github give you a Client ID and a Client Secret
 Connect CDS To Github Set env CDS_VCS_REPOSITORIES_GITHUB_CLIENTSECRET or update your configuration file with &amp;lt;client-secret&amp;gt;:
@@ -46,132 +35,89 @@ With CDS CLI run :</description>
     </item>
     
     <item>
-      <title>Introduction</title>
-      <link>https://ovh.github.io/cds/introduction/introduction/</link>
+      <title>Hatchery Local</title>
+      <link>https://ovh.github.io/cds/hatchery/local/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/introduction/introduction/</guid>
-      <description>What is CDS? Enterprise-Grade Continuous Delivery &amp;amp; DevOps Automation Open Source Platform
- Easy to deploy Cloud native Scalable &amp;amp; Extensible Infrastructure &amp;amp; Architecture agnostic Event-Driven Pipeline  Designed for scalability, CDS tasks can run either on cloud infrastructure or on your own machines, should you start some workers using a hatchery.
-CDS exposes an API available to workers and humans through CLI or WebUI.
-What does CDS do? Basically, CDS allows users to create building and delivery pipelines for all your applications.</description>
+      <guid>https://ovh.github.io/cds/hatchery/local/</guid>
+      <description>Use case If you are a CDS user, you can use shared.infra Worker to run your job.
+But, if you want to use your host for various good reasons as OS, Network, etc&amp;hellip; you can launch CDS Worker on your host.
+Two prerequisites:
+ your host must reach your CDS API on HTTP port or GPRC Port defined on your CDS Configuration you need the CDS Worker binary on your host.</description>
     </item>
     
     <item>
       <title>Pipeline</title>
-      <link>https://ovh.github.io/cds/introduction/introduction.concepts.pipeline/</link>
+      <link>https://ovh.github.io/cds/introduction/concepts/pipeline/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/introduction/introduction.concepts.pipeline/</guid>
+      <guid>https://ovh.github.io/cds/introduction/concepts/pipeline/</guid>
       <description>A pipeline describes how things need to be executed in order to obtain the expected result. In CDS, a pipeline belongs to a single project and can be used with the applications of that project.
 A pipeline is structured in sequential stages containing one or multiple concurrent jobs.
-In CDS there are several types of pipelines : build, testing and deployment. In Pipeline configuration file, default type is build.</description>
+CDS pipelines can be parametrized. This allows you to reuse the same pipeline when you have similar workloads. For example, you could use the same pipeline to deploy in your pre-production environment first and then to your production environment.</description>
     </item>
     
     <item>
-      <title>Requirements</title>
-      <link>https://ovh.github.io/cds/installation/installation.requirements/</link>
+      <title>Scheduler</title>
+      <link>https://ovh.github.io/cds/workflows/design/hooks/scheduler/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/installation/installation.requirements/</guid>
-      <description>CDS API is the core component of CDS. To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
-There is are two ways to set up CDS:
- as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4 and Redis &amp;gt;= 3.2. But for serious usage your may need :</description>
+      <guid>https://ovh.github.io/cds/workflows/design/hooks/scheduler/</guid>
+      <description>On a Root Pipeline, you can add a &amp;ldquo;Hook Scheduler&amp;rdquo;. You can use the Crontab Expression Format</description>
     </item>
     
     <item>
-      <title>User Actions</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/</link>
+      <title>Update a Workflow run number</title>
+      <link>https://ovh.github.io/cds/workflows/design/advanced/update-run-number/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user-actions/</guid>
-      <description>A user action is a combination of built-in or plugin actions. A user can import user actions using the Web UI or the CLI:
-Import an action using the CLI With a local file :
-$ cds action add --url $GOPATH/src/github.com/ovh/cds/contrib/actions/actions/cds-docker-package.hcl  With a remote file :
-$ cds action add --url https://raw.githubusercontent.com/ovh/cds/master/contrib/actions/cds-docker-package.hcl  CDS&amp;rsquo;s source code bundles a few user-actions that you may use directly or as a starting point for your own user-actions:</description>
+      <guid>https://ovh.github.io/cds/workflows/design/advanced/update-run-number/</guid>
+      <description>workflow -&amp;gt; advanced section. You can edit the run number to set you old cds.version value.
+{{cds.version}} is always usable, and equals to {{.cds.run.number}}</description>
     </item>
     
     <item>
-      <title>Worker Setup</title>
-      <link>https://ovh.github.io/cds/tutorials/tutorials.worker-setup/</link>
+      <title>Update your worker</title>
+      <link>https://ovh.github.io/cds/worker/update/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/tutorials/tutorials.worker-setup/</guid>
-      <description>Introduction Why would you need to setup your own worker ? There is several cases where one would need to setup his own worker:
- Perform incremental build Build on a specific architecture Perform integration tests in a specific network  How does this work ? Workers authenticate on CDS with a token and have the same permissions as the user who generated it.
-Bottom line, if you can access the application, your worker will too.</description>
+      <guid>https://ovh.github.io/cds/worker/update/</guid>
+      <description>Manual Update If you run manually a worker, you problably want to update it when CDS Engine is updated with a new Release.
+Update your worker from CDS API:
+./worker update --api https://your.cds.instance  Update your worker from latest Release from Github:
+./worker update --from-github  Auto Update If you use a dedicated worker, you launch it with the command:
+./worker --api https://your.cds.instance  You can add auto-update flag, to auto update the worker, without restart it.</description>
     </item>
     
     <item>
-      <title>Write your own hatchery</title>
-      <link>https://ovh.github.io/cds/tutorials/tutorials.hatchery-create/</link>
+      <title>Variables</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/variables/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/tutorials/tutorials.hatchery-create/</guid>
-      <description>Example with a creation of a VSphere hatchery  First of all you need to create a new package like the other into the hatchery package. Let&amp;rsquo;s call this package vsphere for our example.
- You have to implement the Service interface (see here) in order to configure launch this new hatchery mode via CDS engine CLI.
- Your have to create a Configuration structure composed of the hatchery.CommonConfiguration and the variables you need to access to Vsphere API.</description>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/variables/</guid>
+      <description>In CDS, it is possible to define variables at different levels:
+ Project Environment Application  Variable types Existing variable types:
+ String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
+ Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{.</description>
     </item>
     
     <item>
       <title>Bitbucket</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.repositories_manager.bitbucket/</link>
+      <link>https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/advanced/advanced.repositories_manager.bitbucket/</guid>
+      <guid>https://ovh.github.io/cds/hosting/repositories-manager/bitbucket/</guid>
       <description>Authorize CDS on your Bitbucket instance You need to perform the following steps :
  Bitbucket admin privileges A RSA Key Pair  Create a CDS application in BitBucket In Bitbucket go to Administration Settings / Application Links. Create a new Application with :
  Name : CDS Type : Generic Application Application URL : Your CDS URL Display URL : Your CDS URL  On this application, you just have to set up OAuth Incoming Authentication :</description>
     </item>
     
     <item>
-      <title>Concepts</title>
-      <link>https://ovh.github.io/cds/introduction/introduction.concepts/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/introduction/introduction.concepts/</guid>
-      <description>Project A project contains applications, pipelines and environments.
-A project is the first level of permissions management. Any CDS application has to be created inside a project.
-The project key has to be unique among all projects in CDS.
-At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one.</description>
-    </item>
-    
-    <item>
-      <title>Download</title>
-      <link>https://ovh.github.io/cds/installation/installation.download/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/installation/installation.download/</guid>
-      <description>You&amp;rsquo;ll find last release of CDS on Github Releases</description>
-    </item>
-    
-    <item>
-      <title>First Pipeline with CLI</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.first-pipeline-cli/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.first-pipeline-cli/</guid>
-      <description>Create a project The first step is to create your own Project. A project contains applications, pipelines and environments.
-You can use either the CLI or the UI to create your project.
-$ cds project add TEST &amp;quot;My test project&amp;quot; test-team OK  Create a simple pipeline $ cds pipeline add TEST hello-pip Pipeline hello-pip created.  Create an application $ cds application add TEST hello-world Application hello-world created.  Configure your pipeline You can add a script step in the pipeline that simply echoes &amp;ldquo;Hello World !</description>
-    </item>
-    
-    <item>
-      <title>Getting Started</title>
-      <link>https://ovh.github.io/cds/getting-started/getting-started.first-pipeline-ui/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/getting-started/getting-started.first-pipeline-ui/</guid>
-      <description> 0 - Prerequisite You must have a CDS Running. See Installation for more information.
-1 - Create Project 2 - Create Application 3 - Create Pipeline 4 - Create Stage and Job 5 - Run Pipeline  Click on the &amp;ldquo;Play&amp;rdquo; button  </description>
-    </item>
-    
-    <item>
       <title>Gitlab</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.repositories_manager.gitlab/</link>
+      <link>https://ovh.github.io/cds/hosting/repositories-manager/gitlab/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/advanced/advanced.repositories_manager.gitlab/</guid>
+      <guid>https://ovh.github.io/cds/hosting/repositories-manager/gitlab/</guid>
       <description>Authorize CDS on your Gitlab instance What you need to perform the following steps :
  Gitlab admin privileges  Create a CDS application on Gitlab In Gitlab go to Settings / Application section. Create a new application with :
  Name : CDS Redirect URI : http(s):///repositories_manager/oauth2/callback  Scopes :
@@ -180,23 +126,182 @@ $ cds project add TEST &amp;quot;My test project&amp;quot; test-team OK  Create 
     </item>
     
     <item>
-      <title>Hatcheries</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.hatcheries/</link>
+      <title>Hatchery Marathon</title>
+      <link>https://ovh.github.io/cds/hatchery/marathon/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/advanced/advanced.hatcheries/</guid>
-      <description>Hatchery is a service dedicated to spawn and kill worker in accordance with build queue needs.
-An hatchery is started with permissions to build all pipelines accessible from a given group, using token.
-There are 6 modes for hatcheries:
- Local (Start local workers on a single host) Marathon (Start worker model instances on a mesos cluster with marathon framework) Swarm (Start worker on a docker swarm cluster) Openstack (Start virtual machines on an openstack cluster) VSphere (Start virtual machines on an VSphere cluster)  Local mode Hatchery starts workers directly as local process.</description>
+      <guid>https://ovh.github.io/cds/hatchery/marathon/</guid>
+      <description>Start Marathon hatchery Generate a token for group:
+$ cds generate token -g shared.infra -e persistent fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92  Edit the CDS Configuration or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated.
+Then start hatchery:
+engine start hatchery:marathon --config config.toml  This hatchery will spawn Application on Marathon. Each application is a CDS Worker, using the Worker Model of type &amp;lsquo;docker&amp;rsquo;.</description>
+    </item>
+    
+    <item>
+      <title>Payload</title>
+      <link>https://ovh.github.io/cds/workflows/design/payload/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/design/payload/</guid>
+      <description>A CDS Workflow can be launched :
+ manually, user can enter a Payload by webhooks / repository webhooks, payload contains the value sent by initiator of the hook scheduler, the payload contains the value of the default payload. You can edit the default payload on the root pipeline (on roadmap) listener, as a kafka listener. The payload will contain the content of the kafka message  A payload is a JSON value.</description>
+    </item>
+    
+    <item>
+      <title>Project</title>
+      <link>https://ovh.github.io/cds/introduction/scopes/project/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/scopes/project/</guid>
+      <description>Project A project contains applications, pipelines and environments.
+A project is the first level of permissions management. Any CDS application has to be created inside a project.
+The project key has to be unique among all projects in CDS.
+At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one.</description>
+    </item>
+    
+    <item>
+      <title>Requirements</title>
+      <link>https://ovh.github.io/cds/hosting/requirements/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/requirements/</guid>
+      <description>CDS API is the core component of CDS. To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
+There is are two ways to set up CDS:
+ as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4 and Redis &amp;gt;= 3.2. But for serious usage your may need :</description>
+    </item>
+    
+    <item>
+      <title>Stage</title>
+      <link>https://ovh.github.io/cds/introduction/concepts/stage/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/concepts/stage/</guid>
+      <description>Usually in CDS a build pipeline is structured of the following stages :
+ Compile stage : Build the binaries Analysis &amp;amp; Unit Tests stage : Run all unit tests and analyse code quality Packaging stage : Build the final package, Virtual Machine Image or Docker Image.  In CDS, stages are executed sequentially if the previous stage is successful.
+You can define trigger conditions on a stage, to enable/disable it under given conditions.</description>
+    </item>
+    
+    <item>
+      <title>Webhook</title>
+      <link>https://ovh.github.io/cds/workflows/design/hooks/webhook/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/design/hooks/webhook/</guid>
+      <description>On a Root Pipeline, you can add a &amp;ldquo;Webhook&amp;rdquo;. Click on the created icon to get the WebHook URL.
+In order to trigger this one you just have to make a curl on the given url with the selected method.</description>
+    </item>
+    
+    <item>
+      <title>Worker</title>
+      <link>https://ovh.github.io/cds/introduction/concepts/worker/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/concepts/worker/</guid>
+      <description>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.
+Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge&amp;hellip;</description>
+    </item>
+    
+    <item>
+      <title>Worker Model From Docker Hub</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/</guid>
+      <description>A worker model of type docker can be spawned by a Hatchery Docker Swarm.
+Register a worker Model from an existing Docker Image Docker Image golang:1.8.1 have a &amp;ldquo;curl&amp;rdquo; in $PATH, so it can be used as it is.
+ In the UI, click on the wheel on the hand right top corner and select *workers&amp;rdquo; (or go the the route #/worker) At the bottom of the page, fill the form  Name of your worker Golang-1.</description>
+    </item>
+    
+    <item>
+      <title>Application</title>
+      <link>https://ovh.github.io/cds/introduction/scopes/application/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/scopes/application/</guid>
+      <description>Application An application represents a real world production unit. An application lives inside a project, has variables and can be attached to a CDS Workflow.</description>
+    </item>
+    
+    <item>
+      <title>Download</title>
+      <link>https://ovh.github.io/cds/hosting/download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/download/</guid>
+      <description>You&amp;rsquo;ll find last release of CDS on Github Releases</description>
+    </item>
+    
+    <item>
+      <title>Git Repository Webhook</title>
+      <link>https://ovh.github.io/cds/workflows/design/hooks/git-repo-webhook/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/design/hooks/git-repo-webhook/</guid>
+      <description>You want to run a workflow after a git push on a repository? This kink of hook is for you.
+You have to:
+ link your project to a Repository Manager, on Advanced Section. See how to setup repository manager on your CDS instance. link an application to a git repository add a Repository Webhook on the root pipeline, this pipeline have the application linked in the context  Github / Bitbucket &amp;amp; Gitlab are supported by CDS.</description>
+    </item>
+    
+    <item>
+      <title>Hatchery Openstack</title>
+      <link>https://ovh.github.io/cds/hatchery/openstack/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hatchery/openstack/</guid>
+      <description>CDS build using Openstack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
+Start Opentack hatchery Generate a token for group:
+$ cds generate token -g shared.infra -e persistent fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92  Edit the CDS configuration or set the dedicated environment variables. To enable the hatchery, just set the API HTTP and GRPC URL, the token freshly generated and the openstack variables.
+Then start hatchery:
+engine start hatchery:openstack --config config.</description>
+    </item>
+    
+    <item>
+      <title>Job</title>
+      <link>https://ovh.github.io/cds/introduction/concepts/job/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/concepts/job/</guid>
+      <description>A Job is an important concept in CDS. A job is composed of steps which will be run sequentially. A Job is executed in a dedicated workspace and each new run of a job will have a new dedicated workspace. This means that you cannot share a workspace between jobs or between two runs of the same job.
+A Job is executed by a worker. CDS will select or provision a worker for the job dependending on the Requirements the job&amp;rsquo;s requirements.</description>
+    </item>
+    
+    <item>
+      <title>Pipeline Context</title>
+      <link>https://ovh.github.io/cds/workflows/design/pipeline-context/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/design/pipeline-context/</guid>
+      <description>After adding the pipeline, you can &amp;ldquo;Edit the pipeline Context&amp;rdquo; (sidebar).
+Then, you can:
+ add or remove application. Jobs can use cds.app.* configuration and or remove an environment. Jobs can use cds.env.* configuration enable / disable Pipeline Mutex  </description>
+    </item>
+    
+    <item>
+      <title>Worker Model with your own image</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/</guid>
+      <description>A worker model of type docker can be spawned by a Hatchery Docker Swarm
+Setup Docker Worker Model with your own image In this example, we will build a Docker model able to build an AngularJs application with webfonts. To create webfonts, a grunt task (optionnally) requires fontforge and ttfautohint.
+The following tools must be included in the model:
+ NodeJs and npm bower grunt-cli gulp-cli fontforge ttfautohint  We will use the official nodejs image from Docker.</description>
+    </item>
+    
+    <item>
+      <title>Environment</title>
+      <link>https://ovh.github.io/cds/introduction/scopes/environment/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/scopes/environment/</guid>
+      <description>Environment An environment is created inside a project and can be used by all the applications of that project.</description>
     </item>
     
     <item>
       <title>Hatchery Swarm</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/</link>
+      <link>https://ovh.github.io/cds/hatchery/swarm/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/advanced/advanced.hatcheries.swarm/</guid>
+      <guid>https://ovh.github.io/cds/hatchery/swarm/</guid>
       <description>CDS build using Docker Swarm to spawn CDS Worker.
 Start Swarm hatchery Generate a token for group:
 $ cds generate token -g shared.infra -e persistent fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92  Edit the CDS configuration or set the dedicated environment variables. To enable the hactchery, just set the API HTTP and GRPC URL, the token freshly generated.
@@ -205,187 +310,11 @@ Then start hatchery:</description>
     </item>
     
     <item>
-      <title>Plugins Actions</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins/</link>
+      <title>Openstack Worker Model</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins/</guid>
-      <description>CDS Plugin System lets users develop complex actions. See How to write a plugin
-CDS Administrators have to import plugins on CDS to let user use them.
-Plugins from CDS Contributions:
-plugin-download plugin-group-tmpl plugin-kafka-publish plugin-marathon plugin-ssh-cmd plugin-tmpl plugin-venom </description>
-    </item>
-    
-    <item>
-      <title>Setup Worker Model From Docker Hub</title>
-      <link>https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-simple/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-simple/</guid>
-      <description>A worker model of type docker can be spawned by a Hatchery Docker Swarm.
-Register a worker Model from an existing Docker Image Docker Image golang:1.8.1 have a &amp;ldquo;curl&amp;rdquo; in $PATH, so it can be used as it is.
- In the UI, click on the wheel on the hand right top corner and select *workers&amp;rdquo; (or go the the route #/worker) At the bottom of the page, fill the form  Name of your worker Golang-1.</description>
-    </item>
-    
-    <item>
-      <title>Worker</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.worker/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/advanced/advanced.worker/</guid>
-      <description>A pipeline is structured in sequential stages containing one or multiple concurrent jobs. A Job will be executed by a worker.
-Building your own worker model enables you to integrate your own tools, or to customize the tools you need to use. For instance, to build an AngularJs application, you shall need a worker capable of installing npm tools, importing bower packages (these are nodeJs tools), building webfonts with fontforge&amp;hellip;</description>
-    </item>
-    
-    <item>
-      <title>Worker Model</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.worker.model/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/advanced/advanced.worker.model/</guid>
-      <description>Purpose The goal of CDS is to start a worker when you need it, which should match all your requirements exactly. In order to scale automatically on demand, it is possible to register a worker model.
-The goal of a worker model is to describe the capabilities of a given docker/iso image in terms of architecture, pre-installed binaries or libraries.
-Types There are 2 types of worker models:
- Docker images, see how to create a worker model docker Openstack images, see how to create a worker model openstack  Capabilities Capabilities have a name, a type and a value.</description>
-    </item>
-    
-    <item>
-      <title>Building Pipelines</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines/</guid>
-      <description> First Pipeline with CLI Use Configuration File Actions Templates Variables Job&amp;#39;s Requirements  </description>
-    </item>
-    
-    <item>
-      <title>Building Workflows</title>
-      <link>https://ovh.github.io/cds/building-workflows/building-workflows/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/building-workflows/building-workflows/</guid>
-      <description> Run conditions on pipeline  </description>
-    </item>
-    
-    <item>
-      <title>Configuration</title>
-      <link>https://ovh.github.io/cds/installation/installation.configuration/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/installation/installation.configuration/</guid>
-      <description>The toml configuration can be provided by a file, via consul k/v store or via vault.
-Start CDS with local configuration file You can also generate a configuration file template with the following command.
-$ $PATH_TO_CDS/engine config new &amp;gt; my_conf_file.toml  Edit this file.
-Check your configuration file with
-$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
-$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Run CDS</description>
-    </item>
-    
-    <item>
-      <title>Hatchery Openstack</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/advanced/advanced.hatcheries.openstack/</guid>
-      <description>CDS build using Openstack infrastructure to spawn each CDS Workers inside dedicated virtual machine.
-Start Opentack hatchery Generate a token for group:
-$ cds generate token -g shared.infra -e persistent fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92  Edit the CDS configuration or set the dedicated environment variables. To enable the hactchery, just set the API HTTP and GRPC URL, the token freshly generated and the openstack variables.
-Then start hatchery:
-engine start hatchery:openstack --config config.</description>
-    </item>
-    
-    <item>
-      <title>Hatchery Vsphere</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/advanced/advanced.hatcheries.vsphere/</guid>
-      <description>CDS build using VMWare Vsphere infrastructure to spawn each CDS Workers inside dedicated VM.
-Pre-requisites This hatchery spawns VM which obtains IP from DHCP. So first you have to create a DHCP server on your host with NAT if you want to access to the internet. In order to create you have multiple possibilities like create your own VM with a DHCP server configured or if you are comfortable with the VMWare tools you can use the NSX system.</description>
-    </item>
-    
-    <item>
-      <title>Job</title>
-      <link>https://ovh.github.io/cds/introduction/introduction.concepts.job/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/introduction/introduction.concepts.job/</guid>
-      <description>A Job is an important concept in CDS. A job is composed of steps which will be run sequentially. A Job is executed in a dedicated workspace and each new run of a job will have a new dedicated workspace. This means that you cannot share a workspace between jobs or between two runs of the same job.
-A Job is executed by a worker. CDS will select or provision a worker for the job dependending on the Requirements the job&amp;rsquo;s requirements.</description>
-    </item>
-    
-    <item>
-      <title>Repositories Manager</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.repositories_manager/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/advanced/advanced.repositories_manager/</guid>
-      <description>CDS can be linked to following repositories manager :
- Atlassian Stash / Bitbucket Github Gitlab  It allows you to enable some CDS features such as :
- Create application in CDS from Bitbucket or Github Attach an application to its Bitbucket or Github repository Fully automatic hook management Branch filtering on application workflows Commit logs on pipeline build details  Go through this tutorial to enable the link between repositories managers and CDS.</description>
-    </item>
-    
-    <item>
-      <title>Setup Docker Worker Model with your own image</title>
-      <link>https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-customized/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/tutorials/tutorials.worker-model-docker-customized/</guid>
-      <description>A worker model of type docker can be spawned by a Hatchery Docker Swarm
-Setup Docker Worker Model with your own image In this example, we will build a Docker model able to build an AngularJs application with webfonts. To create webfonts, a grunt task (optionnally) requires fontforge and ttfautohint.
-The following tools must be included in the model:
- NodeJs and npm bower grunt-cli gulp-cli fontforge ttfautohint  We will use the official nodejs image from Docker.</description>
-    </item>
-    
-    <item>
-      <title>Use Configuration File</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.configuration-file/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.configuration-file/</guid>
-      <description>You can define a pipeline in the json format but also in the yaml format. The default is the yaml format.
-Basic configuration If you have a pretty basic build pipeline with a single stage and a single job. You may write such a configuration file:
-steps: - script: echo I&#39;m the firt step - script: echo I&#39;m the second step  This defines a pipeline of type build (it&amp;rsquo;s the default type), named Build (the default name for a build Pipeline).</description>
-    </item>
-    
-    <item>
-      <title>Actions</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions/</guid>
-      <description>Within a Job, each step is based on an action.
-There are three types of actions:
- Built-in actions, available on each CDS Installation User actions, added by CDS Administrators for now Plugins actions, added by CDS Administrators  </description>
-    </item>
-    
-    <item>
-      <title>Database Management</title>
-      <link>https://ovh.github.io/cds/installation/installation.database/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/installation/installation.database/</guid>
-      <description>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the engine binary.
-The migration files are available to download on Github Releases and the archive is named sql.tar.gz. You have to download it and untar (tar xvzf sql.tar.gz).
-Creation On a brand new database run the following command:
-$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Upgrade On an existing database, run the following command on each CDS update:</description>
-    </item>
-    
-    <item>
-      <title>Installation</title>
-      <link>https://ovh.github.io/cds/installation/installation/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/installation/installation/</guid>
-      <description> Requirements Download Configuration Database Management Ready to RUN Advanced Startup  </description>
-    </item>
-    
-    <item>
-      <title>Setup Openstack Worker Model</title>
-      <link>https://ovh.github.io/cds/tutorials/tutorials.worker-model-openstack/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/tutorials/tutorials.worker-model-openstack/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/</guid>
       <description>CDS build using OVH.com Openstack infrastructure
 Create Openstack user In OVH manager, in cloud section, click on the menu on the Servers&amp;gt;Openstack item.
 You will be able to create a worker model Openstack user, enter description (name and password will be generated).
@@ -395,11 +324,32 @@ We will create a model called docker:
     </item>
     
     <item>
-      <title>Setup VSphere Worker Model</title>
-      <link>https://ovh.github.io/cds/tutorials/tutorials.worker-model-vsphere/</link>
+      <title>Step</title>
+      <link>https://ovh.github.io/cds/introduction/concepts/step/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/tutorials/tutorials.worker-model-vsphere/</guid>
+      <guid>https://ovh.github.io/cds/introduction/concepts/step/</guid>
+      <description>The steps of a job is the list of the different operations performed by the CDS worker. Each step is based on an Action pre-defined by CDS. The list of all actions is defined on *&amp;lt;your cds url ui&amp;gt;/#/action*. When a step fails, its parent job is stopped and marked as failed.
+You can define a Step as final. It mean that even if the job fails before reaching it, the step will be executed anyway.</description>
+    </item>
+    
+    <item>
+      <title>Use Configuration File</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/configuration-file/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/configuration-file/</guid>
+      <description>You can define a pipeline in the json format but also in the yaml format. The default is the yaml format.
+Basic configuration If you have a pretty basic build pipeline with a single stage and a single job. You may write such a configuration file:
+steps: - script: echo I&#39;m the firt step - script: echo I&#39;m the second step  This defines a pipeline of type build (it&amp;rsquo;s the default type), named Build (the default name for a build Pipeline).</description>
+    </item>
+    
+    <item>
+      <title>VSphere Worker Model</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/vsphere/</guid>
       <description>CDS build using VSphere infrastructure
 Add VSphere worker model We need to define a VSphere worker model to have VSphere hatchery booting workers.
 We will create a worker model called debian8-docker:
@@ -408,32 +358,158 @@ We will create a worker model called debian8-docker:
     </item>
     
     <item>
-      <title>Step</title>
-      <link>https://ovh.github.io/cds/introduction/introduction.concepts.step/</link>
+      <title>Configuration</title>
+      <link>https://ovh.github.io/cds/hosting/configuration/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/introduction/introduction.concepts.step/</guid>
-      <description>The steps of a job is the list of the different operations performed by the CDS worker. Each step is based on an Action pre-defined by CDS. The list of all actions is defined on *&amp;lt;your cds url ui&amp;gt;/#/action*. When a step fails, its parent job is stopped and marked as failed.
-You can define a Step as final. It mean that even if the job fails before reaching it, the step will be executed anyway.</description>
+      <guid>https://ovh.github.io/cds/hosting/configuration/</guid>
+      <description>The toml configuration can be provided by a file, via consul k/v store or via vault.
+Start CDS with local configuration file You can also generate a configuration file template with the following command.
+$ $PATH_TO_CDS/engine config new &amp;gt; my_conf_file.toml  Edit this file.
+Check your configuration file with
+$ $PATH_TO_CDS/engine config check my_conf_file.toml Reading configuration file my_new_file.toml Configuration file OK  Create your database relations
+$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Run CDS</description>
     </item>
     
     <item>
-      <title>Templates</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates/</link>
+      <title>Hatchery Vsphere</title>
+      <link>https://ovh.github.io/cds/hatchery/vsphere/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates/</guid>
-      <description>CDS models allow users to:
- quickly create a workflow, with applications, pipelines and triggers reuse best practices for some use cases  Templates from CDS Contributions :
-cds-template-cds-plugin cds-template-cds-template cds-template-deploy-marathon-app cds-template-only-git-clone-job cds-template-plain </description>
+      <guid>https://ovh.github.io/cds/hatchery/vsphere/</guid>
+      <description>CDS build using VMWare Vsphere infrastructure to spawn each CDS Workers inside dedicated VM.
+Pre-requisites This hatchery spawns VM which obtains IP from DHCP. So first you have to create a DHCP server on your host with NAT if you want to access to the internet. In order to create you have multiple possibilities like create your own VM with a DHCP server configured or if you are comfortable with the VMWare tools you can use the NSX system.</description>
+    </item>
+    
+    <item>
+      <title>Run conditions on pipeline</title>
+      <link>https://ovh.github.io/cds/workflows/design/run-conditions/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/design/run-conditions/</guid>
+      <description>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
+If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditons like this :</description>
+    </item>
+    
+    <item>
+      <title>Service Requirement Nginx</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/</guid>
+      <description>Add the service requirement  Name: mypg. This will be the service hostname Type: service Value: nginx:1.11.1. This is the name of docker image to link to current job  And a requirement model which allow you to execute apt-get install -y postgresql-client
+worker-model-docker-simple.md
+Add a step of type script docker image nginx:1.11.1 start a nginx at startup. So, it&amp;rsquo;s now available on http://mynginx
+curl -v -X GET http://mynginx  Execute Pipeline</description>
+    </item>
+    
+    <item>
+      <title>Database Management</title>
+      <link>https://ovh.github.io/cds/hosting/database/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/database/</guid>
+      <description>CDS provides all needed tools scripts to perform Schema creation and auto-migration. Those tools are embedded inside the engine binary.
+The migration files are available to download on Github Releases and the archive is named sql.tar.gz. You have to download it and untar (tar xvzf sql.tar.gz).
+Creation On a brand new database run the following command:
+$ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port &amp;lt;port&amp;gt; --db-user &amp;lt;user&amp;gt; --db-password &amp;lt;password&amp;gt; --db-name &amp;lt;database&amp;gt; --migrate-dir $PATH_TO_CDS/engine/sql --limit 0  Upgrade On an existing database, run the following command on each CDS update:</description>
+    </item>
+    
+    <item>
+      <title>Join</title>
+      <link>https://ovh.github.io/cds/workflows/design/join/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/design/join/</guid>
+      <description>A join lets workflow to wait the end of two or more parent pipelines.
+You can trigger one or many pipelines after a join.</description>
+    </item>
+    
+    <item>
+      <title>Service Requirement PostgreSQL</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/</guid>
+      <description>Add the service requirement Requirement Service
+ Name: mypg. This will be the service hostname Type: service Value: postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword. This is the name of docker image to link to current job  And a requirement model which allow you to execute apt-get install -y postgresql-client, see HowTo
+Add a step of type script docker image postgres:9.5.3 start a postgresql at startup. So, it&amp;rsquo;s now available on mypg</description>
+    </item>
+    
+    <item>
+      <title>Update your hatchery</title>
+      <link>https://ovh.github.io/cds/hatchery/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hatchery/update/</guid>
+      <description> Manual Update If you run manually a Hatchery, you problably want to update it when CDS Engine is updated with a new release.
+Update your hatchery from CDS API:
+./engine update --api https://your.cds.instance  Update your hatchery from latest Release from Github:
+./engine update --from-github  </description>
+    </item>
+    
+    <item>
+      <title>Mutex</title>
+      <link>https://ovh.github.io/cds/workflows/design/mutex/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/design/mutex/</guid>
+      <description>By default, the same pipeline can run at the same time on multiple runs.
+In a CDS Workflow, you can limit running a pipeline one at a time.
+Click on the pipeline → Edit the pipeline context → enable &amp;ldquo;Limit one run at run time&amp;rdquo;
+Example of use case: run an integration test once on a particular environment.</description>
+    </item>
+    
+    <item>
+      <title>Write your own hatchery</title>
+      <link>https://ovh.github.io/cds/hatchery/create/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hatchery/create/</guid>
+      <description>Example with a creation of a VSphere hatchery  First of all you need to create a new package like the other into the hatchery package. Let&amp;rsquo;s call this package vsphere for our example.
+ You have to implement the Service interface (see here) in order to configure launch this new hatchery mode via CDS engine CLI.
+ Your have to create a Configuration structure composed of the hatchery.CommonConfiguration and the variables you need to access to Vsphere API.</description>
+    </item>
+    
+    <item>
+      <title>Monitoring</title>
+      <link>https://ovh.github.io/cds/hosting/monitoring/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/monitoring/</guid>
+      <description>Status Handler on API https://your.cds.instance/mon/status returns the status of CDS Engine.
+If status != OK, something is wrong on your CDS Instance.
+Example:
+{ &amp;quot;now&amp;quot;: &amp;quot;2018-01-09T20:24:20.481193492Z&amp;quot;, &amp;quot;lines&amp;quot;: [ { &amp;quot;status&amp;quot;: &amp;quot;OK&amp;quot;, &amp;quot;component&amp;quot;: &amp;quot;Version&amp;quot;, &amp;quot;value&amp;quot;: &amp;quot;0.25.1-snapshot+1455.cds&amp;quot; }, ... { &amp;quot;status&amp;quot;: &amp;quot;OK&amp;quot;, &amp;quot;component&amp;quot;: &amp;quot;Database&amp;quot;, &amp;quot;value&amp;quot;: &amp;quot;20 conns&amp;quot; }, { &amp;quot;status&amp;quot;: &amp;quot;OK&amp;quot;, &amp;quot;component&amp;quot;: &amp;quot;LastUpdate Connected&amp;quot;, &amp;quot;value&amp;quot;: &amp;quot;14&amp;quot; }, { &amp;quot;status&amp;quot;: &amp;quot;OK&amp;quot;, &amp;quot;component&amp;quot;: &amp;quot;Worker Model Errors&amp;quot;, &amp;quot;value&amp;quot;: &amp;quot;0&amp;quot; } ... }  Monitoring with Command Line .</description>
+    </item>
+    
+    <item>
+      <title>Sidebar</title>
+      <link>https://ovh.github.io/cds/workflows/design/sidebar/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/design/sidebar/</guid>
+      <description>On the left sidebar, there is only one select box for filter on CDS Tags.
+So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment. For example if you want to know on which branch the build was launched you just have to filter on a specific CDS tag (in this case git.branch)
+Inside a job, a user can add a Tag with the worker command</description>
+    </item>
+    
+    <item>
+      <title>Upgrade your CDS Instance</title>
+      <link>https://ovh.github.io/cds/hosting/upgrade/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/hosting/upgrade/</guid>
+      <description> Upgrade Binary Update your CDS Engine binary from latest Release from Github:
+./engine update --from-github  Database Migration # get the file sql.tar.gz from latest release from https://github.com/ovh/cds/releases # unzip sql.tar.gz inside a sql/ directory, then run this command: ./engine database upgrade --db-password=cds --db-sslmode=disable --db-name=cds --migrate-dir=sql --db-connect-timeout=20  Restart your CDS API ./engine start api ...  </description>
     </item>
     
     <item>
       <title>Write a Plugin</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.write-plugin/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/advanced/advanced.write-plugin/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/</guid>
       <description>A CDS worker executes job, and job is composed of steps.
 A step is :
  a builtin action, as GitClone, etc&amp;hellip; read more a user action read more a Plugin Action  A Plugin is a Golang Binary.
@@ -442,122 +518,11 @@ Contribute on https://github.com/ovh/cds/tree/master/contrib/plugins</descriptio
     </item>
     
     <item>
-      <title>Write your own hatchery</title>
-      <link>https://ovh.github.io/cds/advanced/advanced.hatcheries.write.hatchery/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/advanced/advanced.hatcheries.write.hatchery/</guid>
-      <description>Feel free to contribute to add new Hatchery mode.
-See Tutorial</description>
-    </item>
-    
-    <item>
-      <title>Ready to RUN</title>
-      <link>https://ovh.github.io/cds/installation/installation.ready-to-run/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/installation/installation.ready-to-run/</guid>
-      <description> Docker Compose  </description>
-    </item>
-    
-    <item>
-      <title>Service Requirement Nginx</title>
-      <link>https://ovh.github.io/cds/tutorials/tutorials.service-link-requirement-nginx/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/tutorials/tutorials.service-link-requirement-nginx/</guid>
-      <description>Add the service requirement  Name: mypg. This will be the service hostname Type: service Value: nginx:1.11.1. This is the name of docker image to link to current job  And a requirement model which allow you to execute apt-get install -y postgresql-client
-worker-model-docker-simple.md
-Add a step of type script docker image nginx:1.11.1 start a nginx at startup. So, it&amp;rsquo;s now available on http://mynginx
-curl -v -X GET http://mynginx  Execute Pipeline</description>
-    </item>
-    
-    <item>
-      <title>Variables</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.variables/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.variables/</guid>
-      <description>In CDS, it is possible to define variables at different levels:
- Project Environment Application  Variable types Existing variable types:
- String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
- Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{.</description>
-    </item>
-    
-    <item>
-      <title>Advanced</title>
-      <link>https://ovh.github.io/cds/advanced/advanced/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/advanced/advanced/</guid>
-      <description> Generate a Token Hatcheries Worker Repositories Manager Write a Plugin  </description>
-    </item>
-    
-    <item>
-      <title>Advanced Startup</title>
-      <link>https://ovh.github.io/cds/installation/installation.advanced/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/installation/installation.advanced/</guid>
-      <description>Introduction This section will help you to undestand how to start all the differents components of CDS: UI, API and the other µServices.
-Pre-requisites You need :
- to download the latest release a properly formatted configuration file, a properly configured database, the desired third-parties up and running.  Engine startup The CDS engine is made of following components:
- API Hatcheries (local, docker, openstack, swarm, vshpere) Hooks  To start a services you just have to run $PATH_TO_CDS/engine start &amp;lt;service&amp;gt;.</description>
-    </item>
-    
-    <item>
-      <title>Job&#39;s Requirements</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.requirements/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.requirements/</guid>
-      <description>Type of requirements:
- Binary Model Hostname Network Service Memory OS (Not yet implemented) Architecture (Not yet implemented)  A Job will be executed by a worker.
-CDS will choose and provision a worker for dependending on the requirements you define on your job.
-You can set as many requirements as you want, following these rules:
- Only one model can be set as requirement Only one hostname can be set as requirement Memory and Services requirements are availabe only on Docker models  Note on Service Requirement A Service in CDS is a docker container which is linked with your base image.</description>
-    </item>
-    
-    <item>
-      <title>Service Requirement PostgreSQL</title>
-      <link>https://ovh.github.io/cds/tutorials/tutorials.service-link-requirement-pg/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/tutorials/tutorials.service-link-requirement-pg/</guid>
-      <description>Add the service requirement Requirement Service
- Name: mypg. This will be the service hostname Type: service Value: postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword. This is the name of docker image to link to current job  And a requirement model which allow you to execute apt-get install -y postgresql-client, see HowTo
-Add a step of type script docker image postgres:9.5.3 start a postgresql at startup. So, it&amp;rsquo;s now available on mypg</description>
-    </item>
-    
-    <item>
-      <title>Track CDS Pipeline from Git command line </title>
-      <link>https://ovh.github.io/cds/tutorials/tutorials.cds-track/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/tutorials/tutorials.cds-track/</guid>
-      <description>Introduction This tutorial introduce the cds track &amp;lt;git commit&amp;gt; function of CDS cli.
-Goal: Immediate feedback cds track aims to display in your terminal the status of the pipeline building code refered by given commit hash.
-Push your branch, start cds track and get immediate feedback.
-Git track will display all pipelines related to given hash.
-This means triggered testing and deployment pipelines will be displayed.
-Git alias sugar To enhance even more your daily routine, you can create a git alias:</description>
-    </item>
-    
-    <item>
-      <title>Tutorials</title>
-      <link>https://ovh.github.io/cds/tutorials/tutorials/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/tutorials/tutorials/</guid>
-      <description> Worker Setup Write your own hatchery Setup Worker Model From Docker Hub Setup Docker Worker Model with your own image Setup Openstack Worker Model Setup VSphere Worker Model Service Requirement Nginx Service Requirement PostgreSQL Track CDS Pipeline from Git command line   </description>
-    </item>
-    
-    <item>
       <title>Artifact Download</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-download/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-download/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-download/</guid>
       <description>Artifact Download Action is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to retrieve an artifact previously uploaded by an Artifact Upload action.
 Parameters  application: Application from where artifacts will be downloaded pipeline: Pipeline from where artifacts will be downloaded tag: Tag set in the Artifact Upload action path: Path where artifacts will be downloaded  Example  Workflow Configuration: a pipeline doing an upload artifact and another doing a download artifact.</description>
@@ -565,32 +530,21 @@ Parameters  application: Application from where artifacts will be downloaded pip
     
     <item>
       <title>Artifact Upload</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-upload/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.artifact-upload/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-upload/</guid>
       <description> Artifact Upload Action is a builtin action, you can&amp;rsquo;t modify it.
 This action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.
 Parameters  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  </description>
     </item>
     
     <item>
-      <title>Docker Compose</title>
-      <link>https://ovh.github.io/cds/installation/installation.ready-to-run.docker-compose/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/installation/installation.ready-to-run.docker-compose/</guid>
-      <description>Run with Docker-Compose The docker-compose.yml contains:
- cds-db service with a postgresql cds-cache service with a redis cds-migrate service to prepare DB tables cds-api service cds-ui service cds-hatchery-swarm service cds-hatchery-local service  Docker compose is very convenient to launch CDS for testing it. But this is not recommended for a Production Installation.
-How to run $ git clone https://github.com/ovh/cds.git $ cd cds $ export HOSTNAME=$(hostname) # Create PG Database $ docker-compose up --no-recreate -d cds-db # check if db is UP # check if last log is &amp;quot;LOG: database system is ready to accept connections&amp;quot; $ docker-compose logs $ docker-compose up --no-recreate cds-migrate # You should have this log: &amp;quot;cds_cds-migrate_1 exited with code 0&amp;quot; # run API and UI $ docker-compose up cds-api cds-ui  Open a browser on http://localhost:2015, then register a new user.</description>
-    </item>
-    
-    <item>
       <title>GitClone</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.gitclone/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/gitclone/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.gitclone/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/gitclone/</guid>
       <description>GitClone is a builtin action, you can&amp;rsquo;t modify it.
 This action clones a repository into a new directory.
 This will retrieve a shallow git clone (depth==1).
@@ -600,31 +554,21 @@ Parameters  url - mandatory - the git URL must include information about the tra
     
     <item>
       <title>JUnit</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.junit/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/junit/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.junit/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/junit/</guid>
       <description> JUnit is a builtin action, you can&amp;rsquo;t modify it.
 This action parses a given Junit formatted XML file to extract its test results.
 Parameters  path: Path to a junit xml file  Example  Job Configuration.   Launch pipeline, check XUnit Result   And view details:  </description>
     </item>
     
     <item>
-      <title>Run conditions on pipeline</title>
-      <link>https://ovh.github.io/cds/building-workflows/building-workflows.pipeline-run-conditions/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/building-workflows/building-workflows.pipeline-run-conditions/</guid>
-      <description>In CDS if you want to launch a pipeline in your workflow only in specific cases you can add conditions on your pipeline in your workflow. For example if you want to run this pipeline automatically only if the value of git.branch is master.
-If you want to edit your pipeline condition on the user interface you have to select a node under edition mode of your workflow and click on Edit run conditons like this :</description>
-    </item>
-    
-    <item>
       <title>Script</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.script/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.builtin.script/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/</guid>
       <description>Script is a builtin action, you can&amp;rsquo;t modify it.
 This action executes a given script with a given interpreter.
 Parameters  script: Content of your script. You can put  #!/bin/bash  or
@@ -634,124 +578,494 @@ If you use a shebang bash, sh, zsh or ksh, CDS will return a failure on your ste
     </item>
     
     <item>
-      <title>Stage</title>
-      <link>https://ovh.github.io/cds/introduction/introduction.concepts.stage/</link>
+      <title>add</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/keys/add/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/introduction/introduction.concepts.stage/</guid>
-      <description>Usually in CDS a build pipeline is structured of the following stages :
- Compile stage : Build the binaries Analysis &amp;amp; Unit Tests stage : Run all unit tests and analyse code quality Packaging stage : Build the final package, Virtual Machine Image or Docker Image.  In CDS, stages are executed sequentially if the previous stage is successful.
-You can define trigger conditions on a stage, to enable/disable it under given conditions.</description>
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/keys/add/</guid>
+      <description>cdsctl application keys add Add a new key on application. key type can be ssh or pgp
+Synopsis Add a new key on application. key type can be ssh or pgp
+cdsctl application keys add KEY APP-NAME KEY-NAME KEY-TYPE [flags]  Options  -h, --help help for add  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>add</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/variable/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/variable/add/</guid>
+      <description>cdsctl application variable add Add a new variable on application. variable type can be one of password, text, string, key, boolean, number, repository
+Synopsis Add a new variable on application. variable type can be one of password, text, string, key, boolean, number, repository
+cdsctl application variable add PROJECT-KEY APP-NAME VARIABLE-NAME VARIABLE-TYPE VARIABLE-VALUE [flags]  Options  -h, --help help for add  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>add</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/keys/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/keys/add/</guid>
+      <description>cdsctl environment keys add Add a new key on environment. key-type can be ssh or pgp
+Synopsis Add a new key on environment. key-type can be ssh or pgp
+cdsctl environment keys add PROJECT-KEY ENV-NAME KEY-NAME KEY-TYPE [flags]  Options  -h, --help help for add  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>add</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/variable/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/variable/add/</guid>
+      <description>cdsctl environment variable add Add a new variable on environment. variable type can be one of password, text, string, key, boolean, number, repository
+Synopsis Add a new variable on environment. variable type can be one of password, text, string, key, boolean, number, repository
+cdsctl environment variable add PROJECT-KEY ENV-NAME VARIABLE-NAME VARIABLE-TYPE VARIABLE-VALUE [flags]  Options  -h, --help help for add  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>add</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/group/user/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/group/user/add/</guid>
+      <description> cdsctl group user add Add a user into a group
+Synopsis Add a user into a group
+cdsctl group user add GROUPNAME USERNAME [flags]  Options  -h, --help help for add  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl group user - Manage CDS users group  </description>
+    </item>
+    
+    <item>
+      <title>add</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/keys/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/keys/add/</guid>
+      <description>cdsctl project keys add Add a new key on project. key-type can be ssh or pgp
+Synopsis Add a new key on project. key-type can be ssh or pgp
+cdsctl project keys add PROJECT-KEY KEY-NAME KEY-TYPE [flags]  Options  -h, --help help for add  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>add</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/variable/add/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/variable/add/</guid>
+      <description>cdsctl project variable add Add a new variable on project. Variable type can be one of password, text, string, key, boolean, number, repository
+Synopsis Add a new variable on project. Variable type can be one of password, text, string, key, boolean, number, repository
+cdsctl project variable add PROJECT-KEY VARIABLE-NAME VARIABLE-TYPE VARIABLE-VALUE [flags]  Options  -h, --help help for add  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
     </item>
     
     <item>
       <title>cds-docker-package</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-docker-package/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-docker-package/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-docker-package/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-docker-package/</guid>
       <description>Build a Docker image and push it to a docker repository
-Parameters  dockerOpts: Docker options, you can add --no-cache --pull for example dockerRegistry: The Docker registry to push the image to. dockerfileDirectory: Directory which contains your Dockerfile. imageName: Name of your docker image, without tag. imageTag: The Docker image tag. {{.cds.version}} can be a good tag value. You can use multiple tags. E.g., firstTag,SecondTag,{{.cds.version}},latest  Requirements  bash: type: binary Value: bash docker: type: binary Value: docker  More documentation on Github</description>
+Parameters  dockerOpts: Docker options, you can add --no-cache --pull for example dockerRegistry: The Docker registry to push the image to. dockerRegistryPassword: Docker Registry Password. Enter password to connect on your docker registry. dockerRegistryUsername: Docker Registry Username. Enter username to connect on your docker registry. dockerfileDirectory: Directory which contains your Dockerfile. imageName: Name of your docker image, without tag.</description>
     </item>
     
     <item>
       <title>cds-go-build</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-go-build/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-go-build/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-go-build/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-go-build/</guid>
       <description>Go Build: compile a go program
 Parameters  architecture: GOOS artifactUpload: Upload Binary as CDS Artifact binary: Binary name: Put foo for go build -o foo cgoDisabled: if true (checked) -&amp;gt; export CGO_ENABLED=0 before go build detectRaceCondition: Enable data race detection. It&amp;rsquo;s flag -race flags: flags for go build. Put -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; for go build -ldflags &amp;ldquo;-X main.xyz=abc&amp;rdquo; gopath: set a $GOPATH. If empty, this action tries to get env $GOPATH.</description>
     </item>
     
     <item>
       <title>cds-nexus-upload</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-nexus-upload/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-nexus-upload/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-nexus-upload/</guid>
       <description>Upload file on Nexus
 Parameters  artifactId: Artifact id of the artifact extension: Extension of the artifact files: Regex of files you want to upload groupId: Group id of the artifact login: Login for nexus packaging: Packaging type of the artifact password: Password for nexus repository: Nexus repository that the artifact is contained in url: Nexus URL version: Version of the artifact. Supports resolving of &amp;lsquo;LATEST&amp;rsquo;, &amp;lsquo;RELEASE&amp;rsquo; and snapshot versions (&amp;lsquo;1.</description>
     </item>
     
     <item>
       <title>cds-perl-test</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-perl-test/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-perl-test/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-perl-test/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-perl-test/</guid>
       <description>Test with prove on perl source code
 Parameters  proveOptions: Options passed to prove testDirectory: Directory in which prove will be launched  Requirements  bash: type: binary Value: bash perl: type: binary Value: perl prove: type: binary Value: prove  More documentation on Github</description>
     </item>
     
     <item>
       <title>cds-publish-ovh-metrics</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-publish-ovh-metrics/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.user.cds-publish-ovh-metrics/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-publish-ovh-metrics/</guid>
       <description>Publish a metric on OVH Metrics. See https://www.ovh.com/fr/data-platforms/metrics/ and doc on https://docs.ovh.com/gb/en/cloud/metrics/
 Parameters  file: Metrics file to push (optional) See: http://www.warp10.io/apis/ingress/ labels: Labels of your metric (one K/V per line separated by a space) name: Name of you metric (optional) region: Metrics region token: Metrics write token value: Value of your metric (T=true) See: http://www.warp10.io/apis/ingress/  Requirements  bash: type: binary Value: bash curl: type: binary Value: curl  More documentation on Github</description>
     </item>
     
     <item>
-      <title>cds-template-cds-plugin</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-cds-plugin/</link>
+      <title>cds-python-pylint</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-python-pylint/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-cds-plugin/</guid>
-      <description>This template creates a pipeline for building CDS Plugin with:
- A &amp;ldquo;Commit Stage&amp;rdquo; with one job &amp;ldquo;Compile&amp;rdquo; Job contains two steps: GitClone and CDS_GoBuild  Parameters  package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the plugin. Enter &amp;ldquo;contrib/plugins/your-plugin&amp;rdquo; for github.com/ovh/cds/contrib/plugins/your-plugin
- repo: Your source code repository
-  More More documentation on Github</description>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/user/cds-python-pylint/</guid>
+      <description>Run pylint. By default, each pylint recommendation will be displayed as a Junit test. The short errors are fully contained inside the test title, an arrow (-&amp;gt;) will be present if a part of the recommendation is displayed in the test body.
+Parameters  extra_options: Extra options to pass during pylint invocation. ignore: List of ignored files / directory (base name, not path), separated by a ; module_path: List of modules paths (absolute or relative) to launch pylint into, separated by a ;.</description>
     </item>
     
     <item>
-      <title>cds-template-cds-template</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-cds-template/</link>
+      <title>check</title>
+      <link>https://ovh.github.io/cds/cli/engine/config/check/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-cds-template/</guid>
-      <description>This template creates a pipeline for building CDS Template with:
- A &amp;ldquo;Commit Stage&amp;rdquo; with one job &amp;ldquo;Compile&amp;rdquo; Job contains two steps: GitClone and CDS_GoBuild  Parameters  package.root: example: github.com/ovh/cds package.sub: Directory inside your repository where is the template. Enter &amp;ldquo;contrib/templates/your-plugin&amp;rdquo; for github.com/ovh/cds/contrib/templates/your-plugin
- repo: Your source code repository
-  More More documentation on Github</description>
+      <guid>https://ovh.github.io/cds/cli/engine/config/check/</guid>
+      <description> engine config check Check CDS configuration file
+Synopsis $ engine config check 
+engine config check [flags]  Options  -h, --help help for check  SEE ALSO  engine config - Manage CDS Configuration  </description>
     </item>
     
     <item>
-      <title>cds-template-deploy-marathon-app</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-deploy-marathon-app/</link>
+      <title>confirm</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/user/confirm/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-deploy-marathon-app/</guid>
-      <description>This template creates:
- a deployment pipeline with one stage, and containing one job job calls plugin-marathon an application with a variable named &amp;ldquo;marathon.config&amp;rdquo; uses environment variables marathonHost, password and user  Please update Application / Environment Variables after creating application.
-Parameters  docker.image: Your docker image without the tag marathon.appID: Your marathon application ID marathon.config: Content of your marathon.json file  More More documentation on Github</description>
+      <guid>https://ovh.github.io/cds/cli/cdsctl/user/confirm/</guid>
+      <description> cdsctl user confirm Confirm CDS user password reset
+Synopsis Confirm CDS user password reset
+cdsctl user confirm USERNAME TOKEN [flags]  Options  -h, --help help for confirm  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl user - Manage CDS user  </description>
     </item>
     
     <item>
-      <title>cds-template-only-git-clone-job</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-only-git-clone-job/</link>
+      <title>create</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/create/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-only-git-clone-job/</guid>
-      <description>This template creates:
- a build pipeline with one stage, containing one job job contains 2 steps: GitClone and a empty script.  Pipeline name contains Application name. If you want to make a reusable pipeline, please consider updating this name after creating application.
-Parameters  repo: Your source code repository  More More documentation on Github</description>
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/create/</guid>
+      <description> cdsctl application create Create a CDS application
+Synopsis Create a CDS application
+cdsctl application create PROJECT-KEY APPLICATION-NAME [flags]  Options  -h, --help help for create  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl application - Manage CDS application  </description>
     </item>
     
     <item>
-      <title>cds-template-plain</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-plain/</link>
+      <title>create</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/create/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.templates.cds-template-plain/</guid>
-      <description>This template creates:
- a build pipeline with two stages: Commit Stage and Packaging Stage a deploy pipeline with one stage: Deploy Stage  Commit Stage:
- run git clone run make build  Packaging Stage:
- run docker build and docker push  Deploy Stage:
- it&amp;rsquo;s an empty script  Packaging and Deploy are optional.
-Parameters  repo: Your source code repository withDeploy: Do you want an deploy Pipeline?</description>
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/create/</guid>
+      <description> cdsctl environment create Create a CDS environment
+Synopsis Create a CDS environment
+cdsctl environment create PROJECT-KEY ENVIRONMENT-NAME [flags]  Options  -h, --help help for create  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl environment - Manage CDS environment  </description>
+    </item>
+    
+    <item>
+      <title>create</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/group/create/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/group/create/</guid>
+      <description> cdsctl group create Create a CDS group
+Synopsis Create a CDS group
+cdsctl group create GROUP-NAME [flags]  Options  -h, --help help for create  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl group - Manage CDS group  </description>
+    </item>
+    
+    <item>
+      <title>create</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/create/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/create/</guid>
+      <description> cdsctl pipeline create Create a CDS pipeline
+Synopsis Create a CDS pipeline
+cdsctl pipeline create PROJECT-KEY PIPELINE-NAME [flags]  Options  -h, --help help for create --type string Pipeline type {build,deployment,testing} (default &amp;quot;build&amp;quot;) (default &amp;quot;build&amp;quot;)  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl pipeline - Manage CDS pipeline  </description>
+    </item>
+    
+    <item>
+      <title>create</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/create/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/create/</guid>
+      <description> cdsctl project create Create a CDS project
+Synopsis Create a CDS project
+cdsctl project create PROJECT-KEY PROJECT-NAME [GROUP-NAME] [flags]  Options  -h, --help help for create  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl project - Manage CDS project  </description>
+    </item>
+    
+    <item>
+      <title>dbmigrate</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/health/dbmigrate/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/health/dbmigrate/</guid>
+      <description>cdsctl health dbmigrate Show DB Migrate status
+Synopsis Show DB Migrate status
+cdsctl health dbmigrate [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for dbmigrate -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>dbtimes</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/health/dbtimes/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/health/dbtimes/</guid>
+      <description> cdsctl health dbtimes Show some DB Times
+Synopsis Show some DB Times
+cdsctl health dbtimes [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for dbtimes  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl health - Check CDS health  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/action/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/action/delete/</guid>
+      <description> cdsctl action delete Delete a CDS action
+Synopsis Delete a CDS action
+cdsctl action delete ACTION-NAME [flags]  Options  -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl action - Manage CDS action  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/delete/</guid>
+      <description> cdsctl application delete Delete a CDS application
+Synopsis Delete a CDS application
+cdsctl application delete PROJECT-KEY APPLICATION-NAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl application - Manage CDS application  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/keys/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/keys/delete/</guid>
+      <description> cdsctl application keys delete Delete CDS an application key
+Synopsis Delete CDS an application key
+cdsctl application keys delete KEY APP-NAME KEY-NAME [flags]  Options  -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl application keys - Manage CDS application keys  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/variable/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/variable/delete/</guid>
+      <description> cdsctl application variable delete Delete CDS application variable
+Synopsis Delete CDS application variable
+cdsctl application variable delete PROJECT-KEY APP-NAME VARIABLE-NAME [flags]  Options  -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl application variable - Manage CDS application variables  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/delete/</guid>
+      <description> cdsctl environment delete Delete a CDS environment
+Synopsis Delete a CDS environment
+cdsctl environment delete PROJECT-KEY ENVIRONMENT-NAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl environment - Manage CDS environment  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/keys/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/keys/delete/</guid>
+      <description> cdsctl environment keys delete Delete CDS environment key
+Synopsis Delete CDS environment key
+cdsctl environment keys delete PROJECT-KEY ENV-NAME KEY-NAME [flags]  Options  -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl environment keys - Manage CDS environment keys  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/variable/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/variable/delete/</guid>
+      <description> cdsctl environment variable delete Delete CDS environment variable
+Synopsis Delete CDS environment variable
+cdsctl environment variable delete PROJECT-KEY ENV-NAME VARIABLE-NAME [flags]  Options  -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl environment variable - Manage CDS environment variables  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/group/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/group/delete/</guid>
+      <description> cdsctl group delete Delete a CDS group
+Synopsis Delete a CDS group
+cdsctl group delete GROUP-NAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl group - Manage CDS group  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/group/user/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/group/user/delete/</guid>
+      <description>cdsctl group user delete Delete an user from a group
+Synopsis Delete an user from a group
+cdsctl group user delete GROUPNAME USERNAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/delete/</guid>
+      <description> cdsctl pipeline delete Delete a CDS pipeline
+Synopsis Delete a CDS pipeline
+cdsctl pipeline delete PROJECT-KEY PIPELINE-NAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl pipeline - Manage CDS pipeline  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/delete/</guid>
+      <description> cdsctl project delete Delete a CDS project
+Synopsis Delete a CDS project
+cdsctl project delete PROJECT-KEY [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl project - Manage CDS project  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/keys/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/keys/delete/</guid>
+      <description> cdsctl project keys delete Delete CDS project key
+Synopsis Delete CDS project key
+cdsctl project keys delete PROJECT-KEY KEY-NAME [flags]  Options  -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl project keys - Manage CDS project keys  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/variable/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/variable/delete/</guid>
+      <description> cdsctl project variable delete Delete CDS project variable
+Synopsis Delete CDS project variable
+cdsctl project variable delete PROJECT-KEY ENV-NAME VARIABLE-NAME [flags]  Options  -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl project variable - Manage CDS project variables  </description>
+    </item>
+    
+    <item>
+      <title>delete</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/delete/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/delete/</guid>
+      <description> cdsctl workflow delete Delete a CDS workflow
+Synopsis Delete a CDS workflow
+cdsctl workflow delete PROJECT-KEY WORKFLOW-NAME [flags]  Options  --force Force delete without confirmation and exit 0 if resource does not exist -h, --help help for delete  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl workflow - Manage CDS workflow  </description>
+    </item>
+    
+    <item>
+      <title>doc</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/action/doc/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/action/doc/</guid>
+      <description> cdsctl action doc Generate Action Documentation: cdsctl action doc 
+Synopsis Generate Action Documentation: cdsctl action doc 
+cdsctl action doc PATH [flags]  Options  -h, --help help for doc  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl action - Manage CDS action  </description>
+    </item>
+    
+    <item>
+      <title>downgrade</title>
+      <link>https://ovh.github.io/cds/cli/engine/database/downgrade/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/database/downgrade/</guid>
+      <description>engine database downgrade Downgrade schema
+Synopsis Undo a database migration.
+engine database downgrade [flags]  Options  --db-connect-timeout int Maximum wait for connection, in seconds (default 10) --db-host string DB Host (default &amp;quot;localhost&amp;quot;) --db-maxconn int DB Max connection (default 20) --db-name string DB Name (default &amp;quot;cds&amp;quot;) --db-password string DB Password --db-port int DB Port (default 5432) --db-sslmode string DB SSL Mode: require (default), verify-full, or disable (default &amp;quot;require&amp;quot;) --db-timeout int Statement timeout value in milliseconds (default 3000) --db-user string DB User (default &amp;quot;cds&amp;quot;) --dry-run Dry run downgrade -h, --help help for downgrade --limit int Max number of migrations to apply (0 = unlimited) (default 1) --migrate-dir string CDS SQL Migration directory (default &amp;quot;.</description>
+    </item>
+    
+    <item>
+      <title>download</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/download/</guid>
+      <description> cdsctl workflow artifact download Download artifacts of one Workflow Run
+Synopsis Download artifacts of one Workflow Run
+cdsctl workflow artifact download PROJECT-KEY WORKFLOW NUMBER [ARTEFACT-NAME] [flags]  Options  -h, --help help for download  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl workflow artifact - Manage Workflow Artifact  </description>
+    </item>
+    
+    <item>
+      <title>exit</title>
+      <link>https://ovh.github.io/cds/cli/worker/exit/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/exit/</guid>
+      <description> worker exit worker exit
+Synopsis worker exit command lets job finish current step and disabled all further steps
+worker exit [flags]  Options  -h, --help help for exit  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>export</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/export/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/export/</guid>
+      <description> cdsctl application export Export an application
+Synopsis Export an application
+cdsctl application export PROJECT-KEY APPLICATION-NAME [flags]  Options  --format string Specify export format (json or yaml) (default &amp;quot;yaml&amp;quot;) -h, --help help for export --with-permissions Export permissions  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl application - Manage CDS application  </description>
+    </item>
+    
+    <item>
+      <title>export</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/export/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/export/</guid>
+      <description> cdsctl pipeline export Export CDS pipeline
+Synopsis Export CDS pipeline
+cdsctl pipeline export PROJECT-KEY PIPELINE-NAME [flags]  Options  --format string yml or json (default &amp;quot;yml&amp;quot;) -h, --help help for export --with-permission true or false  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl pipeline - Manage CDS pipeline  </description>
+    </item>
+    
+    <item>
+      <title>export</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/export/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/export/</guid>
+      <description> cdsctl workflow export Export a workflow
+Synopsis Export a workflow
+cdsctl workflow export PROJECT-KEY WORKFLOW-NAME [flags]  Options  --format string Specify export format (json or yaml) (default &amp;quot;yaml&amp;quot;) -h, --help help for export --with-permissions Export permissions  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl workflow - Manage CDS workflow  </description>
+    </item>
+    
+    <item>
+      <title>export</title>
+      <link>https://ovh.github.io/cds/cli/worker/export/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/export/</guid>
+      <description> worker export worker export  
+Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can create a build variable with the worker command:
+# worker export &amp;lt;varname&amp;gt; &amp;lt;value&amp;gt; worker export foo bar  then, you can use new build variable:
+echo &amp;quot;{{.cds.build.foo}}&amp;quot;  Scope You can use the build variable in :
+ the current job with {{.cds.build.varname}} the next stages in same pipeline {{.cds.build.varname}} the next pipelines {{.workflow.pipelineName.build.varname}} with pipelineName the name of the pipeline in your worklow   worker export [flags]  Options  -h, --help help for export  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>generate</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/group/token/generate/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/group/token/generate/</guid>
+      <description> cdsctl group token generate Generate a new token
+Synopsis Generate a new token
+cdsctl group token generate GROUPNAME EXPIRATION [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for generate  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl group token - Manage CDS group token  </description>
     </item>
     
     <item>
@@ -764,62 +1078,381 @@ Parameters  repo: Your source code repository withDeploy: Do you want an deploy 
     </item>
     
     <item>
-      <title>plugin-download</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-download/</link>
+      <title>history</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/history/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-download/</guid>
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/history/</guid>
+      <description>cdsctl workflow history History of a CDS workflow
+Synopsis History of a CDS workflow
+cdsctl workflow history PROJECT-KEY WORKFLOW-NAME [OFFSET] [LIMIT] [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for history -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/group/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/group/import/</guid>
+      <description>cdsctl application group import Import group linked to a CDS application
+Synopsis Import group linked to a CDS application
+cdsctl application group import PROJECT-KEY APPLICATION-NAME PATH [flags]  Options  --force Use force flag to replace groups in your application -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/import/</guid>
+      <description> cdsctl application import Import an application
+Synopsis Import an application
+cdsctl application import PROJECT-KEY FILENAME [flags]  Options  --force Override application if exists -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl application - Manage CDS application  </description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/group/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/group/import/</guid>
+      <description>cdsctl environment group import Import group linked to a CDS environment
+Synopsis Import group linked to a CDS environment
+cdsctl environment group import PROJECT-KEY ENVIRONMENT-NAME PATH [flags]  Options  --force Use force flag to replace groups in your environment -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/group/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/group/import/</guid>
+      <description>cdsctl pipeline group import Import group linked to a CDS pipeline
+Synopsis Import group linked to a CDS pipeline
+cdsctl pipeline group import PROJECT-KEY PIPELINE-NAME PATH [flags]  Options  --force Use force flag to replace groups in your pipeline -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/import/</guid>
+      <description> cdsctl pipeline import Import CDS pipeline
+Synopsis PATH: Path or URL of pipeline to import
+cdsctl pipeline import PROJECT-KEY PATH [flags]  Options  --force Use force flag to update your pipeline -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl pipeline - Manage CDS pipeline  </description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/group/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/group/import/</guid>
+      <description>cdsctl project group import Import group linked to a CDS project
+Synopsis Import group linked to a CDS project
+cdsctl project group import PROJECT-KEY PATH [flags]  Options  --force Use force flag to replace groups in your project -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>import</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/import/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/import/</guid>
+      <description> cdsctl workflow import Import a workflow
+Synopsis Import a workflow
+cdsctl workflow import PROJECT-KEY FILENAME [flags]  Options  --force Override workflow if exists -h, --help help for import  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl workflow - Manage CDS workflow  </description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/action/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/action/list/</guid>
+      <description>cdsctl action list List CDS actions
+Synopsis List CDS actions
+cdsctl action list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/keys/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/keys/list/</guid>
+      <description>cdsctl application keys list List CDS application keys
+Synopsis List CDS application keys
+cdsctl application keys list KEY APP-NAME [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/list/</guid>
+      <description>cdsctl application list List CDS applications
+Synopsis List CDS applications
+cdsctl application list PROJECT-KEY [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/variable/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/variable/list/</guid>
+      <description>cdsctl application variable list List CDS application variables
+Synopsis List CDS application variables
+cdsctl application variable list PROJECT-KEY APP-NAME [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/keys/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/keys/list/</guid>
+      <description>cdsctl environment keys list List CDS environment keys
+Synopsis List CDS environment keys
+cdsctl environment keys list PROJECT-KEY ENV-NAME [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/list/</guid>
+      <description>cdsctl environment list List CDS environments
+Synopsis List CDS environments
+cdsctl environment list PROJECT-KEY [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/variable/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/variable/list/</guid>
+      <description>cdsctl environment variable list List CDS environment variables
+Synopsis List CDS environment variables
+cdsctl environment variable list PROJECT-KEY ENV-NAME [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/group/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/group/list/</guid>
+      <description>cdsctl group list List CDS groups
+Synopsis List CDS groups
+cdsctl group list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/pipeline/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/pipeline/list/</guid>
+      <description>cdsctl pipeline list List CDS pipelines
+Synopsis List CDS pipelines
+cdsctl pipeline list PROJECT-KEY [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/keys/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/keys/list/</guid>
+      <description>cdsctl project keys list List CDS project keys
+Synopsis List CDS project keys
+cdsctl project keys list PROJECT-KEY [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/list/</guid>
+      <description>cdsctl project list List CDS projects
+Synopsis List CDS projects
+cdsctl project list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/variable/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/variable/list/</guid>
+      <description>cdsctl project variable list List CDS project variables
+Synopsis List CDS project variables
+cdsctl project variable list PROJECT-KEY ENV-NAME [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/user/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/user/list/</guid>
+      <description>cdsctl user list List CDS users
+Synopsis List CDS users
+cdsctl user list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/worker/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/worker/list/</guid>
+      <description>cdsctl worker list List CDS workers
+Synopsis List CDS workers
+cdsctl worker list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/worker/model/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/worker/model/list/</guid>
+      <description>cdsctl worker model list List CDS worker models
+Synopsis List CDS worker models
+cdsctl worker model list [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/artifact/list/</guid>
+      <description>cdsctl workflow artifact list List artifacts of one Workflow Run
+Synopsis List artifacts of one Workflow Run
+cdsctl workflow artifact list PROJECT-KEY WORKFLOW NUMBER [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>list</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/list/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/list/</guid>
+      <description>cdsctl workflow list List CDS workflows
+Synopsis List CDS workflows
+cdsctl workflow list PROJECT-KEY [flags]  Options  --fields string Only display specified object fields. &#39;empty&#39; will display all fields, &#39;all&#39; will display all object fields, &#39;field1,field2&#39; to select multiple fields --filter string Filter output based on conditions provided --format string Output format: table|json|yaml (default &amp;quot;table&amp;quot;) -h, --help help for list -q, --quiet Only display object&#39;s key  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>login</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/login/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/login/</guid>
+      <description>cdsctl login Login to CDS
+Synopsis Login to CDS
+cdsctl login [flags]  Options  -H, --api-url string CDS API URL --env Display the commands to set up the environment for the cds client -h, --help help for login -p, --password string CDS Password -u, --username string CDS Username  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>me</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/user/me/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/user/me/</guid>
+      <description> cdsctl user me Show Current CDS user details
+Synopsis Show Current CDS user details
+cdsctl user me [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for me  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl user - Manage CDS user  </description>
+    </item>
+    
+    <item>
+      <title>monitoring</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/monitoring/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/monitoring/</guid>
+      <description> cdsctl monitoring CDS monitoring
+Synopsis CDS monitoring
+cdsctl monitoring [flags]  Options  -h, --help help for monitoring  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility  </description>
+    </item>
+    
+    <item>
+      <title>new</title>
+      <link>https://ovh.github.io/cds/cli/engine/config/new/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/config/new/</guid>
+      <description> engine config new CDS configuration file assistant
+Synopsis Comming soon&amp;hellip;
+engine config new [flags]  Options  --env Print configuration as environment variable -h, --help help for new  SEE ALSO  engine config - Manage CDS Configuration  </description>
+    </item>
+    
+    <item>
+      <title>plugin-download</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-download/</guid>
       <description>This is a plugin to download file from URL
 Parameters  filepath: the destination of your file to be copied headers: specific headers to add to your request (&amp;ldquo;headerName&amp;rdquo;=&amp;ldquo;value&amp;rdquo; newline separated list) url: the url of your file  More More documentation on Github</description>
     </item>
     
     <item>
       <title>plugin-group-tmpl</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-group-tmpl/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-group-tmpl/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-group-tmpl/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-group-tmpl/</guid>
       <description>This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template.
 Parameters  applications: Applications file variables config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension)  More More documentation on Github</description>
     </item>
     
     <item>
       <title>plugin-kafka-publish</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-kafka-publish/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-kafka-publish/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-kafka-publish/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-kafka-publish/</guid>
       <description>This action helps you to send data through Kafka across every network.
 You are able to send a custom &amp;quot;message&amp;quot; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.</description>
     </item>
     
     <item>
       <title>plugin-marathon</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-marathon/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-marathon/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-marathon/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-marathon/</guid>
       <description>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
-Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successfull.
+Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successful.
 Parameters  configuration: Marathon application configuration file (json format) insecureSkipVerify: Skip SSL Verify if you want to use self-signed certificate password: Marathon Password (please use project, application or environment variables) timeout: Marathon deployment timeout (seconds). Used only if &amp;ldquo;waitForDeployment&amp;rdquo; is true.</description>
     </item>
     
     <item>
       <title>plugin-ssh-cmd</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-ssh-cmd/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-ssh-cmd/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-ssh-cmd/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-ssh-cmd/</guid>
       <description>This plugin helps you to run cmd on remote server over ssh.
 Parameters  command: Command commandTimeout: Command Timeout (seconds) hostnames: Hostnames (comma separated values) privateKey: SSH RSA private key timeout: Timeout (seconds) username: Username  More More documentation on Github</description>
     </item>
     
     <item>
       <title>plugin-tmpl</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-tmpl/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-tmpl/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-tmpl/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-tmpl/</guid>
       <description>This action helps you generates a file using a template file and text/template golang package.
 Check documentation on text/template for more information https://golang.org/pkg/text/template.
 Parameters  file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list)  More More documentation on Github</description>
@@ -827,13 +1460,353 @@ Parameters  file: Template file to use output: Output path for generated file (d
     
     <item>
       <title>plugin-venom</title>
-      <link>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/</link>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-venom/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/building-pipelines/building-pipelines.actions.plugins.plugin-venom/</guid>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-venom/</guid>
       <description>This plugin helps you to run venom. Venom: https://github.com/ovh/venom.
 Add an extra step of type junit on your job to view tests results on CDS UI.
 Parameters  details: Output Details Level: low, medium, high exclude: Exclude some files, one file per line loglevel: Log Level: debug, info, warn or error output: Directory where output xunit result file parallel: Launch Test Suites in parallel. Enter here number of routines path: Path containers yml venom files.</description>
+    </item>
+    
+    <item>
+      <title>pull</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/pull/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/pull/</guid>
+      <description>cdsctl workflow pull Pull a workflow
+Synopsis Pull a workflow
+cdsctl workflow pull PROJECT-KEY WORKFLOW-NAME [flags]  Options  --force Force, may override files -h, --help help for pull -d, --output-dir string Output directory (default &amp;quot;.cds&amp;quot;) --quiet If true, do not output filename created --with-permissions Export permissions  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>push</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/push/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/push/</guid>
+      <description> cdsctl workflow push Push a workflow
+Synopsis Push a workflow
+cdsctl workflow push PROJECT-KEY YAML-FILE ... [flags]  Options  -h, --help help for push  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl workflow - Manage CDS workflow  </description>
+    </item>
+    
+    <item>
+      <title>register</title>
+      <link>https://ovh.github.io/cds/cli/worker/register/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/register/</guid>
+      <description> worker register worker register
+Synopsis worker register
+worker register [flags]  Options  -h, --help help for register  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>removeAdmin</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/group/user/removeadmin/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/group/user/removeadmin/</guid>
+      <description> cdsctl group user removeAdmin Remove a user from administrators of a group
+Synopsis Remove a user from administrators of a group
+cdsctl group user removeAdmin GROUPNAME USERNAME [flags]  Options  -h, --help help for removeAdmin  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl group user - Manage CDS users group  </description>
+    </item>
+    
+    <item>
+      <title>reset</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/user/reset/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/user/reset/</guid>
+      <description> cdsctl user reset Reset CDS user password
+Synopsis Reset CDS user password
+cdsctl user reset [USERNAME] [EMAIL] [flags]  Options  -h, --help help for reset  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl user - Manage CDS user  </description>
+    </item>
+    
+    <item>
+      <title>run</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/run/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/run/</guid>
+      <description>cdsctl workflow run Run a CDS workflow
+Synopsis Run a CDS workflow
+cdsctl workflow run PROJECT-KEY WORKFLOW-NAME [PAYLOAD] [flags]  Options  -h, --help help for run -i, --interactive Follow the workflow run in an interactive terminal user interface --node-name string Node Name to relaunch; Flag run-number is mandatory -o, --open-web-browser Open web browser on the workflow run --run-number string Existing Workflow RUN Number  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers.</description>
+    </item>
+    
+    <item>
+      <title>setAdmin</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/group/user/setadmin/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/group/user/setadmin/</guid>
+      <description> cdsctl group user setAdmin Set a user as an administrator of a group
+Synopsis Set a user as an administrator of a group
+cdsctl group user setAdmin GROUPNAME USERNAME [flags]  Options  -h, --help help for setAdmin  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl group user - Manage CDS users group  </description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/action/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/action/show/</guid>
+      <description> cdsctl action show Show a CDS action
+Synopsis Show a CDS action
+cdsctl action show ACTION-NAME [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for show  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl action - Manage CDS action  </description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/show/</guid>
+      <description> cdsctl application show Show a CDS application
+Synopsis Show a CDS application
+cdsctl application show PROJECT-KEY APP-NAME [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for show  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl application - Manage CDS application  </description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/group/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/group/show/</guid>
+      <description> cdsctl group show Show a CDS group
+Synopsis Show a CDS group
+cdsctl group show GROUP-NAME [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for show  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl group - Manage CDS group  </description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/show/</guid>
+      <description> cdsctl project show Show a CDS project
+Synopsis Show a CDS project
+cdsctl project show PROJECT-KEY [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for show  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl project - Manage CDS project  </description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/user/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/user/show/</guid>
+      <description> cdsctl user show Show CDS user details
+Synopsis Show CDS user details
+cdsctl user show USERNAME [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for show  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl user - Manage CDS user  </description>
+    </item>
+    
+    <item>
+      <title>show</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/workflow/show/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/workflow/show/</guid>
+      <description> cdsctl workflow show Show a CDS workflow
+Synopsis Show a CDS workflow
+cdsctl workflow show PROJECT-KEY WORKFLOW-NAME [RUN-NUMBER] [flags]  Options  --format string Output format: plain|json|yaml (default &amp;quot;plain&amp;quot;) -h, --help help for show  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl workflow - Manage CDS workflow  </description>
+    </item>
+    
+    <item>
+      <title>signup</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/signup/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/signup/</guid>
+      <description> cdsctl signup Signup on CDS
+Synopsis Signup on CDS
+cdsctl signup [flags]  Options  -H, --api-url string CDS API URL --email string Email --fullname string Fullname -h, --help help for signup --username string CDS Username  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility  </description>
+    </item>
+    
+    <item>
+      <title>start</title>
+      <link>https://ovh.github.io/cds/cli/engine/start/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/start/</guid>
+      <description>engine start Start CDS
+Synopsis Start CDS Engine Services
+API This is the core component of CDS.
+Hatcheries They are the components responsible for spawning workers. Supported platforms/orchestrators are:
+ Local machine Openstack Docker Swarm Openstack Vsphere  Hooks This component operates CDS workflow hooks
+VCS This component operates CDS VCS connectivity
+Start all of this with a single command:
+$ engine start [api] [hatchery:local] [hatchery:marathon] [hatchery:openstack] [hatchery:swarm] [hatchery:vsphere] [hooks] [vcs]  All the services are using the same configuration file format.</description>
+    </item>
+    
+    <item>
+      <title>status</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/health/status/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/health/status/</guid>
+      <description> cdsctl health status Show CDS Status
+Synopsis Show CDS Status
+cdsctl health status [flags]  Options  -h, --help help for status  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl health - Check CDS health  </description>
+    </item>
+    
+    <item>
+      <title>status</title>
+      <link>https://ovh.github.io/cds/cli/engine/database/status/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/database/status/</guid>
+      <description>engine database status Show current migration status
+Synopsis Show current migration status
+engine database status [flags]  Options  --db-connect-timeout int Maximum wait for connection, in seconds (default 10) --db-host string DB Host (default &amp;quot;localhost&amp;quot;) --db-maxconn int DB Max connection (default 20) --db-name string DB Name (default &amp;quot;cds&amp;quot;) --db-password string DB Password --db-port int DB Port (default 5432) --db-sslmode string DB SSL Mode: require (default), verify-full, or disable (default &amp;quot;require&amp;quot;) --db-timeout int Statement timeout value in milliseconds (default 3000) --db-user string DB User (default &amp;quot;cds&amp;quot;) -h, --help help for status --migrate-dir string CDS SQL Migration directory (default &amp;quot;.</description>
+    </item>
+    
+    <item>
+      <title>tag</title>
+      <link>https://ovh.github.io/cds/cli/worker/tag/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/tag/</guid>
+      <description>worker tag worker tag key=value key=value
+Synopsis On the workflow view, the sidebar on the left displays a select box to filter on CDS Tags.
+So, what&amp;rsquo;s a tag? A tag is a CDS Variable, exported as a tag. There are default tags as git.branch, git.hash, tiggered_by and environment.
+Inside a job, you can add a Tag with the worker command:
+# worker tag &amp;lt;key&amp;gt;=&amp;lt;value&amp;gt; &amp;lt;key&amp;gt;=&amp;lt;value&amp;gt; worker tag tagKey=tagValue anotherTagKey=anotherTagValue  Tags are useful to add indication on the sidebar about the context of a Run.</description>
+    </item>
+    
+    <item>
+      <title>tmpl</title>
+      <link>https://ovh.github.io/cds/cli/worker/tmpl/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/tmpl/</guid>
+      <description>worker tmpl worker tmpl inputFile outputFile
+Synopsis Inside a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), you can add a replace CDS variables with the real value into a file:
+# create a file cat &amp;lt;&amp;lt; EOF &amp;gt; myFile this a a line in the file, with a CDS variable {{.cds.version}} EOF # worker tmpl &amp;lt;input file&amp;gt; &amp;lt;output file&amp;gt; worker tmpl {{.cds.workspace}}/myFile {{.cds.workspace}}/outputFile  The file outputFile will contain the string:
+this a a line in the file, with a CDS variable 2  if it&amp;rsquo;s the RUN n°2 of the current workflow.</description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/application/variable/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/application/variable/update/</guid>
+      <description> cdsctl application variable update Update CDS application variable value
+Synopsis Update CDS application variable value
+cdsctl application variable update PROJECT-KEY APP-NAME VARIABLE-OLDNAME VARIABLE-NAME VARIABLE-TYPE VARIABLE-VALUE [flags]  Options  -h, --help help for update  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl application variable - Manage CDS application variables  </description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/environment/variable/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/environment/variable/update/</guid>
+      <description> cdsctl environment variable update Update CDS environment variable value
+Synopsis Update CDS environment variable value
+cdsctl environment variable update PROJECT-KEY ENV-NAME VARIABLE-OLDNAME VARIABLE-NAME VARIABLE-TYPE VARIABLE-VALUE [flags]  Options  -h, --help help for update  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl environment variable - Manage CDS environment variables  </description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/project/variable/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/project/variable/update/</guid>
+      <description> cdsctl project variable update Update CDS project variable value
+Synopsis Update CDS project variable value
+cdsctl project variable update PROJECT-KEY VARIABLE-OLDNAME VARIABLE-NAME VARIABLE-TYPE VARIABLE-VALUE [flags]  Options  -h, --help help for update  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl project variable - Manage CDS project variables  </description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/update/</guid>
+      <description> cdsctl update Update cdsctl from CDS API or from CDS Release
+Synopsis Update cdsctl from CDS API or from CDS Release
+cdsctl update [flags]  Options  --from-github Update binary from latest github release -h, --help help for update  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility  </description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>https://ovh.github.io/cds/cli/engine/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/update/</guid>
+      <description> engine update Update engine binary
+Synopsis Update engine binary
+engine update [flags]  Examples engine update --from-github  Options  --api string Update binary from a CDS Engine API --from-github Update binary from latest github release -h, --help help for update  SEE ALSO  engine - CDS Engine  </description>
+    </item>
+    
+    <item>
+      <title>update</title>
+      <link>https://ovh.github.io/cds/cli/worker/update/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/update/</guid>
+      <description> worker update Update worker from CDS API or from CDS Release
+Synopsis Update worker from CDS API or from CDS Release
+worker update [flags]  Options  --from-github Update binary from latest github release -h, --help help for update  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>upgrade</title>
+      <link>https://ovh.github.io/cds/cli/engine/database/upgrade/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/database/upgrade/</guid>
+      <description>engine database upgrade Upgrade schema
+Synopsis Migrates the database to the most recent version available.
+engine database upgrade [flags]  Options  --db-connect-timeout int Maximum wait for connection, in seconds (default 10) --db-host string DB Host (default &amp;quot;localhost&amp;quot;) --db-maxconn int DB Max connection (default 20) --db-name string DB Name (default &amp;quot;cds&amp;quot;) --db-password string DB Password --db-port int DB Port (default 5432) --db-sslmode string DB SSL Mode: require (default), verify-full, or disable (default &amp;quot;require&amp;quot;) --db-timeout int Statement timeout value in milliseconds (default 3000) --db-user string DB User (default &amp;quot;cds&amp;quot;) --dry-run Dry run upgrade -h, --help help for upgrade --limit int Max number of migrations to apply (0 = unlimited) --migrate-dir string CDS SQL Migration directory (default &amp;quot;.</description>
+    </item>
+    
+    <item>
+      <title>upload</title>
+      <link>https://ovh.github.io/cds/cli/worker/upload/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/upload/</guid>
+      <description> worker upload worker upload &amp;ndash;tag=tagValue {{.cds.workspace}}/fileToUpload
+Synopsis Inside a job, there are two ways to upload an artifact:
+ with a step using action Upload Artifacts with a step script (https://ovh.github.io/cds/workflows/pipelines/actions/builtin/script/), using the worker command: worker upload --tag=&amp;lt;tag&amp;gt; &amp;lt;path&amp;gt;
+worker upload &amp;ndash;tag=  worker upload &amp;ndash;tag={{.cds.version}} {{.cds.workspace}}/files*.yml
+  worker upload [flags]  Options  -h, --help help for upload --tag string Tag for artifact Upload. Tag is mandatory  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
+    </item>
+    
+    <item>
+      <title>version</title>
+      <link>https://ovh.github.io/cds/cli/cdsctl/version/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/cdsctl/version/</guid>
+      <description> cdsctl version show cdsctl version
+Synopsis show cdsctl version
+cdsctl version [flags]  Options  -h, --help help for version  Options inherited from parent commands  -f, --file string set configuration file -k, --insecure (SSL) This option explicitly allows curl to perform &amp;quot;insecure&amp;quot; SSL connections and transfers. -w, --no-warnings do not display warnings -v, --verbose verbose output  SEE ALSO  cdsctl - CDS Command line utility  </description>
+    </item>
+    
+    <item>
+      <title>version</title>
+      <link>https://ovh.github.io/cds/cli/engine/version/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/engine/version/</guid>
+      <description> engine version Display CDS version
+Synopsis Display CDS version
+engine version [flags]  Options  -h, --help help for version  SEE ALSO  engine - CDS Engine  </description>
+    </item>
+    
+    <item>
+      <title>version</title>
+      <link>https://ovh.github.io/cds/cli/worker/version/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/cli/worker/version/</guid>
+      <description> worker version Print the version of the worker binary
+Synopsis Print the version of the worker binary
+worker version [flags]  Options  -h, --help help for version  Options inherited from parent commands  --api string URL of CDS API --hatchery int Hatchery ID spawing worker --hatchery-name string Hatchery Name spawing worker --log-level string Log Level: debug, info, notice, warning, critical (default &amp;quot;notice&amp;quot;) --model int Model of worker --name string Name of worker --token string CDS Token  SEE ALSO  worker - CDS Worker  </description>
     </item>
     
   </channel>

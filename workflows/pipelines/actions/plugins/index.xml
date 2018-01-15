@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Plugins Actions on CDS Documentation</title>
+    <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/</link>
+    <description>Recent content in Plugins Actions on CDS Documentation</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    
+	<atom:link href="https://ovh.github.io/cds/workflows/pipelines/actions/plugins/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Write a Plugin</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/write-plugin/</guid>
+      <description>A CDS worker executes job, and job is composed of steps.
+A step is :
+ a builtin action, as GitClone, etc&amp;hellip; read more a user action read more a Plugin Action  A Plugin is a Golang Binary.
+Take a look at https://github.com/ovh/cds/tree/master/sdk/plugin/dummy/dummy_plugin.go
+Contribute on https://github.com/ovh/cds/tree/master/contrib/plugins</description>
+    </item>
+    
+    <item>
+      <title>plugin-download</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-download/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-download/</guid>
+      <description>This is a plugin to download file from URL
+Parameters  filepath: the destination of your file to be copied headers: specific headers to add to your request (&amp;ldquo;headerName&amp;rdquo;=&amp;ldquo;value&amp;rdquo; newline separated list) url: the url of your file  More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>plugin-group-tmpl</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-group-tmpl/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-group-tmpl/</guid>
+      <description>This actions helps you generate a marathon group application file. It takes a config template file as a single application, and creates the group with the variables specified for each application in the applications files. Check documentation on text/template for more information https://golang.org/pkg/text/template.
+Parameters  applications: Applications file variables config: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension)  More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>plugin-kafka-publish</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-kafka-publish/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-kafka-publish/</guid>
+      <description>This action helps you to send data through Kafka across every network.
+You are able to send a custom &amp;quot;message&amp;quot; file and all the artifacts you want: there is no file size limit. To improve security, you can encrypt the files content with a GPG Key. From the consumer side, you will need to decrypt files content with you GPG private key and your passphrase. This action is a CDS Plugin packaged as a single binary file you can download and use to listen and consume data coming from CDS through Kafka.</description>
+    </item>
+    
+    <item>
+      <title>plugin-marathon</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-marathon/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-marathon/</guid>
+      <description>This action helps you to deploy on Mesos/Marathon. Provide a marathon.json file to configure deployment.
+Your marathon.json file can be templated with cds variables &amp;ldquo;{{.cds.variables}}&amp;rdquo;. Enable &amp;ldquo;waitForDeployment&amp;rdquo; option to ensure deployment is successful.
+Parameters  configuration: Marathon application configuration file (json format) insecureSkipVerify: Skip SSL Verify if you want to use self-signed certificate password: Marathon Password (please use project, application or environment variables) timeout: Marathon deployment timeout (seconds). Used only if &amp;ldquo;waitForDeployment&amp;rdquo; is true.</description>
+    </item>
+    
+    <item>
+      <title>plugin-ssh-cmd</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-ssh-cmd/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-ssh-cmd/</guid>
+      <description>This plugin helps you to run cmd on remote server over ssh.
+Parameters  command: Command commandTimeout: Command Timeout (seconds) hostnames: Hostnames (comma separated values) privateKey: SSH RSA private key timeout: Timeout (seconds) username: Username  More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>plugin-tmpl</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-tmpl/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-tmpl/</guid>
+      <description>This action helps you generates a file using a template file and text/template golang package.
+Check documentation on text/template for more information https://golang.org/pkg/text/template.
+Parameters  file: Template file to use output: Output path for generated file (default to .out or just trimming .tpl extension) params: Parameters to pass on the template file (key=value newline separated list)  More More documentation on Github</description>
+    </item>
+    
+    <item>
+      <title>plugin-venom</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-venom/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/actions/plugins/plugin-venom/</guid>
+      <description>This plugin helps you to run venom. Venom: https://github.com/ovh/venom.
+Add an extra step of type junit on your job to view tests results on CDS UI.
+Parameters  details: Output Details Level: low, medium, high exclude: Exclude some files, one file per line loglevel: Log Level: debug, info, warn or error output: Directory where output xunit result file parallel: Launch Test Suites in parallel. Enter here number of routines path: Path containers yml venom files.</description>
+    </item>
+    
+  </channel>
+</rss>
