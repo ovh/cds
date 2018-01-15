@@ -220,19 +220,19 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 
 	fileForMD5, errop := os.Open(filePath)
 	if errop != nil {
-		return false, 0, errop
+		return false, 0, fmt.Errorf("error on os.Open(filePath), errop:%s", errop)
 	}
 
 	//File stat
 	stat, errst := fileForMD5.Stat()
 	if errst != nil {
-		return false, 0, errst
+		return false, 0, fmt.Errorf("error on fileForMD5.Stat(), errst: %s", errst)
 	}
 
 	//Compute md5sum
 	hash := md5.New()
 	if _, errcopy := io.Copy(hash, fileForMD5); errcopy != nil {
-		return false, 0, errcopy
+		return false, 0, fmt.Errorf("error on io.Copy, errcopy:%s", errcopy)
 	}
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
@@ -241,7 +241,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	//Reopen the file because we already read it for md5
 	fileReopen, erro := os.Open(filePath)
 	if erro != nil {
-		return false, 0, erro
+		return false, 0, fmt.Errorf("error os.Open(filePath), erro:%s", erro)
 	}
 	defer fileReopen.Close()
 	_, name := filepath.Split(filePath)
@@ -254,20 +254,28 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		if store.TemporaryURLSupported {
 			tempURL, dur, err := uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileReopen, stat, md5sumStr)
 			if err == nil {
-				return tempURL, dur, err
+				return tempURL, dur, fmt.Errorf("error on uploadArtifactWithTempURL err:%s", err)
 			}
 		}
 	}
+
+	// if we are here, upload with tempURL didn't work. Fallback to download with CDS API.
+	// we have to reopen af new file here, already close by calling uploadArtifactWithTempURL
+	fileReopenForCDSAPI, erroapi := os.Open(filePath)
+	if erroapi != nil {
+		return false, 0, fmt.Errorf("error os.Open(filePath), errobis:%s", erroapi)
+	}
+	defer fileReopenForCDSAPI.Close()
 
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
 	if errc != nil {
-		return false, 0, errc
+		return false, 0, fmt.Errorf("error on writer.CreateFormFile() errc:%s", errc)
 	}
 
-	if _, err := io.Copy(part, fileReopen); err != nil {
-		return false, 0, err
+	if _, err := io.Copy(part, fileReopenForCDSAPI); err != nil {
+		return false, 0, fmt.Errorf("error on io.Copy(part, fileReopenForCDSAPI), err: %s", err)
 	}
 
 	writer.WriteField("env", env)
@@ -276,7 +284,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	writer.WriteField("md5sum", md5sumStr)
 
 	if err := writer.Close(); err != nil {
-		return false, 0, err
+		return false, 0, fmt.Errorf("error on write.Close(), err:%s", err)
 	}
 
 	var bodyReader io.Reader
