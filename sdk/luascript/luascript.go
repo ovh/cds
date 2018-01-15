@@ -48,6 +48,7 @@ func (c *Check) SetVariables(vars map[string]string) {
 	c.variables = vars
 	for k, v := range vars {
 		k = strings.Replace(k, ".", "_", -1)
+		k = strings.Replace(k, "-", "_", -1)
 		c.state.SetGlobal(k, lua.LString(v))
 	}
 }
