@@ -136,6 +136,7 @@
   "commit_date": "Date",
 
   "common_action": "Action",
+  "common_ask_cds_administrator": "Demandez à votre administrateur CDS",
   "common_audit": "Audit",
   "common_advanced": "Administration",
   "common_application": "Application",
