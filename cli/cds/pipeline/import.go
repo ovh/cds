@@ -21,7 +21,7 @@ func importCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "import",
 		Short: "cds pipeline import <projectKey> [file] [--url <url> --format json|yaml] [--force]",
-		Long:  "See documentation on https://ovh.github.io/cds/building-pipelines/building-pipelines.configuration-file/",
+		Long:  "See documentation on https://ovh.github.io/cds/workflows/pipelines/configuration-file/",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) < 1 {
 				sdk.Exit("Wrong usage: see %s\n", cmd.Short)
