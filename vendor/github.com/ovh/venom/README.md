@@ -354,6 +354,16 @@ func (tcc *DefaultTestCaseContext) Close() error {
 
 Methods SetTestCase and  GetName are implemented by CommonTestCaseContext
 
+# Dependencies
+
+Individual packages were updated using the rough procedure:
+
+1. `dep ensure`
+2. `dep ensure -update ${PACKAGE}`
+3. `dep prune`
+4. `go build`
+
+
 # Hacking
 
 You've developed a new cool feature? Fixed an annoying bug? We'd be happy
