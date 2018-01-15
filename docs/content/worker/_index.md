@@ -17,9 +17,13 @@ There is several cases where one would need to setup his own worker:
 
 ### How does this work ?
 
-Workers authenticate on CDS with a [token]({{< relref "introduction/cli/token.md" >}}) and have the same permissions as the user who generated it.
+Workers authenticate on CDS with a token and have the same permissions as the user who generated it.
 
-Bottom line, if you can access the application, your worker will too.
+Generate a token with the following cdsctl command:
+
+```bash
+$ cdsctl generate token -g yourgroup -e persistent
+```
 
 ### Linux Setup
 
@@ -34,42 +38,6 @@ $ wget -nv https://your-cds-api/download/worker/`uname -m` -O worker
 or download from https://github.com/ovh/cds/releases
 
 #### Startup the worker
-
-```bash
-$ worker --help
-CDS Worker
-
-Usage:
-  worker [flags]
-  worker [command]
-
-Available Commands:
-  export      worker export <varname> <value>
-  upload      worker upload --tag=<tag> <path>
-  version     Print the version number
-  register    worker register
-
-Flags:
-      --api string                   URL of CDS API
-      --basedir string               Worker working directory
-      --booked-job-id int            Booked job id
-      --graylog-extra-key string     Ex: --graylog-extra-key=xxxx-yyyy
-      --graylog-extra-value string   Ex: --graylog-extra-value=xxxx-yyyy
-      --graylog-host string          Ex: --graylog-host=xxxx-yyyy
-      --graylog-port string          Ex: --graylog-port=12202
-      --graylog-protocol string      Ex: --graylog-protocol=xxxx-yyyy
-      --grpc-api string              CDS GRPC tcp address
-      --grpc-insecure                Disable GRPC TLS encryption
-      --hatchery int                 Hatchery spawing worker
-      --token string                 CDS Token
-      --log-level string             Log Level : debug, info, notice, warning, critical (default "notice")
-      --model int                    Model of worker
-      --name string                  Name of worker
-      --single-use                   Exit after executing an action
-      --ttl int                      Worker time to live (minutes) (default 30)
-
-Use "worker [command] --help" for more information about a command.
-```
 
 Mandatory parameters are **--api** and **--token**.
 
