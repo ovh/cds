@@ -15,7 +15,7 @@
                     <div class="four wide column">{{osArch.os}}</div>
                     <div class="four wide column"  *ngFor="let a of osArch.archs">
                             <a *ngIf="a.available" href="{{apiURL}}/download/{{line.name}}/{{osArch.os}}/{{a.arch}}">[{{a.arch}}]</a> 
-                            <span *ngIf="!a.available" title="{{'common_ask_cds_administrator' | translate}}">N.A</span>
+                            <span *ngIf="!a.available" title="{{'common_ask_cds_administrator' | translate}}">{{a.arch}}: n.a</span>
                     </div>
                 </div>
             </td>
