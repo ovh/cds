@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"github.com/fsamin/go-dump"
 )
 
 //Workflow represents a pipeline based workflow
@@ -687,6 +689,23 @@ type WorkflowNodeContext struct {
 	DefaultPipelineParameters []Parameter            `json:"default_pipeline_parameters,omitempty" db:"-"`
 	Conditions                WorkflowNodeConditions `json:"conditions,omitempty" db:"-"`
 	Mutex                     bool                   `json:"mutex"`
+}
+
+// HasDefaultPayload returns true if the node has a default payload
+func (c *WorkflowNodeContext) HasDefaultPayload() bool {
+	if c == nil {
+		return false
+	}
+	if c.DefaultPayload == nil {
+		return false
+	}
+	dumper := dump.NewDefaultEncoder(nil)
+	dumper.ExtraFields.DetailedMap = false
+	dumper.ExtraFields.DetailedStruct = false
+	dumper.ExtraFields.Len = false
+	dumper.ExtraFields.Type =  false
+	m, _ := dumper.ToStringMap(c.DefaultPayload)
+	return len(m) > 0
 }
 
 //WorkflowNodeContextDefaultPayloadVCS represents a default payload when a workflow is attached to a repository Webhook
