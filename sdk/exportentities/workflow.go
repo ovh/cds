@@ -18,6 +18,7 @@ type Workflow struct {
 	When            []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
 	PipelineName    string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
 	Payload         interface{}                 `json:"payload,omitempty" yaml:"payload,omitempty"`
+	Parameters      map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
 	PipelineHooks   []HookEntry                 `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
@@ -33,6 +34,7 @@ type NodeEntry struct {
 	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
 	OneAtATime      *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty"`
 	Payload         interface{}                 `json:"payload,omitempty" yaml:"payload,omitempty"`
+	Parameters      map[string]string           `json:"parameters,omitempty" yaml:"parameters,omitempty"`
 }
 
 type HookEntry struct {
@@ -75,7 +77,6 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 		entry.DependsOn = ancestors
 		entry.PipelineName = n.Pipeline.Name
-		//TODO pipeline parameter
 		conditions := []sdk.WorkflowNodeCondition{}
 		for _, c := range n.Context.Conditions.PlainConditions {
 			if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
@@ -113,6 +114,10 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			entry.Payload = n.Context.DefaultPayload
 		}
 
+		if len(n.Context.DefaultPipelineParameters) > 0 {
+			entry.Parameters = sdk.ParametersToMap(n.Context.DefaultPipelineParameters)
+		}
+
 		return entry, nil
 	}
 
@@ -145,6 +150,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			})
 		}
 		exportedWorkflow.Payload = entry.Payload
+		exportedWorkflow.Parameters = entry.Parameters
 	} else {
 		nodes = append(nodes, *w.Root)
 		for i := range nodes {
@@ -157,7 +163,6 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 				return exportedWorkflow, err
 			}
 			exportedWorkflow.Workflow[n.Name] = entry
-
 		}
 
 		for _, h := range hooks {
