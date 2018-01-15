@@ -204,7 +204,7 @@ func (h *HatcheryVSphere) launchScriptWorker(name string, isWorkflowJob bool, jo
 	env = append(env, h.getGraylogGrpcEnv(model)...)
 
 	script := fmt.Sprintf(
-		`cd $HOME; rm -f worker; curl "%s/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1; chmod +x worker; PATH=$PATH ./worker`,
+		`cd $HOME; rm -f worker; curl "%s/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1; chmod +x worker; PATH=$PATH ./worker`,
 		h.Configuration().API.HTTP.URL,
 	)
 

@@ -199,7 +199,7 @@ func (h *HatcheryMarathon) SpawnWorker(spawnArgs hatchery.SpawnArguments) (strin
 	// Estimate needed memory, we will set 110% of required memory
 	memory := int64(h.Config.DefaultMemory)
 
-	cmd := "rm -f worker && curl ${CDS_API}/download/worker/$(uname -m) -o worker &&  chmod +x worker && exec ./worker"
+	cmd := "rm -f worker && curl ${CDS_API}/download/worker/linux/$(uname -m) -o worker && chmod +x worker && exec ./worker"
 	if spawnArgs.RegisterOnly {
 		cmd += " register"
 		memory = hatchery.MemoryRegisterContainer
