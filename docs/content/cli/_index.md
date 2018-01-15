@@ -1,8 +1,7 @@
 +++
 title = "Command Line"
-weight = 1
+weight = 6
 
 +++
 
 {{%children style="h4"%}}
-

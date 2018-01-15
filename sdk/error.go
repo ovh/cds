@@ -133,6 +133,7 @@ var (
 	ErrDownloadInvalidOS                     = Error{ID: 117, Status: http.StatusNotFound}
 	ErrDownloadInvalidArch                   = Error{ID: 118, Status: http.StatusNotFound}
 	ErrDownloadInvalidName                   = Error{ID: 119, Status: http.StatusNotFound}
+	ErrDownloadDoesNotExist                  = Error{ID: 120, Status: http.StatusNotFound}
 )
 
 var errorsAmericanEnglish = map[int]string{
@@ -254,6 +255,7 @@ var errorsAmericanEnglish = map[int]string{
 	ErrDownloadInvalidOS.ID:                     "OS Invalid. Should be linux, darwin, freebsd or windows",
 	ErrDownloadInvalidArch.ID:                   "Architecture invalid. Should be 386, i386, i686, amd64, x86_64 or arm (depends on OS)",
 	ErrDownloadInvalidName.ID:                   "Invalid name",
+	ErrDownloadDoesNotExist.ID:                  "File does not exist",
 }
 
 var errorsFrench = map[int]string{
@@ -375,6 +377,7 @@ var errorsFrench = map[int]string{
 	ErrDownloadInvalidOS.ID:                     "OS invalide. L'OS doit être linux, darwin, freebsd ou windows",
 	ErrDownloadInvalidArch.ID:                   "Architecture invalide. L'architecture doit être 386, i386, i686, amd64, x86_64 ou arm (dépendant de l'OS)",
 	ErrDownloadInvalidName.ID:                   "Nom invalide",
+	ErrDownloadDoesNotExist.ID:                  "Le fichier n'existe pas",
 }
 
 var errorsLanguages = []map[int]string{

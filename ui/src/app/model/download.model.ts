@@ -5,5 +5,10 @@ export class Download {
 
 export class OSArch {
     os: string;
-    archs: Array<string>;
+    archs: Array<Arch>;
+}
+
+export class Arch {
+    arch: string;
+    available: boolean;
 }

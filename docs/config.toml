@@ -9,6 +9,8 @@ editURL = "https://github.com/ovh/cds/edit/master/docs/content/"
 noHomeIcon = true
 themeVariant = "custom"
 
+[outputs]
+home = [ "HTML", "RSS", "JSON"]
 
 [[menu.shortcuts]]
 pre = "<h3></h3>"
