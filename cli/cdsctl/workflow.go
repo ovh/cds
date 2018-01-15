@@ -35,6 +35,7 @@ var (
 			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil),
 			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil),
 			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil),
+			cli.NewCommand(workflowStopCmd, workflowStopRun, nil),
 			cli.NewCommand(workflowExportCmd, workflowExportRun, nil),
 			cli.NewCommand(workflowImportCmd, workflowImportRun, nil),
 			cli.NewCommand(workflowPullCmd, workflowPullRun, nil),
@@ -318,6 +319,63 @@ func workflowRunManualRun(v cli.Values) error {
 	}
 
 	return workflowRunInteractive(v, w, baseURL)
+}
+
+var workflowStopCmd = cli.Command{
+	Name:  "stop",
+	Short: "Stop a CDS workflow or a specific node name",
+	Long:  "Stop a CDS workflow or a specific node name",
+	Args: []cli.Arg{
+		{Name: "project-key"},
+		{Name: "workflow-name"},
+		{Name: "run-number"},
+	},
+	OptionalArgs: []cli.Arg{
+		{Name: "node-name"},
+	},
+}
+
+func workflowStopRun(v cli.Values) error {
+	var fromNodeID int64
+	runNumber, errp := strconv.ParseInt(v.GetString("run-number"), 10, 64)
+	if errp != nil {
+		return fmt.Errorf("run-number invalid: not a integer")
+	}
+
+	if v.GetString("node-name") != "" {
+		if runNumber <= 0 {
+			return fmt.Errorf("You can use flag node-name without flag run-number")
+		}
+		wr, err := client.WorkflowRunGet(v["project-key"], v["workflow-name"], runNumber)
+		if err != nil {
+			return err
+		}
+		for _, wnrs := range wr.WorkflowNodeRuns {
+			if wnrs[0].WorkflowNodeName == v.GetString("node-name") {
+				fromNodeID = wnrs[0].ID
+				break
+			}
+		}
+		if fromNodeID == 0 {
+			return fmt.Errorf("Node not found")
+		}
+	}
+
+	if fromNodeID != 0 {
+		wNodeRun, err := client.WorkflowNodeStop(v["project-key"], v["workflow-name"], runNumber, fromNodeID)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Workflow node %s from workflow %s #%d has been stopped\n", v.GetString("node-name"), v["workflow-name"], wNodeRun.Number)
+	} else {
+		w, err := client.WorkflowStop(v["project-key"], v["workflow-name"], runNumber)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Workflow %s #%d has been stopped\n", v["workflow-name"], w.Number)
+	}
+
+	return nil
 }
 
 var workflowExportCmd = cli.Command{
