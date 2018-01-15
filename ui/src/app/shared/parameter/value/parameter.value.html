@@ -10,26 +10,26 @@
         <label>{{ ' '}}</label>
     </div>
     <div *ngSwitchCase="'ssh-key'">
-        <ng-container *ngIf="list">
+        <ng-container *ngIf="keys">
             <sm-select class="search fluid"
                        [(model)]="editableValue"
                        [options]="{'fullTextSearch': true}"
                        (modelChange)="valueChanged();sendValueChanged()"
                        (keydown)="sendValueChanged()"
                        name="value">
-                    <option *ngFor="let v of list" [value]="v">{{v}}</option>
+                    <option *ngFor="let v of keys.ssh" [value]="v">{{v}}</option>
             </sm-select>
         </ng-container>
     </div>
     <div *ngSwitchCase="'pgp-key'">
-        <ng-container *ngIf="list">
+        <ng-container *ngIf="keys">
             <sm-select class="search fluid"
                        [(model)]="editableValue"
                        [options]="{'fullTextSearch': true}"
                        (modelChange)="valueChanged();sendValueChanged()"
                        (keydown)="sendValueChanged()"
                        name="value">
-                <option *ngFor="let v of list" [value]="v">{{v}}</option>
+                <option *ngFor="let v of keys.pgp" [value]="v">{{v}}</option>
             </sm-select>
         </ng-container>
     </div>

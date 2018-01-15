@@ -47,7 +47,6 @@ type RepositoryStrategy struct {
 	SSHKey         string `json:"ssh_key"`
 	User           string `json:"user"`
 	Password       string `json:"password"`
-	URL            string `json:"url"`
 	Branch         string `json:"branch"`
 	DefaultBranch  string `json:"default_branch"`
 	PGPKey         string `json:"pgp_key"`

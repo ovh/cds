@@ -2,6 +2,7 @@ import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {VCSConnections, VCSStrategy} from '../../model/vcs.model';
 import {Project} from '../../model/project.model';
 import {KeyService} from '../../service/keys/keys.service';
+import {AllKeys} from '../../model/keys.model';
 
 @Component({
     selector: 'app-vcs-strategy',
@@ -24,8 +25,7 @@ export class VCSStrategyComponent implements OnInit {
     }
 
     @Output() strategyChange = new EventEmitter<VCSStrategy>();
-    sshKeys: Array<string>;
-    pgpKeys: Array<string>;
+    keys: AllKeys;
     connectionType = VCSConnections;
     displayVCSStrategy = false;
 
@@ -37,17 +37,8 @@ export class VCSStrategyComponent implements OnInit {
             this.strategy = new VCSStrategy();
         }
         this._keyService.getAllKeys(this.project.key).subscribe(k => {
-            this.sshKeys = k.ssh;
-            this.pgpKeys = k.pgp;
+            this.keys = k;
         })
-    }
-
-    changeConnection(event: string) {
-        if (event === this.connectionType.SSH) {
-            this.strategy.url = '{{.git.url}}';
-        } else {
-            this.strategy.url = '{{.git.http_url}}';
-        }
     }
 
     saveStrategy() {

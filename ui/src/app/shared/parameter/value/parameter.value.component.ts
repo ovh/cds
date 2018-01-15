@@ -7,6 +7,7 @@ import {RepoManagerService} from '../../../service/repomanager/project.repomanag
 import {cloneDeep} from 'lodash';
 import {Parameter} from '../../../model/parameter.model';
 import {first} from 'rxjs/operators';
+import {AllKeys} from '../../../model/keys.model';
 
 declare var CodeMirror: any;
 
@@ -19,7 +20,7 @@ export class ParameterValueComponent implements OnInit {
 
     editableValue: string | number | boolean;
     @Input() type: string;
-
+    @Input() keys: AllKeys;
     @Input('value')
     set value(data: string | number | boolean) {
         this.castValue(data);

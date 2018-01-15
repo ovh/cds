@@ -6,16 +6,16 @@ export class Keys {
     static formatForSelect(keys: any): AllKeys {
         let k = new AllKeys();
         if (keys.project_key) {
-            k.ssh.push(...keys.project_key.filter(key => key.type === KeyType.SSH).map(key => 'proj-' + key.name ));
-            k.pgp.push(...keys.project_key.filter(key => key.type === KeyType.PGP).map(key => 'proj-' + key.name ));
+            k.ssh.push(...keys.project_key.filter(key => key.type === KeyType.SSH).map(key => key.name ));
+            k.pgp.push(...keys.project_key.filter(key => key.type === KeyType.PGP).map(key => key.name ));
         }
         if (keys.application_key) {
-            k.ssh.push(...keys.application_key.filter(key => key.type === KeyType.SSH).map(key => 'app-' + key.name ));
-            k.pgp.push(...keys.application_key.filter(key => key.type === KeyType.PGP).map(key => 'app-' + key.name ));
+            k.ssh.push(...keys.application_key.filter(key => key.type === KeyType.SSH).map(key => key.name ));
+            k.pgp.push(...keys.application_key.filter(key => key.type === KeyType.PGP).map(key => key.name ));
         }
         if (keys.environment_key) {
-            k.ssh.push(...keys.environment_key.filter(key => key.type === KeyType.SSH).map(key => 'env-' + key.name ));
-            k.pgp.push(...keys.environment_key.filter(key => key.type === KeyType.PGP).map(key => 'env-' + key.name ));
+            k.ssh.push(...keys.environment_key.filter(key => key.type === KeyType.SSH).map(key => key.name ));
+            k.pgp.push(...keys.environment_key.filter(key => key.type === KeyType.PGP).map(key => key.name ));
         }
         return k;
     }

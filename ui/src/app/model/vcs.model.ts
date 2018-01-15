@@ -6,13 +6,11 @@ export class VCSStrategy {
     branch: string;
     ssh_key: string;
     pgp_key: string;
-    url: string;
 
     constructor() {
         this.connection_type = VCSConnections.HTTPS;
         this.default_branch = 'master';
         this.branch = '{{.git.branch}}';
-        this.url = '{{git.http_url}}';
     }
 }
 

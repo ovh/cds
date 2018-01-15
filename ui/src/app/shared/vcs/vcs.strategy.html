@@ -21,7 +21,7 @@
                     </div>
                     <div class="fourteen wide field">
                         <div class="ssh">
-                            <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [ref]="sshKeys" [(value)]="strategy.ssh_key"></app-parameter-value>
+                            <app-parameter-value [editList]="false" [edit]="true" [type]="'ssh-key'" [keys]="keys" [(value)]="strategy.ssh_key"></app-parameter-value>
                         </div>
                     </div>
                 </div>
@@ -47,14 +47,6 @@
             </ng-container>
             <div class="inline fields">
                 <div class="two wide field">
-                    <label>{{ 'vcs_url' | translate }}</label>
-                </div>
-                <div class="fourteen wide field">
-                    <input type="text" class="ui input" [(ngModel)]="strategy.url">
-                </div>
-            </div>
-            <div class="inline fields">
-                <div class="two wide field">
                     <label>{{ 'vcs_branch' | translate }}</label>
                 </div>
                 <div class="fourteen wide field">
@@ -75,7 +67,7 @@
                 </div>
                 <div class="fourteen wide field">
                     <div class="ssh">
-                        <app-parameter-value [editList]="false" [edit]="true" [type]="'pgp-key'" [ref]="pgpKeys" [(value)]="strategy.pgp_key"></app-parameter-value>
+                        <app-parameter-value [editList]="false" [edit]="true" [type]="'pgp-key'" [keys]="keys" [(value)]="strategy.pgp_key"></app-parameter-value>
                     </div>
                 </div>
             </div>

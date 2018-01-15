@@ -555,7 +555,6 @@
   "vcs_connection" : "Connexion : ",
   "vcs_user" : "Utilisateur : ",
   "vcs_password" : "Mot de passe : ",
-  "vcs_url" : "URL : ",
   "vcs_branch" : "Branche : ",
   "vcs_default_branch" : "Branche par defaut : ",
   "vcs_ssh_key" : "Clé SSH",

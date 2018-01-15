@@ -13,7 +13,7 @@ import (
 func SetupSSHKey(vars []sdk.Variable, path string, key *sdk.Parameter) error {
 	if key == nil {
 		for _, v := range vars {
-			if v.Type != sdk.KeyVariable {
+			if v.Type != sdk.KeyVariable && v.Type != sdk.KeySSHParameter {
 				continue
 			}
 			if err := write(path, v.Name, v.Value); err != nil {

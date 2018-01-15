@@ -1,6 +1,7 @@
 import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {Key, KeyType} from '../../../model/keys.model';
 import {KeyEvent} from '../key.event';
+import {cloneDeep} from 'lodash';
 
 @Component({
     selector: 'app-keys-form',
@@ -13,6 +14,7 @@ export class KeysFormComponent implements OnInit {
     keyTypes = KeyType.values();
 
     @Input() loading = false;
+    @Input() prefix: string;
     @Output() keyEvent = new EventEmitter<KeyEvent>();
 
     constructor() {
@@ -24,6 +26,10 @@ export class KeysFormComponent implements OnInit {
     }
 
     addKey(): void {
-        this.keyEvent.emit(new KeyEvent('add', this.newKey));
+        let k = cloneDeep(this.newKey);
+        if (k.name.indexOf(this.prefix) !== 0) {
+            k.name = this.prefix + k.name;
+        }
+        this.keyEvent.emit(new KeyEvent('add', k));
     }
 }

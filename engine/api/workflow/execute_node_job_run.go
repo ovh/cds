@@ -181,17 +181,17 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 
 	for _, k := range p.Keys {
 		params = append(params, sdk.Parameter{
-			Name:  "cds.proj." + k.Name + ".pub",
+			Name:  "cds.key." + k.Name + ".pub",
 			Type:  "string",
 			Value: k.Public,
 		})
 		params = append(params, sdk.Parameter{
-			Name:  "cds.proj." + k.Name + ".id",
+			Name:  "cds.key." + k.Name + ".id",
 			Type:  "string",
 			Value: k.KeyID,
 		})
 		secrets = append(secrets, sdk.Variable{
-			Name:  "cds.proj." + k.Name + ".priv",
+			Name:  "cds.key." + k.Name + ".priv",
 			Type:  "string",
 			Value: k.Private,
 		})
@@ -209,17 +209,17 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 		}
 		for _, k := range a.Keys {
 			params = append(params, sdk.Parameter{
-				Name:  "cds.app." + k.Name + ".pub",
+				Name:  "cds.key." + k.Name + ".pub",
 				Type:  "string",
 				Value: k.Public,
 			})
 			params = append(params, sdk.Parameter{
-				Name:  "cds.app." + k.Name + ".id",
+				Name:  "cds.key." + k.Name + ".id",
 				Type:  "string",
 				Value: k.KeyID,
 			})
 			secrets = append(secrets, sdk.Variable{
-				Name:  "cds.app." + k.Name + ".priv",
+				Name:  "cds.key." + k.Name + ".priv",
 				Type:  "string",
 				Value: k.Private,
 			})
@@ -233,17 +233,17 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 		}
 		for _, k := range e.Keys {
 			params = append(params, sdk.Parameter{
-				Name:  "cds.env." + k.Name + ".pub",
+				Name:  "cds.key." + k.Name + ".pub",
 				Type:  "string",
 				Value: k.Public,
 			})
 			params = append(params, sdk.Parameter{
-				Name:  "cds.env." + k.Name + ".id",
+				Name:  "cds.key." + k.Name + ".id",
 				Type:  "string",
 				Value: k.KeyID,
 			})
 			secrets = append(secrets, sdk.Variable{
-				Name:  "cds.env." + k.Name + ".priv",
+				Name:  "cds.key." + k.Name + ".priv",
 				Type:  "string",
 				Value: k.Private,
 			})
