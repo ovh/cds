@@ -2,10 +2,6 @@
 title = "Script"
 chapter = true
 
-[menu.main]
-parent = "actions-builtin"
-identifier = "script"
-
 +++
 
 **Script** is a builtin action, you can't modify it.

@@ -2,10 +2,6 @@
 title = "Artifact Upload"
 chapter = true
 
-[menu.main]
-parent = "actions-builtin"
-identifier = "builtin-artifact-upload"
-
 +++
 
 **Artifact Upload Action** is a builtin action, you can't modify it.

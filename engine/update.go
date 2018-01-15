@@ -16,8 +16,9 @@ var updateFromGithub bool
 var updateURLAPI string
 
 var updateCmd = &cobra.Command{
-	Use:   "update",
-	Short: "Update engine binary",
+	Use:     "update",
+	Short:   "Update engine binary",
+	Example: "engine update --from-github",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("CDS engine version:%s os:%s architecture:%s\n", sdk.VERSION, runtime.GOOS, runtime.GOARCH)
 

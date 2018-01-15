@@ -1,9 +1,6 @@
 +++
 title = "Docker Compose"
-
-[menu.main]
-parent = "ready-to-run"
-identifier = "ready-to-run.docker-compose"
+weight = 1
 
 +++
 

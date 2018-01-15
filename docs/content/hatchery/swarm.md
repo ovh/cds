@@ -2,10 +2,6 @@
 title = "Hatchery Swarm"
 weight = 4
 
-[menu.main]
-parent = "hatchery"
-identifier = "hatchery.swarm"
-
 +++
 
 CDS build using Docker Swarm to spawn CDS Worker.

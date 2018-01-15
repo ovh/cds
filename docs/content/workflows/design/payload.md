@@ -2,10 +2,6 @@
 title = "Payload"
 weight = 2
 
-[menu.main]
-parent = "design"
-identifier = "design.payload"
-
 +++
 
 

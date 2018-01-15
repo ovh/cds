@@ -104,7 +104,7 @@ func actionPluginToAction(ap *sdk.ActionPlugin, params *plugin.Parameters) (*sdk
 		Name:        ap.Name,
 		Type:        sdk.PluginAction,
 		Description: ap.Description,
-		Requirements: []sdk.Requirement{
+		Requirements: sdk.RequirementList{
 			sdk.Requirement{
 				Name:  ap.Name,
 				Type:  sdk.PluginRequirement,

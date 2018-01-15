@@ -63,7 +63,7 @@ func Test_checkMultipleWorkerModelWarning(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "model-1",
 							Type:  sdk.ModelRequirement,
@@ -101,7 +101,7 @@ func Test_checkMultipleWorkerModelWarning(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "model-1",
 							Type:  sdk.ModelRequirement,
@@ -150,7 +150,7 @@ func Test_checkMultipleHostnameWarning(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "host-1",
 							Type:  sdk.HostnameRequirement,
@@ -219,7 +219,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "binary-1",
 							Type:  sdk.BinaryRequirement,
@@ -234,7 +234,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				},
 				wms: []sdk.Model{
 					{
-						Capabilities: []sdk.Requirement{
+						Capabilities: sdk.RequirementList{
 							{
 								Value: "binary-1",
 							},
@@ -268,7 +268,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "binary-1",
 							Type:  sdk.BinaryRequirement,
@@ -283,7 +283,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				},
 				wms: []sdk.Model{
 					{
-						Capabilities: []sdk.Requirement{
+						Capabilities: sdk.RequirementList{
 							{
 								Value: "binary-1",
 							},
@@ -305,7 +305,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "binary-1",
 							Type:  sdk.BinaryRequirement,
@@ -326,7 +326,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				wms: []sdk.Model{
 					sdk.Model{
 						Type: sdk.Openstack,
-						Capabilities: []sdk.Requirement{
+						Capabilities: sdk.RequirementList{
 							{
 								Value: "binary-1",
 							},
@@ -360,7 +360,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "binary-1",
 							Type:  sdk.BinaryRequirement,
@@ -381,7 +381,7 @@ func Test_checkNoWorkerModelMatchRequirement(t *testing.T) {
 				wms: []sdk.Model{
 					sdk.Model{
 						Type: sdk.Docker,
-						Capabilities: []sdk.Requirement{
+						Capabilities: sdk.RequirementList{
 							{
 								Value: "binary-1",
 							},
@@ -432,7 +432,7 @@ func Test_checkIncompatibleBinaryWithModelRequirement(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "binary-1",
 							Type:  sdk.BinaryRequirement,
@@ -449,7 +449,7 @@ func Test_checkIncompatibleBinaryWithModelRequirement(t *testing.T) {
 				wms: []sdk.Model{
 					sdk.Model{
 						Name: "model",
-						Capabilities: []sdk.Requirement{
+						Capabilities: sdk.RequirementList{
 							{
 								Type:  sdk.BinaryRequirement,
 								Value: "binary-1",
@@ -473,7 +473,7 @@ func Test_checkIncompatibleBinaryWithModelRequirement(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "binary-1",
 							Type:  sdk.BinaryRequirement,
@@ -490,7 +490,7 @@ func Test_checkIncompatibleBinaryWithModelRequirement(t *testing.T) {
 				wms: []sdk.Model{
 					sdk.Model{
 						Name: "model",
-						Capabilities: []sdk.Requirement{
+						Capabilities: sdk.RequirementList{
 							{
 								Type:  sdk.BinaryRequirement,
 								Value: "binary-1",
@@ -552,7 +552,7 @@ func Test_checkIncompatibleServiceWithModelRequirement(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "service-1",
 							Type:  sdk.ServiceRequirement,
@@ -579,7 +579,7 @@ func Test_checkIncompatibleServiceWithModelRequirement(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "service-1",
 							Type:  sdk.ServiceRequirement,
@@ -647,7 +647,7 @@ func Test_checkIncompatibleMemoryWithModelRequirement(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "service-1",
 							Type:  sdk.MemoryRequirement,
@@ -674,7 +674,7 @@ func Test_checkIncompatibleMemoryWithModelRequirement(t *testing.T) {
 				a: &sdk.Action{
 					ID:   1,
 					Name: "Action Name 1",
-					Requirements: []sdk.Requirement{
+					Requirements: sdk.RequirementList{
 						{
 							Name:  "service-1",
 							Type:  sdk.MemoryRequirement,

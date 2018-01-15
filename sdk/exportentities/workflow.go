@@ -17,6 +17,7 @@ type Workflow struct {
 	Conditions      *sdk.WorkflowNodeConditions `json:"conditions,omitempty" yaml:"conditions,omitempty"`
 	When            []string                    `json:"when,omitempty" yaml:"when,omitempty"` //This is use only for manual and success condition
 	PipelineName    string                      `json:"pipeline,omitempty" yaml:"pipeline,omitempty"`
+	Payload         interface{}                 `json:"payload,omitempty" yaml:"payload,omitempty"`
 	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
 	PipelineHooks   []HookEntry                 `json:"pipeline_hooks,omitempty" yaml:"pipeline_hooks,omitempty"`
@@ -31,6 +32,7 @@ type NodeEntry struct {
 	ApplicationName string                      `json:"application,omitempty" yaml:"application,omitempty"`
 	EnvironmentName string                      `json:"environment,omitempty" yaml:"environment,omitempty"`
 	OneAtATime      *bool                       `json:"one_at_a_time,omitempty" yaml:"one_at_a_time,omitempty"`
+	Payload         interface{}                 `json:"payload,omitempty" yaml:"payload,omitempty"`
 }
 
 type HookEntry struct {
@@ -73,6 +75,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 
 		entry.DependsOn = ancestors
 		entry.PipelineName = n.Pipeline.Name
+		//TODO pipeline parameter
 		conditions := []sdk.WorkflowNodeCondition{}
 		for _, c := range n.Context.Conditions.PlainConditions {
 			if c.Operator == sdk.WorkflowConditionsOperatorEquals &&
@@ -106,6 +109,10 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 			entry.OneAtATime = &n.Context.Mutex
 		}
 
+		if n.Context.HasDefaultPayload() {
+			entry.Payload = n.Context.DefaultPayload
+		}
+
 		return entry, nil
 	}
 
@@ -137,6 +144,7 @@ func NewWorkflow(w sdk.Workflow, withPermission bool) (Workflow, error) {
 				Config: h.Config.Values(),
 			})
 		}
+		exportedWorkflow.Payload = entry.Payload
 	} else {
 		nodes = append(nodes, *w.Root)
 		for i := range nodes {

@@ -2,10 +2,6 @@
 title = "Bitbucket"
 weight = 2
 
-[menu.main]
-parent = "repositories-manager"
-identifier = "repositories-manager.bitbucket"
-
 +++
 
 ## Authorize CDS on your Bitbucket instance

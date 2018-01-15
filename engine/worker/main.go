@@ -63,5 +63,9 @@ func main() {
 	cmd.AddCommand(cmdExit(w))
 	cmd.AddCommand(cmdVersion)
 	cmd.AddCommand(cmdRegister(w))
+
+	// last command: doc, this command is hidden
+	cmd.AddCommand(cmdDoc(cmd))
+
 	cmd.Execute()
 }

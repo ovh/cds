@@ -1,10 +1,6 @@
 +++
-title = "Setup Worker Model From Docker Hub"
+title = "Worker Model From Docker Hub"
 weight = 2
-
-[menu.main]
-parent = "worker-model"
-identifier = "worker-model.docker-simple"
 
 +++
 

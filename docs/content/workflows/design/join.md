@@ -2,10 +2,6 @@
 title = "Join"
 weight = 6
 
-[menu.main]
-parent = "design"
-identifier = "design.join"
-
 +++
 
 A join lets workflow to wait the end of two or more parent pipelines.

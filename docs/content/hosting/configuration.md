@@ -2,10 +2,6 @@
 title = "Configuration"
 weight = 5
 
-[menu.main]
-parent = "hosting"
-identifier = "hosting.configuration"
-
 +++
 
 The toml configuration can be provided by a file, via [consul k/v store](https://www.consul.io) or via [vault](https://www.vaultproject.io/).

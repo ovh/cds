@@ -189,18 +189,26 @@ func (api *API) postWorkflowPushHandler() Handler {
 			}
 		}
 
+		// We only use the multiError the une unmarshalling steps.
+		// When a DB transaction has been started, just return at the first error 
+		// because transaction may have to be aborted
+		if !mError.IsEmpty() {
+			return mError
+		}
+
 		tx, err := api.mustDB().Begin()
 		if err != nil {
 			return sdk.WrapError(err, "postWorkflowPushHandler> Unable to start tx")
 		}
+		defer tx.Rollback()
 
 		allMsg := []sdk.Message{}
 		for filename, app := range apps {
 			log.Debug("postWorkflowPushHandler> Parsing %s", filename)
 			msgList, err := application.ParseAndImport(tx, api.Cache, proj, &app, true, project.DecryptWithBuiltinKey, getUser(ctx))
 			if err != nil {
-				log.Error("postWorkflowPushHandler> Unable to parse&import application %s: %v", app.Name, err)
-				mError.Append(err)
+				err = sdk.SetError(err, "unable to import application %s",  app.Name)
+				return sdk.WrapError(err, "postWorkflowPushHandler> ", err)
 			}
 			allMsg = append(allMsg, msgList...)
 			log.Debug("postWorkflowPushHandler> -- %s OK", filename)
@@ -210,8 +218,8 @@ func (api *API) postWorkflowPushHandler() Handler {
 			log.Debug("postWorkflowPushHandler> Parsing %s", filename)
 			msgList, err := environment.ParseAndImport(tx, api.Cache, proj, &env, true, project.DecryptWithBuiltinKey, getUser(ctx))
 			if err != nil {
-				log.Error("postWorkflowPushHandler> Unable to parse&import environment %s: %v", env.Name, err)
-				mError.Append(err)
+				err = sdk.SetError(err, "unable to import environment %s",  env.Name)
+				return sdk.WrapError(err, "postWorkflowPushHandler> ", err)
 			}
 			allMsg = append(allMsg, msgList...)
 			log.Debug("postWorkflowPushHandler> -- %s OK", filename)
@@ -221,15 +229,11 @@ func (api *API) postWorkflowPushHandler() Handler {
 			log.Debug("postWorkflowPushHandler> Parsing %s", filename)
 			msgList, err := pipeline.ParseAndImport(tx, api.Cache, proj, &pip, true, getUser(ctx))
 			if err != nil {
-				log.Error("postWorkflowPushHandler> Unable to parse&import pipeline %s: %v", pip.Name, err)
-				mError.Append(err)
+				err = sdk.SetError(err, "unable to import pipeline %s",  pip.Name)
+				return sdk.WrapError(err, "postWorkflowPushHandler> ", err)
 			}
 			allMsg = append(allMsg, msgList...)
 			log.Debug("postWorkflowPushHandler> -- %s OK", filename)
-		}
-
-		if !mError.IsEmpty() {
-			return mError
 		}
 
 		//Reload project to get apps, envs and pipelines updated
@@ -240,14 +244,13 @@ func (api *API) postWorkflowPushHandler() Handler {
 			project.LoadOptions.WithPipelines,
 		)
 		if errp != nil {
-			log.Error("postWorkflowPushHandler> Unable to reload project %s: %v", proj.Name, errp)
-			return sdk.WrapError(errp, "postWorkflowPushHandler> Unable load project")
+			return sdk.WrapError(errp, "postWorkflowPushHandler> Unable reload project")
 		}
 
 		msgList, err := workflow.ParseAndImport(tx, api.Cache, proj, &wrkflw, true, getUser(ctx))
 		if err != nil {
-			log.Error("postWorkflowPushHandler> Unable to parse&import workflow %s: %v", wrkflw.Name, err)
-			return sdk.WrapError(err, "postWorkflowPushHandler> Unable to parse&import workflow")
+			err = sdk.SetError(err, "unable to import workflow %s",  wrkflw.Name)
+			return sdk.WrapError(err, "postWorkflowPushHandler> ", err)
 		}
 
 		allMsg = append(allMsg, msgList...)

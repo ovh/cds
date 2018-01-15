@@ -2,10 +2,6 @@
 title = "Plugins Actions"
 weight = 2
 
-[menu.main]
-parent = "actions"
-identifier = "plugins"
-
 +++
 
 CDS Plugin System lets users develop complex actions. See [How to write a plugin]({{< relref "workflows/pipelines/actions/plugins/write-plugin.md" >}})

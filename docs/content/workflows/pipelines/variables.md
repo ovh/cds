@@ -2,10 +2,6 @@
 title = "Variables"
 weight = 1
 
-[menu.main]
-parent = "pipelines"
-identifier = "variables"
-
 +++
 
 In CDS, it is possible to define variables at different levels:

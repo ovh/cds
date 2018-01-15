@@ -36,7 +36,6 @@ func (api *API) getWorkflowExportHandler() Handler {
 		}
 
 		w.Header().Add("Content-Type", exportentities.GetContentType(f))
-		w.WriteHeader(http.StatusOK)
 		return nil
 	}
 }

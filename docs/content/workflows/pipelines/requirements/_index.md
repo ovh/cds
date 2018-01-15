@@ -2,10 +2,6 @@
 title = "Job's Requirements"
 weight = 3
 
-[menu.main]
-parent = "pipelines"
-identifier = "pipelines.requirements"
-
 +++
 
 
@@ -17,8 +13,7 @@ Type of requirements:
 - Network
 - Service
 - Memory
-- OS (Not yet implemented)
-- Architecture (Not yet implemented)
+- OS & Architecture
 
 A [Job]({{< relref "introduction/concepts/job.md" >}}) will be executed by a **worker**.
 
@@ -28,6 +23,7 @@ You can set as many requirements as you want, following these rules:
 
 - Only one model can be set as requirement
 - Only one hostname can be set as requirement
+- Only one OS & Architecture requirement can be set as at a time
 - Memory and Services requirements are availabe only on Docker models
 
 ## Note on Service Requirement

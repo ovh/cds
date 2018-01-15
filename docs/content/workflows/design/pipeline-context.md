@@ -2,10 +2,6 @@
 title = "Pipeline Context"
 weight = 3
 
-[menu.main]
-parent = "design"
-identifier = "design..pipeline_context"
-
 +++
 
 After adding the pipeline, you can "Edit the pipeline Context" (sidebar).

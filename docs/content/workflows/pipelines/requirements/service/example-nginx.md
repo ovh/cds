@@ -2,10 +2,6 @@
 title = "Service Requirement Nginx"
 weight = 5
 
-[menu.main]
-parent = "service"
-identifier = "example-nginx"
-
 +++
 
 #### Add the service requirement

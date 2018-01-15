@@ -2,10 +2,6 @@
 title = "Requirements"
 weight = 2
 
-[menu.main]
-parent = "hosting"
-identifier = "hosting.requirements"
-
 +++
 
 

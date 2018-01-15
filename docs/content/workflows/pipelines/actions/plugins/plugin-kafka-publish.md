@@ -1,10 +1,6 @@
 +++
 title = "plugin-kafka-publish"
 
-[menu.main]
-parent = "actions-plugins"
-identifier = "plugin-kafka-publish"
-
 +++
 
 This action helps you to send data through Kafka across every network.

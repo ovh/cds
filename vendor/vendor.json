@@ -91,6 +91,12 @@
 			"revisionTime": "2015-10-26T16:03:18Z"
 		},
 		{
+			"checksumSHA1": "Lw2q7vP1ClxZiE97TLt8bvI/FsE=",
+			"path": "github.com/cpuguy83/go-md2man/md2man",
+			"revision": "8d868be6e9bf9d5350910bab97a050e49887600f",
+			"revisionTime": "2017-12-23T16:05:37Z"
+		},
+		{
 			"checksumSHA1": "vvFDcA+qQlBPrJjKEYQCHVBS9xQ=",
 			"path": "github.com/danieljoos/wincred",
 			"revision": "412b574fb496839b312a75fba146bd32a89001cf",
@@ -344,10 +350,10 @@
 			"revisionTime": "2017-01-03T08:10:50Z"
 		},
 		{
-			"checksumSHA1": "/PYd5R4kHFrESPi5GPr3SuGcAYI=",
+			"checksumSHA1": "Lpt6iB3ub1Wrl4aJTiG88s0As84=",
 			"path": "github.com/fsamin/go-dump",
-			"revision": "b3a2116ad4889b990f825a5f62bdf9c21f34f0ab",
-			"revisionTime": "2018-01-04T22:04:42Z"
+			"revision": "c11d795dfb144119426e58a89d6b9be5462bf7d5",
+			"revisionTime": "2018-01-12T10:48:20Z"
 		},
 		{
 			"checksumSHA1": "vy34LEN8AkNfhLaoOVnyScVI25c=",
@@ -972,12 +978,6 @@
 			"revisionTime": "2017-12-19T16:21:11Z"
 		},
 		{
-			"checksumSHA1": "RyZVPXHMl03jL1O4q93AhVMA2JE=",
-			"path": "github.com/ovh/logrus-ovh-hook",
-			"revision": "f70db37f6f7c7cc9d5a772f0749e3d5389a2afb5",
-			"revisionTime": "2017-04-04T20:09:27Z"
-		},
-		{
 			"checksumSHA1": "BGY2jbzYUHUdxy3d58QUZ7FrUmY=",
 			"path": "github.com/ovh/tat",
 			"revision": "43966f33245defc6b16e7904c5558448e365fe3e",
@@ -1183,6 +1183,12 @@
 			"revisionTime": "2016-06-20T08:32:29Z"
 		},
 		{
+			"checksumSHA1": "1KVewmQICPa+IH1gYJUKDgNbKpY=",
+			"path": "github.com/russross/blackfriday",
+			"revision": "6d1ef893fcb01b4f50cb6e57ed7df3e2e627b6b2",
+			"revisionTime": "2017-10-11T18:22:19Z"
+		},
+		{
 			"checksumSHA1": "zmC8/3V4ls53DJlNTKDZwPSC/dA=",
 			"path": "github.com/satori/go.uuid",
 			"revision": "b061729afc07e77a8aa4fad0a2fd840958f1942a",
@@ -1262,10 +1268,16 @@
 			"revisionTime": "2016-09-26T08:42:49Z"
 		},
 		{
-			"checksumSHA1": "sB9JgRY0ch4NpG/oUOrR1fnpMqE=",
+			"checksumSHA1": "aG5wPXVGAEu90TjPFNZFRtox2Zo=",
 			"path": "github.com/spf13/cobra",
-			"revision": "1238ba19d24b0b9ceee2094e1cb31947d45c3e86",
-			"revisionTime": "2016-06-07T12:43:46Z"
+			"revision": "b95ab734e27d33e0d8fbabf71ca990568d4e2020",
+			"revisionTime": "2017-12-31T10:15:56Z"
+		},
+		{
+			"checksumSHA1": "UV6A5TUHJK1cLjRq5+eLHOcrLlc=",
+			"path": "github.com/spf13/cobra/doc",
+			"revision": "b95ab734e27d33e0d8fbabf71ca990568d4e2020",
+			"revisionTime": "2017-12-31T10:15:56Z"
 		},
 		{
 			"checksumSHA1": "dkruahfhuLXXuyeCuRpsWlcRK+8=",
@@ -1274,10 +1286,10 @@
 			"revisionTime": "2016-03-01T12:00:06Z"
 		},
 		{
-			"checksumSHA1": "GxPD7A0NjMDom1xte0mghkpzr0E=",
+			"checksumSHA1": "fKq6NiaqP3DFxnCRF5mmpJWTSUA=",
 			"path": "github.com/spf13/pflag",
-			"revision": "dabebe21bf790f782ea4c7bbd2efc430de182afd",
-			"revisionTime": "2016-10-18T23:08:44Z"
+			"revision": "4c012f6dcd9546820e378d0bdda4d8fc772cdfea",
+			"revisionTime": "2017-11-06T14:28:49Z"
 		},
 		{
 			"checksumSHA1": "izVU6j6QQkUnVzStaKUWnXrgDdY=",

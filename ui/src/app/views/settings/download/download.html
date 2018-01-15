@@ -13,8 +13,9 @@
 
                 <div class="ui grid" *ngFor="let osArch of line.osArchs">
                     <div class="four wide column">{{osArch.os}}</div>
-                    <div class="four wide column"  *ngFor="let arch of osArch.archs">
-                            <a href="{{apiURL}}/download/{{line.name}}/{{osArch.os}}/{{arch}}">[{{arch}}]</a> 
+                    <div class="four wide column"  *ngFor="let a of osArch.archs">
+                            <a *ngIf="a.available" href="{{apiURL}}/download/{{line.name}}/{{osArch.os}}/{{a.arch}}">[{{a.arch}}]</a> 
+                            <span *ngIf="!a.available" title="{{'common_ask_cds_administrator' | translate}}">N.A</span>
                     </div>
                 </div>
             </td>
