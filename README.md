@@ -18,9 +18,9 @@ Documentation is available [here](https://ovh.github.io/cds/)
 
 CDS is composend of several components
 
-### API
+### Engine
 
-The core component of CDS: [read more](/engine/api/README.md)
+The core component of CDS: [read more](/engine/README.md)
 
 ### WebUI
 
@@ -28,15 +28,15 @@ CDS Web UI: [read more](ui/README.md)
 
 ### CLI
 
-CDS Command line interface: [read more](cli/cds)
+CDS Command line interface: [read more](https://ovh.github.io/cds/cli/cdsctl/)
 
 ### Worker
 
-In CDS, a worker is an agent executing actions pushed in queue by CDS engine: [read more](https://ovh.github.io/cds/advanced/advanced.worker/)
+In CDS, a worker is an agent executing actions pushed in queue by CDS engine: [read more](https://ovh.github.io/cds/cli/worker/)
 
 ### Hatchery
 
-In CDS, a hatchery is an agent which spawn workers: [read more](https://ovh.github.io/cds/advanced/advanced.hatcheries/)
+In CDS, a hatchery is an agent which spawn workers: [read more](https://ovh.github.io/cds/hatchery/)
 
 ### Contrib
 
