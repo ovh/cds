@@ -100,7 +100,7 @@ type TestSuite struct {
 	Properties []Property             `xml:"-" json:"properties" yaml:"-"`
 	Skipped    int                    `xml:"skipped,attr,omitempty" json:"skipped" yaml:"skipped,omitempty"`
 	Total      int                    `xml:"tests,attr" json:"total" yaml:"total,omitempty"`
-	TestCases  []TestCase             `xml:"testcase" json:"tests" yaml:"testcases"`
+	TestCases  []TestCase             `xml:"testcase" hcl:"testcase" json:"tests" yaml:"testcases"`
 	Time       string                 `xml:"time,attr,omitempty" json:"time" yaml:"-"`
 	Timestamp  string                 `xml:"timestamp,attr,omitempty" json:"timestamp" yaml:"-"`
 	Vars       map[string]interface{} `xml:"-" json:"-" yaml:"vars"`
@@ -117,7 +117,7 @@ type Property struct {
 // TestCase is a single test case with its result.
 type TestCase struct {
 	XMLName    xml.Name               `xml:"testcase" json:"-" yaml:"-"`
-	Assertions string                 `xml:"assertions,attr,omitempty" json:"assertions" yaml:"-"`
+	Assertions []string               `xml:"assertions,attr,omitempty" json:"assertions" yaml:"-"`
 	Classname  string                 `xml:"classname,attr,omitempty" json:"classname" yaml:"-"`
 	Errors     []Failure              `xml:"error,omitempty" json:"errors" yaml:"errors,omitempty"`
 	Failures   []Failure              `xml:"failure,omitempty" json:"failures" yaml:"failures,omitempty"`
@@ -127,7 +127,7 @@ type TestCase struct {
 	Systemout  InnerResult            `xml:"system-out,omitempty" json:"systemout" yaml:"systemout,omitempty"`
 	Systemerr  InnerResult            `xml:"system-err,omitempty" json:"systemerr" yaml:"systemerr,omitempty"`
 	Time       string                 `xml:"time,attr,omitempty" json:"time" yaml:"time,omitempty"`
-	TestSteps  []TestStep             `xml:"-" json:"steps" yaml:"steps"`
+	TestSteps  []TestStep             `xml:"-" hcl:"step" json:"steps" yaml:"steps"`
 	Context    map[string]interface{} `xml:"-" json:"-" yaml:"context,omitempty"`
 }
 
