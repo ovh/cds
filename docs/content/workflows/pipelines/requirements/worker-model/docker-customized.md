@@ -1,6 +1,6 @@
 +++
 title = "Worker Model with your own image"
-weight = 3
+weight = 2
 
 +++
 

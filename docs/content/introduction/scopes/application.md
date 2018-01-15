@@ -1,6 +1,6 @@
 +++
 title = "Application"
-weight = 3
+weight = 2
 
 +++
 

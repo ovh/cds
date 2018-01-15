@@ -1,6 +1,6 @@
 +++
 title = "Service Requirement PostgreSQL"
-weight = 6
+weight = 2
 
 +++
 
