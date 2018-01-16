@@ -10,9 +10,38 @@ var (
 	encryptCmd = cli.Command{
 		Name:  "encrypt",
 		Short: "Encrypt variable into your CDS project",
-		Long:  "To be able to write secret in the CDS yaml files, you have encrypt data with the project GPG key",
+		Long:  `To be able to write secret in the CDS yaml files, you have to encrypt data with the project GPG key.
+
+Create a secret variable:
+
+
+    $ cdsctl encrypt MYPROJECT my-data my-super-secret-value
+    my-data: 01234567890987654321
+
+The command returns the value: `01234567890987654321`. You can use this value in a configuration file.
+
+Example of use case: Import an environment with a secret.
+
+Create an environment file to import :
+
+    $ cat << EOF > your-environment.json
+    name: your-environment
+    values:
+    a-readable-variable:
+        type: string
+        value: registry.ovh.net/engine/http2kafka
+    my-data:
+        type: password
+        value: 01234567890987654321
+    EOF
+
+
+Then, import then environment:
+
+    cds environment import MYPROJECT your-environment.json`,
+		
 		Example: `cdsctl encrypt MYPROJECT my-data my-super-secret-value
-mydata: 01234567890987654321`,
+my-data: 01234567890987654321`,
 		Args: []cli.Arg{
 			{Name: "project-key"},
 			{Name: "variable-name"},
