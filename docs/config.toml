@@ -113,7 +113,7 @@ weight = 3
   cta = "Check out the UI tutorial"
   link = "workflows/design/"
   color_classes = "bg-accent-color white"
-  image = "images/workflows.design.payload.gif"
+  image = "images/capture-start.gif"
   copy = "CDS provides a super intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed."
 
 
