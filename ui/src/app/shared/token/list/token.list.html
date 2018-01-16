@@ -1,0 +1,61 @@
+<div class="ui token">
+    <div class="ui grid">
+        <div class="ui right aligned column">
+            <div class="ui input">
+                <input type="text" placeholder="{{ 'filter' | translate }}" [(ngModel)]="filter">
+            </div>
+        </div>
+    </div>
+
+    <table class="ui celled fixed table" *ngIf="getDataForCurrentPage().length > 0">
+        <thead>
+        <tr>
+            <th class="four wide center">{{ 'token_description' | translate }}</th>
+            <th class="three wide center">{{ 'token_value' | translate }}</th>
+            <th class="three wide center">{{ 'token_type' | translate }}</th>
+            <th class="five wide center">{{ 'token_created' | translate }}</th>
+            <th class="three wide"></th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let t of getDataForCurrentPage()">
+            <td class="border center">
+                {{t.description}}
+            </td>
+            <td class="border token-content center">
+                <button class="ui circular icon button" *ngIf="!showToken[t.token]" (click)="showToken[t.token] = true">
+                    <i class="unhide icon"></i>
+                </button>
+                <span *ngIf="showToken[t.token]">{{t.token}}</span>
+            </td>
+            <td class="border center">
+                {{t.expiration}}
+            </td>
+            <td class="border center">
+                {{t.created | date}}
+            </td>
+            <td class="border center">
+                <app-delete-button (event)="sendEvent('delete', t)" [loading]="t.deleting"></app-delete-button>
+            </td>
+        </tr>
+        </tbody>
+        <tfoot *ngIf="getNbOfPages() > 1">
+        <tr>
+            <th colspan="4">
+                <div class="ui right floated pagination menu" >
+                    <a class="icon item" (click)="downPage()">
+                        <i class="left chevron icon"></i>
+                    </a>
+                    <a class="item" *ngFor="let page of getNbOfPages() | ngForNumber" (click)="goTopage(page)" [class.active]="currentPage === page">{{page}}</a>
+                    <a class="icon item" (click)="upPage()">
+                        <i class="right chevron icon"></i>
+                    </a>
+                </div>
+            </th>
+        </tr>
+        </tfoot>
+    </table>
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'token_no' | translate }}
+    </div>
+</div>

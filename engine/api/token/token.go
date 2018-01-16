@@ -30,13 +30,13 @@ func GenerateToken() (string, error) {
 }
 
 // InsertToken inserts a new token in database
-func InsertToken(db gorp.SqlExecutor, groupID int64, token string, e sdk.Expiration) error {
-	query := `INSERT INTO token (group_id, token, expiration, created) VALUES ($1, $2, $3, $4)`
+func InsertToken(db gorp.SqlExecutor, groupID int64, token string, e sdk.Expiration, description, creator string) error {
+	query := `INSERT INTO token (group_id, token, expiration, created, description, creator) VALUES ($1, $2, $3, $4, $5, $6)`
 
 	hasher := sha512.New()
 	hashedToken := base64.StdEncoding.EncodeToString(hasher.Sum([]byte(token)))
 
-	if _, err := db.Exec(query, groupID, hashedToken, int(e), time.Now()); err != nil {
+	if _, err := db.Exec(query, groupID, hashedToken, int(e), time.Now(), description, creator); err != nil {
 		return err
 	}
 	return nil
@@ -54,14 +54,14 @@ func CountToken(db gorp.SqlExecutor, groupID int64) (int, error) {
 
 // LoadToken fetch token infos from database
 func LoadToken(db gorp.SqlExecutor, token string) (*sdk.Token, error) {
-	query := `SELECT group_id, expiration, created FROM token WHERE token = $1`
+	query := `SELECT id, group_id, expiration, created, description, creator FROM token WHERE token = $1`
 
 	hasher := sha512.New()
 	hashed := base64.StdEncoding.EncodeToString(hasher.Sum([]byte(token)))
 
 	var t sdk.Token
 	var exp int
-	if err := db.QueryRow(query, hashed).Scan(&t.GroupID, &exp, &t.Created); err != nil {
+	if err := db.QueryRow(query, hashed).Scan(&t.ID, &t.GroupID, &exp, &t.Created, &t.Description, &t.Creator); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrInvalidToken
 		}
@@ -71,4 +71,10 @@ func LoadToken(db gorp.SqlExecutor, token string) (*sdk.Token, error) {
 	t.Expiration = sdk.Expiration(exp)
 
 	return &t, nil
+}
+
+// Delete delete a token in db given his value
+func Delete(db gorp.SqlExecutor, tokenID int64) error {
+	_, err := db.Exec("DELETE FROM token WHERE id = $1", tokenID)
+	return sdk.WrapError(err, "DeleteToken> Cannot delete token %d", tokenID)
 }

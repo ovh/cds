@@ -1,6 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {Group} from '../../model/group.model';
+import {Token} from '../../model/user.model';
 import {HttpClient} from '@angular/common/http';
 
 /**
@@ -29,6 +30,15 @@ export class GroupService {
     getGroups(): Observable<Group[]> {
         return this._http.get<Group[]>('/group');
     }
+
+    /**
+     * Get all tokens linked to a specific group that the user can access.
+     * @returns {Observable<Group[]>}
+     */
+    getTokens(groupName: string): Observable<Token[]> {
+        return this._http.get<Token[]>(`/group/${groupName}/tokens`);
+    }
+
 
     /**
      * Create a new group

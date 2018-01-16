@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -142,6 +143,46 @@ func LoadGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
 		groups = append(groups, g)
 	}
 	return groups, nil
+}
+
+// LoadTokens load all tokens linked to a group from database
+func LoadTokens(db gorp.SqlExecutor, groupName string) ([]sdk.Token, error) {
+	tokens := []sdk.Token{}
+
+	query := `
+		SELECT token.id, token.token, token.creator, token.description, token.expiration, token.created FROM "group"
+		JOIN token ON "group".id = token.group_id
+		WHERE "group".name = $1
+	`
+	rows, err := db.Query(query, groupName)
+	if err == sql.ErrNoRows {
+		return tokens, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var token string
+		var creator, description sql.NullString
+		var expiration sdk.Expiration
+		var created time.Time
+		if err := rows.Scan(&token, &creator, &description, &expiration, &created); err != nil {
+			return nil, err
+		}
+
+		tok := sdk.Token{Token: token, Expiration: expiration, Created: created}
+		if creator.Valid {
+			tok.Creator = creator.String
+		}
+		if description.Valid {
+			tok.Description = description.String
+		}
+
+		tokens = append(tokens, tok)
+	}
+	return tokens, nil
 }
 
 //LoadGroupByUser return group list from database

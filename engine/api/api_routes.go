@@ -76,7 +76,9 @@ func (api *API) InitRouter() {
 	r.Handle("/group/{permGroupName}/user", r.POST(api.addUserInGroupHandler))
 	r.Handle("/group/{permGroupName}/user/{user}", r.DELETE(api.removeUserFromGroupHandler))
 	r.Handle("/group/{permGroupName}/user/{user}/admin", r.POST(api.setUserGroupAdminHandler), r.DELETE(api.removeUserGroupAdminHandler))
-	r.Handle("/group/{permGroupName}/token/{expiration}", r.POST(api.generateTokenHandler))
+	r.Handle("/group/{permGroupName}/token", r.GET(api.getTokenListHandler), r.POST(api.generateTokenHandler))
+	r.Handle("/group/{permGroupName}/token/{expiration}", r.POST(api.generateTokenHandler, DEPRECATED))
+	r.Handle("/group/{permGroupName}/token/{tokenid}", r.DELETE(api.deleteTokenHandler))
 
 	// Hatchery
 	r.Handle("/hatchery", r.POST(api.registerHatcheryHandler, Auth(false)))

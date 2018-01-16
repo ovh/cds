@@ -9,10 +9,13 @@ import (
 // Token describes tokens used by worker to access the API
 // on behalf of a group.
 type Token struct {
-	GroupID    int64      `json:"group_id"`
-	Token      string     `json:"token" cli:"token"`
-	Expiration Expiration `json:"expiration" cli:"expiration"`
-	Created    time.Time  `json:"created" cli:"created"`
+	ID          int64      `json:"id"`
+	GroupID     int64      `json:"group_id"`
+	Token       string     `json:"token" cli:"token"`
+	Description string     `json:"description" cli:"description"`
+	Creator     string     `json:"creator" cli:"creator"`
+	Expiration  Expiration `json:"expiration" cli:"expiration"`
+	Created     time.Time  `json:"created" cli:"created"`
 }
 
 // GenerateWorkerToken creates a key tied to calling user that allow registering workers

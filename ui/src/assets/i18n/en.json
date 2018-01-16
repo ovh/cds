@@ -258,6 +258,11 @@
   "group_btn_set_admin": "Admin",
   "group_btn_unset_admin": "Admin",
 
+  "token_description": "Description",
+  "token_value": "Token",
+  "token_type": "Type",
+  "token_created": "Creation date",
+
   "hook_create_label": "Create a hook",
   "hook_deleted": "Hook deleted",
   "hook_edit_title": "Hook edition: {{app}} / {{pip}}",

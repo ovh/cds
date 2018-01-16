@@ -180,7 +180,7 @@ func Test_addSpawnInfosPipelineBuildJobHandler(t *testing.T) {
 	if errg != nil {
 		t.Fatal(errg)
 	}
-	if err := token.InsertToken(api.mustDB(), g.ID, tk, sdk.Daily); err != nil {
+	if err := token.InsertToken(api.mustDB(), g.ID, tk, sdk.Daily, "", ""); err != nil {
 		t.Fatal(err)
 	}
 

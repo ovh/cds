@@ -9,3 +9,20 @@ export class User {
 
     constructor() {}
 }
+
+export class Token {
+  token: string;
+  expiration: ExpirationTokenType;
+  created: string;
+  description: string;
+  creator: string;
+
+  // useful for ui
+  deleting: boolean;
+}
+
+export enum ExpirationTokenType {
+  Session = 1,
+  Daily,
+  Persistent,
+}

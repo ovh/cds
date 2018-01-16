@@ -95,7 +95,7 @@ type ActionClient interface {
 type GroupClient interface {
 	GroupCreate(group *sdk.Group) error
 	GroupDelete(name string) error
-	GroupGenerateToken(groupName, expiration string) (*sdk.Token, error)
+	GroupGenerateToken(groupName, expiration, description string) (*sdk.Token, error)
 	GroupGet(name string, mods ...RequestModifier) (*sdk.Group, error)
 	GroupList() ([]sdk.Group, error)
 	GroupUserAdminSet(groupname string, username string) error
