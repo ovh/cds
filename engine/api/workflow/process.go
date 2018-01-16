@@ -213,7 +213,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 
 			log.Debug("Checking source %s (#%d.%d) status = %s", w.Workflow.GetNode(nodeRun.WorkflowNodeID).Name, nodeRun.Number, nodeRun.SubNumber, nodeRun.Status)
 
-			if (nodeRun.Status != string(sdk.StatusSuccess) && nodeRun.Status != string(sdk.StatusFail)) || nodeRun.SubNumber < maxsn {
+			if !sdk.StatusIsTerminated(nodeRun.Status) || nodeRun.Status == sdk.StatusNeverBuilt.String() || nodeRun.Status == sdk.StatusStopped.String() || nodeRun.SubNumber < maxsn {
 				//One of the sources have not been completed
 				ok = false
 				break
@@ -319,6 +319,11 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	}
 
 	runPayload := map[string]string{}
+
+	//If the pipeline has parameter but none are defined on context, use the defaults
+	if len(n.Pipeline.Parameter) > 0 && len(n.Context.DefaultPipelineParameters) == 0 {
+		n.Context.DefaultPipelineParameters = n.Pipeline.Parameter
+	}
 
 	parentStatus := sdk.StatusSuccess.String()
 	run.SourceNodeRuns = sourceNodeRuns

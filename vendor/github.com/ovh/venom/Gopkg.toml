@@ -1,0 +1,61 @@
+# Gopkg.toml example
+#
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
+# for detailed Gopkg.toml documentation.
+#
+# required = ["github.com/user/thing/cmd/thing"]
+# ignored = ["github.com/user/project/pkgX", "bitbucket.org/user/project/pkgA/pkgY"]
+#
+# [[constraint]]
+#   name = "github.com/user/project"
+#   version = "1.0.0"
+#
+# [[constraint]]
+#   name = "github.com/user/project2"
+#   branch = "dev"
+#   source = "github.com/myfork/project2"
+#
+# [[override]]
+#  name = "github.com/x/y"
+#  version = "2.4.0"
+
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/fsamin/go-dump"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/inconshreveable/go-update"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/yesnault/go-imap"
+
+[[override]]
+  branch = "master"
+  name = "github.com/davecgh/go-spew"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/go-sql-driver/mysql"
+
+[[override]]
+  branch = "master"
+  name = "github.com/mattn/go-runewidth"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/sclevine/agouti"
+
+[[override]]
+  branch = "master"
+  name = "github.com/spf13/pflag"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/spf13/cobra"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/pkg/errors"

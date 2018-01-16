@@ -568,6 +568,9 @@ func (p PipelineV1) Pipeline() (pip *sdk.Pipeline, err error) {
 			Type:  v.Type,
 			Value: v.DefaultValue,
 		}
+		if param.Type == "" {
+			param.Type = sdk.StringParameter
+		}
 		pip.Parameter = append(pip.Parameter, param)
 	}
 

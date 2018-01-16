@@ -21,8 +21,9 @@ type Download struct {
 
 // OSArch contains a association OS / Arch
 type OSArch struct {
-	OS    string `json:"os"`
-	Archs []Arch `json:"archs"`
+	OS        string `json:"os"`
+	Archs     []Arch `json:"archs"`
+	Extension string `json:"extension"`
 }
 
 // Arch contains a association Arch / available
@@ -34,7 +35,7 @@ type Arch struct {
 // IsBinaryOSArchValid returns err if name (worker, engine, cdsctl..) is not
 // valid with os and arch. Returns "fixed Arch" 386 / amd64 or arm
 // example: if arch == i386 or i686, return 386
-func IsBinaryOSArchValid(directoriesDownload, name, osBinary, arch string) (string, error) {
+func IsBinaryOSArchValid(directoriesDownload, name, osBinary, arch string) (string, string, error) {
 	v := GetStaticDownloads()
 	var fixedArch = getArchName(arch)
 
@@ -48,7 +49,7 @@ func IsBinaryOSArchValid(directoriesDownload, name, osBinary, arch string) (stri
 	}
 
 	if !nameFound {
-		return arch, ErrDownloadInvalidName
+		return arch, "", ErrDownloadInvalidName
 	}
 
 	var osFound bool
@@ -58,20 +59,19 @@ func IsBinaryOSArchValid(directoriesDownload, name, osBinary, arch string) (stri
 			for _, a := range o.Archs {
 				if a.Arch == fixedArch {
 					// name, os, arch found, it's valid
-					return fixedArch, nil
+					if _, err := os.Stat(path.Join(directoriesDownload, fmt.Sprintf("cds-%s-%s-%s%s", name, osBinary, fixedArch, o.Extension))); err == nil {
+						return fixedArch, o.Extension, nil
+					}
+					return fixedArch, "", ErrDownloadDoesNotExist
 				}
 			}
 		}
 	}
 	if !osFound {
-		return fixedArch, ErrDownloadInvalidOS
+		return fixedArch, "", ErrDownloadInvalidOS
 	}
 
-	if _, err := os.Stat(path.Join(directoriesDownload, fmt.Sprintf("cds-%s-%s-%s", name, osBinary, fixedArch))); err != nil {
-		return fixedArch, ErrDownloadDoesNotExist
-	}
-
-	return fixedArch, ErrDownloadInvalidArch
+	return fixedArch, "", ErrDownloadInvalidArch
 }
 
 // getArchName returns 386 for "386", "i386", "i686"
@@ -94,7 +94,7 @@ func GetArtifactFilename(name, os, arch string) string {
 
 func getDefaultArch() []OSArch {
 	return []OSArch{
-		{OS: "windows", Archs: []Arch{{Arch: "386"}, {Arch: "amd64"}}},
+		{OS: "windows", Archs: []Arch{{Arch: "386"}, {Arch: "amd64"}}, Extension: ".exe"},
 		{OS: "linux", Archs: []Arch{{Arch: "386"}, {Arch: "amd64"}, {Arch: "arm"}}},
 		{OS: "darwin", Archs: []Arch{{Arch: "amd64"}}},
 		{OS: "freebsd", Archs: []Arch{{Arch: "386"}, {Arch: "amd64"}}},
@@ -114,7 +114,7 @@ func GetStaticDownloads() []Download {
 		},
 		{
 			Name:    "cdsctl",
-			OSArchs: []OSArch{{OS: "linux", Archs: []Arch{{Arch: "amd64"}}}},
+			OSArchs: getDefaultArch(),
 		},
 		{
 			Name:    "cds",
@@ -132,7 +132,7 @@ func GetStaticDownloadsWithAvailability(directoriesDownload string) []Download {
 	for k, d := range downloads {
 		for ks, o := range downloads[k].OSArchs {
 			for ka, a := range downloads[k].OSArchs[ks].Archs {
-				if _, err := os.Stat(path.Join(directoriesDownload, fmt.Sprintf("cds-%s-%s-%s", d.Name, o.OS, a.Arch))); err == nil {
+				if _, err := os.Stat(path.Join(directoriesDownload, fmt.Sprintf("cds-%s-%s-%s%s", d.Name, o.OS, a.Arch, o.Extension))); err == nil {
 					downloads[k].OSArchs[ks].Archs[ka].Available = true
 				}
 			}

@@ -2,6 +2,7 @@ package exec
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -34,13 +35,15 @@ type Executor struct {
 
 // Result represents a step result
 type Result struct {
-	Executor    Executor `json:"executor,omitempty" yaml:"executor,omitempty"`
-	Systemout   string   `json:"systemout,omitempty" yaml:"systemout,omitempty"`
-	Systemerr   string   `json:"systemerr,omitempty" yaml:"systemerr,omitempty"`
-	Err         string   `json:"err,omitempty" yaml:"err,omitempty"`
-	Code        string   `json:"code,omitempty" yaml:"code,omitempty"`
-	TimeSeconds float64  `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
-	TimeHuman   string   `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
+	Executor      Executor    `json:"executor,omitempty" yaml:"executor,omitempty"`
+	Systemout     string      `json:"systemout,omitempty" yaml:"systemout,omitempty"`
+	SystemoutJSON interface{} `json:"systemoutjson,omitempty" yaml:"systemoutjson,omitempty"`
+	Systemerr     string      `json:"systemerr,omitempty" yaml:"systemerr,omitempty"`
+	SystemerrJSON interface{} `json:"systemerrjson,omitempty" yaml:"systemerrjson,omitempty"`
+	Err           string      `json:"err,omitempty" yaml:"err,omitempty"`
+	Code          string      `json:"code,omitempty" yaml:"code,omitempty"`
+	TimeSeconds   float64     `json:"timeseconds,omitempty" yaml:"timeseconds,omitempty"`
+	TimeHuman     string      `json:"timehuman,omitempty" yaml:"timehuman,omitempty"`
 }
 
 // ZeroValueResult return an empty implemtation of this executor result
@@ -199,6 +202,26 @@ func (Executor) Run(testCaseContext venom.TestCaseContext, l venom.Logger, step 
 
 	result.Systemout = venom.RemoveNotPrintableChar(strings.TrimRight(result.Systemout, "\n"))
 	result.Systemerr = venom.RemoveNotPrintableChar(strings.TrimRight(result.Systemerr, "\n"))
+
+	outJSONArray := []interface{}{}
+	if err := json.Unmarshal([]byte(result.Systemout), &outJSONArray); err != nil {
+		outJSONMap := map[string]interface{}{}
+		if err2 := json.Unmarshal([]byte(result.Systemout), &outJSONMap); err2 == nil {
+			result.SystemoutJSON = outJSONMap
+		}
+	} else {
+		result.SystemoutJSON = outJSONArray
+	}
+
+	errJSONArray := []interface{}{}
+	if err := json.Unmarshal([]byte(result.Systemout), &errJSONArray); err != nil {
+		errJSONMap := map[string]interface{}{}
+		if err2 := json.Unmarshal([]byte(result.Systemout), &errJSONMap); err2 == nil {
+			result.SystemoutJSON = errJSONMap
+		}
+	} else {
+		result.SystemoutJSON = errJSONArray
+	}
 
 	return executors.Dump(result)
 }

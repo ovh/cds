@@ -1,6 +1,6 @@
 +++
 title = "Service Requirement Nginx"
-weight = 5
+weight = 1
 
 +++
 

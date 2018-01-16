@@ -89,7 +89,7 @@ func (h *HatcheryOpenstack) SpawnWorker(spawnArgs hatchery.SpawnArguments) (stri
 cd $HOME
 # Download and start worker with curl
 rm -f worker
-curl  "{{.API}}/download/worker/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
+curl  "{{.API}}/download/worker/linux/$(uname -m)" -o worker --retry 10 --retry-max-time 120 -C - >> /tmp/user_data 2>&1
 chmod +x worker
 export CDS_SINGLE_USE=1
 export CDS_FORCE_EXIT=1
