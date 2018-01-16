@@ -57,7 +57,7 @@
                 {{ 'application_repo_strat_title' | translate }}
             </h4>
             <div class="detail" [class.active]="displayVCSStrategy">
-                <app-vcs-strategy [project]="project" class="detail" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name"></app-vcs-strategy>
+                <app-vcs-strategy [project]="project" class="detail" [(strategy)]="application.vcs_strategy" (strategyChange)="saveVCSConfiguration()" [appName]="application.name" [loading]="loadingBtn"></app-vcs-strategy>
             </div>
         </div>
     </div>

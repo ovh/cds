@@ -13,6 +13,7 @@ export class VCSStrategyComponent implements OnInit {
 
     @Input() project: Project;
     @Input() appName: string;
+    @Input() loading: boolean;
 
     _strategy: VCSStrategy;
     @Input('strategy')
