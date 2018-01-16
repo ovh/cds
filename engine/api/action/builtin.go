@@ -120,34 +120,6 @@ Clone a repository into a new directory.`
 Tag the current branch and push it.`
 
 	gittag.Parameter(sdk.Parameter{
-		Name:        "url",
-		Description: "URL must contain information about the transport protocol, the address of the remote server, and the path to the repository.",
-		Value:       "{{.git.http_url}}",
-		Type:        sdk.StringParameter,
-	})
-	gittag.Parameter(sdk.Parameter{
-		Name:        "ssh-key",
-		Value:       "",
-		Description: "Set the private key to be able to git push to the remote",
-		Type:        sdk.KeySSHParameter,
-	})
-	gittag.Parameter(sdk.Parameter{
-		Name:        "user",
-		Description: "Set the user to be able to git clone from https with authentication",
-		Type:        sdk.StringParameter,
-	})
-	gittag.Parameter(sdk.Parameter{
-		Name:        "password",
-		Description: "Set the password to be able to git clone from https with authentication",
-		Type:        sdk.StringParameter,
-	})
-	gittag.Parameter(sdk.Parameter{
-		Name:        "pgp-key",
-		Value:       "",
-		Description: "Set the key to be able to sign the tag",
-		Type:        sdk.KeyPGPParameter,
-	})
-	gittag.Parameter(sdk.Parameter{
 		Name:        "tagName",
 		Description: "Set the name of the tag. Must match semver. If empty CDS will make a patch version",
 		Value:       "",
