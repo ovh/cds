@@ -239,11 +239,10 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	fileForMD5.Close()
 
 	//Reopen the file because we already read it for md5
-	fileReopen, erro := os.Open(filePath)
+	fileContent, erro := ioutil.ReadFile(filePath)
 	if erro != nil {
 		return false, 0, fmt.Errorf("error os.Open(filePath), erro:%s", erro)
 	}
-	defer fileReopen.Close()
 	_, name := filepath.Split(filePath)
 
 	bodyRes, _, _ := Request("GET", "/artifact/store", nil)
@@ -252,7 +251,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		_ = json.Unmarshal(bodyRes, store)
 
 		if store.TemporaryURLSupported {
-			tempURL, dur, err := uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileReopen, stat, md5sumStr)
+			tempURL, dur, err := uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileContent, stat, md5sumStr)
 			if err == nil {
 				return tempURL, dur, fmt.Errorf("error on uploadArtifactWithTempURL err:%s", err)
 			}
@@ -260,13 +259,6 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	}
 
 	// if we are here, upload with tempURL didn't work. Fallback to download with CDS API.
-	// we have to reopen af new file here, already close by calling uploadArtifactWithTempURL
-	fileReopenForCDSAPI, erroapi := os.Open(filePath)
-	if erroapi != nil {
-		return false, 0, fmt.Errorf("error os.Open(filePath), errobis:%s", erroapi)
-	}
-	defer fileReopenForCDSAPI.Close()
-
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
@@ -274,8 +266,8 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		return false, 0, fmt.Errorf("error on writer.CreateFormFile() errc:%s", errc)
 	}
 
-	if _, err := io.Copy(part, fileReopenForCDSAPI); err != nil {
-		return false, 0, fmt.Errorf("error on io.Copy(part, fileReopenForCDSAPI), err: %s", err)
+	if _, err := io.Copy(part, bytes.NewReader(fileContent)); err != nil {
+		return false, 0, fmt.Errorf("error on io.Copy(part, bytes.NewReader(fileContent)), err: %s", err)
 	}
 
 	writer.WriteField("env", env)
@@ -305,7 +297,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	return false, 0, fmt.Errorf("x10: %s", err)
 }
 
-func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, file io.Reader, stat os.FileInfo, md5sum string) (bool, time.Duration, error) {
+func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, fileContent []byte, stat os.FileInfo, md5sum string) (bool, time.Duration, error) {
 	t0 := time.Now()
 	art := Artifact{
 		Name:   filename,
@@ -334,7 +326,7 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 	}
 
 	//Post the file to the temporary URL
-	req, errRequest := http.NewRequest("PUT", art.TempURL, file)
+	req, errRequest := http.NewRequest("PUT", art.TempURL, bytes.NewReader(fileContent))
 	if errRequest != nil {
 		return true, 0, errRequest
 	}
