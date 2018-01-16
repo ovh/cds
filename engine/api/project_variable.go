@@ -12,6 +12,31 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
+func (api *API) postEncryptVariableHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		vars := mux.Vars(r)
+		key := vars["permProjectKey"]
+
+		p, errp := project.Load(api.mustDB(), api.Cache, key, getUser(ctx))
+		if errp != nil {
+			return sdk.WrapError(errp, "postEncryptVariableHandler> unable to load project")
+		}
+
+		variable := new(sdk.Variable)
+		if err := UnmarshalBody(r, variable); err != nil {
+			return sdk.WrapError(err, "postEncryptVariableHandler> unable to read body")
+		}
+
+		encryptedValue, erre := project.EncryptWithBuiltinKey(api.mustDB(), p.ID, variable.Name, variable.Value)
+		if erre != nil {
+			return sdk.WrapError(erre, "postEncryptVariableHandler> unable to encrypte content %s", variable.Name)
+		}
+
+		variable.Value = encryptedValue
+		return WriteJSON(w, r, variable, http.StatusOK)
+	}
+}
+
 func (api *API) getVariablesAuditInProjectnHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)

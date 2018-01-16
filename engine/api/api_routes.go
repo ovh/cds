@@ -107,6 +107,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/group/import", r.POST(api.importGroupsInProjectHandler))
 	r.Handle("/project/{permProjectKey}/group/{group}", r.PUT(api.updateGroupRoleOnProjectHandler), r.DELETE(api.deleteGroupFromProjectHandler))
 	r.Handle("/project/{permProjectKey}/variable", r.GET(api.getVariablesInProjectHandler), r.PUT(api.updateVariablesInProjectHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/encrypt", r.POST(api.postEncryptVariableHandler))
 	r.Handle("/project/{key}/variable/audit", r.GET(api.getVariablesAuditInProjectnHandler))
 	r.Handle("/project/{key}/variable/audit/{auditID}", r.PUT(api.restoreProjectVariableAuditHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/variable/{name}", r.GET(api.getVariableInProjectHandler, DEPRECATED), r.POST(api.addVariableInProjectHandler), r.PUT(api.updateVariableInProjectHandler), r.DELETE(api.deleteVariableFromProjectHandler))
