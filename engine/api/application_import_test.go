@@ -114,13 +114,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecrets(t *testi
 		ApplicationID: app.ID,
 	}
 
-	kid, pubR, privR, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
 	test.NoError(t, err)
-	pub, _ := ioutil.ReadAll(pubR)
-	priv, _ := ioutil.ReadAll(privR)
-	k.Public = string(pub)
-	k.Private = string(priv)
-	k.KeyID = kid
+	k.Public = kpgp.Public
+	k.Private = kpgp.Private
+	k.KeyID = kpgp.KeyID
 	if err := application.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
 	}
@@ -225,13 +223,11 @@ func Test_postApplicationImportHandler_NewAppFromYAMLWithKeysAndSecretsAndReImpo
 		ApplicationID: app.ID,
 	}
 
-	kid, pubR, privR, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
 	test.NoError(t, err)
-	pub, _ := ioutil.ReadAll(pubR)
-	priv, _ := ioutil.ReadAll(privR)
-	k.Public = string(pub)
-	k.Private = string(priv)
-	k.KeyID = kid
+	k.Public = kpgp.Public
+	k.Private = kpgp.Private
+	k.KeyID = kpgp.KeyID
 	if err := application.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
 	}

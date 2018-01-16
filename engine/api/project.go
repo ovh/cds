@@ -226,15 +226,20 @@ func (api *API) addProjectHandler() Handler {
 		}
 
 		for _, v := range p.Variable {
-			var errVar error
-			switch v.Type {
-			case sdk.KeyVariable:
-				errVar = project.AddKeyPair(tx, p, v.Name, getUser(ctx))
-			default:
-				errVar = project.InsertVariable(tx, p, &v, getUser(ctx))
-			}
-			if errVar != nil {
+			if errVar := project.InsertVariable(tx, p, &v, getUser(ctx)); errVar != nil {
 				return sdk.WrapError(errVar, "addProject> Cannot add variable %s in project %s", v.Name, p.Name)
+			}
+		}
+
+		for _, k := range p.Keys {
+			k.ProjectID = p.ID
+			switch k.Type {
+			case sdk.KeyTypeSSH:
+
+			case sdk.KeyTypePGP:
+			}
+			if errK := project.InsertKey(tx, &k); errK != nil {
+				return sdk.WrapError(errK, "addProject> Cannot add key %s in project %s", k.Name)
 			}
 		}
 

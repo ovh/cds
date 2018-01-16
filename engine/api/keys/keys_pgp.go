@@ -10,6 +10,7 @@ import (
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/armor"
 	"golang.org/x/crypto/openpgp/packet"
+	"io/ioutil"
 )
 
 //GetOpenPGPEntity returns a single entity from an armored entity list
@@ -60,7 +61,7 @@ func NewOpenPGPEntity(keyname string) (*openpgp.Entity, error) {
 }
 
 // GeneratePGPPrivateKey generates a private key
-func GeneratePGPPrivateKey(key *openpgp.Entity) (io.Reader, error) {
+func generatePGPPrivateKey(key *openpgp.Entity) (io.Reader, error) {
 	bufPrivate := new(bytes.Buffer)
 	w, errPrivEncode := armor.Encode(bufPrivate, openpgp.PrivateKeyType, nil)
 	if errPrivEncode != nil {
@@ -74,7 +75,7 @@ func GeneratePGPPrivateKey(key *openpgp.Entity) (io.Reader, error) {
 }
 
 // GeneratePGPPublicKey generates a public key
-func GeneratePGPPublicKey(key *openpgp.Entity) (io.Reader, error) {
+func generatePGPPublicKey(key *openpgp.Entity) (io.Reader, error) {
 	bufPublic := new(bytes.Buffer)
 	w, errEncode := armor.Encode(bufPublic, openpgp.PublicKeyType, nil)
 	if errEncode != nil {
@@ -88,22 +89,37 @@ func GeneratePGPPublicKey(key *openpgp.Entity) (io.Reader, error) {
 }
 
 // GeneratePGPKeyPair generates a private / public PGP key
-func GeneratePGPKeyPair(name string) (id string, pub io.Reader, priv io.Reader, err error) {
+func GeneratePGPKeyPair(name string) (sdk.Key, error) {
+	k := sdk.Key{
+		Name: name,
+		Type: sdk.KeyTypePGP,
+	}
 	key, err := NewOpenPGPEntity(name)
 	if err != nil {
-		return id, nil, nil, err
+		return k, err
 	}
-	id = key.PrimaryKey.KeyIdShortString()
+	k.KeyID = key.PrimaryKey.KeyIdShortString()
 
-	bufPrivate, err := GeneratePGPPrivateKey(key)
+	bufPrivate, err := generatePGPPrivateKey(key)
 	if err != nil {
-		return id, nil, nil, err
+		return k, err
 	}
 
-	bufPublic, err := GeneratePGPPublicKey(key)
+	bufPublic, err := generatePGPPublicKey(key)
 	if err != nil {
-		return id, nil, nil, err
+		return k, err
 	}
 
-	return id, bufPublic, bufPrivate, err
+	pub, errPub := ioutil.ReadAll(bufPublic)
+	if errPub != nil {
+		return k, sdk.WrapError(errPub, "addKeyInEnvironmentHandler> Unable to read public key")
+	}
+
+	priv, errPriv := ioutil.ReadAll(bufPrivate)
+	if errPriv != nil {
+		return k, sdk.WrapError(errPriv, "addKeyInEnvironmentHandler>  Unable to read private key")
+	}
+	k.Private = string(priv)
+	k.Public = string(pub)
+	return k, err
 }

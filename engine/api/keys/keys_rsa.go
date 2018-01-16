@@ -23,7 +23,7 @@ const (
 )
 
 // GenerateSSHKeyPair generates a RSA private / public key, 4096 bits
-func GenerateSSHKeyPair(keyname string) (pub io.Reader, priv io.Reader, err error) {
+func generateSSHKeyPair(keyname string) (pub io.Reader, priv io.Reader, err error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return nil, nil, err
@@ -36,7 +36,7 @@ func GenerateSSHKeyPair(keyname string) (pub io.Reader, priv io.Reader, err erro
 	}
 
 	// generate and write public key
-	pubkey, err := GetSSHPublicKey(keyname, privateKey)
+	pubkey, err := getSSHPublicKey(keyname, privateKey)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -45,7 +45,7 @@ func GenerateSSHKeyPair(keyname string) (pub io.Reader, priv io.Reader, err erro
 }
 
 //GetSSHPrivateKey returns the RSA private key
-func GetSSHPrivateKey(r io.Reader) (*rsa.PrivateKey, error) {
+func getSSHPrivateKey(r io.Reader) (*rsa.PrivateKey, error) {
 	privBytes, errr := ioutil.ReadAll(r)
 	if errr != nil {
 		return nil, sdk.WrapError(errr, "GetSSHPrivateKey> Unable to read private key")
@@ -68,7 +68,7 @@ func GetSSHPrivateKey(r io.Reader) (*rsa.PrivateKey, error) {
 }
 
 //GetSSHPublicKey returns the public key from a private key
-func GetSSHPublicKey(name string, privateKey *rsa.PrivateKey) (io.Reader, error) {
+func getSSHPublicKey(name string, privateKey *rsa.PrivateKey) (io.Reader, error) {
 	// generate and write public key
 	pubkey, err := ssh.NewPublicKey(&privateKey.PublicKey)
 	if err != nil {
@@ -79,4 +79,28 @@ func GetSSHPublicKey(name string, privateKey *rsa.PrivateKey) (io.Reader, error)
 	// add label to public key
 	pub = fmt.Sprintf("%s %s@cds", pub, name)
 	return strings.NewReader(pub), nil
+}
+
+// GenerateSSHKey Generate a new ssh key
+func GenerateSSHKey(name string) (sdk.Key, error) {
+	k := sdk.Key{
+		Name: name,
+		Type: sdk.KeyTypeSSH,
+	}
+	pubR, privR, errGenerate := generateSSHKeyPair(name)
+	if errGenerate != nil {
+		return k, sdk.WrapError(errGenerate, "GenerateSSHKey> Cannot generate sshKey")
+	}
+	pub, errPub := ioutil.ReadAll(pubR)
+	if errPub != nil {
+		return k, sdk.WrapError(errPub, "GenerateSSHKey> Unable to read public key")
+	}
+
+	priv, errPriv := ioutil.ReadAll(privR)
+	if errPriv != nil {
+		return k, sdk.WrapError(errPriv, "GenerateSSHKey> Unable to read private key")
+	}
+	k.Public = string(pub)
+	k.Private = string(priv)
+	return k, nil
 }

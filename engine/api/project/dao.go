@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"time"
 
 	"github.com/go-gorp/gorp"
@@ -130,26 +129,16 @@ func Insert(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, u *sdk.Us
 	}
 	*proj = sdk.Project(dbProj)
 
-	keyID, pubR, privR, err := keys.GeneratePGPKeyPair(BuiltinGPGKey)
+	k, err := keys.GeneratePGPKeyPair(BuiltinGPGKey)
 	if err != nil {
 		return sdk.WrapError(err, "project.Insert> Unable to generate PGPKeyPair: %v", err)
 	}
 
-	pub, errPub := ioutil.ReadAll(pubR)
-	if errPub != nil {
-		return sdk.WrapError(errPub, "project.Insert> Unable to read public key")
-	}
-
-	priv, errPriv := ioutil.ReadAll(privR)
-	if errPriv != nil {
-		return sdk.WrapError(errPriv, "project.Insert>  Unable to read private key")
-	}
-
 	pk := sdk.ProjectKey{}
-	pk.Key.KeyID = keyID
+	pk.Key.KeyID = k.KeyID
 	pk.Key.Name = BuiltinGPGKey
-	pk.Key.Private = string(priv)
-	pk.Key.Public = string(pub)
+	pk.Key.Private = k.Private
+	pk.Key.Public = k.Public
 	pk.Type = sdk.KeyTypePGP
 	pk.ProjectID = proj.ID
 	pk.Builtin = true

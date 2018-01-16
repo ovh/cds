@@ -1,7 +1,6 @@
 package api
 
 import (
-	"io/ioutil"
 	"testing"
 
 	"github.com/loopfz/gadgeto/iffy"
@@ -43,16 +42,14 @@ func Test_getKeysInEnvironmentHandler(t *testing.T) {
 		EnvironmentID: env.ID,
 	}
 
-	kid, pubR, privR, err := keys.GeneratePGPKeyPair(k.Name)
+	kpgp, err := keys.GeneratePGPKeyPair(k.Name)
 	if err != nil {
 		t.Fatal(err)
 	}
-	pub, _ := ioutil.ReadAll(pubR)
-	priv, _ := ioutil.ReadAll(privR)
 
-	k.Public = string(pub)
-	k.Private = string(priv)
-	k.KeyID = kid
+	k.Public = kpgp.Public
+	k.Private = kpgp.Private
+	k.KeyID = kpgp.KeyID
 
 	if err := environment.InsertKey(api.mustDB(), k); err != nil {
 		t.Fatal(err)
