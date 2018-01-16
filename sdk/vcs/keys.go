@@ -31,6 +31,14 @@ type SSHKey struct {
 	Content  []byte
 }
 
+// PGPKey is a type for a pgp key
+type PGPKey struct {
+	Name    string
+	Public  string
+	Private string
+	ID      string
+}
+
 // GetSSHKey get a key in the path. If the key is nil, it will choose a default key among project, application and env variables
 func GetSSHKey(vars []sdk.Parameter, path string, key *sdk.Parameter) (*SSHKey, error) {
 	var k sdk.Parameter

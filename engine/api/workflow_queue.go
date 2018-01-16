@@ -79,7 +79,6 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
-		log.Warning("SECRETS:  %+v", pbji.Secrets)
 		return WriteJSON(w, r, pbji, http.StatusOK)
 	}
 }

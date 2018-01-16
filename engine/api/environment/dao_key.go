@@ -2,10 +2,10 @@ package environment
 
 import (
 	"database/sql"
+	"encoding/base64"
 
 	"github.com/go-gorp/gorp"
 
-	"encoding/base64"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"

@@ -33,6 +33,7 @@ type AuthOpts struct {
 	Username   string
 	Password   string
 	PrivateKey vcs.SSHKey
+	SignKey    vcs.PGPKey
 }
 
 // OutputOpts is a optional structs for git clone command

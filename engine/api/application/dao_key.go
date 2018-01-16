@@ -47,6 +47,7 @@ func LoadAllApplicationKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.A
 	keys := make([]sdk.ApplicationKey, len(res))
 	for i := range res {
 		p := res[i]
+		p.Private = sdk.PasswordPlaceholder
 		keys[i] = sdk.ApplicationKey(p)
 	}
 	return keys, nil

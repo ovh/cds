@@ -65,7 +65,7 @@ func LoadAllKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 	return nil
 }
 
-// LoadAllKeys load all keys for the given project
+// LoadAllDecryptedKeys load all keys for the given project
 func LoadAllDecryptedKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 	var res []dbProjectKey
 	if _, err := db.Select(&res, "SELECT * FROM project_key WHERE project_id = $1 and builtin = false", proj.ID); err != nil {
