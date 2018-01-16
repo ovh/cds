@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>CDS Documentation</title>
+    <title>CDS - Continuous Delivery Service</title>
     <link>https://ovh.github.io/cds/</link>
-    <description>Recent content on CDS Documentation</description>
+    <description>Recent content on CDS - Continuous Delivery Service</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     

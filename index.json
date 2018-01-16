@@ -469,13 +469,6 @@
 	"content": "A CDS worker executes job, and job is composed of steps.\nA step is :\n a builtin action, as GitClone, etc\u0026hellip; read more a user action read more a Plugin Action  A Plugin is a Golang Binary.\nTake a look at https://github.com/ovh/cds/tree/master/sdk/plugin/dummy/dummy_plugin.go\nContribute on https://github.com/ovh/cds/tree/master/contrib/plugins\n"
 },
 {
-	"uri": "https://ovh.github.io/cds/",
-	"title": "",
-	"tags": [],
-	"description": "",
-	"content": " Enterprise-Grade Continuous Delivery \u0026amp; DevOps Automation Open Source Platform  Easy to deploy Cloud native Scalable \u0026amp; Extensible Infrastructure \u0026amp; Architecture agnostic Event-Driven Pipeline  "
-},
-{
 	"uri": "https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-download/",
 	"title": "Artifact Download",
 	"tags": [],
@@ -488,6 +481,13 @@
 	"tags": [],
 	"description": "",
 	"content": " Artifact Upload Action is a builtin action, you can\u0026rsquo;t modify it.\nThis action can be used to upload artifacts in CDS. This is the recommended way to share files between pipelines or stages.\nParameters  path: Path of file to upload tag: Tag to apply to your file.  Example  Create a file myFile and upload it.   Launch pipeline, check logs   View artifact  "
+},
+{
+	"uri": "https://ovh.github.io/cds/",
+	"title": "CDS - Continuous Delivery Service",
+	"tags": [],
+	"description": "",
+	"content": ""
 },
 {
 	"uri": "https://ovh.github.io/cds/categories/",

@@ -271,15 +271,16 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-download/</loc>
   </url>
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/builtin/artifact-upload/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/</loc>
+    <priority>0</priority>
   </url>
   
   <url>
