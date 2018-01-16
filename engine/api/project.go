@@ -9,6 +9,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/ovh/cds/engine/api/group"
+	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/engine/api/permission"
 	"github.com/ovh/cds/engine/api/project"
 	"github.com/ovh/cds/sdk"
@@ -235,8 +236,17 @@ func (api *API) addProjectHandler() Handler {
 			k.ProjectID = p.ID
 			switch k.Type {
 			case sdk.KeyTypeSSH:
-
+				kTemp, errK := keys.GenerateSSHKey(k.Name)
+				if errK != nil {
+					return sdk.WrapError(errK, "addProject> Cannot generate ssh key for project %s", p.Name)
+				}
+				k.Key = kTemp
 			case sdk.KeyTypePGP:
+				kTemp, errK := keys.GeneratePGPKeyPair(k.Name)
+				if errK != nil {
+					return sdk.WrapError(errK, "addProject> Cannot generate pgp key for project %s", p.Name)
+				}
+				k.Key = kTemp
 			}
 			if errK := project.InsertKey(tx, &k); errK != nil {
 				return sdk.WrapError(errK, "addProject> Cannot add key %s in project %s", k.Name)
