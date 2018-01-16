@@ -58,12 +58,36 @@ CDS pipelines can be parametrized. This allows you to reuse the same pipeline wh
     </item>
     
     <item>
+      <title>Project</title>
+      <link>https://ovh.github.io/cds/introduction/scopes/project/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/scopes/project/</guid>
+      <description>Project A project contains applications, pipelines and environments.
+A project is the first level of permissions management. Any CDS application has to be created inside a project.
+The project key has to be unique among all projects in CDS.
+At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one.</description>
+    </item>
+    
+    <item>
       <title>Scheduler</title>
       <link>https://ovh.github.io/cds/workflows/design/hooks/scheduler/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
       <guid>https://ovh.github.io/cds/workflows/design/hooks/scheduler/</guid>
       <description>On a Root Pipeline, you can add a &amp;ldquo;Hook Scheduler&amp;rdquo;. You can use the Crontab Expression Format</description>
+    </item>
+    
+    <item>
+      <title>Service Requirement Nginx</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/</guid>
+      <description>Add the service requirement  Name: mypg. This will be the service hostname Type: service Value: nginx:1.11.1. This is the name of docker image to link to current job  And a requirement model which allow you to execute apt-get install -y postgresql-client
+worker-model-docker-simple.md
+Add a step of type script docker image nginx:1.11.1 start a nginx at startup. So, it&amp;rsquo;s now available on http://mynginx
+curl -v -X GET http://mynginx  Execute Pipeline</description>
     </item>
     
     <item>
@@ -99,6 +123,26 @@ Update your worker from CDS API:
  Project Environment Application  Variable types Existing variable types:
  String Text Boolean Number Password Key  Placeholder format All variables in CDS can be invoked using the simple {{.VAR}} format. To simplify the use between all the variable sources, we have defined the following prefixes:
  Action variable: {{.VAR}} Builtin CDS: {{.cds.VAR}} Git: {{.git.VAR}} Pipeline: {{.cds.pip.VAR}} Application: {{.</description>
+    </item>
+    
+    <item>
+      <title>Worker Model From Docker Hub</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/</guid>
+      <description>A worker model of type docker can be spawned by a Hatchery Docker Swarm.
+Register a worker Model from an existing Docker Image Docker Image golang:1.8.1 have a &amp;ldquo;curl&amp;rdquo; in $PATH, so it can be used as it is.
+ In the UI, click on the wheel on the hand right top corner and select *workers&amp;rdquo; (or go the the route #/worker) At the bottom of the page, fill the form  Name of your worker Golang-1.</description>
+    </item>
+    
+    <item>
+      <title>Application</title>
+      <link>https://ovh.github.io/cds/introduction/scopes/application/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/scopes/application/</guid>
+      <description>Application An application represents a real world production unit. An application lives inside a project, has variables and can be attached to a CDS Workflow.</description>
     </item>
     
     <item>
@@ -148,18 +192,6 @@ engine start hatchery:marathon --config config.toml  This hatchery will spawn Ap
     </item>
     
     <item>
-      <title>Project</title>
-      <link>https://ovh.github.io/cds/introduction/scopes/project/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/introduction/scopes/project/</guid>
-      <description>Project A project contains applications, pipelines and environments.
-A project is the first level of permissions management. Any CDS application has to be created inside a project.
-The project key has to be unique among all projects in CDS.
-At creation, a project has to have at least one group with edition permissions on it. It is possible to use either an existing group or create a new one.</description>
-    </item>
-    
-    <item>
       <title>Requirements</title>
       <link>https://ovh.github.io/cds/hosting/requirements/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -168,6 +200,17 @@ At creation, a project has to have at least one group with edition permissions o
       <description>CDS API is the core component of CDS. To start CDS api, the only mandatory dependency is a PostgreSQL database and a path to the directory containing other CDS binaries.
 There is are two ways to set up CDS:
  as toml configuration over environment variables.  CDS API Third-parties At the minimum, CDS needs a PostgreSQL Database &amp;gt;= 9.4 and Redis &amp;gt;= 3.2. But for serious usage your may need :</description>
+    </item>
+    
+    <item>
+      <title>Service Requirement PostgreSQL</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/</guid>
+      <description>Add the service requirement Requirement Service
+ Name: mypg. This will be the service hostname Type: service Value: postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword. This is the name of docker image to link to current job  And a requirement model which allow you to execute apt-get install -y postgresql-client, see HowTo
+Add a step of type script docker image postgres:9.5.3 start a postgresql at startup. So, it&amp;rsquo;s now available on mypg</description>
     </item>
     
     <item>
@@ -202,23 +245,15 @@ Building your own worker model enables you to integrate your own tools, or to cu
     </item>
     
     <item>
-      <title>Worker Model From Docker Hub</title>
-      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/</link>
+      <title>Worker Model with your own image</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
       
-      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/</guid>
-      <description>A worker model of type docker can be spawned by a Hatchery Docker Swarm.
-Register a worker Model from an existing Docker Image Docker Image golang:1.8.1 have a &amp;ldquo;curl&amp;rdquo; in $PATH, so it can be used as it is.
- In the UI, click on the wheel on the hand right top corner and select *workers&amp;rdquo; (or go the the route #/worker) At the bottom of the page, fill the form  Name of your worker Golang-1.</description>
-    </item>
-    
-    <item>
-      <title>Application</title>
-      <link>https://ovh.github.io/cds/introduction/scopes/application/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/introduction/scopes/application/</guid>
-      <description>Application An application represents a real world production unit. An application lives inside a project, has variables and can be attached to a CDS Workflow.</description>
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/</guid>
+      <description>A worker model of type docker can be spawned by a Hatchery Docker Swarm
+Setup Docker Worker Model with your own image In this example, we will build a Docker model able to build an AngularJs application with webfonts. To create webfonts, a grunt task (optionnally) requires fontforge and ttfautohint.
+The following tools must be included in the model:
+ NodeJs and npm bower grunt-cli gulp-cli fontforge ttfautohint  We will use the official nodejs image from Docker.</description>
     </item>
     
     <item>
@@ -228,6 +263,15 @@ Register a worker Model from an existing Docker Image Docker Image golang:1.8.1 
       
       <guid>https://ovh.github.io/cds/hosting/download/</guid>
       <description>You&amp;rsquo;ll find last release of CDS on Github Releases</description>
+    </item>
+    
+    <item>
+      <title>Environment</title>
+      <link>https://ovh.github.io/cds/introduction/scopes/environment/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/introduction/scopes/environment/</guid>
+      <description>Environment An environment is created inside a project and can be used by all the applications of that project.</description>
     </item>
     
     <item>
@@ -265,6 +309,20 @@ A Job is executed by a worker. CDS will select or provision a worker for the job
     </item>
     
     <item>
+      <title>Openstack Worker Model</title>
+      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      
+      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/</guid>
+      <description>CDS build using OVH.com Openstack infrastructure
+Create Openstack user In OVH manager, in cloud section, click on the menu on the Servers&amp;gt;Openstack item.
+You will be able to create a worker model Openstack user, enter description (name and password will be generated).
+Add Openstack worker model We need to define an Openstack worker model to have Openstack hatchery booting workers.
+We will create a model called docker:
+ With low hardware capacity (vps-ssd-1) On Debian 8 With docker ready to use Git installed  First, define a udata file.</description>
+    </item>
+    
+    <item>
       <title>Pipeline Context</title>
       <link>https://ovh.github.io/cds/workflows/design/pipeline-context/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -273,27 +331,6 @@ A Job is executed by a worker. CDS will select or provision a worker for the job
       <description>After adding the pipeline, you can &amp;ldquo;Edit the pipeline Context&amp;rdquo; (sidebar).
 Then, you can:
  add or remove application. Jobs can use cds.app.* configuration and or remove an environment. Jobs can use cds.env.* configuration enable / disable Pipeline Mutex  </description>
-    </item>
-    
-    <item>
-      <title>Worker Model with your own image</title>
-      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/</guid>
-      <description>A worker model of type docker can be spawned by a Hatchery Docker Swarm
-Setup Docker Worker Model with your own image In this example, we will build a Docker model able to build an AngularJs application with webfonts. To create webfonts, a grunt task (optionnally) requires fontforge and ttfautohint.
-The following tools must be included in the model:
- NodeJs and npm bower grunt-cli gulp-cli fontforge ttfautohint  We will use the official nodejs image from Docker.</description>
-    </item>
-    
-    <item>
-      <title>Environment</title>
-      <link>https://ovh.github.io/cds/introduction/scopes/environment/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/introduction/scopes/environment/</guid>
-      <description>Environment An environment is created inside a project and can be used by all the applications of that project.</description>
     </item>
     
     <item>
@@ -307,20 +344,6 @@ Start Swarm hatchery Generate a token for group:
 $ cds generate token -g shared.infra -e persistent fc300aad48242d19e782a37d361dfa3e55868a629e52d7f6825c7ce65a72bf92  Edit the CDS configuration or set the dedicated environment variables. To enable the hactchery, just set the API HTTP and GRPC URL, the token freshly generated.
 This hatchery use the standard docker environment variables to connect to a docker host.
 Then start hatchery:</description>
-    </item>
-    
-    <item>
-      <title>Openstack Worker Model</title>
-      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/</guid>
-      <description>CDS build using OVH.com Openstack infrastructure
-Create Openstack user In OVH manager, in cloud section, click on the menu on the Servers&amp;gt;Openstack item.
-You will be able to create a worker model Openstack user, enter description (name and password will be generated).
-Add Openstack worker model We need to define an Openstack worker model to have Openstack hatchery booting workers.
-We will create a model called docker:
- With low hardware capacity (vps-ssd-1) On Debian 8 With docker ready to use Git installed  First, define a udata file.</description>
     </item>
     
     <item>
@@ -392,18 +415,6 @@ If you want to edit your pipeline condition on the user interface you have to se
     </item>
     
     <item>
-      <title>Service Requirement Nginx</title>
-      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/</guid>
-      <description>Add the service requirement  Name: mypg. This will be the service hostname Type: service Value: nginx:1.11.1. This is the name of docker image to link to current job  And a requirement model which allow you to execute apt-get install -y postgresql-client
-worker-model-docker-simple.md
-Add a step of type script docker image nginx:1.11.1 start a nginx at startup. So, it&amp;rsquo;s now available on http://mynginx
-curl -v -X GET http://mynginx  Execute Pipeline</description>
-    </item>
-    
-    <item>
       <title>Database Management</title>
       <link>https://ovh.github.io/cds/hosting/database/</link>
       <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
@@ -423,17 +434,6 @@ $ $PATH_TO_CDS/engine database upgrade --db-host &amp;lt;host&amp;gt; --db-port 
       <guid>https://ovh.github.io/cds/workflows/design/join/</guid>
       <description>A join lets workflow to wait the end of two or more parent pipelines.
 You can trigger one or many pipelines after a join.</description>
-    </item>
-    
-    <item>
-      <title>Service Requirement PostgreSQL</title>
-      <link>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/</guid>
-      <description>Add the service requirement Requirement Service
- Name: mypg. This will be the service hostname Type: service Value: postgres:9.5.3 POSTGRES_USER=myuser POSTGRES_PASSWORD=mypassword. This is the name of docker image to link to current job  And a requirement model which allow you to execute apt-get install -y postgresql-client, see HowTo
-Add a step of type script docker image postgres:9.5.3 start a postgresql at startup. So, it&amp;rsquo;s now available on mypg</description>
     </item>
     
     <item>

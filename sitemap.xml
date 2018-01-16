@@ -31,6 +31,10 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/introduction/scopes/project/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/design/hooks/scheduler/</loc>
   </url>
   
@@ -40,6 +44,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/service/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/</loc>
   </url>
   
   <url>
@@ -63,7 +71,15 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/pipelines/actions/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/introduction/scopes/application/</loc>
   </url>
   
   <url>
@@ -95,11 +111,11 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/introduction/scopes/project/</loc>
+    <loc>https://ovh.github.io/cds/hosting/requirements/</loc>
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/hosting/requirements/</loc>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/</loc>
   </url>
   
   <url>
@@ -115,11 +131,7 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-simple/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/introduction/scopes/application/</loc>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/</loc>
   </url>
   
   <url>
@@ -128,6 +140,10 @@
   
   <url>
     <loc>https://ovh.github.io/cds/hosting/download/</loc>
+  </url>
+  
+  <url>
+    <loc>https://ovh.github.io/cds/introduction/scopes/environment/</loc>
   </url>
   
   <url>
@@ -147,19 +163,11 @@
   </url>
   
   <url>
+    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/</loc>
+  </url>
+  
+  <url>
     <loc>https://ovh.github.io/cds/workflows/design/pipeline-context/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/docker-customized/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/introduction/cli/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/introduction/scopes/environment/</loc>
   </url>
   
   <url>
@@ -168,10 +176,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/design/hooks/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/worker-model/openstack/</loc>
   </url>
   
   <url>
@@ -211,10 +215,6 @@
   </url>
   
   <url>
-    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-nginx/</loc>
-  </url>
-  
-  <url>
     <loc>https://ovh.github.io/cds/cli/</loc>
   </url>
   
@@ -228,10 +228,6 @@
   
   <url>
     <loc>https://ovh.github.io/cds/workflows/design/join/</loc>
-  </url>
-  
-  <url>
-    <loc>https://ovh.github.io/cds/workflows/pipelines/requirements/service/example-pg/</loc>
   </url>
   
   <url>
