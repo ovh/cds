@@ -37,7 +37,7 @@ func (c *client) ProjectVariableGet(projectKey string, varName string) (*sdk.Var
 	return variable, nil
 }
 
-func (c *client) VariableEnrypt(projectKey string, varName string, content string) (*sdk.Variable, error) {
+func (c *client) VariableEncrypt(projectKey string, varName string, content string) (*sdk.Variable, error) {
 	variable := &sdk.Variable{
 		Name:  varName,
 		Value: content,

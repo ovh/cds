@@ -143,7 +143,7 @@ type ProjectVariablesClient interface {
 	ProjectVariableDelete(projectKey string, varName string) error
 	ProjectVariableGet(projectKey string, varName string) (*sdk.Variable, error)
 	ProjectVariableUpdate(projectKey string, variable *sdk.Variable) error
-	VariableEnrypt(projectKey string, varName string, content string) (*sdk.Variable, error)
+	VariableEncrypt(projectKey string, varName string, content string) (*sdk.Variable, error)
 }
 
 // QueueClient exposes queue related functions
