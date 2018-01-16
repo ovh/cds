@@ -51,7 +51,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 			return sdk.WrapError(err, "postTakeWorkflowJobHandler> cannot unmarshal request")
 		}
 
-		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables)
+		p, errP := project.LoadProjectByNodeJobRunID(api.mustDB(), api.Cache, id, getUser(ctx), project.LoadOptions.WithVariables, project.LoadOptions.WithKeys)
 		if errP != nil {
 			return sdk.WrapError(errP, "postTakeWorkflowJobHandler> Cannot load project")
 		}
@@ -79,6 +79,7 @@ func (api *API) postTakeWorkflowJobHandler() Handler {
 		workflow.ResyncNodeRunsWithCommits(api.mustDB(), api.Cache, p, workflowNodeRuns)
 		go workflow.SendEvent(api.mustDB(), workflowRuns, workflowNodeRuns, workflowNodeJobRuns, p.Key)
 
+		log.Warning("SECRETS:  %+v", pbji.Secrets)
 		return WriteJSON(w, r, pbji, http.StatusOK)
 	}
 }
@@ -169,6 +170,10 @@ func takeJob(ctx context.Context, chEvent chan<- interface{}, chError chan<- err
 	wnjri.SubNumber = noderun.SubNumber
 	wnjri.Secrets = secrets
 
+	if errDK := project.LoadAllDecryptedKeys(tx, p); errDK != nil {
+		chError <- sdk.WrapError(errDK, "takeJob> Cannot load project decrypt keys")
+		return
+	}
 	params, secretsKeys, errK := workflow.LoadNodeJobRunKeys(tx, store, job, noderun, workflowRun, p)
 	if errK != nil {
 		chError <- sdk.WrapError(errK, "takeJob> Cannot load keys")

@@ -2,6 +2,7 @@ package application
 
 import (
 	"database/sql"
+	"encoding/base64"
 
 	"github.com/go-gorp/gorp"
 
@@ -51,8 +52,48 @@ func LoadAllApplicationKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.A
 	return keys, nil
 }
 
+// LoadAllBase64Keys Load application key with encrypted secret
+func LoadAllBase64Keys(db gorp.SqlExecutor, app *sdk.Application) error {
+	var res []dbApplicationKey
+	if _, err := db.Select(&res, "SELECT * FROM application_key WHERE application_id = $1", app.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+	}
+
+	keys := make([]sdk.ApplicationKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.ApplicationKey(p)
+		keys[i].Private = base64.StdEncoding.EncodeToString([]byte(keys[i].Private))
+	}
+	app.Keys = keys
+	return nil
+}
+
 // LoadAllKeys load all keys for the given application
 func LoadAllKeys(db gorp.SqlExecutor, app *sdk.Application) error {
+	var res []dbApplicationKey
+	if _, err := db.Select(&res, "SELECT * FROM application_key WHERE application_id = $1", app.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+	}
+
+	keys := make([]sdk.ApplicationKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.ApplicationKey(p)
+		keys[i].Private = sdk.PasswordPlaceholder
+	}
+	app.Keys = keys
+	return nil
+}
+
+// LoadAllDecryptedKeys load all keys for the given application
+func LoadAllDecryptedKeys(db gorp.SqlExecutor, app *sdk.Application) error {
 	var res []dbApplicationKey
 	if _, err := db.Select(&res, "SELECT * FROM application_key WHERE application_id = $1", app.ID); err != nil {
 		if err == sql.ErrNoRows {

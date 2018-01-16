@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-gorp/gorp"
 
+	"encoding/base64"
 	"github.com/ovh/cds/engine/api/secret"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/log"
@@ -53,6 +54,46 @@ func LoadAllEnvironmentKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.E
 
 // LoadAllKeys load all keys for the given environment
 func LoadAllKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
+	var res []dbEnvironmentKey
+	if _, err := db.Select(&res, "SELECT * FROM environment_key WHERE environment_id = $1", env.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+	}
+
+	keys := make([]sdk.EnvironmentKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.EnvironmentKey(p)
+		keys[i].Private = sdk.PasswordPlaceholder
+	}
+	env.Keys = keys
+	return nil
+}
+
+// LoadAllBase64Keys Load environment key with encrypted secret
+func LoadAllBase64Keys(db gorp.SqlExecutor, env *sdk.Environment) error {
+	var res []dbEnvironmentKey
+	if _, err := db.Select(&res, "SELECT * FROM environment_key WHERE environment_id = $1", env.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+	}
+
+	keys := make([]sdk.EnvironmentKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.EnvironmentKey(p)
+		keys[i].Private = base64.StdEncoding.EncodeToString([]byte(keys[i].Private))
+	}
+	env.Keys = keys
+	return nil
+}
+
+// LoadAllDecryptedKeys load all keys for the given environment
+func LoadAllDecryptedKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 	var res []dbEnvironmentKey
 	if _, err := db.Select(&res, "SELECT * FROM environment_key WHERE environment_id = $1", env.ID); err != nil {
 		if err == sql.ErrNoRows {

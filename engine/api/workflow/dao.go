@@ -22,6 +22,7 @@ import (
 type LoadOptions struct {
 	DeepPipeline bool
 	WithoutNode  bool
+	Base64Keys   bool
 }
 
 // Exists checks if a workflow exists

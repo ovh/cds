@@ -12,6 +12,7 @@ import {AllKeys} from '../../model/keys.model';
 export class VCSStrategyComponent implements OnInit {
 
     @Input() project: Project;
+    @Input() appName: string;
 
     _strategy: VCSStrategy;
     @Input('strategy')
@@ -36,7 +37,7 @@ export class VCSStrategyComponent implements OnInit {
         if (!this.strategy) {
             this.strategy = new VCSStrategy();
         }
-        this._keyService.getAllKeys(this.project.key).subscribe(k => {
+        this._keyService.getAllKeys(this.project.key, this.appName).subscribe(k => {
             this.keys = k;
         })
     }

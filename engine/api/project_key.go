@@ -19,6 +19,8 @@ func (api *API) getAllKeysProjectHandler() Handler {
 		vars := mux.Vars(r)
 		key := vars["permProjectKey"]
 
+		appName := r.FormValue("appName")
+
 		allkeys := struct {
 			ProjectKeys     []sdk.ProjectKey     `json:"project_key"`
 			ApplicationKeys []sdk.ApplicationKey `json:"application_key"`
@@ -35,11 +37,22 @@ func (api *API) getAllKeysProjectHandler() Handler {
 		}
 		allkeys.ProjectKeys = projectKeys
 
-		appKeys, errA := application.LoadAllApplicationKeysByProject(api.mustDB(), p.ID)
-		if errA != nil {
-			return sdk.WrapError(errK, "getAllKeysProjectHandler> Cannot load application keys")
+		if appName == "" {
+			appKeys, errA := application.LoadAllApplicationKeysByProject(api.mustDB(), p.ID)
+			if errA != nil {
+				return sdk.WrapError(errA, "getAllKeysProjectHandler> Cannot load application keys")
+			}
+			allkeys.ApplicationKeys = appKeys
+		} else {
+			app, errA := application.LoadByName(api.mustDB(), api.Cache, p.Key, appName, getUser(ctx))
+			if errA != nil {
+				return sdk.WrapError(errA, "getAllKeysProjectHandler> Cannot load application")
+			}
+			if errK := application.LoadAllKeys(api.mustDB(), app); errK != nil {
+				return sdk.WrapError(errK, "getAllKeysProjectHandler> Cannot load application keys")
+			}
+			allkeys.ApplicationKeys = app.Keys
 		}
-		allkeys.ApplicationKeys = appKeys
 
 		envKeys, errP := environment.LoadAllEnvironmentKeysByProject(api.mustDB(), p.ID)
 		if errP != nil {

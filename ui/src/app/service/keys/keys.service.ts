@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpParams} from '@angular/common/http';
 import {Observable} from 'rxjs/Observable';
 import {AllKeys, Keys} from '../../model/keys.model';
 
@@ -14,8 +14,13 @@ export class KeyService {
      * @param key Project unique key
      * @returns {Observable<Keys>}
      */
-    getAllKeys(key: string): Observable<AllKeys> {
-        return this._http.get<Keys>('/project/' + key + '/all/keys').map(keys => {
+    getAllKeys(key: string, appName?: string): Observable<AllKeys> {
+        let p = new HttpParams();
+        if (appName) {
+            p = p.append('appName', appName);
+        }
+
+        return this._http.get<Keys>('/project/' + key + '/all/keys', {params: p}).map(keys => {
             return Keys.formatForSelect(keys);
         });
     }

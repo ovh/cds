@@ -59,6 +59,26 @@ func LoadAllKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
 	for i := range res {
 		p := res[i]
 		keys[i] = sdk.ProjectKey(p)
+		keys[i].Private = sdk.PasswordPlaceholder
+	}
+	proj.Keys = keys
+	return nil
+}
+
+// LoadAllKeys load all keys for the given project
+func LoadAllDecryptedKeys(db gorp.SqlExecutor, proj *sdk.Project) error {
+	var res []dbProjectKey
+	if _, err := db.Select(&res, "SELECT * FROM project_key WHERE project_id = $1 and builtin = false", proj.ID); err != nil {
+		if err == sql.ErrNoRows {
+			return nil
+		}
+		return sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+	}
+
+	keys := make([]sdk.ProjectKey, len(res))
+	for i := range res {
+		p := res[i]
+		keys[i] = sdk.ProjectKey(p)
 		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
 		if err != nil {
 			log.Error("LoadAllKeys> Unable to decrypt private key %s/%s: %v", proj.Key, keys[i].Name, err)

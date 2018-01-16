@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"path/filepath"
 	"regexp"
 
 	"github.com/ovh/cds/sdk"
@@ -14,13 +12,17 @@ import (
 
 func runCheckoutApplication(w *currentWorker) BuiltInAction {
 	return func(ctx context.Context, a *sdk.Action, buildID int64, params *[]sdk.Parameter, sendLog LoggerFunc) sdk.Result {
-		branch := sdk.ParameterFind(a.Parameters, "git.branch")
-		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
-		commit := sdk.ParameterFind(a.Parameters, "git.commit")
+
+		// Load action param
 		directory := sdk.ParameterFind(a.Parameters, "directory")
 
+		// Load build param
+		branch := sdk.ParameterFind(*params, "git.branch")
+		defaultBranch := sdk.ParameterValue(*params, "git.default_branch")
+		commit := sdk.ParameterFind(*params, "git.commit")
+
 		// Get connection type
-		connetionType := sdk.ParameterFind(a.Parameters, "git.connection.type")
+		connetionType := sdk.ParameterFind(*params, "git.connection.type")
 		if connetionType == nil || (connetionType.Value != "ssh" && connetionType.Value != "https") {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
@@ -35,7 +37,7 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 
 		switch connetionType.Value {
 		case "ssh":
-			keyName := sdk.ParameterFind(a.Parameters, "git.ssh.key")
+			keyName := sdk.ParameterFind(*params, "git.ssh.key")
 			if keyName == nil || keyName.Value == "" {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
@@ -45,8 +47,8 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 				return res
 			}
 
-			privateKey := sdk.ParameterFind(a.Parameters, "cds.key."+keyName.Value+".priv")
-			if privateKey == nil || privateKey.Value != "" {
+			privateKey := sdk.ParameterFind(*params, "cds.key."+keyName.Value+".priv")
+			if privateKey == nil || privateKey.Value == "" {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
 					Reason: "SSH key not found. Nothing to perform.",
@@ -62,20 +64,23 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 				sendLog(res.Reason)
 				return res
 			}
-			p := filepath.Join(keysDirectory, keyName.Value)
-			b, err := ioutil.ReadFile(p)
-			if err != nil {
+			key, errK := vcs.GetSSHKey(*params, keysDirectory, privateKey)
+			if errK != nil && errK != sdk.ErrKeyNotFound {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Unable to setup ssh key. %s", err),
+					Reason: fmt.Sprintf("Unable to setup ssh key. %s", errK),
 				}
 				sendLog(res.Reason)
 				return res
 			}
-			auth = new(git.AuthOpts)
-			auth.PrivateKey = vcs.SSHKey{Filename: p, Content: b}
+			if key != nil {
+				if auth == nil {
+					auth = new(git.AuthOpts)
+				}
+				auth.PrivateKey = *key
+			}
 
-			url := sdk.ParameterFind(a.Parameters, "git.url")
+			url := sdk.ParameterFind(*params, "git.url")
 			if url == nil || url.Value == "" {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
@@ -86,8 +91,8 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 			}
 			gitUrl = url.Value
 		case "https":
-			user := sdk.ParameterFind(a.Parameters, "git.http.user")
-			password := sdk.ParameterFind(a.Parameters, "git.http.password")
+			user := sdk.ParameterFind(*params, "git.http.user")
+			password := sdk.ParameterFind(*params, "git.http.password")
 
 			if user != nil || password != nil {
 				auth = new(git.AuthOpts)
@@ -99,7 +104,7 @@ func runCheckoutApplication(w *currentWorker) BuiltInAction {
 				}
 			}
 
-			url := sdk.ParameterFind(a.Parameters, "git.http_url")
+			url := sdk.ParameterFind(*params, "git.http_url")
 			if url == nil || url.Value == "" {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),

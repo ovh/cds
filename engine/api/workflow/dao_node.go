@@ -242,7 +242,7 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	//TODO: Check user permission
 
 	//Load context
-	ctx, errCtx := LoadNodeContext(db, store, wn.ID)
+	ctx, errCtx := LoadNodeContext(db, store, wn.ID, opts)
 	if errCtx != nil {
 		return nil, sdk.WrapError(errCtx, "LoadNode> Unable to load context of %d", id)
 	}
@@ -279,7 +279,7 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 }
 
 // LoadNodeContextByNodeName load the context for a given node name and user
-func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, workflowName, nodeName string) (*sdk.WorkflowNodeContext, error) {
+func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, workflowName, nodeName string, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
 	query := `
 		SELECT workflow_node_context.id, workflow_node_context.workflow_node_id 
@@ -296,7 +296,7 @@ func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk
 	}
 	ctx := sdk.WorkflowNodeContext(dbnc)
 
-	if err := postLoadNodeContext(db, store, &ctx); err != nil {
+	if err := postLoadNodeContext(db, store, &ctx, opts); err != nil {
 		return nil, sdk.WrapError(err, "LoadNodeContextByNodeName> Unable to load node context dependencies")
 	}
 
@@ -304,7 +304,7 @@ func LoadNodeContextByNodeName(db gorp.SqlExecutor, store cache.Store, proj *sdk
 }
 
 // LoadNodeContext load the context for a given node id and user
-func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64) (*sdk.WorkflowNodeContext, error) {
+func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64, opts LoadOptions) (*sdk.WorkflowNodeContext, error) {
 	dbnc := NodeContext{}
 	if err := db.SelectOne(&dbnc, "select id from workflow_node_context where workflow_node_id = $1", nodeID); err != nil {
 		return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load node context %d", nodeID)
@@ -312,14 +312,14 @@ func LoadNodeContext(db gorp.SqlExecutor, store cache.Store, nodeID int64) (*sdk
 	ctx := sdk.WorkflowNodeContext(dbnc)
 	ctx.WorkflowNodeID = nodeID
 
-	if err := postLoadNodeContext(db, store, &ctx); err != nil {
+	if err := postLoadNodeContext(db, store, &ctx, opts); err != nil {
 		return nil, sdk.WrapError(err, "LoadNodeContext> Unable to load node context dependencies")
 	}
 
 	return &ctx, nil
 }
 
-func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, ctx *sdk.WorkflowNodeContext) error {
+func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, ctx *sdk.WorkflowNodeContext, opts LoadOptions) error {
 	var sqlContext = sqlContext{}
 	if err := db.SelectOne(&sqlContext,
 		"select application_id, environment_id, default_payload, default_pipeline_parameters, conditions, mutex from workflow_node_context where id = $1", ctx.ID); err != nil {
@@ -351,6 +351,16 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, ctx *sdk.Workfl
 		if err != nil {
 			return sdk.WrapError(err, "LoadNodeContext> Unable to load application %d", ctx.ApplicationID)
 		}
+		if opts.Base64Keys {
+			if err := application.LoadAllBase64Keys(db, app); err != nil {
+				return sdk.WrapError(err, "LoadNodeContext> Unable to load application %d base64keys", ctx.ApplicationID)
+			}
+		} else {
+			if err := application.LoadAllKeys(db, app); err != nil {
+				return sdk.WrapError(err, "LoadNodeContext> Unable to load application %d keys", ctx.ApplicationID)
+			}
+		}
+
 		ctx.Application = app
 	}
 
@@ -361,6 +371,12 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, ctx *sdk.Workfl
 			return sdk.WrapError(err, "LoadNodeContext> Unable to load env %d", ctx.EnvironmentID)
 		}
 		ctx.Environment = env
+
+		if opts.Base64Keys {
+			if errE := environment.LoadAllBase64Keys(db, env); errE != nil {
+				return sdk.WrapError(errE, "LoadNodeContext> Unable to load env %d keys", ctx.EnvironmentID)
+			}
+		}
 	}
 
 	if err := gorpmapping.JSONNullString(sqlContext.Conditions, &ctx.Conditions); err != nil {
