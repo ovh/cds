@@ -24,7 +24,7 @@ Example of use case: Import an environment with a secret.
 
 Create an environment file to import :
 
-    $ cat << EOF > your-environment.json
+    $ cat << EOF > your-environment.yml
     name: your-environment
     values:
     a-readable-variable:
@@ -38,7 +38,12 @@ Create an environment file to import :
 
 Then, import then environment:
 
-    cds environment import MYPROJECT your-environment.json`,
+    cds environment import MYPROJECT your-environment.yml
+
+Or push your workflow
+
+    cds workflow push MYPROJECT *.yml
+`,
 		
 		Example: `cdsctl encrypt MYPROJECT my-data my-super-secret-value
 my-data: 01234567890987654321`,
