@@ -6,6 +6,7 @@ import (
 	"github.com/go-gorp/gorp"
 
 	"github.com/ovh/cds/engine/api/cache"
+	"github.com/ovh/cds/engine/api/group"
 	"github.com/ovh/cds/engine/api/keys"
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/exportentities"
@@ -25,11 +26,11 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 
 	//Check if env exist
 	oldEnv, errl := LoadEnvironmentByName(db, proj.Key, eenv.Name)
-	if errl != nil && sdk.ErrorIs(errl, sdk.ErrNoEnvironment) {
+	if errl != nil && !sdk.ErrorIs(errl, sdk.ErrNoEnvironment) {
 		return nil, sdk.WrapError(errl, "ParseAndImport>> Unable to load environment")
 	}
 
-	//If the environment exist and we don't want to force, raise an error
+	//If the environment exists and we don't want to force, raise an error
 	var exist bool
 	if oldEnv != nil && !force {
 		return nil, sdk.ErrEnvironmentExist
@@ -38,20 +39,23 @@ func ParseAndImport(db gorp.SqlExecutor, cache cache.Store, proj *sdk.Project, e
 		exist = true
 	}
 
+	env := new(sdk.Environment)
+	env.Name = eenv.Name
+
 	//Inherit permissions from project
 	if len(eenv.Permissions) == 0 {
-		eenv.Permissions = make(map[string]int)
-		for _, p := range proj.ProjectGroups {
-			eenv.Permissions[p.Group.Name] = p.Permission
+		env.EnvironmentGroups = proj.ProjectGroups
+	} else {
+		//Compute permissions
+		for groupname, p := range eenv.Permissions {
+			//Load the group by name
+			g, errlg := group.LoadGroup(db, groupname)
+			if errlg != nil {
+				return nil, sdk.WrapError(errlg, "ParseAndImport> error on group.LoadGroup(%s): %v", groupname, errlg)
+			}
+			perm := sdk.GroupPermission{Group: sdk.Group{Name: g.Name}, Permission: p}
+			env.EnvironmentGroups = append(env.EnvironmentGroups, perm)
 		}
-	}
-
-	env := new(sdk.Environment)
-
-	//Compute permissions
-	for g, p := range eenv.Permissions {
-		perm := sdk.GroupPermission{Group: sdk.Group{Name: g}, Permission: p}
-		env.EnvironmentGroups = append(env.EnvironmentGroups, perm)
 	}
 
 	//Compute variables
