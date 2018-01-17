@@ -186,7 +186,11 @@ export class GroupEditComponent implements OnInit {
                         })
                     )
                     .subscribe((token) => {
-                        this.group.tokens.push(token);
+                        if (!Array.isArray(this.group.tokens)) {
+                            this.group.tokens = [token];
+                        } else {
+                            this.group.tokens.push(token);
+                        }
                         this._toast.success('', this._translate.instant('token_added'));
                     });
                     break;

@@ -23,23 +23,23 @@ All CDS Contributors: https://github.com/ovh/cds/graphs/contributors
 
 Feel free to open an issue on https://github.com/ovh/cds/issues
 
-## Documentation 
+## Documentation
 
 Documentation https://ovh.github.io/cds is generated with Hugo. Source are under https://github.com/ovh/cds/tree/master/docs/content
 
 ### Write / Generate / Test documentation
 
 * Download release Hugo v32.4 https://github.com/gohugoio/hugo/releases/tag/v0.32.4 - put hugo binary in your PATH
-* Download CDS Binaries: cdsctl, engine, worker from https://github.com/ovh/cds/releases/latest 
+* Download CDS Binaries: cdsctl, engine, worker from https://github.com/ovh/cds/releases/latest
 * Clone CDS repository: git clone https://github.com/ovh/cds.git inside ${CDS_SOURCES}
 * Generate documentation with Hugo
 
 ```bash
 cd ${CDS_SOURCES}/docs/content/cli
-rm -rf cdsctl engine worker; 
-cdsctl doc  # generate cdsctl documentation inside ${CDS_SOURCES}/docs/content/cli/cdsctl
-engine doc  # generate engine documentation
-worker doc  # generate worker documentation
+rm -rf cdsctl engine worker;
+cdsctl doc  # generate cdsctl directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli
+engine doc  # generate engine directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli
+worker doc  # generate worker directory documentation in the current directory so you must be inside ${CDS_SOURCES}/docs/content/cli
 cd ${CDS_SOURCES}/docs
 hugo server
 ```

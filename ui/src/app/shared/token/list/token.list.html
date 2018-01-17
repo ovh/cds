@@ -7,7 +7,11 @@
         </div>
     </div>
 
-    <table class="ui celled fixed table" *ngIf="getDataForCurrentPage().length > 0">
+    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
+        {{ 'token_no' | translate }}
+    </div>
+
+    <table class="ui celled fixed table">
         <thead>
         <tr>
             <th class="four wide center">{{ 'token_description' | translate }}</th>
@@ -87,7 +91,4 @@
         </tr>
         </tfoot>
     </table>
-    <div class="ui info message" *ngIf="getDataForCurrentPage().length === 0">
-        {{ 'token_no' | translate }}
-    </div>
 </div>
