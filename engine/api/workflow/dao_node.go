@@ -63,6 +63,23 @@ func insertNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, n *sdk.
 		n.Context.EnvironmentID = n.Context.Environment.ID
 	}
 
+	//Checks pipeline parameters
+	if len(n.Context.DefaultPipelineParameters) > 0 {
+		for i := range n.Context.DefaultPipelineParameters {
+			var paramFound bool
+			param := &n.Context.DefaultPipelineParameters[i]
+			for _, pipParam := range n.Pipeline.Parameter {
+				if pipParam.Name == param.Name {
+					param.Type = pipParam.Type
+					paramFound = true
+				}
+			}
+			if !paramFound {
+				return nil, sdk.NewError(sdk.ErrWrongRequest, fmt.Errorf("invalid parameter %s in pipeline %s", param.Name, n.Pipeline.Name))
+			}
+		}
+	}
+
 	//Insert new node
 	dbwn := Node(*n)
 	if err := db.Insert(&dbwn); err != nil {
