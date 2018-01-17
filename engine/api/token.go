@@ -63,18 +63,34 @@ func (api *API) generateTokenHandler() Handler {
 	}
 }
 
-func (api *API) getTokenListHandler() Handler {
+func (api *API) getGroupTokenListHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
 		groupName := vars["permGroupName"]
 
-		if !getUser(ctx).Admin {
+		isAdmin, errA := group.IsGroupAdmin(api.mustDB(), groupName, getUser(ctx).ID)
+		if errA != nil {
+			return sdk.WrapError(errA, "getGroupTokenListHandler> cannot load group admin information '%s'", groupName)
+		}
+
+		if !isAdmin {
 			return WriteJSON(w, r, nil, http.StatusForbidden)
 		}
 
 		tokens, err := group.LoadTokens(api.mustDB(), groupName)
 		if err != nil {
-			return sdk.WrapError(err, "getTokenListHandler> cannot load group '%s'", groupName)
+			return sdk.WrapError(err, "getGroupTokenListHandler> cannot load group '%s'", groupName)
+		}
+
+		return WriteJSON(w, r, tokens, http.StatusOK)
+	}
+}
+
+func (api *API) getUserTokenListHandler() Handler {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+		tokens, err := token.LoadTokens(api.mustDB(), getUser(ctx).ID)
+		if err != nil {
+			return sdk.WrapError(err, "getUserTokenListHandler> cannot load group for user %s", getUser(ctx).Username)
 		}
 
 		return WriteJSON(w, r, tokens, http.StatusOK)

@@ -172,6 +172,7 @@ type UserClient interface {
 	UserLogin(username, password string) (bool, string, error)
 	UserReset(username, email, callback string) error
 	UserSignup(username, fullname, email, callback string) error
+	ListAllTokens() ([]sdk.Token, error)
 }
 
 // WorkerClient exposes workers functions

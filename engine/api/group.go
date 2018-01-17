@@ -30,7 +30,14 @@ func (api *API) getGroupHandler() Handler {
 			return sdk.WrapError(err, "getGroupHandler: Cannot load user group from db")
 		}
 
-		if getUser(ctx).Admin {
+		isGroupAdmin := false
+		currentUser := getUser(ctx)
+		for _, grAdmin := range g.Admins {
+			if currentUser.ID == grAdmin.ID {
+				isGroupAdmin = true
+			}
+		}
+		if isGroupAdmin {
 			tokens, errT := group.LoadTokens(api.mustDB(), name)
 			if errT != nil {
 				return sdk.WrapError(errT, "getGroupHandler: Cannot load tokens group from db")

@@ -85,3 +85,42 @@ func Delete(db gorp.SqlExecutor, tokenID int64) error {
 	_, err := db.Exec("DELETE FROM token WHERE id = $1", tokenID)
 	return sdk.WrapError(err, "DeleteToken> Cannot delete token %d", tokenID)
 }
+
+// LoadTokens load all tokens linked that a user can see
+func LoadTokens(db gorp.SqlExecutor, userID int64) ([]sdk.Token, error) {
+	tokens := []sdk.Token{}
+
+	query := `
+		SELECT token.id, token.token, token.creator, token.description, token.expiration, token.created, "group".name
+		FROM token
+		JOIN "group" ON "group".id = token.group_id
+		JOIN group_user ON group_user.user_id = $1
+		WHERE group_user.group_admin = true
+	`
+	rows, err := db.Query(query, userID)
+	if err == sql.ErrNoRows {
+		return tokens, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var creator, description sql.NullString
+		tok := sdk.Token{}
+		if err := rows.Scan(&tok.ID, &tok.Token, &creator, &description, &tok.Expiration, &tok.Created, &tok.GroupName); err != nil {
+			return nil, sdk.WrapError(err, "LoadTokens> Cannot scan the token line")
+		}
+
+		if creator.Valid {
+			tok.Creator = creator.String
+		}
+		if description.Valid {
+			tok.Description = description.String
+		}
+
+		tokens = append(tokens, tok)
+	}
+	return tokens, nil
+}

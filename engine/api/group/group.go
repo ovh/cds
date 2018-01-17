@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/go-gorp/gorp"
 
@@ -122,6 +121,21 @@ func LoadUserGroup(db gorp.SqlExecutor, group *sdk.Group) error {
 	return nil
 }
 
+// IsGroupAdmin return true if the user is an administrator
+func IsGroupAdmin(db gorp.SqlExecutor, groupName string, userID int64) (bool, error) {
+	var admin bool
+	query := `SELECT "group_user".group_admin FROM "user"
+	 		  JOIN "group_user" ON "group_user".user_id = "user".id
+				JOIN "group" ON "group".id = "group_user".group_id
+	 		  WHERE "group".name = $1 AND "user".id = $2`
+
+	if err := db.QueryRow(query, groupName, userID).Scan(&admin); err != nil {
+		return admin, err
+	}
+
+	return admin, nil
+}
+
 // LoadGroups load all groups from database
 func LoadGroups(db gorp.SqlExecutor) ([]sdk.Group, error) {
 	groups := []sdk.Group{}
@@ -150,7 +164,8 @@ func LoadTokens(db gorp.SqlExecutor, groupName string) ([]sdk.Token, error) {
 	tokens := []sdk.Token{}
 
 	query := `
-		SELECT token.id, token.token, token.creator, token.description, token.expiration, token.created FROM "group"
+		SELECT token.id, token.token, token.creator, token.description, token.expiration, token.created, "group".name
+		FROM "group"
 		JOIN token ON "group".id = token.group_id
 		WHERE "group".name = $1
 	`
@@ -164,16 +179,12 @@ func LoadTokens(db gorp.SqlExecutor, groupName string) ([]sdk.Token, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var token string
-		var id int64
 		var creator, description sql.NullString
-		var expiration sdk.Expiration
-		var created time.Time
-		if err := rows.Scan(&id, &token, &creator, &description, &expiration, &created); err != nil {
+		tok := sdk.Token{}
+		if err := rows.Scan(&tok.ID, &tok.Token, &creator, &description, &tok.Expiration, &tok.Created, &tok.GroupName); err != nil {
 			return nil, sdk.WrapError(err, "LoadTokens> Cannot scan the token line")
 		}
 
-		tok := sdk.Token{ID: id, Token: token, Expiration: expiration, Created: created}
 		if creator.Valid {
 			tok.Creator = creator.String
 		}

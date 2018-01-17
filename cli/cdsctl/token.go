@@ -9,20 +9,20 @@ import (
 )
 
 var (
-	groupTokenCmd = cli.Command{
+	tokenCmd = cli.Command{
 		Name:  "token",
 		Short: "Manage CDS group token",
 	}
 
-	groupToken = cli.NewCommand(groupTokenCmd, nil,
+	token = cli.NewCommand(tokenCmd, nil,
 		[]*cobra.Command{
-			cli.NewListCommand(groupTokenListCmd, groupTokenListRun, nil),
-			cli.NewGetCommand(groupTokenCreateCmd, groupTokenCreateRun, nil),
-			cli.NewDeleteCommand(groupTokenDeleteCmd, groupTokenDeleteRun, nil),
+			cli.NewListCommand(tokenListCmd, tokenListRun, nil),
+			cli.NewGetCommand(tokenCreateCmd, tokenCreateRun, nil),
+			cli.NewDeleteCommand(tokenDeleteCmd, tokenDeleteRun, nil),
 		})
 )
 
-var groupTokenCreateCmd = cli.Command{
+var tokenCreateCmd = cli.Command{
 	Name:  "generate",
 	Short: "Generate a new token",
 	Long: `
@@ -45,7 +45,7 @@ Pay attention you must be an administrator of the group to launch this command.
 	},
 }
 
-func groupTokenCreateRun(v cli.Values) (interface{}, error) {
+func tokenCreateRun(v cli.Values) (interface{}, error) {
 	token, err := client.GroupGenerateToken(v["groupname"], v["expiration"], v.GetString("description"))
 	if err != nil {
 		return nil, err
@@ -53,7 +53,7 @@ func groupTokenCreateRun(v cli.Values) (interface{}, error) {
 	return *token, nil
 }
 
-var groupTokenDeleteCmd = cli.Command{
+var tokenDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a token linked to a group",
 	Long: `
@@ -67,7 +67,7 @@ Pay attention you must be an administrator of the group to launch this command.
 	},
 }
 
-func groupTokenDeleteRun(v cli.Values) error {
+func tokenDeleteRun(v cli.Values) error {
 	tokenID, err := v.GetInt64("tokenId")
 	if err != nil {
 		return fmt.Errorf("Token id is bad formatted")
@@ -79,23 +79,32 @@ func groupTokenDeleteRun(v cli.Values) error {
 	return nil
 }
 
-var groupTokenListCmd = cli.Command{
+var tokenListCmd = cli.Command{
 	Name:  "list",
 	Short: "List tokens from group",
 	Long: `
 You can list tokens linked to a groups to know the id of a token to delete it or know the creator of this token.
 
-Pay attention you must be an administrator of the group to launch this command
+Pay attention, if you mention a group, you must be an administrator of the group to launch this command
 	`,
-	Args: []cli.Arg{
+	OptionalArgs: []cli.Arg{
 		{Name: "groupname"},
 	},
 }
 
-func groupTokenListRun(v cli.Values) (cli.ListResult, error) {
-	tokens, err := client.GroupListToken(v["groupname"])
+func tokenListRun(v cli.Values) (cli.ListResult, error) {
+	if v.GetString("groupname") != "" {
+		tokens, err := client.GroupListToken(v.GetString("groupname"))
+		if err != nil {
+			return nil, err
+		}
+		return cli.AsListResult(tokens), nil
+	}
+
+	tokens, err := client.ListAllTokens()
 	if err != nil {
 		return nil, err
 	}
-	return cli.AsListResult(tokens), nil
+
+	return cli.AsListResult(tokens), err
 }
