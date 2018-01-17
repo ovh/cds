@@ -68,6 +68,10 @@ func (api *API) getTokenListHandler() Handler {
 		vars := mux.Vars(r)
 		groupName := vars["permGroupName"]
 
+		if !getUser(ctx).Admin {
+			return WriteJSON(w, r, nil, http.StatusForbidden)
+		}
+
 		tokens, err := group.LoadTokens(api.mustDB(), groupName)
 		if err != nil {
 			return sdk.WrapError(err, "generateTokenHandler> cannot load group '%s'", groupName)

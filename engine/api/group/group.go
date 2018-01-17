@@ -165,14 +165,15 @@ func LoadTokens(db gorp.SqlExecutor, groupName string) ([]sdk.Token, error) {
 
 	for rows.Next() {
 		var token string
+		var id int64
 		var creator, description sql.NullString
 		var expiration sdk.Expiration
 		var created time.Time
-		if err := rows.Scan(&token, &creator, &description, &expiration, &created); err != nil {
+		if err := rows.Scan(&id, &token, &creator, &description, &expiration, &created); err != nil {
 			return nil, err
 		}
 
-		tok := sdk.Token{Token: token, Expiration: expiration, Created: created}
+		tok := sdk.Token{ID: id, Token: token, Expiration: expiration, Created: created}
 		if creator.Valid {
 			tok.Creator = creator.String
 		}

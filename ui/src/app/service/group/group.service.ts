@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {Observable} from 'rxjs/Observable';
 import {Group} from '../../model/group.model';
-import {Token} from '../../model/user.model';
+import {Token} from '../../model/token.model';
 import {HttpClient} from '@angular/common/http';
 
 /**
@@ -33,10 +33,25 @@ export class GroupService {
 
     /**
      * Get all tokens linked to a specific group that the user can access.
-     * @returns {Observable<Group[]>}
+     * @returns {Observable<Token[]>}
      */
     getTokens(groupName: string): Observable<Token[]> {
-        return this._http.get<Token[]>(`/group/${groupName}/tokens`);
+        return this._http.get<Token[]>(`/group/${groupName}/token`);
+    }
+
+    /**
+     * Remove a token linked to a specific group that the user can access.
+     * @returns {Observable<{}>}
+     */
+    removeToken(groupName: string, tokenId: number): Observable<{}> {
+        return this._http.delete<{}>(`/group/${groupName}/token/${tokenId}`);
+    }
+    /**
+     * Add a token linked to a specific group that the user can access.
+     * @returns {Observable<Token>}
+     */
+    addToken(groupName: string, expiration: string, description: string): Observable<Token> {
+        return this._http.post<Token>(`/group/${groupName}/token`, { expiration, description });
     }
 
 

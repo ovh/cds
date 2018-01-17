@@ -1,5 +1,5 @@
 import {Component, Input, EventEmitter, Output} from '@angular/core';
-import {Token} from '../../../model/user.model';
+import {Token, ExpirationToString} from '../../../model/token.model';
 import {Table} from '../../table/table';
 import {TokenEvent} from '../token.event.model';
 
@@ -29,9 +29,12 @@ export class TokenListComponent extends Table {
     private _tokens: Token[];
     filter: string;
     showToken: {} = {};
+    expirationToString = ExpirationToString;
+    newToken: Token;
 
     constructor() {
         super();
+        this.newToken = new Token();
     }
 
     getData(): any[] {
@@ -48,7 +51,7 @@ export class TokenListComponent extends Table {
      * @param variable Variable data
      */
     sendEvent(type: string, token: Token): void {
-        token.deleting = true;
+        token.updating = true;
         this.event.emit(new TokenEvent(type, token));
     }
 }

@@ -9,7 +9,7 @@ import (
 // Token describes tokens used by worker to access the API
 // on behalf of a group.
 type Token struct {
-	ID          int64      `json:"id"`
+	ID          int64      `json:"id" cli:"id"`
 	GroupID     int64      `json:"group_id"`
 	Token       string     `json:"token" cli:"token"`
 	Description string     `json:"description" cli:"description"`

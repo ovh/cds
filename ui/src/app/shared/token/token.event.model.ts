@@ -1,4 +1,4 @@
-import {Token} from '../../model/user.model';
+import {Token} from '../../model/token.model';
 
 export class TokenEvent {
     type: string;

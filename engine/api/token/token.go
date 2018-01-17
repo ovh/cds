@@ -61,11 +61,18 @@ func LoadToken(db gorp.SqlExecutor, token string) (*sdk.Token, error) {
 
 	var t sdk.Token
 	var exp int
-	if err := db.QueryRow(query, hashed).Scan(&t.ID, &t.GroupID, &exp, &t.Created, &t.Description, &t.Creator); err != nil {
+	var description, creator sql.NullString
+	if err := db.QueryRow(query, hashed).Scan(&t.ID, &t.GroupID, &exp, &t.Created, &description, &creator); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, sdk.ErrInvalidToken
 		}
 		return nil, err
+	}
+	if description.Valid {
+		t.Description = description.String
+	}
+	if creator.Valid {
+		t.Creator = creator.String
 	}
 	t.Token = token
 	t.Expiration = sdk.Expiration(exp)

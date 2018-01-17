@@ -1,4 +1,5 @@
-import {User, Token} from './user.model';
+import {User} from './user.model';
+import {Token} from './token.model';
 
 export const adminGroupName = 'shared.infra';
 

@@ -29,13 +29,45 @@
                 <span *ngIf="showToken[t.token]">{{t.token}}</span>
             </td>
             <td class="border center">
-                {{t.expiration}}
+                {{expirationToString[t.expiration]}}
             </td>
             <td class="border center">
                 {{t.created | date}}
             </td>
             <td class="border center">
-                <app-delete-button (event)="sendEvent('delete', t)" [loading]="t.deleting"></app-delete-button>
+                <app-delete-button (event)="sendEvent('delete', t)" [loading]="t.updating"></app-delete-button>
+            </td>
+        </tr>
+        <tr>
+            <td class="border center">
+                <div class="ui fluid input focus">
+                    <input class="ui input" placeholder="Description" [(ngModel)]="newToken.description">
+                </div>
+            </td>
+            <td class="border token-content center">
+                <div class="ui fluid input focus disabled">
+                    <input class="ui input">
+                </div>
+            </td>
+            <td class="border center">
+                <sui-select class="selection"
+                    [(ngModel)]="newToken.expirationString"
+                    placeholder="Type"
+                    #select>
+                    <sui-select-option *ngFor="let expiration of expirationToString"
+                                       [value]="expiration">
+                    </sui-select-option>
+                </sui-select>
+            </td>
+            <td class="border center">
+                <div class="ui fluid input focus disabled">
+                    <input class="ui input">
+                </div>
+            </td>
+            <td class="border center">
+                <button class="ui blue button" (click)="sendEvent('add', newToken)" [class.loading]="newToken.updating" [class.disabled]="newToken.expirationString == null">
+                    <i class="plus icon"></i>{{ 'btn_add' | translate}}
+                </button>
             </td>
         </tr>
         </tbody>

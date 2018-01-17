@@ -98,9 +98,10 @@
         </div>
 
       </div>
-      <div class="ui row">
+      <div class="ui row" *ngIf="currentUserIsAdminOnGroup">
         <div class="sixteen wide column">
-            <app-token-list [tokens]="group.tokens"></app-token-list>
+            <h3>{{'token_title_handling' | translate}}</h3>
+            <app-token-list [tokens]="group.tokens" (event)="tokenEvent($event)"></app-token-list>
         </div>
       </div>
     </div>

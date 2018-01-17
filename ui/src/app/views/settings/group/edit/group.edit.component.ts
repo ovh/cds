@@ -1,10 +1,12 @@
 import {Component, OnInit} from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
+import {first, finalize} from 'rxjs/operators';
 import {Group} from '../../../../model/group.model';
 import {GroupService} from '../../../../service/group/group.service';
 import {User} from '../../../../model/user.model';
 import {UserService} from '../../../../service/user/user.service';
 import {ToastService} from '../../../../shared/toast/ToastService';
+import {TokenEvent} from '../../../../shared/token/token.event.model';
 import {TranslateService} from '@ngx-translate/core';
 import {AuthentificationStore} from '../../../../service/auth/authentification.store';
 
@@ -155,5 +157,39 @@ export class GroupEditComponent implements OnInit {
       }, () => {
           this.loading = false;
       });
+    }
+
+    tokenEvent(event: TokenEvent): void {
+        if (!event) {
+            return;
+        }
+        switch (event.type) {
+            case 'delete':
+                this._groupService.removeToken(this.groupname, event.token.id)
+                    .pipe(
+                        first(),
+                        finalize(() => event.token.updating = false)
+                    )
+                    .subscribe(() => {
+                        this.group.tokens = this.group.tokens.filter((token) => token.id !== event.token.id);
+                        this._toast.success('', this._translate.instant('token_deleted'));
+                    });
+                    break;
+            case 'add':
+                this._groupService.addToken(this.groupname, event.token.expirationString, event.token.description)
+                    .pipe(
+                        first(),
+                        finalize(() => {
+                            event.token.expirationString = null;
+                            event.token.description = null;
+                            event.token.updating = false;
+                        })
+                    )
+                    .subscribe((token) => {
+                        this.group.tokens.push(token);
+                        this._toast.success('', this._translate.instant('token_added'));
+                    });
+                    break;
+        }
     }
 }
