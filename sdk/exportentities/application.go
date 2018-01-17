@@ -70,7 +70,9 @@ func NewApplication(app sdk.Application, withPermissions bool, keys []EncryptedK
 	}
 
 	a.VCSBranch = app.RepositoryStrategy.Branch
-	a.VCSConnectionType = app.RepositoryStrategy.ConnectionType
+	if app.RepositoryStrategy.ConnectionType != "https" {
+		a.VCSConnectionType = app.RepositoryStrategy.ConnectionType
+	}
 	a.VCSDefaultBranch = app.RepositoryStrategy.DefaultBranch
 	a.VCSPGPKey = app.RepositoryStrategy.PGPKey
 	a.VCSSSHKey = app.RepositoryStrategy.SSHKey
