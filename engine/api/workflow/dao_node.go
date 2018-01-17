@@ -279,15 +279,6 @@ func loadNode(db gorp.SqlExecutor, store cache.Store, w *sdk.Workflow, id int64,
 	}
 	wn.Pipeline = *pip
 
-	// Load at least pipeline parameters
-	if !opts.DeepPipeline {
-		parameters, err := pipeline.GetAllParametersInPipeline(db, pip.ID)
-		if err != nil {
-			return nil, sdk.WrapError(err, "LoadNode> Unable to load pipeline parameter")
-		}
-		wn.Pipeline.Parameter = parameters
-	}
-
 	if wn.Name == "" {
 		wn.Name = pip.Name
 	}
