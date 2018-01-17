@@ -1,6 +1,6 @@
 import {Component, EventEmitter, Input, Output, OnInit, ViewChild} from '@angular/core';
 import {CodemirrorComponent} from 'ng2-codemirror-typescript/Codemirror';
-import {cloneDeep, snakeCase} from 'lodash';
+import {cloneDeep} from 'lodash';
 import {WorkflowNodeCondition, WorkflowNodeConditions, Workflow} from '../../../../../model/workflow.model';
 declare var CodeMirror: any;
 
@@ -16,7 +16,7 @@ export class WorkflowNodeConditionFormComponent implements OnInit {
     set names(data: string[]) {
         this._names = data;
         if (data) {
-            this.suggest = data.map((d) => snakeCase(d));
+            this.suggest = data.map((d) => d.replace(/-|\./g, '_'));
         }
     }
     get names() {

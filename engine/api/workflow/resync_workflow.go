@@ -32,7 +32,7 @@ func Resync(db gorp.SqlExecutor, store cache.Store, wr *sdk.WorkflowRun, u *sdk.
 		}
 	}
 
-	return updateWorkflowRun(db, wr)
+	return UpdateWorkflowRun(db, wr)
 }
 
 func resyncNode(node *sdk.WorkflowNode, newWorkflow sdk.Workflow) error {

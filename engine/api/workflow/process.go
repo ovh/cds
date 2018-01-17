@@ -287,7 +287,7 @@ func processWorkflowRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Sto
 	}
 
 	w.Status = getRunStatus(nodesRunSuccess, nodesRunBuilding, nodesRunFailed, nodesRunStopped, nodesRunSkipped, nodesRunDisabled)
-	if err := updateWorkflowRun(db, w); err != nil {
+	if err := UpdateWorkflowRun(db, w); err != nil {
 		return false, sdk.WrapError(err, "processWorkflowRun>")
 	}
 
@@ -541,7 +541,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 	w.WorkflowNodeRuns[run.WorkflowNodeID] = append(w.WorkflowNodeRuns[run.WorkflowNodeID], *run)
 	w.LastSubNumber = MaxSubNumber(w.WorkflowNodeRuns)
 
-	if err := updateWorkflowRun(db, w); err != nil {
+	if err := UpdateWorkflowRun(db, w); err != nil {
 		return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
 	}
 
@@ -567,7 +567,7 @@ func processWorkflowNodeRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 				Args: []interface{}{n.Name},
 			})
 
-			if err := updateWorkflowRun(db, w); err != nil {
+			if err := UpdateWorkflowRun(db, w); err != nil {
 				return true, sdk.WrapError(err, "processWorkflowNodeRun> unable to update workflow run")
 			}
 

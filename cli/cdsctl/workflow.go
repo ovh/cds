@@ -3,6 +3,7 @@ package main
 import (
 	"archive/tar"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -34,6 +35,7 @@ var (
 			cli.NewGetCommand(workflowShowCmd, workflowShowRun, nil),
 			cli.NewDeleteCommand(workflowDeleteCmd, workflowDeleteRun, nil),
 			cli.NewCommand(workflowRunManualCmd, workflowRunManualRun, nil),
+			cli.NewCommand(workflowStopCmd, workflowStopRun, nil),
 			cli.NewCommand(workflowExportCmd, workflowExportRun, nil),
 			cli.NewCommand(workflowImportCmd, workflowImportRun, nil),
 			cli.NewCommand(workflowPullCmd, workflowPullRun, nil),
@@ -249,7 +251,9 @@ var workflowRunManualCmd = cli.Command{
 func workflowRunManualRun(v cli.Values) error {
 	manual := sdk.WorkflowNodeRunManual{}
 	if v["payload"] != "" {
-		manual.Payload = v["payload"]
+		if err := json.Unmarshal([]byte(v["payload"]), &manual.Payload); err != nil {
+			return fmt.Errorf("Error payload isn't a valid json")
+		}
 	}
 
 	var runNumber, fromNodeID int64
@@ -286,7 +290,7 @@ func workflowRunManualRun(v cli.Values) error {
 		return err
 	}
 
-	fmt.Printf("Workflow %s #%d has been lauched\n", v["workflow-name"], w.Number)
+	fmt.Printf("Workflow %s #%d has been launched\n", v["workflow-name"], w.Number)
 
 	var baseURL string
 	configUser, err := client.ConfigUser()
@@ -315,6 +319,67 @@ func workflowRunManualRun(v cli.Values) error {
 	}
 
 	return workflowRunInteractive(v, w, baseURL)
+}
+
+var workflowStopCmd = cli.Command{
+	Name:  "stop",
+	Short: "Stop a CDS workflow or a specific node name",
+	Long:  "Stop a CDS workflow or a specific node name",
+	Example: `
+		cdsctl workflow stop MYPROJECT myworkflow 5 # To stop a workflow run on number 5
+		cdsctl workflow stop MYPROJECT myworkflow 5 compile # To stop a workflow node run on workflow run 5
+	`,
+	Args: []cli.Arg{
+		{Name: "project-key"},
+		{Name: "workflow-name"},
+		{Name: "run-number"},
+	},
+	OptionalArgs: []cli.Arg{
+		{Name: "node-name"},
+	},
+}
+
+func workflowStopRun(v cli.Values) error {
+	var fromNodeID int64
+	runNumber, errp := strconv.ParseInt(v.GetString("run-number"), 10, 64)
+	if errp != nil {
+		return fmt.Errorf("run-number invalid: not a integer")
+	}
+
+	if v.GetString("node-name") != "" {
+		if runNumber <= 0 {
+			return fmt.Errorf("You can use flag node-name without flag run-number")
+		}
+		wr, err := client.WorkflowRunGet(v["project-key"], v["workflow-name"], runNumber)
+		if err != nil {
+			return err
+		}
+		for _, wnrs := range wr.WorkflowNodeRuns {
+			if wnrs[0].WorkflowNodeName == v.GetString("node-name") {
+				fromNodeID = wnrs[0].ID
+				break
+			}
+		}
+		if fromNodeID == 0 {
+			return fmt.Errorf("Node not found")
+		}
+	}
+
+	if fromNodeID != 0 {
+		wNodeRun, err := client.WorkflowNodeStop(v["project-key"], v["workflow-name"], runNumber, fromNodeID)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Workflow node %s from workflow %s #%d has been stopped\n", v.GetString("node-name"), v["workflow-name"], wNodeRun.Number)
+	} else {
+		w, err := client.WorkflowStop(v["project-key"], v["workflow-name"], runNumber)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("Workflow %s #%d has been stopped\n", v["workflow-name"], w.Number)
+	}
+
+	return nil
 }
 
 var workflowExportCmd = cli.Command{
@@ -441,6 +506,10 @@ func workflowPullRun(c cli.Values) error {
 var workflowImportCmd = cli.Command{
 	Name:  "import",
 	Short: "Import a workflow",
+	Long: `
+		In case you want to import just your workflow.
+		If you want to update also dependencies likes pipelines, applications or environments at same time you have to use workflow push instead workflow import.
+	`,
 	Args: []cli.Arg{
 		{Name: "project-key"},
 		{Name: "filename"},
@@ -483,6 +552,11 @@ func workflowImportRun(c cli.Values) error {
 var workflowPushCmd = cli.Command{
 	Name:  "push",
 	Short: "Push a workflow",
+	Long: `
+		Useful when you want to push a workflow and his dependencies (pipelines, applications, environments)
+		For example if you have a workflow with pipelines build and tests you can push your workflow and pipelines with
+		cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml
+	`,
 	Args: []cli.Arg{
 		{Name: "project-key"},
 	},

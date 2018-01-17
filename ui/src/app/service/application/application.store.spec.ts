@@ -17,7 +17,6 @@ import {HttpRequest} from '@angular/common/http';
 import {WorkflowItem} from '../../model/application.workflow.model';
 import {Trigger} from '../../model/trigger.model';
 import {ProjectStore} from '../project/project.store';
-import {ApplyTemplateRequest} from '../../model/template.model';
 import {first} from 'rxjs/operators';
 
 describe('CDS: application Store', () => {
@@ -560,47 +559,6 @@ describe('CDS: application Store', () => {
             checkedDeleteTrigger = true;
         });
         expect(checkedDeleteTrigger).toBeTruthy('Need application to be updated');
-
-        http.verify();
-    }));
-
-    it('should create application from template', async(() => {
-        const projectStore = TestBed.get(ProjectStore);
-        const applicationStore = TestBed.get(ApplicationStore);
-        const http = TestBed.get(HttpTestingController);
-
-        let project = new Project();
-        project.name = 'proj';
-        project.key = 'proj1';
-
-        let projectUp = new Project();
-        projectUp.name = 'proj';
-        projectUp.key = 'proj1';
-        projectUp.last_modified = '123';
-        projectUp.applications = new Array<Application>();
-        let app = new Application();
-        app.name = 'app1';
-        projectUp.applications.push(app);
-
-        projectStore.getProjects('proj1').subscribe(() => {});
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/proj1';
-        })).flush(project);
-
-
-        applicationStore.applyTemplate('proj1', new ApplyTemplateRequest()).subscribe(() => {});
-        http.expectOne(((req: HttpRequest<any>) => {
-            return req.url === 'foo.bar/project/proj1/template';
-        })).flush(projectUp);
-
-        let checked = false;
-        projectStore.getProjectResolver('proj1').subscribe(p => {
-            checked = true;
-            expect(p.last_modified).toBe('123');
-            expect(p.applications.length).toBe(1);
-            expect(p.applications[0].name).toBe('app1');
-        });
-        expect(checked).toBeTruthy();
 
         http.verify();
     }));
