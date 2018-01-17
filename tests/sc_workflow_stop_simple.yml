@@ -1,4 +1,4 @@
-name: Create a simple workflow (ITSCWRKFLW2) and run it
+name: Create a simple workflow (ITSCWRKFLW2) run it and then stop it
 testcases:
 - name: assert filepath, your current directory must be at the root of this project
   steps:
@@ -38,3 +38,10 @@ testcases:
     - result.systemoutjson.num ShouldContainSubstring 1
     - result.systemoutjson.status ShouldEqual Building
     - result.systemoutjson.tags ShouldContainSubstring triggered_by
+
+- name: stop workflow
+  steps:
+  - script:  {{.cds.build.cdsctl}} workflow stop ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #1 has been stopped"

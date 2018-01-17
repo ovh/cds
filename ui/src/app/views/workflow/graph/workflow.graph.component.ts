@@ -324,7 +324,7 @@ export class WorkflowGraphComponent implements AfterViewInit {
     }
 
     getJoinSrcStyle(nodeID: number): string {
-        if (this._workflowRun && this._workflowRun.nodes[nodeID] && this._workflowRun.nodes[nodeID].length > 0) {
+        if (this._workflowRun && this._workflowRun.nodes && this._workflowRun.nodes[nodeID] && this._workflowRun.nodes[nodeID].length > 0) {
             switch (this._workflowRun.nodes[nodeID][0].status) {
                 case 'Success':
                 case 'Fail':

@@ -1,0 +1,15 @@
+version: v1.0
+name: deploy
+stages:
+- Deploy
+
+jobs:
+
+- job: Deploy
+  stage: Deploy
+  description: Deploy on a platform
+  steps:
+  - script:
+    - '#echo ''Deploy in progress...'' '
+    - sleep 1
+    - '#echo ''Deployed'' '
