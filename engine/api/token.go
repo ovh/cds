@@ -100,9 +100,19 @@ func (api *API) getUserTokenListHandler() Handler {
 func (api *API) deleteTokenHandler() Handler {
 	return func(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
 		vars := mux.Vars(r)
+		groupName := vars["permGroupName"]
 		tokenID, errT := requestVarInt(r, "tokenid")
 		if errT != nil {
 			return sdk.WrapError(errT, "deleteTokenHandler> token id is not a number '%s'", vars["tokenid"])
+		}
+
+		isGroupAdmin, errA := group.IsGroupAdmin(api.mustDB(), groupName, getUser(ctx).ID)
+		if errA != nil {
+			return sdk.WrapError(errT, "deleteTokenHandler> cannot load group admin for user %s", getUser(ctx).Username)
+		}
+
+		if !isGroupAdmin {
+			return WriteJSON(w, r, nil, http.StatusForbidden)
 		}
 
 		if err := token.Delete(api.mustDB(), tokenID); err != nil {
