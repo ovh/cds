@@ -62,7 +62,7 @@ func RunFromHook(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *
 		}
 		if !hasRun {
 			wr.Status = sdk.StatusNeverBuilt.String()
-			return wr, updateWorkflowRun(db, wr)
+			return wr, UpdateWorkflowRun(db, wr)
 		}
 	} else {
 
@@ -149,7 +149,7 @@ func ManualRun(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sd
 	}
 	if !hasRun {
 		wr.Status = sdk.StatusNeverBuilt.String()
-		return wr, updateWorkflowRun(db, wr)
+		return wr, UpdateWorkflowRun(db, wr)
 	}
 	return wr, nil
 }
