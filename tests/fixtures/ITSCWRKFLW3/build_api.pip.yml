@@ -1,0 +1,32 @@
+version: v1.0
+name: build_api
+stages:
+- Build
+
+jobs:
+
+- job: Build golang api
+  stage: Build
+  description: Compile CDS Engine
+  steps:
+  - gitClone:
+      branch: '{{.git.branch}}'
+      commit: '{{.git.hash}}'
+      directory: /go/src/github.com/ovh/cds/
+      url: '{{.git.http_url}}'
+  - script:
+    - cd /go/src/github.com/ovh/cds/engine
+    - export OS=linux
+    - export ARCH=amd64
+    - make build
+    - cd dist
+    - tar czf cds-engine-linux-amd64.tar.gz cds-engine-linux-amd64
+  - artifactUpload:
+      path: /go/src/github.com/ovh/cds/engine/dist/sql.tar.gz
+      tag: '{{.cds.version}}'
+  - artifactUpload:
+      path: /go/src/github.com/ovh/cds/engine/dist/cds-engine-linux-amd64.tar.gz
+      tag: '{{.cds.version}}'
+  requirements:
+  - binary: git
+  - model: Go-official-1.9.1

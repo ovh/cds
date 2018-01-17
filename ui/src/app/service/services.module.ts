@@ -29,7 +29,6 @@ import {
     ProjectForWorkflowResolver,
     ProjectForPipelineCreateResolver
 } from './project/project.resolver';
-import {ApplicationTemplateService} from './application/application.template.service';
 import {ProjectAuditService} from './project/project.audit.service';
 import {EnvironmentAuditService} from './environment/environment.audit.service';
 import {ApplicationAuditService} from './application/application.audit.service';
@@ -67,7 +66,6 @@ export class ServicesModule {
                 ApplicationService,
                 ApplicationWorkflowService,
                 ApplicationPipelineService,
-                ApplicationTemplateService,
                 ApplicationMigrateService,
                 ApplicationStore,
                 AuthentificationStore,
@@ -132,7 +130,6 @@ export {
     ApplicationStore,
     ApplicationPipelineService,
     ApplicationWorkflowService,
-    ApplicationTemplateService,
     ApplicationMigrateService,
     AuthentificationStore,
     CanActivateAuthRoute,

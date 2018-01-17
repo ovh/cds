@@ -94,30 +94,6 @@ func DeletePlugin(art sdk.ActionPlugin) error {
 	return fmt.Errorf("store not initialized")
 }
 
-//StoreTemplateExtension call Store on the common driver
-func StoreTemplateExtension(tmpl sdk.TemplateExtension, data io.ReadCloser) (string, error) {
-	if storage != nil {
-		return storage.Store(&tmpl, data)
-	}
-	return "", fmt.Errorf("store not initialized")
-}
-
-//FetchTemplateExtension call Fetch on the common driver
-func FetchTemplateExtension(tmpl sdk.TemplateExtension) (io.ReadCloser, error) {
-	if storage != nil {
-		return storage.Fetch(&tmpl)
-	}
-	return nil, fmt.Errorf("store not initialized")
-}
-
-//DeleteTemplateExtension call Delete on the common driver
-func DeleteTemplateExtension(tmpl sdk.TemplateExtension) error {
-	if storage != nil {
-		return storage.Delete(&tmpl)
-	}
-	return fmt.Errorf("store not initialized")
-}
-
 // Driver allows artifact to be stored and retrieve the same way to any backend
 // - Openstack / Swift
 // - Filesystem

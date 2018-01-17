@@ -103,6 +103,7 @@ func newCommand(c Command, run interface{}, subCommands []*cobra.Command, mods .
 	cmd.Short = c.Short
 	cmd.Long = c.Long
 	cmd.Hidden = c.Hidden
+	cmd.Example = c.Example
 	cmd.AddCommand(subCommands...)
 
 	if run == nil || reflect.ValueOf(run).IsNil() {

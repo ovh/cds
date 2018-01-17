@@ -85,6 +85,7 @@ type Command struct {
 	VariadicArgs Arg
 	Short        string
 	Long         string
+	Example      string
 	Flags        []Flag
 	Aliases      []string
 	Hidden       bool
