@@ -220,30 +220,29 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 
 	fileForMD5, errop := os.Open(filePath)
 	if errop != nil {
-		return false, 0, errop
+		return false, 0, fmt.Errorf("unable on open file %s (%v)", filePath, errop)
 	}
 
 	//File stat
 	stat, errst := fileForMD5.Stat()
 	if errst != nil {
-		return false, 0, errst
+		return false, 0, fmt.Errorf("unable to get file info (%v)", errst)
 	}
 
 	//Compute md5sum
 	hash := md5.New()
 	if _, errcopy := io.Copy(hash, fileForMD5); errcopy != nil {
-		return false, 0, errcopy
+		return false, 0, fmt.Errorf("unable to read file content (%v)", errcopy)
 	}
 	hashInBytes := hash.Sum(nil)[:16]
 	md5sumStr := hex.EncodeToString(hashInBytes)
 	fileForMD5.Close()
 
 	//Reopen the file because we already read it for md5
-	fileReopen, erro := os.Open(filePath)
+	fileContent, erro := ioutil.ReadFile(filePath)
 	if erro != nil {
-		return false, 0, erro
+		return false, 0, fmt.Errorf("unable to read file %s (%v)", filePath, erro)
 	}
-	defer fileReopen.Close()
 	_, name := filepath.Split(filePath)
 
 	bodyRes, _, _ := Request("GET", "/artifact/store", nil)
@@ -252,22 +251,23 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 		_ = json.Unmarshal(bodyRes, store)
 
 		if store.TemporaryURLSupported {
-			tempURL, dur, err := uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileReopen, stat, md5sumStr)
+			tempURL, dur, err := uploadArtifactWithTempURL(project, pipeline, application, env, tag, buildNumber, name, fileContent, stat, md5sumStr)
 			if err == nil {
-				return tempURL, dur, err
+				return tempURL, dur, fmt.Errorf("unable to upload to objectstore (%v)", err)
 			}
 		}
 	}
 
+	// if we are here, upload with tempURL didn't work. Fallback to download with CDS API.
 	body := new(bytes.Buffer)
 	writer := multipart.NewWriter(body)
 	part, errc := writer.CreateFormFile(name, filepath.Base(filePath))
 	if errc != nil {
-		return false, 0, errc
+		return false, 0, fmt.Errorf("unable to create multipart form file (%v)", errc)
 	}
 
-	if _, err := io.Copy(part, fileReopen); err != nil {
-		return false, 0, err
+	if _, err := io.Copy(part, bytes.NewReader(fileContent)); err != nil {
+		return false, 0, fmt.Errorf("unable to read file content (%v)", err)
 	}
 
 	writer.WriteField("env", env)
@@ -276,7 +276,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	writer.WriteField("md5sum", md5sumStr)
 
 	if err := writer.Close(); err != nil {
-		return false, 0, err
+		return false, 0, fmt.Errorf("unable to close multipart form writer (%v)", err)
 	}
 
 	var bodyReader io.Reader
@@ -297,7 +297,7 @@ func UploadArtifact(project string, pipeline string, application string, tag str
 	return false, 0, fmt.Errorf("x10: %s", err)
 }
 
-func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, file io.Reader, stat os.FileInfo, md5sum string) (bool, time.Duration, error) {
+func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, buildNumber int, filename string, fileContent []byte, stat os.FileInfo, md5sum string) (bool, time.Duration, error) {
 	t0 := time.Now()
 	art := Artifact{
 		Name:   filename,
@@ -326,7 +326,7 @@ func uploadArtifactWithTempURL(project, pipeline, application, env, tag string, 
 	}
 
 	//Post the file to the temporary URL
-	req, errRequest := http.NewRequest("PUT", art.TempURL, file)
+	req, errRequest := http.NewRequest("PUT", art.TempURL, bytes.NewReader(fileContent))
 	if errRequest != nil {
 		return true, 0, errRequest
 	}
