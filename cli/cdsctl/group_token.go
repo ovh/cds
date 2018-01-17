@@ -26,11 +26,15 @@ var groupTokenCreateCmd = cli.Command{
 	Name:  "generate",
 	Short: "Generate a new token",
 	Long: `
-		Useful to generate a new token when you use the cli or the api in scripts or for your worker, hatchery, uservices.
-		The expiration must be [daily|persistent|session]
-		Daily expirate after one day
-		Persistent doesn't expirate until you revoke them
-		Pay attention you must be an administrator of the group to launch this command
+Generate a new token when you use the cli or the api in scripts or for your worker, hatchery, uservices.
+
+The expiration must be [daily|persistent|session].
+
+Daily expirate after one day.
+
+Persistent doesn't expirate until you revoke them.
+
+Pay attention you must be an administrator of the group to launch this command.
 	`,
 	Args: []cli.Arg{
 		{Name: "groupname"},
@@ -53,9 +57,9 @@ var groupTokenDeleteCmd = cli.Command{
 	Name:  "delete",
 	Short: "Delete a token linked to a group",
 	Long: `
-	
-Useful to delete a token from a group and so revoke it to unauthorize future connection
-Pay attention you must be an administrator of the group to launch this command
+Delete a token from a group and so revoke it to unauthorize future connection.
+
+Pay attention you must be an administrator of the group to launch this command.
 	`,
 	Args: []cli.Arg{
 		{Name: "groupname"},
@@ -79,8 +83,8 @@ var groupTokenListCmd = cli.Command{
 	Name:  "list",
 	Short: "List tokens from group",
 	Long: `
-
 You can list tokens linked to a groups to know the id of a token to delete it or know the creator of this token.
+
 Pay attention you must be an administrator of the group to launch this command
 	`,
 	Args: []cli.Arg{

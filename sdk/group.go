@@ -12,7 +12,7 @@ const SharedInfraGroupName = "shared.infra"
 type Group struct {
 	ID     int64   `json:"id" yaml:"-"`
 	Name   string  `json:"name" yaml:"name" cli:"name"`
-	Admins []User  `json:"admins,omitempty" yaml:"admin,omitempty"`
+	Admins []User  `json:"admins,omitempty" yaml:"admins,omitempty"`
 	Users  []User  `json:"users,omitempty" yaml:"users,omitempty"`
 	Tokens []Token `json:"tokens,omitempty" yaml:"tokens,omitempty"`
 }

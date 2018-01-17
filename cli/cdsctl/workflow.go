@@ -508,6 +508,7 @@ var workflowImportCmd = cli.Command{
 	Short: "Import a workflow",
 	Long: `
 		In case you want to import just your workflow.
+		
 		If you want to update also dependencies likes pipelines, applications or environments at same time you have to use workflow push instead workflow import.
 	`,
 	Args: []cli.Arg{
