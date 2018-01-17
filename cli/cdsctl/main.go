@@ -46,6 +46,7 @@ func main() {
 			monitoring,
 			health,
 			version,
+			encrypt,
 		},
 	)
 
