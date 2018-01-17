@@ -170,7 +170,7 @@ func LoadTokens(db gorp.SqlExecutor, groupName string) ([]sdk.Token, error) {
 		var expiration sdk.Expiration
 		var created time.Time
 		if err := rows.Scan(&id, &token, &creator, &description, &expiration, &created); err != nil {
-			return nil, err
+			return nil, sdk.WrapError(err, "LoadTokens> Cannot scan the token line")
 		}
 
 		tok := sdk.Token{ID: id, Token: token, Expiration: expiration, Created: created}

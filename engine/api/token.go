@@ -74,7 +74,7 @@ func (api *API) getTokenListHandler() Handler {
 
 		tokens, err := group.LoadTokens(api.mustDB(), groupName)
 		if err != nil {
-			return sdk.WrapError(err, "generateTokenHandler> cannot load group '%s'", groupName)
+			return sdk.WrapError(err, "getTokenListHandler> cannot load group '%s'", groupName)
 		}
 
 		return WriteJSON(w, r, tokens, http.StatusOK)
