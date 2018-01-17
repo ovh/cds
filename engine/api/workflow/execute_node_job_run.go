@@ -247,11 +247,11 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 
 			unBase64, err64 := base64.StdEncoding.DecodeString(k.Private)
 			if err64 != nil {
-				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunSecrets> Cannot decode env key %s", k.Name)
+				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunKeys> Cannot decode env key %s", k.Name)
 			}
 			decrypted, errD := secret.Decrypt([]byte(unBase64))
 			if errD != nil {
-				log.Error("LoadNodeJobRunSecrets> Unable to decrypt env private key %s/%s: %v", n.Context.Environment.Name, k.Name, errD)
+				log.Error("LoadNodeJobRunKeys> Unable to decrypt env private key %s/%s: %v", n.Context.Environment.Name, k.Name, errD)
 			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",
