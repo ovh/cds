@@ -11,11 +11,11 @@
     <ul class="list ma0 pa0 dib-l">
       {{ range .Site.Menus.global }}
         <li class="f5 dib mr4" role="menuitem">
+            {{ $post_status := printf "%s" .Post }}
             {{/* TODO: Create an "Global" active class to show which site one is currently at */}}
-          <a href="{{ .URL }}" target="_blank" class="dim link{{ if $currentPage.IsMenuCurrent "global" . }} gray {{else}} light-silver{{ end }}">
+          <a href="{{ .URL }}"{{ if eq $post_status "external" }} target="_blank"{{ end }} class="dim link{{ if $currentPage.IsMenuCurrent "global" . }} gray {{else}} light-silver{{ end }}">
             {{ .Name }}
               {{/* using ".Post" from the menu system to determine if we should show an icon for external links */}}
-            {{ $post_status := printf "%s" .Post }}
             {{ if eq $post_status "external" }}
               {{ partial "svg/link-ext.svg" (dict "size" "10") }}
             {{ end }}
