@@ -74,15 +74,15 @@ func extractVCSInformations(params []sdk.Parameter) (string, *git.AuthOpts, erro
 			Name: pgpKeyName.Value,
 		}
 		pgpPrivate := sdk.ParameterFind(params, "cds.key."+pgpKeyName.Value+".priv")
-		if pgpPrivate != nil || pgpPrivate.Value != "" {
+		if pgpPrivate != nil && pgpPrivate.Value != "" {
 			auth.SignKey.Private = pgpPrivate.Value
 		}
 		pgpPublic := sdk.ParameterFind(params, "cds.key."+pgpKeyName.Value+".pub")
-		if pgpPublic != nil || pgpPublic.Value != "" {
+		if pgpPublic != nil && pgpPublic.Value != "" {
 			auth.SignKey.Public = pgpPublic.Value
 		}
 		pgpID := sdk.ParameterFind(params, "cds.key."+pgpKeyName.Value+".id")
-		if pgpID != nil || pgpID.Value != "" {
+		if pgpID != nil && pgpID.Value != "" {
 			auth.SignKey.ID = pgpID.Value
 		}
 
