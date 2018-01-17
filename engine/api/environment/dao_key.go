@@ -41,7 +41,7 @@ func LoadAllEnvironmentKeysByProject(db gorp.SqlExecutor, projID int64) ([]sdk.E
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
-		return nil, sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+		return nil, sdk.WrapError(err, "LoadAllEnvironmentKeysByProject> Cannot load keys")
 	}
 
 	keys := make([]sdk.EnvironmentKey, len(res))
@@ -79,7 +79,7 @@ func LoadAllBase64Keys(db gorp.SqlExecutor, env *sdk.Environment) error {
 		if err == sql.ErrNoRows {
 			return nil
 		}
-		return sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+		return sdk.WrapError(err, "LoadAllBase64Keys> Cannot load keys")
 	}
 
 	keys := make([]sdk.EnvironmentKey, len(res))
@@ -99,7 +99,7 @@ func LoadAllDecryptedKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 		if err == sql.ErrNoRows {
 			return nil
 		}
-		return sdk.WrapError(err, "LoadAllKeys> Cannot load keys")
+		return sdk.WrapError(err, "LoadAllDecryptedKeys> Cannot load keys")
 	}
 
 	keys := make([]sdk.EnvironmentKey, len(res))
@@ -108,7 +108,7 @@ func LoadAllDecryptedKeys(db gorp.SqlExecutor, env *sdk.Environment) error {
 		keys[i] = sdk.EnvironmentKey(p)
 		decrypted, err := secret.Decrypt([]byte(keys[i].Private))
 		if err != nil {
-			log.Error("LoadAllKeys> Unable to decrypt private key %s/%s: %v", env.Name, keys[i].Name, err)
+			log.Error("LoadAllDecryptedKeys> Unable to decrypt private key %s/%s: %v", env.Name, keys[i].Name, err)
 		}
 		keys[i].Private = string(decrypted)
 	}

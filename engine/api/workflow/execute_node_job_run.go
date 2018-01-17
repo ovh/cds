@@ -201,7 +201,7 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 	//Load node definition
 	n := w.Workflow.GetNode(nodeRun.WorkflowNodeID)
 	if n == nil {
-		return nil, nil, sdk.WrapError(fmt.Errorf("Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
+		return nil, nil, sdk.WrapError(fmt.Errorf("LoadNodeJobRunKeys> Unable to find node %d in workflow", nodeRun.WorkflowNodeID), "LoadNodeJobRunSecrets>")
 	}
 	if n.Context != nil && n.Context.Application != nil {
 		for _, k := range n.Context.Application.Keys {
@@ -218,11 +218,11 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 
 			unBase64, err64 := base64.StdEncoding.DecodeString(k.Private)
 			if err64 != nil {
-				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunSecrets> Cannot app decode key %s", k.Name)
+				return nil, nil, sdk.WrapError(err64, "LoadNodeJobRunKeys> Cannot app decode key %s", k.Name)
 			}
 			decrypted, errD := secret.Decrypt([]byte(unBase64))
 			if errD != nil {
-				log.Error("LoadNodeJobRunSecrets> Unable to decrypt app private key %s/%s: %v", n.Context.Application.Name, k.Name, errD)
+				log.Error("LoadNodeJobRunKeys> Unable to decrypt app private key %s/%s: %v", n.Context.Application.Name, k.Name, errD)
 			}
 			secrets = append(secrets, sdk.Variable{
 				Name:  "cds.key." + k.Name + ".priv",

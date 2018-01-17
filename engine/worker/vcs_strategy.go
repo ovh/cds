@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/ovh/cds/sdk"
 	"github.com/ovh/cds/sdk/vcs"
 	"github.com/ovh/cds/sdk/vcs/git"

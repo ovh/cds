@@ -337,27 +337,27 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, ctx *sdk.Workfl
 
 	//Unmarshal payload
 	if err := gorpmapping.JSONNullString(sqlContext.DefaultPayload, &ctx.DefaultPayload); err != nil {
-		return sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d default payload", ctx.ID)
+		return sdk.WrapError(err, "postLoadNodeContext> Unable to unmarshall context %d default payload", ctx.ID)
 	}
 
 	//Unmarshal pipeline parameters
 	if err := gorpmapping.JSONNullString(sqlContext.DefaultPipelineParameters, &ctx.DefaultPipelineParameters); err != nil {
-		return sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d default pipeline parameters", ctx.ID)
+		return sdk.WrapError(err, "postLoadNodeContext> Unable to unmarshall context %d default pipeline parameters", ctx.ID)
 	}
 
 	//Load the application in the context
 	if ctx.ApplicationID != 0 {
 		app, err := application.LoadByID(db, store, ctx.ApplicationID, nil, application.LoadOptions.WithVariables)
 		if err != nil {
-			return sdk.WrapError(err, "LoadNodeContext> Unable to load application %d", ctx.ApplicationID)
+			return sdk.WrapError(err, "postLoadNodeContext> Unable to load application %d", ctx.ApplicationID)
 		}
 		if opts.Base64Keys {
 			if err := application.LoadAllBase64Keys(db, app); err != nil {
-				return sdk.WrapError(err, "LoadNodeContext> Unable to load application %d base64keys", ctx.ApplicationID)
+				return sdk.WrapError(err, "postLoadNodeContext> Unable to load application %d base64keys", ctx.ApplicationID)
 			}
 		} else {
 			if err := application.LoadAllKeys(db, app); err != nil {
-				return sdk.WrapError(err, "LoadNodeContext> Unable to load application %d keys", ctx.ApplicationID)
+				return sdk.WrapError(err, "postLoadNodeContext> Unable to load application %d keys", ctx.ApplicationID)
 			}
 		}
 
@@ -368,19 +368,19 @@ func postLoadNodeContext(db gorp.SqlExecutor, store cache.Store, ctx *sdk.Workfl
 	if ctx.EnvironmentID != 0 {
 		env, err := environment.LoadEnvironmentByID(db, ctx.EnvironmentID)
 		if err != nil {
-			return sdk.WrapError(err, "LoadNodeContext> Unable to load env %d", ctx.EnvironmentID)
+			return sdk.WrapError(err, "postLoadNodeContext> Unable to load env %d", ctx.EnvironmentID)
 		}
 		ctx.Environment = env
 
 		if opts.Base64Keys {
 			if errE := environment.LoadAllBase64Keys(db, env); errE != nil {
-				return sdk.WrapError(errE, "LoadNodeContext> Unable to load env %d keys", ctx.EnvironmentID)
+				return sdk.WrapError(errE, "postLoadNodeContext> Unable to load env %d keys", ctx.EnvironmentID)
 			}
 		}
 	}
 
 	if err := gorpmapping.JSONNullString(sqlContext.Conditions, &ctx.Conditions); err != nil {
-		return sdk.WrapError(err, "LoadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
+		return sdk.WrapError(err, "postLoadNodeContext> Unable to unmarshall context %d conditions", ctx.ID)
 	}
 
 	return nil
@@ -392,7 +392,7 @@ func deleteNode(db gorp.SqlExecutor, w *sdk.Workflow, node *sdk.WorkflowNode, u 
 
 	dbwn := Node(*node)
 	if _, err := db.Delete(&dbwn); err != nil {
-		return sdk.WrapError(err, "DeleteNode> Unable to delete node %d", dbwn.ID)
+		return sdk.WrapError(err, "deleteNode> Unable to delete node %d", dbwn.ID)
 	}
 
 	node.ID = 0

@@ -51,7 +51,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		if errT != nil {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("Tag name is not semver compatible"),
+				Reason: "Tag name is not semver compatible",
 			}
 			sendLog(res.Reason)
 			return res
@@ -73,7 +73,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 		if userTag == "" {
 			res := sdk.Result{
 				Status: sdk.StatusFail.String(),
-				Reason: fmt.Sprintf("No user find to perform tag"),
+				Reason: "No user find to perform tag",
 			}
 			sendLog(res.Reason)
 			return res
@@ -94,7 +94,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			if err := ioutil.WriteFile("pgp.pub.key", []byte(auth.SignKey.Public), 0600); err != nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Cannot create pgp key file."),
+					Reason: "Cannot create pgp key file.",
 				}
 				sendLog(res.Reason)
 				return res
@@ -102,7 +102,7 @@ func runGitTag(w *currentWorker) BuiltInAction {
 			if err := ioutil.WriteFile("pgp.key", []byte(tagOpts.SignKey), 0600); err != nil {
 				res := sdk.Result{
 					Status: sdk.StatusFail.String(),
-					Reason: fmt.Sprintf("Cannot create pgp key file."),
+					Reason: "Cannot create pgp key file.",
 				}
 				sendLog(res.Reason)
 				return res

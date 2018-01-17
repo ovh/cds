@@ -22,7 +22,7 @@ const (
 	sha512 = 10
 )
 
-// GenerateSSHKeyPair generates a RSA private / public key, 4096 bits
+// generateSSHKeyPair generates a RSA private / public key, 4096 bits
 func generateSSHKeyPair(keyname string) (pub io.Reader, priv io.Reader, err error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
@@ -44,19 +44,19 @@ func generateSSHKeyPair(keyname string) (pub io.Reader, priv io.Reader, err erro
 	return pubkey, privb, err
 }
 
-//GetSSHPrivateKey returns the RSA private key
+//getSSHPrivateKey returns the RSA private key
 func getSSHPrivateKey(r io.Reader) (*rsa.PrivateKey, error) {
 	privBytes, errr := ioutil.ReadAll(r)
 	if errr != nil {
-		return nil, sdk.WrapError(errr, "GetSSHPrivateKey> Unable to read private key")
+		return nil, sdk.WrapError(errr, "getSSHPrivateKey> Unable to read private key")
 	}
 
 	privBlock, _ := pem.Decode(privBytes)
 	if privBlock == nil {
-		return nil, sdk.WrapError(errors.New("No Block found"), "GetSSHPrivateKey> Unable to decode PEM private key")
+		return nil, sdk.WrapError(errors.New("No Block found"), "getSSHPrivateKey> Unable to decode PEM private key")
 	}
 	if privBlock.Type != "RSA PRIVATE KEY" {
-		return nil, sdk.WrapError(errors.New("Unsupported Key type"), "GetSSHPrivateKey> Unable to decode PEM private key")
+		return nil, sdk.WrapError(errors.New("Unsupported Key type"), "getSSHPrivateKey> Unable to decode PEM private key")
 	}
 	//Parse the block
 	key, err := x509.ParsePKCS1PrivateKey(privBlock.Bytes)
@@ -67,7 +67,7 @@ func getSSHPrivateKey(r io.Reader) (*rsa.PrivateKey, error) {
 	return key, nil
 }
 
-//GetSSHPublicKey returns the public key from a private key
+//getSSHPublicKey returns the public key from a private key
 func getSSHPublicKey(name string, privateKey *rsa.PrivateKey) (io.Reader, error) {
 	// generate and write public key
 	pubkey, err := ssh.NewPublicKey(&privateKey.PublicKey)
@@ -89,16 +89,16 @@ func GenerateSSHKey(name string) (sdk.Key, error) {
 	}
 	pubR, privR, errGenerate := generateSSHKeyPair(name)
 	if errGenerate != nil {
-		return k, sdk.WrapError(errGenerate, "GenerateSSHKey> Cannot generate sshKey")
+		return k, sdk.WrapError(errGenerate, "getSSHPublicKey> Cannot generate sshKey")
 	}
 	pub, errPub := ioutil.ReadAll(pubR)
 	if errPub != nil {
-		return k, sdk.WrapError(errPub, "GenerateSSHKey> Unable to read public key")
+		return k, sdk.WrapError(errPub, "getSSHPublicKey> Unable to read public key")
 	}
 
 	priv, errPriv := ioutil.ReadAll(privR)
 	if errPriv != nil {
-		return k, sdk.WrapError(errPriv, "GenerateSSHKey> Unable to read private key")
+		return k, sdk.WrapError(errPriv, "getSSHPublicKey> Unable to read private key")
 	}
 	k.Public = string(pub)
 	k.Private = string(priv)

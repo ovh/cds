@@ -559,7 +559,7 @@
   "vcs_user" : "Utilisateur : ",
   "vcs_password" : "Mot de passe : ",
   "vcs_branch" : "Branche : ",
-  "vcs_default_branch" : "Branche par defaut : ",
+  "vcs_default_branch" : "Branche par défaut : ",
   "vcs_ssh_key" : "Clé SSH",
   "vcs_pgp_key" : "Clé PGP",
 
