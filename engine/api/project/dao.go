@@ -244,6 +244,7 @@ var LoadOptions = struct {
 	WithWorkflowNames              LoadOptionFunc
 	WithLock                       LoadOptionFunc
 	WithLockNoWait                 LoadOptionFunc
+	WithClearKeys                  LoadOptionFunc
 }{
 	Default:                        &loadDefault,
 	WithPipelines:                  &loadPipelines,
@@ -262,6 +263,7 @@ var LoadOptions = struct {
 	WithWorkflowNames:              &loadWorkflowNames,
 	WithLock:                       &lockProject,
 	WithLockNoWait:                 &lockAndWaitProject,
+	WithClearKeys:                  &loadClearKeys,
 }
 
 // LoadProjectByNodeJobRunID return a project from node job run id

@@ -16,12 +16,13 @@ import (
 func Export(db gorp.SqlExecutor, cache cache.Store, key string, appName string, f exportentities.Format, withPermissions bool, u *sdk.User, encryptFunc sdk.EncryptFunc, w io.Writer) (int, error) {
 	// Load app
 	app, errload := LoadByName(db, cache, key, appName, u,
-		LoadOptions.WithVariablesWithClearPassword,
-		LoadOptions.WithKeys,
+		LoadOptions.WithVariablesWithClearPassword, LoadOptions.WithClearKeys,
 	)
 	if errload != nil {
 		return 0, sdk.WrapError(errload, "application.Export> Cannot load application %s", appName)
 	}
+
+	// load clear key
 
 	// Load permissions
 	if withPermissions {

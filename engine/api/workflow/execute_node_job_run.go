@@ -205,7 +205,6 @@ func LoadNodeJobRunKeys(db gorp.SqlExecutor, store cache.Store, job *sdk.Workflo
 	}
 	if n.Context != nil && n.Context.Application != nil {
 		for _, k := range n.Context.Application.Keys {
-			log.Warning("GET KEYYYYY: %s", k.Name)
 			params = append(params, sdk.Parameter{
 				Name:  "cds.key." + k.Name + ".pub",
 				Type:  "string",
