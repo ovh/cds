@@ -9,7 +9,7 @@ import (
 	"github.com/ovh/cds/sdk"
 )
 
-//Cmd returns the root cobra command for Template management
+//Cmd returns the root cobra command for Users management
 func Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "users",

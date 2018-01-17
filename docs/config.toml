@@ -1,5 +1,5 @@
 languageCode = "en-us"
-title = "CDS Documentation"
+title = "CDS - Continuous Delivery Service"
 baseURL = "https://ovh.github.io/cds"
 theme = "docdock"
 canonifyurls = true
@@ -8,6 +8,7 @@ canonifyurls = true
 editURL = "https://github.com/ovh/cds/edit/master/docs/content/"
 noHomeIcon = true
 themeVariant = "custom"
+description = "Enterprise-Grade Continuous Delivery & DevOps Automation Open Source Platform"
 
 [outputs]
 home = [ "HTML", "RSS", "JSON"]
@@ -30,3 +31,97 @@ name = "<i class='fa fa-commenting'></i> Gitter"
 identifier = "cdsgitter"
 url = "https://gitter.im/ovh-cds/Lobby"
 weight = 3
+
+######## Homepage data
+
+[[menu.global]]
+  name = "Docs"
+  weight = 5
+  identifier = "docs"
+  url = "/introduction/"
+
+
+  # Anything with a weight > 100 gets an external icon
+[[menu.global]]
+  name = "Community"
+  weight = 150
+  icon = true
+  identifier = "community"
+  post = "external"
+  url = "https://gitter.im/ovh-cds/Lobby"
+
+
+[[menu.global]]
+  name = "GitHub"
+  weight = 200
+  identifier = "github"
+  post = "external"
+  url = "https://github.com/ovh/cds"
+
+
+[[params.feature]]
+  heading = "Built with user empowerment in mind"
+  image_path = "images/028-superhero.png"
+  tagline = "Self-service culture everywhere"
+  copy = "CDS has been designed to be used by thousands of projects simultaneously and independently. Project stakeholders are free to decide how to build, test and deploy their software. CDS guarantees project isolation and worker scalability."
+
+[[params.feature]]
+  heading = "Designed to grow with your needs"
+  image_path = "images/026-bars.png"
+  tagline = "Horizontal scalability in its DNA"
+  copy = "Need thousands of simultaneous workers to do the job? fear not! CDS will manage that for you! CDS servers are stateless. No shared state. Need more power? just add more servers."
+
+[[params.feature]]
+  heading = "Best practices friendly"
+  image_path = "images/019-team.png"
+  tagline = "Assists you in your quest toward Continuous Delivery/Deployment"
+  copy = "We love the ideas behind Continuous Delivery and we've created a tool that makes the right things easy to do. Build reproducibility, artifact management, feedback loops, etc. are at your fingertips."
+
+[[params.feature]]
+  heading = "Microservices' best friend"
+  image_path = "images/018-diagram.png"
+  tagline = "Build similar projects with the same workflow"
+  copy = "The built-in don't-repeat-yourself features help you minimize your effort when you need to build, test and deploy hundreds (thousands?) of projects with a similar workflow. This is especially useful when you are managing a micro-services-based infrastructure."
+
+[[params.feature]]
+  heading = "Highly automatable"
+  image_path = "images/artificial-intelligence.png"
+  tagline = "Full featured RESTful API"
+  copy = "CDS can be fully operated through its RESTful API. The API is used by the CDS's UI but also by the workers. All components speak the same language."
+
+[[params.feature]]
+  heading = "Cloud native"
+  image_path = "images/ladder.png"
+  tagline = "Spawn on-demand VMs and containers in the cloud"
+  copy = "Unleash the power of the cloud by spawning as much OpenStack and Docker workers as you need."
+
+[[params.feature]]
+  heading = "Built-in security"
+  image_path = "images/network.png"
+  tagline = "Fine-grained ACLs at every step"
+  copy = "In CDS, read and right access can be finely tuned to suit your needs. You can control who can view, edit, build, deploy in staging or deploy in prod."
+
+[[params.feature]]
+  heading = "Easily customizable"
+  image_path = "images/solution.png"
+  tagline = "Make it yours through plug-ins and actions"
+  copy = "You feel like something is missing in CDS ? Just add it."
+
+
+[[params.section]]
+  heading = "Clearly visualize your workflow"
+  cta = "Check out the UI tutorial"
+  link = "workflows/design/"
+  color_classes = "bg-accent-color white"
+  image = "images/capture-start.gif"
+  copy = "CDS provides a super intuitive UI that allows you to build complex workflows, run them and dig into the logs when needed."
+
+
+[[params.section]]
+  heading = "Testing data at your fingertips"
+  cta = "Learn more about the Junit step."
+  link = "workflows/pipelines/actions/builtin/junit/"
+  color_classes = "bg-primary-color-light black"
+  image = "images/workflows.pipelines.actions.builtin.junit-view-details.png"
+  copy = "CDS parses the Junit files produced by your build and displays them in a friendly manner to help you analyse what went wrong."
+

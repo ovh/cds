@@ -5,8 +5,6 @@ import {Variable} from '../../model/variable.model';
 import {RepositoryPoller} from '../../model/polling.model';
 import {GroupPermission} from '../../model/group.model';
 import {Trigger} from '../../model/trigger.model';
-import {ApplyTemplateRequest} from '../../model/template.model';
-import {Project} from '../../model/project.model';
 import {Notification, UserNotificationSettings} from '../../model/notification.model';
 import {Scheduler} from '../../model/scheduler.model';
 import {Hook} from '../../model/hook.model';
@@ -67,13 +65,16 @@ export class ApplicationService {
         return this._http.post<Application>('/project/' + key + '/application/' + appName + '/clone', application);
     }
 
-    /***
-     * Apply a template to a project to create an application
+    /**
+     * Create application
      * @param key Project unique key
+     * @param application Application data
+     * @returns {Observable<Application>}
      */
-    applyTemplate(key: string, request: ApplyTemplateRequest): Observable<Project> {
-        return this._http.post<Project>('/project/' + key + '/template', request);
+    createApplication(key: string, application: Application): Observable<Application> {
+        return this._http.post<Application>('/project/' + key + '/applications', application);
     }
+
 
     /**
      * Delete an application

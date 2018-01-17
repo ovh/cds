@@ -24,8 +24,8 @@ func insertWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	return nil
 }
 
-// updateWorkflowRun updates in table "workflow_run""
-func updateWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
+// UpdateWorkflowRun updates in table "workflow_run""
+func UpdateWorkflowRun(db gorp.SqlExecutor, wr *sdk.WorkflowRun) error {
 	wr.LastModified = time.Now()
 
 	for _, info := range wr.Infos {

@@ -108,6 +108,7 @@ func (api *API) InitRouter() {
 	r.Handle("/project/{permProjectKey}/group/import", r.POST(api.importGroupsInProjectHandler))
 	r.Handle("/project/{permProjectKey}/group/{group}", r.PUT(api.updateGroupRoleOnProjectHandler), r.DELETE(api.deleteGroupFromProjectHandler))
 	r.Handle("/project/{permProjectKey}/variable", r.GET(api.getVariablesInProjectHandler), r.PUT(api.updateVariablesInProjectHandler, DEPRECATED))
+	r.Handle("/project/{permProjectKey}/encrypt", r.POST(api.postEncryptVariableHandler))
 	r.Handle("/project/{key}/variable/audit", r.GET(api.getVariablesAuditInProjectnHandler))
 	r.Handle("/project/{key}/variable/audit/{auditID}", r.PUT(api.restoreProjectVariableAuditHandler, DEPRECATED))
 	r.Handle("/project/{permProjectKey}/variable/{name}", r.GET(api.getVariableInProjectHandler, DEPRECATED), r.POST(api.addVariableInProjectHandler), r.PUT(api.updateVariableInProjectHandler), r.DELETE(api.deleteVariableFromProjectHandler))
@@ -337,14 +338,9 @@ func (api *API) InitRouter() {
 	// Suggest
 	r.Handle("/suggest/variable/{permProjectKey}", r.GET(api.getVariablesHandler))
 
-	// Templates
-	r.Handle("/template", r.GET(api.getTemplatesHandler, Auth(false)))
-	r.Handle("/template/add", r.POST(api.addTemplateHandler, NeedAdmin(true)))
-	r.Handle("/template/build", r.GET(api.getBuildTemplatesHandler, Auth(false)))
-	r.Handle("/template/deploy", r.GET(api.getDeployTemplatesHandler, Auth(false)))
-	r.Handle("/template/{id}", r.PUT(api.updateTemplateHandler, NeedAdmin(true)), r.DELETE(api.deleteTemplateHandler, NeedAdmin(true)))
-	r.Handle("/project/{permProjectKey}/template", r.POST(api.applyTemplateHandler))
-	r.Handle("/project/{key}/application/{permApplicationName}/template", r.POST(api.applyTemplateOnApplicationHandler))
+	//Requirements
+	r.Handle("/requirement/types", r.GET(api.getRequirementTypesHandler))
+	r.Handle("/requirement/types/{type}", r.GET(api.getRequirementTypeValuesHandler))
 
 	//Requirements
 	r.Handle("/requirement/types", r.GET(api.getRequirementTypesHandler))

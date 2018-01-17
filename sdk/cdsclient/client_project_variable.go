@@ -36,3 +36,15 @@ func (c *client) ProjectVariableGet(projectKey string, varName string) (*sdk.Var
 	}
 	return variable, nil
 }
+
+func (c *client) VariableEncrypt(projectKey string, varName string, content string) (*sdk.Variable, error) {
+	variable := &sdk.Variable{
+		Name:  varName,
+		Value: content,
+		Type:  sdk.SecretVariable,
+	}
+	if _, err := c.PostJSON("/project/"+projectKey+"/encrypt", variable, variable); err != nil {
+		return nil, err
+	}
+	return variable, nil
+}

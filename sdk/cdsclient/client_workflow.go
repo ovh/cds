@@ -165,3 +165,33 @@ func (c *client) WorkflowRunFromManual(projectKey string, workflowName string, m
 
 	return run, nil
 }
+
+func (c *client) WorkflowStop(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/stop", projectKey, workflowName, number)
+
+	run := &sdk.WorkflowRun{}
+	code, err := c.PostJSON(url, nil, run)
+	if err != nil {
+		return nil, err
+	}
+	if code >= 300 {
+		return nil, fmt.Errorf("Cannot stop workflow %s. HTTP code error: %d", workflowName, code)
+	}
+
+	return run, nil
+}
+
+func (c *client) WorkflowNodeStop(projectKey string, workflowName string, number, fromNodeID int64) (*sdk.WorkflowNodeRun, error) {
+	url := fmt.Sprintf("/project/%s/workflows/%s/runs/%d/nodes/%d/stop", projectKey, workflowName, number, fromNodeID)
+
+	nodeRun := &sdk.WorkflowNodeRun{}
+	code, err := c.PostJSON(url, nil, nodeRun)
+	if err != nil {
+		return nil, err
+	}
+	if code >= 300 {
+		return nil, fmt.Errorf("Cannot stop workflow node %d. HTTP code error: %d", fromNodeID, code)
+	}
+
+	return nodeRun, nil
+}

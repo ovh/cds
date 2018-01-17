@@ -145,6 +145,7 @@ type ProjectVariablesClient interface {
 	ProjectVariableDelete(projectKey string, varName string) error
 	ProjectVariableGet(projectKey string, varName string) (*sdk.Variable, error)
 	ProjectVariableUpdate(projectKey string, variable *sdk.Variable) error
+	VariableEncrypt(projectKey string, varName string, content string) (*sdk.Variable, error)
 }
 
 // QueueClient exposes queue related functions
@@ -160,13 +161,6 @@ type QueueClient interface {
 	QueueSendResult(int64, sdk.Result) error
 	QueueArtifactUpload(id int64, tag, filePath string) (bool, time.Duration, error)
 	QueueJobTag(jobID int64, tags []sdk.WorkflowRunTag) error
-}
-
-// TemplateClient exposes queue related functions
-type TemplateClient interface {
-	TemplateApplicationCreate(projectKey, name string, template *sdk.Template) error
-	TemplateList() ([]sdk.Template, error)
-	TemplateGet(name string) (*sdk.Template, error)
 }
 
 // UserClient exposes users functions
@@ -201,6 +195,8 @@ type WorkflowClient interface {
 	WorkflowRunArtifacts(projectKey string, name string, number int64) ([]sdk.WorkflowNodeRunArtifact, error)
 	WorkflowRunFromHook(projectKey string, workflowName string, hook sdk.WorkflowNodeRunHookEvent) (*sdk.WorkflowRun, error)
 	WorkflowRunFromManual(projectKey string, workflowName string, manual sdk.WorkflowNodeRunManual, number, fromNodeID int64) (*sdk.WorkflowRun, error)
+	WorkflowStop(projectKey string, workflowName string, number int64) (*sdk.WorkflowRun, error)
+	WorkflowNodeStop(projectKey string, workflowName string, number, fromNodeID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRun(projectKey string, name string, number int64, nodeRunID int64) (*sdk.WorkflowNodeRun, error)
 	WorkflowNodeRunArtifacts(projectKey string, name string, number int64, nodeRunID int64) ([]sdk.WorkflowNodeRunArtifact, error)
 	WorkflowNodeRunArtifactDownload(projectKey string, name string, a sdk.WorkflowNodeRunArtifact, w io.Writer) error
@@ -232,7 +228,6 @@ type Interface interface {
 	QueueClient
 	Requirements() ([]sdk.Requirement, error)
 	ServiceRegister(sdk.Service) (string, error)
-	TemplateClient
 	UserClient
 	WorkerClient
 	WorkflowClient

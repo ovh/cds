@@ -19,8 +19,6 @@ import {AuthentificationStore} from '../../../service/auth/authentification.stor
 import {TranslateService, TranslateLoader, TranslateParser} from '@ngx-translate/core';
 import {Project} from '../../../model/project.model';
 import {ApplicationAddComponent} from './application.add.component';
-import {ApplicationTemplateService} from '../../../service/application/application.template.service';
-import {Template, ApplyTemplateRequest} from '../../../model/template.model';
 import {Parameter} from '../../../model/parameter.model';
 import {Application} from '../../../model/application.model';
 import {Variable} from '../../../model/variable.model';
@@ -52,7 +50,6 @@ describe('CDS: Application Add Component', () => {
                 TranslateService,
                 TranslateLoader,
                 TranslateParser,
-                ApplicationTemplateService,
                 VariableService
             ],
             imports : [
@@ -78,86 +75,6 @@ describe('CDS: Application Add Component', () => {
     });
 
     it('should create an empty application', fakeAsync( () => {
-
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationAddComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        let project: Project = new Project();
-        project.key = 'key1';
-
-        let templates = new Array<Template>();
-        let t1 = new Template();
-        t1.name = 'Void';
-        templates.push(t1);
-        let t2 = new Template();
-        t2.name = 'GoBuild';
-        templates.push(t2);
-        fixture.componentInstance.templates = templates;
-
-        fixture.componentInstance.selectedName = 'myApp';
-        fixture.componentInstance.updateSelection('empty');
-
-        expect(fixture.componentInstance.selectedTemplate.name).toBe('Void');
-
-        spyOn(appStore, 'applyTemplate').and.callFake( () => {
-            return Observable.of(project);
-        });
-
-        fixture.componentInstance.createApplication();
-        let addAppRequest: ApplyTemplateRequest = new ApplyTemplateRequest();
-        addAppRequest.name = 'myApp';
-        addAppRequest.template = 'Void';
-        expect(appStore.applyTemplate).toHaveBeenCalledWith(project.key, addAppRequest);
-    }));
-
-    it('should create an application from template', fakeAsync( () => {
-
-        // Create component
-        let fixture = TestBed.createComponent(ApplicationAddComponent);
-        let component = fixture.debugElement.componentInstance;
-        expect(component).toBeTruthy();
-
-        let project: Project = new Project();
-        project.key = 'key1';
-
-        let templates = new Array<Template>();
-        let t1 = new Template();
-        t1.name = 'Void';
-        templates.push(t1);
-        let t2 = new Template();
-        t2.name = 'GoBuild';
-        t2.params = new Array<Parameter>();
-        let p = new Parameter();
-        p.name = 'param1';
-        p.type = 'number';
-        p.value = '1';
-        t2.params.push(p);
-        templates.push(t2);
-        fixture.componentInstance.templates = templates;
-
-        fixture.componentInstance.selectedName = 'myApp';
-        fixture.componentInstance.typeofCreation = 'template';
-        fixture.componentInstance.updateSelection('template');
-        fixture.componentInstance.updateSelectedTemplateToUse('GoBuild');
-
-        expect(fixture.componentInstance.selectedTemplate.name).toBe('GoBuild');
-        expect(fixture.componentInstance.parameters.length).toBe(1);
-
-        fixture.componentInstance.parameters[0].value = '2';
-
-        spyOn(appStore, 'applyTemplate').and.callFake( () => {
-            return Observable.of(project);
-        });
-
-        fixture.componentInstance.createApplication();
-        let addAppRequest: ApplyTemplateRequest = new ApplyTemplateRequest();
-        addAppRequest.name = 'myApp';
-        addAppRequest.template = 'GoBuild';
-        addAppRequest.template_params = fixture.componentInstance.parameters;
-
-        expect(appStore.applyTemplate).toHaveBeenCalledWith(project.key, addAppRequest);
     }));
 
     it('should clone an application', fakeAsync( () => {

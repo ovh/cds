@@ -6,7 +6,6 @@ CDS support several kind of extensions:
 
 - Actions
 - Plugins
-- Templates
 - Secret Backends
 - µServices
 
@@ -20,11 +19,6 @@ See [CDS documentation](https://github.com/ovh/cds) for more details.
 
 [See Plugins Documentation](https://ovh.github.io/cds/workflows/pipelines/pipelines.actions.user-actions/)
 
-## Templates
-
-[See Templates Documentation](https://ovh.github.io/cds/workflows/pipelines/pipelines.templates/)
-
-
 ## µServices
 
 - [cds2xmpp](https://github.com/ovh/cds/tree/master/contrib/uservices/cds2xmpp)
@@ -32,4 +26,4 @@ See [CDS documentation](https://github.com/ovh/cds) for more details.
 
 ## Contributions
 
-By convention, plugins must have prefix `plugin`, templates  must have prefix `templates`, secret backends must have prefix `secret-backend`.
+By convention, plugins must have prefix `plugin`.

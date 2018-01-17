@@ -87,7 +87,7 @@
   "application_repoman_cant": "First, you must connect a repository manager to your project: ",
   "application_repoman_cant_link": "here",
   "application_repo_title": "Link application to a repository: ",
-  "application_template_title": "Templating",
+  "application_new_title" : "New application",
   "application_update_name_error": "Application name is mandatory and must respect the alphanumeric pattern + the following characters: .-_ ([a-zA-Z0-9._-]*)",
   "application_update_ok": "Application has been updated",
   "application_variable_list_title": "List of application variables: ",
@@ -579,7 +579,6 @@
 
   "wizard_app_clone": "Clone an application",
   "wizard_app_empty": "Empty application",
-  "wizard_app_template": "Apply a template",
   "wizard_ssh_key_name": "Ssh key name",
 
   "worker_model_type": "Type",

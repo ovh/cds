@@ -23,19 +23,18 @@ testcases:
 - name: run workflow
   steps:
   - script:  {{.cds.build.cdsctl}} workflow run ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW
-  assertions:
-      - result.code ShouldEqual 0
-      - "result.systemout ShouldContain Workflow ITSCWRKFLW2-WORKFLOW #1 has been lauched"
+    assertions:
+    - result.code ShouldEqual 0
+    - "result.systemout ShouldContainSubstring Workflow ITSCWRKFLW2-WORKFLOW #1 has been launched"
 
 - name: check workflow
   steps:
   - script:  {{.cds.build.cdsctl}} workflow show ITSCWRKFLW2 ITSCWRKFLW2-WORKFLOW 1 --format json
-  assertions:
-      - result.code ShouldEqual 0
-        result.systemout.last_execution ShouldNotBeEmpty
-        result.systemout.start ShouldNotBeEmpty
-        result.systemout.payload ShouldBeEmpty
-        result.systemout.num ShouldEqual 1
-        result.systemout.status ShouldEqual Building
-        result.systemout.tags ShouldContains triggered_by
-        
+    assertions:
+    - result.code ShouldEqual 0
+    - result.systemoutjson.last_execution ShouldNotBeEmpty
+    - result.systemoutjson.start ShouldNotBeEmpty
+    - result.systemoutjson.payload ShouldBeEmpty
+    - result.systemoutjson.num ShouldContainSubstring 1
+    - result.systemoutjson.status ShouldEqual Building
+    - result.systemoutjson.tags ShouldContainSubstring triggered_by

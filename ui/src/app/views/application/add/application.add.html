@@ -1,97 +1,56 @@
-<div *ngIf="ready;then addApplication;else loadTemplate"></div>
-<ng-template #addApplication>
-    <div id="AddApplication">
-        <div class="scrollingContent">
-            <div class="paddingContent">
-                <div class="viewContent">
-                    <form class="ui form" (ngSubmit)="createApplication()">
-                        <h2>{{ 'application_create' | translate }}</h2>
-                        <div class="ui grid">
-                            <div class="one wide column">
+<div id="AddApplication" class="scrollingContent">
+    <div class="paddingContent">
+        <div class="viewContent">
+            <form class="ui form" (ngSubmit)="createApplication()">
+                <h2>{{ 'application_create' | translate }}</h2>
+                <div class="ui grid">
+                    <div class="one wide column">
 
-                            </div>
-                            <div class="fourteen wide column">
-                                <div class="field">
-                                    <label>{{'application_name' | translate}}</label>
-                                    <input type="text" name="appname" [(ngModel)]="selectedName">
-                                    <div class="ui error message" *ngIf="appPatternError">
-                                        {{ 'application_name_error' | translate }}
-                                    </div>
-                                </div>
-
-                                <div class="grouped fields">
-                                    <label>{{ 'application_template_title' | translate }}</label>
-                                    <div class="field">
-                                        <input type="radio" name="creation" value="empty" [(ngModel)]="typeofCreation" (change)="updateSelection('empty')">
-                                        {{ 'wizard_app_empty' | translate }}
-                                    </div>
-                                    <div class="field" *ngIf="project.applications && project.applications.length > 0">
-                                        <input type="radio" name="creation" value="clone" [(ngModel)]="typeofCreation" (change)="updateSelection('clone')">
-                                        {{ 'wizard_app_clone' | translate }}
-                                    </div>
-                                    <div class="field" *ngIf="project.workflow_migration === 'NOT_BEGUN' && templates && templates.length > 0">
-                                        <input type="radio" name="creation" value="template" [(ngModel)]="typeofCreation"
-                                               (change)="updateSelection('template')">
-                                        {{ 'wizard_app_template' | translate }}
-                                    </div>
-                                </div>
-
-                                <div class="ui grid">
-                                    <div class="wide column" [class.twelve]="typeofCreation === 'template'" [class.sixteen]="typeofCreation !== 'template'">
-
-
-                                        <div class="field" *ngIf="typeofCreation === 'template' && selectedTemplate.name !== ''">
-                                            <sm-select
-                                                [model]="selectedTemplate.name"
-                                                [options]="{'fullTextSearch': true}"
-                                                (modelChange)="updateSelectedTemplateToUse($event)">
-                                                <option *ngFor="let t of templates" value="{{t.name}}">{{t.name}}</option>
-                                            </sm-select>
-                                        </div>
-                                        <div class="field" *ngIf="typeofCreation === 'clone'">
-                                            <sm-select [options]="{'fullTextSearch': true}"
-                                                [model]="selectedApplicationName"
-                                                (modelChange)="updateSelectedApplicationToClone($event)">
-                                                <option *ngFor="let app of project.applications" [value]="app.name">{{app.name}}</option>
-                                            </sm-select>
-                                        </div>
-
-
-                                        <div class="field" *ngIf="parameters && parameters.length > 0">
-                                            <app-parameter-list [parameters]="parameters" mode="launcher" [project]="project" [suggest]="suggestion"></app-parameter-list>
-                                        </div>
-                                        <div class="field" *ngIf="variables && variables.length > 0">
-                                            <app-variable [variables]="variables" mode="launcher"></app-variable>
-                                        </div>
-                                        <div class="field">
-                                            <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'applications'}">{{ 'btn_cancel' | translate }}</a>
-                                            <button class="ui green right floated button" [class.loading]="loadingCreate"
-                                                    [class.disabled]="!selectedName || selectedName === ''">{{ 'btn_create' | translate }}
-                                            </button>
-                                        </div>
-                                    </div>
-
-
-                                    <div class="four wide column">
-                                        <div class="wizard card">
-                                            <sm-card class="ui card" *ngIf="selectedTemplate && typeofCreation === 'template'">
-                                                <card-title><b>{{selectedTemplate.name}}</b></card-title>
-                                                <card-subtitle> {{selectedTemplate.author}}</card-subtitle>
-                                                <card-content>
-                                                    <markdown [data]="selectedTemplate.description"></markdown>
-                                                </card-content>
-                                            </sm-card>
-                                        </div>
-                                    </div>
-                                </div>
+                    </div>
+                    <div class="fourteen wide column">
+                        <div class="field">
+                            <label>{{'application_name' | translate}}</label>
+                            <input type="text" name="appname" [(ngModel)]="selectedName">
+                            <div class="ui error message" *ngIf="appPatternError">
+                                {{ 'application_name_error' | translate }}
                             </div>
                         </div>
-                    </form>
+
+                        <div class="grouped fields">
+                            <label>{{ 'application_new_title' | translate }}</label>
+                            <div class="field">
+                                <input type="radio" name="creation" value="empty" [(ngModel)]="typeofCreation" (change)="updateSelection('empty')"> {{ 'wizard_app_empty' | translate }}
+                            </div>
+                            <div class="field" *ngIf="project.applications && project.applications.length > 0">
+                                <input type="radio" name="creation" value="clone" [(ngModel)]="typeofCreation" (change)="updateSelection('clone')"> {{ 'wizard_app_clone' | translate }}
+                            </div>
+                        </div>
+
+                        <div class="ui grid">
+                            <div class="wide column sixteen">
+
+                                <div class="field" *ngIf="typeofCreation === 'clone'">
+                                    <sm-select [options]="{'fullTextSearch': true}" [model]="selectedApplicationName" (modelChange)="updateSelectedApplicationToClone($event)">
+                                        <option *ngFor="let app of project.applications" [value]="app.name">{{app.name}}</option>
+                                    </sm-select>
+                                </div>
+
+                                <div class="field" *ngIf="variables && variables.length > 0">
+                                    <app-variable [variables]="variables" mode="launcher"></app-variable>
+                                </div>
+                                <div class="field">
+                                    <a class="ui button" [routerLink]="['/project', project.key]" [queryParams]="{ tab: 'applications'}">{{ 'btn_cancel' | translate }}</a>
+                                    <button class="ui green right floated button" [class.loading]="loadingCreate" [class.disabled]="!selectedName || selectedName === ''">{{ 'btn_create' | translate }}
+                                    </button>
+                                </div>
+                            </div>
+
+
+
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
-</ng-template>
-<ng-template #loadTemplate>
-    <div class="ui text active loader">Loading CDS templates...</div>
-</ng-template>
+</div>

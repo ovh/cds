@@ -75,10 +75,6 @@ func Import(db gorp.SqlExecutor, store cache.Store, proj *sdk.Project, app *sdk.
 		return err
 	}
 
-	if err := ImportPipelines(db, store, proj, app, u, msgChan); err != nil {
-		return err
-	}
-
 	//Insert group permission on application
 	for i := range app.ApplicationGroups {
 		//Load the group by name

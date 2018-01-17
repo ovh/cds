@@ -26,7 +26,6 @@ import (
 	"github.com/ovh/cds/cli/cds/update"
 	"github.com/ovh/cds/cli/cds/user"
 	"github.com/ovh/cds/cli/cds/version"
-	"github.com/ovh/cds/cli/cds/wizard"
 	"github.com/ovh/cds/cli/cds/worker"
 	"github.com/ovh/cds/cli/cds/workflow"
 	"github.com/ovh/cds/sdk"
@@ -114,7 +113,6 @@ func main() {
 	rootCmd.AddCommand(version.Cmd)
 	rootCmd.AddCommand(trigger.Cmd())
 	rootCmd.AddCommand(ui.Cmd)
-	rootCmd.AddCommand(wizard.Cmd)
 	rootCmd.AddCommand(track.Cmd)
 	rootCmd.AddCommand(generate.Cmd())
 	rootCmd.AddCommand(admin.Cmd())
