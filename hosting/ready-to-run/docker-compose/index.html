@@ -1048,6 +1048,11 @@
           <span>show</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/workflow/stop/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/stop/">
+          <span>stop</span>
+        </a>
+    </li>
         </ul>
     </li>
         </ul>
@@ -1344,7 +1349,7 @@
 <li><a href="#prepare-project-pipeline-and-application">Prepare Project, Pipeline and Application</a></li>
 <li><a href="#run-pipeline">Run Pipeline</a></li>
 <li><a href="#hatchery-docker-swarm">Hatchery Docker Swarm</a></li>
-<li><a href="#next-with-actions-plugins-and-templates">Next with Actions, Plugins and Templates</a></li>
+<li><a href="#next-with-actions-plugins">Next with Actions, Plugins</a></li>
 </ul></li>
 <li><a href="#go-further">Go further</a></li>
 </ul>
@@ -1467,7 +1472,7 @@ $ docker-compose up cds-hatchery-swarm
 <p>A <code>swarm hatchery</code> spawns CDS Workers inside dedicated containers.
 This ensures isolation of the workspaces and resources.</p>
 
-<h2 id="next-with-actions-plugins-and-templates">Next with Actions, Plugins and Templates</h2>
+<h2 id="next-with-actions-plugins">Next with Actions, Plugins</h2>
 
 <ul>
 <li>You can download CDS CLI from <a href="https://github.com/ovh/cds/releases">https://github.com/ovh/cds/releases</a></li>
@@ -1489,12 +1494,6 @@ $ ./cds login
 
 <pre><code class="language-bash"># download plugin-download-linux-amd64 from  https://github.com/ovh/cds/releases
 $ cds admin plugin add ./plugin-download-linux-amd64
-</code></pre></li>
-
-<li><p>Import templates, example:</p>
-
-<pre><code class="language-bash"># download cds-template-plain-linux-amd64 from  https://github.com/ovh/cds/releases
-$ cds admin templates add ./cds-template-plain-linux-amd64
 </code></pre></li>
 </ul>
 

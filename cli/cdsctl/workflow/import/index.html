@@ -1051,6 +1051,11 @@
           <span>show</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/workflow/stop/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/stop/">
+          <span>stop</span>
+        </a>
+    </li>
         </ul>
     </li>
         </ul>
@@ -1380,7 +1385,9 @@
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Import a workflow</p>
+<pre><code>    In case you want to import just your workflow.
+    If you want to update also dependencies likes pipelines, applications or environments at same time you have to use workflow push instead workflow import.
+</code></pre>
 
 <pre><code>cdsctl workflow import PROJECT-KEY FILENAME [flags]
 </code></pre>

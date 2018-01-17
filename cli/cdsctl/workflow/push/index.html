@@ -1051,6 +1051,11 @@
           <span>show</span>
         </a>
     </li>
+      <li data-nav-id="/cli/cdsctl/workflow/stop/" class="dd-item">
+        <a href="https://ovh.github.io/cds/cli/cdsctl/workflow/stop/">
+          <span>stop</span>
+        </a>
+    </li>
         </ul>
     </li>
         </ul>
@@ -1380,7 +1385,10 @@
 
 <h3 id="synopsis">Synopsis</h3>
 
-<p>Push a workflow</p>
+<pre><code>    Useful when you want to push a workflow and his dependencies (pipelines, applications, environments)
+    For example if you have a workflow with pipelines build and tests you can push your workflow and pipelines with
+    cdsctl workflow push tests.pip.yml build.pip.yml myWorkflow.yml
+</code></pre>
 
 <pre><code>cdsctl workflow push PROJECT-KEY YAML-FILE ... [flags]
 </code></pre>
