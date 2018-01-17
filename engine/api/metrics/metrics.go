@@ -26,6 +26,9 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	nbWorkflows := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflows", Help: "metrics nb_workflows", ConstLabels: labels})
 	nbArtifacts := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_artifacts", Help: "metrics nb_artifacts", ConstLabels: labels})
 	nbWorkerModels := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_worker_models", Help: "metrics nb_worker_models", ConstLabels: labels})
+	nbWorkflowRuns := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_runs", Help: "metrics nb_workflow_runs", ConstLabels: labels})
+	nbWorkflowNodeRuns := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_node_runs", Help: "metrics nb_workflow_node_runs", ConstLabels: labels})
+	nbWorkflowNodeRunJobs := prometheus.NewSummary(prometheus.SummaryOpts{Name: "nb_workflow_node_run_jobs", Help: "metrics nb_workflow_node_run_jobs", ConstLabels: labels})
 
 	registry.MustRegister(nbUsers)
 	registry.MustRegister(nbApplications)
@@ -35,6 +38,9 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 	registry.MustRegister(nbWorkflows)
 	registry.MustRegister(nbArtifacts)
 	registry.MustRegister(nbWorkerModels)
+	registry.MustRegister(nbWorkflowRuns)
+	registry.MustRegister(nbWorkflowNodeRuns)
+	registry.MustRegister(nbWorkflowNodeRunJobs)
 
 	tick := time.NewTicker(30 * time.Second).C
 
@@ -55,6 +61,9 @@ func Initialize(c context.Context, DBFunc func() *gorp.DbMap, instance string) {
 				count(DBFunc(), "SELECT COUNT(1) FROM workflow", nbWorkflows)
 				count(DBFunc(), "SELECT COUNT(1) FROM artifact", nbArtifacts)
 				count(DBFunc(), "SELECT COUNT(1) FROM worker_model", nbWorkerModels)
+				count(DBFunc(), "SELECT MAX(id) FROM workflow_run", nbWorkflowRuns)
+				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run", nbWorkflowRuns)
+				count(DBFunc(), "SELECT MAX(id) FROM workflow_node_run_job", nbWorkflowNodeRunJobs)
 			}
 		}
 	}(c, DBFunc)
