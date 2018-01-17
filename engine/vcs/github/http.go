@@ -236,7 +236,7 @@ func (c *githubClient) delete(path string) error {
 	}
 
 	if res.StatusCode != 204 {
-		return fmt.Errorf("github>delete wrong status code %d on url", res.StatusCode, path)
+		return fmt.Errorf("github>delete wrong status code %d on url %s", res.StatusCode, path)
 	}
 	return nil
 }
