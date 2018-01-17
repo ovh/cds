@@ -62,7 +62,7 @@ func UpdateNodeJobRunStatus(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache
 		}
 
 		wf.LastExecution = time.Now()
-		if err := updateWorkflowRun(db, wf); err != nil {
+		if err := UpdateWorkflowRun(db, wf); err != nil {
 			return sdk.WrapError(err, "workflow.UpdateNodeJobRunStatus> Cannot update WorkflowRun %d", wf.ID)
 		}
 	default:

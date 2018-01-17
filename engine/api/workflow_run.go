@@ -323,11 +323,15 @@ func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.
 	}
 	defer tx.Rollback()
 
+	spwnMsg := sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{u.Username}}
+
 	stopInfos := sdk.SpawnInfo{
 		APITime:    time.Now(),
 		RemoteTime: time.Now(),
-		Message:    sdk.SpawnMsg{ID: sdk.MsgWorkflowNodeStop.ID, Args: []interface{}{u.Username}},
+		Message:    spwnMsg,
 	}
+
+	workflow.AddWorkflowRunInfo(run, false, spwnMsg)
 
 	for _, wn := range run.WorkflowNodeRuns {
 		for _, wnr := range wn {
@@ -346,8 +350,8 @@ func stopWorkflowRun(chEvent chan<- interface{}, chError chan<- error, db *gorp.
 	}
 
 	run.Status = sdk.StatusStopped.String()
-	if errU := workflow.UpdateWorkflowRunStatus(tx, run); errU != nil {
-		chError <- sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run status %d", run.ID)
+	if errU := workflow.UpdateWorkflowRun(tx, run); errU != nil {
+		chError <- sdk.WrapError(errU, "stopWorkflowRunHandler> Unable to update workflow run %d", run.ID)
 		return
 	}
 	chEvent <- *run

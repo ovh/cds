@@ -258,7 +258,7 @@ func execute(dbCopy *gorp.DbMap, db gorp.SqlExecutor, store cache.Store, p *sdk.
 				Args: []interface{}{waitingRun.WorkflowNodeName},
 			})
 
-			if err := updateWorkflowRun(db, workflowRun); err != nil {
+			if err := UpdateWorkflowRun(db, workflowRun); err != nil {
 				return sdk.WrapError(err, "workflow.execute> Unable to update workflow run %d after mutex release", workflowRun.ID)
 			}
 
